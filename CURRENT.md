@@ -25,13 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14: same-process decoder confirmation running.**
-The bounded18-request `na-axis-confirm-01` is running against the unchanged
-packet10 PID84255/exec33936. Six balanced OCO/COC triples cover boat, marble,
-and bird with all four raw-output checks on every clip. Root reviewed the new
-client and prior-screen admission; eight stdlib tests and offline admission of
-161 evidence files passed. No application reload or other native work during
-timing. Preserve the process and halt submissions on any failure.
+**Four-B70 host, September14 16:57 UTC: decoder confirmation complete; scoped gain retained.**
+All18 balanced `na-axis-confirm-01` clips passed the four original raw-output
+oracles and full24-call decoder checks on unchanged packet10 PID84255/exec33936.
+Across this screen and confirmation,29/29 clips are exact. All six balanced
+decoder comparisons favor the cache, median−83.231ms. Whole-preview effects
+split3wins/3losses, median−41.966ms; preview medians remain about6.4s. Retain the
+local decoder gain, with no overall speed promotion or streaming qualification.
+Client31882 exited0; same boot, queue empty, onlyPID84255 owns all four render
+devices, no fault. Default route is original; private axis-cache remains
+available. No reload was required for confirmation. Next: saved-event attribution
+of encoder/sampler variation and the remaining transformer/encoder costs.
+[Confirmation results](experiments/ltx25-b70/notes/na-axis-confirm-01-results.md).
 
 **Four-B70 host, September14 16:42 UTC: decoder screen passed; small speed gain to confirm.**
 PID84255 serves `http://127.0.0.1:8188` in exec33936, packet

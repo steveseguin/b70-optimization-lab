@@ -1,0 +1,806 @@
+{
+  "schema": "ltx.na-axis-confirm-event-attribution.v1",
+  "status": "passed",
+  "native_requests": 0,
+  "script_sha256": "75764558b41cc64edfdaac4c9c6ab5c346a0bb60048b4cd2cb5c37d15c6202b0",
+  "input_sha256s": {
+    "na-axis-confirm-01/progress.json": "fa77ffc44624f4223d89966e7a3bb7cb91c5a9aae121920f3420c3030d7ed8ee",
+    "requests/na-axis-confirm-01-r01-original-boat/profile.json": "6abecd6a70ea36088653d96418bf90ca0f58aa424756ffd856d10564c59e7e9b",
+    "requests/na-axis-confirm-01-r01-original-boat/events.jsonl": "b955684f2402f97362e2c36112c5068991aed47985a329adcf73dd98c4ce52e0",
+    "requests/na-axis-confirm-01-r02-axis-cache-boat/profile.json": "f1d49c44302106b9ecd4831ad6f50bee148b67728906096283cc774254003901",
+    "requests/na-axis-confirm-01-r02-axis-cache-boat/events.jsonl": "3bf2e4312861133a687e9caf2ffe696806110319e2bd35e1470312c52b32b522",
+    "requests/na-axis-confirm-01-r03-original-boat/profile.json": "4427a59ff08e2c614990977e6ff93f696aab757c113bd9467daba19cd1fcdd35",
+    "requests/na-axis-confirm-01-r03-original-boat/events.jsonl": "73bd55d075a16cb9e109c00e41ea2a97de9b93ed9da85322a572eb0919993256",
+    "requests/na-axis-confirm-01-r04-axis-cache-marble/profile.json": "16be2775ca46b2a629753c8e382e3ef14603bc2caf9b557aeb185a5da3108339",
+    "requests/na-axis-confirm-01-r04-axis-cache-marble/events.jsonl": "8813576c3ac2b23c0525c46439d404431a626d17db7674110602923179baa7e5",
+    "requests/na-axis-confirm-01-r05-original-marble/profile.json": "7c37785262d5122eea44489c3abe06c2706ee3768494e106b6dc5737a60d7eee",
+    "requests/na-axis-confirm-01-r05-original-marble/events.jsonl": "d72fb0e6945fafd2db3f45a5a1c7d73f8849427012b905453967896eca673c49",
+    "requests/na-axis-confirm-01-r06-axis-cache-marble/profile.json": "d987f1adb7f0043226174a28e39eac04e4e0bf6b14c743a18dd28bad91ed6345",
+    "requests/na-axis-confirm-01-r06-axis-cache-marble/events.jsonl": "9f1720ae7aa652afb157580ed30c4774ef5451190f49e1e9c038f4b6ceb8ef04",
+    "requests/na-axis-confirm-01-r07-original-bird/profile.json": "ba9aeb8b53bd1aa097bc16c24158c62b6a4e421325da88c70adf83d60afd369d",
+    "requests/na-axis-confirm-01-r07-original-bird/events.jsonl": "9cbcccaef882e82d2c23fdfc80e96d1ca0523ea1492370f97c8a29184c48fc8b",
+    "requests/na-axis-confirm-01-r08-axis-cache-bird/profile.json": "1ee17d004ebe38b998ee6b5bb3bb0ab6e7732ca34b9b420a00e35d0e51d9e93a",
+    "requests/na-axis-confirm-01-r08-axis-cache-bird/events.jsonl": "2b0571a8dfc96fe45de5e6d66502a5b782ec1d1911400e4ec88dac39325c3c2b",
+    "requests/na-axis-confirm-01-r09-original-bird/profile.json": "0b809de669dda88b5785c0fe702af6b564f0533b9aafb00fb86b5c01533ed474",
+    "requests/na-axis-confirm-01-r09-original-bird/events.jsonl": "9a505e33195e65a8617a20dfbff4e6876ebab364ab6dc926406ce7d0dfd56d94",
+    "requests/na-axis-confirm-01-r10-axis-cache-bird/profile.json": "da1f2881c384401b06b2213bc90d33e36d61235ee571138bb73e8a71bb34dc18",
+    "requests/na-axis-confirm-01-r10-axis-cache-bird/events.jsonl": "2b0d1464ba858877bc74b6abd655e46a5b4a5078886c7d6f8ca4597a0ac6b008",
+    "requests/na-axis-confirm-01-r11-original-bird/profile.json": "a60a5c6c84fe9e6b12a0e0335fc1c897549a6369a22301f2a7046b26ee9ee668",
+    "requests/na-axis-confirm-01-r11-original-bird/events.jsonl": "64a4366d26930a9ebe88685bb9c3b4078ef74687abdf13534a7e74324d7eae28",
+    "requests/na-axis-confirm-01-r12-axis-cache-bird/profile.json": "cdae3318fd61b08756ce81ee7005ac086649fa54a59f926149c8909cc789a6a4",
+    "requests/na-axis-confirm-01-r12-axis-cache-bird/events.jsonl": "1c0e1b5e1b845ca76baaeeecd648dc5f60f3d8fd090ffed896a894004e052847",
+    "requests/na-axis-confirm-01-r13-original-marble/profile.json": "93291b292512d6edc06e7ae900690399c9e038c053b81b7aab5febbdac551a2c",
+    "requests/na-axis-confirm-01-r13-original-marble/events.jsonl": "da1600fc435593cc0cd3f98127c45aadbe7bb1fcaa6dd0d22caa525830e547de",
+    "requests/na-axis-confirm-01-r14-axis-cache-marble/profile.json": "2a4a62b016370771f1256bd48cd5f3ee765046c02622c678ead641d918c04cdf",
+    "requests/na-axis-confirm-01-r14-axis-cache-marble/events.jsonl": "6ac5560849138f984d13ff6ca6b7c860bf4a141c41c58a0f8cf98acf19e520ab",
+    "requests/na-axis-confirm-01-r15-original-marble/profile.json": "c25eba3e742a0e3f565643d7c703427e9dd61fdfdc68c896a7546285da0f6913",
+    "requests/na-axis-confirm-01-r15-original-marble/events.jsonl": "06e1e3f1ebd0454951ce396c389410cd9c7884aafbcf2d43d60acc1688999437",
+    "requests/na-axis-confirm-01-r16-axis-cache-boat/profile.json": "f32a9649ab8e106b6118056b665dda5d86e51f8abba4a21baba54cec7fdd783f",
+    "requests/na-axis-confirm-01-r16-axis-cache-boat/events.jsonl": "0f52626e1479d0e95bbb168c8e3da3588952271d83bf5a8e3383ae8dadf9f791",
+    "requests/na-axis-confirm-01-r17-original-boat/profile.json": "a4ddeddd301009e2d58471a540d75a344b87a5b5fd446acca4bb3bfca8b2122a",
+    "requests/na-axis-confirm-01-r17-original-boat/events.jsonl": "2f80d803f436cdb5f1b3e1de5c3e0a650bc365cc681639dbf2a1a581ba0e39f5",
+    "requests/na-axis-confirm-01-r18-axis-cache-boat/profile.json": "a8f29146e6c50822ad7baf189e6b769a5d8b281593a90e0265810c13ac853638",
+    "requests/na-axis-confirm-01-r18-axis-cache-boat/events.jsonl": "fb4273e9dfadf03201920f0e4b2aead37507f8e62d24c0bd58157f0a6f67c87d"
+  },
+  "rows": [
+    {
+      "number": 1,
+      "run": "na-axis-confirm-01-r01-original-boat",
+      "mode": "original",
+      "fixture": "boat",
+      "seconds": {
+        "preview": 6.36482625500139,
+        "submit_to_execution_start": 0.004124340000998927,
+        "submit_to_first_node": 0.0044770160002371995,
+        "encoder": 1.8206835410001077,
+        "placement": 0.023467126999094035,
+        "sampler1": 2.545285562000572,
+        "sampler2": 1.004166635000729,
+        "audio_decode": 0.17727268500129867,
+        "video_decode": 0.6354747570003383,
+        "capture": 0.021922452999206143,
+        "savevideo_until_preview": 0.10274967900113552,
+        "preview_to_execution_success": 0.0003456819995335536,
+        "execution_success_to_result": 0.29511676199945214,
+        "other_until_preview": 0.02932679999867105
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.397927899000933,
+          "seconds": 0.022992001000602613
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "run": "na-axis-confirm-01-r02-axis-cache-boat",
+      "mode": "axis-cache",
+      "fixture": "boat",
+      "seconds": {
+        "preview": 6.294042352999895,
+        "submit_to_execution_start": 0.004680939999161637,
+        "submit_to_first_node": 0.005007875999581302,
+        "encoder": 1.8105755519991362,
+        "placement": 0.011612524000156554,
+        "sampler1": 2.5111223879994213,
+        "sampler2": 1.0082975429995713,
+        "audio_decode": 0.1766463969997858,
+        "video_decode": 0.5567028220011707,
+        "capture": 0.025039770000148565,
+        "savevideo_until_preview": 0.13253673600047478,
+        "preview_to_execution_success": 0.0003341810006531887,
+        "execution_success_to_result": 0.0014033869992999826,
+        "other_until_preview": 0.05650074500044866
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "404",
+          "class_type": "ManualSigmas",
+          "start_seconds": 0.008618447000117158,
+          "seconds": 0.015239586000461713
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.3585751009995874,
+          "seconds": 0.034434350000083214
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "run": "na-axis-confirm-01-r03-original-boat",
+      "mode": "original",
+      "fixture": "boat",
+      "seconds": {
+        "preview": 6.421254087001216,
+        "submit_to_execution_start": 0.004120542000237037,
+        "submit_to_first_node": 0.004330017000029329,
+        "encoder": 1.8121400510008243,
+        "placement": 0.012286072998904274,
+        "sampler1": 2.532025684000473,
+        "sampler2": 1.0591616030014848,
+        "audio_decode": 0.18789361999915855,
+        "video_decode": 0.6221349090010335,
+        "capture": 0.022476170999652823,
+        "savevideo_until_preview": 0.11865270500129554,
+        "preview_to_execution_success": 0.0005417519987531705,
+        "execution_success_to_result": 0.0017974600013985764,
+        "other_until_preview": 0.050153253998360015
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "377",
+          "class_type": "LTXVConcatAVLatent",
+          "start_seconds": 0.0072408169999107486,
+          "seconds": 0.01813012599996
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.385990982000294,
+          "seconds": 0.023096631999578676
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "run": "na-axis-confirm-01-r04-axis-cache-marble",
+      "mode": "axis-cache",
+      "fixture": "marble",
+      "seconds": {
+        "preview": 6.513318351000635,
+        "submit_to_execution_start": 0.00376699499975075,
+        "submit_to_first_node": 0.00395607199970982,
+        "encoder": 1.9266890670005523,
+        "placement": 0.011876348000441794,
+        "sampler1": 2.684623143999488,
+        "sampler2": 0.9927119399999356,
+        "audio_decode": 0.1762753340008203,
+        "video_decode": 0.5486891220007237,
+        "capture": 0.021869954998692265,
+        "savevideo_until_preview": 0.11730654100028914,
+        "preview_to_execution_success": 0.0003269059998274315,
+        "execution_success_to_result": 0.449188384000081,
+        "other_until_preview": 0.029320827999981702
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.630784155000583,
+          "seconds": 0.023728330999801983
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "run": "na-axis-confirm-01-r05-original-marble",
+      "mode": "original",
+      "fixture": "marble",
+      "seconds": {
+        "preview": 6.341139903001022,
+        "submit_to_execution_start": 0.0038096940006653313,
+        "submit_to_first_node": 0.00398771999971359,
+        "encoder": 1.8081842240007973,
+        "placement": 0.023229898999488796,
+        "sampler1": 2.5127237630003947,
+        "sampler2": 0.9903047669995431,
+        "audio_decode": 0.1760875069994654,
+        "video_decode": 0.641730320001443,
+        "capture": 0.02298642699861375,
+        "savevideo_until_preview": 0.10866443100167089,
+        "preview_to_execution_success": 0.0004238189994794084,
+        "execution_success_to_result": 0.0015970419990480877,
+        "other_until_preview": 0.053240844999891124
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "404",
+          "class_type": "ManualSigmas",
+          "start_seconds": 0.006141441999716335,
+          "seconds": 0.010345220000090194
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.366653437000423,
+          "seconds": 0.03287029800048913
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "run": "na-axis-confirm-01-r06-axis-cache-marble",
+      "mode": "axis-cache",
+      "fixture": "marble",
+      "seconds": {
+        "preview": 6.755256118000034,
+        "submit_to_execution_start": 0.004935917999318917,
+        "submit_to_first_node": 0.005301347000568057,
+        "encoder": 2.2753888389997883,
+        "placement": 0.021386369000538252,
+        "sampler1": 2.5201681979997375,
+        "sampler2": 0.995769339000617,
+        "audio_decode": 0.1765890530004981,
+        "video_decode": 0.5694658709999203,
+        "capture": 0.022881417000462534,
+        "savevideo_until_preview": 0.12604951899993466,
+        "preview_to_execution_success": 0.00037811299989698455,
+        "execution_success_to_result": 0.00174821700056782,
+        "other_until_preview": 0.04225616599796922
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "404",
+          "class_type": "ManualSigmas",
+          "start_seconds": 0.008730985000511282,
+          "seconds": 0.016331586999513092
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.8434541699989495,
+          "seconds": 0.01906537100148853
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "run": "na-axis-confirm-01-r07-original-bird",
+      "mode": "original",
+      "fixture": "bird",
+      "seconds": {
+        "preview": 6.880402310998761,
+        "submit_to_execution_start": 0.004549758999928599,
+        "submit_to_first_node": 0.004907873999400181,
+        "encoder": 2.2030618890003097,
+        "placement": 0.023727440999209648,
+        "sampler1": 2.5470279370001663,
+        "sampler2": 1.0003247679997003,
+        "audio_decode": 0.17706577999888395,
+        "video_decode": 0.653926909000802,
+        "capture": 0.02395280500059016,
+        "savevideo_until_preview": 0.10318900799939001,
+        "preview_to_execution_success": 0.21752981499957968,
+        "execution_success_to_result": 0.08810516700032167,
+        "other_until_preview": 0.14321790000030887
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "404",
+          "class_type": "ManualSigmas",
+          "start_seconds": 0.008202135999454185,
+          "seconds": 0.09498035999968124
+        },
+        {
+          "node": "352",
+          "class_type": "KSamplerSelect",
+          "start_seconds": 0.10318249599913543,
+          "seconds": 0.01803845500035095
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.896501126999283,
+          "seconds": 0.023739873000522493
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "run": "na-axis-confirm-01-r08-axis-cache-bird",
+      "mode": "axis-cache",
+      "fixture": "bird",
+      "seconds": {
+        "preview": 6.367466117999356,
+        "submit_to_execution_start": 0.004041670999868074,
+        "submit_to_first_node": 0.004318381999837584,
+        "encoder": 1.8453195450001658,
+        "placement": 0.022073017998991418,
+        "sampler1": 2.566680993000773,
+        "sampler2": 1.019765113998801,
+        "audio_decode": 0.1768098850006936,
+        "video_decode": 0.5555627249996178,
+        "capture": 0.023362177998933475,
+        "savevideo_until_preview": 0.10934532399915042,
+        "preview_to_execution_success": 0.00030940299984649755,
+        "execution_success_to_result": 0.0013088579999021022,
+        "other_until_preview": 0.04422895400239213
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "352",
+          "class_type": "KSamplerSelect",
+          "start_seconds": 0.0074542349993862445,
+          "seconds": 0.011939071000597323
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.454457230000116,
+          "seconds": 0.026027342999441316
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "run": "na-axis-confirm-01-r09-original-bird",
+      "mode": "original",
+      "fixture": "bird",
+      "seconds": {
+        "preview": 6.3960846250010945,
+        "submit_to_execution_start": 0.003235691001464147,
+        "submit_to_first_node": 0.004401899001095444,
+        "encoder": 1.8173527380004089,
+        "placement": 0.012541314999907627,
+        "sampler1": 2.570492650000233,
+        "sampler2": 1.0109410339991882,
+        "audio_decode": 0.17604847100119514,
+        "video_decode": 0.6308675349991972,
+        "capture": 0.02096205099951476,
+        "savevideo_until_preview": 0.11026447500080394,
+        "preview_to_execution_success": 0.0003251729995099595,
+        "execution_success_to_result": 0.0015615939992130734,
+        "other_until_preview": 0.04221245699955034
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "352",
+          "class_type": "KSamplerSelect",
+          "start_seconds": 0.007443304000844364,
+          "seconds": 0.012616467000043485
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.421453863000352,
+          "seconds": 0.023443600000973674
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "run": "na-axis-confirm-01-r10-axis-cache-bird",
+      "mode": "axis-cache",
+      "fixture": "bird",
+      "seconds": {
+        "preview": 6.396356824998293,
+        "submit_to_execution_start": 0.00458331099980569,
+        "submit_to_first_node": 0.004931326999212615,
+        "encoder": 1.8216195770000922,
+        "placement": 0.013106029000482522,
+        "sampler1": 2.5419715759999235,
+        "sampler2": 1.008689938000316,
+        "audio_decode": 0.17721748400072102,
+        "video_decode": 0.5591396239997266,
+        "capture": 0.021854439999515307,
+        "savevideo_until_preview": 0.10731708699859155,
+        "preview_to_execution_success": 0.20896422200166853,
+        "execution_success_to_result": 0.08793124899966642,
+        "other_until_preview": 0.1405097429997113
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "352",
+          "class_type": "KSamplerSelect",
+          "start_seconds": 0.008224625998991542,
+          "seconds": 0.11082355600046867
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.49697511299928,
+          "seconds": 0.0233736449990829
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "run": "na-axis-confirm-01-r11-original-bird",
+      "mode": "original",
+      "fixture": "bird",
+      "seconds": {
+        "preview": 6.347298082000634,
+        "submit_to_execution_start": 0.0038978180000412976,
+        "submit_to_first_node": 0.004076224000527873,
+        "encoder": 1.7978515479990165,
+        "placement": 0.021903842000028817,
+        "sampler1": 2.5359345309989294,
+        "sampler2": 1.0019227900011174,
+        "audio_decode": 0.17786020699895744,
+        "video_decode": 0.6366291670001374,
+        "capture": 0.02205471600063902,
+        "savevideo_until_preview": 0.10362302100111265,
+        "preview_to_execution_success": 0.0004319039999245433,
+        "execution_success_to_result": 0.0016324879998137476,
+        "other_until_preview": 0.04544203600016772
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "404",
+          "class_type": "ManualSigmas",
+          "start_seconds": 0.006223202000910533,
+          "seconds": 0.01034674499896937
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.37979146699945,
+          "seconds": 0.023087724001015886
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "run": "na-axis-confirm-01-r12-axis-cache-bird",
+      "mode": "axis-cache",
+      "fixture": "bird",
+      "seconds": {
+        "preview": 6.336792037998748,
+        "submit_to_execution_start": 0.0049203149992536055,
+        "submit_to_first_node": 0.0053173229989624815,
+        "encoder": 1.8086393989997305,
+        "placement": 0.025593435000700993,
+        "sampler1": 2.5599136210003053,
+        "sampler2": 1.0194647289990826,
+        "audio_decode": 0.17761787100062065,
+        "video_decode": 0.5614611569999397,
+        "capture": 0.022670845999527955,
+        "savevideo_until_preview": 0.10975438800051052,
+        "preview_to_execution_success": 0.00041545299973222427,
+        "execution_success_to_result": 0.0017076690000976669,
+        "other_until_preview": 0.04635926899936749
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "404",
+          "class_type": "ManualSigmas",
+          "start_seconds": 0.008319351998579805,
+          "seconds": 0.01627416799965431
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.420313732998693,
+          "seconds": 0.02355373899990809
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "run": "na-axis-confirm-01-r13-original-marble",
+      "mode": "original",
+      "fixture": "marble",
+      "seconds": {
+        "preview": 6.444246978000592,
+        "submit_to_execution_start": 0.0038132580011733808,
+        "submit_to_first_node": 0.00397814900134108,
+        "encoder": 1.924068026999521,
+        "placement": 0.02164954799991392,
+        "sampler1": 2.511093929000708,
+        "sampler2": 0.997149349999745,
+        "audio_decode": 0.17816805000074964,
+        "video_decode": 0.6443889000001946,
+        "capture": 0.02159485399897676,
+        "savevideo_until_preview": 0.11230170700036979,
+        "preview_to_execution_success": 0.21597582200047327,
+        "execution_success_to_result": 0.08745734799958882,
+        "other_until_preview": 0.029854463999072323
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.465298061000794,
+          "seconds": 0.023544309000499197
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "run": "na-axis-confirm-01-r14-axis-cache-marble",
+      "mode": "axis-cache",
+      "fixture": "marble",
+      "seconds": {
+        "preview": 6.360713578000286,
+        "submit_to_execution_start": 0.004454848000023048,
+        "submit_to_first_node": 0.0047286339995480375,
+        "encoder": 1.8154059860007692,
+        "placement": 0.022854216998894117,
+        "sampler1": 2.575994606999302,
+        "sampler2": 1.0099912969999423,
+        "audio_decode": 0.18751841399898694,
+        "video_decode": 0.5580813700016733,
+        "capture": 0.02255659399997967,
+        "savevideo_until_preview": 0.10794993200033787,
+        "preview_to_execution_success": 0.0004654179992940044,
+        "execution_success_to_result": 0.0018240280005556997,
+        "other_until_preview": 0.05563252700085286
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "352",
+          "class_type": "KSamplerSelect",
+          "start_seconds": 0.007775175999995554,
+          "seconds": 0.015473134999410831
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.438581362999685,
+          "seconds": 0.03425669699936407
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "run": "na-axis-confirm-01-r15-original-marble",
+      "mode": "original",
+      "fixture": "marble",
+      "seconds": {
+        "preview": 6.452991023999857,
+        "submit_to_execution_start": 0.0052094689999648836,
+        "submit_to_first_node": 0.005490669000209891,
+        "encoder": 1.8362168959993141,
+        "placement": 0.02225488600015524,
+        "sampler1": 2.582462160000432,
+        "sampler2": 1.012415654000506,
+        "audio_decode": 0.17738763299894345,
+        "video_decode": 0.6393930680005724,
+        "capture": 0.01988470700052858,
+        "savevideo_until_preview": 0.12444768500063219,
+        "preview_to_execution_success": 0.000319511998895905,
+        "execution_success_to_result": 0.0014251860011427198,
+        "other_until_preview": 0.03303766599856317
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.453529771999456,
+          "seconds": 0.02356558499923267
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "run": "na-axis-confirm-01-r16-axis-cache-boat",
+      "mode": "axis-cache",
+      "fixture": "boat",
+      "seconds": {
+        "preview": 6.41861980000067,
+        "submit_to_execution_start": 0.0037180470008024713,
+        "submit_to_first_node": 0.004042969001602614,
+        "encoder": 1.8246136980014853,
+        "placement": 0.02496763499948429,
+        "sampler1": 2.5306232339989947,
+        "sampler2": 1.0043944850003754,
+        "audio_decode": 0.17754292600147892,
+        "video_decode": 0.572938344999784,
+        "capture": 0.021846891999302898,
+        "savevideo_until_preview": 0.10232418899977347,
+        "preview_to_execution_success": 0.00026232399977743626,
+        "execution_success_to_result": 0.2093957640008739,
+        "other_until_preview": 0.15532542699838814
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "366",
+          "class_type": "LTXVEmptyLatentAudio",
+          "start_seconds": 0.004812970000784844,
+          "seconds": 0.011982644000454457
+        },
+        {
+          "node": "404",
+          "class_type": "ManualSigmas",
+          "start_seconds": 0.017705679001664976,
+          "seconds": 0.1046484069993312
+        },
+        {
+          "node": "352",
+          "class_type": "KSamplerSelect",
+          "start_seconds": 0.12235408600099618,
+          "seconds": 0.010579538999081706
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.514324749001389,
+          "seconds": 0.02338681499895756
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "run": "na-axis-confirm-01-r17-original-boat",
+      "mode": "original",
+      "fixture": "boat",
+      "seconds": {
+        "preview": 6.409214248998978,
+        "submit_to_execution_start": 0.003254653998737922,
+        "submit_to_first_node": 0.004969534998963354,
+        "encoder": 1.8149322289991687,
+        "placement": 0.023862450001615798,
+        "sampler1": 2.526347220000389,
+        "sampler2": 1.008262684001238,
+        "audio_decode": 0.17686499299998104,
+        "video_decode": 0.6604194819992699,
+        "capture": 0.02187988200057589,
+        "savevideo_until_preview": 0.12601202899895725,
+        "preview_to_execution_success": 0.0003705380004248582,
+        "execution_success_to_result": 0.001600154999323422,
+        "other_until_preview": 0.04566374499881931
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "352",
+          "class_type": "KSamplerSelect",
+          "start_seconds": 0.008610687000327744,
+          "seconds": 0.01562996599932376
+        },
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.390429855999173,
+          "seconds": 0.023349783001322066
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "run": "na-axis-confirm-01-r18-axis-cache-boat",
+      "mode": "axis-cache",
+      "fixture": "boat",
+      "seconds": {
+        "preview": 6.407754409001427,
+        "submit_to_execution_start": 0.004257533000782132,
+        "submit_to_first_node": 0.004529916001047241,
+        "encoder": 1.8395701579993329,
+        "placement": 0.021861397000975558,
+        "sampler1": 2.5753283630001533,
+        "sampler2": 1.0149490749990946,
+        "audio_decode": 0.19310800199855294,
+        "video_decode": 0.5679767520014138,
+        "capture": 0.021096804999615415,
+        "savevideo_until_preview": 0.12818165300086548,
+        "preview_to_execution_success": 0.0003023099998245016,
+        "execution_success_to_result": 0.0013847189984517172,
+        "other_until_preview": 0.04115228800037585
+      },
+      "other_nodes_over_8ms": [
+        {
+          "node": "348",
+          "class_type": "LTXVLatentUpsampler",
+          "start_seconds": 4.4453239160011435,
+          "seconds": 0.03498813199985307
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "fixture": "boat",
+      "order": "OCO",
+      "cache_minus_original_seconds": {
+        "preview": -0.09899781800140772,
+        "submit_to_execution_start": 0.000558498998543655,
+        "submit_to_first_node": 0.0006043594994480372,
+        "encoder": -0.00583624400132976,
+        "placement": -0.0062640759988426,
+        "sampler1": -0.027533235001101275,
+        "sampler2": -0.023366576001535577,
+        "audio_decode": -0.005936755500442814,
+        "video_decode": -0.07210201099951519,
+        "capture": 0.0028404580007190816,
+        "savevideo_until_preview": 0.021835543999259244,
+        "preview_to_execution_success": -0.00010953599849017337,
+        "execution_success_to_result": -0.14705372400112537,
+        "other_until_preview": 0.016760718001933128
+      }
+    },
+    {
+      "fixture": "marble",
+      "order": "COC",
+      "cache_minus_original_seconds": {
+        "preview": 0.2931473314993127,
+        "submit_to_execution_start": 0.0005417624988695025,
+        "submit_to_first_node": 0.0006409895004253485,
+        "encoder": 0.29285472899937304,
+        "placement": -0.006598540498998773,
+        "sampler1": 0.08967190799921809,
+        "sampler2": 0.00393587250073324,
+        "audio_decode": 0.00034468650119379163,
+        "video_decode": -0.08265282350112102,
+        "capture": -0.0006107409990363522,
+        "savevideo_until_preview": 0.013013598998441012,
+        "preview_to_execution_success": -7.130949961720034e-05,
+        "execution_success_to_result": 0.22387125850127632,
+        "other_until_preview": -0.017452348000915663
+      }
+    },
+    {
+      "fixture": "bird",
+      "order": "OCO",
+      "cache_minus_original_seconds": {
+        "preview": -0.27077735000057146,
+        "submit_to_execution_start": 0.00014894599917170126,
+        "submit_to_first_node": -0.0003365045004102285,
+        "encoder": -0.1648877685001935,
+        "placement": 0.00393863999943278,
+        "sampler1": 0.007920699500573392,
+        "sampler2": 0.014132212999356852,
+        "audio_decode": 0.00025275950065406505,
+        "video_decode": -0.08683449700038182,
+        "capture": 0.0009047499988810159,
+        "savevideo_until_preview": 0.0026185824990534456,
+        "preview_to_execution_success": -0.10861809099969832,
+        "execution_success_to_result": -0.04352452249986527,
+        "other_until_preview": -0.04848622449753748
+      }
+    },
+    {
+      "fixture": "bird",
+      "order": "COC",
+      "cache_minus_original_seconds": {
+        "preview": 0.019276349497886258,
+        "submit_to_execution_start": 0.00085399499948835,
+        "submit_to_first_node": 0.0010481009985596756,
+        "encoder": 0.017277940000894887,
+        "placement": -0.0025541099994370597,
+        "sampler1": 0.015008067501184996,
+        "sampler2": 0.012154543498581916,
+        "audio_decode": -0.0004425294982866035,
+        "video_decode": -0.07632877650030423,
+        "capture": 0.00020792699888261268,
+        "savevideo_until_preview": 0.004912716498438385,
+        "preview_to_execution_success": 0.10425793350077583,
+        "execution_success_to_result": 0.0431869710000683,
+        "other_until_preview": 0.04799246999937168
+      }
+    },
+    {
+      "fixture": "marble",
+      "order": "OCO",
+      "cache_minus_original_seconds": {
+        "preview": -0.08790542299993831,
+        "submit_to_execution_start": -5.6515500546083786e-05,
+        "submit_to_first_node": -5.775001227448229e-06,
+        "encoder": -0.06473647549864836,
+        "placement": 0.0009019999988595373,
+        "sampler1": 0.029216562498731946,
+        "sampler2": 0.005208794999816746,
+        "audio_decode": 0.009740572499140399,
+        "video_decode": -0.08380961399871012,
+        "capture": 0.0018168135002269992,
+        "savevideo_until_preview": -0.010424764000163123,
+        "preview_to_execution_success": -0.10768224900039058,
+        "execution_success_to_result": -0.04261723899981007,
+        "other_until_preview": 0.024186462002035114
+      }
+    },
+    {
+      "fixture": "boat",
+      "order": "COC",
+      "cache_minus_original_seconds": {
+        "preview": 0.003972855502070161,
+        "submit_to_execution_start": 0.0007331360020543798,
+        "submit_to_first_node": -0.0006830924976384267,
+        "encoder": 0.01715969900124037,
+        "placement": -0.0004479340013858746,
+        "sampler1": 0.026628578499185096,
+        "sampler2": 0.0014090959984969231,
+        "audio_decode": 0.008460471000034886,
+        "video_decode": -0.08996193349867099,
+        "capture": -0.00040803350111673353,
+        "savevideo_until_preview": -0.010759107998637774,
+        "preview_to_execution_success": -8.822100062388927e-05,
+        "execution_success_to_result": 0.10379008650033938,
+        "other_until_preview": 0.05257511250056268
+      }
+    }
+  ],
+  "scope": "Client-received event intervals, not synchronized kernels. Pre-request admission is outside the timer. The final SaveVideo node interval includes preview-to-success delay; split here at the executed preview event. No causal attribution to GC, device work, filesystem, or scheduling is possible from these events alone."
+}

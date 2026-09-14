@@ -1,0 +1,5691 @@
+{
+  "schema": "ltx25.na-axis-confirmation-terminal-export.v1",
+  "status": "passed",
+  "status_scope": "Copied terminal campaign status, with preserved parity reports; native qualification not rerun",
+  "campaign": "na-axis-confirm-01",
+  "server_run": "encoder-server-na-axis-10",
+  "server_pid": 84255,
+  "server_boot_id": "8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a",
+  "source_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-10",
+  "packet_manifest_sha256": "d6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a",
+  "client_sha256": "265c0925b9bf04bc53a7653b7bbcdde991b0a32fe2c887c1dfd6a9e48f5df22b",
+  "validator_sha256": "ac11e8fc95275660d76336cafd892a6ec67e0c4f68b0208f5752a328b254274c",
+  "admission_helper_sha256": "2ee3f7d064454137a4192370cbf4e86247cbc5dd9f79c8c3de59cb9380210e0a",
+  "prior_screen": {
+    "campaign": "na-axis-screen-01",
+    "progress_sha256": "a0da72e9a1a85086b41bb02c66e9eda63401a649b5795e0a63e46deceb244568",
+    "admission_bound_text_files": 161,
+    "export_text_sha256s": {
+      "summary.json": "691ebdbb96a3c99edc3f6d4ffbb6219275d730610e849982ccf76c74640bb06a",
+      "manifest.json": "9df6a58b55c8878eda58d3abd3bd8112fb38b7cb6d8e80d7f08aea4633f7f230"
+    },
+    "archive_path": "repository/experiments/ltx25-b70/data/na-axis-screen-01-export/evidence.json.gz",
+    "archive_sha256": "c8b0cf80eab96efbec59023df2a0d9d36a57d69a9d9bcc123fc31e6aa3109e07",
+    "archive_included": false,
+    "scope": "Prior raw comparison receipts remain evidence; deleted raw archives are not regenerated"
+  },
+  "startup_tools_sha256": {
+    "encoder_runtime_common.py": "6f5f82721e8034cd7ec3c50def53e57a3024c6ba4981c11df11d1e7fc8902f93",
+    "serve-encoder.py": "b9d30d63a11bcce7bcdddd31a303ee8a47c6a83a37cad6d74a5bb6f91f35c1a7"
+  },
+  "extension_sha256s": {
+    "block_compile_node.py": "ddd49674e2603d79818eed3263a4bc6876163fc6b1a1731fb6e95136ceb1ebdc",
+    "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+    "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+    "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+    "ltx_block_compile.py": "c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e",
+    "ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "ltx_multiblock_compile.py": "ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b",
+    "ltx_na_axis_candidate.py": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+    "ltx_na_axis_router.py": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537",
+    "ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+    "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+    "multiblock_compile_node.py": "e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f",
+    "na_axis_decode_node.py": "ffd7549d29828a11f336f07873f63a407df7722328df519f2bec3514964ad32b",
+    "resident_node.py": "57b60dcba6be6b3127bd5c532603905cdcb1e541889ecb5f9b37ff2084ee1c25"
+  },
+  "exporter_sha256": "8c4bd7e85d862529d395b84d89c63d70c90c921d3c6b0b6c35826d73e30e315e",
+  "startup_log_pins": {
+    "encoder-server-na-axis-10/components-01-split-control.json": "a5c0421d9d91fbc715c2d25dee2be180b3e650edc0ab5e26d99758142064755d",
+    "encoder-server-na-axis-10/determinism-after-import.json": "4a9070b35f7776ddba919b43cffe9c44d93da477fc38b12e5a0e89ac2ed3950a",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r01-original-boat.json": "6b2589db18a797d41928d99174345d346a8aaa49f21366c489142d4284cb563c",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r02-axis-cache-boat.json": "4336826cf0ffd2fafbc4c2e062ceaead008cb3bfb942bc852dfbf0571335e760",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r03-original-boat.json": "818d2c837282e41f631e413949353d46c6e744f552ea6e69e1cd52744df69b65",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r04-axis-cache-marble.json": "f2107b6fefb6911d629b34ea8950f6170b3ae85c824190ff8befd029c64dff6e",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r05-original-marble.json": "75cf814473fc6ce8432632efb62c95be43e612470a8507a85fc8b3d456b621aa",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r06-axis-cache-marble.json": "dddc1329a1d20518a656f9f4773bad5ca4b945466b99ef9e528ec943ff060d0c",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r07-original-bird.json": "a62249206d602caf0dd07bb272f22349d68f335ba82557f5d35bf438ccc641d0",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r08-axis-cache-bird.json": "2c6bde733359bb4351f82343ad00d08c9c5f104ca96b8a20bdddad0a5e7ff103",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r09-original-bird.json": "9a105a54c6f30b5d145b774d394a8eecada43e3cdafd48c0f03be417a10000b7",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r10-axis-cache-bird.json": "44d655fae7b4bbd6cae8f086f1d88c31ac1d96a7dbae5d5aabd5df11c7afd487",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r11-original-bird.json": "009dc645af2433b0cbf8291cde501d8ed1def1f90e1d1bd705c5d5c75d56f121",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r12-axis-cache-bird.json": "10c5e73ff75992d27f83881550df7393f0bb4945fe53fb0d58319f4a0b7bb647",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r13-original-marble.json": "f0b1ddee90f2b9fe13ece54e2af94d9636a48267078bea785909e5fc94ac1cc1",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r14-axis-cache-marble.json": "0d7d41e4ca6f561a7be8cd99c8e92ebec9d41a36b401abf08171d5696b99d645",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r15-original-marble.json": "5574eede46a407875b4fdc942bc65eb84ab0849afc4cf3dfd67c8469f889d7d2",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r16-axis-cache-boat.json": "98c2d149692b384f780c6d1ae2d2e813830a61026414bc27465c64b649aa96ed",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r17-original-boat.json": "b560fce3abafb8613ca57de5e47f8217a24b465b3af9bd30cf78ba5db5878d0a",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r18-axis-cache-boat.json": "3becd16abfa4e37e640ce3bd9de48efc2f57b929682bed4198310061b6731a7a",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r01-bare-boat.json": "ff2e9c3196209696c77475fd9d1e01148e4411b66bf5bba6f7a7073b894e83ea",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r02-bare-boat.json": "ec208a766c67c7d4ffeb0d4699c2706fcd4200c8a9343fb12000a782a1cf06ff",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r03-original-boat.json": "461debf019389e487a8d5a322a5ecfc321f3826598cbbf8da33ef62930a3ad64",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r04-axis-cache-boat.json": "dd889314695ed4c67cd406c78d30108c4ea3465934cc37d090b9176fa8c0486c",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r05-original-boat.json": "b7b5b558b82da4c1e118b488e42c3a06f2a8f8a0b94e598aaae77aa55d282f15",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r06-original-marble.json": "946775f5f780ccf2481a3e3b2c773293d8f08a88bc6cd53a50434001cc972028",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r07-axis-cache-marble.json": "512a6beac894c2825a8fe6b72ce535a9c43fc0e828bc55448455b5611e397cbc",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r08-original-marble.json": "1061e0bb193cef4c605f031e5685212939de608d90a5133e3aec71d1250cc589",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r09-original-bird.json": "c5def2b64e2cc64cf951caab23c8352a356640cd03e755fe91b04ef0f517dfb9",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r10-axis-cache-bird.json": "521239e7f56b58f1dd7fdc753f43942bb30fb49d8ae565fc5e187ed34be5bdc1",
+    "encoder-server-na-axis-10/encoder-placement-na-axis-screen-01-r11-original-bird.json": "a1bbfee940b572127cbe47e66add6ecf1033ee8ea05844d06b147fb46132dda3",
+    "encoder-server-na-axis-10/journal-after-preflight.txt": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e",
+    "encoder-server-na-axis-10/journal-before.txt": "7ec2341f80cc7c693c5a8a2a9a24ec820020faeae998848a547970bbd92fa01e",
+    "encoder-server-na-axis-10/server-args.json": "b21e43e850893eb281745caf9e9cc1f8ff9d3146c1dbd115f9c37fd415373a06",
+    "encoder-server-na-axis-10/server-identity.json": "1b3c4c36e6b91556b731057e725a52ef602ad16c397c842e270f90a13ef72cd2",
+    "encoder-server-na-axis-10.log": "6d6a2735d444893481c39a51d8affd9e4b1db8beaac85c79eb74109c833d9269",
+    "na-axis-confirm-01-client.log": "0880f390419ab591b9ff4df74ae3c56f20463f918d259b18677fd91d797ee2cd"
+  },
+  "planned_requests": 18,
+  "recorded_requests": 18,
+  "failure_stage": null,
+  "reported_error": null,
+  "requests": [
+    {
+      "run": "na-axis-confirm-01-r01-original-boat",
+      "mode": "original",
+      "fixture": "boat",
+      "pair": "01-boat-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r01-original-boat-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "a867593c-b606-4a24-b15b-1fd458f2a7c1",
+        "seconds": 6.660288699000375,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.0044770160002371995,
+            "seconds": 0.0006561669997608988
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.005133182999998098,
+            "seconds": 0.0015753620009490987
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.006708545000947197,
+            "seconds": 0.0002265269995405106
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.0069350720004877076,
+            "seconds": 0.00022576599985768553
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.007160838000345393,
+            "seconds": 0.00017241600107809063
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.007333254001423484,
+            "seconds": 0.00017226499949174467
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.007505519000915228,
+            "seconds": 1.8206835410001077
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8281890600010229,
+            "seconds": 0.023467126999094035
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.851656187000117,
+            "seconds": 0.0001551730001665419
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8518113600002835,
+            "seconds": 0.0003810090001934441
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.852192369000477,
+            "seconds": 0.0001989150005101692
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.852391284000987,
+            "seconds": 2.545285562000572
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.397676846001559,
+            "seconds": 0.0002510529993742239
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.397927899000933,
+            "seconds": 0.022992001000602613
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.420919900001536,
+            "seconds": 0.0003337199996167328
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.421253620001153,
+            "seconds": 0.00021912299962423276
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.421472743000777,
+            "seconds": 0.0003790850005316315
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.421851828001309,
+            "seconds": 0.00028295399897615425
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.422134782000285,
+            "seconds": 0.0002931630006060004
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.422427945000891,
+            "seconds": 1.004166635000729
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.42659458000162,
+            "seconds": 0.0003592469984141644
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.426953827000034,
+            "seconds": 0.17727268500129867
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.604226512001333,
+            "seconds": 0.6354747570003383
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.239701269001671,
+            "seconds": 0.021922452999206143
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.261623722000877,
+            "seconds": 0.0004528539993771119
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.262076576000254,
+            "seconds": 0.10309536100066907
+          }
+        ],
+        "preview_ready_seconds": 6.36482625500139,
+        "tensor_archive_ready_seconds": 6.261077993000072
+      },
+      "timings": {
+        "preview_ready_seconds": 6.36482625500139,
+        "tensor_archive_ready_seconds": 6.261077993000072,
+        "sampler_intervals_seconds": 3.549452197001301,
+        "text_encoder_interval_seconds": 1.8206835410001077,
+        "video_decoder_interval_seconds": 0.6354747570003383,
+        "audio_decoder_interval_seconds": 0.17727268500129867
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r01-original-boat/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r01-original-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r02-axis-cache-boat",
+      "mode": "axis-cache",
+      "fixture": "boat",
+      "pair": "01-boat-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r02-axis-cache-boat-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "c7de4f44-22cc-439d-9222-277cc01e1eab",
+        "seconds": 6.295779920999848,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.005007875999581302,
+            "seconds": 0.002602108999781194
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.007609984999362496,
+            "seconds": 0.000383032000172534
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.00799301699953503,
+            "seconds": 0.00026284600062354
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.00825586300015857,
+            "seconds": 0.0003625839999585878
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.008618447000117158,
+            "seconds": 0.015239586000461713
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.02385803300057887,
+            "seconds": 0.00022724900009052362
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.024085282000669395,
+            "seconds": 1.8105755519991362
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8346608339998056,
+            "seconds": 0.011612524000156554
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8462733579999622,
+            "seconds": 0.00020186999972793274
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.84647522799969,
+            "seconds": 0.0003190019997418858
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.846794229999432,
+            "seconds": 0.00021096800082887057
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8470051980002609,
+            "seconds": 2.5111223879994213
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.358127585999682,
+            "seconds": 0.0004475149999052519
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.3585751009995874,
+            "seconds": 0.034434350000083214
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.393009450999671,
+            "seconds": 0.0003162360007991083
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.39332568700047,
+            "seconds": 0.00030968499959271867
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.3936353720000625,
+            "seconds": 0.00017902699983096682
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.3938143989998935,
+            "seconds": 0.00029255200024635997
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.39410695100014,
+            "seconds": 0.0001923929994518403
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.394299343999592,
+            "seconds": 1.0082975429995713
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.402596886999163,
+            "seconds": 0.0002752899999904912
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.4028721769991535,
+            "seconds": 0.1766463969997858
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.579518573998939,
+            "seconds": 0.5567028220011707
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.13622139600011,
+            "seconds": 0.025039770000148565
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.1612611660002585,
+            "seconds": 0.00024445099916192703
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.1615056169994205,
+            "seconds": 0.13287091700112796
+          }
+        ],
+        "preview_ready_seconds": 6.294042352999895,
+        "tensor_archive_ready_seconds": 6.159780423000484
+      },
+      "timings": {
+        "preview_ready_seconds": 6.294042352999895,
+        "tensor_archive_ready_seconds": 6.159780423000484,
+        "sampler_intervals_seconds": 3.5194199309989926,
+        "text_encoder_interval_seconds": 1.8105755519991362,
+        "video_decoder_interval_seconds": 0.5567028220011707,
+        "audio_decoder_interval_seconds": 0.1766463969997858
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r02-axis-cache-boat/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r02-axis-cache-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r03-original-boat",
+      "mode": "original",
+      "fixture": "boat",
+      "pair": "01-boat-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r03-original-boat-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "968d4a77-de48-4200-86c2-fe3cf6897a07",
+        "seconds": 6.423593299001368,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004330017000029329,
+            "seconds": 0.0022923440010345075
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.006622361001063837,
+            "seconds": 0.0003509919988573529
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.00697335299992119,
+            "seconds": 0.00026746399998955894
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.0072408169999107486,
+            "seconds": 0.01813012599996
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.02537094299987075,
+            "seconds": 0.0014552550001099007
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.02682619799998065,
+            "seconds": 0.0017752780004229862
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.028601476000403636,
+            "seconds": 1.8121400510008243
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.840741527001228,
+            "seconds": 0.012286072998904274
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8530276000001322,
+            "seconds": 0.00021695900068152696
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8532445590008138,
+            "seconds": 0.00034063199927913956
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.853585191000093,
+            "seconds": 0.00019540900029824115
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8537806000003911,
+            "seconds": 2.532025684000473
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.385806284000864,
+            "seconds": 0.0001846979994297726
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.385990982000294,
+            "seconds": 0.023096631999578676
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.409087613999873,
+            "seconds": 0.0001934650008479366
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.409281079000721,
+            "seconds": 0.0003077910005231388
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.409588870001244,
+            "seconds": 0.0001580379994265968
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.40974690800067,
+            "seconds": 0.0001619850008864887
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.409908893001557,
+            "seconds": 0.0002247139982500812
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.410133606999807,
+            "seconds": 1.0591616030014848
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.469295210001292,
+            "seconds": 0.0003586069997254526
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.469653817001017,
+            "seconds": 0.18789361999915855
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.657547437000176,
+            "seconds": 0.6221349090010335
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.279682346001209,
+            "seconds": 0.022476170999652823
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.302158517000862,
+            "seconds": 0.0004428649990586564
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.302601381999921,
+            "seconds": 0.11919445700004871
+          }
+        ],
+        "preview_ready_seconds": 6.421254087001216,
+        "tensor_archive_ready_seconds": 6.301621795000756
+      },
+      "timings": {
+        "preview_ready_seconds": 6.421254087001216,
+        "tensor_archive_ready_seconds": 6.301621795000756,
+        "sampler_intervals_seconds": 3.591187287001958,
+        "text_encoder_interval_seconds": 1.8121400510008243,
+        "video_decoder_interval_seconds": 0.6221349090010335,
+        "audio_decoder_interval_seconds": 0.18789361999915855
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r03-original-boat/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r03-original-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r04-axis-cache-marble",
+      "mode": "axis-cache",
+      "fixture": "marble",
+      "pair": "02-marble-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r04-axis-cache-marble-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "542fcac1-371e-47ee-8cd4-05166aa40959",
+        "seconds": 6.962833641000543,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.00395607199970982,
+            "seconds": 0.0017643870014580898
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.00572045900116791,
+            "seconds": 0.00027470799977891147
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.005995167000946822,
+            "seconds": 0.00012893299935967661
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.006124100000306498,
+            "seconds": 0.0001177120011561783
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.0062418120014626766,
+            "seconds": 0.0001815429986891104
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.006423355000151787,
+            "seconds": 0.00012231999971845653
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.0065456749998702435,
+            "seconds": 1.9266890670005523
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.9332347420004226,
+            "seconds": 0.011876348000441794
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.9451110900008644,
+            "seconds": 0.00021648899928550236
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.9453275790001499,
+            "seconds": 0.0003280580003774958
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.9456556370005273,
+            "seconds": 0.0002127919997292338
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.9458684290002566,
+            "seconds": 2.684623143999488
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.630491572999745,
+            "seconds": 0.00029258200083859265
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.630784155000583,
+            "seconds": 0.023728330999801983
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.654512486000385,
+            "seconds": 0.0002771319996099919
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.654789617999995,
+            "seconds": 0.00020274300004530232
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.6549923610000405,
+            "seconds": 0.0001734670004225336
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.655165828000463,
+            "seconds": 0.00028639999982260633
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.655452228000286,
+            "seconds": 0.00022409300072467886
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.65567632100101,
+            "seconds": 0.9927119399999356
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.648388261000946,
+            "seconds": 0.00037024799894425087
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.64875850899989,
+            "seconds": 0.1762753340008203
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.8250338430007105,
+            "seconds": 0.5486891220007237
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.373722965001434,
+            "seconds": 0.021869954998692265
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.3955929200001265,
+            "seconds": 0.0004188900002191076
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.396011810000346,
+            "seconds": 0.11763344700011658
+          }
+        ],
+        "preview_ready_seconds": 6.513318351000635,
+        "tensor_archive_ready_seconds": 6.393467421999958
+      },
+      "timings": {
+        "preview_ready_seconds": 6.513318351000635,
+        "tensor_archive_ready_seconds": 6.393467421999958,
+        "sampler_intervals_seconds": 3.6773350839994237,
+        "text_encoder_interval_seconds": 1.9266890670005523,
+        "video_decoder_interval_seconds": 0.5486891220007237,
+        "audio_decoder_interval_seconds": 0.1762753340008203
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r04-axis-cache-marble/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r04-axis-cache-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r05-original-marble",
+      "mode": "original",
+      "fixture": "marble",
+      "pair": "02-marble-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r05-original-marble-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "87b87fec-96ed-48f8-a366-bded6173d023",
+        "seconds": 6.343160763999549,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.00398771999971359,
+            "seconds": 0.0016152259995578788
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.005602945999271469,
+            "seconds": 0.000263016001554206
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.005865962000825675,
+            "seconds": 0.00013163799849280622
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.005997599999318481,
+            "seconds": 0.00014384200039785355
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.006141441999716335,
+            "seconds": 0.010345220000090194
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.01648666199980653,
+            "seconds": 0.004955946000336553
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.021442608000143082,
+            "seconds": 1.8081842240007973
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8296268320009403,
+            "seconds": 0.023229898999488796
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8528567310004291,
+            "seconds": 0.00021874199956073426
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8530754729999899,
+            "seconds": 0.00032963200101221446
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.853405105001002,
+            "seconds": 0.00022347099911712576
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8536285760001192,
+            "seconds": 2.5127237630003947
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.366352339000514,
+            "seconds": 0.00030109799990896136
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.366653437000423,
+            "seconds": 0.03287029800048913
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.399523735000912,
+            "seconds": 0.0002461749991198303
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.399769910000032,
+            "seconds": 0.00019097999938821886
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.39996088999942,
+            "seconds": 0.00027926600159844384
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.4002401560010185,
+            "seconds": 0.00019351499940967187
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.400433671000428,
+            "seconds": 0.00026169400007347576
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.400695365000502,
+            "seconds": 0.9903047669995431
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.391000132000045,
+            "seconds": 0.0002616040001157671
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.3912617360001605,
+            "seconds": 0.1760875069994654
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.567349242999626,
+            "seconds": 0.641730320001443
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.209079563001069,
+            "seconds": 0.02298642699861375
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.232065989999683,
+            "seconds": 0.00040948199966805987
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.232475471999351,
+            "seconds": 0.1090882500011503
+          }
+        ],
+        "preview_ready_seconds": 6.341139903001022,
+        "tensor_archive_ready_seconds": 6.231605210999987
+      },
+      "timings": {
+        "preview_ready_seconds": 6.341139903001022,
+        "tensor_archive_ready_seconds": 6.231605210999987,
+        "sampler_intervals_seconds": 3.5030285299999377,
+        "text_encoder_interval_seconds": 1.8081842240007973,
+        "video_decoder_interval_seconds": 0.641730320001443,
+        "audio_decoder_interval_seconds": 0.1760875069994654
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r05-original-marble/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r05-original-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r06-axis-cache-marble",
+      "mode": "axis-cache",
+      "fixture": "marble",
+      "pair": "02-marble-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r06-axis-cache-marble-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "8e072213-2f22-4075-98a3-d2a699f2a861",
+        "seconds": 6.757382448000499,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.005301347000568057,
+            "seconds": 0.002667961000042851
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.007969308000610908,
+            "seconds": 0.00040214899854618125
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.00837145699915709,
+            "seconds": 0.00020101900008739904
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.008572475999244489,
+            "seconds": 0.00015850900126679335
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.008730985000511282,
+            "seconds": 0.016331586999513092
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.025062572000024375,
+            "seconds": 0.0003316959991934709
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.025394267999217845,
+            "seconds": 2.2753888389997883
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 2.300783106999006,
+            "seconds": 0.021386369000538252
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 2.3221694759995444,
+            "seconds": 0.00023609600066265557
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 2.322405572000207,
+            "seconds": 0.0004917869991913904
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 2.3228973589993984,
+            "seconds": 0.0002216080010839505
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 2.3231189670004824,
+            "seconds": 2.5201681979997375
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.84328716500022,
+            "seconds": 0.00016700499872968066
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.8434541699989495,
+            "seconds": 0.01906537100148853
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.862519541000438,
+            "seconds": 0.0002605909994599642
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.862780131999898,
+            "seconds": 0.0003835539991996484
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.863163685999098,
+            "seconds": 0.0001991460012504831
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.863362832000348,
+            "seconds": 0.00018515899864723906
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.863547990998995,
+            "seconds": 0.0002634570009831805
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.8638114479999786,
+            "seconds": 0.995769339000617
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.859580787000596,
+            "seconds": 0.0002743079985521035
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.859855094999148,
+            "seconds": 0.1765890530004981
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 6.036444147999646,
+            "seconds": 0.5694658709999203
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.605910018999566,
+            "seconds": 0.022881417000462534
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.628791436000029,
+            "seconds": 0.00041516300007060636
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.629206599000099,
+            "seconds": 0.12642763199983165
+          }
+        ],
+        "preview_ready_seconds": 6.755256118000034,
+        "tensor_archive_ready_seconds": 6.628396632000658
+      },
+      "timings": {
+        "preview_ready_seconds": 6.755256118000034,
+        "tensor_archive_ready_seconds": 6.628396632000658,
+        "sampler_intervals_seconds": 3.5159375370003545,
+        "text_encoder_interval_seconds": 2.2753888389997883,
+        "video_decoder_interval_seconds": 0.5694658709999203,
+        "audio_decoder_interval_seconds": 0.1765890530004981
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r06-axis-cache-marble/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r06-axis-cache-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r07-original-bird",
+      "mode": "original",
+      "fixture": "bird",
+      "pair": "03-bird-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r07-original-bird-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "8f2210aa-8a2c-4a4a-b01f-61e034ddbf24",
+        "seconds": 7.1860372929986625,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004907873999400181,
+            "seconds": 0.002498751999155502
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.007406625998555683,
+            "seconds": 0.00028436600041459315
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.007690991998970276,
+            "seconds": 0.0003531260008458048
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.00804411799981608,
+            "seconds": 0.0001580179996381048
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.008202135999454185,
+            "seconds": 0.09498035999968124
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.10318249599913543,
+            "seconds": 0.01803845500035095
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.12122095099948638,
+            "seconds": 2.2030618890003097
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 2.324282839999796,
+            "seconds": 0.023727440999209648
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 2.3480102809990058,
+            "seconds": 0.0002082129994960269
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 2.348218493998502,
+            "seconds": 0.000527775000591646
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 2.3487462689990934,
+            "seconds": 0.00026693300060287584
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 2.3490132019996963,
+            "seconds": 2.5470279370001663
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.896041138999863,
+            "seconds": 0.0004599879994202638
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.896501126999283,
+            "seconds": 0.023739873000522493
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.920240999999805,
+            "seconds": 0.00020701099856523797
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.920448010998371,
+            "seconds": 0.00027458800104795955
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.9207225989994186,
+            "seconds": 0.0001726949994917959
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.92089529399891,
+            "seconds": 0.0002700790009839693
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.921165372999894,
+            "seconds": 0.00020336399938969407
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.921368736999284,
+            "seconds": 1.0003247679997003
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.921693504998984,
+            "seconds": 0.0002734160007094033
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.921966920999694,
+            "seconds": 0.17706577999888395
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 6.099032700998578,
+            "seconds": 0.653926909000802
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.75295960999938,
+            "seconds": 0.02395280500059016
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.77691241499997,
+            "seconds": 0.0003008879994013114
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.777213302999371,
+            "seconds": 0.3207188229989697
+          }
+        ],
+        "preview_ready_seconds": 6.880402310998761,
+        "tensor_archive_ready_seconds": 6.77652922299967
+      },
+      "timings": {
+        "preview_ready_seconds": 6.880402310998761,
+        "tensor_archive_ready_seconds": 6.77652922299967,
+        "sampler_intervals_seconds": 3.5473527049998665,
+        "text_encoder_interval_seconds": 2.2030618890003097,
+        "video_decoder_interval_seconds": 0.653926909000802,
+        "audio_decoder_interval_seconds": 0.17706577999888395
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r07-original-bird/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r07-original-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r08-axis-cache-bird",
+      "mode": "axis-cache",
+      "fixture": "bird",
+      "pair": "03-bird-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r08-axis-cache-bird-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "49bbfbe0-581d-4e93-bba3-ec951fee0f90",
+        "seconds": 6.369084378999105,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004318381999837584,
+            "seconds": 0.0010964680004690308
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.005414850000306615,
+            "seconds": 0.001357428998744581
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.006772278999051196,
+            "seconds": 0.00026987900128006004
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.007042158000331256,
+            "seconds": 0.0001535299998067785
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.007195688000138034,
+            "seconds": 0.00025854699924821034
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.0074542349993862445,
+            "seconds": 0.011939071000597323
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.019393305999983568,
+            "seconds": 1.8453195450001658
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8647128510001494,
+            "seconds": 0.022073017998991418
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8867858689991408,
+            "seconds": 0.00022117700063972734
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8870070459997805,
+            "seconds": 0.0003640670001914259
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.887371112999972,
+            "seconds": 0.00016994999896269292
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8875410629989346,
+            "seconds": 2.566680993000773
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.454222055999708,
+            "seconds": 0.00023517400040873326
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.454457230000116,
+            "seconds": 0.026027342999441316
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.480484572999558,
+            "seconds": 0.0003040829997189576
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.480788655999277,
+            "seconds": 0.0002544899998611072
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.481043145999138,
+            "seconds": 0.0003181200008839369
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.481361266000022,
+            "seconds": 0.00023399100064125378
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.481595257000663,
+            "seconds": 0.00029025799994997215
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.481885515000613,
+            "seconds": 1.019765113998801
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.501650628999414,
+            "seconds": 0.00029309300043678377
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.501943721999851,
+            "seconds": 0.1768098850006936
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.678753607000544,
+            "seconds": 0.5555627249996178
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.234316332000162,
+            "seconds": 0.023362177998933475
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.257678509999096,
+            "seconds": 0.000442284001110238
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.258120794000206,
+            "seconds": 0.10965472699899692
+          }
+        ],
+        "preview_ready_seconds": 6.367466117999356,
+        "tensor_archive_ready_seconds": 6.257162857998992
+      },
+      "timings": {
+        "preview_ready_seconds": 6.367466117999356,
+        "tensor_archive_ready_seconds": 6.257162857998992,
+        "sampler_intervals_seconds": 3.586446106999574,
+        "text_encoder_interval_seconds": 1.8453195450001658,
+        "video_decoder_interval_seconds": 0.5555627249996178,
+        "audio_decoder_interval_seconds": 0.1768098850006936
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r08-axis-cache-bird/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r08-axis-cache-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r09-original-bird",
+      "mode": "original",
+      "fixture": "bird",
+      "pair": "03-bird-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r09-original-bird-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "81338b24-7657-49f4-b1d1-19da3ff5a2ec",
+        "seconds": 6.397971391999818,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004401899001095444,
+            "seconds": 0.002320145000339835
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.006722044001435279,
+            "seconds": 0.00021484499848156702
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.006936888999916846,
+            "seconds": 0.00017638200006331317
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.007113270999980159,
+            "seconds": 0.00016189600137295201
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.007275167001353111,
+            "seconds": 0.00016813699949125294
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.007443304000844364,
+            "seconds": 0.012616467000043485
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.02005977100088785,
+            "seconds": 1.8173527380004089
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8374125090012967,
+            "seconds": 0.012541314999907627
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8499538240012043,
+            "seconds": 0.0002161169995815726
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.850169941000786,
+            "seconds": 0.00033739599894033745
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.8505073369997262,
+            "seconds": 0.00021938400095677935
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.850726721000683,
+            "seconds": 2.570492650000233
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.421219371000916,
+            "seconds": 0.0002344919994357042
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.421453863000352,
+            "seconds": 0.023443600000973674
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.444897463001325,
+            "seconds": 0.0002451919990562601
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.445142655000382,
+            "seconds": 0.00028674100030912086
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.445429396000691,
+            "seconds": 0.00017652300084591843
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.445605919001537,
+            "seconds": 0.0002742869983194396
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.445880205999856,
+            "seconds": 0.00020125900118728168
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.446081465001043,
+            "seconds": 1.0109410339991882
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.457022499000232,
+            "seconds": 0.0004877499995927792
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.457510248999824,
+            "seconds": 0.17604847100119514
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.6335587200010195,
+            "seconds": 0.6308675349991972
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.264426255000217,
+            "seconds": 0.02096205099951476
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.2853883059997315,
+            "seconds": 0.00043184400055906735
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.285820150000291,
+            "seconds": 0.1105896480003139
+          }
+        ],
+        "preview_ready_seconds": 6.3960846250010945,
+        "tensor_archive_ready_seconds": 6.285072550999757
+      },
+      "timings": {
+        "preview_ready_seconds": 6.3960846250010945,
+        "tensor_archive_ready_seconds": 6.285072550999757,
+        "sampler_intervals_seconds": 3.581433683999421,
+        "text_encoder_interval_seconds": 1.8173527380004089,
+        "video_decoder_interval_seconds": 0.6308675349991972,
+        "audio_decoder_interval_seconds": 0.17604847100119514
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r09-original-bird/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r09-original-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r10-axis-cache-bird",
+      "mode": "axis-cache",
+      "fixture": "bird",
+      "pair": "04-bird-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r10-axis-cache-bird-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "f9e1f6d4-12fc-4c34-b043-9ddbaa25341e",
+        "seconds": 6.693252295999628,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004931326999212615,
+            "seconds": 0.0013276129993755603
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.0062589399985881755,
+            "seconds": 0.0013977350008644862
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.007656674999452662,
+            "seconds": 0.00021461399956024252
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.007871288999012904,
+            "seconds": 0.00018937700042442884
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.008060665999437333,
+            "seconds": 0.00016395999955420848
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.008224625998991542,
+            "seconds": 0.11082355600046867
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.11904818199946021,
+            "seconds": 1.8216195770000922
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.9406677589995525,
+            "seconds": 0.013106029000482522
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.953773788000035,
+            "seconds": 0.00029430399990815204
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.9540680919999431,
+            "seconds": 0.0005127669992361916
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.9545808589991793,
+            "seconds": 0.00020195099932607263
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.9547828099985054,
+            "seconds": 2.5419715759999235
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.496754385998429,
+            "seconds": 0.00022072700085118413
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.49697511299928,
+            "seconds": 0.0233736449990829
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.520348757998363,
+            "seconds": 0.00025635300153226126
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.520605110999895,
+            "seconds": 0.00020150999989709817
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.520806620999792,
+            "seconds": 0.0002424670001346385
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.521049087999927,
+            "seconds": 0.00021265099894662853
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.521261738998874,
+            "seconds": 0.0001905190001707524
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.521452257999044,
+            "seconds": 1.008689938000316
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.53014219599936,
+            "seconds": 0.0002761409996310249
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.530418336998991,
+            "seconds": 0.17721748400072102
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.7076358209997125,
+            "seconds": 0.5591396239997266
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.266775444999439,
+            "seconds": 0.021854439999515307
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.288629884998954,
+            "seconds": 0.0004098530007468071
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.289039737999701,
+            "seconds": 0.3162813090002601
+          }
+        ],
+        "preview_ready_seconds": 6.396356824998293,
+        "tensor_archive_ready_seconds": 6.288169036999534
+      },
+      "timings": {
+        "preview_ready_seconds": 6.396356824998293,
+        "tensor_archive_ready_seconds": 6.288169036999534,
+        "sampler_intervals_seconds": 3.5506615140002395,
+        "text_encoder_interval_seconds": 1.8216195770000922,
+        "video_decoder_interval_seconds": 0.5591396239997266,
+        "audio_decoder_interval_seconds": 0.17721748400072102
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r10-axis-cache-bird/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r10-axis-cache-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r11-original-bird",
+      "mode": "original",
+      "fixture": "bird",
+      "pair": "04-bird-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r11-original-bird-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "c4089009-7464-4f24-b96f-7eaf26e4987f",
+        "seconds": 6.3493624740003725,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004076224000527873,
+            "seconds": 0.0016118789990287041
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.005688102999556577,
+            "seconds": 0.0002601200012577465
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.005948223000814323,
+            "seconds": 0.00012998499914829154
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.006078207999962615,
+            "seconds": 0.0001449940009479178
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.006223202000910533,
+            "seconds": 0.01034674499896937
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.016569946999879903,
+            "seconds": 0.006508550000944524
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.023078497000824427,
+            "seconds": 1.7978515479990165
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.820930044999841,
+            "seconds": 0.021903842000028817
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8428338869998697,
+            "seconds": 0.00020267200125090312
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8430365590011206,
+            "seconds": 0.0003262449990870664
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.8433628040002077,
+            "seconds": 0.00023401200087391771
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8435968160010816,
+            "seconds": 2.5359345309989294
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.379531347000011,
+            "seconds": 0.0002601199994387571
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.37979146699945,
+            "seconds": 0.023087724001015886
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.402879191000466,
+            "seconds": 0.0002459839997754898
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.403125175000241,
+            "seconds": 0.000256974000876653
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.403382149001118,
+            "seconds": 0.0003725019996636547
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.4037546510007815,
+            "seconds": 0.00027341500026523136
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.404028066001047,
+            "seconds": 0.0003800069989665644
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.404408073000013,
+            "seconds": 1.0019227900011174
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.406330863001131,
+            "seconds": 0.0003793050000240328
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.406710168001155,
+            "seconds": 0.17786020699895744
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.584570375000112,
+            "seconds": 0.6366291670001374
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.2211995420002495,
+            "seconds": 0.02205471600063902
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.2432542580008885,
+            "seconds": 0.0004208029986330075
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.2436750609995215,
+            "seconds": 0.10405492500103719
+          }
+        ],
+        "preview_ready_seconds": 6.347298082000634,
+        "tensor_archive_ready_seconds": 6.242822092999631
+      },
+      "timings": {
+        "preview_ready_seconds": 6.347298082000634,
+        "tensor_archive_ready_seconds": 6.242822092999631,
+        "sampler_intervals_seconds": 3.537857321000047,
+        "text_encoder_interval_seconds": 1.7978515479990165,
+        "video_decoder_interval_seconds": 0.6366291670001374,
+        "audio_decoder_interval_seconds": 0.17786020699895744
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r11-original-bird/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r11-original-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r12-axis-cache-bird",
+      "mode": "axis-cache",
+      "fixture": "bird",
+      "pair": "04-bird-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r12-axis-cache-bird-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "bbf448e0-a2a4-4ffa-bcce-bd986c40202b",
+        "seconds": 6.338915159998578,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.0053173229989624815,
+            "seconds": 0.0023671519993513357
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.007684474998313817,
+            "seconds": 0.0002593490007711807
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.007943823999084998,
+            "seconds": 0.00025352800003020093
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.008197351999115199,
+            "seconds": 0.00012199999946460593
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.008319351998579805,
+            "seconds": 0.01627416799965431
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.024593519998234115,
+            "seconds": 0.0004566810002870625
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.025050200998521177,
+            "seconds": 1.8086393989997305
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8336895999982517,
+            "seconds": 0.025593435000700993
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8592830349989526,
+            "seconds": 0.00016391899953305256
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8594469539984857,
+            "seconds": 0.0004208840000501368
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.8598678379985358,
+            "seconds": 0.00023713700102234725
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8601049749995582,
+            "seconds": 2.5599136210003053
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.4200185959998635,
+            "seconds": 0.00029513699882954825
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.420313732998693,
+            "seconds": 0.02355373899990809
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.443867471998601,
+            "seconds": 0.0001968910000869073
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.444064362998688,
+            "seconds": 0.0002865900005417643
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.44435095299923,
+            "seconds": 0.0001751910003804369
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.44452614399961,
+            "seconds": 0.0002675439991435269
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.444793687998754,
+            "seconds": 0.00019016800069948658
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.444983855999453,
+            "seconds": 1.0194647289990826
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.464448584998536,
+            "seconds": 0.00026636199982021935
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.464714946998356,
+            "seconds": 0.17761787100062065
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.642332817998977,
+            "seconds": 0.5614611569999397
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.203793974998916,
+            "seconds": 0.022670845999527955
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.226464820998444,
+            "seconds": 0.0005728289997932734
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.227037649998238,
+            "seconds": 0.11016984100024274
+          }
+        ],
+        "preview_ready_seconds": 6.336792037998748,
+        "tensor_archive_ready_seconds": 6.2260471529989445
+      },
+      "timings": {
+        "preview_ready_seconds": 6.336792037998748,
+        "tensor_archive_ready_seconds": 6.2260471529989445,
+        "sampler_intervals_seconds": 3.579378349999388,
+        "text_encoder_interval_seconds": 1.8086393989997305,
+        "video_decoder_interval_seconds": 0.5614611569999397,
+        "audio_decoder_interval_seconds": 0.17761787100062065
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r12-axis-cache-bird/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r12-axis-cache-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r13-original-marble",
+      "mode": "original",
+      "fixture": "marble",
+      "pair": "05-marble-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r13-original-marble-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "e0aead5e-f954-4184-823d-2c74fba6f3ba",
+        "seconds": 6.747680148000654,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.00397814900134108,
+            "seconds": 0.0010164359991904348
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.004994585000531515,
+            "seconds": 0.0017785019990697037
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.006773086999601219,
+            "seconds": 0.00019561900080589112
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.00696870600040711,
+            "seconds": 0.00015201700080069713
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.007120723001207807,
+            "seconds": 0.00016715499987185467
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.007287878001079662,
+            "seconds": 0.00022165799964568578
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.0075095360007253475,
+            "seconds": 1.924068026999521
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.9315775630002463,
+            "seconds": 0.02164954799991392
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.9532271110001602,
+            "seconds": 0.00019505800082697533
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.9534221690009872,
+            "seconds": 0.0003323259988974314
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.9537544949998846,
+            "seconds": 0.0002090540001518093
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.9539635490000364,
+            "seconds": 2.511093929000708
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.465057478000745,
+            "seconds": 0.00024058300004980993
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.465298061000794,
+            "seconds": 0.023544309000499197
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.488842370001294,
+            "seconds": 0.00017612199917493854
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.4890184920004685,
+            "seconds": 0.000275850999969407
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.489294343000438,
+            "seconds": 0.0001739470008033095
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.489468290001241,
+            "seconds": 0.0002879329986171797
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.489756222999858,
+            "seconds": 0.00019735200112336315
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.489953575000982,
+            "seconds": 0.997149349999745
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.487102925000727,
+            "seconds": 0.0002761609994195169
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.487379086000146,
+            "seconds": 0.17816805000074964
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.665547136000896,
+            "seconds": 0.6443889000001946
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.3099360360010905,
+            "seconds": 0.02159485399897676
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.331530890000067,
+            "seconds": 0.00041438100015511736
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.331945271000222,
+            "seconds": 0.32827752900084306
+          }
+        ],
+        "preview_ready_seconds": 6.444246978000592,
+        "tensor_archive_ready_seconds": 6.331038001000707
+      },
+      "timings": {
+        "preview_ready_seconds": 6.444246978000592,
+        "tensor_archive_ready_seconds": 6.331038001000707,
+        "sampler_intervals_seconds": 3.508243279000453,
+        "text_encoder_interval_seconds": 1.924068026999521,
+        "video_decoder_interval_seconds": 0.6443889000001946,
+        "audio_decoder_interval_seconds": 0.17816805000074964
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r13-original-marble/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r13-original-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r14-axis-cache-marble",
+      "mode": "axis-cache",
+      "fixture": "marble",
+      "pair": "05-marble-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r14-axis-cache-marble-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "113a4aff-8f3a-4687-8d30-abdb4d8f842f",
+        "seconds": 6.363003024000136,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.0047286339995480375,
+            "seconds": 0.002156054000806762
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.0068846880003547994,
+            "seconds": 0.00023847899865359068
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.00712316699900839,
+            "seconds": 0.00023656600023969077
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.007359732999248081,
+            "seconds": 0.00024250699971162248
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.007602239998959703,
+            "seconds": 0.0001729360010358505
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.007775175999995554,
+            "seconds": 0.015473134999410831
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.023248310999406385,
+            "seconds": 1.8154059860007692
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8386542970001756,
+            "seconds": 0.022854216998894117
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8615085139990697,
+            "seconds": 0.00015134500063140877
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.861659858999701,
+            "seconds": 0.0003916179994121194
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.8620514769991132,
+            "seconds": 0.0002047260004474083
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8622562029995606,
+            "seconds": 2.575994606999302
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.438250809998863,
+            "seconds": 0.0003305530008219648
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.438581362999685,
+            "seconds": 0.03425669699936407
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.472838059999049,
+            "seconds": 0.000260120999882929
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.473098180998932,
+            "seconds": 0.00020751100055349525
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.473305691999485,
+            "seconds": 0.0002603800003271317
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.473566071999812,
+            "seconds": 0.00019150099979015067
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.473757572999602,
+            "seconds": 0.000248168000325677
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.474005740999928,
+            "seconds": 1.0099912969999423
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.48399703799987,
+            "seconds": 0.0002704700000322191
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.484267507999903,
+            "seconds": 0.18751841399898694
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.6717859219988895,
+            "seconds": 0.5580813700016733
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.229867292000563,
+            "seconds": 0.02255659399997967
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.2524238860005426,
+            "seconds": 0.0003397599994059419
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.2527636459999485,
+            "seconds": 0.10841534999963187
+          }
+        ],
+        "preview_ready_seconds": 6.360713578000286,
+        "tensor_archive_ready_seconds": 6.251999246000196
+      },
+      "timings": {
+        "preview_ready_seconds": 6.360713578000286,
+        "tensor_archive_ready_seconds": 6.251999246000196,
+        "sampler_intervals_seconds": 3.5859859039992443,
+        "text_encoder_interval_seconds": 1.8154059860007692,
+        "video_decoder_interval_seconds": 0.5580813700016733,
+        "audio_decoder_interval_seconds": 0.18751841399898694
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r14-axis-cache-marble/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r14-axis-cache-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r15-original-marble",
+      "mode": "original",
+      "fixture": "marble",
+      "pair": "05-marble-oco",
+      "order": "OCO",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r15-original-marble-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "166ebe71-7054-4641-b062-bed0089f6746",
+        "seconds": 6.454735721999896,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.005490669000209891,
+            "seconds": 0.0023210139988805167
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.007811682999090408,
+            "seconds": 0.00026875700132222846
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.008080440000412636,
+            "seconds": 0.0002334199998585973
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.008313860000271234,
+            "seconds": 0.00022531499962497037
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.008539174999896204,
+            "seconds": 0.00016642300033709034
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.008705598000233294,
+            "seconds": 0.002857134999430855
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.01156273299966415,
+            "seconds": 1.8362168959993141
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8477796289989783,
+            "seconds": 0.02225488600015524
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8700345149991335,
+            "seconds": 0.00024324799960595556
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8702777629987395,
+            "seconds": 0.0003356630004418548
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.8706134259991813,
+            "seconds": 0.0002105269995809067
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8708239529987623,
+            "seconds": 2.582462160000432
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.453286112999194,
+            "seconds": 0.00024365900026168674
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.453529771999456,
+            "seconds": 0.02356558499923267
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.477095356998689,
+            "seconds": 0.0004449380012374604
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.477540294999926,
+            "seconds": 0.00031333100014308
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.477853626000069,
+            "seconds": 0.00038600699917878956
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.478239632999248,
+            "seconds": 0.00024051400032476522
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.478480146999573,
+            "seconds": 0.000274267000349937
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.478754413999923,
+            "seconds": 1.012415654000506
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.491170068000429,
+            "seconds": 0.0003133999998681247
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.491483468000297,
+            "seconds": 0.17738763299894345
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.66887110099924,
+            "seconds": 0.6393930680005724
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.308264168999813,
+            "seconds": 0.01988470700052858
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.328148876000341,
+            "seconds": 0.0003944629988836823
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.328543338999225,
+            "seconds": 0.1247671969995281
+          }
+        ],
+        "preview_ready_seconds": 6.452991023999857,
+        "tensor_archive_ready_seconds": 6.327724284999931
+      },
+      "timings": {
+        "preview_ready_seconds": 6.452991023999857,
+        "tensor_archive_ready_seconds": 6.327724284999931,
+        "sampler_intervals_seconds": 3.594877814000938,
+        "text_encoder_interval_seconds": 1.8362168959993141,
+        "video_decoder_interval_seconds": 0.6393930680005724,
+        "audio_decoder_interval_seconds": 0.17738763299894345
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r15-original-marble/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r15-original-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r16-axis-cache-boat",
+      "mode": "axis-cache",
+      "fixture": "boat",
+      "pair": "06-boat-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r16-axis-cache-boat-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "e1e22199-c853-4202-b788-490b379a9218",
+        "seconds": 6.628277888001321,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004042969001602614,
+            "seconds": 0.0007700009991822299
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.004812970000784844,
+            "seconds": 0.011982644000454457
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.0167956140012393,
+            "seconds": 0.0006554749998031184
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.01745108900104242,
+            "seconds": 0.00025459000062255654
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.017705679001664976,
+            "seconds": 0.1046484069993312
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.12235408600099618,
+            "seconds": 0.010579538999081706
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.13293362500007788,
+            "seconds": 1.8246136980014853
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.9575473230015632,
+            "seconds": 0.02496763499948429
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.9825149580010475,
+            "seconds": 0.00027715299984265584
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.9827921110008901,
+            "seconds": 0.0004075979995832313
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.9831997090004734,
+            "seconds": 0.00026841600083571393
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.983468125001309,
+            "seconds": 2.5306232339989947
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.514091359000304,
+            "seconds": 0.00023339000108535402
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.514324749001389,
+            "seconds": 0.02338681499895756
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.537711564000347,
+            "seconds": 0.00026706300013756845
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.537978627000484,
+            "seconds": 0.00018068099961965345
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.538159308000104,
+            "seconds": 0.0003012280012626434
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.538460536001367,
+            "seconds": 0.0001821730002120603
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.538642709001579,
+            "seconds": 0.00024260699865408242
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.538885316000233,
+            "seconds": 1.0043944850003754
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.543279801000608,
+            "seconds": 0.00027239399969403166
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.543552195000302,
+            "seconds": 0.17754292600147892
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.721095121001781,
+            "seconds": 0.572938344999784
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.294033466001565,
+            "seconds": 0.021846891999302898
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.315880358000868,
+            "seconds": 0.000415253000028315
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.316295611000896,
+            "seconds": 0.1025865129995509
+          }
+        ],
+        "preview_ready_seconds": 6.41861980000067,
+        "tensor_archive_ready_seconds": 6.315447994000351
+      },
+      "timings": {
+        "preview_ready_seconds": 6.41861980000067,
+        "tensor_archive_ready_seconds": 6.315447994000351,
+        "sampler_intervals_seconds": 3.53501771899937,
+        "text_encoder_interval_seconds": 1.8246136980014853,
+        "video_decoder_interval_seconds": 0.572938344999784,
+        "audio_decoder_interval_seconds": 0.17754292600147892
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r16-axis-cache-boat/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r16-axis-cache-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r17-original-boat",
+      "mode": "original",
+      "fixture": "boat",
+      "pair": "06-boat-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r17-original-boat-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "9491403c-291b-4fe5-8e72-bdbb6d41a0e1",
+        "seconds": 6.411184941998727,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004969534998963354,
+            "seconds": 0.0026209799998468952
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.007590514998810249,
+            "seconds": 0.00030116700145299546
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.007891682000263245,
+            "seconds": 0.0002770119990600506
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.008168693999323295,
+            "seconds": 0.00019541900110198185
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.008364113000425277,
+            "seconds": 0.0002465739999024663
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.008610687000327744,
+            "seconds": 0.01562996599932376
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.024240652999651502,
+            "seconds": 1.8149322289991687
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8391728819988202,
+            "seconds": 0.023862450001615798
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.863035332000436,
+            "seconds": 0.0002547899985074764
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8632901219989435,
+            "seconds": 0.00035265500082459766
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.863642776999768,
+            "seconds": 0.0002005480000661919
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8638433249998343,
+            "seconds": 2.526347220000389
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.390190545000223,
+            "seconds": 0.00023931099894980434
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.390429855999173,
+            "seconds": 0.023349783001322066
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.413779639000495,
+            "seconds": 0.0001901179984997725
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.413969756998995,
+            "seconds": 0.00028675100111286156
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.414256508000108,
+            "seconds": 0.0002531769987399457
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.414509684998848,
+            "seconds": 0.000244791001023259
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.414754475999871,
+            "seconds": 0.00020955499894625973
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.414964030998817,
+            "seconds": 1.008262684001238
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.423226715000055,
+            "seconds": 0.0002974700000777375
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.423524185000133,
+            "seconds": 0.17686499299998104
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.600389178000114,
+            "seconds": 0.6604194819992699
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.260808659999384,
+            "seconds": 0.02187988200057589
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.28268854199996,
+            "seconds": 0.0005136780000611907
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.283202220000021,
+            "seconds": 0.1263825669993821
+          }
+        ],
+        "preview_ready_seconds": 6.409214248998978,
+        "tensor_archive_ready_seconds": 6.28218007400028
+      },
+      "timings": {
+        "preview_ready_seconds": 6.409214248998978,
+        "tensor_archive_ready_seconds": 6.28218007400028,
+        "sampler_intervals_seconds": 3.534609904001627,
+        "text_encoder_interval_seconds": 1.8149322289991687,
+        "video_decoder_interval_seconds": 0.6604194819992699,
+        "audio_decoder_interval_seconds": 0.17686499299998104
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r17-original-boat/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r17-original-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      }
+    },
+    {
+      "run": "na-axis-confirm-01-r18-axis-cache-boat",
+      "mode": "axis-cache",
+      "fixture": "boat",
+      "pair": "06-boat-coc",
+      "order": "COC",
+      "status": "passed",
+      "initialization": false,
+      "parity_status": "passed",
+      "reported_all_four_outputs_exact": true,
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      },
+      "parity_parse_error": null,
+      "parity_path": "na-axis-confirm-01/na-axis-confirm-01-r18-axis-cache-boat-parity.json",
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "717ef2e4-1226-4336-b55c-4f660c12a76a",
+        "seconds": 6.409441437999703,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004529916001047241,
+            "seconds": 0.0019823459988401737
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.006512261999887414,
+            "seconds": 0.00022747900038666558
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.00673974100027408,
+            "seconds": 0.00022608600011153612
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.006965827000385616,
+            "seconds": 0.00015530200107605197
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.007121129001461668,
+            "seconds": 0.00022247999913815875
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.007343609000599827,
+            "seconds": 0.0001721640001051128
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.0075157730007049395,
+            "seconds": 1.8395701579993329
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8470859310000378,
+            "seconds": 0.021861397000975558
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8689473280010134,
+            "seconds": 0.00015240699940477498
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8690997350004181,
+            "seconds": 0.0003862979992845794
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.8694860329997027,
+            "seconds": 0.00020737100021506194
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8696934039999178,
+            "seconds": 2.5753283630001533
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.445021767000071,
+            "seconds": 0.00030214900107239373
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.4453239160011435,
+            "seconds": 0.03498813199985307
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.480312048000997,
+            "seconds": 0.00028330399982223753
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.480595352000819,
+            "seconds": 0.0003320859996165382
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.480927438000435,
+            "seconds": 0.00026193300072918646
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.4811893710011645,
+            "seconds": 0.0002730449996306561
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.481462416000795,
+            "seconds": 0.00037693000012950506
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.481839346000925,
+            "seconds": 1.0149490749990946
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.496788421000019,
+            "seconds": 0.0002871810011129128
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.497075602001132,
+            "seconds": 0.19310800199855294
+          },
+          {
+            "node": "374",
+            "class_type": "LTXNAAxisDecode",
+            "start_seconds": 5.690183603999685,
+            "seconds": 0.5679767520014138
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.258160356001099,
+            "seconds": 0.021096804999615415
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.279257161000714,
+            "seconds": 0.00031559499984723516
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.279572756000562,
+            "seconds": 0.12848396300068998
+          }
+        ],
+        "preview_ready_seconds": 6.407754409001427,
+        "tensor_archive_ready_seconds": 6.278884999999718
+      },
+      "timings": {
+        "preview_ready_seconds": 6.407754409001427,
+        "tensor_archive_ready_seconds": 6.278884999999718,
+        "sampler_intervals_seconds": 3.590277437999248,
+        "text_encoder_interval_seconds": 1.8395701579993329,
+        "video_decoder_interval_seconds": 0.5679767520014138,
+        "audio_decoder_interval_seconds": 0.19310800199855294
+      },
+      "decoder_receipt_path": "encoder-server-na-axis-10/na-axis-na-axis-confirm-01-r18-axis-cache-boat/result.json",
+      "reported_decoder_status": "passed-decode-route",
+      "reported_na_call_count": 24,
+      "capture_summary": {
+        "run_name": "na-axis-confirm-01-r18-axis-cache-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      }
+    }
+  ],
+  "paired_results": {
+    "paired_samples": 6,
+    "triples": [
+      {
+        "fixture": "boat",
+        "order": "OCO",
+        "pair": "01-boat-oco",
+        "runs": [
+          "na-axis-confirm-01-r01-original-boat",
+          "na-axis-confirm-01-r02-axis-cache-boat",
+          "na-axis-confirm-01-r03-original-boat"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "samples_seconds": [
+              6.36482625500139,
+              6.294042352999895,
+              6.421254087001216
+            ],
+            "original_mean_seconds": 6.393040171001303,
+            "cache_mean_seconds": 6.294042352999895,
+            "cache_minus_original_seconds": -0.09899781800140772,
+            "original_mean_over_cache_mean": 1.0157288134475648
+          },
+          "tensor_archive_ready_seconds": {
+            "samples_seconds": [
+              6.261077993000072,
+              6.159780423000484,
+              6.301621795000756
+            ],
+            "original_mean_seconds": 6.281349894000414,
+            "cache_mean_seconds": 6.159780423000484,
+            "cache_minus_original_seconds": -0.12156947099992976,
+            "original_mean_over_cache_mean": 1.019736007235906
+          },
+          "video_decoder_interval_seconds": {
+            "samples_seconds": [
+              0.6354747570003383,
+              0.5567028220011707,
+              0.6221349090010335
+            ],
+            "original_mean_seconds": 0.6288048330006859,
+            "cache_mean_seconds": 0.5567028220011707,
+            "cache_minus_original_seconds": -0.07210201099951519,
+            "original_mean_over_cache_mean": 1.129516158621814
+          }
+        }
+      },
+      {
+        "fixture": "marble",
+        "order": "COC",
+        "pair": "02-marble-coc",
+        "runs": [
+          "na-axis-confirm-01-r04-axis-cache-marble",
+          "na-axis-confirm-01-r05-original-marble",
+          "na-axis-confirm-01-r06-axis-cache-marble"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "samples_seconds": [
+              6.513318351000635,
+              6.341139903001022,
+              6.755256118000034
+            ],
+            "original_mean_seconds": 6.341139903001022,
+            "cache_mean_seconds": 6.634287234500334,
+            "cache_minus_original_seconds": 0.2931473314993127,
+            "original_mean_over_cache_mean": 0.9558132891842764
+          },
+          "tensor_archive_ready_seconds": {
+            "samples_seconds": [
+              6.393467421999958,
+              6.231605210999987,
+              6.628396632000658
+            ],
+            "original_mean_seconds": 6.231605210999987,
+            "cache_mean_seconds": 6.510932027000308,
+            "cache_minus_original_seconds": 0.27932681600032083,
+            "original_mean_over_cache_mean": 0.9570987970935689
+          },
+          "video_decoder_interval_seconds": {
+            "samples_seconds": [
+              0.5486891220007237,
+              0.641730320001443,
+              0.5694658709999203
+            ],
+            "original_mean_seconds": 0.641730320001443,
+            "cache_mean_seconds": 0.559077496500322,
+            "cache_minus_original_seconds": -0.08265282350112102,
+            "original_mean_over_cache_mean": 1.147837865087588
+          }
+        }
+      },
+      {
+        "fixture": "bird",
+        "order": "OCO",
+        "pair": "03-bird-oco",
+        "runs": [
+          "na-axis-confirm-01-r07-original-bird",
+          "na-axis-confirm-01-r08-axis-cache-bird",
+          "na-axis-confirm-01-r09-original-bird"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "samples_seconds": [
+              6.880402310998761,
+              6.367466117999356,
+              6.3960846250010945
+            ],
+            "original_mean_seconds": 6.638243467999928,
+            "cache_mean_seconds": 6.367466117999356,
+            "cache_minus_original_seconds": -0.27077735000057146,
+            "original_mean_over_cache_mean": 1.042525134014478
+          },
+          "tensor_archive_ready_seconds": {
+            "samples_seconds": [
+              6.77652922299967,
+              6.257162857998992,
+              6.285072550999757
+            ],
+            "original_mean_seconds": 6.530800886999714,
+            "cache_mean_seconds": 6.257162857998992,
+            "cache_minus_original_seconds": -0.27363802900072187,
+            "original_mean_over_cache_mean": 1.0437319653029185
+          },
+          "video_decoder_interval_seconds": {
+            "samples_seconds": [
+              0.653926909000802,
+              0.5555627249996178,
+              0.6308675349991972
+            ],
+            "original_mean_seconds": 0.6423972219999996,
+            "cache_mean_seconds": 0.5555627249996178,
+            "cache_minus_original_seconds": -0.08683449700038182,
+            "original_mean_over_cache_mean": 1.1563000775482941
+          }
+        }
+      },
+      {
+        "fixture": "bird",
+        "order": "COC",
+        "pair": "04-bird-coc",
+        "runs": [
+          "na-axis-confirm-01-r10-axis-cache-bird",
+          "na-axis-confirm-01-r11-original-bird",
+          "na-axis-confirm-01-r12-axis-cache-bird"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "samples_seconds": [
+              6.396356824998293,
+              6.347298082000634,
+              6.336792037998748
+            ],
+            "original_mean_seconds": 6.347298082000634,
+            "cache_mean_seconds": 6.36657443149852,
+            "cache_minus_original_seconds": 0.019276349497886258,
+            "original_mean_over_cache_mean": 0.9969722572624743
+          },
+          "tensor_archive_ready_seconds": {
+            "samples_seconds": [
+              6.288169036999534,
+              6.242822092999631,
+              6.2260471529989445
+            ],
+            "original_mean_seconds": 6.242822092999631,
+            "cache_mean_seconds": 6.257108094999239,
+            "cache_minus_original_seconds": 0.014286001999607834,
+            "original_mean_over_cache_mean": 0.9977168363111666
+          },
+          "video_decoder_interval_seconds": {
+            "samples_seconds": [
+              0.5591396239997266,
+              0.6366291670001374,
+              0.5614611569999397
+            ],
+            "original_mean_seconds": 0.6366291670001374,
+            "cache_mean_seconds": 0.5603003904998332,
+            "cache_minus_original_seconds": -0.07632877650030423,
+            "original_mean_over_cache_mean": 1.1362283121598626
+          }
+        }
+      },
+      {
+        "fixture": "marble",
+        "order": "OCO",
+        "pair": "05-marble-oco",
+        "runs": [
+          "na-axis-confirm-01-r13-original-marble",
+          "na-axis-confirm-01-r14-axis-cache-marble",
+          "na-axis-confirm-01-r15-original-marble"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "samples_seconds": [
+              6.444246978000592,
+              6.360713578000286,
+              6.452991023999857
+            ],
+            "original_mean_seconds": 6.448619001000225,
+            "cache_mean_seconds": 6.360713578000286,
+            "cache_minus_original_seconds": -0.08790542299993831,
+            "original_mean_over_cache_mean": 1.0138200568099742
+          },
+          "tensor_archive_ready_seconds": {
+            "samples_seconds": [
+              6.331038001000707,
+              6.251999246000196,
+              6.327724284999931
+            ],
+            "original_mean_seconds": 6.329381143000319,
+            "cache_mean_seconds": 6.251999246000196,
+            "cache_minus_original_seconds": -0.07738189700012299,
+            "original_mean_over_cache_mean": 1.0123771443270133
+          },
+          "video_decoder_interval_seconds": {
+            "samples_seconds": [
+              0.6443889000001946,
+              0.5580813700016733,
+              0.6393930680005724
+            ],
+            "original_mean_seconds": 0.6418909840003835,
+            "cache_mean_seconds": 0.5580813700016733,
+            "cache_minus_original_seconds": -0.08380961399871012,
+            "original_mean_over_cache_mean": 1.150174541749098
+          }
+        }
+      },
+      {
+        "fixture": "boat",
+        "order": "COC",
+        "pair": "06-boat-coc",
+        "runs": [
+          "na-axis-confirm-01-r16-axis-cache-boat",
+          "na-axis-confirm-01-r17-original-boat",
+          "na-axis-confirm-01-r18-axis-cache-boat"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "samples_seconds": [
+              6.41861980000067,
+              6.409214248998978,
+              6.407754409001427
+            ],
+            "original_mean_seconds": 6.409214248998978,
+            "cache_mean_seconds": 6.4131871045010485,
+            "cache_minus_original_seconds": 0.003972855502070161,
+            "original_mean_over_cache_mean": 0.9993805177617098
+          },
+          "tensor_archive_ready_seconds": {
+            "samples_seconds": [
+              6.315447994000351,
+              6.28218007400028,
+              6.278884999999718
+            ],
+            "original_mean_seconds": 6.28218007400028,
+            "cache_mean_seconds": 6.297166497000035,
+            "cache_minus_original_seconds": 0.014986422999754723,
+            "original_mean_over_cache_mean": 0.9976201323234991
+          },
+          "video_decoder_interval_seconds": {
+            "samples_seconds": [
+              0.572938344999784,
+              0.6604194819992699,
+              0.5679767520014138
+            ],
+            "original_mean_seconds": 0.6604194819992699,
+            "cache_mean_seconds": 0.5704575485005989,
+            "cache_minus_original_seconds": -0.08996193349867099,
+            "original_mean_over_cache_mean": 1.1577013639930414
+          }
+        }
+      }
+    ],
+    "fixture_mean_cache_minus_original_seconds": {
+      "boat": {
+        "preview_ready_seconds": -0.04751248124966878,
+        "tensor_archive_ready_seconds": -0.05329152400008752,
+        "video_decoder_interval_seconds": -0.08103197224909309
+      },
+      "marble": {
+        "preview_ready_seconds": 0.1026209542496872,
+        "tensor_archive_ready_seconds": 0.10097245950009892,
+        "video_decoder_interval_seconds": -0.08323121874991557
+      },
+      "bird": {
+        "preview_ready_seconds": -0.1257505002513426,
+        "tensor_archive_ready_seconds": -0.12967601350055702,
+        "video_decoder_interval_seconds": -0.08158163675034302
+      }
+    },
+    "metric_summaries": {
+      "preview_ready_seconds": {
+        "paired_samples": 6,
+        "median_cache_minus_original_seconds": -0.041966283748934075
+      },
+      "tensor_archive_ready_seconds": {
+        "paired_samples": 6,
+        "median_cache_minus_original_seconds": -0.03154794750025758
+      },
+      "video_decoder_interval_seconds": {
+        "paired_samples": 6,
+        "median_cache_minus_original_seconds": -0.08323121874991557
+      }
+    },
+    "scope": "Copied parity report status and client-event intervals; screening only, no qualification recomputed"
+  },
+  "reported_paired_results": {
+    "triples": [
+      {
+        "fixture": "boat",
+        "order": "OCO",
+        "runs": [
+          "na-axis-confirm-01-r01-original-boat",
+          "na-axis-confirm-01-r02-axis-cache-boat",
+          "na-axis-confirm-01-r03-original-boat"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "seconds": [
+              6.36482625500139,
+              6.294042352999895,
+              6.421254087001216
+            ],
+            "original_mean": 6.393040171001303,
+            "cache_mean": 6.294042352999895,
+            "cache_minus_original": -0.09899781800140772
+          },
+          "decoder_node_seconds": {
+            "seconds": [
+              0.6354747570003383,
+              0.5567028220011707,
+              0.6221349090010335
+            ],
+            "original_mean": 0.6288048330006859,
+            "cache_mean": 0.5567028220011707,
+            "cache_minus_original": -0.07210201099951519
+          }
+        }
+      },
+      {
+        "fixture": "marble",
+        "order": "COC",
+        "runs": [
+          "na-axis-confirm-01-r04-axis-cache-marble",
+          "na-axis-confirm-01-r05-original-marble",
+          "na-axis-confirm-01-r06-axis-cache-marble"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "seconds": [
+              6.513318351000635,
+              6.341139903001022,
+              6.755256118000034
+            ],
+            "original_mean": 6.341139903001022,
+            "cache_mean": 6.634287234500334,
+            "cache_minus_original": 0.2931473314993127
+          },
+          "decoder_node_seconds": {
+            "seconds": [
+              0.5486891220007237,
+              0.641730320001443,
+              0.5694658709999203
+            ],
+            "original_mean": 0.641730320001443,
+            "cache_mean": 0.559077496500322,
+            "cache_minus_original": -0.08265282350112102
+          }
+        }
+      },
+      {
+        "fixture": "bird",
+        "order": "OCO",
+        "runs": [
+          "na-axis-confirm-01-r07-original-bird",
+          "na-axis-confirm-01-r08-axis-cache-bird",
+          "na-axis-confirm-01-r09-original-bird"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "seconds": [
+              6.880402310998761,
+              6.367466117999356,
+              6.3960846250010945
+            ],
+            "original_mean": 6.638243467999928,
+            "cache_mean": 6.367466117999356,
+            "cache_minus_original": -0.27077735000057146
+          },
+          "decoder_node_seconds": {
+            "seconds": [
+              0.653926909000802,
+              0.5555627249996178,
+              0.6308675349991972
+            ],
+            "original_mean": 0.6423972219999996,
+            "cache_mean": 0.5555627249996178,
+            "cache_minus_original": -0.08683449700038182
+          }
+        }
+      },
+      {
+        "fixture": "bird",
+        "order": "COC",
+        "runs": [
+          "na-axis-confirm-01-r10-axis-cache-bird",
+          "na-axis-confirm-01-r11-original-bird",
+          "na-axis-confirm-01-r12-axis-cache-bird"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "seconds": [
+              6.396356824998293,
+              6.347298082000634,
+              6.336792037998748
+            ],
+            "original_mean": 6.347298082000634,
+            "cache_mean": 6.36657443149852,
+            "cache_minus_original": 0.019276349497886258
+          },
+          "decoder_node_seconds": {
+            "seconds": [
+              0.5591396239997266,
+              0.6366291670001374,
+              0.5614611569999397
+            ],
+            "original_mean": 0.6366291670001374,
+            "cache_mean": 0.5603003904998332,
+            "cache_minus_original": -0.07632877650030423
+          }
+        }
+      },
+      {
+        "fixture": "marble",
+        "order": "OCO",
+        "runs": [
+          "na-axis-confirm-01-r13-original-marble",
+          "na-axis-confirm-01-r14-axis-cache-marble",
+          "na-axis-confirm-01-r15-original-marble"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "seconds": [
+              6.444246978000592,
+              6.360713578000286,
+              6.452991023999857
+            ],
+            "original_mean": 6.448619001000225,
+            "cache_mean": 6.360713578000286,
+            "cache_minus_original": -0.08790542299993831
+          },
+          "decoder_node_seconds": {
+            "seconds": [
+              0.6443889000001946,
+              0.5580813700016733,
+              0.6393930680005724
+            ],
+            "original_mean": 0.6418909840003835,
+            "cache_mean": 0.5580813700016733,
+            "cache_minus_original": -0.08380961399871012
+          }
+        }
+      },
+      {
+        "fixture": "boat",
+        "order": "COC",
+        "runs": [
+          "na-axis-confirm-01-r16-axis-cache-boat",
+          "na-axis-confirm-01-r17-original-boat",
+          "na-axis-confirm-01-r18-axis-cache-boat"
+        ],
+        "metrics": {
+          "preview_ready_seconds": {
+            "seconds": [
+              6.41861980000067,
+              6.409214248998978,
+              6.407754409001427
+            ],
+            "original_mean": 6.409214248998978,
+            "cache_mean": 6.4131871045010485,
+            "cache_minus_original": 0.003972855502070161
+          },
+          "decoder_node_seconds": {
+            "seconds": [
+              0.572938344999784,
+              0.6604194819992699,
+              0.5679767520014138
+            ],
+            "original_mean": 0.6604194819992699,
+            "cache_mean": 0.5704575485005989,
+            "cache_minus_original": -0.08996193349867099
+          }
+        }
+      }
+    ],
+    "paired_samples": 6,
+    "fixture_mean_cache_minus_original": {
+      "boat": {
+        "preview_ready_seconds": -0.04751248124966878,
+        "decoder_node_seconds": -0.08103197224909309
+      },
+      "marble": {
+        "preview_ready_seconds": 0.1026209542496872,
+        "decoder_node_seconds": -0.08323121874991557
+      },
+      "bird": {
+        "preview_ready_seconds": -0.1257505002513426,
+        "decoder_node_seconds": -0.08158163675034302
+      }
+    },
+    "median_triplet_preview_delta": -0.041966283748934075,
+    "scope": "Balanced repeated same-fixture event timings; no kernel timing, automatic promotion, or streaming qualification"
+  },
+  "source_pin_closure": {
+    "dependencies": {
+      "CANDIDATE_SHA": {
+        "actual_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+        "declared_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2"
+      },
+      "DECODER_SHA": {
+        "actual_sha256": "7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21",
+        "declared_sha256": "7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21"
+      },
+      "NODES_SHA": {
+        "actual_sha256": "dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e",
+        "declared_sha256": "dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e"
+      },
+      "ROUTER_SHA": {
+        "actual_sha256": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537",
+        "declared_sha256": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537"
+      },
+      "SD_SHA": {
+        "actual_sha256": "41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0",
+        "declared_sha256": "41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0"
+      },
+      "router.CANDIDATE_SHA": {
+        "actual_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+        "declared_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2"
+      },
+      "router.ORIGINAL_SHA": {
+        "actual_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+        "declared_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995"
+      }
+    },
+    "native_imports": false,
+    "startup_registration_qualified": false,
+    "status": "passed-stdlib-source-pin-closure"
+  },
+  "correction_provenance": {
+    "failed_packet_manifest_sha256": "a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed",
+    "files": {
+      "failed09-manifest.json": "a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed",
+      "failed09-startup-failure.json": "bdf914ee6fe908ea0bda69180bb9814b40db208b96b66b1e81fba16ad50a7729",
+      "failed09-startup-failure.log": "1989e73176d45dc4dc869c4e792bd25ee3ffe0593887dee8c9ed3b779ed9daee"
+    },
+    "reason": "startup-pin-mismatch-before-native-requests"
+  },
+  "qualification_recomputed": false,
+  "speed_promotion": false,
+  "streaming_qualification": false,
+  "fault_latch_present_at_export": false,
+  "exported_text_files": 674,
+  "source_text_bytes": 30023544,
+  "archive_bytes": 2334602,
+  "evidence_sha256": "525b426c3b298e51d56639288ad7954dd197717ae3d2acd00e8ce6616feb4f15",
+  "max_file_bytes": 67108864,
+  "max_total_source_bytes": 268435456,
+  "max_scan_entries": 8192,
+  "excluded": [
+    "raw weights",
+    "raw tensor archives",
+    "video/images/audio",
+    "whole Comfy tree",
+    "binary/serialized/generated caches"
+  ]
+}
