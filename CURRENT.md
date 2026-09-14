@@ -29,9 +29,10 @@ actions are historical, span multiple hosts, and are not current instructions.
 a very short native-precision clip and deterministic repeat checks. One local
 ComfyUI server (PID 11499, `127.0.0.1:8188`) is running with exclusive device
 locks; all four cards passed its small copy/compute preflight. No model request
-has been submitted yet: the five selected BF16 component files are staging
-from read-only RAID to internal NVMe, and the API rejects generation until the
-checksum receipt passes. Preserve the server, source and environment at
+has been submitted yet. The RAID distilled transformer failed its fresh
+SHA-256 check; rejected bytes and the failed receipt are preserved. A pinned
+replacement is downloading to NVMe while other components are verified. The
+API rejects generation until the full checksum receipt passes. Preserve the server, source and environment at
 `/home/steve/src/ComfyUI-ltx25-baseline` and
 `/home/steve/.venvs/ltx25-baseline`; no restart chain or power-setting changes.
 See [lane preregistration](experiments/ltx25-b70/README.md). Evidence root:

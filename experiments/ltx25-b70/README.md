@@ -43,3 +43,34 @@ Before first execution, source review changed the encoder placement from CPU
 to the default XPU path and removed `--lowvram`: this CPU lacks native BF16
 matrix instructions. ComfyUI's normal memory mode retains partial-weight
 offloading, with 6 GiB reserved. No CPU-encoder measurement was made.
+
+## Input integrity failure before first generation
+
+The September 12 RAID copy of the distilled transformer failed its fresh
+staging hash. The copied file hashes to
+`ad9eb77d12e611917f91cc71df924c6383a30cbf306b4d4afdf990912af0ebe9`;
+authenticated publisher metadata at the pinned revision confirms the expected
+`31eb3cad89b9e54e99dd3baf286f70825ac4f6c660a70d9184d895be76d7bff4`.
+Size and first MiB match; a zero-page screen found no entirely zero 4 KiB pages.
+No inference used these bytes. The original RAID is unchanged; the rejected
+internal copy is preserved in the evidence root's `quarantine/` directory.
+
+The original download helper reported a successful hash but did not explicitly
+fsync files and trusts old verified statuses plus size on resume. That does not
+establish the timing or cause of the present corruption. It is not a GPU result.
+
+`scripts/download-verified.py` fetches a replacement at the same pinned revision,
+checks network SHA-256, fsyncs the file, checks persisted bytes via O_DIRECT,
+then renames and fsyncs the parent directory. It makes one attempt, with no
+automatic retry or server restart. Other selected components are being checked
+separately. The initial failed receipt and log remain preserved; the server
+gate stays closed until the complete component set is verified.
+
+The repair localized 79 changed bytes in one 8 MiB region starting at byte
+310,378,496. Replacing that region in a separate copy restored the full
+publisher SHA-256; an O_DIRECT reread also passed. The exact reversible delta
+is preserved in `data/transformer-corruption-byte-delta.json` and the proof in
+`data/localized-repair-promotion.json`. The original rejected file, old/new
+region bytes and partial publisher download remain outside Git in the evidence
+root. The now-redundant download was stopped once, after verification succeeded;
+the ComfyUI server was not stopped or restarted.
