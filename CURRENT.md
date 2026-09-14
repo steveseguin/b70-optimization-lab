@@ -34,12 +34,16 @@ It is currently unavailable; the historical recovery status below remains
 evidence of the earlier qualified process.
 The refreshed V1/MTP-only control image is built, with accepted overlays
 preserved; it is not runtime-qualified. Metadata relocation passes36 actual
-builder cases on each of two source versions. The exact TP2 prototype compiles
-and passes nine CPU protocol/lifetime checks; native quality and speed are
-unmeasured. Root owns all GPU operations; agents work on isolated CPU/source
-and client tooling. Next: exclusive operator qualification and independent new
-base qualification, then paired full-output candidate gates on one persistent
-research process. No new result or default is promoted.
+builder cases on each of two source versions. The exact TP2 prototype is undergoing exclusive native qualification.
+Two launcher-environment failures were preserved and corrected; the third
+stage passed XCCL, peer capability, dedicated allocation and FD transfer,
+then stopped at a receiver-side API validation before candidate copy/add.
+No kernel fault occurred. Root retains this GPU lane while correcting that
+boundary; do not start competing work merely because a probe has exited.
+The metadata endpoint harness now binds the exact runtime, source and frozen
+oracles, with23 CPU controller/client checks passing. Next: finish the operator
+gate, qualify the refreshed base, then paired complete-output candidate tests
+on one persistent research process. No new result or default is promoted.
 [Implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 

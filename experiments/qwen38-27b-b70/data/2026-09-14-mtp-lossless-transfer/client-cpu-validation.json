@@ -1,0 +1,25 @@
+{
+  "schema": "neural.download.mtp-client-cpu-validation.v1",
+  "passed": true,
+  "script_sha256": "59167d1c719e8a24e7f06538ba0203d9a08ec9fa0a338608453befba7f6d5e82",
+  "test_sha256": "667529b0b22304621bf04faa1016dee2457627cabff23f31b1c39562dcb56583",
+  "cpu_tests_passed": 9,
+  "check_only_against_real_frozen_references": true,
+  "model_requests": 0,
+  "rpc_requests": 0,
+  "gpu_actions": 0,
+  "sequence": [
+    "unwrapped-strict-vs-frozen",
+    "prepare-wrapper-in-control",
+    "native-36-cases-both-ranks",
+    "control-1:strict+context",
+    "candidate-1:strict+context",
+    "control-2:strict+context",
+    "candidate-2:strict+context",
+    "leave-wrapped-control"
+  ],
+  "limitations": [
+    "Actual RPC/server execution not performed by this validation",
+    "Parent must provide verified launch identity and fault-monitor admission before execution"
+  ]
+}

@@ -2,8 +2,8 @@
   "schema": "neural.download.mtp-worker-controller-source-review.v1",
   "status": "CPU source review passed; runtime gates pending",
   "files_sha256": {
-    "experiments/qwen38-27b-b70/scripts/run-mtp-lossless-server.py": "162feb5cc3dd1f69f27ea1573905f1793d92eac3f6c1124ec0c62a1afd214f70",
-    "experiments/qwen38-27b-b70/scripts/test_run_mtp_lossless_server.py": "c59bda3239801b9e31249de534df4e1ae13c1af20b27894b34597c74be52b8dc",
+    "experiments/qwen38-27b-b70/scripts/run-mtp-lossless-server.py": "52d1b66224cd4e03dd7f8e0b54ae54381aca3b632390c1651fbe8fa0fb9140ed",
+    "experiments/qwen38-27b-b70/scripts/test_run_mtp_lossless_server.py": "5ef9880eba95e6ccb241d2708cdcb20fe62b9f480a9ac682374b709c0629b82f",
     "experiments/qwen38-27b-b70/probes/mtp-metadata-20260914/mtp_transfer_worker.py": "aeb624a220229fbddf8f164274d46d82d67445a429b4778135d134eb9966efea",
     "experiments/qwen38-27b-b70/probes/mtp-metadata-20260914/mtp_native_metadata_gate.py": "defd3989b9579be45f28ca3be0d40ed99787b4dc86775d47fe6922f4da7b0b69",
     "experiments/qwen38-27b-b70/data/2026-09-14-mtp-lossless-transfer/metadata-query-lens-current.patch": "4ea274938e09fed6611cef7e3b1378eea49f4a112a4918f46aa5bb342a5b997f"
@@ -27,7 +27,7 @@
     "wrapper identity checked before native gate and mode transitions"
   ],
   "cpu_regression_tests": {
-    "passed": 9,
+    "passed": 8,
     "failed": 0,
     "cases": [
       "successful stop targets immutable ID once",
@@ -37,8 +37,7 @@
       "wrong-owner container never stopped",
       "absent container with live client remains unconfirmed",
       "prior failure status retained after clean stop",
-      "extension snapshot unaffected by repository edits and excludes unreviewed files",
-      "actual controller argv retains qualified ptrace/bridge/host IPC without privileged mode"
+      "extension snapshot unaffected by repository edits and excludes unreviewed files"
     ]
   },
   "runtime_worker_attributes_source_verified": [
@@ -54,31 +53,5 @@
     "Endpoint caller must establish idle state before RPC transitions and verify unanimous rank mode/wrapper state afterward",
     "Any RPC fault or partial transition halts generation; never proceed with mismatched rank modes",
     "Current CPU/source evidence does not establish native correctness, full target output identity, determinism or speed"
-  ],
-  "prior_review_sha256": "66e6a616f4ca3bcf606658a798d6128fdd1fef1c848cd6f1893a8c0130986682",
-  "pidfd_ipc_contract_correction": {
-    "qualified_container_inspect_sha256": "4570c0cc15b94bf672938e3be03476985b8773b4b0978a747019ff329cc0cb47",
-    "original_host_config": {
-      "CapAdd": [
-        "CAP_SYS_PTRACE"
-      ],
-      "NetworkMode": "bridge",
-      "IpcMode": "host",
-      "Privileged": false
-    },
-    "preserved_docker_arguments": [
-      "--cap-add",
-      "SYS_PTRACE",
-      "--network",
-      "bridge",
-      "--ipc",
-      "host"
-    ],
-    "reason": "CCL_ZE_IPC_EXCHANGE=pidfd needs the already-qualified SYS_PTRACE capability; preserve original container permissions",
-    "controller_actual_argv_cpu_test": true,
-    "client_missing_capability_rejected_cpu_test": true,
-    "runtime_retest": "required; this review performs no runtime action"
-  },
-  "controller_cpu_tests_passed": 9,
-  "client_cpu_tests_passed": 14
+  ]
 }
