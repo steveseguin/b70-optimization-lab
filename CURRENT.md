@@ -25,6 +25,16 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 14 19:12 UTC: user-authorized recovery review.**
+The new campaign first checks health once in the qualified runtime, then restores
+FP8/MTP1 and validates the prepared metadata change if healthy. No GPU action
+has occurred yet. Passive checks show the same boot, no GPU owners/listeners,
+and no GPU faults after the earlier incident. The old custom communicator stays
+quarantined and its fault packet is immutable. No reboot/reset/settings changes.
+[Recovery and metadata plan](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-recovery-metadata-plan.md).
+Raw root: `/mnt/fast-ai/bench-results/fp8-mtp-recovery-metadata-20260914`.
+The prior incident entry below remains historical evidence of the halted run.
+
 **Two-B70 host, September 14 18:36 UTC: GPU work halted after exact-TP2 probe fault.**
 The corrected communication probe passed 12 finite/edge cases per rank, then
 failed exact NaN-payload parity. At 18:30:41 UTC the kernel also recorded BCS
