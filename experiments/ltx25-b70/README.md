@@ -4,6 +4,13 @@ Status: **validated exact-output speedup: 6.44–7.10 s warm clips**, September 
 User authorized bring-up and repeatability validation on September 13, 2026.
 
 Direction: [north star, milestones and next work](PLAN.md).
+The actual goal is one second of new video in under one second at 24 fps,
+with final output at least 256x256 and no quality loss. Continuous recording
+is unnecessary; keep a small review set and exact verification receipts.
+The [first 30-request campaign](notes/stability-01-results.md) passed all ten
+fixture repeats at 6.515 s median preview. It reclaimed 607 MB of verified
+temporary output and kept only three small campaign previews. Two source
+patches are prepared for further validation; the loaded runtime is unchanged.
 
 ## Current optimized baseline
 

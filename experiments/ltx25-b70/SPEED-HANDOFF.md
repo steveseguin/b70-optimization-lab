@@ -3,6 +3,11 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
+The user subsequently made **one second of video in under one second** the actual
+goal, with24fps and a256x256 minimum final output. The [first30-request campaign](notes/stability-01-results.md)
+passed all10 fixture repeats at6.515s median preview and bounded review storage.
+Accounting/transfer candidates are prepared but inactive; the target is not yet met.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,

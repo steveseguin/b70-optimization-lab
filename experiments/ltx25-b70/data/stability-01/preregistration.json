@@ -1,0 +1,80 @@
+{
+  "campaign": "stability-01",
+  "rounds": 3,
+  "fixtures": [
+    {
+      "id": "boat",
+      "prompt": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat.",
+      "seed": 42,
+      "reference": "baseline-01"
+    },
+    {
+      "id": "marble",
+      "prompt": "A clear blue glass marble rolls slowly across a light wooden tabletop. Fixed close-up camera, soft window light, detailed reflections, quiet rolling sound.",
+      "seed": 17,
+      "reference": "speed-oracle-marble"
+    },
+    {
+      "id": "bird",
+      "prompt": "A small yellow bird perched on a leafy branch turns its head slightly. Static camera, soft morning light, green garden background, a single quiet chirp.",
+      "seed": 123,
+      "reference": "speed-oracle-bird"
+    },
+    {
+      "id": "pendulum",
+      "prompt": "A brass pendulum swings gently in front of a dark wooden clock face. Fixed camera, warm indoor light, clear metal reflections, soft rhythmic ticking.",
+      "seed": 271
+    },
+    {
+      "id": "rain",
+      "prompt": "Raindrops slide slowly down a clear window with an out-of-focus green garden behind it. Static close-up camera, soft daylight, quiet steady rain.",
+      "seed": 314
+    },
+    {
+      "id": "paper",
+      "prompt": "A folded white paper crane rests on a blue desk while one wing moves slightly in a light breeze. Fixed close-up camera, soft side lighting, faint rustling sound.",
+      "seed": 519
+    },
+    {
+      "id": "candle",
+      "prompt": "A single candle flame flickers gently above a white candle on a stone table. Static camera, dark neutral background, soft warm light, quiet room ambience.",
+      "seed": 808
+    },
+    {
+      "id": "pour",
+      "prompt": "A thin stream of clear water pours into a transparent glass on a wooden table. Fixed close-up camera, daylight, detailed ripples and reflections, gentle pouring sound.",
+      "seed": 1201
+    },
+    {
+      "id": "fabric",
+      "prompt": "A red fabric ribbon hanging from a branch moves gently in a light breeze. Static camera, green leaves in the background, natural daylight, quiet wind.",
+      "seed": 2026
+    },
+    {
+      "id": "wheel",
+      "prompt": "A small silver toy wheel turns slowly on a dark tabletop. Fixed close-up camera, soft studio lighting, clear mechanical details, a quiet rolling sound.",
+      "seed": 4096
+    }
+  ],
+  "graph": "speed-resident-split-api.json",
+  "min_output_width": 256,
+  "min_output_height": 256,
+  "frames": 25,
+  "fps": 24,
+  "request_count": 30,
+  "checkpoint_precision": "unchanged native BF16 distilled",
+  "steps": [
+    8,
+    3
+  ],
+  "server_pid": 24848,
+  "purpose": "Characterize same-process exact repeats, latency and suspected encoder residency ratchet; not a new speed candidate or endurance qualification.",
+  "reference_scope": "Three fixtures compare to frozen original process. Seven new fixtures use first selected-split execution as within-campaign reference; they do not establish original single-card parity.",
+  "retention": "Original evidence protected. Keep first seven new reference tensor archives only until all repeats pass; then delete campaign raw archives after preserving hashes and comparisons. Keep at most three passed review MP4s at end, temporarily unmatched previews until parity. Never prune mismatch/failure evidence.",
+  "stop_rules": [
+    "Any request/error/parity failure or fault latch: halt new submissions, preserve server and evidence.",
+    "At least5GiB disk and8GiB host MemAvailable before each request.",
+    "No retries/restarts, new GPU contexts for monitoring, power/swap/cache changes."
+  ],
+  "memory_hypothesis": "Earlier log suggests45MiB encoder residency loss per warm request. Measure trend; continued growth blocks longer soak even if all30requests complete."
+}

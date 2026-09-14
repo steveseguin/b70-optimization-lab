@@ -31,10 +31,14 @@ quality/losslessness sacrifice. Final output floor is256x256; <=3s is only an
 intermediate marker. Minimal rolling review footage is authorized, including
 deleting older verified campaign outputs while preserving compact hashes and
 receipts. Existing model/reference artifacts stay protected. The first bounded
-work is [30 sequential requests over10 fixtures](experiments/ltx25-b70/data/stability-01-prereg.json)
-on the existing PID24848 endpoint, with physical-memory observations and exact
-comparisons. A source audit is investigating45MiB/request encoder accounting
-drift and unnecessary hidden-state transfers. No server/runtime change is made.
+work completed [30 sequential requests over10 fixtures](experiments/ltx25-b70/notes/stability-01-results.md)
+on the existing PID24848 endpoint: all exact repeats passed, median preview6.515s,
+p956.680s, no faults/OOM. Physical memory stayed within observed bounds while
+the encoder's reported offload grew690→2718MiB; source/CPU work supports an
+accounting defect. Longer soaks remain deferred. Verified pruning reclaimed607MB,
+retaining three campaign previews totaling170KB plus compact receipts. Two
+inactive candidate patches target accounting and unnecessary hidden-state CPU
+copies; no runtime change or further restart occurred. The server is idle.
 See the updated [plan](experiments/ltx25-b70/PLAN.md).
 
 **2026-09-13 EDT, two-B70 host: final FP8 prefill pass complete and stopped.**

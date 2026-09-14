@@ -1,0 +1,13 @@
+--- a/comfy/model_patcher.py
++++ b/comfy/model_patcher.py
+@@ -999,6 +999,10 @@
+ 
+                 potential_offload = max(offload_buffer, module_offload_mem + sum([ x1[1] for x1 in loading[i+1:i+1+comfy.model_management.NUM_STREAMS]]))
+                 lowvram_fits = mem_counter + module_mem + potential_offload < lowvram_model_memory
++                # A same-device resident module remains allocated here. Only
++                # partially_unload actually moves resident weights off device.
++                if self.model.device == device_to and getattr(m, "comfy_patched_weights", False):
++                    lowvram_fits = True
+ 
+                 weight_key = "{}.weight".format(n)
+                 bias_key = "{}.bias".format(n)

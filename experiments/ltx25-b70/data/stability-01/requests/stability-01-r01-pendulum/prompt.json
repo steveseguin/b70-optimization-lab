@@ -1,0 +1,315 @@
+{
+  "364": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "420",
+        1
+      ],
+      "text": "A brass pendulum swings gently in front of a dark wooden clock face. Fixed camera, warm indoor light, clear metal reflections, soft rhythmic ticking."
+    }
+  },
+  "365": {
+    "class_type": "LTXVConditioning",
+    "inputs": {
+      "positive": [
+        "364",
+        0
+      ],
+      "negative": [
+        "364",
+        0
+      ],
+      "frame_rate": 24.0
+    }
+  },
+  "356": {
+    "class_type": "EmptyLTXVLatentVideo",
+    "inputs": {
+      "width": 128,
+      "height": 128,
+      "length": 25,
+      "batch_size": 1
+    }
+  },
+  "366": {
+    "class_type": "LTXVEmptyLatentAudio",
+    "inputs": {
+      "audio_vae": [
+        "420",
+        3
+      ],
+      "frames_number": 25,
+      "frame_rate": 24.0,
+      "batch_size": 1
+    }
+  },
+  "377": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "video_latent": [
+        "356",
+        0
+      ],
+      "audio_latent": [
+        "366",
+        0
+      ]
+    }
+  },
+  "339": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 271
+    }
+  },
+  "388": {
+    "class_type": "LTXVDualCFGGuider",
+    "inputs": {
+      "model": [
+        "420",
+        0
+      ],
+      "positive": [
+        "365",
+        0
+      ],
+      "negative": [
+        "365",
+        1
+      ],
+      "video_cfg": 1.0,
+      "audio_cfg": 1.0
+    }
+  },
+  "352": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    }
+  },
+  "404": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    }
+  },
+  "344": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "339",
+        0
+      ],
+      "guider": [
+        "388",
+        0
+      ],
+      "sampler": [
+        "352",
+        0
+      ],
+      "sigmas": [
+        "404",
+        0
+      ],
+      "latent_image": [
+        "377",
+        0
+      ]
+    }
+  },
+  "367": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": {
+      "av_latent": [
+        "344",
+        0
+      ]
+    }
+  },
+  "348": {
+    "class_type": "LTXVLatentUpsampler",
+    "inputs": {
+      "samples": [
+        "367",
+        0
+      ],
+      "upscale_model": [
+        "420",
+        4
+      ],
+      "vae": [
+        "420",
+        2
+      ]
+    }
+  },
+  "340": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "video_latent": [
+        "348",
+        0
+      ],
+      "audio_latent": [
+        "367",
+        1
+      ]
+    }
+  },
+  "338": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 271
+    }
+  },
+  "391": {
+    "class_type": "LTXVDualCFGGuider",
+    "inputs": {
+      "model": [
+        "420",
+        0
+      ],
+      "positive": [
+        "365",
+        0
+      ],
+      "negative": [
+        "365",
+        1
+      ],
+      "video_cfg": 1.0,
+      "audio_cfg": 1.0
+    }
+  },
+  "341": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    }
+  },
+  "395": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+    }
+  },
+  "368": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "338",
+        0
+      ],
+      "guider": [
+        "391",
+        0
+      ],
+      "sampler": [
+        "341",
+        0
+      ],
+      "sigmas": [
+        "395",
+        0
+      ],
+      "latent_image": [
+        "340",
+        0
+      ]
+    }
+  },
+  "369": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": {
+      "av_latent": [
+        "368",
+        0
+      ]
+    }
+  },
+  "374": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "369",
+        0
+      ],
+      "vae": [
+        "420",
+        2
+      ]
+    }
+  },
+  "358": {
+    "class_type": "LTXVAudioVAEDecode",
+    "inputs": {
+      "samples": [
+        "369",
+        1
+      ],
+      "audio_vae": [
+        "420",
+        3
+      ]
+    }
+  },
+  "370": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "374",
+        0
+      ],
+      "audio": [
+        "358",
+        0
+      ],
+      "fps": 24.0,
+      "bit_depth": 8,
+      "color_space": "sRGB",
+      "codec": "none"
+    }
+  },
+  "75": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "370",
+        0
+      ],
+      "filename_prefix": "stability-01-r01-pendulum/preview",
+      "format": "mp4",
+      "format.codec": "auto"
+    }
+  },
+  "414": {
+    "class_type": "LTXBaselineCapture",
+    "inputs": {
+      "images": [
+        "374",
+        0
+      ],
+      "video_latent": [
+        "369",
+        0
+      ],
+      "audio_latent": [
+        "369",
+        1
+      ],
+      "audio": [
+        "358",
+        0
+      ],
+      "run_name": "stability-01-r01-pendulum"
+    }
+  },
+  "420": {
+    "class_type": "LTXResidentComponents",
+    "inputs": {
+      "placement": "split"
+    }
+  }
+}
