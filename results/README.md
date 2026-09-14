@@ -23,7 +23,9 @@ before comparing their absolute values with conventionally counted rates.
 
 The [local coding worker trial](../experiments/local-coding-worker/README.md)
 records issue-to-patch work using the qualified FP8 model. It is an experimental
-integration result, with no new model speed or quality promotion.
+integration result, with no new model speed or quality promotion. The
+[readable-output follow-up](../experiments/local-coding-worker/overnight-2026-09-14-results.md)
+passed all five original issues and failed both new held-out issues; it remains experimental.
 
 ## Model Packets
 

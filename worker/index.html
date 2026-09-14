@@ -25,14 +25,24 @@
 <ol class="worker-flow" aria-label="Worker steps"><li>1. Read the issue</li><li>2. Edit the code</li><li>3. Test and correct</li><li>4. Review the patch</li></ol>
 <p>This version uses Qwen3.8 27B FP8 on two Intel Arc Pro B70s. Model requests stay on the local machine. Coding commands run in an isolated copy of the repository, with network access disabled.</p>
 <p><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/worker/README.md">Setup guide and commands</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/local-coding-worker/README.md">Test details and patches</a></p>
-<h2>The first trial</h2>
-<p id="trial-status">Three of five issues passed independent checks. Two remain unsolved. These are small bugs across two repositories; earlier failed attempts are also preserved in the test packet.</p>
-<table class="worker-table"><caption>Selected task attempts, September 14, 2026</caption><thead><tr><th scope="col">Issue</th><th scope="col">Result</th><th scope="col">Elapsed</th></tr></thead><tbody><tr><th scope="row">Quoted download paths</th><td>Tests passed</td><td>2m 19s</td></tr><tr><th scope="row">Stop after a failed request</th><td>Tests passed</td><td>1m 13s</td></tr><tr><th scope="row">Keep hardware listings independent</th><td>Unsolved</td><td>1m 05s</td></tr><tr><th scope="row">Honor zero electricity costs</th><td>Unsolved</td><td>4m 49s</td></tr><tr><th scope="row">Reject invalid CLI numbers</th><td>Tests passed</td><td>1m 24s</td></tr></tbody></table>
-<p>Elapsed time includes setup of the source copy, editing, tests and patch export.</p>
-<p>Passing tests is one checkpoint. Review the patch before applying it. The worker does not merge or publish its changes.</p>
+<h2>What the latest trial showed</h2>
+<p id="trial-status">With more readable tool output, all five original issues produced patches that passed tests and independent review. Both new issues remained unsolved. The two formerly failed original issues also passed one repeat each. This is still an experimental worker.</p>
+<table class="worker-table"><caption>Original issues: first trial and readable-output follow-up</caption><thead><tr><th scope="col">Issue</th><th scope="col">First trial</th><th scope="col">Follow-up</th></tr></thead><tbody>
+<tr><th scope="row">Quoted download paths</th><td>Passed</td><td>Passed · 1m 21s</td></tr>
+<tr><th scope="row">Stop after a failed request</th><td>Passed</td><td>Passed · 1m 18s</td></tr>
+<tr><th scope="row">Keep hardware listings independent</th><td>Unsolved</td><td>Passed · 1m 00s</td></tr>
+<tr><th scope="row">Honor zero electricity costs</th><td>Unsolved</td><td>Passed · 1m 51s</td></tr>
+<tr><th scope="row">Reject invalid CLI numbers</th><td>Passed</td><td>Passed · 1m 42s</td></tr>
+</tbody></table>
+<p>The two new issues involved batch-latency calculations and incomplete command-line flags. Each reached the 40-step limit without an accepted fix. The readable-output option remains experimental.</p>
+<p>Elapsed time includes preparing the source copy, editing, tests and patch export. These changing coding tasks are not a controlled model-speed comparison.</p>
+<p>“Passed” means tests and a separate agent’s patch review passed for the stated issue. Human approval is still pending; all generated patches remain unmerged. The zero-cost task has a separate follow-up for browser input limits.</p>
+<p><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/local-coding-worker/overnight-2026-09-14-results.md">Full comparison, failed attempts and repeat checks</a></p>
+<h2>API and capacity</h2>
+<p>The local API accepts Chat Completions requests at <code>http://127.0.0.1:18124/v1</code> using model <code>qwen38-27b-fp8</code>. It runs one generation at a time; extra requests queue. The server allows 33,024 tokens total for the prompt and response. The worker reserves 28,000 for its growing input and allows up to 2,048 output tokens per step.</p>
 <h2>What it needs</h2>
 <p>A working FP8 model server, Docker, and a clean Git repository. The included coding environment supports Python standard-library and Node.js tasks. Jobs needing extra dependencies require a prepared environment.</p>
-<p>Each task has a 20-minute limit and a 28,000-token input budget. If a task exceeds its limits or a model request fails, it stops and keeps the evidence.</p>
+<p>The agent has a 20-minute budget, checked between turns, and a 28,000-token input budget. Preparing the source copy and exporting a patch add time. If a limit is reached or a model request fails, it stops and keeps the evidence.</p>
 <h2>Reading and writing speed</h2>
 <p>Prefill measures how fast the model reads a prompt. Decode measures how fast it writes a response. Coding prompts grow as the worker reads files and test output, so these task timings are separate from the fixed-length model benchmarks.</p>
 <p><a href="../models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">See the FP8 model’s measured reading and writing speeds</a>. The test packet also records each coding request’s input size, reading speed, writing speed, and wait for the first token.</p>

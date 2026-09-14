@@ -1,4 +1,11 @@
-# Local coding worker: first five issues
+# Local coding worker results
+
+The [overnight follow-up](overnight-2026-09-14-results.md) passed all five original
+issues with readable tool output, while both new held-out issues remained unsolved.
+The original default remains unchanged and the new profile is experimental.
+The full first trial below is preserved as history.
+
+## First five-issue trial
 
 The first milestone tests whether the preferred Qwen3.8 27B FP8 setup can turn
 real repository bugs into tested patches. This is an experimental integration
@@ -9,7 +16,7 @@ Use the [worker guide](../../worker/README.md) to install and run it, or read th
 [original plan](../../worker/PLAN.md). The public overview is
 [neural.download/worker](https://neural.download/worker/).
 
-## Outcomes
+## Original outcomes
 
 **Three of five issues passed the independent acceptance checks; two remain
 unsolved.** Seven attempts are retained: five selected runs, the invalid first

@@ -144,27 +144,26 @@ service; no new speed claim. Next: finish startup identity/client and actual
 placement diagnostics before any maintenance decision or the bounded 25-request
 comparison. See the [source packet and remaining gates](experiments/ltx25-b70/notes/encoder-runtime-packet.md).
 
-**2026-09-14 UTC, two-B70 host: overnight worker reliability work authorized.**
-Window 04:40–12:40 UTC maximum. Reuse the existing healthy FP8 endpoint only.
-A bounded client-profile screen targets the two failed coding tasks, followed
-by held-out checks if successful; no server restart or inference optimization.
-[Registered plan](experiments/local-coding-worker/overnight-2026-09-14-plan.md).
-Preserve independent four-card LTX work and all frozen prior evidence.
+**2026-09-14 UTC, two-B70 host: bounded worker comparison finished; FP8 ready.**
+Readable tool output passed stable acceptance and independent agent review on all
+five original issues, plus one confirmation each of the formerly failed hardware
+and zero-cost tasks. Both new held-out issues failed. The readable profile remains
+opt-in/experimental; original defaults and model performance qualification stay
+unchanged. All generated patches remain unmerged, with human review pending.
+[Results and evidence](experiments/local-coding-worker/overnight-2026-09-14-results.md).
+The original 3/5 trial and first failed profile screen remain frozen separately.
 
-**2026-09-14 UTC, two-B70 host: local coding worker installed, FP8 ready.**
-`neural-worker` runs committed source copies in CPU-only, network-disabled containers.
-The bounded five-issue trial passed three independent acceptance checks; hardware
-listing and zero-cost tasks remain unsolved. Candidate patches are unmerged;
-reviews and unsuccessful attempts are retained in the [trial packet](experiments/local-coding-worker/README.md).
 One unchanged qualified FP8 TP2/MTP1 server remains healthy at `127.0.0.1:18124`,
-33,024 capacity / 4,096 batch / one sequence. Exact helper state/logs:
-`/mnt/fast-ai/bench-results/local-worker-20260914/server/`.
-All task CPU containers stopped. The ML Bottleneck checkout was untouched;
-no generated fix was applied to the lab checkout. No server restart, model
-optimization, host-setting change, GPU fault or cloud fallback. Use the existing
-endpoint for subsequent worker jobs; do not launch a competing GPU lane.
-[Worker commands](worker/README.md). Preserve independent four-card LTX work.
-
+33,024 total capacity / 4,096 scheduling batch / one active sequence. Exact helper
+state/logs: `/mnt/fast-ai/bench-results/local-worker-20260914/server/`.
+All nine corrected-campaign CPU containers stopped before patch export. No model
+patch was applied to either source checkout. No server restart, inference
+optimization, host-setting change, local GPU fault or cloud fallback occurred.
+The eight-hour authorization was an upper bound; this bounded model campaign is
+closed. No queued model/GPU tasks remain in this lane.
+Use the existing endpoint for subsequent worker jobs; do not launch a competing
+GPU lane. [Worker commands and API capacity](worker/README.md).
+Preserve independent four-card LTX work and its fault-halt state above.
 
 **Four-B70 host, post-stability LTX diagnostics: next runtime candidates prepared.**
 One 15-second nonblocking py-spy attachment and one unchanged clip completed on

@@ -7,8 +7,9 @@ B70s; coding commands run in an isolated CPU container.
 This first version uses the qualified **Qwen3.8 27B FP8 / MTP1 / 32K-input**
 setup and [mini-SWE-agent 2.4.6](https://github.com/SWE-agent/mini-swe-agent).
 The [first milestone](PLAN.md) covered five real bugs across two repositories:
-three produced patches that passed independent tests and agent review; two
-remain unsolved. This first profile is not dependable unattended coding.
+three produced patches that passed independent tests and agent review. A bounded
+follow-up with readable tool output passed all five original issues, but failed
+both new held-out issues. It remains an experimental coding assistant.
 Read the [trial results and patches](../experiments/local-coding-worker/README.md).
 Automatic tests, independent agent review, and human approval are reported separately.
 
@@ -70,6 +71,13 @@ the loaded server. The [original profile](config.json) uses greedy generation,
 thinking disabled, and a 2,048-token output cap. Profile experiments and their
 qualification status are recorded in the [worker results](../experiments/local-coding-worker/README.md).
 
+To try the experimental readable-output profile, add
+`--config worker/profiles/readable-observations.json` to a worker command. It keeps
+greedy generation and the 2,048-token output cap. The original default is retained;
+the follow-up does not establish reliable unattended work on new issues.
+The server schedules up to 4,096 tokens per batch; that scheduling limit is
+separate from its total context capacity.
+
 ## Give it work
 
 Write the issue in a text file, then run:
@@ -91,8 +99,8 @@ worker/neural-worker --repo /absolute/path/b70-optimization-lab --task worker/ta
 Run one task at a time. When the model submits, the acceptance command runs. A
 failure is returned to the model for correction, up to the configured limit.
 Your custom test command must work inside the CPU image: Python standard library,
-Node and ordinary shell tools are available; network access and package installs
-are disabled during tasks. The bundled checks are mounted read-only.
+Node and ordinary shell tools are available. Network downloads are unavailable,
+so required dependencies must already be present. The bundled checks are mounted read-only.
 
 ## Review the result
 
@@ -111,10 +119,14 @@ The worker never merges, commits, pushes, contacts others, or restarts the model
 You can inspect a patch with `git apply --stat /path/changes.patch`; applying it
 is a separate user action against the intended source commit.
 
-The default limits are 40 model steps, 20 minutes per task, 28K input tokens,
-2,048 output tokens per step, and three completion checks. No automatic context
+The default limits are 40 model steps, a 20-minute agent budget, 28K input tokens,
+2,048 output tokens per step, and three completion checks. The agent checks its
+time budget between turns; source setup and final export add time. No automatic context
 truncation hides earlier instructions. Three identical consecutive commands trigger corrective feedback; a fourth stops
-the task. CPU commands have a 120-second limit and
+the task. The worker also warns after three exact two-command/output cycles and
+stops before the next cycle if its first command repeats. This additional guard
+was checked with CPU fixtures and recorded trace replay; model responses to its
+feedback are not yet measured. CPU commands have a 120-second limit and
 10 KB returned output. See [config.json](config.json) for the fixed first profile.
 
 ## Stop

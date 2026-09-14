@@ -29,7 +29,7 @@ at your own risk.
 | See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
 | Find a tested result or reproduction artifact | [Results index](results/README.md), [classified reproduction catalog](repro/README.md), and [certification standard](docs/reproduction-guide-certification.md) |
 | Try a packaged candidate | Browse the [model guide library](guides.html) or its [machine-readable package catalog](packages/catalog.json) — twelve candidates/replays, none yet starter-certified |
-| Give a local model a coding issue | [Local coding worker](worker/README.md): isolated source edits, tests, and reviewable patches using 27B FP8 |
+| Give a local model a coding issue | [Local coding worker](worker/README.md): 27B FP8 source edits and tested patches; [follow-up results](experiments/local-coding-worker/overnight-2026-09-14-results.md) cover five original passes and two unsolved new issues |
 | Start optimizing a new model | [Model optimization guide](docs/model-optimization-guide.md) |
 | See or prepare the next model downloads | [Model intake queue](model-intake/README.md) |
 | Follow the Docker and Windows packaging path | [Distribution and packaging roadmap](docs/model-distribution-and-packaging-roadmap.md) |
