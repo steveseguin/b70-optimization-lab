@@ -99,3 +99,20 @@ class BaselineTests(unittest.TestCase):
         RUN.validate_baseline(task,{'returncode':1,'output':'AssertionError: expected bug'})
         with self.assertRaisesRegex(RuntimeError,'already passes'):
             RUN.validate_baseline(task,{'returncode':0,'output':''})
+
+class RepeatedCommandTests(unittest.TestCase):
+    setUp=AcceptanceTreeTests.setUp
+    environment=AcceptanceTreeTests.environment
+    def test_third_repeated_command_gives_feedback_and_fourth_stops(self):
+        sandbox,env=self.environment()
+        action={'command':'cat answer.py'}
+        env.execute(action);env.execute(action)
+        self.assertIn('No-progress warning',env.execute(action)['output'])
+        self.assertEqual(sandbox.calls,['cat answer.py']*2)
+        with self.assertRaisesRegex(RuntimeError,'Repeated-command loop'):
+            env.execute(action)
+    def test_changed_command_resets_loop_counter(self):
+        sandbox,env=self.environment()
+        env.execute({'command':'cat answer.py'});env.execute({'command':'cat answer.py'})
+        env.execute({'command':'echo changed'})
+        self.assertEqual(env.execute({'command':'cat answer.py'})['returncode'],0)

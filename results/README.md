@@ -21,6 +21,10 @@ Historical first-100-token rows from the shared realistic-suite helper used a
 evidence; use the scoreboard accounting note and model-specific corrections
 before comparing their absolute values with conventionally counted rates.
 
+The [local coding worker trial](../experiments/local-coding-worker/README.md)
+records issue-to-patch work using the qualified FP8 model. It is an experimental
+integration result, with no new model speed or quality promotion.
+
 ## Model Packets
 
 | Model / Lane | Folder | Status | Best Valid Result |

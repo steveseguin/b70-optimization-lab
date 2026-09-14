@@ -1,10 +1,10 @@
 name: local-worker
 on:
   pull_request:
-    paths: ['worker/**', '.github/workflows/local-worker.yml']
+    paths: ['worker/**', 'experiments/local-coding-worker/**', 'experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py', 'experiments/qwen38-27b-b70/scripts/bench-short-prefill.py', '.github/workflows/local-worker.yml']
   push:
     branches: [main]
-    paths: ['worker/**', '.github/workflows/local-worker.yml']
+    paths: ['worker/**', 'experiments/local-coding-worker/**', 'experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py', 'experiments/qwen38-27b-b70/scripts/bench-short-prefill.py', '.github/workflows/local-worker.yml']
 permissions:
   contents: read
 jobs:
@@ -19,3 +19,4 @@ jobs:
           cache-dependency-path: worker/requirements.lock
       - run: python -m pip install --require-hashes -r worker/requirements.lock
       - run: python -m unittest discover -s worker -p 'test_*.py'
+      - run: python worker/collect_results.py --verify --out experiments/local-coding-worker/data/2026-09-14-five-issues

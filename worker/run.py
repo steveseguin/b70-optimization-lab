@@ -52,9 +52,19 @@ class CheckedEnvironment:
     def __init__(self,sandbox,command,out,limit):
         self.sandbox=sandbox;self.command=command;self.out=out;self.limit=limit;self.validations=[]
         self.passing_tree_sha256=None;self.final_tree_sha256=None
+        self.last_command=None;self.repeated_command_count=0;self.loop_warnings=0
     def execute(self,action):
         self.passing_tree_sha256=None
-        if action.get('command','')==FINISH:
+        command=action.get('command','').strip()
+        if command!=FINISH:
+            self.repeated_command_count=self.repeated_command_count+1 if command==self.last_command else 1
+            self.last_command=command
+            if self.repeated_command_count>=4:
+                raise RuntimeError('Repeated-command loop persisted after feedback; task stopped without another tool execution')
+            if self.repeated_command_count==3:
+                self.loop_warnings+=1
+                return {'returncode':1,'output':'No-progress warning: you repeated the same command three times. Its output is already in the conversation. Do not repeat it again. Make the focused edit, run a different diagnostic, or submit if the task is complete.'}
+        if command==FINISH:
             before=workspace_tree_sha256(self.sandbox.run_dir/'workspace')
             result=self.sandbox.execute({'command':self.command})
             after=workspace_tree_sha256(self.sandbox.run_dir/'workspace')
@@ -133,7 +143,8 @@ def main():
             result={'schema':'neural.download.local-worker-result.v1','task_id':task['id'],'status':'tests-passed-awaiting-review' if passed else 'incomplete','acceptance_passed':passed,'human_review':'pending','source_commit':commit,'source_repository':str(repo),'sandbox_image':config['sandbox_image'],'agent_engine':'mini-swe-agent 2.4.6','model':config['model'],'baseline_returncode':baseline.get('returncode'),'agent_result':agent_result,'error':error,'model_requests':len(model.calls) if model else 0,'elapsed_seconds':time.time()-started,'patch':patch,'requests':model.calls if model else [],'validation_attempts':len(env.validations) if env else 0,'model_server_restarted':False,'original_repository_modified':False if patch and patch.get('source_repo_unchanged') else None}
             result.update(acceptance_tree_sha256=env.passing_tree_sha256 if env else None,
                           final_workspace_tree_sha256=env.final_tree_sha256 if env else None,
-                          final_workspace_matches_acceptance=final_tree_matches)
+                          final_workspace_matches_acceptance=final_tree_matches,
+                          repeated_command_warnings=env.loop_warnings if env else 0)
             save(out/'result.json',result)
             print(json.dumps({'status':result['status'],'task':task['id'],'model_requests':result['model_requests'],'elapsed_seconds':round(result['elapsed_seconds'],1),'result':str(out/'result.json')}),flush=True)
     return 0 if passed else 1
