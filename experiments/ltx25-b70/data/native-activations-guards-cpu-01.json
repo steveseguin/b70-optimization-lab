@@ -1,0 +1,32 @@
+{
+  "scope": "CPU graph/alias/layout/signature guards, no Inductor or XPU qualification",
+  "passed": true,
+  "checks": [
+    "sigmoid-torch.bfloat16-exact-repeat",
+    "sigmoid-torch.bfloat16-layout-no-alias",
+    "gelu-torch.bfloat16-exact-repeat",
+    "gelu-torch.bfloat16-layout-no-alias",
+    "noncontiguous-torch.bfloat16",
+    "sigmoid-torch.float32-exact-repeat",
+    "sigmoid-torch.float32-layout-no-alias",
+    "gelu-torch.float32-exact-repeat",
+    "gelu-torch.float32-layout-no-alias",
+    "noncontiguous-torch.float32",
+    "unsupported-dtype",
+    "unsupported-gelu-approximation",
+    "original-graph-preserved",
+    "parameter-identities-preserved-through-both-copies",
+    "replacement-counts",
+    "rewritten-graph-exact",
+    "count-mismatch",
+    "missing-input",
+    "duplicate-input",
+    "unknown-keyword",
+    "FX-wrong-gelu-approximation"
+  ],
+  "count": 21,
+  "torch": "2.14.0+xpu",
+  "backend_sha256": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+  "rms_dependency_sha256": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+  "test_sha256": "1940fe042499a8f855efc42ff96ae49e38db77385bf5954d3c615dcbdcaab2d1"
+}

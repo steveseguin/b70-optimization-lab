@@ -1,0 +1,321 @@
+{
+  "scope": "Actual tiny CPU BF16 LTXAV block with private native RMS/activations FX rewrite and Inductor; unit gate only",
+  "not_claimed": [
+    "XPU qualification",
+    "full checkpoint quality",
+    "generation speed",
+    "output resolution change"
+  ],
+  "source": "/home/steve/src/ComfyUI-ltx25-baseline",
+  "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "source_hashes": {
+    "comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+  },
+  "helper_sha256": "09632eba818a3cf925a7627b14f9b61db326dcb310e6ab2b282f51720d1cd18d",
+  "passed": true,
+  "rows": [
+    {
+      "video_tokens": 64,
+      "seed": 17,
+      "outputs": [
+        {
+          "name": "video",
+          "shape": [
+            1,
+            64,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            2048,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        },
+        {
+          "name": "audio",
+          "shape": [
+            1,
+            26,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            832,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "video_tokens": 64,
+      "seed": 123,
+      "outputs": [
+        {
+          "name": "video",
+          "shape": [
+            1,
+            64,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            2048,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        },
+        {
+          "name": "audio",
+          "shape": [
+            1,
+            26,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            832,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "video_tokens": 256,
+      "seed": 17,
+      "outputs": [
+        {
+          "name": "video",
+          "shape": [
+            1,
+            256,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            8192,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        },
+        {
+          "name": "audio",
+          "shape": [
+            1,
+            26,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            832,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "video_tokens": 256,
+      "seed": 123,
+      "outputs": [
+        {
+          "name": "video",
+          "shape": [
+            1,
+            256,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            8192,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        },
+        {
+          "name": "audio",
+          "shape": [
+            1,
+            26,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "stride": [
+            832,
+            32,
+            1
+          ],
+          "device": "cpu",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        }
+      ]
+    }
+  ],
+  "graphs": [
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-activations-block-cpu-01/graphs/graph-001.json",
+      "sha256": "0f57764be5232bc2f99f728e097828632e012e1b0ca1e1ebb02fac22b8c867cb",
+      "status": "compiled-native-activations-boundary",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      }
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-activations-block-cpu-01/graphs/graph-002.json",
+      "sha256": "ee8bdc81964cf8ca4c172491dd6eaf6a3aee27f46036f126ad8ce1bd2b2c1bfa",
+      "status": "compiled-native-activations-boundary",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      }
+    }
+  ],
+  "torch_imported": true,
+  "phase": "completed",
+  "block_dimensions": {
+    "video": 32,
+    "audio": 32,
+    "heads": 1,
+    "head_dim": 32,
+    "context_tokens": 8
+  },
+  "requested_video_tokens": [
+    64,
+    256
+  ],
+  "audio_tokens": 26,
+  "fullgraph": true,
+  "dynamic": false,
+  "guard_filter": null,
+  "backend": "private-native-activations-inductor",
+  "fixture_script_sha256": "0bb74cc2e7480777be6874612b18cbdc85bd976b7e985119daf6fa6d3fc9873e",
+  "backend_source_sha256": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+  "options_source_sha256": "96871c075b1c9851882171b84223d7e2b2294a734f15242278f75cc462b21ea4",
+  "options": {
+    "compile_threads": 1,
+    "emulate_precision_casts": true,
+    "eager_numerics.division_rounding": true,
+    "triton.cudagraphs": false,
+    "max_autotune": false,
+    "max_autotune_gemm": false
+  },
+  "expected_rms_per_graph": 15,
+  "rms_dependency_sha256": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+  "expected_activations_per_graph": {
+    "sigmoid": 6,
+    "gelu": 2
+  },
+  "evidence_directory": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-activations-block-cpu-01",
+  "compiler_environment": {
+    "TORCHINDUCTOR_COMPILE_THREADS": "1",
+    "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-activations-block-cpu-01/inductor-cache",
+    "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-activations-block-cpu-01/triton-cache",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "determinism": {
+    "enabled": true,
+    "warn_only": false,
+    "cpu_threads": 1,
+    "interop_threads": 1
+  },
+  "torch": "2.14.0+xpu",
+  "parameter_count": 43654,
+  "parameter_bytes": 87308,
+  "in_training": false,
+  "current_case": {
+    "video_tokens": 256,
+    "seed": 123
+  },
+  "dynamo_counters": {
+    "stats": {
+      "calls_captured": 986,
+      "unique_graphs": 2
+    },
+    "aot_autograd": {
+      "total": 2,
+      "autograd_cache_miss": 2,
+      "autograd_cache_saved": 2,
+      "ok": 2
+    },
+    "inductor": {
+      "pattern_matcher_count": 316,
+      "pattern_matcher_nodes": 340,
+      "removed_pointless_view_pair": 12,
+      "fxgraph_cache_miss": 2,
+      "extern_calls": 170
+    },
+    "graph_break": {},
+    "aten_mm_info": {
+      "aten.addmm_64_32_32": 10,
+      "aten.addmm_64_1_32": 3,
+      "aten.addmm_8_32_32": 8,
+      "aten.addmm_26_32_32": 20,
+      "aten.addmm_26_1_32": 6,
+      "aten.addmm_64_128_32": 1,
+      "aten.addmm_64_32_128": 1,
+      "aten.addmm_26_128_32": 2,
+      "aten.addmm_26_32_128": 2,
+      "aten.addmm_256_32_32": 10,
+      "aten.addmm_256_1_32": 3,
+      "aten.addmm_256_128_32": 1,
+      "aten.addmm_256_32_128": 1
+    }
+  },
+  "compiled_graphs": 2,
+  "torch_present_in_sys_modules": true,
+  "max_rss_kib": 1065784
+}

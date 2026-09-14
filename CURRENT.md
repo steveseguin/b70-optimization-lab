@@ -43,6 +43,11 @@ localization. [Result](experiments/ltx25-b70/notes/compiler-screen-03-results.md
 This supersedes PID6502 and historical blocked/fault states below.
 [CPU qualification](experiments/ltx25-b70/notes/native-rms-cpu-qualification-01.md),
 [prepared source](experiments/ltx25-b70/notes/native-rms-runtime-04-prepared.md).
+The separate native activation successor is now CPU-qualified:21 guard checks,
+four tiny block cases, and two emitted graphs each retaining15 RMS/six sigmoid/
+two GELU calls. It is not deployed; native GPU and full-clip parity remain
+pending. Prepare its immutable packet/client before another necessary controlled
+application reload. [Candidate and exact scope](experiments/ltx25-b70/notes/native-activations-cpu-qualification-01.md).
 
 **Two-B70 host, September 14: AMD transfer tests authorized.** The unchanged
 FP8 service at localhost:18124 passed 12/12 full-output reference checks and
