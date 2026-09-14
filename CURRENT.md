@@ -25,6 +25,20 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: adjacent-state native screen running on packet07.**
+PID56711 serves `http://127.0.0.1:8188`, manifest
+`afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1`.
+All four startup checks and strict after-import determinism passed. Old PID39793
+exited cleanly after one SIGINT, with render ownership clear. Computer boot is
+unchanged; no reboot, driver reset or host-setting changes occurred.
+The 12-request `multiblock-screen-02` is running (client exec40600, server exec70494).
+It tests all48 adjacent-state reuse against restored original dispatch on three
+scenes. No speed or native quality result is claimed yet. Failed requests halt
+submissions without cycling the server. [Prepared comparison](experiments/ltx25-b70/notes/adjacent-state-runtime-07-prepared.md),
+[startup evidence](experiments/ltx25-b70/data/multiblock-migration-07/startup.json).
+This supersedes PID39793/packet06 live statements below; inspect actual progress
+before any new client action.
+
 **Four-B70 host, September14: multiblock screen complete; exact but slower.**
 PID39793 serves `http://127.0.0.1:8188` on packet06, manifest
 `3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394`.

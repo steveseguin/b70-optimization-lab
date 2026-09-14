@@ -1,0 +1,33 @@
+{
+  "client_session": 40600,
+  "server_session": 70494,
+  "client_environment": {
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "client_command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "scripts/run-multiblock-screen-v2.py",
+    "--campaign",
+    "multiblock-screen-02",
+    "--packet",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-07",
+    "--manifest-sha256",
+    "afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1",
+    "--server-run",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-07"
+  ],
+  "server_pid": 56711,
+  "server_log": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-07.log",
+  "server_command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-u",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-07/launch/serve-encoder.py",
+    "--packet",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-07",
+    "--manifest-sha256",
+    "afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1",
+    "--run-name",
+    "encoder-server-compiler-07"
+  ]
+}
