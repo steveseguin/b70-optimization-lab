@@ -1,0 +1,65 @@
+{
+  "schema": "ltx.user-reported-freeze-passive.v1",
+  "utc": "2026-09-14T19:20:53.603727+00:00",
+  "user_report": "computer froze; user restarted computer afterward",
+  "previous_boot_id": "8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a",
+  "observed_boot_id": "5414a640-c223-4a67-baa2-ec2f4c4c5917",
+  "agent_rebooted": false,
+  "user_confirmed_restart": true,
+  "active_probe_run_directory_exists": false,
+  "existing_fault_sha256": "3f5106bada68c5efd6746cab28fe89d1544b10d525f69e225bbc6b9794485126",
+  "fault_unchanged": true,
+  "uptime": "492.96 15709.81",
+  "meminfo": "MemTotal:       131754508 kB\nMemFree:        129244772 kB\nMemAvailable:   129639564 kB\nBuffers:           82624 kB\nCached:          1307916 kB\nSwapCached:            0 kB\nActive:          1372936 kB\nInactive:         322120 kB\nActive(anon):     310944 kB\nInactive(anon):        0 kB\nActive(file):    1061992 kB\nInactive(file):   322120 kB\nUnevictable:        3088 kB\nMlocked:              16 kB\nSwapTotal:       8388604 kB\nSwapFree:        8388604 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:               412 kB\nWriteback:             0 kB\nAnonPages:        307968 kB\nMapped:           382796 kB\nShmem:              6268 kB\nKReclaimable:      62884 kB\nSlab:             387796 kB\nSReclaimable:      62884 kB\nSUnreclaim:       324912 kB\nKernelStack:       11616 kB\nPageTables:         9704 kB\nSecPageTables:      2336 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    74265856 kB\nCommitted_AS:    2188876 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      113316 kB\nVmallocChunk:          0 kB\nPercpu:            22528 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:     18432 kB\nFilePmdMapped:         0 kB\nCmaTotal:              0 kB\nCmaFree:         9320448 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      316336 kB\nDirectMap2M:     6887424 kB\nDirectMap1G:    126877696 kB\n",
+  "pstore_inspection": "PermissionError listing /sys/fs/pstore; no escalation performed; contents unknown",
+  "initial_collector_error": "PermissionError at pstore listing after four command payloads and existing FAULT were saved; initial command returncode fields were not retained",
+  "render_ownership_now": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": ""
+  },
+  "commands": {
+    "previous-kernel": {
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 0,
+      "returncode_not_retained_by_interrupted_collector": true,
+      "detected_faults": [],
+      "tail": []
+    },
+    "current-kernel": {
+      "stdout_sha256": "5b4cfede2218542c9a4f107acbeb0cb90c3fa349315db169c5beb9bd1d56e29b",
+      "stdout_bytes": 260208,
+      "returncode_not_retained_by_interrupted_collector": true,
+      "detected_faults": [],
+      "tail": [
+        "2026-09-14T15:12:52.888888-04:00 steve-b70s kernel: atlantic 0000:69:00.0 eth1: atlantic: link change old 0 new 100",
+        "2026-09-14T15:12:53.926875-04:00 steve-b70s kernel: NFSD: Using nfsdcld client tracking operations.",
+        "2026-09-14T15:12:53.926922-04:00 steve-b70s kernel: NFSD: no clients to reclaim, skipping NFSv4 grace period (net effffff9)",
+        "2026-09-14T15:12:53.934872-04:00 steve-b70s kernel: kauditd_printk_skb: 149 callbacks suppressed",
+        "2026-09-14T15:12:53.934889-04:00 steve-b70s kernel: audit: type=1400 audit(1789413173.933:161): apparmor=\"STATUS\" operation=\"profile_load\" profile=\"unconfined\" name=\"docker-default\" pid=2929 comm=\"apparmor_parser\"",
+        "2026-09-14T15:12:54.197876-04:00 steve-b70s kernel: Initializing XFRM netlink socket",
+        "2026-09-14T15:12:54.212870-04:00 steve-b70s kernel: bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.",
+        "2026-09-14T15:12:54.272872-04:00 steve-b70s kernel: atlantic 0000:69:00.0 eth1: atlantic: link change old 100 new 0",
+        "2026-09-14T15:12:54.984889-04:00 steve-b70s kernel: fbcon: Taking over console",
+        "2026-09-14T15:12:54.993880-04:00 steve-b70s kernel: Console: switching to colour frame buffer device 128x48",
+        "2026-09-14T15:12:59.416911-04:00 steve-b70s kernel: atlantic 0000:69:00.0 eth1: atlantic: link change old 0 new 100",
+        "2026-09-14T15:18:39.634815-04:00 steve-b70s systemd-journald[578]: /var/log/journal/9c3959da4143428eb2e83dbae3e4a0f7/user-1000.journal: Journal file uses a different sequence number ID, rotating.",
+        "2026-09-14T15:18:44.131927-04:00 steve-b70s kernel: audit: type=1400 audit(1789413524.130:162): apparmor=\"AUDIT\" operation=\"userns_create\" class=\"namespace\" info=\"Userns create - transitioning profile\" profile=\"unconfined\" pid=3773 comm=\"bwrap\" requested=\"userns_create\" target=\"unprivileged_userns\" execpath=\"/usr/bin/bwrap\"",
+        "2026-09-14T15:18:44.132891-04:00 steve-b70s kernel: audit: type=1400 audit(1789413524.131:163): apparmor=\"DENIED\" operation=\"capable\" class=\"cap\" profile=\"unprivileged_userns\" pid=3774 comm=\"bwrap\" capability=8  capname=\"setpcap\"",
+        "2026-09-14T15:18:44.132921-04:00 steve-b70s kernel: audit: type=1400 audit(1789413524.131:164): apparmor=\"DENIED\" operation=\"capable\" class=\"cap\" profile=\"unprivileged_userns\" pid=3774 comm=\"bwrap\" capability=12  capname=\"net_admin\""
+      ]
+    },
+    "boots": {
+      "stdout_sha256": "cf8010793ed65370838b1566fd9f71e02ea05674b53eaa459c003b8ed613d934",
+      "stdout_bytes": 3517,
+      "returncode_not_retained_by_interrupted_collector": true
+    },
+    "render-owners": {
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 0,
+      "returncode_not_retained_by_interrupted_collector": true
+    }
+  },
+  "causal_attribution": "unknown; passive evidence only",
+  "action": "Keep native holds; prior same-boot diagnostic admission invalid; preserve source work and inspect new evidence"
+}

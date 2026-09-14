@@ -47,7 +47,20 @@ on one persistent research process. No new result or default is promoted.
 [Implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
-**Four-B70 host, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
+**Four-B70 host, September14 19:20 UTC: user-reported freeze and user-confirmed reboot.**
+The computer is now on boot `5414a640-c223-4a67-baa2-ec2f4c4c5917`,
+started about19:12 UTC. The user confirms restarting it after a freeze; the
+agent did not reboot or reset it. LTX remains stopped and the original FAULT
+latch remains byte-identical. The planned same-boot health diagnostic never
+ran (its one-use output directory is absent); its old-boot admission is invalid.
+Passive checks find unowned render nodes and no detected current-boot kernel
+fault. These observations do not qualify GPU health. A new, separately reviewed
+bounded assessment is being prepared; no model or native CPU tests are admitted.
+The previous boot's kernel tail contains the earlier18:13 xe fault; it does not
+establish the cause or precise time of the later reported freeze.
+[Passive incident evidence](experiments/ltx25-b70/data/user-reported-freeze-02/report.json).
+
+**Historical four-B70 state, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
 Linux OOM-killed LTX PID116013 at18:12:58 UTC during the third component
 transition (host-table back to control), before the next clip completed.
 Exec15201 exited137. Xe GPU0 reported a bcs engine fault/reset at18:13:01,

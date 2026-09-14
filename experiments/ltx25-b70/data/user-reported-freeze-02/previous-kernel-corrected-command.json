@@ -1,0 +1,19 @@
+{
+  "command": [
+    "journalctl",
+    "-k",
+    "--boot=8e4b1b651c3847bb8ca5e4fd6bbdf94a",
+    "--no-pager",
+    "-o",
+    "short-iso-precise"
+  ],
+  "returncode": 0,
+  "stderr": "",
+  "stdout_sha256": "c0c1e63444216aa42560e5e6b7deb753a1957addcc4e52b014414c787725b9a1",
+  "correction": "journalctl requires unhyphenated boot ID; previous collector used hyphenated ID and lost stderr; corrected query preserves actual previous-boot evidence",
+  "last_lines": [
+    "                                                            EngineInstance: 0",
+    "2026-09-14T14:13:01.141938-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+    "2026-09-14T14:13:01.142276-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT"
+  ]
+}
