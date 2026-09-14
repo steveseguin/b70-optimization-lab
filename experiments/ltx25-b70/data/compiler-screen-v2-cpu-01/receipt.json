@@ -1,0 +1,93 @@
+{
+  "schema": "ltx25.compiler-client-naming-cpu.v1",
+  "status": "passed",
+  "tests_run": 5,
+  "failures": 0,
+  "errors": 0,
+  "source_sha256": {
+    "run-compiler-screen.py": "51376640d128bfeac5bb6e76e40ce2d7bdb44a610e9e649f9aef9a0dcfc069e6",
+    "run-compiler-screen-v2.py": "0069bee68b70230ce9ae17774873e497cc62573fe945c5f666ac1fd4e9884d33",
+    "test-compiler-screen-v2.py": "6dbaeadd05aa0ece102f9a785bd870dcfc9f3e9409e56d65a96534e02c3f299f",
+    "run-encoder-screen.py": "4ec94d7e69c3d93b2caa740209f6a84ff35d56bdbbb8bf55f4b9782bacde10b0",
+    "compare-clip.py": "80ee7a45468f95c6c0b8df9ecceea338af9fdf4d2537ba5966603b4f5b03fe0e",
+    "profile-clip.py": "ad0141ff493c8c4cc5993ff4f8c2aceea76c2e99359477c7cef2d24628eb1980",
+    "run-stability.py": "7769cf87ed005be6e13dc6acced399f1541f68bc988953e7a409ba7fb80937b2"
+  },
+  "parsed_cli": {
+    "campaign": "compiler-screen-02",
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03",
+    "manifest_sha256": "9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980",
+    "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-03"
+  },
+  "schedule": [
+    {
+      "mode": "eager",
+      "fixture": "boat",
+      "initialization": true,
+      "qualified_before": 0,
+      "run": "compiler-screen-02-r01-eager-boat"
+    },
+    {
+      "mode": "eager",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 0,
+      "run": "compiler-screen-02-r02-eager-boat"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": true,
+      "qualified_before": 0,
+      "run": "compiler-screen-02-r03-compiled-boat"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-02-r04-compiled-boat"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "marble",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-02-r05-compiled-marble"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "bird",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-02-r06-compiled-bird"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-02-r07-compiled-boat"
+    },
+    {
+      "mode": "restored",
+      "fixture": "boat",
+      "initialization": true,
+      "qualified_before": 2,
+      "run": "compiler-screen-02-r08-restored-boat"
+    },
+    {
+      "mode": "restored",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-02-r09-restored-boat"
+    }
+  ],
+  "transcript": "test_all_non_naming_ast_is_unchanged (__main__.NamingTests.test_all_non_naming_ast_is_unchanged) ... ok\ntest_all_required_arguments_and_no_default_campaign (__main__.NamingTests.test_all_required_arguments_and_no_default_campaign) ... ok\ntest_fresh_names_preserve_nine_request_schedule (__main__.NamingTests.test_fresh_names_preserve_nine_request_schedule) ... ok\ntest_frozen_source_and_helper_pins (__main__.NamingTests.test_frozen_source_and_helper_pins) ... ok\ntest_safe_campaign_names (__main__.NamingTests.test_safe_campaign_names) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.034s\n\nOK\n",
+  "client_imported_or_executed": false,
+  "torch_imported": false,
+  "native_or_gpu_execution": false,
+  "runtime_qualification": false,
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+}

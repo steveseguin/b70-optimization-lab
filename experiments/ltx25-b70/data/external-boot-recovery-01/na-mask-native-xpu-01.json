@@ -1,0 +1,1229 @@
+{
+  "schema": "ltx25.na-mask-extent-native-qualification.v1",
+  "created_utc": "2026-09-14T13:01:48.190681+00:00",
+  "script_sha256": "3d05bd4c0095b2d204698d02dc61c935a0ee9eee688e916954b6bb0b22dacdd7",
+  "python": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+  "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+  "device": "xpu:3",
+  "check_only": false,
+  "torch_imported": true,
+  "passed": true,
+  "cases": [
+    {
+      "kind": "mask",
+      "case_id": 0,
+      "dtype": "torch.bfloat16",
+      "relative_bounds": [
+        [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ],
+        [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ],
+        [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 1,
+      "dtype": "torch.bfloat16",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            1,
+            1
+          ],
+          [
+            3,
+            4,
+            4
+          ]
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            3
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            12,
+            36
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "6f0304efc3bf82da8df01eabdb82e7c0198e87baa6a90e2ce36f6e66647b86a8",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            12,
+            36
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "6f0304efc3bf82da8df01eabdb82e7c0198e87baa6a90e2ce36f6e66647b86a8",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            12,
+            36
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "6f0304efc3bf82da8df01eabdb82e7c0198e87baa6a90e2ce36f6e66647b86a8",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 2,
+      "dtype": "torch.bfloat16",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            5,
+            5,
+            5
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            12,
+            60
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "52dbd4365b026555e3382c056240376d3aa319c7e46c1aa7c38caa4883570517",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            12,
+            60
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "52dbd4365b026555e3382c056240376d3aa319c7e46c1aa7c38caa4883570517",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            12,
+            60
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "52dbd4365b026555e3382c056240376d3aa319c7e46c1aa7c38caa4883570517",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 3,
+      "dtype": "torch.bfloat16",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            2,
+            3,
+            4
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            27,
+            60
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "0d44cd53ed10dc77c9f0820423d5e5ed95da17fbae70e672abb50fcfc9b4cccc",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            27,
+            60
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "0d44cd53ed10dc77c9f0820423d5e5ed95da17fbae70e672abb50fcfc9b4cccc",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            27,
+            60
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "0d44cd53ed10dc77c9f0820423d5e5ed95da17fbae70e672abb50fcfc9b4cccc",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 4,
+      "dtype": "torch.bfloat16",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            12,
+            27
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "620854ea4084745c1a046a4db0dc53d389dbcc1a84a6f6683c4e0e4858f3e539",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            12,
+            27
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "620854ea4084745c1a046a4db0dc53d389dbcc1a84a6f6683c4e0e4858f3e539",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            12,
+            27
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "620854ea4084745c1a046a4db0dc53d389dbcc1a84a6f6683c4e0e4858f3e539",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "attention",
+      "case_id": 0,
+      "dtype": "torch.bfloat16",
+      "shape": [
+        1,
+        1,
+        1,
+        1,
+        2,
+        8
+      ],
+      "kernels": [
+        1,
+        1,
+        1
+      ],
+      "causal": [
+        false,
+        false,
+        false
+      ],
+      "scale": 1.0,
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            1,
+            1,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "4b445369554f6c13e159cdf710acb77772addaa827b0f041a943b5d6e3439021",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            1,
+            1,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "4b445369554f6c13e159cdf710acb77772addaa827b0f041a943b5d6e3439021",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            1,
+            1,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "4b445369554f6c13e159cdf710acb77772addaa827b0f041a943b5d6e3439021",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "attention",
+      "case_id": 1,
+      "dtype": "torch.bfloat16",
+      "shape": [
+        1,
+        2,
+        3,
+        4,
+        2,
+        8
+      ],
+      "kernels": [
+        3,
+        3,
+        3
+      ],
+      "causal": [
+        false,
+        false,
+        false
+      ],
+      "scale": null,
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            2,
+            3,
+            4,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "76dbe1ef67eda1faec9ac6eb66f58f94b3c70cbce43ae177c2fcafab5e72eb2c",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            2,
+            3,
+            4,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "76dbe1ef67eda1faec9ac6eb66f58f94b3c70cbce43ae177c2fcafab5e72eb2c",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            2,
+            3,
+            4,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "76dbe1ef67eda1faec9ac6eb66f58f94b3c70cbce43ae177c2fcafab5e72eb2c",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "attention",
+      "case_id": 2,
+      "dtype": "torch.bfloat16",
+      "shape": [
+        1,
+        3,
+        4,
+        5,
+        2,
+        8
+      ],
+      "kernels": [
+        2,
+        3,
+        4
+      ],
+      "causal": [
+        true,
+        false,
+        true
+      ],
+      "scale": 1.0,
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            3,
+            4,
+            5,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "13331bb1507d6f98c5d96cd9de7cd18b1378d51092e9ec0217ea7c253d2a640d",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            3,
+            4,
+            5,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "13331bb1507d6f98c5d96cd9de7cd18b1378d51092e9ec0217ea7c253d2a640d",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            3,
+            4,
+            5,
+            2,
+            8
+          ],
+          "dtype": "torch.bfloat16",
+          "sha256": "13331bb1507d6f98c5d96cd9de7cd18b1378d51092e9ec0217ea7c253d2a640d",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 0,
+      "dtype": "torch.float32",
+      "relative_bounds": [
+        [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ],
+        [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ],
+        [
+          [
+            0
+          ],
+          [
+            1
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "dtype": "torch.float32",
+          "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "dtype": "torch.float32",
+          "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "dtype": "torch.float32",
+          "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 1,
+      "dtype": "torch.float32",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            1,
+            1
+          ],
+          [
+            3,
+            4,
+            4
+          ]
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            3
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            12,
+            36
+          ],
+          "dtype": "torch.float32",
+          "sha256": "e79d71811cfc06b4def310f71b04327a06549162590e4709ffacd44e9b72f675",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            12,
+            36
+          ],
+          "dtype": "torch.float32",
+          "sha256": "e79d71811cfc06b4def310f71b04327a06549162590e4709ffacd44e9b72f675",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            12,
+            36
+          ],
+          "dtype": "torch.float32",
+          "sha256": "e79d71811cfc06b4def310f71b04327a06549162590e4709ffacd44e9b72f675",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 2,
+      "dtype": "torch.float32",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            5,
+            5,
+            5
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            12,
+            60
+          ],
+          "dtype": "torch.float32",
+          "sha256": "39a68c2004ed4a20edb148b72e5aabd663f15cce54b30d2ea1c106e839761ed5",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            12,
+            60
+          ],
+          "dtype": "torch.float32",
+          "sha256": "39a68c2004ed4a20edb148b72e5aabd663f15cce54b30d2ea1c106e839761ed5",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            12,
+            60
+          ],
+          "dtype": "torch.float32",
+          "sha256": "39a68c2004ed4a20edb148b72e5aabd663f15cce54b30d2ea1c106e839761ed5",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 3,
+      "dtype": "torch.float32",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            2,
+            3,
+            4
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            27,
+            60
+          ],
+          "dtype": "torch.float32",
+          "sha256": "2d3400fe7fdcac54b86b72e2d00d9113db2f5b3f79960857c5887d9a9ebff0ef",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            27,
+            60
+          ],
+          "dtype": "torch.float32",
+          "sha256": "2d3400fe7fdcac54b86b72e2d00d9113db2f5b3f79960857c5887d9a9ebff0ef",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            27,
+            60
+          ],
+          "dtype": "torch.float32",
+          "sha256": "2d3400fe7fdcac54b86b72e2d00d9113db2f5b3f79960857c5887d9a9ebff0ef",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "mask",
+      "case_id": 4,
+      "dtype": "torch.float32",
+      "relative_bounds": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ]
+      ],
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            12,
+            27
+          ],
+          "dtype": "torch.float32",
+          "sha256": "3475cbf648bf36c815d8e128c8125ab9c268025a81ad41fbce568a5101896d53",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            12,
+            27
+          ],
+          "dtype": "torch.float32",
+          "sha256": "3475cbf648bf36c815d8e128c8125ab9c268025a81ad41fbce568a5101896d53",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            12,
+            27
+          ],
+          "dtype": "torch.float32",
+          "sha256": "3475cbf648bf36c815d8e128c8125ab9c268025a81ad41fbce568a5101896d53",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "attention",
+      "case_id": 0,
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        1,
+        1,
+        1,
+        2,
+        8
+      ],
+      "kernels": [
+        1,
+        1,
+        1
+      ],
+      "causal": [
+        false,
+        false,
+        false
+      ],
+      "scale": 1.0,
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            1,
+            1,
+            1,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "8e322cd5ac0b6c1d487c2d43a6fbbb05e3e0b223e2e87830e97d36d628ee1f86",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            1,
+            1,
+            1,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "8e322cd5ac0b6c1d487c2d43a6fbbb05e3e0b223e2e87830e97d36d628ee1f86",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            1,
+            1,
+            1,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "8e322cd5ac0b6c1d487c2d43a6fbbb05e3e0b223e2e87830e97d36d628ee1f86",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "attention",
+      "case_id": 1,
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        2,
+        3,
+        4,
+        2,
+        8
+      ],
+      "kernels": [
+        3,
+        3,
+        3
+      ],
+      "causal": [
+        false,
+        false,
+        false
+      ],
+      "scale": null,
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            2,
+            3,
+            4,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "797f435722703a8f670bbaf829f636d2e74d8bca941c1cc3f02c5eefef4e088b",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            2,
+            3,
+            4,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "797f435722703a8f670bbaf829f636d2e74d8bca941c1cc3f02c5eefef4e088b",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            2,
+            3,
+            4,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "797f435722703a8f670bbaf829f636d2e74d8bca941c1cc3f02c5eefef4e088b",
+          "finite": true
+        }
+      ],
+      "exact": true
+    },
+    {
+      "kind": "attention",
+      "case_id": 2,
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        3,
+        4,
+        5,
+        2,
+        8
+      ],
+      "kernels": [
+        2,
+        3,
+        4
+      ],
+      "causal": [
+        true,
+        false,
+        true
+      ],
+      "scale": 1.0,
+      "outputs": [
+        {
+          "implementation": "original",
+          "shape": [
+            1,
+            3,
+            4,
+            5,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "a357ebc450cb0a1012ebc9d86c86f9a1b2caa18c3d9c036fbc4c0a507a14cf70",
+          "finite": true
+        },
+        {
+          "implementation": "candidate",
+          "shape": [
+            1,
+            3,
+            4,
+            5,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "a357ebc450cb0a1012ebc9d86c86f9a1b2caa18c3d9c036fbc4c0a507a14cf70",
+          "finite": true
+        },
+        {
+          "implementation": "candidate-repeat",
+          "shape": [
+            1,
+            3,
+            4,
+            5,
+            2,
+            8
+          ],
+          "dtype": "torch.float32",
+          "sha256": "a357ebc450cb0a1012ebc9d86c86f9a1b2caa18c3d9c036fbc4c0a507a14cf70",
+          "finite": true
+        }
+      ],
+      "exact": true
+    }
+  ],
+  "full_clip_parity_tested": false,
+  "timing_measured": false,
+  "limitations": [
+    "Small bounded native cases only; no full-clip parity or speed claim",
+    "Tiny attention cases use unchanged production budgets and do not force tiling"
+  ],
+  "source_checks_sha256": "0de8acb35a21f3d7ef2b5f67f8533b68f7ff3f106b6bc90784d762f7951b203a",
+  "sources": {
+    "original": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+    "candidate": "4df083f73ee533e6a45efd9f7cc14e0a2abf21bbc065c128b19ff5083be6f228"
+  },
+  "dependency_versions": {
+    "torch": "2.14.0+xpu",
+    "comfy-kitchen": "0.2.33",
+    "numpy": "2.5.2"
+  },
+  "source_checks_passed": true,
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "strict_determinism": {
+    "enabled": true,
+    "warn_only": false,
+    "float32_matmul_precision": "highest"
+  },
+  "torch_identity": {
+    "version": "2.14.0+xpu",
+    "git_version": "08187d9e0fba026dc8217405802ab5381dc88d90",
+    "module_path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py"
+  },
+  "status": "small-native-mask-attention-parity-passed",
+  "torch_present_in_sys_modules": true
+}

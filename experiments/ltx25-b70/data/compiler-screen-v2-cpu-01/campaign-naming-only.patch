@@ -1,0 +1,113 @@
+--- scripts/run-compiler-screen.py
++++ scripts/run-compiler-screen-v2.py
+@@ -5,6 +5,7 @@
+ import fcntl
+ import importlib.util
+ import json
++import re
+ from pathlib import Path
+ import shutil
+ import sys
+@@ -12,7 +13,6 @@
+ sys.dont_write_bytecode = True
+ LANE = Path(__file__).resolve().parents[1]
+ ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+-CAMPAIGN = 'compiler-screen-01'
+ ENCODER_CLIENT_SHA = '4ec94d7e69c3d93b2caa740209f6a84ff35d56bdbbb8bf55f4b9782bacde10b0'
+ 
+ 
+@@ -29,14 +29,21 @@
+ require, sha, write_json = screen.require, screen.sha, screen.write_json
+ 
+ 
+-def schedule():
++def campaign_name(value):
++    if not isinstance(value, str) or re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,63}', value) is None:
++        raise argparse.ArgumentTypeError('campaign must be 1..64 lowercase safe filename characters')
++    return value
++
++
++def schedule(campaign):
++    campaign = campaign_name(campaign)
+     cases = [('eager', 'boat'), ('eager', 'boat'), ('compiled', 'boat'),
+              ('compiled', 'boat'), ('compiled', 'marble'), ('compiled', 'bird'),
+              ('compiled', 'boat'), ('restored', 'boat'), ('restored', 'boat')]
+     return [{'mode': mode, 'fixture': fixture,
+              'initialization': index in (0, 2, 7),
+              'qualified_before': 0 if index <= 2 else 2,
+-             'run': f'{CAMPAIGN}-r{index + 1:02d}-{mode}-{fixture}'}
++             'run': f'{campaign}-r{index + 1:02d}-{mode}-{fixture}'}
+             for index, (mode, fixture) in enumerate(cases)]
+ 
+ 
+@@ -161,6 +168,7 @@
+ 
+ 
+ def run_campaign(args, common):
++    campaign = campaign_name(args.campaign)
+     require(sha(LANE / 'data/speed-resident-split-api.json') == screen.BASELINE_SHA,
+             'Original resident graph changed')
+     base = json.loads((LANE / 'data/speed-resident-split-api.json').read_text())
+@@ -169,7 +177,7 @@
+         template = json.loads((args.packet / 'graphs' / ('compiler-' + mode + '.json')).read_text())
+         require(normalized(template) == normalized(expected_graph(base, mode)), 'Packet compiler graph differs')
+     identity_sha = sha(args.server_run / 'server-identity.json')
+-    rows = schedule()
++    rows = schedule(campaign)
+     require(len(rows) == 9, 'Unbounded compiler schedule')
+     fixtures = {}
+     for fixture, (reference, seed) in screen.REFERENCES.items():
+@@ -182,10 +190,10 @@
+                          Path('output/validation') / row['run']):
+             require(not retention.safe_path(ROOT, relative, exists=False).exists(), 'Output already exists')
+         require(not (args.server_run / ('compiler-' + row['run'])).exists(), 'Compiler receipts already exist')
+-    output = retention.safe_path(ROOT, CAMPAIGN, exists=False)
++    output = retention.safe_path(ROOT, campaign, exists=False)
+     output.mkdir(exist_ok=False)
+     write_json(output / 'preregistration.json', {
+-        'campaign': CAMPAIGN, 'schedule': rows, 'max_requests': 9, 'fixtures': fixtures,
++        'campaign': campaign, 'schedule': rows, 'max_requests': 9, 'fixtures': fixtures,
+         'client_sha256': sha(Path(__file__)), 'encoder_helpers_sha256': ENCODER_CLIENT_SHA,
+         'packet_manifest_sha256': args.manifest_sha256, 'identity': identity,
+         'scope': 'one native block24, eager/compiled/restored in one process, control encoder',
+@@ -263,9 +271,9 @@
+             previews = history['outputs']['75']['images']
+             require(len(previews) == 1 and previews[0]['type'] == 'output' and previews[0]['subfolder'] == run,
+                     'Unexpected preview path')
+-            files[run] = [retention.inventory(ROOT, CAMPAIGN, runs, run,
++            files[run] = [retention.inventory(ROOT, campaign, runs, run,
+                             Path('output/validation') / run / 'tensors.safetensors'),
+-                          retention.inventory(ROOT, CAMPAIGN, runs, run,
++                          retention.inventory(ROOT, campaign, runs, run,
+                             Path('output') / run / previews[0]['filename'])]
+             write_json(output / 'output-inventory.json', files)
+             write_json(output / 'progress.json', {'status': 'running', 'rows': completed})
+@@ -275,7 +283,7 @@
+                         if x['relative_path'].endswith('.mp4') and x['relative_path'] not in deleted]
+             to_delete.extend(previews[:-3])
+             for entry in to_delete:
+-                retention.delete_owned(ROOT, CAMPAIGN, runs, entry, parity_passed=True,
++                retention.delete_owned(ROOT, campaign, runs, entry, parity_passed=True,
+                                        receipts=output / 'deletion-receipts.jsonl')
+                 deleted.add(entry['relative_path'])
+             print(json.dumps({'run': run, 'status': 'passed', 'initialization': current['initialization'],
+@@ -292,12 +300,17 @@
+         raise
+ 
+ 
+-def main():
++def parse_args(argv=None):
+     parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--campaign', type=campaign_name, required=True)
+     parser.add_argument('--packet', type=Path, required=True)
+     parser.add_argument('--manifest-sha256', required=True)
+     parser.add_argument('--server-run', type=Path, required=True)
+-    args = parser.parse_args()
++    return parser.parse_args(argv)
++
++
++def main():
++    args = parse_args()
+     args.packet, args.server_run = args.packet.absolute(), args.server_run.absolute()
+     require(args.packet.parent == ROOT and args.server_run.parent == ROOT, 'Invalid packet/server location')
+     retention.safe_path(ROOT, args.packet.name)

@@ -25,6 +25,28 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host recovered after an external boot, September14.** Current boot
+`8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a` differs from the faulted boot; all three
+old processes are absent. Four-card copy/compute and clean-kernel checks passed,
+with render ownership clear after exit. The original FAULT was preserved
+byte-for-byte under `external-boot-recovery-01/historical-FAULT.json` and an
+explicit recovery admission was recorded there. No reboot, driver reset or host
+setting change was performed by this agent. This supersedes the blocked status
+below; the full generation goal remains incomplete.
+
+The prepared decoder mask-extent candidate passed all16 small XPU:3 native
+mask/attention cases, including BF16/F32 and exact repeats. Kernel postflight is
+clean and render devices were released. Full-clip parity and speed are still
+unmeasured; installed Comfy Kitchen remains unchanged. Compiler packet03 is now
+running as PID6502 at `http://127.0.0.1:8188`, server directory
+`encoder-server-compiler-03`, manifest
+`9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980`.
+Startup four-card checks and strict after-import determinism passed; endpoint
+identity matched. New campaign `compiler-screen-02` is running through the
+naming-only v2 client, with original quality gates and protected campaign01
+unchanged. Inspect its progress before any new GPU request; reuse this server.
+[Recovery evidence](experiments/ltx25-b70/notes/external-boot-recovery-01.md).
+
 **LTX goal blocked on host recovery, September14.** The same kernel fault and
 pending-interrupt native clients were revalidated across three consecutive goal
 turns. Prepared source work is saved, but the next meaningful steps require a
