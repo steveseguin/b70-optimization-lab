@@ -1,0 +1,124 @@
+{
+  "status": "prepared-inactive-native-unqualified",
+  "original_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+  "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+  "patch_sha256": "4a9eaece77d8572994142da0057ce21afa6baa954c978d2cf0e7dc3e8fb8880c",
+  "preparer_sha256": "fa07110d8158a4adc56da8132e863110b4c164aa0bac3398b0e2d9418f119706",
+  "source_path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py",
+  "source_derived_untiled_stages_not_runtime_shapes": [
+    {
+      "dimensions": [
+        6,
+        8,
+        8
+      ],
+      "kernels": [
+        3,
+        7,
+        7
+      ],
+      "blocks": 4,
+      "is_causal": null,
+      "groups": 1,
+      "uncached_axis_builds": 3,
+      "cached_axis_builds": 2,
+      "axis_tensor_bytes": 100,
+      "max_axis_tensor_bytes": 64,
+      "full_bf16_masks_if_all_retained_bytes": 294912
+    },
+    {
+      "dimensions": [
+        6,
+        16,
+        16
+      ],
+      "kernels": [
+        3,
+        7,
+        7
+      ],
+      "blocks": 6,
+      "is_causal": null,
+      "groups": 1,
+      "uncached_axis_builds": 3,
+      "cached_axis_builds": 2,
+      "axis_tensor_bytes": 292,
+      "max_axis_tensor_bytes": 256,
+      "full_bf16_masks_if_all_retained_bytes": 4718592
+    },
+    {
+      "dimensions": [
+        11,
+        16,
+        16
+      ],
+      "kernels": [
+        3,
+        5,
+        5
+      ],
+      "blocks": 4,
+      "is_causal": null,
+      "groups": 1,
+      "uncached_axis_builds": 3,
+      "cached_axis_builds": 2,
+      "axis_tensor_bytes": 377,
+      "max_axis_tensor_bytes": 256,
+      "full_bf16_masks_if_all_retained_bytes": 15859712
+    },
+    {
+      "dimensions": [
+        21,
+        32,
+        32
+      ],
+      "kernels": [
+        3,
+        5,
+        5
+      ],
+      "blocks": 2,
+      "is_causal": null,
+      "groups": 8,
+      "uncached_axis_builds": 24,
+      "cached_axis_builds": 4,
+      "axis_tensor_bytes": 818,
+      "max_axis_tensor_bytes": 288,
+      "full_bf16_masks_if_all_retained_bytes": 160579584
+    },
+    {
+      "dimensions": [
+        25,
+        64,
+        64
+      ],
+      "kernels": [
+        11,
+        11,
+        11
+      ],
+      "blocks": 8,
+      "is_causal": null,
+      "groups": 18,
+      "uncached_axis_builds": 54,
+      "cached_axis_builds": 8,
+      "axis_tensor_bytes": 1878,
+      "max_axis_tensor_bytes": 416,
+      "full_bf16_masks_if_all_retained_bytes": 335486976
+    }
+  ],
+  "assumed_decoder_axis_builds_original": 522,
+  "assumed_decoder_axis_builds_candidate": 100,
+  "cache_scope": "one na3d call; no cross-call or generated-output reuse",
+  "max_cache_tensor_bytes": 262144,
+  "max_cache_entries": 64,
+  "unchanged": [
+    "q/k/v operations",
+    "SDPA arguments/order",
+    "full mask allocation/fill",
+    "mask miss arithmetic including extent scalar readback",
+    "tile budgets/grouping"
+  ],
+  "live_source_modified": false,
+  "native_or_speed_claim": false
+}

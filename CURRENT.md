@@ -48,20 +48,63 @@ and exact-but-neutral projection screen remain valid separate observations.
 [Incident receipt](experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/freeze-incident.json),
 [final results and recovery evidence](experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md).
 
-**Four-B70 host, September14: one-pass native screen running on packet08.**
+**Four-B70 host, September14: retained profile captured; recorder failed after exact clip.**
+The same packet08 PID66846 remains alive and idle, now on **compiled all48**
+dispatch. One diagnostic clip matched all four original raw outputs; its graph,
+component and owner evidence still passes. The recorder then rejected its own
+run name during output inventory (`unregistered/protected run`). No restored
+request, retry, deletion, application reload or host action followed. Client
+exec11241 exited1; bounded nonblocking profiler exited0. Queue/kernel postflight
+clean, no FAULT latch. This is a recorder integration failure, not a device or
+numerical fault, and it supersedes the restored-dispatch claim immediately below.
+
+[Profile/postmortem](experiments/ltx25-b70/notes/retained-multiblock-profile-01-results.md)
+preserves the trace and exact clip. Offline analysis and a corrected recorder
+continue; do not rerun the failed campaign. The saved profile is sufficient for
+the next source investigation: decoder geometry-mask construction and native
+operation wrapper overhead. No speed promotion or streaming qualification.
+
+The inactive [per-call decoder axis cache](experiments/ltx25-b70/notes/na-axis-cache-01.md)
+now passes23 CPU exactness/lifecycle groups, including unchanged SDPA inputs and
+call order. Root reviewed the patch and tests. Its source-derived untiled path
+reduces522 axis builds to100 with at most1,878 bytes predicted cached payload;
+the general cap is256KiB plus allocator/metadata overhead. Native shape coverage,
+full-clip equality and speed remain pending. The startup-only scoped router
+passed11 actual Kitchen CPU dispatcher lifecycle groups with XPU access
+blocked; root reviewed source/tests. [Routing gate](experiments/ltx25-b70/notes/na-axis-router-cpu-01.md).
+No installed or loaded runtime source changed. Next: private original-VAEDecode
+node integration, complete native shape/route receipts, then a sealed packet and
+bounded original/cache/original clip comparison. Keep the C++ experiment separate.
+
+The independent [private C++ operator prototype](experiments/ltx25-b70/native-cpp-ops-01/README.md)
+built once on CPU and passed119 operator/fake comparisons with exact outputs.
+Small matched CPU dispatch observations are favorable but do not predict XPU
+speed; larger RMS samples include a loss and substantial noise. Root reviewed
+the C++ source and test/timing drivers. This namespace has CPU implementations
+only; compiled tiny-block, XPU and full-clip qualification remain pending.
+At16:07UTC the application was still healthy and idle on compiled all48 with
+the same boot, empty queue and no kernel/fault evidence after the CPU work.
+[Observation](experiments/ltx25-b70/data/retained-profile-final-observation-01.json).
+
+**Four-B70 host, September14: packet08 native screen complete; original selected.**
 PID66846 serves `http://127.0.0.1:8188`, manifest
 `a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b`.
-All four startup checks and strict after-import determinism passed. Old PID56711
-exited0 after one SIGINT, with render ownership clear. Same computer boot; no
-host reboot, driver reset or power/memory changes. The12-request all48
-`multiblock-screen-03` is running (client exec97668, server exec53546).
-New native quality/speed remain pending; failed requests halt without retry or
-cycling the server. [Prepared comparison](experiments/ltx25-b70/notes/onepass-runtime-08-prepared.md),
-[startup](experiments/ltx25-b70/data/multiblock-migration-08/startup.json).
-Next after terminal quality/timing: prepare a bounded retained-candidate stack
-profile on this same application to attribute remaining cost. No profiler
-request or source integration is qualified yet. This supersedes live PID56711
-and packet07 statements below; inspect actual client state before submissions.
+All12 screen03 clips match all four original raw outputs, including all48
+compiled blocks. Compiled previews7.38–8.04s remain slower than adjacent original
+controls6.39–6.59s; median penalties1.273s preview/0.927s samplers. No promotion.
+Client exec97668 exited0; server exec53546 is idle on restored dispatch with
+all48 retained. Queue empty, clean kernel postflight and no FAULT latch.
+[Native results](experiments/ltx25-b70/notes/multiblock-screen-03-results.md).
+Old PID56711 exited0 after one SIGINT. Same host boot; no computer reboot,
+driver reset or power/memory changes. [Startup](experiments/ltx25-b70/data/multiblock-migration-08/startup.json).
+
+Next: complete and review the packet08-only retained diagnostic profiler client,
+then one warmed compiled clip with bounded nonblocking stack sampling and one
+restored control after all gates pass. This reuses the current application;
+no profiler/GPU diagnostic request has occurred yet. It must bind screen03's
+same-process qualification and preserve full-output/receipt/identity/fault gates.
+The CPU traversal improvement is not a native video speed claim. This supersedes
+older live PID56711/packet07 and running-client statements below.
 
 **Four-B70 host, September14: packet07 screen complete; original dispatch selected.**
 PID56711 serves `http://127.0.0.1:8188`, manifest

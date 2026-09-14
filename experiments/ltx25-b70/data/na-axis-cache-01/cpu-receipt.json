@@ -1,0 +1,181 @@
+{
+  "status": "cpu-exact-parity-and-cache-lifecycle-passed",
+  "passed": true,
+  "checks": [
+    {
+      "case": "mask-boundary-dtype-mutation",
+      "index": 0,
+      "passed": true
+    },
+    {
+      "case": "mask-boundary-dtype-mutation",
+      "index": 1,
+      "passed": true
+    },
+    {
+      "case": "mask-boundary-dtype-mutation",
+      "index": 2,
+      "passed": true
+    },
+    {
+      "case": "mask-boundary-dtype-mutation",
+      "index": 3,
+      "passed": true
+    },
+    {
+      "case": "mask-boundary-dtype-mutation",
+      "index": 4,
+      "passed": true
+    },
+    {
+      "case": "identical-axes-device-key",
+      "passed": true
+    },
+    {
+      "case": "64-entry-4096-element-bounds",
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 0,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 0,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 64,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 1,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 1,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 64,
+      "sdpa_calls": 12,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 2,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 2,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 64,
+      "sdpa_calls": 60,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 3,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 3,
+      "dtype": "torch.bfloat16",
+      "tile_budget": 64,
+      "sdpa_calls": 36,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 0,
+      "dtype": "torch.float32",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 0,
+      "dtype": "torch.float32",
+      "tile_budget": 64,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 1,
+      "dtype": "torch.float32",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 1,
+      "dtype": "torch.float32",
+      "tile_budget": 64,
+      "sdpa_calls": 12,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 2,
+      "dtype": "torch.float32",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 2,
+      "dtype": "torch.float32",
+      "tile_budget": 64,
+      "sdpa_calls": 60,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 3,
+      "dtype": "torch.float32",
+      "tile_budget": 33554432,
+      "sdpa_calls": 1,
+      "passed": true
+    },
+    {
+      "case": "attention-exact-inputs-order-release",
+      "index": 3,
+      "dtype": "torch.float32",
+      "tile_budget": 64,
+      "sdpa_calls": 36,
+      "passed": true
+    }
+  ],
+  "check_count": 23,
+  "torch_version": "2.14.0+xpu",
+  "xpu_initialized": false,
+  "strict_enabled": true,
+  "strict_warn_only": false,
+  "original_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+  "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+  "driver_sha256": "9d8c7f7c7422ac00412adc6191a8ccb24d92520a688409b660d1eb5c4931e13d",
+  "limitations": [
+    "CPU only; no native decoder/full-clip or performance qualification",
+    "64-element test tile budget is fixture-only; production budgets unchanged",
+    "Device alias test does not prove XPU or cross-stream behavior"
+  ],
+  "installed_source_unchanged": true
+}

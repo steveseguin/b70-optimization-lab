@@ -1,0 +1,9 @@
+Retained all48 diagnostic client, packet08 only
+
+Prepared `scripts/record-retained-multiblock-profile.py`; source pins and source-only validation are in `data/retained-multiblock-profile-source-01.json`. Eight synthetic stdlib tests and correct-venv offline packet/source check passed. No endpoint request, profiler attachment, native import, privilege use or server action was performed.
+
+The closed schedule admits completed same-process screen03, revalidates cold/warm/restored receipt evidence, then requests one warmed compiled boat42 clip under one 15-second nonblocking py-spy attachment. A restored boat42 control follows only after full raw four-output equality, graph/placement/owner/receipt checks and a successful useful sampled trace. Failure halts new requests without retry, restoration or process signals. Raw archives are pruned only after both requests and profiling succeed; previews and diagnostic evidence remain.
+
+Qualification binds 96 graph JSON receipts and 192 Python source files (288 graph evidence files), distinct from 528 call JSON receipts per compiled clip. The raw profiler log and per-thread sample counts/weights are retained. Historical sampling errors are not copied; thread weights including idle time are not aggregated into CPU percentages. Parent monotonic/wall timestamps bracket attachment and request observations and do not prove exact node-window alignment. Profiled timings cannot promote speed.
+
+Use --check-only for offline sealed-source checks; --ready-check additionally verifies completed qualification and idle live identity without attaching or submitting. Omit either flag only after root review to execute the bounded diagnostic. The profiler owns a fixed 15-second duration; on an unexpected wait expiry the known PID is preserved for operator inspection, with no automated signals.

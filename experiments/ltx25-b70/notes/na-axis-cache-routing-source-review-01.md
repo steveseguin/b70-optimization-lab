@@ -1,0 +1,41 @@
+Source review: context-scoped VAE NA axis-cache routing
+
+Verdict: the proposed startup-only eager attribute router is the narrow integration. It can preserve Kitchen selection and validation while choosing original versus private candidate only inside the selected decode node. This is a source feasibility conclusion, not runtime context propagation, numerical qualification or a speed claim. Installed Kitchen and packet08 were read only; no imports, tests, endpoints, GPU work or process actions were performed.
+
+Concrete call chain and dispatch
+
+- `nodes.py:334` synchronously calls `vae.decode`, retaining nested-latent and output reshape handling in the original method. `execution.py:306–309` calls synchronous node methods inline; it only creates asyncio tasks for coroutine methods at lines294–303. `main.py:529` creates the prompt worker thread before requests. Set scope inside the decode method, not in HTTP submission or the parent main thread.
+- `comfy/sd.py:1230–1266` loads/places the VAE and calls `first_stage_model.decode` synchronously. `na_diffusion_decoder.py:516–520` creates the original fixed-seed0 generator and invokes the decoder. Its layer loops and `comfy_kitchen.na3d` at line161 are synchronous. Device kernels may enqueue asynchronously, but mode selection occurs in the Python dispatcher before enqueue. No worker handoff was found on this pinned decode path; this does not prove C++ dispatcher ContextVar behavior, which needs the CPU lifecycle gate below.
+- Public `comfy_kitchen/__init__.py:245–252` normalizes kernel/causal inputs before the existing custom op. `backends/eager/na.py:163–174` resolves an implementation on EVERY custom-op invocation. `registry.py:269–270` selects by current constraints/priority then retrieves the function dynamically with getattr. Eager registration at `backends/eager/__init__.py:605–611` retains the eager module object, whose na3d attribute was imported at line73. Therefore patching only that module attribute at startup affects future dispatch; replacing the source module's own `na.py.na3d` would leave the imported eager attribute unchanged.
+
+Minimal integration and necessary boundaries
+
+Keep a saved original callable; install exactly one private eager-module na3d wrapper after imports/registration and before serving. Default/control mode calls the saved callable with identical args. Candidate mode calls four extracted pinned undecorated candidate functions, with original math/Torch/functional objects and both NA_SCORE_BUDGET and NA_KV_STACK_BUDGET values; never execute candidate custom-op decorators or register another Kitchen operator. The candidate's axis cache remains local to each na3d call, not the whole VAE or context. Startup rejects a different original callable/source, duplicate installation, missing registry module ownership, altered constraints, or altered priority/capabilities. Scope entry checks wrapper identity so later replacement cannot silently bypass it.
+
+A private VAEDecode subclass can add explicit mode/run identity and call the saved original nodes.VAEDecode.decode inside ContextVar.set/reset(token) in finally. ContextVar is preferable to a process-global flag; thread-local also suffices only for the currently synchronous path. Neither automatically guarantees an arbitrary new worker's context, and future compiled VAE/autograd worker execution is outside this gate. Keep the original VAE/model owner and all original decode math/generator/batch/tile behavior. Registry selection stays untouched: if another backend wins, it must keep winning. Candidate receipts must then report insufficient eager coverage and reject qualification, rather than secretly force eager. Count route hits and input metadata only; do not hash large tensors per NA call.
+
+Receipts must prove the selected custom node executed, candidate/original routing coverage, owner/run/context identity, expected shape/call sequence from the actual pinned decoder, restored default mode after exit, and no backend/registry drift. Positive hit counts alone are insufficient if only part of a decode was routed. Keep cache-none and require a receipt for every request so reused graph outputs cannot masquerade as executing the candidate. Do not mutate mode through an untracked node field. Exact source-derived expected counts are assumptions until matched with native receipts. The original VAE catches OOM and changes to a tiled fallback (`sd.py:1267–1306`); scope naturally extends to that path, but the fixed untiled comparison must reject changed call/shape coverage rather than accept a changed execution recipe silently.
+
+Required focused CPU lifecycle gates (not run here)
+
+1. Invoke the ACTUAL public Kitchen na3d/custom op with tiny CPU tensors through the wrapper, not just the Python wrapper directly. Prove original outside scope, candidate inside scope, restoration after success and exception, nested token restoration or deliberate nested-scope rejection, and a separate worker not inheriting an active scope. Record no XPU initialization.
+2. Snapshot registry module identity, constraints, priority, disabled state, capabilities and other eager operation identities before/after installation and calls. Invalid NA shapes/dtypes/arguments must still fail through the original registry constraint path before candidate execution. Unsupported signature or duplicate installation fails closed.
+3. Use a tiny fake VAE under the ORIGINAL VAEDecode method to verify latent/reshape/output behavior, context seen by the custom-op call, exception cleanup, and per-decode evidence counts. Check that a different selected backend remains unmodified and cannot falsely earn candidate coverage.
+4. Separately retain the cache algorithm gate: original/candidate mask bytes and native attention outputs, unchanged q/k/v and SDPA arguments/order, valid cache keys, entry/element cap, misses above cap, and no retained cache between calls. CPU behavior is not native BF16 XPU qualification.
+
+Then the native gate must compare all four raw outputs to the frozen oracle for boat/marble/bird with unchanged model/dtype/sampler/decoder seed and adjacent same-process original controls. Record decode and end-to-end timings; preserve fault-halt/no-retry behavior. Do not infer a speed win from fewer source operations or a passed CPU lifecycle.
+
+Simpler alternative assessment
+
+There is no existing VAE decode wrapper hook in `comfy/patcher_extension.py:50–58`; its named wrappers cover samplers and diffusion models. Kitchen use_backend is broader than required: its override affects every Kitchen operation in the scope, and changes priority semantics, so it is not a safe simplification. Direct calls to the candidate from a copied attention/module forward would bypass normalization/custom-op/constraints and duplicate model math. A single startup eager attribute router plus one context-managed node is already the smallest route that preserves those contracts. Avoid a new registry/backend framework or per-request monkeypatch.
+
+Read source pins
+
+- `/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py`: `4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995`
+- `/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/__init__.py`: `8a92e2b0b1b80781fe401fecba658bb7f79962c73ba2a463d4a44488feda375d`
+- `/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/registry.py`: `181b02ee1ee60154766cebb3cad6dc5d2015c38551e10071303a5a2a897f7015`
+- `/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/__init__.py`: `e19ad20021eb35986c9cfce19c4ee2fdc813f2783aeeae46559d62b649744117`
+- `/home/steve/src/ComfyUI-ltx25-baseline/nodes.py`: `dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e`
+- `/home/steve/src/ComfyUI-ltx25-baseline/execution.py`: `0a648063cd651692f1d8e67ff8dcf73372730b86161e892d3fffc196dde78827`
+- `/home/steve/src/ComfyUI-ltx25-baseline/comfy/sd.py`: `3eba634a7311bc51cf19c54b12c91149306fe71ae28fa37744e36cfb9290f00a`
+- `/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/vae/na_diffusion_decoder.py`: `7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21`

@@ -1,0 +1,47 @@
+--- a/comfy_kitchen/backends/eager/na.py
++++ b/comfy_kitchen/backends/eager/na.py
+@@ -64,17 +64,27 @@
+     return tiles
+ 
+ 
+-def _group_mask(rel_bounds, dtype, device):
++def _group_mask(rel_bounds, dtype, device, axis_cache=None):
+     """Additive ``[1, 1, Nq, Nk]`` mask for one tile-geometry group.
+ 
+     ``rel_bounds``: per-axis (starts, ends) relative to the key region origin.
+     """
+     bools = []
+     for starts, ends in rel_bounds:
+-        st = torch.tensor(starts, device=device)
+-        en = torch.tensor(ends, device=device)
+-        kj = torch.arange(int(en.max()), device=device)
+-        bools.append((kj[None, :] >= st[:, None]) & (kj[None, :] < en[:, None]))
++        # The cache belongs to this na3d invocation, never to model state.
++        # Axis visibility is bool and independent of the additive mask dtype.
++        key = (starts, ends, device) if axis_cache is not None else None
++        axis = axis_cache.get(key) if axis_cache is not None else None
++        if axis is None:
++            st = torch.tensor(starts, device=device)
++            en = torch.tensor(ends, device=device)
++            kj = torch.arange(int(en.max()), device=device)
++            axis = (kj[None, :] >= st[:, None]) & (kj[None, :] < en[:, None])
++            # At most64 entries of4096 bool elements:256KiB tensor storage.
++            # Oversized axes still execute the original uncached operations.
++            if axis_cache is not None and len(axis_cache) < 64 and axis.numel() <= 4096:
++                axis_cache[key] = axis
++        bools.append(axis)
+     visible = (bools[0][:, None, None, :, None, None]
+                & bools[1][None, :, None, None, :, None]
+                & bools[2][None, None, :, None, None, :])
+@@ -127,9 +137,10 @@
+                     (slice(rt0, rt1), slice(rh0, rh1), slice(rw0, rw1)),
+                 ))
+ 
++    axis_cache = {}  # Invocation-local, read-only geometry; released on return.
+     out = torch.empty((batch, t, h, w, nh, hd), device=device, dtype=v.dtype)
+     for rel, tiles in groups.items():
+-        mask = _group_mask(rel, q.dtype, device)
++        mask = _group_mask(rel, q.dtype, device, axis_cache)
+         nq, nk = mask.shape[2], mask.shape[3]
+         if device.type == "cuda":
+             g_max = max(1, NA_KV_STACK_BUDGET // max(1, batch * nh * nk * hd * 2))
