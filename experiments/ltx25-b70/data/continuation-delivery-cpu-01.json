@@ -1,0 +1,40 @@
+{
+  "schema": "ltx25.continuation-delivery-cpu.v1",
+  "created_utc": "2026-09-14T06:04:01.768575+00:00",
+  "status": "passed",
+  "tests_run": 15,
+  "failures": 0,
+  "errors": 0,
+  "source_sha256": {
+    "scripts/continuation_delivery.py": "9c126facd3f132f78dc080d9092748a91e4f9671ce93b04db6c3b0828daeaacb",
+    "scripts/test-continuation-delivery.py": "6c6c2e622f961fe446451f3e757fd3a8d7fe00b29e93dd2afeaa1a6f691c0d8e",
+    "scripts/continuation_anchor_io.py": "9dffd12ccb90285c5bee32ea7803321822fbf349344073b3dfb63cfac772a2c9",
+    "data/continuation-delivery-cpu-01.log": "517956abdf225831476db726f20054f85fab197c42f65dfe81d5df26d4176107"
+  },
+  "execution": "stdlib unittest in current Python process, no subprocess",
+  "reproduce_command": "python3 experiments/ltx25-b70/scripts/test-continuation-delivery.py",
+  "coverage": [
+    "exact four tensor SHA256 and finite scans",
+    "recorded strict flags, summary hash and run_name binding",
+    "exact25/24 F32 frame streams",
+    "per-frame hashes and anchor match frozen extraction helper",
+    "actual reads at most65536 bytes",
+    "early close releases descriptor without completing or reading ahead",
+    "corrupt final frame and wrong hashes/shapes/dtypes",
+    "source mutation during verification, between yields, and after last yield",
+    "reopened header and exact file range binding",
+    "rejection of incomplete or malformed frame hash receipts"
+  ],
+  "synthetic_fixtures_only": true,
+  "real_capture_reads": false,
+  "model_reads": false,
+  "native_runtime_imports": false,
+  "gpu_requests": 0,
+  "writes_footage": false,
+  "limits": [
+    "integrity against own summary, not original-reference parity",
+    "strict deterministic flags are reported by summary, not runtime-attested",
+    "caller owns immutable captures and trusted verification receipts",
+    "native Torch tensor correctness, GPU inference and stream quality unqualified"
+  ]
+}

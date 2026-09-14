@@ -62,6 +62,16 @@ No new video saved or generated. Native tensor construction, runtime deployment,
 predecessor lineage, delivery state, continuation quality and speed remain
 unqualified. [Implementation and evidence](experiments/ltx25-b70/notes/continuation-anchor-provider-01.md).
 
+Offline continuation work now includes a bounded four-tensor verifier/frame
+reader and a single-request coordinator with predecessor binding, explicit sink
+acknowledgements, atomic metadata checkpoints and a three-capture admission
+limit. Fifteen reader tests and15 simulated coordinator tests pass. Both25/24
+frame delivery modes matched independent byte reads for all three original
+reference captures, with their four tensor hashes intact. No GPU request,
+playback, generation-speed result or footage deletion occurred. Transport,
+cleanup, native continuation and playback remain pending; host FAULT persists.
+[Bounded state and delivery evidence](experiments/ltx25-b70/notes/continuation-stream-state-01.md).
+
 **Historical startup, superseded by the fault above: native compiler comparison.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.
