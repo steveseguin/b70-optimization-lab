@@ -31,13 +31,22 @@ The user restarted the computer. Current boot is
 at about 09:27:55 EDT. The newest-base/V2/DFlash2 candidate never reached
 readiness or benchmark requests. Its last model log is target loading, not a
 completed draft or generation operation; cause remains unknown. Do not retry
-this candidate unchanged. No model endpoint is currently listening and both
-render devices are unowned. Preserve the stopped candidate container and all
-raw evidence under `/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914`;
-`FAULT.json` records the incident. Recovery is a bounded health check followed
-by restoration of the original R304 FP8 service if healthy. The earlier control
+this candidate unchanged. Both GPUs passed bounded compute and XCCL recovery
+checks with no new kernel faults. The original R304 FP8/MTP1 service is healthy
+at `http://127.0.0.1:18124/v1`, model `qwen38-27b-fp8`; post-reboot strict checks
+passed 12/12 complete outputs and all 18 measured
+512/2K/16K continuations match the pre-incident control, with cache zero.
+Strict decode measured 54.3158 tokens/s and all recovery monitor windows passed.
+Its persistent helper owns
+`/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/restored-service`.
+Preserve the stopped candidate container and all raw evidence under
+`/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914`;
+`FAULT.json` records the incident. The root fault receipt remains preserved;
+the explicit recovery admission
+applies only to the original qualified service. The earlier control
 and exact-but-neutral projection screen remain valid separate observations.
-[Incident receipt](experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/freeze-incident.json).
+[Incident receipt](experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/freeze-incident.json),
+[final results and recovery evidence](experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md).
 
 **Four-B70 host, September14: one-pass native screen running on packet08.**
 PID66846 serves `http://127.0.0.1:8188`, manifest

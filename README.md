@@ -89,6 +89,12 @@ Official **27B FP8 reading speed** now includes a 2,048-token prompt measurement
 and a final bounded profiling review. [Results and evidence](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md)
 cover two B70s, one user and fixed MTP1; no new optimization was promoted.
 
+A bounded [AMD-to-B70 transfer test](experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md)
+adds 512/2K/16K reading measurements for the recommended 27B FP8 setup.
+The exact projection-dispatch candidate was neutral. The newer-runtime/V2/
+DFlash2 startup froze the host before inference; the user rebooted it and the
+original qualified service was restored. No new speedup is claimed.
+
 [`CURRENT.md`](CURRENT.md) alone owns the live service and active research
 state. These are evidence-backed examples; the broader expected-performance
 view is the [performance index](results/scoreboard.md).

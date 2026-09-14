@@ -1,0 +1,145 @@
+{
+  "schema": "neural.download.amd-transfer-incident-loader-review.v1",
+  "reviewed_utc": "2026-09-14T15:53:04.458124+00:00",
+  "scope": "Read-only source and retained-log analysis following user-reported freeze/manual reboot; no GPU, model import, container operation or runtime mutation.",
+  "source_commit": "dc36fcce902a63eab06c1b93a5c4a5ee178a0c56",
+  "source_files": [
+    {
+      "path": "vllm/config/load.py",
+      "sha256": "bd6431c22e078362d749a56a2c84145432ebf2605d8bcfa2ac679182d18ed630",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/config/load.py"
+    },
+    {
+      "path": "vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+      "sha256": "ba123182e4f9505f553227e06c8adeb68a0307800dea69f6e6614e25cd7541d1",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/model_executor/kernels/linear/scaled_mm/xpu.py"
+    },
+    {
+      "path": "vllm/model_executor/layers/quantization/fp8.py",
+      "sha256": "947540b443c15e9e5b4c08ff07f7a7c0e8d8f0d8494f3964c0172a772a779fe5",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/model_executor/layers/quantization/fp8.py"
+    },
+    {
+      "path": "vllm/model_executor/model_loader/base_loader.py",
+      "sha256": "5291c330c4ed5634a9ea1d535364c26162b60251aa2af03fd409b88c34d836e2",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/model_executor/model_loader/base_loader.py"
+    },
+    {
+      "path": "vllm/model_executor/model_loader/default_loader.py",
+      "sha256": "9c9d54b1b650bf5affc924ebb8b8c73711e187ae7486cadd9f737bb1279cc7b8",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/model_executor/model_loader/default_loader.py"
+    },
+    {
+      "path": "vllm/model_executor/model_loader/utils.py",
+      "sha256": "a2ecab7d012d695998f763f356664f59e95127d2e3c04b0c5cb1a788550dd132",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/model_executor/model_loader/utils.py"
+    },
+    {
+      "path": "vllm/model_executor/model_loader/weight_utils.py",
+      "sha256": "7443e55184777dcc99f621b0d97d9149d52c2ea8b4304c6621eb4902e1c8ba5b",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/model_executor/model_loader/weight_utils.py"
+    },
+    {
+      "path": "vllm/v1/worker/gpu/model_runner.py",
+      "sha256": "6e3bfbc91d88c65c7ca9259b0a226417b4aaa6c5a513b2e1a4c8973e5758795a",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/v1/worker/gpu/model_runner.py"
+    },
+    {
+      "path": "vllm/v1/worker/gpu/spec_decode/dflash2/speculator.py",
+      "sha256": "9ae6a9e27e8777d9590914cbc925d9cb3b66a3031e830abb468c7c4cb2295382",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/v1/worker/gpu/spec_decode/dflash2/speculator.py"
+    },
+    {
+      "path": "vllm/v1/worker/xpu_model_runner.py",
+      "sha256": "07fa0390d28f2b8c3c3c0019eb9c3b126e2397aea268ba47c889f06b423deb23",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/v1/worker/xpu_model_runner.py"
+    },
+    {
+      "path": "vllm/v1/worker/xpu_worker.py",
+      "sha256": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3",
+      "source_url": "https://github.com/vllm-project/vllm/blob/dc36fcce902a63eab06c1b93a5c4a5ee178a0c56/vllm/v1/worker/xpu_worker.py"
+    }
+  ],
+  "log_receipts": [
+    {
+      "path": "/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/candidate-dflash/server.log",
+      "bytes": 20499,
+      "sha256": "e3098e6bae322b3204d00598957328dfdef1604a6a178662188ea24213854c8c"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/candidate-dflash/launch.json",
+      "bytes": 6406,
+      "sha256": "63fa5450af6af44c58208e1ecbe968272549eb830bf6cdb3d6e277ffbcb73a0a"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/candidate-dflash/ABORTED",
+      "bytes": 47,
+      "sha256": "dcf5e458d7601cc420b52f38336177e724d648fdbf2d029a907f259458706e78"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/candidate-monitor/kernel.log",
+      "bytes": 619,
+      "sha256": "d1acaf965562a6cd66ff1b019288cd222039d5f26f4214a52278e6687eac8a55"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/candidate-monitor/command.json",
+      "bytes": 521,
+      "sha256": "b3fc142a9a2f3d841eea08b9ca7447b3357709987a0610f4b31c0347593226b0"
+    }
+  ],
+  "observed": {
+    "launch_utc": "2026-09-14T13:26:56.643312+00:00",
+    "last_application_log_utc": "2026-09-14T13:27:48+00:00",
+    "last_phase": "V2 target model construction/loading after XCCL worker initialization",
+    "target_kernel_selected": "XPUFp8BlockScaledMMKernel",
+    "draft_architecture_resolved": "DFlash2DraftModel",
+    "readiness_received": false,
+    "model_load_completion_logged": false,
+    "checkpoint_iterator_filesystem_logged": false,
+    "prefix_or_performance_requests_observed": false,
+    "host_memory_limit_gib": 12,
+    "memory_plus_swap_limit_gib": 16,
+    "swap_allowance_gib": 4,
+    "host_ipc": true,
+    "explicit_safetensors_load_strategy": null
+  },
+  "source_findings": [
+    {
+      "finding": "The V2 runner calls the target model loader before speculator.load_model(target).",
+      "location": "vllm/v1/worker/gpu/model_runner.py:399-423"
+    },
+    {
+      "finding": "The shared loader constructs the model under the XPU target-device context before iterating checkpoint weights, then processes weights afterward.",
+      "location": "vllm/model_executor/model_loader/base_loader.py:57-91"
+    },
+    {
+      "finding": "DefaultModelLoader and XPU V1/V2 wrapper files are byte-identical between v0.29.0 and the candidate source. BaseModelLoader refactors construction into create_model and adds online-quantization logging; device placement order is unchanged.",
+      "comparison": "direct public-source byte and diff review"
+    },
+    {
+      "finding": "Default local safetensors loading is memory-mapped. Network-only automatic prefetch requires checkpoint size to fit 90% of available RAM, including cgroup headroom. No iterator filesystem log was emitted, so entry into this phase is not established.",
+      "location": "vllm/model_executor/model_loader/weight_utils.py:866-995"
+    },
+    {
+      "finding": "The 12/16 GiB settings mean at most 12 GiB non-swap container memory and 4 GiB swap, not a 16 GiB RAM reserve or a GPU-memory cap. They do not establish historical peak use.",
+      "source_url": "https://docs.docker.com/engine/containers/resource_constraints/#--memory-swap-details"
+    }
+  ],
+  "interpretation": {
+    "supported": "The failure occurred during startup, with last progress inside target model construction/loading. This candidate is unsafe to retry unchanged. No performance or DFlash output qualification was obtained.",
+    "plausible_unproven": [
+      "GPU allocation or driver progress failure during target initialization",
+      "Host-memory or memory-reclaim pressure during startup",
+      "Other host/driver failure not flushed to retained logs"
+    ],
+    "not_established": [
+      "DFlash proposal or verification kernels executed",
+      "The draft weights finished loading or even began loading",
+      "A CUDA kernel ran because an internal GDN selector printed cuda",
+      "A host/container OOM occurred",
+      "Safetensors prefetch or eager CPU loading caused the freeze",
+      "Native kernel ABI mismatch caused the freeze"
+    ],
+    "guard_limitation": "The same-host journal monitor and Python timeout did not prevent the reported host freeze. A late ABORTED timeout receipt is not proof that startup was stopped at its configured wall-time bound."
+  }
+}

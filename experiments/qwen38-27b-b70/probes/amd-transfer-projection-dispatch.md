@@ -1,6 +1,9 @@
 # AMD transfer: heterogeneous GDN projection dispatch screen
 
-Status: source-only prototype, not compiled or GPU tested when authored.
+Status: compiled and GPU tested September 14. All 12 tensor cases were exact,
+but synchronized wall time was neutral at both tested row counts. The screen
+failed its 3% admission gate; no larger sweep or endpoint integration followed.
+See the [results](../notes/2026-09-14-amd-transfer-results.md).
 
 The Radiance 1.0.16 RX3 report (source revision
 `f295b9ef51ad413a68e4192371e0377741a354ce`,

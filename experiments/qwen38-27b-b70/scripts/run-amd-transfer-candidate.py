@@ -20,6 +20,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[3]
 BASE = 'http://127.0.0.1:18128'
 MODEL = 'qwen38-fp8-amd-transfer-screen'
+QUARANTINED_IMAGE = 'sha256:3be4c6c9918c820b508e3c13fcfd04323e53a96177ac0de0eb6b1179ee45760f'
 
 
 def run(cmd, **kwargs):
@@ -40,6 +41,8 @@ def main():
     a = ap.parse_args()
     if not a.image.startswith('sha256:') or len(a.image) != 71:
         ap.error('image must be the exact local image ID')
+    if a.image == QUARANTINED_IMAGE:
+        ap.error('This unchanged DFlash2 candidate is quarantined after the user-reported host freeze; see freeze-incident.json.')
     a.out.mkdir(parents=True, exist_ok=False)
     if (a.control_root / 'FAULT.json').exists():
         raise RuntimeError('campaign fault latch present')
