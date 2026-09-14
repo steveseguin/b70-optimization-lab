@@ -62,17 +62,20 @@ operator-stage snapshots and the earlier unrelated freeze packet below.
 [implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
-**Four-B70 host, September14: packet12 live; full transition screen running.**
-LTX PID11888/exec40923 serves `http://127.0.0.1:8188`, packet
-`prepared-encoder-host-embedding-12`, manifest
-`b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666`.
-Four startup checks, strict determinism, endpoint identity and node registration
-passed on user-reboot boot5414a640. No agent reboot/reset/settings action.
-The v3 client is running `host-embedding-screen-02`:15 newly generated clips,
-control/host/control, four original byte-exact raw gates, retained nonencoder
-owners and encoder memory/release checks. The cold admission requires96.02GiB.
-Failure halts requests without cycling the application. No speed promotion.
-[Prepared runtime](experiments/ltx25-b70/notes/host-transition-runtime-12-prepared.md).
+**Four-B70 host, September14: packet12 idle after safe memory refusal.**
+LTX PID11888/exec40923 remains healthy and idle at `http://127.0.0.1:8188`,
+packet12 manifest`b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666`.
+Screen02 client/exec12642 exited1: five control clips passed all four raw
+oracles, then the first encoder transition refused replacement construction.
+After full old-encoder weakref/registry release, available RAM was46.58GiB,
+below the unchanged56.89GiB construction floor. Diffusion/VAEs/upscaler stayed
+owned. No replacement encoder was allocated. Requests halted; no retry/reload.
+Postflight: same user-reboot boot5414a640, empty queue, only11888 owns renders,
+no FAULT latch and no new kernel entries. No agent reboot/reset/settings action.
+Preserve the failed screen; it does not qualify host timing or full transitions.
+Next: export evidence and audit encoder reuse without checkpoint/constructor
+allocation. Existing constructor floor and all quality gates remain unchanged.
+[Postflight](experiments/ltx25-b70/data/host-embedding-screen-02-postflight.json).
 
 **Historical Four-B70 host, September14 19:32 UTC: bounded post-reboot health assessment passed.**
 One diagnostic (parent8068/worker8088) passed four exact copy/compute checks and

@@ -1,0 +1,56 @@
+{
+  "schema": "ltx.linear-same-device-source-route-review.v1",
+  "status": "requires-future-sealed-adapter-and-application-reload",
+  "packet_manifest_sha256": "b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666",
+  "native_imports": false,
+  "endpoint_calls": 0,
+  "runtime_mutations": false,
+  "source_sha256s": {
+    "source/scripts/capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+    "source/scripts/block_compile_node.py": "ddd49674e2603d79818eed3263a4bc6876163fc6b1a1731fb6e95136ceb1ebdc",
+    "source/scripts/multiblock_compile_node.py": "e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f",
+    "source/scripts/ltx_multiblock_compile.py": "ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b",
+    "source/scripts/ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+    "source/scripts/ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "source/scripts/encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+    "source/comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0",
+    "source/comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "source/comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d"
+  },
+  "raw_linear_input_capture_available": false,
+  "existing_compiler_capture_scope": "FX code, metadata and block output byte hashes; no persistent raw FF input values",
+  "target": "transformer_blocks[24].ff.net[0].proj",
+  "weight_shape": [
+    16384,
+    4096
+  ],
+  "split_weight_shapes": [
+    [
+      8192,
+      4096
+    ],
+    [
+      8192,
+      4096
+    ]
+  ],
+  "source_inferred_input_shapes": [
+    [
+      1,
+      64,
+      4096
+    ],
+    [
+      1,
+      256,
+      4096
+    ]
+  ],
+  "input_metadata_and_values_must_be_observed": true,
+  "diagnostic_requests_proposed": 1,
+  "diagnostic_stage_invocations_proposed": [
+    1,
+    9
+  ],
+  "speed_or_partition_qualification": false
+}
