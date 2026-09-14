@@ -38,3 +38,5 @@ it cannot be injected into the frozen running application.
 Postflight: `../data/host-embedding-screen-02-postflight.json`.
 Raw terminal root: `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/host-embedding-screen-02`.
 Runtime receipt root: `encoder-server-host-embedding-12` alongside it.
+
+Complete terminal text is preserved in [the export](../data/host-embedding-screen-02-export/summary.json):325 files, compressed archiveSHA`a17e36baedd382cecd82f7a3e9705fd7580f80062756337d1e5a32216b206ef2`. Root verified its round trip and every archived file hash. Saved unload/release/memory-refusal receipts validate; this does not turn the failed campaign into a full component or speed pass. No video/tensor binaries were copied.
