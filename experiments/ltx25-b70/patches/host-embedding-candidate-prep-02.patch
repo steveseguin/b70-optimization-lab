@@ -1,0 +1,721 @@
+--- /dev/null
++++ b/scripts/ltx_host_embedding_candidate.py
+@@ -0,0 +1,217 @@
++"""Inactive CPU-owned embedding gather candidate; no installer or runtime node.
++
++Call only on a newly constructed, fully CPU/offloaded static CLIP patcher.
++The returned owner must remain part of the resident component set. Integration
++must expose both patchers and restore the owner before serialization/reloading.
++No automatic deployment, memory-budget override, or model/output cache.
++"""
++import inspect
++import weakref
++
++import torch
++from torch import nn
++from comfy.model_patcher import ModelPatcher
++from comfy.patcher_extension import CallbacksMP
++
++
++def require(condition, message):
++    if not condition:
++        raise RuntimeError(message)
++
++
++def unmodified(patcher):
++    require(not patcher.is_dynamic(), 'Static patcher required')
++    require(not any((patcher.patches, patcher.weight_wrapper_patches,
++                     patcher.hook_patches, patcher.forced_hooks, patcher.backup,
++                     patcher.hook_backup, patcher.current_hooks, patcher.injections)),
++            'Weight modifications/hooks are unsupported')
++    require(not any(value for groups in patcher.wrappers.values() for value in groups.values()),
++            'Execution wrappers are unsupported')
++    require(not patcher.model_options.get('ltx_small_state_residency', False),
++            'Do not combine with the prior small-state policy')
++    require(not patcher.object_patches or (patcher.is_clip and
++            patcher.object_patches == {'manual_cast_dtype': torch.float32}),
++            'Unexpected object patches')
++
++
++def weight_identity(weight):
++    # Actual node execution may construct inference tensors. Preserve that
++    # storage; do not copy a full table just to manufacture a version counter.
++    version = None if torch.is_inference(weight) else weight._version
++    return (id(weight), weight.data_ptr(), version, tuple(weight.shape), weight.dtype)
++
++
++class GatherDelegate(nn.Module):
++    """No registered parameters: the separately exposed CPU patcher owns them."""
++    def __init__(self, owner):
++        super().__init__()
++        # Owner is not an nn.Module; no second registration of the table.
++        self.owner = owner
++
++    @property
++    def weight(self):
++        return self.owner.host.model.embedding.weight
++
++    def forward(self, input_ids, out_dtype=None):
++        owner = self.owner
++        owner.guard(require_resident=True)
++        require(input_ids.device == owner.execution_device, 'Changed embedding execution device')
++        require(input_ids.dtype == torch.long and input_ids.ndim == 2,
++                'Expected batched int64 token IDs')
++        require(out_dtype == torch.float32, 'Only original LTX F32 embedding output is supported')
++        # Original ops.Embedding gathers BF16, converts to requested dtype,
++        # then the ScaledEmbedding wrapper multiplies by sqrt(hidden_size).
++        # Only the bit-preserving row gather moves to CPU. Conversion and
++        # multiplication remain separate operations on the original device.
++        indices = input_ids.to(device='cpu')
++        source = owner.host.model.embedding
++        rows = torch.nn.functional.embedding(indices, source.weight,
++            source.padding_idx, source.max_norm, source.norm_type,
++            source.scale_grad_by_freq, source.sparse)
++        return rows.to(device=input_ids.device).to(dtype=out_dtype) * owner.scale
++
++
++class HostEmbeddingOwner:
++    CALLBACK_KEY = 'ltx-host-embedding-candidate-v1'
++
++    def __init__(self, patcher, parent, key='embed_tokens'):
++        unmodified(patcher)
++        require(not patcher.get_callbacks(CallbacksMP.ON_CLONE, self.CALLBACK_KEY)
++                and not patcher.get_callbacks(CallbacksMP.ON_LOAD, self.CALLBACK_KEY),
++                'CPU embedding callback key already exists')
++        require(patcher.loaded_size() == 0, 'Detach before creating CPU embedding ownership')
++        require(not any(getattr(m, 'comfy_patched_weights', False) for m in patcher.model.modules()),
++                'Previously loaded modules require complete detach')
++        require(all(p.device.type == 'cpu' for p in patcher.model.parameters()),
++                'All original parameters must already be on CPU')
++        source = parent._modules.get(key)
++        require(source is not None and type(source).__qualname__ == '_make_scaled_embedding.<locals>.ScaledEmbedding',
++                'Expected original scaled embedding class')
++        require(list(source._parameters) == ['weight'] and not source._buffers,
++                'Unexpected embedding state')
++        require(type(source.weight) is nn.Parameter and source.weight.dtype == torch.bfloat16,
++                'Expected plain BF16 embedding weight')
++        require(not source.weight.requires_grad and not source.training,
++                'Inference-only embedding required')
++        require(source.padding_idx is None and source.max_norm is None
++                and source.norm_type == 2.0 and not source.scale_grad_by_freq and not source.sparse,
++                'Unsupported mutating/alternate embedding options')
++        require(not source.weight_function and not source.bias_function
++                and not source._forward_hooks and not source._forward_pre_hooks,
++                'Embedding hooks and weight functions are unsupported')
++        require(sum(p is source.weight for _, p in patcher.model.named_parameters(remove_duplicate=False)) == 1,
++                'Tied/shared embedding registrations are unsupported')
++        scale = inspect.getclosurevars(type(source).forward).nonlocals.get('scale')
++        require(scale == source.embedding_dim ** .5, 'Unexpected embedding scale')
++        self.original_size = patcher.model_size()
++        self.host_bytes = source.weight.nbytes
++        self.execution_device = patcher.load_device
++        self.parent, self.key, self.scale = parent, key, scale
++        self.embedding_options = (source.padding_idx, source.max_norm, source.norm_type,
++                                  source.scale_grad_by_freq, source.sparse)
++        host_container = nn.Module()
++        host_container.add_module('embedding', source)
++        # A named child is required: a root Embedding makes the generic
++        # ModelPatcher loader form invalid '.weight' lookup keys.
++        self.host = ModelPatcher(host_container, torch.device('cpu'), torch.device('cpu'))
++        self.weight = source.weight
++        self.weight_identity = weight_identity(self.weight)
++        self.active = True
++        self.patchers = []
++        self.delegate = GatherDelegate(self)
++        parent._modules[key] = self.delegate
++        try:
++            patcher.size = 0
++            require(patcher.model_size() == self.original_size - self.host_bytes,
++                    'CPU owner extraction changed unrelated model bytes')
++            self.register(patcher)
++            patcher.add_callback_with_key(CallbacksMP.ON_CLONE, self.CALLBACK_KEY, self.on_clone)
++            patcher.add_callback_with_key(CallbacksMP.ON_LOAD, self.CALLBACK_KEY, self.on_load)
++        except BaseException:
++            parent._modules[key] = source
++            patcher.size = self.original_size
++            patcher.remove_callbacks_with_key(CallbacksMP.ON_CLONE, self.CALLBACK_KEY)
++            patcher.remove_callbacks_with_key(CallbacksMP.ON_LOAD, self.CALLBACK_KEY)
++            self.active = False
++            raise
++
++    def register(self, patcher):
++        live = self.live_patchers()
++        require(patcher.model is live[0].model if live else True,
++                'Different model owner is unsupported')
++        require(patcher.load_device == self.execution_device, 'Retargeted clone is unsupported')
++        unmodified(patcher)
++        self.patchers.append(weakref.ref(patcher))
++
++    def on_clone(self, original, clone):
++        self.guard()
++        self.register(clone)
++
++    def on_load(self, patcher, *args):
++        self.guard()
++
++    def live_patchers(self):
++        return [value for ref in self.patchers if (value := ref()) is not None]
++
++    def guard(self, require_resident=False):
++        require(self.active and self.parent._modules.get(self.key) is self.delegate,
++                'CPU gather owner was restored or embedding owner changed')
++        source = self.host.model.embedding
++        current = source.weight
++        identity = weight_identity(current)
++        require(current is self.weight and identity == self.weight_identity
++                and current.device.type == 'cpu', 'CPU table ownership/storage/version changed')
++        require(not current.requires_grad and not source.training and not source._forward_hooks
++                and not source._forward_pre_hooks and not source.weight_function
++                and not source.bias_function and (source.padding_idx, source.max_norm,
++                source.norm_type, source.scale_grad_by_freq, source.sparse) == self.embedding_options,
++                'CPU embedding behavior changed')
++        require(self.host.load_device.type == 'cpu' and self.host.offload_device.type == 'cpu',
++                'CPU owner device changed')
++        unmodified(self.host)
++        patchers = self.live_patchers()
++        require(bool(patchers), 'Encoder owner expired')
++        for patcher in patchers:
++            unmodified(patcher)
++            require(patcher.load_device == self.execution_device and
++                    patcher.model_size() + self.host_bytes == self.original_size,
++                    'Encoder clone device/accounting changed')
++        model = patchers[0].model
++        require(all(p is not current for p in model.parameters()), 'CPU table registered twice')
++        if require_resident:
++            require(all(p.device == self.execution_device for p in model.parameters()),
++                    'Remaining encoder weights are not fully resident; supplied budget is insufficient')
++            require(patchers[0].loaded_size() == patchers[0].model_size(),
++                    'Remaining encoder accounting is not fully loaded')
++
++    def metadata(self):
++        self.guard()
++        patcher = self.live_patchers()[0]
++        return {'schema': 'ltx.host-embedding-ownership.v1',
++                'host_owner_id': id(self.host.model), 'host_weight_id': id(self.weight),
++                'host_device': str(self.weight.device), 'host_dtype': str(self.weight.dtype),
++                'host_registered_bytes': self.host_bytes,
++                'inference_tensor': torch.is_inference(self.weight),
++                'weight_version_tracked': self.weight_identity[2] is not None,
++                'inference_mutation_scope': 'Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable',
++                'encoder_eligible_bytes': patcher.model_size(),
++                'encoder_reported_loaded_bytes': patcher.loaded_size(),
++                'original_combined_bytes': self.original_size,
++                'execution_device': str(self.execution_device),
++                'clone_count': len(self.live_patchers()), 'native_qualified': False}
++
++    def restore(self):
++        """Call after complete encoder detach, before serialization/reloading."""
++        self.guard()
++        patchers = self.live_patchers()
++        require(all(p.loaded_size() == 0 for p in patchers), 'Detach encoder owners before restoration')
++        require(all(p.device.type == 'cpu' for p in patchers[0].model.parameters()),
++                'Encoder parameters remain on an accelerator')
++        self.host.detach()
++        self.parent._modules[self.key] = self.host.model.embedding
++        for patcher in patchers:
++            patcher.remove_callbacks_with_key(CallbacksMP.ON_CLONE, self.CALLBACK_KEY)
++            patcher.remove_callbacks_with_key(CallbacksMP.ON_LOAD, self.CALLBACK_KEY)
++            patcher.size = 0
++            require(patcher.model_size() == self.original_size, 'Restored model bytes changed')
++        self.active = False
+--- /dev/null
++++ b/scripts/test-host-embedding-candidate-cpu-fixture-v2.py
+@@ -0,0 +1,194 @@
++#!/usr/bin/env python3
++"""Prepared CPU proof; run only after the parent schedules native CPU work.
++
++Imports actual frozen ops/ScaledEmbedding/ModelPatcher with --cpu, then tests
++actual SDClipModel.process_tokens extracted from the pinned source. Never
++launches an endpoint or queries an accelerator. CPU equality is not XPU proof.
++"""
++import ast
++import copy
++import hashlib
++import importlib.util
++import json
++import logging
++import numbers
++from pathlib import Path
++import sys
++import unittest
++
++SOURCE = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-10/source')
++LANE = Path(__file__).resolve().parents[1]
++PINS = {
++    'comfy/text_encoders/llama.py': '7a1c57dd6e94ff1731f4cc6d98db2baaf8fed03e2fe996f79e49e06d9199717f',
++    'comfy/sd1_clip.py': 'fc2c7e8442e00d525740699c936a00e93a87f58d7c63a1c23a87cd96226962f8',
++    'comfy/ops.py': '6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0',
++    'comfy/model_patcher.py': '768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99',
++}
++for name, expected in PINS.items():
++    if hashlib.sha256((SOURCE / name).read_bytes()).hexdigest() != expected:
++        raise RuntimeError('CPU fixture source identity changed: ' + name)
++sys.dont_write_bytecode = True
++sys.path.insert(0, str(SOURCE))
++sys.argv = [sys.argv[0], '--cpu', '--disable-dynamic-vram', '--disable-pinned-memory', '--disable-async-offload']
++import comfy.options
++comfy.options.enable_args_parsing()
++import torch
++from torch import nn
++import comfy.ops
++from comfy.model_patcher import ModelPatcher
++from comfy.text_encoders.llama import _make_scaled_embedding
++
++spec = importlib.util.spec_from_file_location('host_embedding_candidate', LANE / 'scripts/ltx_host_embedding_candidate.py')
++candidate = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(candidate)
++tree = ast.parse((SOURCE / 'comfy/sd1_clip.py').read_text())
++clazz = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == 'SDClipModel')
++method = next(node for node in clazz.body if isinstance(node, ast.FunctionDef) and node.name == 'process_tokens')
++namespace = {'torch': torch, 'numbers': numbers, 'logging': logging}
++exec(compile(ast.Module(body=[method], type_ignores=[]), '<actual-process-tokens>', 'exec'), namespace)
++
++
++class Tiny(nn.Module):
++    def __init__(self):
++        super().__init__()
++        self.embed_tokens = _make_scaled_embedding(comfy.ops.manual_cast, 32, 8, 8 ** .5, 'cpu', torch.bfloat16)
++        self.linear = comfy.ops.manual_cast.Linear(8, 8, dtype=torch.bfloat16, device='cpu')
++        with torch.no_grad():
++            self.embed_tokens.weight.copy_(torch.arange(256).reshape(32, 8).to(torch.bfloat16) / 16 - 8)
++            self.embed_tokens.weight[0, 0] = -0.0
++            self.linear.weight.fill_(.125)
++            self.linear.bias.zero_()
++        self.requires_grad_(False).eval()
++
++    def get_input_embeddings(self):
++        return self.embed_tokens
++
++
++class TokenFixture:
++    process_tokens = namespace['process_tokens']
++    special_tokens = {'start': 2, 'pad': 0}
++
++    def __init__(self, model):
++        self.transformer = model
++
++
++def make():
++    model = Tiny()
++    patcher = ModelPatcher(model, torch.device('cpu'), torch.device('cpu'))
++    return model, patcher
++
++
++def raw(tensor):
++    return tensor.detach().contiguous().view(torch.uint8).numpy().tobytes()
++
++
++class Tests(unittest.TestCase):
++    def test_actual_token_processing_and_rows(self):
++        self.assertNotEqual(raw(torch.tensor([0.0])), raw(torch.tensor([-0.0])))
++        for tokens in ([[0, 0, 2, 5, 5, 31]], [[2, 1, 7], [0, 2, 31]], [[0] * 1023 + [2]]):
++            model, patcher = make()
++            fixture = TokenFixture(model)
++            reference = fixture.process_tokens(tokens, torch.device('cpu'))
++            owner = candidate.HostEmbeddingOwner(patcher, model)
++            patcher.patch_model(torch.device('cpu'))
++            actual = fixture.process_tokens(tokens, torch.device('cpu'))
++            for index in (0, 1):
++                self.assertTrue(torch.equal(reference[index], actual[index]))
++                self.assertEqual(raw(reference[index]), raw(actual[index]))
++                self.assertEqual(reference[index].dtype, actual[index].dtype)
++                self.assertEqual(reference[index].stride(), actual[index].stride())
++            self.assertEqual(reference[2:], actual[2:])
++            patcher.detach()
++            owner.restore()
++
++    def test_ownership_full_load_clone_detach_restore(self):
++        model, patcher = make()
++        original = {key: value.clone() for key, value in model.state_dict().items()}
++        owner = candidate.HostEmbeddingOwner(patcher, model)
++        clone = patcher.clone()
++        self.assertEqual(owner.metadata()['clone_count'], 2)
++        self.assertNotIn('embed_tokens.weight', model.state_dict())
++        self.assertIn('embedding.weight', owner.host.model.state_dict())
++        owner.host.patch_model(torch.device('cpu'))
++        self.assertEqual(owner.host.loaded_size(), owner.host_bytes)
++        patcher.patch_model(torch.device('cpu'))
++        owner.guard(require_resident=True)
++        self.assertEqual(patcher.loaded_size() + owner.host_bytes, owner.original_size)
++        clone.partially_load(torch.device('cpu'), .1)
++        with self.assertRaises(RuntimeError):
++            owner.restore()
++        clone.detach()
++        owner.restore()
++        self.assertEqual(patcher.model_size(), owner.original_size)
++        self.assertEqual(clone.model_size(), owner.original_size)
++        for key, value in model.state_dict().items():
++            self.assertTrue(torch.equal(original[key], value))
++            self.assertEqual(raw(original[key]), raw(value))
++        with self.assertRaises(RuntimeError):
++            owner.delegate(torch.tensor([[2]]), out_dtype=torch.float32)
++
++    def test_inference_construction_preserves_original_table(self):
++        with torch.inference_mode():
++            model, patcher = make()
++            table = model.embed_tokens.weight
++            owner = candidate.HostEmbeddingOwner(patcher, model)
++            self.assertIs(owner.host.model.embedding.weight, table)
++            self.assertTrue(owner.metadata()['inference_tensor'])
++            self.assertFalse(owner.metadata()['weight_version_tracked'])
++            owner.host.patch_model(torch.device('cpu'))
++            patcher.patch_model(torch.device('cpu'))
++            owner.delegate(torch.tensor([[0, 2, 31]]), out_dtype=torch.float32)
++            patcher.detach()
++            owner.restore()
++            self.assertIs(model.embed_tokens.weight, table)
++            self.assertEqual(owner.host.loaded_size(), 0)
++
++    def test_install_failure_restores_original_registration(self):
++        model, patcher = make()
++        original = model.embed_tokens
++        size = patcher.model_size()
++        def reject(*args):
++            raise RuntimeError('fixture registration failure')
++        patcher.add_callback_with_key = reject
++        with self.assertRaises(RuntimeError):
++            candidate.HostEmbeddingOwner(patcher, model)
++        self.assertIs(model.embed_tokens, original)
++        self.assertEqual(patcher.model_size(), size)
++
++    def test_invalidations(self):
++        mutations = [lambda owner: owner.weight.add_(1),
++                     lambda owner: setattr(owner.host.model.embedding, 'padding_idx', 0),
++                     lambda owner: setattr(owner.host.model.embedding, 'weight', nn.Parameter(owner.weight.clone(), requires_grad=False)),
++                     lambda owner: setattr(owner.host.model.embedding, 'training', True)]
++        for mutation in mutations:
++            model, patcher = make()
++            owner = candidate.HostEmbeddingOwner(patcher, model)
++            with torch.no_grad():
++                mutation(owner)
++            with self.assertRaises(RuntimeError):
++                owner.guard()
++
++    def test_reject_preload_hooks_and_nonresident_accounting(self):
++        model, patcher = make()
++        patcher.patch_model(torch.device('cpu'))
++        with self.assertRaises(RuntimeError):
++            candidate.HostEmbeddingOwner(patcher, model)
++        patcher.detach()
++        owner = candidate.HostEmbeddingOwner(patcher, model)
++        with self.assertRaises(RuntimeError):
++            owner.delegate(torch.tensor([[2]]), out_dtype=torch.float32)
++        patcher.patch_model(torch.device('cpu'))
++        clone = patcher.clone()
++        clone.object_patches['unexpected'] = True
++        with self.assertRaises(RuntimeError):
++            owner.guard()
++
++
++if __name__ == '__main__':
++    result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
++    print(json.dumps({'status': 'passed' if result.wasSuccessful() else 'failed',
++        'tests': result.testsRun, 'scope': 'Actual CPU embedding/token/patcher code; not accelerator residency or performance proof',
++        'source_sha256s': PINS, 'driver_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
++        'candidate_sha256': hashlib.sha256((LANE / 'scripts/ltx_host_embedding_candidate.py').read_bytes()).hexdigest(),
++        'native_gpu_requests': 0}, sort_keys=True))
++    raise SystemExit(0 if result.wasSuccessful() else 1)
+--- /dev/null
++++ b/scripts/test-host-embedding-candidate-cpu-v2.py
+@@ -0,0 +1,202 @@
++#!/usr/bin/env python3
++"""Inactive guarded CPU embedding proof. No compilation or accelerator access.
++
++Reuses the unchanged v1 actual-source fixture after process-local guards.
++--check-only is stdlib-only. Native CPU execution requires parent scheduling.
++"""
++import argparse
++import ast
++from datetime import datetime, timezone
++import hashlib
++import importlib.util
++import json
++import os
++from pathlib import Path
++import sys
++import time
++import traceback
++import unittest
++
++sys.dont_write_bytecode = True
++LANE = Path(__file__).resolve().parents[1]
++ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
++SOURCE = ROOT / 'prepared-encoder-na-axis-10/source'
++TRITON_UTILS = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_triton.py')
++HELPERS = {
++    'scripts/test-host-embedding-candidate-cpu.py': '2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534',
++    'scripts/test-host-embedding-candidate-cpu-fixture-v2.py': 'b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32',
++    'scripts/ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9',
++    'native-cpp-block-01/accelerator_guard_v2.py': 'b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce',
++    'native-cpp-block-01/cpu_import_policy_v3.py': '03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a',
++}
++TRITON_SHA = '4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a'
++
++
++def require(value, message):
++    if not value:
++        raise RuntimeError(message)
++
++
++def sha(path):
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def load(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++def source_gate():
++    require(not (ROOT / 'FAULT.json').exists(), 'Fault latch prohibits native work')
++    for name, expected in HELPERS.items():
++        require(sha(LANE / name) == expected, 'Frozen helper changed: ' + name)
++    require(sha(TRITON_UTILS) == TRITON_SHA, 'Triton helper source changed')
++    tree = ast.parse((LANE / 'scripts/test-host-embedding-candidate-cpu-fixture-v2.py').read_text())
++    pins = ast.literal_eval(next(node.value for node in tree.body if isinstance(node, ast.Assign)
++        and any(isinstance(target, ast.Name) and target.id == 'PINS' for target in node.targets)))
++    for name, expected in pins.items():
++        require(sha(SOURCE / name) == expected, 'Frozen actual source changed: ' + name)
++    return pins
++
++
++def write_exclusive(path, value):
++    with path.open('x') as stream:
++        json.dump(value, stream, indent=2)
++        stream.write('\n')
++        stream.flush()
++        os.fsync(stream.fileno())
++
++
++def install_backend_refusals(torch, triton_utils, report, guard):
++    """Block every backend lookup/compile attempt; never call originals."""
++    guard.require_clean(report)
++    require('backend_refusals' not in report, 'Backend refusal cannot be reinstalled')
++    report['backend_refusals'] = {'scope': 'All triton_backend and torch.compile calls forbidden; no compilation',
++                                  'attempts': [], 'tripped': False}
++    def make_trap(label):
++        def blocked(*args, **kwargs):
++            report['accelerator_guard_tripped'] = True
++            record = {'entry': label, 'pid': os.getpid(), 'phase': report.get('phase'),
++                      'monotonic_ns': time.monotonic_ns(), 'stack': traceback.format_stack(limit=24)}
++            report['backend_refusals']['tripped'] = True
++            report['backend_refusals']['attempts'].append(record)
++            raise guard.AcceleratorAccessBlocked('CPU embedding proof forbids ' + label)
++        return blocked
++    backend_trap = make_trap('torch.utils._triton.triton_backend')
++    compile_trap = make_trap('torch.compile')
++    triton_utils.triton_backend = backend_trap
++    torch.compile = compile_trap
++    def intact():
++        guard.require_clean(report)
++        require(triton_utils.triton_backend is backend_trap and torch.compile is compile_trap,
++                'CPU backend refusal identity changed')
++    intact()
++    return intact
++
++
++class StopOnFailureResult(unittest.TextTestResult):
++    def addError(self, test, error):
++        super().addError(test, error)
++        self.stop()
++
++    def addFailure(self, test, error):
++        super().addFailure(test, error)
++        self.stop()
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--evidence-dir', type=Path, required=True)
++    parser.add_argument('--check-only', action='store_true')
++    args = parser.parse_args()
++    directory = args.evidence_dir
++    require(directory.is_absolute() and directory.parent == ROOT and
++            directory.name.startswith('host-embedding-cpu-') and not directory.exists()
++            and not directory.is_symlink(), 'Evidence directory must be a new bounded absolute path')
++    directory.mkdir()
++    report = {'schema': 'ltx.host-embedding-guarded-cpu.v2', 'status': 'failed',
++              'pid': os.getpid(), 'ppid': os.getppid(), 'command': list(sys.argv),
++              'phase': 'source-gate', 'torch_imported': False, 'tests_run': 0,
++              'native_gpu_requests': 0, 'compilation_permitted': False,
++              'driver_sha256': sha(Path(__file__)), 'helper_sha256s': HELPERS,
++              'triton_utils_sha256': TRITON_SHA,
++              'scope': 'Actual tiny CPU embedding/token/patcher fixture only; no XPU residency, clip, or speed qualification'}
++    torch = None
++    integrity = None
++    try:
++        require('torch' not in sys.modules, 'Fresh disposable interpreter required')
++        report['source_pins'] = source_gate()
++        startup = {**report, 'timestamp_utc': datetime.now(timezone.utc).isoformat(),
++            'proc_start_ticks': Path(f'/proc/{os.getpid()}/stat').read_text().split(') ')[1].split()[19],
++            'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
++            'status': 'startup-before-torch'}
++        write_exclusive(directory / 'startup-identity.json', startup)
++        report['startup_sha256'] = sha(directory / 'startup-identity.json')
++        if args.check_only:
++            report.update(status='passed-stdlib-source-check', phase='source-check-only', native_cpu_tests_executed=False)
++            return 0
++        report['phase'] = 'torch-import'
++        import torch as imported_torch
++        torch = imported_torch
++        report['torch_imported'] = True
++        guard = load('host_embedding_accelerator_guard', LANE / 'native-cpp-block-01/accelerator_guard_v2.py')
++        policy = load('host_embedding_cpu_import_policy', LANE / 'native-cpp-block-01/cpu_import_policy_v3.py')
++        guard.install(torch, report)
++        cpu_intact = policy.install(torch, report, guard)
++        report['phase'] = 'backend-refusal-install-before-Comfy'
++        import torch.utils._triton as triton_utils
++        require(Path(triton_utils.__file__).resolve() == TRITON_UTILS, 'Unexpected Triton helper module')
++        backend_intact = install_backend_refusals(torch, triton_utils, report, guard)
++        def integrity():
++            cpu_intact()
++            backend_intact()
++            require(not torch.xpu.is_initialized() and not torch.cuda.is_initialized(), 'Accelerator initialized')
++            require(not (ROOT / 'FAULT.json').exists(), 'Fault latch prohibits CPU work')
++        integrity()
++        report['phase'] = 'guarded-actual-source-import'
++        fixture = load('guarded_host_embedding_actual_fixture', LANE / 'scripts/test-host-embedding-candidate-cpu-fixture-v2.py')
++        integrity()
++        report['identity_after_import'] = {'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False}
++        report['cpu_policy_reuse_note'] = 'Frozen policy description mentions compiled arms; this driver permits only these CPU eager tests and rejects every compile/backend lookup.'
++        torch.set_num_threads(1)
++        torch.set_num_interop_threads(1)
++        torch.use_deterministic_algorithms(True, warn_only=False)
++        report['determinism'] = {'enabled': torch.are_deterministic_algorithms_enabled(),
++                                'warn_only': torch.is_deterministic_algorithms_warn_only_enabled()}
++        fixture.Tests.setUp = lambda self: integrity()
++        fixture.Tests.tearDown = lambda self: integrity()
++        report['phase'] = 'actual-CPU-tests'
++        with (directory / 'tests.log').open('x') as stream:
++            result = unittest.TextTestRunner(stream=stream, verbosity=2,
++                resultclass=StopOnFailureResult).run(unittest.defaultTestLoader.loadTestsFromTestCase(fixture.Tests))
++        report['tests_run'] = result.testsRun
++        report['test_failures'] = [text for _, text in result.failures]
++        report['test_errors'] = [text for _, text in result.errors]
++        integrity()
++        require(source_gate() == report['source_pins'], 'Source identity changed during tests')
++        require(result.wasSuccessful() and result.testsRun == 6, 'CPU fixture failed; no retry')
++        report.update(status='passed-guarded-cpu-fixture', phase='finished', native_cpu_tests_executed=True,
++                      identity_after_tests={'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False})
++        return 0
++    except BaseException as error:
++        report.update(status='failed', error=repr(error), traceback=traceback.format_exc())
++        return 1
++    finally:
++        if torch is not None:
++            report['xpu_initialized'] = bool(torch.xpu.is_initialized())
++            report['cuda_initialized'] = bool(torch.cuda.is_initialized())
++            if integrity is not None:
++                try:
++                    integrity()
++                    report['final_guards_intact'] = True
++                except BaseException as error:
++                    report.update(status='failed', final_guards_intact=False, final_guard_error=repr(error))
++        write_exclusive(directory / 'result.json', report)
++        if report['status'] == 'failed':
++            return 1
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+--- /dev/null
++++ b/scripts/test-host-embedding-cpu-v2-stdlib.py
+@@ -0,0 +1,96 @@
++#!/usr/bin/env python3
++"""Offline driver/refusal regression checks. Does not import Torch."""
++import ast
++import hashlib
++import importlib.util
++import io
++import json
++from pathlib import Path
++import sys
++from types import SimpleNamespace
++import unittest
++
++LANE = Path(__file__).resolve().parents[1]
++DRIVER = LANE / 'scripts/test-host-embedding-candidate-cpu-v2.py'
++spec = importlib.util.spec_from_file_location('host_cpu_guarded_driver', DRIVER)
++driver = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(driver)
++guard = driver.load('host_cpu_frozen_guard', LANE / 'native-cpp-block-01/accelerator_guard_v2.py')
++
++
++class Tests(unittest.TestCase):
++    def test_actual_source_pins_without_native_import(self):
++        self.assertEqual(len(driver.source_gate()), 4)
++        self.assertNotIn('torch', sys.modules)
++
++    def test_all_backend_calls_refused_and_sticky(self):
++        for target in ('backend', 'compile'):
++            calls = []
++            original = lambda *args, **kwargs: calls.append('original')
++            torch = SimpleNamespace(compile=original)
++            utils = SimpleNamespace(triton_backend=original)
++            report = {'phase': 'stdlib-fake'}
++            intact = driver.install_backend_refusals(torch, utils, report, guard)
++            call = utils.triton_backend if target == 'backend' else torch.compile
++            with self.assertRaises(guard.AcceleratorAccessBlocked):
++                try:
++                    call(object(), cpu_only=True)
++                except Exception:
++                    self.fail('BaseException refusal was swallowed')
++            self.assertEqual(calls, [])
++            self.assertTrue(report['backend_refusals']['tripped'])
++            with self.assertRaises(guard.AcceleratorAccessBlocked):
++                intact()
++            with self.assertRaises(guard.AcceleratorAccessBlocked):
++                driver.install_backend_refusals(torch, utils, report, guard)
++
++    def test_refusal_identity_change_detected(self):
++        for target in ('backend', 'compile'):
++            torch, utils = SimpleNamespace(compile=lambda: None), SimpleNamespace(triton_backend=lambda: None)
++            intact = driver.install_backend_refusals(torch, utils, {}, guard)
++            if target == 'backend':
++                utils.triton_backend = lambda: None
++            else:
++                torch.compile = lambda: None
++            with self.assertRaises(RuntimeError):
++                intact()
++
++    def test_startup_order_and_complete_final_gate(self):
++        text = DRIVER.read_text()
++        ordering = ["write_exclusive(directory / 'startup-identity.json', startup)",
++                    'import torch as imported_torch', 'guard.install(torch, report)',
++                    'cpu_intact = policy.install(torch, report, guard)',
++                    'backend_intact = install_backend_refusals(torch, triton_utils, report, guard)',
++                    "fixture = load('guarded_host_embedding_actual_fixture'"]
++        positions = [text.index(value) for value in ordering]
++        self.assertEqual(positions, sorted(positions))
++        tree = ast.parse(text)
++        main = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'main')
++        final = next(node for node in main.body if isinstance(node, ast.Try)).finalbody
++        self.assertIsInstance(final[-1], ast.If)
++        self.assertEqual(ast.literal_eval(final[-1].body[0].value), 1)
++        self.assertNotIn('torch.compile(', text)
++
++    def test_first_failure_stops_suite(self):
++        calls = []
++        class Broken(unittest.TestCase):
++            def test_a(self):
++                calls.append('first')
++                raise guard.AcceleratorAccessBlocked('fixture')
++            def test_b(self):
++                calls.append('forbidden continuation')
++        result = unittest.TextTestRunner(stream=io.StringIO(),
++            resultclass=driver.StopOnFailureResult).run(unittest.defaultTestLoader.loadTestsFromTestCase(Broken))
++        self.assertEqual(result.testsRun, 1)
++        self.assertEqual(calls, ['first'])
++        self.assertFalse(result.wasSuccessful())
++
++
++if __name__ == '__main__':
++    result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
++    print(json.dumps({'status': 'passed' if result.wasSuccessful() else 'failed', 'tests': result.testsRun,
++        'driver_sha256': hashlib.sha256(DRIVER.read_bytes()).hexdigest(),
++        'test_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
++        'torch_imported': 'torch' in sys.modules, 'native_cpu_tests_executed': False,
++        'scope': 'Actual source pins/AST plus stdlib fake refusal behavior only'}, sort_keys=True))
++    raise SystemExit(0 if result.wasSuccessful() else 1)
