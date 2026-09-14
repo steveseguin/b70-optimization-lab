@@ -1,0 +1,203 @@
+"""Inactive CPU cache-system refusal, with source/outer-graph admission.
+
+Stdlib imports only. Native CacheBase.get_system catches the one ordinary
+refusal and caches its own empty-system fallback. Every other device query goes
+to the frozen sticky trap, never to hardware. No native cache is cleared.
+"""
+import functools
+import hashlib
+import os
+from pathlib import Path
+import sys
+import time
+import types
+
+SITE = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages')
+CODECACHE = 'torch/_inductor/codecache.py'
+PINS = {
+    CODECACHE: '1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156',
+    'torch/_inductor/cache_key.py': '9f3c204291bcd3a2edc5c4b80df5c7b65ef76ea9352f9166a9da58d8753b9101',
+}
+EXPECTED_FALLBACK = {'hash': hashlib.sha256(b'{}').hexdigest()}
+DESCRIPTION = {
+    'schema': 'ltx.cpu-cache-system-policy.v8',
+    'hook': 'torch.cuda.current_device',
+    'allowed_caller': 'Pinned native CacheBase.get_system, directly inside pinned FxGraphHashDetails.__init__ with CPU tensor inputs/parameters/buffers',
+    'phases': ['python-compile-and-execute', 'cpp-compile-and-execute'],
+    'scope': 'Same isolated CPU fixture process and native function cache for both compiled arms',
+    'expected_ordinary_refusals': 1,
+    'expected_fallback': EXPECTED_FALLBACK,
+    'expected_final_cache': {'misses': 1, 'currsize': 1},
+    'cache_clears_or_disables': False,
+    'numeric_OPTIONS_changed': False,
+    'semantics': 'Explicit CPU diagnostic system-metadata exception; native fallback/caching retained, no GPU cache-identity claim',
+    'source_pins': PINS,
+}
+
+
+class CpuOnlyCacheSystemUnavailable(RuntimeError):
+    pass
+
+
+def source_gate():
+    for relative, expected in PINS.items():
+        if hashlib.sha256((SITE / relative).read_bytes()).hexdigest() != expected:
+            raise RuntimeError('CPU cache-system source changed: ' + relative)
+
+
+def source_code(qualname):
+    path = SITE / CODECACHE
+    root = compile(path.read_text(), str(path), 'exec', dont_inherit=True)
+    def find(code):
+        for value in code.co_consts:
+            if isinstance(value, types.CodeType):
+                if value.co_qualname == qualname:
+                    return value
+                nested = find(value)
+                if nested is not None:
+                    return nested
+        return None
+    result = find(root)
+    if result is None:
+        raise RuntimeError('Pinned cache-system code missing: ' + qualname)
+    return result
+
+
+class CpuCacheSystemPolicy:
+    def __init__(self, torch, report, guard):
+        guard.require_clean(report)
+        source_gate()
+        if 'cpu_cache_system_policy' in report:
+            raise RuntimeError('Cache-system policy cannot be reinstalled')
+        if 'torch.cuda.current_device' not in report.get('accelerator_guard_entries', []):
+            raise RuntimeError('Install frozen accelerator guard first')
+        self.original_trap = torch.cuda.current_device
+        if not isinstance(self.original_trap, types.FunctionType) or self.original_trap.__name__ != 'blocked':
+            raise RuntimeError('Expected frozen CUDA current-device trap')
+        self.torch, self.report, self.guard = torch, report, guard
+        self.cache_class = self.details_class = self.cached = self.native = self.details_init = None
+        self.module = None
+        self.events = report.setdefault('cpu_cache_system_omissions', [])
+        if self.events:
+            raise RuntimeError('Cache-system omission evidence must start empty')
+        self.hook = self._refuse_system_query
+        torch.cuda.current_device = self.hook
+        report['cpu_cache_system_policy'] = {**DESCRIPTION, 'installed': True, 'bound': False}
+        self.require_intact()
+
+    def _halt(self, reason, *args, **kwargs):
+        self.report.setdefault('cpu_cache_system_refusals', []).append({
+            'reason': reason, 'phase': self.report.get('phase'), 'monotonic_ns': time.monotonic_ns()})
+        return self.original_trap(*args, **kwargs)
+
+    def bind(self, cache_class, details_class):
+        self.require_intact()
+        if self.cache_class is not None:
+            self._halt('Cache-system binding cannot be replaced')
+        descriptor = vars(cache_class).get('get_system')
+        cached = descriptor.__func__ if isinstance(descriptor, staticmethod) else None
+        native = getattr(cached, '__wrapped__', None)
+        details_init = vars(details_class).get('__init__')
+        if type(cached) is not functools._lru_cache_wrapper or not isinstance(native, types.FunctionType) or not isinstance(details_init, types.FunctionType):
+            self._halt('Expected original cached native system/details functions')
+        if native.__code__ != source_code('CacheBase.get_system') or details_init.__code__ != source_code('FxGraphHashDetails.__init__'):
+            self._halt('Cache-system/details code differs from pinned source')
+        module = sys.modules.get('torch._inductor.codecache')
+        if type(module) is not types.ModuleType or Path(module.__file__).resolve() != SITE / CODECACHE:
+            self._halt('Native codecache module binding mismatch')
+        if native.__globals__ is not vars(module) or details_init.__globals__ is not vars(module) or module.CacheBase is not cache_class or module.FxGraphHashDetails is not details_class or module.torch is not self.torch:
+            self._halt('Native cache-system/details global ownership mismatch')
+        info = cached.cache_info()._asdict()
+        if info != {'hits': 0, 'misses': 0, 'maxsize': None, 'currsize': 0}:
+            self._halt('Native cache-system function cache must be pristine; no reset')
+        self.cache_class, self.details_class = cache_class, details_class
+        self.cached, self.native, self.details_init = cached, native, details_init
+        self.native_code, self.details_code = native.__code__, details_init.__code__
+        self.module = module
+        self.tensor_types = (self.torch.Tensor, self.torch.nn.Parameter, module.FakeTensor)
+        self.report['cpu_cache_system_policy'].update(bound=True, native_cache_before=info,
+            native_caller_file=self.native_code.co_filename, native_caller_qualname=self.native_code.co_qualname,
+            outer_qualname=self.details_code.co_qualname)
+        self.require_intact()
+
+    def require_intact(self):
+        self.guard.require_clean(self.report)
+        if self.torch.cuda.current_device is not self.hook or self.report.get('cpu_cache_system_omissions') is not self.events:
+            self._halt('Cache-system hook/evidence identity changed')
+        if self.cache_class is not None:
+            if sys.modules.get('torch._inductor.codecache') is not self.module or self.module.CacheBase is not self.cache_class or self.module.FxGraphHashDetails is not self.details_class:
+                self._halt('Native cache-system module/class ownership changed')
+            if self.cache_class.get_system is not self.cached or self.cached.__wrapped__ is not self.native or self.native.__code__ is not self.native_code:
+                self._halt('Native cached system function identity changed')
+            if self.details_class.__init__ is not self.details_init or self.details_init.__code__ is not self.details_code:
+                self._halt('Native graph-details constructor identity changed')
+
+    def _tensor_metadata(self, tensor):
+        if type(tensor) not in self.tensor_types:
+            self._halt('Unrecognized cache-input tensor class')
+        if tensor.device.type != 'cpu':
+            self._halt('Cache-system fallback requires only CPU tensors')
+        shape, stride = list(tensor.shape), list(tensor.stride())
+        if any(type(value) is not int for value in shape + stride):
+            self._halt('Symbolic tensor metadata is outside the static CPU fixture scope')
+        return {'class': type(tensor).__module__ + '.' + type(tensor).__qualname__,
+                'device': str(tensor.device), 'dtype': str(tensor.dtype),
+                'shape': shape, 'stride': stride}
+
+    def _refuse_system_query(self, *args, **kwargs):
+        self.require_intact()
+        caller = sys._getframe(1)
+        outer = caller.f_back
+        try:
+            if args or kwargs or self.native is None or self.events or self.report.get('phase') not in DESCRIPTION['phases']:
+                return self._halt('CUDA query outside first qualified CPU cache-system request', *args, **kwargs)
+            if caller.f_code is not self.native_code or caller.f_globals is not vars(self.module) or outer is None or outer.f_code is not self.details_code or outer.f_globals is not vars(self.module):
+                return self._halt('CUDA query lacks exact native cache-system and graph-details caller frames')
+            inputs = outer.f_locals.get('example_inputs')
+            graph = outer.f_locals.get('gm')
+            if type(inputs) not in (list, tuple) or not isinstance(graph, self.torch.fx.GraphModule):
+                return self._halt('CPU cache-system inputs/graph shape is outside fixture scope')
+            tensors = []
+            for value in inputs:
+                if isinstance(value, self.torch.Tensor):
+                    tensors.append(self._tensor_metadata(value))
+                elif type(value) not in (type(None), bool, int, float, str):
+                    return self._halt('Opaque cache input is outside CPU fixture scope')
+            if not tensors:
+                return self._halt('Tensor-free cache-system requests are not allowed')
+            state = []
+            for kind, iterator in (('parameter', graph.named_parameters()), ('buffer', graph.named_buffers())):
+                for name, tensor in iterator:
+                    state.append({'kind': kind, 'name': name, **self._tensor_metadata(tensor)})
+            info = self.cached.cache_info()._asdict()
+            if info != {'hits': 0, 'misses': 1, 'maxsize': None, 'currsize': 0}:
+                return self._halt('Cache-system refusal must occur during its first native cache miss')
+            self.events.append({'ordinal': 1, 'pid': os.getpid(), 'phase': self.report['phase'],
+                'monotonic_ns': time.monotonic_ns(), 'native_line': caller.f_lineno,
+                'outer_line': outer.f_lineno, 'input_tensors': tensors, 'graph_state': state,
+                'native_cache_during_miss': info,
+                'action': 'Raise CpuOnlyCacheSystemUnavailable; original device function never called'})
+            raise CpuOnlyCacheSystemUnavailable('CPU fixture refuses CUDA cache-system discovery')
+        finally:
+            del caller, outer
+
+    def verify_cache(self, *, require_ready=False):
+        self.require_intact()
+        if self.cached is None:
+            self._halt('Cache-system verification requires bound native functions')
+        info = self.cached.cache_info()._asdict()
+        if not self.events:
+            if require_ready or info != {'hits': 0, 'misses': 0, 'maxsize': None, 'currsize': 0}:
+                self._halt('Missing unique CPU cache-system fallback or unexpected native cache state')
+            return info
+        if len(self.events) != 1 or info['misses'] != 1 or info['currsize'] != 1:
+            self._halt('CPU cache-system fallback was not cached exactly once')
+        # Only read after proving an existing entry; this increments native hits,
+        # which the receipt distinguishes from omissions and compile events.
+        result = self.cached()
+        self.guard.require_clean(self.report)
+        if type(result) is not dict or result != EXPECTED_FALLBACK:
+            self._halt('Native empty-system fallback differs from pinned hash semantics')
+        self.report['cpu_cache_system_policy'].update(native_fallback=dict(result),
+            native_cache_last_observed=self.cached.cache_info()._asdict())
+        return info

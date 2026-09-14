@@ -1,0 +1,49 @@
+--- a/scripts/run-host-embedding-screen.py
++++ b/scripts/run-host-embedding-screen.py
+@@ -1,5 +1,8 @@
+ #!/usr/bin/env python3
+-"""Bounded packet11 original/CPU-table/original encoder screen; no lifecycle actions."""
++"""Inactive diagnostic successor: preserve request failure if post-snapshot also fails.
++
++Packet11 admission is unchanged and remains fault-halted; this is not a client
++for the unqualified residentv2 component schema."""
+ import argparse
+ import copy
+ import fcntl
+@@ -146,6 +149,22 @@
+                       'runs': [r['run'] for r in chosen], 'metrics': metrics})
+     return {'pairs': pairs, 'paired_samples': len(pairs),
+             'scope': 'Warm positions bracketed by control arms; repeated boat is not an independent fixture; client event intervals, no promotion'}
++
++
++def run_with_post_snapshot(run_call, snapshot_call, record):
++    """Preserve the request error as primary; snapshot diagnostics are secondary."""
++    try:
++        run_call()
++    except BaseException:
++        try:
++            record['after'] = snapshot_call()
++        except BaseException as snapshot_error:
++            record['after_snapshot_error'] = {'error': repr(snapshot_error),
++                                              'scope': 'secondary diagnostic failure after request failed'}
++        raise
++    else:
++        # A failed postflight remains fatal even when the request returned.
++        record['after'] = snapshot_call()
+ 
+ 
+ def run_campaign(args, common):
+@@ -209,10 +228,9 @@
+             command = [sys.executable, str(LANE / 'scripts/profile-clip.py'), run, '--graph', str(graph_path),
+                        '--server-run', str(args.server_run), '--timeout', '1200']
+             current['command'] = command
+-            try:
+-                screen.run_subprocess(command, output / (run + '-client.log'), 1260)
+-            finally:
+-                current['after'] = retention.snapshot(identity['pid'])
++            run_with_post_snapshot(
++                lambda: screen.run_subprocess(command, output / (run + '-client.log'), 1260),
++                lambda: retention.snapshot(identity['pid']), current)
+             v3.identity_binding(common, args.packet, args.manifest_sha256, args.server_run, identity)
+             stage = 'graph-placement-retirement-gates'
+             request = ROOT / 'requests' / run
