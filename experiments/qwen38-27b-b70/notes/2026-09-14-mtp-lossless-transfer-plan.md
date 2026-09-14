@@ -25,7 +25,7 @@ AMD-transfer packet stay preserved.
 
 ## Work and gates
 
-- [in progress] 1. Snapshot actual service/source identities, refresh upstream,
+- [done] 1. Snapshot actual service/source identities, refresh upstream,
   and preregister the experiment. Keep the current service during preparation.
 - [in progress] 2. Validate the metadata subtraction relocation against actual
   original and candidate builders: ordinary, all-spec, rejected-draft, mixed,
@@ -50,7 +50,7 @@ AMD-transfer packet stay preserved.
   consistent with stability policy before promotion. No noisy one-process win
   or microbenchmark result becomes a public recommendation. Preserve original
   defaults if no candidate meets both quality and performance requirements.
-- [pending] 7. Attribute native convolution time from existing evidence. Pursue
+- [done] 7. Attribute native convolution time from existing evidence. Pursue
   native channel tiling only if the measured cost supports it; a different
   backend's Triton constant is not an optimization of the native XPU route.
 - [pending] 8. Close source/evidence, update recipes/packages/site only for
@@ -75,3 +75,19 @@ Previous qualified service state:
 `/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/restored-service`.
 The parent owns all native testing and application transitions. Parallel agents
 own only isolated CPU/source/build tasks until explicitly assigned a GPU stage.
+
+## Preparation checkpoint
+
+The accepted overlay is preserved on separately built V1/MTP-only image
+`sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1dd8ea066`.
+It remains runtime-unqualified. Both source versions pass36 metadata cases;
+the communication prototype passes nine CPU protocol/lifetime cases and loads
+under the control image without initializing XPU. The previous service was
+stopped gracefully once at18:07UTC; ownership and kernel checks passed afterward.
+
+Saved-trace attribution identifies48 native convolution calls per rank,
+3.547/3.571ms total, about2.02/2.03% of summed device kernel time. This native
+implementation already tiles256 channels and8tokens. The external Triton
+constant does not affect it. This bounded campaign does not justify a native
+convolution rewrite from that small measured share; the other GDN stages must
+not be counted as convolution savings. See [attribution receipt](../data/2026-09-14-mtp-lossless-transfer/convolution-attribution.json).

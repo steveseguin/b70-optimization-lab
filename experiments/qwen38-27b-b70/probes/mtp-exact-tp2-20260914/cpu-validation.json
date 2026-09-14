@@ -1,0 +1,94 @@
+{
+  "schema": "neural.download.exact-tp2-cpu-prototype.v1",
+  "recorded_at": "2026-09-14T18:13:10.836163+00:00",
+  "status": "CPU built and tested; native GPU execution pending",
+  "gpu_initialized": false,
+  "runtime_qualified": false,
+  "promoted": false,
+  "tests": {
+    "count": 17,
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "test_copy_failure_cannot_submit_add_or_reuse (test_protocol.ProtocolTests.test_copy_failure_cannot_submit_add_or_reuse) ... ok\ntest_fd_transferred_and_not_inheritable (test_protocol.ProtocolTests.test_fd_transferred_and_not_inheritable) ... ok\ntest_mismatched_shape_poisoned (test_protocol.ProtocolTests.test_mismatched_shape_poisoned) ... ok\ntest_missing_peer_bounded (test_protocol.ProtocolTests.test_missing_peer_bounded) ... ok\ntest_peer_exit_after_ready (test_protocol.ProtocolTests.test_peer_exit_after_ready) ... ok\ntest_peer_retirement_failure_cannot_submit_add (test_protocol.ProtocolTests.test_peer_retirement_failure_cannot_submit_add) ... ok\ntest_reserved_identity_rejected (test_protocol.ProtocolTests.test_reserved_identity_rejected) ... ok\ntest_reuse_before_retirement_rejected (test_protocol.ProtocolTests.test_reuse_before_retirement_rejected) ... ok\ntest_reuse_changing_sizes (test_protocol.ProtocolTests.test_reuse_changing_sizes) ... ok\ntest_five_percent_threshold (test_analysis.AnalysisTests.test_five_percent_threshold) ... ok\ntest_one_negative_block_is_inconclusive (test_analysis.AnalysisTests.test_one_negative_block_is_inconclusive) ... ok\ntest_reordered_or_missing_samples_rejected (test_analysis.AnalysisTests.test_reordered_or_missing_samples_rejected) ... ok\ntest_slowest_rank_controls_gate (test_analysis.AnalysisTests.test_slowest_rank_controls_gate) ... ok\ntest_foreign_same_named_container_never_stopped (test_controller.ControllerTests.test_foreign_same_named_container_never_stopped) ... ok\ntest_natural_exit_has_no_stop (test_controller.ControllerTests.test_natural_exit_has_no_stop) ... ok\ntest_running_owned_container_stopped_once (test_controller.ControllerTests.test_running_owned_container_stopped_once) ... ok\ntest_snapshot_keeps_exact_bytes_and_readonly_mode (test_controller.ControllerTests.test_snapshot_keeps_exact_bytes_and_readonly_mode) ... ok\n\n----------------------------------------------------------------------\nRan 17 tests in 0.046s\n\nOK\n"
+  },
+  "additional_checks": [
+    "All seven FP16 fixture generators passed on CPU with torch 2.11.0+xpu; torch.xpu.is_initialized() remained False",
+    "SYCL ABI8 native CDLL loaded with Torch 2.11.0+xpu; XPU remained uninitialized",
+    "SYCL ABI9 native CDLL rejected before loading into Torch ABI8 process"
+  ],
+  "builds": [
+    {
+      "path": "/tmp/mtp-exact-tp2-build-20260914",
+      "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.1/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.1/bin/compiler/../icpx.cfg\n",
+      "library_sha256": "92134c3d404e643c5e590fdf3e51a778a48a9ed9848b471f170efd6f8576509b",
+      "library_bytes": 55104,
+      "source_sha256": "8cace2596582c1294950da50fb74032ecd4528153937a14c6d7fb79519f841fb",
+      "elf_dynamic": "\nDynamic section at offset 0x8d20 contains 34 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libze_loader.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libsvml.so]\n 0x0000000000000001 (NEEDED)             Shared library: [libirng.so]\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libimf.so]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libintlc.so.5]\n 0x0000000000000001 (NEEDED)             Shared library: [libsycl.so.9]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]\n 0x000000000000000c (INIT)               0x3000\n 0x000000000000000d (FINI)               0x58e4\n 0x0000000000000019 (INIT_ARRAY)         0x8980\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x8990\n 0x000000000000001c (FINI_ARRAYSZ)       16 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x238\n 0x0000000000000005 (STRTAB)             0xd70\n 0x0000000000000006 (SYMTAB)             0x320\n 0x000000000000000a (STRSZ)              4293 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000003 (PLTGOT)             0x8fe8\n 0x0000000000000002 (PLTRELSZ)           1776 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x28c0\n 0x0000000000000007 (RELA)               0x2008\n 0x0000000000000008 (RELASZ)             2232 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x1f18\n 0x000000006fffffff (VERNEEDNUM)         4\n 0x000000006ffffff0 (VERSYM)             0x1e36\n 0x000000006ffffff9 (RELACOUNT)          62\n 0x0000000000000000 (NULL)               0x0\n"
+    },
+    {
+      "path": "/tmp/mtp-exact-tp2-build-20260914-sycl8",
+      "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2025.3.3 (2025.3.3.20260319)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2025.3/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2025.3/bin/compiler/../icpx.cfg\n",
+      "library_sha256": "4d02db1f1565bf0c281db9b4a3176db9cc1cd0c3f8fad38ada0e484bed74503a",
+      "library_bytes": 54496,
+      "source_sha256": "8cace2596582c1294950da50fb74032ecd4528153937a14c6d7fb79519f841fb",
+      "elf_dynamic": "\nDynamic section at offset 0x8d20 contains 34 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libze_loader.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libsvml.so]\n 0x0000000000000001 (NEEDED)             Shared library: [libirng.so]\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libimf.so]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libintlc.so.5]\n 0x0000000000000001 (NEEDED)             Shared library: [libsycl.so.8]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]\n 0x000000000000000c (INIT)               0x3000\n 0x000000000000000d (FINI)               0x5e14\n 0x0000000000000019 (INIT_ARRAY)         0x9a80\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x9a90\n 0x000000000000001c (FINI_ARRAYSZ)       16 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x238\n 0x0000000000000005 (STRTAB)             0xe10\n 0x0000000000000006 (SYMTAB)             0x318\n 0x000000000000000a (STRSZ)              4125 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000003 (PLTGOT)             0x9fe8\n 0x0000000000000002 (PLTRELSZ)           1992 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x26c8\n 0x0000000000000007 (RELA)               0x2008\n 0x0000000000000008 (RELASZ)             1728 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffffe (VERNEED)            0x1f18\n 0x000000006fffffff (VERNEEDNUM)         4\n 0x000000006ffffff0 (VERSYM)             0x1e2e\n 0x000000006ffffff9 (RELACOUNT)          50\n 0x0000000000000000 (NULL)               0x0\n"
+    }
+  ],
+  "sources": [
+    {
+      "path": "README.md",
+      "sha256": "7cccf4d35285557189e97d1c4cc48b92f287449380b9c1b9a0958ce2069f168d",
+      "bytes": 9358
+    },
+    {
+      "path": "analyze.py",
+      "sha256": "42eaf84a5d6fd04ba18be3ef0fa23893d2830c82a2ce122053452f3b1160b432",
+      "bytes": 5283
+    },
+    {
+      "path": "build.sh",
+      "sha256": "4a570e986363fe94929d6cf53897259b5a8ce3f618a16d70f6ccc6c7b88629dd",
+      "bytes": 650
+    },
+    {
+      "path": "exact_tp2.cpp",
+      "sha256": "8cace2596582c1294950da50fb74032ecd4528153937a14c6d7fb79519f841fb",
+      "bytes": 6661
+    },
+    {
+      "path": "gate.py",
+      "sha256": "b426a744cdf6995f74b2878dc538d712fffcb7c3453bb38297b0a46b9b069ca8",
+      "bytes": 9450
+    },
+    {
+      "path": "native.py",
+      "sha256": "2671bbacba7e42190f0ba0ded42994bac944080f804c2098ea654a7451b8d753",
+      "bytes": 4186
+    },
+    {
+      "path": "protocol.py",
+      "sha256": "29f76ae8318e83bb13cb07832ae58236043194008ab2d9d0e0f805546a2b6052",
+      "bytes": 3690
+    },
+    {
+      "path": "run-native.py",
+      "sha256": "b6928871e68c2c2efed078df6c224d7dfc8a86e69268af13000c47000a92855a",
+      "bytes": 14296
+    },
+    {
+      "path": "test_analysis.py",
+      "sha256": "623a291aaca7e9300da47a90804d9f6f7a1a1893a24efbcb1c81067a0fbafab7",
+      "bytes": 1617
+    },
+    {
+      "path": "test_controller.py",
+      "sha256": "e2265db5428d14a6eff0f29685058c94eac55f33c2f8744a2c86886e362ce2ec",
+      "bytes": 2717
+    },
+    {
+      "path": "test_protocol.py",
+      "sha256": "ebc142d9afbee6732d0fb48b93be3dbb788278b2cd151cbce43a4da7a70eaa2a",
+      "bytes": 5265
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.exact-tp2-root-source-admission.v1",
+  "at": "2026-09-14T18:13:14.624776+00:00",
+  "reviewed_files": {
+    "exact_tp2.cpp": "8cace2596582c1294950da50fb74032ecd4528153937a14c6d7fb79519f841fb",
+    "native.py": "2671bbacba7e42190f0ba0ded42994bac944080f804c2098ea654a7451b8d753",
+    "protocol.py": "29f76ae8318e83bb13cb07832ae58236043194008ab2d9d0e0f805546a2b6052",
+    "gate.py": "b426a744cdf6995f74b2878dc538d712fffcb7c3453bb38297b0a46b9b069ca8",
+    "run-native.py": "b6928871e68c2c2efed078df6c224d7dfc8a86e69268af13000c47000a92855a"
+  },
+  "cpu_tests": {
+    "protocol": 9,
+    "controller": 4,
+    "analysis": 4
+  },
+  "immutable_control_image": "sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1dd8ea066",
+  "cpu_only_native_import": {
+    "torch": "2.13.0+xpu",
+    "xpu_initialized": false,
+    "library_loaded": true
+  },
+  "admitted": "One exclusive operator gate after previous service stop and clean ownership/kernel checks; not model integration or speed qualification",
+  "review": [
+    "Dedicated IPC allocation ownership and directed peer capability checks",
+    "Complete local producer, finite host READY, complete peer copy, finite COPIED, local sum, completion before reuse",
+    "No peer spin or imported events",
+    "Full bitwise both-rank XCCL equality and buffer lifetime before timing",
+    "Pinned source/library immutable snapshot; no restart/retry; ownedIDstoponlyifneeded",
+    "Stop GPU submission on kernel fault; no setting changes or host recovery"
+  ],
+  "unqualified": [
+    "Native driver behavior",
+    "XCCL arithmetic identity",
+    "Measured operator benefit",
+    "Arbitrary model producer allocation integration",
+    "Complete model token identity and independent-process confirmation"
+  ]
+}
