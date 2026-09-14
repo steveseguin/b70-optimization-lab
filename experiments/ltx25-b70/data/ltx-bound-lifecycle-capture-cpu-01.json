@@ -1,0 +1,94 @@
+{
+  "scope": "CPU lifecycle gate with native ModelPatcher.pre_run; one tiny native block compiled; no GPU/checkpoint/speed claim",
+  "passed": true,
+  "phase": "completed",
+  "checks": [
+    "native_pre_run_method",
+    "current_executing_patcher_bound",
+    "actual_lifecycle_callback_in_capture_registry",
+    "actual_bound_lifecycle_capture_exact_and_repeatable",
+    "one_compiled_graph_without_fallback",
+    "native_cleanup_clears_execution"
+  ],
+  "patch_order": [
+    "ltx-block-compile-ownership-guard.patch",
+    "ltx-block-compile-pre-run-lifecycle-v2.patch"
+  ],
+  "sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-bound-lifecycle-capture.py": "dae3b40eea742b2bdc419fce3f4f32872356e8b5daa13b45df80c0cb378c5617",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_block_compile.py": "96871c075b1c9851882171b84223d7e2b2294a734f15242278f75cc462b21ea4",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-route.py": "1720e45b5296d8fa27d0451c737c1de4c1b28337ff82a06cadfa20857110f58f",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-cpu.py": "f0928810e670e3d3a8bb2998c4cbe430557e796a6535426481e9047a0dc18aa0",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_patcher.py": "26da6710a7d84e8e98ea3e0f0bc07b88cfef3f99a7f7d59daa71e650512c6ed4",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/ltx-block-compile-ownership-guard.patch": "98ea91b751eefd6e200957115c7d277953e4751a24f5a2bc033177f0eb03df62",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/ltx-block-compile-pre-run-lifecycle-v2.patch": "76a8445b14e9539f1d0277ffe2c964803a33afaa7372eb3e32e4571a3844a01b"
+  },
+  "effective_adapter_sha256": "79ba260785e16d7e646bfe79b0816e99a8fab6db557a60408c35bd7675121577",
+  "torch": "2.14.0+xpu",
+  "seed": 17,
+  "video_tokens": 64,
+  "audio_tokens": 26,
+  "compilation_executed": true,
+  "options": {
+    "compile_threads": 1,
+    "emulate_precision_casts": true,
+    "eager_numerics.division_rounding": true,
+    "triton.cudagraphs": false,
+    "max_autotune": false,
+    "max_autotune_gemm": false
+  },
+  "lifecycle_callback_present": true,
+  "capture_case": {
+    "video_tokens": 64,
+    "audio_tokens": 26,
+    "seed": 17,
+    "outputs": [
+      {
+        "name": "video",
+        "exact_eager": true,
+        "exact_repeat": true,
+        "finite": true
+      },
+      {
+        "name": "audio",
+        "exact_eager": true,
+        "exact_repeat": true,
+        "finite": true
+      }
+    ]
+  },
+  "dynamo_counters": {
+    "stats": {
+      "calls_captured": 493,
+      "unique_graphs": 1
+    },
+    "aot_autograd": {
+      "total": 1,
+      "autograd_cache_miss": 1,
+      "autograd_cache_saved": 1,
+      "ok": 1
+    },
+    "inductor": {
+      "pattern_matcher_count": 158,
+      "pattern_matcher_nodes": 170,
+      "removed_pointless_view_pair": 6,
+      "fxgraph_cache_miss": 1,
+      "extern_calls": 62
+    },
+    "graph_break": {},
+    "aten_mm_info": {
+      "aten.addmm_64_32_32": 10,
+      "aten.addmm_64_1_32": 3,
+      "aten.addmm_8_32_32": 4,
+      "aten.addmm_26_32_32": 10,
+      "aten.addmm_26_1_32": 3,
+      "aten.addmm_64_128_32": 1,
+      "aten.addmm_64_32_128": 1,
+      "aten.addmm_26_128_32": 1,
+      "aten.addmm_26_32_128": 1
+    }
+  },
+  "max_parent_rss_kib": 1141888
+}

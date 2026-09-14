@@ -35,13 +35,18 @@ These are tiny CPU fixtures, not native-weight GPU or speed results. The
 records native block dimensions and mixed stored dtypes without loading weights.
 A subsequent [executing-patcher lifecycle gate](experiments/ltx25-b70/notes/ltx-block-compile-pre-run-lifecycle.md)
 passed 25 CPU checks for live owner anchoring, late changes, clone behavior and
-cleanup. It used a dispatch spy; compiler capture with the new lifecycle metadata
-and native GPU correctness/overhead remain unqualified. The cancelled optional
-CPU compilation attempt is preserved separately. The
+cleanup. A subsequent [real bound CPU capture](experiments/ltx25-b70/notes/ltx-bound-lifecycle-capture-cpu.md)
+passed one 64-video/26-audio-token case with the lifecycle callback present:
+both outputs exact and repeatable, one compiled graph and zero graph breaks.
+Native GPU correctness/overhead and broader cases remain unqualified. The
+cancelled optional CPU compilation attempt is preserved separately. The
 [continuation audit](experiments/ltx25-b70/notes/continuation-source-boundary.md)
 also records two-stage mask loss and unresolved audio timing before streaming.
 PID24848 remains idle, fault-free and unchanged; the encoder v2 maintenance
-approval is still pending. Compiler work is separate from that immutable packet.
+approval is still pending after multiple goal turns. The prepared launcher again
+passed its read-only check. Further measured speed work is waiting on that
+decision; do not infer approval from automatic continuation. Compiler work is
+separate from that immutable packet.
 See the [route gate](experiments/ltx25-b70/notes/ltx-block-compile-route-cpu.md).
 
 **Four-B70 host, encoder runtime v2: GPU screen prepared, maintenance pending.**

@@ -8,6 +8,10 @@ failed pre-run; and dispatch after native cleanup. Parent and sibling ownership
 and restored eager dispatch remain intact. This is a lifecycle result, with no
 video, throughput, XPU execution, or new compiled numerical-parity result.
 
+The subsequent [bound CPU capture](ltx-bound-lifecycle-capture-cpu.md) qualifies
+one real compiled case with the lifecycle object present. Broader shapes,
+native weights, XPU behavior and performance still need qualification.
+
 Apply [ownership guard](../patches/ltx-block-compile-ownership-guard.patch) first
 to the preserved base `scripts/ltx_block_compile.py`, then
 [lifecycle v2](../patches/ltx-block-compile-pre-run-lifecycle-v2.patch).

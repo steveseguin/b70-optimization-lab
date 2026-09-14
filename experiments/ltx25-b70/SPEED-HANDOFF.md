@@ -39,6 +39,12 @@ capture and GPU overhead/correctness are still unqualified. The separate
 [continuation source audit](notes/continuation-source-boundary.md) identifies
 the upsampler's dropped anchor mask and audio-timing work required for streaming.
 
+A subsequent [real bound CPU capture](notes/ltx-bound-lifecycle-capture-cpu.md)
+passed one case with the new lifecycle metadata: exact eager/repeated outputs,
+one compiled graph and no graph breaks. Native GPU qualification remains
+pending. The encoder launcher's read-only check passed again; the next measured
+GPU comparison is waiting on the previously requested maintenance decision.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,
