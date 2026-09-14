@@ -1,0 +1,1164 @@
+{
+  "schema": "neural.download.prefill-trace-analysis.v1",
+  "date_utc": "2026-09-14",
+  "status": "diagnostic_only_no_optimization_promoted",
+  "setup": {
+    "model": "Qwen3.5 4B",
+    "quantization": "W4A16",
+    "gpu_count": 2,
+    "runtime_identity": "Published R304; see follow-up preregistration and collected image contract",
+    "draft": "fixed MTP depth 3, 67k shortlist",
+    "fp16_linear_mode": "CLASSPAD0, rowchunk32",
+    "input_tokens": 512,
+    "requested_output_tokens": 1,
+    "profiled_requests": 1
+  },
+  "source_files": [
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-prefill-followup-20260914/4b-tp2/profile/cf801b518d39_1.async_llm.1789349685768019935.pt.trace.json.gz",
+      "sha256": "ad568a81d856cfd408060fc53c4937d183b6979be8d46a487921d86b64f3cc34",
+      "bytes": 784
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-prefill-followup-20260914/4b-tp2/profile/profiler_out_0.txt",
+      "sha256": "c4b94c60e82576bc6c9f5c35de4c530f426c5d10387abf8552d9d3b6173352ba",
+      "bytes": 20654
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-prefill-followup-20260914/4b-tp2/profile/profiler_out_1.txt",
+      "sha256": "ce8704d965ee58b0050497f11763b921c6dfb8121900d4060eaac2e4e0d5ab04",
+      "bytes": 20654
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-prefill-followup-20260914/4b-tp2/profile/rank0.1789349685888038274.pt.trace.json.gz",
+      "sha256": "38468482cd602c0a3bdbcf90743ae63ac72a42e6550174f8c386db8fea5553fe",
+      "bytes": 768869
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-prefill-followup-20260914/4b-tp2/profile/rank1.1789349685887902194.pt.trace.json.gz",
+      "sha256": "aeb01fdb8a98f590c8337d2ad00203122c17c8b9fc4187ecb12cb218e41a7a0b",
+      "bytes": 773495
+    }
+  ],
+  "methodology": {
+    "trace_format": "PyTorch Chrome trace; gzip JSON",
+    "units": "Trace timestamps/durations are microseconds, converted to milliseconds by division by 1000.",
+    "cpu": "Only complete cpu_op events; CPU durations are inclusive and overlap parent/child operators. Do not add nested rows. execute_context annotations are inclusive host-side profiled intervals, not server-prefill measurements.",
+    "device": "Only complete kernel events for kernel sums. Each event counted once per rank. gpu_memcpy durations reported separately. Kernel percentages use that rank kernel-duration sum, excluding copies; no summing ranks into request latency.",
+    "attribution": "Match kernel args.External id to cpu_op args.External id. Direct attribution is exclusive by external id. Rowchunk inclusive device group uses all CPU operators on the same process/thread whose full intervals are contained within a rowchunk CPU interval, then matches their external IDs to kernels. CPU launch timestamps, not kernel timestamp containment, determine parentage because device work is asynchronous.",
+    "shapes": "Read Input Dims and Input type from aten::mm CPU events; matrix B dimensions are post-transpose as actually passed to mm.",
+    "aggregation": "One profiled request, two tensor-parallel ranks; no repetitions, performance comparison, extrapolation or speedup estimate.",
+    "reproduction": "For each rank*.pt.trace.json.gz: gzip-decode JSON, select traceEvents where ph=X and cat=cpu_op/kernel, group by CPU operator name and Input Dims, join External id for device attribution, sum dur/1000. Source hashes above bind inputs."
+  },
+  "ranks": [
+    {
+      "trace_file": "rank0.1789349685888038274.pt.trace.json.gz",
+      "record_shapes": 1,
+      "device_kernel_count": 1901,
+      "device_kernel_sum_ms": 73.135136,
+      "device_kernel_interval_union_ms": 73.107937,
+      "device_memcpy_count": 115,
+      "device_memcpy_sum_ms": 0.305158,
+      "execute_context_annotations": [
+        {
+          "name": "execute_context_1(512)_generation_0(0)",
+          "cpu_inclusive_ms": 125.574177
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 0.23998
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 0.10374
+        }
+      ],
+      "operator_summary": [
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "cpu_call_count": 64,
+          "cpu_inclusive_ms": 50.115689,
+          "directly_attributed_kernel_count": 0,
+          "directly_attributed_kernel_ms": 0.0,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 0.0
+        },
+        {
+          "operator": "aten::mm",
+          "cpu_call_count": 907,
+          "cpu_inclusive_ms": 43.709632,
+          "directly_attributed_kernel_count": 907,
+          "directly_attributed_kernel_ms": 27.417635,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 37.489
+        },
+        {
+          "operator": "_xpu_C::int4_gemm_w4a16",
+          "cpu_call_count": 83,
+          "cpu_inclusive_ms": 4.20587,
+          "directly_attributed_kernel_count": 83,
+          "directly_attributed_kernel_ms": 19.876212,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 27.1774
+        },
+        {
+          "operator": "_xpu_C::gdn_attention",
+          "cpu_call_count": 24,
+          "cpu_inclusive_ms": 10.929867,
+          "directly_attributed_kernel_count": 168,
+          "directly_attributed_kernel_ms": 7.908783,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 10.8139
+        },
+        {
+          "operator": "c10d::allreduce_",
+          "cpu_call_count": 74,
+          "cpu_inclusive_ms": 9.459757,
+          "directly_attributed_kernel_count": 74,
+          "directly_attributed_kernel_ms": 9.023408,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 12.338
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "cpu_call_count": 7,
+          "cpu_inclusive_ms": 6.596938,
+          "directly_attributed_kernel_count": 7,
+          "directly_attributed_kernel_ms": 2.28156,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 3.1196
+        },
+        {
+          "operator": "aten::cat",
+          "cpu_call_count": 87,
+          "cpu_inclusive_ms": 2.960286,
+          "directly_attributed_kernel_count": 78,
+          "directly_attributed_kernel_ms": 2.437575,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 3.333
+        }
+      ],
+      "rowchunk_including_descendant_kernels": {
+        "kernel_count": 912,
+        "kernel_sum_ms": 29.390658,
+        "kernel_pct_of_rank_kernel_sum": 40.1868
+      },
+      "rowchunk_input_shapes": [
+        {
+          "input_dims": [
+            [
+              1,
+              2048
+            ],
+            [
+              2560,
+              2048
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              124160,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              5120,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              9216,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              4608
+            ],
+            [
+              2560,
+              4608
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              1280,
+              5120
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2048
+            ],
+            [
+              2560,
+              2048
+            ],
+            [],
+            []
+          ],
+          "calls": 25
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2560
+            ],
+            [
+              5120,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2560
+            ],
+            [
+              6144,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 24
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2560
+            ],
+            [
+              9216,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              4608
+            ],
+            [
+              2560,
+              4608
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              1280,
+              5120
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        }
+      ],
+      "fp16_mm_shapes": [
+        {
+          "input_dims": [
+            [
+              1,
+              2048
+            ],
+            [
+              2048,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.14704,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.04302,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              2560,
+              124160
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.08951,
+          "device_kernel_count": 1,
+          "device_kernel_ms": 1.090625,
+          "calls_within_rowchunk": 1
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              2560,
+              5120
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.1502,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.105312,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              2560,
+              9216
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.15383,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.164582,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              4608
+            ],
+            [
+              4608,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.12092,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.08552,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              5120,
+              1280
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.18942,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.055103,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              256,
+              2560
+            ],
+            [
+              2560,
+              32
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 2.45387,
+          "device_kernel_count": 48,
+          "device_kernel_ms": 0.380811,
+          "calls_within_rowchunk": 0
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2048
+            ],
+            [
+              2048,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 400,
+          "cpu_inclusive_ms": 18.543001,
+          "device_kernel_count": 400,
+          "device_kernel_ms": 5.987535,
+          "calls_within_rowchunk": 400
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2560
+            ],
+            [
+              2560,
+              5120
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.86964,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 0.505202,
+          "calls_within_rowchunk": 16
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2560
+            ],
+            [
+              2560,
+              6144
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 384,
+          "cpu_inclusive_ms": 18.835312,
+          "device_kernel_count": 384,
+          "device_kernel_ms": 16.968903,
+          "calls_within_rowchunk": 384
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2560
+            ],
+            [
+              2560,
+              9216
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.72129,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 1.333952,
+          "calls_within_rowchunk": 16
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              4608
+            ],
+            [
+              4608,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.679939,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 0.389264,
+          "calls_within_rowchunk": 16
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              5120
+            ],
+            [
+              5120,
+              1280
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.75566,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 0.307806,
+          "calls_within_rowchunk": 16
+        }
+      ]
+    },
+    {
+      "trace_file": "rank1.1789349685887902194.pt.trace.json.gz",
+      "record_shapes": 1,
+      "device_kernel_count": 1901,
+      "device_kernel_sum_ms": 84.698608,
+      "device_kernel_interval_union_ms": 84.602408,
+      "device_memcpy_count": 115,
+      "device_memcpy_sum_ms": 0.359072,
+      "execute_context_annotations": [
+        {
+          "name": "execute_context_1(512)_generation_0(0)",
+          "cpu_inclusive_ms": 125.672117
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 0.24054
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 0.10148
+        }
+      ],
+      "operator_summary": [
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "cpu_call_count": 64,
+          "cpu_inclusive_ms": 49.97464,
+          "directly_attributed_kernel_count": 0,
+          "directly_attributed_kernel_ms": 0.0,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 0.0
+        },
+        {
+          "operator": "aten::mm",
+          "cpu_call_count": 907,
+          "cpu_inclusive_ms": 43.560371,
+          "directly_attributed_kernel_count": 907,
+          "directly_attributed_kernel_ms": 28.842953,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 34.0536
+        },
+        {
+          "operator": "_xpu_C::int4_gemm_w4a16",
+          "cpu_call_count": 83,
+          "cpu_inclusive_ms": 4.252526,
+          "directly_attributed_kernel_count": 83,
+          "directly_attributed_kernel_ms": 19.369448,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 22.8687
+        },
+        {
+          "operator": "_xpu_C::gdn_attention",
+          "cpu_call_count": 24,
+          "cpu_inclusive_ms": 10.895667,
+          "directly_attributed_kernel_count": 168,
+          "directly_attributed_kernel_ms": 7.859934,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 9.2799
+        },
+        {
+          "operator": "c10d::allreduce_",
+          "cpu_call_count": 74,
+          "cpu_inclusive_ms": 9.850045,
+          "directly_attributed_kernel_count": 74,
+          "directly_attributed_kernel_ms": 21.959658,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 25.9268
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "cpu_call_count": 7,
+          "cpu_inclusive_ms": 6.780118,
+          "directly_attributed_kernel_count": 7,
+          "directly_attributed_kernel_ms": 0.10208,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 0.1205
+        },
+        {
+          "operator": "aten::cat",
+          "cpu_call_count": 87,
+          "cpu_inclusive_ms": 3.002999,
+          "directly_attributed_kernel_count": 78,
+          "directly_attributed_kernel_ms": 2.398094,
+          "directly_attributed_kernel_pct_of_rank_kernel_sum": 2.8313
+        }
+      ],
+      "rowchunk_including_descendant_kernels": {
+        "kernel_count": 912,
+        "kernel_sum_ms": 30.79118,
+        "kernel_pct_of_rank_kernel_sum": 36.3538
+      },
+      "rowchunk_input_shapes": [
+        {
+          "input_dims": [
+            [
+              1,
+              2048
+            ],
+            [
+              2560,
+              2048
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              124160,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              5120,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              9216,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              4608
+            ],
+            [
+              2560,
+              4608
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              1280,
+              5120
+            ],
+            [],
+            []
+          ],
+          "calls": 2
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2048
+            ],
+            [
+              2560,
+              2048
+            ],
+            [],
+            []
+          ],
+          "calls": 25
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2560
+            ],
+            [
+              5120,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2560
+            ],
+            [
+              6144,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 24
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              2560
+            ],
+            [
+              9216,
+              2560
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              4608
+            ],
+            [
+              2560,
+              4608
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        },
+        {
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              1280,
+              5120
+            ],
+            [],
+            []
+          ],
+          "calls": 1
+        }
+      ],
+      "fp16_mm_shapes": [
+        {
+          "input_dims": [
+            [
+              1,
+              2048
+            ],
+            [
+              2048,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.14533,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.042915,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              2560,
+              124160
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.08968,
+          "device_kernel_count": 1,
+          "device_kernel_ms": 1.092708,
+          "calls_within_rowchunk": 1
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              2560,
+              5120
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.15909,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.102707,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              2560
+            ],
+            [
+              2560,
+              9216
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.15511,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.165416,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              4608
+            ],
+            [
+              4608,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.11851,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.085833,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              5120,
+              1280
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.17567,
+          "device_kernel_count": 2,
+          "device_kernel_ms": 0.054583,
+          "calls_within_rowchunk": 2
+        },
+        {
+          "input_dims": [
+            [
+              256,
+              2560
+            ],
+            [
+              2560,
+              32
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 2.410028,
+          "device_kernel_count": 48,
+          "device_kernel_ms": 0.363626,
+          "calls_within_rowchunk": 0
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2048
+            ],
+            [
+              2048,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 400,
+          "cpu_inclusive_ms": 18.355471,
+          "device_kernel_count": 400,
+          "device_kernel_ms": 5.926293,
+          "calls_within_rowchunk": 400
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2560
+            ],
+            [
+              2560,
+              5120
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.88541,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 0.454576,
+          "calls_within_rowchunk": 16
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2560
+            ],
+            [
+              2560,
+              6144
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 384,
+          "cpu_inclusive_ms": 18.894733,
+          "device_kernel_count": 384,
+          "device_kernel_ms": 18.478065,
+          "calls_within_rowchunk": 384
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              2560
+            ],
+            [
+              2560,
+              9216
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.73267,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 1.361243,
+          "calls_within_rowchunk": 16
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              4608
+            ],
+            [
+              4608,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.687459,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 0.395412,
+          "calls_within_rowchunk": 16
+        },
+        {
+          "input_dims": [
+            [
+              32,
+              5120
+            ],
+            [
+              5120,
+              1280
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.75121,
+          "device_kernel_count": 16,
+          "device_kernel_ms": 0.319576,
+          "calls_within_rowchunk": 16
+        }
+      ]
+    }
+  ],
+  "findings": [
+    "Both ranks execute 64 FP16 rowchunk custom ops: 53 receive 512 input rows and expand to 848 separate 32-row FP16 GEMMs; the other 11 receive one row. Another 48 FP16 GEMMs have [256,2560] x [2560,32] shapes outside rowchunk, giving 907 FP16 GEMMs total per rank.",
+    "The two most frequent 32-row shapes are [32,2048] x [2048,2560] (400 calls) and [32,2560] x [2560,6144] (384 calls). FP16 mm kernels are the largest directly attributed device operator group on both ranks.",
+    "INT4 GEMMs remain substantial: 83 kernels per rank. GDN attention has 24 CPU calls and 168 directly attributed device kernels per rank. These are separate from the FP16 mm device group.",
+    "Allreduce kernel time differs sharply by rank: approximately 9.02 ms on rank0 and 21.96 ms on rank1. Collective durations can include synchronization/waiting; this trace does not isolate wire-transfer cost or prove a communication optimization.",
+    "The sole full-vocabulary matrix multiplication has one input row: [1,2560] x [2560,124160]. The trace does not support treating the vocabulary projection as a 512-row prefill bottleneck.",
+    "A one-token output cap does not remove all speculative work: the captured execution has additional one-row calls with MTP-shaped weights. Treat the profile as the actual configured serving path, not an isolated target-only forward."
+  ],
+  "limitations": [
+    "Profiler instrumentation and shape recording alter host overhead and scheduling; these timings are diagnostic and must not enter the public prefill-rate table.",
+    "One request cannot establish repeatability, control drift, optimization benefit, output quality or decode regression. The parent campaign owns token equality and unprofiled controls.",
+    "CPU inclusive time is not GPU execution time. Device kernel sums are not HTTP TTFT, server prefill duration or a causal critical-path decomposition. CPU/GPU execution and tensor-parallel ranks can overlap.",
+    "The trace records kernel names and shapes but does not establish exact arithmetic equivalence of alternate GEMM implementations, larger row shapes, batching, graph capture, fusion or allocation lifetime changes.",
+    "Directly attributed operator rows omit descendant kernels by design; for example rowchunk has no direct device kernel and its inclusive descendant kernels are reported separately.",
+    "Unknown/unattributed device events remain included in device totals; operator summaries are selected groups rather than a partition of all work."
+  ],
+  "conclusion": {
+    "new_small_same_arithmetic_candidate_established": false,
+    "optimization_implemented": false,
+    "serving_defaults_changed": false,
+    "decision": "Finish baseline publication with existing defaults. The trace confirms repeated 32-row FP16 dispatch as a useful future target but does not reveal an independently justified small same-arithmetic patch beyond the already screened direct-allocation change. Do not reopen that screen or promote CLASSPAD from this profile.",
+    "possible_later_bounded_followup": "If separately prioritized, investigate reducing dispatch overhead for the two observed dominant 32-row shapes while retaining the exact existing GEMM arithmetic, followed by operator identity/determinism and matched full-output/decode gates. This is a research question, not a tested candidate or predicted speedup."
+  }
+}

@@ -269,7 +269,27 @@
     "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json",
     "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-contract.log",
     "experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md",
-    "experiments/qwen38-27b-b70/data/2026-09-13-short-prefill/summary.json"
+    "experiments/qwen38-27b-b70/data/2026-09-13-short-prefill/summary.json",
+    "experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/summary.json",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/evidence/manifest.json",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/evidence/campaign.tar.gz",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/evidence/4b-tp2.tar.gz",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/evidence/4b-tp2-traces.tar.gz",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/evidence/9b-tp2.tar.gz",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/evidence/27b-int4-tp1.tar.gz",
+    "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py",
+    "experiments/qwen38-27b-b70/scripts/bench-prefill-followup.py",
+    "experiments/qwen38-27b-b70/scripts/run-prefill-followup-stage.py",
+    "experiments/qwen38-27b-b70/scripts/profile-prefill-followup.py",
+    "experiments/qwen38-27b-b70/scripts/summarize-prefill-followup.py",
+    "experiments/qwen38-27b-b70/scripts/export-short-prefill-evidence.py",
+    "experiments/qwen38-27b-b70/scripts/export-prefill-followup-evidence.py",
+    "experiments/qwen38-27b-b70/scripts/test_bench_prefill_followup.py",
+    "experiments/qwen38-27b-b70/scripts/test_summarize_prefill_followup.py",
+    "experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py",
+    "experiments/qwen38-27b-b70/data/2026-09-13-prefill-followup-corpus.json",
+    "experiments/qwen38-27b-b70/data/2026-09-14-prefill-trace-analysis.json"
   ],
   "evidence": [
     "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-fp8-repeat-exactness.json",
@@ -690,6 +710,53 @@
         {
           "context_tokens": 512,
           "value": 3941.821849211462,
+          "samples": 18
+        }
+      ]
+    },
+    {
+      "id": "short-prompt-server-prefill-followup-4b-tp2",
+      "label": "Reading speed with a short prompt · 2 GPUs",
+      "public_label": "Reading speed · 2 GPUs · 3-token draft",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_metric": "context_tokens",
+      "x_label": "Input length (tokens)",
+      "measurement_kind": "server_prefill",
+      "scope": "One user, 2 GPUs, 256–512 input tokens; no saved prompt cache. Separate short-input test on the published R304 runtime.",
+      "public_scope": "How fast the server reads a short prompt before making its first token. One user; no saved prompt cache. Unrepeated prose, code and documents.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md",
+      "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-prefill-followup/summary.json",
+      "operating_profile": {
+        "tensor_parallel_size": 2,
+        "speculative_tokens": 3,
+        "quantization": "W4A16",
+        "parent_runtime": "R304",
+        "image_id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+        "activations": "FP16",
+        "kv_cache": "native",
+        "concurrency": 1,
+        "max_model_len": 1024,
+        "max_num_batched_tokens": 1024,
+        "max_num_seqs": 1,
+        "prefix_caching": false,
+        "classpad": 0,
+        "rowchunk": 32,
+        "draft_shortlist_rows": 67248,
+        "profiler_configured": true,
+        "profiler_active_during_measurement": false
+      },
+      "technical_method": "Measured 2026-09-14 UTC on ASRock B70. Input tokens divided by vLLM server prefill duration from first scheduled execution to first token, obtained from one-request histogram deltas; not isolated GPU throughput or HTTP TTFT. Each point averages two control-arm rates. Each arm takes the median of three repeats per prose/code/documentation class, then the median across classes (18 measured requests per length). Unrepeated source excerpts truncated to exact numeric input IDs, 128 output tokens with ignore_eos, zero cached tokens; warmups and the optional profiler request excluded. Complete outputs repeat exactly. All 12 natural-completion strict-suite outputs matched the qualified reference. One loaded server per setup; no runtime optimization or new decode record promoted. Earlier short-prefill tests used a different prompt corpus and do not provide a matched scaling comparison.",
+      "promotion_qualified": false,
+      "points": [
+        {
+          "context_tokens": 256,
+          "value": 6122.949504585635,
+          "samples": 18
+        },
+        {
+          "context_tokens": 512,
+          "value": 7366.869760407872,
           "samples": 18
         }
       ]

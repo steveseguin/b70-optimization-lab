@@ -17,6 +17,16 @@ lossless speculative draft and full decode-only XPU graph capture. It is the
 same stack and launcher as the
 [9B W4A16 route](../qwen35-9b-w4a16-b70/README.md); only the weights differ.
 
+## Reading speed (prefill), September 14 UTC
+
+The 2-GPU R304 setup with fixed MTP depth 3 reads a 512-token prompt at
+**7,367 input tokens/s**, measured with one user and no prompt-cache reuse.
+This is server processing time before its first token, separate from HTTP wait
+and decode speed. The unrepeated prose/code/document test has 18 measurements
+per input length; the full strict suite matched its qualified reference 12/12.
+No runtime change or new decode record was promoted. See the
+[prefill results, exact settings and raw evidence](../../experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md).
+
 ## Historical headline (campaign v1, 2026-09-07, one B70)
 
 - **MTP depth 3 with the draft-only INT4 lm_head: `177.406 / 177.168 tok/s`**

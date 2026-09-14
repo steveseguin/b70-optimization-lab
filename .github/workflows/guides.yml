@@ -23,6 +23,8 @@ on:
       - "tools/build-model-pages.py"
       - "tools/test_build_model_pages.py"
       - "tools/sync-short-prefill-profiles.py"
+      - "tools/sync-prefill-followup-profiles.py"
+      - "tools/test_sync_prefill_followup_profiles.py"
       - "tools/test_build_family_pages.py"
       - "tools/test_guides_browser.cjs"
       - "tools/test_measured_opt_contract.py"
@@ -71,6 +73,8 @@ on:
       - "tools/build-model-pages.py"
       - "tools/test_build_model_pages.py"
       - "tools/sync-short-prefill-profiles.py"
+      - "tools/sync-prefill-followup-profiles.py"
+      - "tools/test_sync_prefill_followup_profiles.py"
       - "tools/test_build_family_pages.py"
       - "tools/test_guides_browser.cjs"
       - "tools/test_measured_opt_contract.py"
@@ -115,6 +119,10 @@ jobs:
       - run: python3 -m unittest tools/test_build_family_pages.py
       - run: python3 -m unittest tools/test_measured_opt_contract.py
       - run: python3 tools/sync-short-prefill-profiles.py --check
+      - run: python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py
+      - run: python3 tools/sync-prefill-followup-profiles.py --check
+      - run: python3 -m unittest tools/test_sync_prefill_followup_profiles.py
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p "test_*prefill_followup.py"
       - run: python3 -m unittest tools/test_build_model_pages.py
       - run: python3 tools/build-model-pages.py
       - run: git diff --exit-code -- index.html learn/hardware.html models

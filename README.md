@@ -81,6 +81,10 @@ forward.
 state. These are evidence-backed examples; the broader expected-performance
 view is the [performance index](results/scoreboard.md).
 
+Additional **512-token prefill measurements** now cover 4B/9B on two B70s and
+27B INT4 on one B70. [Results and optimization findings](experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md)
+keep reading speed separate from decode and HTTP first-token wait.
+
 ### Current public package headlines
 
 This table is generated from the package manifests. It is a synchronization

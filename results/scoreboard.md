@@ -13,6 +13,23 @@ verify a score originally reported on different hardware.
 
 Last manual review: **2026-09-13**.
 
+## Short-prompt reading speed (September 14 UTC)
+
+Prefill measures how fast the server reads the prompt before producing its first
+token. These additional baselines use exactly 512 input tokens, one user, no
+prompt-cache reuse and the published R304 runtime. They do not replace decode
+records or establish an optimization win.
+
+| Model | B70s | Draft depth | Prefill (input tokens/s) |
+| --- | ---: | ---: | ---: |
+| Qwen3.5 4B W4A16 | 2 | 3 | 7,367 |
+| Qwen3.5 9B W4A16 | 2 | 3 | 4,419 |
+| Qwen3.8 27B INT4 | 1 | 4 | 1,209 |
+
+[Methods, quality checks and full evidence](../experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md);
+[earlier four prefill baselines](../experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md).
+The two campaigns use different prompt material and are not a matched scaling test.
+
 ## Read This Before Comparing Rows
 
 - Compare results only when model revision, quantization and quality class,
