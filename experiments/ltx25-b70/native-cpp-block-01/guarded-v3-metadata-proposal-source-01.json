@@ -1,0 +1,48 @@
+{
+  "status": "source-only proposal; no hook implemented",
+  "source": [
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py",
+      "sha256": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+      "excerpts": [
+        {
+          "start_line": 2238,
+          "end_line": 2249,
+          "text": "        # Validate extern_libs (e.g. libdevice) match the current env.\n        if graph.extern_libs_key is not None:\n            try:\n                backend = torch.utils._triton.triton_backend()\n                current = torch.utils._triton._extern_libs_key(backend)\n            except Exception:\n                current = None\n            if current != graph.extern_libs_key:\n                cache_info[\"cache_status_detailed\"] = \"guard_miss\"\n                return None, cache_info\n\n        CacheArtifactRecorder(InductorCacheArtifact.type(), key).record_if_present("
+        },
+        {
+          "start_line": 2276,
+          "end_line": 2313,
+          "text": "    @staticmethod\n    def _save_graph(\n        key: str,\n        compiled_graph: OutputCode,\n        example_inputs: Sequence[InputType],\n        local: bool,\n        remote_cache: RemoteCache[JsonDataTy] | None,\n    ) -> None:\n        \"\"\"\n        Store a serialized CompiledFxGraph on disk.\n        \"\"\"\n        from .compile_fx import CompiledFxGraph\n\n        if not isinstance(compiled_graph, CompiledFxGraph):\n            raise AssertionError(f\"serialization for {type(compiled_graph)} NYI\")\n\n        # Before serializing, compute the guard expression that will be used to\n        # ensure that a CompiledFxGraph is valid when loaded from the cache. It's\n        # sufficient to consider only the SymInt args to the fx graph since the\n        # Tensor shapes are already captured in the hash for the cache key. Any\n        # Tensor arg with a symbolic shape will have a SymInt arg for the graph.\n        shape_env = FxGraphCache._get_shape_env()\n        if shape_env is None:\n            raise AssertionError(\"ShapeEnv is not set for cache serialization\")\n        symints = FxGraphCache._filter_backed_symints(example_inputs)\n        guards = shape_env.get_pruned_guards(symints)\n        compiled_graph.guards_expr = shape_env.produce_guards_expression(\n            placeholders=symints, guards=guards\n        )\n        try:\n            backend = torch.utils._triton.triton_backend()\n            compiled_graph.extern_libs_key = torch.utils._triton._extern_libs_key(\n                backend\n            )\n        except Exception:\n            pass\n        disk_compiled_graph = copy(compiled_graph)\n        disk_compiled_graph.prepare_for_serialization()"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/output_code.py",
+      "sha256": "647fdca5e7ab214acdf8280885d419efc607f3a003353a46611e59ec6b3d8fe6",
+      "excerpts": [
+        {
+          "start_line": 607,
+          "end_line": 614,
+          "text": "        self.inductor_post_grad_graph_str = inductor_post_grad_graph_str\n        self.inductor_provenance_mapping_str = inductor_provenance_mapping_str\n        self.inductor_provenance_stack_traces_str = inductor_provenance_stack_traces_str\n        self.cache_linemap = graph.cache_linemap\n        # TODO - ordered set\n        self.device_types = OrderedSet(graph.device_types)\n        self.device_idxs = OrderedSet(graph.device_idxs)\n        self.mutated_inputs = OrderedSet(graph.mutated_inputs)"
+        },
+        {
+          "start_line": 640,
+          "end_line": 646,
+          "text": "        self.kernel_free_cudagraph = graph.kernel_free_cudagraph\n        self.metrics_deltas = metrics_deltas\n        self.counter_deltas = counter_deltas\n        self.guards_expr = None\n        self.extern_libs_key = None\n        self.cudagraph_info = None\n        self.partition_maps = graph.partition_maps"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py",
+      "sha256": "4e5b593e018c6bd6f69062483d524b64820ab272351fbf073b7ec118a66598f8",
+      "excerpts": [
+        {
+          "start_line": 1199,
+          "end_line": 1208,
+          "text": "            cache_info[\"time_taken_ns\"] = mb_compiled_graph._time_taken_ns\n            log.debug(\"Saving compiled graph to FX cache with key: %s\", cache_key)\n            FxGraphCache._save_graph(\n                cache_key,\n                mb_compiled_graph,\n                example_inputs,\n                local,\n                remote_cache,\n            )\n"
+        }
+      ]
+    }
+  ]
+}

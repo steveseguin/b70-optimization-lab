@@ -1,0 +1,21 @@
+{
+  "schema": "ltx.cross-step-text-kv-source-audit.v1",
+  "status": "reject_unconditional_cross_step_projected_text_kv_reuse",
+  "checkpoint": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors",
+  "checkpoint_header_bytes": 677624,
+  "checkpoint_header_sha256": "e0558e1aff461dedc507377213969ead72c1be73e0a0ebaea839f5e73942d747",
+  "config": {
+    "cross_attention_adaln": true,
+    "num_layers": 48,
+    "apply_gated_attention": true
+  },
+  "video_prompt_tables": 48,
+  "audio_prompt_tables": 48,
+  "sources": {
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-10/source/comfy/model_detection.py": "bb3995fe6f977fbac4f0d424d6a773b9b81d35f5f0f92c841db9cf250d088a32",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-10/source/comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-10/source/comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d"
+  },
+  "native_calls": 0,
+  "conclusion": "Current checkpoint enables cross-attention ADaLN; prompt timestep derived from current sigma changes text K/V inputs across denoising steps. Constant raw prompt is insufficient justification to reuse projected K/V. No speed or numerical equality measured."
+}
