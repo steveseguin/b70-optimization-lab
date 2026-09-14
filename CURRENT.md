@@ -25,12 +25,13 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host, September 14 19:19 UTC: health passed; original FP8/MTP1 restoring.**
+**Two-B70 host, September 14 19:22 UTC: original FP8/MTP1 API ready; strict recovery check running.**
 The single bounded recovery check passed on both cards: exact local copy/compute,
 standard XCCL sums at both shapes, normal collective cleanup, confirmed container
 exit, no device owners and a clean new kernel window. Same boot; no reset or
-settings change. Starting the original qualified image on port18124 under
-`fp8-mtp-recovery-metadata-20260914/recovered-service`. It is not ready yet.
+settings change. The original qualified image is ready on port18124 under
+`fp8-mtp-recovery-metadata-20260914/recovered-service`. The full 12-prompt
+strict/canary recovery check is running; no candidate is enabled.
 The custom communicator remains quarantined. Metadata testing follows only
 a successful model restoration and full reference-output gate.
 [Recovery and metadata plan](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-recovery-metadata-plan.md).
