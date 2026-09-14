@@ -1,0 +1,105 @@
+{
+  "status": "halted-unintended-xpu-initialization",
+  "fault_classification": "No global FAULT written; parent owns host/device-fault classification",
+  "pid": null,
+  "pid_limit": "Python PID was not captured. Tool exec session8264 is a session identifier, not a PID.",
+  "process_exit_code": 1,
+  "completed_model_calls": [
+    {
+      "arm": "eager",
+      "video_tokens": 64,
+      "seed": 17,
+      "expected_new_graphs": 0,
+      "counter_delta": {}
+    },
+    {
+      "arm": "python",
+      "video_tokens": 64,
+      "seed": 17,
+      "expected_new_graphs": 1,
+      "counter_delta": {
+        "aten_mm_info": {
+          "aten.addmm_26_128_32": 1,
+          "aten.addmm_26_32_128": 1,
+          "aten.addmm_26_32_32": 10,
+          "aten.addmm_26_1_32": 3,
+          "aten.addmm_8_32_32": 4,
+          "aten.addmm_64_32_32": 10,
+          "aten.addmm_64_128_32": 1,
+          "aten.addmm_64_32_128": 1,
+          "aten.addmm_64_1_32": 3
+        },
+        "inductor": {
+          "removed_pointless_view_pair": 6,
+          "fxgraph_cache_miss": 1,
+          "pattern_matcher_nodes": 170,
+          "pattern_matcher_count": 158,
+          "extern_calls": 85
+        },
+        "aot_autograd": {
+          "autograd_cache_miss": 1,
+          "total": 1,
+          "autograd_cache_saved": 1,
+          "ok": 1
+        },
+        "stats": {
+          "calls_captured": 493,
+          "unique_graphs": 1
+        },
+        "graph_break": {}
+      }
+    }
+  ],
+  "completed_output_parity_rows": 0,
+  "cpp_compiled_graphs": 0,
+  "timeline": [
+    "Torch/Comfy imports completed with xpu.is_initialized false",
+    "Eager CPU call returned and post-call xpu check remained false",
+    "First Python-boundary compiled call returned; unique_graphs delta1, graph breaks0, original state hashes/ids unchanged",
+    "Post-call torch.xpu.is_initialized returned true; execution halted before output parity recording, Python repeat, or C++ compiled call"
+  ],
+  "source_backed_sufficient_trigger_not_captured_first_stack": [
+    "torch/_inductor/compile_fx.py:1201 calls FxGraphCache._save_graph",
+    "torch/_inductor/codecache.py:2306 calls torch.utils._triton.triton_backend without CPU-device guard",
+    "torch/utils/_triton.py:248 requests driver.active.get_current_target",
+    "triton/backends/intel/driver.py:758-760 resolves current device/target; utils lazy initialization occurs at715-718",
+    "triton/backends/intel/driver.py:441-455 builds spirv_utils and calls mod.init_devices(self.get_sycl_queue())",
+    "triton/backends/intel/driver.py:472-474 calls torch.xpu.current_stream().sycl_queue",
+    "torch/xpu/__init__.py:650-659 calls _lazy_init; :343-361 calls torch._C._xpu_init"
+  ],
+  "source_sha256s": {
+    "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py": "4e5b593e018c6bd6f69062483d524b64820ab272351fbf073b7ec118a66598f8",
+    "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+    "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_triton.py": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+    "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/triton/backends/intel/driver.py": "3861015216ebb1f649f383614ec6ffb4212a554929e8594baf3abdfd89e3d480",
+    "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/__init__.py": "391dd518f4fe944cf0e7dae37f4f4f63b0b54973fdc7e93d76627ffcbda3852c"
+  },
+  "graph_receipt_device_census": {
+    "cpu": 35
+  },
+  "generated_wrappers": [
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-01/inductor-cache/w7/cw7sfpiyh4vahcl6jdbhydhytwhmfn2ybkjpgrvu6rtaqhs6uqbj.py",
+      "sha256": "638580946bce06e2170c14f8663e5ae497aa6fe37a56c802dc084885c41860db",
+      "cpu_allocation_calls": 14,
+      "accelerator_named_call_expressions": [],
+      "private_op_counts": {
+        "ltx_exact_rms.native": 15,
+        "ltx_exact_activations.sigmoid": 6,
+        "ltx_exact_activations.gelu": 2
+      }
+    }
+  ],
+  "device_execution_limits": "Fixture and generated block allocations are CPU. Triton target-query libraries exist in cache. No captured first-initialization stack or accelerator activity trace exists; incidental driver/runtime allocation or kernel activity cannot be ruled out.",
+  "guarded_successor": {
+    "script_sha256": "83e03c31578b333f581babd22ca67da95637851f4bafe86997ae983e34ad6da1",
+    "guard_sha256": "5f6a1a05ef98955bf4f4934a818626b3d7671d8aec4de48f7207dc9812656ad6",
+    "executed": false,
+    "scope": "Traps accelerator enumeration/properties/init/current-device/current-stream, records PID/stack and raises BaseException before calling originals; no availability simulation/options mutation"
+  },
+  "evidence_sha256s": {
+    "cpu-result-01.json": "7bda635acf1dbfc9a1a1f05a79319464e799e7aea083c80ba34ca13f182cd767",
+    "cpu-run-01.log": "658c9105a179bb8fac454e84b61dea86e22b748e8aa976ac159181bba4a5dfa6",
+    "cache-inventory-01.json": "305b79063fc490a90a6879ab695fdc65aa47443f258cac472e4735b632bf109d"
+  }
+}
