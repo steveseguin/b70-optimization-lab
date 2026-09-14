@@ -25,6 +25,29 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14 17:19 UTC: optimization continues; application unchanged.**
+Packet10 PID84255/exec33936 remains healthy and idle with the same full endpoint
+identity, empty queue, sole ownership of all four render nodes and no fault.
+Saved-event attribution puts about1.82s in encoding and3.54s in the two sampler
+nodes. A new inactive CPU embedding ownership candidate could free1,920MiB of
+encoder VRAM and replace465MiB of recurring weight uploads with7.5MiB of token
+rows. Native correctness/residency and speed are unmeasured; unchanged memory
+reserve and full actual residency remain required. Source review caught and
+corrected named-owner loading and inference-tensor version assumptions.
+[Candidate](experiments/ltx25-b70/notes/host-embedding-gather-candidate-01.md),
+[review](experiments/ltx25-b70/notes/host-embedding-source-review-01.md).
+
+The guarded C++ CPU v4 diagnostic stopped at a second import-time device-count
+probe in Comfy, before any model/compile call; both GPU backends remained
+uninitialized. Its source/39 stdlib checks passed, but native qualification is
+still pending. The embedding CPU driver reaches this same import and was not
+run. Next: a narrowly scoped CPU import refusal, then bounded CPU qualification
+before runtime integration. No live application or host action occurred.
+[V4 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v4-native-attempt-01.md).
+Unconditional cross-step text K/V reuse was rejected from the actual checkpoint
+and source: ADaLN changes the projection inputs with timestep.
+[Audit](experiments/ltx25-b70/notes/cross-step-text-kv-audit-01.md).
+
 **Four-B70 host, September14 16:57 UTC: decoder confirmation complete; scoped gain retained.**
 All18 balanced `na-axis-confirm-01` clips passed the four original raw-output
 oracles and full24-call decoder checks on unchanged packet10 PID84255/exec33936.
