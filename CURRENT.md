@@ -25,6 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: same-process decoder confirmation running.**
+The bounded18-request `na-axis-confirm-01` is running against the unchanged
+packet10 PID84255/exec33936. Six balanced OCO/COC triples cover boat, marble,
+and bird with all four raw-output checks on every clip. Root reviewed the new
+client and prior-screen admission; eight stdlib tests and offline admission of
+161 evidence files passed. No application reload or other native work during
+timing. Preserve the process and halt submissions on any failure.
+
 **Four-B70 host, September14 16:42 UTC: decoder screen passed; small speed gain to confirm.**
 PID84255 serves `http://127.0.0.1:8188` in exec33936, packet
 `prepared-encoder-na-axis-10`, manifest
@@ -41,6 +49,11 @@ qualification. Next: preserve terminal evidence and prepare a balanced18-request
 confirmation on this same application. No reload is required. Halt submissions
 on failure without cycling the service.
 [Screen results](experiments/ltx25-b70/notes/na-axis-screen-01-results.md).
+The separate guarded CPU compiler probe exited1 after blocking an import-time
+`torch.xpu.device_count` query; XPU stayed uninitialized, no model/compile calls
+occurred, and LTX PID84255 remained idle and healthy. It did not reach the earlier
+cache-metadata hypothesis. No retry is scheduled during confirmation.
+[Guarded probe](experiments/ltx25-b70/native-cpp-block-01/guarded-v2-native-attempt-01.md).
 [Corrected preparation](experiments/ltx25-b70/notes/na-axis-runtime-10-prepared.md).
 This supersedes all older PID/startup statements below.
 
