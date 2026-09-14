@@ -138,6 +138,49 @@ def strict(reader, profile):
             'independent_process_repeat': False}
 
 
+def original_reference(reader, profile):
+    manifest = reader.read('original-reference-manifest.json')
+    reference = {}
+    provenance = {}
+    for kind in ('performance', 'canaries', 'campaign-identity'):
+        filename = f'original-{profile}-{kind}.json'
+        reference[kind] = reader.read(filename)
+        recorded = manifest[filename]
+        actual = reader.sources[filename]
+        require(recorded['sha256'] == actual['sha256'] and recorded['bytes'] == actual['bytes'],
+                f'original reference manifest mismatch: {filename}')
+        require(isinstance(recorded['source'], str) and bool(recorded['source']),
+                f'original reference source missing: {filename}')
+        provenance[kind] = recorded
+    perf = reference['performance']
+    identity = reference['campaign-identity']
+    contract = identity['performance_contract']
+    require(perf['realistic_final_gate']['passed'] is True
+            and perf['fresh_response_validity']['valid'] is True
+            and perf['fresh_response_validity']['cached_tokens_all_zero'] is True
+            and reference['canaries']['pass_all'] is True, 'original reference workload/canaries failed')
+    require(contract['max_tokens'] == 512 and contract['ignore_eos'] is False
+            and contract['complete_fixed_suite'] is True, 'original reference natural-completion contract differs')
+    baseline = reader.read(Path(profile) / 'baseline-strict/performance.json')
+    baseline_identity = reader.read(Path(profile) / 'baseline-strict/campaign-identity.json')
+    require(bool(identity.get('suite_sha256'))
+            and identity['suite_sha256'] == baseline_identity['suite_sha256'], 'original reference suite differs')
+    rows = perf['rows']
+    require(len(rows) == 12 and len({r['prompt_id'] for r in rows}) == 12, 'original reference coverage incomplete')
+    expected = {r['prompt_id']: r for r in rows}
+    got = {r['prompt_id']: r for r in baseline['rows']}
+    require(set(expected) == set(got), 'original reference prompt set differs')
+    for key, row in expected.items():
+        ids = row['token_ids']
+        require(row['cached_tokens'] == 0 and len(ids) == row['completion_tokens']
+                and len(ids) >= 100 and all(type(x) is int for x in ids), 'original reference IDs/cache invalid')
+        require(row['prompt_sha256'] == got[key]['prompt_sha256'], f'original reference input differs: {key}')
+        require(ids == got[key]['token_ids'], f'original reference output differs: {key}')
+    return {'passed': True, 'exact_prompts': 12, 'total_prompts': 12,
+            'suite_sha256': identity['suite_sha256'], 'provenance': provenance,
+            'scope': 'Overlay-off baseline matches prior qualified complete numeric outputs; candidate also matches baseline.'}
+
+
 def profile_summary(reader, profile):
     root = reader.root / profile
     require(not (root / 'ABORTED').exists(), 'stage ABORTED')
@@ -172,6 +215,7 @@ def profile_summary(reader, profile):
                        'arms': measurements, 'candidate_vs_mean_controls_per_key_median_ratio': ratios,
                        'final_vs_initial_control_fractional_drift': drifts})
     strict_result = strict(reader, profile)
+    reference_result = original_reference(reader, profile)
     prefill = [p['candidate_vs_mean_controls_per_key_median_ratio']['server_prefill_tokens_per_s'] for p in points]
     gains = median(prefill) - 1 if all(x is not None for x in prefill) else None
     drift = max(abs(p['final_vs_initial_control_fractional_drift']['server_prefill_tokens_per_s'])
@@ -185,6 +229,7 @@ def profile_summary(reader, profile):
     if not decode_ok:
         reasons.append('At least one matched decode screen regressed more than 3%.')
     return {'complete': True, 'quality_exact': True, 'points': points, 'strict': strict_result,
+            'original_reference': reference_result,
             'median_server_prefill_fractional_gain': gains, 'max_observed_control_fractional_drift': drift,
             'screen_speed_gate_passed': speed_ok, 'screen_decode_gate_passed': decode_ok,
             'promotion_qualified': False, 'decision': 'retain original runtime', 'reasons': reasons,

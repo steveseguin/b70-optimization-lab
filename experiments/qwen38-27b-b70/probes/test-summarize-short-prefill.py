@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """CPU-only negative gate tests for the prefill evidence collector."""
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -19,6 +20,7 @@ def put(root, path, value):
 
 
 def fixture(root):
+    references = {}
     for profile in summary.PROFILES:
         p = root / profile
         p.mkdir()
@@ -56,6 +58,13 @@ def fixture(root):
                 'performance_contract': {'max_tokens': 512, 'ignore_eos': False, 'complete_fixed_suite': True}})
         put(p, 'strict-comparison.json', {'comparison': {'exact_prompts': 12, 'total_prompts': 12},
                                          'qualification': {'strict_pair_qualified': True}})
+        for kind in ('performance', 'canaries', 'campaign-identity'):
+            filename = f'original-{profile}-{kind}.json'
+            data = (p / f'baseline-strict/{kind}.json').read_bytes()
+            (root / filename).write_bytes(data)
+            references[filename] = {'source': f'prior-qualified/{profile}/{kind}.json',
+                                    'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
+    put(root, 'original-reference-manifest.json', references)
     put(root, 'rowchunk-direct-output.json', {'passed': True, 'rows': [
         {'bit_differences': 0, 'repeat_bit_differences': {'baseline': 0, 'direct_out': 0},
          'speedup': 1.03} for _ in range(72)]})
@@ -93,6 +102,28 @@ class Gates(unittest.TestCase):
                     d['rows'][0]['usage']['prompt_tokens_details']['cached_tokens'] = 1
                 path.write_text(json.dumps(d))
                 self.assertFalse(summary.summarize(root)['complete'])
+
+    def test_original_output_or_manifest_tamper_fails(self):
+        for mutation in ('original_output', 'manifest_hash'):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                fixture(root)
+                manifest_path = root / 'original-reference-manifest.json'
+                manifest = json.loads(manifest_path.read_text())
+                filename = 'original-4b-performance.json'
+                if mutation == 'original_output':
+                    path = root / filename
+                    d = json.loads(path.read_text())
+                    d['rows'][0]['token_ids'][0] = 999
+                    path.write_text(json.dumps(d))
+                    data = path.read_bytes()
+                    manifest[filename].update(sha256=hashlib.sha256(data).hexdigest(), bytes=len(data))
+                else:
+                    manifest[filename]['sha256'] = '0' * 64
+                manifest_path.write_text(json.dumps(manifest))
+                d = summary.summarize(root)
+                self.assertFalse(d['complete'])
+                self.assertIn('original reference', d['profiles']['4b']['error'])
 
 
 if __name__ == '__main__':
