@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: native RMS compiler successor running.** One
+controlled LTX application replacement completed: PID6502 exited cleanly after
+one SIGINT; render ownership cleared and the port was available. The computer
+was not rebooted. PID12199 now serves `http://127.0.0.1:8188` from
+`encoder-server-compiler-04`, packet `prepared-encoder-compiler-04`, manifest
+`c4e0f7e56fc7bbc51101894d79d279dd9886f07272868dc99cc7953c647a65c9`.
+Four-card startup checks and strict after-import determinism passed; endpoint
+identity matched. No fault latch. The candidate preserves original native RMS
+calls inside one compiled block; small CPU gates passed, native GPU/full-clip
+qualification is active via compiler-screen-03. Inspect its progress before new
+GPU requests. Preserve failed screen02 evidence.
+This supersedes PID6502 and historical blocked/fault states below.
+[CPU qualification](experiments/ltx25-b70/notes/native-rms-cpu-qualification-01.md),
+[prepared source](experiments/ltx25-b70/notes/native-rms-runtime-04-prepared.md).
+
 **Two-B70 host, September 14: AMD transfer tests authorized.** The unchanged
 FP8 service at localhost:18124 passed 12/12 full-output reference checks and
 short/16K continuation controls. A newest-upstream candidate with the accepted
