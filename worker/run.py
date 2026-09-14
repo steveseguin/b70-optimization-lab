@@ -17,7 +17,11 @@ from sandbox import DockerSandbox,prepare_snapshot,_regular_tree
 
 FINISH='echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT'
 SYSTEM='''You are a software engineering worker. Complete the user's issue in /workspace.
-Inspect the relevant code, reproduce the problem, implement a focused fix, and run tests.
+Inspect the relevant code, implement a focused fix, and run tests.
+Keep investigation proportional: start with the named implementation and one nearby test.
+Avoid broad repository, documentation, or CI surveys. The baseline has already been tested.
+Once the cause is clear, edit and test; do not keep gathering conventions.
+Keep edits and new tests compact enough to fit one response; split large edits across steps.
 Every reply must contain exactly ONE executable bash command in a fenced bash block:
 ```bash
 command here
@@ -77,6 +81,14 @@ class CheckedEnvironment:
     def serialize(self):return self.sandbox.serialize()
 
 
+def validate_baseline(task,result):
+    if not task.get('expected_baseline_failure'):return
+    if result['returncode']==0:raise RuntimeError('This issue already passes its acceptance check; no model request sent')
+    marker=task.get('expected_baseline_error')
+    if not marker or marker not in result['output']:
+        raise RuntimeError('Baseline failed for an unexpected reason; resolve the test environment before sending model requests')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     source=parser.add_mutually_exclusive_group(required=True);source.add_argument('--task',type=Path);source.add_argument('--issue-file',type=Path)
@@ -102,11 +114,13 @@ def main():
             sandbox=DockerSandbox(out,config['sandbox_image'],acceptance_dir=HERE/'acceptance');sandbox.start()
             baseline=sandbox.execute({'command':command});save(out/'baseline-validation.json',baseline)
             print(f'Baseline acceptance: exit {baseline["returncode"]}',flush=True)
-            if task.get('expected_baseline_failure') and baseline['returncode']==0:raise RuntimeError('This issue already passes its acceptance check; no model request sent')
+            validate_baseline(task,baseline)
             model=LocalModel(config['base_url'],config['model'],out/'requests',config['max_input_tokens'],config['max_output_tokens'])
             env=CheckedEnvironment(sandbox,command,out,config['validation_attempts'])
             agent=DefaultAgent(model,env,system_template=SYSTEM,instance_template='Issue: {{task}}\n\nAcceptance command: {{acceptance_command}}\nRead relevant project instructions, fix the issue, and add an appropriate regression test.',step_limit=config['step_limit'],cost_limit=0,wall_time_limit_seconds=config['wall_time_limit_seconds'],max_consecutive_format_errors=2,output_path=out/'trajectory.json')
             agent_result=agent.run(task['issue'],acceptance_command=command)
+        except KeyboardInterrupt:
+            error='Interrupted by operator; task remains incomplete'
         except Exception as exc:
             error=f'{type(exc).__name__}: {exc}';print(error,file=sys.stderr,flush=True)
         finally:

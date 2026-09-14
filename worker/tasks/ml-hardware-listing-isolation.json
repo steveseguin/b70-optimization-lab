@@ -4,5 +4,6 @@
   "source_commit": "8df1372c4f20fc8ae0bf4e35e1b75084327b17fc",
   "issue": "Editing a nested compute specification in a value returned by the public listHardware() API unexpectedly changes later hardware listings and predictions from that engine. Callers must not be able to corrupt engine state by editing returned listing data. Preserve the listing schema and prediction behavior, including independence of separate engine instances. The API is in sdk/api.js and existing SDK tests are in tests/sdk.test.mjs. Add focused regression coverage and regenerate SDK output as required; do not alter hardware specifications, calibration, or evidence data.",
   "validation_command": "node /acceptance/ml_hardware_listing.mjs",
-  "expected_baseline_failure": true
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "Mutating a returned listing must not change later listings"
 }

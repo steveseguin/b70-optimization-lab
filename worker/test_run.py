@@ -90,3 +90,12 @@ class AcceptanceTreeTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+class BaselineTests(unittest.TestCase):
+    def test_environment_failure_cannot_substitute_for_issue_failure(self):
+        task={'expected_baseline_failure':True,'expected_baseline_error':'expected bug'}
+        with self.assertRaisesRegex(RuntimeError,'unexpected reason'):
+            RUN.validate_baseline(task,{'returncode':1,'output':'TimeoutExpired'})
+        RUN.validate_baseline(task,{'returncode':1,'output':'AssertionError: expected bug'})
+        with self.assertRaisesRegex(RuntimeError,'already passes'):
+            RUN.validate_baseline(task,{'returncode':0,'output':''})

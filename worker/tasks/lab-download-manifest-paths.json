@@ -4,5 +4,6 @@
   "source_commit": "f7ad72e556f5508519fc1e806a1039b4a818511f",
   "issue": "Container-packet downloads fail when MODEL_MANIFEST points to a valid filename or directory containing an apostrophe. Make tools/container-packet/download-model.sh support ordinary manifest paths containing spaces, apostrophes, or double quotes without interpreting path contents as code. Preserve the manifest's pinned repository/revision, listed file paths, requested destination, and successful behavior for ordinary paths. Add focused CPU-only regression coverage; do not download real models or contact the network.",
   "validation_command": "python3 /acceptance/lab_download_paths.py",
-  "expected_baseline_failure": true
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "SyntaxError: unterminated string literal"
 }

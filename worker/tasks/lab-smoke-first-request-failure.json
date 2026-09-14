@@ -4,5 +4,6 @@
   "source_commit": "f7ad72e556f5508519fc1e806a1039b4a818511f",
   "issue": "tools/container-packet/smoke-test.sh sends its second generation request after the first request has already failed at the HTTP/transport layer. Stop further generation immediately on the first transport failure, preserve available first-response evidence, return failure without a passing result, and never restart the server as a consequence. Preserve the existing successful two-response identity check. Existing CPU-only fake-command coverage is in tools/test_container_packet_smoke.py; do not launch containers, use GPUs, or contact real endpoints.",
   "validation_command": "python3 /acceptance/lab_smoke_fail_stop.py",
-  "expected_baseline_failure": true
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "First failed request was followed by another generation"
 }

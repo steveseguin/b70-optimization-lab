@@ -308,7 +308,7 @@ class DockerSandbox:
                 "--cpus", "2", "--memory", "2g", "--memory-swap", "2g",
                 "--user", f"{os.getuid()}:{os.getgid()}", "--init", "--workdir", "/workspace",
                 "--mount", f"type=bind,src={self.run_dir / 'workspace'},dst=/workspace",
-                "--tmpfs", "/tmp:rw,nosuid,nodev,size=268435456,mode=1777",
+                "--tmpfs", "/tmp:rw,exec,nosuid,nodev,size=268435456,mode=1777",
                 "--env", "HOME=/tmp", "--env", "PATH=/usr/local/bin:/usr/bin:/bin",
                 "--env", "PYTHONDONTWRITEBYTECODE=1", "--env", "GIT_CONFIG_NOSYSTEM=1"]
         if self.acceptance_dir:
