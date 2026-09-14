@@ -1,0 +1,2514 @@
+{
+  "schema": "neural.download.fp8-prefill-trace-analysis.v1",
+  "date_utc": "2026-09-14",
+  "status": "diagnostic_only_no_optimization_promoted",
+  "setup": {
+    "model": "Qwen3.8 27B",
+    "quantization": "FP8 W8A16",
+    "gpu_count": 2,
+    "runtime_identity": "Published R304; see campaign image contract",
+    "image_id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+    "draft": "fixed MTP depth 1, full-vocabulary INT4 draft head; no shortlist",
+    "fp16_linear_mode": "CLASSPAD0, rowchunk32",
+    "max_model_len": 4096,
+    "max_num_batched_tokens": 4096,
+    "max_num_seqs": 1,
+    "input_tokens": 512,
+    "requested_output_tokens": 1,
+    "cached_tokens": 0,
+    "profiled_requests": 1
+  },
+  "source_files": [
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/profile/67aa83625906_1.async_llm.1789352176105808219.pt.trace.json.gz",
+      "raw_relative_path": "27b-fp8/profile/67aa83625906_1.async_llm.1789352176105808219.pt.trace.json.gz",
+      "sha256": "bad810c2de0c0f041d0411a0e42d06f8ee023b9c61de8a5f9f2d5eb4efe05bf0",
+      "bytes": 780
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/profile/rank0.1789352176184368425.pt.trace.json.gz",
+      "raw_relative_path": "27b-fp8/profile/rank0.1789352176184368425.pt.trace.json.gz",
+      "sha256": "c13b4c5b16bd7eaf416f7be961d778a492368bf3ce00a37c1770bc21e452a4f2",
+      "bytes": 688383
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/profile/rank1.1789352176188684008.pt.trace.json.gz",
+      "raw_relative_path": "27b-fp8/profile/rank1.1789352176188684008.pt.trace.json.gz",
+      "sha256": "28a80f99268b70520044682e1b3a899108efb0a40b56e19862e55e922554b4b2",
+      "bytes": 688828
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/profile/profiler_out_0.txt",
+      "raw_relative_path": "27b-fp8/profile/profiler_out_0.txt",
+      "sha256": "0f1090a6fad141e792674dac270f2f1b52213e9c0f173d246a207c196cfefcc7",
+      "bytes": 20655
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/profile/profiler_out_1.txt",
+      "raw_relative_path": "27b-fp8/profile/profiler_out_1.txt",
+      "sha256": "929a9d84e409c176941f4abe107fb50e9f4d5475602e0a45ea964d130989bd64",
+      "bytes": 20655
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/identity.json",
+      "raw_relative_path": "27b-fp8/identity.json",
+      "sha256": "65ad486f1419c665b857152332392ed7d620834f61361c502e9a9871e380f8cc",
+      "bytes": 1747
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/container-inspect.json",
+      "raw_relative_path": "27b-fp8/container-inspect.json",
+      "sha256": "d4645221005400704c4cc1a431f20f4c87a3d39a1ea0d90dcf8a9d703c3e947a",
+      "bytes": 14108
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/profile-request/request.json",
+      "raw_relative_path": "27b-fp8/profile-request/request.json",
+      "sha256": "9aa188abac5f8eddd7901783b0386af792c2940a0eb4414bc069fe5d512acbf5",
+      "bytes": 5063
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914/27b-fp8/profile-request/response.json",
+      "raw_relative_path": "27b-fp8/profile-request/response.json",
+      "sha256": "55a8ee8ded897bbf0879c411b5c0c924c9c298af09eadc4aa6307eb7c6edd486",
+      "bytes": 2974
+    }
+  ],
+  "methodology": {
+    "trace_format": "Original gzip-compressed PyTorch Chrome JSON is decoded in memory, never rewritten.",
+    "units": "Trace timestamps and durations are microseconds, divided by 1000 for milliseconds.",
+    "cpu": "Complete cpu_op events. Inclusive CPU intervals overlap nested operators; do not add them.",
+    "device": "Complete kernel events, each counted once per worker. Copies are separate. Percentages divide by the same rank kernel-duration sum. Never sum ranks into request latency.",
+    "attribution": "Join kernel External id to CPU External id. Only if missing/unmatched, use a unique xpu_runtime/xpu_driver correlation-to-External-id match. Unattributed events remain in totals.",
+    "parentage": "Inclusive groups collect CPU intervals fully contained within root intervals on the same pid/tid (0.001 us end tolerance), then attribute kernels through those CPU launches. Asynchronous kernel timestamp containment is not used.",
+    "shapes": "Actual CPU Input Dims and Input type fields; aten::mm B dimensions are post-transpose. No FLOP counts inferred.",
+    "aggregation": "One diagnostic request, two tensor-parallel ranks. No repetition, speed comparison or extrapolation.",
+    "reproduction": "python3 experiments/qwen38-27b-b70/scripts/analyze-fp8-prefill-trace.py --raw-root RAW_ROOT --out OUTPUT_JSON"
+  },
+  "ranks": [
+    {
+      "trace_file": "rank0.1789352176184368425.pt.trace.json.gz",
+      "rank": 0,
+      "record_shapes": 1,
+      "device_kernel_count": 1890,
+      "device_kernel_sum_ms": 175.836638,
+      "device_kernel_interval_union_ms": 175.781655,
+      "device_memcpy_count": 169,
+      "device_memcpy_sum_ms": 1.205979,
+      "attribution_kernel_counts": {
+        "external_id": 1887,
+        "unattributed": 1,
+        "unique_runtime_correlation": 2
+      },
+      "execute_context_annotations": [
+        {
+          "name": "execute_context_1(512)_generation_0(0)",
+          "cpu_inclusive_ms": 144.147575
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 2.865845
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 0.622554
+        }
+      ],
+      "operator_summary": [
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "cpu_call_count": 260,
+          "cpu_inclusive_ms": 12.709478,
+          "direct_device": {
+            "kernel_count": 260,
+            "kernel_sum_ms": 106.97031,
+            "kernel_pct_of_rank_kernel_sum": 60.8351
+          }
+        },
+        {
+          "operator": "c10d::allreduce_",
+          "cpu_call_count": 132,
+          "cpu_inclusive_ms": 14.967442,
+          "direct_device": {
+            "kernel_count": 132,
+            "kernel_sum_ms": 27.222242,
+            "kernel_pct_of_rank_kernel_sum": 15.4816
+          }
+        },
+        {
+          "operator": "_xpu_C::gdn_attention",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 22.17699,
+          "direct_device": {
+            "kernel_count": 336,
+            "kernel_sum_ms": 21.751227,
+            "kernel_pct_of_rank_kernel_sum": 12.3701
+          }
+        },
+        {
+          "operator": "aten::mm",
+          "cpu_call_count": 113,
+          "cpu_inclusive_ms": 7.133603,
+          "direct_device": {
+            "kernel_count": 113,
+            "kernel_sum_ms": 4.920165,
+            "kernel_pct_of_rank_kernel_sum": 2.7981
+          }
+        },
+        {
+          "operator": "triton_poi_fused_fp8_gemm_w8a16_mul_silu_slice_t_6",
+          "cpu_call_count": 64,
+          "cpu_inclusive_ms": 2.979019,
+          "direct_device": {
+            "kernel_count": 64,
+            "kernel_sum_ms": 2.708511,
+            "kernel_pct_of_rank_kernel_sum": 1.5404
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_21",
+          "cpu_call_count": 30,
+          "cpu_inclusive_ms": 1.83768,
+          "direct_device": {
+            "kernel_count": 30,
+            "kernel_sum_ms": 2.476345,
+            "kernel_pct_of_rank_kernel_sum": 1.4083
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_20",
+          "cpu_call_count": 31,
+          "cpu_inclusive_ms": 1.623597,
+          "direct_device": {
+            "kernel_count": 31,
+            "kernel_sum_ms": 2.206654,
+            "kernel_pct_of_rank_kernel_sum": 1.2549
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_11",
+          "cpu_call_count": 32,
+          "cpu_inclusive_ms": 1.818345,
+          "direct_device": {
+            "kernel_count": 32,
+            "kernel_sum_ms": 1.536134,
+            "kernel_pct_of_rank_kernel_sum": 0.8736
+          }
+        },
+        {
+          "operator": "_vllm_fa2_C::varlen_fwd",
+          "cpu_call_count": 17,
+          "cpu_inclusive_ms": 3.634608,
+          "direct_device": {
+            "kernel_count": 34,
+            "kernel_sum_ms": 1.146128,
+            "kernel_pct_of_rank_kernel_sum": 0.6518
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_10",
+          "cpu_call_count": 31,
+          "cpu_inclusive_ms": 1.522759,
+          "direct_device": {
+            "kernel_count": 31,
+            "kernel_sum_ms": 1.026135,
+            "kernel_pct_of_rank_kernel_sum": 0.5836
+          }
+        },
+        {
+          "operator": "aten::fill_",
+          "cpu_call_count": 408,
+          "cpu_inclusive_ms": 10.094463,
+          "direct_device": {
+            "kernel_count": 391,
+            "kernel_sum_ms": 0.775361,
+            "kernel_pct_of_rank_kernel_sum": 0.441
+          }
+        },
+        {
+          "operator": "_xpu_C::int4_gemm_w4a16",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.058861,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.575729,
+            "kernel_pct_of_rank_kernel_sum": 0.3274
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_fp8_gemm_w8a16_mean_mul_pow_rsqrt_silu_t_view_4",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 1.793796,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 0.553623,
+            "kernel_pct_of_rank_kernel_sum": 0.3149
+          }
+        },
+        {
+          "operator": "aten::cat",
+          "cpu_call_count": 58,
+          "cpu_inclusive_ms": 1.867344,
+          "direct_device": {
+            "kernel_count": 49,
+            "kernel_sum_ms": 0.250187,
+            "kernel_pct_of_rank_kernel_sum": 0.1423
+          }
+        },
+        {
+          "operator": "triton_per_fused__to_copy_mean_pow_view_3",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 1.89051,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 0.193208,
+            "kernel_pct_of_rank_kernel_sum": 0.1099
+          }
+        },
+        {
+          "operator": "triton_poi_fused__unsafe_view_clone_fp8_gemm_w8a16_mul_sigmoid_split_split_with_sizes_t_view_19",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.637545,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.123432,
+            "kernel_pct_of_rank_kernel_sum": 0.0702
+          }
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "cpu_call_count": 3,
+          "cpu_inclusive_ms": 0.321901,
+          "direct_device": {
+            "kernel_count": 3,
+            "kernel_sum_ms": 0.103853,
+            "kernel_pct_of_rank_kernel_sum": 0.0591
+          }
+        },
+        {
+          "operator": "triton_poi_fused_zeros_2",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 1.841037,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 0.103209,
+            "kernel_pct_of_rank_kernel_sum": 0.0587
+          }
+        },
+        {
+          "operator": "triton_red_fused_clone_rms_norm_split_split_with_sizes_view_12",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.577632,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.102908,
+            "kernel_pct_of_rank_kernel_sum": 0.0585
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_rms_norm_slice_split_split_with_sizes_view_18",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.602132,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.083536,
+            "kernel_pct_of_rank_kernel_sum": 0.0475
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_22",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.05573,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.082708,
+            "kernel_pct_of_rank_kernel_sum": 0.047
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_15",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.588104,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.08187,
+            "kernel_pct_of_rank_kernel_sum": 0.0466
+          }
+        },
+        {
+          "operator": "aten::argmax",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.178301,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.076666,
+            "kernel_pct_of_rank_kernel_sum": 0.0436
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_9",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.05252,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.072812,
+            "kernel_pct_of_rank_kernel_sum": 0.0414
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_8",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.078171,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.053958,
+            "kernel_pct_of_rank_kernel_sum": 0.0307
+          }
+        },
+        {
+          "operator": "triton_poi_fused_fp8_gemm_w8a16_mul_silu_slice_t_12",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.03864,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.0475,
+            "kernel_pct_of_rank_kernel_sum": 0.027
+          }
+        },
+        {
+          "operator": "_C_cache_ops::reshape_and_cache_flash",
+          "cpu_call_count": 17,
+          "cpu_inclusive_ms": 0.542543,
+          "direct_device": {
+            "kernel_count": 17,
+            "kernel_sum_ms": 0.047492,
+            "kernel_pct_of_rank_kernel_sum": 0.027
+          }
+        },
+        {
+          "operator": "triton_poi_fused_arange_bitwise_and_eq_index_lt_remainder_select_split_where_14",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.542072,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.045202,
+            "kernel_pct_of_rank_kernel_sum": 0.0257
+          }
+        },
+        {
+          "operator": "triton_red_fused_rms_norm_split_with_sizes_view_13",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.503333,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.042081,
+            "kernel_pct_of_rank_kernel_sum": 0.0239
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_16",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.580542,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.041559,
+            "kernel_pct_of_rank_kernel_sum": 0.0236
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_13",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.046981,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.037812,
+            "kernel_pct_of_rank_kernel_sum": 0.0215
+          }
+        },
+        {
+          "operator": "aten::copy_",
+          "cpu_call_count": 242,
+          "cpu_inclusive_ms": 17.755937,
+          "direct_device": {
+            "kernel_count": 11,
+            "kernel_sum_ms": 0.037809,
+            "kernel_pct_of_rank_kernel_sum": 0.0215
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_7",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.052631,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.036666,
+            "kernel_pct_of_rank_kernel_sum": 0.0209
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_rms_norm_slice_split_with_sizes_view_17",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.519012,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.034264,
+            "kernel_pct_of_rank_kernel_sum": 0.0195
+          }
+        },
+        {
+          "operator": "aten::sub",
+          "cpu_call_count": 47,
+          "cpu_inclusive_ms": 1.066507,
+          "direct_device": {
+            "kernel_count": 26,
+            "kernel_sum_ms": 0.033845,
+            "kernel_pct_of_rank_kernel_sum": 0.0192
+          }
+        },
+        {
+          "operator": "aten::gt",
+          "cpu_call_count": 23,
+          "cpu_inclusive_ms": 1.069095,
+          "direct_device": {
+            "kernel_count": 20,
+            "kernel_sum_ms": 0.031759,
+            "kernel_pct_of_rank_kernel_sum": 0.0181
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_rms_norm_1",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.087981,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.02927,
+            "kernel_pct_of_rank_kernel_sum": 0.0166
+          }
+        },
+        {
+          "operator": "aten::as_strided",
+          "cpu_call_count": 1008,
+          "cpu_inclusive_ms": 0.357032,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.02625,
+            "kernel_pct_of_rank_kernel_sum": 0.0149
+          }
+        },
+        {
+          "operator": "triton_poi_fused_add_bitwise_and_bitwise_not_bitwise_or_embedding_ge_lt_masked_fill_mul_sub_unsqueeze_0",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.145951,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.024478,
+            "kernel_pct_of_rank_kernel_sum": 0.0139
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_5",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.05023,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.022083,
+            "kernel_pct_of_rank_kernel_sum": 0.0126
+          }
+        },
+        {
+          "operator": "aten::index",
+          "cpu_call_count": 5,
+          "cpu_inclusive_ms": 0.446171,
+          "direct_device": {
+            "kernel_count": 4,
+            "kernel_sum_ms": 0.014998,
+            "kernel_pct_of_rank_kernel_sum": 0.0085
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_rms_norm_t_1",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.06001,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.013645,
+            "kernel_pct_of_rank_kernel_sum": 0.0078
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_rms_norm_t_2",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.07214,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.011145,
+            "kernel_pct_of_rank_kernel_sum": 0.0063
+          }
+        },
+        {
+          "operator": "triton_red_fused_clone_rms_norm_split_split_with_sizes_view_3",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.03974,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.008229,
+            "kernel_pct_of_rank_kernel_sum": 0.0047
+          }
+        },
+        {
+          "operator": "triton_poi_fused__unsafe_view_clone_fp8_gemm_w8a16_mul_sigmoid_split_split_with_sizes_t_view_10",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.04353,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.007291,
+            "kernel_pct_of_rank_kernel_sum": 0.0041
+          }
+        },
+        {
+          "operator": "aten::to",
+          "cpu_call_count": 75,
+          "cpu_inclusive_ms": 4.718222,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.006666,
+            "kernel_pct_of_rank_kernel_sum": 0.0038
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_6",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.04171,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.005625,
+            "kernel_pct_of_rank_kernel_sum": 0.0032
+          }
+        },
+        {
+          "operator": "aten::sum",
+          "cpu_call_count": 13,
+          "cpu_inclusive_ms": 0.209981,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.005416,
+            "kernel_pct_of_rank_kernel_sum": 0.0031
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_rms_norm_slice_split_split_with_sizes_view_9",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.04296,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.005104,
+            "kernel_pct_of_rank_kernel_sum": 0.0029
+          }
+        },
+        {
+          "operator": "aten::_index_put_impl_",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.0836,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.003645,
+            "kernel_pct_of_rank_kernel_sum": 0.0021
+          }
+        },
+        {
+          "operator": "aten::add",
+          "cpu_call_count": 9,
+          "cpu_inclusive_ms": 0.266912,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.002812,
+            "kernel_pct_of_rank_kernel_sum": 0.0016
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_7",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.0416,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002812,
+            "kernel_pct_of_rank_kernel_sum": 0.0016
+          }
+        },
+        {
+          "operator": "triton_poi_fused_arange_bitwise_and_eq_index_lt_remainder_select_split_where_5",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.039091,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002812,
+            "kernel_pct_of_rank_kernel_sum": 0.0016
+          }
+        },
+        {
+          "operator": "triton_red_fused_rms_norm_split_with_sizes_view_4",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.03475,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002604,
+            "kernel_pct_of_rank_kernel_sum": 0.0015
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_rms_norm_slice_split_with_sizes_view_8",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.035701,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002187,
+            "kernel_pct_of_rank_kernel_sum": 0.0012
+          }
+        },
+        {
+          "operator": "aten::ne",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.04224,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.001875,
+            "kernel_pct_of_rank_kernel_sum": 0.0011
+          }
+        },
+        {
+          "operator": "aten::add_",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.04207,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.001458,
+            "kernel_pct_of_rank_kernel_sum": 0.0008
+          }
+        },
+        {
+          "operator": "aten::clamp_",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.05185,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.001354,
+            "kernel_pct_of_rank_kernel_sum": 0.0008
+          }
+        },
+        {
+          "operator": "vllm::gdn_attention_core_xpu",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 24.466118,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          }
+        },
+        {
+          "operator": "vllm::qwen_gdn_ba_prefill_xpu",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 9.979373,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          }
+        },
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 1.031155,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          }
+        }
+      ],
+      "inclusive_groups": {
+        "fp16_rowchunk": {
+          "root_operator_names": [
+            "vllm::xpu_fp16_linear_rowchunk"
+          ],
+          "root_cpu_call_count": 2,
+          "root_cpu_inclusive_ms": 1.031155,
+          "including_descendant_device": {
+            "kernel_count": 18,
+            "kernel_sum_ms": 3.784474,
+            "kernel_pct_of_rank_kernel_sum": 2.1523
+          }
+        },
+        "fp8_w8a16": {
+          "root_operator_names": [
+            "_xpu_C::fp8_gemm_w8a16"
+          ],
+          "root_cpu_call_count": 260,
+          "root_cpu_inclusive_ms": 12.709478,
+          "including_descendant_device": {
+            "kernel_count": 260,
+            "kernel_sum_ms": 106.97031,
+            "kernel_pct_of_rank_kernel_sum": 60.8351
+          }
+        },
+        "gdn": {
+          "root_operator_names": [
+            "_xpu_C::gdn_attention"
+          ],
+          "root_cpu_call_count": 48,
+          "root_cpu_inclusive_ms": 22.17699,
+          "including_descendant_device": {
+            "kernel_count": 720,
+            "kernel_sum_ms": 22.520756,
+            "kernel_pct_of_rank_kernel_sum": 12.8078
+          }
+        },
+        "allreduce": {
+          "root_operator_names": [
+            "c10d::allreduce_"
+          ],
+          "root_cpu_call_count": 132,
+          "root_cpu_inclusive_ms": 14.967442,
+          "including_descendant_device": {
+            "kernel_count": 132,
+            "kernel_sum_ms": 27.222242,
+            "kernel_pct_of_rank_kernel_sum": 15.4816
+          }
+        },
+        "allgather": {
+          "root_operator_names": [
+            "c10d::_allgather_base_"
+          ],
+          "root_cpu_call_count": 3,
+          "root_cpu_inclusive_ms": 0.321901,
+          "including_descendant_device": {
+            "kernel_count": 3,
+            "kernel_sum_ms": 0.103853,
+            "kernel_pct_of_rank_kernel_sum": 0.0591
+          }
+        }
+      },
+      "operator_shapes": [
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              3072
+            ],
+            [
+              3072,
+              5120
+            ],
+            [
+              24,
+              40
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 65,
+          "cpu_inclusive_ms": 3.464527,
+          "direct_device": {
+            "kernel_count": 65,
+            "kernel_sum_ms": 11.098306,
+            "kernel_pct_of_rank_kernel_sum": 6.3117
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              5120,
+              17408
+            ],
+            [
+              40,
+              136
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 65,
+          "cpu_inclusive_ms": 3.350282,
+          "direct_device": {
+            "kernel_count": 65,
+            "kernel_sum_ms": 48.55591,
+            "kernel_pct_of_rank_kernel_sum": 27.6142
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              5120,
+              7168
+            ],
+            [
+              40,
+              56
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 17,
+          "cpu_inclusive_ms": 0.850089,
+          "direct_device": {
+            "kernel_count": 17,
+            "kernel_sum_ms": 5.333431,
+            "kernel_pct_of_rank_kernel_sum": 3.0332
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              5120,
+              8192
+            ],
+            [
+              40,
+              64
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 2.430347,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 17.353004,
+            "kernel_pct_of_rank_kernel_sum": 9.8688
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              8704
+            ],
+            [
+              8704,
+              5120
+            ],
+            [
+              68,
+              40
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 65,
+          "cpu_inclusive_ms": 2.614233,
+          "direct_device": {
+            "kernel_count": 65,
+            "kernel_sum_ms": 24.629659,
+            "kernel_pct_of_rank_kernel_sum": 14.0071
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::gdn_attention",
+          "input_dims": [
+            [
+              512,
+              24,
+              128
+            ],
+            [
+              512,
+              24,
+              128
+            ],
+            [
+              512,
+              8192
+            ],
+            [
+              512,
+              48
+            ],
+            [],
+            [],
+            [],
+            [],
+            [
+              464,
+              4,
+              5120
+            ],
+            [
+              464,
+              24,
+              128,
+              128
+            ],
+            [
+              5120,
+              4
+            ],
+            [],
+            [],
+            [
+              24
+            ],
+            [
+              24
+            ],
+            [],
+            [],
+            [],
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [],
+            [
+              1
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "c10::Half",
+            "c10::Half",
+            "Scalar",
+            "Scalar",
+            "Scalar",
+            "Scalar",
+            "c10::Half",
+            "float",
+            "c10::Half",
+            "",
+            "",
+            "float",
+            "c10::Half",
+            "Scalar",
+            "Scalar",
+            "Scalar",
+            "bool",
+            "int",
+            "",
+            "int",
+            "",
+            "",
+            "",
+            "",
+            "Scalar",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 22.17699,
+          "direct_device": {
+            "kernel_count": 336,
+            "kernel_sum_ms": 21.751227,
+            "kernel_pct_of_rank_kernel_sum": 12.3701
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "aten::mm",
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              5120,
+              124160
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.09368,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 2.175937,
+            "kernel_pct_of_rank_kernel_sum": 1.2375
+          },
+          "calls_within_fp16_rowchunk": 1
+        },
+        {
+          "operator": "aten::mm",
+          "input_dims": [
+            [
+              256,
+              5120
+            ],
+            [
+              5120,
+              48
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 96,
+          "cpu_inclusive_ms": 6.29947,
+          "direct_device": {
+            "kernel_count": 96,
+            "kernel_sum_ms": 1.16642,
+            "kernel_pct_of_rank_kernel_sum": 0.6634
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "aten::mm",
+          "input_dims": [
+            [
+              32,
+              10240
+            ],
+            [
+              10240,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.740453,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 1.577808,
+            "kernel_pct_of_rank_kernel_sum": 0.8973
+          },
+          "calls_within_fp16_rowchunk": 16
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "input_dims": [
+            [
+              1024,
+              2560
+            ],
+            [
+              512,
+              2560
+            ],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.10334,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.079583,
+            "kernel_pct_of_rank_kernel_sum": 0.0453
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "input_dims": [
+            [
+              2,
+              124160
+            ],
+            [
+              1,
+              124160
+            ],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.218561,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.02427,
+            "kernel_pct_of_rank_kernel_sum": 0.0138
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "c10d::allreduce_",
+          "input_dims": [
+            [
+              [
+                512,
+                5120
+              ]
+            ],
+            [],
+            [],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "TensorList",
+            "",
+            "",
+            "",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 132,
+          "cpu_inclusive_ms": 14.967442,
+          "direct_device": {
+            "kernel_count": 132,
+            "kernel_sum_ms": 27.222242,
+            "kernel_pct_of_rank_kernel_sum": 15.4816
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              124160,
+              5120
+            ],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.1241,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          },
+          "calls_within_fp16_rowchunk": 1
+        },
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "input_dims": [
+            [
+              512,
+              10240
+            ],
+            [
+              2560,
+              10240
+            ],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.907055,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          },
+          "calls_within_fp16_rowchunk": 1
+        }
+      ]
+    },
+    {
+      "trace_file": "rank1.1789352176188684008.pt.trace.json.gz",
+      "rank": 1,
+      "record_shapes": 1,
+      "device_kernel_count": 1890,
+      "device_kernel_sum_ms": 175.809419,
+      "device_kernel_interval_union_ms": 175.766433,
+      "device_memcpy_count": 169,
+      "device_memcpy_sum_ms": 1.162545,
+      "attribution_kernel_counts": {
+        "external_id": 1887,
+        "unattributed": 1,
+        "unique_runtime_correlation": 2
+      },
+      "execute_context_annotations": [
+        {
+          "name": "execute_context_1(512)_generation_0(0)",
+          "cpu_inclusive_ms": 144.512077
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 3.145046
+        },
+        {
+          "name": "execute_context_0(0)_generation_0(0)",
+          "cpu_inclusive_ms": 7.45867
+        }
+      ],
+      "operator_summary": [
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "cpu_call_count": 260,
+          "cpu_inclusive_ms": 12.633184,
+          "direct_device": {
+            "kernel_count": 260,
+            "kernel_sum_ms": 111.861349,
+            "kernel_pct_of_rank_kernel_sum": 63.6265
+          }
+        },
+        {
+          "operator": "_xpu_C::gdn_attention",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 22.052586,
+          "direct_device": {
+            "kernel_count": 336,
+            "kernel_sum_ms": 22.847676,
+            "kernel_pct_of_rank_kernel_sum": 12.9957
+          }
+        },
+        {
+          "operator": "c10d::allreduce_",
+          "cpu_call_count": 132,
+          "cpu_inclusive_ms": 15.064718,
+          "direct_device": {
+            "kernel_count": 132,
+            "kernel_sum_ms": 20.498286,
+            "kernel_pct_of_rank_kernel_sum": 11.6594
+          }
+        },
+        {
+          "operator": "aten::mm",
+          "cpu_call_count": 113,
+          "cpu_inclusive_ms": 7.179067,
+          "direct_device": {
+            "kernel_count": 113,
+            "kernel_sum_ms": 4.928286,
+            "kernel_pct_of_rank_kernel_sum": 2.8032
+          }
+        },
+        {
+          "operator": "triton_poi_fused_fp8_gemm_w8a16_mul_silu_slice_t_6",
+          "cpu_call_count": 64,
+          "cpu_inclusive_ms": 3.066705,
+          "direct_device": {
+            "kernel_count": 64,
+            "kernel_sum_ms": 2.802786,
+            "kernel_pct_of_rank_kernel_sum": 1.5942
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_21",
+          "cpu_call_count": 30,
+          "cpu_inclusive_ms": 1.818463,
+          "direct_device": {
+            "kernel_count": 30,
+            "kernel_sum_ms": 2.447593,
+            "kernel_pct_of_rank_kernel_sum": 1.3922
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_20",
+          "cpu_call_count": 31,
+          "cpu_inclusive_ms": 1.569082,
+          "direct_device": {
+            "kernel_count": 31,
+            "kernel_sum_ms": 2.383115,
+            "kernel_pct_of_rank_kernel_sum": 1.3555
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_11",
+          "cpu_call_count": 32,
+          "cpu_inclusive_ms": 1.727349,
+          "direct_device": {
+            "kernel_count": 32,
+            "kernel_sum_ms": 1.496858,
+            "kernel_pct_of_rank_kernel_sum": 0.8514
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_10",
+          "cpu_call_count": 31,
+          "cpu_inclusive_ms": 1.459908,
+          "direct_device": {
+            "kernel_count": 31,
+            "kernel_sum_ms": 1.236761,
+            "kernel_pct_of_rank_kernel_sum": 0.7035
+          }
+        },
+        {
+          "operator": "_vllm_fa2_C::varlen_fwd",
+          "cpu_call_count": 17,
+          "cpu_inclusive_ms": 3.552749,
+          "direct_device": {
+            "kernel_count": 34,
+            "kernel_sum_ms": 1.178317,
+            "kernel_pct_of_rank_kernel_sum": 0.6702
+          }
+        },
+        {
+          "operator": "aten::fill_",
+          "cpu_call_count": 408,
+          "cpu_inclusive_ms": 9.853161,
+          "direct_device": {
+            "kernel_count": 391,
+            "kernel_sum_ms": 0.842965,
+            "kernel_pct_of_rank_kernel_sum": 0.4795
+          }
+        },
+        {
+          "operator": "_xpu_C::int4_gemm_w4a16",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.05877,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.58052,
+            "kernel_pct_of_rank_kernel_sum": 0.3302
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_fp8_gemm_w8a16_mean_mul_pow_rsqrt_silu_t_view_4",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 1.823334,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 0.548935,
+            "kernel_pct_of_rank_kernel_sum": 0.3122
+          }
+        },
+        {
+          "operator": "aten::cat",
+          "cpu_call_count": 58,
+          "cpu_inclusive_ms": 1.852867,
+          "direct_device": {
+            "kernel_count": 49,
+            "kernel_sum_ms": 0.254875,
+            "kernel_pct_of_rank_kernel_sum": 0.145
+          }
+        },
+        {
+          "operator": "triton_per_fused__to_copy_mean_pow_view_3",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 1.937091,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 0.201952,
+            "kernel_pct_of_rank_kernel_sum": 0.1149
+          }
+        },
+        {
+          "operator": "triton_poi_fused__unsafe_view_clone_fp8_gemm_w8a16_mul_sigmoid_split_split_with_sizes_t_view_19",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.728006,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.122805,
+            "kernel_pct_of_rank_kernel_sum": 0.0699
+          }
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "cpu_call_count": 3,
+          "cpu_inclusive_ms": 0.334543,
+          "direct_device": {
+            "kernel_count": 3,
+            "kernel_sum_ms": 0.108853,
+            "kernel_pct_of_rank_kernel_sum": 0.0619
+          }
+        },
+        {
+          "operator": "triton_poi_fused_zeros_2",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 1.78312,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 0.108202,
+            "kernel_pct_of_rank_kernel_sum": 0.0615
+          }
+        },
+        {
+          "operator": "triton_red_fused_clone_rms_norm_split_split_with_sizes_view_12",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.576744,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.106973,
+            "kernel_pct_of_rank_kernel_sum": 0.0608
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_8",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.08832,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.102812,
+            "kernel_pct_of_rank_kernel_sum": 0.0585
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_15",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.570882,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.084994,
+            "kernel_pct_of_rank_kernel_sum": 0.0483
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_rms_norm_slice_split_split_with_sizes_view_18",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.663886,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.083745,
+            "kernel_pct_of_rank_kernel_sum": 0.0476
+          }
+        },
+        {
+          "operator": "aten::argmax",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.206422,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.081666,
+            "kernel_pct_of_rank_kernel_sum": 0.0465
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_22",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.0499,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.080729,
+            "kernel_pct_of_rank_kernel_sum": 0.0459
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_9",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.051631,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.079166,
+            "kernel_pct_of_rank_kernel_sum": 0.045
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_7",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.05232,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.064791,
+            "kernel_pct_of_rank_kernel_sum": 0.0369
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_16",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.577954,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.058225,
+            "kernel_pct_of_rank_kernel_sum": 0.0331
+          }
+        },
+        {
+          "operator": "_C_cache_ops::reshape_and_cache_flash",
+          "cpu_call_count": 17,
+          "cpu_inclusive_ms": 0.546714,
+          "direct_device": {
+            "kernel_count": 17,
+            "kernel_sum_ms": 0.050931,
+            "kernel_pct_of_rank_kernel_sum": 0.029
+          }
+        },
+        {
+          "operator": "triton_poi_fused_arange_bitwise_and_eq_index_lt_remainder_select_split_where_14",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.524442,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.047179,
+            "kernel_pct_of_rank_kernel_sum": 0.0268
+          }
+        },
+        {
+          "operator": "triton_poi_fused_fp8_gemm_w8a16_mul_silu_slice_t_12",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.0618,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.04427,
+            "kernel_pct_of_rank_kernel_sum": 0.0252
+          }
+        },
+        {
+          "operator": "triton_red_fused_rms_norm_split_with_sizes_view_13",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.505543,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.04343,
+            "kernel_pct_of_rank_kernel_sum": 0.0247
+          }
+        },
+        {
+          "operator": "aten::as_strided",
+          "cpu_call_count": 1008,
+          "cpu_inclusive_ms": 0.35993,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.040416,
+            "kernel_pct_of_rank_kernel_sum": 0.023
+          }
+        },
+        {
+          "operator": "aten::copy_",
+          "cpu_call_count": 242,
+          "cpu_inclusive_ms": 17.347441,
+          "direct_device": {
+            "kernel_count": 11,
+            "kernel_sum_ms": 0.039371,
+            "kernel_pct_of_rank_kernel_sum": 0.0224
+          }
+        },
+        {
+          "operator": "aten::sub",
+          "cpu_call_count": 47,
+          "cpu_inclusive_ms": 1.071285,
+          "direct_device": {
+            "kernel_count": 26,
+            "kernel_sum_ms": 0.037699,
+            "kernel_pct_of_rank_kernel_sum": 0.0214
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_rms_norm_slice_split_with_sizes_view_17",
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.522482,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 0.036657,
+            "kernel_pct_of_rank_kernel_sum": 0.0209
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_rms_norm_t_1",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.059031,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.034062,
+            "kernel_pct_of_rank_kernel_sum": 0.0194
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_5",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.051011,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.03375,
+            "kernel_pct_of_rank_kernel_sum": 0.0192
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fused_add_rms_norm_13",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.0465,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.03302,
+            "kernel_pct_of_rank_kernel_sum": 0.0188
+          }
+        },
+        {
+          "operator": "aten::gt",
+          "cpu_call_count": 23,
+          "cpu_inclusive_ms": 1.012016,
+          "direct_device": {
+            "kernel_count": 20,
+            "kernel_sum_ms": 0.031867,
+            "kernel_pct_of_rank_kernel_sum": 0.0181
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_rms_norm_1",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.10884,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.029791,
+            "kernel_pct_of_rank_kernel_sum": 0.0169
+          }
+        },
+        {
+          "operator": "triton_poi_fused_add_bitwise_and_bitwise_not_bitwise_or_embedding_ge_lt_masked_fill_mul_sub_unsqueeze_0",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.143411,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.020312,
+            "kernel_pct_of_rank_kernel_sum": 0.0116
+          }
+        },
+        {
+          "operator": "aten::index",
+          "cpu_call_count": 5,
+          "cpu_inclusive_ms": 0.451573,
+          "direct_device": {
+            "kernel_count": 4,
+            "kernel_sum_ms": 0.018749,
+            "kernel_pct_of_rank_kernel_sum": 0.0107
+          }
+        },
+        {
+          "operator": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_rms_norm_t_2",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.048391,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.009375,
+            "kernel_pct_of_rank_kernel_sum": 0.0053
+          }
+        },
+        {
+          "operator": "aten::to",
+          "cpu_call_count": 75,
+          "cpu_inclusive_ms": 4.253313,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.008958,
+            "kernel_pct_of_rank_kernel_sum": 0.0051
+          }
+        },
+        {
+          "operator": "triton_poi_fused__unsafe_view_clone_fp8_gemm_w8a16_mul_sigmoid_split_split_with_sizes_t_view_10",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.0427,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.00802,
+            "kernel_pct_of_rank_kernel_sum": 0.0046
+          }
+        },
+        {
+          "operator": "triton_red_fused_clone_rms_norm_split_split_with_sizes_view_3",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.042631,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.006979,
+            "kernel_pct_of_rank_kernel_sum": 0.004
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_6",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.03858,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.00552,
+            "kernel_pct_of_rank_kernel_sum": 0.0031
+          }
+        },
+        {
+          "operator": "aten::sum",
+          "cpu_call_count": 13,
+          "cpu_inclusive_ms": 0.214201,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.005416,
+            "kernel_pct_of_rank_kernel_sum": 0.0031
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_clone_rms_norm_slice_split_split_with_sizes_view_9",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.041771,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.005104,
+            "kernel_pct_of_rank_kernel_sum": 0.0029
+          }
+        },
+        {
+          "operator": "aten::_index_put_impl_",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.08506,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.003854,
+            "kernel_pct_of_rank_kernel_sum": 0.0022
+          }
+        },
+        {
+          "operator": "aten::add",
+          "cpu_call_count": 9,
+          "cpu_inclusive_ms": 0.268041,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.003853,
+            "kernel_pct_of_rank_kernel_sum": 0.0022
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_7",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.037941,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002916,
+            "kernel_pct_of_rank_kernel_sum": 0.0017
+          }
+        },
+        {
+          "operator": "triton_poi_fused_arange_bitwise_and_eq_index_lt_remainder_select_split_where_5",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.03831,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002812,
+            "kernel_pct_of_rank_kernel_sum": 0.0016
+          }
+        },
+        {
+          "operator": "triton_red_fused_rms_norm_split_with_sizes_view_4",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.03464,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002604,
+            "kernel_pct_of_rank_kernel_sum": 0.0015
+          }
+        },
+        {
+          "operator": "triton_poi_fused__to_copy_add_cat_rms_norm_slice_split_with_sizes_view_8",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.03597,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.002083,
+            "kernel_pct_of_rank_kernel_sum": 0.0012
+          }
+        },
+        {
+          "operator": "aten::add_",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.04394,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.001875,
+            "kernel_pct_of_rank_kernel_sum": 0.0011
+          }
+        },
+        {
+          "operator": "aten::clamp_",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.04494,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.00177,
+            "kernel_pct_of_rank_kernel_sum": 0.001
+          }
+        },
+        {
+          "operator": "aten::ne",
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.0458,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.001562,
+            "kernel_pct_of_rank_kernel_sum": 0.0009
+          }
+        },
+        {
+          "operator": "vllm::gdn_attention_core_xpu",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 24.351379,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          }
+        },
+        {
+          "operator": "vllm::qwen_gdn_ba_prefill_xpu",
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 10.022682,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          }
+        },
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 1.038326,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          }
+        }
+      ],
+      "inclusive_groups": {
+        "fp16_rowchunk": {
+          "root_operator_names": [
+            "vllm::xpu_fp16_linear_rowchunk"
+          ],
+          "root_cpu_call_count": 2,
+          "root_cpu_inclusive_ms": 1.038326,
+          "including_descendant_device": {
+            "kernel_count": 18,
+            "kernel_sum_ms": 3.776137,
+            "kernel_pct_of_rank_kernel_sum": 2.1479
+          }
+        },
+        "fp8_w8a16": {
+          "root_operator_names": [
+            "_xpu_C::fp8_gemm_w8a16"
+          ],
+          "root_cpu_call_count": 260,
+          "root_cpu_inclusive_ms": 12.633184,
+          "including_descendant_device": {
+            "kernel_count": 260,
+            "kernel_sum_ms": 111.861349,
+            "kernel_pct_of_rank_kernel_sum": 63.6265
+          }
+        },
+        "gdn": {
+          "root_operator_names": [
+            "_xpu_C::gdn_attention"
+          ],
+          "root_cpu_call_count": 48,
+          "root_cpu_inclusive_ms": 22.052586,
+          "including_descendant_device": {
+            "kernel_count": 720,
+            "kernel_sum_ms": 23.682623,
+            "kernel_pct_of_rank_kernel_sum": 13.4706
+          }
+        },
+        "allreduce": {
+          "root_operator_names": [
+            "c10d::allreduce_"
+          ],
+          "root_cpu_call_count": 132,
+          "root_cpu_inclusive_ms": 15.064718,
+          "including_descendant_device": {
+            "kernel_count": 132,
+            "kernel_sum_ms": 20.498286,
+            "kernel_pct_of_rank_kernel_sum": 11.6594
+          }
+        },
+        "allgather": {
+          "root_operator_names": [
+            "c10d::_allgather_base_"
+          ],
+          "root_cpu_call_count": 3,
+          "root_cpu_inclusive_ms": 0.334543,
+          "including_descendant_device": {
+            "kernel_count": 3,
+            "kernel_sum_ms": 0.108853,
+            "kernel_pct_of_rank_kernel_sum": 0.0619
+          }
+        }
+      },
+      "operator_shapes": [
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              3072
+            ],
+            [
+              3072,
+              5120
+            ],
+            [
+              24,
+              40
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 65,
+          "cpu_inclusive_ms": 3.432718,
+          "direct_device": {
+            "kernel_count": 65,
+            "kernel_sum_ms": 11.535495,
+            "kernel_pct_of_rank_kernel_sum": 6.5614
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              5120,
+              17408
+            ],
+            [
+              40,
+              136
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 65,
+          "cpu_inclusive_ms": 3.381597,
+          "direct_device": {
+            "kernel_count": 65,
+            "kernel_sum_ms": 50.235493,
+            "kernel_pct_of_rank_kernel_sum": 28.5738
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              5120,
+              7168
+            ],
+            [
+              40,
+              56
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 17,
+          "cpu_inclusive_ms": 0.838294,
+          "direct_device": {
+            "kernel_count": 17,
+            "kernel_sum_ms": 5.751034,
+            "kernel_pct_of_rank_kernel_sum": 3.2712
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              5120
+            ],
+            [
+              5120,
+              8192
+            ],
+            [
+              40,
+              64
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 2.366932,
+          "direct_device": {
+            "kernel_count": 48,
+            "kernel_sum_ms": 17.990499,
+            "kernel_pct_of_rank_kernel_sum": 10.233
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::fp8_gemm_w8a16",
+          "input_dims": [
+            [
+              512,
+              8704
+            ],
+            [
+              8704,
+              5120
+            ],
+            [
+              68,
+              40
+            ],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Float8_e4m3fn",
+            "float",
+            ""
+          ],
+          "cpu_call_count": 65,
+          "cpu_inclusive_ms": 2.613643,
+          "direct_device": {
+            "kernel_count": 65,
+            "kernel_sum_ms": 26.348828,
+            "kernel_pct_of_rank_kernel_sum": 14.9872
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "_xpu_C::gdn_attention",
+          "input_dims": [
+            [
+              512,
+              24,
+              128
+            ],
+            [
+              512,
+              24,
+              128
+            ],
+            [
+              512,
+              8192
+            ],
+            [
+              512,
+              48
+            ],
+            [],
+            [],
+            [],
+            [],
+            [
+              464,
+              4,
+              5120
+            ],
+            [
+              464,
+              24,
+              128,
+              128
+            ],
+            [
+              5120,
+              4
+            ],
+            [],
+            [],
+            [
+              24
+            ],
+            [
+              24
+            ],
+            [],
+            [],
+            [],
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [],
+            [
+              1
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "c10::Half",
+            "c10::Half",
+            "Scalar",
+            "Scalar",
+            "Scalar",
+            "Scalar",
+            "c10::Half",
+            "float",
+            "c10::Half",
+            "",
+            "",
+            "float",
+            "c10::Half",
+            "Scalar",
+            "Scalar",
+            "Scalar",
+            "bool",
+            "int",
+            "",
+            "int",
+            "",
+            "",
+            "",
+            "",
+            "Scalar",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 48,
+          "cpu_inclusive_ms": 22.052586,
+          "direct_device": {
+            "kernel_count": 336,
+            "kernel_sum_ms": 22.847676,
+            "kernel_pct_of_rank_kernel_sum": 12.9957
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "aten::mm",
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              5120,
+              124160
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.094761,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 2.16302,
+            "kernel_pct_of_rank_kernel_sum": 1.2303
+          },
+          "calls_within_fp16_rowchunk": 1
+        },
+        {
+          "operator": "aten::mm",
+          "input_dims": [
+            [
+              256,
+              5120
+            ],
+            [
+              5120,
+              48
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 96,
+          "cpu_inclusive_ms": 6.339732,
+          "direct_device": {
+            "kernel_count": 96,
+            "kernel_sum_ms": 1.182565,
+            "kernel_pct_of_rank_kernel_sum": 0.6726
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "aten::mm",
+          "input_dims": [
+            [
+              32,
+              10240
+            ],
+            [
+              10240,
+              2560
+            ]
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half"
+          ],
+          "cpu_call_count": 16,
+          "cpu_inclusive_ms": 0.744574,
+          "direct_device": {
+            "kernel_count": 16,
+            "kernel_sum_ms": 1.582701,
+            "kernel_pct_of_rank_kernel_sum": 0.9002
+          },
+          "calls_within_fp16_rowchunk": 16
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "input_dims": [
+            [
+              1024,
+              2560
+            ],
+            [
+              512,
+              2560
+            ],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.102681,
+          "direct_device": {
+            "kernel_count": 1,
+            "kernel_sum_ms": 0.071458,
+            "kernel_pct_of_rank_kernel_sum": 0.0406
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "c10d::_allgather_base_",
+          "input_dims": [
+            [
+              2,
+              124160
+            ],
+            [
+              1,
+              124160
+            ],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 2,
+          "cpu_inclusive_ms": 0.231862,
+          "direct_device": {
+            "kernel_count": 2,
+            "kernel_sum_ms": 0.037395,
+            "kernel_pct_of_rank_kernel_sum": 0.0213
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "c10d::allreduce_",
+          "input_dims": [
+            [
+              [
+                512,
+                5120
+              ]
+            ],
+            [],
+            [],
+            [],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "TensorList",
+            "",
+            "",
+            "",
+            "Scalar",
+            "Scalar"
+          ],
+          "cpu_call_count": 132,
+          "cpu_inclusive_ms": 15.064718,
+          "direct_device": {
+            "kernel_count": 132,
+            "kernel_sum_ms": 20.498286,
+            "kernel_pct_of_rank_kernel_sum": 11.6594
+          },
+          "calls_within_fp16_rowchunk": 0
+        },
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "input_dims": [
+            [
+              1,
+              5120
+            ],
+            [
+              124160,
+              5120
+            ],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.126241,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          },
+          "calls_within_fp16_rowchunk": 1
+        },
+        {
+          "operator": "vllm::xpu_fp16_linear_rowchunk",
+          "input_dims": [
+            [
+              512,
+              10240
+            ],
+            [
+              2560,
+              10240
+            ],
+            [],
+            []
+          ],
+          "input_dtype": [
+            "c10::Half",
+            "c10::Half",
+            "",
+            "Scalar"
+          ],
+          "cpu_call_count": 1,
+          "cpu_inclusive_ms": 0.912085,
+          "direct_device": {
+            "kernel_count": 0,
+            "kernel_sum_ms": 0.0,
+            "kernel_pct_of_rank_kernel_sum": 0.0
+          },
+          "calls_within_fp16_rowchunk": 1
+        }
+      ]
+    }
+  ],
+  "findings": [
+    "The FP8/W8A16 custom operator is the largest directly attributed device group on both ranks. Its actual Input Dims use 512 activation rows; these are not a chain of 32-row FP16 GEMMs.",
+    "Only two FP16 rowchunk custom-op calls appear per rank: a 512-row projection expanded into sixteen 32-row GEMMs, and a one-row full-vocabulary projection. The detailed shapes are retained below each rank.",
+    "The 4B small-FP16-GEMM bottleneck therefore does not describe this preferred FP8 model. Its FP16 rowchunk descendants represent only about two percent of the per-rank kernel-duration sums.",
+    "The most costly W8A16 shape is [512,5120] times [5120,17408], with 65 calls per rank. Changing its geometry or implementation is a kernel arithmetic and qualification task, not an established cheap dispatch fix.",
+    "GDN and allreduce remain substantial separate device groups. Rank differences in allreduce do not establish pure transport cost or an available communication speedup.",
+    "No new small same-arithmetic candidate is established by this trace. Preserve the closed allocation screen and the source-review conclusions about existing scale preparation and primitive caching."
+  ],
+  "limitations": [
+    "Profiling and shape recording change host overhead and scheduling. These timings must not become public prefill throughput.",
+    "CPU inclusive intervals nest. Device sums can overlap across streams and ranks; they are not server prefill duration, HTTP TTFT or a critical-path decomposition.",
+    "Collective durations may include synchronization waiting; their sum is not isolated wire-transfer cost.",
+    "Inclusive groups can overlap each other and direct operator rows. Do not add those different views.",
+    "One returned token may still execute MTP work; this is the configured serving path, not an isolated target forward.",
+    "This trace alone cannot establish arithmetic equivalence, repeatability, quality, decode regression or the speed of an unimplemented optimization."
+  ],
+  "conclusion": {
+    "new_small_same_arithmetic_candidate_established": false,
+    "optimization_implemented": false,
+    "serving_defaults_changed": false,
+    "decision": "Diagnostic profile only. No optimization benefit is inferred from attributed durations; candidate decisions require source review and qualification."
+  }
+}

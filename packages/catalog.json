@@ -5779,7 +5779,27 @@
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r307-contract-digests.sha256",
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-contract-digests.sha256",
         "experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md",
-        "experiments/qwen38-27b-b70/data/2026-09-13-short-prefill/summary.json"
+        "experiments/qwen38-27b-b70/data/2026-09-13-short-prefill/summary.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md",
+        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/summary.json",
+        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/verification.json",
+        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/evidence/manifest.json",
+        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/evidence/27b-fp8.tar.gz",
+        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/evidence/27b-fp8-traces.tar.gz",
+        "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py",
+        "experiments/qwen38-27b-b70/scripts/bench-prefill-followup.py",
+        "experiments/qwen38-27b-b70/scripts/run-fp8-prefill-focus.py",
+        "experiments/qwen38-27b-b70/scripts/profile-prefill-followup.py",
+        "experiments/qwen38-27b-b70/scripts/summarize-fp8-prefill-focus.py",
+        "experiments/qwen38-27b-b70/scripts/export-short-prefill-evidence.py",
+        "experiments/qwen38-27b-b70/scripts/export-fp8-prefill-evidence.py",
+        "experiments/qwen38-27b-b70/scripts/test_summarize_fp8_prefill_focus.py",
+        "experiments/qwen38-27b-b70/scripts/test_analyze_fp8_prefill_trace.py",
+        "experiments/qwen38-27b-b70/scripts/analyze-fp8-prefill-trace.py",
+        "experiments/qwen38-27b-b70/scripts/verify-fp8-prefill-evidence.py",
+        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-corpus.json",
+        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-trace-analysis.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-prereg.md"
       ],
       "performance_profiles": [
         {
@@ -6501,6 +6521,53 @@
             {
               "context_tokens": 512,
               "value": 2884.615727462591,
+              "samples": 18
+            }
+          ]
+        },
+        {
+          "id": "server-prefill-fp8-focus-27b-fp8",
+          "label": "Reading speed at 512 and 2,048 input tokens · 2 GPUs",
+          "public_label": "Reading speed · 2 GPUs · 1-token draft · 4K capacity",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Input length (tokens)",
+          "measurement_kind": "server_prefill",
+          "scope": "One user, 2 GPUs, 512–2,048 input tokens; 4096-token capacity and batch budget; no saved prompt cache. Separate test on the published R304 runtime.",
+          "public_scope": "How fast the server reads your prompt before making its first token. One user, room for 4,096 tokens, no saved prompt cache. Unrepeated prose, code and documents.",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md",
+          "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/summary.json",
+          "operating_profile": {
+            "tensor_parallel_size": 2,
+            "speculative_tokens": 1,
+            "quantization": "FP8",
+            "parent_runtime": "R304",
+            "image_id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+            "activations": "FP16",
+            "kv_cache": "native",
+            "concurrency": 1,
+            "max_model_len": 4096,
+            "max_num_batched_tokens": 4096,
+            "max_num_seqs": 1,
+            "prefix_caching": false,
+            "classpad": 0,
+            "rowchunk": 32,
+            "draft_shortlist_rows": null,
+            "profiler_configured": true,
+            "profiler_active_during_measurement": false
+          },
+          "technical_method": "Measured 2026-09-14 UTC on ASRock B70. Input tokens divided by vLLM server prefill duration from first scheduled execution to first token, obtained from one-request histogram deltas; not isolated GPU throughput or HTTP TTFT. Each point averages two control-arm rates. Each arm takes the median of three repeats per prose/code/documentation class, then the median across classes (18 measured requests per length). Unrepeated source excerpts truncated to exact numeric input IDs, 128 output tokens with ignore_eos, zero cached tokens; warmups and the optional profiler request excluded. Complete outputs repeat exactly. All 12 natural-completion strict-suite outputs matched the qualified reference. One loaded server per setup; no runtime optimization or new decode record promoted. The earlier short-prefill test used another corpus and a 1024-token capacity/batch budget; it is preserved separately and does not establish a speedup. At 2048 scheduled rows, W8A16 uses its natural oneDNN catalog beyond the fixed-K hook’s 512-row range.",
+          "promotion_qualified": false,
+          "points": [
+            {
+              "context_tokens": 512,
+              "value": 2856.962190244135,
+              "samples": 18
+            },
+            {
+              "context_tokens": 2048,
+              "value": 3679.254296096209,
               "samples": 18
             }
           ]

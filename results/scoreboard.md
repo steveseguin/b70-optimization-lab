@@ -30,6 +30,21 @@ records or establish an optimization win.
 [earlier four prefill baselines](../experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md).
 The two campaigns use different prompt material and are not a matched scaling test.
 
+## Official 27B FP8 reading speed (final bounded pass)
+
+Two B70s, fixed MTP1, one user, 4096-token capacity/batch budget, native KV and
+no prompt-cache reuse. These separate baseline points retain the existing
+homepage and historical decode records.
+
+| Input tokens | Reading speed | Server prefill | HTTP first-token wait |
+| ---: | ---: | ---: | ---: |
+| 512 | 2,857 input tokens/s | 179.21 ms | 182.18 ms |
+| 2,048 | 3,679 input tokens/s | 556.64 ms | 567.90 ms |
+
+All 12 full strict outputs matched the qualified reference; decode differed by
+−0.13%. Profiling found no justified quick optimization; defaults are retained.
+[Methods, trace findings and full evidence](../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md).
+
 ## Read This Before Comparing Rows
 
 - Compare results only when model revision, quantization and quality class,

@@ -25,6 +25,16 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-13 EDT, two-B70 host: final FP8 prefill pass complete and stopped.**
+Official 27B FP8, R304 TP2/MTP1, measured 512/2048 inputs at 2,857/3,679 input
+tokens/s with 4096 capacity/batch. All 36 measured outputs repeated exactly;
+strict 12/12 original-reference parity, decode −0.13%. Profiling found FP8 matrix
+operations dominant and no justified quick candidate; defaults retained and
+prefill campaign closed. Owned server stopped, both GPUs/XCCL and journal
+postflights passed. [Results](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md).
+Raw root `/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914`.
+No restart chain or power/memory-setting changes; four-card LTX work preserved.
+
 **Four-B70 host, 2026-09-13 22:23 EDT: exact-output LTX speed result.**
 User prioritizes first usable clip within a few seconds, while retaining exact
 baseline outputs. Baseline PID11499 exited cleanly after one planned SIGINT;
