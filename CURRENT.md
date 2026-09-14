@@ -55,10 +55,21 @@ The computer remains on the same boot; passive postflight is preserved below.
 Ten completed clips passed all four raw oracles, including all five host-table
 clips with full remaining encoder residency. Host warm previews6.322–6.455s
 versus first-control6.378–6.576s; the final control is missing, so this is an
-incomplete screen and no speed promotion. Current work: preserve failed export,
-audit the RAM spike during component retirement/unload, and prepare a bounded
-source-only lifecycle fix. Keep successful raw parity evidence and all failures.
+incomplete screen and no speed promotion. The failed export and memory audit
+are preserved. An inactive successor retains diffusion/VAEs/upscaler across
+encoder changes, requires old encoder owner release, and checks separate
+restore/construction RAM budgets. Ten stdlib fake/header-only tests and an
+independent source review passed. Actual CPU lifecycle qualification, a new
+packet/client and native testing remain pending under the fault latch. Its
+memory guards cover encoder transitions, not initial diffusion construction.
+[Transition fix](experiments/ltx25-b70/notes/host-embedding-clip-only-transition-01.md),
+[memory audit](experiments/ltx25-b70/notes/host-embedding-transition-memory-audit-01.md).
+The separate C++ CPU v8 cache-policy proposal is also source-only and inactive.
+Keep successful raw parity evidence and all failures.
 [Incident postflight](experiments/ltx25-b70/data/host-embedding-screen-01-incident/postflight.json).
+
+The earlier four-B70 entries below are historical snapshots; the fault state
+above supersedes their live-process and pending-launch statements.
 
 **Four-B70 host, September14 18:07 UTC: packet11 ready; encoder comparison starting.**
 LTX PID116013/exec15201 serves `http://127.0.0.1:8188`, using

@@ -1,0 +1,432 @@
+--- /dev/null
++++ b/scripts/host_embedding_resident_node_v2.py
+@@ -0,0 +1,203 @@
++"""Inactive successor: retain nonencoder components; replace only CLIP.
++
++The five component outputs and all diffusion/VAE/upscaler loading operations
++match packet10's split lane. Only the explicit CLIP ownership adapter changes.
++No prompt encodings or generated outputs are retained here.
++"""
++import gc
++import hashlib
++import json
++import time
++import weakref
++
++from host_embedding_transition_memory import checkpoint_geometry, admission, restore_allocation
++
++import torch
++import comfy.model_management
++import comfy.sd
++import comfy.utils
++import folder_paths
++import nodes
++from comfy_extras.nodes_hunyuan import LatentUpscaleModelLoader
++
++from ltx_layer_shard import apply_layer_shard
++from encoder_diagnostics import ROOT, _context, _exclusive_json
++from host_embedding_clip import load_clip, MODES, require
++from host_embedding_placement_node import NODE_CLASS_MAPPINGS as PLACEMENT_NODES
++
++MODEL_SHA = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
++_components = None
++_shared = None
++_mode = None
++_generation = 0
++_identity = None
++_failure = None
++_pending = []
++
++
++def write_receipt(path, value):
++    _exclusive_json(path, value, ROOT)
++
++
++def retirement_refs(clip):
++    group = clip._host_embedding
++    objects = {'clip': clip, 'group': group, 'encoder_patcher': clip.patcher,
++               'encoder_model': clip.cond_stage_model}
++    if group.owner is not None:
++        owner = group.owner
++        objects.update(host_owner=owner, host_patcher=owner.host,
++                       host_model=owner.host.model, host_weight=owner.weight)
++    return {name: weakref.ref(value) for name, value in objects.items()}
++
++
++def require_dead(refs):
++    survivors = [name for name, ref in refs.items() if ref() is not None]
++    require(not survivors, 'Retired CLIP owner survived; refuse replacement: ' + ', '.join(survivors))
++    return {'all_retired_weakrefs_dead': True, 'checked': sorted(refs)}
++
++
++def memory_gate(run_dir, prefix, stage, allocation):
++    report = admission(stage, allocation)
++    write_receipt(run_dir / (prefix + '-' + stage + '-memory.json'), report)
++    require(report['passed'], 'Insufficient source-budgeted host RAM at ' + stage)
++    return report
++
++
++def shared_identity(shared):
++    model, video, audio, upscaler = shared
++    shard, = model.get_additional_models_with_key('ltx_layer_shard')
++    return {'model_patcher': id(model), 'model': id(model.model), 'shard_patcher': id(shard),
++            'shard_model': id(shard.model), 'video_vae': id(video), 'audio_vae': id(audio),
++            'upscaler': id(upscaler)}
++
++
++class LTXHostEmbeddingComponents:
++    @classmethod
++    def INPUT_TYPES(cls):
++        return {'required': {'placement': (['split'],), 'encoder_mode': (list(MODES),)}}
++
++    RETURN_TYPES = ('MODEL', 'CLIP', 'VAE', 'VAE', 'LATENT_UPSCALE_MODEL')
++    RETURN_NAMES = ('model', 'clip', 'video_vae', 'audio_vae', 'upscaler')
++    FUNCTION = 'load'
++    CATEGORY = 'lab/validation'
++
++    def load(self, placement, encoder_mode):
++        global _components, _shared, _mode, _generation, _identity, _failure, _pending
++        require(placement == 'split' and encoder_mode in MODES, 'Unsupported component configuration')
++        require(_failure is None, 'Component transition failed; halt new requests and inspect evidence')
++        run_dir, identity = _context(ROOT)
++        require(identity['model_verification_sha256'] == MODEL_SHA, 'Original model identity required')
++        if _identity is not None:
++            require(identity == _identity, 'Server/model identity changed during component ownership')
++        if _components is not None and _mode == encoder_mode:
++            _components[1]._host_embedding.guard()
++            return _components
++
++        next_generation = _generation + 1
++        prefix = f'host-components-{next_generation:02d}-{encoder_mode}'
++        started = run_dir / (prefix + '-started.json')
++        result_path = run_dir / (prefix + '-result.json')
++        require(not result_path.exists() and not result_path.is_symlink(), 'Existing transition result')
++        record = {'schema': 'ltx.host-embedding-components.v2', **identity,
++                  'generation': next_generation, 'previous_generation': _generation,
++                  'placement': placement, 'encoder_mode': encoder_mode, 'previous_mode': _mode,
++                  'retained': 'nonencoder components across all generations; one current CLIP', 'prompt_encoding_cache': False,
++                  'generated_output_cache': False, 'status': 'started'}
++        write_receipt(started, record)
++        start = time.monotonic()
++        phase = 'retire-previous-components'
++        try:
++            clip_path = folder_paths.get_full_path_or_raise('text_encoders', 'gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
++            geometry = checkpoint_geometry(clip_path)
++            record['memory_geometry'] = geometry
++            if _components is not None:
++                clip = _components[1]
++                inspection = clip._host_embedding.inventory(clip)
++                record['restore_memory'] = memory_gate(run_dir, prefix, 'before-restore', restore_allocation(inspection['encoder']))
++                retired_patcher_ids = [id(clip.patcher)]
++                if clip._host_embedding.owner is not None:
++                    retired_patcher_ids.append(id(clip._host_embedding.owner.host))
++                refs = retirement_refs(clip)
++                retirement = clip._host_embedding.detach_restore(clip)
++                write_receipt(run_dir / (prefix + '-unload.json'), {**identity, **retirement,
++                    'old_generation': _generation, 'new_generation': next_generation,
++                    'old_mode': _mode, 'new_mode': encoder_mode})
++                # Keep nonencoder owners strongly resident. Remove old CLIP from
++                # every component slot/local before collecting cycles. The native
++                # LoadedModel registry is weak and its finalizer removes dead models.
++                _components = None
++                _mode = None
++                del clip
++                gc.collect()
++                comfy.model_management.cleanup_models()
++                death = require_dead(refs)
++                live_registry_ids = {id(p) for p in comfy.model_management.loaded_models() if p is not None}
++                require(not live_registry_ids.intersection(retired_patcher_ids), 'Retired CLIP remains in native registry')
++                death['retired_patcher_ids_absent_from_registry'] = True
++                write_receipt(run_dir / (prefix + '-retired-owner-release.json'), {**identity, **death,
++                    'old_generation': _generation, 'new_generation': next_generation,
++                    'shared_owner_ids': shared_identity(_shared),
++                    'native_registry_cleanup': 'cleanup_models after weak-finalizer cleanup; no direct list mutation'})
++                record['released_memory'] = memory_gate(run_dir, prefix, 'after-release', 0)
++
++            _pending = []
++            if _shared is None:
++                phase = 'load-diffusion'
++                model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]
++                _pending.append(model)
++            else:
++                model, video, audio, upscaler = _shared
++                vaes = [video, audio]
++                record['shared_owner_ids_before'] = shared_identity(_shared)
++            phase = 'admit-CPU-encoder-construction'
++            record['construction_memory'] = memory_gate(run_dir, prefix, 'before-construction', geometry['construction_overlap_bytes'])
++            phase = 'construct-CPU-encoder-ownership'
++            clip = load_clip(ckpt_paths=[clip_path],
++                embedding_directory=folder_paths.get_folder_paths('embeddings'), mode=encoder_mode,
++                model_options={'load_device': torch.device('xpu:2'), 'offload_device': torch.device('cpu')})
++            _pending.append(clip)
++            record['constructed_memory'] = memory_gate(run_dir, prefix, 'after-construction', 0)
++            initial_encoder = clip._host_embedding.inventory(clip)
++            require(clip.patcher.loaded_size() == 0 and all(p.device.type == 'cpu'
++                    for p in clip.cond_stage_model.parameters()), 'Encoder loaded before ownership receipt')
++
++            if _shared is None:
++                phase = 'load-VAEs'
++                vaes = []
++                for name in ['ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors']:
++                    path = folder_paths.get_full_path_or_raise('vae', name)
++                    weights, metadata = comfy.utils.load_torch_file(path, return_metadata=True)
++                    vae = comfy.sd.VAE(sd=weights, metadata=metadata, device=torch.device('xpu:3'))
++                    vae.throw_exception_if_invalid()
++                    del weights
++                    vaes.append(vae)
++                    _pending.append(vae)
++                phase = 'load-upscaler-and-split'
++                upscaler = LatentUpscaleModelLoader.execute('ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors')[0]
++                _pending.append(upscaler)
++                model = apply_layer_shard(model, secondary_device='xpu:1')
++                _shared = (model, *vaes, upscaler)
++            record['shared_owner_ids'] = shared_identity(_shared)
++            if 'shared_owner_ids_before' in record:
++                require(record['shared_owner_ids'] == record['shared_owner_ids_before'], 'Nonencoder ownership changed')
++            completed = (model, clip, *vaes, upscaler)
++            record.update(status='completed', seconds=time.monotonic() - start,
++                encoder_initial_ownership=initial_encoder,
++                model_load_device=str(model.load_device),
++                text_encoder_load_device=str(clip.patcher.load_device),
++                vae_devices=[str(v.device) for v in vaes], shard=model.ltx_layer_shard_report)
++            write_receipt(result_path, record)
++            _components, _mode, _generation, _identity = completed, encoder_mode, next_generation, identity
++            _pending = []
++            return _components
++        except BaseException as error:
++            # Retain partial owners for inspection; never retry or cycle a server.
++            _failure = {'phase': phase, 'error': repr(error), 'generation': next_generation}
++            record.update(status='failed', seconds=time.monotonic() - start, failure=_failure,
++                          retained_partial_owners=len(_pending), shared_components_retained=_shared is not None)
++            if not result_path.exists() and not result_path.is_symlink():
++                write_receipt(result_path, record)
++            raise
++
++
++NODE_CLASS_MAPPINGS = {'LTXHostEmbeddingComponents': LTXHostEmbeddingComponents, **PLACEMENT_NODES}
+--- /dev/null
++++ b/scripts/host_embedding_transition_memory.py
+@@ -0,0 +1,69 @@
++"""Inactive stdlib host-memory admission for CLIP-only replacement.
++
++The tensor overlap is source-derived; the 8GiB margin is the existing screen's
++operational headroom, not a proven bound on tokenizer/allocator/driver overhead.
++"""
++import json
++from pathlib import Path
++import struct
++
++REGISTERED_STATE_BYTES = 26231584372
++CHECKPOINT_TENSOR_BYTES = 26263774294
++EXISTING_HEADROOM_BYTES = 8 * 1024**3
++
++
++def require(ok, message):
++    if not ok:
++        raise RuntimeError(message)
++
++
++def checkpoint_geometry(path):
++    path = Path(path)
++    require(path.is_file() and not path.is_symlink(), 'Expected original regular checkpoint')
++    with path.open('rb') as stream:
++        size = struct.unpack('<Q', stream.read(8))[0]
++        require(0 < size < 16 * 1024**2, 'Unexpected safetensors header size')
++        header = json.loads(stream.read(size))
++    records = [v for k, v in header.items() if k != '__metadata__']
++    offsets = sorted(tuple(v['data_offsets']) for v in records)
++    cursor = 0
++    for start, end in offsets:
++        require(type(start) is int and type(end) is int and start == cursor and end >= start, 'Unexpected checkpoint offsets')
++        cursor = end
++    require(cursor == CHECKPOINT_TENSOR_BYTES and path.stat().st_size == 8 + size + cursor,
++            'Checkpoint extent differs from source-audited model')
++    return {'checkpoint_tensor_bytes': cursor, 'checkpoint_header_bytes': size,
++            'registered_state_bytes': REGISTERED_STATE_BYTES,
++            'construction_overlap_bytes': cursor + REGISTERED_STATE_BYTES,
++            'existing_headroom_bytes': EXISTING_HEADROOM_BYTES,
++            'scope': 'Conservative mapped-checkpoint plus allocated CPU parameter/buffer overlap; not a measured total peak'}
++
++
++def memory_snapshot():
++    raw = Path('/proc/meminfo').read_text()
++    parsed = dict(line.split(':', 1) for line in raw.splitlines())
++    fields = {}
++    for key in ('MemTotal', 'MemAvailable', 'MemFree', 'SwapFree', 'SwapTotal'):
++        parts = parsed[key].split()
++        require(len(parts) == 2 and parts[1] == 'kB' and parts[0].isdigit(), 'Malformed meminfo: ' + key)
++        fields[key] = int(parts[0]) * 1024
++    require(0 < fields['MemTotal'] and fields['MemAvailable'] <= fields['MemTotal'] and
++            fields['MemFree'] <= fields['MemTotal'] and fields['SwapFree'] <= fields['SwapTotal'], 'Inconsistent meminfo')
++    return {'source': '/proc/meminfo', 'raw': raw, 'bytes': fields}
++
++
++def admission(stage, allocation_bytes, *, snapshot=None):
++    require(type(allocation_bytes) is int and allocation_bytes >= 0, 'Invalid source-derived memory request')
++    observed = memory_snapshot() if snapshot is None else snapshot
++    required = allocation_bytes + EXISTING_HEADROOM_BYTES
++    available = observed['bytes']['MemAvailable']
++    require(type(available) is int and available >= 0, 'Invalid available RAM observation')
++    return {'schema': 'ltx.host-embedding-memory-admission.v1', 'stage': stage,
++            'tracked_allocation_bytes': allocation_bytes, 'existing_headroom_bytes': EXISTING_HEADROOM_BYTES,
++            'required_available_bytes': required, 'observed': observed, 'passed': available >= required,
++            'swap_counted_as_headroom': False, 'runtime_memory_settings_changed': False}
++
++
++def restore_allocation(inspection):
++    return sum(row['bytes'] for kind in ('parameters', 'buffers') for row in inspection[kind]['records']
++               if row['device'] != 'cpu')
+--- /dev/null
++++ b/scripts/test-host-embedding-resident-v2-stdlib.py
+@@ -0,0 +1,151 @@
++#!/usr/bin/env python3
++"""Inactive CLIP-only transition proof using stdlib fakes, never native imports."""
++import ast
++import gc
++import hashlib
++import importlib.util
++import json
++from pathlib import Path
++import sys
++import tempfile
++import types
++import unittest
++from unittest.mock import patch
++import weakref
++
++sys.dont_write_bytecode=True
++HERE=Path(__file__).resolve().parent
++
++def load(name,path):
++    spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec)
++    sys.modules[name]=m;spec.loader.exec_module(m);return m
++
++old=load('resident_v1_test_helpers',HERE/'test-host-embedding-resident-stdlib.py')
++mem=load('host_embedding_transition_memory',HERE/'host_embedding_transition_memory.py')
++TARGET=HERE/'host_embedding_resident_node_v2.py'
++
++class Box:
++    def __init__(self,**kwargs):self.__dict__.update(kwargs)
++
++class Assembly(old.Assembly):
++    def __init__(self,root):
++        super().__init__(root);self.registry=[];self.weakclips=[];self.available=128*1024**3;self.memory_events=[]
++    def clip(self,**kwargs):
++        self.event('clip',kwargs)
++        model=Box(parameters=lambda:[Box(device=old.Device('cpu'))])
++        patcher=Box(model=model,loaded_size=lambda:0,load_device=old.Device('xpu:2'))
++        group=Box(mode=kwargs['mode'],retired=False,owner=None)
++        if kwargs['mode']=='host-table':
++            weight=Box();hostmodel=Box(weight=weight);host=Box(model=hostmodel)
++            group.owner=Box(host=host,weight=weight)
++            self.registry.append(weakref.ref(host))
++        def guard():
++            if group.retired:raise RuntimeError('retired')
++        def retire(clip):
++            guard();self.event('retire',group.mode);group.retired=True
++            return {'original_ownership_restored':True,'all_shared_clones_retired':True}
++        group.guard=guard;group.detach_restore=retire
++        group.inventory=lambda clip:{'mode':group.mode,'encoder':{'parameters':{'records':[{'device':'xpu:2','bytes':1024}]},'buffers':{'records':[]}}}
++        clip=Box(_host_embedding=group,patcher=patcher,cond_stage_model=model)
++        self.registry.append(weakref.ref(patcher));self.weakclips.append(weakref.ref(clip))
++        return clip
++    def shard(self,model,**kwargs):
++        super().shard(model,**kwargs)
++        model.model=Box();model.shard=Box(model=Box())
++        model.get_additional_models_with_key=lambda key:[model.shard]
++        return model
++    def cleanup(self):
++        self.event('cleanup-native');self.registry[:]=[r for r in self.registry if r() is not None]
++    def setup(self,module):
++        module.checkpoint_geometry=lambda path:{'construction_overlap_bytes':mem.CHECKPOINT_TENSOR_BYTES+mem.REGISTERED_STATE_BYTES}
++        def admission(stage,allocation):
++            self.memory_events.append((stage,allocation))
++            return mem.admission(stage,allocation,snapshot={'bytes':{'MemAvailable':self.available},'source':'synthetic'})
++        module.admission=admission
++        mm=sys.modules['comfy.model_management']
++        mm.cleanup_models=self.cleanup;mm.loaded_models=lambda:[r() for r in self.registry if r() is not None]
++        mm.unload_all_models=lambda:(_ for _ in ()).throw(AssertionError('bulk unload forbidden'))
++
++class Tests(unittest.TestCase):
++    def enter(self,a):
++        context=a.loaded();m,node=context.__enter__();a.setup(m)
++        self.addCleanup(context.__exit__,None,None,None)
++        return m,node
++    def test_three_generations_keep_shared_and_release_clip(self):
++        with tempfile.TemporaryDirectory() as root,patch.object(old,'TARGET',TARGET):
++            a=Assembly(root);m,node=self.enter(a)
++            first=node.load('split','control');shared=[id(first[i]) for i in [0,2,3,4]];oldref=weakref.ref(first[1]);del first
++            second=node.load('split','host-table');self.assertIsNone(oldref());self.assertEqual(shared,[id(second[i]) for i in [0,2,3,4]])
++            hostref=weakref.ref(second[1]._host_embedding.owner);del second
++            third=node.load('split','control');self.assertIsNone(hostref());self.assertEqual(shared,[id(third[i]) for i in [0,2,3,4]])
++            self.assertEqual(sum(e[0]=='unet' for e in a.events),1);self.assertEqual(sum(e[0]=='vae' for e in a.events),2)
++            self.assertEqual(sum(e[0]=='upscale' for e in a.events),1);self.assertEqual(sum(e[0]=='clip' for e in a.events),3)
++            self.assertEqual(sum(e[0]=='cleanup-native' for e in a.events),2)
++            self.assertFalse(any(e[0]=='unload_all' for e in a.events))
++            release=json.loads((Path(root)/'host-components-03-control-retired-owner-release.json').read_text())
++            self.assertTrue(release['all_retired_weakrefs_dead']);self.assertTrue(release['retired_patcher_ids_absent_from_registry'])
++            self.assertIn('host_weight',release['checked'])
++            self.assertEqual(m._generation,3)
++    def test_external_model_owner_fails_before_replacement(self):
++        with tempfile.TemporaryDirectory() as root,patch.object(old,'TARGET',TARGET):
++            a=Assembly(root);m,node=self.enter(a)
++            first=node.load('split','control');leak=first[1].cond_stage_model;del first
++            with self.assertRaisesRegex(RuntimeError,'survived'):node.load('split','host-table')
++            self.assertEqual(sum(e[0]=='clip' for e in a.events),1);self.assertIsNotNone(m._shared)
++            self.assertIsNotNone(m._failure);self.assertIsNotNone(leak)
++            with self.assertRaisesRegex(RuntimeError,'failed'):node.load('split','host-table')
++    def test_external_output_tuple_fails_closed(self):
++        with tempfile.TemporaryDirectory() as root,patch.object(old,'TARGET',TARGET):
++            a=Assembly(root);m,node=self.enter(a);retained=node.load('split','control')
++            with self.assertRaisesRegex(RuntimeError,'survived'):node.load('split','host-table')
++            self.assertTrue(retained[1]._host_embedding.retired)
++    def test_restore_floor_before_any_copy(self):
++        with tempfile.TemporaryDirectory() as root,patch.object(old,'TARGET',TARGET):
++            a=Assembly(root);m,node=self.enter(a);node.load('split','control')
++            a.available=mem.EXISTING_HEADROOM_BYTES+1023
++            with self.assertRaisesRegex(RuntimeError,'before-restore'):node.load('split','host-table')
++            self.assertFalse(any(e[0]=='retire' for e in a.events));self.assertIsNotNone(m._components)
++    def test_constructor_floor_after_old_death(self):
++        with tempfile.TemporaryDirectory() as root,patch.object(old,'TARGET',TARGET):
++            a=Assembly(root);m,node=self.enter(a);node.load('split','control')
++            a.available=mem.EXISTING_HEADROOM_BYTES+mem.REGISTERED_STATE_BYTES
++            with self.assertRaisesRegex(RuntimeError,'before-construction'):node.load('split','host-table')
++            self.assertIsNone(a.weakclips[0]());self.assertIsNotNone(m._shared)
++            self.assertEqual(sum(e[0]=='clip' for e in a.events),1)
++            result=json.loads((Path(root)/'host-components-02-host-table-result.json').read_text())
++            self.assertEqual(result['status'],'failed');self.assertTrue(result['shared_components_retained'])
++    def test_constructor_failure_retains_shared_and_no_retry(self):
++        with tempfile.TemporaryDirectory() as root,patch.object(old,'TARGET',TARGET):
++            a=Assembly(root);m,node=self.enter(a);node.load('split','control');a.failure='clip'
++            with self.assertRaisesRegex(RuntimeError,'injected clip'):node.load('split','host-table')
++            self.assertIsNotNone(m._shared);self.assertIsNone(a.weakclips[0]())
++            with self.assertRaisesRegex(RuntimeError,'failed'):node.load('split','host-table')
++    def test_threshold_exact_and_no_swap_credit(self):
++        allocation=mem.CHECKPOINT_TENSOR_BYTES+mem.REGISTERED_STATE_BYTES;floor=allocation+mem.EXISTING_HEADROOM_BYTES
++        for delta,expected in [(-1,False),(0,True),(1,True)]:
++            r=mem.admission('construction',allocation,snapshot={'bytes':{'MemAvailable':floor+delta,'SwapFree':10**15}})
++            self.assertIs(r['passed'],expected);self.assertFalse(r['swap_counted_as_headroom'])
++        self.assertEqual(allocation,52495358666)
++    def test_missing_malformed_meminfo_refusal(self):
++        valid='MemTotal: 100 kB\nMemAvailable: 80 kB\nMemFree: 60 kB\nSwapFree: 0 kB\nSwapTotal: 20 kB\n'
++        with patch.object(mem.Path,'read_text',return_value=valid):self.assertEqual(mem.memory_snapshot()['bytes']['MemAvailable'],81920)
++        for invalid in ['',valid.replace('80 kB','-1 kB'),valid.replace('80 kB','80 MB'),valid.replace('80 kB','101 kB')]:
++            with patch.object(mem.Path,'read_text',return_value=invalid):
++                with self.assertRaises((RuntimeError,KeyError)):mem.memory_snapshot()
++    def test_actual_checkpoint_header_only_budget(self):
++        p=Path('/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
++        r=mem.checkpoint_geometry(p);self.assertEqual(r['construction_overlap_bytes'],52495358666)
++    def test_source_no_bulkoffload_or_registry_mutation(self):
++        tree=ast.parse(TARGET.read_text())
++        forbidden={'unload_all_models','unload_model_and_clones','free_memory','to','empty_cache','synchronize'}
++        calls={n.func.attr for n in ast.walk(tree) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)}
++        self.assertFalse(calls&forbidden);self.assertNotIn('current_loaded_models',TARGET.read_text())
++        self.assertNotIn('torch',sys.modules);self.assertFalse(any(k.startswith('comfy.') for k in sys.modules))
++
++if __name__=='__main__':
++    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
++    print(json.dumps({'status':'passed' if result.wasSuccessful() else 'failed','tests_run':result.testsRun,
++        'scope':'stdlib fakes and checkpoint header only; no native CPU/GPU imports or execution, no endpoint calls',
++        'native_imports':False,'source_sha256s':{str(p):hashlib.sha256(p.read_bytes()).hexdigest()
++        for p in [TARGET,HERE/'host_embedding_transition_memory.py',Path(__file__)]}}))
++    raise SystemExit(0 if result.wasSuccessful() else 1)
