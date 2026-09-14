@@ -25,6 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-13 21:30 EDT, two-B70 host: bounded prefill follow-up.** User
+selected up to three missing short-prefill setups (4B/9B TP2, 27B INT4 TP1)
+and a modest optimization review. The first stage is launching `prefill-followup-4b-tp2-396151` on localhost
+18149 after both-card compute/XCCL preflight; each independent stage rechecks
+process/listener/render ownership and health. Reserve this host for this lane; preserve the four-card LTX work.
+[Preregistration](experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-prereg.md),
+raw evidence `/mnt/fast-ai/bench-results/qwen-prefill-followup-20260914`.
+No restart chain or power/memory-setting changes.
+
 **Four-B70 host, 2026-09-13 20:42 EDT: LTX baseline bring-up.** User authorized
 a very short native-precision clip and deterministic repeat checks. One local
 ComfyUI server (PID 11499, `127.0.0.1:8188`) is running with exclusive device
