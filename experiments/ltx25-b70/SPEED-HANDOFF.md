@@ -8,6 +8,13 @@ goal, with24fps and a256x256 minimum final output. The [first30-request campaign
 passed all10 fixture repeats at6.515s median preview and bounded review storage.
 Accounting/transfer candidates are prepared but inactive; the target is not yet met.
 
+Follow-up: [nonblocking stack profile](notes/stack-profile-01-results.md) selects
+an [opt-in small-state residency candidate](notes/encoder-small-state-audit.md).
+It incorporates the accounting fix under its own option; do not stack both
+patches. [Actual LTX block CPU compilation](notes/ltx-block-compile-cpu.md)
+also passed exactness with rounding-preservation options. Both need runtime
+integration and XPU qualification before a speed claim; preserve PID24848.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,

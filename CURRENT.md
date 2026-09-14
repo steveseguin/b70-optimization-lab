@@ -25,6 +25,26 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, post-stability LTX diagnostics: next runtime candidates prepared.**
+One 15-second nonblocking py-spy attachment and one unchanged clip completed on
+PID24848; all four output tensors matched baseline-01. The trace points to
+repeated CPU copies of tiny encoder RMSNorm weights and layer scalars totaling
+only 1.47 MiB. The opt-in small-state residency patch passed 12 real Gemma4 CPU
+lifecycle tests; it includes a scoped accounting correction and must not be
+stacked with the separate generic accounting patch. It is inactive.
+Stock whole-model compilation was rejected by source audit. Default CPU
+Inductor changed BF16 values despite deterministic repeats; preserving rounding
+passed 6/6 toy cases. An actual native LTXAV block CPU fixture then passed both
+stage token counts: two compiled graphs, zero graph breaks, both outputs exact.
+These are CPU preparation gates, not GPU speed/quality results. No server restart
+or runtime patch occurred; the server is idle and fault-free. Diagnostic media
+was pruned after exact verification. Next work is a bounded runtime integration
+packet for small-state residency/cropping and one-block compilation; do not use
+the unsafe stock compile node or inject code into the live process.
+See [profile result](experiments/ltx25-b70/notes/stack-profile-01-results.md),
+[small-state candidate](experiments/ltx25-b70/notes/encoder-small-state-audit.md),
+and [compiler block gate](experiments/ltx25-b70/notes/ltx-block-compile-cpu.md).
+
 **Four-B70 host, September13, LTX campaign started toward the revised goal.**
 User requires one second of new video in **under one second**, at24fps with no
 quality/losslessness sacrifice. Final output floor is256x256; <=3s is only an

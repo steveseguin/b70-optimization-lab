@@ -1,0 +1,200 @@
+{
+  "scope": "nonblocking Python stack samples; not synchronized GPU kernel or copy durations",
+  "worker": "Thread 24977 \"Thread-2 (prompt_worker)\"",
+  "worker_sample_count": 1357,
+  "queue_idle_samples": 816,
+  "non_queue_idle_samples": 541,
+  "cast_to_leaf_groups": {
+    "RMSNorm weight cast/copy": 79,
+    "Gemma4 per-layer scalar cast/copy": 37,
+    "Linear weight cast/copy": 4
+  },
+  "top_nonidle_leaves": [
+    {
+      "name": "cast_to",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_management.py",
+      "line": 1568,
+      "samples": 120
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/linear.py",
+      "line": 134,
+      "samples": 54
+    },
+    {
+      "name": "rms_norm",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/functional.py",
+      "line": 3012,
+      "samples": 37
+    },
+    {
+      "name": "_group_mask",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py",
+      "line": 74,
+      "samples": 27
+    },
+    {
+      "name": "scaled_dot_product_attention",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ops.py",
+      "line": 61,
+      "samples": 22
+    },
+    {
+      "name": "prompt_worker",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/main.py",
+      "line": 402,
+      "samples": 20
+    },
+    {
+      "name": "cast_bias_weight",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ops.py",
+      "line": 432,
+      "samples": 14
+    },
+    {
+      "name": "encode_token_weights",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/sd1_clip.py",
+      "line": 68,
+      "samples": 14
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/model.py",
+      "line": 499,
+      "samples": 13
+    },
+    {
+      "name": "save_to",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy_api/latest/_input_impl/video_types.py",
+      "line": 1190,
+      "samples": 10
+    },
+    {
+      "name": "empty_cache",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/memory.py",
+      "line": 36,
+      "samples": 9
+    },
+    {
+      "name": "_call_impl",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py",
+      "line": 1794,
+      "samples": 8
+    },
+    {
+      "name": "save_to",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy_api/latest/_input_impl/video_types.py",
+      "line": 1183,
+      "samples": 8
+    },
+    {
+      "name": "__call__",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_ops.py",
+      "line": 1350,
+      "samples": 7
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ops.py",
+      "line": 694,
+      "samples": 7
+    },
+    {
+      "name": "rms_adaln",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/adaln.py",
+      "line": 20,
+      "samples": 7
+    },
+    {
+      "name": "apply_rope_split_half1",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/rope.py",
+      "line": 41,
+      "samples": 7
+    },
+    {
+      "name": "rope_inv_freqs",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/vae/na_diffusion_decoder.py",
+      "line": 83,
+      "samples": 7
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/text_encoders/gemma4.py",
+      "line": 643,
+      "samples": 6
+    },
+    {
+      "name": "get_ada_values",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py",
+      "line": 216,
+      "samples": 6
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ops.py",
+      "line": 575,
+      "samples": 6
+    },
+    {
+      "name": "save_to",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy_api/latest/_input_impl/video_types.py",
+      "line": 1199,
+      "samples": 6
+    },
+    {
+      "name": "expand_for_computation",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py",
+      "line": 67,
+      "samples": 5
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py",
+      "line": 299,
+      "samples": 5
+    },
+    {
+      "name": "precompute_freqs",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/embeddings_connector.py",
+      "line": 199,
+      "samples": 5
+    },
+    {
+      "name": "_group_mask",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py",
+      "line": 76,
+      "samples": 5
+    },
+    {
+      "name": "encode_token_weights",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/text_encoders/lt.py",
+      "line": 187,
+      "samples": 4
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py",
+      "line": 328,
+      "samples": 4
+    },
+    {
+      "name": "silu",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/functional.py",
+      "line": 2451,
+      "samples": 4
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/vae/na_diffusion_decoder.py",
+      "line": 192,
+      "samples": 3
+    }
+  ],
+  "limitations": [
+    "Profiler reported142 sampling errors; nonblocking reads can miss frames",
+    "Synchronous copy stack occupancy can include waiting for previously queued GPU work",
+    "Idle-thread samples are excluded by their actual queue-wait call chain",
+    "Profiled request latency is not an uninstrumented speed result"
+  ]
+}

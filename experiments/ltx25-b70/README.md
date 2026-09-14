@@ -11,6 +11,9 @@ The [first 30-request campaign](notes/stability-01-results.md) passed all ten
 fixture repeats at 6.515 s median preview. It reclaimed 607 MB of verified
 temporary output and kept only three small campaign previews. Two source
 patches are prepared for further validation; the loaded runtime is unchanged.
+The [next diagnostic](notes/stack-profile-01-results.md) identifies tiny encoder
+state repeatedly copied from CPU. Its residency candidate and an actual LTX
+block compiler both have CPU test evidence, while GPU validation remains pending.
 
 ## Current optimized baseline
 

@@ -1,0 +1,30 @@
+--- a/experiments/ltx25-b70/scripts/test-ltx-block-compile-cpu.py
++++ b/experiments/ltx25-b70/scripts/test-ltx-block-compile-cpu.py
+@@ -51,6 +51,7 @@
+             import torch
+             import comfy.ops
+             import comfy.model_management
++            from torch._dynamo.utils import counters
+             from comfy.ldm.lightricks.av_model import BasicAVTransformerBlock, CompressedTimestep
+             torch.set_num_threads(1)
+             torch.set_num_interop_threads(1)
+@@ -72,6 +73,7 @@
+             report['parameter_count'] = sum(p.numel() for p in block.parameters())
+             report['parameter_bytes'] = sum(p.numel() * p.element_size() for p in block.parameters())
+             report['in_training'] = comfy.model_management.in_training
++            counters.clear()
+             compiled = torch.compile(block, backend='inductor', options=report['options'],
+                                      fullgraph=True, dynamic=False)
+ 
+@@ -120,8 +122,10 @@
+                                 'max_abs_diff': float((ref.float() - got.float()).abs().max())})
+                         report['rows'].append({**report['current_case'], 'outputs': outputs})
+                 report['phase'] = 'completed'
++                report['dynamo_counters'] = {group: dict(count) for group, count in counters.items()}
++                report['compiled_graphs'] = counters['stats']['unique_graphs']
+                 report['passed'] = all(o['finite'] and o['exact_eager'] and o['exact_repeat']
+-                                       for row in report['rows'] for o in row['outputs'])
++                                       for row in report['rows'] for o in row['outputs']) and report['compiled_graphs'] >= 2
+         except Exception as exc:
+             report['error_type'] = type(exc).__name__
+             report['error'] = str(exc)

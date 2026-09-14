@@ -1,0 +1,111 @@
+--- a/comfy/model_patcher.py
++++ b/comfy/model_patcher.py
+@@ -942,6 +942,35 @@
+         for key in list(self.pinned):
+             self.unpin_weight(key)
+ 
++    def _ltx_small_state(self):
++        # Opt-in, static Gemma4 encoder only. Preserve registered owners/keys.
++        if not self.model_options.get("ltx_small_state_residency", False):
++            if getattr(self.model, "_ltx_small_buffers_loaded", False):
++                raise RuntimeError("Detach before disabling LTX small-state residency")
++            return set(), []
++        if self.is_dynamic():
++            raise RuntimeError("LTX small-state candidate requires static ModelPatcher")
++        if (self.patches or self.weight_wrapper_patches or self.forced_hooks
++                or self.hook_patches or self.object_patches):
++            raise RuntimeError("LTX small-state candidate does not support weight patches/hooks")
++        norms = set()
++        buffers = []
++        for name, module in self.model.named_modules():
++            kind = type(module)
++            if kind.__module__ == "comfy.text_encoders.llama" and kind.__name__ == "RMSNorm":
++                if (list(dict(module.named_parameters(recurse=False))) != ["weight"]
++                        or module.weight.dtype != torch.bfloat16):
++                    raise RuntimeError("Unexpected RMSNorm state")
++                norms.add(name)
++            if kind.__module__ == "comfy.text_encoders.gemma4" and kind.__name__ == "TransformerBlockGemma4":
++                value = module._buffers.get("layer_scalar")
++                if value is None or value.shape != (1,) or value.dtype != torch.bfloat16:
++                    raise RuntimeError("Unexpected Gemma4 layer_scalar state")
++                buffers.append((module, "layer_scalar"))
++        if not norms or not buffers:
++            raise RuntimeError("LTX small-state candidate requires Gemma4 RMSNorms and scalars")
++        return norms, buffers
++
+     def _load_list(self, for_dynamic=False, default_device=None):
+         loading = []
+         for n, m in self.model.named_modules():
+@@ -987,11 +1016,25 @@
+             lowvram_counter = 0
+             lowvram_mem_counter = 0
+             loading = self._load_list()
++            small_norms, small_buffers = self._ltx_small_state()
++            small_buffer_bytes = sum(m._buffers[k].nbytes for m, k in small_buffers)
++            small_total = small_buffer_bytes + sum(row[1] for row in loading if row[2] in small_norms)
++            if small_buffers:
++                # Retain the ordinary cast-buffer allowance in this gate.
++                cast_reserve = max(row[0] for row in loading) + sum(sorted(
++                    (row[1] for row in loading), reverse=True)[:comfy.model_management.NUM_STREAMS])
++                if not full_load and lowvram_model_memory <= small_total + cast_reserve:
++                    raise RuntimeError("LTX small-state plus cast reserve exceeds the supplied model budget")
++                for owner, key in small_buffers:
++                    owner._buffers[key] = owner._buffers[key].to(device=device_to)
++                self.model._ltx_small_buffers_loaded = True
++                mem_counter += small_buffer_bytes
+ 
+             load_completely = []
+             offloaded = []
+             offload_buffer = 0
+-            loading.sort(reverse=True)
++            # Keep byte counts intact: priority affects ordering, never size.
++            loading.sort(key=lambda row: (row[2] in small_norms, row), reverse=True)
+             for i, x in enumerate(loading):
+                 module_offload_mem, module_mem, n, m, params = x
+ 
+@@ -999,6 +1042,10 @@
+ 
+                 potential_offload = max(offload_buffer, module_offload_mem + sum([ x1[1] for x1 in loading[i+1:i+1+comfy.model_management.NUM_STREAMS]]))
+                 lowvram_fits = mem_counter + module_mem + potential_offload < lowvram_model_memory
++                if n in small_norms:
++                    lowvram_fits = True
++                if small_norms and self.model.device == device_to and getattr(m, "comfy_patched_weights", False):
++                    lowvram_fits = True
+ 
+                 weight_key = "{}.weight".format(n)
+                 bias_key = "{}.bias".format(n)
+@@ -1157,6 +1204,8 @@
+                 self.model.device = device_to
+             self.model.model_loaded_weight_memory = 0
+             self.model.model_offload_buffer_memory = 0
++            if hasattr(self.model, "_ltx_small_buffers_loaded"):
++                self.model._ltx_small_buffers_loaded = False
+ 
+             for m in self.model.modules():
+                 if hasattr(m, "comfy_patched_weights"):
+@@ -1174,7 +1223,9 @@
+             memory_freed = 0
+             patch_counter = 0
+             unload_list = self._load_list()
+-            unload_list.sort()
++            small_norms, small_buffers = self._ltx_small_state()
++            # Ordinary weights first, then RMSNorms, then the direct buffers.
++            unload_list.sort(key=lambda row: (row[2] in small_norms, row))
+ 
+             offload_buffer = self.model.model_offload_buffer_memory
+             if len(unload_list) > 0:
+@@ -1245,6 +1296,14 @@
+                         for param in params:
+                             self.pin_weight_to_device(key_param_name_to_key(n, param))
+ 
++
++            if (small_buffers and getattr(self.model, "_ltx_small_buffers_loaded", False)
++                    and memory_freed <= memory_to_free + offload_buffer - self.model.model_offload_buffer_memory):
++                for owner, key in small_buffers:
++                    value = owner._buffers[key]
++                    owner._buffers[key] = value.to(device=device_to)
++                    memory_freed += value.nbytes
++                self.model._ltx_small_buffers_loaded = False
+ 
+             self.model.model_lowvram = True
+             self.model.lowvram_patch_counter += patch_counter

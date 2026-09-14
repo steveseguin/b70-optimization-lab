@@ -1,0 +1,277 @@
+{
+  "scope": "CPU BF16 add/multiply/divide chain only; no LTX, XPU, or speed claim",
+  "torch": "2.14.0+xpu",
+  "config_path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py",
+  "config_sha256": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a",
+  "fullgraph": true,
+  "dynamic": false,
+  "guard_filter": null,
+  "rows": [
+    {
+      "arm": "default_rounding",
+      "shape": [
+        1,
+        16,
+        64
+      ],
+      "seed": 17,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": false,
+        "eager_numerics.division_rounding": false
+      },
+      "exact_eager": false,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 332,
+      "max_abs_diff": 0.0625
+    },
+    {
+      "arm": "default_rounding",
+      "shape": [
+        1,
+        16,
+        64
+      ],
+      "seed": 42,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": false,
+        "eager_numerics.division_rounding": false
+      },
+      "exact_eager": false,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 347,
+      "max_abs_diff": 0.0625
+    },
+    {
+      "arm": "default_rounding",
+      "shape": [
+        1,
+        16,
+        64
+      ],
+      "seed": 123,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": false,
+        "eager_numerics.division_rounding": false
+      },
+      "exact_eager": false,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 331,
+      "max_abs_diff": 0.0625
+    },
+    {
+      "arm": "default_rounding",
+      "shape": [
+        1,
+        64,
+        64
+      ],
+      "seed": 17,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": false,
+        "eager_numerics.division_rounding": false
+      },
+      "exact_eager": false,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 1384,
+      "max_abs_diff": 0.125
+    },
+    {
+      "arm": "default_rounding",
+      "shape": [
+        1,
+        64,
+        64
+      ],
+      "seed": 42,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": false,
+        "eager_numerics.division_rounding": false
+      },
+      "exact_eager": false,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 1352,
+      "max_abs_diff": 0.125
+    },
+    {
+      "arm": "default_rounding",
+      "shape": [
+        1,
+        64,
+        64
+      ],
+      "seed": 123,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": false,
+        "eager_numerics.division_rounding": false
+      },
+      "exact_eager": false,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 1404,
+      "max_abs_diff": 0.125
+    },
+    {
+      "arm": "preserve_rounding",
+      "shape": [
+        1,
+        16,
+        64
+      ],
+      "seed": 17,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": true,
+        "eager_numerics.division_rounding": true
+      },
+      "exact_eager": true,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 0,
+      "max_abs_diff": 0.0
+    },
+    {
+      "arm": "preserve_rounding",
+      "shape": [
+        1,
+        16,
+        64
+      ],
+      "seed": 42,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": true,
+        "eager_numerics.division_rounding": true
+      },
+      "exact_eager": true,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 0,
+      "max_abs_diff": 0.0
+    },
+    {
+      "arm": "preserve_rounding",
+      "shape": [
+        1,
+        16,
+        64
+      ],
+      "seed": 123,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": true,
+        "eager_numerics.division_rounding": true
+      },
+      "exact_eager": true,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 0,
+      "max_abs_diff": 0.0
+    },
+    {
+      "arm": "preserve_rounding",
+      "shape": [
+        1,
+        64,
+        64
+      ],
+      "seed": 17,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": true,
+        "eager_numerics.division_rounding": true
+      },
+      "exact_eager": true,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 0,
+      "max_abs_diff": 0.0
+    },
+    {
+      "arm": "preserve_rounding",
+      "shape": [
+        1,
+        64,
+        64
+      ],
+      "seed": 42,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": true,
+        "eager_numerics.division_rounding": true
+      },
+      "exact_eager": true,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 0,
+      "max_abs_diff": 0.0
+    },
+    {
+      "arm": "preserve_rounding",
+      "shape": [
+        1,
+        64,
+        64
+      ],
+      "seed": 123,
+      "options": {
+        "compile_threads": 1,
+        "triton.cudagraphs": false,
+        "max_autotune": false,
+        "max_autotune_gemm": false,
+        "emulate_precision_casts": true,
+        "eager_numerics.division_rounding": true
+      },
+      "exact_eager": true,
+      "exact_repeat": true,
+      "finite": true,
+      "unequal_values": 0,
+      "max_abs_diff": 0.0
+    }
+  ],
+  "preserve_rounding_passed": true,
+  "default_rounding_mismatch_observed": true
+}
