@@ -25,6 +25,13 @@ with 26 additional CPU checks and the copied launcher's read-only check passing.
 The source packet remains inactive; a maintenance decision precedes the bounded
 GPU comparison. PID24848 and all original reference evidence remain preserved.
 
+Compiler follow-up: the [routed CPU gate](notes/ltx-block-compile-route-cpu.md)
+passed, followed by 51 ownership/guard checks with the compiler callback in the
+options registry. Both stage shapes and seeds remain exact. The
+[native header census](notes/native-block-header-census.md) records full block
+sizes and stored dtypes. Native-weight XPU correctness and speed remain
+unmeasured; none of this work changes the pending encoder v2 packet.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,

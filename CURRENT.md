@@ -25,6 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, compiler preparation: routed CPU gates pass; inactive.**
+The native block adapter passed its initial 29 checks; the additive ownership
+guard passed 51 checks with the compiler callback itself in the full options
+registry. Both stage token counts and two seeds matched video/audio outputs
+exactly and repeated identically, with two compiled graphs and no graph breaks.
+These are tiny CPU fixtures, not native-weight GPU or speed results. The
+[checkpoint header census](experiments/ltx25-b70/notes/native-block-header-census.md)
+records native block dimensions and mixed stored dtypes without loading weights.
+PID24848 remains idle, fault-free and unchanged; the encoder v2 maintenance
+approval is still pending. Compiler work is separate from that immutable packet.
+See the [route gate](experiments/ltx25-b70/notes/ltx-block-compile-route-cpu.md).
+
 **Four-B70 host, encoder runtime v2: GPU screen prepared, maintenance pending.**
 Startup, actual placement/unload diagnostics and the 25-request bounded client
 are complete. Eight startup, ten diagnostics and eight client CPU tests pass;

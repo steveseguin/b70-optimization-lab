@@ -1,6 +1,10 @@
 # One native block compiler through unchanged shard routing
 
 Status: **CPU unit/capture gate passed; inactive, no XPU or checkpoint result.**
+The [additive ownership follow-up](ltx-block-compile-ownership-guard.md) preserves
+this original gate and adds 51 checks, including the compiler callback itself
+in the options registry. Its remaining lifecycle limitations are explicit.
+
 The [new helper](../scripts/test-ltx-block-compile-route.py) tests the
 [inactive adapter](../scripts/ltx_block_compile.py) against the frozen LTXAV
 implementation without changing the original compiler tests, shard helper,
