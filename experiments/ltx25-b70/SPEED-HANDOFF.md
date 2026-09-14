@@ -10,7 +10,9 @@ All48 remains retained. Queue/kernel postflight are clean; no FAULT latch.
 [Native result](notes/multiblock-screen-02-results.md). An offline528-record
 serializer replay shows only52.5ms potential CPU savings, insufficient to
 explain the penalty or justify a reload alone. [Attribution](notes/serializer-replay-cpu-01.md).
-Next: measure metadata/lifecycle traversal before choosing another runtime patch.
+CPU metadata attribution then measured0.480s per528 fake-compute route calls;
+[profile and scope](notes/metadata-dispatch-cpu-02-results.md). Next: a single
+state/hook traversal, preserving all execution boundaries, first tested on CPU.
 CURRENT.md remains authoritative; older process statements below are superseded.
 
 Historical September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)

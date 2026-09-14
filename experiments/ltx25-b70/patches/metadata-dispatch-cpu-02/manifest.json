@@ -1,0 +1,14 @@
+{
+  "status": "inactive-harness-fix-unexecuted",
+  "original_sha256": "19212bcc4bcb2df8fc9337cb4ddc826d21f586a89612206d391ffc36b088bcad",
+  "candidate_sha256": "2d1b8b760ed4965557ec4a01d61d89094b718e4f8841253b2fc8a9a64c87ce6c",
+  "patch_sha256": "9745a6697f8c902ffffb725a21b7021e5808b21523a11a05c4f39b44ca182481",
+  "failed_attempt": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-01/result.json",
+  "native_census_sha256": "0bf847900c86d2d3edf37045eb5d969f8520e033d0539fc8f8ec8aee43baf25b",
+  "constructor_fix": {
+    "ff_bias": false,
+    "audio_ff_bias": true
+  },
+  "proof": "Native84 state names omit two video feedforward biases and retain both audio feedforward biases. Every tiny block now must match exact kind/name pairs. Module names derive from those prefixes plus eight parameterless Dropout paths in pinned model.py; native receipt has no explicit module-name census. Full observed names/counts recorded before assertions.",
+  "validation": "AST parsed only; no native import or harness execution; no live runtime edits"
+}

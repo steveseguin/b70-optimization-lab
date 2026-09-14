@@ -1,0 +1,58 @@
+         8003547 function calls (6694085 primitive calls) in 1.558 seconds
+
+   Ordered by: cumulative time
+   List reduced from 72 to 50 due to restriction <50>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    1.558    1.558 /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/profile-adjacent-metadata-cpu.py:213(dispatch_clip)
+      528    0.001    0.000    1.558    0.003 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:132(__call__)
+     1584    0.001    0.000    1.524    0.001 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:92(_validate_execution)
+     1584    0.002    0.000    1.523    0.001 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:287(validate_current_execution)
+     1584    0.056    0.000    1.521    0.001 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:251(_validate)
+      528    0.004    0.000    1.047    0.002 /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py:73(__call__)
+      528    0.003    0.000    1.029    0.002 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:100(_call_native)
+     1584    0.054    0.000    1.027    0.001 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:66(_validate)
+   136224    0.123    0.000    0.559    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2650(_named_members)
+      528    0.001    0.000    0.507    0.001 /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/profile-adjacent-metadata-cpu.py:189(simulated_gate)
+   134640    0.023    0.000    0.419    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2670(parameters)
+   202752    0.133    0.000    0.402    0.000 {built-in method builtins.any}
+1444608/351648    0.338    0.000    0.396    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2845(named_modules)
+   134640    0.019    0.000    0.396    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2699(named_parameters)
+     1584    0.029    0.000    0.239    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:157(_routes)
+     1584    0.001    0.000    0.183    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2731(buffers)
+     1584    0.001    0.000    0.183    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2754(named_buffers)
+   117216    0.020    0.000    0.158    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2814(modules)
+     1584    0.060    0.000    0.134    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:199(_registered_bindings)
+   532224    0.080    0.000    0.107    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:271(<genexpr>)
+   555984    0.063    0.000    0.107    0.000 {method 'add' of 'set' objects}
+   578160    0.066    0.000    0.100    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:83(<genexpr>)
+   266112    0.031    0.000    0.092    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_tensor.py:1227(__hash__)
+643104/440352    0.053    0.000    0.078    0.000 {built-in method builtins.len}
+   266112    0.060    0.000    0.060    0.000 {built-in method builtins.id}
+     3168    0.018    0.000    0.056    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:244(_validate_selection)
+   581328    0.047    0.000    0.047    0.000 {method 'items' of 'dict' objects}
+   618343    0.040    0.000    0.041    0.000 {built-in method builtins.isinstance}
+   205920    0.025    0.000    0.035    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/container.py:410(__len__)
+   468864    0.035    0.000    0.035    0.000 {built-in method builtins.getattr}
+     1584    0.019    0.000    0.030    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:139(_indices)
+   115632    0.020    0.000    0.030    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2724(<lambda>)
+   115632    0.019    0.000    0.028    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:2778(<lambda>)
+   134640    0.018    0.000    0.018    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:87(<genexpr>)
+   155232    0.017    0.000    0.017    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:247(<genexpr>)
+   134640    0.017    0.000    0.017    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:89(<genexpr>)
+15873/8987    0.009    0.000    0.014    0.000 /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py:29(_move)
+15312/8448    0.008    0.000    0.011    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:103(require_device)
+   155232    0.009    0.000    0.009    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:245(<genexpr>)
+    77616    0.008    0.000    0.008    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:214(<genexpr>)
+    77616    0.005    0.000    0.005    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:180(<genexpr>)
+     7953    0.002    0.000    0.005    0.000 /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py:42(<genexpr>)
+     1584    0.001    0.000    0.004    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/container.py:387(__getitem__)
+    22176    0.003    0.000    0.003    0.000 {method 'get' of 'dict' objects}
+     1584    0.001    0.000    0.003    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/container.py:372(_get_abs_string_index)
+     7920    0.001    0.000    0.002    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:78(<genexpr>)
+     1584    0.001    0.000    0.002    0.000 /home/steve/src/ComfyUI-ltx25-baseline/comfy/model_patcher.py:1334(get_all_callbacks)
+     3168    0.001    0.000    0.002    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/container.py:414(__iter__)
+     6336    0.001    0.000    0.002    0.000 /mnt/fast-ai/bench-results/ltx25-baseline-20260913/metadata-dispatch-cpu-02/tested-adapter.py:191(<genexpr>)
+     3168    0.002    0.000    0.002    0.000 /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py:1959(__getattr__)
+
+

@@ -40,8 +40,13 @@ driver reset or settings changes. [Startup](experiments/ltx25-b70/data/multibloc
 A subsequent offline replay measured only52.5ms potential savings from compact
 receipt serialization across528 calls, with all parsed fields equal. This is
 CPU/filesystem attribution, not a native speed result; no reload is warranted
-for it alone. Next: attribute metadata/lifecycle traversal without GPU work.
-[Replay evidence](experiments/ltx25-b70/notes/serializer-replay-cpu-01.md).
+for it alone. A corrected native-class CPU fixture then measured0.480s per528
+route calls with fake compute, preserving1584 state/registry boundaries. The
+separate profile points to repeated metadata traversal; this is not native
+speed attribution. Next: inactive single-traversal state/hook candidate and
+CPU parity/cost checks before another native build.
+[Replay evidence](experiments/ltx25-b70/notes/serializer-replay-cpu-01.md),
+[metadata attribution](experiments/ltx25-b70/notes/metadata-dispatch-cpu-02-results.md).
 This supersedes PID39793/packet06 and running-client statements below.
 
 **Four-B70 host, September14: multiblock screen complete; exact but slower.**
