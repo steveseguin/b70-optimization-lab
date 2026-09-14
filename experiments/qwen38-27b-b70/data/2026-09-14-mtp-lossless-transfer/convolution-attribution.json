@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.native-convolution-attribution.v1",
+  "status": "saved-trace-analysis-no-new-GPU-work",
+  "input_tokens": 512,
+  "requests": 1,
+  "source": {
+    "commit": "6d92b1bfbf32767ecda8e819613eb151e70030ad",
+    "path": "csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_tiled_xe2.hpp",
+    "sha256": "2b61990858ba084ef948183f9dee5bd00d0951aa4c39b89386208c8e4c70aac5",
+    "existing_channel_tile": 256,
+    "existing_time_tile": 8
+  },
+  "ranks": [
+    {
+      "rank": 0,
+      "trace": "rank0.1789352176184368425.pt.trace.json.gz",
+      "trace_sha256": "c13b4c5b16bd7eaf416f7be961d778a492368bf3ce00a37c1770bc21e452a4f2",
+      "conv_calls": 48,
+      "conv_kernel_sum_ms": 3.546542,
+      "state_update_sum_ms": 0.124573,
+      "rank_kernel_sum_ms": 175.836638,
+      "conv_percent": 2.0169528036585866,
+      "kernel_names": [
+        "gdn::tiled_kernel_launcher<sycl::_V1::detail::half_impl::half, 4, 8, true>(sycl::_V1::queue&, sycl::_V1::detail::half_impl::half*, sycl::_V1::detail::half_impl::half*, sycl::_V1::detail::half_impl::half*, sycl::_V1::detail::half_impl::half*, float*, float*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half*, int, sycl::_V1::detail::half_impl::half*, int*, int*, bool*, int const*, gdn::ActMode const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, bool)::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::nd_item<2>)#1}"
+      ]
+    },
+    {
+      "rank": 1,
+      "trace": "rank1.1789352176188684008.pt.trace.json.gz",
+      "trace_sha256": "28a80f99268b70520044682e1b3a899108efb0a40b56e19862e55e922554b4b2",
+      "conv_calls": 48,
+      "conv_kernel_sum_ms": 3.5709180000000003,
+      "state_update_sum_ms": 0.134252,
+      "rank_kernel_sum_ms": 175.809419,
+      "conv_percent": 2.0311300841054485,
+      "kernel_names": [
+        "gdn::tiled_kernel_launcher<sycl::_V1::detail::half_impl::half, 4, 8, true>(sycl::_V1::queue&, sycl::_V1::detail::half_impl::half*, sycl::_V1::detail::half_impl::half*, sycl::_V1::detail::half_impl::half*, sycl::_V1::detail::half_impl::half*, float*, float*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half const*, sycl::_V1::detail::half_impl::half*, int, sycl::_V1::detail::half_impl::half*, int*, int*, bool*, int const*, gdn::ActMode const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, int const&, bool)::{lambda(sycl::_V1::handler&)#1}::operator()(sycl::_V1::handler&) const::{lambda(sycl::_V1::nd_item<2>)#1}"
+      ]
+    }
+  ],
+  "method": "Exact native convolution kernel name from immutable source and original gzip trace. Sum per-rank device durations; do not add ranks or interpret summed kernel time as request latency. Fused work is included.",
+  "decision": "Native convolution already tiles channels and time. This saved prefill trace attributes about2% of summed kernel time to convolution, not the entire12% GDN group. No backend-irrelevant Triton BLOCK_N change or speculative native rewrite is justified in this bounded campaign. Decode convolution was not profiled by this trace."
+}

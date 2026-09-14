@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""CPU-only ownership, snapshot and shutdown regression checks; no Docker calls."""
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import types
+import unittest
+
+path = Path(__file__).with_name('run-mtp-lossless-server.py')
+spec = importlib.util.spec_from_file_location('mtp_server_under_test', path)
+server = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(server)
+
+
+class ShutdownTests(unittest.TestCase):
+    def scenario(self, *, running_after=False, stop_error=False, client_live=False, wrong_owner=False, absent=False, failure=None):
+        with tempfile.TemporaryDirectory() as tmp:
+            out=Path(tmp)
+            state={'container_name':'owned','container_id':'immutable-id','image_id':server.CONTROL_IMAGE,'status':'ready'}
+            before={'Name':'/owned','Id':'immutable-id','Image':server.CONTROL_IMAGE,'State':{'Running':True}}
+            if wrong_owner: before['Image']='other-image'
+            after=copy.deepcopy(before); after['State']['Running']=running_after
+            inspections=iter([None] if absent else [before,after]); commands=[]
+            def run(argv,**kwargs):
+                commands.append(argv)
+                if stop_error: raise subprocess.TimeoutExpired(argv,150)
+                return types.SimpleNamespace(returncode=0,stdout='stopped',stderr='')
+            helper=types.SimpleNamespace(now=lambda:'test-time',inspect_container=lambda _:next(inspections),run=run)
+            def wait(timeout):
+                if client_live: raise subprocess.TimeoutExpired(['docker'],timeout)
+                return 0
+            child=types.SimpleNamespace(poll=lambda:None if client_live else 0,wait=wait)
+            confirmed=server.stop_owned_server(helper,child,out,state,failure)
+            return confirmed,json.loads((out/'state.json').read_text()),json.loads((out/'stop.json').read_text()),commands,(out/'STOP_UNCONFIRMED').exists()
+
+    def test_success_stops_immutable_id_once(self):
+        ok,state,receipt,commands,latch=self.scenario()
+        self.assertTrue(ok); self.assertEqual(state['status'],'stopped'); self.assertFalse(latch)
+        self.assertEqual(commands,[['docker','stop','--time','120','immutable-id']])
+
+    def test_running_container_never_reported_stopped(self):
+        ok,state,_,commands,latch=self.scenario(running_after=True)
+        self.assertFalse(ok); self.assertEqual(state['status'],'stop_unconfirmed'); self.assertTrue(latch); self.assertEqual(len(commands),1)
+
+    def test_stop_timeout_retains_evidence(self):
+        ok,state,receipt,commands,latch=self.scenario(running_after=True,stop_error=True)
+        self.assertFalse(ok); self.assertTrue(receipt['errors']); self.assertTrue(latch); self.assertEqual(len(commands),1)
+
+    def test_dead_container_live_client_unconfirmed(self):
+        ok,state,_,_,latch=self.scenario(client_live=True)
+        self.assertFalse(ok); self.assertEqual(state['status'],'stop_unconfirmed'); self.assertTrue(latch)
+
+    def test_wrong_owner_not_stopped(self):
+        ok,state,_,commands,latch=self.scenario(wrong_owner=True)
+        self.assertFalse(ok); self.assertEqual(commands,[]); self.assertTrue(latch)
+
+    def test_absent_container_live_client_unconfirmed(self):
+        ok,state,_,commands,latch=self.scenario(absent=True,client_live=True)
+        self.assertFalse(ok); self.assertEqual(commands,[]); self.assertTrue(latch)
+
+    def test_failure_status_preserved_after_clean_stop(self):
+        ok,state,_,_,latch=self.scenario(failure='prior fault')
+        self.assertTrue(ok); self.assertEqual(state['status'],'failed'); self.assertTrue(state['stop_confirmed']); self.assertFalse(latch)
+
+    def test_snapshot_independent_of_repository_edits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); source=root/'source';source.mkdir();out=root/'out';out.mkdir()
+            for name in ('mtp_transfer_worker.py','mtp_native_metadata_gate.py'):(source/name).write_text('value = 1\n')
+            (source/'unreviewed.py').write_text('raise RuntimeError()\n')
+            snap,hashes=server.snapshot_extensions(source,out)
+            try:
+                (source/'mtp_transfer_worker.py').write_text('value = 2\n')
+                self.assertEqual((snap/'mtp_transfer_worker.py').read_text(),'value = 1\n')
+                self.assertEqual(set(p.name for p in snap.iterdir()),set(hashes))
+                self.assertFalse((snap/'unreviewed.py').exists())
+                self.assertEqual(snap.stat().st_mode & 0o777,0o555)
+            finally:
+                snap.chmod(0o755)
+                for p in snap.iterdir():p.chmod(0o644)
+
+
+if __name__=='__main__':unittest.main()
