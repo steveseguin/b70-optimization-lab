@@ -1,7 +1,7 @@
 # How the dual-R9700 Qwen3.8 result reaches 894.9 tok/s
 
-Reviewed September14,2026. **Community-reported; not reproduced on AMD or B70.**
-The submitted record was created September11. Read [STATUS.md](STATUS.md) for
+Reviewed September 14, 2026. **Community-reported; not reproduced on AMD or B70.**
+The submitted record was created September 11. Read [STATUS.md](STATUS.md) for
 provenance, review scope and recognition. The useful conclusion is an aggressive
 batch-throughput demonstration with several transferable ideas, rather than an
 895-token/s single-user, unchanged-FP8 result.
@@ -21,22 +21,22 @@ runs by the same contributor. Selected rows:
 
 The last value is consistent with aggregate throughput: dividing by eight gives
 111.868 tok/s per simultaneous stream as an accounting equivalent, not a measured
-per-request latency distribution. The code c1 record reports40 input/512 output
-tokens; c8 reports368/4096. Thus4096 appears to be eight512-token responses
-combined, and368 appears to sum eight46-token requests with the disclosed ID
+per-request latency distribution. The code c1 record reports 40 input/512 output
+tokens; c8 reports368/4096. Thus 4096 appears to be eight 512-token responses
+combined, and 368 appears to sum eight 46-token requests with the disclosed ID
 suffixes. The actual benchmark client and per-request receipts are missing.
-Do not describe this as4096 output tokens per request or as a32K-input test:
-32768 is configured context capacity. The reported depth0 does not mean no input.
+Do not describe this as 4096 output tokens per request or as a 32K-input test:
+32768 is configured context capacity. The reported depth 0 does not mean no input.
 
-The headline prefill value2226.5 equals368/0.16528 to reported precision. Other
+The headline prefill value 2226.5 equals 368 / 0.16528 to reported precision. Other
 rows similarly divide prompt counts by HTTP first-token wait. This supports
 a TTFT-derived proxy interpretation, with aggregate prompt accounting at c8;
 raw server prefill timers are absent. It is not directly comparable to the
-lab's fixed512-token, one-user server-prefill measurement. The975.351 total
-rate likewise numerically equals894.946×(4096+368)/4096.
+lab's fixed 512-token, one-user server-prefill measurement. The 975.351 total
+rate likewise numerically equals 894.946 × (4096 + 368) / 4096.
 
 The site marks the record unverified/experimental: missing prompt hash, output
-sample and raw engine timing, plus batch/concurrency8 outside its single-user
+sample and raw engine timing, plus batch/concurrency 8 outside its single-user
 verification rule. Draft acceptance counters and exact engine commit are absent.
 The nearly identical code prompts, greedy decoding and disabled thinking favor
 draft agreement and shared batch behavior. Prefix caching defaults on in the
@@ -45,14 +45,14 @@ no cache-hit receipts; no cache contribution is established.
 
 ## Implementation and actual precision
 
-The observed1.0.16 registry manifest resolves to digest
+The observed 1.0.16 registry manifest resolves to digest
 `sha256:83a9dc02a8f8e75aabe81366d36ebaa2e35fcbe181cacf8e8e0a4cef4ebccbcc`;
 its OCI revision label points to
 [`f295b9ef51ad413a68e4192371e0377741a354ce`](https://github.com/magiccodingman/vllm-radiance/tree/f295b9ef51ad413a68e4192371e0377741a354ce).
 This pins the image inspected now; the submitted run itself reports only the
 mutable tag and cannot prove its exact local image bytes.
 
-- Packed group32 MXFP4 target weights reduce weight traffic. Radiance's W4A8
+- Packed group-32 MXFP4 target weights reduce weight traffic. Radiance's W4A8
   path quantizes activations to FP8 and uses hand-written RDNA4 FP8-WMMA
   kernels, instead of the checkpoint's generic W4A4 route. This is a different
   arithmetic/quality profile from our official FP8-weight/FP16-activation lane.
@@ -89,7 +89,7 @@ request types fall back, but the submitted greedy workload is eligible. Missing
 server logs prevent asserting which path actually fired in this run.
 
 The source also defaults to rotated six-bit compressed all-reduce for eligible
-large target messages, above a128KiB threshold. That changes target arithmetic,
+large target messages, above a 128 KiB threshold. That changes target arithmetic,
 not just draft quality. Actual use depends on shapes, availability and overrides.
 These are mechanisms to isolate, not to silently port into our lossless default.
 
@@ -125,8 +125,8 @@ Sources: [target head](https://github.com/magiccodingman/vllm-radiance/blob/f295
    metrics separately. Do not replace single-user homepage numbers with c8 totals.
 
 The runtime's broader [RX5 report](https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/docs/MXFP4_RX5_FP8KV_CONTINUATION.md)
-reports183.1 weighted single-stream tok/s and523.5 c8 aggregate on its broader
-suite, with5–6% gains from the narrow layout/load change. Those are contributor
+reports 183.1 weighted single-stream tok/s and 523.5 c8 aggregate on its broader
+suite, with 5–6% gains from the narrow layout/load change. Those are contributor
 measurements on different prompts and settings, not independent validation of
 this run or a B70 forecast. Our [current FP8 package](../../packages/qwen38-27b-fp8-tp2-b70/README.md)
 and [prefill profiling](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md)
