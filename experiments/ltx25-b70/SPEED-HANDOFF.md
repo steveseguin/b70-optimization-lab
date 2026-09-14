@@ -60,3 +60,10 @@ New startup path: `scripts/serve-speed.py`; run identity and startup evidence
 will be written under the original evidence root's `speed-server/` directory.
 The original `scripts/serve.py` and baseline receipts remain frozen. The capture
 gate and fault latch remain shared with the original evidence root.
+
+Migration completed cleanly: PID11499 exited with code0; the new PID24848 owns
+port8188 and passed all four small startup checks. No GPU fault occurred.
+`planned-server-migration.json` records the single transition. Both extension
+ownership/routing tests (six) and resident-loader retention/gate tests passed
+on CPU before startup. Extension and launcher hashes are bound into the new
+server identity. Further experiments use PID24848 without restarting it.

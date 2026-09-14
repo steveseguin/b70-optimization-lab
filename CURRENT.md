@@ -25,6 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, 2026-09-13 22:03 EDT: exact-output LTX speed campaign.**
+User prioritizes first usable clip within a few seconds, while retaining exact
+baseline outputs. Baseline PID11499 exited cleanly after one planned SIGINT;
+new ComfyUI PID24848 owns `127.0.0.1:8188`, with the same exclusive locks,
+strict deterministic mode and cache-none computation. All four small startup
+preflights passed, with no device fault. Resident model components and exact
+layer placement are startup extensions; generated outputs and prompt encodings
+are always recomputed. First resident-single request is running. Further variants
+use this same process; no restart chains/power/swap/cache-drop/driver changes.
+See [speed campaign handoff](experiments/ltx25-b70/SPEED-HANDOFF.md).
+Original baseline remains frozen; new process identity is under the original
+evidence root's `speed-server/`. Use `profile-clip.py --server-run` pointing there.
+
 **2026-09-13 21:47 EDT, two-B70 host: bounded prefill follow-up complete.**
 4B TP2, 9B TP2 and 27B INT4 TP1 measured at 256/512 input tokens, one user,
 cache zero; all 108 measured requests repeat exactly and all three strict suites
@@ -36,9 +49,9 @@ No restart chain or power/memory-setting changes; four-card LTX work preserved.
 
 **Four-B70 host, 2026-09-13 20:42 EDT: LTX baseline bring-up.** User authorized
 a very short native-precision clip and deterministic repeat checks. One local
-ComfyUI server (PID 11499, `127.0.0.1:8188`) is running with exclusive device
+ComfyUI server (historical PID 11499, `127.0.0.1:8188`) ran with exclusive device
 locks; all four cards passed its small copy/compute preflight. **Baseline complete,
-server idle:** three fixed-seed 256x256/25-frame generations are bitwise identical
+original server since replaced as described above:** three fixed-seed 256x256/25-frame generations are bitwise identical
 across images, video/audio latents and waveform, with strict determinism and zero
 cached nodes. First/repeat server times were 97.590/54.009/52.774 seconds. Exact
 float video/audio export passed independent decode round-trip verification.
