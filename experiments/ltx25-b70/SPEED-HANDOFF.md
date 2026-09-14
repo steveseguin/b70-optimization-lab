@@ -20,6 +20,11 @@ now includes explicit control/crop/small_state/combined variants and the require
 clone-policy guard. Seventeen CPU lifecycle tests and four real-loader integration
 tests pass; startup/client integration and GPU qualification remain pending.
 
+V2 follow-up: [startup/client integration is complete](notes/encoder-runtime-v2-ready.md),
+with 26 additional CPU checks and the copied launcher's read-only check passing.
+The source packet remains inactive; a maintenance decision precedes the bounded
+GPU comparison. PID24848 and all original reference evidence remain preserved.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,

@@ -25,6 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, encoder runtime v2: GPU screen prepared, maintenance pending.**
+Startup, actual placement/unload diagnostics and the 25-request bounded client
+are complete. Eight startup, ten diagnostics and eight client CPU tests pass;
+the copied launcher's read-only check passed and all 1,214 packet files still
+match their hashes. No new GPU request, runtime change or server replacement
+occurred. PID24848 remains running and idle, with its original identity and no
+fault latch. The new `encoder-server-01` directory does not exist. One deliberate
+graceful replacement is needed to load v2; do not start a second process beside
+the current server or create a retry/restart chain. The next action is a
+maintenance decision for the [concrete launch and screen](experiments/ltx25-b70/notes/encoder-runtime-v2-ready.md).
+The source snapshot is `prepared-encoder-02`, manifest SHA256
+`920d0e35774f298c9b11f80b3dd5e3708d0541f914e4c1857e96493bfd7282a8`.
+
 **Four-B70 host, encoder integration follow-up: inactive source packet built.**
 The four encoder variants now pass 17 CPU lifecycle tests and four integration
 tests through tiny real Gemma4/CLIP/LTX projection paths. Review fixed a shared

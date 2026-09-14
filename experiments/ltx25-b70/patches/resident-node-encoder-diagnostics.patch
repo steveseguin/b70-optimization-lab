@@ -1,0 +1,31 @@
+--- a/scripts/resident_node.py
++++ b/scripts/resident_node.py
+@@ -16,6 +16,10 @@
+ from comfy_extras.nodes_hunyuan import LatentUpscaleModelLoader
+ 
+ from ltx_layer_shard import apply_layer_shard
++from encoder_diagnostics import (
++    begin_encoder_unload, finish_encoder_unload,
++    NODE_CLASS_MAPPINGS as ENCODER_DIAGNOSTIC_NODES,
++)
+ 
+ ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+ _components = None
+@@ -59,7 +63,11 @@
+             raise FileExistsError(f'Refuse existing component receipt: {receipt_path}')
+         if _components is not None:
+             # A deliberate graph configuration change releases the previous model set.
++            unload_report = begin_encoder_unload(
++                _components[1], _generation, _generation + 1,
++                _encoder_variant, encoder_variant, root=ROOT)
+             comfy.model_management.unload_all_models()
++            finish_encoder_unload(_components[1], unload_report, root=ROOT)
+             _components = None
+             _placement = None
+             _encoder_variant = None
+@@ -115,4 +123,4 @@
+         return _components
+ 
+ 
+-NODE_CLASS_MAPPINGS = {'LTXResidentComponents': LTXResidentComponents}
++NODE_CLASS_MAPPINGS = {'LTXResidentComponents': LTXResidentComponents, **ENCODER_DIAGNOSTIC_NODES}
