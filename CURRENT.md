@@ -54,6 +54,14 @@ which does not identify the exact stalled instruction.
 [Loader candidate and incomplete test](experiments/ltx25-b70/notes/loader-memory-candidate-02.md);
 [continuation source checks](experiments/ltx25-b70/notes/continuation-graph-constructor-cpu.md).
 
+The float-anchor provider and closed continuation graph are now implemented
+offline. Thirteen byte-reader tests and12 integration checks passed without
+Torch imports; frame extraction also matched independently read final frames
+from all three protected originals, whose full-image hashes still matched.
+No new video saved or generated. Native tensor construction, runtime deployment,
+predecessor lineage, delivery state, continuation quality and speed remain
+unqualified. [Implementation and evidence](experiments/ltx25-b70/notes/continuation-anchor-provider-01.md).
+
 **Historical startup, superseded by the fault above: native compiler comparison.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.
