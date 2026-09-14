@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.mtp-worker-controller-source-review.v1",
+  "status": "CPU source review passed; runtime gates pending",
+  "files_sha256": {
+    "experiments/qwen38-27b-b70/scripts/run-mtp-lossless-server.py": "52d1b66224cd4e03dd7f8e0b54ae54381aca3b632390c1651fbe8fa0fb9140ed",
+    "experiments/qwen38-27b-b70/scripts/test_run_mtp_lossless_server.py": "5ef9880eba95e6ccb241d2708cdcb20fe62b9f480a9ac682374b709c0629b82f",
+    "experiments/qwen38-27b-b70/probes/mtp-metadata-20260914/mtp_transfer_worker.py": "aeb624a220229fbddf8f164274d46d82d67445a429b4778135d134eb9966efea",
+    "experiments/qwen38-27b-b70/probes/mtp-metadata-20260914/mtp_native_metadata_gate.py": "defd3989b9579be45f28ca3be0d40ed99787b4dc86775d47fe6922f4da7b0b69",
+    "experiments/qwen38-27b-b70/data/2026-09-14-mtp-lossless-transfer/metadata-query-lens-current.patch": "4ea274938e09fed6611cef7e3b1378eea49f4a112a4918f46aa5bb342a5b997f"
+  },
+  "generated_candidate_ast_sha256": "30d6d181060d10f9132c4cbe4163d97931b5a7a177ad6f63d7145b8fce8b17c0",
+  "generated_candidate_equals_validated_patch": true,
+  "earlier_integration_blockers_resolved": [
+    "normalized speculative method=mtp with native qwen3_5_mtp/Qwen3_5MTP and same-checkpoint guard",
+    "native gate admits exact generated candidate function name"
+  ],
+  "controller_fixes": [
+    "immutable allowlisted extension snapshot mounted read-only instead of mutable repository",
+    "clean Docker client environment matching qualified helper",
+    "unique container name and image/name/immutable-ID ownership checks",
+    "one owned stop with timeout evidence and bounded client exit wait",
+    "stop_unconfirmed marker/state instead of false stopped status",
+    "stage lock closed even if shutdown recording raises"
+  ],
+  "worker_fixes": [
+    "candidate AST pinned to independently validated patch",
+    "wrapper identity checked before native gate and mode transitions"
+  ],
+  "cpu_regression_tests": {
+    "passed": 8,
+    "failed": 0,
+    "cases": [
+      "successful stop targets immutable ID once",
+      "running container remains unconfirmed",
+      "stop timeout evidence retained",
+      "live client remains unconfirmed",
+      "wrong-owner container never stopped",
+      "absent container with live client remains unconfirmed",
+      "prior failure status retained after clean stop",
+      "extension snapshot unaffected by repository edits and excludes unreviewed files"
+    ]
+  },
+  "runtime_worker_attributes_source_verified": [
+    "vllm_config",
+    "rank",
+    "device"
+  ],
+  "ab_wrapper_overhead": "identical dispatch and counters both arms",
+  "source_files_weights_verifier_or_stored_oracle_modified_by_extension": false,
+  "gpu_actions": 0,
+  "remaining_operational_requirements": [
+    "Parent must confirm both GPU ownership and the unchanged official checkpoint before the one controlled load",
+    "Endpoint caller must establish idle state before RPC transitions and verify unanimous rank mode/wrapper state afterward",
+    "Any RPC fault or partial transition halts generation; never proceed with mismatched rank modes",
+    "Current CPU/source evidence does not establish native correctness, full target output identity, determinism or speed"
+  ]
+}

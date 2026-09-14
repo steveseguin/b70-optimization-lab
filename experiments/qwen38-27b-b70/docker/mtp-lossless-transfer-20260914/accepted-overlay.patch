@@ -1,0 +1,1238 @@
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -3,6 +3,8 @@
+ 
+ from collections.abc import Callable
+ from typing import TYPE_CHECKING
++
++import os
+ 
+ import torch
+ from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+@@ -139,6 +141,8 @@
+     z: torch.Tensor,
+     projected_states_qkvz: torch.Tensor,
+     projected_states_ba: torch.Tensor,
++    conv_state: torch.Tensor,
++    ssm_state: torch.Tensor,
+     layer_name: str,
+ ) -> None:
+     """Custom op wrapping the XPU SYCL GDN kernel for torch.compile."""
+@@ -188,6 +192,119 @@
+     conv_weights = self.conv1d.weight.view(
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
++
++    def _kernel(out, zz, qkvz, ba, n_prefills, n_decodes, n_spec, his, ns_qs,
++                ns_tok, ns_state, sp_qs, sp_tok, sp_state, n_acc, n_tokens):
++        torch.ops._xpu_C.gdn_attention(
++            out, zz, qkvz, ba, self.num_k_heads, self.num_v_heads,
++            self.head_k_dim, self.head_v_dim,
++            conv_state=conv_state, ssm_state=ssm_state, conv_weights=conv_weights,
++            conv_bias=self.conv1d.bias, activation=self.activation,
++            A_log=self.A_log, dt_bias=self.dt_bias,
++            num_prefills=n_prefills, num_decodes=n_decodes,
++            num_spec_decodes=n_spec, has_initial_state=his,
++            non_spec_query_start_loc=ns_qs, non_spec_token_indx=ns_tok,
++            non_spec_state_indices_tensor=ns_state,
++            spec_query_start_loc=sp_qs, spec_token_indx=sp_tok,
++            spec_state_indices_tensor=sp_state, num_accepted_tokens=n_acc,
++            num_actual_tokens=n_tokens, tp_size=self.tp_size,
++            reorder_input=not self.gqa_interleaved_layout,
++        )
++
++    _spec_group = int(os.environ.get("VLLM_XPU_GDN_SPEC_GROUP", "16"))
++    _group_spec = (
++        _spec_group > 0 and num_spec_decodes > _spec_group
++        and spec_sequence_masks is not None and spec_token_indx is not None
++    )
++    if _group_spec or (os.environ.get("VLLM_XPU_GDN_SPLIT_MIXED", "0") == "1" and (
++        (num_prefills > 0 and num_decodes > 0)
++        or (num_spec_decodes > 0 and (num_prefills > 0 or num_decodes > 0))
++    )):
++        # R156: the XPU GDN kernel computes decode rows on a different
++        # arithmetic path when prefill rows share the call (one float16 ULP
++        # in the SSM state and output), and vLLM folds non-spec decodes into
++        # prefills whenever spec rows are present. Split every mixed step into
++        # pure calls so each row sees the same arithmetic it sees at c1.
++        logger.warning_once("R156 GDN split-mixed step executed")
++        dev = core_attn_out.device
++        if spec_sequence_masks is None:
++            # decode-first contiguous layout, no token index maps
++            d = num_decodes
++            n = num_actual_tokens
++            _kernel(core_attn_out[:d], z[:d],
++                    projected_states_qkvz[:d], projected_states_ba[:d],
++                    0, d, 0, has_initial_state[:d],
++                    torch.arange(d + 1, dtype=torch.int32, device=dev), None,
++                    non_spec_state_indices_tensor[:d], None, None, None, None, d)
++            _kernel(core_attn_out[d:n], z[d:n],
++                    projected_states_qkvz[d:n], projected_states_ba[d:n],
++                    num_prefills, 0, 0, has_initial_state[d:],
++                    (non_spec_query_start_loc[d:] - d).to(torch.int32).contiguous(),
++                    None, non_spec_state_indices_tensor[d:].contiguous(),
++                    None, None, None, None, n - d)
++            return
++        # spec rows present: gather each class into a contiguous buffer,
++        # run it pure, scatter the rows back
++        if spec_token_indx is not None and spec_token_indx.numel() > 0:
++            st = spec_token_indx.long()
++            n_sp = st.numel()
++            _n_spec_tok = int(getattr(attn_metadata, "num_spec_decode_tokens", 0) or 0)
++            _q = _n_spec_tok // num_spec_decodes if num_spec_decodes else 0
++            if _q > 0 and _q * num_spec_decodes == _n_spec_tok and n_sp == _n_spec_tok:
++                # R276: uniform spec rows (k+1 tokens each): arithmetic boundaries, no device sync, graph-capturable
++                sp_qs_cpu = [i * _q for i in range(num_spec_decodes + 1)]
++            else:
++                sp_qs_cpu = spec_query_start_loc[: num_spec_decodes + 1].to("cpu", non_blocking=False).tolist()
++            group = _spec_group if _spec_group > 0 else num_spec_decodes
++            if group != _spec_group:
++                logger.warning_once("R228 GDN spec grouping inactive (group %d)", group)
++            else:
++                logger.warning_once("R228 GDN spec rows grouped by %d sequences", group)
++            for s0 in range(0, num_spec_decodes, group):
++                s1 = min(s0 + group, num_spec_decodes)
++                t0, t1 = int(sp_qs_cpu[s0]), int(sp_qs_cpu[s1])
++                rows = st[t0:t1]
++                n_g = t1 - t0
++                out_s = torch.zeros((n_g,) + tuple(core_attn_out.shape[1:]), dtype=core_attn_out.dtype, device=dev)
++                z_s = torch.empty_like(out_s)
++                qs_g = (spec_query_start_loc[s0:s1 + 1] - t0).to(torch.int32).contiguous()
++                acc_g = num_accepted_tokens[s0:s1].contiguous() if num_accepted_tokens is not None else None
++                _kernel(out_s, z_s, projected_states_qkvz[rows].contiguous(),
++                        projected_states_ba[rows].contiguous(), 0, 0, s1 - s0, None,
++                        None, torch.empty(0, dtype=torch.int32, device=dev), None,
++                        qs_g, torch.arange(n_g, dtype=torch.int32, device=dev),
++                        spec_state_indices_tensor[s0:s1].contiguous(), acc_g, n_g)
++                core_attn_out[rows] = out_s
++                z[rows] = z_s
++        if non_spec_token_indx is not None and non_spec_token_indx.numel() > 0:
++            nt = non_spec_token_indx.long()
++            qs = non_spec_query_start_loc
++            lens = (qs[1:] - qs[:-1])
++            n_seq = lens.numel()
++            his = has_initial_state if has_initial_state is not None else torch.zeros(n_seq, dtype=torch.bool, device=dev)
++            dec_mask = (lens == 1) & his
++            seq_ids = torch.arange(n_seq, device=dev)
++            for is_dec in (True, False):
++                sel = seq_ids[dec_mask] if is_dec else seq_ids[~dec_mask]
++                if sel.numel() == 0:
++                    continue
++                starts = qs[:-1][sel]; ends = qs[1:][sel]
++                rows = torch.cat([torch.arange(int(a), int(b), device=dev) for a, b in zip(starts.tolist(), ends.tolist())])
++                tok = nt[rows]
++                n_t = tok.numel()
++                out_p = torch.zeros((n_t,) + tuple(core_attn_out.shape[1:]), dtype=core_attn_out.dtype, device=dev)
++                z_p = torch.empty_like(out_p)
++                sub_qs = torch.zeros(sel.numel() + 1, dtype=torch.int32, device=dev)
++                torch.cumsum(lens[sel].to(torch.int32), dim=0, out=sub_qs[1:])
++                _kernel(out_p, z_p, projected_states_qkvz[tok].contiguous(),
++                        projected_states_ba[tok].contiguous(),
++                        0 if is_dec else sel.numel(), sel.numel() if is_dec else 0, 0,
++                        his[sel].contiguous(), sub_qs, None,
++                        non_spec_state_indices_tensor[sel].contiguous(),
++                        None, None, None, None, n_t)
++                core_attn_out[tok] = out_p
++                z[tok] = z_p
++        return
+ 
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+@@ -198,8 +315,8 @@
+         self.num_v_heads,
+         self.head_k_dim,
+         self.head_v_dim,
+-        conv_state=self.kv_cache[0],
+-        ssm_state=self.kv_cache[1],
++        conv_state=conv_state,
++        ssm_state=ssm_state,
+         conv_weights=conv_weights,
+         conv_bias=self.conv1d.bias,
+         activation=self.activation,
+@@ -1287,7 +1404,7 @@
+             direct_register_custom_op(
+                 op_name="gdn_attention_core_xpu",
+                 op_func=eager_break_during_capture(_gdn_attention_core_xpu_impl),
+-                mutates_args=["core_attn_out", "z"],
++                mutates_args=["core_attn_out", "z", "conv_state", "ssm_state"],
+             )
+ 
+             direct_register_custom_op(
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -47,7 +47,8 @@
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
+         output = input_.clone()
+-        dist.all_reduce(output, group=self.device_group)
++        work = dist.all_reduce(output, group=self.device_group, async_op=True)
++        work.wait()
+         return output
+ 
+     def reduce_scatter(self, input_: torch.Tensor, dim: int = -1):
+--- a/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
++++ b/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
+@@ -3,6 +3,53 @@
+ 
+ 
+ import torch
++import os as _r213_os
++from vllm.utils.torch_utils import direct_register_custom_op as _r213_register
++_R213_PAD = _r213_os.environ.get("VLLM_XPU_W4A16_DETERMINISM_PAD", "1") == "1"
++_R213_LOW = int(_r213_os.environ.get("VLLM_XPU_W4A16_DETERMINISM_PAD_LOW", "128"))
++_R213_PAD_HIGH = _r213_os.environ.get("VLLM_XPU_W4A16_DETERMINISM_PAD_HIGH", "1") == "1"
++
++
++def _xpu_w4a16_detpad_gemm_impl(
++    x: torch.Tensor,
++    w_q_t: torch.Tensor,
++    bias: torch.Tensor | None,
++    w_s: torch.Tensor,
++    w_zp: torch.Tensor,
++    group_size: int,
++    w_gidx: torch.Tensor | None,
++) -> torch.Tensor:
++    m = x.shape[0]
++    pad_to = 0
++    if _R213_LOW < m < 512:
++        pad_to = 512
++    elif _R213_PAD_HIGH and 512 < m < 1024:
++        pad_to = 1024
++    if pad_to:
++        xp = torch.zeros(pad_to, x.shape[1], dtype=x.dtype, device=x.device)
++        xp[:m].copy_(x)
++        return torch.ops._xpu_C.int4_gemm_w4a16(xp, w_q_t, bias, w_s, w_zp, group_size, w_gidx)[:m]
++    return torch.ops._xpu_C.int4_gemm_w4a16(x, w_q_t, bias, w_s, w_zp, group_size, w_gidx)
++
++
++def _xpu_w4a16_detpad_gemm_fake(
++    x: torch.Tensor,
++    w_q_t: torch.Tensor,
++    bias: torch.Tensor | None,
++    w_s: torch.Tensor,
++    w_zp: torch.Tensor,
++    group_size: int,
++    w_gidx: torch.Tensor | None,
++) -> torch.Tensor:
++    return torch.empty((x.shape[0], w_s.shape[1]), dtype=x.dtype, device=x.device)
++
++
++_r213_register(
++    op_name="xpu_w4a16_detpad_gemm",
++    op_func=_xpu_w4a16_detpad_gemm_impl,
++    mutates_args=[],
++    fake_impl=_xpu_w4a16_detpad_gemm_fake,
++)
+ from torch.nn.parameter import Parameter
+ 
+ from vllm.logger import init_logger
+@@ -97,6 +144,9 @@
+     ) -> torch.Tensor:
+         reshaped_x = x.reshape(-1, x.shape[-1])
+         w_q, w_s, w_zp = self._get_weight_params(layer)
++        if _R213_PAD:
++            return torch.ops.vllm.xpu_w4a16_detpad_gemm(
++                reshaped_x, w_q.t(), bias if bias is not None else None, w_s, w_zp, self.config.group_size, None)
+         out = torch.ops._xpu_C.int4_gemm_w4a16(
+             reshaped_x,
+             w_q.t(),
+--- a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import math
++import os
+ from collections.abc import Sequence
+ 
+ import torch
+@@ -190,6 +191,22 @@
+ 
+ 
+ class XPUFp8BlockScaledMMKernel(Fp8BlockScaledMMLinearKernel):
++    def __init__(self, config: FP8ScaledMMLinearLayerConfig) -> None:
++        super().__init__(config)
++        self._use_w8a16 = os.environ.get(
++            "VLLM_XPU_FP8_BLOCK_W8A16", "0"
++        ).strip().lower() in ("1", "true", "yes", "on")
++        if self._use_w8a16:
++            if not hasattr(torch.ops._xpu_C, "fp8_gemm_w8a16"):
++                raise RuntimeError(
++                    "VLLM_XPU_FP8_BLOCK_W8A16 requires "
++                    "_xpu_C::fp8_gemm_w8a16"
++                )
++            # The oneDNN W8A16 primitive consumes the original FP16/BF16
++            # activation directly. Skip dynamic activation quantization in
++            # Fp8BlockScaledMMLinearKernel.apply_weights.
++            self.apply_input_quant = False
++
+     @classmethod
+     def is_supported(
+         cls, compute_capability: int | None = None
+@@ -274,6 +291,13 @@
+         # B is [N, K]; .t() gives [K, N] view (no copy).
+         # Bs is stored as [n_blocks, k_blocks] view; .t() recovers the
+         # contiguous [k_blocks, n_blocks] buffer that oneDNN expects.
++        if self._use_w8a16:
++            return torch.ops._xpu_C.fp8_gemm_w8a16(
++                A,
++                B.t(),
++                Bs.t(),
++                None,
++            )
+         return torch.ops._xpu_C.fp8_gemm(
+             A,
+             B.t(),
+--- a/vllm/model_executor/layers/layernorm.py
++++ b/vllm/model_executor/layers/layernorm.py
+@@ -1,6 +1,8 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Custom normalization layers."""
++
++import os
+ 
+ import torch
+ import torch.nn as nn
+@@ -147,6 +149,12 @@
+         super().__init__()
+         self.weight = nn.Parameter(torch.zeros(hidden_size))
+         self.variance_epsilon = eps
++        if os.environ.get(
++            "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT", "0"
++        ) == "1":
++            logger.warning_once(
++                "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT armed (r30)"
++            )
+ 
+     def forward_native(
+         self,
+@@ -154,6 +162,27 @@
+         residual: torch.Tensor | None = None,
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+         """PyTorch-native implementation equivalent to forward()."""
++        if (
++            os.environ.get(
++                "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT", "0"
++            )
++            == "1"
++            and x.shape[0] == 2
++        ):
++            weight = self.weight.float() + 1.0
++            if residual is not None:
++                row0 = ir.ops.fused_add_rms_norm(
++                    x[0:1], residual[0:1], weight, self.variance_epsilon
++                )
++                row1 = ir.ops.fused_add_rms_norm(
++                    x[1:2], residual[1:2], weight, self.variance_epsilon
++                )
++                return torch.cat((row0[0], row1[0])), torch.cat(
++                    (row0[1], row1[1])
++                )
++            row0 = ir.ops.rms_norm(x[0:1], weight, self.variance_epsilon)
++            row1 = ir.ops.rms_norm(x[1:2], weight, self.variance_epsilon)
++            return torch.cat((row0, row1))
+         weight = self.weight.float() + 1.0
+         if residual is None:
+             return ir.ops.rms_norm(x, weight, self.variance_epsilon)
+@@ -171,27 +200,7 @@
+         x: torch.Tensor,
+         residual: torch.Tensor | None = None,
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+-        import vllm._xpu_ops  # noqa: F401 registers torch.ops.vllm.xpu_gemma_rms_norm
+-
+-        # Fall back to the native path if the fused gemma kernels are not
+-        # available in the installed vllm-xpu-kernels package.
+-        if not hasattr(torch.ops._C, "gemma_rms_norm"):
+-            return self.forward_native(x, residual)
+-
+-        # Pass the raw (bf16/fp16) weight; the +1 offset and the fp32 multiply
+-        # are folded into the kernel (matches forward_native numerics).
+-        if residual is not None:
+-            torch.ops.vllm.xpu_fused_add_gemma_rms_norm(
+-                x, residual, self.weight.data, self.variance_epsilon
+-            )
+-            return x, residual
+-        # empty_like preserves x's strides, but the kernel requires a
+-        # contiguous out (unlike x, which it can handle non-contiguous).
+-        out = torch.empty(x.shape, device=x.device, dtype=x.dtype)
+-        torch.ops.vllm.xpu_gemma_rms_norm(
+-            out, x, self.weight.data, self.variance_epsilon
+-        )
+-        return out
++        return self.forward_native(x, residual)
+ 
+ 
+ # --8<-- [start:rms_norm_gated]
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -77,6 +77,54 @@
+     or rocm_aiter_ops.is_rdna_gdn_triton_kernels_available()
+ )
+ 
++_XPU_DETERMINISTIC_BA_MIN_TOKENS = 17
++_XPU_DETERMINISTIC_BA_PAD_TOKENS = 256
++
++
++def _deterministic_xpu_ba_prefill(
++    hidden_states: torch.Tensor,
++    weight: torch.Tensor,
++) -> torch.Tensor:
++    """Compute the small GDN B/A projection in a fixed reduction order.
++
++    Intel XPU's ordinary GEMM is not bit-stable for several prefill shapes of
++    this projection (for example M=75, K=5120, N=96). The same projection is
++    stable at M=256, so execute fixed 256-row blocks and discard padded rows.
++    Padding only adds zero input rows and does not alter any real row's dot
++    product or accumulation precision.
++    """
++    pieces = []
++    for start in range(0, hidden_states.shape[0], _XPU_DETERMINISTIC_BA_PAD_TOKENS):
++        count = min(_XPU_DETERMINISTIC_BA_PAD_TOKENS, hidden_states.shape[0] - start)
++        block = hidden_states[start : start + count]
++        if count != _XPU_DETERMINISTIC_BA_PAD_TOKENS:
++            padded = torch.zeros(
++                (_XPU_DETERMINISTIC_BA_PAD_TOKENS, hidden_states.shape[-1]),
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
++            padded[:count].copy_(block)
++            block = padded
++        pieces.append(torch.nn.functional.linear(block, weight)[:count])
++    return torch.cat(pieces, dim=0) if len(pieces) > 1 else pieces[0]
++
++
++def _deterministic_xpu_ba_prefill_fake(
++    hidden_states: torch.Tensor,
++    weight: torch.Tensor,
++) -> torch.Tensor:
++    """Shape-only implementation used while tracing dynamic compile graphs."""
++    return hidden_states.new_empty((hidden_states.shape[0], weight.shape[0]))
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_ba_prefill_xpu",
++    op_func=_deterministic_xpu_ba_prefill,
++    mutates_args=[],
++    fake_impl=_deterministic_xpu_ba_prefill_fake,
++)
++
++
+ if GDN_AITER_TRITON_AVAILABLE:
+     from aiter.ops.triton.causal_conv1d_update_single_token import (
+         fused_reshape_causal_conv1d_update_single_token as gdn_aiter_fused_reshape_causal_conv1d_update_single_token,  # noqa: E501
+@@ -510,6 +558,25 @@
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
+         self.gdn_decode_kernel = envs.VLLM_GDN_DECODE_KERNEL.strip().lower()
++        conv_state_dtype, ssm_state_dtype = self.get_state_dtype()
++        self.register_buffer(
++            "_xpu_conv_state",
++            torch.empty(
++                0,
++                dtype=conv_state_dtype,
++                device=current_platform.current_device(),
++            ),
++            persistent=False,
++        )
++        self.register_buffer(
++            "_xpu_ssm_state",
++            torch.empty(
++                0,
++                dtype=ssm_state_dtype,
++                device=current_platform.current_device(),
++            ),
++            persistent=False,
++        )
+         if self.gdn_decode_kernel == "cuda" and current_platform.is_cuda_alike():
+             reason = self._fused_gdn_decode_unsupported_reason(vllm_config)
+             if reason is not None:
+@@ -531,6 +598,12 @@
+         if prefix in compilation_config.static_forward_context:
+             raise ValueError(f"Duplicate layer name: {prefix}")
+         compilation_config.static_forward_context[prefix] = self
++
++    def bind_kv_cache(self, kv_cache: torch.Tensor) -> None:
++        """Bind compiler-visible XPU views to the allocated recurrent cache."""
++        super().bind_kv_cache(kv_cache)
++        self._xpu_conv_state.set_(self.kv_cache[0])
++        self._xpu_ssm_state.set_(self.kv_cache[1])
+ 
+     def _fused_gdn_decode_unsupported_reason(
+         self, vllm_config: VllmConfig
+@@ -989,7 +1062,15 @@
+         # Part 1: Input Projection
+         # ============================================================
+         projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if (
++            num_tokens >= _XPU_DETERMINISTIC_BA_MIN_TOKENS
++            and self.in_proj_ba.weight.dtype in (torch.float16, torch.bfloat16)
++        ):
++            projected_states_ba = torch.ops.vllm.qwen_gdn_ba_prefill_xpu(
++                hidden_states, self.in_proj_ba.weight
++            )
++        else:
++            projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -1000,12 +1081,13 @@
+             device=hidden_states.device,
+         )
+         z = torch.empty_like(core_attn_out)
+-
+         torch.ops.vllm.gdn_attention_core_xpu(
+             core_attn_out,
+             z,
+             projected_states_qkvz,
+             projected_states_ba,
++            self._xpu_conv_state,
++            self._xpu_ssm_state,
+             self.prefix,
+         )
+ 
+--- a/vllm/model_executor/layers/utils.py
++++ b/vllm/model_executor/layers/utils.py
+@@ -81,12 +81,168 @@
+     return logits
+ 
+ 
++_R224_CHUNK = int(__import__("os").environ.get("VLLM_XPU_FP16_LINEAR_ROWCHUNK", "32"))
++_R290_CLASSPAD = int(__import__("os").environ.get("VLLM_XPU_FP16_LINEAR_CLASSPAD", "0"))
++_R290_MAXM = int(__import__("os").environ.get("VLLM_XPU_FP16_LINEAR_CLASSPAD_MAXM", "512"))
++_R290_MAPS: dict = {}
++_R291_MIN_BYTES = int(__import__("os").environ.get("VLLM_XPU_FP16_LINEAR_CLASSPAD_MIN_BYTES", "0"))
++_R291_BUFS: dict = {}
++_R293_BIG_BYTES = int(__import__("os").environ.get("VLLM_XPU_FP16_LINEAR_CLASSPAD_BIG_BYTES", str(256 << 20)))
++_R292_ZERO_PAD = int(__import__("os").environ.get("VLLM_XPU_FP16_LINEAR_CLASSPAD_ZERO_PAD", "0"))
++
++
++def _r291_invariant(weight: torch.Tensor, x: torch.Tensor, m: int) -> bool:
++    """Deterministic, position-invariant and pad-invariant at row count m."""
++    lin = torch.nn.functional.linear
++    o = lin(x[:m], weight)
++    if not torch.equal(lin(x[:m], weight), o):
++        return False
++    perm = torch.roll(torch.arange(m, device=x.device), 3)
++    if not torch.equal(lin(x[perm], weight)[torch.argsort(perm)], o):
++        return False
++    h = max(m // 2, 1)
++    xp = torch.cat([x[:h], torch.zeros(m - h, x.shape[1], device=x.device, dtype=x.dtype)], dim=0)
++    return bool(torch.equal(lin(xp, weight)[:h], o[:h]))
++
++
++def _r290_census(weight: torch.Tensor) -> tuple:
++    """Verified class map of F.linear at this weight shape for M in 1..MAXM."""
++    import logging
++    log = logging.getLogger("vllm")
++    n, k = weight.shape
++    gen = torch.Generator(device="cpu").manual_seed(291)
++    xs = [(torch.randn(_R290_MAXM, k, generator=gen) * sc).to(device=weight.device, dtype=weight.dtype)
++          for sc in (0.5, 1.0, 0.1)]
++    lin = torch.nn.functional.linear
++    refs: list = []
++    cls: list = []
++    for m in range(1, _R290_MAXM + 1):
++        fp = tuple(lin(x[:m], weight)[:1] for x in xs)
++        cid = None
++        for i, r in enumerate(refs):
++            if all(torch.equal(a, b) for a, b in zip(fp, r)):
++                cid = i
++                break
++        if cid is None:
++            refs.append(tuple(t.clone() for t in fp))
++            cid = len(refs) - 1
++        cls.append(cid)
++    members: dict = {}
++    for m, c in enumerate(cls, start=1):
++        members.setdefault(c, []).append(m)
++    eligible = set()
++    for c, ms in members.items():
++        probe = sorted({ms[0], ms[len(ms) // 2], ms[-1]})
++        if all(_r291_invariant(weight, xs[0], m) for m in probe):
++            eligible.add(c)
++    # canonical: the eligible class with the most members that is not the single-row class (class of M=1),
++    # unless nothing else is eligible - then fall back to R224 pieces (target None everywhere).
++    single_cls = cls[0]
++    cands = [c for c in eligible if c != single_cls]
++    if cands:
++        big = weight.numel() * weight.element_size() >= _R293_BIG_BYTES
++        if big:
++            canonical = max(cands, key=lambda c: (len(members[c]), -c))
++        else:
++            canonical = min(cands, key=lambda c: (members[c][0], -len(members[c])))
++        target = [None] * (_R290_MAXM + 1)
++        nxt = None
++        for m in range(_R290_MAXM, 0, -1):
++            if cls[m - 1] == canonical:
++                nxt = m
++            target[m] = nxt
++        largest = members[canonical][-1]
++        verdict = "classpad"
++    else:
++        canonical, target, largest, verdict = single_cls, None, 32, "fallback-r224-pieces"
++    runs, st = [], 1
++    for m in range(2, _R290_MAXM + 2):
++        if m > _R290_MAXM or cls[m - 1] != cls[m - 2]:
++            runs.append(f"{st}-{m - 1}:c{cls[m - 2]}")
++            st = m
++    log.info("R291 classpad census shape=%dx%d dtype=%s classes=%d eligible=%s canonical=c%d largest=%d "
++             "verdict=%s map=%s", n, k, str(weight.dtype).replace("torch.", ""), len(refs),
++             ",".join(f"c{c}" for c in sorted(eligible)), canonical, largest, verdict, " ".join(runs))
++    return canonical, target, largest
++
++
++def _r290_one(x2: torch.Tensor, weight: torch.Tensor, bias, target: list) -> torch.Tensor:
++    m = x2.shape[0]
++    t = target[m]
++    if t == m:
++        return torch.nn.functional.linear(x2, weight, bias)
++    key = (t, x2.shape[1], x2.dtype, str(x2.device))
++    buf = _R291_BUFS.get(key)
++    if buf is None:
++        buf = torch.zeros(t, x2.shape[1], device=x2.device, dtype=x2.dtype)
++        _R291_BUFS[key] = buf
++    buf[:m].copy_(x2)
++    if _R292_ZERO_PAD:
++        buf[m:].zero_()
++    return torch.nn.functional.linear(buf, weight, bias)[:m]
++
++
++def _r290_linear(x2: torch.Tensor, weight: torch.Tensor, bias) -> torch.Tensor:
++    key = (tuple(weight.shape), weight.dtype, str(weight.device))
++    entry = _R290_MAPS.get(key)
++    if entry is None:
++        if _R291_MIN_BYTES > 0 and weight.numel() * weight.element_size() < _R291_MIN_BYTES:
++            entry = (None, None, 32)
++        else:
++            entry = _r290_census(weight)
++        _R290_MAPS[key] = entry
++    canonical, target, largest = entry
++    m = x2.shape[0]
++    if target is None:  # R224 behaviour: <=32-row pieces in the single-row class
++        if m <= 32:
++            return torch.nn.functional.linear(x2, weight, bias)
++        return torch.cat([torch.nn.functional.linear(x2[i:i + 32], weight, bias) for i in range(0, m, 32)], dim=0)
++    if m <= _R290_MAXM and target[m] is not None:
++        return _r290_one(x2, weight, bias, target)
++    return torch.cat([_r290_one(x2[i:i + largest], weight, bias, target) for i in range(0, m, largest)], dim=0)
++
++
++def _xpu_fp16_linear_rowchunk_impl(
++    x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None, chunk: int
++) -> torch.Tensor:
++    x2 = x.reshape(-1, x.shape[-1])
++    m = x2.shape[0]
++    if _R290_CLASSPAD > 0:
++        out = _r290_linear(x2, weight, bias)
++    elif m <= chunk:
++        out = torch.nn.functional.linear(x2, weight, bias)
++    else:
++        out = torch.cat(
++            [torch.nn.functional.linear(x2[i:i + chunk], weight, bias) for i in range(0, m, chunk)], dim=0
++        )
++    return out.reshape(x.shape[:-1] + (weight.shape[0],))
++
++
++def _xpu_fp16_linear_rowchunk_fake(
++    x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None, chunk: int
++) -> torch.Tensor:
++    return torch.empty(x.shape[:-1] + (weight.shape[0],), dtype=x.dtype, device=x.device)
++
++
++if _R224_CHUNK > 0 or _R290_CLASSPAD > 0:
++    from vllm.utils.torch_utils import direct_register_custom_op as _r224_register
++
++    _r224_register(
++        op_name="xpu_fp16_linear_rowchunk",
++        op_func=_xpu_fp16_linear_rowchunk_impl,
++        mutates_args=[],
++        fake_impl=_xpu_fp16_linear_rowchunk_fake,
++    )
++
++
+ def default_unquantized_gemm(
+     layer: torch.nn.Module,
+     x: torch.Tensor,
+     weight: torch.Tensor,
+     bias: torch.Tensor | None = None,
+ ):
++    if (_R224_CHUNK > 0 or _R290_CLASSPAD > 0) and x.device.type == "xpu" and x.dtype in (torch.float16, torch.bfloat16):
++        return torch.ops.vllm.xpu_fp16_linear_rowchunk(x, weight, bias, _R224_CHUNK)
+     return torch.nn.functional.linear(x, weight, bias)
+ 
+ 
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -1,6 +1,8 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import copy
++import os
+ from collections.abc import Sequence
+ from dataclasses import dataclass
+ 
+@@ -69,12 +71,190 @@
+ 
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=False)
+ 
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in {
++            "1",
++            "true",
++            "yes",
++            "on",
++        }
++
++    def make_xpu_int4_draft_copy(
++        self, layer: torch.nn.Module
++    ) -> torch.nn.Module | None:
++        """Return a draft-only W4A16 view without changing the target head.
++
++        Qwen3.8 MTP omits an independent vocabulary head and normally shares
++        the target ``ParallelLMHead`` object. A shallow module copy lets the
++        drafter own packed buffers while retaining the already-loaded target
++        parameter. The target module never receives the marker or buffers, so
++        verifier logits stay on the original FP16 path.
++        """
++        if not self._env_enabled("VLLM_XPU_DRAFT_LM_HEAD_INT4"):
++            return None
++        if layer.__class__.__name__ != "ParallelLMHead":
++            raise RuntimeError(
++                "draft INT4 requires a ParallelLMHead target, got "
++                f"{layer.__class__.__name__}"
++            )
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            raise RuntimeError("draft INT4 requires an XPU-resident lm_head weight")
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            raise RuntimeError(
++                "draft INT4 requires an FP16/BF16 lm_head weight, got "
++                f"{weight.dtype}"
++            )
++        import vllm_xpu_kernels._xpu_C  # noqa: F401
++
++        if not hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
++            raise RuntimeError("_xpu_C.int4_gemm_w4a16 is unavailable")
++
++        group_size = int(
++            os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE", "128") or "128"
++        )
++        chunk_rows = int(
++            os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS", "2048") or "2048"
++        )
++        if group_size <= 0 or weight.shape[1] % group_size != 0:
++            raise ValueError(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE must divide hidden "
++                f"size {weight.shape[1]}, got {group_size}"
++            )
++        if group_size % 8 != 0:
++            raise ValueError(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE must be divisible by 8"
++            )
++
++        # R294: optional shortlist of vocabulary rows for the draft-only copy.
++        _r294_path = os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST", "").strip()
++        _r294_local = None
++        _r294_full_rows = weight.shape[0]
++        if _r294_path:
++            import logging as _r294_logging
++            _ids = sorted({int(t) for t in open(_r294_path).read().split() if t.strip()})
++            _si = getattr(layer, "shard_indices", None)
++            _start = getattr(_si, "org_vocab_start_index", 0) if _si is not None else 0
++            _end = getattr(_si, "org_vocab_end_index", weight.shape[0]) if _si is not None else weight.shape[0]
++            _local = [t - _start for t in _ids if _start <= t < _end]
++            if not _local:
++                _local = [0]  # a shard with no shortlist rows still needs one row so the GEMM has a shape
++            _r294_local = torch.tensor(_local, dtype=torch.long, device=weight.device)
++            _r294_logging.getLogger("vllm").info(
++                "R294 draft shortlist: %d ids from %s, %d in this shard [%d, %d) of %d rows",
++                len(_ids), _r294_path, len(_local), _start, _end, weight.shape[0])
++            weight = weight.index_select(0, _r294_local)
++        num_tokens, hidden = weight.shape
++        packed_k = hidden // 8
++        num_groups = hidden // group_size
++        chunk_rows = max(1, min(chunk_rows, num_tokens))
++        scale_name = (
++            os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE", "bf16")
++            .strip()
++            .lower()
++        )
++        if scale_name in {"fp16", "float16", "half"}:
++            scale_dtype = torch.float16
++        elif scale_name in {"fp32", "float32"}:
++            scale_dtype = torch.float32
++        elif scale_name in {"bf16", "bfloat16"}:
++            scale_dtype = torch.bfloat16
++        else:
++            raise ValueError(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE must be bf16, fp16, "
++                f"or fp32, got {scale_name!r}"
++            )
++
++        with torch.no_grad():
++            packed_storage = torch.empty(
++                (num_tokens, packed_k),
++                dtype=torch.int32,
++                device=weight.device,
++            )
++            scales = torch.empty(
++                (num_groups, num_tokens),
++                dtype=scale_dtype,
++                device=weight.device,
++            )
++            factors = (
++                16 ** torch.arange(8, device=weight.device, dtype=torch.int32)
++            ).view(1, 1, 8)
++            for start in range(0, num_tokens, chunk_rows):
++                end = min(start + chunk_rows, num_tokens)
++                weight_chunk = weight[start:end].detach().float()
++                grouped = weight_chunk.view(end - start, num_groups, group_size)
++                chunk_scales = grouped.abs().amax(dim=2).clamp_min(1.0e-10) / 7.0
++                scales[:, start:end] = chunk_scales.t().to(scale_dtype)
++                quantized = (
++                    torch.round(grouped / chunk_scales.unsqueeze(-1))
++                    .clamp(-8, 7)
++                    .to(torch.int32)
++                    + 8
++                )
++                packed_storage[start:end].copy_(
++                    (quantized.view(end - start, packed_k, 8) * factors)
++                    .sum(dim=2)
++                    .to(torch.int32)
++                )
++
++            qweight = packed_storage.t()
++            qzeros = torch.tensor([8], dtype=torch.int8, device=weight.device)
++
++        draft_layer = copy.copy(layer)
++        draft_layer._parameters = layer._parameters.copy()
++        draft_layer._buffers = layer._buffers.copy()
++        draft_layer._modules = layer._modules.copy()
++        draft_layer._non_persistent_buffers_set = (
++            layer._non_persistent_buffers_set.copy()
++        )
++        draft_layer.register_buffer(
++            "_xpu_draft_int4_weight_t", qweight, persistent=False
++        )
++        draft_layer.register_buffer(
++            "_xpu_draft_int4_scale", scales.contiguous(), persistent=False
++        )
++        draft_layer.register_buffer("_xpu_draft_int4_qzeros", qzeros, persistent=False)
++        draft_layer._xpu_draft_int4_group_size = group_size
++        draft_layer._xpu_draft_int4_enabled = True
++        if _r294_local is not None:
++            draft_layer.register_buffer("_xpu_draft_shortlist_local", _r294_local, persistent=False)
++            draft_layer._xpu_draft_shortlist_full_rows = _r294_full_rows
++        return draft_layer
++
+     def apply(
+         self,
+         layer: torch.nn.Module,
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_DRAFT_LM_HEAD_INT4")
++            and bias is None
++            and x.device.type == "xpu"
++            and getattr(layer, "_xpu_draft_int4_enabled", False)
++        ):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            logits = torch.ops._xpu_C.int4_gemm_w4a16(
++                x_contiguous.reshape(-1, x_contiguous.shape[-1]),
++                layer._xpu_draft_int4_weight_t,
++                None,
++                layer._xpu_draft_int4_scale,
++                layer._xpu_draft_int4_qzeros,
++                layer._xpu_draft_int4_group_size,
++                None,
++            )
++            _sl = getattr(layer, "_xpu_draft_shortlist_local", None)
++            if _sl is not None:
++                # R294: scatter the shortlist logits into a full-width row of -inf.
++                full = torch.full(
++                    (logits.shape[0], layer._xpu_draft_shortlist_full_rows),
++                    float("-inf"), dtype=logits.dtype, device=logits.device)
++                full.index_copy_(1, _sl, logits)
++                return full.reshape(x_contiguous.shape[:-1] + (layer._xpu_draft_shortlist_full_rows,))
++            return logits.reshape(
++                x_contiguous.shape[:-1] + (layer._xpu_draft_int4_weight_t.shape[1],)
++            )
+         if envs.VLLM_BATCH_INVARIANT and (
+             current_platform.is_cuda_alike() or current_platform.is_xpu()
+         ):
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -4,6 +4,7 @@
+ 
+ import copy
+ import functools
++import os
+ from dataclasses import dataclass
+ from typing import Any, ClassVar
+ 
+@@ -1378,6 +1379,78 @@
+                     block_table = block_table[:, :num_pages]
+                     num_splits = 1
+ 
++                serial_spec = os.environ.get(
++                    "VLLM_XPU_FA_SERIAL_SPEC_DECODE", "0"
++                ).strip().lower() in ("1", "true", "yes", "on")
++                if (
++                    current_platform.is_xpu()
++                    and serial_spec
++                    and max_seqlen_q > 1
++                    and not is_dynamic_causal
++                    and mm_mask_mod is None
++                    and rswa_mask_mod_fn is None
++                    and num_actual_tokens <= int(cu_seqlens_q[-1].item())
++                ):
++                    single_cu_seqlens_q = torch.tensor(
++                        [0, 1], dtype=torch.int32, device=query.device
++                    )
++                    for req_idx in range(cu_seqlens_q.shape[0] - 1):
++                        q_start = int(cu_seqlens_q[req_idx].item())
++                        q_end = int(cu_seqlens_q[req_idx + 1].item())
++                        q_len = q_end - q_start
++                        if q_len <= 0:
++                            continue
++                        seq_len = int(seqused_k[req_idx].item())
++                        req_block_table = block_table[req_idx : req_idx + 1]
++                        req_q_descale = (
++                            q_descale[req_idx : req_idx + 1]
++                            if q_descale is not None
++                            else None
++                        )
++                        req_k_descale = k_descale[req_idx : req_idx + 1]
++                        req_v_descale = v_descale[req_idx : req_idx + 1]
++                        for rel_pos in range(q_len):
++                            token_idx = q_start + rel_pos
++                            token_seq_len = seq_len - (q_len - 1 - rel_pos)
++                            if token_seq_len <= 0:
++                                continue
++                            token_seqused_k = torch.tensor(
++                                [token_seq_len],
++                                dtype=seqused_k.dtype,
++                                device=seqused_k.device,
++                            )
++                            flash_attn_varlen_func(
++                                q=query[token_idx : token_idx + 1],
++                                k=key_cache,
++                                v=value_cache,
++                                out=output[token_idx : token_idx + 1],
++                                cu_seqlens_q=single_cu_seqlens_q,
++                                max_seqlen_q=1,
++                                seqused_k=token_seqused_k,
++                                max_seqlen_k=token_seq_len,
++                                softmax_scale=self.scale,
++                                causal=causal,
++                                alibi_slopes=self.alibi_slopes,
++                                window_size=sliding_window_size,
++                                block_table=req_block_table,
++                                softcap=self.logits_soft_cap,
++                                scheduler_metadata=None,
++                                fa_version=self.vllm_flash_attn_version,
++                                q_descale=req_q_descale,
++                                k_descale=req_k_descale,
++                                v_descale=req_v_descale,
++                                dynamic_causal=None,
++                                num_splits=0,
++                                s_aux=self.sinks,
++                                mask_mod=None,
++                                aux_tensors=None,
++                            )
++                    logger.warning_once(
++                        "VLLM_XPU_FA_SERIAL_SPEC_DECODE reached "
++                        "for progressive verifier queries (r38)"
++                    )
++                    return output
++
+                 _FA4_DENSE_ATTENTION_KERNEL(
+                     q=query[:num_actual_tokens],
+                     k=key_cache,
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -227,6 +227,7 @@
+         )
+ 
+         spec_sequence_masks_cpu: torch.Tensor | None = None
++        active_spec_width = 0
+         if not self.use_spec_decode or num_decode_draft_tokens_cpu is None:
+             spec_sequence_masks = None
+             num_spec_decodes = 0
+@@ -247,23 +248,53 @@
+                 )
+ 
+         if spec_sequence_masks is None:
++            # A one-token first chunk has no GDN state and must take the
++            # prefill path, which masks recycled state pages. Resumed short
++            # prefills already own state and can stay on the decode path.
++            assert m.seq_lens_cpu_upper_bound is not None
++            query_lens_cpu = query_start_loc_cpu.diff()
++            no_prior_state = (query_lens_cpu > 0) & (
++                m.seq_lens_cpu_upper_bound <= query_lens_cpu
++            )
++            if m.is_prefilling is not None:
++                no_prior_state &= m.is_prefilling
++            else:
++                # Metadata without this runner flag is indistinguishable from
++                # the dummy batch used for cudagraph capture.
++                no_prior_state = torch.zeros_like(no_prior_state)
+             num_decodes, num_prefills, num_decode_tokens, num_prefill_tokens = (
+-                split_decodes_and_prefills(m, decode_threshold=1)
+-            )
++                split_decodes_and_prefills(
++                    m.replace(is_prefilling=no_prior_state),
++                    decode_threshold=1,
++                    treat_short_extends_as_decodes=False,
++                )
++            )
++            if num_prefills > 0:
++                num_padding_reqs = (query_lens_cpu[num_decodes:] == 0).sum().item()
++                num_prefills -= num_padding_reqs
++                num_prefill_tokens = (
++                    query_start_loc_cpu[num_decodes + num_prefills].item()
++                    - num_decode_tokens
++                )
+             num_spec_decode_tokens = 0
+             spec_token_indx = None
+             non_spec_token_indx = None
+             spec_state_indices_tensor = None
+-            non_spec_state_indices_tensor = block_table_tensor[:, 0]
++            num_non_spec_reqs = num_decodes + num_prefills
++            non_spec_state_indices_tensor = block_table_tensor[:num_non_spec_reqs, 0]
+             spec_query_start_loc = None
+-            non_spec_query_start_loc = query_start_loc
+-            non_spec_query_start_loc_cpu = query_start_loc_cpu
++            non_spec_query_start_loc = query_start_loc[: num_non_spec_reqs + 1]
++            non_spec_query_start_loc_cpu = query_start_loc_cpu[: num_non_spec_reqs + 1]
+             num_accepted_tokens = None
+         else:
+             query_lens = query_start_loc[1:] - query_start_loc[:-1]
+             assert spec_sequence_masks_cpu is not None
+             non_spec_sequence_masks_cpu = ~spec_sequence_masks_cpu
+             query_lens_cpu = query_start_loc_cpu[1:] - query_start_loc_cpu[:-1]
++            active_spec_width = int(
++                query_lens_cpu[spec_sequence_masks_cpu].max().item()
++            )
++            assert 1 < active_spec_width <= self.num_spec + 1
+ 
+             # Use CPU tensors to avoid CPU-GPU sync
+             non_spec_query_lens_cpu = query_lens_cpu[non_spec_sequence_masks_cpu]
+@@ -304,7 +335,7 @@
+                 )
+                 # Filter by spec_sequence_masks to exclude padded sequences
+                 spec_state_indices_tensor = block_table_tensor[
+-                    spec_sequence_masks_cpu, : self.num_spec + 1
++                    spec_sequence_masks_cpu, :active_spec_width
+                 ]
+                 non_spec_state_indices_tensor = None
+                 # Padded sequences are always at the back, so the first
+@@ -325,7 +356,7 @@
+                 spec_token_indx = index[num_non_spec_tokens:]
+ 
+                 spec_state_indices_tensor = block_table_tensor[
+-                    spec_sequence_masks_cpu, : self.num_spec + 1
++                    spec_sequence_masks_cpu, :active_spec_width
+                 ]
+                 non_spec_state_indices_tensor = block_table_tensor[
+                     non_spec_sequence_masks_cpu, 0
+@@ -402,6 +433,8 @@
+             if spec_sequence_masks_cpu is not None:
+                 has_initial_state = has_initial_state[~spec_sequence_masks_cpu]
+                 assert non_spec_query_start_loc_cpu is not None
++            else:
++                has_initial_state = has_initial_state[: num_decodes + num_prefills]
+             nums_dict, batch_ptr, token_chunk_offset_ptr = (
+                 compute_causal_conv1d_metadata(
+                     non_spec_query_start_loc_cpu,
+@@ -434,10 +467,13 @@
+             and num_spec_decode_tokens <= self.decode_cudagraph_max_bs
+         ):
+             assert spec_sequence_masks is not None
+-            self.spec_state_indices_tensor[:num_spec_decodes].copy_(
++            assert active_spec_width > 0
++            self.spec_state_indices_tensor[:num_spec_decodes, :active_spec_width].copy_(
+                 spec_state_indices_tensor, non_blocking=True
+             )
+-            spec_state_indices_tensor = self.spec_state_indices_tensor[:batch_size]
++            spec_state_indices_tensor = self.spec_state_indices_tensor[
++                :batch_size, :active_spec_width
++            ]
+             spec_state_indices_tensor[num_spec_decodes:].fill_(NULL_BLOCK_ID)
+ 
+             self.spec_sequence_masks[:num_spec_decodes].copy_(
+@@ -472,26 +508,25 @@
+             num_accepted_tokens = self.num_accepted_tokens[:batch_size]
+             num_accepted_tokens[num_spec_decodes:].fill_(1)
+ 
++        # FULL-graph dispatch is shape-based, so stage uniform one-token
++        # metadata even when a stateless row was classified as a prefill.
+         if (
+             self.use_full_cuda_graph
+-            and num_prefills == 0
+             and num_spec_decodes == 0
+-            and num_decodes <= self.decode_cudagraph_max_bs
++            and m.max_query_len <= 1
++            and batch_size <= self.decode_cudagraph_max_bs
+         ):
+-            self.non_spec_state_indices_tensor[:num_decodes].copy_(
+-                non_spec_state_indices_tensor, non_blocking=True
++            self.non_spec_state_indices_tensor[:batch_size].copy_(
++                block_table_tensor[:, 0], non_blocking=True
+             )
+             non_spec_state_indices_tensor = self.non_spec_state_indices_tensor[
+                 :batch_size
+             ]
+-            non_spec_state_indices_tensor[num_decodes:].fill_(NULL_BLOCK_ID)
+-
+-            self.non_spec_query_start_loc[: num_decodes + 1].copy_(
+-                non_spec_query_start_loc, non_blocking=True
+-            )
+-            non_spec_num_query_tokens = non_spec_query_start_loc[-1]  # type: ignore[index]
++
++            self.non_spec_query_start_loc[: batch_size + 1].copy_(
++                query_start_loc, non_blocking=True
++            )
+             non_spec_query_start_loc = self.non_spec_query_start_loc[: batch_size + 1]
+-            non_spec_query_start_loc[num_decodes + 1 :].fill_(non_spec_num_query_tokens)
+ 
+         attn_metadata = GDNAttentionMetadata(
+             num_prefills=num_prefills,
+--- a/vllm/v1/spec_decode/llm_base_proposer.py
++++ b/vllm/v1/spec_decode/llm_base_proposer.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import dataclasses
++import os
+ from importlib.util import find_spec
+ from typing import TYPE_CHECKING, Any, cast
+ 
+@@ -1522,6 +1523,7 @@
+         the target model's LM head with the draft model to save memory.
+         """
+         share_lm_head = False
++        lm_head_to_share = getattr(target_language_model, "lm_head", None)
+         if hasattr(self.model, "has_own_lm_head"):
+             # EAGLE model
+             if not self.model.has_own_lm_head:
+@@ -1556,15 +1558,50 @@
+         else:
+             # MTP model
+             share_lm_head = True
+-            logger.info(
+-                "Detected MTP model. "
+-                "Sharing target model lm_head weights with the draft model."
+-            )
++            draft_int4 = os.environ.get(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4", "0"
++            ).strip().lower() in {"1", "true", "yes", "on"}
++            if draft_int4:
++                if lm_head_to_share is None:
++                    raise RuntimeError(
++                        "draft INT4 requested but the target has no lm_head"
++                    )
++                quant_method = getattr(lm_head_to_share, "quant_method", None)
++                prepare = getattr(quant_method, "make_xpu_int4_draft_copy", None)
++                if not callable(prepare):
++                    # R256: unquantized FP16 head under a non-embedding quant method (gptq relabel)
++                    from vllm.model_executor.layers.vocab_parallel_embedding import (
++                        UnquantizedEmbeddingMethod as _R256Emb,
++                    )
++                    _weight = getattr(lm_head_to_share, "weight", None)
++                    if _weight is not None and _weight.dtype in (torch.float16, torch.bfloat16):
++                        _emb = _R256Emb()
++                        prepare = getattr(_emb, "make_xpu_int4_draft_copy", None)
++                        logger.info("R256: draft-only INT4 head via UnquantizedEmbeddingMethod fallback")
++                if not callable(prepare):
++                    raise RuntimeError(
++                        "draft INT4 requested but the target lm_head quantization "
++                        "method cannot prepare a draft-only copy"
++                    )
++                lm_head_to_share = prepare(lm_head_to_share)
++                if lm_head_to_share is None:
++                    raise RuntimeError(
++                        "draft INT4 requested but no draft-only head was prepared"
++                    )
++                logger.info(
++                    "Prepared MTP draft-only INT4 lm_head from the loaded target "
++                    "weight; the target verifier lm_head remains FP16."
++                )
++            else:
++                logger.info(
++                    "Detected MTP model. "
++                    "Sharing target model lm_head weights with the draft model."
++                )
+ 
+         if share_lm_head and hasattr(target_language_model, "lm_head"):
+             if hasattr(self.model, "lm_head"):
+                 del self.model.lm_head
+-            self.model.lm_head = target_language_model.lm_head
++            self.model.lm_head = lm_head_to_share
+ 
+             # MTP models call compute_logits via shared_head.head (a
+             # ParallelLMHead inside each MTP layer), not self.model.lm_head.
+@@ -1579,9 +1616,9 @@
+                     sh = getattr(layer, "shared_head", None)
+                     if sh is not None and hasattr(sh, "head"):
+                         del sh.head
+-                        sh.head = target_language_model.lm_head
++                        sh.head = lm_head_to_share
+                         logger.info(
+-                            "Shared target model lm_head with MTP shared_head.head."
++                            "Installed selected lm_head with MTP shared_head.head."
+                         )
+ 
+         if hasattr(target_language_model.model, "topk_indices_buffer"):
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -3884,8 +3884,8 @@
+             **model_kwargs,
+         )
+ 
+-    @staticmethod
+     def _is_uniform_decode(
++        self,
+         max_num_scheduled_tokens: int,
+         uniform_decode_query_len: int,
+         num_tokens: int,
+@@ -3896,13 +3896,28 @@
+         Checks if it's a decode batch with same amount scheduled tokens
+         across all requests.
+         """
+-        return (
++        if force_uniform_decode is not None:
++            return force_uniform_decode
++        if not (
++            max_num_scheduled_tokens == uniform_decode_query_len
++            and num_tokens == max_num_scheduled_tokens * num_reqs
++        ):
++            return False
++        # The shape check alone can misclassify prefills: with spec decode
++        # (uniform_decode_query_len = 1 + num_spec_tokens), any batch of
++        # prompts scheduled with exactly uniform_decode_query_len tokens per
++        # request aliases the uniform-decode shape. Dispatching such a
++        # prefill into a cudagraph captured for uniform decode replays stale
++        # capture-time metadata for backends with persistent buffers (e.g.
++        # GDN), silently skipping prefill state writes and corrupting output
++        # (https://github.com/vllm-project/vllm/issues/53051). A batch is
++        # only uniform decode if every request is already past its prompt.
++        input_batch = self.input_batch
++        return bool(
+             (
+-                (max_num_scheduled_tokens == uniform_decode_query_len)
+-                and (num_tokens == max_num_scheduled_tokens * num_reqs)
+-            )
+-            if force_uniform_decode is None
+-            else force_uniform_decode
++                input_batch.num_computed_tokens_cpu[:num_reqs]
++                >= input_batch.num_prompt_tokens[:num_reqs]
++            ).all()
+         )
+ 
+     def _allow_microbatching(

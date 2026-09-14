@@ -1,0 +1,32 @@
+{
+  "worker_extension_sha256": "730f08f810aa17bcafe5aa8780ac4d51a9a2aa5c47377b0dd93aa593fd02e567",
+  "control_source_sha256": "95b0a3c079cb63f04a1a0b78b290c7496c63cc5ebc4dc567962de335ea894b9a",
+  "validated_patch_sha256": "4ea274938e09fed6611cef7e3b1378eea49f4a112a4918f46aa5bb342a5b997f",
+  "patched_source_sha256": "cd22b7b20104a8d03c28d1e45c2f85da2c68ec2b3300f82c30bdc66137ac1c04",
+  "generated_candidate_ast_sha256": "30d6d181060d10f9132c4cbe4163d97931b5a7a177ad6f63d7145b8fce8b17c0",
+  "generated_candidate_ast_equals_validated_patch": true,
+  "imports": "stdlib only, no torch or GPU",
+  "blocking_findings": [
+    "prepare rejects normalized method=mtp; must verify native qwen3_5_mtp separately",
+    "native gate requires candidate.__name__ == 'build' but generated candidate name is '_mtp_candidate_build'"
+  ],
+  "worker_attributes_verified": [
+    "vllm_config",
+    "rank",
+    "device"
+  ],
+  "equal_wrapper_overhead": true,
+  "source_files_or_output_oracle_modified": false,
+  "runner_requirements": [
+    "Verify endpoint and scheduler are idle before each RPC transition",
+    "Verify unanimous rank modes and wrapper_active after every RPC",
+    "Halt on RPC failure or divergent rank states; never submit generation in mixed state"
+  ],
+  "runtime_source_files_sha256": {
+    "config/speculative.py": "b1058985ee565a81c3c4254b26ff4030fcaa97fc41ccf39b62f7336285673457",
+    "v1/worker/gpu_worker.py": "596f5b6e97be754f84b04c17bc0b96fd92d2f05ee86e0459aa515ffa48d8c5cb",
+    "v1/worker/worker_base.py": "4a1a5266b912fe97991d8dc89d92b923990da9f6cb4b817d00d52e9c0d26dd7c",
+    "v1/worker/xpu_worker.py": "711b56432506b58041cd86e71320c3960413f7bd61061990b66488421d81cfc3"
+  },
+  "review_scope": "CPU-only AST equivalence and source review; no runtime initialization or request"
+}

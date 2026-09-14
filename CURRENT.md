@@ -25,13 +25,23 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host, September 14: MTP-only transfer review.**
-The user excludes DFlash and retains official FP8 with lossless native MTP.
-The restored service below remains unchanged and healthy. Source review
-identified a small unused metadata subtraction and a larger exact P2P
-collective design lead; neither is applied or benchmarked. The inactive
-metadata patch must be rebased and qualified before runtime use.
-[Review and adoption decisions](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
+**Two-B70 host, September 14: FP8/native-MTP optimization implementation active.**
+The user authorized implementing and validating the transfer ideas, retaining
+lossless deterministic complete outputs and excluding DFlash. The original
+qualified service at port18124 was gracefully stopped once at18:07UTC for
+exclusive operator qualification and the planned MTP-only control handover.
+It is currently unavailable; the historical recovery status below remains
+evidence of the earlier qualified process.
+The refreshed V1/MTP-only control image is built, with accepted overlays
+preserved; it is not runtime-qualified. Metadata relocation passes36 actual
+builder cases on each of two source versions. The exact TP2 prototype compiles
+and passes nine CPU protocol/lifetime checks; native quality and speed are
+unmeasured. Root owns all GPU operations; agents work on isolated CPU/source
+and client tooling. Next: exclusive operator qualification and independent new
+base qualification, then paired full-output candidate gates on one persistent
+research process. No new result or default is promoted.
+[Implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
+[earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
 **Four-B70 host, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
 Linux OOM-killed LTX PID116013 at18:12:58 UTC during the third component

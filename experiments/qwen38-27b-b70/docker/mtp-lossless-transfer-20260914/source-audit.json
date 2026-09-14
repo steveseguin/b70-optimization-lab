@@ -1,0 +1,101 @@
+{
+  "upstream_commit": "dc36fcce902a63eab06c1b93a5c4a5ee178a0c56",
+  "upstream_tag": "vllm/vllm-openai-xpu:nightly",
+  "index_digest": "sha256:fa0e2f3966f23d64e1532e45ce2eca2fef619fb63f93d5b9b13cb5bcc0743aec",
+  "amd64_digest": "sha256:28915aadfe9665dd70f1cf36e6f7362e25df24e9035785dedd00559652bbef41",
+  "r304_python_hashes_reconstructed": 15,
+  "automatic_merge_conflict_regions": 6,
+  "automatic_merge_conflict_files": 5,
+  "files": [
+    {
+      "path": "vllm/_xpu_ops.py",
+      "upstream_sha256": "4db00df212d772601fe59272cf8d4d0822ec8ef7bad219100c978943a7daf37b",
+      "candidate_sha256": "69f16a33621208e2d90cd7e77f3a2f028bb3bd8e32ecd977faf09b88f10f2cad",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/config/compilation.py",
+      "upstream_sha256": "c9cec5c7200e8e559810ec8c30113ad61dab6780f9f7fb3c116bd0d9b5a43065",
+      "candidate_sha256": "c9cec5c7200e8e559810ec8c30113ad61dab6780f9f7fb3c116bd0d9b5a43065",
+      "overlay_changes_file": false
+    },
+    {
+      "path": "vllm/distributed/device_communicators/xpu_communicator.py",
+      "upstream_sha256": "527cbfb250760abc62096ee7cd612307b821f21b72dee1687ad866620ec89b6d",
+      "candidate_sha256": "5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/ir/ops/layernorm.py",
+      "upstream_sha256": "65d33dcb96404ddde273acf84ef901151a8155a2cffc144bdd0c49fe1d576a22",
+      "candidate_sha256": "65d33dcb96404ddde273acf84ef901151a8155a2cffc144bdd0c49fe1d576a22",
+      "overlay_changes_file": false
+    },
+    {
+      "path": "vllm/model_executor/kernels/linear/mixed_precision/xpu.py",
+      "upstream_sha256": "6c4fc2a961dfc94a75aa39c91f76d53621c8903291820c72946ca889ef2c4816",
+      "candidate_sha256": "8eb3cf7e9e24d8e7d28fdc1a4513277eb6724621eaa52c88b2e274d056c9b758",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+      "upstream_sha256": "ba123182e4f9505f553227e06c8adeb68a0307800dea69f6e6614e25cd7541d1",
+      "candidate_sha256": "7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/model_executor/layers/layernorm.py",
+      "upstream_sha256": "4126258bf85aa3af54c78cfbf2a0f32000491e42be37661f2d1ac9f0beea00f3",
+      "candidate_sha256": "3f949e537ccc52744d7eba52ed2034b20ee3fbaeaabbfab4e672f1dc9767602c",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/model_executor/layers/logits_processor.py",
+      "upstream_sha256": "6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f",
+      "candidate_sha256": "6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f",
+      "overlay_changes_file": false
+    },
+    {
+      "path": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "upstream_sha256": "b80f8e6f3fff442fb880aebb3209c52f814f66490009f4ac4003de603576d10a",
+      "candidate_sha256": "f4cc0a757b1d231817e7edd875c9a395c4ab4898d05fa7131df29f88656e0e17",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/model_executor/layers/utils.py",
+      "upstream_sha256": "88dee156d427709feb8a560f61eba8e0ebfd1dc10885978ccdce3a952c6afb10",
+      "candidate_sha256": "26ec8e3adb93b557307f0c5e28f9bec4d658e2745551e1880d6edaf12913616d",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/model_executor/layers/vocab_parallel_embedding.py",
+      "upstream_sha256": "d42574ac79bd7d7847548784d2272c7c40cbd93fe6cdadb15e8c2db79d2074d7",
+      "candidate_sha256": "0316fb1d5284614c9167d63ec0e411013b67f24a22863eca1406e48572f48e69",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/v1/attention/backends/flash_attn.py",
+      "upstream_sha256": "b170a4789e18104c1bee35bea70df51abe6766693d8f4726a59f2e6f5c4282aa",
+      "candidate_sha256": "45e1f93ba0d90bf4c9b2dde258391bbbc4c9722a49834c0b27e0292e321bd50f",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/v1/attention/backends/gdn_attn.py",
+      "upstream_sha256": "3831019404a92200a38b43571c040cffeb6638bbdc71e4cb5e680dbc6c93d054",
+      "candidate_sha256": "95b0a3c079cb63f04a1a0b78b290c7496c63cc5ebc4dc567962de335ea894b9a",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/v1/spec_decode/llm_base_proposer.py",
+      "upstream_sha256": "175f3a96cb8d1e8f4e6db820b2eda85e1880dde7d03789fdf0d0bcbd11e9fa9f",
+      "candidate_sha256": "3ba944d22365917c9481fcdc31b8be76f5203f25c4c2e6421cd126cb376ed952",
+      "overlay_changes_file": true
+    },
+    {
+      "path": "vllm/v1/worker/gpu_model_runner.py",
+      "upstream_sha256": "87c29d08c0bbf66993d8b984811e7325e35e6436242a773feb55ec88f16b2c51",
+      "candidate_sha256": "0e20c4393bc2dd8da1354999a631368498bb570f5ea65037dbf067c61a470743",
+      "overlay_changes_file": true
+    }
+  ]
+}
