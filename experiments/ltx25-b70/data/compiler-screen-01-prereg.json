@@ -1,0 +1,100 @@
+{
+  "schema": "ltx.compiler-screen-prereg.v1",
+  "status": "prepared-not-run",
+  "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02",
+  "source_packet_manifest_sha256": "f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-01",
+  "campaign": "compiler-screen-01",
+  "max_requests": 9,
+  "schedule": [
+    {
+      "mode": "eager",
+      "fixture": "boat",
+      "initialization": true,
+      "qualified_before": 0,
+      "run": "compiler-screen-01-r01-eager-boat"
+    },
+    {
+      "mode": "eager",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 0,
+      "run": "compiler-screen-01-r02-eager-boat"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": true,
+      "qualified_before": 0,
+      "run": "compiler-screen-01-r03-compiled-boat"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-01-r04-compiled-boat"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "marble",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-01-r05-compiled-marble"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "bird",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-01-r06-compiled-bird"
+    },
+    {
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-01-r07-compiled-boat"
+    },
+    {
+      "mode": "restored",
+      "fixture": "boat",
+      "initialization": true,
+      "qualified_before": 2,
+      "run": "compiler-screen-01-r08-restored-boat"
+    },
+    {
+      "mode": "restored",
+      "fixture": "boat",
+      "initialization": false,
+      "qualified_before": 2,
+      "run": "compiler-screen-01-r09-restored-boat"
+    }
+  ],
+  "client_sha256": "51376640d128bfeac5bb6e76e40ce2d7bdb44a610e9e649f9aef9a0dcfc069e6",
+  "frozen_helpers": {
+    "profile-clip.py": "ad0141ff493c8c4cc5993ff4f8c2aceea76c2e99359477c7cef2d24628eb1980",
+    "compare-clip.py": "80ee7a45468f95c6c0b8df9ecceea338af9fdf4d2537ba5966603b4f5b03fe0e",
+    "run-stability.py": "7769cf87ed005be6e13dc6acced399f1541f68bc988953e7a409ba7fb80937b2"
+  },
+  "encoder_helpers_sha256": "4ec94d7e69c3d93b2caa740209f6a84ff35d56bdbbb8bf55f4b9782bacde10b0",
+  "quality": {
+    "resolution": [
+      256,
+      256
+    ],
+    "frames": 25,
+    "fps": 24,
+    "precision": "native BF16",
+    "steps": [
+      8,
+      3
+    ],
+    "all_four_outputs": "strict exact original references"
+  },
+  "candidate": "native block24 only, original control encoder, no graph or arithmetic changes beyond exact compiler candidate",
+  "stage_gate": "first compiled request must independently qualify both stages; warm ownership/capture checks remain",
+  "failure_action": "halt new requests; preserve process and failure evidence, no automatic retry or restart",
+  "speed_promotion": false,
+  "streaming_qualification": false
+}

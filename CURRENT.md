@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: native compiler comparison running.**
+PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
+manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.
+Endpoint identity and strict after-import determinism match the startup receipt.
+The bounded nine-request compiler-screen-01 is active; inspect its progress
+under `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-01`
+before any new GPU request. It checks one native block24 with the original
+control encoder, both native stage outputs against eager/repeat calculations,
+and every completed clip against all four original raw references. No compiled
+speed or correctness result is claimed before those gates finish.
+PID78769 exited cleanly after one controlled SIGINT to load this new application
+code; the computer was not rebooted. No fault latch at startup. This supersedes
+the idle PID78769 statements below. [Preregistration](experiments/ltx25-b70/data/compiler-screen-01-prereg.json)
+and [native gate](experiments/ltx25-b70/notes/ltx-block-compile-node-ready.md).
+
 **Four-B70 host, September14: encoder comparison complete; compiler integration next.**
 All25 encoder-screen-02 clips passed strict four-output original-reference parity
 and all four unload transitions passed. No convincing speed winner: warm medians
