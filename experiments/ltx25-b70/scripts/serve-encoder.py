@@ -72,6 +72,7 @@ def launch(packet, digest, run_name, check_only=False):
         fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         locks.append(handle)
     with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         probe.bind(('127.0.0.1', 8188))
     common.require(not subprocess.check_output(['docker', 'ps', '-q'], text=True, timeout=10).strip(),
                    'A container is running; inspect ownership')
@@ -164,6 +165,18 @@ def launch(packet, digest, run_name, check_only=False):
     sys.argv = argv
     import comfy.options
     comfy.options.enable_args_parsing()
+    # Comfy's import selects warn_only=True. Restore the original strict
+    # baseline only after that import, before main can execute any graph.
+    import comfy.model_management
+    torch.use_deterministic_algorithms(True, warn_only=False)
+    common.require(torch.are_deterministic_algorithms_enabled() and
+                   not torch.is_deterministic_algorithms_warn_only_enabled(),
+                   'Strict deterministic mode was not restored after Comfy import')
+    write_json(run / 'determinism-after-import.json', {
+        'enabled': torch.are_deterministic_algorithms_enabled(),
+        'warn_only': torch.is_deterministic_algorithms_warn_only_enabled(),
+        'stage': 'after_model_management_import_before_main',
+        'server_identity_sha256': os.environ['LTX_ENCODER_IDENTITY_SHA256']})
     runpy.run_path(str(packet / 'source/main.py'), run_name='__main__')
 
 

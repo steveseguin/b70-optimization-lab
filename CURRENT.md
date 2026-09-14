@@ -25,6 +25,35 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: strict startup fixed; encoder comparison active.**
+PID78769 serves `http://127.0.0.1:8188` from prepared-encoder-03 / encoder-server-02.
+Startup identity matches the endpoint and the after-import receipt verifies
+strict determinism (enabled, warning-only off). Encoder-screen-02 is running;
+reuse this process and inspect its progress before any new GPU request.
+The first screen on PID75850 stopped after one completed control clip: all four
+outputs matched baseline bytes, but strict-mode qualification failed because
+Comfy import reset warning-only mode. The corrected launcher restores the
+original import order;11 CPU regression checks passed. Only the launcher differs
+between the immutable packets. No quality gate was waived. Evidence and exact
+scope: [startup correction](experiments/ltx25-b70/notes/encoder-strict-startup-fix.md).
+User clarified that routine application reloads should not cause approval
+pauses or stop optimization; the host-reboot/power/restart-chain constraints
+remain. This supersedes all earlier pending-approval and process statements below.
+
+**Four-B70 host, September14: authorized LTX replacement completed.**
+User approved the restart and clarified that optimization must continue without
+an unnecessary application-restart approval pause. Original PID24848
+stopped cleanly after one SIGINT. Replacement PID75850 is ready at
+`http://127.0.0.1:8188`; endpoint identity matches the encoder-server-01 receipt,
+the queue is empty and the fault latch is absent. Host LAN IP is10.0.0.65, but
+the application listens on localhost only. The immutable prepared-encoder-02
+packet is active. The preregistered encoder-screen-01 comparison is now running
+on this process; inspect its live progress before any new GPU work. An initial launcher
+preflight exited before Torch import because the old TCP socket was in TIME-WAIT;
+after its observed expiry, the bind check passed and the replacement started.
+Evidence: `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-migration-01.json`
+and `encoder-server-01/`. This supersedes pending-replacement statements below.
+
 **Four-B70 host, compiler preparation: routed CPU gates pass; inactive.**
 The native block adapter passed its initial 29 checks; the additive ownership
 guard passed 51 checks with the compiler callback itself in the full options

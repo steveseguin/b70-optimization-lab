@@ -1,0 +1,208 @@
+{
+  "campaign": "encoder-screen-01",
+  "max_requests": 25,
+  "schedule": [
+    {
+      "arm": 0,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": true,
+      "run": "encoder-screen-01-r01-control-boat"
+    },
+    {
+      "arm": 0,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r02-control-boat"
+    },
+    {
+      "arm": 0,
+      "variant": "control",
+      "fixture": "marble",
+      "initialization": false,
+      "run": "encoder-screen-01-r03-control-marble"
+    },
+    {
+      "arm": 0,
+      "variant": "control",
+      "fixture": "bird",
+      "initialization": false,
+      "run": "encoder-screen-01-r04-control-bird"
+    },
+    {
+      "arm": 0,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r05-control-boat"
+    },
+    {
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "boat",
+      "initialization": true,
+      "run": "encoder-screen-01-r06-crop-boat"
+    },
+    {
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r07-crop-boat"
+    },
+    {
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "marble",
+      "initialization": false,
+      "run": "encoder-screen-01-r08-crop-marble"
+    },
+    {
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "bird",
+      "initialization": false,
+      "run": "encoder-screen-01-r09-crop-bird"
+    },
+    {
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r10-crop-boat"
+    },
+    {
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "boat",
+      "initialization": true,
+      "run": "encoder-screen-01-r11-small-state-boat"
+    },
+    {
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r12-small-state-boat"
+    },
+    {
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "marble",
+      "initialization": false,
+      "run": "encoder-screen-01-r13-small-state-marble"
+    },
+    {
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "bird",
+      "initialization": false,
+      "run": "encoder-screen-01-r14-small-state-bird"
+    },
+    {
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r15-small-state-boat"
+    },
+    {
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "boat",
+      "initialization": true,
+      "run": "encoder-screen-01-r16-combined-boat"
+    },
+    {
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r17-combined-boat"
+    },
+    {
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "marble",
+      "initialization": false,
+      "run": "encoder-screen-01-r18-combined-marble"
+    },
+    {
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "bird",
+      "initialization": false,
+      "run": "encoder-screen-01-r19-combined-bird"
+    },
+    {
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r20-combined-boat"
+    },
+    {
+      "arm": 4,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": true,
+      "run": "encoder-screen-01-r21-control-boat"
+    },
+    {
+      "arm": 4,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r22-control-boat"
+    },
+    {
+      "arm": 4,
+      "variant": "control",
+      "fixture": "marble",
+      "initialization": false,
+      "run": "encoder-screen-01-r23-control-marble"
+    },
+    {
+      "arm": 4,
+      "variant": "control",
+      "fixture": "bird",
+      "initialization": false,
+      "run": "encoder-screen-01-r24-control-bird"
+    },
+    {
+      "arm": 4,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "run": "encoder-screen-01-r25-control-boat"
+    }
+  ],
+  "fixtures": {
+    "boat": {
+      "reference": "baseline-01",
+      "seed": 42,
+      "prompt": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+    },
+    "marble": {
+      "reference": "speed-oracle-marble",
+      "seed": 17,
+      "prompt": "A clear blue glass marble rolls slowly across a light wooden tabletop. Fixed close-up camera, soft window light, detailed reflections, quiet rolling sound."
+    },
+    "bird": {
+      "reference": "speed-oracle-bird",
+      "seed": 123,
+      "prompt": "A small yellow bird perched on a leafy branch turns its head slightly. Static camera, soft morning light, green garden background, a single quiet chirp."
+    }
+  },
+  "purpose": "bounded same-process encoder screen; four warm samples per arm, no promoted speed claim",
+  "minimum_output": [
+    256,
+    256
+  ],
+  "frames": 25,
+  "fps": 24,
+  "initialization": "first request of each arm includes any component reload/initialization; excluded from warm timing",
+  "retention": "all four tensors compared before pruning raw archive; at most three passed review previews retained",
+  "failure_action": "halt new requests, preserve failure evidence and running server; no retry/restart"
+}

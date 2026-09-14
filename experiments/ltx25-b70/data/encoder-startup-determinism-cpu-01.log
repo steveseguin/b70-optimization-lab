@@ -1,0 +1,117 @@
+{
+  "passed": true,
+  "checks": {
+    "historical_preflight_was_strict": true,
+    "historical_main_import_reproduces_warn_only_reset": true,
+    "historical_has_no_after_import_receipt": true,
+    "fixed_before_main_is_strict": true,
+    "fixed_main_import_keeps_strict": true,
+    "actual_module_matches_pinned_source": true,
+    "both_runs_use_cpu_only": true,
+    "identity_env_bound_to_written_file": true,
+    "strict_receipt_bound_to_server_identity": true,
+    "strict_receipt_stage_and_flags_correct": true,
+    "fixed_import_warn_mode_then_restores_strict": true
+  },
+  "rows": [
+    {
+      "launcher": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-02/launch/serve-encoder.py",
+      "launcher_sha256": "9668e487ace20a8dc600d9c88fedd5df9eb7fef90f058437c8fcba19bbf3e619",
+      "model_management_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+      "watcher_started": false,
+      "server_started": false,
+      "scope": "Actual pinned model_management import and actual launcher post-preflight tail; CPU only",
+      "before_tail": {
+        "enabled": true,
+        "warn_only": false
+      },
+      "before_main_marker": {
+        "enabled": true,
+        "warn_only": false
+      },
+      "after_main_model_management_import": {
+        "enabled": true,
+        "warn_only": true
+      },
+      "actual_module_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+      "actual_device": "cpu",
+      "server_identity_sha256": "40b3e9831f4ba6e2c64a187b269510c9c34075e9907a43922fd56ac69c74859b",
+      "identity_env_matches_file": true,
+      "after_import_receipt": null,
+      "main_marker_reached": true,
+      "mocked_discovery_calls": {
+        "xpu_device_count": 1,
+        "xpu_is_available": 2,
+        "xpu_init": 0,
+        "cuda_init": 0,
+        "cuda_is_available": 2,
+        "mps_is_available": 1
+      },
+      "determinism_events": [
+        {
+          "enabled": true,
+          "warn_only": false
+        },
+        {
+          "enabled": true,
+          "warn_only": true
+        }
+      ]
+    },
+    {
+      "launcher": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/serve-encoder.py",
+      "launcher_sha256": "f4f87cdebcb808507edf8147c67043e5252bcf0ebb66efd78b95ea20eb8e2b37",
+      "model_management_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+      "watcher_started": false,
+      "server_started": false,
+      "scope": "Actual pinned model_management import and actual launcher post-preflight tail; CPU only",
+      "before_tail": {
+        "enabled": true,
+        "warn_only": false
+      },
+      "before_main_marker": {
+        "enabled": true,
+        "warn_only": false
+      },
+      "after_main_model_management_import": {
+        "enabled": true,
+        "warn_only": false
+      },
+      "actual_module_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+      "actual_device": "cpu",
+      "server_identity_sha256": "a47370881cf0f04957a801769b1b6b72b7d00d13ab0c6db048381f4db244aa54",
+      "identity_env_matches_file": true,
+      "after_import_receipt": {
+        "enabled": true,
+        "warn_only": false,
+        "stage": "after_model_management_import_before_main",
+        "server_identity_sha256": "a47370881cf0f04957a801769b1b6b72b7d00d13ab0c6db048381f4db244aa54"
+      },
+      "main_marker_reached": true,
+      "mocked_discovery_calls": {
+        "xpu_device_count": 1,
+        "xpu_is_available": 2,
+        "xpu_init": 0,
+        "cuda_init": 0,
+        "cuda_is_available": 2,
+        "mps_is_available": 1
+      },
+      "determinism_events": [
+        {
+          "enabled": true,
+          "warn_only": false
+        },
+        {
+          "enabled": true,
+          "warn_only": true
+        },
+        {
+          "enabled": true,
+          "warn_only": false
+        }
+      ]
+    }
+  ],
+  "driver_sha256": "731c8f62d2d64da77b0f6a2ad8fbcae3d38854ee999cfb663cde14fd6bb9d899",
+  "scope": "Regression of real import-order failure, not a server/watcher/GPU/clip qualification"
+}

@@ -1,0 +1,37 @@
+{
+  "classification": "diagnostic only; strict determinism gate failed and is not waived",
+  "names": [
+    "baseline-01",
+    "encoder-screen-01-r01-control-boat"
+  ],
+  "strict_flags": [
+    {
+      "enabled": true,
+      "warn_only": false
+    },
+    {
+      "enabled": true,
+      "warn_only": true
+    }
+  ],
+  "comparisons": {
+    "audio_latent": {
+      "bitwise_equal": true,
+      "finite": true
+    },
+    "images": {
+      "bitwise_equal": true,
+      "finite": true
+    },
+    "video_latent": {
+      "bitwise_equal": true,
+      "finite": true
+    },
+    "waveform": {
+      "bitwise_equal": true,
+      "finite": true
+    }
+  },
+  "all_tensor_hashes_recomputed": true,
+  "speed_promotion": false
+}
