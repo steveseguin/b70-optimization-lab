@@ -1,0 +1,97 @@
+{
+  "schema": "neural.download.dflash2-static-feasibility.v1",
+  "observed_at": "2026-09-14T13:12:46.366129+00:00",
+  "scope": "Read-only runtime source inspection and public metadata; no GPU request, Torch import, install, weights download or runtime mutation. New audit files only.",
+  "runtime_image_id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+  "metadata_receipts": [
+    {
+      "path": "dflash2-hf-metadata.json",
+      "url": "https://huggingface.co/api/models/tcclaviger/Qwen3.8-27B-DFlash2-FP8/revision/ee0cb26a8279b7910cc28d82a8a3e15e4728d56f?blobs=true",
+      "bytes": 3628,
+      "sha256": "4efd78db8662d9f22e9d239a605f1d087bbc4103a0f77be5fe4fd4d0953d311f"
+    },
+    {
+      "path": "dflash2-config.json",
+      "url": "https://huggingface.co/tcclaviger/Qwen3.8-27B-DFlash2-FP8/raw/ee0cb26a8279b7910cc28d82a8a3e15e4728d56f/config.json",
+      "bytes": 3256,
+      "sha256": "5b5668a00b26aaebd88c7e3d961f7d1cdef025867fee158dfccb84f29fd8caec"
+    },
+    {
+      "path": "upstream-xpu-tags.json",
+      "url": "https://hub.docker.com/v2/repositories/vllm/vllm-openai-xpu/tags?page_size=5&ordering=last_updated",
+      "bytes": 4474,
+      "sha256": "c21e95c974d091c75c5646ab73cef265cc7275b1f4ac31e4911fb740d4c526da"
+    },
+    {
+      "path": "upstream-release.json",
+      "url": "https://api.github.com/repos/vllm-project/vllm/releases/latest",
+      "bytes": 51172,
+      "sha256": "3c4b4d9a42208790c0a1819332f96354bab284da05fb389e3b05946d2ee3d29a"
+    }
+  ],
+  "runtime_source_hashes": [
+    {
+      "path": "vllm/config/vllm.py",
+      "sha256": "788430b9211a5b0ccda0be565ad2a0f27e9069370f35d2b1f6a333a6ca135186"
+    },
+    {
+      "path": "vllm/config/speculative.py",
+      "sha256": "cf8fcd342b6e863bac18415705a0ec2864c12b9def8e23ee84ea3ab4ede19847"
+    },
+    {
+      "path": "vllm/sampling_params.py",
+      "sha256": "2aba9ebd1c3921d601dcf94ac6a1f726e5172fe991e313cd5a69d3eaa02013fa"
+    },
+    {
+      "path": "vllm/model_executor/models/qwen3_dflash2.py",
+      "sha256": "c141daa4b2059c0098224ac36471c2197b7052c100bef0a4dbc2ca79b627053f"
+    },
+    {
+      "path": "vllm/v1/worker/gpu/spec_decode/dflash2/speculator.py",
+      "sha256": "9ae6a9e27e8777d9590914cbc925d9cb3b66a3031e830abb468c7c4cb2295382"
+    },
+    {
+      "path": "vllm/v1/worker/gpu/spec_decode/dflash/utils.py",
+      "sha256": "cba41a772dd057a54fb38ad756c6a0780a847eb0cbbc6af2edac89a37bd39a3f"
+    },
+    {
+      "path": "vllm/v1/worker/gpu/model_runner.py",
+      "sha256": "d7bae5b05a2a9f02c1ba29f0b4b32434cee43c3b369d3985505d3f8ed89b461b"
+    }
+  ],
+  "no_spec_per_request": {
+    "supported": false,
+    "basis": "No disable field in SamplingParams or OpenAI Chat/Completion protocols. Dynamic batch schedule is launch-global and is not an established per-request V2 no-spec oracle. Trace replay explicitly rejects speculative servers."
+  },
+  "draft": {
+    "repo": "tcclaviger/Qwen3.8-27B-DFlash2-FP8",
+    "revision": "ee0cb26a8279b7910cc28d82a8a3e15e4728d56f",
+    "required_files": [
+      "config.json",
+      "model.safetensors"
+    ],
+    "weights_bytes": 2118882784,
+    "weights_sha256": "7dbb99a8d0120f502e66b256aa7c0866d933ceeee4a02463d9db591811e8404e"
+  },
+  "compilation": {
+    "static_v2_rejection": false,
+    "reason": "Existing profile uses VLLM_COMPILE with splitting_ops=[]; V2 unsupported list rejects STOCK_TORCH_COMPILE only. XPU graphs remain disabled. Actual compilation has not been tested."
+  },
+  "memory": {
+    "historical_live_startup_available_kv_gib_per_rank": 12.53,
+    "historical_live_startup_kv_tokens": 333111,
+    "configured_context": 33024,
+    "configured_active_requests": 1,
+    "fit_status": "Plausible, not measured. Keep0.95 utilization and33,024 context; automatic KV profiling should reduce excess cache. Do not preemptively shrink supported context."
+  },
+  "upstream": {
+    "latest_release": "v0.29.0",
+    "newest_observed_xpu_nightly_source": "dc36fcce902a63eab06c1b93a5c4a5ee178a0c56",
+    "nightly_index_digest": "sha256:fa0e2f3966f23d64e1532e45ce2eca2fef619fb63f93d5b9b13cb5bcc0743aec",
+    "nightly_amd64_digest": "sha256:28915aadfe9665dd70f1cf36e6f7362e25df24e9035785dedd00559652bbef41",
+    "rolling_base_required": true,
+    "pull_performed": false
+  },
+  "measured_speed_gain": null,
+  "exact_output_qualification": null
+}

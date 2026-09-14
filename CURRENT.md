@@ -25,6 +25,17 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 14: AMD transfer tests authorized.** The unchanged
+FP8 service at localhost:18124 passed 12/12 full-output reference checks and
+short/16K continuation controls. A newest-upstream candidate with the accepted
+arithmetic overlay is being built for a bounded projection-dispatch and DFlash2
+screen. The original service is still running during CPU preparation; one
+controlled maintenance transition will precede exclusive GPU testing. No new
+runtime or speed result is promoted. Evidence root:
+`/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914`.
+[Preregistration](experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-prereg.md).
+
+
 **LTX goal blocked on host recovery, September14.** The same kernel fault and
 pending-interrupt native clients were revalidated across three consecutive goal
 turns. Prepared source work is saved, but the next meaningful steps require a

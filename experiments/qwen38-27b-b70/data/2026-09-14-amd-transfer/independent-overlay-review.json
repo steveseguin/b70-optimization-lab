@@ -1,0 +1,129 @@
+{
+  "schema": "neural.download.static-overlay-independent-review.v1",
+  "observed_at": "2026-09-14T13:18:04.864568+00:00",
+  "reviewer": "dflash_transfer_feasibility",
+  "patch_sha256": "e557a01aa8a483036f5d2177d6f3a1a4b5dbd3902d3ea504a10454ad7d642c8c",
+  "upstream_commit": "dc36fcce902a63eab06c1b93a5c4a5ee178a0c56",
+  "candidate_hashes_checked": [
+    {
+      "path": "vllm/_xpu_ops.py",
+      "sha256": "69f16a33621208e2d90cd7e77f3a2f028bb3bd8e32ecd977faf09b88f10f2cad"
+    },
+    {
+      "path": "vllm/config/compilation.py",
+      "sha256": "c9cec5c7200e8e559810ec8c30113ad61dab6780f9f7fb3c116bd0d9b5a43065"
+    },
+    {
+      "path": "vllm/distributed/device_communicators/xpu_communicator.py",
+      "sha256": "5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d"
+    },
+    {
+      "path": "vllm/ir/ops/layernorm.py",
+      "sha256": "65d33dcb96404ddde273acf84ef901151a8155a2cffc144bdd0c49fe1d576a22"
+    },
+    {
+      "path": "vllm/model_executor/kernels/linear/mixed_precision/xpu.py",
+      "sha256": "8eb3cf7e9e24d8e7d28fdc1a4513277eb6724621eaa52c88b2e274d056c9b758"
+    },
+    {
+      "path": "vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+      "sha256": "7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208"
+    },
+    {
+      "path": "vllm/model_executor/layers/layernorm.py",
+      "sha256": "3f949e537ccc52744d7eba52ed2034b20ee3fbaeaabbfab4e672f1dc9767602c"
+    },
+    {
+      "path": "vllm/model_executor/layers/logits_processor.py",
+      "sha256": "6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f"
+    },
+    {
+      "path": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "sha256": "f4cc0a757b1d231817e7edd875c9a395c4ab4898d05fa7131df29f88656e0e17"
+    },
+    {
+      "path": "vllm/model_executor/layers/utils.py",
+      "sha256": "26ec8e3adb93b557307f0c5e28f9bec4d658e2745551e1880d6edaf12913616d"
+    },
+    {
+      "path": "vllm/model_executor/layers/vocab_parallel_embedding.py",
+      "sha256": "0316fb1d5284614c9167d63ec0e411013b67f24a22863eca1406e48572f48e69"
+    },
+    {
+      "path": "vllm/v1/attention/backends/flash_attn.py",
+      "sha256": "45e1f93ba0d90bf4c9b2dde258391bbbc4c9722a49834c0b27e0292e321bd50f"
+    },
+    {
+      "path": "vllm/v1/attention/backends/gdn_attn.py",
+      "sha256": "95b0a3c079cb63f04a1a0b78b290c7496c63cc5ebc4dc567962de335ea894b9a"
+    },
+    {
+      "path": "vllm/v1/spec_decode/llm_base_proposer.py",
+      "sha256": "3ba944d22365917c9481fcdc31b8be76f5203f25c4c2e6421cd126cb376ed952"
+    },
+    {
+      "path": "vllm/v1/worker/gpu_model_runner.py",
+      "sha256": "0e20c4393bc2dd8da1354999a631368498bb570f5ea65037dbf067c61a470743"
+    }
+  ],
+  "arithmetically_relevant_ast_checks": [
+    {
+      "path": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "node": "bind_kv_cache",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "node": "forward_xpu",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "node": "_deterministic_xpu_ba_prefill",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+      "node": "_deterministic_xpu_ba_prefill_fake",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/_xpu_ops.py",
+      "node": "_gdn_attention_core_xpu_impl",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/model_executor/layers/layernorm.py",
+      "node": "GemmaRMSNorm",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+      "node": "XPUFp8BlockScaledMMKernel",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/model_executor/layers/vocab_parallel_embedding.py",
+      "node": "make_xpu_int4_draft_copy",
+      "ast_identical_to_r304": true
+    },
+    {
+      "path": "vllm/model_executor/layers/utils.py",
+      "node": "dispatch_unquantized_gemm",
+      "ast_identical_to_r304": true
+    }
+  ],
+  "xccl_communicator_byte_identical_to_r304": true,
+  "concrete_merge_defects_found": [],
+  "scope_limit": "Static review only. Does not qualify native kernel ABI, compilation, V2 cache state or complete output parity. No GPU, Torch import or runtime edits.",
+  "head_review": "No target shortlist introduced. DFlash2 candidate must disable V1 INT4 draft-head flag and leave shortlist empty; do not mutate a target head shared with the draft. Existing separate-copy helper is preserved.",
+  "norm_review": "GemmaRMSNorm is imported as Qwen3_5RMSNorm by the target, so preserving its native forward_xpu path is relevant to Qwen arithmetic.",
+  "minimal_screen": {
+    "control": "Captured unchanged R304/V1/MTP1 qualified service outputs and current controls, retaining input token IDs and full output token IDs.",
+    "candidate": "One latest-base overlay/V2/DFlash2 process, all target precision and exact communication held constant.",
+    "stage1": "First fixed prompt in each of prose, code, analysis, operations, structured/documentation classes; 64 output tokens or natural EOS. Compare every token with same-reference prefix, cached_tokens=0. Add one-token and eight-token fresh-prefill fixtures if matching reference captured.",
+    "stage2": "Only if stage1 passes: existing real-content2K,8K,32K inputs with64 output tokens and same-reference prefix comparison.",
+    "stop_rule": "Any mismatch, nonzero cached tokens, request failure or host/GPU fault stops this screen; preserve first mismatch and incident. No restart chain.",
+    "interpretation": "A mismatch rejects the combined newbase/V2/DFlash2 configuration under unchanged-output goal; it does not identify DFlash2 or prove semantic degradation. A pass is screening only; no full512 suite, fresh-process determinism or promotion is established."
+  }
+}
