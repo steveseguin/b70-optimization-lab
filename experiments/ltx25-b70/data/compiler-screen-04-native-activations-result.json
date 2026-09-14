@@ -1,0 +1,124 @@
+{
+  "scope": "one native block24 in unchanged full LTX 2.5 clips; screening exactness, no speed promotion",
+  "passed": true,
+  "completed_clips": 9,
+  "compiled_clips": 5,
+  "native_stage_and_repeat_checks_passed": 2,
+  "native_block_calls_in_five_compiled_clips": 55,
+  "rows": [
+    {
+      "run": "compiler-screen-04-r01-eager-boat",
+      "mode": "eager",
+      "fixture": "boat",
+      "initialization": true,
+      "preview_ready_seconds": 92.21204726400038,
+      "client_seconds": 95.07114784600026,
+      "sampler_node_seconds": 36.340657115999875
+    },
+    {
+      "run": "compiler-screen-04-r02-eager-boat",
+      "mode": "eager",
+      "fixture": "boat",
+      "initialization": false,
+      "preview_ready_seconds": 8.611249106999821,
+      "client_seconds": 8.923365733999617,
+      "sampler_node_seconds": 3.5564610689998517
+    },
+    {
+      "run": "compiler-screen-04-r03-compiled-boat",
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": true,
+      "preview_ready_seconds": 45.108960474000014,
+      "client_seconds": 45.46565060800003,
+      "sampler_node_seconds": 41.90950354300003
+    },
+    {
+      "run": "compiler-screen-04-r04-compiled-boat",
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": false,
+      "preview_ready_seconds": 6.578554570000051,
+      "client_seconds": 6.580490403000113,
+      "sampler_node_seconds": 3.6679912529998546
+    },
+    {
+      "run": "compiler-screen-04-r05-compiled-marble",
+      "mode": "compiled",
+      "fixture": "marble",
+      "initialization": false,
+      "preview_ready_seconds": 6.635165492999931,
+      "client_seconds": 6.638278134999837,
+      "sampler_node_seconds": 3.661414788000002
+    },
+    {
+      "run": "compiler-screen-04-r06-compiled-bird",
+      "mode": "compiled",
+      "fixture": "bird",
+      "initialization": false,
+      "preview_ready_seconds": 6.6799040450000575,
+      "client_seconds": 7.030352071999914,
+      "sampler_node_seconds": 3.666374072999588
+    },
+    {
+      "run": "compiler-screen-04-r07-compiled-boat",
+      "mode": "compiled",
+      "fixture": "boat",
+      "initialization": false,
+      "preview_ready_seconds": 6.513470226999743,
+      "client_seconds": 6.515603320000082,
+      "sampler_node_seconds": 3.6325603109999065
+    },
+    {
+      "run": "compiler-screen-04-r08-restored-boat",
+      "mode": "restored",
+      "fixture": "boat",
+      "initialization": true,
+      "preview_ready_seconds": 6.489519887999904,
+      "client_seconds": 6.491631490000145,
+      "sampler_node_seconds": 3.6649829689999933
+    },
+    {
+      "run": "compiler-screen-04-r09-restored-boat",
+      "mode": "restored",
+      "fixture": "boat",
+      "initialization": false,
+      "preview_ready_seconds": 6.495027154000127,
+      "client_seconds": 6.89919738000026,
+      "sampler_node_seconds": 3.577527786000246
+    }
+  ],
+  "warm_compiled_median_preview_seconds": 6.606860031499991,
+  "timing_limitations": "One eager-before warm clip and drifting controls; warm compiled fixture mix differs from boat-only control. No demonstrated speed win.",
+  "generated_wrappers": [
+    {
+      "path": "encoder-server-compiler-05/inductor-cache/we/cweo4fyb22lfibw6o3znl32ekqf64acowii56hlhf6h6finev4jy.py",
+      "sha256": "49cad4e52ff5ff909f59237a2a3a53387e799e9ec26de98a56e5d27ed9f355cb",
+      "counts": {
+        "rms": 15,
+        "sigmoid": 6,
+        "gelu": 2
+      }
+    },
+    {
+      "path": "encoder-server-compiler-05/inductor-cache/lz/clzzwwovbinxtgrhnxbvmpewdhzn7oi5dsfbunmclboe33t2aj6h.py",
+      "sha256": "311b676d96e13045d2d0301b8822fe805a9f163fb6b365337509252c0855bcef",
+      "counts": {
+        "rms": 15,
+        "sigmoid": 6,
+        "gelu": 2
+      }
+    }
+  ],
+  "postflight": {
+    "queue_empty": true,
+    "kernel_fault_matches": 0,
+    "fault_latch_present": false,
+    "pid_present": true,
+    "endpoint_identity_matched": true,
+    "server_pid": 17769,
+    "boot_id": "8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a"
+  },
+  "real_time_goal_achieved": false,
+  "streaming_qualified": false
+}

@@ -25,21 +25,27 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September 14: native activation GPU comparison active.**
-One controlled application replacement completed after CPU qualification and
-source/client review. PID12199 exited cleanly; render devices and port cleared.
-PID17769 now serves `http://127.0.0.1:8188`, server `encoder-server-compiler-05`,
+**Four-B70 host, September 14: native block compilation exact; timing active.**
+PID17769 serves `http://127.0.0.1:8188`, server `encoder-server-compiler-05`,
 packet `prepared-encoder-compiler-05`, manifest
 `45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5`.
-Startup four-card health and strict after-import determinism passed; endpoint
-identity matched. No host reboot/settings change or FAULT latch. Bounded
-`compiler-screen-04` is active using v4; inspect its progress before new GPU
-requests. Native RMS/sigmoid/tanh-GELU are preserved inside compiled block24;
-all native stage/repeat, four-output and lifecycle gates remain unchanged.
-No native candidate quality or speed is yet claimed. This supersedes the idle
-PID12199 and inactive activation candidate statements below.
-[Prepared source](experiments/ltx25-b70/notes/native-activations-runtime-05-prepared.md),
-[CPU qualification](experiments/ltx25-b70/notes/native-activations-cpu-qualification-01.md).
+All nine compiler-screen-04 clips match all four original raw outputs. Five
+compiled clips covered three scenes; both native stages passed eager/compiled
+and compiled/repeat checks. Two emitted graphs each retain15 native RMS, six
+sigmoid and two tanh-GELU calls. This qualifies block24 only, with no demonstrated
+speed win (warm compiled median6.607s; restored boat about6.49s).
+Postflight: empty queue, matching identity, clean kernel and no FAULT latch.
+
+A bounded18-request `compiler-timing-01` is now active on the SAME process:
+two rounds of restored/compiled/restored per boat/marble/bird fixture. It reuses
+the qualified candidate, revalidates prior native/original-output evidence and
+keeps all live quality and retention gates. Inspect its progress before new GPU
+requests. No application reload occurred for this timing test. Continuous
+real-time generation remains incomplete.
+[Exact native results](experiments/ltx25-b70/notes/compiler-screen-04-results.md),
+[scaling/guard audit](experiments/ltx25-b70/notes/compiler-screen-04-conditional-scaling-audit.md),
+[prepared source](experiments/ltx25-b70/notes/native-activations-runtime-05-prepared.md).
+This supersedes all earlier process and failed-candidate state below.
 
 **Four-B70 host, September14: native RMS compiler successor running.** One
 controlled LTX application replacement completed: PID6502 exited cleanly after

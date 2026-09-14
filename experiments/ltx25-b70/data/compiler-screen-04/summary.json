@@ -1,0 +1,1646 @@
+{
+  "schema": "ltx25.compiler-native-export.v1",
+  "status": "passed",
+  "status_scope": "Copied final campaign status; exporter does not rerun qualification gates",
+  "campaign": "compiler-screen-04",
+  "server_run": "encoder-server-compiler-05",
+  "server_pid": 17769,
+  "server_boot_id": "8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a",
+  "source_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-05",
+  "source_packet_manifest_sha256": "45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5",
+  "planned_requests": 9,
+  "recorded_requests": 9,
+  "reported_row_counts": {
+    "eager": {
+      "passed": 2
+    },
+    "compiled": {
+      "passed": 5
+    },
+    "restored": {
+      "passed": 2
+    }
+  },
+  "failure_stage": null,
+  "reported_error": null,
+  "qualification_recomputed": false,
+  "speed_promotion": false,
+  "streaming_qualification": false,
+  "request_profiles": [
+    {
+      "run": "compiler-screen-04-r01-eager-boat",
+      "mode": "eager",
+      "status": "passed",
+      "initialization": true,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "c9b3e031-e6cf-4ef7-99ae-a052445ee325",
+        "seconds": 95.07114784600026,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.0062780230000498705,
+            "seconds": 20.89499450400035
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 20.9012725270004,
+            "seconds": 0.0004482909998841933
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 20.901720818000285,
+            "seconds": 0.00017249399979846203
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 20.901893312000084,
+            "seconds": 0.00014586399993277155
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 20.902039176000017,
+            "seconds": 0.00014923000026101363
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 20.902188406000278,
+            "seconds": 0.00010582899994915351
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 20.902294235000227,
+            "seconds": 7.82377010800019
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 28.726064343000417,
+            "seconds": 0.010989545999564143
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 28.73705388899998,
+            "seconds": 0.0001642480001464719
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 28.737218137000127,
+            "seconds": 0.0013562660001298354
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 28.738574403000257,
+            "seconds": 0.0003872960000990133
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 28.738961699000356,
+            "seconds": 0.00020925299986629398
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 28.739170952000222,
+            "seconds": 34.65535544400018
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 63.3945263960004,
+            "seconds": 0.001260455999727128
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 63.39578685200013,
+            "seconds": 5.813914474000285
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 69.20970132600041,
+            "seconds": 0.000933721999899717
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 69.21063504800031,
+            "seconds": 0.0004374709997136961
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 69.21107251900003,
+            "seconds": 0.0004568970002765127
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 69.2115294160003,
+            "seconds": 0.0003905329999724927
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 69.21191994900028,
+            "seconds": 0.009641516000101547
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 69.22156146500038,
+            "seconds": 1.6853016719996958
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 70.90686313700007,
+            "seconds": 0.0015375150001091242
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 70.90840065200018,
+            "seconds": 12.414495553000052
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 83.32289620500023,
+            "seconds": 8.60410564699987
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 91.9270018520001,
+            "seconds": 0.08742141199991238
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 92.01442326400002,
+            "seconds": 0.008384636000300816
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 92.02280790000032,
+            "seconds": 0.19214070899988656
+          }
+        ],
+        "preview_ready_seconds": 92.21204726400038,
+        "tensor_archive_ready_seconds": 91.99894652700004
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r01-eager-boat-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r02-eager-boat",
+      "mode": "eager",
+      "status": "passed",
+      "initialization": false,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "32897e16-1e55-48b5-9cb1-46110710ca05",
+        "seconds": 8.923365733999617,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.0060033969998585235,
+            "seconds": 0.0007714479997957824
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.006774844999654306,
+            "seconds": 0.05714067100007014
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.06391551599972445,
+            "seconds": 0.00033502799988127663
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.06425054399960572,
+            "seconds": 0.00021383200009950087
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.06446437599970523,
+            "seconds": 0.00029952200020488817
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.06476389799991011,
+            "seconds": 0.0005725949999941804
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.0653364929999043,
+            "seconds": 3.9807085079996796
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 4.046045000999584,
+            "seconds": 0.01477011000042694
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 4.060815111000011,
+            "seconds": 0.0002222269999947457
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 4.0610373380000055,
+            "seconds": 0.0026925629999823286
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.063729900999988,
+            "seconds": 0.0002445889999762585
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.063974489999964,
+            "seconds": 0.00016615200001979247
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.064140641999984,
+            "seconds": 2.561575237999932
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 6.625715879999916,
+            "seconds": 0.00028025599976899684
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 6.625996135999685,
+            "seconds": 0.025629841999943892
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 6.651625977999629,
+            "seconds": 0.0004911620003440476
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 6.652117139999973,
+            "seconds": 0.0002743049999480718
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 6.652391444999921,
+            "seconds": 0.00042053900006067124
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 6.652811983999982,
+            "seconds": 0.00035109899999952177
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 6.653163082999981,
+            "seconds": 0.00019359299994903267
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 6.65335667599993,
+            "seconds": 0.9948858309999196
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 7.64824250699985,
+            "seconds": 0.00031128399996305234
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 7.648553790999813,
+            "seconds": 0.18432752399985475
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 7.832881314999668,
+            "seconds": 0.6337616069999967
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 8.466642921999664,
+            "seconds": 0.020153613000275072
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 8.48679653499994,
+            "seconds": 0.0004622279998329759
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 8.487258762999772,
+            "seconds": 0.1242966179997893
+          }
+        ],
+        "preview_ready_seconds": 8.611249106999821,
+        "tensor_archive_ready_seconds": 8.486344777999875
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r02-eager-boat-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r03-compiled-boat",
+      "mode": "compiled",
+      "status": "passed",
+      "initialization": true,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "a359947b-c7ec-417d-ae5f-d4224b747b80",
+        "seconds": 45.46565060800003,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004098021000118024,
+            "seconds": 0.001188329999877169
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.005286350999995193,
+            "seconds": 0.0014416560002246115
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.0067280070002198045,
+            "seconds": 0.0002042629998868506
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.006932270000106655,
+            "seconds": 0.00013291999994180514
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.00706519000004846,
+            "seconds": 0.0002217960000052699
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.00728698600005373,
+            "seconds": 0.01750399100001232
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.02479097700006605,
+            "seconds": 1.8046324710003319
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.829423448000398,
+            "seconds": 0.020068904999789083
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.849492353000187,
+            "seconds": 0.00019729999985429458
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 1.8496896530000413,
+            "seconds": 0.30179594700030066
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 2.151485600000342,
+            "seconds": 0.0002344099998481397
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 2.15172001000019,
+            "seconds": 0.00015799599987076363
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 2.151878006000061,
+            "seconds": 31.390118305000215
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 33.541996311000275,
+            "seconds": 0.0003549059997567383
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 33.54235121700003,
+            "seconds": 0.0370445850003307
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 33.57939580200036,
+            "seconds": 0.00020357199991849484
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 33.57959937400028,
+            "seconds": 0.0002925589997175848
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 33.579891933,
+            "seconds": 0.00019546700013961527
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 33.58008740000014,
+            "seconds": 0.0002752260002125695
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 33.58036262600035,
+            "seconds": 0.00020555599985527806
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 33.580568182000206,
+            "seconds": 10.519385237999813
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 44.09995342000002,
+            "seconds": 0.00032612200038784067
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 44.10027954200041,
+            "seconds": 0.19621470999982193
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 44.29649425200023,
+            "seconds": 0.6683234289998836
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 44.96481768100011,
+            "seconds": 0.02324149900005068
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 44.988059180000164,
+            "seconds": 0.0008458070001324813
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 44.988904987000296,
+            "seconds": 0.12041952999970817
+          }
+        ],
+        "preview_ready_seconds": 45.108960474000014,
+        "tensor_archive_ready_seconds": 44.987670981000065
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r03-compiled-boat-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r04-compiled-boat",
+      "mode": "compiled",
+      "status": "passed",
+      "initialization": false,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "ac228c6f-066c-4f21-a635-549ebf925957",
+        "seconds": 6.580490403000113,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.0055133269997895695,
+            "seconds": 0.003495691000352963
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.009009018000142532,
+            "seconds": 0.0003538639998623694
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.009362882000004902,
+            "seconds": 0.0002655079997566645
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.009628389999761566,
+            "seconds": 0.00016119300016725902
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.009789582999928825,
+            "seconds": 0.01004295800021282
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.019832541000141646,
+            "seconds": 0.00021243899982437142
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.020044979999966017,
+            "seconds": 1.8403600769997865
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8604050569997526,
+            "seconds": 0.01347709300034694
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8738821500000995,
+            "seconds": 0.00021674699974028044
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 1.8740988969998398,
+            "seconds": 0.0010088429999086657
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8751077399997484,
+            "seconds": 0.00023440000040864106
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.875342140000157,
+            "seconds": 0.00020888199969704146
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8755510219998541,
+            "seconds": 2.6181688619999477
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.493719883999802,
+            "seconds": 0.00022098499994172016
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.4939408689997435,
+            "seconds": 0.038050101000408176
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.531990970000152,
+            "seconds": 0.00021496399995157844
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.532205934000103,
+            "seconds": 0.00018962500007546623
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.532395559000179,
+            "seconds": 0.0002911969995693653
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.532686755999748,
+            "seconds": 0.00020476400004554307
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.532891519999794,
+            "seconds": 0.00018799300005412078
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.533079512999848,
+            "seconds": 1.049822390999907
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.582901903999755,
+            "seconds": 0.00028793000001314795
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.583189833999768,
+            "seconds": 0.20576473200026157
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 5.7889545660000294,
+            "seconds": 0.6434727569999268
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.432427322999956,
+            "seconds": 0.02030539899988071
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.452732721999837,
+            "seconds": 0.009357511999951384
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.462090233999788,
+            "seconds": 0.11697251000032338
+          }
+        ],
+        "preview_ready_seconds": 6.578554570000051,
+        "tensor_archive_ready_seconds": 6.452384388000155
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r04-compiled-boat-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r05-compiled-marble",
+      "mode": "compiled",
+      "status": "passed",
+      "initialization": false,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "5e74d3d7-2b89-435d-b048-95b604126db8",
+        "seconds": 6.638278134999837,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.0048446820001117885,
+            "seconds": 0.014545828999871446
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.019390510999983235,
+            "seconds": 0.0011007059997609758
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.02049121699974421,
+            "seconds": 0.00024522000012439094
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.0207364369998686,
+            "seconds": 0.00018673000022317865
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.02092316700009178,
+            "seconds": 0.00038635600003544823
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.02130952300012723,
+            "seconds": 0.019786603999818908
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.041096126999946136,
+            "seconds": 1.885498706999897
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.926594833999843,
+            "seconds": 0.016475770999932138
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.9430706049997752,
+            "seconds": 0.00030822799999441486
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 1.9433788329997697,
+            "seconds": 0.0014982620000409952
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.9448770949998107,
+            "seconds": 0.0002490370002306008
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.9451261320000413,
+            "seconds": 0.00019093899982181028
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.945317070999863,
+            "seconds": 2.6360514140001214
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.5813684849999845,
+            "seconds": 0.0006023299997650611
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.58197081499975,
+            "seconds": 0.025594184000055975
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.6075649989998055,
+            "seconds": 0.00023225600034493254
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.6077972550001505,
+            "seconds": 0.00034991699976671953
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.608147171999917,
+            "seconds": 0.00029317999997147126
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.608440351999889,
+            "seconds": 0.0003687220000756497
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.608809073999964,
+            "seconds": 0.00028555600010804483
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.609094630000072,
+            "seconds": 1.0253633739998804
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.634458003999953,
+            "seconds": 0.0003023869999196904
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.6347603909998725,
+            "seconds": 0.1896548670001721
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 5.824415258000045,
+            "seconds": 0.6534138319998419
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.4778290899998865,
+            "seconds": 0.023876531000041723
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.501705620999928,
+            "seconds": 0.00031532200000583543
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.502020942999934,
+            "seconds": 0.13452453999980207
+          }
+        ],
+        "preview_ready_seconds": 6.635165492999931,
+        "tensor_archive_ready_seconds": 6.501242741999704
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r05-compiled-marble-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r06-compiled-bird",
+      "mode": "compiled",
+      "status": "passed",
+      "initialization": false,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "e1386303-adfa-4131-b4c9-ba1c94b43185",
+        "seconds": 7.030352071999914,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.005064415000106237,
+            "seconds": 0.015650311000172223
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.02071472600027846,
+            "seconds": 0.00023680499998590676
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.020951531000264367,
+            "seconds": 0.00024591099963799934
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.021197441999902367,
+            "seconds": 0.0003559180004231166
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.021553360000325483,
+            "seconds": 0.11760686999969039
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.13916023000001587,
+            "seconds": 0.0012665469998864864
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.14042677699990236,
+            "seconds": 1.8538223210002798
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.9942490980001821,
+            "seconds": 0.01168028099982621
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 2.0059293790000083,
+            "seconds": 0.00020561600013024872
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 2.0061349950001386,
+            "seconds": 0.0017146879999927478
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 2.0078496830001313,
+            "seconds": 0.00034797299986166763
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 2.008197655999993,
+            "seconds": 0.00022561300011147978
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 2.0084232690001045,
+            "seconds": 2.626219683999807
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.634642952999911,
+            "seconds": 0.0002862670003196399
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.634929220000231,
+            "seconds": 0.025893114999689715
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.660822334999921,
+            "seconds": 0.00020486500034166966
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.661027200000262,
+            "seconds": 0.00027892299976883805
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.661306123000031,
+            "seconds": 0.00019073800012847641
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.66149686100016,
+            "seconds": 0.0002812180000546505
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.661778079000214,
+            "seconds": 0.0001920710001286352
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.661970150000343,
+            "seconds": 1.040154388999781
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.702124539000124,
+            "seconds": 0.00038099499988675234
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.702505534000011,
+            "seconds": 0.211181907000082
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 5.913687441000093,
+            "seconds": 0.6377141859998119
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.551401626999905,
+            "seconds": 0.021206770000389952
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.572608397000295,
+            "seconds": 0.0005008699999962118
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.573109267000291,
+            "seconds": 0.10708333000002312
+          }
+        ],
+        "preview_ready_seconds": 6.6799040450000575,
+        "tensor_archive_ready_seconds": 6.572239515000092
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r06-compiled-bird-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r07-compiled-boat",
+      "mode": "compiled",
+      "status": "passed",
+      "initialization": false,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "b545a0ba-936f-44e7-8072-3cf156eab0eb",
+        "seconds": 6.515603320000082,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004413212000144995,
+            "seconds": 0.001027628999963781
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.005440841000108776,
+            "seconds": 0.0011103739998361561
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.006551214999944932,
+            "seconds": 0.0001339909999842348
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.006685205999929167,
+            "seconds": 0.00016761500000939122
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.006852820999938558,
+            "seconds": 0.00014119500019660336
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.0069940160001351614,
+            "seconds": 0.00012121700001443969
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.007115233000149601,
+            "seconds": 1.8420455829996172
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8491608159997668,
+            "seconds": 0.012035398000080022
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8611962139998468,
+            "seconds": 0.00019732999999177991
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 1.8613935439998386,
+            "seconds": 0.0013621060002151353
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8627556500000537,
+            "seconds": 0.00016654299997753697
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.8629221930000313,
+            "seconds": 0.00020452299986573053
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.863126715999897,
+            "seconds": 2.602709182000126
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.465835898000023,
+            "seconds": 0.0003249299998060451
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.466160827999829,
+            "seconds": 0.03373118500030614
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.499892013000135,
+            "seconds": 0.00024129299981723307
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.500133305999952,
+            "seconds": 0.00029916099992988165
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.500432466999882,
+            "seconds": 0.0002045840001301258
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.500637051000012,
+            "seconds": 0.0002979689998028334
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.500935019999815,
+            "seconds": 0.00019868300023517804
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.5011337030000504,
+            "seconds": 1.0298511289997805
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.530984831999831,
+            "seconds": 0.000288572000044951
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.531273403999876,
+            "seconds": 0.23293904999991355
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 5.764212453999789,
+            "seconds": 0.6067556020002485
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.370968056000038,
+            "seconds": 0.019885619999968185
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.390853676000006,
+            "seconds": 0.0004798099998879479
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.391333485999894,
+            "seconds": 0.12258262800014563
+          }
+        ],
+        "preview_ready_seconds": 6.513470226999743,
+        "tensor_archive_ready_seconds": 6.390449196999725
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r07-compiled-boat-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r08-restored-boat",
+      "mode": "restored",
+      "status": "passed",
+      "initialization": true,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "3b92a4aa-d785-49ae-a273-e6a70d31b870",
+        "seconds": 6.491631490000145,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004365652999695158,
+            "seconds": 0.002875146000405948
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.007240799000101106,
+            "seconds": 0.000330409999605763
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.007571208999706869,
+            "seconds": 0.0002559600002314255
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.007827168999938294,
+            "seconds": 0.00024796500019874657
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.00807513400013704,
+            "seconds": 0.0001791969998521381
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.008254330999989179,
+            "seconds": 0.0068970839997746225
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.015151414999763801,
+            "seconds": 1.8261992770003417
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.8413506920001055,
+            "seconds": 0.011120620999918174
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.8524713130000237,
+            "seconds": 0.00019148899991705548
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 1.8526628019999407,
+            "seconds": 0.0021050000000286673
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.8547678019999694,
+            "seconds": 0.0002997530000357074
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.855067555000005,
+            "seconds": 0.0002167570000892738
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.8552843120000944,
+            "seconds": 2.641789407000033
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.497073719000127,
+            "seconds": 0.0001907579999169684
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.497264477000044,
+            "seconds": 0.023800016999757645
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.521064493999802,
+            "seconds": 0.00019313200027681887
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.521257626000079,
+            "seconds": 0.00029884099967603106
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.521556466999755,
+            "seconds": 0.00018413600037092692
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.521740603000126,
+            "seconds": 0.0002710379999371071
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.522011641000063,
+            "seconds": 0.0001912089996949362
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.522202849999758,
+            "seconds": 1.0231935619999604
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.545396411999718,
+            "seconds": 0.00033493800037831534
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.545731350000096,
+            "seconds": 0.1878798640000241
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 5.7336112140001205,
+            "seconds": 0.6151977339995938
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.348808947999714,
+            "seconds": 0.021941789000266
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.37075073699998,
+            "seconds": 0.00033218399994439096
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.371082920999925,
+            "seconds": 0.11887002899993604
+          }
+        ],
+        "preview_ready_seconds": 6.489519887999904,
+        "tensor_archive_ready_seconds": 6.370441507000123
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r08-restored-boat-parity.json"
+    },
+    {
+      "run": "compiler-screen-04-r09-restored-boat",
+      "mode": "restored",
+      "status": "passed",
+      "initialization": false,
+      "profile": {
+        "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+        "prompt_id": "593cbc50-78d4-46c1-af53-9caf750547ac",
+        "seconds": 6.89919738000026,
+        "nodes": [
+          {
+            "node": "420",
+            "class_type": "LTXResidentComponents",
+            "start_seconds": 0.004069276999871363,
+            "seconds": 0.0019681630001286976
+          },
+          {
+            "node": "366",
+            "class_type": "LTXVEmptyLatentAudio",
+            "start_seconds": 0.0060374400000000605,
+            "seconds": 0.000360156000169809
+          },
+          {
+            "node": "356",
+            "class_type": "EmptyLTXVLatentVideo",
+            "start_seconds": 0.0063975960001698695,
+            "seconds": 0.00029662699989785324
+          },
+          {
+            "node": "377",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 0.006694223000067723,
+            "seconds": 0.1100153809998119
+          },
+          {
+            "node": "404",
+            "class_type": "ManualSigmas",
+            "start_seconds": 0.11670960399987962,
+            "seconds": 0.0013893780001126288
+          },
+          {
+            "node": "352",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 0.11809898199999225,
+            "seconds": 0.0010759689998849353
+          },
+          {
+            "node": "364",
+            "class_type": "CLIPTextEncode",
+            "start_seconds": 0.11917495099987718,
+            "seconds": 1.8239217280001867
+          },
+          {
+            "node": "421",
+            "class_type": "LTXEncoderPlacementCheck",
+            "start_seconds": 1.9430966790000639,
+            "seconds": 0.01163850300008562
+          },
+          {
+            "node": "365",
+            "class_type": "LTXVConditioning",
+            "start_seconds": 1.9547351820001495,
+            "seconds": 0.0002037219996964268
+          },
+          {
+            "node": "422",
+            "class_type": "LTXCompileOneBlockGate",
+            "start_seconds": 1.954938903999846,
+            "seconds": 0.0013828850001118553
+          },
+          {
+            "node": "388",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 1.9563217889999578,
+            "seconds": 0.0001574860002619971
+          },
+          {
+            "node": "339",
+            "class_type": "RandomNoise",
+            "start_seconds": 1.9564792750002198,
+            "seconds": 0.00020865099986622226
+          },
+          {
+            "node": "344",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 1.956687926000086,
+            "seconds": 2.5589014890001636
+          },
+          {
+            "node": "367",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 4.51558941500025,
+            "seconds": 0.00023437999971065437
+          },
+          {
+            "node": "348",
+            "class_type": "LTXVLatentUpsampler",
+            "start_seconds": 4.51582379499996,
+            "seconds": 0.02354770300007658
+          },
+          {
+            "node": "340",
+            "class_type": "LTXVConcatAVLatent",
+            "start_seconds": 4.539371498000037,
+            "seconds": 0.000252714999987802
+          },
+          {
+            "node": "395",
+            "class_type": "ManualSigmas",
+            "start_seconds": 4.539624213000025,
+            "seconds": 0.00020002500014015823
+          },
+          {
+            "node": "341",
+            "class_type": "KSamplerSelect",
+            "start_seconds": 4.539824238000165,
+            "seconds": 0.0003363109999554581
+          },
+          {
+            "node": "391",
+            "class_type": "LTXVDualCFGGuider",
+            "start_seconds": 4.54016054900012,
+            "seconds": 0.0002479549998497532
+          },
+          {
+            "node": "338",
+            "class_type": "RandomNoise",
+            "start_seconds": 4.54040850399997,
+            "seconds": 0.0001980520000870456
+          },
+          {
+            "node": "368",
+            "class_type": "SamplerCustomAdvanced",
+            "start_seconds": 4.540606556000057,
+            "seconds": 1.0186262970000826
+          },
+          {
+            "node": "369",
+            "class_type": "LTXVSeparateAVLatent",
+            "start_seconds": 5.55923285300014,
+            "seconds": 0.000345328000094014
+          },
+          {
+            "node": "358",
+            "class_type": "LTXVAudioVAEDecode",
+            "start_seconds": 5.559578181000234,
+            "seconds": 0.17794861499987746
+          },
+          {
+            "node": "374",
+            "class_type": "VAEDecode",
+            "start_seconds": 5.737526796000111,
+            "seconds": 0.6176094980000926
+          },
+          {
+            "node": "414",
+            "class_type": "LTXBaselineCapture",
+            "start_seconds": 6.355136294000204,
+            "seconds": 0.019855302999985724
+          },
+          {
+            "node": "370",
+            "class_type": "CreateVideo",
+            "start_seconds": 6.374991597000189,
+            "seconds": 0.00045766899984300835
+          },
+          {
+            "node": "75",
+            "class_type": "SaveVideo",
+            "start_seconds": 6.375449266000032,
+            "seconds": 0.1199488739998742
+          }
+        ],
+        "preview_ready_seconds": 6.495027154000127,
+        "tensor_archive_ready_seconds": 6.374562201000117
+      },
+      "parity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-04/compiler-screen-04-r09-restored-boat-parity.json"
+    }
+  ],
+  "fault_latch_present_at_export": false,
+  "exported_text_files": 1440,
+  "source_text_bytes": 58487285,
+  "archive_bytes": 12942949,
+  "max_file_bytes": 16777216,
+  "max_total_source_bytes": 268435456,
+  "excluded": [
+    "raw tensors",
+    "media",
+    "compiler/cache binaries and serialized cache metadata"
+  ],
+  "exporter_sha256": "09694c9e1a4ac7d2526c81a29ddba63c9ba2d979364640e7d1d5411290f3b782",
+  "evidence_sha256": "229519b1abfbd4402429632f775bed87ca8d627deada8fb16c8f5e2ff8347d51"
+}
