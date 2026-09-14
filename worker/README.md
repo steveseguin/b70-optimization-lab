@@ -77,7 +77,8 @@ is a separate user action against the intended source commit.
 
 The default limits are 40 model steps, 20 minutes per task, 28K input tokens,
 2,048 output tokens per step, and three completion checks. No automatic context
-truncation hides earlier instructions. CPU commands have a 120-second limit and
+truncation hides earlier instructions. Three identical consecutive commands trigger corrective feedback; a fourth stops
+the task. CPU commands have a 120-second limit and
 10 KB returned output. See [config.json](config.json) for the fixed first profile.
 
 ## Stop
