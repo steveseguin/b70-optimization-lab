@@ -1,0 +1,545 @@
+--- /dev/null
++++ b/scripts/test-host-embedding-resident-lifecycle-cpu.py
+@@ -0,0 +1,243 @@
++#!/usr/bin/env python3
++"""Inactive guarded actual tiny-CPU resident lifecycle qualification. No compilation or accelerator access.
++
++Reuses the frozen integration process-local guards; native scheduling remains separate.
++--check-only is stdlib-only. Native CPU execution requires parent scheduling.
++"""
++import argparse
++import ast
++from datetime import datetime, timezone
++import hashlib
++import importlib.util
++import json
++import os
++from pathlib import Path
++import sys
++import time
++import traceback
++import unittest
++
++sys.dont_write_bytecode = True
++LANE = Path(__file__).resolve().parents[1]
++ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
++SOURCE = ROOT / 'prepared-encoder-na-axis-10/source'
++TRITON_UTILS = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_triton.py')
++HELPERS = {
++    'scripts/test-host-embedding-integration-cpu.py': '6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d',
++    'scripts/host_embedding_resident_node_v2.py': 'bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7',
++    'scripts/host_embedding_transition_memory.py': '707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86',
++    'scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py': '4e2d0d92eea345dcb0ae36a4143f7f0d8887dda5c996845c37c6eba30673ee73',
++    'scripts/test-host-embedding-candidate-cpu-v3.py': '1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca',
++    'scripts/host_embedding_clip_v2.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994',
++    'scripts/host_embedding_placement_node_v2.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b',
++    'scripts/test-host-embedding-integration-cpu-fixture.py': '2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e',
++    'scripts/cpu_comfy_import_policy_v1.py': '7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec',
++    'scripts/test-host-embedding-candidate-cpu-v2.py': '9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3',
++    'scripts/test-host-embedding-candidate-cpu.py': '2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534',
++    'scripts/test-host-embedding-candidate-cpu-fixture-v2.py': 'b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32',
++    'scripts/ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9',
++    'native-cpp-block-01/accelerator_guard_v2.py': 'b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce',
++    'native-cpp-block-01/cpu_import_policy_v3.py': '03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a',
++}
++COMFY_MANAGEMENT_SHA = 'ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd'
++CPU_QUALIFICATION = ROOT / 'host-embedding-cpu-v3-native-01/result.json'
++CPU_QUALIFICATION_SHA = 'eacb3389cc9fd8065c135bc6dea2a11b9b4263520c3d88f8096ce08f4c762948'
++INTEGRATION_QUALIFICATION = ROOT / 'host-embedding-cpu-integration-native-01/result.json'
++INTEGRATION_QUALIFICATION_SHA = 'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326'
++TRITON_SHA = '4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a'
++
++
++def require(value, message):
++    if not value:
++        raise RuntimeError(message)
++
++
++def sha(path):
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def load(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++def source_gate():
++    require(not (ROOT / 'FAULT.json').exists(), 'Fault latch prohibits native work')
++    for name, expected in HELPERS.items():
++        require(sha(LANE / name) == expected, 'Frozen helper changed: ' + name)
++    require(sha(SOURCE / 'comfy/model_management.py') == COMFY_MANAGEMENT_SHA, 'Pinned Comfy import source changed')
++    require(sha(TRITON_UTILS) == TRITON_SHA, 'Triton helper source changed')
++    tree = ast.parse((LANE / 'scripts/test-host-embedding-candidate-cpu-fixture-v2.py').read_text())
++    pins = ast.literal_eval(next(node.value for node in tree.body if isinstance(node, ast.Assign)
++        and any(isinstance(target, ast.Name) and target.id == 'PINS' for target in node.targets)))
++    pins.update({'comfy/sd.py': '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0',
++                 'scripts/encoder_diagnostics.py': 'f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a'})
++    require(sha(CPU_QUALIFICATION) == CPU_QUALIFICATION_SHA, 'Qualified CPU candidate receipt changed')
++    qualification = json.loads(CPU_QUALIFICATION.read_text())
++    require(qualification['status'] == 'passed-guarded-cpu-fixture' and qualification['tests_run'] == 6
++            and qualification['xpu_initialized'] is False and qualification['cuda_initialized'] is False
++            and qualification['final_guards_intact'] is True, 'Standalone CPU qualification missing')
++    require(sha(INTEGRATION_QUALIFICATION) == INTEGRATION_QUALIFICATION_SHA, 'Qualified CLIP integration receipt changed')
++    previous = json.loads(INTEGRATION_QUALIFICATION.read_text())
++    require(previous['status'] == 'passed-guarded-cpu-integration' and previous['tests_run'] == 6
++            and previous['xpu_initialized'] is False and previous['cuda_initialized'] is False
++            and previous['final_guards_intact'] is True, 'Actual CLIP integration qualification missing')
++    for name, expected in pins.items():
++        require(sha(SOURCE / name) == expected, 'Frozen actual source changed: ' + name)
++    return pins
++
++
++def write_exclusive(path, value):
++    with path.open('x') as stream:
++        json.dump(value, stream, indent=2)
++        stream.write('\n')
++        stream.flush()
++        os.fsync(stream.fileno())
++
++
++def install_backend_refusals(torch, triton_utils, report, guard):
++    """Block every backend lookup/compile attempt; never call originals."""
++    guard.require_clean(report)
++    require('backend_refusals' not in report, 'Backend refusal cannot be reinstalled')
++    report['backend_refusals'] = {'scope': 'All triton_backend and torch.compile calls forbidden; no compilation',
++                                  'attempts': [], 'tripped': False}
++    def make_trap(label):
++        def blocked(*args, **kwargs):
++            report['accelerator_guard_tripped'] = True
++            record = {'entry': label, 'pid': os.getpid(), 'phase': report.get('phase'),
++                      'monotonic_ns': time.monotonic_ns(), 'stack': traceback.format_stack(limit=24)}
++            report['backend_refusals']['tripped'] = True
++            report['backend_refusals']['attempts'].append(record)
++            raise guard.AcceleratorAccessBlocked('CPU embedding proof forbids ' + label)
++        return blocked
++    backend_trap = make_trap('torch.utils._triton.triton_backend')
++    compile_trap = make_trap('torch.compile')
++    triton_utils.triton_backend = backend_trap
++    torch.compile = compile_trap
++    def intact():
++        guard.require_clean(report)
++        require(triton_utils.triton_backend is backend_trap and torch.compile is compile_trap,
++                'CPU backend refusal identity changed')
++    intact()
++    return intact
++
++
++class StopOnFailureResult(unittest.TextTestResult):
++    def addError(self, test, error):
++        super().addError(test, error)
++        self.stop()
++
++    def addFailure(self, test, error):
++        super().addFailure(test, error)
++        self.stop()
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--evidence-dir', type=Path, required=True)
++    parser.add_argument('--check-only', action='store_true')
++    args = parser.parse_args()
++    directory = args.evidence_dir
++    require(directory.is_absolute() and directory.parent == ROOT and
++            directory.name.startswith('host-embedding-cpu-') and not directory.exists()
++            and not directory.is_symlink(), 'Evidence directory must be a new bounded absolute path')
++    directory.mkdir()
++    report = {'schema': 'ltx.host-embedding-resident-lifecycle-guarded-cpu.v1', 'status': 'failed',
++              'pid': os.getpid(), 'ppid': os.getppid(), 'command': list(sys.argv),
++              'phase': 'source-gate', 'torch_imported': False, 'tests_run': 0,
++              'native_gpu_requests': 0, 'compilation_permitted': False,
++              'driver_sha256': sha(Path(__file__)), 'helper_sha256s': HELPERS,
++              'candidate_cpu_receipt_sha256': CPU_QUALIFICATION_SHA,
++              'integration_cpu_receipt_sha256': INTEGRATION_QUALIFICATION_SHA,
++              'triton_utils_sha256': TRITON_SHA, 'comfy_model_management_sha256': COMFY_MANAGEMENT_SHA,
++              'scope': 'Actual tiny CPU CLIP loader registry and weakref lifecycle across resident modes; nonencoder owners and memory observations are fakes; no full model, GPU placement, real clip, speed or full-memory-peak qualification'}
++    torch = None
++    integrity = None
++    try:
++        require('torch' not in sys.modules, 'Fresh disposable interpreter required')
++        report['source_pins'] = source_gate()
++        startup = {**report, 'timestamp_utc': datetime.now(timezone.utc).isoformat(),
++            'proc_start_ticks': Path(f'/proc/{os.getpid()}/stat').read_text().split(') ')[1].split()[19],
++            'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
++            'status': 'startup-before-torch'}
++        write_exclusive(directory / 'startup-identity.json', startup)
++        report['startup_sha256'] = sha(directory / 'startup-identity.json')
++        if args.check_only:
++            report.update(status='passed-stdlib-source-check', phase='source-check-only', native_cpu_tests_executed=False)
++            return 0
++        report['phase'] = 'torch-import'
++        import torch as imported_torch
++        torch = imported_torch
++        report['torch_imported'] = True
++        guard = load('host_embedding_accelerator_guard', LANE / 'native-cpp-block-01/accelerator_guard_v2.py')
++        policy = load('host_embedding_cpu_import_policy', LANE / 'native-cpp-block-01/cpu_import_policy_v3.py')
++        guard.install(torch, report)
++        comfy_import_policy = load('host_embedding_comfy_import_policy', LANE / 'scripts/cpu_comfy_import_policy_v1.py')
++        import_controller = comfy_import_policy.ComfyImportPolicy(torch, report, guard,
++            model_management_source=SOURCE / 'comfy/model_management.py')
++        imports_complete = False
++        cpu_intact = policy.install(torch, report, guard)
++        report['phase'] = 'backend-refusal-install-before-Comfy'
++        import torch.utils._triton as triton_utils
++        require(Path(triton_utils.__file__).resolve() == TRITON_UTILS, 'Unexpected Triton helper module')
++        backend_intact = install_backend_refusals(torch, triton_utils, report, guard)
++        def integrity():
++            cpu_intact()
++            backend_intact()
++            import_controller.require_intact(require_complete=imports_complete)
++            require(not torch.xpu.is_initialized() and not torch.cuda.is_initialized(), 'Accelerator initialized')
++            require(not (ROOT / 'FAULT.json').exists(), 'Fault latch prohibits CPU work')
++        integrity()
++        report['phase'] = comfy_import_policy.EXPECTED_PHASE
++        fixture = load('guarded_host_embedding_resident_fixture', LANE / 'scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py')
++        import_controller.finish_import(sys.modules['comfy.model_management'])
++        imports_complete = True
++        integrity()
++        report['identity_after_import'] = {'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False}
++        report['cpu_policy_reuse_note'] = 'Frozen policy description mentions compiled arms; this driver permits only these CPU eager tests and rejects every compile/backend lookup.'
++        torch.set_num_threads(1)
++        torch.set_num_interop_threads(1)
++        torch.use_deterministic_algorithms(True, warn_only=False)
++        report['determinism'] = {'enabled': torch.are_deterministic_algorithms_enabled(),
++                                'warn_only': torch.is_deterministic_algorithms_warn_only_enabled()}
++        fixture.Tests.setUp = lambda self: integrity()
++        fixture.Tests.tearDown = lambda self: integrity()
++        report['phase'] = 'actual-CPU-tests'
++        with (directory / 'tests.log').open('x') as stream:
++            result = unittest.TextTestRunner(stream=stream, verbosity=2,
++                resultclass=StopOnFailureResult).run(unittest.defaultTestLoader.loadTestsFromTestCase(fixture.Tests))
++        write_exclusive(directory / 'fixture-evidence.json', fixture.EVIDENCE)
++        report['fixture_evidence_sha256'] = sha(directory / 'fixture-evidence.json')
++        report['test_names'] = list(fixture.TEST_NAMES)
++        report['test_skips'] = [reason for _, reason in result.skipped]
++        report['tests_run'] = result.testsRun
++        report['test_failures'] = [text for _, text in result.failures]
++        report['test_errors'] = [text for _, text in result.errors]
++        integrity()
++        require(source_gate() == report['source_pins'], 'Source identity changed during tests')
++        require(result.wasSuccessful() and result.testsRun == 6 and not result.skipped, 'CPU fixture failed; no retry')
++        report.update(status='passed-guarded-cpu-resident-lifecycle', phase='finished', native_cpu_tests_executed=True,
++                      identity_after_tests={'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False})
++        return 0
++    except BaseException as error:
++        report.update(status='failed', error=repr(error), traceback=traceback.format_exc())
++        return 1
++    finally:
++        if torch is not None:
++            report['xpu_initialized'] = bool(torch.xpu.is_initialized())
++            report['cuda_initialized'] = bool(torch.cuda.is_initialized())
++            if integrity is not None:
++                try:
++                    integrity()
++                    report['final_guards_intact'] = True
++                except BaseException as error:
++                    report.update(status='failed', final_guards_intact=False, final_guard_error=repr(error))
++        write_exclusive(directory / 'result.json', report)
++        if report['status'] == 'failed':
++            return 1
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+--- /dev/null
++++ b/scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py
+@@ -0,0 +1,198 @@
++"""Inactive actual tiny-CPU CLIP lifecycle proof; guarded driver import only.
++
++Nonencoder factory imports and host memory observations are explicit fakes.
++CLIP, candidate ownership, ModelPatcher loading and registry cleanup are actual.
++"""
++from contextlib import contextmanager, ExitStack
++import gc
++import hashlib
++import importlib.util
++import json
++from pathlib import Path
++import sys
++import tempfile
++import types
++import unittest
++from unittest.mock import patch
++import weakref
++
++LANE=Path(__file__).resolve().parents[1]
++
++def load(name,path):
++    spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec)
++    sys.modules[name]=m;spec.loader.exec_module(m);return m
++
++base=load('qualified_actual_clip_integration',LANE/'scripts/test-host-embedding-integration-cpu-fixture.py')
++torch,mm=base.torch,base.mm
++memory=load('host_embedding_transition_memory',LANE/'scripts/host_embedding_transition_memory.py')
++EVIDENCE=[]
++
++class Box:
++    def __init__(self,**kwargs):self.__dict__.update(kwargs)
++
++
++class Assembly:
++    def __init__(self,root):
++        self.root=Path(root);self.constructed=0;self.nonencoder_calls=[]
++        self.available=128*1024**3;self.weak_clips=[]
++        self.identity={'model_verification_sha256':'273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f',
++                       'server_identity_sha256':'CPU-fixture-no-server'}
++    def tiny_clip(self,**kwargs):
++        if kwargs['model_options'] != {'load_device':torch.device('xpu:2'),'offload_device':torch.device('cpu')}:
++            raise RuntimeError('Resident factory logical device contract changed')
++        # Physical CPU execution is deliberate fixture injection. The prior
++        # qualified factory test separately covers original initial-CPU options.
++        clip=base.adapted(kwargs['mode'])
++        self.constructed+=1;self.weak_clips.append(weakref.ref(clip));return clip
++    def unet(self,*args):
++        self.nonencoder_calls.append('diffusion')
++        return (Box(load_device=torch.device('cpu'),model=Box()),)
++    def vae(self,**kwargs):
++        self.nonencoder_calls.append('vae')
++        return Box(device=torch.device('cpu'),throw_exception_if_invalid=lambda:None)
++    def upscaler(self,*args):
++        self.nonencoder_calls.append('upscaler');return (Box(),)
++    def shard(self,model,**kwargs):
++        self.nonencoder_calls.append('shard');shard=Box(model=Box())
++        model.get_additional_models_with_key=lambda key:[shard]
++        model.ltx_layer_shard_report={'fixture':'nonencoder metadata only'};return model
++    def admit(self,stage,allocation):
++        return memory.admission(stage,allocation,snapshot={'source':'synthetic fixture MemAvailable; no large allocation',
++                                                          'bytes':{'MemAvailable':self.available}})
++    def exclusive(self,path,value,root):
++        with Path(path).open('x') as f:json.dump(value,f)
++
++
++@contextmanager
++def assembly(name):
++    with tempfile.TemporaryDirectory(prefix='host-resident-cpu-') as root, ExitStack() as stack:
++        a=Assembly(root)
++        # Stub only nonencoder construction modules; actual Comfy CLIP and memory
++        # manager stay installed and untouched throughout all loader operations.
++        stubs={n:types.ModuleType(n) for n in ('nodes','comfy_extras','comfy_extras.nodes_hunyuan','ltx_layer_shard')}
++        stubs['comfy_extras'].__path__=[]
++        stubs['nodes'].UNETLoader=lambda:Box(load_unet=a.unet)
++        stubs['comfy_extras.nodes_hunyuan'].LatentUpscaleModelLoader=Box(execute=a.upscaler)
++        stubs['ltx_layer_shard'].apply_layer_shard=a.shard
++        stack.enter_context(patch.dict(sys.modules,stubs))
++        module_name='resident_actual_cpu_'+name
++        resident=load(module_name,LANE/'scripts/host_embedding_resident_node_v2.py')
++        stack.enter_context(patch.object(resident,'load_clip',a.tiny_clip))
++        stack.enter_context(patch.object(resident,'_context',lambda root:(a.root,dict(a.identity))))
++        stack.enter_context(patch.object(resident,'ROOT',a.root))
++        stack.enter_context(patch.object(resident,'_exclusive_json',a.exclusive))
++        stack.enter_context(patch.object(resident,'checkpoint_geometry',lambda path:{
++            'construction_overlap_bytes':memory.CHECKPOINT_TENSOR_BYTES+memory.REGISTERED_STATE_BYTES,
++            'fixture_geometry_only':True}))
++        stack.enter_context(patch.object(resident,'admission',a.admit))
++        stack.enter_context(patch.object(resident.folder_paths,'get_full_path_or_raise',lambda *args:'fixture-no-weights'))
++        stack.enter_context(patch.object(resident.folder_paths,'get_folder_paths',lambda *args:[]))
++        stack.enter_context(patch.object(resident.comfy.sd,'VAE',a.vae))
++        stack.enter_context(patch.object(resident.comfy.utils,'load_torch_file',lambda *args,**kwargs:({},{})))
++        # A regression to device-wide unload is a hard test error. The actual
++        # native CPU loader and cleanup_models/loaded_models are NOT mocked.
++        stack.enter_context(patch.object(mm,'unload_all_models',side_effect=AssertionError('No bulk unload allowed')))
++        try:
++            with torch.inference_mode():
++                yield a,resident,resident.LTXHostEmbeddingComponents()
++        finally:
++            EVIDENCE.append({'case':name,'constructed_clips':a.constructed,'nonencoder_calls':a.nonencoder_calls,
++                'receipts':{p.name:json.loads(p.read_text()) for p in sorted(a.root.glob('*.json'))},
++                'fixture_scope':'Actual tiny CPU CLIP/model manager; nonencoder objects and memory observations are fakes'})
++            # Cleanup belongs to the disposable fixture only. Transition weakref
++            # assertions in the node have already run before this scope exits.
++            if resident._components is not None and not resident._components[1]._host_embedding.retired:
++                resident._components[1]._host_embedding.detach_restore(resident._components[1])
++            resident._components=None;resident._pending=[];resident._shared=None
++            sys.modules.pop(module_name,None)
++            gc.collect();mm.cleanup_models()
++
++
++def compute(clip):
++    actual=clip.encode_from_tokens(base.TOKENS,return_dict=True)['cond']
++    raw=base.base.raw(actual)
++    clip._host_embedding.consume_observations()
++    return (raw,str(actual.dtype),tuple(actual.shape),tuple(actual.stride()))
++
++
++def registry_ids():
++    return {id(p) for p in mm.loaded_models() if p is not None}
++
++
++class Tests(unittest.TestCase):
++    def test_actual_control_host_control_registry_death_and_exactness(self):
++        with assembly('roundtrip') as (a,m,node):
++            expected=None;shared=None;old_refs=None
++            for mode in ('control','host-table','control'):
++                outputs=node.load('split',mode)
++                clip=outputs[1]
++                result=compute(clip)
++                if expected is None:expected=result
++                self.assertEqual(result,expected)
++                ids=m.shared_identity(m._shared)
++                if shared is None:shared=ids
++                self.assertEqual(ids,shared)
++                if old_refs:
++                    self.assertTrue(all(ref() is None for ref in old_refs.values()))
++                    # Object IDs may be reused after replacement allocation.
++                    # The actual node checks native registry removal BEFORE it.
++                    release=json.loads((a.root/f'host-components-{m._generation:02d}-{mode}-retired-owner-release.json').read_text())
++                    self.assertTrue(release['retired_patcher_ids_absent_from_registry'])
++                owned={id(clip.patcher)}
++                if clip._host_embedding.owner is not None:
++                    owned.add(id(clip._host_embedding.owner.host))
++                self.assertTrue(owned <= registry_ids())
++                old_refs=m.retirement_refs(clip)
++                del clip,outputs
++            self.assertEqual(a.constructed,3)
++            self.assertEqual(a.nonencoder_calls,['diffusion','vae','vae','upscaler','shard'])
++            self.assertEqual(m._generation,3)
++            EVIDENCE.append({'case':'roundtrip-byte-oracle','dtype':expected[1],'shape':expected[2],
++                'stride':expected[3],'raw_sha256':hashlib.sha256(expected[0]).hexdigest(),
++                'scope':'Tiny CPU scaled-embedding/linear output only; no real clip or accelerator parity'})
++
++    def refused_owner(self,kind):
++        with assembly('survivor-'+kind) as (a,m,node):
++            outputs=node.load('split','host-table');clip=outputs[1];compute(clip)
++            if kind=='clone':held=clip.clone()
++            elif kind=='model':held=clip.cond_stage_model
++            else:held=outputs
++            del clip,outputs
++            with self.assertRaisesRegex(RuntimeError,'survived'):
++                node.load('split','control')
++            self.assertEqual(a.constructed,1);self.assertIsNotNone(m._shared);self.assertIsNotNone(m._failure)
++            with self.assertRaisesRegex(RuntimeError,'failed'):
++                node.load('split','control')
++            del held
++            gc.collect();mm.cleanup_models()
++
++    def test_external_actual_clone_refuses_replacement(self):self.refused_owner('clone')
++    def test_external_actual_model_refuses_replacement(self):self.refused_owner('model')
++    def test_external_output_tuple_refuses_replacement(self):self.refused_owner('tuple')
++
++    def test_restore_memory_refusal_before_retirement(self):
++        with assembly('restore-budget') as (a,m,node):
++            outputs=node.load('split','control');clip=outputs[1];compute(clip)
++            a.available=memory.EXISTING_HEADROOM_BYTES-1
++            with self.assertRaisesRegex(RuntimeError,'before-restore'):
++                node.load('split','host-table')
++            self.assertFalse(clip._host_embedding.retired)
++            self.assertEqual(a.constructed,1);self.assertIs(m._components,outputs)
++            self.assertFalse(list(a.root.glob('*-unload.json')))
++            del clip,outputs
++
++    def test_construction_memory_refusal_after_actual_owner_death(self):
++        with assembly('construction-budget') as (a,m,node):
++            outputs=node.load('split','host-table');clip=outputs[1];compute(clip)
++            refs=m.retirement_refs(clip)
++            ids={id(clip.patcher),id(clip._host_embedding.owner.host)}
++            del clip,outputs
++            a.available=memory.EXISTING_HEADROOM_BYTES+memory.REGISTERED_STATE_BYTES
++            with self.assertRaisesRegex(RuntimeError,'before-construction'):
++                node.load('split','control')
++            self.assertTrue(all(ref() is None for ref in refs.values()))
++            self.assertFalse(ids & registry_ids());self.assertEqual(a.constructed,1)
++            self.assertIsNotNone(m._shared);self.assertIsNone(m._components)
++
++
++TEST_NAMES=sorted(name for name in vars(Tests) if name.startswith('test_'))
+--- /dev/null
++++ b/scripts/test-host-embedding-resident-lifecycle-stdlib.py
+@@ -0,0 +1,95 @@
++#!/usr/bin/env python3
++"""Source identity and guard regression only; never import the native fixture."""
++import ast
++import hashlib
++import importlib.util
++import json
++from pathlib import Path
++import sys
++import unittest
++
++sys.dont_write_bytecode=True
++HERE=Path(__file__).resolve().parent
++DRIVER=HERE/'test-host-embedding-resident-lifecycle-cpu.py'
++FIXTURE=HERE/'test-host-embedding-resident-lifecycle-cpu-fixture.py'
++PREVIOUS=HERE/'test-host-embedding-integration-cpu.py'
++spec=importlib.util.spec_from_file_location('resident_lifecycle_source_driver',DRIVER)
++driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
++
++def definition(path,name):
++    return next(n for n in ast.parse(path.read_text()).body if isinstance(n,(ast.FunctionDef,ast.ClassDef)) and n.name==name)
++
++class Tests(unittest.TestCase):
++    def test_all_frozen_helper_and_native_source_pins(self):
++        for name,digest in driver.HELPERS.items():
++            self.assertEqual(driver.sha(driver.LANE/name),digest,name)
++        self.assertEqual(driver.sha(driver.SOURCE/'comfy/model_management.py'),driver.COMFY_MANAGEMENT_SHA)
++        self.assertEqual(driver.sha(driver.TRITON_UTILS),driver.TRITON_SHA)
++        original=ast.parse((HERE/'test-host-embedding-candidate-cpu-fixture-v2.py').read_text())
++        pins=ast.literal_eval(next(n.value for n in original.body if isinstance(n,ast.Assign) and any(isinstance(x,ast.Name) and x.id=='PINS' for x in n.targets)))
++        for name,digest in pins.items():self.assertEqual(driver.sha(driver.SOURCE/name),digest)
++        self.assertEqual(driver.sha(driver.SOURCE/'comfy/sd.py'),'41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0')
++    def test_actual_previous_cpu_qualification_bound(self):
++        self.assertEqual(driver.sha(driver.INTEGRATION_QUALIFICATION),driver.INTEGRATION_QUALIFICATION_SHA)
++        receipt=json.loads(driver.INTEGRATION_QUALIFICATION.read_text())
++        self.assertEqual(receipt['status'],'passed-guarded-cpu-integration')
++        self.assertEqual(receipt['tests_run'],6)
++        for name in ['host_embedding_clip_v2.py','host_embedding_placement_node_v2.py']:
++            self.assertEqual(receipt['helper_sha256s']['scripts/'+name],driver.HELPERS['scripts/'+name])
++    def test_fault_guard_is_exact_first_operation(self):
++        old=definition(PREVIOUS,'source_gate');new=definition(DRIVER,'source_gate')
++        self.assertEqual(ast.dump(old.body[0]),ast.dump(new.body[0]))
++        self.assertIn("ROOT / 'FAULT.json'",ast.unparse(new.body[0]))
++        # If a real latch exists, exercise its actual refusal without masking it.
++        if (driver.ROOT/'FAULT.json').exists():
++            with self.assertRaisesRegex(RuntimeError,'Fault latch'):driver.source_gate()
++        self.assertNotIn('torch',sys.modules)
++    def test_backend_and_failure_guards_unchanged(self):
++        for name in ['install_backend_refusals','StopOnFailureResult','write_exclusive']:
++            self.assertEqual(ast.dump(definition(DRIVER,name)),ast.dump(definition(PREVIOUS,name)),name)
++    def test_import_startup_and_guard_order_unchanged(self):
++        old=PREVIOUS.read_text();new=DRIVER.read_text()
++        start="        report['phase'] = 'torch-import'"
++        end="        fixture = load("
++        self.assertEqual(old[old.index(start):old.index(end)],new[new.index(start):new.index(end)])
++        for text in [old,new]:
++            self.assertLess(text.index("write_exclusive(directory / 'startup-identity.json'"),text.index('import torch as imported_torch'))
++            self.assertLess(text.index('if args.check_only:'),text.index('import torch as imported_torch'))
++            self.assertLess(text.index('report[\'source_pins\'] = source_gate()'),text.index('import torch as imported_torch'))
++    def test_actual_registry_functions_not_mocked(self):
++        text=FIXTURE.read_text();tree=ast.parse(text)
++        targets=[]
++        for n in ast.walk(tree):
++            if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr=='object' and len(n.args)>1 and isinstance(n.args[1],ast.Constant):
++                targets.append(n.args[1].value)
++        self.assertFalse({'load_models_gpu','loaded_models','cleanup_models','ModelPatcher','CLIP','retirement_refs','require_dead'} & set(targets))
++        self.assertIn('base.adapted',text);self.assertIn('mm.loaded_models()',text)
++        self.assertIn('mm.cleanup_models()',text);self.assertIn("clip.clone()",text)
++        self.assertIn("clip.cond_stage_model",text);self.assertIn("held=outputs",text)
++        self.assertNotIn('current_loaded_models',text)
++    def test_six_cases_raw_bytes_and_receipt_evidence(self):
++        cls=definition(FIXTURE,'Tests')
++        names=[n.name for n in cls.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
++        self.assertEqual(len(names),6)
++        text=FIXTURE.read_text()
++        for expected in ['base.base.raw(actual)','tuple(actual.stride())',"release['retired_patcher_ids_absent_from_registry']",
++                         'all(ref() is None for ref in old_refs.values())',"self.assertEqual(a.constructed,3)"]:
++            self.assertIn(expected,text)
++        d=DRIVER.read_text();self.assertIn("write_exclusive(directory / 'fixture-evidence.json', fixture.EVIDENCE)",d)
++        self.assertIn('result.testsRun == 6 and not result.skipped',d)
++        self.assertIn('passed-guarded-cpu-resident-lifecycle',d)
++    def test_memory_fakes_only_no_native_import_by_preparation(self):
++        text=FIXTURE.read_text()
++        self.assertIn("'fixture_geometry_only':True",text)
++        self.assertIn("'source':'synthetic fixture MemAvailable; no large allocation'",text)
++        self.assertNotIn('torch.empty(',text);self.assertNotIn('torch.zeros(',text)
++        self.assertNotIn('torch',sys.modules);self.assertFalse(any(k.startswith('comfy.') for k in sys.modules))
++
++if __name__=='__main__':
++    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
++    print(json.dumps({'status':'passed' if result.wasSuccessful() else 'failed','tests_run':result.testsRun,
++        'scope':'stdlib hashes/AST and existing fault refusal only; actual CPU fixture not imported or run',
++        'torch_imported':'torch' in sys.modules,'native_cpu_tests_executed':False,'endpoint_calls':0,
++        'fault_latch_present':(driver.ROOT/'FAULT.json').exists(),
++        'source_sha256s':{str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in [DRIVER,FIXTURE,Path(__file__)]}}))
++    raise SystemExit(0 if result.wasSuccessful() else 1)
