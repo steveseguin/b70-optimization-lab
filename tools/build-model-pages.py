@@ -148,6 +148,97 @@ def gb(value):
         return "—"
 
 
+def public_profile_label(profile):
+    """Keep experiment identifiers in evidence, while naming the measured task."""
+    if profile.get("public_label"):
+        return profile["public_label"]
+    raw = profile.get("label", "")
+    metric = profile.get("metric", "decode")
+    task = {"decode": "Writing speed", "aggregate_decode": "Total writing speed",
+            "prefill": "Reading speed (prefill)", "ttft": "Wait for the first token"}.get(metric, "Measured speed")
+    if "p95" in raw.lower():
+        task += " · 95% of requests finish waiting within this time"
+    elif "median" in raw.lower() and metric == "ttft":
+        task += " · middle result"
+    cards = re.search(r"\bTP(\d+)\b", raw, re.I)
+    parts = []
+    if cards:
+        parts.append(f"{cards[1]} GPU" + ("s" if cards[1] != "1" else ""))
+    elif re.search(r"two cards", raw, re.I):
+        parts.append("2 GPUs")
+    elif re.search(r"one (?:card|B70)", raw, re.I):
+        parts.append("1 GPU")
+    if profile.get("x_metric") == "speculative_tokens":
+        parts.append("different draft lengths")
+    elif re.search(r"scheduled|scheduled by batch", raw, re.I):
+        parts.append("automatic draft length")
+    else:
+        draft = re.search(r"MTP(?:[ -]*depth[ -]*)?(\d+)", raw, re.I)
+        if draft:
+            parts.append("no draft" if draft[1] == "0" else f"{draft[1]}-token draft")
+        elif re.search(r"no speculation|target.only", raw, re.I):
+            parts.append("no draft")
+    if profile.get("metric") == "prefill" and ("ttft" in raw.lower() or "divided by ttft" in profile.get("scope", "").lower()):
+        parts.append("estimated from first-token wait")
+    if "raw" in raw.lower():
+        parts.append("engine test")
+    if re.search(r"graph capture|graphs|graph on", raw, re.I):
+        parts.append("reused execution graphs")
+    if "high-capacity" in raw:
+        parts.append("high user capacity")
+    kv = re.search(r"with (F16|Q8_0) KV", raw)
+    if kv:
+        parts.append("16-bit memory" if kv[1] == "F16" else "8-bit memory")
+    return task + (" · " + " · ".join(parts) if parts else "")
+
+
+def public_profile_scope(profile):
+    if profile.get("public_scope"):
+        return profile["public_scope"]
+    metric = profile.get("metric")
+    raw = profile.get("label", "").lower()
+    scope = profile.get("scope", "").lower()
+    if metric == "prefill" and ("ttft" in raw or "effective" in raw or "divided by ttft" in scope):
+        return "Approximate reading rate: input tokens divided by the wait for the first token. This includes waiting time, so it differs from server prefill speed."
+    if metric == "prefill" and "pp2048" in raw:
+        return "Engine test: reading 2,048 new tokens with different amounts of text already in memory. Zero means empty memory before reading."
+    if "repeated-token" in scope:
+        return "Test input repeats the same token; it is not normal text. " + ("Speed comes from server prompt-reading counters." if metric == "prefill" else "See the linked test for settings.")
+    if metric == "decode" and "raw" in raw:
+        return "Engine writing test with different amounts of text already in memory. Zero means empty memory before the test."
+    if profile.get("x_metric") == "concurrent_sequences" and "raw" in raw + scope:
+        return "Engine test with parallel sequences; the speed is their combined total." if metric == "aggregate_decode" else "Engine test with parallel sequences."
+    if profile.get("x_metric") == "concurrent_sequences":
+        text = "Measured with several users at once." + (" Speed is shared across all users." if metric == "aggregate_decode" else "")
+        if "eight active slots" in scope and "queued" in scope:
+            text = "Up to 8 users run at once; extra requests wait. Speed is the combined total."
+        if "batch-shape-dependent" in scope:
+            text += " Answers can change when users run together."
+        if "missing rungs failed" in scope:
+            text += " Only user counts that passed the answer checks are shown."
+        return text
+    if profile.get("x_metric") == "speculative_tokens":
+        return "A draft lets the model check several possible next tokens together. Zero means no draft."
+    return {"decode": "Writing speed after the answer starts, with different amounts of input text.",
+            "prefill": "How fast the server reads the input before writing an answer.",
+            "ttft": "How long the user waits for the answer to start."}.get(metric, "Measured points only.")
+
+
+def public_x_label(profile):
+    if profile.get("x_metric") == "concurrent_sequences":
+        raw_engine = "raw" in (profile.get("label", "") + profile.get("scope", "")).lower()
+        if raw_engine:
+            return "Parallel sequences (doubling scale)"
+        if "queued" in (profile.get("label", "") + profile.get("scope", "")).lower():
+            return "Requests, including waiting (doubling scale)"
+        return "Users at once (doubling scale)"
+    if profile.get("x_metric") == "speculative_tokens":
+        return "Draft length (tokens)"
+    if "raw" in profile.get("label", "").lower() and profile.get("metric") in ("decode", "prefill"):
+        return "Tokens already in memory"
+    return "Input length (tokens)"
+
+
 def svg_profile(profile):
     """Static SVG of one measured profile: exact points, straight connectors."""
     points = [p for p in profile.get("points", []) if isinstance(p.get("value"), (int, float))]
@@ -156,7 +247,7 @@ def svg_profile(profile):
     x_metric = profile.get("x_metric", "context_tokens")
     xs = [float(p.get(x_metric, 0)) for p in points]
     ys = [float(p["value"]) for p in points]
-    width, height, left, top, right, bottom = 640, 260, 64, 20, 20, 44
+    width, height, left, top, right, bottom = 640, 280, 64, 40, 20, 44
     import math
     # Context depth is a cardinal scale and should read linearly. Concurrency
     # ladders are conventionally powers of two, so retain log2 spacing there
@@ -175,30 +266,33 @@ def svg_profile(profile):
         return top + (1 - v / y1) * (height - top - bottom)
     path = " ".join(f"{'M' if i == 0 else 'L'}{sx(x):.1f},{sy(y):.1f}" for i, (x, y) in enumerate(zip(xs, ys)))
     dots = "".join(
-        f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="4" fill="var(--spot)"></circle>'
-        f'<text x="{sx(x):.1f}" y="{sy(y) - 9:.1f}" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">{fmt(y)}</text>'
-        for x, y in zip(xs, ys)
+        f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="4" fill="var(--spot)" tabindex="0"><title>{esc(public_x_label(profile))}: {x:g}; {y} {esc(profile.get("unit", "tok/s"))}</title></circle>'
+        f'<text x="{sx(x):.1f}" y="{sy(y) + (22 if i % 2 and sx(x) - sx(xs[i - 1]) < 55 and sy(y) < height - bottom - 25 else -9):.1f}" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">{fmt(y)}</text>'
+        for i, (x, y) in enumerate(zip(xs, ys))
     )
     def x_tick(v):
         v = int(v)
         if x_metric == "concurrent_sequences":
             return str(v)
         if x_metric == "speculative_tokens":
-            return f"MTP{v}"
+            return str(v)
         if v < 2:
             return "0"
         return f"{v // 1024}K" if v >= 1024 and v % 1024 == 0 else (f"{v / 1024:.1f}K" if v >= 1024 else str(v))
     ticks = "".join(
-        f'<text x="{sx(x):.1f}" y="{height - 24}" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">{x_tick(x)}</text>'
+        f'<text x="{sx(x):.1f}" y="{height - 24}" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">{x_tick(x)}</text>'
         for x in xs
     )
     unit = profile.get("unit", "tok/s")
-    label = profile.get("label") or profile.get("id", "")
+    label = public_profile_label(profile)
+    y_metric = {"decode": "Writing speed", "aggregate_decode": "Total writing speed", "prefill": "Reading speed", "ttft": "Wait"}.get(profile.get("metric"), "Rate")
+    display_unit = {"tok/s": "tokens/s", "s": "seconds", "ms": "milliseconds"}.get(unit, unit)
     return (
-        f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" aria-label="{esc(label)}" xmlns="http://www.w3.org/2000/svg">'
+        f'<svg class="{"dense-plot" if len(points) > 4 else "short-plot"}" viewBox="0 0 {width} {height}" width="100%" role="img" aria-label="{esc(label)}" xmlns="http://www.w3.org/2000/svg">'
+        f'<text x="{left}" y="16" font-size="14" font-family="var(--mono)" fill="var(--muted)">{esc(y_metric)} ({esc(display_unit)})</text>'
         f'<line x1="{left}" y1="{sy(0):.1f}" x2="{width - right}" y2="{sy(0):.1f}" stroke="var(--ink)" stroke-width="2"></line>'
         f'<path d="{path}" fill="none" stroke="var(--spot)" stroke-width="3"></path>{dots}{ticks}'
-        f'<text x="{left}" y="{height - 6}" font-size="11" font-family="var(--mono)" fill="var(--muted)">{esc(profile.get("x_label", "Context tokens"))}{" · log2 spacing" if x_metric == "concurrent_sequences" else ""} · y: {esc(unit)}</text>'
+        f'<text x="{left}" y="{height - 6}" font-size="14" font-family="var(--mono)" fill="var(--muted)">{esc(public_x_label(profile))}</text>'
         f"</svg>"
     )
 
@@ -264,16 +358,14 @@ def page(pkg, all_pkgs, family=None):
     facts = [
         ("Model", f"{lib.get('model_family', '')} {lib.get('variant', '')}".strip()),
         ("Publisher", lib.get("publisher", "")),
-        ("Checkpoint", model.get("repository", "")),
         ("Compression", lib.get("quantization", "")),
         ("Software", lib.get("runtime_label", "")),
         ("Cards", f"{hw.get('cards', 1)}× {hw.get('accelerator', 'Intel Arc Pro B70')}"),
-        ("Model weight bytes", gb(hw.get("model_weight_bytes") or hw.get("target_model_bytes"))),
+        ("Model download", gb(hw.get("model_weight_bytes") or hw.get("target_model_bytes"))),
         ("Operating systems", ", ".join(lib.get("operating_systems", []))),
         ("Delivery", ", ".join("Docker / container" if v == "container" else v for v in lib.get("delivery", []))),
         ("Good for", "\u0000USE_CHIPS\u0000"),
-        ("Published", lib.get("published_at", "")),
-        ("Clean-host replay", "yes" if pkg.get("clean_host_tested") else "not yet"),
+        ("Fresh install tested", "yes" if pkg.get("clean_host_tested") else "not yet — follow the guide carefully"),
     ]
     use_chips = "".join(f'<span class="use-chip">{esc(u)}</span> ' for u in lib.get("use_cases", [])) or "—"
 
@@ -284,47 +376,49 @@ def page(pkg, all_pkgs, family=None):
 
     facts_html = "".join(f"<div><dt>{esc(k)}</dt><dd>{fact_dd(v)}</dd></div>" for k, v in facts)
     profiles = [p for p in (pkg.get("performance_profiles") or []) if p.get("points")]
-    context_profiles = [p for p in profiles if p.get("x_metric", "context_tokens") != "concurrent_sequences"]
+    context_profiles = [p for p in profiles if p.get("x_metric", "context_tokens") != "concurrent_sequences" and p.get("metric") != "prefill"]
     concurrent_profiles = [p for p in profiles if p.get("x_metric") == "concurrent_sequences"]
+    prefill_profiles = [p for p in profiles if p.get("metric") == "prefill" and p.get("x_metric") != "concurrent_sequences"]
 
     def render_profiles(items):
-        return "".join(
-        f'<figure class="chart"><h4>{esc(p.get("label") or p.get("id"))} <span class="badge lab">Lab-measured</span></h4>{svg_profile(p)}'
-        f'<figcaption>{esc(p.get("scope", ""))}' + (f' <a class="inline" href="{GITHUB}{esc(p["evidence"])}">evidence</a>' if p.get("evidence") else "") + "</figcaption></figure>"
-        for p in items
-        )
+        rendered = []
+        for number, profile in enumerate(items, 1):
+            evidence = (f'<a class="inline" href="{GITHUB}{esc(profile["evidence"])}">Test details on GitHub</a>' if profile.get("evidence") else "")
+            rows = "".join(f'<tr><td>{esc(point.get(profile.get("x_metric", "context_tokens"), "—"))}</td><td>{esc(point["value"])}</td><td>{esc(point.get("samples", point.get("n", "See test details")))}</td></tr>' for point in profile["points"])
+            rendered.append(f'<details class="profile"><summary>{esc(public_profile_label(profile))} <small>· test {number}</small></summary><figure class="chart">{svg_profile(profile)}'
+                            + ('<p class="graph-scroll-hint">Scroll sideways for the full graph.</p>' if len(profile["points"]) > 4 else '')
+                            + f'<figcaption>{esc(public_profile_scope(profile))} {evidence}</figcaption></figure>'
+                            f'<details class="exact-values"><summary>Exact measured values</summary><div class="table-scroll"><table><thead><tr><th>{esc(public_x_label(profile))}</th><th>{esc(profile.get("unit", "tok/s"))}</th><th>Samples</th></tr></thead><tbody>{rows}</tbody></table></div></details></details>')
+        return "".join(rendered)
 
     profiles_html = render_profiles(context_profiles)
     concurrent_profiles_html = render_profiles(concurrent_profiles)
-    evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">proof file</a>' if fm.get("evidence") else ""
-    # Plain words for the measurement vocabulary the scope line uses.
-    GLOSS = [
-        ("target-only", "target-only = no draft model assisting"),
-        ("cache-zero", "cache-zero = a fresh start, nothing pre-computed"),
-        ("99-interval", "99-interval median = the middle rate across 99 measured stretches of a long answer"),
-        ("tg128", "tg128 = a raw 128-token generation benchmark, not the headline suite"),
-        ("MTP", "MTP = multi-token prediction, a small draft the main model verifies"),
-        ("oracle", "oracle = the fixed prompt set whose exact outputs are checked"),
-    ]
-    scope_text = f"{fm.get('scope', '')} {name}"
-    gloss_bits = [words for term, words in GLOSS if term.lower() in scope_text.lower()]
-    scope_gloss = f'<p class="scope-gloss">{esc(" · ".join(gloss_bits))}</p>' if gloss_bits else ""
-    missing = pkg.get("missing") or []
-    missing_html = ""
-    if missing:
-        items = "".join(f"<li>{esc(m if isinstance(m, str) else m.get('item') or m.get('description') or json.dumps(m))}</li>" for m in missing[:8])
-        missing_html = f'<div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul>{items}</ul></div>'
-    limitations = pkg.get("known_limitations") or []
-    limitations_html = ""
-    if limitations:
-        items = "".join(
-            f"<li>{esc(item if isinstance(item, str) else json.dumps(item))}</li>"
-            for item in limitations[:8]
-        )
-        limitations_html = (
-            '<div class="limitations"><p class="limitations-tag">What to know</p>'
-            f'<ul>{items}</ul></div>'
-        )
+    prefill_highlight = ""
+    for profile in prefill_profiles:
+        if profile.get("id") != "short-prompt-server-prefill-control":
+            continue
+        point = next((point for point in profile["points"] if point.get("context_tokens") == 512), None)
+        if point:
+            setting = profile.get("operating_profile", {})
+            cards = setting.get("tensor_parallel_size", hw.get("cards", 1))
+            draft = setting.get("speculative_tokens")
+            draft_note = f" · {draft}-token draft" if draft is not None else ""
+            prefill_highlight = (f'<div class="measured"><span class="big">{esc(fmt(point["value"]))}</span><span class="unit">input tokens/s</span></div>'
+                                 f'<p class="scope">512 input tokens · one user · {esc(cards)} GPU(s){esc(draft_note)}. Separate short-input test; no saved prompt cache.</p>')
+    prefill_section = '<h2 id="prefill">Reading speed (prefill)</h2>' + prefill_highlight + (render_profiles(prefill_profiles) or '<p>Not measured yet for this setup.</p>')
+    evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">Test details on GitHub</a>' if fm.get("evidence") else ""
+    missing_html = ('<p class="missing">This setup still needs installation checks. <a class="inline" href="' + GITHUB + esc(pkg.get("guide", "")) + '">See what remains in the guide.</a></p>') if pkg.get("missing") else ""
+    caveats = []
+    limitations = " ".join(str(item) for item in pkg.get("known_limitations", [])).lower()
+    if re.search(r"exact|determin|quality|identit|diverg|incorrect|mismatch", limitations):
+        caveats.append("Matching answers are only verified for the tested settings.")
+    if re.search(r"concurr|multi.user|users|batch", limitations):
+        caveats.append("Tested user counts depend on the chosen settings.")
+    if re.search(r"context|prompt.length|long.prompt", limitations):
+        caveats.append("Longer inputs may need different settings.")
+    caveat = lib.get("public_caveat") or " ".join(caveats[:2]) or "Some settings have known limits."
+    limitations_html = (f'<p class="limitations">{esc(caveat)} <a class="inline" href="{GITHUB}{esc(pkg.get("guide", ""))}">Read the limits before choosing settings.</a></p>') if pkg.get("known_limitations") else ""
+
     related = [p for p in all_pkgs if p["id"] != pid and p["library"].get("model_family") == lib.get("model_family")][:4]
     related_html = "".join(
         f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else missing_headline_label(p["library"]))} · {esc(p["library"].get("runtime_label", ""))}</span></a>'
@@ -372,24 +466,8 @@ def page(pkg, all_pkgs, family=None):
         "@type": "BreadcrumbList",
         "itemListElement": crumb_items,
     }
-    if profiles_html:
-        profiles_section = '<h2 id="profiles">Measured performance profiles <span class="badge lab">Lab-measured</span></h2>' + profiles_html
-    else:
-        profiles_section = ('<h2 id="profiles">Measured performance profiles <span class="badge todo">Not published</span></h2>'
-                            '<div class="placeholder"><p>No qualified structured context or depth profile is published for this package. '
-                            'Diagnostic evidence may still be linked under “What to know” or in the full guide; nothing is estimated in its place'
-                            + (' — the clearly labeled projection block below is the current best guess.' if ml else '.')
-                            + '</p></div>')
-    if concurrent_profiles_html:
-        multiuser_section = ('<h2 id="multi-user">Many people at once <span class="badge lab">Lab-measured</span></h2>'
-                             + concurrent_profiles_html)
-    else:
-        multiuser_section = ('<h2 id="multi-user">Many people at once <span class="badge todo">Not published</span></h2>'
-                             '<div class="placeholder"><p>No qualified multi-user aggregate profile is published for this exact package. '
-                             'Diagnostic or unsupported boundaries may still appear under “What to know” or in the full guide. '
-                             'Nothing is interpolated or promoted from a different model, quantization, runtime, or card count'
-                             + ('; the projection below remains clearly labeled as projected.' if exact_projection_workload else '.')
-                             + '</p></div>')
+    profiles_section = '<h2 id="profiles">Writing speed and waiting time</h2>' + (profiles_html or '<p>Long-input tests are not published yet for this setup.</p>')
+    multiuser_section = '<h2 id="multi-user">Many people at once</h2>' + (concurrent_profiles_html or '<p>Multi-user tests are not published yet for this setup.</p>')
     projection_html = ""
     if exact_projection_workload:
         projection_html = f"""
@@ -415,12 +493,12 @@ def page(pkg, all_pkgs, family=None):
   <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div>"""
     measured_html = (
         f'<h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>'
-        f'<div class="measured"><span class="big">{esc(fmt(fm.get("value")))}</span><span class="unit">{esc(fm.get("unit", "tok/s"))} {esc(fm.get("label", "decode"))}</span></div>'
-        f'<p class="scope">{esc(fm.get("scope", ""))} {evidence_link}</p>{scope_gloss}'
+        f'<div class="measured"><span class="big">{esc(fmt(fm.get("value")))}</span><span class="unit">{esc(fm.get("unit", "tok/s"))} writing speed</span></div>'
+        f'<p class="scope">{esc(public_profile_label({"metric": "decode", "label": fm.get("label", "")}))}. {evidence_link}</p>'
         if has_featured_metric
         else (
             f'<h2 id="measured">Public headline <span class="badge todo">{"Withheld" if "withheld" in missing_label else "Pending"}</span></h2>'
-            f'<div class="placeholder"><p>{esc(benchmark_status)} Diagnostic measurements remain in the guide and evidence, but none is presented as the package headline.</p></div>'
+            '<div class="placeholder"><p>A checked headline speed is not available yet. See the guide for test results and remaining checks.</p></div>'
         )
     )
     seo_title = (
@@ -449,6 +527,18 @@ def page(pkg, all_pkgs, family=None):
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
+  .profile {{ margin: 10px 0; border: 1px solid var(--line); padding: 10px 14px; }}
+  .profile summary {{ cursor: pointer; font-weight: 700; }}
+  .profile small {{ color: var(--muted); font-weight: 400; }}
+  .table-scroll {{ overflow-x: auto; }}
+  .exact-values {{ margin: 12px 0; }}
+  .chart {{ overflow-x: auto; }}
+  .graph-scroll-hint {{ display: none; }}
+  @media (max-width: 600px) {{
+    .chart .short-plot text {{ font-size: 24px; }}
+    .chart .dense-plot {{ min-width: 560px; }}
+    .graph-scroll-hint {{ display: block; font-size: 12px; }}
+  }}
   .facts {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }}
   .facts div {{ min-width: 0; }}
   .facts dt {{ font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }}
@@ -517,7 +607,7 @@ def page(pkg, all_pkgs, family=None):
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / {f'<a href="{family_href}">{esc(family_label)}</a> / ' if family else ''}{esc(lib.get('variant') or lib.get('model_family', ''))}</p>
   <p class="eyebrow">{esc(status)} · {esc(lib.get('runtime_label', ''))} · {esc(hw.get('cards', 1))}× Intel Arc Pro B70</p>
   <h1>{esc(name)}</h1>
-  <p>{esc(lib.get('summary', ''))}</p>
+  <p>{esc(lib.get("public_summary") or f"{lib.get('model_family', '')} {lib.get('variant', '')} running on {hw.get('cards', 1)} Intel Arc Pro B70 GPU(s).")}</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page"{ml_attrs}>
@@ -532,9 +622,11 @@ def page(pkg, all_pkgs, family=None):
   <dl class="facts">{facts_html}</dl>
 {missing_html}
 {limitations_html}
+{prefill_section}
+<p class="scope">Tokens are pieces of words. Higher tokens per second means faster reading or writing; a shorter wait is better. Each test uses its own settings. Drafts are checked by the main model. Open a test to see its graph and exact values.</p>
 {profiles_section}
 {multiuser_section}
-{projection_html}
+<details class="profile"><summary>Speed estimates</summary>{projection_html}</details>
 
   <div class="related">
     <h2>Keep going</h2>
@@ -578,7 +670,7 @@ def page(pkg, all_pkgs, family=None):
 def index_page(pkgs, families):
     family_rows = "".join(
         f'<a class="guide-card family-card" href="{esc(f["id"])}.html"><div class="gc-top"><div class="gc-n">Model family · {esc(len(f.get("weight_revisions") or []))} revision{"s" if len(f.get("weight_revisions") or []) != 1 else ""} · {esc(len(f.get("packets") or []))} packet{"s" if len(f.get("packets") or []) != 1 else ""}</div><h3>{esc(f.get("display_name") or f.get("name"))}</h3></div>'
-        f'<div class="gc-body"><p>{esc(f.get("summary", ""))}</p><p class="gc-meta"><strong>{esc(family_topology(f))}</strong> · {esc(family_speedup(f))} · context, KV, graph, quant, prefill, TTFT, quality</p></div><div class="gc-go">Open the model page →</div></a>'
+        f'<div class="gc-body"><p>Compare tested sizes and setups.</p><p class="gc-meta"><strong>{esc(family_topology(f))}</strong> · {esc(family_speedup(f))} · reading and writing speeds</p></div><div class="gc-go">Open the model page →</div></a>'
         for f in sorted(families, key=lambda item: (item.get("display_name") or item.get("name", "")).casefold())
     )
     display_pkgs = sorted(
@@ -592,7 +684,7 @@ def index_page(pkgs, families):
     )
     rows = "".join(
         f'<a class="guide-card" href="{esc(p["id"])}.html"><div class="gc-top"><div class="gc-n">{esc(STATUS_LABEL.get(p.get("status"), p.get("status", "")))} · {esc(p["library"].get("runtime_label", ""))}</div><h3>{esc(p["name"])}</h3></div>'
-        f'<div class="gc-body"><p>{esc(p["library"].get("summary", ""))}</p><p class="gc-meta"><strong>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else missing_headline_label(p["library"]))}</strong>{" measured" if p["library"].get("featured_metric") else ""} · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
+        f'<div class="gc-body"><p>{esc(p["library"].get("public_summary") or (p["library"].get("model_family", "") + " " + p["library"].get("variant", "")))}</p><p class="gc-meta"><strong>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else missing_headline_label(p["library"]))}</strong>{" measured" if p["library"].get("featured_metric") else ""} · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
         for p in display_pkgs
     )
     return f"""<!doctype html>
@@ -633,16 +725,16 @@ def index_page(pkgs, families):
 </div></div>
 <header class="hero"><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / Models</p>
-  <p class="eyebrow">Families first · quantizations are deployment variants</p>
+  <p class="eyebrow">Models and tested setups</p>
   <h1>Models</h1>
-  <p>Start with the model family, then choose weights, quantization, cards, context, runtime, and speed-up. Mini graphs show decode, prefill, TTFT, quality, and gaps without turning every permutation into another model.</p>
+  <p>Choose a model, then compare the tested setups. See how fast each reads your prompt and writes an answer.</p>
 </div></header>
 <main id="main"><div class="wrap">
   <h2 class="section-title">Model families</h2>
-  <p class="section-note">Shape-compatible weight updates share implementation work, while every measurement stays pinned to its exact checkpoint and runtime.</p>
+  <p class="section-note">Start here to compare sizes and versions of the same model.</p>
   <div class="guide-cards">{family_rows}</div>
-  <h2 class="section-title">Deployment packets</h2>
-  <p class="section-note">Measured quantized variants, recipes, and research packets at their honest maturity. Speed is one field, not the sorting rule.</p>
+  <h2 class="section-title">Tested setups</h2>
+  <p class="section-note">Choose the software, model size and number of GPUs that fit your needs. Each setup links to its tests and installation guide.</p>
   <div class="guide-cards">{rows}</div>
 </div></main>
 <footer><div class="wrap">
