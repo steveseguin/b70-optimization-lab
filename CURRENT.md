@@ -35,6 +35,8 @@ launched. The active task is storage/download review and LTX bring-up planning;
 prior queued four-card launch instructions are superseded. See the
 [pivot and storage review](notes/2026-09-13-ltx25-focus-and-storage-review.md).
 
+**2026-09-13 19:51 EDT, two-B70 host:** user-authorized short-context prefill measurement and optimization screen for 4B/9B W4A16 and 27B FP8/INT4. One model/endpoint at a time, c1, 128/256/512 input tokens, unchanged precision and decode path. Preflight passed both GPUs and XCCL. See [preregistration](experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-prereg.md). 4B, 9B and27B INT4 completed A/B/A and strict12/12 with clean postflights; final27B FP8 TP2 experimental endpoint is starting on localhost18141. Raw logs and identity are under `/mnt/fast-ai/bench-results/qwen-short-prefill-20260913/`.
+
 **2026-09-13 19:32 EDT, two-B70 host: R308 work complete.** The optional
 single-request repair for Qwen3.5 4B and 9B is published, anonymously pullable,
 and verified on the live site. Both models passed 60/60 oracle checks,
