@@ -99,3 +99,24 @@ The integration review also corrected history loss after malformed action
 responses. The full assistant answer and reasoning now precede the correction
 message. This harness fix applies to both candidate profiles. All 67 CPU tests
 passed before task generation.
+
+## Bounded recovery correction
+
+The initial screen is frozen in `data/2026-09-14-profile-screen`. Thinking-low
+passed all three acceptance checks, but independent review rejected the zero-cost
+patch's stale engine cache version. The readable-observation attempts all stopped
+on two malformed XML replies before any tool command or observation occurred.
+Their first request/output matches the historical attempt exactly. The shared
+format-recovery change preserved the invalid assistant reply; the legacy worker
+omitted it from the next request while retaining the raw response and metadata.
+These attempts do not establish an observation-format effect.
+
+Restore legacy nonthinking format recovery; retain full thinking history in the
+thinking adapter. Verify both paths with CPU tests and preserve the first packet.
+Then allow **one corrected pass of the same readable-observation profile on the
+same three tasks**, in `/mnt/fast-ai/bench-results/local-worker-readable-20260914`.
+This is a bounded harness repair, with no new sampling candidate or task hints.
+No further correction/retry rounds follow. The original expansion rule applies
+only if that corrected profile passes all three independent reviews. Keep the
+original acceptance fixtures unchanged during comparisons; a stronger prospective
+zero-cost gate will be published separately, without relabeling prior patches.

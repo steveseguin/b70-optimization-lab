@@ -197,4 +197,21 @@ class LocalModelTests(unittest.TestCase):
             self.assertEqual(generate['messages'][1]['reasoning'],'Useful reasoning')
             self.assertIn('Expected exactly 1 action',generate['messages'][2]['content'])
 
+    def test_nonthinking_format_recovery_preserves_legacy_request_history(self):
+        from minisweagent.exceptions import FormatError
+        with tempfile.TemporaryDirectory() as directory:
+            model=MODULE.LocalModel('http://127.0.0.1:18124','qwen',Path(directory)/'requests')
+            model.opener=ThinkingOpener(content='<tool_call>unsupported native format</tool_call>')
+            history=[{'role':'user','content':'Fix it'}]
+            with self.assertRaises(FormatError) as caught:model.query(history)
+            recovery=list(caught.exception.messages)
+            self.assertEqual([message['role'] for message in recovery],['user'])
+            self.assertEqual(recovery[0]['extra']['model_response'],'<tool_call>unsupported native format</tool_call>')
+            model.opener.content='```bash\necho safe\n```'
+            answer=model.query(history+recovery)
+            self.assertEqual(answer['extra']['actions'],[{'command':'echo safe'}])
+            payload=json.loads((model.out/'002/request.json').read_text())
+            self.assertEqual([message['role'] for message in payload['messages']],['user','user'])
+            self.assertNotIn('<tool_call>',str(payload['messages']))
+
 if __name__=='__main__':unittest.main()

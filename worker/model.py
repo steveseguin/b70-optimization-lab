@@ -92,11 +92,12 @@ class LocalModel:
         try:
             actions=parse_regex_actions(answer,action_regex=r'```bash[ \t]*\n(.*?)\n```',format_error_template='Return exactly one bash command block. {{error}}')
         except FormatError as exc:
-            # Preserve the complete assistant turn before requesting a correction.
-            # No action from a malformed answer is executed.
+            # Thinking turns need their reasoning history for the next request.
+            # Keep legacy nonthinking recovery: the rejected text stays in raw
+            # evidence and error metadata, but is not replayed as an assistant turn.
             result['action_format_valid']=False
             self.wire.write_json(directory/'response.json',result)
-            exc.messages=(message,*exc.messages)
+            if self.thinking:exc.messages=(message,*exc.messages)
             raise
         result['action_ready_s']=time.perf_counter()-generation_started
         result['action_format_valid']=True
