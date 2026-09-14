@@ -25,19 +25,24 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14: native multiblock screen running on packet06.**
-PID39793 serves `http://127.0.0.1:8188`, manifest
+**Four-B70 host, September14: multiblock screen complete; exact but slower.**
+PID39793 serves `http://127.0.0.1:8188` on packet06, manifest
 `3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394`.
-All four startup device checks and strict after-import determinism passed.
-PID17769 exited cleanly after oneSIGINT; old render ownership cleared. Same
-host boot, no reboot/reset or host-setting changes. The32-request bounded
-`multiblock-screen-01` client is running (exec6245; server exec38020).
-Inspect campaign progress and actual process state before new requests.
-Original/compiled/restored choices will test single24, boundary4 and all48;
-no current candidate native speed result is claimed. Fault/failure halts new
-requests without restarting the application. [Client and gates](experiments/ltx25-b70/notes/multiblock-native-client-01.md),
-[migration/startup evidence](experiments/ltx25-b70/data/multiblock-migration-06/startup.json).
-This supersedes earlier PID17769/live packet05 statements below.
+All 32 clips passed all four original raw-output comparisons, including all48
+compiled blocks. Median all48 penalty was +1.303 seconds versus adjacent
+restored controls; no speed promotion. The client exited zero. The application
+is idle on restored dispatch, queue empty, kernel postflight clean and no FAULT
+latch; all three compiled selections remain retained. Server exec38020.
+PID17769 exited after one SIGINT; same host boot, no computer reboot, driver
+reset or power/memory-setting changes. [Native results](experiments/ltx25-b70/notes/multiblock-screen-01-results.md).
+
+The next inactive adjacent-state reuse03 patch passed all 60 CPU checks for
+both parent and candidate, preserving three validation boundaries while
+removing two adjacent duplicate state checks per block call. Native quality
+and speed remain pending. Prepare its sealed runtime and bounded comparison,
+then perform any necessary controlled application reload within authorized work.
+[Patch and CPU evidence](experiments/ltx25-b70/notes/adjacent-state-reuse-03-cpu.md).
+This supersedes earlier process, inactive-packet and running-client statements below.
 
 **Four-B70 host, September 14: native block compilation exact; paired timing complete.**
 PID17769 serves `http://127.0.0.1:8188`, server `encoder-server-compiler-05`,

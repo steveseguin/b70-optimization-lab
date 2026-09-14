@@ -3,16 +3,15 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
-Current September14: packet05 PID17769 remains idle on restored dispatch after
-27 exact full clips. One-block compilation is exact but slower in matched timing
-(+99.797 ms median preview); see [paired result](notes/compiler-timing-01-results.md).
-A multi-block successor passed54 CPU lifecycle checks, then the actual composed
-five-block CPU test hit the unchanged eight-graph compiler limit. A private
-per-block entry fix then passed all10 stage graphs and exact eager/repeat checks;
-packet06 is prepared and inactive. No new native speed result or application
-reload is claimed. [CPU fix and packet](notes/multiblock-private-entry-02.md).
-CURRENT.md remains authoritative; historical incident/process statements below
-are superseded by its verified current state.
+Current September14: packet06 PID39793 is idle on restored dispatch after
+32 exact full clips, including all48 compiled blocks. All three selections are
+retained. All48 warm previews took about 7.8 seconds and lost a median 1.303
+seconds against adjacent restored controls; no speed promotion. Queue and
+kernel postflight are clean, with no FAULT latch. See [native screen results](notes/multiblock-screen-01-results.md).
+The inactive [adjacent-state reuse03 candidate](notes/adjacent-state-reuse-03-cpu.md)
+passed all 60 CPU checks in both parent and candidate. Native GPU quality and
+speed remain pending; immutable runtime and bounded client preparation proceed.
+CURRENT.md remains authoritative; historical process statements below are superseded.
 
 Historical September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)
 halted the first eager control of the subsequent compiler campaign after graph
