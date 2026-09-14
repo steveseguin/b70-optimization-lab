@@ -1,4 +1,106 @@
-# Qwen3.8 27B FP8 — two-B70 candidate package
+# Run Qwen3.8 27B official FP8 on two B70s
+
+Start here for the lab's recommended FP8 setup: **two Intel Arc Pro B70
+32 GiB cards, one active user, fixed MTP depth 1, and 33,024 total tokens**.
+That allows a 32,768-token input with 256 tokens left for the answer; shorter
+inputs leave more room for answers. MTP drafts tokens that the target verifies.
+The official FP8 checkpoint and target arithmetic are unchanged.
+
+You need Linux with working Intel GPU drivers, Docker, Python 3, both cards
+available, and room for the 30.9 GB model plus the container and compile cache.
+The scripts do not install drivers. Independent-host installation remains
+untested; this is a candidate portable recipe.
+
+## Download and start
+
+From a checkout of this repository, download the pinned weights (or use your
+existing matching model directory):
+
+```bash
+MODEL_DIR=/absolute/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/download-model.sh
+```
+
+Pull the exact public runtime once:
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
+```
+
+The image name includes INT4 because the two model packages share a runtime;
+this command serves the official **FP8** weights. Start with a new state directory:
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/fp8-session --port 18124
+```
+
+Leave this terminal running. Initial verification, model loading, and compilation
+take time. Wait for the helper to print that the endpoint is ready. The helper
+checks the pinned model and runtime, fixes the qualified settings, preserves
+logs, and refuses competing GPU work. It never restarts the server automatically.
+
+## Connect, check, and stop
+
+Use an OpenAI-compatible client with base URL `http://127.0.0.1:18124/v1`.
+The model name is printed at startup and available from `/v1/models`.
+From another terminal:
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /absolute/path/fp8-session
+curl -fsS http://127.0.0.1:18124/v1/models
+```
+
+Keep requests sequential for this configuration. Its capacity includes the
+chat template, conversation history, and answer. Keep some room for the answer
+instead of filling the entire context with input.
+
+Stop with Ctrl-C in the serving terminal, or:
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /absolute/path/fp8-session
+```
+
+Stop verifies the recorded container identity before acting. Logs and status
+stay in the state directory. If startup or a request fails, inspect those logs
+and resolve the cause before a new manually started session with a new state
+directory. A GPU fault ends this session; do not send more requests.
+
+## What performance means here
+
+Reading speed (prefill) describes processing your input. Writing speed (decode)
+describes producing the answer. HTTP first-token wait also includes the API and
+network overhead. These measurements have separate configuration labels:
+
+- The current runtime's qualified one-user MTP1 strict tests measured about
+  **54.8 output tokens/s**. [Runtime qualification](../../experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md).
+- A separate **4,096-token capacity** profile measured **2,857 input tokens/s
+  at 512 input tokens** and **3,679 at 2,048**. HTTP first-token waits were
+  182 and 568 ms. These are not measurements of the 33,024-capacity launcher.
+  [Prefill results and graphs](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md).
+- The **86.18 output tokens/s** historical record uses an older runtime and
+  MTP depth 5. It is an advanced configuration, not this launcher's expected rate.
+
+Prompt caching is off. Existing 2K–32K continuation checks matched all 18
+reference outputs; they do not establish general document retrieval accuracy.
+A clean-directory practical replay of this entry point is being recorded in
+[this bounded test plan](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-prereg.md).
+
+## Reproduce and inspect
+
+The [full reproduction guide](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md)
+retains strict benchmark commands and historical variants. The recommended
+runtime's public source/build closure is the shared
+[publication manifest, `chains.r304`](../../repro/qwen38-27b-autoround-int4-b70/publication-manifest.json).
+The older FP8 image builders below reproduce their own historical images.
+[package.json](package.json) records exact model, image, and evidence identities.
+[Compose](compose.yaml) is an optional generated view of the same recommended
+capacity and draft settings; the helper above owns the tested session lifecycle.
+
+<details>
+<summary>Historical configurations, results, and build commands</summary>
+
+The following records retain their original runtime and settings. Use the
+recommended commands above for the current one-user setup.
+
 
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
@@ -617,3 +719,5 @@ container output and the preflight output before changing settings. Do not
 silently reduce precision, context, memory policy, graph mode, or GPU count;
 that creates a different lane. Full beginner recovery and clean-host install
 instructions remain an explicit certification gap.
+
+</details>

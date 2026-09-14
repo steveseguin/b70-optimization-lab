@@ -77,6 +77,11 @@ forward.
 
 ## Representative Results and Public Packages
 
+The [official 27B FP8 quickstart](packages/qwen38-27b-fp8-tp2-b70/README.md)
+now selects one current runtime and a one-user MTP1 setup with 32K input
+capacity. Its helper provides persistent start, status, and owned stop commands.
+Historical higher-draft speed records keep their original configuration labels.
+
 Official **27B FP8 reading speed** now includes a 2,048-token prompt measurement
 and a final bounded profiling review. [Results and evidence](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md)
 cover two B70s, one user and fixed MTP1; no new optimization was promoted.

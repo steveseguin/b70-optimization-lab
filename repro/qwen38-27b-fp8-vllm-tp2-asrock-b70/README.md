@@ -1,5 +1,20 @@
 # Reproduce official Qwen3.8 27B FP8 TP2 on two B70s
 
+## Recommended one-user setup
+
+Use the [FP8 package quickstart](../../packages/qwen38-27b-fp8-tp2-b70/README.md)
+for the current digest-pinned runtime, one user, fixed MTP1, 33,024-token total
+capacity, and one persistent start/status/stop path. Its settings reproduce the
+already qualified 32K-input profile. The [bounded practical replay plan](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-prereg.md)
+tracks the public-source download and session check. Independent-host driver
+installation remains untested.
+
+The [shared runtime publication manifest](../qwen38-27b-autoround-int4-b70/publication-manifest.json)
+contains the current image's source closure under `chains.r304`. Historical
+build commands and faster draft-depth records below retain their own identities;
+they are not the recommended launcher's settings.
+
+
 > **Certification: `candidate-portable-repro`, not a starter guide.** The
 > model, image, launch, and validation identities are pinned and the model has
 > been verified on this host. A fresh pinned source rebuild and empty-cache
