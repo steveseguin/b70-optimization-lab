@@ -25,6 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September13, LTX campaign started toward the revised goal.**
+User requires one second of new video in **under one second**, at24fps with no
+quality/losslessness sacrifice. Final output floor is256x256; <=3s is only an
+intermediate marker. Minimal rolling review footage is authorized, including
+deleting older verified campaign outputs while preserving compact hashes and
+receipts. Existing model/reference artifacts stay protected. The first bounded
+work is [30 sequential requests over10 fixtures](experiments/ltx25-b70/data/stability-01-prereg.json)
+on the existing PID24848 endpoint, with physical-memory observations and exact
+comparisons. A source audit is investigating45MiB/request encoder accounting
+drift and unnecessary hidden-state transfers. No server/runtime change is made.
+See the updated [plan](experiments/ltx25-b70/PLAN.md).
+
 **2026-09-13 EDT, two-B70 host: final FP8 prefill pass complete and stopped.**
 Official 27B FP8, R304 TP2/MTP1, measured 512/2048 inputs at 2,857/3,679 input
 tokens/s with 4096 capacity/batch. All 36 measured outputs repeated exactly;
@@ -54,8 +66,8 @@ Server is idle with split components retained. Further variants
 use this same process; no restart chains/power/swap/cache-drop/driver changes.
 See [speed campaign handoff](experiments/ltx25-b70/SPEED-HANDOFF.md).
 The [LTX north star and plan](experiments/ltx25-b70/PLAN.md) now define the next
-milestones: bounded stability validation, <=3 s exact clips, coherent streaming,
-then sustained 24 fps. These are targets; this planning update launches no jobs.
+milestones: bounded stability validation, exact clips under1s, coherent streaming,
+then sustained generation above24fps. The later start instruction is recorded above.
 Original baseline remains frozen; new process identity is under the original
 evidence root's `speed-server/`. Use `profile-clip.py --server-run` pointing there.
 

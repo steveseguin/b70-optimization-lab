@@ -1,23 +1,26 @@
 # LTX 2.5 north star and execution plan
 
-Written September 13, 2026. This is a planning document; it does not launch a
-campaign or change the running server. [CURRENT.md](../../CURRENT.md) remains
+Written September 13, 2026; sharpened by the user's subsequent start instruction.
+The user authorized beginning the work, with small rolling review storage.
+[CURRENT.md](../../CURRENT.md) remains
 the authority for live state. Measurements and completed experiments belong in
 [SPEED-HANDOFF.md](SPEED-HANDOFF.md) and the linked evidence directories.
 
 ## North star
 
-**Turn a prompt into coherent moving video within a few seconds, then keep
-producing new video at playback speed for as long as requested, on the existing
-four B70s, while preserving the chosen model's output quality, deterministic
-replay and a lossless recording path.**
+**Generate one second of new video in under one second, at 24 fps and a minimum
+output resolution of 256x256, on the existing four B70s, without sacrificing
+quality or losslessness. Extend it into coherent continuous video with
+deterministic replay and bounded memory and disk use.**
 
-The ideal is an immediate response. For engineering purposes, the proposed
-first target is a usable result within **3 seconds** from a loaded service,
-with **under 1 second** as the stretch target. These are targets, not promises
-that this checkpoint and hardware can meet them. First achieve them at the
-current 256x256 resolution; raise resolution only after latency and stability
-have headroom. An acknowledgment, loading animation, repeated old clip or
+Under one second is the actual goal, not a stretch goal. Three seconds is only
+an intermediate progress marker. The user expects sustained work over weeks.
+The minimum applies to final generated output; preserve the existing two-stage
+128-to-256 latent workflow and all its sampling steps. No tiny-resolution
+benchmark can satisfy this goal. The current 25-frame clip is 1.042 seconds at
+24 fps: completing that whole clip in under one second is a conservative initial
+acceptance target. Also report startup and fresh-prompt response separately from
+continuing-scene throughput. An acknowledgment, loading animation, repeated old clip or
 unfinished denoising preview does not count as generated output.
 
 Success must satisfy speed, quality and stability together. If exact-output
@@ -48,11 +51,11 @@ Evidence: [current measurements](data/speed-resident/summary.json).
 
 | Measure | Definition and target |
 | --- | --- |
-| Fresh-prompt response | Submit a new prompt to the loaded service; time until actual generated output is usable. Report first frame/chunk and complete clip separately. Initial full-clip target: p95 <=3 s; stretch: p95 <=1 s. |
-| Continuous throughput | At least 24 newly generated, displayed frames/s at 24 fps. Count overlapping continuation frames only once; exclude repeats, dropped frames and interpolation used to mask slow generation. |
+| Fresh-prompt response | Submit a new prompt to the loaded service; time until actual generated output is usable. Report first frame/chunk and complete clip separately. Complete decoded 25-frame target: p95 <1 s, with worst case and all samples visible. <=3 s is an intermediate marker only. |
+| Continuous throughput | More than 24 newly generated usable frames per wall second, played at 24 fps. Require p95 <1 s for each new second of video and no playback stalls; averages alone are insufficient. Count overlapping continuation frames only once; exclude repeats, dropped frames and interpolation used to mask slow generation. |
 | Playback continuity | No buffer underruns after the declared initial buffer; queue and buffer sizes stay bounded. Report startup buffering and prompt-change delay so batching cannot hide latency. |
 | Repeatability | Same pinned model, runtime, configuration, prompt and seed produce identical raw outputs. For streaming, include ordered prompt changes, continuation state and seed schedule in the replay identity. |
-| Lossless recording | Decoded archival video/audio match the captured generated samples exactly. Record whether archival writing can keep up; a lossy MP4 is only a preview. |
+| Lossless recording | Save only selected review samples. Decoded lossless review media must match captured samples exactly; a lossy MP4 is only a preview. Persistent recording of the full stream is unnecessary and outside the generation timer. |
 | Stability | No device faults, OOMs or unexplained unbounded RAM/VRAM growth during progressively longer tests. A finite test establishes its measured duration, never literal infinity. |
 
 Use fixed, disclosed fixtures and matched timing definitions. Keep fresh prompt
@@ -68,10 +71,10 @@ costs visible separately from loaded-service latency.
 | --- | --- | --- |
 | 0 — Preserve the baseline | Keep current graph, model hashes, runtime identity, exact tensors, timings and failed experiments. | Complete: current result is the rollback/reference point in Git and external evidence storage. |
 | 1 — Establish stable operation | Run a bounded sequence on the existing endpoint, mixing original fixtures with additional reference-backed scenes. Observe per-request RAM/VRAM, encoder residency, queue state, latency and faults. | At least 30 completed requests; original fixtures remain exact; allocation growth is explained or fixed before longer operation. |
-| 2 — Reach <=3 s full clips | Profile the remaining text, denoising, transfers and decode costs; test one justified exact optimization at a time. | Matched full-suite p95 <=3 s and exact output gates pass. If the target is unattainable in this design, preserve the fastest qualified result and identify the measured gap. |
+| 2 — Drive full clips below 1 s | Profile text, denoising, transfers and decode costs; test one justified exact optimization at a time. Use <=3 s as an intermediate marker. | Matched full-suite p95 <1 s at >=256x256, 25 frames/24 fps, and exact output gates pass. Preserve partial wins and the measured remaining gap throughout the campaign. |
 | 3 — Build continuous generation | Define continuation inputs/state, deterministic seeds, bounded scheduling, cancellation, prompt changes and incremental display. Establish a reference implementation before optimizing it. | Consecutive chunks form a coherent scene; replay is deterministic; no stale queue growth. Report actual speed even if still below real time. |
-| 4 — Sustain playback speed | Overlap independent stages where exactness permits, then qualify generation, display and lossless writing together. | >=24 unique displayed frames/s, first usable chunk p95 <=3 s, no playback underruns, bounded memory/queues during a 30-minute run, then a 2-hour run. |
-| 5 — Improve responsiveness and resolution | Pursue subsecond prompt response, then test higher resolutions one measured configuration at a time. | Each new setting retains its own quality, latency and endurance gates. Keep 256x256 as the regression baseline. |
+| 4 — Sustain faster-than-playback generation | Overlap independent stages where exactness permits, then qualify generation and display with optional review capture. | >24 unique generated frames/s, each second of video ready in p95 <1 s, no playback underruns, bounded memory/queues during a 30-minute run, then a 2-hour run. |
+| 5 — Raise resolution and responsiveness | Improve margins below one second, then test higher resolutions one measured configuration at a time. | Each new setting retains its own quality, latency and endurance gates. Keep 256x256 as the minimum and regression baseline. |
 
 Stage3 can begin as CPU/source design work while Stage2 proceeds. Do not wait
 for a theoretical proof that every possible speed optimization is exhausted;
@@ -138,6 +141,16 @@ drops. Faults halt new requests. Do not run other model workloads on these GPUs
 alongside LTX. Qwen artifacts and its unresolved USB archive remain protected;
 that storage work is not a prerequisite for the next LTX measurement.
 
+Disk policy: continuous video saving is not required. Keep a small set of
+canonical reference tensors, selected lossless review samples and at most three
+recent campaign preview clips. After exact verification, delete superseded
+campaign footage/tensor archives as needed while retaining compact metadata,
+hashes, comparisons and deletion receipts. Preserve unresolved failure evidence
+and active reference tensors until comparisons finish. Prune only explicitly
+identified LTX outputs; model weights and unrelated experiment artifacts are
+outside this permission. Deletion never substitutes lower-quality stored
+samples for the full-precision verification step.
+
 For each bounded experiment, record hypothesis, exact code/config diff,
 identity, command, timing definition, prompt/seed set, output comparisons,
 memory/fault observations and a win/loss/inconclusive decision. Work on main;
@@ -145,7 +158,9 @@ commit explicit paths and preserve prior receipts. For endurance runs, plan
 bounded disk use and retain enough stream state and hashes for replay; durable
 recording still needs finite storage and an explicit retention policy.
 
-The immediate next deliverable is a preregistered 30-request stability and
-latency campaign using the current server, followed by one evidence-backed
-optimization proposal. This document does not claim the real-time target is
-already feasible or authorize an unbounded unattended workload.
+Work begins with the [30-request stability campaign](data/stability-01-prereg.json)
+on the current server, followed by an evidence-backed exact optimization.
+Ten prompt/seed fixtures run three times each; the three existing fixtures keep
+their original references, while seven new fixtures establish only repeatability
+under the current split. Longer soaks wait for unexplained allocation drift to
+be resolved. These bounded steps pursue the user's actual under-one-second goal.
