@@ -1,0 +1,37 @@
+{
+  "image": "magiccodingman/vllm-radiance:1.0.16",
+  "image_manifest_digest": "sha256:83a9dc02a8f8e75aabe81366d36ebaa2e35fcbe181cacf8e8e0a4cef4ebccbcc",
+  "config_digest": "sha256:4adbeb66552ed76b329734ee5e830d79ed22961662b886e5029c9920d1bdb7cf",
+  "labels": {
+    "org.opencontainers.image.description": "vLLM inference server for AMD Radeon AI PRO R9700",
+    "org.opencontainers.image.ref.name": "ubuntu",
+    "org.opencontainers.image.revision": "f295b9ef51ad413a68e4192371e0377741a354ce",
+    "org.opencontainers.image.source": "https://gitlab.sayou.io/lance-wright/vllm-radiance",
+    "org.opencontainers.image.title": "vllm-radiance",
+    "org.opencontainers.image.version": "1.0.16"
+  },
+  "relevant_environment": [
+    "RADIANCE_USE_R4D_AR=1",
+    "RADIANCE_USE_R4D_AR_QUANT=1",
+    "RADIANCE_DRAFT_RERANK=64",
+    "RADIANCE_VERIFY_HEAD=1",
+    "RADIANCE_FAST_DRAFT=0",
+    "RADIANCE_VERSION=1.0.16"
+  ],
+  "source_commit": "f295b9ef51ad413a68e4192371e0377741a354ce",
+  "source_url": "https://github.com/magiccodingman/vllm-radiance/tree/f295b9ef51ad413a68e4192371e0377741a354ce",
+  "source_local_directory": "/tmp/radiance-source-audit-f295b9ef51ad",
+  "qualification": "OCI label binds claimed build revision; no rebuild or runtime qualification performed",
+  "files": {
+    "README.md": "3666b0a41d6e05e268cbe3468d0ee1f1509b8fced08131e721283725ce0fbf05",
+    "Dockerfile": "3b0afcbe08477ef099d1dd7f45bd1621bf24365632a7696a697f562fd0a180a0",
+    "radiance_drafthead.py": "0de6f82cbf22d7ef6ac254748df60c72b329834fbc839cdb7d8f3cbf337bba92",
+    "radiance_verifyhead.py": "7fc05ceb76672aa9eae3cd7715046873b6294857c1bf56abbfda322ef4536789",
+    "radiance_allreduce.py": "453f92d9b61ca09d4b04543c9b1f504c7dc9382461a98c85fbf774c0ff18d573",
+    "patch_dflash_w4.py": "5a6eeb09b48890974b98066a0c4008a9c3b9509b911591491eabf6595fcc352b",
+    "patch_dynwidth.py": "436ce722c19c36ee96184246e3bb49a40951d3344c5fa1d09ce05b5a8ce4189c",
+    "docs/DFLASH2_OPTIMIZATION.md": "0a6b068caa6854e5e7fd4577c4ef53f53a1cfa0a05d6ef4303e78ce73c243258",
+    "docs/RADIANCE_093_R4D050_MXFP4.md": "7911be3e84ff13574af0d9219d17512de17ee79019bb181d739bb96a39fafe60",
+    "benchmarks/README.md": "094631db6bb509bf336aa48e0938baf62517bf9433e1116d4cef4a28f0f53a78"
+  }
+}
