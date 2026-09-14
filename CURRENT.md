@@ -63,6 +63,13 @@ the general cap is256KiB plus allocator/metadata overhead. Native shape coverage
 full-clip equality and speed remain pending. A startup-only scoped router is
 being tested separately; no installed or loaded runtime source changed.
 
+The independent [private C++ operator prototype](experiments/ltx25-b70/native-cpp-ops-01/README.md)
+built once on CPU and passed119 operator/fake comparisons with exact outputs.
+Small matched CPU dispatch observations are favorable but do not predict XPU
+speed; larger RMS samples include a loss and substantial noise. Root reviewed
+the C++ source and test/timing drivers. This namespace has CPU implementations
+only; compiled tiny-block, XPU and full-clip qualification remain pending.
+
 **Four-B70 host, September14: packet08 native screen complete; original selected.**
 PID66846 serves `http://127.0.0.1:8188`, manifest
 `a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b`.

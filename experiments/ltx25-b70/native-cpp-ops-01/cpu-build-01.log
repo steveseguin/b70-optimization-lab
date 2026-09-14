@@ -1,0 +1,7 @@
+[1/2] ccache c++ -MMD -MF native_ops.o.d -DTORCH_EXTENSION_NAME=ltx_exact_cpp_cpu01 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/include -isystem /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/include/python3.12 -fPIC -std=c++20 -O2 -g0 -c /mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-ops-cpu-01/native_ops.cpp -o native_ops.o 
+[2/2] ccache c++ native_ops.o -shared -L/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/lib -lc10 -ltorch_cpu -ltorch -ltorch_python -o ltx_exact_cpp_cpu01.so
+{
+  "status": "passed-cpu-operator-feasibility",
+  "output": "experiments/ltx25-b70/native-cpp-ops-01/cpu-result-01.json",
+  "cases": 119
+}
