@@ -1,0 +1,70 @@
+--- a/scripts/block_compile_node.py
++++ b/scripts/block_compile_node.py
+@@ -70,17 +70,37 @@
+     return tuple(t.clone(memory_format=torch.preserve_format) for t in x)
+ 
+ 
++class ComparisonError(RuntimeError):
++    def __init__(self, message, rows):
++        super().__init__(message)
++        self.rows = rows
++
++
++def require_exact(rows, message):
++    if not all(row['finite'] and row['bitwise_equal'] for row in rows):
++        raise ComparisonError(message, rows)
++
++
+ def exact_pair(expected, actual):
+     require(type(actual) in (tuple, list) and len(actual) == 2, 'Unexpected block output')
+     rows = []
+-    for eager, compiled in zip(expected, actual):
+-        require(eager.shape == compiled.shape and eager.dtype == compiled.dtype and
+-                eager.device == compiled.device, 'Block output metadata differs')
+-        # Byte comparison includes signed zero; finite check rejects matching NaNs.
++    for name, eager, compiled in zip(('video', 'audio'), expected, actual):
++        metadata_equal = eager.shape == compiled.shape and eager.dtype == compiled.dtype and eager.device == compiled.device
++        # First-stage diagnostic only: byte hashes preserve signed zero and BF16.
+         a, b = eager.detach().contiguous().cpu(), compiled.detach().contiguous().cpu()
++        a_bytes = a.view(torch.uint8).reshape(-1)
++        b_bytes = b.view(torch.uint8).reshape(-1)
++        common = min(a_bytes.numel(), b_bytes.numel())
++        unequal = int(torch.count_nonzero(a_bytes[:common] != b_bytes[:common])) + abs(a_bytes.numel() - b_bytes.numel())
+         finite = bool(torch.isfinite(a).all() and torch.isfinite(b).all())
+-        equal = bool(torch.equal(a.view(torch.uint8), b.view(torch.uint8)))
+-        rows.append({'finite': finite, 'bitwise_equal': equal, **tensor_meta(compiled)})
++        rows.append({'output': name, 'finite': finite, 'metadata_equal': metadata_equal,
++                     'bitwise_equal': bool(metadata_equal and unequal == 0),
++                     'unequal_bytes': unequal,
++                     'expected_sha256': hashlib.sha256(a_bytes.numpy().tobytes()).hexdigest(),
++                     'actual_sha256': hashlib.sha256(b_bytes.numpy().tobytes()).hexdigest(),
++                     'expected': tensor_meta(eager), **tensor_meta(compiled)})
++    if not all(row['metadata_equal'] for row in rows):
++        raise ComparisonError('Block output metadata differs', rows)
+     return rows
+ 
+ 
+@@ -145,12 +165,10 @@
+                 eager = self.native(eager_x, **kwargs)
+                 result = self.compiled(x, **kwargs)
+                 report['eager_vs_compiled'] = exact_pair(eager, result)
+-                require(all(r['finite'] and r['bitwise_equal'] for r in report['eager_vs_compiled']),
+-                        'Native block eager/compiled mismatch')
++                require_exact(report['eager_vs_compiled'], 'Native block eager/compiled mismatch')
+                 repeated = self.compiled(repeat_x, **kwargs)
+                 report['compiled_vs_repeat'] = exact_pair(result, repeated)
+-                require(all(r['finite'] and r['bitwise_equal'] for r in report['compiled_vs_repeat']),
+-                        'Native block compiled/repeat mismatch')
++                require_exact(report['compiled_vs_repeat'], 'Native block compiled/repeat mismatch')
+                 report['stage_check'] = True
+                 self.stages[shape] = self.calls
+             else:
+@@ -166,6 +184,8 @@
+             return result
+         except BaseException as error:
+             self.failed = _failed = True
++            if isinstance(error, ComparisonError):
++                report['comparison_failure_rows'] = error.rows
+             report['failures'].append(repr(error))
+             raise
+         finally:

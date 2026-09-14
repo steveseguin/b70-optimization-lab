@@ -1,0 +1,227 @@
+{
+  "schema": "ltx.kernel-incident.v1",
+  "status": "fault_latched_client_kernel_stuck",
+  "time": 1789363248.7964563,
+  "first_watchdog_utc": "2026-09-14 05:16:10 UTC",
+  "kernel": "7.0.0-31-generic",
+  "observed_stack": "client96119 CPU13 smp_call_function_many_cond -> native_flush_tlb_multi -> flush_tlb_mm_range -> unmap/brk; laterCPU6 rsyslog similar TLB synchronization wait",
+  "root_cause": "unconfirmed",
+  "server_pid": 95931,
+  "client_pid": 96119,
+  "client_interrupt": "one SIGINT sent; process exit unconfirmed",
+  "queue": {
+    "queue_running": [],
+    "queue_pending": []
+  },
+  "model_generation": {
+    "name": "compiler-screen-01-r01-eager-boat",
+    "prompt_id": "75d85a13-7af1-4ac4-ac48-73fd569fe96e",
+    "seconds": 142.20923913599836,
+    "status": {
+      "status_str": "success",
+      "completed": true,
+      "messages": [
+        [
+          "execution_start",
+          {
+            "prompt_id": "75d85a13-7af1-4ac4-ac48-73fd569fe96e",
+            "timestamp": 1789362803105
+          }
+        ],
+        [
+          "execution_cached",
+          {
+            "nodes": [],
+            "prompt_id": "75d85a13-7af1-4ac4-ac48-73fd569fe96e",
+            "timestamp": 1789362803105
+          }
+        ],
+        [
+          "execution_success",
+          {
+            "prompt_id": "75d85a13-7af1-4ac4-ac48-73fd569fe96e",
+            "timestamp": 1789362941889
+          }
+        ]
+      ]
+    }
+  },
+  "profile": {
+    "definition": "client-received node-start event intervals; approximate wall time, not synchronized kernel timings",
+    "prompt_id": "75d85a13-7af1-4ac4-ac48-73fd569fe96e",
+    "seconds": 142.20923913599836,
+    "nodes": [
+      {
+        "node": "420",
+        "class_type": "LTXResidentComponents",
+        "start_seconds": 0.005905635000090115,
+        "seconds": 25.51677051200022
+      },
+      {
+        "node": "366",
+        "class_type": "LTXVEmptyLatentAudio",
+        "start_seconds": 25.52267614700031,
+        "seconds": 0.03898806199867977
+      },
+      {
+        "node": "356",
+        "class_type": "EmptyLTXVLatentVideo",
+        "start_seconds": 25.56166420899899,
+        "seconds": 0.004881446999206673
+      },
+      {
+        "node": "377",
+        "class_type": "LTXVConcatAVLatent",
+        "start_seconds": 25.566545655998198,
+        "seconds": 0.0006867970005259849
+      },
+      {
+        "node": "404",
+        "class_type": "ManualSigmas",
+        "start_seconds": 25.567232452998724,
+        "seconds": 0.0004472779983188957
+      },
+      {
+        "node": "352",
+        "class_type": "KSamplerSelect",
+        "start_seconds": 25.567679730997042,
+        "seconds": 0.0003138680003758054
+      },
+      {
+        "node": "364",
+        "class_type": "CLIPTextEncode",
+        "start_seconds": 25.56799359899742,
+        "seconds": 8.267997929000558
+      },
+      {
+        "node": "421",
+        "class_type": "LTXEncoderPlacementCheck",
+        "start_seconds": 33.835991527997976,
+        "seconds": 0.01618080800108146
+      },
+      {
+        "node": "365",
+        "class_type": "LTXVConditioning",
+        "start_seconds": 33.85217233599906,
+        "seconds": 0.0002970770001411438
+      },
+      {
+        "node": "422",
+        "class_type": "LTXCompileOneBlockGate",
+        "start_seconds": 33.8524694129992,
+        "seconds": 0.02494780599954538
+      },
+      {
+        "node": "388",
+        "class_type": "LTXVDualCFGGuider",
+        "start_seconds": 33.877417218998744,
+        "seconds": 0.024280755998915993
+      },
+      {
+        "node": "339",
+        "class_type": "RandomNoise",
+        "start_seconds": 33.90169797499766,
+        "seconds": 0.00036543399983202107
+      },
+      {
+        "node": "344",
+        "class_type": "SamplerCustomAdvanced",
+        "start_seconds": 33.90206340899749,
+        "seconds": 77.49950788800197
+      },
+      {
+        "node": "367",
+        "class_type": "LTXVSeparateAVLatent",
+        "start_seconds": 111.40157129699946,
+        "seconds": 0.0006106049986556172
+      },
+      {
+        "node": "348",
+        "class_type": "LTXVLatentUpsampler",
+        "start_seconds": 111.40218190199812,
+        "seconds": 5.006201853000675
+      },
+      {
+        "node": "340",
+        "class_type": "LTXVConcatAVLatent",
+        "start_seconds": 116.4083837549988,
+        "seconds": 0.0005627249993267469
+      },
+      {
+        "node": "395",
+        "class_type": "ManualSigmas",
+        "start_seconds": 116.40894647999812,
+        "seconds": 0.0004777550020662602
+      },
+      {
+        "node": "341",
+        "class_type": "KSamplerSelect",
+        "start_seconds": 116.40942423500019,
+        "seconds": 0.00030255699675763026
+      },
+      {
+        "node": "391",
+        "class_type": "LTXVDualCFGGuider",
+        "start_seconds": 116.40972679199695,
+        "seconds": 0.00033765300031518564
+      },
+      {
+        "node": "338",
+        "class_type": "RandomNoise",
+        "start_seconds": 116.41006444499726,
+        "seconds": 0.0002223960000264924
+      },
+      {
+        "node": "368",
+        "class_type": "SamplerCustomAdvanced",
+        "start_seconds": 116.41028684099729,
+        "seconds": 1.1318491120000544
+      },
+      {
+        "node": "369",
+        "class_type": "LTXVSeparateAVLatent",
+        "start_seconds": 117.54213595299734,
+        "seconds": 0.002305330002855044
+      },
+      {
+        "node": "358",
+        "class_type": "LTXVAudioVAEDecode",
+        "start_seconds": 117.5444412830002,
+        "seconds": 11.685990042999038
+      },
+      {
+        "node": "374",
+        "class_type": "VAEDecode",
+        "start_seconds": 129.23043132599923,
+        "seconds": 9.252419599997666
+      },
+      {
+        "node": "414",
+        "class_type": "LTXBaselineCapture",
+        "start_seconds": 138.4828509259969,
+        "seconds": 0.09754774200337124
+      },
+      {
+        "node": "370",
+        "class_type": "CreateVideo",
+        "start_seconds": 138.58039866800027,
+        "seconds": 0.015266368998709368
+      },
+      {
+        "node": "75",
+        "class_type": "SaveVideo",
+        "start_seconds": 138.59566503699898,
+        "seconds": 3.3634881719990517
+      }
+    ],
+    "preview_ready_seconds": 138.80179962900002,
+    "tensor_archive_ready_seconds": 138.5648173189984
+  },
+  "compiled_requests_submitted": 0,
+  "complete_qualification": false,
+  "raw_archive_preserved": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/compiler-screen-01-r01-eager-boat/tensors.safetensors",
+  "preview_preserved": true,
+  "prior_encoder_screen": "25/25 strict four-output pass; preserved separately",
+  "action": "no new GPU requests; no automatic reboot/reset/restart or power/swap/cache changes",
+  "evidence_archive_sha256": "b5ff5649788da44d59ad2af202df4253f2de69488d823b06933a8637ebb932d1"
+}

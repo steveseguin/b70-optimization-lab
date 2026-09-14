@@ -1,0 +1,102 @@
+{
+  "status": "inactive-startup-check-passed",
+  "scope": "Full packet inventory, runtime files, model receipt, generated source syntax, inherited-file identity, three compiler graph invariants, and launch --check-only. No device discovery, locks, requests or process changes.",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02",
+  "manifest_sha256": "f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952",
+  "parent_manifest_sha256": "d391ac4236e7ea683af1e1cdae5a4f020e608e20c4ff849d9fe958b524d028e7",
+  "inherited_file_count": 1214,
+  "inherited_modified_paths": [
+    "launch/encoder_runtime_common.py",
+    "launch/serve-encoder.py"
+  ],
+  "full_file_count": 1227,
+  "extension_sha256s": {
+    "resident_node.py": "57b60dcba6be6b3127bd5c532603905cdcb1e541889ecb5f9b37ff2084ee1c25",
+    "ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+    "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+    "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+    "ltx_block_compile.py": "79ba260785e16d7e646bfe79b0816e99a8fab6db557a60408c35bd7675121577",
+    "block_compile_node.py": "ba98268c89f52477d4641a15b2f8ea9e73f68cdd5fc683700ee50d98f706280e"
+  },
+  "startup_tools": {
+    "serve-encoder.py": "6252e6840a4f8eb1b6cfd76ab8a47c3aa9be6833bbce9a274dd4bb920e6a9527",
+    "encoder_runtime_common.py": "e2739c7a6223f278eabd587ec7ebb8f08d10158303b950b13b0011435e1b3f72"
+  },
+  "server_run_created": false,
+  "original_graph_sha256s": {
+    "control": "150674b5f991a277d2f56227fee317b6fcb9606129d1b55819e7d56decfff8e2",
+    "crop": "98a7317868348e4b38c6e6a0ffc006ceb998a56048caf77dcf6b14669bac370a",
+    "small_state": "08336e04cf4e83043a5a5fa3b4f0b63058bbfd56efcefa26ed898b17aa30ebfa",
+    "combined": "eb8c24460b977f48d67e00aeee5561974fc32ce7f9930e7eca381d3f7a498003"
+  },
+  "compiler_graph_sha256s": {
+    "eager": "c7d84ed41fcb511e3601fa65a3a60d0927c47569f7949f385620a0feea7a03a0",
+    "compiled": "d7e62e9ea09af85ac731c6baebc365b50be6b98e1f7594034373f2cb55c06de7",
+    "restored": "60127491deeb10612aeb4f47bdb283a08e11166c28fae374b7a278f6f73df094"
+  },
+  "native_compile_and_full_clip_parity": "pending",
+  "startup_check": {
+    "status": "inactive-startup-check-passed",
+    "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-02",
+    "packet_manifest_sha256": "f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952",
+    "server_args": [
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02/source/main.py",
+      "--listen",
+      "127.0.0.1",
+      "--port",
+      "8188",
+      "--disable-auto-launch",
+      "--cache-none",
+      "--deterministic",
+      "--disable-async-offload",
+      "--disable-dynamic-vram",
+      "--disable-comfy-compiler",
+      "--disable-cuda-graphs",
+      "--disable-pinned-memory",
+      "--reserve-vram",
+      "6",
+      "--bf16-unet",
+      "--bf16-text-enc",
+      "--bf16-vae",
+      "--use-pytorch-cross-attention",
+      "--disable-xformers",
+      "--disable-api-nodes",
+      "--extra-model-paths-config",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02/model-paths.yaml",
+      "--output-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output",
+      "--user-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-02/user",
+      "--temp-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-02/temp",
+      "--input-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-02/input",
+      "--disable-all-custom-nodes",
+      "--whitelist-custom-nodes",
+      "ltx_speed_lab",
+      "ltx_baseline_capture",
+      "ltx_encoder_diagnostics",
+      "ltx_encoder_identity",
+      "ltx_block_compile_lab"
+    ],
+    "limits": "No device discovery, locks, process changes or GPU work; exclusive preflight occurs only at launch"
+  },
+  "startup_check_command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02/launch/serve-encoder.py",
+    "--packet",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02",
+    "--manifest-sha256",
+    "f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952",
+    "--run-name",
+    "encoder-server-compiler-02",
+    "--check-only"
+  ],
+  "startup_check_stderr": "",
+  "supersedes": {
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-01",
+    "reason": "Retain expected/actual byte hashes and unequal-byte counts in failed first-stage comparison receipts. Prior packet preserved."
+  }
+}

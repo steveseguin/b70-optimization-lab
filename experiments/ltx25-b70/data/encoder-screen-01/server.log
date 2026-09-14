@@ -1,0 +1,95 @@
+[32m[INFO][0m setup plugin alembic.autogenerate.schemas
+[32m[INFO][0m setup plugin alembic.autogenerate.tables
+[32m[INFO][0m setup plugin alembic.autogenerate.types
+[32m[INFO][0m setup plugin alembic.autogenerate.constraints
+[32m[INFO][0m setup plugin alembic.autogenerate.defaults
+[32m[INFO][0m setup plugin alembic.autogenerate.comments
+[32m[INFO][0m setup plugin alembic.ext.checkconstraint_byname
+[32m[INFO][0m Adding extra search path diffusion_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models
+[32m[INFO][0m Adding extra search path text_encoders /mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders
+[32m[INFO][0m Adding extra search path vae /mnt/fast-ai/llm-models/LTX-2.5-baseline/vae
+[32m[INFO][0m Adding extra search path latent_upscale_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models
+[32m[INFO][0m Setting output directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/output
+[32m[INFO][0m Setting input directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-01/input
+[32m[INFO][0m Setting user directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-01/user
+[1m[33m[WARNING][0m WARNING: Potential Error in code: Torch already imported, torch should never be imported before this point.
+[32m[INFO][0m Found comfy_kitchen backend hip: {'available': False, 'disabled': False, 'unavailable_reason': 'PyTorch ROCm/HIP runtime not available', 'capabilities': []}
+[32m[INFO][0m Found comfy_kitchen backend eager: {'available': True, 'disabled': False, 'unavailable_reason': None, 'capabilities': ['adaln', 'apply_rope', 'apply_rope1', 'apply_rope1_', 'apply_rope_', 'apply_rope_split_half', 'apply_rope_split_half1', 'apply_rope_split_half1_', 'apply_rope_split_half_', 'convrot_w4a4_linear', 'dequantize_convrot_w4a4_weight', 'dequantize_int8_convrot_weight', 'dequantize_int8_convrot_weight_dtype', 'dequantize_int8_embedding', 'dequantize_int8_simple', 'dequantize_int8_simple_dtype', 'dequantize_mxfp8', 'dequantize_nvfp4', 'dequantize_per_tensor_fp8', 'dequantize_w4a8_int8_weight', 'gemv_awq_w4a16', 'int8_linear', 'na3d', 'prepare_int4_weight_for_int8_linear', 'quantize_and_rotate_rowwise', 'quantize_convrot_w4a4_weight', 'quantize_int8_convrot_weight', 'quantize_int8_rowwise', 'quantize_int8_tensorwise', 'quantize_mxfp8', 'quantize_nvfp4', 'quantize_per_tensor_fp8', 'quantize_svdquant_w4a4', 'quantize_w4a8_int8_weight', 'rms_adaln', 'rms_rope', 'rms_rope1', 'rms_rope1_', 'rms_rope_', 'rms_rope_split_half', 'rms_rope_split_half1', 'rms_rope_split_half1_', 'rms_rope_split_half_', 'rotate_int8_convrot_weight', 'scaled_mm_mxfp8', 'scaled_mm_nvfp4', 'scaled_mm_svdquant_w4a4', 'sol_attn', 'stochastic_rounding_fp8', 'w4a8_int8_linear']}
+[32m[INFO][0m Found comfy_kitchen backend triton: {'available': True, 'disabled': True, 'unavailable_reason': None, 'capabilities': ['adaln', 'apply_rope', 'apply_rope1', 'apply_rope1_', 'apply_rope_', 'apply_rope_split_half', 'apply_rope_split_half1', 'apply_rope_split_half1_', 'apply_rope_split_half_', 'dequantize_nvfp4', 'dequantize_per_tensor_fp8', 'int8_linear', 'na3d', 'quantize_and_rotate_rowwise', 'quantize_int8_rowwise', 'quantize_mxfp8', 'quantize_nvfp4', 'quantize_per_tensor_fp8', 'rms_adaln', 'rms_rope', 'rms_rope1', 'rms_rope1_', 'rms_rope_', 'rms_rope_split_half', 'rms_rope_split_half1', 'rms_rope_split_half1_', 'rms_rope_split_half_', 'w4a8_int8_linear']}
+[32m[INFO][0m Found comfy_kitchen backend cuda: {'available': False, 'disabled': True, 'unavailable_reason': 'CUDA not available on this system', 'capabilities': []}
+[32m[INFO][0m Checkpoint files will always be loaded safely.
+[32m[INFO][0m Using deterministic algorithms for pytorch
+[32m[INFO][0m Total VRAM 32656 MB, total RAM 128667 MB
+[32m[INFO][0m pytorch version: 2.14.0+xpu
+[32m[INFO][0m Set vram state to: NORMAL_VRAM
+[32m[INFO][0m Device: xpu:0 Intel(R) Arc(TM) Pro B70 Graphics
+[32m[INFO][0m Device: xpu:1 Intel(R) Arc(TM) Pro B70 Graphics
+[32m[INFO][0m Device: xpu:2 Intel(R) Arc(TM) Pro B70 Graphics
+[32m[INFO][0m Device: xpu:3 Intel(R) Arc(TM) Pro B70 Graphics
+[32m[INFO][0m Using pytorch attention
+[32m[INFO][0m Python version: 3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]
+[32m[INFO][0m ComfyUI version: 0.35.0
+[32m[INFO][0m comfy-aimdo version: 0.5.3
+[32m[INFO][0m comfy-kitchen version: 0.2.33
+[1m[33m[WARNING][0m Dynamic vram disabled with argument. If you have any issues with dynamic vram enabled please give us a detailed reports as this argument will be removed soon. If you use gguf we recommend keeping dynamic vram enabled and using native ComfyUI model formats instead. ComfyUI native formats like fp8, int8 and w4a8 will be faster even if they are larger than your memory.
+[32m[INFO][0m Setting temp directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-01/temp/temp
+[32m[INFO][0m comfyui-frontend-package version: 1.52.7
+[32m[INFO][0m comfyui-workflow-templates version: 0.11.59
+[32m[INFO][0m comfyui-embedded-docs version: 0.5.11
+[32m[INFO][0m comfy-kitchen version: 0.2.33
+[32m[INFO][0m comfy-aimdo version: 0.5.3
+[32m[INFO][0m [Prompt Server] web root: /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfyui_frontend_package/static
+[32m[INFO][0m Asset seeder disabled
+/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+[32m[INFO][0m No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+[32m[INFO][0m Skipping websocket_image_save.py due to disable_all_custom_nodes and whitelist_custom_nodes
+[32m[INFO][0m 
+Import times for custom nodes:
+[32m[INFO][0m    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-02/source/custom_nodes/ltx_encoder_identity
+[32m[INFO][0m    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-02/source/custom_nodes/ltx_baseline_capture
+[32m[INFO][0m    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-02/source/custom_nodes/ltx_encoder_diagnostics
+[32m[INFO][0m    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-02/source/custom_nodes/ltx_speed_lab
+[32m[INFO][0m 
+[32m[INFO][0m Context impl SQLiteImpl.
+[32m[INFO][0m Will assume non-transactional DDL.
+[32m[INFO][0m Context impl SQLiteImpl.
+[32m[INFO][0m Will assume non-transactional DDL.
+[32m[INFO][0m Running upgrade  -> 0001_assets, Initial assets schema
+Revision ID: 0001_assets
+Revises: None
+Create Date: 2025-12-10 00:00:00
+[32m[INFO][0m Running upgrade 0001_assets -> 0002_merge_to_asset_references, Merge AssetInfo and AssetCacheState into unified asset_references table.
+[32m[INFO][0m Running upgrade 0002_merge_to_asset_references -> 0003_add_metadata_job_id, Add system_metadata and job_id columns to asset_references.
+Change preview_id FK from assets.id to asset_references.id.
+[32m[INFO][0m Running upgrade 0003_add_metadata_job_id -> 0004_drop_tag_type, Drop the vestigial tags.tag_type column.
+[32m[INFO][0m Running upgrade 0004_drop_tag_type -> 0005_allow_case_sensitive_tags, Allow case-sensitive tag names.
+[32m[INFO][0m Running upgrade 0005_allow_case_sensitive_tags -> 0006_add_loader_path, Add loader_path column to asset_references.
+[32m[INFO][0m Running upgrade 0006_add_loader_path -> 0007_record_content_split, Record/content split.
+[32m[INFO][0m Database upgraded from None to 0007_record_content_split
+[32m[INFO][0m Disabling intermediate node cache.
+[32m[INFO][0m Starting server
+
+[32m[INFO][0m To see the GUI go to: http://127.0.0.1:8188
+[32m[INFO][0m got prompt
+[32m[INFO][0m model weight dtype torch.bfloat16, manual cast: None
+[32m[INFO][0m model_type FLUX
+[32m[INFO][0m CLIP/text encoder model load device: xpu:2, offload device: cpu, current: cpu, dtype: torch.bfloat16
+[32m[INFO][0m VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+[32m[INFO][0m VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+[32m[INFO][0m LTX resident components initialized: {'placement': 'split', 'encoder_variant': 'control', 'encoder_options': {'ltx_crop_before_cpu': False, 'ltx_small_state_residency': False}, 'seconds': 25.622119129000566, 'generation': 1, 'retained': 'model components only', 'model_verification_sha256': '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f', 'prompt_encoding_cache': False, 'generated_output_cache': False, 'model_load_device': 'xpu:0', 'text_encoder_load_device': 'xpu:2', 'vae_devices': ['xpu:3', 'xpu:3'], 'shard': {'split_index': 21, 'block_count': 48, 'primary': 'xpu:0', 'secondary': 'xpu:1', 'primary_bytes': 21127647680, 'secondary_bytes': 20880443520, 'original_bytes': 42008091200, 'numerical_validation': 'pending'}}
+[32m[INFO][0m Requested to load LTXAVTEModel_
+[32m[INFO][0m loaded partially; 24586.00 MB usable, 24541.00 MB loaded, 457.51 MB offloaded, 45.00 MB buffer reserved, lowvram patches: 0
+[32m[INFO][0m Requested to load _Shard
+[32m[INFO][0m Requested to load LTXAV
+[32m[INFO][0m loaded completely; 25692.80 MB usable, 19908.08 MB loaded, full load: True
+[32m[INFO][0m loaded completely; 25692.80 MB usable, 20143.39 MB loaded, full load: True
+  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:01<00:10,  1.49s/it] 25%|██▌       | 2/8 [00:01<00:04,  1.26it/s] 38%|███▊      | 3/8 [00:02<00:02,  1.77it/s] 50%|█████     | 4/8 [00:02<00:01,  2.18it/s] 62%|██████▎   | 5/8 [00:02<00:01,  2.50it/s] 75%|███████▌  | 6/8 [00:02<00:00,  2.75it/s] 88%|████████▊ | 7/8 [00:03<00:00,  2.94it/s]100%|██████████| 8/8 [00:03<00:00,  3.08it/s]100%|██████████| 8/8 [00:03<00:00,  2.25it/s]
+[32m[INFO][0m Requested to load LatentUpsampler
+[32m[INFO][0m loaded completely; 5543.84 MB usable, 949.61 MB loaded, full load: True
+  0%|          | 0/3 [00:00<?, ?it/s] 33%|███▎      | 1/3 [00:00<00:00,  2.46it/s] 67%|██████▋   | 2/3 [00:00<00:00,  2.92it/s]100%|██████████| 3/3 [00:01<00:00,  3.11it/s]100%|██████████| 3/3 [00:01<00:00,  3.00it/s]
+[32m[INFO][0m Requested to load AudioVAE
+[32m[INFO][0m loaded completely;  346.73 MB loaded, full load: True
+[32m[INFO][0m Requested to load CausalDiffusionVAE
+[32m[INFO][0m loaded completely;  1403.92 MB loaded, full load: True
+[32m[INFO][0m [32mPrompt executed in 125.51 seconds[0m

@@ -14,6 +14,14 @@ server and reuse its endpoint; failed client requests must not cycle the server.
 No automatic reboot or driver reset. Record faults and halt new requests; any
 needed graceful shutdown is a single incident action, never a restart loop.
 
+2026-09-14 clarification: the user objected to an approval pause for a routine
+LTX application restart and to optimization stopping afterward. Do not interpret
+the preference for a persistent application as a blanket approval requirement
+for a necessary, controlled application reload within authorized work. Explain
+application reloads plainly, distinguish them from restarting the computer,
+and continue optimization afterward. The no-restart-chain, no host reboot or
+driver reset, no power/memory-setting changes, and fault-halt rules still apply.
+
 
 This repository is a reproducible lab notebook and deployment guide for Intel
 XPU local AI work across multiple B70 model efforts: MiniMax, Qwen, Gemma, and

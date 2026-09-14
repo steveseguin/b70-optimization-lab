@@ -1,0 +1,24 @@
+{
+  "scope": "CPU facade unit tests; fake compiler/route/context, no Comfy model or XPU execution",
+  "passed": true,
+  "checks": [
+    "in_place_result_matches_one_native_execution",
+    "two_stage_independent_eager_and_repeat_only_once",
+    "eleven_exclusive_passed_receipts",
+    "two_stage_qualifications_calls1_and9",
+    "two_qualified_stage_graphs",
+    "warm_call_skips_eager_and_repeat",
+    "reject_new_request_before11_calls",
+    "reject_stream_aliases",
+    "signed_zero_bit_difference_detected",
+    "matching_nan_is_not_qualified",
+    "reject_third_compiler_graph",
+    "reject_graph_break",
+    "reject_numerical_mismatch",
+    "failed_comparison_evidence_preserved"
+  ],
+  "sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/block_compile_node.py": "ba98268c89f52477d4641a15b2f8ea9e73f68cdd5fc683700ee50d98f706280e",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-block-compile-node-cpu.py": "ea11472acc8e72066c3d8929817d15c6e62c684f44f7e1c75910ea5a4c800f85"
+  }
+}

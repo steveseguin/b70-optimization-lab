@@ -25,6 +25,75 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: kernel incident; GPU requests halted.**
+`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.json` is present.
+The first compiler-screen-01 eager control clip completed generation, but client
+PID96119 became stuck in a kernel cross-CPU TLB wait during post-request work.
+CPU13/CPU6 soft lockups, RCU stalls and blocked system tasks are recorded.
+Only eager mode ran: no compiled candidate/block execution or completed oracle
+qualification. PID95931 remains present with an empty queue; one client SIGINT
+was sent, exit unconfirmed. No reboot/reset/restart or host-setting changes were
+performed after the fault. The stale campaign `running` status is superseded by
+this incident and the fault latch. **No new GPU requests until recovery and
+health are established.** Preserve all failed/current clip files and the earlier
+25/25 exact encoder results. [Incident and evidence](experiments/ltx25-b70/notes/compiler-screen-01-kernel-incident.md).
+
+**Four-B70 host, September14: native compiler comparison running.**
+PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
+manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.
+Endpoint identity and strict after-import determinism match the startup receipt.
+The bounded nine-request compiler-screen-01 is active; inspect its progress
+under `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/compiler-screen-01`
+before any new GPU request. It checks one native block24 with the original
+control encoder, both native stage outputs against eager/repeat calculations,
+and every completed clip against all four original raw references. No compiled
+speed or correctness result is claimed before those gates finish.
+PID78769 exited cleanly after one controlled SIGINT to load this new application
+code; the computer was not rebooted. No fault latch at startup. This supersedes
+the idle PID78769 statements below. [Preregistration](experiments/ltx25-b70/data/compiler-screen-01-prereg.json)
+and [native gate](experiments/ltx25-b70/notes/ltx-block-compile-node-ready.md).
+
+**Four-B70 host, September14: encoder comparison complete; compiler integration next.**
+All25 encoder-screen-02 clips passed strict four-output original-reference parity
+and all four unload transitions passed. No convincing speed winner: warm medians
+6.364s control-before,6.377s crop,6.430s small-state,6.441s combined,6.643s
+control-after. Small-state residency fixes the observed loaded-byte accounting
+drift, but has no demonstrated full-clip speed gain. PID78769 is idle on control,
+generation5, at `http://127.0.0.1:8188`; no fault latch. Preserve this process
+while preparing the compiler successor; no competing GPU requests. Next is a
+bounded one-native-block exact compilation gate, then full-clip verification if
+it passes. [Results](experiments/ltx25-b70/notes/encoder-screen-02-results.md).
+This supersedes the active-screen statements immediately below.
+
+**Four-B70 host, September14: strict startup fixed; encoder comparison started.**
+PID78769 serves `http://127.0.0.1:8188` from prepared-encoder-03 / encoder-server-02.
+Startup identity matches the endpoint and the after-import receipt verifies
+strict determinism (enabled, warning-only off). Encoder-screen-02 is running;
+reuse this process and inspect its progress before any new GPU request.
+The first screen on PID75850 stopped after one completed control clip: all four
+outputs matched baseline bytes, but strict-mode qualification failed because
+Comfy import reset warning-only mode. The corrected launcher restores the
+original import order;11 CPU regression checks passed. Only the launcher differs
+between the immutable packets. No quality gate was waived. Evidence and exact
+scope: [startup correction](experiments/ltx25-b70/notes/encoder-strict-startup-fix.md).
+User clarified that routine application reloads should not cause approval
+pauses or stop optimization; the host-reboot/power/restart-chain constraints
+remain. This supersedes all earlier pending-approval and process statements below.
+
+**Four-B70 host, September14: authorized LTX replacement completed.**
+User approved the restart and clarified that optimization must continue without
+an unnecessary application-restart approval pause. Original PID24848
+stopped cleanly after one SIGINT. Replacement PID75850 is ready at
+`http://127.0.0.1:8188`; endpoint identity matches the encoder-server-01 receipt,
+the queue is empty and the fault latch is absent. Host LAN IP is10.0.0.65, but
+the application listens on localhost only. The immutable prepared-encoder-02
+packet is active. The preregistered encoder-screen-01 comparison is now running
+on this process; inspect its live progress before any new GPU work. An initial launcher
+preflight exited before Torch import because the old TCP socket was in TIME-WAIT;
+after its observed expiry, the bind check passed and the replacement started.
+Evidence: `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-migration-01.json`
+and `encoder-server-01/`. This supersedes pending-replacement statements below.
+
 **Four-B70 host, compiler preparation: routed CPU gates pass; inactive.**
 The native block adapter passed its initial 29 checks; the additive ownership
 guard passed 51 checks with the compiler callback itself in the full options
