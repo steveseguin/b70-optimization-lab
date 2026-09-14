@@ -1,0 +1,8 @@
+{
+  "id": "ml-zero-electricity-cost",
+  "repository": "ml-bottleneck",
+  "source_commit": "8df1372c4f20fc8ae0bf4e35e1b75084327b17fc",
+  "issue": "A user entering an electricity price of zero or zero operating hours still receives the default daily electricity charge. Honor explicit zero values consistently in browser usage controls and the SDK. Zero price must yield zero monetary costs; zero hours must yield zero daily cost. Preserve ordinary positive inputs and omitted-input defaults, and leave prefill/decode predictions unchanged. Relevant code is calculatePowerAndCost in engine.js and getUsageAssumptionsFromDom in index.html; public SDK behavior is covered by tests/sdk.test.mjs. Add focused regression tests and regenerate SDK output as required, without changing calibration, benchmark evidence, or refresh workflows.",
+  "validation_command": "node /acceptance/ml_zero_cost.mjs",
+  "expected_baseline_failure": true
+}
