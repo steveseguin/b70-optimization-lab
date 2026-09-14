@@ -3,6 +3,8 @@ from pathlib import Path
 from types import SimpleNamespace
 import tempfile
 import unittest
+import json
+import copy
 
 spec = importlib.util.spec_from_file_location("controller", Path(__file__).with_name("run-native.py"))
 controller = importlib.util.module_from_spec(spec)
@@ -23,6 +25,38 @@ class Helper:
 
 
 class ControllerTests(unittest.TestCase):
+    def test_actual_qualified_transport_contract(self):
+        reference = json.loads(controller.RUNTIME_REFERENCE.read_text())
+        contract = controller.runtime_contract(reference)
+        self.assertEqual(contract["env"]["ONEAPI_DEVICE_SELECTOR"], "level_zero:0,1")
+        self.assertEqual(contract["env"]["CCL_ZE_IPC_EXCHANGE"], "pidfd")
+        self.assertEqual(contract["env"]["CCL_ATL_TRANSPORT"], "ofi")
+        argv = controller.hardware_argv()
+        for key, value in [("--network", "bridge"), ("--ipc", "host"), ("--cap-add", "SYS_PTRACE"),
+                           ("--device", "/dev/dri"), ("--security-opt", "label=disable")]:
+            self.assertEqual(argv[argv.index(key) + 1], value)
+
+    def test_missing_selector_or_transport_capability_refused(self):
+        reference = json.loads(controller.RUNTIME_REFERENCE.read_text())
+        reference = reference[0] if isinstance(reference, list) else reference
+        missing = copy.deepcopy(reference)
+        missing["Config"]["Env"] = [v for v in missing["Config"]["Env"] if not v.startswith("ONEAPI_DEVICE_SELECTOR=")]
+        with self.assertRaisesRegex(ValueError, "environment"):
+            controller.runtime_contract(missing)
+        for key, value in [("NetworkMode", "none"), ("IpcMode", "private"), ("CapAdd", [])]:
+            changed = copy.deepcopy(reference)
+            changed["HostConfig"][key] = value
+            with self.assertRaisesRegex(ValueError, "hardware/transport"):
+                controller.runtime_contract(changed)
+
+    def test_static_loopback_rendezvous_without_restarts(self):
+        argv = controller.operator_argv()
+        self.assertEqual(argv[:7], [controller.IMAGE, "--nnodes=1", "--node-rank=0",
+                                   "--nproc-per-node=2", "--master-addr=127.0.0.1",
+                                   "--master-port=29500", "--max-restarts=0"])
+        self.assertNotIn("--standalone", argv)
+        self.assertNotIn("--rdzv-backend=c10d", argv)
+
     def info(self, running=True, id_="abc"):
         return {"Id": id_, "Name": "/ours", "Image": controller.IMAGE,
                 "State": {"Running": running, "ExitCode": 0, "OOMKilled": False}}

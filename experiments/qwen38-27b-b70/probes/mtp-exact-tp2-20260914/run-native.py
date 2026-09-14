@@ -20,7 +20,50 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 IMAGE = "sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1dd8ea066"
 IDENTITY = Path("/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/control-identity.json")
+RUNTIME_REFERENCE = Path("/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/restored-service/container-inspect.json")
 FILES = ("exact_tp2.cpp", "native.py", "protocol.py", "gate.py", "analyze.py", "run-native.py", "cpu-validation.json")
+
+
+def runtime_contract(reference):
+    """CPU-only admission of the qualified oneCCL transport, IPC and selector."""
+    if isinstance(reference, list):
+        if len(reference) != 1:
+            raise ValueError("expected one qualified container reference")
+        reference = reference[0]
+    host = reference["HostConfig"]
+    required = {"NetworkMode": "bridge", "IpcMode": "host", "CapAdd": ["CAP_SYS_PTRACE"],
+                "SecurityOpt": ["label=disable"], "GroupAdd": ["render"], "Privileged": False,
+                "Devices": [{"PathOnHost": "/dev/dri", "PathInContainer": "/dev/dri", "CgroupPermissions": "rwm"}],
+                "ShmSize": 8589934592, "Ulimits": [{"Name": "core", "Hard": 0, "Soft": 0}]}
+    if any(host.get(k) != v for k, v in required.items()):
+        raise ValueError("qualified container hardware/transport settings changed")
+    env = {k: v for entry in reference["Config"]["Env"] for k, v in [entry.split("=", 1)]
+           if k.startswith(("CCL_", "ONECCL_", "ONEAPI_", "SYCL_", "ZE_", "UR_", "TORCH_", "OMP_", "MKL_", "KMP_"))}
+    expected = {"CCL_TOPO_P2P_ACCESS": "1", "CCL_RECV": "direct", "CCL_SEND": "direct",
+                "CCL_ZE_IPC_EXCHANGE": "pidfd", "ZE_AFFINITY_MASK": "0,1",
+                "CCL_ATL_TRANSPORT": "ofi", "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1",
+                "CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD": "4294967296",
+                "CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD": "4294967296",
+                "CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD": "4294967296"}
+    if any(env.get(k) != v for k, v in expected.items()):
+        raise ValueError("qualified oneCCL transport/IPC/selector environment changed")
+    return {"host_config": required, "env": env}
+
+
+def hardware_argv():
+    return ["--network", "bridge", "--device", "/dev/dri", "--group-add", "render",
+            "--ipc", "host", "--cap-add", "SYS_PTRACE", "--shm-size", "8g",
+            "--ulimit", "core=0", "--security-opt", "label=disable"]
+
+
+def operator_argv():
+    # Explicit static loopback rendezvous avoids --standalone's container-
+    # hostname discovery. No worker or rendezvous restart policy is enabled.
+    return [IMAGE, "--nnodes=1", "--node-rank=0", "--nproc-per-node=2",
+            "--master-addr=127.0.0.1", "--master-port=29500", "--max-restarts=0",
+            "/probe/gate.py", "--library", "/probe/libexact_tp2.so", "--out", "/results",
+            "--rows", "1,2,512,4096", "--blocks", "5", "--iterations", "12",
+            "--timeout", "15", "--admitted-exclusive-gpu-test"]
 
 
 def sha(data):
@@ -48,6 +91,11 @@ def inputs(library):
     blobs["libexact_tp2.so"] = library.read_bytes()
     if not any(b["library_sha256"] == sha(blobs["libexact_tp2.so"]) and b["source_sha256"] == sha(blobs["exact_tp2.cpp"]) for b in receipt["builds"]):
         raise RuntimeError("native library does not match a CPU build receipt")
+    raw_reference = RUNTIME_REFERENCE.read_bytes()
+    contract = runtime_contract(json.loads(raw_reference))
+    contract["reference_sha256"] = sha(raw_reference)
+    contract["reference_path"] = str(RUNTIME_REFERENCE)
+    blobs["qualified-runtime-contract.json"] = (json.dumps(contract, indent=2) + "\n").encode()
     return blobs
 
 
@@ -122,8 +170,8 @@ def main():
     if not 30 <= args.timeout <= 1200:
         raise ValueError("bounded timeout must be 30–1200 seconds")
     out = args.out.resolve()
-    if out.name != "communication-native-01":
-        raise ValueError("this one-shot preregistration uses communication-native-01 only")
+    if out.name not in ("communication-native-01", "communication-native-02", "communication-native-03"):
+        raise ValueError("only the original or explicitly corrected one-shot stage is admitted")
     if out.exists() or (out.parent / "FAULT.json").exists():
         raise RuntimeError("output exists or campaign GPU fault latch is set; no retry")
     blobs = inputs(args.library)
@@ -147,25 +195,20 @@ def main():
         snapshot = freeze(out, blobs)
         results = out / "results"; results.mkdir()
         write(out / "image.json", image)
-        control = json.loads(IDENTITY.read_text())
-        env = {k: v for entry in control["env"] for k, v in [entry.split("=", 1)]
-               if k.startswith(("CCL_", "ONECCL_", "SYCL_", "ZE_", "UR_", "TORCH_", "OMP_", "MKL_", "KMP_"))}
+        contract = json.loads(blobs["qualified-runtime-contract.json"])
+        env = dict(contract["env"])
         env.update(PYTHONUNBUFFERED="1", OMP_NUM_THREADS="1")
-        cmd = ["docker", "create", "--name", name, "--restart", "no", "--network", "none",
-               "--device", "/dev/dri", "--group-add", "render", "--ipc", "private",
-               "--shm-size", "512m", "--memory", "6g", "--memory-swap", "8g",
-               "--ulimit", "core=0", "--security-opt", "label=disable", "--workdir", "/probe",
+        cmd = ["docker", "create", "--name", name, "--restart", "no"] + hardware_argv() + [
+               "--memory", "6g", "--memory-swap", "8g", "--workdir", "/probe",
                "--mount", f"type=bind,source={snapshot},target=/probe,readonly",
                "--mount", f"type=bind,source={results},target=/results",
                "--entrypoint", "/opt/venv/bin/torchrun"]
         for key, value in sorted(env.items()):
             cmd += ["--env", f"{key}={value}"]
-        cmd += [IMAGE, "--standalone", "--nnodes=1", "--nproc-per-node=2", "/probe/gate.py",
-                "--library", "/probe/libexact_tp2.so", "--out", "/results",
-                "--rows", "1,2,512,4096", "--blocks", "5", "--iterations", "12",
-                "--timeout", "15", "--admitted-exclusive-gpu-test"]
+        cmd += operator_argv()
         write(out / "launch.json", {"argv": cmd, "started": started, "timeout_seconds": args.timeout,
               "original_identity_sha256": sha(IDENTITY.read_bytes()), "runtime_env": env,
+              "qualified_runtime_reference_sha256": contract["reference_sha256"],
               "memory": "6GiB RAM maximum; 8GiB RAM+swap maximum; no host setting changes"})
         state = {"status": "prepared", "owner_pid": os.getpid(), "name": name, "image": IMAGE,
                  "container_id": None, "started": started,
@@ -194,7 +237,7 @@ def main():
                     bad = [line for line in journal.splitlines() if helper.FAULT.search(line)]
                     if bad:
                         gpu_fault = True
-                        write(out.parent / "FAULT.json", {"at": helper.now(), "stage": "communication-native-01", "lines": bad})
+                        write(out.parent / "FAULT.json", {"at": helper.now(), "stage": out.name, "lines": bad})
                         raise RuntimeError("GPU/kernel fault; no successor admitted")
                     if signals or (out / "STOP").exists():
                         raise InterruptedError("operator controller interrupted")
@@ -245,7 +288,7 @@ def main():
                 if bad:
                     gpu_fault = True
                     failure = "GPU/kernel fault in final monitoring window"
-                    write(out.parent / "FAULT.json", {"at": helper.now(), "stage": "communication-native-01", "lines": bad})
+                    write(out.parent / "FAULT.json", {"at": helper.now(), "stage": out.name, "lines": bad})
                     write(out / "GPU-FAULT.json", {"at": helper.now(), "error": failure, "lines": bad})
                     state.update(status="gpu_fault", error=failure)
             except Exception as exc:

@@ -1,0 +1,54 @@
+{
+  "schema": "neural.download.mtp-client-final-source-review.v1",
+  "status": "CPU review passed; real endpoint execution pending",
+  "files_sha256": {
+    "experiments/qwen38-27b-b70/scripts/run-mtp-metadata-client-campaign.py": "5e534ca5973aa58e1b2e048629ad633049cfc6eb2de913ba47c1913a8758c79c",
+    "experiments/qwen38-27b-b70/scripts/test_mtp_metadata_client_campaign.py": "948a5149ff5f13b19776c345c75c2ae541f2b079b029d11ce8ffd10c2624d19d",
+    "experiments/qwen38-27b-b70/probes/mtp-metadata-20260914/mtp_transfer_worker.py": "aeb624a220229fbddf8f164274d46d82d67445a429b4778135d134eb9966efea",
+    "experiments/qwen38-27b-b70/probes/mtp-metadata-20260914/mtp_native_metadata_gate.py": "defd3989b9579be45f28ca3be0d40ed99787b4dc86775d47fe6922f4da7b0b69",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh": "83fae8c37e8779a218acc0c6c386f79cd04889411ee88a2d6f7e00191966789c",
+    "scripts/bench-openai-realistic-suite.py": "7b4aef6fca0ffebf6ab83ac0b70bb13505cb4b93010f45529623dcf8892fc130",
+    "scripts/neural-download-canaries.py": "b04d6f33d52904780937bf7f74eac09582f2635852108d9b0d30cb46261b58a7",
+    "scripts/compare-strict-attempt-outputs.py": "0b4ee5baf50b00066d4c2ef86ed0e52c4a2ea369f065c627ebc9c7d154eab7af",
+    "experiments/qwen38-27b-b70/scripts/bench-prefill-followup.py": "18faf32667d05cf6b25c0457845a20ff48ddef5f37b56653857a8c615e5e8238"
+  },
+  "cpu_tests_passed": 14,
+  "real_frozen_schemas_verified": {
+    "strict_rows": 12,
+    "strict_full_numeric_parity_prompts": 12,
+    "context_rows": 18
+  },
+  "fixed_findings": [
+    "server identity now binds actual controller launch/state/image, current boot, ready state, admitted image, unchanged target/MTP/environment and immutable extension snapshot",
+    "frozen strict performance/canaries/campaign identity and full context summary now included in source pins",
+    "all pinned source/oracle/identity files rechecked before each child invocation and RPC/HTTP operation",
+    "both ranks must execute equal positive selected-arm metadata call deltas and zero other-arm deltas",
+    "rank call counters must be exact nonnegative integers with complete control/candidate keys"
+  ],
+  "sequence_verified": [
+    "unwrapped worker/source status",
+    "full 12-prompt strict attempt versus frozen output oracle",
+    "confirm still unwrapped",
+    "install paired wrapper in control mode",
+    "36 native metadata cases on each rank",
+    "four control/candidate arms with full strict and context comparison",
+    "return to wrapped control only after every gate passes"
+  ],
+  "failure_semantics": [
+    "uncaught HTTP/RPC/subprocess failures abort later campaign phases",
+    "source/cache/output/native/rank/counter gate failures abort later phases",
+    "no cleanup RPC or model request after failure",
+    "active child receives one process-group SIGINT on interruption/timeout; unresolved exit is recorded",
+    "GPU-fault monitoring remains the mandatory parent wrapper responsibility"
+  ],
+  "quality_check_granularity": "Strict output parity is evaluated after each complete fixed suite; context token parity is checked after each request. Shared canary harness evaluates its objective results after its complete canary batch. HTTP failures propagate immediately.",
+  "model_requests": 0,
+  "rpc_requests": 0,
+  "gpu_actions": 0,
+  "remaining_requirements": [
+    "Parent must provide exclusive endpoint admission and fault-monitor wrapper",
+    "Controller launch/state/image files must describe the real ready research server",
+    "Fresh-base oracle parity must pass before preparing candidate dispatch",
+    "Same-process results remain screening evidence; no fresh-process promotion is claimed"
+  ]
+}

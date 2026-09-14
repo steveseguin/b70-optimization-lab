@@ -1,15 +1,15 @@
 {
   "schema": "neural.download.exact-tp2-cpu-prototype.v1",
-  "recorded_at": "2026-09-14T18:13:10.836163+00:00",
+  "recorded_at": "2026-09-14T18:19:29.467863+00:00",
   "status": "CPU built and tested; native GPU execution pending",
   "gpu_initialized": false,
   "runtime_qualified": false,
   "promoted": false,
   "tests": {
-    "count": 17,
+    "count": 20,
     "returncode": 0,
     "stdout": "",
-    "stderr": "test_copy_failure_cannot_submit_add_or_reuse (test_protocol.ProtocolTests.test_copy_failure_cannot_submit_add_or_reuse) ... ok\ntest_fd_transferred_and_not_inheritable (test_protocol.ProtocolTests.test_fd_transferred_and_not_inheritable) ... ok\ntest_mismatched_shape_poisoned (test_protocol.ProtocolTests.test_mismatched_shape_poisoned) ... ok\ntest_missing_peer_bounded (test_protocol.ProtocolTests.test_missing_peer_bounded) ... ok\ntest_peer_exit_after_ready (test_protocol.ProtocolTests.test_peer_exit_after_ready) ... ok\ntest_peer_retirement_failure_cannot_submit_add (test_protocol.ProtocolTests.test_peer_retirement_failure_cannot_submit_add) ... ok\ntest_reserved_identity_rejected (test_protocol.ProtocolTests.test_reserved_identity_rejected) ... ok\ntest_reuse_before_retirement_rejected (test_protocol.ProtocolTests.test_reuse_before_retirement_rejected) ... ok\ntest_reuse_changing_sizes (test_protocol.ProtocolTests.test_reuse_changing_sizes) ... ok\ntest_five_percent_threshold (test_analysis.AnalysisTests.test_five_percent_threshold) ... ok\ntest_one_negative_block_is_inconclusive (test_analysis.AnalysisTests.test_one_negative_block_is_inconclusive) ... ok\ntest_reordered_or_missing_samples_rejected (test_analysis.AnalysisTests.test_reordered_or_missing_samples_rejected) ... ok\ntest_slowest_rank_controls_gate (test_analysis.AnalysisTests.test_slowest_rank_controls_gate) ... ok\ntest_foreign_same_named_container_never_stopped (test_controller.ControllerTests.test_foreign_same_named_container_never_stopped) ... ok\ntest_natural_exit_has_no_stop (test_controller.ControllerTests.test_natural_exit_has_no_stop) ... ok\ntest_running_owned_container_stopped_once (test_controller.ControllerTests.test_running_owned_container_stopped_once) ... ok\ntest_snapshot_keeps_exact_bytes_and_readonly_mode (test_controller.ControllerTests.test_snapshot_keeps_exact_bytes_and_readonly_mode) ... ok\n\n----------------------------------------------------------------------\nRan 17 tests in 0.046s\n\nOK\n"
+    "stderr": "test_copy_failure_cannot_submit_add_or_reuse (test_protocol.ProtocolTests.test_copy_failure_cannot_submit_add_or_reuse) ... ok\ntest_fd_transferred_and_not_inheritable (test_protocol.ProtocolTests.test_fd_transferred_and_not_inheritable) ... ok\ntest_mismatched_shape_poisoned (test_protocol.ProtocolTests.test_mismatched_shape_poisoned) ... ok\ntest_missing_peer_bounded (test_protocol.ProtocolTests.test_missing_peer_bounded) ... ok\ntest_peer_exit_after_ready (test_protocol.ProtocolTests.test_peer_exit_after_ready) ... ok\ntest_peer_retirement_failure_cannot_submit_add (test_protocol.ProtocolTests.test_peer_retirement_failure_cannot_submit_add) ... ok\ntest_reserved_identity_rejected (test_protocol.ProtocolTests.test_reserved_identity_rejected) ... ok\ntest_reuse_before_retirement_rejected (test_protocol.ProtocolTests.test_reuse_before_retirement_rejected) ... ok\ntest_reuse_changing_sizes (test_protocol.ProtocolTests.test_reuse_changing_sizes) ... ok\ntest_five_percent_threshold (test_analysis.AnalysisTests.test_five_percent_threshold) ... ok\ntest_one_negative_block_is_inconclusive (test_analysis.AnalysisTests.test_one_negative_block_is_inconclusive) ... ok\ntest_reordered_or_missing_samples_rejected (test_analysis.AnalysisTests.test_reordered_or_missing_samples_rejected) ... ok\ntest_slowest_rank_controls_gate (test_analysis.AnalysisTests.test_slowest_rank_controls_gate) ... ok\ntest_actual_qualified_transport_contract (test_controller.ControllerTests.test_actual_qualified_transport_contract) ... ok\ntest_foreign_same_named_container_never_stopped (test_controller.ControllerTests.test_foreign_same_named_container_never_stopped) ... ok\ntest_missing_selector_or_transport_capability_refused (test_controller.ControllerTests.test_missing_selector_or_transport_capability_refused) ... ok\ntest_natural_exit_has_no_stop (test_controller.ControllerTests.test_natural_exit_has_no_stop) ... ok\ntest_running_owned_container_stopped_once (test_controller.ControllerTests.test_running_owned_container_stopped_once) ... ok\ntest_snapshot_keeps_exact_bytes_and_readonly_mode (test_controller.ControllerTests.test_snapshot_keeps_exact_bytes_and_readonly_mode) ... ok\ntest_static_loopback_rendezvous_without_restarts (test_controller.ControllerTests.test_static_loopback_rendezvous_without_restarts) ... ok\n\n----------------------------------------------------------------------\nRan 20 tests in 0.041s\n\nOK\n"
   },
   "additional_checks": [
     "All seven FP16 fixture generators passed on CPU with torch 2.11.0+xpu; torch.xpu.is_initialized() remained False",
@@ -37,8 +37,8 @@
   "sources": [
     {
       "path": "README.md",
-      "sha256": "7cccf4d35285557189e97d1c4cc48b92f287449380b9c1b9a0958ce2069f168d",
-      "bytes": 9358
+      "sha256": "23bd42c0b43a9e19d81aef1e219cccfb9aa9249e8508e771cf2193f518544b18",
+      "bytes": 10669
     },
     {
       "path": "analyze.py",
@@ -72,8 +72,8 @@
     },
     {
       "path": "run-native.py",
-      "sha256": "b6928871e68c2c2efed078df6c224d7dfc8a86e69268af13000c47000a92855a",
-      "bytes": 14296
+      "sha256": "757c7cd70fe45a503d5896df1a80850ac7ec20e87af6755e1024ef252565c2a0",
+      "bytes": 16789
     },
     {
       "path": "test_analysis.py",
@@ -82,8 +82,8 @@
     },
     {
       "path": "test_controller.py",
-      "sha256": "e2265db5428d14a6eff0f29685058c94eac55f33c2f8744a2c86886e362ce2ec",
-      "bytes": 2717
+      "sha256": "85676b0c669c8a0d987bf5cdf147f10b810482082446dc99e7ed7d5c76fc123a",
+      "bytes": 4724
     },
     {
       "path": "test_protocol.py",

@@ -134,6 +134,25 @@ blocks further work. The standalone output is `communication-native-01` under
 the new campaign root. `--check-only` validates files without GPU discovery,
 Docker calls, creating the output directory or acquiring the GPU stage lock.
 
+The first controller launch stopped in torchrun's `--standalone` hostname
+discovery under the isolated container network, before workers or GPU quality
+tests started. Root requested one controlled stop; that frozen stage remains
+preserved. The explicitly corrected `communication-native-02` uses static
+`127.0.0.1:29500` rendezvous, node rank zero and `--max-restarts=0`. It is a
+separately admitted stage, never an automatic successor. The native kernel,
+quality oracle and library are unchanged by this launcher correction.
+
+The second stage reached worker startup but the control XCCL barrier failed in
+oneCCL OFI transport initialization before the candidate ran. Root confirmed
+that the operator container had omitted the qualified bridge network, host IPC,
+`SYS_PTRACE` capability needed by the existing `pidfd` exchange, and
+`ONEAPI_DEVICE_SELECTOR`. This is a harness-environment failure, not a candidate
+quality result. The explicitly corrected `communication-native-03` validates
+those flags and all relevant collective environment values against the original
+qualified container receipt, then freezes a sanitized runtime contract with its
+source hash. Static loopback rendezvous remains unchanged. Neither prior stage
+is overwritten, no transport behavior is changed, and no automatic retry exists.
+
 ## Source references and limits
 
 - [Level Zero programming guide](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html): allocation-scoped concurrent-access rules require explicit ordering; ordinary peer access does not imply peer atomics or coherence.

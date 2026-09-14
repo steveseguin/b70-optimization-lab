@@ -127,6 +127,7 @@ def main():
         raise RuntimeError('Only unchanged native MTP1 is admitted')
     cmd = ['docker', 'run', '--name', name, '--restart', 'no', '--network', 'bridge',
            '--device', '/dev/dri', '--group-add', 'render', '--ipc', 'host',
+           '--cap-add', 'SYS_PTRACE',  # Preserved qualified pidfd IPC capability.
            '--shm-size', '8g', '--memory', '12g', '--memory-swap', '16g',
            '--ulimit', 'core=0', '--security-opt', 'label=disable',
            '-p', f'127.0.0.1:{a.port}:8000', '--workdir', '/',

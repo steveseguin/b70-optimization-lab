@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """CPU-only ownership, snapshot and shutdown regression checks; no Docker calls."""
+import ast
 import copy
 import importlib.util
 import json
@@ -64,6 +65,19 @@ class ShutdownTests(unittest.TestCase):
     def test_failure_status_preserved_after_clean_stop(self):
         ok,state,_,_,latch=self.scenario(failure='prior fault')
         self.assertTrue(ok); self.assertEqual(state['status'],'failed'); self.assertTrue(state['stop_confirmed']); self.assertFalse(latch)
+
+    def test_actual_controller_argv_preserves_qualified_ipc(self):
+        tree=ast.parse(path.read_text())
+        main=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='main')
+        node=next(n for n in ast.walk(main) if isinstance(n,ast.Assign)
+                  and any(isinstance(t,ast.Name) and t.id=='cmd' for t in n.targets))
+        namespace={'name':'test-owned','a':types.SimpleNamespace(port=18129),
+                   'MODEL_DIR':server.MODEL_DIR,'out':Path('/test-state')}
+        exec(compile(ast.fix_missing_locations(ast.Module(body=[node],type_ignores=[])), '<actual-controller-argv>', 'exec'),namespace)
+        argv=namespace['cmd']
+        for flag,value in (('--cap-add','SYS_PTRACE'),('--network','bridge'),('--ipc','host')):
+            self.assertEqual(argv[argv.index(flag)+1],value)
+        self.assertNotIn('--privileged',argv)
 
     def test_snapshot_independent_of_repository_edits(self):
         with tempfile.TemporaryDirectory() as tmp:
