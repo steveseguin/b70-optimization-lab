@@ -63,6 +63,8 @@ def tree_sha(tree):
 def validate_campaign(campaign):
     if campaign.get("schema") != "neural.download.worker-overnight-campaign.v1":
         raise IntegrityError("unsupported campaign schema")
+    if "review_identity_required" in campaign and type(campaign["review_identity_required"]) is not bool:
+        raise IntegrityError("review_identity_required must be boolean")
     profiles, attempts = campaign.get("profiles"), campaign.get("attempts")
     if not isinstance(profiles, dict) or not profiles or not isinstance(attempts, list) or not attempts:
         raise IntegrityError("campaign must explicitly list profiles and every attempt")
@@ -122,6 +124,15 @@ def check_timing(response, raw, thinking):
         raise IntegrityError("all-output decode proxy does not match token arrival intervals")
     if not C.finite_number(response.get("elapsed_s")) or response["elapsed_s"] < offsets[-1]:
         raise IntegrityError("elapsed response time precedes the final token")
+    valid_action = response.get("action_format_valid")
+    if type(valid_action) is not bool:
+        raise IntegrityError("completed response requires a boolean action-format result")
+    if valid_action:
+        ready = response.get("action_ready_s")
+        if not C.finite_number(ready) or ready < 0 or ready < response["elapsed_s"]:
+            raise IntegrityError("action-ready latency must be finite and at or after the complete response")
+    elif "action_ready_s" in response:
+        raise IntegrityError("invalid action format cannot have an action-ready latency")
     if thinking:
         chunks = raw_content_chunks(raw)
         content_offsets = response.get("content_chunk_offsets_s", [])
@@ -218,7 +229,7 @@ def review_request(reader, prefix, attempt, config):
     return row, payload, response
 
 
-def review_task(reader, directory, result, config):
+def review_task(reader, directory, result, config, entry, review_identity_required=False):
     required = ["task.json", "baseline-validation.json", "sandbox.json", "snapshot.json", "runner-identity.json"]
     missing = [name for name in required if directory + "/" + name not in reader.members]
     if missing:
@@ -302,8 +313,21 @@ def review_task(reader, directory, result, config):
         raise IntegrityError("claimed task acceptance lacks matching baseline/final-tree/teardown evidence: " + directory)
     review_path = directory + "/independent-review.json"
     review = reader.json(review_path) if review_path in reader.members else None
-    if review and review.get("task_id") != result.get("task_id"):
-        raise IntegrityError("independent review identifies a different task: " + directory)
+    if review is not None:
+        if not isinstance(review, dict) or review.get("task_id") != result.get("task_id"):
+            raise IntegrityError("independent review identifies a different task: " + directory)
+        if review.get("attempt") != entry["profile"]:
+            raise IntegrityError("independent review attempt differs from the campaign profile: " + directory)
+        bindings = {"attempt_directory": entry["directory"],
+                    "patch_sha256": patch.get("patch_sha256") if patch else None,
+                    "final_workspace_tree_sha256": final_tree,
+                    "source_commit": snapshot.get("source_commit"),
+                    "model_adapter_sha256": identity.get("model_adapter_sha256")}
+        for field, expected_binding in bindings.items():
+            if review_identity_required and field not in review:
+                raise IntegrityError("independent review is missing required identity binding " + field + ": " + directory)
+            if field in review and review[field] != expected_binding:
+                raise IntegrityError("independent review identity binding differs for " + field + ": " + directory)
     verdict = review.get("verdict") if review else None
     review_status = "approved" if verdict == "approved-for-human-merge" and accepted else "rejected" if verdict == "rejected" else "pending"
     return {"acceptance_supported": accepted, "baseline_matches_expected_failure": bool(baseline_ok),
@@ -413,7 +437,7 @@ def summarize(members):
                 raise IntegrityError("unlisted generation evidence in request directory: " + prefix)
             pre_generation.append({"directory": number, "status": "pre-generation only; no generation request recorded", "files": files})
         if entry["kind"] == "task":
-            checks = review_task(reader, directory, result, config)
+            checks = review_task(reader, directory, result, config, entry, campaign.get("review_identity_required", False))
         else:
             supported = result.get("status") == "passed" and bool(requests) and all(row["metrics_included"] for row in requests) and result.get("no_commands_executed") is True
             if result.get("status") == "passed" and not supported:

@@ -108,6 +108,16 @@ class OvernightTests(unittest.TestCase):
         self.write("campaign.json", self.campaign)
         with patch.object(O, "REFERENCE", self.reference): return O.collect(self.raw, self.raw / "campaign.json", self.out)
 
+    def bound_review(self, directory):
+        result = json.loads((self.raw / directory / "result.json").read_text())
+        identity = json.loads((self.raw / directory / "runner-identity.json").read_text())
+        review = {"task_id": "fixture", "attempt": "thinking-low", "verdict": "approved-for-human-merge",
+                  "attempt_directory": directory, "patch_sha256": result["patch"]["patch_sha256"],
+                  "final_workspace_tree_sha256": result["final_workspace_tree_sha256"],
+                  "source_commit": result["source_commit"], "model_adapter_sha256": identity["model_adapter_sha256"]}
+        self.write(directory + "/independent-review.json", review)
+        return review
+
     def test_task_and_failed_protocol_roundtrip(self):
         self.task(); self.protocol(failed=True)
         self.assertTrue(self.collect()["verified"])
@@ -236,7 +246,7 @@ class OvernightTests(unittest.TestCase):
 
     def test_automatic_acceptance_does_not_override_review_rejection(self):
         directory = self.task()
-        self.write(directory + "/independent-review.json", {"task_id": "fixture", "verdict": "rejected", "rationale": "stale generated browser cache key"})
+        self.write(directory + "/independent-review.json", {"task_id": "fixture", "attempt": "thinking-low", "verdict": "rejected", "rationale": "stale generated browser cache key"})
         summary = O.summarize(self.members()); group = summary["profiles"]["thinking-low"]
         self.assertEqual(group["accepted_tasks"], 1)
         self.assertEqual(group["reviewed_approved_tasks"], 0)
@@ -289,6 +299,78 @@ class OvernightTests(unittest.TestCase):
         self.write("protocol/result.json", result)
         with self.assertRaisesRegex(O.IntegrityError, "previous assistant reasoning/answer was not preserved"):
             O.summarize(self.members())
+
+    def test_action_ready_latency_rejects_invalid_or_premature_values(self):
+        self.protocol(); members = self.members(); name = "protocol/requests/001/response.json"
+        original = json.loads(members[name])
+        for value in (-1, 0, 0.249, float("nan"), float("inf"), "0.3", True, None):
+            with self.subTest(value=value):
+                response = dict(original, action_ready_s=value)
+                members[name] = json.dumps(response).encode()
+                with self.assertRaisesRegex(O.IntegrityError, "action-ready latency must be finite"):
+                    O.summarize(members)
+        response = dict(original); response.pop("action_ready_s")
+        members[name] = O.encoded(response)
+        with self.assertRaisesRegex(O.IntegrityError, "action-ready latency must be finite"):
+            O.summarize(members)
+
+    def test_action_format_flag_and_ready_field_must_be_consistent(self):
+        self.protocol(); members = self.members(); name = "protocol/requests/001/response.json"
+        original = json.loads(members[name])
+        for value in (None, 1, "true"):
+            with self.subTest(value=value):
+                response = dict(original, action_format_valid=value)
+                members[name] = O.encoded(response)
+                with self.assertRaisesRegex(O.IntegrityError, "boolean action-format result"):
+                    O.summarize(members)
+        response = dict(original); response.pop("action_format_valid")
+        members[name] = O.encoded(response)
+        with self.assertRaisesRegex(O.IntegrityError, "boolean action-format result"):
+            O.summarize(members)
+        members[name] = O.encoded(dict(original, action_format_valid=False))
+        with self.assertRaisesRegex(O.IntegrityError, "invalid action format cannot have"):
+            O.summarize(members)
+
+    def test_action_ready_latency_can_equal_complete_response_time(self):
+        self.protocol(); members = self.members(); name = "protocol/requests/001/response.json"
+        response = json.loads(members[name]); response["action_ready_s"] = response["elapsed_s"]
+        members[name] = O.encoded(response)
+        summary = O.summarize(members)
+        self.assertEqual(summary["attempts"][0]["requests"][0]["action_ready_s"], response["elapsed_s"])
+
+    def test_review_profile_mismatch_rejected_even_for_legacy_campaign(self):
+        directory = self.task(); review = self.bound_review(directory)
+        review["attempt"] = "entirely-different-attempt"
+        self.write(directory + "/independent-review.json", review)
+        with self.assertRaisesRegex(O.IntegrityError, "review attempt differs"):
+            O.summarize(self.members())
+
+    def test_required_review_bindings_match_the_exact_attempt(self):
+        directory = self.task(); self.bound_review(directory); self.campaign["review_identity_required"] = True
+        members = self.members(); summary = O.summarize(members)
+        self.assertEqual(summary["profiles"]["thinking-low"]["reviewed_approved_tasks"], 1)
+        name = directory + "/independent-review.json"; original = json.loads(members[name])
+        for field in ("attempt_directory", "patch_sha256", "final_workspace_tree_sha256", "source_commit", "model_adapter_sha256"):
+            with self.subTest(field=field, error="mismatch"):
+                review = dict(original); review[field] = "wrong"
+                members[name] = O.encoded(review)
+                with self.assertRaisesRegex(O.IntegrityError, "identity binding differs for " + field):
+                    O.summarize(members)
+            with self.subTest(field=field, error="missing"):
+                review = dict(original); review.pop(field)
+                members[name] = O.encoded(review)
+                with self.assertRaisesRegex(O.IntegrityError, "missing required identity binding " + field):
+                    O.summarize(members)
+
+    def test_provided_review_bindings_are_checked_without_required_flag(self):
+        directory = self.task(); self.bound_review(directory); members = self.members()
+        name = directory + "/independent-review.json"; original = json.loads(members[name])
+        for field in ("attempt_directory", "patch_sha256", "final_workspace_tree_sha256", "source_commit", "model_adapter_sha256"):
+            with self.subTest(field=field):
+                review = dict(original); review[field] = "wrong"
+                members[name] = O.encoded(review)
+                with self.assertRaisesRegex(O.IntegrityError, "identity binding differs for " + field):
+                    O.summarize(members)
 
 
 if __name__ == "__main__": unittest.main()
