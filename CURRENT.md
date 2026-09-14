@@ -46,6 +46,13 @@ See [speed campaign handoff](experiments/ltx25-b70/SPEED-HANDOFF.md).
 Original baseline remains frozen; new process identity is under the original
 evidence root's `speed-server/`. Use `profile-clip.py --server-run` pointing there.
 
+**2026-09-13 EDT, two-B70 host: final preferred-model prefill pass prepared.**
+User selected official 27B FP8. One owned R304 TP2/MTP1 server will measure
+512/2048 inputs and one diagnostic trace at localhost 18152; no runtime changes
+or restart chain. [Preregistration](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-prereg.md).
+Raw root `/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914`.
+Four-card LTX work remains separate and protected.
+
 **2026-09-13 21:47 EDT, two-B70 host: bounded prefill follow-up complete.**
 4B TP2, 9B TP2 and 27B INT4 TP1 measured at 256/512 input tokens, one user,
 cache zero; all 108 measured requests repeat exactly and all three strict suites
