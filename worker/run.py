@@ -40,7 +40,7 @@ The external acceptance check then runs. If it fails, use its output to correct 
 
 
 def save(path,value):
-    temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(value,indent=2,default=str)+'\n');temporary.replace(path)
+    temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(value,indent=2,default=str,ensure_ascii=False)+'\n');temporary.replace(path)
 
 
 def workspace_tree_sha256(workspace):
@@ -119,13 +119,13 @@ def main():
         from minisweagent import __version__
         if __version__!='2.4.6':raise RuntimeError('Install the pinned worker requirements before running')
         save(out/'task.json',task);save(out/'config.json',config)
-        save(out/'runner-identity.json',{'mini_swe_agent':__version__,'source_commit':commit,'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'model_adapter_sha256':hashlib.sha256((HERE/'model.py').read_bytes()).hexdigest(),'sandbox_sha256':hashlib.sha256((HERE/'sandbox.py').read_bytes()).hexdigest(),'started_epoch_s':started})
+        save(out/'runner-identity.json',{'mini_swe_agent':__version__,'source_commit':commit,'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'model_adapter_sha256':hashlib.sha256((HERE/'model.py').read_bytes()).hexdigest(),'sandbox_sha256':hashlib.sha256((HERE/'sandbox.py').read_bytes()).hexdigest(),'thinking_stream_sha256':hashlib.sha256((HERE/'stream.py').read_bytes()).hexdigest() if config.get('generation',{}).get('enable_thinking') else None,'generation':config.get('generation',{}),'observation_format':config.get('observation_format','json'),'started_epoch_s':started})
         try:
             sandbox=DockerSandbox(out,config['sandbox_image'],acceptance_dir=HERE/'acceptance');sandbox.start()
             baseline=sandbox.execute({'command':command});save(out/'baseline-validation.json',baseline)
             print(f'Baseline acceptance: exit {baseline["returncode"]}',flush=True)
             validate_baseline(task,baseline)
-            model=LocalModel(config['base_url'],config['model'],out/'requests',config['max_input_tokens'],config['max_output_tokens'])
+            model=LocalModel(config['base_url'],config['model'],out/'requests',config['max_input_tokens'],config['max_output_tokens'],generation=config.get('generation'),observation_format=config.get('observation_format','json'))
             env=CheckedEnvironment(sandbox,command,out,config['validation_attempts'])
             agent=DefaultAgent(model,env,system_template=SYSTEM,instance_template='Issue: {{task}}\n\nAcceptance command: {{acceptance_command}}\nRead relevant project instructions, fix the issue, and add an appropriate regression test.',step_limit=config['step_limit'],cost_limit=0,wall_time_limit_seconds=config['wall_time_limit_seconds'],max_consecutive_format_errors=2,output_path=out/'trajectory.json')
             agent_result=agent.run(task['issue'],acceptance_command=command)
