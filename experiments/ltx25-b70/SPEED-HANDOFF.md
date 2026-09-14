@@ -3,18 +3,16 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
-Current September14: packet07 PID56711 is idle on restored dispatch after
-12 exact full clips, including all48 compiled blocks. Warm candidate previews
-7.59–7.65s lose a median1.214s against adjacent original controls; no promotion.
-All48 remains retained. Queue/kernel postflight are clean; no FAULT latch.
-[Native result](notes/multiblock-screen-02-results.md). An offline528-record
-serializer replay shows only52.5ms potential CPU savings, insufficient to
-explain the penalty or justify a reload alone. [Attribution](notes/serializer-replay-cpu-01.md).
-CPU metadata attribution then measured0.480s per528 fake-compute route calls;
-[profile and scope](notes/metadata-dispatch-cpu-02-results.md). Next: a single
-state/hook traversal now passes60 existing CPU lifecycle checks and measures
-0.313s in that fixture. [Candidate scope/pending gates](notes/onepass-state-04-cpu.md).
-Focused alias/None-state gates and native GPU validation remain pending.
+Current September14: packet08 PID66846 is idle on restored dispatch after
+12 exact full clips, including all48 compiled blocks. Compiled previews7.38–8.04s
+remain slower than adjacent original controls; median penalties1.273s preview
+and0.927s sampler intervals. No promotion. Queue/kernel postflight clean, noFAULT.
+[Native results](notes/multiblock-screen-03-results.md). The one-pass state
+candidate also passed60 lifecycle checks and48 focused metadata acceptance
+comparisons, with isolated CPU traversal0.313s versus earlier0.480s.
+Next: a bounded retained-candidate nonblocking stack profile on the same
+application, keeping profile timing diagnostic and preserving original-output
+gates. Client implementation/review pending; no profiler request yet.
 CURRENT.md remains authoritative; older process statements below are superseded.
 
 Historical September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)

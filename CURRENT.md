@@ -25,20 +25,25 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14: one-pass native screen running on packet08.**
+**Four-B70 host, September14: packet08 native screen complete; original selected.**
 PID66846 serves `http://127.0.0.1:8188`, manifest
 `a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b`.
-All four startup checks and strict after-import determinism passed. Old PID56711
-exited0 after one SIGINT, with render ownership clear. Same computer boot; no
-host reboot, driver reset or power/memory changes. The12-request all48
-`multiblock-screen-03` is running (client exec97668, server exec53546).
-New native quality/speed remain pending; failed requests halt without retry or
-cycling the server. [Prepared comparison](experiments/ltx25-b70/notes/onepass-runtime-08-prepared.md),
-[startup](experiments/ltx25-b70/data/multiblock-migration-08/startup.json).
-Next after terminal quality/timing: prepare a bounded retained-candidate stack
-profile on this same application to attribute remaining cost. No profiler
-request or source integration is qualified yet. This supersedes live PID56711
-and packet07 statements below; inspect actual client state before submissions.
+All12 screen03 clips match all four original raw outputs, including all48
+compiled blocks. Compiled previews7.38–8.04s remain slower than adjacent original
+controls6.39–6.59s; median penalties1.273s preview/0.927s samplers. No promotion.
+Client exec97668 exited0; server exec53546 is idle on restored dispatch with
+all48 retained. Queue empty, clean kernel postflight and no FAULT latch.
+[Native results](experiments/ltx25-b70/notes/multiblock-screen-03-results.md).
+Old PID56711 exited0 after one SIGINT. Same host boot; no computer reboot,
+driver reset or power/memory changes. [Startup](experiments/ltx25-b70/data/multiblock-migration-08/startup.json).
+
+Next: complete and review the packet08-only retained diagnostic profiler client,
+then one warmed compiled clip with bounded nonblocking stack sampling and one
+restored control after all gates pass. This reuses the current application;
+no profiler/GPU diagnostic request has occurred yet. It must bind screen03's
+same-process qualification and preserve full-output/receipt/identity/fault gates.
+The CPU traversal improvement is not a native video speed claim. This supersedes
+older live PID56711/packet07 and running-client statements below.
 
 **Four-B70 host, September14: packet07 screen complete; original dispatch selected.**
 PID56711 serves `http://127.0.0.1:8188`, manifest
