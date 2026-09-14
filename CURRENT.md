@@ -75,6 +75,13 @@ service; no new speed claim. Next: finish startup identity/client and actual
 placement diagnostics before any maintenance decision or the bounded 25-request
 comparison. See the [source packet and remaining gates](experiments/ltx25-b70/notes/encoder-runtime-packet.md).
 
+**2026-09-14 UTC, two-B70 host: overnight worker reliability work authorized.**
+Window 04:40–12:40 UTC maximum. Reuse the existing healthy FP8 endpoint only.
+A bounded client-profile screen targets the two failed coding tasks, followed
+by held-out checks if successful; no server restart or inference optimization.
+[Registered plan](experiments/local-coding-worker/overnight-2026-09-14-plan.md).
+Preserve independent four-card LTX work and all frozen prior evidence.
+
 **2026-09-14 UTC, two-B70 host: local coding worker installed, FP8 ready.**
 `neural-worker` runs committed source copies in CPU-only, network-disabled containers.
 The bounded five-issue trial passed three independent acceptance checks; hardware
