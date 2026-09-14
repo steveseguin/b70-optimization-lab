@@ -1,0 +1,27 @@
+{
+  "schema": "ltx25.continuation-graph-cpu.v1",
+  "created_utc": "2026-09-14T05:33:12.332944+00:00",
+  "status": "passed",
+  "supersedes": "continuation-graph-cpu-01.json",
+  "correction": "Selected dual CFG1 split graph; AST validation of every output signature added. Initial receipts and reversible source delta preserved.",
+  "command": [
+    "python3",
+    "experiments/ltx25-b70/scripts/test-continuation-graph.py"
+  ],
+  "unittest_methods": 13,
+  "returncode": 0,
+  "files_sha256": {
+    "scripts/build-continuation-graph.py": "22911dcda8ecad5f88b11d04521e777215ee9b96bfd7c3bcb1eb29f2e3dbe33d",
+    "scripts/test-continuation-graph.py": "57ce1138913342c38e5da8663f5c7316bef28cf490529a97b8276d7b16693ba8",
+    "data/continuation-graph-cpu-02.log": "fcd184cb6aa8966a2f8db1e21a5597a61def078ff1c8b70e98b3df3ec47673a1",
+    "patches/continuation-graph-cpu-01-to-02.patch": "0148c097b0d04f67be22854aaae641af7238f047c293ab6a7faaafbf7952c9fe"
+  },
+  "base_graph_sha256": "fa3868afb3d81056a776d256e68ed5e239cb501bd8b254af7ff2d33339d742d7",
+  "scope": "standard-library graph construction; six pinned native source hashes; native anchor input schema and all node output lists parsed as AST; structural negative tests and CLI output protection",
+  "gpu_execution": false,
+  "runtime_imports": false,
+  "anchor_payload_loaded": false,
+  "synthetic_hash_fixture": "SHA256 of a textual CPU contract fixture; not an image hash or replay qualification",
+  "determinism_claim": "constructor output only; no generated-tensor replay claim",
+  "deployment": false
+}

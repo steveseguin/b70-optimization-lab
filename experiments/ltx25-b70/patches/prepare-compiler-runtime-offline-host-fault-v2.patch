@@ -1,0 +1,107 @@
+--- a/scripts/prepare-compiler-runtime.py
++++ b/scripts/prepare-compiler-runtime.py
+@@ -1,5 +1,8 @@
+ #!/usr/bin/env python3
+-"""Build a dormant compiler successor from the immutable encoder-03 packet.
++"""Build an offline compiler successor with host-fault detection.
++
++A current fault blocks runtime admission, not copying and checking source.
++The model receipt still must have its exact known passed identity.
+ 
+ No Torch imports, process operations, GPU requests, or edits to previous packets.
+ The one-block candidate is explicit in separate graph templates; existing encoder
+@@ -26,6 +29,7 @@
+ PATCHES = ('ltx-block-compile-ownership-guard.patch',
+            'ltx-block-compile-pre-run-lifecycle-v2.patch')
+ EXTRA_HELPERS = ('ltx_block_compile.py', 'block_compile_node.py')
++HOST_FAULT_PATCH = 'encoder-kernel-host-fault-detector.patch'
+ COMPILER_SCHEMA = 'ltx.compiler-runtime-packet.v1'
+ 
+ 
+@@ -119,6 +123,23 @@
+         "                'compiler_environment': compiler_environment,")
+ 
+ 
++
++def verify_model_receipt_offline(common):
++    """Verify immutable model provenance without granting runtime admission."""
++    receipt = common.safe_path(ROOT, 'model-verification.json')
++    common.require(common.sha(receipt) == common.MODEL_VERIFICATION_SHA256,
++                   'Offline model verification receipt changed')
++    common.require(json.loads(receipt.read_text())['status'] == 'passed',
++                   'Offline model gate not passed')
++    # Do not call common.verify_model_receipt here: it also checks the live
++    # fault latch. Launchers and clients retain that runtime admission function.
++    fault = ROOT / 'FAULT.json'
++    return {'model_verification_sha256': common.sha(receipt),
++            'fault_latch_present_at_preparation': fault.exists(),
++            'fault_latch_sha256_at_preparation': common.sha(fault) if fault.exists() else None,
++            'runtime_admission': 'not attempted; fault latch still blocks runtime'}
++
++
+ def prepare(output):
+     common = load_module(PARENT / 'launch/encoder_runtime_common.py', 'compiler_parent_common')
+     common.require(output.is_absolute() and output.parent == ROOT and
+@@ -128,10 +149,11 @@
+     common.require(not output.exists(), 'Packet already exists; never overwrite or repair in place')
+     parent = common.verify_packet(PARENT, PARENT_SHA256)
+     common.verify_runtime(parent['runtime'])
+-    common.verify_model_receipt()
++    offline_receipt = verify_model_receipt_offline(common)
+     common.require(shutil.disk_usage(ROOT).free >= 5 * 1024**3, 'Less than 5 GiB disk free')
+     inputs = [LANE / 'scripts' / name for name in EXTRA_HELPERS]
+-    inputs += [LANE / 'patches' / name for name in PATCHES]
++    inputs += [LANE / 'patches' / name for name in (*PATCHES, HOST_FAULT_PATCH)]
++    inputs.append(LANE / 'scripts/kernel_fault_detector.py')
+     for path in inputs:
+         common.require(path.is_file() and not path.is_symlink(), 'Missing compiler input: ' + str(path))
+         if path.suffix == '.py':
+@@ -159,6 +181,7 @@
+     shutil.copyfile(LANE / 'scripts/ltx_block_compile.py',
+                     provenance / 'ltx_block_compile.unpatched.py')
+     shutil.copyfile(Path(__file__), provenance / Path(__file__).name)
++    shutil.copyfile(LANE / 'scripts/kernel_fault_detector.py', provenance / 'kernel_fault_detector.py')
+     shutil.copyfile(LANE / 'scripts/ltx_block_compile.py', output / 'source/scripts/ltx_block_compile.py')
+     for name in PATCHES:
+         target = output / 'patches' / name
+@@ -174,6 +197,11 @@
+     shutil.copyfile(output / 'source/scripts/block_compile_node.py', node / '__init__.py')
+     (output / 'launch/encoder_runtime_common.py').write_text(checker_text)
+     (output / 'launch/serve-encoder.py').write_text(launcher_text)
++    host_patch = output / 'patches' / HOST_FAULT_PATCH
++    shutil.copyfile(LANE / 'patches' / HOST_FAULT_PATCH, host_patch)
++    subprocess.run(['git', 'apply', '--check', str(host_patch)], cwd=output, check=True, timeout=30)
++    subprocess.run(['git', 'apply', str(host_patch)], cwd=output, check=True, timeout=30)
++    ast.parse((output / 'launch/serve-encoder.py').read_text(), filename='serve-encoder.py')
+     control = json.loads((output / 'graphs/control.json').read_text())
+     common.require(control['420']['inputs']['encoder_variant'] == 'control', 'Control graph variant changed')
+     for mode in ('eager', 'compiled', 'restored'):
+@@ -195,11 +223,14 @@
+         'schema': COMPILER_SCHEMA,
+         'parent_packet': str(PARENT), 'parent_manifest_sha256': PARENT_SHA256,
+         'compiler_preparer_sha256': common.sha(Path(__file__)),
++        'offline_preparation': offline_receipt,
++        'host_fault_detection': {'patch': HOST_FAULT_PATCH,
++                                 'scope': 'Legacy GPU signatures plus soft lockups, RCU stalls/starvation, and hung tasks; no recovery actions.'},
+         'startup_tools': {name: common.sha(output / 'launch' / name)
+                           for name in ('serve-encoder.py', 'encoder_runtime_common.py')},
+         'extension_sha256s': {name: common.sha(output / 'source/scripts' / name) for name in local.EXTENSIONS},
+-        'patch_order': parent['patch_order'] + list(PATCHES),
+-        'patch_sha256s': {**parent['patch_sha256s'], **{name: common.sha(output / 'patches' / name) for name in PATCHES}},
++        'patch_order': parent['patch_order'] + [*PATCHES, HOST_FAULT_PATCH],
++        'patch_sha256s': {**parent['patch_sha256s'], **{name: common.sha(output / 'patches' / name) for name in (*PATCHES, HOST_FAULT_PATCH)}},
+         'compiler': {'default': 'dormant; existing encoder graphs do not call the compiler node',
+                      'encoder_variant': 'control', 'block_index': 24,
+                      'effective_adapter_sha256': EFFECTIVE_ADAPTER_SHA256,
+@@ -211,8 +242,10 @@
+                      'graph_delta': 'Add422 after420 and route both guider model inputs through422; all other nodes unchanged.'},
+         'limitations': [
+             'Prepared inactive; builder does not launch, stop, restart or contact any server.',
+-            'Original launcher archived byte-for-byte; copied launcher adds only compiler environment. Four original encoder graphs unchanged.',
++            'Original launcher archived byte-for-byte; copied launcher adds compiler environment and host-kernel fault signatures. Four original encoder graphs unchanged.',
+             'Compiler enabled only by explicit compiled graph mode; one native block24 only.',
++            'Offline preparation does not grant runtime admission; existing FAULT blocks launcher, client and node execution.',
++            'Host-kernel fault detection is an earlier halt mechanism, not a fix for the kernel incident.',
+             'Compiler exact parity, determinism, lifecycle restoration and native timing remain unqualified.',
+             'Requires unique request names in capture, preview, encoder placement and compiler gate nodes.',
+             'Compiler graphs use control encoder to isolate the compiler delta.',

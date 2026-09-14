@@ -38,6 +38,13 @@ this incident and the fault latch. **No new GPU requests until recovery and
 health are established.** Preserve all failed/current clip files and the earlier
 25/25 exact encoder results. [Incident and evidence](experiments/ltx25-b70/notes/compiler-screen-01-kernel-incident.md).
 
+Subsequent source progress: the same boot/client kernel wait persists. One
+bounded CPU-stack diagnostic timed out without a captured backtrace; no retry,
+reboot or new GPU request. Future compiler packet03 is prepared with explicit
+host-fault detection; its copied launcher correctly refuses current FAULT.
+Runtime remains on packet02, never migrated to03.
+[Preparation and fault revalidation](experiments/ltx25-b70/notes/kernel-fault-source-progress-01.md).
+
 **Four-B70 host, September14: native compiler comparison running.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.

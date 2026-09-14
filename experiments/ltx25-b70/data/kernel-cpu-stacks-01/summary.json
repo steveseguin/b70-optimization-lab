@@ -1,0 +1,39 @@
+{
+  "classification": "previous_goal_turn_progress; current_fault_revalidated",
+  "diagnostic": "one SysRq l stack-capture attempt through sudo with25s timeout",
+  "purpose": "identify outstanding cross-CPU wait without reboot or settings changes",
+  "official_reference": "https://docs.kernel.org/admin-guide/sysrq.html",
+  "start_utc": "2026-09-14 05:25:34 UTC",
+  "result": "One bounded command timed out (exit124); no sysrq/NMI backtrace marker observed; owned sudo and timeout processes exited",
+  "sysrq_marker_observed": false,
+  "nmi_backtrace_observed": false,
+  "kernel_fault_remains": true,
+  "command_log_bytes": 0,
+  "retries": 0,
+  "power_swap_cache_settings_changed": false,
+  "gpu_requests_submitted": 0,
+  "command_exit_code": 124,
+  "archive_sha256": "fc55855dfcd6a9ae4283282afdad010472207fb5ff805ce155dad496afbfc0ab",
+  "files": {
+    "kernel-cpu-stacks-01-command.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "kernel-cpu-stacks-01-interrupts.txt": {
+      "bytes": 49318,
+      "sha256": "b3a8afa42938e8416116d8fe6b455ffaa4019c0fccc0fdd79e9bc31d3c299cda"
+    },
+    "kernel-cpu-stacks-01-journal.log": {
+      "bytes": 57238,
+      "sha256": "c5cb8f62935635bbc926f1f2e06e1c6f0c4f5057f7715aabca958fe076f21d68"
+    },
+    "kernel-cpu-stacks-01-result.json": {
+      "bytes": 750,
+      "sha256": "bcecc2bb94866005315e41f3cdfea7bc6eeae56e32a6ebc61157626efeb5aee9"
+    },
+    "kernel-cpu-stacks-01-start.txt": {
+      "bytes": 24,
+      "sha256": "7b5c88704e24c96967552eb352ffc8617e1854fc3cd2236bfbeb2380e2dcd3cd"
+    }
+  }
+}
