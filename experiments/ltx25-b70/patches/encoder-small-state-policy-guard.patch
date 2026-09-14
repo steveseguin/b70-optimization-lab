@@ -1,0 +1,74 @@
+--- a/comfy/model_patcher.py
++++ b/comfy/model_patcher.py
+@@ -942,6 +942,18 @@
+         for key in list(self.pinned):
+             self.unpin_weight(key)
+ 
++    def _ltx_guard_small_state_policy(self):
++        enabled = bool(self.model_options.get("ltx_small_state_residency", False))
++        previous = bool(getattr(self.model, "_ltx_small_state_policy", False))
++        if enabled != previous:
++            # Model-owned state is shared by clones; their option dicts are not.
++            allocated = (self.model.model_loaded_weight_memory > 0
++                         or getattr(self.model, "_ltx_small_buffers_loaded", False)
++                         or any(getattr(m, "comfy_patched_weights", False) for m in self.model.modules()))
++            if allocated:
++                raise RuntimeError("Detach before changing LTX small-state residency policy")
++        return enabled
++
+     def _ltx_small_state(self):
+         # Opt-in, static Gemma4 encoder only. Preserve registered owners/keys.
+         if not self.model_options.get("ltx_small_state_residency", False):
+@@ -951,7 +963,9 @@
+         if self.is_dynamic():
+             raise RuntimeError("LTX small-state candidate requires static ModelPatcher")
+         if (self.patches or self.weight_wrapper_patches or self.forced_hooks
+-                or self.hook_patches or self.object_patches):
++                or self.hook_patches or (self.object_patches and not (
++                    getattr(self, "is_clip", False)
++                    and self.object_patches == {"manual_cast_dtype": torch.float32}))):
+             raise RuntimeError("LTX small-state candidate does not support weight patches/hooks")
+         norms = set()
+         buffers = []
+@@ -1009,6 +1023,7 @@
+         return loading
+ 
+     def load(self, device_to=None, lowvram_model_memory=0, force_patch_weights=False, full_load=False):
++        small_state_policy = self._ltx_guard_small_state_policy()
+         with self.use_ejected():
+             self.unpatch_hooks()
+             mem_counter = 0
+@@ -1151,6 +1166,8 @@
+             self.model.model_loaded_weight_memory = mem_counter
+             self.model.model_offload_buffer_memory = offload_buffer
+             self.model.current_weight_patches_uuid = self.patches_uuid
++            if small_state_policy or hasattr(self.model, "_ltx_small_state_policy"):
++                self.model._ltx_small_state_policy = small_state_policy
+ 
+             for callback in self.get_all_callbacks(CallbacksMP.ON_LOAD):
+                 callback(self, device_to, lowvram_model_memory, force_patch_weights, full_load)
+@@ -1206,6 +1223,8 @@
+             self.model.model_offload_buffer_memory = 0
+             if hasattr(self.model, "_ltx_small_buffers_loaded"):
+                 self.model._ltx_small_buffers_loaded = False
++            if hasattr(self.model, "_ltx_small_state_policy"):
++                del self.model._ltx_small_state_policy
+ 
+             for m in self.model.modules():
+                 if hasattr(m, "comfy_patched_weights"):
+@@ -1218,6 +1237,7 @@
+         self.object_patches_backup.clear()
+ 
+     def partially_unload(self, device_to, memory_to_free=0, force_patch_weights=False):
++        self._ltx_guard_small_state_policy()
+         with self.use_ejected():
+             hooks_unpatched = False
+             memory_freed = 0
+@@ -1313,6 +1333,7 @@
+             return memory_freed
+ 
+     def partially_load(self, device_to, extra_memory=0, force_patch_weights=False):
++        self._ltx_guard_small_state_policy()
+         with self.use_ejected(skip_and_inject_on_exit_only=True):
+             unpatch_weights = self.model.current_weight_patches_uuid is not None and (self.model.current_weight_patches_uuid != self.patches_uuid or force_patch_weights)
+             # TODO: force_patch_weights should not unload + reload full model

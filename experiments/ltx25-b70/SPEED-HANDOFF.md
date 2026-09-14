@@ -15,6 +15,11 @@ patches. [Actual LTX block CPU compilation](notes/ltx-block-compile-cpu.md)
 also passed exactness with rounding-preservation options. Both need runtime
 integration and XPU qualification before a speed claim; preserve PID24848.
 
+Encoder follow-up: [inactive source packet](notes/encoder-runtime-packet.md)
+now includes explicit control/crop/small_state/combined variants and the required
+clone-policy guard. Seventeen CPU lifecycle tests and four real-loader integration
+tests pass; startup/client integration and GPU qualification remain pending.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,

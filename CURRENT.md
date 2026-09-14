@@ -25,6 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, encoder integration follow-up: inactive source packet built.**
+The four encoder variants now pass 17 CPU lifecycle tests and four integration
+tests through tiny real Gemma4/CLIP/LTX projection paths. Review fixed a shared
+clone policy bypass; integration also fixed rejection of CLIP's stock compute
+dtype setting. Original patches and earlier receipts remain preserved. A new
+non-Git source snapshot under `prepared-encoder-01` inventories 1,205 files and
+keeps all baseline graph inputs except explicit encoder options. Every staged
+file hash and the unchanged loaded-source hashes passed verification. No GPU
+job, server restart or runtime edit occurred. PID24848 remains the loaded idle
+service; no new speed claim. Next: finish startup identity/client and actual
+placement diagnostics before any maintenance decision or the bounded 25-request
+comparison. See the [source packet and remaining gates](experiments/ltx25-b70/notes/encoder-runtime-packet.md).
+
 **Four-B70 host, post-stability LTX diagnostics: next runtime candidates prepared.**
 One 15-second nonblocking py-spy attachment and one unchanged clip completed on
 PID24848; all four output tensors matched baseline-01. The trace points to

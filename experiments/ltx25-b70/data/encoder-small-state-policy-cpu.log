@@ -1,0 +1,32 @@
+test_complete_detach_allows_deliberate_policy_change (__main__.Tests.test_complete_detach_allows_deliberate_policy_change) ... ok
+test_complete_partial_unload_then_reload_preserves_registered_state (__main__.Tests.test_complete_partial_unload_then_reload_preserves_registered_state) ... ok
+test_detach_shared_clone_and_reload (__main__.Tests.test_detach_shared_clone_and_reload) ... ok
+test_disabled_candidate_keeps_original_first_load_placement (__main__.Tests.test_disabled_candidate_keeps_original_first_load_placement) ... ok
+test_full_resident_clone_rejects_both_policy_toggles_before_return (__main__.Tests.test_full_resident_clone_rejects_both_policy_toggles_before_return) ... ok
+test_only_stock_clip_compute_dtype_object_patch_is_supported (__main__.Tests.test_only_stock_clip_compute_dtype_object_patch_is_supported) ... ok
+test_option_cannot_be_disabled_while_buffers_are_loaded (__main__.Tests.test_option_cannot_be_disabled_while_buffers_are_loaded) ... ok
+test_original_full_resident_clone_bypasses_policy_guard (__main__.Tests.test_original_full_resident_clone_bypasses_policy_guard) ... ok
+test_partial_load_prioritizes_norms_and_accounts_buffers (__main__.Tests.test_partial_load_prioritizes_norms_and_accounts_buffers) ... ok
+test_partial_reload_repeats_preserve_accounting_and_values (__main__.Tests.test_partial_reload_repeats_preserve_accounting_and_values) ... ok
+test_partial_unload_prefers_large_weights_before_norms (__main__.Tests.test_partial_unload_prefers_large_weights_before_norms) ... ok
+test_pinned_load_list_omits_direct_scalar_buffers (__main__.Tests.test_pinned_load_list_omits_direct_scalar_buffers) ... ok
+test_rejects_budget_that_covers_state_but_not_cast_reserve (__main__.Tests.test_rejects_budget_that_covers_state_but_not_cast_reserve) ... ok
+test_rejects_dynamic_hooks_and_object_patches (__main__.Tests.test_rejects_dynamic_hooks_and_object_patches) ... ok
+test_rejects_inadequate_budget_before_setting_loaded_state (__main__.Tests.test_rejects_inadequate_budget_before_setting_loaded_state) ... ok
+test_rejects_weight_patches (__main__.Tests.test_rejects_weight_patches) ... ok
+test_same_policy_clone_keeps_full_resident_fast_return (__main__.Tests.test_same_policy_clone_keeps_full_resident_fast_return) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.067s
+
+OK
+{
+  "passed": true,
+  "tests_run": 17,
+  "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "patch_sha256": {
+    "encoder-small-state-residency.patch": "1d83247ac6384f3fe84816280651419ea13531ec0eff0a4a81a1200e82168c3d",
+    "encoder-small-state-policy-guard.patch": "7c83d1597430c821a8168026b337313f098c872e0e3273ac79d63193ca9dad77"
+  },
+  "scope": "CPU-only original bypass reproduction plus real tiny Gemma4 lifecycle; no GPU validation"
+}
