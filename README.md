@@ -96,6 +96,9 @@ DFlash2 startup froze the host before inference; the user rebooted it and the
 original qualified service was restored. No new speedup is claimed.
 The [MTP-only source follow-up](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md)
 excludes DFlash and ranks the remaining exactness-preserving ideas.
+The [implementation follow-up](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md) built metadata and exact
+communication candidates. The communication attempt failed exactness and
+recorded GPU faults; no speedup or new default was qualified.
 
 [`CURRENT.md`](CURRENT.md) alone owns the live service and active research
 state. These are evidence-backed examples; the broader expected-performance

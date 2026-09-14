@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import json
 import copy
+from unittest import mock
 
 spec = importlib.util.spec_from_file_location("controller", Path(__file__).with_name("run-native.py"))
 controller = importlib.util.module_from_spec(spec)
@@ -25,6 +26,22 @@ class Helper:
 
 
 class ControllerTests(unittest.TestCase):
+    def test_quarantine_blocks_cli_before_inputs_docker_or_device_helpers(self):
+        with mock.patch("sys.argv", ["run-native.py", "--out", "/tmp/new-campaign/communication-native-04"]), \
+             mock.patch.object(controller, "inputs") as inputs, \
+             mock.patch.object(controller, "freeze") as freeze, \
+             mock.patch.object(controller.subprocess, "Popen") as popen, \
+             mock.patch.object(controller.importlib.util, "spec_from_file_location") as helper_import:
+            with self.assertRaisesRegex(RuntimeError, "GPU-fault quarantine"):
+                controller.main()
+            for operation in (inputs, freeze, popen, helper_import):
+                operation.assert_not_called()
+
+    def test_quarantine_allows_cpu_admission_only(self):
+        controller.require_native_execution_admission(True)
+        with self.assertRaisesRegex(RuntimeError, "No override"):
+            controller.require_native_execution_admission(False)
+
     def test_actual_qualified_transport_contract(self):
         reference = json.loads(controller.RUNTIME_REFERENCE.read_text())
         contract = controller.runtime_contract(reference)

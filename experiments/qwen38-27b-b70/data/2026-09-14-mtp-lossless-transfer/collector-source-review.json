@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.mtp-collector-source-review.v1",
+  "status": "CPU review and frozen-reference replay passed; final packet collection remains parent-owned",
+  "files_sha256": {
+    "experiments/qwen38-27b-b70/scripts/collect-mtp-transfer-evidence.py": "34fc94e49d9c551e9d69a20449cddc5ab5a64938987f12a3aa2fb276167f20da",
+    "experiments/qwen38-27b-b70/scripts/test_collect_mtp_transfer_evidence.py": "aab25a318df0a6c4882838cdbe731452244d1741e3cb3f561e06b962d7864e16"
+  },
+  "cpu_tests_passed": 9,
+  "frozen_reference_replay": {
+    "strict_prompts": 12,
+    "class_balanced_decode_tok_s": 54.854664057239546,
+    "context_measured_requests": 18,
+    "context_warmups": 3,
+    "all_context_raw_sse_and_metrics_recomputed": true
+  },
+  "fixes": [
+    "Archive research server controller and qualified serving helper source",
+    "Archive frozen mounted research-extension bytes, original control identity and actual controller stop/inspect receipts",
+    "Retain STOP_UNCONFIRMED plus root/stage GPU fault and postflight evidence",
+    "Require explicit completed or closed-after-gpu-fault closure with finished_at and final_service.status",
+    "Require snapshot labels for running or unconfirmed server logs; preserve stopped-server logs as terminal evidence",
+    "Reject complete strict qualification when full numeric token timestamp coverage is absent",
+    "Replay all ordered RPC transitions, rank counters, arm hashes and aggregates for completed campaigns",
+    "Verify preregistered source/oracle/identity hashes against archived bytes for completed campaigns"
+  ],
+  "preservation_scope": [
+    "All explicitly selected operator stage JSON/logs/markers including failures",
+    "Full operator candidate and XCCL .bin outputs, deduplicated by content without dropping bytes",
+    "Full frozen strict numeric arrays and context arrays/SSE/metrics",
+    "All available client raw RPC request/response and partial context evidence"
+  ],
+  "failure_closure": {
+    "allowed_status": "closed-after-gpu-fault",
+    "does_not_require_user_optimization_goal_achieved": true,
+    "absent_client_requires_explicit_reason": true
+  },
+  "archive_execution_policy": "Verifier imports only reviewed local repository replay modules after matching relevant archived source hashes; it never executes source extracted from archive members",
+  "gpu_actions": 0,
+  "endpoint_requests": 0,
+  "runtime_service_actions": 0
+}

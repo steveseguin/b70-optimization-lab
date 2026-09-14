@@ -1,0 +1,184 @@
+{
+  "schema": "neural.download.exact-tp2-native04-postmortem.v1",
+  "status": "GPU fault; all further native work halted; candidate quarantined",
+  "recorded_at": "2026-09-14T18:41:13.721198+00:00",
+  "gpu_actions_by_review_agent": false,
+  "known": [
+    "Both ranks recorded twelve exact first-row quality cases and unchanged inputs, followed by the same double-NaN payload mismatch. These are partial receipts inside a faulted attempt, not an operator qualification.",
+    "Both rank fault receipts were written around18:30:41.774UTC; both workers take os._exit(70) from the general exception handler.",
+    "First precise kernel fault was recorded18:30:41.795853UTC, about22milliseconds after those receipt mtimes; faults affected both GPUs BCS engines. Exact worker OS-exit timestamps were not recorded.",
+    "Controller recorded gpu_fault with the campaign FAULT latch and confirmed stopped container; it did not issue docker stop because the container had already exited.",
+    "No timing blocks, completed shape qualification or model requests ran."
+  ],
+  "not_established": [
+    "Faulting GPU virtual addresses were not mapped to candidate inputs/outputs or XCCL buffers, so the copy owner cannot be identified from this evidence.",
+    "The timing is consistent with a teardown/lifetime race, but does not prove os._exit caused the faults. Candidate copies, XCCL internals or driver lifecycle behavior remain possibilities.",
+    "Successful local event polling in source establishes what the program waited for; it does not prove all driver/collective internal work was retired."
+  ],
+  "structural_finding": "Known, mutually acknowledged quality rejection uses the same abrupt process exit as an unexpected device/timeout failure, bypassing explicit peer mapping close, peer-close acknowledgement, export release and process-group teardown. This is an independently actionable lifetime weakness even though incident causality remains unproven.",
+  "kernel_events": [
+    {
+      "utc": "2026-09-14T18:30:41.795853+00:00",
+      "realtime_us": 1789410641795853,
+      "monotonic_us": 12139705024,
+      "message": "xe 0000:03:00.0: [drm] Tile0: GT0: \n\tASID: 38\n\tFaulted Address: 0x00008101fcac0000\n\tFaultType: 0\n\tAccessType: 0\n\tFaultLevel: 4\n\tEngineClass: 3 bcs\n\tEngineInstance: 0"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.796760+00:00",
+      "realtime_us": 1789410641796760,
+      "monotonic_us": 12139705931,
+      "message": "xe 0000:03:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -EINVAL"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.796828+00:00",
+      "realtime_us": 1789410641796828,
+      "monotonic_us": 12139705998,
+      "message": "xe 0000:03:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=18, state=0x289"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.799835+00:00",
+      "realtime_us": 1789410641799835,
+      "monotonic_us": 12139709006,
+      "message": "xe 0000:e3:00.0: [drm] Tile0: GT0: \n\tASID: 38\n\tFaulted Address: 0x00008156a74c0000\n\tFaultType: 0\n\tAccessType: 0\n\tFaultLevel: 4\n\tEngineClass: 3 bcs\n\tEngineInstance: 0"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.799913+00:00",
+      "realtime_us": 1789410641799913,
+      "monotonic_us": 12139709084,
+      "message": "xe 0000:e3:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -EINVAL"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.799959+00:00",
+      "realtime_us": 1789410641799959,
+      "monotonic_us": 12139709130,
+      "message": "xe 0000:e3:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs, logical_mask: 0x1, guc_id=11"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.800005+00:00",
+      "realtime_us": 1789410641800005,
+      "monotonic_us": 12139709175,
+      "message": "xe 0000:e3:00.0: [drm] Tile0: GT0: \n\tASID: 38\n\tFaulted Address: 0x00008156a74c0000\n\tFaultType: 0\n\tAccessType: 0\n\tFaultLevel: 4\n\tEngineClass: 3 bcs\n\tEngineInstance: 0"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.800049+00:00",
+      "realtime_us": 1789410641800049,
+      "monotonic_us": 12139709219,
+      "message": "xe 0000:e3:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -EINVAL"
+    },
+    {
+      "utc": "2026-09-14T18:30:41.800103+00:00",
+      "realtime_us": 1789410641800103,
+      "monotonic_us": 12139709274,
+      "message": "xe 0000:e3:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=11, state=0x2c9"
+    }
+  ],
+  "quality_receipts": {
+    "rank0": {
+      "records": 13,
+      "exact_records": 12,
+      "last_case": {
+        "rows": 1,
+        "kind": "nan_inf",
+        "repeat": 0,
+        "exact": false,
+        "input_sha256": "a01e1f5af78fae1c862e797efcd2b08f5754d7e5628fa9ef65053ce7fe47d270",
+        "candidate_sha256": "d1e176577a8016882b262a8a8b5ee517120ca3b654bc149fe8f595e20049f838",
+        "xccl_sha256": "f13d63a483950a5e51a4b2095233b39b6b8159ba15755be81b188266736db53e",
+        "input_unchanged": true
+      }
+    },
+    "rank1": {
+      "records": 13,
+      "exact_records": 12,
+      "last_case": {
+        "rows": 1,
+        "kind": "nan_inf",
+        "repeat": 0,
+        "exact": false,
+        "input_sha256": "93d6b239eb8a8d9f88ad2a38219920c85d037159ba44c24b8ed31b910cbbda7e",
+        "candidate_sha256": "d1e176577a8016882b262a8a8b5ee517120ca3b654bc149fe8f595e20049f838",
+        "xccl_sha256": "f13d63a483950a5e51a4b2095233b39b6b8159ba15755be81b188266736db53e",
+        "input_unchanged": true
+      }
+    }
+  },
+  "artifacts": [
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/state.json",
+      "sha256": "62cb8aa0994b7c4e74bcf25933c1d2eacd7329aa85280474606936d01df929b3",
+      "mtime_utc": "2026-09-14T18:30:42.284537+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/stop.json",
+      "sha256": "2c9dc2d0e28ed43a1fd09ff4aa0be8de7019d1f208e597dd856325e712434dce",
+      "mtime_utc": "2026-09-14T18:30:42.271674+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/GPU-FAULT.json",
+      "sha256": "e357eb34994daa9c3280fda5318900be62d2a9270fc5edcad166383a722cfa2b",
+      "mtime_utc": "2026-09-14T18:30:42.282193+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/snapshot-manifest.json",
+      "sha256": "9de333c7e8f53e6afada45c9e362e413bcaf2604765ec71ad6d44aab89aad9f2",
+      "mtime_utc": "2026-09-14T18:30:38.023635+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/results/rank0-FAULT.txt",
+      "sha256": "10ac74574884e512512ceb3ba715345346bc1dce45e2f89daa7c7857ef7fab1f",
+      "mtime_utc": "2026-09-14T18:30:41.774018+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/results/rank1-FAULT.txt",
+      "sha256": "9eed56528c24e0cad0aaaeb1c4e40078e5262b8167688e0524a04109f506e2cd",
+      "mtime_utc": "2026-09-14T18:30:41.773911+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/results/rank0-quality.json",
+      "sha256": "4a5e026a39e288d2fa5cec8793f1e9e61d50d77fcd6374b7ec734c6dfb17012a",
+      "mtime_utc": "2026-09-14T18:30:41.773448+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/communication-native-04/results/rank1-quality.json",
+      "sha256": "167dfa4871abe9159cb67d73c21908ddd060ade461dada1cec471270789cecb4",
+      "mtime_utc": "2026-09-14T18:30:41.773358+00:00"
+    },
+    {
+      "path": "/mnt/fast-ai/research/mtp-exact-tp2-ccl-20260914/native04-kernel-precise.jsonl",
+      "sha256": "e5d473c387a2de860828e820180364c8ac8b7c5898f6d94b419be32eafc6d9cb",
+      "mtime_utc": "2026-09-14T18:36:06.226528+00:00"
+    }
+  ],
+  "inactive_followup": {
+    "helper": "quality_retirement.py",
+    "patch": "quality-retirement.patch",
+    "active_gate_modified": false,
+    "native_arithmetic_modified": false,
+    "requires_completed_events_healthy_channels_and_peer_verdict_agreement": true,
+    "ordering": "both readiness frames; close local imported mapping and received FD; both import-close acknowledgements; return own export handle; free own output/input; normal process-group teardown under bounded outer controller",
+    "exclusions": "Never use for device error, timeout, unfinished work, poisoned channel or missing peer acknowledgement. Unexpected fault path remains separate; coordinated whole-group termination still needs review.",
+    "tests": {
+      "count": 4,
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "test_complete_and_agreed_close_order (test_quality_retirement.RetirementTests.test_complete_and_agreed_close_order) ... ok\ntest_incomplete_or_device_fault_never_enters_teardown (test_quality_retirement.RetirementTests.test_incomplete_or_device_fault_never_enters_teardown) ... ok\ntest_missing_peer_ack_never_frees_export (test_quality_retirement.RetirementTests.test_missing_peer_ack_never_frees_export) ... ok\ntest_poisoned_or_incomplete_peer_phase_never_enters_teardown (test_quality_retirement.RetirementTests.test_poisoned_or_incomplete_peer_phase_never_enters_teardown) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK\n"
+    }
+  },
+  "nan_source_status": {
+    "package": "oneccl2022.0.0",
+    "release_commit": "1318c3aaf8a67536ff538331c418c8cea3114f33",
+    "legacy_backend_submodule_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "libccl_so1_sha256": "733980ab6a6eb15d2d3da0649b92052c64a9597ced48fe9188434face5298b35",
+    "finding": "Release tree pins the legacy backend matching the available allreduce source. Exact compiled NaN operand-selection semantics remain unqualified; no arithmetic patch selected or benchmark fixture excluded.",
+    "release_tree_url": "https://github.com/uxlfoundation/oneCCL/tree/1318c3aaf8a67536ff538331c418c8cea3114f33/deps/libccl",
+    "local_tree": "/mnt/fast-ai/research/mtp-exact-tp2-ccl-20260914/2022.0.0/tree.json"
+  },
+  "quarantine_guard": {
+    "path": "run-native.py",
+    "native_execution_refused_before_inputs_device_helpers_locks_or_docker": true,
+    "output_directory_independent": true,
+    "override_flag": false,
+    "check_only_cpu_allowed": true,
+    "future_native_work": "Requires external recovery admission and a new reviewed recipe; this does not establish a fault fix."
+  }
+}

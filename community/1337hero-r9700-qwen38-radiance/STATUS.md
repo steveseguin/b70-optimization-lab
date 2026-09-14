@@ -18,3 +18,11 @@ September 14 follow-up: user excludes DFlash and retains FP8/native MTP.
 [MTP-only source review](validation/2026-09-14-mtp-fp8-transfer-review.md)
 preserves one inactive metadata cleanup and an exact-communication design lead.
 No model requests, installed changes, new speed measurements or promotion.
+
+September 14 implementation follow-up: the [FP8/native-MTP campaign](../../experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md)
+implemented and offline-tested the metadata relocation and a native Intel
+communication prototype. The operator attempt failed NaN-payload equality and
+recorded GPU memory faults; native work halted before performance or model
+tests. No validated boost, recipe integration or verification of the AMD run.
+The query-length observation is acknowledged; the actual branch relocation
+and Intel prototype are lab adaptations. All failed stages remain preserved.

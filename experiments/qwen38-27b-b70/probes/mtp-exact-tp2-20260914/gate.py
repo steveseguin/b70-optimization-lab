@@ -93,7 +93,9 @@ def main(args):
         native.call("validate_fd", queue, handle)
         remote_handle, remote_fd = exchange_ipc(sock, handle.raw)
         remote_buffer = C.create_string_buffer(remote_handle, 64)
-        native.call("validate_fd", queue, remote_buffer)
+        # validate_fd is an EXPORT-map query, not a receiver-import API. The
+        # exporter still passed it above; SCM_RIGHTS/fstat validate the received
+        # descriptor, and zeMemOpenIpcHandle performs actual driver admission.
         peer = native.pointer("open", remote_buffer)
         collective = Collective(native, channel, n, local, peer, output)
         for kind in ["varied", "cancel", "signed_zero", "subnormal", "overflow", "rounding", "nan_inf"]:

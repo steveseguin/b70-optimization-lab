@@ -1,0 +1,166 @@
+{
+  "schema": "neural.download.exact-tp2-ipc-import-source-review.v1",
+  "recorded_at": "2026-09-14T18:26:37.145231+00:00",
+  "driver_tag": "26.22.38646.7",
+  "commit": "08816334ba301fb27a54f06e4293daab584165c3",
+  "version_scope": "Initial reference matches host26.22.38646.7; container_confirmation below pins the actual control-image26.27.39122.11 driver and verifies all five relevant implementation bodies identical.",
+  "sources": [
+    {
+      "upstream_path": "level_zero/core/source/context/context.cpp",
+      "local_path": "/mnt/fast-ai/research/mtp-exact-tp2-ipc-20260914/installed/level_zero_core_source_context_context.cpp",
+      "url": "https://github.com/intel/compute-runtime/blob/08816334ba301fb27a54f06e4293daab584165c3/level_zero/core/source/context/context.cpp",
+      "sha256": "f5a4ece056cbea4b71be2049771a3491374972d356b6da3a3d98d099839bbdf7",
+      "bytes": 97403,
+      "excerpts": [
+        {
+          "first_line": 888,
+          "last_line": 934,
+          "text": "ze_result_t Context::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {\n    std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;\n    auto lock = driverHandle->lockIPCHandleMap();\n    auto &ipcMap = driverHandle->getIPCHandleMap();\n    auto ipcIter = ipcMap.find(handle);\n    if (ipcIter != ipcMap.end()) {\n        IpcHandleTracking *trackIPC = ipcIter->second;\n        if (settings.useOpaqueHandle) {\n            using IpcDataT = IpcOpaqueMemoryData;\n            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);\n            ipcData = trackIPC->opaqueData;\n        } else {\n            using IpcDataT = IpcMemoryData;\n            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);\n            ipcData = trackIPC->ipcData;\n        }\n    } else {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n    return ZE_RESULT_SUCCESS;\n}\n\nze_result_t Context::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) {\n    uint64_t handle = 0;\n    if (settings.useOpaqueHandle) {\n        if (settings.handleType == IpcHandleType::fdHandle) {\n            using IpcDataOpaqueT = IpcOpaqueMemoryData;\n            IpcDataOpaqueT &ipcData = *reinterpret_cast<IpcDataOpaqueT *>(ipcHandle.data);\n            handle = static_cast<uint64_t>(ipcData.handle.fd);\n        } else {\n            return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n        }\n    } else {\n        using IpcDataT = IpcMemoryData;\n        IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);\n        handle = ipcData.handle;\n    }\n    std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;\n    auto lock = this->driverHandle->lockIPCHandleMap();\n    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);\n    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {\n        *pHandle = ipcHandleIterator->first;\n    } else {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n    return ZE_RESULT_SUCCESS;\n}"
+        },
+        {
+          "first_line": 1074,
+          "last_line": 1122,
+          "text": "ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,\n                                      const ze_ipc_mem_handle_t &pIpcHandle,\n                                      ze_ipc_memory_flags_t flags,\n                                      void **ptr) {\n    uint64_t handle;\n    uint8_t type;\n    unsigned int processId;\n    uint64_t poolOffset;\n    uint64_t cacheID;\n    bool compressedMemory = false;\n    void *reservedHandleData = nullptr;\n\n    if (!settings.enableIpcHandleSharing) {\n        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;\n    }\n\n    bool isOpaqueHandle = false;\n    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);\n\n    NEO::AllocationType allocationType = NEO::AllocationType::unknown;\n    if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {\n        allocationType = NEO::AllocationType::buffer;\n    } else if (type == static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory)) {\n        allocationType = NEO::AllocationType::bufferHostMemory;\n    } else {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n\n    *ptr = getMemHandlePtr(hDevice,\n                           handle,\n                           allocationType,\n                           allocationType == NEO::AllocationType::bufferHostMemory,\n                           processId,\n                           flags,\n                           cacheID,\n                           reservedHandleData,\n                           compressedMemory,\n                           isOpaqueHandle)\n               .second;\n    if (nullptr == *ptr) {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n\n    *ptr = ptrOffset(*ptr, poolOffset);\n\n    return ZE_RESULT_SUCCESS;\n}\n\nze_result_t Context::openIpcMemHandles(ze_device_handle_t hDevice,"
+        }
+      ]
+    },
+    {
+      "upstream_path": "level_zero/core/source/context/context_drm/context_drm.cpp",
+      "local_path": "/mnt/fast-ai/research/mtp-exact-tp2-ipc-20260914/installed/level_zero_core_source_context_context_drm_context_drm.cpp",
+      "url": "https://github.com/intel/compute-runtime/blob/08816334ba301fb27a54f06e4293daab584165c3/level_zero/core/source/context/context_drm/context_drm.cpp",
+      "sha256": "08a53926166f6921e7f08e340186b2326f5da6cf4e71e202e7525f83fb0edbd1",
+      "bytes": 12467,
+      "excerpts": [
+        {
+          "first_line": 88,
+          "last_line": 123,
+          "text": "std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle) {\n    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();\n    uint64_t effectiveCacheID = cacheID;\n    uint64_t importHandle = handle;\n\n    bool opaqueHandlesAttempted = false;\n    if (isOpaqueHandle && settings.useOpaqueHandle) {\n        // Use helper to import opaque handle with fallback\n        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice);\n        if (!importResult.success) {\n            return {nullptr, nullptr};\n        }\n        importHandle = importResult.importHandle;\n        opaqueHandlesAttempted = importResult.opaqueHandlesAttempted;\n    }\n\n    NEO::GraphicsAllocation *alloc = nullptr;\n    NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());\n    auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory);\n    if (opaqueHandlesAttempted && !alloc && reservedHandleData) {\n        result = importHandleFromReservedHandleData(reservedHandleData, cacheID, neoDevice, flags, allocationType, isHostIpcAllocation, compressedMemory, importHandle, alloc);\n    }\n\n    // Store cacheID in IPC handle tracking if opaque handles are used\n    if (result && isOpaqueHandle && settings.useOpaqueHandle && effectiveCacheID != 0) {\n        auto lock = driverHandle->lockIPCHandleMap();\n        auto &ipcMap = driverHandle->getIPCHandleMap();\n        auto ipcIter = ipcMap.find(importHandle);\n        if (ipcIter != ipcMap.end()) {\n            ipcIter->second->cacheID = effectiveCacheID;\n        }\n    }\n\n    return {alloc, result};\n}\n"
+        },
+        {
+          "first_line": 124,
+          "last_line": 151,
+          "text": "void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {\n    if (settings.useOpaqueHandle) {\n        const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);\n        handle = static_cast<uint64_t>(ipcData->handle.fd);\n        type = ipcData->memoryType;\n        processId = ipcData->processId;\n        poolOffset = ipcData->poolOffset;\n        cacheID = ipcData->computeCacheID();\n        compressedMemory = ipcData->compressedMemory;\n        uint8_t emptyReservedData[32] = {0};\n        if (std::memcmp(ipcData->reservedHandleData, emptyReservedData, sizeof(emptyReservedData)) != 0) {\n            reservedHandleData = const_cast<void *>(static_cast<const void *>(&ipcData->reservedHandleData));\n        }\n        // Check if opaqueHandle matches handle - if not, user changed it, so fallback to legacy path\n        uint64_t normalizedHandle = normalizeIPCHandle(*ipcData);\n        uint64_t normalizedOpaqueHandle = 0;\n        normalizedOpaqueHandle = static_cast<uint64_t>(static_cast<int64_t>(ipcData->opaqueHandle.fd));\n        isOpaqueHandle = (normalizedHandle == normalizedOpaqueHandle);\n    } else {\n        const IpcMemoryData *ipcData = reinterpret_cast<const IpcMemoryData *>(ipcHandle.data);\n        handle = ipcData->handle;\n        type = ipcData->type;\n        poolOffset = ipcData->poolOffset;\n        processId = 0;\n        cacheID = 0;\n        reservedHandleData = nullptr;\n        isOpaqueHandle = false;\n    }"
+        }
+      ]
+    },
+    {
+      "upstream_path": "level_zero/core/source/context/context.h",
+      "local_path": "/mnt/fast-ai/research/mtp-exact-tp2-ipc-20260914/installed/level_zero_core_source_context_context.h",
+      "url": "https://github.com/intel/compute-runtime/blob/08816334ba301fb27a54f06e4293daab584165c3/level_zero/core/source/context/context.h",
+      "sha256": "df47dd1c638613b75ba4ffcd8db6f87c13cb96cb5e32d71e2895b9bd172c56c5",
+      "bytes": 20567,
+      "excerpts": [
+        {
+          "first_line": 54,
+          "last_line": 82,
+          "text": "\n#pragma pack(1)\nstruct IpcMemoryData {\n    uint64_t handle = 0;\n    uint64_t poolOffset = 0;\n    uint8_t type = 0;\n};\n#pragma pack()\nstatic_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, \"IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE\");\n\n#pragma pack(1)\nstruct IpcOpaqueMemoryData {\n    union IpcHandle {\n        int fd;\n        uint64_t reserved;\n    };\n    IpcHandle handle = {};\n    uint64_t poolOffset = 0;\n    unsigned int processId = 0;\n    IpcHandleType type = IpcHandleType::maxHandle;\n    uint8_t memoryType = 0;\n    IpcHandle opaqueHandle = {};\n    uint8_t reservedHandleData[32] = {0};\n    // Computes and returns the cache ID hash\n    uint64_t computeCacheID() const noexcept;\n    bool compressedMemory = false;\n};\n#pragma pack()\nstatic_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, \"IpcOpaqueMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE\");"
+        }
+      ]
+    }
+  ],
+  "license": "MIT License\n\nCopyright (C) 2021 Intel Corporation\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+  "diagnosis": "getFdFromIpcHandle and getIpcHandleFromFd both require membership in the calling driver local IPC export map. A received SCM_RIGHTS descriptor is valid in the OS but is not a local export-map entry; INVALID_ARGUMENT before import is expected.",
+  "correction": [
+    "Keep native exporter FD/layout validation on both ranks.",
+    "Validate SCM_RIGHTS descriptor with fstat and retain its lifetime through peer mapping close.",
+    "If received fd equals exporter numeric fd, duplicate using F_DUPFD_CLOEXEC minimum exporter+1, then close only original received descriptor; preserve every non-FD byte.",
+    "Call zeMemOpenIpcHandle directly; changed-FD source branch explicitly imports the supplied descriptor and preserves allocation offset/type metadata.",
+    "Do not use the reverse FD conversion API; it has the same local-export-map precondition.",
+    "Keep peer access/UUID, SYCL pointer admission, exact output and lifetime gates unchanged."
+  ],
+  "gpu_actions_by_review_agent": false,
+  "candidate_arithmetic_changed": false,
+  "container_confirmation": {
+    "recorded_at": "2026-09-14T18:30:01.056633+00:00",
+    "image": "sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1dd8ea066",
+    "version_evidence": "Root-agent CPU dpkg-query in the immutable control image",
+    "packages": {
+      "libze-intel-gpu1": "26.27.39122.11-0",
+      "libze1": "1.32.0"
+    },
+    "driver_tag": "26.27.39122.11",
+    "commit": "930b848261031928061f744020de30c104c0f207",
+    "source_compatible": true,
+    "comparisons": [
+      {
+        "function": "Context::getIpcHandleFromFd",
+        "identical_to_host_reference": true,
+        "body_sha256": "8fe719f2e30d56c88ff281cead5665365392659ff971b202290d52be8619e21f"
+      },
+      {
+        "function": "Context::getFdFromIpcHandle",
+        "identical_to_host_reference": true,
+        "body_sha256": "e0d43031aa0d75c230524572b9c40fefa52979d8efbb36bdf5241a90c279dfdf"
+      },
+      {
+        "function": "Context::openIpcMemHandle(",
+        "identical_to_host_reference": true,
+        "body_sha256": "796ec77a7150c9d4ed7a0d4e91f1f701cce7f2100c3343ac5e2abca55b207074"
+      },
+      {
+        "function": "Context::getMemHandlePtr",
+        "identical_to_host_reference": true,
+        "body_sha256": "0a0717d5ecf2713b5e476eec2d0fc4c6e39c44b91390651e65760edc2c152a6a"
+      },
+      {
+        "function": "Context::getDataFromIpcHandle",
+        "identical_to_host_reference": true,
+        "body_sha256": "9a5ad786f024d40588eea5323fec1950b9854a3ed0088eb8050eb3f4097b3e00"
+      }
+    ],
+    "sources": [
+      {
+        "upstream_path": "level_zero/core/source/context/context.cpp",
+        "local_path": "/mnt/fast-ai/research/mtp-exact-tp2-ipc-20260914/container/level_zero_core_source_context_context.cpp",
+        "url": "https://github.com/intel/compute-runtime/blob/930b848261031928061f744020de30c104c0f207/level_zero/core/source/context/context.cpp",
+        "sha256": "d9b831048861c431fcb44c9d2863ba799e8df69622bf37c0ef345876a68ccbda",
+        "bytes": 100075,
+        "excerpts": [
+          {
+            "first_line": 875,
+            "last_line": 921,
+            "text": "ze_result_t Context::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {\n    std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;\n    auto lock = driverHandle->lockIPCHandleMap();\n    auto &ipcMap = driverHandle->getIPCHandleMap();\n    auto ipcIter = ipcMap.find(handle);\n    if (ipcIter != ipcMap.end()) {\n        IpcHandleTracking *trackIPC = ipcIter->second;\n        if (settings.useOpaqueHandle) {\n            using IpcDataT = IpcOpaqueMemoryData;\n            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);\n            ipcData = trackIPC->opaqueData;\n        } else {\n            using IpcDataT = IpcMemoryData;\n            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);\n            ipcData = trackIPC->ipcData;\n        }\n    } else {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n    return ZE_RESULT_SUCCESS;\n}\n\nze_result_t Context::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) {\n    uint64_t handle = 0;\n    if (settings.useOpaqueHandle) {\n        if (settings.handleType == IpcHandleType::fdHandle) {\n            using IpcDataOpaqueT = IpcOpaqueMemoryData;\n            IpcDataOpaqueT &ipcData = *reinterpret_cast<IpcDataOpaqueT *>(ipcHandle.data);\n            handle = static_cast<uint64_t>(ipcData.handle.fd);\n        } else {\n            return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n        }\n    } else {\n        using IpcDataT = IpcMemoryData;\n        IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);\n        handle = ipcData.handle;\n    }\n    std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;\n    auto lock = this->driverHandle->lockIPCHandleMap();\n    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);\n    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {\n        *pHandle = ipcHandleIterator->first;\n    } else {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n    return ZE_RESULT_SUCCESS;\n}"
+          },
+          {
+            "first_line": 1061,
+            "last_line": 1107,
+            "text": "ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,\n                                      const ze_ipc_mem_handle_t &pIpcHandle,\n                                      ze_ipc_memory_flags_t flags,\n                                      void **ptr) {\n    uint64_t handle;\n    uint8_t type;\n    unsigned int processId;\n    uint64_t poolOffset;\n    uint64_t cacheID;\n    bool compressedMemory = false;\n    void *reservedHandleData = nullptr;\n\n    if (!settings.enableIpcHandleSharing) {\n        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;\n    }\n\n    bool isOpaqueHandle = false;\n    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);\n\n    NEO::AllocationType allocationType = NEO::AllocationType::unknown;\n    if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {\n        allocationType = NEO::AllocationType::buffer;\n    } else if (type == static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory)) {\n        allocationType = NEO::AllocationType::bufferHostMemory;\n    } else {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n\n    *ptr = getMemHandlePtr(hDevice,\n                           handle,\n                           allocationType,\n                           allocationType == NEO::AllocationType::bufferHostMemory,\n                           processId,\n                           flags,\n                           cacheID,\n                           reservedHandleData,\n                           compressedMemory,\n                           isOpaqueHandle)\n               .second;\n    if (nullptr == *ptr) {\n        return ZE_RESULT_ERROR_INVALID_ARGUMENT;\n    }\n\n    *ptr = ptrOffset(*ptr, poolOffset);\n\n    return ZE_RESULT_SUCCESS;\n}"
+          }
+        ]
+      },
+      {
+        "upstream_path": "level_zero/core/source/context/context_drm/context_drm.cpp",
+        "local_path": "/mnt/fast-ai/research/mtp-exact-tp2-ipc-20260914/container/level_zero_core_source_context_context_drm_context_drm.cpp",
+        "url": "https://github.com/intel/compute-runtime/blob/930b848261031928061f744020de30c104c0f207/level_zero/core/source/context/context_drm/context_drm.cpp",
+        "sha256": "08a53926166f6921e7f08e340186b2326f5da6cf4e71e202e7525f83fb0edbd1",
+        "bytes": 12467,
+        "excerpts": [
+          {
+            "first_line": 88,
+            "last_line": 123,
+            "text": "std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle) {\n    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();\n    uint64_t effectiveCacheID = cacheID;\n    uint64_t importHandle = handle;\n\n    bool opaqueHandlesAttempted = false;\n    if (isOpaqueHandle && settings.useOpaqueHandle) {\n        // Use helper to import opaque handle with fallback\n        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice);\n        if (!importResult.success) {\n            return {nullptr, nullptr};\n        }\n        importHandle = importResult.importHandle;\n        opaqueHandlesAttempted = importResult.opaqueHandlesAttempted;\n    }\n\n    NEO::GraphicsAllocation *alloc = nullptr;\n    NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());\n    auto result = this->driverHandle->importFdHandle(neoDevice, flags, importHandle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory);\n    if (opaqueHandlesAttempted && !alloc && reservedHandleData) {\n        result = importHandleFromReservedHandleData(reservedHandleData, cacheID, neoDevice, flags, allocationType, isHostIpcAllocation, compressedMemory, importHandle, alloc);\n    }\n\n    // Store cacheID in IPC handle tracking if opaque handles are used\n    if (result && isOpaqueHandle && settings.useOpaqueHandle && effectiveCacheID != 0) {\n        auto lock = driverHandle->lockIPCHandleMap();\n        auto &ipcMap = driverHandle->getIPCHandleMap();\n        auto ipcIter = ipcMap.find(importHandle);\n        if (ipcIter != ipcMap.end()) {\n            ipcIter->second->cacheID = effectiveCacheID;\n        }\n    }\n\n    return {alloc, result};\n}\n"
+          },
+          {
+            "first_line": 124,
+            "last_line": 152,
+            "text": "void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {\n    if (settings.useOpaqueHandle) {\n        const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);\n        handle = static_cast<uint64_t>(ipcData->handle.fd);\n        type = ipcData->memoryType;\n        processId = ipcData->processId;\n        poolOffset = ipcData->poolOffset;\n        cacheID = ipcData->computeCacheID();\n        compressedMemory = ipcData->compressedMemory;\n        uint8_t emptyReservedData[32] = {0};\n        if (std::memcmp(ipcData->reservedHandleData, emptyReservedData, sizeof(emptyReservedData)) != 0) {\n            reservedHandleData = const_cast<void *>(static_cast<const void *>(&ipcData->reservedHandleData));\n        }\n        // Check if opaqueHandle matches handle - if not, user changed it, so fallback to legacy path\n        uint64_t normalizedHandle = normalizeIPCHandle(*ipcData);\n        uint64_t normalizedOpaqueHandle = 0;\n        normalizedOpaqueHandle = static_cast<uint64_t>(static_cast<int64_t>(ipcData->opaqueHandle.fd));\n        isOpaqueHandle = (normalizedHandle == normalizedOpaqueHandle);\n    } else {\n        const IpcMemoryData *ipcData = reinterpret_cast<const IpcMemoryData *>(ipcHandle.data);\n        handle = ipcData->handle;\n        type = ipcData->type;\n        poolOffset = ipcData->poolOffset;\n        processId = 0;\n        cacheID = 0;\n        reservedHandleData = nullptr;\n        isOpaqueHandle = false;\n    }\n}"
+          }
+        ]
+      },
+      {
+        "upstream_path": "level_zero/core/source/context/context.h",
+        "local_path": "/mnt/fast-ai/research/mtp-exact-tp2-ipc-20260914/container/level_zero_core_source_context_context.h",
+        "url": "https://github.com/intel/compute-runtime/blob/930b848261031928061f744020de30c104c0f207/level_zero/core/source/context/context.h",
+        "sha256": "0e0aa0a5b5c3ad733b004c3aaabd83206d8bef52678ec8bf263609d82a0a09aa",
+        "bytes": 21086,
+        "excerpts": [
+          {
+            "first_line": 54,
+            "last_line": 82,
+            "text": "\n#pragma pack(1)\nstruct IpcMemoryData {\n    uint64_t handle = 0;\n    uint64_t poolOffset = 0;\n    uint8_t type = 0;\n};\n#pragma pack()\nstatic_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, \"IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE\");\n\n#pragma pack(1)\nstruct IpcOpaqueMemoryData {\n    union IpcHandle {\n        int fd;\n        uint64_t reserved;\n    };\n    IpcHandle handle = {};\n    uint64_t poolOffset = 0;\n    unsigned int processId = 0;\n    IpcHandleType type = IpcHandleType::maxHandle;\n    uint8_t memoryType = 0;\n    IpcHandle opaqueHandle = {};\n    uint8_t reservedHandleData[32] = {0};\n    // Computes and returns the cache ID hash\n    uint64_t computeCacheID() const noexcept;\n    bool compressedMemory = false;\n};\n#pragma pack()\nstatic_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, \"IpcOpaqueMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE\");"
+          }
+        ]
+      }
+    ]
+  }
+}

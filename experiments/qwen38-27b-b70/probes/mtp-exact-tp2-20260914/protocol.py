@@ -1,5 +1,6 @@
 """CPU-only framed, sequenced fail-closed TP2 channel. No torch import."""
 import array
+import fcntl
 import json
 import os
 import socket
@@ -80,11 +81,40 @@ def exchange_ipc(sock, local_handle):
     try:
         if len(data) != 64 or len(fds) != 1 or flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC):
             raise ConnectionError("invalid/truncated IPC fd transfer")
-        os.set_inheritable(fds[0], False)
-        remote = bytearray(data)
-        struct.pack_into("i", remote, 0, fds[0])
-        return bytes(remote), fds[0]
+        return received_ipc_handle(data, fds[0])
     except BaseException:
         for fd in fds:
             os.close(fd)
+        raise
+
+
+def received_ipc_handle(data, fd):
+    """Install a valid received FD, preserving all non-FD exporter metadata.
+
+    On success caller owns returned FD; if it numerically equaled the exporter's
+    FD, this function duplicates then closes ONLY the received descriptor. Intel
+    context_drm.cpp detects changed handle.fd and imports it directly, instead
+    of looking up the exporter's process/opaque FD again. No export-map API is
+    valid on this newly received descriptor. See ipc-import-source-review.json.
+    """
+    if len(data) != 64 or fd < 0:
+        raise ValueError("invalid received IPC handle")
+    original = struct.unpack_from("i", data)[0]
+    if original < 0:
+        raise ValueError("invalid exporter fd")
+    os.fstat(fd)  # Real OS descriptor, not the sender's process-local integer.
+    os.set_inheritable(fd, False)
+    remote = bytearray(data)
+    replacement = fd
+    try:
+        if fd == original:
+            replacement = fcntl.fcntl(fd, fcntl.F_DUPFD_CLOEXEC, original + 1)
+        struct.pack_into("i", remote, 0, replacement)
+        result = bytes(remote)
+        if replacement != fd:
+            os.close(fd)  # Only receiver's SCM_RIGHTS descriptor, never exporter.
+        return result, replacement
+    except BaseException:
+        if replacement != fd:
+            os.close(replacement)
         raise

@@ -1,6 +1,12 @@
 # Exact FP16 two-card communication prototype
 
-Status: **implemented and CPU-compiled; no GPU execution or speed result**.
+Status: **quarantined after Native04 GPU faults; no quality or speed qualification**.
+See the [fault postmortem](native04-postmortem.md). All further native work is
+halted. Earlier source/build notes below are historical preparation evidence.
+`run-native.py` now refuses all native execution before loading device helpers,
+acquiring GPU locks or calling Docker, even with a new output directory. There
+is no override flag. CPU-only `--check-only` remains available. Recovery and any
+corrected candidate require a new reviewed recipe.
 This is an isolated operator prototype, not a live vLLM patch. Official target
 FP8 weights, FP16 activations/KV and native MTP remain unchanged.
 
@@ -152,6 +158,17 @@ those flags and all relevant collective environment values against the original
 qualified container receipt, then freezes a sanitized runtime contract with its
 source hash. Static loopback rendezvous remains unchanged. Neither prior stage
 is overwritten, no transport behavior is changed, and no automatic retry exists.
+
+The third stage passed control XCCL setup, peer-device admission, allocation and
+both exporters' FD checks. It stopped before peer import because the harness
+incorrectly applied the export-map FD query to a newly received descriptor.
+[Pinned Intel source and exact excerpts](ipc-import-source-review.json) show
+that both FD-conversion APIs consult the caller's local export map, whereas
+`zeMemOpenIpcHandle` accepts the imported handle. Stage04 retains exporter
+validation, validates the received OS descriptor, and uses the documented import
+path with all non-FD metadata preserved. A numeric FD collision is resolved by
+duplicating only the received FD before closing that received copy. Exact
+arithmetic, output comparisons and the native library remain unchanged.
 
 ## Source references and limits
 

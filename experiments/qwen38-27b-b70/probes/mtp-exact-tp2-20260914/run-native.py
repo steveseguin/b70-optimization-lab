@@ -21,7 +21,16 @@ ROOT = HERE.parents[3]
 IMAGE = "sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1dd8ea066"
 IDENTITY = Path("/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/control-identity.json")
 RUNTIME_REFERENCE = Path("/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/restored-service/container-inspect.json")
-FILES = ("exact_tp2.cpp", "native.py", "protocol.py", "gate.py", "analyze.py", "run-native.py", "cpu-validation.json")
+FILES = ("exact_tp2.cpp", "native.py", "protocol.py", "gate.py", "analyze.py", "run-native.py", "cpu-validation.json", "ipc-import-source-review.json")
+
+
+def require_native_execution_admission(check_only):
+    if not check_only:
+        raise RuntimeError(
+            "Native04 GPU-fault quarantine: this prototype cannot execute. "
+            "See native04-postmortem.md. No override exists; recovery and a "
+            "corrected candidate require a new reviewed recipe. --check-only is CPU-only."
+        )
 
 
 def runtime_contract(reference):
@@ -167,12 +176,15 @@ def main():
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("--check-only", action="store_true")
     args = ap.parse_args()
+    # Unconditional prototype-level latch, independent of output directory or
+    # campaign FAULT files. It precedes imports, locks, Docker and device checks.
+    require_native_execution_admission(args.check_only)
     if not 30 <= args.timeout <= 1200:
         raise ValueError("bounded timeout must be 30–1200 seconds")
     out = args.out.resolve()
-    if out.name not in ("communication-native-01", "communication-native-02", "communication-native-03"):
+    if out.name not in ("communication-native-01", "communication-native-02", "communication-native-03", "communication-native-04"):
         raise ValueError("only the original or explicitly corrected one-shot stage is admitted")
-    if out.exists() or (out.parent / "FAULT.json").exists():
+    if not args.check_only and (out.exists() or (out.parent / "FAULT.json").exists()):
         raise RuntimeError("output exists or campaign GPU fault latch is set; no retry")
     blobs = inputs(args.library)
     if args.check_only:

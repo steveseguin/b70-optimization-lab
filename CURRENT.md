@@ -25,26 +25,28 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host, September 14: FP8/native-MTP optimization implementation active.**
-The user authorized implementing and validating the transfer ideas, retaining
-lossless deterministic complete outputs and excluding DFlash. The original
-qualified service at port18124 was gracefully stopped once at18:07UTC for
-exclusive operator qualification and the planned MTP-only control handover.
-It is currently unavailable; the historical recovery status below remains
-evidence of the earlier qualified process.
-The refreshed V1/MTP-only control image is built, with accepted overlays
-preserved; it is not runtime-qualified. Metadata relocation passes36 actual
-builder cases on each of two source versions. The exact TP2 prototype is undergoing exclusive native qualification.
-Two launcher-environment failures were preserved and corrected; the third
-stage passed XCCL, peer capability, dedicated allocation and FD transfer,
-then stopped at a receiver-side API validation before candidate copy/add.
-No kernel fault occurred. Root retains this GPU lane while correcting that
-boundary; do not start competing work merely because a probe has exited.
-The metadata endpoint harness now binds the exact runtime, source and frozen
-oracles, with23 CPU controller/client checks passing. Next: finish the operator
-gate, qualify the refreshed base, then paired complete-output candidate tests
-on one persistent research process. No new result or default is promoted.
-[Implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
+**Two-B70 host, September 14 18:36 UTC: GPU work halted after exact-TP2 probe fault.**
+The corrected communication probe passed 12 finite/edge cases per rank, then
+failed exact NaN-payload parity. At 18:30:41 UTC the kernel also recorded BCS
+memory faults on both GPUs, a CAT error and driver-initiated engine resets.
+The controller preserved the fault latch and confirmed container exit; no
+subsequent GPU request or model reload occurred. The causal relationship to
+IPC cleanup/process exit is unproven. Do not retry this probe or start a model
+under the current faulted campaign. Offline analysis and the failed-attempt evidence packet are complete.
+
+Read-only postflight at 18:36 UTC: no render-device owners, no running Docker
+containers, both 18124 and 18129 closed, same computer boot. GPU compute health
+has not been requalified. The original service was stopped once at 18:07 UTC for
+the planned exclusive test; the API is currently unavailable. No agent reboot,
+driver reset or power/memory-setting change occurred.
+
+Metadata relocation passed 36 offline cases on both source versions; its native
+and endpoint gates remain unrun. The separate V1/MTP control image is built but
+unqualified. No speed measurement or optimization is promoted. Preserve
+`/mnt/fast-ai/bench-results/mtp-lossless-transfer-20260914/FAULT.json`, all four
+operator-stage snapshots and the earlier unrelated freeze packet below.
+[Implementation results and incident](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md),
+[implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
 **Four-B70 host, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
