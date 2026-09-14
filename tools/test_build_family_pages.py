@@ -34,7 +34,8 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(row)
         self.assertIn(">64.24</a>", row.group(0))
-        self.assertEqual(row.group(0).count("not measured"), 2)
+        for column in ("model-32k", "model-agg", "model-prefill"):
+            self.assertRegex(row.group(0), rf'class="[^"]*{column}[^"]*"[^>]*>.*?&mdash;')
         self.assertIn(
             'data-copy-markdown="repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md"',
             row.group(0),
@@ -120,13 +121,13 @@ class FamilyCoverageTest(unittest.TestCase):
         # throughput without output identity is no longer surfaced).
         self.assertIn(">931.4</a>", fp8_row.group(0))
         self.assertIn("64 simultaneous users", fp8_row.group(0))
-        self.assertIn("byte-identical to its sequential oracle", fp8_row.group(0))
+        self.assertIn("Tested answers matched the one-user answers", fp8_row.group(0))
         laguna_row = re.search(
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
         )
         self.assertIsNotNone(laguna_row)
         self.assertNotIn(">29.78&dagger;</a>", laguna_row.group(0))
-        self.assertIn("Multi-user greedy output is batch-shape-dependent", index_html)
+        self.assertIn("Not shown: answers did not pass the required consistency checks", index_html)
 
     def test_fp8_tp2_concurrency_profiles_match_qualified_source(self) -> None:
         package = json.loads(
@@ -213,7 +214,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertAlmostEqual(sum(current) / len(current), 131.460231, places=6)
         index_html = (MODULE.ROOT / "index.html").read_text()
         self.assertNotIn(">131.46</td>", index_html)
-        self.assertIn("natural-response hashes were not stable", index_html)
+        self.assertIn("Not shown: answers did not pass the required consistency checks", index_html)
         self.assertNotIn(">132.79</td>", index_html)
 
         ratebars = [
@@ -565,7 +566,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("Open reproduction guide", deepseek_rendered)
         self.assertNotIn("not a step-by-step install guide", deepseek_rendered)
         index_html = (MODULE.ROOT / "index.html").read_text()
-        self.assertIn("Record strict-suite high; three-suite median-of-medians 78.29", index_html)
+        self.assertIn("Best measured run; typical result across three tests: 78.29 tok/s", index_html)
         self.assertNotIn("Median high", index_html)
         model_index_html = (MODULE.ROOT / "models/index.html").read_text()
         self.assertIn("target / MTP0–4 / DSpark5–8", model_index_html)

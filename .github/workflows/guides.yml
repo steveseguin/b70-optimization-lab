@@ -21,6 +21,8 @@ on:
       - "learn/**"
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
+      - "tools/test_build_model_pages.py"
+      - "tools/sync-short-prefill-profiles.py"
       - "tools/test_build_family_pages.py"
       - "tools/test_guides_browser.cjs"
       - "tools/test_measured_opt_contract.py"
@@ -67,6 +69,8 @@ on:
       - "learn/**"
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
+      - "tools/test_build_model_pages.py"
+      - "tools/sync-short-prefill-profiles.py"
       - "tools/test_build_family_pages.py"
       - "tools/test_guides_browser.cjs"
       - "tools/test_measured_opt_contract.py"
@@ -110,6 +114,8 @@ jobs:
       - run: python3 tools/build-family-pages.py --check
       - run: python3 -m unittest tools/test_build_family_pages.py
       - run: python3 -m unittest tools/test_measured_opt_contract.py
+      - run: python3 tools/sync-short-prefill-profiles.py --check
+      - run: python3 -m unittest tools/test_build_model_pages.py
       - run: python3 tools/build-model-pages.py
       - run: git diff --exit-code -- index.html learn/hardware.html models
       # Offline: resolves repository-relative links in the guides and site pages. Publisher-side manifest checking

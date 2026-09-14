@@ -101,6 +101,26 @@ binary, or a hand-maintained hash allow-list is not publication. Do not mark a
 recipe `published` until every release asset has been downloaded from its
 public URL and re-hashed.
 
+## Human-readable public results (2026-09-13)
+
+Always report **prefill (reading the prompt)** alongside decode (writing the
+answer) on neural.download: a main-table column and a short section on model
+details pages. Use measured 512-token, one-user prefill rates where available;
+state the input length and timing definition. Show “not measured” for missing
+results. Never borrow a rate from another card count, quantization, runtime or
+draft setting, or turn a diagnostic optimization into a promoted speed claim.
+
+Write the main page and model details for a reader with no lab background,
+including a ten-year-old: short sentences, familiar words, and only information
+needed to understand the model, choose a setup, and read its speeds. Explain
+prefill, decode, units and graph axes in plain language. Graph titles must say
+what is measured; internal experiment IDs such as R187 are not public labels.
+Keep captions brief and preserve meaningful differences between test setups.
+Put commands, experiment history, detailed methods, logs and full evidence in
+GitHub files linked as “Setup guide” or “Test details”, rather than copying
+walls of technical text into public pages. Keep exact points and accessible
+value tables; simplicity never permits invented or misleading measurements.
+
 ## External Projections (ML Bottleneck bridge)
 
 `learn/assets/mlbottleneck-bridge.js` loads the ML Bottleneck physics engine

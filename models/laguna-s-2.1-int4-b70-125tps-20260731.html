@@ -40,6 +40,18 @@
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
+  .profile { margin: 10px 0; border: 1px solid var(--line); padding: 10px 14px; }
+  .profile summary { cursor: pointer; font-weight: 700; }
+  .profile small { color: var(--muted); font-weight: 400; }
+  .table-scroll { overflow-x: auto; }
+  .exact-values { margin: 12px 0; }
+  .chart { overflow-x: auto; }
+  .graph-scroll-hint { display: none; }
+  @media (max-width: 600px) {
+    .chart .short-plot text { font-size: 24px; }
+    .chart .dense-plot { min-width: 560px; }
+    .graph-scroll-hint { display: block; font-size: 12px; }
+  }
   .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }
   .facts div { min-width: 0; }
   .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -108,24 +120,26 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="laguna-s.html">Laguna S · 2.1</a> / INT4 target plus INT4 DFlash draft</p>
   <p class="eyebrow">Candidate package · vLLM XPU · 4× Intel Arc Pro B70</p>
   <h1>Laguna S 2.1 INT4 with DFlash on four Intel Arc Pro B70 cards</h1>
-  <p>Poolside&#x27;s Laguna S 2.1 coding assistant on four Arc Pro B70 cards in 4-bit form, with a draft model speeding up generation. A replay of the lab&#x27;s record run, quality-checked.</p>
+  <p>Laguna S 2.1 INT4 target plus INT4 DFlash draft running on 4 Intel Arc Pro B70 GPU(s).</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page" data-ml-model="laguna_s_2.1" data-ml-quant="AutoRound INT4" data-ml-runtime="vllm" data-ml-cards="4" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="dflash:11" data-ml-measured="125.4619731637751" data-ml-quant-label="INT4 / BF16 KV" data-ml-runtime-label="vLLM XPU" data-ml-prompt="128" data-ml-output="128">
 
-  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">125</span><span class="unit">tok/s conventional decode median</span></div><p class="scope">Conventional 99-interval median across the sealed 13-prompt, one-start, cache-zero record gate. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/laguna-shared-elementwise-m12-record-20260731.json">proof file</a></p><p class="scope-gloss">cache-zero = a fresh start, nothing pre-computed · 99-interval median = the middle rate across 99 measured stretches of a long answer</p>
+  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">125</span><span class="unit">tok/s writing speed</span></div><p class="scope">Writing speed. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/laguna-shared-elementwise-m12-record-20260731.json">Test details on GitHub</a></p>
   <div class="actions">
     <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md">Open the full guide</a>
     <button type="button" class="copy-md" data-copy-markdown="../repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
     <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=Laguna%20S%202.1%20INT4%20with%20DFlash%20on%20four%20Intel%20Arc%20Pro%20B70%20cards">Submit an improvement</a>
   </div>
 
-  <dl class="facts"><div><dt>Model</dt><dd>Laguna S 2.1 INT4 target plus INT4 DFlash draft</dd></div><div><dt>Publisher</dt><dd>Poolside</dd></div><div><dt>Checkpoint</dt><dd>poolside/Laguna-S-2.1-INT4</dd></div><div><dt>Compression</dt><dd>INT4 / BF16 KV</dd></div><div><dt>Software</dt><dd>vLLM XPU</dd></div><div><dt>Cards</dt><dd>4× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>—</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">speculative decoding research</span></dd></div><div><dt>Published</dt><dd>2026-08-22</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
-<div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>portable runtime rebuild</li><li>tested platform installation</li><li>record-specific model acquisition helper</li><li>non-originating-host replay</li><li>beginner recovery flow</li><li>decode, prefill, and TTFT context sweep</li></ul></div>
+  <dl class="facts"><div><dt>Model</dt><dd>Laguna S 2.1 INT4 target plus INT4 DFlash draft</dd></div><div><dt>Publisher</dt><dd>Poolside</dd></div><div><dt>Compression</dt><dd>INT4 / BF16 KV</dd></div><div><dt>Software</dt><dd>vLLM XPU</dd></div><div><dt>Cards</dt><dd>4× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model download</dt><dd>—</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">speculative decoding research</span></dd></div><div><dt>Fresh install tested</dt><dd>not yet — follow the guide carefully</dd></div></dl>
+<p class="missing">This setup still needs installation checks. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md">See what remains in the guide.</a></p>
 
-<h2 id="profiles">Measured performance profiles <span class="badge todo">Not published</span></h2><div class="placeholder"><p>No qualified structured context or depth profile is published for this package. Diagnostic evidence may still be linked under “What to know” or in the full guide; nothing is estimated in its place — the clearly labeled projection block below is the current best guess.</p></div>
-<h2 id="multi-user">Many people at once <span class="badge todo">Not published</span></h2><div class="placeholder"><p>No qualified multi-user aggregate profile is published for this exact package. Diagnostic or unsupported boundaries may still appear under “What to know” or in the full guide. Nothing is interpolated or promoted from a different model, quantization, runtime, or card count; the projection below remains clearly labeled as projected.</p></div>
-
+<h2 id="prefill">Reading speed (prefill)</h2><p>Not measured yet for this setup.</p>
+<p class="scope">Tokens are pieces of words. Higher tokens per second means faster reading or writing; a shorter wait is better. Each test uses its own settings. Drafts are checked by the main model. Open a test to see its graph and exact values.</p>
+<h2 id="profiles">Writing speed and waiting time</h2><p>Long-input tests are not published yet for this setup.</p>
+<h2 id="multi-user">Many people at once</h2><p>Multi-user tests are not published yet for this setup.</p>
+<details class="profile"><summary>Speed estimates</summary>
   <h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2>
   <p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects what stock software, a tuned run, and the physical ceiling look like for this exact model, compression, card count, and software. The grade is optimization headroom against the tuned-run target, not model quality.</p>
   <div id="package-projection" class="projection" hidden>
@@ -133,7 +147,7 @@
     <div data-package-card></div>
     <div data-package-charts></div>
   </div>
-  <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
+  <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript></details>
 
   <div class="related">
     <h2>Keep going</h2>

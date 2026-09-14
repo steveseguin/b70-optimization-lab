@@ -267,7 +267,9 @@
     "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json",
     "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/source-manifest.json",
     "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json",
-    "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-contract.log"
+    "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-contract.log",
+    "experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md",
+    "experiments/qwen38-27b-b70/data/2026-09-13-short-prefill/summary.json"
   ],
   "evidence": [
     "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-fp8-repeat-exactness.json",
@@ -640,6 +642,55 @@
           "value": 2520.0,
           "per_user_value": 19.6875,
           "samples": 4
+        }
+      ]
+    },
+    {
+      "id": "short-prompt-server-prefill-control",
+      "label": "Reading speed with a short prompt · 1 GPU",
+      "public_label": "Reading speed · 1 GPU · 3-token draft",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_metric": "context_tokens",
+      "x_label": "Input length (tokens)",
+      "scope": "One user, 1 GPU, 128–512 input tokens; no saved prompt cache. A separate short-input test, using the existing allocation method.",
+      "public_scope": "How fast the server reads a short prompt before making its first token. One user; no saved prompt cache. A separate short-input test.",
+      "measurement_kind": "server_prefill",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md",
+      "source_data": "experiments/qwen38-27b-b70/data/2026-09-13-short-prefill/summary.json",
+      "operating_profile": {
+        "tensor_parallel_size": 1,
+        "speculative_tokens": 3,
+        "quantization": "W4A16",
+        "parent_runtime": "R308",
+        "allocation_mode": "original branch through disabled experimental dispatcher",
+        "activations": "FP16",
+        "kv_cache": "native",
+        "concurrency": 1,
+        "max_model_len": 1024,
+        "max_num_batched_tokens": 1024,
+        "max_num_seqs": 1,
+        "prefix_caching": false,
+        "classpad": 0,
+        "rowchunk": 32
+      },
+      "technical_method": "Measured 2026-09-13 on ASRock B70. Input tokens divided by vLLM server prefill duration (first scheduled execution to first token), obtained from the one-request histogram delta; not isolated GPU throughput or HTTP TTFT. Each value is the arithmetic mean of baseline and final-control aggregate rates. Each arm aggregates three repeats per prose/code/documentation class by median, then takes the median across the three classes: 18 control requests per input length. Numeric input IDs; 128 output tokens; ignore_eos enabled; zero cached tokens. One loaded server per model with a default-off experimental overlay; controls execute the original allocation branch, not an unmodified parent process. Complete control outputs matched the qualified parent outputs. These short-input screening measurements do not promote the allocation candidate or replace historical decode records. Runtime identities, repeats, control drift and hash-bound raw evidence are linked in the report.",
+      "promotion_qualified": false,
+      "points": [
+        {
+          "context_tokens": 128,
+          "value": 2624.99531802613,
+          "samples": 18
+        },
+        {
+          "context_tokens": 256,
+          "value": 3396.5659912682786,
+          "samples": 18
+        },
+        {
+          "context_tokens": 512,
+          "value": 3941.821849211462,
+          "samples": 18
         }
       ]
     }
