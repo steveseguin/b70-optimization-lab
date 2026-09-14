@@ -1,0 +1,74 @@
+diff --git "a/tools/container-packet/smoke-test.sh" "b/tools/container-packet/smoke-test.sh"
+index f9adc0584..258860515 100755
+--- "a/tools/container-packet/smoke-test.sh"
++++ "b/tools/container-packet/smoke-test.sh"
+@@ -46,11 +46,17 @@ ask() {
+     "max_tokens":64,"temperature":0,"seed":42,"stream":false}'
+ }
+ a=$(ask); rc_a=$?
++printf '%s\n' "$a" >"${out}/answer-1.json"
++if (( rc_a != 0 )); then
++  echo "FAIL: first completion request errored; stopping before further generation"
++  "${compose[@]}" logs --no-color >"${out}/server.log" 2>&1 || true
++  exit 1
++fi
+ b=$(ask); rc_b=$?
+-printf '%s\n' "$a" >"${out}/answer-1.json"; printf '%s\n' "$b" >"${out}/answer-2.json"
++printf '%s\n' "$b" >"${out}/answer-2.json"
+ "${compose[@]}" logs --no-color >"${out}/server.log" 2>&1 || true
+ 
+-if (( rc_a != 0 || rc_b != 0 )); then echo "FAIL: completion request errored"; exit 1; fi
++if (( rc_b != 0 )); then echo "FAIL: second completion request errored"; exit 1; fi
+ if ! python3 - "${out}" "${profile}" "${PACKAGE_DIR}" <<'PY'
+ import json,platform,sys,datetime
+ from pathlib import Path
+diff --git "a/tools/test_container_packet_smoke.py" "b/tools/test_container_packet_smoke.py"
+index eacdb7a7d..0502d2eab 100644
+--- "a/tools/test_container_packet_smoke.py"
++++ "b/tools/test_container_packet_smoke.py"
+@@ -69,6 +69,45 @@ print((root/f'response-{n}.json').read_text())
+                 self.assertIsNone(record)
+                 self.assertNotIn("PASS ", result.stdout)
+ 
++    def test_first_transport_failure_stops_before_second_generation(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            root = Path(tmp)
++            bin_dir = root / "bin"
++            bin_dir.mkdir()
++            docker = bin_dir / "docker"
++            docker.write_text("#!/bin/sh\nexit 0\n")
++            docker.chmod(0o755)
++            curl = bin_dir / "curl"
++            curl.write_text("""#!/usr/bin/env python3
++import os,sys
++from pathlib import Path
++if any(arg.endswith('/health') for arg in sys.argv):
++    sys.exit(0)
++root=Path(os.environ['FAKE_ROOT'])
++counter=root/'counter'
++n=int(counter.read_text())+1 if counter.exists() else 1
++counter.write_text(str(n))
++if n==1:
++    print('{"error":"first request failed"}')
++    sys.exit(22)
++print((root/f'response-{n}.json').read_text())
++""")
++            curl.chmod(0o755)
++            (root / "response-2.json").write_text(self.response("A tensor.\n"))
++            env = dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}",
++                       FAKE_ROOT=tmp, PACKAGE_DIR="packages/qwen35-4b-w4a16-b70",
++                       SERVED_NAME="test-4b", MODEL_DIR=tmp, OUT_DIR=f"{tmp}/out",
++                       VLLM_CACHE_DIR=f"{tmp}/cache", KEEP_UP="0", PROFILE="one-gpu")
++            result = subprocess.run(
++                ["bash", str(ROOT / "tools/container-packet/smoke-test.sh")],
++                env=env, capture_output=True, text=True, timeout=15)
++            self.assertNotEqual(result.returncode, 0)
++            self.assertNotIn("PASS ", result.stdout)
++            self.assertEqual(int((root / "counter").read_text()), 1)
++            self.assertTrue((root / "out/answer-1.json").exists())
++            self.assertIn("first request failed", (root / "out/answer-1.json").read_text())
++            self.assertFalse((root / "out/result.json").exists())
++
+ 
+ if __name__ == "__main__":
+     unittest.main()

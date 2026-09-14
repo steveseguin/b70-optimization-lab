@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A local coding worker — neural.download</title>
+<meta name="description" content="A local Qwen3.8 27B FP8 worker that reads an issue, edits a copy of your code, runs tests, and returns a patch for review.">
+<link rel="canonical" href="https://neural.download/worker/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../learn/learn.css">
+<style>.worker-flow{display:flex;flex-wrap:wrap;gap:8px;list-style:none!important;padding:0!important}.worker-flow li{padding:10px 14px;border:2px solid var(--ink);background:var(--surface)}.worker-table{width:100%;border-collapse:collapse;font-size:14px}.worker-table th,.worker-table td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line)}.worker-table th:last-child,.worker-table td:last-child{white-space:nowrap}footer{padding:36px 0}.prose a{overflow-wrap:anywhere}</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+<a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+<nav aria-label="Primary"><a href="../models/">Models</a><a href="../guides.html">Recipes</a><a href="../learn.html">Learn</a></nav>
+</div></div>
+<header class="hero"><div class="wrap">
+<p class="eyebrow">Experimental · two B70 graphics cards</p>
+<h1>Give your local AI a coding job</h1>
+<p>Describe a bug. The worker reads the code, edits a copy, runs tests, and returns a patch you can review.</p>
+</div></header>
+<main id="main"><div class="wrap"><div class="col prose">
+<ol class="worker-flow" aria-label="Worker steps"><li>1. Read the issue</li><li>2. Edit the code</li><li>3. Test and correct</li><li>4. Review the patch</li></ol>
+<p>This version uses Qwen3.8 27B FP8 on two Intel Arc Pro B70s. Model requests stay on the local machine. Coding commands run in an isolated copy of the repository, with network access disabled.</p>
+<p><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/worker/README.md">Setup guide and commands</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/local-coding-worker/README.md">Test details and patches</a></p>
+<h2>The first trial</h2>
+<p id="trial-status">Three of five issues passed independent checks. Two remain unsolved. These are small bugs across two repositories; earlier failed attempts are also preserved in the test packet.</p>
+<table class="worker-table"><caption>Selected task attempts, September 14, 2026</caption><thead><tr><th scope="col">Issue</th><th scope="col">Result</th><th scope="col">Elapsed</th></tr></thead><tbody><tr><th scope="row">Quoted download paths</th><td>Tests passed</td><td>2m 19s</td></tr><tr><th scope="row">Stop after a failed request</th><td>Tests passed</td><td>1m 13s</td></tr><tr><th scope="row">Keep hardware listings independent</th><td>Unsolved</td><td>1m 05s</td></tr><tr><th scope="row">Honor zero electricity costs</th><td>Unsolved</td><td>4m 49s</td></tr><tr><th scope="row">Reject invalid CLI numbers</th><td>Tests passed</td><td>1m 24s</td></tr></tbody></table>
+<p>Elapsed time includes setup of the source copy, editing, tests and patch export.</p>
+<p>Passing tests is one checkpoint. Review the patch before applying it. The worker does not merge or publish its changes.</p>
+<h2>What it needs</h2>
+<p>A working FP8 model server, Docker, and a clean Git repository. The included coding environment supports Python standard-library and Node.js tasks. Jobs needing extra dependencies require a prepared environment.</p>
+<p>Each task has a 20-minute limit and a 28,000-token input budget. If a task exceeds its limits or a model request fails, it stops and keeps the evidence.</p>
+<h2>Reading and writing speed</h2>
+<p>Prefill measures how fast the model reads a prompt. Decode measures how fast it writes a response. Coding prompts grow as the worker reads files and test output, so these task timings are separate from the fixed-length model benchmarks.</p>
+<p><a href="../models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">See the FP8 model’s measured reading and writing speeds</a>. The test packet also records each coding request’s input size, reading speed, writing speed, and wait for the first token.</p>
+</div></div></main>
+<footer><div class="wrap"><a href="../index.html">Back to neural.download</a></div></footer>
+</body>
+</html>

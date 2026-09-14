@@ -1,0 +1,69 @@
+diff --git "a/dist/mlbottleneck-engine.mjs" "b/dist/mlbottleneck-engine.mjs"
+index 0a63c9620..cca7e3bc9 100644
+--- "a/dist/mlbottleneck-engine.mjs"
++++ "b/dist/mlbottleneck-engine.mjs"
+@@ -6795,8 +6795,10 @@ function createEngine(options = {}) {
+      */
+     function calculatePowerAndCost(devicesArray, tokensPerSecond, metricsArray = [], usage = null) {
+         const usageProfile = usage || (typeof getUsageAssumptionsFromDom === 'function' ? getUsageAssumptionsFromDom() : {});
+-        const electricityCostPerKWh = parseFloat(usageProfile.costPerKwh) || 0.12;
+-        const hoursPerDay = parseFloat(usageProfile.hoursPerDay) || 8;
++        const parsedCostPerKwh = parseFloat(usageProfile.costPerKwh);
++        const electricityCostPerKwh = Number.isFinite(parsedCostPerKwh) ? parsedCostPerKwh : 0.12;
++        const parsedHoursPerDay = parseFloat(usageProfile.hoursPerDay);
++        const hoursPerDay = Number.isFinite(parsedHoursPerDay) ? parsedHoursPerDay : 8;
+ 
+         let totalTDP = 0;
+         let actualPowerWatts = 0;
+diff --git "a/dist/mlbottleneck-engine.umd.js" "b/dist/mlbottleneck-engine.umd.js"
+index 8fa43459e..2d8e26f94 100644
+--- "a/dist/mlbottleneck-engine.umd.js"
++++ "b/dist/mlbottleneck-engine.umd.js"
+@@ -6804,8 +6804,10 @@
+          */
+         function calculatePowerAndCost(devicesArray, tokensPerSecond, metricsArray = [], usage = null) {
+             const usageProfile = usage || (typeof getUsageAssumptionsFromDom === 'function' ? getUsageAssumptionsFromDom() : {});
+-            const electricityCostPerKWh = parseFloat(usageProfile.costPerKwh) || 0.12;
+-            const hoursPerDay = parseFloat(usageProfile.hoursPerDay) || 8;
++            const parsedCostPerKwh = parseFloat(usageProfile.costPerKwh);
++            const electricityCostPerKwh = Number.isFinite(parsedCostPerKwh) ? parsedCostPerKwh : 0.12;
++            const parsedHoursPerDay = parseFloat(usageProfile.hoursPerDay);
++            const hoursPerDay = Number.isFinite(parsedHoursPerDay) ? parsedHoursPerDay : 8;
+ 
+             let totalTDP = 0;
+             let actualPowerWatts = 0;
+diff --git "a/engine.js" "b/engine.js"
+index d78475e47..db683e84d 100644
+--- "a/engine.js"
++++ "b/engine.js"
+@@ -6791,8 +6791,10 @@ function estimateDeviceTDP(device) {
+  */
+ function calculatePowerAndCost(devicesArray, tokensPerSecond, metricsArray = [], usage = null) {
+     const usageProfile = usage || (typeof getUsageAssumptionsFromDom === 'function' ? getUsageAssumptionsFromDom() : {});
+-    const electricityCostPerKWh = parseFloat(usageProfile.costPerKwh) || 0.12;
+-    const hoursPerDay = parseFloat(usageProfile.hoursPerDay) || 8;
++    const parsedCostPerKwh = parseFloat(usageProfile.costPerKwh);
++    const electricityCostPerKwh = Number.isFinite(parsedCostPerKwh) ? parsedCostPerKwh : 0.12;
++    const parsedHoursPerDay = parseFloat(usageProfile.hoursPerDay);
++    const hoursPerDay = Number.isFinite(parsedHoursPerDay) ? parsedHoursPerDay : 8;
+ 
+     let totalTDP = 0;
+     let actualPowerWatts = 0;
+diff --git "a/index.html" "b/index.html"
+index 3b8a83b3b..316a99ef0 100644
+--- "a/index.html"
++++ "b/index.html"
+@@ -4997,9 +4997,11 @@ details[open] > .mobile-execution-summary .planner-input-summary-action::after {
+         // Usage assumptions for the power/cost estimate come from the page
+         // inputs; the engine takes them as an argument so the SDK can pass its own.
+         function getUsageAssumptionsFromDom() {
++            const hours = parseFloat(document.getElementById('hoursPerDay')?.value);
++            const cost = parseFloat(document.getElementById('costPerKwh')?.value);
+             return {
+-                hoursPerDay: parseFloat(document.getElementById('hoursPerDay')?.value) || 8,
+-                costPerKwh: parseFloat(document.getElementById('costPerKwh')?.value) || 0.12
++                hoursPerDay: Number.isFinite(hours) ? hours : 8,
++                costPerKwh: Number.isFinite(cost) ? cost : 0.12
+             };
+         }
+ 

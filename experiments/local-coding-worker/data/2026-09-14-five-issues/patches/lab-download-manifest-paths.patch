@@ -1,0 +1,86 @@
+diff --git "a/tools/container-packet/download-model.sh" "b/tools/container-packet/download-model.sh"
+index 571bc6b50..0e5373815 100755
+--- "a/tools/container-packet/download-model.sh"
++++ "b/tools/container-packet/download-model.sh"
+@@ -13,16 +13,16 @@ dest=${MODEL_DIR:?set MODEL_DIR to the destination directory}
+ [[ -f "${manifest}" ]] || { echo "manifest not found: ${manifest}" >&2; exit 1; }
+ 
+ read -r hf_repo revision < <(python3 -c "
+-import json
+-m=json.load(open('${manifest}'))
++import json, os
++m=json.load(open(os.environ['MODEL_MANIFEST']))
+ print(m['repository'], m['revision'])
+ ")
+ echo "repository ${hf_repo}"; echo "revision   ${revision}"; echo "dest       ${dest}"
+ mkdir -p "${dest}"
+ 
+ mapfile -t rows < <(python3 -c "
+-import json
+-m=json.load(open('${manifest}'))
++import json, os
++m=json.load(open(os.environ['MODEL_MANIFEST']))
+ for group in ('lfs_files','small_files'):
+     for f in m.get(group) or []:
+         print(f\"{f['path']}\t{f.get('bytes','')}\")
+diff --git "a/tools/test_container_packet_download_paths.py" "b/tools/test_container_packet_download_paths.py"
+new file mode 100644
+index 000000000..1a4ccc8af
+--- /dev/null
++++ "b/tools/test_container_packet_download_paths.py"
+@@ -0,0 +1,55 @@
++"""Regression: download-model.sh must treat manifest paths as data, not code."""
++import json
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++import unittest
++
++ROOT = Path(__file__).resolve().parents[1]
++SCRIPT = ROOT / "tools/container-packet/download-model.sh"
++
++
++class DownloadModelPathTest(unittest.TestCase):
++    def test_manifest_paths_with_special_characters(self):
++        for folder in ("ordinary packet", "reader's packet", 'double "quoted" packet'):
++            with self.subTest(folder=folder):
++                with tempfile.TemporaryDirectory() as tmp:
++                    root = Path(tmp)
++                    commands = root / "commands"
++                    commands.mkdir()
++                    curl = commands / "curl"
++                    curl.write_text(
++                        "#!/usr/bin/env python3\n"
++                        "import json, os, sys\n"
++                        "from pathlib import Path\n"
++                        "args = sys.argv[1:]\n"
++                        "destination = Path(args[args.index('-o') + 1])\n"
++                        "destination.write_bytes(b'{}\\n')\n"
++                        "with open(os.environ['CURL_RECEIPT'], 'a') as receipt:\n"
++                        "    receipt.write(json.dumps({'url': args[-1], 'destination': str(destination)}) + '\\n')\n"
++                    )
++                    curl.chmod(0o755)
++                    source = root / folder
++                    source.mkdir()
++                    manifest = source / "model.json"
++                    manifest.write_text(json.dumps(
++                        {"repository": "example/model", "revision": "0123456789abcdef",
++                         "lfs_files": [], "small_files": [{"path": "nested/config.json", "bytes": 2}]}))
++                    destination = root / "download"
++                    receipt = root / "curl.jsonl"
++                    env = {"PATH": f"{commands}:/usr/local/bin:/usr/bin:/bin",
++                           "MODEL_MANIFEST": str(manifest), "MODEL_DIR": str(destination),
++                           "CURL_RECEIPT": str(receipt), "LANG": "C.UTF-8"}
++                    result = subprocess.run(["bash", str(SCRIPT)], cwd=ROOT, env=env,
++                                            text=True, capture_output=True, timeout=15)
++                    self.assertEqual(result.returncode, 0, result.stderr)
++                    self.assertEqual((destination / "nested/config.json").read_bytes(), b"{}\n")
++                    rows = [json.loads(line) for line in receipt.read_text().splitlines()]
++                    self.assertEqual(rows, [{
++                        "url": "https://huggingface.co/example/model/resolve/0123456789abcdef/nested/config.json",
++                        "destination": str(destination / "nested/config.json")}])
++
++
++if __name__ == "__main__":
++    unittest.main()

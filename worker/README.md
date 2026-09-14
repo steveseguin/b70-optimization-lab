@@ -6,8 +6,11 @@ B70s; coding commands run in an isolated CPU container.
 
 This first version uses the qualified **Qwen3.8 27B FP8 / MTP1 / 32K-input**
 setup and [mini-SWE-agent 2.4.6](https://github.com/SWE-agent/mini-swe-agent).
-The [first milestone](PLAN.md) covers five real bugs across two repositories.
-Task results will distinguish passing tests from completed human review.
+The [first milestone](PLAN.md) covered five real bugs across two repositories:
+three produced patches that passed independent tests and agent review; two
+remain unsolved. This first profile is not dependable unattended coding.
+Read the [trial results and patches](../experiments/local-coding-worker/README.md).
+Automatic tests, independent agent review, and human approval are reported separately.
 
 ## Install
 
