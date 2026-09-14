@@ -1,0 +1,60 @@
+{
+  "status": "passed-cpu-node-lifecycle",
+  "phase": "complete",
+  "pid": 79476,
+  "test_sha256": "dc6c8794ae69d8c0d52997f06d5957c3ce7a7f6552d4cd46ae1d9a805047d52f",
+  "checks": [
+    {
+      "name": "original-cache-original-full-dispatch-exact-output-owners-and-reshape",
+      "passed": true
+    },
+    {
+      "name": "original-input-output-interface-preserved",
+      "passed": true
+    },
+    {
+      "name": "real-nested-latent-first-element-and-output-reshape",
+      "passed": true
+    },
+    {
+      "name": "decode-exception-durable-failure-reset-and-sticky-no-retry",
+      "passed": true
+    },
+    {
+      "name": "missing-custom-op-coverage-fails-closed",
+      "passed": true
+    },
+    {
+      "name": "decoder-config-change-during-decode-rejected",
+      "passed": true
+    },
+    {
+      "name": "owner-change-between-requests-rejected",
+      "passed": true
+    },
+    {
+      "name": "duplicate-run-preserves-exclusive-evidence",
+      "passed": true
+    },
+    {
+      "name": "server-identity-change-before-decode-rejected",
+      "passed": true
+    }
+  ],
+  "forbidden_device_calls": [],
+  "suppressed_availability_probes": [
+    "torch.cuda.is_available",
+    "torch.cuda.is_available",
+    "torch.xpu.is_available",
+    "torch.cuda.is_available"
+  ],
+  "startup_environment_removed": [],
+  "source_pins": {
+    "node": "27e95788b3213adab52a72df46049cda2c17ed9c32afb85338c7c7f839bebf03",
+    "router": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537",
+    "nodes": "dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e"
+  },
+  "xpu_initialized_before": false,
+  "xpu_initialized_after": false,
+  "limitation": "Actual original VAEDecode class and Kitchen dispatcher, but fake VAE/CPU-only registration; no native decoder/config/quality/speed qualification."
+}

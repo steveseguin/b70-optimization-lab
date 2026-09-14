@@ -25,6 +25,26 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: decoder packet09 ready for native comparison.**
+Packet `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-09`
+is sealed at manifest`a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed`.
+The private original-VAEDecode integration passed9 CPU groups; the11-request
+client passed14 stdlib checks and offline packet admission. Root reviewed the
+node, builder, receipts and client; independent builder review found no blocker.
+The new graphs change only decoder374 and retain original transformer dispatch.
+Startup must prove the node is registered through object_info before requests.
+[Prepared package](experiments/ltx25-b70/notes/na-axis-runtime-09-prepared.md).
+PID66846/packet08 is still the live healthy application; no09 native request
+or application reload has occurred yet. Next: one controlled application reload
+to load09, then the bounded bare/original/cache comparison with full raw parity.
+
+The separate C++ CPU tiny-block probe stopped after detecting unintended XPU
+initialization during the first Python-boundary compile; no C++ compiled call
+followed. Root checked an empty queue, no FAULT or new kernel entries, and only
+the original LTX PID owning the four render devices. That probe stays separate;
+its source-backed cache metadata/driver initialization hypothesis and inactive
+guarded successor are preserved. Do not run CPU compilation during native timing.
+
 **Two-B70 host, September 14: user-reported freeze during candidate startup.**
 The user restarted the computer. Current boot is
 `5ba85b30-0455-466a-b9fc-d9132975417e`; the prior boot ended after logs stopped
