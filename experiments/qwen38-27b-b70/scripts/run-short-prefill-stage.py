@@ -48,6 +48,15 @@ def faults(text):
     return [line for line in text.splitlines() if FAULT.search(line) and not line.endswith('Xe device coredump has been deleted.')]
 
 
+def check_port_available(port):
+    # Reuse a closed listener's TIME_WAIT tuples without sharing a live listener.
+    # SO_REUSEPORT is deliberately absent: an active listener must still fail.
+    with socket.socket() as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('127.0.0.1', port))
+        sock.listen(1)
+
+
 class Stage:
     def __init__(self, args):
         self.a = args
@@ -122,8 +131,7 @@ class Stage:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         if checked(['docker', 'ps', '-q']).strip():
             raise RuntimeError('another container is running')
-        with socket.socket() as sock:
-            sock.bind(('127.0.0.1', self.a.port))
+        check_port_available(self.a.port)
         receipt = self.a.base_contract_receipt.read_bytes()
         if not receipt or b'PASS' not in receipt:
             raise RuntimeError('parent contract receipt lacks PASS')
