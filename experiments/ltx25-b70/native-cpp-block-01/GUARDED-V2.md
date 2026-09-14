@@ -1,4 +1,4 @@
-# Guarded diagnostic v2 — prepared, native execution pending
+# Guarded diagnostic v2 — first native attempt safely refused
 
 This successor adds two hardenings to the earlier guarded harness. It does not rerun the failed experiment or qualify compiled C++ output. The failed `test_block_cpu.py`, earlier `test_block_cpu_guarded.py`, earlier `accelerator_guard.py`, and their receipts remain unchanged.
 
@@ -15,4 +15,6 @@ Reproduce the source/fake tests using a new receipt path:
 /home/steve/.venvs/ltx25-baseline/bin/python experiments/ltx25-b70/native-cpp-block-01/test_guarded_v2_stdlib.py --output /absolute/new-guard-tests.json
 ```
 
-**Do not interpret these tests as native diagnostic admission.** The guarded native successor has not been executed. Parent will review and schedule any isolated native run after the GPU campaign. The guard may stop at a harmless accelerator enumeration/property query before the suspected cache-metadata path; that is diagnostic evidence. It is not an operating-system sandbox, and it does not implement a CPU-only replacement for Inductor's Triton metadata query. No compiler options, device visibility, installed runtime or service settings are changed.
+**The stdlib tests qualify the guard behavior, not compiled C++ output.** Root subsequently ran exactly one guarded native diagnostic on 2026-09-14, PID91112, and it exited1 after blocking `torch.xpu.device_count` during Comfy Kitchen Triton registration. Startup identity was persisted before Torch import; XPU and CUDA remained uninitialized at exit, and no model/compiled calls occurred. It **did not reach the original CPU cache-metadata hypothesis**. Parent postflight found the same idle server as the only render-node owner and no fault evidence. See [guarded-v2-native-attempt-01.md](guarded-v2-native-attempt-01.md) and its linked receipts.
+
+There was no retry, compilation, availability simulation or live service change. Further native work remains unscheduled until the confirmation campaign is finished. The API guard is not an operating-system sandbox and does not implement a CPU-only replacement for Inductor's Triton metadata query. The earlier preparation/source-delta receipts remain immutable historical records; this section records the later attempt.
