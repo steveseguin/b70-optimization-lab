@@ -81,6 +81,12 @@ for a theoretical proof that every possible speed optimization is exhausted;
 advance when the next experiment has a concrete hypothesis and acceptance gate.
 Longer endurance runs follow clean shorter tests and a reviewed storage budget.
 
+The first [continuation source audit](notes/continuation-source-boundary.md)
+found that the native upsampler removes the frame-preservation mask. A future
+reference must define anchoring in both stages, count boundary frames only
+once, and resolve audio timing. No continuation graph or quality result is
+qualified yet.
+
 ## Next optimization questions, in order
 
 1. **Does encoder residency settle?** Its partial CPU offload increased across
