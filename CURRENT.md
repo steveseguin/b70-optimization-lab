@@ -25,6 +25,20 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: native multiblock screen running on packet06.**
+PID39793 serves `http://127.0.0.1:8188`, manifest
+`3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394`.
+All four startup device checks and strict after-import determinism passed.
+PID17769 exited cleanly after oneSIGINT; old render ownership cleared. Same
+host boot, no reboot/reset or host-setting changes. The32-request bounded
+`multiblock-screen-01` client is running (exec6245; server exec38020).
+Inspect campaign progress and actual process state before new requests.
+Original/compiled/restored choices will test single24, boundary4 and all48;
+no current candidate native speed result is claimed. Fault/failure halts new
+requests without restarting the application. [Client and gates](experiments/ltx25-b70/notes/multiblock-native-client-01.md),
+[migration/startup evidence](experiments/ltx25-b70/data/multiblock-migration-06/startup.json).
+This supersedes earlier PID17769/live packet05 statements below.
+
 **Four-B70 host, September 14: native block compilation exact; paired timing complete.**
 PID17769 serves `http://127.0.0.1:8188`, server `encoder-server-compiler-05`,
 packet `prepared-encoder-compiler-05`, manifest
