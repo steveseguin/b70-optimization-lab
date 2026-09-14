@@ -25,6 +25,22 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: retained profile captured; recorder failed after exact clip.**
+The same packet08 PID66846 remains alive and idle, now on **compiled all48**
+dispatch. One diagnostic clip matched all four original raw outputs; its graph,
+component and owner evidence still passes. The recorder then rejected its own
+run name during output inventory (`unregistered/protected run`). No restored
+request, retry, deletion, application reload or host action followed. Client
+exec11241 exited1; bounded nonblocking profiler exited0. Queue/kernel postflight
+clean, no FAULT latch. This is a recorder integration failure, not a device or
+numerical fault, and it supersedes the restored-dispatch claim immediately below.
+
+[Profile/postmortem](experiments/ltx25-b70/notes/retained-multiblock-profile-01-results.md)
+preserves the trace and exact clip. Offline analysis and a corrected recorder
+continue; do not rerun the failed campaign. The saved profile is sufficient for
+the next source investigation: decoder geometry-mask construction and native
+operation wrapper overhead. No speed promotion or streaming qualification.
+
 **Four-B70 host, September14: packet08 native screen complete; original selected.**
 PID66846 serves `http://127.0.0.1:8188`, manifest
 `a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b`.

@@ -3,6 +3,16 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
+Latest September14: the retained nonblocking profile captured one exact compiled
+clip, then its recorder failed on a run-name/retention contract mismatch.
+PID66846 remains idle on compiled all48, queue/kernel healthy. No restored
+request or retry occurred. The successful trace is preserved and analyzed;
+timings are diagnostic only. A corrected inactive recorder has real retention
+regression coverage. Next: use captured source evidence for decoder geometry
+mask/native wrapper candidates, with offline exactness and bounded-memory gates.
+[Postmortem](notes/retained-multiblock-profile-01-results.md).
+This supersedes the original-selected state below; CURRENT remains authoritative.
+
 Current September14: packet08 PID66846 is idle on restored dispatch after
 12 exact full clips, including all48 compiled blocks. Compiled previews7.38–8.04s
 remain slower than adjacent original controls; median penalties1.273s preview

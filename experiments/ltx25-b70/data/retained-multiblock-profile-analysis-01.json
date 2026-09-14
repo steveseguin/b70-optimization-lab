@@ -1,0 +1,775 @@
+{
+  "profile_name": "Thread 66989 \"Thread-2 (prompt_worker)\"",
+  "profile_count_ignored": 4,
+  "sample_count": 1341,
+  "weight_semantics": {
+    "declared_unit": "seconds",
+    "weight_unit": "seconds",
+    "explicit_weights": true,
+    "startValue": 0.0,
+    "endValue": 13.41,
+    "profile_extent": 13.41,
+    "total_weight": 13.41,
+    "weight_minus_extent": 0.0,
+    "weights_missing_note": null
+  },
+  "categories": {
+    "queue_idle": {
+      "samples": 598,
+      "weight": 5.98
+    },
+    "empty_stack": {
+      "samples": 0,
+      "weight": 0.0
+    },
+    "current_block_state_validation": {
+      "samples": 18,
+      "weight": 0.18
+    },
+    "aggregate_registry_lifecycle": {
+      "samples": 25,
+      "weight": 0.25
+    },
+    "receipt_context_checks_writes": {
+      "samples": 19,
+      "weight": 0.19
+    },
+    "compiled_wrapper_native_calls": {
+      "samples": 154,
+      "weight": 1.54
+    },
+    "unknown_leaf": {
+      "samples": 3,
+      "weight": 0.03
+    },
+    "other": {
+      "samples": 524,
+      "weight": 5.24
+    }
+  },
+  "priority": [
+    "queue idle",
+    "empty stack",
+    "current-block state validation",
+    "aggregate registry/lifecycle",
+    "explicit receipt/context helpers",
+    "compiled/native wrapper",
+    "remaining gate control",
+    "unknown leaf",
+    "other"
+  ],
+  "top_nonidle_leaves": [
+    {
+      "name": "prompt_worker",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/main.py",
+      "line": 402,
+      "samples": 193,
+      "weight": 1.93
+    },
+    {
+      "name": "cast_to",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/model_management.py",
+      "line": 1568,
+      "samples": 110,
+      "weight": 1.1
+    },
+    {
+      "name": "_group_mask",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py",
+      "line": 74,
+      "samples": 21,
+      "weight": 0.21
+    },
+    {
+      "name": "__call__",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_ops.py",
+      "line": 916,
+      "samples": 20,
+      "weight": 0.2
+    },
+    {
+      "name": "encode_token_weights",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/sd1_clip.py",
+      "line": 73,
+      "samples": 13,
+      "weight": 0.13
+    },
+    {
+      "name": "rms_norm",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/functional.py",
+      "line": 3012,
+      "samples": 13,
+      "weight": 0.13
+    },
+    {
+      "name": "run",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/runtime/static_triton_launcher.py",
+      "line": 457,
+      "samples": 13,
+      "weight": 0.13
+    },
+    {
+      "name": "cast_bias_weight",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/ops.py",
+      "line": 432,
+      "samples": 12,
+      "weight": 0.12
+    },
+    {
+      "name": "empty_cache",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/memory.py",
+      "line": 36,
+      "samples": 12,
+      "weight": 0.12
+    },
+    {
+      "name": "compile_wrapper",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+      "line": 1261,
+      "samples": 9,
+      "weight": 0.09
+    },
+    {
+      "name": "precompute_freqs",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/ldm/lightricks/embeddings_connector.py",
+      "line": 199,
+      "samples": 9,
+      "weight": 0.09
+    },
+    {
+      "name": "rms_adaln",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/adaln.py",
+      "line": 20,
+      "samples": 8,
+      "weight": 0.08
+    },
+    {
+      "name": "forward",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/linear.py",
+      "line": 134,
+      "samples": 7,
+      "weight": 0.07
+    },
+    {
+      "name": "encode_token_weights",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/text_encoders/lt.py",
+      "line": 191,
+      "samples": 6,
+      "weight": 0.06
+    },
+    {
+      "name": "save_to",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy_api/latest/_input_impl/video_types.py",
+      "line": 1190,
+      "samples": 6,
+      "weight": 0.06
+    },
+    {
+      "name": "rope_inv_freqs",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/ldm/lightricks/vae/na_diffusion_decoder.py",
+      "line": 83,
+      "samples": 5,
+      "weight": 0.05
+    },
+    {
+      "name": "_validate",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/ltx_multiblock_compile.py",
+      "line": 282,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "_validate",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/ltx_multiblock_compile.py",
+      "line": 87,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "_validate",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/ltx_multiblock_compile.py",
+      "line": 88,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/hi/chiubyyxe36slupmdbdkhvzr2runeccbaryamtq3kevlaluanary.py",
+      "line": 2307,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "forward",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/text_encoders/gemma4.py",
+      "line": 643,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "named_modules",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py",
+      "line": 2890,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "raw_decode",
+      "file": "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/json/decoder.py",
+      "line": 354,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "run",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/runtime/static_triton_launcher.py",
+      "line": 448,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "save_to",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy_api/latest/_input_impl/video_types.py",
+      "line": 1199,
+      "samples": 4,
+      "weight": 0.04
+    },
+    {
+      "name": "<genexpr>",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/ltx_multiblock_compile.py",
+      "line": 88,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "_group_mask",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py",
+      "line": 76,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "_validate",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/ltx_multiblock_compile.py",
+      "line": 92,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "apply_rope1",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/rope.py",
+      "line": 14,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/hi/chiubyyxe36slupmdbdkhvzr2runeccbaryamtq3kevlaluanary.py",
+      "line": 2065,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/hi/chiubyyxe36slupmdbdkhvzr2runeccbaryamtq3kevlaluanary.py",
+      "line": 2080,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/hi/chiubyyxe36slupmdbdkhvzr2runeccbaryamtq3kevlaluanary.py",
+      "line": 2342,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/hi/chiubyyxe36slupmdbdkhvzr2runeccbaryamtq3kevlaluanary.py",
+      "line": 2432,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/l6/cl6d4awbtd3vg6rhi2vzkmjq2gewq4jrx7x6i6tgri2pb7zewhhr.py",
+      "line": 2501,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/xn/cxnjwbljzncc3azeid6jpsux57ff4xxm77tes6s5ji77rdbakgro.py",
+      "line": 1950,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "call",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08/inductor-cache/xn/cxnjwbljzncc3azeid6jpsux57ff4xxm77tes6s5ji77rdbakgro.py",
+      "line": 2260,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "forward",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/ldm/lightricks/vocoders/vocoder.py",
+      "line": 128,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "forward",
+      "file": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/comfy/ldm/lightricks/vocoders/vocoder.py",
+      "line": 226,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "open",
+      "file": "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py",
+      "line": 1013,
+      "samples": 3,
+      "weight": 0.03
+    },
+    {
+      "name": "run",
+      "file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py",
+      "line": 2467,
+      "samples": 3,
+      "weight": 0.03
+    }
+  ],
+  "unique_nonidle_leaf_count": 214,
+  "unknown_location_frame_ids": [
+    12
+  ],
+  "unknown_leaf_audit": {
+    "samples": 3,
+    "weight": 0.03,
+    "scope": "Nonadditive diagnostic; these samples remain in exclusive categories above."
+  },
+  "sample_conservation": true,
+  "weight_conservation": true,
+  "schema": "ltx.multiblock-stack-summary.v1",
+  "trace": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/retained-multiblock-profile-01/stacks.json",
+    "sha256": "980376023bff0097b7079ff916e4ca20b0118b425cbf2c5fa160ab36d3a113b9"
+  },
+  "profiler_log": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/retained-multiblock-profile-01/profiler.log",
+    "sha256": "dcb2490c62e8e30c744401a6ce00c6c0081ed30213418a425997c3896e660453",
+    "line_count": 4,
+    "matching_line_count": 1,
+    "matching_lines": [
+      {
+        "line": 3,
+        "text": "py-spy> Wrote speedscope file to '/mnt/fast-ai/bench-results/ltx25-baseline-20260913/retained-multiblock-profile-01/stacks.json'. Samples: 6705 Errors: 158"
+      }
+    ],
+    "truncated_matching_lines": 0,
+    "interpretation": "Keyword-matching log lines, not a count of profiler sampling errors."
+  },
+  "source_identity": {
+    "adapter": {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/ltx_multiblock_compile.py",
+      "sha256": "ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b",
+      "spans": {
+        "check_source": [
+          25,
+          29
+        ],
+        "CompiledBlockRoute.__init__": [
+          34,
+          64
+        ],
+        "CompiledBlockRoute.__init__.invoke": [
+          54,
+          55
+        ],
+        "CompiledBlockRoute._validate": [
+          66,
+          101
+        ],
+        "CompiledBlockRoute._validate_execution": [
+          103,
+          109
+        ],
+        "CompiledBlockRoute._call_native": [
+          111,
+          141
+        ],
+        "CompiledBlockRoute._call_native.require_device": [
+          114,
+          121
+        ],
+        "CompiledBlockRoute.__call__": [
+          143,
+          147
+        ],
+        "_indices": [
+          150,
+          165
+        ],
+        "_routes": [
+          168,
+          207
+        ],
+        "_registered_bindings": [
+          210,
+          239
+        ],
+        "_CompilePreRun.__init__": [
+          244,
+          253
+        ],
+        "_CompilePreRun._validate_selection": [
+          255,
+          260
+        ],
+        "_CompilePreRun._validate": [
+          262,
+          289
+        ],
+        "_CompilePreRun.__call__": [
+          291,
+          296
+        ],
+        "_CompilePreRun.validate_current_execution": [
+          298,
+          304
+        ],
+        "apply_blocks_compile": [
+          307,
+          334
+        ],
+        "remove_blocks_compile": [
+          337,
+          350
+        ]
+      },
+      "native_callsite_lines": [
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141
+      ]
+    },
+    "node": {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/multiblock_compile_node.py",
+      "sha256": "e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f",
+      "spans": {
+        "require": [
+          26,
+          28
+        ],
+        "write_json": [
+          31,
+          34
+        ],
+        "counter_snapshot": [
+          37,
+          39
+        ],
+        "counter_delta": [
+          42,
+          45
+        ],
+        "tensor_meta": [
+          48,
+          50
+        ],
+        "signature": [
+          53,
+          55
+        ],
+        "independent_streams": [
+          58,
+          65
+        ],
+        "ComparisonError.__init__": [
+          69,
+          71
+        ],
+        "require_exact": [
+          74,
+          76
+        ],
+        "exact_pair": [
+          79,
+          99
+        ],
+        "graph_receipts": [
+          102,
+          166
+        ],
+        "census": [
+          169,
+          189
+        ],
+        "_Gate.__init__": [
+          193,
+          202
+        ],
+        "_Gate.begin": [
+          204,
+          212
+        ],
+        "_Gate.device": [
+          214,
+          216
+        ],
+        "_Gate.__call__": [
+          218,
+          286
+        ],
+        "_qualified": [
+          289,
+          290
+        ],
+        "LTXCompileBlocksGate.INPUT_TYPES": [
+          294,
+          298
+        ],
+        "LTXCompileBlocksGate.apply": [
+          304,
+          310
+        ],
+        "LTXCompileBlocksGate._apply": [
+          312,
+          401
+        ]
+      },
+      "native_callsite_lines": [
+        242,
+        243,
+        246,
+        252
+      ]
+    },
+    "node_plugin": {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/custom_nodes/ltx_multiblock_compile_lab/__init__.py",
+      "sha256": "e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f",
+      "spans": {
+        "require": [
+          26,
+          28
+        ],
+        "write_json": [
+          31,
+          34
+        ],
+        "counter_snapshot": [
+          37,
+          39
+        ],
+        "counter_delta": [
+          42,
+          45
+        ],
+        "tensor_meta": [
+          48,
+          50
+        ],
+        "signature": [
+          53,
+          55
+        ],
+        "independent_streams": [
+          58,
+          65
+        ],
+        "ComparisonError.__init__": [
+          69,
+          71
+        ],
+        "require_exact": [
+          74,
+          76
+        ],
+        "exact_pair": [
+          79,
+          99
+        ],
+        "graph_receipts": [
+          102,
+          166
+        ],
+        "census": [
+          169,
+          189
+        ],
+        "_Gate.__init__": [
+          193,
+          202
+        ],
+        "_Gate.begin": [
+          204,
+          212
+        ],
+        "_Gate.device": [
+          214,
+          216
+        ],
+        "_Gate.__call__": [
+          218,
+          286
+        ],
+        "_qualified": [
+          289,
+          290
+        ],
+        "LTXCompileBlocksGate.INPUT_TYPES": [
+          294,
+          298
+        ],
+        "LTXCompileBlocksGate.apply": [
+          304,
+          310
+        ],
+        "LTXCompileBlocksGate._apply": [
+          312,
+          401
+        ]
+      },
+      "native_callsite_lines": [
+        242,
+        243,
+        246,
+        252
+      ]
+    },
+    "context": {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/scripts/encoder_diagnostics.py",
+      "sha256": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+      "spans": {
+        "_identifier": [
+          30,
+          33
+        ],
+        "_context": [
+          36,
+          51
+        ],
+        "_exclusive_json": [
+          54,
+          60
+        ],
+        "_tensor_metadata": [
+          63,
+          66
+        ],
+        "_summary": [
+          69,
+          76
+        ],
+        "inspect_encoder": [
+          79,
+          136
+        ],
+        "placement_report": [
+          139,
+          170
+        ],
+        "LTXEncoderPlacementCheck.__init__": [
+          174,
+          177
+        ],
+        "LTXEncoderPlacementCheck.INPUT_TYPES": [
+          179,
+          183
+        ],
+        "LTXEncoderPlacementCheck.check": [
+          189,
+          196
+        ],
+        "begin_encoder_unload": [
+          199,
+          211
+        ],
+        "finish_encoder_unload": [
+          214,
+          242
+        ]
+      },
+      "native_callsite_lines": []
+    },
+    "context_plugin": {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08/source/custom_nodes/ltx_encoder_diagnostics/__init__.py",
+      "sha256": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+      "spans": {
+        "_identifier": [
+          30,
+          33
+        ],
+        "_context": [
+          36,
+          51
+        ],
+        "_exclusive_json": [
+          54,
+          60
+        ],
+        "_tensor_metadata": [
+          63,
+          66
+        ],
+        "_summary": [
+          69,
+          76
+        ],
+        "inspect_encoder": [
+          79,
+          136
+        ],
+        "placement_report": [
+          139,
+          170
+        ],
+        "LTXEncoderPlacementCheck.__init__": [
+          174,
+          177
+        ],
+        "LTXEncoderPlacementCheck.INPUT_TYPES": [
+          179,
+          183
+        ],
+        "LTXEncoderPlacementCheck.check": [
+          189,
+          196
+        ],
+        "begin_encoder_unload": [
+          199,
+          211
+        ],
+        "finish_encoder_unload": [
+          214,
+          242
+        ]
+      },
+      "native_callsite_lines": []
+    }
+  },
+  "script_sha256": "c0df54594796c5098708003bdd6df827760662a56e97a0e3eef733a2cdfdb605",
+  "packet_manifest_sha256": "a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b",
+  "limitations": [
+    "Exclusive whole-stack occupancy categories use the listed priority; nested work is not separately additive.",
+    "State validation has priority over its registry/lifecycle ancestors. Explicit receipt/context helpers precede native wrappers.",
+    "Compiled/native wrapper occupancy includes dispatch, synchronization and waits; it is not kernel time or CPU utilization.",
+    "Sampled stacks may miss short calls or contain incomplete/unknown frames; profiler error lines are preserved without invented counts.",
+    "Only the selected prompt worker contributes counts or weights; other threads, including idle threads, are ignored.",
+    "Queue idle requires the execution queue get plus threading wait call chain; unmatched waiting remains in its sampled category.",
+    "Missing weights imply counts only. Supplied weights and declared units are reported without assuming wall-clock coverage.",
+    "Source classification requires exact pinned paths and AST spans; relocated or unrecognized code can remain other.",
+    "No native speed, uninstrumented latency, sustained streaming, or CPU/GPU utilization claim."
+  ]
+}

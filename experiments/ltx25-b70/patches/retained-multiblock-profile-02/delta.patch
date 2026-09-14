@@ -1,0 +1,48 @@
+--- original.py
++++ record-retained-multiblock-profile-v2.py
+@@ -67,10 +67,23 @@
+     require(isinstance(campaign, str) and 1 <= len(campaign) <= 64 and
+             all(c in 'abcdefghijklmnopqrstuvwxyz0123456789-' for c in campaign) and
+             campaign[0] != '-', 'Unsafe campaign name')
+-    return [{'run': campaign + '-' + mode + '-boat', 'mode': mode, 'selection': 'all48',
++    return [{'run': f'{campaign}-r{index:02d}-{mode}-boat', 'mode': mode, 'selection': 'all48',
+              'fixture': 'boat', 'qualified_before': 2, 'initialization': False,
+              'timeout_seconds': REQUEST_TIMEOUT, 'profiled': mode == 'compiled'}
+-            for mode in ('compiled', 'restored')]
++            for index, mode in enumerate(('compiled', 'restored'), 1)]
++
++
++def validate_retention_names(client, campaign, plans):
++    """Preflight the frozen owned_file naming gate before attachment/submission.
++
++    Actual files do not exist yet; owned_file's path/file checks still run during
++    inventory. Tests exercise both names against that real helper with files.
++    """
++    runs = [row['run'] for row in plans]
++    require(len(runs) == len(set(runs)), 'Duplicate diagnostic run names')
++    require(client.retention.NAME.fullmatch(campaign) and all(
++        client.retention.NAME.fullmatch(run) and run.startswith(campaign + '-r')
++        for run in runs), 'Run names violate frozen retention ownership contract')
+ 
+ 
+ def passed_parity(row):
+@@ -284,9 +297,10 @@
+ 
+ 
+ def run_diagnostic(client, common, args, base):
++    plans = schedule(args.campaign)
++    validate_retention_names(client, args.campaign, plans)
+     identity, _ = client.identity_binding(common, args.packet, args.manifest_sha256, args.server_run)
+     binding = terminal_binding(client, args, identity)
+-    plans = schedule(args.campaign)
+     for row in plans:
+         for relative in (Path('requests') / row['run'], Path('output') / row['run'],
+                          Path('output/validation') / row['run']):
+@@ -371,6 +385,7 @@
+     args = parse_args()
+     schedule(args.campaign)
+     client = load_client()
++    validate_retention_names(client, args.campaign, schedule(args.campaign))
+     args.packet, args.server_run = args.packet.absolute(), args.server_run.absolute()
+     require(args.packet.parent == ROOT and args.server_run.parent == ROOT, 'Invalid packet/server location')
+     client.retention.safe_path(ROOT, args.packet.name)
