@@ -25,7 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14 17:19 UTC: optimization continues; application unchanged.**
+**Four-B70 host, September14 17:29 UTC: encoder CPU proof passed; application unchanged.**
+The CPU embedding candidate passed all six actual-source groups: raw-byte
+token/embedding equality, named-owner loading, clone/detach/restore, inference
+storage, mutation refusals and installation rollback. PID107471/exec35632
+exited0 with both GPU backends uninitialized. This is a tiny CPU fixture proof;
+GPU residency, full-clip equality and speed remain unmeasured. Next: inactive
+CLIP/runtime integration with explicit CPU and encoder ownership, followed by
+native gates. [CPU results](experiments/ltx25-b70/notes/host-embedding-cpu-v3-results-01.md).
+
 Packet10 PID84255/exec33936 remains healthy and idle with the same full endpoint
 identity, empty queue, sole ownership of all four render nodes and no fault.
 Saved-event attribution puts about1.82s in encoding and3.54s in the two sampler
@@ -37,13 +45,13 @@ corrected named-owner loading and inference-tensor version assumptions.
 [Candidate](experiments/ltx25-b70/notes/host-embedding-gather-candidate-01.md),
 [review](experiments/ltx25-b70/notes/host-embedding-source-review-01.md).
 
-The guarded C++ CPU v4 diagnostic stopped at a second import-time device-count
-probe in Comfy, before any model/compile call; both GPU backends remained
-uninitialized. Its source/39 stdlib checks passed, but native qualification is
-still pending. The embedding CPU driver reaches this same import and was not
-run. Next: a narrowly scoped CPU import refusal, then bounded CPU qualification
-before runtime integration. No live application or host action occurred.
-[V4 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v4-native-attempt-01.md).
+The guarded C++ CPU v5 diagnostic fixed the Comfy import probe, completed one
+eager call, then stopped at PyTorch Triton detection's device enumeration during
+the first Python-boundary compile. Both GPU backends stayed uninitialized;
+no compiled C++ qualification yet. Next: the built-in CPU device-detection
+disable setting, explicitly recorded for both arms, followed by a bounded gate.
+No live application or host action occurred.
+[V5 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v5-native-attempt-01.md).
 Unconditional cross-step text K/V reuse was rejected from the actual checkpoint
 and source: ADaLN changes the projection inputs with timestep.
 [Audit](experiments/ltx25-b70/notes/cross-step-text-kv-audit-01.md).

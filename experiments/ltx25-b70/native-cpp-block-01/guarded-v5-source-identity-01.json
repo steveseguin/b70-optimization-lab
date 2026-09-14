@@ -1,0 +1,34 @@
+{
+  "status": "inactive successor; 56 stdlib tests passed; no native execution",
+  "source_sha256s": {
+    "experiments/ltx25-b70/scripts/cpu_comfy_import_policy_v1.py": "7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec",
+    "experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v5.py": "f73a16e11f0674fdaac23366a68fa6bc6ceef3c2b249557fe5159a7610b405da",
+    "experiments/ltx25-b70/native-cpp-block-01/test_guarded_v5_stdlib.py": "92da5b11868772db9e0beb6cb01d23e12e8701358f4a26c750b1ce4a1f8c2137",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v5-stdlib-01.json": "86ae2da77c33f712d597b8c40b6001bdd28fba96717b9e7c284a9d21700dcc61",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-diagnostic-v5.patch": "b5fef9c128f33572d87e7f69d760ccd0cfc8ff7a76757eba18393ee7ea8d7668",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v4-result-01.json": "c9e5f7a4970690a3fdafae1900f0c0eebb2b64039473be38565cb48dd2c1e1eb",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v4-run-01.log": "9ad91ffc9706db649269ccc63506e81e525c2733225606b106723216c8a2e087",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v4-postflight-01.json": "9943c10057e6334ab9e9c5258471c09ce0934b01a5b94c7aeb20ad0ddab62c9d",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v4-startup-01.json": "c3578b209c584e9fe356951dbcebdc4f1a19f496800fc4c92ac96f34181ffb8d",
+    "experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v4.py": "35924bf2f856afa57cb6f29c004b0dac56cf9d50764de8a6309dd432043a2a00",
+    "experiments/ltx25-b70/native-cpp-block-01/cpu_metadata_policy_v4.py": "4fffdedf7d109cc14456aef37031e7471138a9c19c840596efb1e3197e972a80",
+    "experiments/ltx25-b70/native-cpp-block-01/cpu_import_policy_v3.py": "03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a",
+    "experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce"
+  },
+  "model_management": {
+    "path": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_management.py",
+    "sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+    "start_line": 126,
+    "end_line": 131,
+    "excerpt": "try:\n    _ = torch.xpu.device_count()\n    xpu_available = torch.xpu.is_available()\nexcept:\n    xpu_available = False\n"
+  },
+  "prior_v4_result": {
+    "pid": 105412,
+    "passed": false,
+    "model_calls": 0,
+    "metadata_omissions": 0,
+    "xpu_initialized_at_exit": false,
+    "cuda_initialized_at_exit": false,
+    "classification": "guard refusal, no observed device fault"
+  }
+}
