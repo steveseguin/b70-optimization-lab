@@ -6,9 +6,9 @@ establish a performance improvement or change a serving default.
 
 The user requested a modest follow-up, not an exhaustive optimization campaign.
 Two options were reviewed. Neither warranted a new endpoint patch within this
-scope. The next diagnostic is one runtime-profiler trace on the available 4B
-W4A16 two-card setup after its missing baseline measurements are captured. That
-trace is planned work, not a completed result in this note.
+scope. One runtime-profiler trace on the 4B W4A16 two-card setup is now
+complete. It identifies many small FP16 matrix multiplications as a substantial
+cost, but establishes no new inexpensive arithmetic-preserving candidate.
 
 ## Direct-output allocation: keep the existing negative result
 
@@ -81,23 +81,37 @@ Supporting source and history:
 - [R291 verified census implementation](../docker/r291-fp16-linear-classpad-verified.py)
 - [R293 class-selection implementation](../docker/r293-fp16-linear-classpad-cheapest.py)
 
-## One useful profiling step
+## Completed profiling step
 
-After baseline measurement, use the existing runtime profiler for one
-cache-zero, exactly 512-token request on 4B W4A16 TP2. Keep profiling separate
-from the headline timing samples and preserve its configuration and trace.
-Inspect the actual FP16 rowchunk call shapes, their contribution to prefill,
-and whether repeated small GEMMs or another specific operation dominate.
-Do not inject a new model custom op just to collect timings.
+The [trace analysis](../data/2026-09-14-prefill-trace-analysis.json) covers one
+cache-zero 512-input-token request with one returned token on 4B W4A16 TP2.
+The returned token matched the unprofiled baseline. The runtime's existing
+profiler collected both worker traces; no custom model probes were inserted.
+Profiling was stopped before the final unprofiled control measurements.
 
-Only strong new evidence should open a candidate in this session. If the
-trace supports further work, the next bounded task is an operator screen of
-the identified shapes, followed by matched full-output and decode checks for
-one isolated change. A CLASSPAD hybrid would require explicit new arithmetic
-identity and determinism qualification; it cannot inherit the old gates.
-Runtime promotion still requires the repository's performance and quality
-standards, subject to the user's prohibition on server restart chains.
+| Device operation group | Rank 0 | Rank 1 | Interpretation |
+| --- | ---: | ---: | --- |
+| FP16 matrix multiplications | 27.418 ms | 28.843 ms | 907 calls per rank; 848 use 32 input rows |
+| INT4 matrix multiplications | 19.876 ms | 19.369 ms | 83 calls per rank |
+| Directly attributed GDN kernels | 7.909 ms | 7.860 ms | 168 kernels per rank |
+| Allreduce | 9.023 ms | 21.960 ms | Includes possible synchronization waiting; not pure transfer cost |
 
-If profiling shows no inexpensive, well-supported change, finish the measured
-baseline publication and retain existing defaults. No optimization win is
-claimed by this review.
+These are summed traced device-kernel durations within each rank, not unprofiled
+request latency or additive savings. Do not add the ranks together. The trace
+includes MTP work even with only one returned token. Inclusive CPU operator
+intervals nest and are reported separately in the analysis. The full-vocabulary
+FP16 projection has one row, confirming that it is not a 512-row projection.
+
+The rowchunk operations and their device descendants account for 29.391 ms on
+rank 0 and 30.791 ms on rank 1, about 40.2% and 36.4% of each rank's summed
+kernel durations. Fifty-three larger rowchunk calls produce the 848 small
+GEMMs. This is a concrete target for future work, but not proof that their
+required arithmetic can be preserved by a faster implementation.
+
+Decision: retain the existing defaults. The already-screened allocation change
+is not rerun, and the new-arithmetic CLASSPAD hybrid is not patched into the
+server. A later bounded optimization task could screen one implementation that
+batches these fixed 32-row operations while preserving their exact kernel
+arithmetic, then immediately apply matched output and decode gates. Building
+and qualifying such a kernel is beyond this measurement follow-up. No new
+candidate was benchmarked or promoted in this session.

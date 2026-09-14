@@ -25,14 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**2026-09-13 21:30 EDT, two-B70 host: bounded prefill follow-up.** User
-selected up to three missing short-prefill setups (4B/9B TP2, 27B INT4 TP1)
-and a modest optimization review. The first stage is launching `prefill-followup-4b-tp2-396151` on localhost
-18149 after both-card compute/XCCL preflight; each independent stage rechecks
-process/listener/render ownership and health. Reserve this host for this lane; preserve the four-card LTX work.
-[Preregistration](experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-prereg.md),
+**2026-09-13 21:47 EDT, two-B70 host: bounded prefill follow-up complete.**
+4B TP2, 9B TP2 and 27B INT4 TP1 measured at 256/512 input tokens, one user,
+cache zero; all 108 measured requests repeat exactly and all three strict suites
+match their original qualified outputs 12/12. One 4B TP2 profiler trace is
+retained; no new runtime candidate or decode record promoted. All three owned
+servers are stopped, both GPUs/XCCL and journal postflights passed. [Results](experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md),
 raw evidence `/mnt/fast-ai/bench-results/qwen-prefill-followup-20260914`.
-No restart chain or power/memory-setting changes.
+No restart chain or power/memory-setting changes; four-card LTX work preserved.
 
 **Four-B70 host, 2026-09-13 20:42 EDT: LTX baseline bring-up.** User authorized
 a very short native-precision clip and deterministic repeat checks. One local

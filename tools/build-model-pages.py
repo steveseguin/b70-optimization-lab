@@ -395,7 +395,7 @@ def page(pkg, all_pkgs, family=None):
     concurrent_profiles_html = render_profiles(concurrent_profiles)
     prefill_highlight = ""
     for profile in prefill_profiles:
-        if profile.get("id") != "short-prompt-server-prefill-control":
+        if profile.get("measurement_kind") != "server_prefill":
             continue
         point = next((point for point in profile["points"] if point.get("context_tokens") == 512), None)
         if point:
@@ -403,7 +403,7 @@ def page(pkg, all_pkgs, family=None):
             cards = setting.get("tensor_parallel_size", hw.get("cards", 1))
             draft = setting.get("speculative_tokens")
             draft_note = f" · {draft}-token draft" if draft is not None else ""
-            prefill_highlight = (f'<div class="measured"><span class="big">{esc(fmt(point["value"]))}</span><span class="unit">input tokens/s</span></div>'
+            prefill_highlight += (f'<div class="measured"><span class="big">{esc(fmt(point["value"]))}</span><span class="unit">input tokens/s</span></div>'
                                  f'<p class="scope">512 input tokens · one user · {esc(cards)} GPU(s){esc(draft_note)}. Separate short-input test; no saved prompt cache.</p>')
     prefill_section = '<h2 id="prefill">Reading speed (prefill)</h2>' + prefill_highlight + (render_profiles(prefill_profiles) or '<p>Not measured yet for this setup.</p>')
     evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">Test details on GitHub</a>' if fm.get("evidence") else ""

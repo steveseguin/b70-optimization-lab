@@ -64,6 +64,16 @@ Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04
 
 <!-- replication-matrix:end -->
 
+## Reading speed (prefill), September 14 UTC
+
+The 1-GPU R304 setup with fixed MTP depth 4 reads a 512-token prompt at
+**1,209 input tokens/s**, measured with one user and no prompt-cache reuse.
+This is server processing time before its first token, separate from HTTP wait
+and decode speed. The unrepeated prose/code/document test has 18 measurements
+per input length; the full strict suite matched its qualified reference 12/12.
+No runtime change or new decode record was promoted. See the
+[prefill results, exact settings and raw evidence](../../experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md).
+
 ## Fixed-K batch-invariant profile on the R187 stack (2026-09-05, research-status)
 
 The 2026-09-04/05 refresh runs the same AutoRound tensors on the FP8 lane's R187 stack (whole-graph compile,

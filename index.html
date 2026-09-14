@@ -492,7 +492,7 @@ Style genome (duotone-hixffp):
           <td class="model-use" data-label="Best for"></td>
           <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-12-rebase-v0290-r301-results.json">177.28</a></td>
           <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td><td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;</td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="9b-tp2" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen35-9b-w4a16-b70.html#prefill">4,419</a>&dagger;</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-9b-w4a16-b70.html">Details page</a></div></td></tr>
         <tr>
           <th scope="row" class="model"><a href="models/qwen-4b.html">Qwen3.5-4B</a> <small>1&times; B70 &middot; INT4 W4A16 &middot; MTP depth 3 &middot; 67k draft shortlist &middot; Alibaba</small></th>
@@ -507,7 +507,7 @@ Style genome (duotone-hixffp):
           <td class="model-use" data-label="Best for"></td>
           <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-12-rebase-v0290-r301-results.json">245.83</a></td>
           <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td><td class="num r model-agg mut" data-label="Many users" title="No qualified result for this setup yet.">&mdash;</td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="4b-tp2" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen35-4b-w4a16-b70.html#prefill">7,367</a>&dagger;</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen35-4b-w4a16-b70.html">Details page</a></div></td></tr>
         <tr>
           <th scope="row" class="model"><a href="models/muse-glimmer.html">Muse-Glimmer-30B</a> <small>4&times; B70 &middot; Q8/WOQ &middot; DFlash draft n=15 &middot; Meta</small></th>
@@ -682,7 +682,7 @@ Style genome (duotone-hixffp):
           <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-autoround-int4-b70.html#measured">81.16</a></td>
           <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td>
           <td class="num r model-agg" data-label="Many users"><a href="models/qwen38-27b-autoround-int4-b70.html#profiles" title="R304 TP1 MTP4 c8: 273.1/272.7 tok/s, 8/8 exact in both passes; warm rate shown">272.7</a></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="27b-int4-tp1" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen38-27b-autoround-int4-b70.html#prefill">1,209</a>&dagger;</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-autoround-int4-b70.html">Details page</a></div></td>
         </tr>
         <tr class="variant-row">
@@ -739,7 +739,7 @@ Style genome (duotone-hixffp):
       </tbody>
     </table>
     </div>
-    <p class="icon-key mut">Reviewed September 13, 2026. &mdash; No qualified measurement for that setup. &dagger; Separate test settings; speeds in a row may come from different tests. Prefill uses server processing time, not the full wait over the network. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md">Prefill test details</a> &middot; <a href="learn.html">Model names and speed labels explained &rarr;</a></p>
+    <p class="icon-key mut">Reviewed September 13, 2026. &mdash; No qualified measurement for that setup. &dagger; Separate test settings; speeds in a row may come from different tests. Prefill uses server processing time, not the full wait over the network. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md">Prefill test details</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md">Additional prefill tests</a> &middot; <a href="learn.html">Model names and speed labels explained &rarr;</a></p>
   </div>
 </section>
 

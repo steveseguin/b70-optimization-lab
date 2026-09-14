@@ -62,6 +62,28 @@ class HumanPages(unittest.TestCase):
         self.assertIn('tabindex="0"', output)
         self.assertNotIn('R187', output)
 
+    def test_prefill_highlights_keep_each_measured_setup_and_exclude_proxies(self):
+        import copy
+        packages = json.loads((ROOT / 'packages/catalog.json').read_text())['packages']
+        package = copy.deepcopy(next(p for p in packages if p['id'] == 'qwen35-4b-w4a16-b70'))
+        base = next(p for p in package['performance_profiles'] if p.get('measurement_kind') == 'server_prefill')
+        second = copy.deepcopy(base)
+        second.update(id='followup-tp2', public_label='Reading speed · 2 GPUs · 3-token draft')
+        second['operating_profile']['tensor_parallel_size'] = 2
+        for point in second['points']:
+            point['value'] = 1234.5
+        proxy = copy.deepcopy(second)
+        proxy.update(id='http-proxy', measurement_kind='http_ttft_proxy')
+        for point in proxy['points']:
+            point['value'] = 987.6
+        package['performance_profiles'] = [base, second, proxy]
+        output = MODULE.page(package, packages)
+        section = output.split('<h2 id="prefill">')[1].split('<details')[0]
+        self.assertEqual(section.count('input tokens/s'), 2)
+        self.assertIn('1 GPU(s)', section)
+        self.assertIn('2 GPU(s)', section)
+        self.assertNotIn('987.6', section)
+
     def test_catalog_profiles_and_accessible_tables_render(self):
         packages = json.loads((ROOT / 'packages/catalog.json').read_text())['packages']
         for package in packages:
