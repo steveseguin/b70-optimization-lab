@@ -1,0 +1,36 @@
+{
+  "schema": "ltx25.native-progress-blocked-audit.v1",
+  "created_utc": "2026-09-14T06:54:30.370440+00:00",
+  "boot_id": "39a36df1-8b22-498e-b74a-28384839a024",
+  "fault_present": true,
+  "fault_sha256": "8d2beb84936424bcab87b81ad685efd0c57635db9bf321878731d0478c6ce305",
+  "known_processes": {
+    "95931": [
+      "State:\tS (sleeping)",
+      "Threads:\t65",
+      "ShdPnd:\t0000000000000000"
+    ],
+    "96119": [
+      "State:\tR (running)",
+      "Threads:\t1",
+      "ShdPnd:\t0000000000000002"
+    ],
+    "102144": [
+      "State:\tR (running)",
+      "Threads:\t1",
+      "ShdPnd:\t0000000000000002"
+    ]
+  },
+  "prior_consecutive_fault_evidence": [
+    "data/streaming-comparison-evidence-01.json",
+    "data/na-mask-extent-01/native-check-only-fault.json"
+  ],
+  "goal_complete": false,
+  "actual_generation_goal": "p95 <1s per new video second, >24 unique generated frames/s, >=256x256, nativeBF16/original8+3 steps, coherent deterministic continuation, bounded resources",
+  "measured_generation_seconds_approx": 6.4,
+  "native_compiler_qualified": false,
+  "native_continuation_qualified": false,
+  "next_required_condition": "recovered healthy host before native imports or GPU requests",
+  "further_source_only_work_decision": "prepared gates now require native evidence; no additional high-value source-only implementation identified",
+  "host_actions_performed": []
+}
