@@ -48,15 +48,38 @@ def workspace_tree_sha256(workspace):
     return hashlib.sha256(json.dumps(tree,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode()).hexdigest()
 
 
+class ExactTwoCommandCycleGuard:
+    """Bounded exact observation comparison; never execute or truncate commands."""
+    def __init__(self):
+        self.history=[];self.pending_command=None;self.warnings=0
+    def before(self,command):
+        if self.pending_command is not None:
+            if command==self.pending_command:
+                raise RuntimeError('Two-command cycle restarted after repetition feedback; task stopped without another tool execution')
+            self.reset()
+    def reset(self):
+        self.history=[];self.pending_command=None
+    def observe(self,command,result):
+        self.history.append((command,result['returncode'],result['output']))
+        self.history=self.history[-6:]
+        h=self.history
+        if len(h)==6 and h[0][0]!=h[1][0] and h[:2]==h[2:4]==h[4:6]:
+            self.pending_command=h[0][0];self.warnings+=1
+            return dict(result,output=result['output']+'\nRepetition warning: the same two commands, exit statuses, and outputs have repeated for three cycles. Do not start that cycle again. Make a different focused edit, run a different diagnostic, or submit if the task is complete.\n')
+        return result
+
+
 class CheckedEnvironment:
     def __init__(self,sandbox,command,out,limit):
         self.sandbox=sandbox;self.command=command;self.out=out;self.limit=limit;self.validations=[]
         self.passing_tree_sha256=None;self.final_tree_sha256=None
         self.last_command=None;self.repeated_command_count=0;self.loop_warnings=0
+        self.two_command_cycle=ExactTwoCommandCycleGuard()
     def execute(self,action):
         self.passing_tree_sha256=None
         command=action.get('command','').strip()
         if command!=FINISH:
+            self.two_command_cycle.before(command)
             self.repeated_command_count=self.repeated_command_count+1 if command==self.last_command else 1
             self.last_command=command
             if self.repeated_command_count>=4:
@@ -65,6 +88,7 @@ class CheckedEnvironment:
                 self.loop_warnings+=1
                 return {'returncode':1,'output':'No-progress warning: you repeated the same command three times. Its output is already in the conversation. Do not repeat it again. Make the focused edit, run a different diagnostic, or submit if the task is complete.'}
         if command==FINISH:
+            self.two_command_cycle.reset()
             before=workspace_tree_sha256(self.sandbox.run_dir/'workspace')
             result=self.sandbox.execute({'command':self.command})
             after=workspace_tree_sha256(self.sandbox.run_dir/'workspace')
@@ -80,7 +104,12 @@ class CheckedEnvironment:
                           'Rerun acceptance on the stabilized tree using the exact completion command. The patch is not accepted yet.\n')
                 return {'returncode':result['returncode'] or 1,'output':feedback+result['output']}
             self.passing_tree_sha256=after
-        return self.sandbox.execute(action)
+        result=self.sandbox.execute(action)
+        if command!=FINISH:
+            warnings_before=self.two_command_cycle.warnings
+            result=self.two_command_cycle.observe(command,result)
+            self.loop_warnings+=self.two_command_cycle.warnings-warnings_before
+        return result
     def verify_final_tree(self):
         if not self.sandbox.stopped:raise RuntimeError('Stop the CPU sandbox before checking the accepted tree')
         self.final_tree_sha256=workspace_tree_sha256(self.sandbox.run_dir/'workspace')
@@ -144,7 +173,8 @@ def main():
             result.update(acceptance_tree_sha256=env.passing_tree_sha256 if env else None,
                           final_workspace_tree_sha256=env.final_tree_sha256 if env else None,
                           final_workspace_matches_acceptance=final_tree_matches,
-                          repeated_command_warnings=env.loop_warnings if env else 0)
+                          repeated_command_warnings=env.loop_warnings if env else 0,
+                          two_command_cycle_warnings=env.two_command_cycle.warnings if env else 0)
             save(out/'result.json',result)
             print(json.dumps({'status':result['status'],'task':task['id'],'model_requests':result['model_requests'],'elapsed_seconds':round(result['elapsed_seconds'],1),'result':str(out/'result.json')}),flush=True)
     return 0 if passed else 1

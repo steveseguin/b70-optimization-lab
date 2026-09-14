@@ -22,3 +22,4 @@ jobs:
       - run: python worker/collect_results.py --verify --out experiments/local-coding-worker/data/2026-09-14-five-issues
       - run: python worker/collect_overnight.py --verify --out experiments/local-coding-worker/data/2026-09-14-profile-screen
       - run: python worker/collect_overnight.py --verify --out experiments/local-coding-worker/data/2026-09-14-readable-observations
+      - run: python worker/replay_cycle_guard.py --verify --out experiments/local-coding-worker/data/2026-09-14-worker-hardening/cycle

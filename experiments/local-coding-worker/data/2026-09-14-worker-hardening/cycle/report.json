@@ -1,0 +1,286 @@
+{
+  "automatic_acceptance_passing_traces": 13,
+  "failed_traces": 1,
+  "limitations": [
+    "Offline replay of recorded observations; no recorded commands or model requests executed.",
+    "Automatic acceptance is separate from independent review; one thinking trace was review-rejected.",
+    "FINISH acceptance execution is tested separately with CPU fakes.",
+    "No model reaction, latency, token savings, quality, or acceptance improvement measured.",
+    "Identical command/output cycles do not prove hidden workspace state made no progress."
+  ],
+  "packet_bindings": {
+    "2026-09-14-five-issues": {
+      "archive_sha256": "334dd776ebfc5070bb67779157e6bbfaf3380867a0f29a8457ccc25260474819",
+      "manifest_sha256": "a5ed900aeecac59f5ed268ea6b10bab71383631edbc1e2648566ac0498544cff"
+    },
+    "2026-09-14-profile-screen": {
+      "archive_sha256": "78271934c555752c27ecb5893559d3d1edb8411c98176555000ad326712a437d",
+      "manifest_sha256": "0b0ea6df16d90239809957af59383fea4d2ecc07472927216b0bc233d3920b8e"
+    },
+    "2026-09-14-readable-observations": {
+      "archive_sha256": "a0c120d4a3ecc9b02512a54390249a4e3d66de3d206c44a9834729215f2e7ff9",
+      "manifest_sha256": "00ccec17683dba8776517ab85aae631dbab8c5a2e51d47ea7ac8fb59c189df85"
+    }
+  },
+  "schema": "neural.download.worker-cycle-replay.v1",
+  "traces": [
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "lab-download-manifest-paths-v2",
+      "packet": "2026-09-14-five-issues",
+      "recorded_model_calls": 21,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 20,
+        "tool_calls_replayed": 19,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "a4aa86ea2a85e77087a7e424b32e59902b9d142b0181b6d9f124f6f79473de2f",
+        "trajectory.json": "77f82c160d8179e70c8ed6b12fcee5b0386cd764b070e7b93e135dccd570312b"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "lab-smoke-first-request-failure",
+      "packet": "2026-09-14-five-issues",
+      "recorded_model_calls": 12,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 11,
+        "tool_calls_replayed": 10,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "49dcb048a20ec07f4bc80b9f9b8de2db2be8d8783794d9617b073aea20390a68",
+        "trajectory.json": "d5b485002e58c111b71febc10bd7d5d1454aa644998de6428e81ffd75a26039d"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "ml-predict-cli-numeric-errors",
+      "packet": "2026-09-14-five-issues",
+      "recorded_model_calls": 13,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 12,
+        "tool_calls_replayed": 11,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "742c9093ada18054effc3db09b89698e401fd9f97d8794528ecc62021c01aee6",
+        "trajectory.json": "5c11a44ed53943c9f944dc10f6453574cc48acc794cb752511a60ba3cbf402d3"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "thinking-low-ml-hardware-listing-isolation",
+      "packet": "2026-09-14-profile-screen",
+      "recorded_model_calls": 22,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 22,
+        "tool_calls_replayed": 21,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "22e97d36ad43797a2e256b3c13dda6218cc48a2c20b62176ea22751fba123f99",
+        "trajectory.json": "eb89b753ee906b182c183e584d4ffe707c274931af9e5a6612058b708b9991ef"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "thinking-low-ml-predict-cli-numeric-errors",
+      "packet": "2026-09-14-profile-screen",
+      "recorded_model_calls": 13,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 13,
+        "tool_calls_replayed": 12,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "0e6030628a07c2f2167f1e11016f3d868efc58d083af236a7907fc6ffa801d3c",
+        "trajectory.json": "2f5b9d1d9f6e9830579fd623dc821dc2bba0b44d6cdbe079198b425c60ebf04e"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "thinking-low-ml-zero-electricity-cost",
+      "packet": "2026-09-14-profile-screen",
+      "recorded_model_calls": 28,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 28,
+        "tool_calls_replayed": 27,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "7ed27e571843d1781bae5f3a9c9c36484a97e3866f20dbcea32b1eb358ccddec",
+        "trajectory.json": "ebf1f1a871941e262683c08b7205ace2b6e292f4fe8436fdbaced538e58525c1"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "readable-lab-download-manifest-paths",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 13,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 12,
+        "tool_calls_replayed": 11,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "f851301ffbf2b6ea0a57d3f97afc099b92a933382d026f4ab49702a22b8eea4d",
+        "trajectory.json": "89e90ffa8671d1d42f72fae131f178d1314b40fa3e9a9492720cf1ca341b8e41"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "readable-lab-smoke-first-request-failure",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 13,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 12,
+        "tool_calls_replayed": 11,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "c8744ed6eaee3d4d36d0aa57ce80483e7843e32b1e3c14f7fc6d8be9d3c13f0e",
+        "trajectory.json": "4b43800cb654b110fdd3855b07ae88fbe880ef19c08c091bed941271f33c4fe3"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "readable-ml-hardware-listing-isolation-repeat",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 14,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 13,
+        "tool_calls_replayed": 12,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "be2954de0e6e710b092193556c6040c28123b116ba7f63f944e89ee722335049",
+        "trajectory.json": "b9bdf65f77540be41753f6d991618165631cca3af38b25965b3b274ac3b3ed20"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "readable-ml-hardware-listing-isolation",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 14,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 13,
+        "tool_calls_replayed": 12,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "bbcd333cbf145c21f662aeeaad72287af81dfa606e68b0b7506fc14c61861234",
+        "trajectory.json": "05b99b7370daaaee594359b02dd63151721524813b69bad8a7193ea9438b25b1"
+      }
+    },
+    {
+      "automatic_acceptance_passed": false,
+      "directory": "readable-ml-incomplete-depth-flag",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 40,
+      "replay": {
+        "blocked": {
+          "action": 15,
+          "reason": "Two-command cycle restarted after repetition feedback; task stopped without another tool execution",
+          "tool_executed": false
+        },
+        "finish_commands": 0,
+        "recorded_actions": 39,
+        "tool_calls_replayed": 14,
+        "two_command_cycle_warnings": 1,
+        "warning_actions": [
+          14
+        ]
+      },
+      "source_hashes": {
+        "result.json": "b0ea290a8afbbd7f348e4893586375ce8724056cf13a8a8651cc6b19212d1097",
+        "trajectory.json": "a645a6b0b727174b80aa97f162d7af4962da367843693549e3fbaf9a1dd19fb4"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "readable-ml-predict-cli-numeric-errors",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 13,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 12,
+        "tool_calls_replayed": 11,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "1ed459eb84fd608cd1d8e64513d817cc81e32b796c698b832e8da8915552f173",
+        "trajectory.json": "9d8a339542d4ec2213d692f85284c223e257b0a8a1a0abacabd0cc7d9e4d6401"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "readable-ml-zero-electricity-cost-repeat",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 23,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 22,
+        "tool_calls_replayed": 21,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "c7fc7e795e16ef957a4308a83276b4cb07f8c4041b06233d86f33f97b9fc0533",
+        "trajectory.json": "236134f7d55b57198a26391baff4b294df143cee1cb01311d1d4821270538d9e"
+      }
+    },
+    {
+      "automatic_acceptance_passed": true,
+      "directory": "readable-ml-zero-electricity-cost",
+      "packet": "2026-09-14-readable-observations",
+      "recorded_model_calls": 23,
+      "replay": {
+        "blocked": null,
+        "finish_commands": 1,
+        "recorded_actions": 22,
+        "tool_calls_replayed": 21,
+        "two_command_cycle_warnings": 0,
+        "warning_actions": []
+      },
+      "source_hashes": {
+        "result.json": "227f2257c43f1b874c037bbad39976f9d1447adb185919d3da1c2dc85a1ab42e",
+        "trajectory.json": "62073154809201c4cf8653c7160243156c5a9a596739a7d939c904438e5ceb50"
+      }
+    }
+  ]
+}
