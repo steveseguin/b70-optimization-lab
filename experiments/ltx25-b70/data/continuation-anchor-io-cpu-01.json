@@ -1,0 +1,53 @@
+{
+  "schema": "ltx25.continuation-anchor-io-cpu.v1",
+  "created_utc": "2026-09-14T05:51:20.554415+00:00",
+  "status": "passed",
+  "tests_run": 13,
+  "failures": 0,
+  "errors": 0,
+  "execution": "stdlib unittest in current Python process; no subprocess",
+  "reproduce_command": "python3 experiments/ltx25-b70/scripts/test-continuation-anchor-io.py",
+  "files_sha256": {
+    "scripts/continuation_anchor_io.py": "9dffd12ccb90285c5bee32ea7803321822fbf349344073b3dfb63cfac772a2c9",
+    "scripts/test-continuation-anchor-io.py": "315181946a429f14435fce1b6bed195023e8120b284bbf74b172683eb212c2b5",
+    "data/continuation-anchor-io-cpu-01.log": "f42996662a37cd623b96e3d5c377c48fdbae11aa21c5aaf8f6653ee2599efde0"
+  },
+  "read_only_source_reference_sha256": {
+    "scripts/capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da"
+  },
+  "synthetic_fixture": {
+    "shape": [
+      25,
+      256,
+      256,
+      3
+    ],
+    "images_dtype": "F32",
+    "image_tensor_bytes": 19660800,
+    "frame_bytes": 786432,
+    "file_layout": "bounded JSON header;16 byte prefix tensor;sparse images;8 byte suffix tensor",
+    "payload_origin": "synthetic little-endian integer bit patterns, not native generated tensors"
+  },
+  "validation": [
+    "raw-byte SHA256",
+    "finite exponent bits",
+    "signed zero and subnormal preservation",
+    "strict header and descriptor validation",
+    "all tensor range coverage",
+    "frame24 offset and bounded reads",
+    "truncation and concurrent file identity change",
+    "nonregular-file rejection"
+  ],
+  "gpu_execution": false,
+  "native_runtime_imported": false,
+  "real_capture_read": false,
+  "model_read": false,
+  "native_torch_correctness_claim": false,
+  "helper_writes_state_or_receipts": false,
+  "limits": [
+    "test evidence uses synthetic sparse fixtures only",
+    "source capture identity must be bound externally",
+    "no whole-capture hash or other-frame finiteness verification",
+    "no adversarial filesystem snapshot guarantee"
+  ]
+}
