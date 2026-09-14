@@ -62,7 +62,23 @@ operator-stage snapshots and the earlier unrelated freeze packet below.
 [implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
-**Four-B70 host, September14 19:20 UTC: user-reported freeze and user-confirmed reboot.**
+**Four-B70 host, September14 19:32 UTC: bounded post-reboot health assessment passed.**
+One diagnostic (parent8068/worker8088) passed four exact copy/compute checks and
+twelve directed BF16 copies on the expected ordinal UUIDs. Both exited0;
+locked passive postflight confirmed released render nodes and no new kernel
+faults. No agent reboot/reset or host settings change. The root operator
+archived the old-boot FAULT byte-for-byte after separate evidence review;
+the prior failed model campaign remains invalid. LTX is still stopped.
+The guarded tiny CPU qualification then passed all six cases (child8812,
+exit0): actual encoder/registry release, exact CPU output and memory-refusal
+ordering; both GPU backends stayed uninitialized. Parent postflight was clean.
+Next: successor runtime/client preparation and cold-assembly RAM review.
+Large model transitions, full clip performance
+and endurance remain unqualified; a new fault halts requests.
+[Health result and admission](experiments/ltx25-b70/data/external-boot-health-02/recovery-admission.json).
+[CPU lifecycle result](experiments/ltx25-b70/notes/host-embedding-resident-lifecycle-native-01.md).
+
+**Historical four-B70 state, September14 19:20 UTC: user-reported freeze and user-confirmed reboot.**
 The computer is now on boot `5414a640-c223-4a67-baa2-ec2f4c4c5917`,
 started about19:12 UTC. The user confirms restarting it after a freeze; the
 agent did not reboot or reset it. LTX remains stopped and the original FAULT

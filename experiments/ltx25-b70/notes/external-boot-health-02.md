@@ -64,3 +64,34 @@ priority3 USB/audio errors, explicitly listed in the receipt; it is not wholly
 error-free. The exact historical records are preserved, and any new such error
 fails the assessment. Failed test-only assumptions and their corrections are
 preserved separately. No native result follows from these source tests.
+
+## Actual assessment and root admission
+
+The one native attempt ran19:29:19–19:29:31UTC, parent8068/worker8088,
+and both exited0. All four copy/compute checks and all twelve BF16 directed
+copies passed. Device UUID/properties matched the original ordinal mapping;
+strict determinism was enabled. Parent postflight and a separate root locked
+passive recheck found released render nodes, absent diagnostic processes,
+unchanged boot, and no new kernel records/faults. No reboot/reset, host settings
+change, model load or repeated probe occurred.
+
+The [native result](../data/external-boot-health-02/result.json),
+[worker result](../data/external-boot-health-02/worker-result.json) and compressed
+journals are preserved. The root then reviewed those results and archived the
+old-boot FAULT byte-for-byte using the one-use
+[archival script](../scripts/admit-external-boot-health-02.py).
+[Recovery admission](../data/external-boot-health-02/recovery-admission.json)
+and [completion receipt](../data/external-boot-health-02/fault-archive-completed.json)
+bind that state transition. The original model campaign remains failed.
+No large-model or stability qualification is implied by archiving its hold.
+
+The first root archival invocation used system Python for the metadata-only
+runtime verifier; it refused before passive admission or any file/latch change
+because that interpreter has no Torch package metadata. The corrected invocation
+used the original venv and the explicit archival script. This did not rerun the
+native health probe or relax runtime identity. Future runtime-fingerprint checks
+must use `/home/steve/.venvs/ltx25-baseline/bin/python`, even when stdlib-only.
+
+The next admitted operation was the guarded tiny CPU encoder lifecycle test,
+which [passed all six cases](host-embedding-resident-lifecycle-native-01.md).
+LTX remains stopped pending a reviewed successor runtime and full-model gates.

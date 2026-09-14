@@ -1,0 +1,4083 @@
+[
+  {
+    "case": "roundtrip-byte-oracle",
+    "dtype": "torch.float32",
+    "shape": [
+      1,
+      5,
+      8
+    ],
+    "stride": [
+      40,
+      8,
+      1
+    ],
+    "raw_sha256": "052d0711c4d84e6aab0d33e47052607e51bea4c75830c62bf29a891e5a514386",
+    "scope": "Tiny CPU scaled-embedding/linear output only; no real clip or accelerator parity"
+  },
+  {
+    "case": "roundtrip",
+    "constructed_clips": 3,
+    "nonencoder_calls": [
+      "diffusion",
+      "vae",
+      "vae",
+      "upscaler",
+      "shard"
+    ],
+    "receipts": {
+      "host-components-01-control-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-control-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-control-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350653967936,
+          "model": 132350633857328,
+          "shard_patcher": 132350633971728,
+          "shard_model": 132350633971680,
+          "video_vae": 132350633971392,
+          "audio_vae": 132350633971536,
+          "upscaler": 132350633853200
+        },
+        "seconds": 0.004818633000013506,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "control",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 3,
+              "bytes": 656,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 3,
+                  "bytes": 656
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350633967792
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350633967840
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350633967840
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 656,
+              "registered_parameter_bytes_on_load_device": 656,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": null,
+          "owner": null,
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-01-control-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-host-table-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-host-table-after-release-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-release",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-host-table-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-host-table-before-restore-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-restore",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-host-table-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": "control",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "restore_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-restore",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "released_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-release",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids_before": {
+          "model_patcher": 132350653967936,
+          "model": 132350633857328,
+          "shard_patcher": 132350633971728,
+          "shard_model": 132350633971680,
+          "video_vae": 132350633971392,
+          "audio_vae": 132350633971536,
+          "upscaler": 132350633853200
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350653967936,
+          "model": 132350633857328,
+          "shard_patcher": 132350633971728,
+          "shard_model": 132350633971680,
+          "video_vae": 132350633971392,
+          "audio_vae": 132350633971536,
+          "upscaler": 132350633853200
+        },
+        "seconds": 0.11535367900000892,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350635123552
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350635123552
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350633979984
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350654270640,
+            "host_weight_id": 132350633511984,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 0,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-02-host-table-retired-owner-release.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "all_retired_weakrefs_dead": true,
+        "checked": [
+          "clip",
+          "encoder_model",
+          "encoder_patcher",
+          "group"
+        ],
+        "retired_patcher_ids_absent_from_registry": true,
+        "old_generation": 1,
+        "new_generation": 2,
+        "shared_owner_ids": {
+          "model_patcher": 132350653967936,
+          "model": 132350633857328,
+          "shard_patcher": 132350633971728,
+          "shard_model": 132350633971680,
+          "video_vae": 132350633971392,
+          "audio_vae": 132350633971536,
+          "upscaler": 132350633853200
+        },
+        "native_registry_cleanup": "cleanup_models after weak-finalizer cleanup; no direct list mutation"
+      },
+      "host-components-02-host-table-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": "control",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-host-table-unload.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "schema": "ltx.host-embedding-unload.v1",
+        "before": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "control",
+          "encodes_completed": 1,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 3,
+              "bytes": 656,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 3,
+                  "bytes": 656
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350633967792
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350633967840
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350633967840
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 656,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 656,
+              "registered_parameter_bytes_on_load_device": 656,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 656,
+              "marked_modules": [
+                "gemma3_12b.transformer.model.embed_tokens",
+                "gemma3_12b.transformer.model.linear"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": null,
+          "owner": null,
+          "last_load": {
+            "memory_required": 12362,
+            "patcher_ids": [
+              132350635017664
+            ],
+            "force_full_load": false,
+            "reserve_override": false
+          },
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "after_encoder": {
+          "small_state": {
+            "rmsnorm_count": 0,
+            "scalar_count": 0,
+            "total_bytes": 0,
+            "records": []
+          },
+          "parameters": {
+            "count": 3,
+            "bytes": 656,
+            "by_device_dtype": {
+              "cpu/torch.bfloat16": {
+                "tensors": 3,
+                "bytes": 656
+              }
+            },
+            "records": [
+              {
+                "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  32,
+                  8
+                ],
+                "bytes": 512,
+                "owner_id": 132350633967792
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8,
+                  8
+                ],
+                "bytes": 128,
+                "owner_id": 132350633967840
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.bias",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8
+                ],
+                "bytes": 16,
+                "owner_id": 132350633967840
+              }
+            ]
+          },
+          "buffers": {
+            "count": 0,
+            "bytes": 0,
+            "by_device_dtype": {},
+            "records": []
+          },
+          "accounting": {
+            "reported_loaded_weight_bytes": 0,
+            "reported_offload_buffer_bytes": 0,
+            "reported_model_size_bytes": 656,
+            "registered_parameter_bytes_on_load_device": 656,
+            "registered_persistent_buffer_bytes_on_load_device": 0,
+            "marked_direct_state_bytes": 0,
+            "marked_modules": [],
+            "small_buffers_loaded": false,
+            "model_small_state_policy": false,
+            "patcher_small_state_option": false,
+            "crop_option": false,
+            "load_device": "cpu",
+            "offload_device": "cpu",
+            "is_dynamic": false
+          }
+        },
+        "after_host_registered_bytes": 0,
+        "original_ownership_restored": true,
+        "all_shared_clones_retired": true,
+        "old_generation": 1,
+        "new_generation": 2,
+        "old_mode": "control",
+        "new_mode": "host-table"
+      },
+      "host-components-03-control-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-03-control-after-release-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-release",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-03-control-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-03-control-before-restore-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-restore",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-03-control-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 3,
+        "previous_generation": 2,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "restore_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-restore",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "released_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-release",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids_before": {
+          "model_patcher": 132350653967936,
+          "model": 132350633857328,
+          "shard_patcher": 132350633971728,
+          "shard_model": 132350633971680,
+          "video_vae": 132350633971392,
+          "audio_vae": 132350633971536,
+          "upscaler": 132350633853200
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350653967936,
+          "model": 132350633857328,
+          "shard_patcher": 132350633971728,
+          "shard_model": 132350633971680,
+          "video_vae": 132350633971392,
+          "audio_vae": 132350633971536,
+          "upscaler": 132350633853200
+        },
+        "seconds": 0.10429992200010929,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "control",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 3,
+              "bytes": 656,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 3,
+                  "bytes": 656
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350633981376
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350654237440
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350654237440
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 656,
+              "registered_parameter_bytes_on_load_device": 656,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": null,
+          "owner": null,
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-03-control-retired-owner-release.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "all_retired_weakrefs_dead": true,
+        "checked": [
+          "clip",
+          "encoder_model",
+          "encoder_patcher",
+          "group",
+          "host_model",
+          "host_owner",
+          "host_patcher",
+          "host_weight"
+        ],
+        "retired_patcher_ids_absent_from_registry": true,
+        "old_generation": 2,
+        "new_generation": 3,
+        "shared_owner_ids": {
+          "model_patcher": 132350653967936,
+          "model": 132350633857328,
+          "shard_patcher": 132350633971728,
+          "shard_model": 132350633971680,
+          "video_vae": 132350633971392,
+          "audio_vae": 132350633971536,
+          "upscaler": 132350633853200
+        },
+        "native_registry_cleanup": "cleanup_models after weak-finalizer cleanup; no direct list mutation"
+      },
+      "host-components-03-control-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 3,
+        "previous_generation": 2,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-03-control-unload.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "schema": "ltx.host-embedding-unload.v1",
+        "before": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 1,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350635123552
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350635123552
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 144,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 144,
+              "marked_modules": [
+                "gemma3_12b.transformer.model.linear"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350633979984
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 512,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 512,
+              "marked_modules": [
+                "embedding"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350654270640,
+            "host_weight_id": 132350633511984,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 144,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": {
+            "memory_required": 12362,
+            "patcher_ids": [
+              132352074635248,
+              132350657500880
+            ],
+            "force_full_load": false,
+            "reserve_override": false
+          },
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "after_encoder": {
+          "small_state": {
+            "rmsnorm_count": 0,
+            "scalar_count": 0,
+            "total_bytes": 0,
+            "records": []
+          },
+          "parameters": {
+            "count": 3,
+            "bytes": 656,
+            "by_device_dtype": {
+              "cpu/torch.bfloat16": {
+                "tensors": 3,
+                "bytes": 656
+              }
+            },
+            "records": [
+              {
+                "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  32,
+                  8
+                ],
+                "bytes": 512,
+                "owner_id": 132350633979984
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8,
+                  8
+                ],
+                "bytes": 128,
+                "owner_id": 132350635123552
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.bias",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8
+                ],
+                "bytes": 16,
+                "owner_id": 132350635123552
+              }
+            ]
+          },
+          "buffers": {
+            "count": 0,
+            "bytes": 0,
+            "by_device_dtype": {},
+            "records": []
+          },
+          "accounting": {
+            "reported_loaded_weight_bytes": 0,
+            "reported_offload_buffer_bytes": 0,
+            "reported_model_size_bytes": 656,
+            "registered_parameter_bytes_on_load_device": 656,
+            "registered_persistent_buffer_bytes_on_load_device": 0,
+            "marked_direct_state_bytes": 0,
+            "marked_modules": [],
+            "small_buffers_loaded": false,
+            "model_small_state_policy": false,
+            "patcher_small_state_option": false,
+            "crop_option": false,
+            "load_device": "cpu",
+            "offload_device": "cpu",
+            "is_dynamic": false
+          }
+        },
+        "after_host_registered_bytes": 0,
+        "original_ownership_restored": true,
+        "all_shared_clones_retired": true,
+        "old_generation": 2,
+        "new_generation": 3,
+        "old_mode": "host-table",
+        "new_mode": "control"
+      }
+    },
+    "fixture_scope": "Actual tiny CPU CLIP/model manager; nonencoder objects and memory observations are fakes"
+  },
+  {
+    "case": "construction-budget",
+    "constructed_clips": 1,
+    "nonencoder_calls": [
+      "diffusion",
+      "vae",
+      "vae",
+      "upscaler",
+      "shard"
+    ],
+    "receipts": {
+      "host-components-01-host-table-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350633970960,
+          "model": 132350633970864,
+          "shard_patcher": 132350634561696,
+          "shard_model": 132350634561648,
+          "video_vae": 132350634561408,
+          "audio_vae": 132350634561552,
+          "upscaler": 132350634561504
+        },
+        "seconds": 0.0015502619999097078,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350635124800
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350635124800
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634558528
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350633971632,
+            "host_weight_id": 132350632444704,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 0,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-01-host-table-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-after-release-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-release",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 34821518964
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-control-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 34821518964
+          }
+        },
+        "passed": false,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-control-before-restore-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-restore",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 34821518964
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-control-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "failed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "restore_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-restore",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 34821518964
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "released_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-release",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 34821518964
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids_before": {
+          "model_patcher": 132350633970960,
+          "model": 132350633970864,
+          "shard_patcher": 132350634561696,
+          "shard_model": 132350634561648,
+          "video_vae": 132350634561408,
+          "audio_vae": 132350634561552,
+          "upscaler": 132350634561504
+        },
+        "seconds": 0.1032853450001312,
+        "failure": {
+          "phase": "admit-CPU-encoder-construction",
+          "error": "RuntimeError('Insufficient source-budgeted host RAM at before-construction')",
+          "generation": 2
+        },
+        "retained_partial_owners": 0,
+        "shared_components_retained": true
+      },
+      "host-components-02-control-retired-owner-release.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "all_retired_weakrefs_dead": true,
+        "checked": [
+          "clip",
+          "encoder_model",
+          "encoder_patcher",
+          "group",
+          "host_model",
+          "host_owner",
+          "host_patcher",
+          "host_weight"
+        ],
+        "retired_patcher_ids_absent_from_registry": true,
+        "old_generation": 1,
+        "new_generation": 2,
+        "shared_owner_ids": {
+          "model_patcher": 132350633970960,
+          "model": 132350633970864,
+          "shard_patcher": 132350634561696,
+          "shard_model": 132350634561648,
+          "video_vae": 132350634561408,
+          "audio_vae": 132350634561552,
+          "upscaler": 132350634561504
+        },
+        "native_registry_cleanup": "cleanup_models after weak-finalizer cleanup; no direct list mutation"
+      },
+      "host-components-02-control-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-unload.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "schema": "ltx.host-embedding-unload.v1",
+        "before": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 1,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350635124800
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350635124800
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 144,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 144,
+              "marked_modules": [
+                "gemma3_12b.transformer.model.linear"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634558528
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 512,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 512,
+              "marked_modules": [
+                "embedding"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350633971632,
+            "host_weight_id": 132350632444704,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 144,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": {
+            "memory_required": 12362,
+            "patcher_ids": [
+              132350670079808,
+              132350654127360
+            ],
+            "force_full_load": false,
+            "reserve_override": false
+          },
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "after_encoder": {
+          "small_state": {
+            "rmsnorm_count": 0,
+            "scalar_count": 0,
+            "total_bytes": 0,
+            "records": []
+          },
+          "parameters": {
+            "count": 3,
+            "bytes": 656,
+            "by_device_dtype": {
+              "cpu/torch.bfloat16": {
+                "tensors": 3,
+                "bytes": 656
+              }
+            },
+            "records": [
+              {
+                "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  32,
+                  8
+                ],
+                "bytes": 512,
+                "owner_id": 132350634558528
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8,
+                  8
+                ],
+                "bytes": 128,
+                "owner_id": 132350635124800
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.bias",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8
+                ],
+                "bytes": 16,
+                "owner_id": 132350635124800
+              }
+            ]
+          },
+          "buffers": {
+            "count": 0,
+            "bytes": 0,
+            "by_device_dtype": {},
+            "records": []
+          },
+          "accounting": {
+            "reported_loaded_weight_bytes": 0,
+            "reported_offload_buffer_bytes": 0,
+            "reported_model_size_bytes": 656,
+            "registered_parameter_bytes_on_load_device": 656,
+            "registered_persistent_buffer_bytes_on_load_device": 0,
+            "marked_direct_state_bytes": 0,
+            "marked_modules": [],
+            "small_buffers_loaded": false,
+            "model_small_state_policy": false,
+            "patcher_small_state_option": false,
+            "crop_option": false,
+            "load_device": "cpu",
+            "offload_device": "cpu",
+            "is_dynamic": false
+          }
+        },
+        "after_host_registered_bytes": 0,
+        "original_ownership_restored": true,
+        "all_shared_clones_retired": true,
+        "old_generation": 1,
+        "new_generation": 2,
+        "old_mode": "host-table",
+        "new_mode": "control"
+      }
+    },
+    "fixture_scope": "Actual tiny CPU CLIP/model manager; nonencoder objects and memory observations are fakes"
+  },
+  {
+    "case": "survivor-clone",
+    "constructed_clips": 1,
+    "nonencoder_calls": [
+      "diffusion",
+      "vae",
+      "vae",
+      "upscaler",
+      "shard"
+    ],
+    "receipts": {
+      "host-components-01-host-table-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350634562944,
+          "model": 132350634560208,
+          "shard_patcher": 132350634596768,
+          "shard_model": 132350634596864,
+          "video_vae": 132350634596672,
+          "audio_vae": 132350634596720,
+          "upscaler": 132350634596528
+        },
+        "seconds": 0.0014464870000665542,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132352066120272
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132352066120272
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634568080
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350654270640,
+            "host_weight_id": 132350632451184,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 0,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-01-host-table-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-before-restore-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-restore",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-control-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "failed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "restore_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-restore",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "seconds": 0.10185482800011414,
+        "failure": {
+          "phase": "retire-previous-components",
+          "error": "RuntimeError('Retired CLIP owner survived; refuse replacement: group, encoder_patcher, encoder_model, host_owner, host_patcher, host_model, host_weight')",
+          "generation": 2
+        },
+        "retained_partial_owners": 0,
+        "shared_components_retained": true
+      },
+      "host-components-02-control-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-unload.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "schema": "ltx.host-embedding-unload.v1",
+        "before": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 1,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132352066120272
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132352066120272
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 144,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 144,
+              "marked_modules": [
+                "gemma3_12b.transformer.model.linear"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634568080
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 512,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 512,
+              "marked_modules": [
+                "embedding"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350654270640,
+            "host_weight_id": 132350632451184,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 144,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 2,
+            "native_qualified": false
+          },
+          "last_load": {
+            "memory_required": 12362,
+            "patcher_ids": [
+              132350634569808,
+              132350633979648
+            ],
+            "force_full_load": false,
+            "reserve_override": false
+          },
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "after_encoder": {
+          "small_state": {
+            "rmsnorm_count": 0,
+            "scalar_count": 0,
+            "total_bytes": 0,
+            "records": []
+          },
+          "parameters": {
+            "count": 3,
+            "bytes": 656,
+            "by_device_dtype": {
+              "cpu/torch.bfloat16": {
+                "tensors": 3,
+                "bytes": 656
+              }
+            },
+            "records": [
+              {
+                "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  32,
+                  8
+                ],
+                "bytes": 512,
+                "owner_id": 132350634568080
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8,
+                  8
+                ],
+                "bytes": 128,
+                "owner_id": 132352066120272
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.bias",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8
+                ],
+                "bytes": 16,
+                "owner_id": 132352066120272
+              }
+            ]
+          },
+          "buffers": {
+            "count": 0,
+            "bytes": 0,
+            "by_device_dtype": {},
+            "records": []
+          },
+          "accounting": {
+            "reported_loaded_weight_bytes": 0,
+            "reported_offload_buffer_bytes": 0,
+            "reported_model_size_bytes": 656,
+            "registered_parameter_bytes_on_load_device": 656,
+            "registered_persistent_buffer_bytes_on_load_device": 0,
+            "marked_direct_state_bytes": 0,
+            "marked_modules": [],
+            "small_buffers_loaded": false,
+            "model_small_state_policy": false,
+            "patcher_small_state_option": false,
+            "crop_option": false,
+            "load_device": "cpu",
+            "offload_device": "cpu",
+            "is_dynamic": false
+          }
+        },
+        "after_host_registered_bytes": 0,
+        "original_ownership_restored": true,
+        "all_shared_clones_retired": true,
+        "old_generation": 1,
+        "new_generation": 2,
+        "old_mode": "host-table",
+        "new_mode": "control"
+      }
+    },
+    "fixture_scope": "Actual tiny CPU CLIP/model manager; nonencoder objects and memory observations are fakes"
+  },
+  {
+    "case": "survivor-model",
+    "constructed_clips": 1,
+    "nonencoder_calls": [
+      "diffusion",
+      "vae",
+      "vae",
+      "upscaler",
+      "shard"
+    ],
+    "receipts": {
+      "host-components-01-host-table-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350634596672,
+          "model": 132350654239024,
+          "shard_patcher": 132350634618672,
+          "shard_model": 132350634618768,
+          "video_vae": 132350634618864,
+          "audio_vae": 132350634618912,
+          "upscaler": 132350634619008
+        },
+        "seconds": 0.0014440429999922344,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350633978832
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350633978832
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634598400
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350634597968,
+            "host_weight_id": 132350632457104,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 0,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-01-host-table-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-before-restore-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-restore",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-control-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "failed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "restore_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-restore",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "seconds": 0.10151763499993649,
+        "failure": {
+          "phase": "retire-previous-components",
+          "error": "RuntimeError('Retired CLIP owner survived; refuse replacement: encoder_model, host_weight')",
+          "generation": 2
+        },
+        "retained_partial_owners": 0,
+        "shared_components_retained": true
+      },
+      "host-components-02-control-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-unload.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "schema": "ltx.host-embedding-unload.v1",
+        "before": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 1,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350633978832
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350633978832
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 144,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 144,
+              "marked_modules": [
+                "gemma3_12b.transformer.model.linear"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634598400
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 512,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 512,
+              "marked_modules": [
+                "embedding"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350634597968,
+            "host_weight_id": 132350632457104,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 144,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": {
+            "memory_required": 12362,
+            "patcher_ids": [
+              132350633971872,
+              132350634598544
+            ],
+            "force_full_load": false,
+            "reserve_override": false
+          },
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "after_encoder": {
+          "small_state": {
+            "rmsnorm_count": 0,
+            "scalar_count": 0,
+            "total_bytes": 0,
+            "records": []
+          },
+          "parameters": {
+            "count": 3,
+            "bytes": 656,
+            "by_device_dtype": {
+              "cpu/torch.bfloat16": {
+                "tensors": 3,
+                "bytes": 656
+              }
+            },
+            "records": [
+              {
+                "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  32,
+                  8
+                ],
+                "bytes": 512,
+                "owner_id": 132350634598400
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8,
+                  8
+                ],
+                "bytes": 128,
+                "owner_id": 132350633978832
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.bias",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8
+                ],
+                "bytes": 16,
+                "owner_id": 132350633978832
+              }
+            ]
+          },
+          "buffers": {
+            "count": 0,
+            "bytes": 0,
+            "by_device_dtype": {},
+            "records": []
+          },
+          "accounting": {
+            "reported_loaded_weight_bytes": 0,
+            "reported_offload_buffer_bytes": 0,
+            "reported_model_size_bytes": 656,
+            "registered_parameter_bytes_on_load_device": 656,
+            "registered_persistent_buffer_bytes_on_load_device": 0,
+            "marked_direct_state_bytes": 0,
+            "marked_modules": [],
+            "small_buffers_loaded": false,
+            "model_small_state_policy": false,
+            "patcher_small_state_option": false,
+            "crop_option": false,
+            "load_device": "cpu",
+            "offload_device": "cpu",
+            "is_dynamic": false
+          }
+        },
+        "after_host_registered_bytes": 0,
+        "original_ownership_restored": true,
+        "all_shared_clones_retired": true,
+        "old_generation": 1,
+        "new_generation": 2,
+        "old_mode": "host-table",
+        "new_mode": "control"
+      }
+    },
+    "fixture_scope": "Actual tiny CPU CLIP/model manager; nonencoder objects and memory observations are fakes"
+  },
+  {
+    "case": "survivor-tuple",
+    "constructed_clips": 1,
+    "nonencoder_calls": [
+      "diffusion",
+      "vae",
+      "vae",
+      "upscaler",
+      "shard"
+    ],
+    "receipts": {
+      "host-components-01-host-table-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-host-table-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350634598976,
+          "model": 132350634598640,
+          "shard_patcher": 132350634613440,
+          "shard_model": 132350634613392,
+          "video_vae": 132350634613152,
+          "audio_vae": 132350634613200,
+          "upscaler": 132350634609504
+        },
+        "seconds": 0.0014358680000441382,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350634590576
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350634590576
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634609312
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350653960160,
+            "host_weight_id": 132350632249776,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 0,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-01-host-table-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-before-restore-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-restore",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-control-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "failed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "restore_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-restore",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "seconds": 0.10147361299982549,
+        "failure": {
+          "phase": "retire-previous-components",
+          "error": "RuntimeError('Retired CLIP owner survived; refuse replacement: clip, group, encoder_patcher, encoder_model, host_owner, host_patcher, host_model, host_weight')",
+          "generation": 2
+        },
+        "retained_partial_owners": 0,
+        "shared_components_retained": true
+      },
+      "host-components-02-control-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": "host-table",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-control-unload.json": {
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "schema": "ltx.host-embedding-unload.v1",
+        "before": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "host-table",
+          "encodes_completed": 1,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 2,
+              "bytes": 144,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 2,
+                  "bytes": 144
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350634590576
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350634590576
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 144,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 144,
+              "registered_parameter_bytes_on_load_device": 144,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 144,
+              "marked_modules": [
+                "gemma3_12b.transformer.model.linear"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 1,
+              "bytes": 512,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 1,
+                  "bytes": 512
+                }
+              },
+              "records": [
+                {
+                  "name": "embedding.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634609312
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 512,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 512,
+              "registered_parameter_bytes_on_load_device": 512,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 512,
+              "marked_modules": [
+                "embedding"
+              ],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "owner": {
+            "schema": "ltx.host-embedding-ownership.v1",
+            "host_owner_id": 132350653960160,
+            "host_weight_id": 132350632249776,
+            "host_device": "cpu",
+            "host_dtype": "torch.bfloat16",
+            "host_registered_bytes": 512,
+            "inference_tensor": true,
+            "weight_version_tracked": false,
+            "inference_mutation_scope": "Pinned immutable loaded weights; owner/storage/dtype/device checks only when version unavailable",
+            "encoder_eligible_bytes": 144,
+            "encoder_reported_loaded_bytes": 144,
+            "original_combined_bytes": 656,
+            "execution_device": "cpu",
+            "clone_count": 1,
+            "native_qualified": false
+          },
+          "last_load": {
+            "memory_required": 12362,
+            "patcher_ids": [
+              132350634607248,
+              132350634609168
+            ],
+            "force_full_load": false,
+            "reserve_override": false
+          },
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "after_encoder": {
+          "small_state": {
+            "rmsnorm_count": 0,
+            "scalar_count": 0,
+            "total_bytes": 0,
+            "records": []
+          },
+          "parameters": {
+            "count": 3,
+            "bytes": 656,
+            "by_device_dtype": {
+              "cpu/torch.bfloat16": {
+                "tensors": 3,
+                "bytes": 656
+              }
+            },
+            "records": [
+              {
+                "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  32,
+                  8
+                ],
+                "bytes": 512,
+                "owner_id": 132350634609312
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.weight",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8,
+                  8
+                ],
+                "bytes": 128,
+                "owner_id": 132350634590576
+              },
+              {
+                "name": "gemma3_12b.transformer.model.linear.bias",
+                "kind": "parameter",
+                "device": "cpu",
+                "dtype": "torch.bfloat16",
+                "shape": [
+                  8
+                ],
+                "bytes": 16,
+                "owner_id": 132350634590576
+              }
+            ]
+          },
+          "buffers": {
+            "count": 0,
+            "bytes": 0,
+            "by_device_dtype": {},
+            "records": []
+          },
+          "accounting": {
+            "reported_loaded_weight_bytes": 0,
+            "reported_offload_buffer_bytes": 0,
+            "reported_model_size_bytes": 656,
+            "registered_parameter_bytes_on_load_device": 656,
+            "registered_persistent_buffer_bytes_on_load_device": 0,
+            "marked_direct_state_bytes": 0,
+            "marked_modules": [],
+            "small_buffers_loaded": false,
+            "model_small_state_policy": false,
+            "patcher_small_state_option": false,
+            "crop_option": false,
+            "load_device": "cpu",
+            "offload_device": "cpu",
+            "is_dynamic": false
+          }
+        },
+        "after_host_registered_bytes": 0,
+        "original_ownership_restored": true,
+        "all_shared_clones_retired": true,
+        "old_generation": 1,
+        "new_generation": 2,
+        "old_mode": "host-table",
+        "new_mode": "control"
+      }
+    },
+    "fixture_scope": "Actual tiny CPU CLIP/model manager; nonencoder objects and memory observations are fakes"
+  },
+  {
+    "case": "restore-budget",
+    "constructed_clips": 1,
+    "nonencoder_calls": [
+      "diffusion",
+      "vae",
+      "vae",
+      "upscaler",
+      "shard"
+    ],
+    "receipts": {
+      "host-components-01-control-after-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "after-construction",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-control-before-construction-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-construction",
+        "tracked_allocation_bytes": 52495358666,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 61085293258,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 137438953472
+          }
+        },
+        "passed": true,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-01-control-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "completed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "construction_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "before-construction",
+          "tracked_allocation_bytes": 52495358666,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 61085293258,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "constructed_memory": {
+          "schema": "ltx.host-embedding-memory-admission.v1",
+          "stage": "after-construction",
+          "tracked_allocation_bytes": 0,
+          "existing_headroom_bytes": 8589934592,
+          "required_available_bytes": 8589934592,
+          "observed": {
+            "source": "synthetic fixture MemAvailable; no large allocation",
+            "bytes": {
+              "MemAvailable": 137438953472
+            }
+          },
+          "passed": true,
+          "swap_counted_as_headroom": false,
+          "runtime_memory_settings_changed": false
+        },
+        "shared_owner_ids": {
+          "model_patcher": 132350634608640,
+          "model": 132350634618576,
+          "shard_patcher": 132350634618096,
+          "shard_model": 132350634618048,
+          "video_vae": 132350634615744,
+          "audio_vae": 132350634617808,
+          "upscaler": 132350634608592
+        },
+        "seconds": 0.0011162870000589464,
+        "encoder_initial_ownership": {
+          "schema": "ltx.host-embedding-placement.v1",
+          "mode": "control",
+          "encodes_completed": 0,
+          "original_combined_bytes": 656,
+          "encoder": {
+            "small_state": {
+              "rmsnorm_count": 0,
+              "scalar_count": 0,
+              "total_bytes": 0,
+              "records": []
+            },
+            "parameters": {
+              "count": 3,
+              "bytes": 656,
+              "by_device_dtype": {
+                "cpu/torch.bfloat16": {
+                  "tensors": 3,
+                  "bytes": 656
+                }
+              },
+              "records": [
+                {
+                  "name": "gemma3_12b.transformer.model.embed_tokens.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    32,
+                    8
+                  ],
+                  "bytes": 512,
+                  "owner_id": 132350634615360
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.weight",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8,
+                    8
+                  ],
+                  "bytes": 128,
+                  "owner_id": 132350633978544
+                },
+                {
+                  "name": "gemma3_12b.transformer.model.linear.bias",
+                  "kind": "parameter",
+                  "device": "cpu",
+                  "dtype": "torch.bfloat16",
+                  "shape": [
+                    8
+                  ],
+                  "bytes": 16,
+                  "owner_id": 132350633978544
+                }
+              ]
+            },
+            "buffers": {
+              "count": 0,
+              "bytes": 0,
+              "by_device_dtype": {},
+              "records": []
+            },
+            "accounting": {
+              "reported_loaded_weight_bytes": 0,
+              "reported_offload_buffer_bytes": 0,
+              "reported_model_size_bytes": 656,
+              "registered_parameter_bytes_on_load_device": 656,
+              "registered_persistent_buffer_bytes_on_load_device": 0,
+              "marked_direct_state_bytes": 0,
+              "marked_modules": [],
+              "small_buffers_loaded": false,
+              "model_small_state_policy": false,
+              "patcher_small_state_option": false,
+              "crop_option": false,
+              "load_device": "cpu",
+              "offload_device": "cpu",
+              "is_dynamic": false
+            }
+          },
+          "host": null,
+          "owner": null,
+          "last_load": null,
+          "embedding_observations": [],
+          "embedding_observation_limit": 4,
+          "quality_qualified": false,
+          "speed_qualified": false
+        },
+        "model_load_device": "cpu",
+        "text_encoder_load_device": "cpu",
+        "vae_devices": [
+          "cpu",
+          "cpu"
+        ],
+        "shard": {
+          "fixture": "nonencoder metadata only"
+        }
+      },
+      "host-components-01-control-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 1,
+        "previous_generation": 0,
+        "placement": "split",
+        "encoder_mode": "control",
+        "previous_mode": null,
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      },
+      "host-components-02-host-table-before-restore-memory.json": {
+        "schema": "ltx.host-embedding-memory-admission.v1",
+        "stage": "before-restore",
+        "tracked_allocation_bytes": 0,
+        "existing_headroom_bytes": 8589934592,
+        "required_available_bytes": 8589934592,
+        "observed": {
+          "source": "synthetic fixture MemAvailable; no large allocation",
+          "bytes": {
+            "MemAvailable": 8589934591
+          }
+        },
+        "passed": false,
+        "swap_counted_as_headroom": false,
+        "runtime_memory_settings_changed": false
+      },
+      "host-components-02-host-table-result.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": "control",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "failed",
+        "memory_geometry": {
+          "construction_overlap_bytes": 52495358666,
+          "fixture_geometry_only": true
+        },
+        "seconds": 0.00011339299999235664,
+        "failure": {
+          "phase": "retire-previous-components",
+          "error": "RuntimeError('Insufficient source-budgeted host RAM at before-restore')",
+          "generation": 2
+        },
+        "retained_partial_owners": 0,
+        "shared_components_retained": true
+      },
+      "host-components-02-host-table-started.json": {
+        "schema": "ltx.host-embedding-components.v2",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_identity_sha256": "CPU-fixture-no-server",
+        "generation": 2,
+        "previous_generation": 1,
+        "placement": "split",
+        "encoder_mode": "host-table",
+        "previous_mode": "control",
+        "retained": "nonencoder components across all generations; one current CLIP",
+        "prompt_encoding_cache": false,
+        "generated_output_cache": false,
+        "status": "started"
+      }
+    },
+    "fixture_scope": "Actual tiny CPU CLIP/model manager; nonencoder objects and memory observations are fakes"
+  }
+]
