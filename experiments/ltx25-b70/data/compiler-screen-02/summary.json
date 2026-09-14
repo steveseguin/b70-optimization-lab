@@ -1,0 +1,145 @@
+{
+  "schema": "ltx25.compiler-native-failure.v1",
+  "status": "failed-native-exactness",
+  "campaign": "compiler-screen-02",
+  "server_run": "encoder-server-compiler-03",
+  "server_pid": 6502,
+  "completed_exact_eager_clips": 2,
+  "compiled_candidate_qualified": false,
+  "eager_clips": [
+    {
+      "run": "compiler-screen-02-r01-eager-boat",
+      "initialization": true,
+      "preview_ready_seconds": 54.75007179099998,
+      "client_seconds": 54.98115339699996
+    },
+    {
+      "run": "compiler-screen-02-r02-eager-boat",
+      "initialization": false,
+      "preview_ready_seconds": 6.262137746000008,
+      "client_seconds": 6.263890701000037
+    }
+  ],
+  "failed_native_call": {
+    "block_index": 24,
+    "call": 1,
+    "stage_signature": [
+      {
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "shape": [
+          1,
+          64,
+          4096
+        ],
+        "stride": [
+          262144,
+          4096,
+          1
+        ]
+      },
+      {
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "shape": [
+          1,
+          26,
+          2048
+        ],
+        "stride": [
+          53248,
+          2048,
+          1
+        ]
+      }
+    ],
+    "eager_vs_compiled": [
+      {
+        "actual_sha256": "9829dc4d3327dd25203c3e8a275c08dd1e4b3770fdcc162051c022ebf982dee1",
+        "bitwise_equal": false,
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "expected": {
+          "device": "xpu:1",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            1,
+            64,
+            4096
+          ],
+          "stride": [
+            262144,
+            4096,
+            1
+          ]
+        },
+        "expected_sha256": "5120b58cd61f34d08c9b8cc6d0af5418699ac0ee7547b12725b69537abbdff9e",
+        "finite": true,
+        "metadata_equal": true,
+        "output": "video",
+        "shape": [
+          1,
+          64,
+          4096
+        ],
+        "stride": [
+          262144,
+          4096,
+          1
+        ],
+        "unequal_bytes": 54
+      },
+      {
+        "actual_sha256": "d93a3e21ab9035cfe1da1f8a73ce98cc89c2e7080376d742b13c55d6a0bb9b18",
+        "bitwise_equal": false,
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "expected": {
+          "device": "xpu:1",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            1,
+            26,
+            2048
+          ],
+          "stride": [
+            53248,
+            2048,
+            1
+          ]
+        },
+        "expected_sha256": "f502226a5e25c57224f5f235674eadecc6ad624d64e2f46f51a6d85f0291f991",
+        "finite": true,
+        "metadata_equal": true,
+        "output": "audio",
+        "shape": [
+          1,
+          26,
+          2048
+        ],
+        "stride": [
+          53248,
+          2048,
+          1
+        ],
+        "unequal_bytes": 5923
+      }
+    ],
+    "failures": [
+      "ComparisonError('Native block eager/compiled mismatch')"
+    ]
+  },
+  "compiled_repeat_tested": false,
+  "second_stage_tested": false,
+  "full_compiled_clip_generated": false,
+  "candidate_speed_measured": false,
+  "counter_delta_recorded": false,
+  "queue_after_failure": {
+    "queue_running": [],
+    "queue_pending": []
+  },
+  "fault_latch_present_at_export": false,
+  "exported_text_files": 84,
+  "exporter_sha256": "b74b0f26e34898ed18a390b4d8c3eea359929b567ccb53e7ef271b08df4edb26",
+  "evidence_sha256": "e71eb4516d199a9a57701b92eb07b5629b25f1d434d56520d12151e77d2c7f4b"
+}

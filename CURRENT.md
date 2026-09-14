@@ -42,9 +42,14 @@ running as PID6502 at `http://127.0.0.1:8188`, server directory
 `encoder-server-compiler-03`, manifest
 `9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980`.
 Startup four-card checks and strict after-import determinism passed; endpoint
-identity matched. New campaign `compiler-screen-02` is running through the
-naming-only v2 client, with original quality gates and protected campaign01
-unchanged. Inspect its progress before any new GPU request; reuse this server.
+identity matched. Campaign `compiler-screen-02` completed two exact eager clips
+(warm control6.262s), then stopped on first native compiled block24 mismatch:
+54 differing video bytes and5,923 audio bytes, finite/layout-matched. No compiled
+full clip, repeat or speed result is qualified. The queue is empty, PID6502
+remains present, the compiler gate is failed, and kernel postflight is clean.
+Preserve the process/evidence; do not retry the failed gate. Next is numerical
+localization, with native RMS reduction decomposition a source-supported
+hypothesis. [Failure and evidence](experiments/ltx25-b70/notes/compiler-screen-02-results.md).
 [Recovery evidence](experiments/ltx25-b70/notes/external-boot-recovery-01.md).
 
 **LTX goal blocked on host recovery, September14.** The same kernel fault and
