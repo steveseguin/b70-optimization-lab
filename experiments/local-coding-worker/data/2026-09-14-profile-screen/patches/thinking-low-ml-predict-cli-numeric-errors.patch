@@ -1,0 +1,91 @@
+diff --git "a/scripts/predict.mjs" "b/scripts/predict.mjs"
+index 287e192d8..89c8dc04b 100644
+--- "a/scripts/predict.mjs"
++++ "b/scripts/predict.mjs"
+@@ -25,6 +25,20 @@ const option = (name, fallback) => {
+   const index = argv.indexOf(`--${name}`);
+   return index >= 0 && argv[index + 1] !== undefined ? argv[index + 1] : fallback;
+ };
++const requirePositiveInt = (name, fallback) => {
++  const flagIndex = argv.indexOf(`--${name}`);
++  if (flagIndex < 0) return parseInt(fallback, 10);
++  const raw = argv[flagIndex + 1];
++  if (raw === undefined) {
++    console.error(`Error: --${name} requires a positive whole number`);
++    process.exit(1);
++  }
++  if (!/^\d+$/.test(raw) || parseInt(raw, 10) < 1) {
++    console.error(`Error: --${name} must be a positive whole number, got \"${raw}\"`);
++    process.exit(1);
++  }
++  return parseInt(raw, 10);
++};
+ const [presetKey, templateKey] = positional;
+ if (!presetKey || !templateKey) {
+   console.error('usage: node scripts/predict.mjs <presetKey> <deviceTemplate> [--quant q4] [--runtime auto] [--strategy pipeline] [--count 1] [--prompt 2048] [--output 256] [--batch 1] [--kv none] [--sweep]');
+@@ -42,10 +56,10 @@ if (!H.DEVICE_TEMPLATES[templateKey]) {
+   process.exit(1);
+ }
+ 
+-const count = Math.max(1, parseInt(option('count', '1'), 10));
+-const prompt = Math.max(1, parseInt(option('prompt', '2048'), 10));
+-const output = Math.max(1, parseInt(option('output', '256'), 10));
+-const batch = Math.max(1, parseInt(option('batch', '1'), 10));
++const count = requirePositiveInt('count', '1');
++const prompt = requirePositiveInt('prompt', '2048');
++const output = requirePositiveInt('output', '256');
++const batch = requirePositiveInt('batch', '1');
+ const strategy = option('strategy', 'pipeline');
+ H.setDevices(Array.from({ length: count }, (_, index) => ({
+   id: index + 1,
+diff --git "a/tests/predict-cli-validation.test.mjs" "b/tests/predict-cli-validation.test.mjs"
+new file mode 100644
+index 000000000..800b37140
+--- /dev/null
++++ "b/tests/predict-cli-validation.test.mjs"
+@@ -0,0 +1,45 @@
++// CPU-only subprocess regression tests for scripts/predict.mjs numeric argument validation.
++import assert from 'node:assert/strict';
++import {spawnSync} from 'node:child_process';
++import {test, describe} from 'node:test';
++import path from 'node:path';
++import {fileURLToPath} from 'node:url';
++
++const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
++const script = path.join(repoRoot, 'scripts', 'predict.mjs');
++
++const run = (...args) =>
++  spawnSync(process.execPath, [script, 'llama3_8b', 'RTX 4090', ...args], {
++    cwd: repoRoot, encoding: 'utf8', timeout: 15000, maxBuffer: 1024 * 1024
++  });
++
++describe('predict.mjs numeric validation', () => {
++  test('valid documented arguments succeed', () => {
++    const result = run('--count', '2', '--prompt', '64', '--output', '32', '--batch', '4');
++    assert.equal(result.status, 0, result.stderr);
++    assert.match(result.stdout, /decode/i);
++    assert.doesNotMatch(result.stdout, /NaN|Infinity/);
++  });
++
++  for (const opt of ['count', 'prompt', 'output', 'batch']) {
++    for (const bad of ['banana', '0', '-1', '1.5', '2junk']) {
++      test(`--${opt} ${bad} is rejected with actionable error`, () => {
++        const result = run(`--${opt}`, bad);
++        assert.notEqual(result.status, 0, `Expected nonzero exit for --${opt} ${bad}`);
++        const msg = result.stderr + result.stdout;
++        assert.match(msg, new RegExp(opt, 'i'), `Error must mention --${opt}: ${msg}`);
++        assert.doesNotMatch(msg, /TypeError:|ReferenceError:|\n\s+at (?:file:|\w)/,
++          `Must not expose stack trace: ${msg}`);
++      });
++    }
++
++    test(`--${opt} with no value is rejected`, () => {
++      const result = run(`--${opt}`);
++      assert.notEqual(result.status, 0, `Expected nonzero exit for missing --${opt} value`);
++      const msg = result.stderr + result.stdout;
++      assert.match(msg, new RegExp(opt, 'i'), `Error must mention --${opt}: ${msg}`);
++      assert.doesNotMatch(msg, /TypeError:|ReferenceError:|\n\s+at (?:file:|\w)/,
++        `Must not expose stack trace: ${msg}`);
++    });
++  }
++});

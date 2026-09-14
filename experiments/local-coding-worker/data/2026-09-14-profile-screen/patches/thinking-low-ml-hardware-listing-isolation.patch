@@ -1,0 +1,69 @@
+diff --git "a/dist/mlbottleneck-engine.mjs" "b/dist/mlbottleneck-engine.mjs"
+index 0a63c9620..c6896c995 100644
+--- "a/dist/mlbottleneck-engine.mjs"
++++ "b/dist/mlbottleneck-engine.mjs"
+@@ -8446,7 +8446,7 @@ function createEngine(options = {}) {
+             type: template.type || null,
+             memoryGB: template.memoryGB,
+             bandwidthGBps: template.localBandwidthGBps,
+-            computeTFlops: template.computeTFlops || null,
++            computeTFlops: template.computeTFlops ? sdkClone(template.computeTFlops) : null,
+             backend: template.backend || null
+         }));
+     }
+diff --git "a/dist/mlbottleneck-engine.umd.js" "b/dist/mlbottleneck-engine.umd.js"
+index 8fa43459e..d02c60e8d 100644
+--- "a/dist/mlbottleneck-engine.umd.js"
++++ "b/dist/mlbottleneck-engine.umd.js"
+@@ -8455,7 +8455,7 @@
+                 type: template.type || null,
+                 memoryGB: template.memoryGB,
+                 bandwidthGBps: template.localBandwidthGBps,
+-                computeTFlops: template.computeTFlops || null,
++                computeTFlops: template.computeTFlops ? sdkClone(template.computeTFlops) : null,
+                 backend: template.backend || null
+             }));
+         }
+diff --git "a/sdk/api.js" "b/sdk/api.js"
+index 0bf0cb784..a905047e1 100644
+--- "a/sdk/api.js"
++++ "b/sdk/api.js"
+@@ -315,7 +315,7 @@ function listHardware() {
+         type: template.type || null,
+         memoryGB: template.memoryGB,
+         bandwidthGBps: template.localBandwidthGBps,
+-        computeTFlops: template.computeTFlops || null,
++        computeTFlops: template.computeTFlops ? sdkClone(template.computeTFlops) : null,
+         backend: template.backend || null
+     }));
+ }
+diff --git "a/tests/sdk.test.mjs" "b/tests/sdk.test.mjs"
+index 6a8974eb6..df62ed9e8 100644
+--- "a/tests/sdk.test.mjs"
++++ "b/tests/sdk.test.mjs"
+@@ -82,6 +82,25 @@ test('hardware resolution accepts strings, counts, custom specs, and rejects unk
+   assert.throws(() => engine.predict({ model: 'llama3_8b', hardware: 'RTX 4090', quantization: 'q7_wild' }), /Unknown quantization/);
+ });
+ 
++
++test('listHardware returns isolated copies; editing them must not corrupt engine state', () => {
++  const engine = sdk.createEngine();
++  const request = { model: 'llama3_8b', hardware: 'RTX 4090', runtime: 'vllm', quantization: 'fp16' };
++  const baseline = engine.predict(request);
++  const before = JSON.parse(JSON.stringify(engine.listHardware()));
++  const listing = engine.listHardware();
++  const item = listing.find(row => row.key === 'RTX 4090');
++  assert.ok(item?.computeTFlops, 'listing must include computeTFlops');
++  // Mutate the nested compute specification.
++  item.computeTFlops.float16 = 1;
++  item.computeTFlops.hacked = 999;
++  // Later listings must be unchanged.
++  assert.deepEqual(engine.listHardware(), before, 'editing a listing must not change later listings');
++  // Predictions must be unchanged.
++  assert.deepEqual(engine.predict(request), baseline, 'editing a listing must not change predictions');
++  // A separate engine instance must be unaffected.
++  assert.deepEqual(sdk.createEngine().predict(request), baseline, 'separate engine must remain unaffected');
++});
+ test('auto strategy, speculation, overflow warnings, and sweeps work through the SDK', () => {
+   const engine = sdk.createEngine();
+   const auto = engine.predict({ model: 'llama3.3_70b', hardware: { template: 'H100 SXM 80GB', count: 4 }, quantization: 'fp16', runtime: 'vllm' });
