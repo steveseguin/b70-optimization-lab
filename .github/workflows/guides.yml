@@ -22,6 +22,7 @@ on:
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
       - "tools/test_build_model_pages.py"
+      - "tools/test_fp8_*.py"
       - "tools/sync-short-prefill-profiles.py"
       - "tools/sync-prefill-followup-profiles.py"
       - "tools/sync-fp8-prefill-focus-profile.py"
@@ -74,6 +75,7 @@ on:
       - "tools/build-family-pages.py"
       - "tools/build-model-pages.py"
       - "tools/test_build_model_pages.py"
+      - "tools/test_fp8_*.py"
       - "tools/sync-short-prefill-profiles.py"
       - "tools/sync-prefill-followup-profiles.py"
       - "tools/sync-fp8-prefill-focus-profile.py"
@@ -132,6 +134,8 @@ jobs:
       - run: python3 -m unittest tools/test_sync_prefill_followup_profiles.py
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p "test_*prefill_followup.py"
       - run: python3 -m unittest tools/test_build_model_pages.py
+      - run: python3 -m unittest tools/test_fp8_serve.py tools/test_fp8_practical_session.py tools/test_fp8_flagship_evidence.py
+      - run: python3 experiments/qwen38-27b-b70/scripts/collect-fp8-flagship-evidence.py
       - run: python3 tools/build-model-pages.py
       - run: git diff --exit-code -- index.html learn/hardware.html models
       # Offline: resolves repository-relative links in the guides and site pages. Publisher-side manifest checking
