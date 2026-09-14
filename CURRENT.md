@@ -33,6 +33,25 @@ collective design lead; neither is applied or benchmarked. The inactive
 metadata patch must be rebased and qualified before runtime use.
 [Review and adoption decisions](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
+**Four-B70 host, September14 18:07 UTC: packet11 ready; encoder comparison starting.**
+LTX PID116013/exec15201 serves `http://127.0.0.1:8188`, using
+`prepared-encoder-host-embedding-11` at manifest
+`34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08`.
+All four startup device checks, strict determinism, complete endpoint identity
+and both new node interfaces passed. Same computer boot, no host/settings action.
+Client PID116455/exec91667 runs the bounded15-clip `host-embedding-screen-01` comparison, with original
+transformer/decoder and all four raw oracles. No GPU quality/speed claim yet.
+[Startup admission](experiments/ltx25-b70/data/host-embedding-migration-11/startup-admission.json).
+
+**Four-B70 host, September14 18:05 UTC: controlled LTX application migration.**
+Packet10 PID84255/exec33936 exited0 after one SIGINT to load reviewed packet11.
+The computer is on the same boot; no host or memory/power settings action.
+Packet11 manifest34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08
+passed CPU integration, source assembly, builder and startup offline gates;
+the independently reviewed15-clip client passed10 stdlib checks and source
+admission. Starting the application and verifying registration precede all clips.
+[Migration evidence](experiments/ltx25-b70/data/host-embedding-migration-11/preflight.json).
+
 **Four-B70 host, September14 17:54 UTC: actual CLIP integration CPU gate passed.**
 The inactive host-table adapter passed all six actual tiny CPU CLIP integration
 groups, including unchanged memory estimation/native owner loading, clone and
