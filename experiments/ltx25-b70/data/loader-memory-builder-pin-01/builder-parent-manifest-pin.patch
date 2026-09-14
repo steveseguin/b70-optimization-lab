@@ -1,0 +1,16 @@
+--- a/scripts/prepare-loader-memory-candidate.py
++++ b/scripts/prepare-loader-memory-candidate.py
+@@ -9,9 +9,11 @@
+ LANE = Path(__file__).resolve().parents[1]
+ PACKET = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02')
+ OUT = LANE / 'data/loader-memory-candidate-02'
++manifest_bytes = (PACKET / 'manifest.json').read_bytes()
++EXPECTED_PARENT_MANIFEST = 'f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952'
++assert hashlib.sha256(manifest_bytes).hexdigest() == EXPECTED_PARENT_MANIFEST, 'parent packet identity changed'
++manifest = json.loads(manifest_bytes)
+ OUT.mkdir(exist_ok=False)
+-manifest_bytes = (PACKET / 'manifest.json').read_bytes()
+-manifest = json.loads(manifest_bytes)
+ 
+ 
+ def replace_once(text, old, new):

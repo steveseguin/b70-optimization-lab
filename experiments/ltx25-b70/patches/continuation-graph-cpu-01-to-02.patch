@@ -1,0 +1,58 @@
+--- a/scripts/build-continuation-graph.py
++++ b/scripts/build-continuation-graph.py
+@@ -13,10 +13,14 @@
+ import re
+ 
+ LANE = Path(__file__).resolve().parents[1]
+-BASE = LANE / 'data/speed-resident-split-basic-api.json'
+-BASE_SHA256 = '0d4a83d8eca0bee0ccd289c12dffa6a29f15d8518ce04d735922dbfd77281bb2'
++BASE = LANE / 'data/speed-resident-split-api.json'
++BASE_SHA256 = 'fa3868afb3d81056a776d256e68ed5e239cb501bd8b254af7ff2d33339d742d7'
+ COMFY_COMMIT = '19e1058f4c445ef74047e77a23f9ca7684c1e4b6'
+ SOURCE_HASHES = {
++    'nodes.py': 'dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e',
++    'comfy_extras/nodes_custom_sampler.py': 'b0ba1521c72475e06fed15db004274ed7c8bb2bf73f1d58849faf6f9f9d264fe',
++    'comfy_extras/nodes_video.py': '5879633287808ba2dac6753bcbc90acf8d73c72e8df1d0a9755a4ab70e712a0d',
++    'comfy_extras/nodes_lt_audio.py': '7bb3117d159135e9049d589bc457433c8b88ea8cee35c399dd2959524304258f',
+     'comfy_extras/nodes_lt.py': '01575b886e9abacd08c7ce39e7bde9ef7c7cc8f17063d726e2bf4a320a512d95',
+     'comfy_extras/nodes_lt_upsampler.py': 'c9f225e4c54f19f31452016fd4e546119d69e9dec37b60a9dc4ddf133848a892',
+ }
+@@ -24,7 +28,7 @@
+ # Scalar enum choices are frozen to this workload. All listed inputs required.
+ SPECS = {
+     'CLIPTextEncode': ({'clip': 'CLIP', 'text': 'STRING'}, ['CONDITIONING']),
+-    'BasicGuider': ({'model': 'MODEL', 'conditioning': 'CONDITIONING'}, ['GUIDER']),
++    'LTXVDualCFGGuider': ({'model': 'MODEL', 'positive': 'CONDITIONING', 'negative': 'CONDITIONING', 'video_cfg': 'FLOAT', 'audio_cfg': 'FLOAT'}, ['GUIDER']),
+     'LTXResidentComponents': ({'placement': ('split',)}, ['MODEL', 'CLIP', 'VAE', 'VAE', 'LATENT_UPSCALE_MODEL']),
+     'LTXVConditioning': ({'positive': 'CONDITIONING', 'negative': 'CONDITIONING', 'frame_rate': 'FLOAT'}, ['CONDITIONING', 'CONDITIONING']),
+     'EmptyLTXVLatentVideo': ({'width': 'INT', 'height': 'INT', 'length': 'INT', 'batch_size': 'INT'}, ['LATENT']),
+--- a/scripts/test-continuation-graph.py
++++ b/scripts/test-continuation-graph.py
+@@ -155,6 +155,27 @@
+         execute = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == 'execute')
+         self.assertEqual([a.arg for a in execute.args.args], ['cls', 'vae', 'image', 'latent', 'strength', 'bypass'])
+ 
++    def test_all_declared_outputs_match_source_schemas_without_imports(self):
++        root = Path('/home/steve/src/ComfyUI-ltx25-baseline')
++        paths = [root / relative for relative in builder.SOURCE_HASHES]
++        paths += [SCRIPT.with_name('resident_node.py'), SCRIPT.with_name('capture_node.py')]
++        found = {}
++        for path in paths:
++            for cls in ast.parse(path.read_text()).body:
++                if not isinstance(cls, ast.ClassDef) or cls.name not in builder.SPECS:
++                    continue
++                for item in cls.body:
++                    if isinstance(item, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'RETURN_TYPES' for t in item.targets):
++                        found[cls.name] = [value.value if isinstance(value, ast.Constant) else value.attr
++                                           for value in item.value.elts]
++                    if isinstance(item, ast.FunctionDef) and item.name == 'define_schema':
++                        for field in ast.walk(item):
++                            if isinstance(field, ast.keyword) and field.arg == 'outputs':
++                                found[cls.name] = [call.func.value.attr.upper() for call in field.value.elts]
++        self.assertEqual(set(found), set(builder.SPECS))
++        for name, (_, expected) in builder.SPECS.items():
++            self.assertEqual(found[name], expected, name)
++
+     def test_cli_writes_envelope_and_refuses_overwrite(self):
+         with tempfile.TemporaryDirectory(prefix='ltx-continuation-cpu-') as tmp:
+             output = Path(tmp) / 'module.json'

@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "scope": "Offline packet preparation and negative runtime-admission gate only; host fault unresolved and all GPU work remains prohibited.",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03",
+  "manifest_sha256": "9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980",
+  "full_inventory_files": 1229,
+  "torch_imported": false,
+  "fault_latch_preserved": true,
+  "fault_latch_sha256": "8d2beb84936424bcab87b81ad685efd0c57635db9bf321878731d0478c6ce305",
+  "runtime_admission_guard_unchanged": true,
+  "launcher_pattern_matches_tested_detector": true,
+  "negative_check": {
+    "command": [
+      "/home/steve/.venvs/ltx25-baseline/bin/python",
+      "-B",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03/launch/serve-encoder.py",
+      "--packet",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03",
+      "--manifest-sha256",
+      "9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980",
+      "--run-name",
+      "encoder-server-compiler-03",
+      "--check-only"
+    ],
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03/launch/serve-encoder.py\", line 203, in <module>\n    launch(args.packet, args.manifest_sha256, args.run_name, args.check_only)\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03/launch/serve-encoder.py\", line 68, in launch\n    manifest, run = prepare_start(packet, digest, run_name)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03/launch/serve-encoder.py\", line 56, in prepare_start\n    common.verify_model_receipt()\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03/launch/encoder_runtime_common.py\", line 137, in verify_model_receipt\n    require(not (ROOT / 'FAULT.json').exists(), 'Fault recorded; halt new work')\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-03/launch/encoder_runtime_common.py\", line 25, in require\n    raise RuntimeError(message)\nRuntimeError: Fault recorded; halt new work\n",
+    "expected_rejection": "Fault recorded; halt new work",
+    "server_run_created": false
+  },
+  "unit_gates": {
+    "offline_provenance_boundary": 3,
+    "kernel_fault_detector": 8
+  },
+  "unchanged_original_graphs": {
+    "control": "150674b5f991a277d2f56227fee317b6fcb9606129d1b55819e7d56decfff8e2",
+    "crop": "98a7317868348e4b38c6e6a0ffc006ceb998a56048caf77dcf6b14669bac370a",
+    "small_state": "08336e04cf4e83043a5a5fa3b4f0b63058bbfd56efcefa26ed898b17aa30ebfa",
+    "combined": "eb8c24460b977f48d67e00aeee5561974fc32ce7f9930e7eca381d3f7a498003"
+  },
+  "limitations": [
+    "No current-fault removal or rename. No restart, recovery, device discovery or inference.",
+    "New detector only improves future fault admission and monitoring; it does not repair kernel stalls.",
+    "Existing server packet and earlier compiler packets unchanged."
+  ]
+}

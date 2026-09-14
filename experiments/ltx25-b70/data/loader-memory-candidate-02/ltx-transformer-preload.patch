@@ -1,0 +1,86 @@
+--- a/source/scripts/resident_node.py
++++ b/source/scripts/resident_node.py
+@@ -25,6 +25,7 @@
+ _components = None
+ _placement = None
+ _encoder_variant = None
++_loader_policy = None
+ _generation = 0
+ _verification_sha256 = None
+ 
+@@ -33,16 +34,19 @@
+     @classmethod
+     def INPUT_TYPES(cls):
+         return {'required': {'placement': (['single', 'separate', 'split'],)},
+-                'optional': {'encoder_variant': (['control', 'crop', 'small_state', 'combined'], {'default': 'control'})}}
++                'optional': {'encoder_variant': (['control', 'crop', 'small_state', 'combined'], {'default': 'control'}),
++                             'loader_policy': (['baseline', 'assign', 'assign_preload'], {'default': 'baseline'})}}
+ 
+     RETURN_TYPES = ('MODEL', 'CLIP', 'VAE', 'VAE', 'LATENT_UPSCALE_MODEL')
+     RETURN_NAMES = ('model', 'clip', 'video_vae', 'audio_vae', 'upscaler')
+     FUNCTION = 'load'
+     CATEGORY = 'lab/validation'
+ 
+-    def load(self, placement, encoder_variant="control"):
+-        global _components, _placement, _encoder_variant, _generation, _verification_sha256
++    def load(self, placement, encoder_variant="control", loader_policy="baseline"):
++        global _components, _placement, _encoder_variant, _loader_policy, _generation, _verification_sha256
+         assert placement in ['single', 'separate', 'split']
++        assert loader_policy in ['baseline', 'assign', 'assign_preload']
++        assert loader_policy == 'baseline' or placement == 'split', 'loader candidate requires split placement'
+         assert encoder_variant in ['control', 'crop', 'small_state', 'combined']
+         assert not (ROOT / 'FAULT.json').exists(), 'device fault recorded'
+         verification_bytes = (ROOT / 'model-verification.json').read_bytes()
+@@ -54,7 +58,7 @@
+         assert run_value and run_dir.is_absolute(), 'LTX_ENCODER_RUN_DIR must be explicit and absolute'
+         assert run_dir.resolve().parent == ROOT.resolve() and run_dir.name.startswith('encoder-server-'), 'dedicated encoder receipt directory required'
+         assert run_dir.is_dir() and not run_dir.is_symlink(), 'encoder receipt directory must already exist'
+-        if _components is not None and placement == _placement and encoder_variant == _encoder_variant:
++        if _components is not None and placement == _placement and encoder_variant == _encoder_variant and loader_policy == _loader_policy:
+             assert verification_sha256 == _verification_sha256, 'model verification changed; refuse stale components'
+             logging.info('LTX resident component reuse: %s/%s; no prompt/output reuse', placement, encoder_variant)
+             return _components
+@@ -71,10 +75,23 @@
+             _components = None
+             _placement = None
+             _encoder_variant = None
++            _loader_policy = None
+             gc.collect()
+             comfy.model_management.cleanup_models_gc()
+         start = time.monotonic()
+-        model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]
++        if loader_policy == 'baseline':
++            model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]
++        else:
++            model_path = folder_paths.get_full_path_or_raise(
++                'diffusion_models', 'ltx-2.5-22b-distilled-transformer-bf16.safetensors')
++            model = comfy.sd.load_diffusion_model(model_path,
++                model_options={'ltx_native_bf16_assign': True}, disable_dynamic=True)
++        if loader_policy == 'assign_preload':
++            model = apply_layer_shard(model, secondary_device='xpu:1')
++            # Free CPU transformer storage before constructing the large encoder.
++            comfy.model_management.load_models_gpu(
++                [model] + model.get_nested_additional_models(), force_full_load=True)
++            model.verify_placement()
+         clip_path = folder_paths.get_full_path_or_raise('text_encoders', 'gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
+         clip_options = {} if placement == 'single' else {'load_device': torch.device('xpu:2'),
+                                                          'offload_device': torch.device('cpu')}
+@@ -100,14 +117,17 @@
+                 del weights
+             vaes.append(vae)
+         upscaler = LatentUpscaleModelLoader.execute('ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors')[0]
+-        if placement == 'split':
++        if placement == 'split' and loader_policy != 'assign_preload':
+             model = apply_layer_shard(model, secondary_device='xpu:1')
+         _components = (model, clip, *vaes, upscaler)
+         _placement = placement
+         _encoder_variant = encoder_variant
++        _loader_policy = loader_policy
+         _verification_sha256 = verification_sha256
+         _generation += 1
+         receipt = {'placement': placement, 'encoder_variant': encoder_variant,
++                   'loader_policy': loader_policy,
++                   'native_assign': getattr(model, '_ltx_native_assign_report', None),
+                    'encoder_options': encoder_options, 'seconds': time.monotonic() - start,
+                    'generation': _generation, 'retained': 'model components only',
+                    'model_verification_sha256': verification_sha256,

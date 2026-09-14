@@ -1,0 +1,42 @@
+{
+  "status": "source-only-candidate-not-deployed-not-numerically-tested",
+  "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-02",
+  "parent_manifest_sha256": "f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952",
+  "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "changes": [
+    {
+      "path": "source/comfy/sd.py",
+      "before_sha256": "41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0",
+      "after_sha256": "1927b9d9a4d85e96e77ba31da1cd275316317f0d6ac9d2f264a47b4752c10acc",
+      "patch": "ltx-native-bf16-assign.patch",
+      "patch_sha256": "b086aacf77976dbe92f22d627b53316dc8b9fb3a314d1a323090bfa0a20ddd0d"
+    },
+    {
+      "path": "source/scripts/resident_node.py",
+      "before_sha256": "57b60dcba6be6b3127bd5c532603905cdcb1e541889ecb5f9b37ff2084ee1c25",
+      "after_sha256": "e9aa9f6b4cdcb96fe814bafbbfab2c78f80d74c69f6f534c8ced1fd0196b0afc",
+      "patch": "ltx-transformer-preload.patch",
+      "patch_sha256": "8802a497f16f550cbd89c6d927284327f8520bfdf20e0718495c3e4f0bf25ff3"
+    }
+  ],
+  "graphs": {
+    "graph-baseline.json": "0a64ce148e4555b8b446648104bf29cdb9e4df46782cd50a435ecffd071417c4",
+    "graph-assign.json": "3011aee0b715fb61980f06ca4d5198b013f39a1623f92d2f45e05b25759e0258",
+    "graph-assign_preload.json": "77d599ad1c5cfab1bb64e77c3de66a81077fa4e02ea3412d812a2ee07878ef03"
+  },
+  "checks": [
+    "parent source SHA256s match pinned packet manifest",
+    "candidate Python AST parses"
+  ],
+  "torch_imported": false,
+  "weights_loaded": false,
+  "runtime_touched": false,
+  "required_before_runtime": [
+    "review candidate patches",
+    "small CPU mixed-dtype copy-versus-assignment exactness test",
+    "independent resolution of active device fault; no automatic retry",
+    "prepare a separately pinned runtime packet, bind loader policy in run identity",
+    "unique capture/preview/diagnostic names in each graph",
+    "all original four-output parity gates and RSS/VmHWM comparison"
+  ]
+}
