@@ -25,7 +25,7 @@ class OvernightTests(unittest.TestCase):
     def write(self, name, value):
         path = self.raw / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(O.C.encoded(value))
 
-    def request(self, directory, number="001", history=None, failed=False, config=None):
+    def request(self, directory, number="001", history=None, failed=False, config=None, content_parts=None):
         config = config or self.config
         prefix = directory + "/requests/" + number
         kwargs, sampling = O.expected_generation(config)
@@ -34,6 +34,7 @@ class OvernightTests(unittest.TestCase):
                    "stream": True, "stream_options": {"include_usage": True}, "return_token_ids": True}
         self.write(prefix + "/request.json", payload); self.write(prefix + "/token-count.json", {"input_tokens": 100, "limit": 28000})
         content = ["Consider the issue.", "</think>\n```bash\necho ok\n```"] if kwargs["enable_thinking"] else ["```bash\n", "echo ok\n```"]
+        if content_parts is not None: content = content_parts
         events = [{"choices": [{"index": 0, "token_ids": [10 + i], "delta": {"content": text}}]} for i, text in enumerate(content)]
         events += [{"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
                    {"choices": [], "usage": {"prompt_tokens": 100, "completion_tokens": 2, "prompt_tokens_details": {"cached_tokens": 0}}}]
@@ -246,6 +247,48 @@ class OvernightTests(unittest.TestCase):
         directory = self.task(); members = self.members()
         members["sources/worker/acceptance/fixture.py"] = b"assert False\n"
         with self.assertRaisesRegex(O.IntegrityError, "acceptance source copy differs"): O.summarize(members)
+
+    def test_nonthinking_malformed_reply_uses_legacy_correction_history(self):
+        plain = {"model": "fixture", "max_input_tokens": 28000, "max_output_tokens": 2048, "observation_format": "tool_response"}
+        self.campaign["profiles"]["readable"] = {"config": plain}
+        first, response = self.request("readable-recovery", config=plain,
+                                       content_parts=["This answer has no ", "executable command block."])
+        response["action_format_valid"] = False; response.pop("action_ready_s")
+        self.write("readable-recovery/requests/001/response.json", response)
+        history = [{"role": "user", "content": "Fixture task"},
+                   {"role": "user", "content": "Return exactly one bash command block."}]
+        second, answer = self.request("readable-recovery", "002", history, config=plain)
+        self.write("readable-recovery/config.json", plain)
+        self.write("readable-recovery/result.json", {"status": "passed", "model_requests": 2,
+                                                       "requests": [first, second], "no_commands_executed": True})
+        self.write("readable-recovery/trajectory.json", {"messages": history + [{"role": "assistant", "content": answer["text"]}]})
+        self.campaign["attempts"].append({"directory": "readable-recovery", "task_id": "readable-recovery",
+                                           "profile": "readable", "kind": "protocol", "role": "protocol"})
+        members = self.members(); summary = O.summarize(members)
+        self.assertTrue(summary["attempts"][0]["checks"]["protocol_supported"])
+        self.assertEqual(summary["attempts"][0]["requests"][1]["history_errors"], [])
+        # Legacy recovery permits omission of only the malformed assistant;
+        # it still must preserve the complete prior user/system prefix.
+        payload = json.loads(members["readable-recovery/requests/002/request.json"])
+        payload["messages"][0]["content"] = "Changed earlier task"
+        members["readable-recovery/requests/002/request.json"] = O.encoded(payload)
+        with self.assertRaisesRegex(O.IntegrityError, "conversation prefix was dropped or changed"):
+            O.summarize(members)
+
+    def test_thinking_malformed_reply_still_requires_assistant_reasoning(self):
+        self.protocol()
+        path = "protocol/requests/001/response.json"
+        response = json.loads((self.raw / path).read_text())
+        response["action_format_valid"] = False; response.pop("action_ready_s")
+        self.write(path, response)
+        history = [{"role": "user", "content": "Fixture task"},
+                   {"role": "user", "content": "Return exactly one bash command block."}]
+        second, _ = self.request("protocol", "002", history)
+        result = json.loads((self.raw / "protocol/result.json").read_text())
+        result["requests"].append(second); result["model_requests"] = 2
+        self.write("protocol/result.json", result)
+        with self.assertRaisesRegex(O.IntegrityError, "previous assistant reasoning/answer was not preserved"):
+            O.summarize(self.members())
 
 
 if __name__ == "__main__": unittest.main()

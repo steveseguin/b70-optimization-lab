@@ -379,7 +379,14 @@ def summarize(members):
             if previous is not None:
                 if len(history) <= len(previous) or history[:len(previous)] != previous:
                     history_errors.append("conversation prefix was dropped or changed")
-                if previous_response and ("action_ready_s" in previous_response or "action_format_valid" in previous_response):
+                # Legacy non-thinking FormatError recovery omits the malformed
+                # assistant turn. Thinking recovery preserves that turn and its
+                # reasoning; trajectory and prefix checks still cover both paths.
+                thinking = config.get("generation", {}).get("enable_thinking")
+                require_assistant = (previous_response
+                    and ("action_ready_s" in previous_response or "action_format_valid" in previous_response)
+                    and (thinking or previous_response.get("action_format_valid") is not False))
+                if require_assistant:
                     expected = {"role": "assistant", "content": previous_response.get("answer_content", previous_response["text"])}
                     if config.get("generation", {}).get("enable_thinking"):
                         expected["reasoning"] = previous_response["reasoning_content"]
