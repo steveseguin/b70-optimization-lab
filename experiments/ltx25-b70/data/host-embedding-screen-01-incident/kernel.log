@@ -1,0 +1,149 @@
+2026-09-14T14:12:58-04:00 steve-b70s kernel: systemd invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+2026-09-14T14:12:58-04:00 steve-b70s kernel: CPU: 14 UID: 0 PID: 1 Comm: systemd Not tainted 7.0.0-31-generic #31~24.04.1-Ubuntu PREEMPT(lazy) 
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Hardware name: Supermicro Super Server/M12SWA-TF, BIOS 2.4a 07/17/2025
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Call Trace:
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  <TASK>
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  dump_stack_lvl+0x76/0xa0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  dump_stack+0x10/0x20
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  dump_header+0x48/0x210
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  oom_kill_process+0xd7/0x250
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  ? oom_evaluate_task+0x105/0x200
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  out_of_memory+0x101/0x340
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  __alloc_pages_may_oom+0x109/0x1d0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  __alloc_pages_slowpath.constprop.0+0x442/0xa00
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  __alloc_frozen_pages_noprof+0x34a/0x370
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  alloc_pages_mpol+0x7e/0x1a0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  folio_alloc_mpol_noprof+0x14/0x40
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  swap_cache_alloc_folio+0x9a/0xf0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  swap_vma_readahead+0x339/0x520
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  swapin_readahead+0xcc/0xe0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  do_swap_page+0x3ba/0xe70
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  ? __pte_offset_map+0x1c/0x140
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  handle_pte_fault+0x1c1/0x200
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  __handle_mm_fault+0x56a/0x760
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  handle_mm_fault+0x13d/0x3a0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  do_user_addr_fault+0x1d2/0x8c0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  exc_page_fault+0x81/0x1c0
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  asm_exc_page_fault+0x27/0x30
+2026-09-14T14:12:58-04:00 steve-b70s kernel: RIP: 0033:0x7f111d7bad74
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Code: 83 e6 04 4c 8b 41 08 74 3d 48 8b 57 08 8b 4f 24 89 ce 89 c7 49 0f af f0 48 01 fe 48 01 f2 eb 13 66 0f 1f 44 00 00 48 83 c2 01 <80> 7a ff ff 75 0c 83 c0 01 39 c8 72 ef b8 ff ff ff ff c3 66 0f 1f
+2026-09-14T14:12:58-04:00 steve-b70s kernel: RSP: 002b:00007ffe2b60ea68 EFLAGS: 00010202
+2026-09-14T14:12:58-04:00 steve-b70s kernel: RAX: 0000000000000002 RBX: 00005eac746e7b18 RCX: 000000000000000f
+2026-09-14T14:12:58-04:00 steve-b70s kernel: RDX: 00005eac747d7583 RSI: 00000000000000f2 RDI: 0000000000000002
+2026-09-14T14:12:58-04:00 steve-b70s kernel: RBP: 00007ffe2b60ea90 R08: 0000000000000010 R09: 00005eac746e7b18
+2026-09-14T14:12:58-04:00 steve-b70s kernel: R10: 00007ffe2b60eb50 R11: 0000000000000007 R12: 00007ffe2b60eb48
+2026-09-14T14:12:58-04:00 steve-b70s kernel: R13: 00007ffe2b60eb40 R14: 0000000000000000 R15: 00005eac748dda20
+2026-09-14T14:12:58-04:00 steve-b70s kernel:  </TASK>
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Mem-Info:
+2026-09-14T14:12:58-04:00 steve-b70s kernel: active_anon:10542943 inactive_anon:2741059 isolated_anon:0
+                                              active_file:0 inactive_file:1250 isolated_file:0
+                                              unevictable:772 dirty:0 writeback:38
+                                              slab_reclaimable:53841 slab_unreclaimable:267381
+                                              mapped:119 shmem:6695 pagetables:47208
+                                              sec_pagetables:584 bounce:0
+                                              kernel_misc_reclaimable:0
+                                              free:161966 free_pcp:108 free_cma:63070
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 active_anon:42171772kB inactive_anon:10964236kB active_file:0kB inactive_file:4496kB unevictable:3088kB isolated(anon):0kB isolated(file):0kB mapped:476kB dirty:0kB writeback:152kB shmem:26780kB shmem_thp:0kB shmem_pmdmapped:0kB anon_thp:0kB kernel_stack:14384kB pagetables:188832kB sec_pagetables:2336kB all_unreclaimable? no Balloon:0kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 DMA free:11264kB boost:0kB min:8kB low:20kB high:32kB reserved_highatomic:0KB free_highatomic:0KB active_anon:0kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0kB zspages:0kB present:15996kB managed:15360kB mlocked:0kB bounce:0kB free_pcp:0kB local_pcp:0kB free_cma:0kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: lowmem_reserve[]: 0 2869 128651 128651 128651
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 DMA32 free:504544kB boost:0kB min:1416kB low:3984kB high:6552kB reserved_highatomic:0KB free_highatomic:0KB active_anon:291224kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0kB zspages:0kB present:3007408kB managed:2938012kB mlocked:0kB bounce:0kB free_pcp:0kB local_pcp:0kB free_cma:252276kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: lowmem_reserve[]: 0 0 125782 125782 125782
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 Normal free:132056kB boost:65536kB min:131692kB low:251452kB high:371212kB reserved_highatomic:0KB free_highatomic:0KB active_anon:41880572kB inactive_anon:10964228kB active_file:0kB inactive_file:3488kB unevictable:3088kB writepending:152kB zspages:0kB present:131057664kB managed:128801140kB mlocked:16kB bounce:0kB free_pcp:464kB local_pcp:0kB free_cma:4kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: lowmem_reserve[]: 0 0 0 0 0
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 DMA: 0*4kB 0*8kB 0*16kB 0*32kB 0*64kB 0*128kB 0*256kB 0*512kB 1*1024kB (U) 1*2048kB (M) 2*4096kB (M) = 11264kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 DMA32: 4*4kB (UMC) 24*8kB (UMC) 51*16kB (UMEC) 31*32kB (UMEC) 30*64kB (UMEC) 19*128kB (UMEC) 12*256kB (UMEC) 7*512kB (UMEC) 0*1024kB 2*2048kB (UM) 119*4096kB (MC) = 504544kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 Normal: 74*4kB (UEC) 151*8kB (UME) 90*16kB (UM) 56*32kB (UM) 14*64kB (U) 6*128kB (U) 1*256kB (U) 242*512kB (U) 0*1024kB 0*2048kB 0*4096kB = 130560kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=1048576kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: 27791 total pagecache pages
+2026-09-14T14:12:58-04:00 steve-b70s kernel: 20244 pages in swap cache
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Free swap  = 0kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Total swap = 8388604kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: 33520267 pages RAM
+2026-09-14T14:12:58-04:00 steve-b70s kernel: 0 pages HighMem/MovableOnly
+2026-09-14T14:12:58-04:00 steve-b70s kernel: 581639 pages reserved
+2026-09-14T14:12:58-04:00 steve-b70s kernel: 0 pages cma reserved
+2026-09-14T14:12:58-04:00 steve-b70s kernel: 0 pages hwpoisoned
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Memory cgroup min protection 0kB -- low protection 0kB
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Tasks state (memory values in pages):
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [    611]     0   611    12659       57       54        2         1   102400      283          -250 systemd-journal
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [    654]     0   654     7821       20       18        2         0    90112      998         -1000 systemd-udevd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1230]   123  1230     1995        8        6        2         0    53248      117             0 rpcbind
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1236]   990  1236     4395       36       34        2         0    73728      193          -900 systemd-oomd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1237]   991  1237     5372      101       99        2         0    94208      458             0 systemd-resolve
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1238]   996  1238    22767       27       25        2         0    77824      219             0 systemd-timesyn
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1245]     0  1245     1288        3        1        2         0    53248       49             0 blkmapd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1247]     0  1247     1411        3        1        2         0    49152      131             0 nfsdcld
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1323]   108  1323     2225       91       89        2         0    61440       75             0 avahi-daemon
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1325]   101  1325     2731      223      221        2         0    61440      199          -900 dbus-daemon
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1328]     0  1328     1360        9        7        2         0    53248       70             0 fsidd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1332]   987  1332    77665       28       26        2         0   106496      683             0 polkitd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1338]     0  1338     3083       17       15        2         0    65536      360             0 smartd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1340]     0  1340   850985     1818     1816        2         0   466944     2391          -900 snapd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1342]     0  1342     4571       38       36        2         0    77824      310             0 systemd-logind
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1349]   108  1349     2124        4        4        0         0    57344       89             0 avahi-daemon
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1376]     0  1376    84135      263      224       39         0   163840      556             0 NetworkManager
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1385]     0  1385     4350       17       15        2         0    81920      204             0 wpa_supplicant
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1460]   102  1460    55645       53       51        2         0    81920      378             0 rsyslogd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1508]     0  1508    98028        3        1        2         0   135168      518             0 ModemManager
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1738]     0  1738     9699        4        2        2         0   110592      635             0 cupsd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1740]     0  1740    28078        7        5        2         0   122880     2359             0 unattended-upgr
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1746]     0  1746   671108     2229     2227        2         0   401408     1661          -999 containerd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1762]   118  1762    80114        5        3        2         0   131072     1253             0 colord
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1793]     7  1793     4213        3        1        2         0    73728      229             0 dbus
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1794]     7  1794     4213        3        1        2         0    81920      227             0 dbus
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   1795]     7  1795     4213        3        1        2         0    73728      227             0 dbus
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2797]   115  2797    91758       16       14        2         0   188416      842             0 cups-browsed
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2798]     0  2798   745937     3667     3665        2         0   548864     3514          -500 dockerd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2805]     0  2805      755        6        4        2         0    53248       39             0 rpc.idmapd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2816]   124  2816     1156        4        2        2         0    57344       86             0 rpc.statd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2819]     0  2819    10922       17       15        2         0    73728      208             0 rpc.mountd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2821]     0  2821     2359       27       25        2         0    61440       38             0 cron
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2846]   106  2846     3190       29       27        2         0    65536       95             0 kerneloops
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2875]   106  2875     3190       28       26        2         0    65536       95             0 kerneloops
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   2919]     0  2919     2179        5        3        2         0    57344       31             0 agetty
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3222]     0  3222     3008        2        0        2         0    69632      286         -1000 sshd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3224]     0  3224     3821       24       22        2         0    77824      429             0 sshd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3228]  1000  3228     5256       21       19        2         0    94208      686           100 systemd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3229]  1000  3229     5372        0        0        0         0    73728      454           100 (sd-pam)
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3246]  1000  3246    27290        8        6        2         0   102400      459           200 pipewire
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3247]  1000  3247    24438        3        1        2         0    81920      219           200 pipewire
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3248]  1000  3248    41164        6        4        2         0    73728      150           200 user-session-he
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3251]  1000  3251   101281        3        1        2         0   147456      820           200 wireplumber
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3252]  1000  3252    27355        7        5        2         0   102400      375           200 pipewire-pulse
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3275]  1000  3275     2375        4        2        2         0    61440      144           200 dbus-daemon
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3298]   117  3298     5739       12       10        2         0    65536       63             0 rtkit-daemon
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3336]  1000  3336     3861       55       53        2         0    77824      480             0 sshd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3360]  1000  3360   134144       32       30        2         0   143360      158           200 xdg-document-po
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3361]  1000  3361     2851        2        0        2         0    57344      449             0 bash
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3366]  1000  3366    77330        5        3        2         0   110592      122           200 xdg-permission-
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3378]  1000  3378      679        2        1        1         0    45056       29           200 fusermount3
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3443]  1000  3443   152417       29        0       29         0   593920     2881             0 node
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3454]  1000  3454   474887    20072    19963      109         0  2490368    44541             0 codex
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3890]  1000  3890    79094        3        1        2         0   118784      213           200 gnome-keyring-d
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   3891]  1000  3891    79133       10        8        2         0   118784      262           200 gnome-keyring-d
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   5304]  1000  5304 362236636      276      274        2         0   212992      600             0 codex-code-mode
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   5969]     0  5969   122296       56       54        2         0   266240     2958             0 fwupd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   5976]     0  5976    79485        3        1        2         0   118784      711             0 upowerd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [   5982]     0  5982   117418       39       37        2         0   155648      673             0 udisksd
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [ 116011]  1000 116011     2588        2        0        2         0    61440       68             0 bash
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [ 116013]  1000 116013 24225923 13197473 13197363      109         1 179318784  1927789             0 python
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [ 116453]  1000 116453     2588        2        0        2         0    53248       68             0 bash
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [ 116455]  1000 116455  1068384    26122    26050       72         0  2662400    41114             0 python
+2026-09-14T14:12:58-04:00 steve-b70s kernel: [ 121850]  1000 121850    14952     4866     4818       48         0   155648        0             0 python
+2026-09-14T14:12:58-04:00 steve-b70s kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=init.scope,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/session-2.scope,task=python,pid=116013,uid=1000
+2026-09-14T14:12:58-04:00 steve-b70s kernel: Out of memory: Killed process 116013 (python) total-vm:96903692kB, anon-rss:52789452kB, file-rss:436kB, shmem-rss:4kB, UID:1000 pgtables:175116kB oom_score_adj:0
+2026-09-14T14:13:01-04:00 steve-b70s kernel: oom_reaper: reaped process 116013 (python), now anon-rss:0kB, file-rss:0kB, shmem-rss:0kB
+2026-09-14T14:13:01-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: 
+                                                     ASID: 68
+                                                     Faulted Address: 0x0000b557aa450000
+                                                     FaultType: 0
+                                                     AccessType: 0
+                                                     FaultLevel: 4
+                                                     EngineClass: 3 bcs
+                                                     EngineInstance: 0
+2026-09-14T14:13:01-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289
+2026-09-14T14:13:01-04:00 steve-b70s kernel: xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT

@@ -33,6 +33,23 @@ collective design lead; neither is applied or benchmarked. The inactive
 metadata patch must be rebased and qualified before runtime use.
 [Review and adoption decisions](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
+**Four-B70 host, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
+Linux OOM-killed LTX PID116013 at18:12:58 UTC during the third component
+transition (host-table back to control), before the next clip completed.
+Exec15201 exited137. Xe GPU0 reported a bcs engine fault/reset at18:13:01,
+after the process kill. Client116455/exec91667 exited1 and submissions halted.
+The root FAULT.json now records the incident; no new native GPU/CPU work.
+No automatic reboot, driver reset, application restart or settings change.
+The computer remains on the same boot; passive postflight is preserved below.
+
+Ten completed clips passed all four raw oracles, including all five host-table
+clips with full remaining encoder residency. Host warm previews6.322–6.455s
+versus first-control6.378–6.576s; the final control is missing, so this is an
+incomplete screen and no speed promotion. Current work: preserve failed export,
+audit the RAM spike during component retirement/unload, and prepare a bounded
+source-only lifecycle fix. Keep successful raw parity evidence and all failures.
+[Incident postflight](experiments/ltx25-b70/data/host-embedding-screen-01-incident/postflight.json).
+
 **Four-B70 host, September14 18:07 UTC: packet11 ready; encoder comparison starting.**
 LTX PID116013/exec15201 serves `http://127.0.0.1:8188`, using
 `prepared-encoder-host-embedding-11` at manifest

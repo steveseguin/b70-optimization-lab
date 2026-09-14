@@ -1,0 +1,35 @@
+{"run": "host-embedding-screen-01-r01-control-a-boat", "status": "passed", "preview_seconds": 113.68716738500007}
+{"run": "host-embedding-screen-01-r02-control-a-boat", "status": "passed", "preview_seconds": 6.575846782998269}
+{"run": "host-embedding-screen-01-r03-control-a-marble", "status": "passed", "preview_seconds": 6.418993657000101}
+{"run": "host-embedding-screen-01-r04-control-a-bird", "status": "passed", "preview_seconds": 6.378248267999879}
+{"run": "host-embedding-screen-01-r05-control-a-boat", "status": "passed", "preview_seconds": 6.505884625999897}
+{"run": "host-embedding-screen-01-r06-host-table-boat", "status": "passed", "preview_seconds": 97.77956197199819}
+{"run": "host-embedding-screen-01-r07-host-table-boat", "status": "passed", "preview_seconds": 6.454825692002487}
+{"run": "host-embedding-screen-01-r08-host-table-marble", "status": "passed", "preview_seconds": 6.321947367003304}
+{"run": "host-embedding-screen-01-r09-host-table-bird", "status": "passed", "preview_seconds": 6.347296797997842}
+{"run": "host-embedding-screen-01-r10-host-table-boat", "status": "passed", "preview_seconds": 6.3545872530012275}
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-host-embedding-screen.py", line 213, in run_campaign
+    screen.run_subprocess(command, output / (run + '-client.log'), 1260)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-encoder-screen.py", line 177, in run_subprocess
+    require(result.returncode == 0, 'subprocess failed; preserve evidence and halt without retry')
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-stability.py", line 30, in require
+    raise RuntimeError(message)
+RuntimeError: subprocess failed; preserve evidence and halt without retry
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-host-embedding-screen.py", line 323, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-host-embedding-screen.py", line 319, in main
+    run_campaign(args, common)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-host-embedding-screen.py", line 215, in run_campaign
+    current['after'] = retention.snapshot(identity['pid'])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-stability.py", line 191, in snapshot
+    for item in (base / 'fdinfo').iterdir():
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py", line 1056, in iterdir
+    for name in os.listdir(self):
+                ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/proc/116013/fdinfo'
