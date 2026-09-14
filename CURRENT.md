@@ -55,6 +55,14 @@ continue; do not rerun the failed campaign. The saved profile is sufficient for
 the next source investigation: decoder geometry-mask construction and native
 operation wrapper overhead. No speed promotion or streaming qualification.
 
+The inactive [per-call decoder axis cache](experiments/ltx25-b70/notes/na-axis-cache-01.md)
+now passes23 CPU exactness/lifecycle groups, including unchanged SDPA inputs and
+call order. Root reviewed the patch and tests. Its source-derived untiled path
+reduces522 axis builds to100 with at most1,878 bytes predicted cached payload;
+the general cap is256KiB plus allocator/metadata overhead. Native shape coverage,
+full-clip equality and speed remain pending. A startup-only scoped router is
+being tested separately; no installed or loaded runtime source changed.
+
 **Four-B70 host, September14: packet08 native screen complete; original selected.**
 PID66846 serves `http://127.0.0.1:8188`, manifest
 `a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b`.

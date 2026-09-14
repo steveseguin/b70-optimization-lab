@@ -13,6 +13,13 @@ mask/native wrapper candidates, with offline exactness and bounded-memory gates.
 [Postmortem](notes/retained-multiblock-profile-01-results.md).
 This supersedes the original-selected state below; CURRENT remains authoritative.
 
+The subsequent inactive [decoder axis cache](notes/na-axis-cache-01.md) passed23
+CPU exactness/lifecycle groups, preserving every SDPA input and call order.
+Source analysis predicts522→100 axis constructions for the default untiled
+decoder path; this is not a runtime count or speed claim. Root reviewed its
+source and tests. Context-scoped startup routing is under isolated CPU review;
+native shapes, full-output comparisons and timing remain pending.
+
 Current September14: packet08 PID66846 is idle on restored dispatch after
 12 exact full clips, including all48 compiled blocks. Compiled previews7.38–8.04s
 remain slower than adjacent original controls; median penalties1.273s preview
