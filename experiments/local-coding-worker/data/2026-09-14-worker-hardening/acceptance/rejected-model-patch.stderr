@@ -1,0 +1,45 @@
+node:internal/errors:865
+  const err = new Error(message);
+              ^
+
+Error: Command failed: /usr/bin/node scripts/stamp-engine.mjs --check
+engine.js / lab-evidence cache keys are stale; run "npm run stamp:engine" (expected engine ?v=f4d201bfde5c, lab evidence ?v=47452ee3d12c)
+
+    at checkExecSyncError (node:child_process:890:11)
+    at execFileSync (node:child_process:926:15)
+    at file:///tmp/worker-acceptance-hardening/acceptance/ml_zero_cost_v2.mjs:8:1 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    Buffer(0) [Uint8Array] [],
+    Buffer(138) [Uint8Array] [
+      101, 110, 103, 105, 110, 101,  46, 106, 115,  32,  47,  32,
+      108,  97,  98,  45, 101, 118, 105, 100, 101, 110,  99, 101,
+       32,  99,  97,  99, 104, 101,  32, 107, 101, 121, 115,  32,
+       97, 114, 101,  32, 115, 116,  97, 108, 101,  59,  32, 114,
+      117, 110,  32,  34, 110, 112, 109,  32, 114, 117, 110,  32,
+      115, 116,  97, 109, 112,  58, 101, 110, 103, 105, 110, 101,
+       34,  32,  40, 101, 120, 112, 101,  99, 116, 101, 100,  32,
+      101, 110, 103, 105, 110, 101,  32,  63, 118,  61, 102,  52,
+      100,  50,  48,  49,
+      ... 38 more items
+    ]
+  ],
+  pid: 468361,
+  stdout: Buffer(0) [Uint8Array] [],
+  stderr: Buffer(138) [Uint8Array] [
+    101, 110, 103, 105, 110, 101,  46, 106, 115,  32,  47,  32,
+    108,  97,  98,  45, 101, 118, 105, 100, 101, 110,  99, 101,
+     32,  99,  97,  99, 104, 101,  32, 107, 101, 121, 115,  32,
+     97, 114, 101,  32, 115, 116,  97, 108, 101,  59,  32, 114,
+    117, 110,  32,  34, 110, 112, 109,  32, 114, 117, 110,  32,
+    115, 116,  97, 109, 112,  58, 101, 110, 103, 105, 110, 101,
+     34,  32,  40, 101, 120, 112, 101,  99, 116, 101, 100,  32,
+    101, 110, 103, 105, 110, 101,  32,  63, 118,  61, 102,  52,
+    100,  50,  48,  49,
+    ... 38 more items
+  ]
+}
+
+Node.js v18.19.1

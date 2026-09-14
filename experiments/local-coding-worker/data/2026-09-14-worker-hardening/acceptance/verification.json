@@ -1,0 +1,80 @@
+{
+  "purpose": "prospective acceptance v2 validation, not model trial results",
+  "source_commit": "8df1372c4f20fc8ae0bf4e35e1b75084327b17fc",
+  "rejected_frozen_patch_sha256": "429649772a946605e20fd8c2687d7431b86c1ce7c34aa0818129f41cbfb8d0e7",
+  "fixtures_sha256": {
+    "ml_zero_cost_v2.mjs": "1f90756b11141be00bbb33ddbc1c09ccddd4fba92a1085a23316730e936cd5e6",
+    "ml_zero_cost.mjs": "1e6cea409c850f9cbe409b22ac8c9a0c3b86dce55c14fd3b8dfe9b362ad9fdac"
+  },
+  "checks": [
+    {
+      "case": "original-baseline",
+      "command": [
+        "node",
+        "/tmp/worker-acceptance-hardening/acceptance/ml_zero_cost_v2.mjs"
+      ],
+      "cwd": "/tmp/worker-acceptance-hardening/original-baseline",
+      "returncode": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5725323d5614d9329b4e1aced5ace4252ecfe51b32820f7c907a8bf27f086c00",
+      "stdout_log": "original-baseline.stdout",
+      "stderr_log": "original-baseline.stderr",
+      "model_generated": false,
+      "trial_success": false
+    },
+    {
+      "case": "rejected-model-patch",
+      "command": [
+        "node",
+        "/tmp/worker-acceptance-hardening/acceptance/ml_zero_cost_v2.mjs"
+      ],
+      "cwd": "/tmp/worker-acceptance-hardening/rejected-model-patch",
+      "returncode": 1,
+      "stdout_sha256": "b65a10a7e9d9244f0d60e18c26f5f4d3b34e18ffe9e4ab8a74bd929400dc592d",
+      "stderr_sha256": "c3ce62e6da83f3ea37bf3ecdf8fd84c64fafc66f188d30ae7801a587d8d9ab2f",
+      "stdout_log": "rejected-model-patch.stdout",
+      "stderr_log": "rejected-model-patch.stderr",
+      "model_generated": true,
+      "trial_success": false
+    },
+    {
+      "case": "oracle-stamp-only",
+      "command": [
+        "node",
+        "/tmp/worker-acceptance-hardening/acceptance/ml_zero_cost_v2.mjs"
+      ],
+      "cwd": "/tmp/worker-acceptance-hardening/synthetic-oracle",
+      "returncode": 1,
+      "stdout_sha256": "b65a10a7e9d9244f0d60e18c26f5f4d3b34e18ffe9e4ab8a74bd929400dc592d",
+      "stderr_sha256": "4276c1d671902888028d7f828d7eb0abd59a6786497c8d28810105788ccfc6ab",
+      "stdout_log": "oracle-stamp-only.stdout",
+      "stderr_log": "oracle-stamp-only.stderr",
+      "model_generated": false,
+      "trial_success": false
+    },
+    {
+      "case": "oracle-complete",
+      "command": [
+        "node",
+        "/tmp/worker-acceptance-hardening/acceptance/ml_zero_cost_v2.mjs"
+      ],
+      "cwd": "/tmp/worker-acceptance-hardening/synthetic-oracle",
+      "returncode": 0,
+      "stdout_sha256": "0f73ce70253534991504a07c458ca867ac855d94d74a07b0fce2f67ca2e43d8a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_log": "oracle-complete.stdout",
+      "stderr_log": "oracle-complete.stderr",
+      "model_generated": false,
+      "trial_success": false
+    }
+  ],
+  "synthetic_oracle_changes": [
+    "run unchanged repository stamp-engine.mjs",
+    "set existing two browser numeric min attributes to zero"
+  ],
+  "original_fixtures_changed": false,
+  "original_repositories_changed": false,
+  "frozen_workspaces_changed": false,
+  "model_requests": 0,
+  "cpu_node_version": "v18.19.1"
+}
