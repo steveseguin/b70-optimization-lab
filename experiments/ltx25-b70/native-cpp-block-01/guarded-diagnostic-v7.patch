@@ -1,0 +1,264 @@
+--- test_block_cpu_guarded_v6.py
++++ test_block_cpu_guarded_v7.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Inactive guarded diagnostic v6: native CPU-only Triton device-detection disable setting."""
++"""Inactive guarded diagnostic v7: six native unindexed interfaces for a virtual CPU fixture."""
+ import argparse
+ import ast
+ import copy
+@@ -99,7 +99,8 @@
+               'cpu_metadata_policy_requested': report['cpu_metadata_policy_requested'],
+               'cpu_comfy_import_policy_requested': report['cpu_comfy_import_policy_requested'],
+               'cpu_triton_policy_requested': report['cpu_triton_policy_requested'],
+-              'cpu_triton_environment': report['cpu_triton_environment']}
++              'cpu_triton_environment': report['cpu_triton_environment'],
++              'cpu_device_registry_policy_requested': report['cpu_device_registry_policy_requested']}
+     path = evidence_dir / 'startup-identity.json'
+     with path.open('x') as out:
+         json.dump(record, out, indent=2); out.write('\n')
+@@ -121,7 +122,7 @@
+     report = {'schema': 'ltx.cpp-actual-tiny-block-cpu.v1', 'passed': False, 'phase': 'source-gate', 'rows': [],
+               'calls': [], 'command': sys.argv, 'pid': os.getpid(), 'ppid': os.getppid(), 'scope': 'Tiny actual BF16 CPU block exactness only; no XPU/model/clip/speed qualification',
+               'source_pins': SOURCE_PINS, 'fixture_parent_sha256': FIXTURE_SHA, 'operator_qualification_sha256': QUALIFICATION_SHA,
+-              'helper_sha256s': {str(p): sha(p) for p in (Path(__file__), HERE / 'fixture.py', HERE / 'backend.py', HERE / 'accelerator_guard_v2.py', HERE / 'cpu_import_policy_v3.py', HERE / 'cpu_metadata_policy_v4.py', HERE / 'cpu_triton_policy_v6.py', LANE / 'scripts/cpu_comfy_import_policy_v1.py')},
++              'helper_sha256s': {str(p): sha(p) for p in (Path(__file__), HERE / 'fixture.py', HERE / 'backend.py', HERE / 'accelerator_guard_v2.py', HERE / 'cpu_import_policy_v3.py', HERE / 'cpu_metadata_policy_v4.py', HERE / 'cpu_triton_policy_v6.py', HERE / 'cpu_device_registry_policy_v7.py', LANE / 'scripts/cpu_comfy_import_policy_v1.py')},
+               'evidence_directory': str(args.evidence_dir), 'torch_imported': False}
+     try:
+         policy_spec = importlib.util.spec_from_file_location('private_cpu_import_policy_v3', HERE / 'cpu_import_policy_v3.py')
+@@ -139,6 +140,10 @@
+         triton_policy_module = importlib.util.module_from_spec(triton_policy_spec); triton_policy_spec.loader.exec_module(triton_policy_module)
+         report['cpu_triton_policy_requested'] = copy.deepcopy(triton_policy_module.DESCRIPTION)
+         triton_policy_module.source_gate()
++        registry_spec = importlib.util.spec_from_file_location('private_cpu_registry_policy_v7', HERE / 'cpu_device_registry_policy_v7.py')
++        registry_module = importlib.util.module_from_spec(registry_spec); registry_spec.loader.exec_module(registry_module)
++        report['cpu_device_registry_policy_requested'] = copy.deepcopy(registry_module.DESCRIPTION)
++        registry_module.source_gate()
+         options = source_gate(); report['options'] = options
+         report['fixture_AST_contract'] = {'block_initialization_unchanged': True, 'input_arithmetic_unchanged': True}
+         if args.check_only:
+@@ -172,6 +177,8 @@
+         metadata_policy = metadata_module.MetadataPolicy(triton_utils, report, guard)
+         from torch._inductor import config as inductor_config
+         triton_policy = triton_policy_module.CpuTritonPolicy(triton_utils, inductor_config, report, guard)
++        import torch._dynamo.device_interface as device_interface
++        registry_policy = registry_module.CpuDeviceRegistryPolicy(device_interface, torch, report, guard)
+         report['phase'] = 'guarded-Kitchen-Inductor-import'
+         import comfy.ops
+         import comfy.model_management
+@@ -228,6 +235,7 @@
+             metadata_policy.require_intact()
+             comfy_import_policy.require_intact(require_complete=True)
+             triton_policy.require_intact()
++            registry_policy.require_intact()
+             metadata_before = len(report['cpu_metadata_omissions'])
+             x, kwargs = fixture.make_inputs(torch, CompressedTimestep, tokens, seed)
+             before = snapshot()
+@@ -236,12 +244,14 @@
+             metadata_policy.require_intact()
+             comfy_import_policy.require_intact(require_complete=True)
+             triton_policy.require_intact()
++            registry_policy.require_intact()
+             metadata_delta = len(report['cpu_metadata_omissions']) - metadata_before
+             delta = difference(snapshot(), before)
+             report['calls'].append({'arm': arm, 'video_tokens': tokens, 'seed': seed,
+                 'expected_new_graphs': expected_new_graphs, 'counter_delta': delta, 'cpu_import_policy_schema': policy.DESCRIPTION['schema'],
+                 'cpu_metadata_policy_schema': metadata_module.DESCRIPTION['schema'],
+-                'cpu_triton_policy_schema': triton_policy_module.DESCRIPTION['schema'], 'cpu_metadata_omissions_delta': metadata_delta})
++                'cpu_triton_policy_schema': triton_policy_module.DESCRIPTION['schema'],
++                'cpu_device_registry_policy_schema': registry_module.DESCRIPTION['schema'], 'cpu_metadata_omissions_delta': metadata_delta})
+             require(metadata_delta == expected_new_graphs, 'Unexpected CPU cache metadata omission count: ' + arm)
+             require(delta.get('stats', {}).get('unique_graphs', 0) == expected_new_graphs, 'Unexpected graph reuse/recompile/fallback: ' + arm)
+             require(not sum(delta.get('graph_break', {}).values()) and not sum(delta.get('unimplemented', {}).values()),
+@@ -276,6 +286,7 @@
+         metadata_policy.require_intact()
+         comfy_import_policy.require_intact(require_complete=True)
+         triton_policy.require_intact()
++        registry_policy.require_intact()
+         require(len(report['cpu_metadata_omissions']) == 4, 'Exactly four CPU cache metadata omissions required')
+         report['graphs'] = {}
+         for arm in ('python', 'cpp'):
+@@ -298,6 +309,13 @@
+     except BaseException as error:
+         report.update(error=repr(error), traceback=traceback.format_exc())
+     finally:
++        if 'registry_policy' in locals():
++            try:
++                registry_policy.require_intact()
++                report['cpu_device_registry_finalizer_intact'] = True
++            except BaseException as error:
++                report.update(passed=False, cpu_device_registry_finalizer_intact=False,
++                              cpu_device_registry_finalizer_error=repr(error))
+         if 'triton_policy' in locals():
+             try:
+                 triton_policy.require_intact()
+--- /dev/null
++++ cpu_device_registry_policy_v7.py
+@@ -0,0 +1,167 @@
++"""Inactive virtual CPU fixture registry; stdlib imports only.
++
++Uses native registration on a pristine dictionary to install the same six
++unindexed interfaces as native initialization with zero enumeration iterations.
++No device-count call, interface replacement, query simulation or repair.
++"""
++import hashlib
++import os
++from pathlib import Path
++import sys
++import time
++import traceback
++import types
++
++SITE = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages')
++DEVICE_SOURCE = 'torch/_dynamo/device_interface.py'
++HANDLER_SOURCE = 'torch/_dynamo/variables/torch.py'
++PINS = {
++    DEVICE_SOURCE: 'b21d1fbaae999fee0bb98907c44f454f778bac6b28f43f4c2832930438208e8b',
++    HANDLER_SOURCE: '28e9fce5a40ee7038f1ee8517d73781655849da99a02a560ae8c71ea39042995',
++}
++INTERFACES = (('cuda', 'CudaInterface'), ('xpu', 'XpuInterface'), ('mtia', 'MtiaInterface'),
++              ('cpu', 'CpuInterface'), ('mps', 'MpsInterface'), ('tpu', 'TpuInterface'))
++FUNCTIONS = ('register_interface_for_device', 'get_interface_for_device',
++             'get_registered_device_interfaces', 'init_device_reg')
++DESCRIPTION = {
++    'schema': 'ltx.virtual-cpu-device-registry.v7',
++    'registry': [name for name, _ in INTERFACES],
++    'ordinal_entries': [],
++    'semantics': 'Explicit virtual CPU fixture registry, equivalent mapping to native zero enumeration loops; not a host hardware claim',
++    'scope': 'One disposable CPU process and one registry lifetime shared by eager/Python/C++ compile/repeat arms',
++    'construction': 'Original register_interface_for_device on original empty dict, then original initialized flag True',
++    'device_count_calls': 0,
++    'repair_or_reset': False,
++    'native_interface_classes_preserved': True,
++    'numeric_OPTIONS_changed': False,
++    'total_compiler_state_changed': True,
++    'source_pins': PINS,
++}
++
++
++def source_gate():
++    for relative, expected in PINS.items():
++        if hashlib.sha256((SITE / relative).read_bytes()).hexdigest() != expected:
++            raise RuntimeError('CPU registry source pin changed: ' + relative)
++
++
++def source_code(relative, qualname):
++    path = SITE / relative
++    root = compile(path.read_text(), str(path), 'exec', dont_inherit=True)
++    def find(code):
++        for value in code.co_consts:
++            if isinstance(value, types.CodeType):
++                if value.co_qualname == qualname:
++                    return value
++                found = find(value)
++                if found is not None:
++                    return found
++        return None
++    result = find(root)
++    if result is None:
++        raise RuntimeError('Pinned registry code missing: ' + qualname)
++    return result
++
++
++class CpuDeviceRegistryPolicy:
++    def __init__(self, device_module, torch, report, guard):
++        guard.require_clean(report)
++        source_gate()
++        self.module, self.torch, self.report, self.guard = device_module, torch, report, guard
++        if 'cpu_device_registry_policy' in report:
++            self._halt('CPU registry policy cannot be reinstalled')
++        if type(device_module) is not types.ModuleType or Path(device_module.__file__).resolve() != SITE / DEVICE_SOURCE:
++            self._halt('Native device-interface module path/type changed')
++        if sys.modules.get('torch._dynamo.device_interface') is not device_module:
++            self._halt('Native device-interface module ownership changed')
++        self.registry = device_module.device_interfaces
++        if type(self.registry) is not dict or self.registry or device_module._device_initialized is not False:
++            self._halt('CPU registry admission requires pristine empty uninitialized state; no repair')
++        self.functions = {name: getattr(device_module, name) for name in FUNCTIONS}
++        self.function_codes = {}
++        for name, function in self.functions.items():
++            if not isinstance(function, types.FunctionType) or function.__globals__ is not vars(device_module) or function.__code__ != source_code(DEVICE_SOURCE, name):
++                self._halt('Native registry function code/ownership changed: ' + name)
++            self.function_codes[name] = function.__code__
++        self.classes = {key: getattr(device_module, name) for key, name in INTERFACES}
++        for key, name in INTERFACES:
++            cls = self.classes[key]
++            if not isinstance(cls, type) or cls.__module__ != device_module.__name__ or cls.__qualname__ != name:
++                self._halt('Native interface class identity mismatch: ' + key)
++        self.aliases = {}
++        self.raw_aliases = {}
++        for key in ('cuda', 'xpu'):
++            cls = self.classes[key]; namespace = getattr(torch, key)
++            for name in ('current_device', 'set_device', 'device_count', 'current_stream', 'synchronize', 'get_device_properties'):
++                value = getattr(cls, name)
++                if value is not getattr(namespace, name):
++                    self._halt('Native interface missed installed trap/wrapper: ' + key + '.' + name)
++                self.aliases[(key, name)] = value
++            raw = getattr(device_module, 'get_' + key + '_stream')
++            if getattr(cls, 'get_raw_stream') is not raw or (raw is not None and raw is not getattr(torch._C, '_' + key + '_getCurrentRawStream', None)):
++                self._halt('Native raw-stream interface missed installed trap: ' + key)
++            self.raw_aliases[key] = raw
++        self.handler_objects = {(key, name): getattr(cls, name) for key, cls in self.classes.items()
++                                for name in ('stream', 'current_stream', 'Event')}
++        handlers = sys.modules.get('torch._dynamo.variables.torch')
++        cache_before = None
++        if handlers is not None:
++            cache_function = handlers.TorchInGraphFunctionVariable._get_handlers
++            original = getattr(cache_function, '__wrapped__', None)
++            if not isinstance(original, types.FunctionType) or original.__code__ != source_code(HANDLER_SOURCE, 'TorchInGraphFunctionVariable._get_handlers'):
++                self._halt('Original generic handler constructor changed')
++            cache_before = cache_function.cache_info()._asdict()
++            if cache_before['currsize'] != 0:
++                self._halt('Generic handler cache already populated before virtual registry')
++        self.before = {'registry_id': id(self.registry), 'entries': [], 'initialized': False,
++                       'handler_cache': cache_before}
++        report['cpu_device_registry_policy'] = {**DESCRIPTION, 'installed': False, 'before': self.before}
++        # Do not call init_device_reg: only the native six unindexed registrations.
++        for key, _ in INTERFACES:
++            self.functions['register_interface_for_device'](key, self.classes[key])
++        if list(self.registry) != list(self.classes) or any(self.registry[key] is not cls for key, cls in self.classes.items()):
++            self._halt('Native registration produced an unexpected registry')
++        device_module._device_initialized = True
++        self.require_intact()
++        report['cpu_device_registry_policy'].update(installed=True,
++            after={'registry_id': id(self.registry), 'initialized': True, 'entries': self._rows()})
++
++    def _rows(self):
++        return [{'name': key, 'class': cls.__module__ + '.' + cls.__qualname__, 'class_id': id(cls),
++                 'handlers': {name: {'id': id(self.handler_objects[(key, name)]),
++                    'qualified_name': getattr(self.handler_objects[(key, name)], '__qualname__', type(self.handler_objects[(key, name)]).__qualname__)}
++                    for name in ('stream', 'current_stream', 'Event')}} for key, cls in self.classes.items()]
++
++    def _halt(self, reason):
++        self.report['accelerator_guard_tripped'] = True
++        self.report.setdefault('accelerator_guard_attempts', []).append({
++            'entry': 'virtual CPU device registry', 'reason': reason, 'pid': os.getpid(),
++            'phase': self.report.get('phase'), 'monotonic_ns': time.monotonic_ns(),
++            'stack': traceback.format_stack(limit=40)})
++        raise self.guard.AcceleratorAccessBlocked('CPU registry policy halted: ' + reason)
++
++    def require_intact(self):
++        self.guard.require_clean(self.report)
++        if sys.modules.get('torch._dynamo.device_interface') is not self.module:
++            self._halt('Device-interface module identity changed')
++        if self.module.device_interfaces is not self.registry or self.module._device_initialized is not True:
++            self._halt('CPU registry dict/initialized identity changed')
++        if list(self.registry) != list(self.classes) or any(self.registry[key] is not cls for key, cls in self.classes.items()):
++            self._halt('CPU registry keys/order/native classes changed')
++        for name, function in self.functions.items():
++            if getattr(self.module, name) is not function or function.__code__ is not self.function_codes[name]:
++                self._halt('Native registry function identity changed: ' + name)
++        for key, name in INTERFACES:
++            if getattr(self.module, name) is not self.classes[key]:
++                self._halt('Native interface module binding changed: ' + key)
++        for (key, name), value in self.aliases.items():
++            if getattr(self.classes[key], name) is not value or getattr(getattr(self.torch, key), name) is not value:
++                self._halt('Captured trap/wrapper identity changed: ' + key + '.' + name)
++        for key, value in self.raw_aliases.items():
++            if getattr(self.classes[key], 'get_raw_stream') is not value or getattr(self.module, 'get_' + key + '_stream') is not value:
++                self._halt('Raw-stream interface identity changed: ' + key)
++            if value is not None and getattr(self.torch._C, '_' + key + '_getCurrentRawStream', None) is not value:
++                self._halt('Raw-stream trap identity changed: ' + key)
++        for (key, name), value in self.handler_objects.items():
++            if getattr(self.classes[key], name) is not value:
++                self._halt('Generic handler callable identity changed: ' + key + '.' + name)

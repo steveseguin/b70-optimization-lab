@@ -43,7 +43,36 @@ research process. No new result or default is promoted.
 [Implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
-**Four-B70 host, September14 17:19 UTC: optimization continues; application unchanged.**
+**Four-B70 host, September14 17:54 UTC: actual CLIP integration CPU gate passed.**
+The inactive host-table adapter passed all six actual tiny CPU CLIP integration
+groups, including unchanged memory estimation/native owner loading, clone and
+state lifecycle, byte-exact encoding, bounded metadata observations and inference
+tensors. PID112132/exec53199 exited0; both GPU backends remained uninitialized.
+The resident component assembly also passed nine stdlib lifecycle/source tests.
+Full-model GPU residency, original four-output clip parity and speed remain
+unqualified. Packet11 and its comparison client are being prepared offline;
+packet10 PID84255/exec33936 remains the live application. No reload or host
+settings action occurred. The17:54 postflight found the same full identity,
+empty queue, only84255 on all four render nodes, and no faults.
+[CPU evidence](experiments/ltx25-b70/data/host-embedding-integration-postflight-01.json).
+
+The separate C++ CPU v7 fixture installed the reviewed virtual CPU registry and
+completed one eager call. Its first compile halted at the retained CUDA
+current-device trap in AOT cache system metadata; no compiled result or C++ call
+completed. Both GPU backends remained uninitialized. Preserve the refusal;
+no unchanged retry. This does not block the encoder comparison.
+[V7 result](experiments/ltx25-b70/native-cpp-block-01/guarded-v7-result-01.json),
+[postflight](experiments/ltx25-b70/native-cpp-block-01/guarded-v7-postflight-01.json).
+
+**Four-B70 host, September14 17:34 UTC: encoder CPU proof passed; application unchanged.**
+The CPU embedding candidate passed all six actual-source groups: raw-byte
+token/embedding equality, named-owner loading, clone/detach/restore, inference
+storage, mutation refusals and installation rollback. PID107471/exec35632
+exited0 with both GPU backends uninitialized. This is a tiny CPU fixture proof;
+GPU residency, full-clip equality and speed remain unmeasured. Next: inactive
+CLIP/runtime integration with explicit CPU and encoder ownership, followed by
+native gates. [CPU results](experiments/ltx25-b70/notes/host-embedding-cpu-v3-results-01.md).
+
 Packet10 PID84255/exec33936 remains healthy and idle with the same full endpoint
 identity, empty queue, sole ownership of all four render nodes and no fault.
 Saved-event attribution puts about1.82s in encoding and3.54s in the two sampler
@@ -55,13 +84,14 @@ corrected named-owner loading and inference-tensor version assumptions.
 [Candidate](experiments/ltx25-b70/notes/host-embedding-gather-candidate-01.md),
 [review](experiments/ltx25-b70/notes/host-embedding-source-review-01.md).
 
-The guarded C++ CPU v4 diagnostic stopped at a second import-time device-count
-probe in Comfy, before any model/compile call; both GPU backends remained
-uninitialized. Its source/39 stdlib checks passed, but native qualification is
-still pending. The embedding CPU driver reaches this same import and was not
-run. Next: a narrowly scoped CPU import refusal, then bounded CPU qualification
-before runtime integration. No live application or host action occurred.
-[V4 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v4-native-attempt-01.md).
+The guarded C++ CPU v6 diagnostic verified PyTorch's built-in CPU detection
+disable setting and completed one eager call. Generic Dynamo torch-function
+handler registration still enumerates device interfaces; the first compile
+halted at that retained trap. Both GPU backends stayed uninitialized; no
+compiled C++ qualification yet. A future explicit CPU device-registry policy
+needs source review; no unchanged retry is scheduled. Encoder integration
+continues independently. No live application or host action occurred.
+[V6 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v6-native-attempt-01.md).
 Unconditional cross-step text K/V reuse was rejected from the actual checkpoint
 and source: ADaLN changes the projection inputs with timestep.
 [Audit](experiments/ltx25-b70/notes/cross-step-text-kv-audit-01.md).

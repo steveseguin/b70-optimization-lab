@@ -1,0 +1,39 @@
+{
+  "schema": "ltx.host-embedding-guarded-cpu.v3",
+  "status": "startup-before-torch",
+  "pid": 106949,
+  "ppid": 3454,
+  "command": [
+    "experiments/ltx25-b70/scripts/test-host-embedding-candidate-cpu-v3.py",
+    "--evidence-dir",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/host-embedding-cpu-v3-source-01",
+    "--check-only"
+  ],
+  "phase": "source-gate",
+  "torch_imported": false,
+  "tests_run": 0,
+  "native_gpu_requests": 0,
+  "compilation_permitted": false,
+  "driver_sha256": "1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca",
+  "helper_sha256s": {
+    "scripts/cpu_comfy_import_policy_v1.py": "7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec",
+    "scripts/test-host-embedding-candidate-cpu-v2.py": "9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3",
+    "scripts/test-host-embedding-candidate-cpu.py": "2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534",
+    "scripts/test-host-embedding-candidate-cpu-fixture-v2.py": "b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32",
+    "scripts/ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+    "native-cpp-block-01/accelerator_guard_v2.py": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce",
+    "native-cpp-block-01/cpu_import_policy_v3.py": "03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a"
+  },
+  "triton_utils_sha256": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+  "comfy_model_management_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+  "scope": "Actual tiny CPU embedding/token/patcher fixture only; no XPU residency, clip, or speed qualification",
+  "source_pins": {
+    "comfy/text_encoders/llama.py": "7a1c57dd6e94ff1731f4cc6d98db2baaf8fed03e2fe996f79e49e06d9199717f",
+    "comfy/sd1_clip.py": "fc2c7e8442e00d525740699c936a00e93a87f58d7c63a1c23a87cd96226962f8",
+    "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0",
+    "comfy/model_patcher.py": "768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99"
+  },
+  "timestamp_utc": "2026-09-14T17:24:30.570910+00:00",
+  "proc_start_ticks": "1623820",
+  "boot_id": "8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a"
+}

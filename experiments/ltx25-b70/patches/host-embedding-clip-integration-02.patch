@@ -1,0 +1,894 @@
+--- /dev/null
++++ b/scripts/host_embedding_clip_v2.py
+@@ -0,0 +1,277 @@
++"""Inactive per-component CLIP integration for the qualified CPU gather prototype.
++
++No global CLIP/model patch, installer, launcher, or runtime action. Both modes
++construct on CPU; the native loader keeps its estimator/reserve/budget policy.
++"""
++from contextlib import contextmanager
++from contextvars import ContextVar
++from types import SimpleNamespace
++import weakref
++
++import torch
++import comfy.sd
++import comfy.model_management as model_management
++
++from ltx_host_embedding_candidate import HostEmbeddingOwner, require, unmodified
++from encoder_diagnostics import inspect_encoder
++
++MODES = ('control', 'host-table')
++
++
++class ClipOwnership:
++    def __init__(self, clip, mode):
++        require(mode in MODES, 'Unknown host embedding mode')
++        self.mode = mode
++        self.encoder_model = clip.cond_stage_model
++        self.owner = None
++        self.retired = False
++        self.failed = False
++        self.clips = []
++        self.hooks = []
++        self.encodes = 0
++        self.last_checked_encode = 0
++        self.embedding_observations = []
++        self.observation_active = False
++        self.observation_limit = 4
++        self.internal_state = ContextVar('ltx-host-embedding-state-accounting', default=False)
++        self.last_load = None
++        self.original_bytes = clip.patcher.model_size()
++        if mode == 'host-table':
++            parent = clip.cond_stage_model.gemma3_12b.transformer.model
++            self.owner = HostEmbeddingOwner(clip.patcher, parent)
++            try:
++                # Root state dictionaries otherwise silently omit the extracted
++                # table. The private loader context permits size accounting only.
++                for root in (self.encoder_model, self.owner.host.model):
++                    self.hooks.append(root.register_state_dict_pre_hook(self.block_state_dict))
++                    for module in root.modules():
++                        self.hooks.append(module.register_load_state_dict_pre_hook(self.block_state_load))
++            except BaseException:
++                for hook in self.hooks:
++                    hook.remove()
++                self.owner.restore()
++                self.owner.host.model._modules.pop('embedding')
++                self.owner.host.size = 0
++                raise
++        embedding = self.encoder_model.gemma3_12b.transformer.model.embed_tokens
++        self.embedding_observer_handle = embedding.register_forward_hook(self.observe_embedding, with_kwargs=True)
++
++    def observe_embedding(self, module, args, kwargs, output):
++        require(self.observation_active and len(self.embedding_observations) < self.observation_limit,
++                'Embedding observation outside active bounded encode')
++        require(len(args) == 1 and torch.is_tensor(args[0]) and torch.is_tensor(output),
++                'Unexpected embedding call signature')
++        indices = args[0]
++        require(indices.dtype == torch.long and indices.ndim == 2
++                and kwargs.get('out_dtype') == torch.float32,
++                'Expected original int64 IDs and F32 embedding output request')
++        require(output.dtype == torch.float32 and output.device == indices.device
++                and output.ndim == 3 and tuple(output.shape[:2]) == tuple(indices.shape),
++                'Scaled embedding metadata differs from input geometry/device/dtype')
++        metadata = lambda value: {'shape': list(value.shape), 'dtype': str(value.dtype), 'device': str(value.device)}
++        self.embedding_observations.append({'ordinal': len(self.embedding_observations) + 1,
++            'input_ids': metadata(indices), 'scaled_embedding': metadata(output),
++            'scope': 'Observed module input and final scaled output only; internal BF16 gather is not separately observed'})
++        # Returning None preserves the original output object unchanged.
++
++    def consume_observations(self):
++        require(not self.observation_active and self.encodes == self.last_checked_encode + 1
++                and 0 < len(self.embedding_observations) <= self.observation_limit,
++                'Expected exactly one completed unconsumed encoding')
++        self.last_checked_encode = self.encodes
++        self.embedding_observations.clear()
++
++    def active(self):
++        return self.owner is not None and self.owner.active
++
++    @contextmanager
++    def loader_state_access(self):
++        token = self.internal_state.set(True)
++        try:
++            yield
++        finally:
++            self.internal_state.reset(token)
++
++    def block_state_dict(self, *args):
++        require(not self.active() or self.internal_state.get(),
++                'CPU table is separately owned; detach and restore before serializing')
++
++    def block_state_load(self, *args):
++        require(not self.active(), 'Detach and restore CPU table ownership before loading state')
++
++    def bind(self, clip):
++        require(clip.cond_stage_model is self.encoder_model and clip.patcher.model is self.encoder_model,
++                'Different CLIP/model owner is unsupported')
++        self.clips.append(weakref.ref(clip))
++
++    def guard(self, *, cleanup=False):
++        require(not self.retired and (cleanup or not self.failed), 'Retired/failed CLIP component cannot encode')
++        for ref in self.clips:
++            clip = ref()
++            if clip is None:
++                continue
++            require(clip._host_embedding is self and clip.cond_stage_model is self.encoder_model
++                    and clip.patcher.model is self.encoder_model, 'CLIP clone ownership changed')
++            require(clip.layer_idx is None and not clip.use_clip_schedule,
++                    'Layer selection and scheduled CLIP hooks are unsupported')
++            unmodified(clip.patcher)
++        if self.owner is not None:
++            with self.loader_state_access():
++                self.owner.guard()
++
++    def inventory(self, clip, *, require_loaded=False, cleanup=False):
++        self.guard(cleanup=cleanup)
++        encoder = inspect_encoder(clip)
++        result = {'schema': 'ltx.host-embedding-placement.v1', 'mode': self.mode,
++                  'encodes_completed': self.encodes, 'original_combined_bytes': self.original_bytes,
++                  'encoder': encoder, 'host': None, 'owner': None, 'last_load': self.last_load,
++                  'embedding_observations': [dict(row) for row in self.embedding_observations],
++                  'embedding_observation_limit': self.observation_limit,
++                  'quality_qualified': False, 'speed_qualified': False}
++        if self.owner is not None:
++            owner = self.owner
++            with self.loader_state_access():
++                owner.guard(require_resident=require_loaded)
++                owner.host.model_size()
++            host = inspect_encoder(SimpleNamespace(patcher=owner.host, cond_stage_model=owner.host.model))
++            require(host['parameters']['count'] == 1 and host['buffers']['count'] == 0,
++                    'Unexpected CPU table owner inventory')
++            table = host['parameters']['records'][0]
++            require(table['name'] == 'embedding.weight' and table['device'] == 'cpu'
++                    and table['dtype'] == 'torch.bfloat16', 'CPU table placement changed')
++            require(encoder['parameters']['bytes'] + sum(x['bytes'] for x in encoder['buffers']['records']
++                    if x['persistent']) + table['bytes'] == self.original_bytes,
++                    'Registered combined model byte count changed')
++            if require_loaded:
++                require(owner.host.loaded_size() == owner.host_bytes,
++                        'CPU owner is missing from native loaded-model accounting')
++                accounting = encoder['accounting']
++                actual = accounting['registered_parameter_bytes_on_load_device'] + accounting['registered_persistent_buffer_bytes_on_load_device']
++                require(actual == clip.patcher.loaded_size() == clip.patcher.model_size(),
++                        'Actual remaining encoder residency/accounting mismatch')
++            result.update(host=host, owner=owner.metadata())
++        return result
++
++    def detach_restore(self, clip):
++        """Retire one shared component group; surviving clones cannot encode."""
++        self.guard(cleanup=True)
++        before = self.inventory(clip, cleanup=True)
++        clip.patcher.detach()
++        if self.owner is not None:
++            with self.loader_state_access():
++                self.owner.restore()  # Also detaches the host patcher.
++            # The prototype retained this module for its standalone inspection.
++            # Integration must retire the CPU registration after restoration.
++            self.owner.host.model._modules.pop('embedding')
++            self.owner.host.size = 0
++            require(not list(self.owner.host.model.parameters()) and self.owner.host.loaded_size() == 0,
++                    'Retired CPU owner still registers loaded state')
++        for hook in self.hooks:
++            hook.remove()
++        self.hooks.clear()
++        self.embedding_observer_handle.remove()
++        self.embedding_observations.clear()
++        require(clip.patcher.loaded_size() == 0 and all(p.device.type == 'cpu'
++                for p in self.encoder_model.parameters()), 'Encoder detach incomplete')
++        require(clip.patcher.model_size() == self.original_bytes, 'Original ownership was not restored')
++        self.retired = True
++        return {'schema': 'ltx.host-embedding-unload.v1', 'before': before,
++                'after_encoder': inspect_encoder(clip), 'after_host_registered_bytes': 0,
++                'original_ownership_restored': True, 'all_shared_clones_retired': True}
++
++
++class HostEmbeddingCLIP(comfy.sd.CLIP):
++    @classmethod
++    def adopt(cls, clip, group):
++        require(type(clip) is comfy.sd.CLIP, 'Only original CLIP instances can be adapted')
++        result = cls(no_init=True)
++        result.__dict__.update(clip.__dict__)
++        result._host_embedding = group
++        group.bind(result)
++        return result
++
++    def clone(self, disable_dynamic=False):
++        self._host_embedding.guard()
++        clone = super().clone(disable_dynamic=disable_dynamic)
++        return type(self).adopt(clone, self._host_embedding)
++
++    def load_model(self, tokens={}):
++        group = self._host_embedding
++        group.guard()
++        # Same estimator and same memory_required argument as original CLIP.
++        memory_used = 0
++        if hasattr(self.cond_stage_model, 'memory_estimation_function'):
++            memory_used = self.cond_stage_model.memory_estimation_function(tokens, device=self.patcher.load_device)
++        patchers = [self.patcher]
++        if group.owner is not None:
++            # Native loader reverses the list: load the CPU owner first.
++            patchers.append(group.owner.host)
++        with group.loader_state_access():
++            model_management.load_models_gpu(patchers, memory_required=memory_used)
++        group.last_load = {'memory_required': memory_used, 'patcher_ids': [id(p) for p in patchers],
++                           'force_full_load': False, 'reserve_override': False}
++        if group.owner is not None:
++            group.owner.guard(require_resident=True)
++            require(group.owner.host.loaded_size() == group.owner.host_bytes,
++                    'CPU owner is missing from native loaded-model accounting')
++        return self.patcher
++
++    def encode_from_tokens(self, *args, **kwargs):
++        group = self._host_embedding
++        group.guard()
++        require(group.encodes == group.last_checked_encode and not group.observation_active
++                and not group.embedding_observations, 'Previous embedding observations were not consumed')
++        group.observation_active = True
++        try:
++            result = super().encode_from_tokens(*args, **kwargs)
++            if group.owner is not None:
++                group.owner.guard(require_resident=True)
++            require(0 < len(group.embedding_observations) <= group.observation_limit,
++                    'Completed encode did not observe bounded embedding calls')
++            group.encodes += 1
++            return result
++        except BaseException:
++            group.failed = True
++            raise
++        finally:
++            group.observation_active = False
++
++    def _state_api(self):
++        require(not self._host_embedding.active(), 'Detach and restore CPU table before CLIP state APIs')
++
++    def get_sd(self):
++        self._state_api()
++        return super().get_sd()
++
++    def state_dict_for_saving(self):
++        self._state_api()
++        return super().state_dict_for_saving()
++
++    def load_sd(self, *args, **kwargs):
++        self._state_api()
++        return super().load_sd(*args, **kwargs)
++
++    def get_key_patches(self):
++        self._state_api()
++        return super().get_key_patches()
++
++    def add_patches(self, *args, **kwargs):
++        self._state_api()
++        return super().add_patches(*args, **kwargs)
++
++
++def load_clip(*, ckpt_paths, embedding_directory, mode, model_options):
++    require(mode in MODES, 'Unknown host embedding mode')
++    options = dict(model_options)
++    require(options.get('load_device') == torch.device('xpu:2')
++            and options.get('offload_device') == torch.device('cpu'),
++            'This integration requires the original XPU2/CPU encoder placement')
++    require(not options.get('ltx_small_state_residency') and not options.get('ltx_crop_before_cpu'),
++            'Do not combine prior encoder experiments')
++    options['initial_device'] = torch.device('cpu')
++    original = comfy.sd.load_clip(ckpt_paths=ckpt_paths, embedding_directory=embedding_directory,
++                                 clip_type=comfy.sd.CLIPType.LTXV, model_options=options)
++    require(not original.patcher.is_dynamic() and original.patcher.loaded_size() == 0,
++            'CLIP must remain static/unloaded until ownership installation')
++    group = ClipOwnership(original, mode)
++    return HostEmbeddingCLIP.adopt(original, group)
+--- /dev/null
++++ b/scripts/host_embedding_placement_node_v2.py
+@@ -0,0 +1,36 @@
++"""Inactive post-encode metadata gate. Conditioning is returned unchanged."""
++from pathlib import Path
++
++from encoder_diagnostics import ROOT, _context, _exclusive_json, _identifier
++from host_embedding_clip import HostEmbeddingCLIP, MODES
++
++
++class LTXHostEmbeddingPlacementCheck:
++    @classmethod
++    def INPUT_TYPES(cls):
++        return {'required': {'clip': ('CLIP',), 'conditioning': ('CONDITIONING',),
++                'run_name': ('STRING', {'default': 'assign-unique-request-name'}),
++                'encoder_mode': (list(MODES),)}}
++
++    RETURN_TYPES = ('CONDITIONING',)
++    FUNCTION = 'check'
++    CATEGORY = 'lab/validation'
++
++    def check(self, clip, conditioning, run_name, encoder_mode):
++        _identifier(run_name)
++        run_dir, identity = _context(ROOT)
++        if not isinstance(clip, HostEmbeddingCLIP) or clip._host_embedding.mode != encoder_mode:
++            raise RuntimeError('Unexpected CLIP adapter/mode')
++        group = clip._host_embedding
++        if group.encodes != group.last_checked_encode + 1:
++            raise RuntimeError('Each placement receipt requires exactly one new completed encoding')
++        report = group.inventory(clip, require_loaded=True)
++        report.update(identity)
++        report.update(stage='post_encode', run_name=run_name,
++                      passed=True, generated_output_cache=False, prompt_encoding_cache=False)
++        _exclusive_json(run_dir / f'host-embedding-placement-{run_name}.json', report, ROOT)
++        group.consume_observations()
++        return (conditioning,)
++
++
++NODE_CLASS_MAPPINGS = {'LTXHostEmbeddingPlacementCheck': LTXHostEmbeddingPlacementCheck}
+--- /dev/null
++++ b/scripts/test-host-embedding-integration-cpu-fixture.py
+@@ -0,0 +1,266 @@
++"""Inactive actual tiny CLIP integration fixture, imported by guarded driver only."""
++import gc
++import importlib.util
++import json
++import os
++from pathlib import Path
++import sys
++import tempfile
++from types import SimpleNamespace
++import unittest
++from unittest.mock import patch
++import weakref
++
++LANE = Path(__file__).resolve().parents[1]
++SOURCE = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-10/source')
++sys.path.insert(0, str(SOURCE))
++sys.path.insert(0, str(LANE / 'scripts'))
++
++
++def load(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    value = importlib.util.module_from_spec(spec)
++    sys.modules[name] = value
++    spec.loader.exec_module(value)
++    return value
++
++
++# This unchanged fixture sets --cpu before importing the actual Comfy modules.
++base = load('qualified_host_embedding_fixture', LANE / 'scripts/test-host-embedding-candidate-cpu-fixture-v2.py')
++import torch
++from torch import nn
++import comfy.sd
++import comfy.model_management as mm
++load('encoder_diagnostics', SOURCE / 'scripts/encoder_diagnostics.py')
++adapter = load('host_embedding_clip', LANE / 'scripts/host_embedding_clip_v2.py')
++placement = load('host_embedding_placement_node', LANE / 'scripts/host_embedding_placement_node_v2.py')
++CPU = torch.device('cpu')
++TOKENS = [[(0, 1.0), (0, 1.0), (2, 1.0), (5, 1.0), (31, 1.0)]]
++
++
++class TinyTokenizer:
++    def __init__(self, **kwargs):
++        pass
++
++    def state_dict(self):
++        return {}
++
++
++class TinyTE(nn.Module):
++    def __init__(self, dtype, device, model_options):
++        super().__init__()
++        if torch.device(device) != CPU or dtype != torch.bfloat16:
++            raise RuntimeError('Tiny fixture allocates only BF16 CPU parameters')
++        self.dtype = dtype
++        self.dtypes = {dtype}
++        self.gemma3_12b = nn.Module()
++        self.gemma3_12b.transformer = nn.Module()
++        self.gemma3_12b.transformer.model = base.Tiny()
++        self.estimate_calls = []
++        self.execution_device = None
++        self.requires_grad_(False).eval()
++
++    def get_dtype(self):
++        return self.dtype
++
++    def reset_clip_options(self):
++        self.execution_device = None
++
++    def set_clip_options(self, options):
++        self.execution_device = options.get('execution_device', self.execution_device)
++
++    def memory_estimation_function(self, tokens, device=None):
++        value = 12345 + 17 * len(tokens)
++        self.estimate_calls.append((id(tokens), device, value))
++        return value
++
++    def encode_token_weights(self, tokens):
++        core = self.gemma3_12b.transformer.model
++        ids = [[token for token, weight in section] for section in tokens]
++        embeds, mask, counts, info = base.TokenFixture(core).process_tokens(ids, self.execution_device)
++        return core.linear(embeds), None, {'attention_mask': mask}
++
++    def load_sd(self, state):
++        return self.load_state_dict(state, strict=False)
++
++
++def construct(load_device=CPU):
++    return comfy.sd.CLIP(target=SimpleNamespace(params={}, clip=TinyTE, tokenizer=TinyTokenizer),
++        parameters=328, disable_dynamic=True,
++        model_options={'load_device': load_device, 'offload_device': CPU,
++                       'initial_device': CPU, 'dtype': torch.bfloat16})
++
++
++def adapted(mode):
++    # Physical CPU target naturally takes the constructor full-load branch.
++    # Explicitly detach before testing the adapter's required unloaded boundary.
++    original = construct()
++    original.patcher.detach()
++    group = adapter.ClipOwnership(original, mode)
++    return adapter.HostEmbeddingCLIP.adopt(original, group)
++
++
++def state_bytes(clip):
++    return {name: (base.raw(value), str(value.dtype), tuple(value.shape), tuple(value.stride()))
++            for name, value in clip.get_sd().items()}
++
++
++def consume(clip):
++    clip._host_embedding.consume_observations()
++
++
++class Tests(unittest.TestCase):
++    def test_factory_actual_constructor_no_preload(self):
++        observed = []
++        def tiny_loader(**kwargs):
++            observed.append(kwargs)
++            # Same real CLIP constructor and options, tiny CPU-created target.
++            return comfy.sd.CLIP(target=SimpleNamespace(params={}, clip=TinyTE, tokenizer=TinyTokenizer),
++                parameters=328, disable_dynamic=True, model_options=kwargs['model_options'])
++        with patch.object(comfy.sd, 'load_clip', tiny_loader):
++            clip = adapter.load_clip(ckpt_paths=['tiny-no-file'], embedding_directory=[], mode='host-table',
++                model_options={'load_device': torch.device('xpu:2'), 'offload_device': CPU,
++                               'dtype': torch.bfloat16})
++        self.assertEqual(observed[0]['model_options']['initial_device'], CPU)
++        self.assertEqual(clip.patcher.loaded_size(), 0)
++        self.assertEqual(clip.patcher.load_device, torch.device('xpu:2'))
++        self.assertTrue(all(p.device == CPU for p in clip.cond_stage_model.parameters()))
++        self.assertEqual(clip._host_embedding.owner.host.model.embedding.weight.device.type, 'cpu')
++        clip._host_embedding.detach_restore(clip)
++
++    def test_actual_loader_estimator_both_owners_and_accounting(self):
++        for mode in adapter.MODES:
++            clip = adapted(mode)
++            group = clip._host_embedding
++            records = []
++            original_load = mm.load_models_gpu
++            def observe_load(models, **kwargs):
++                records.append((list(models), dict(kwargs)))
++                return original_load(models, **kwargs)
++            # Force the private loader accounting path to recompute model size.
++            clip.patcher.size = 0
++            if group.owner is not None:
++                group.owner.host.size = 0
++            with patch.object(mm, 'load_models_gpu', observe_load):
++                result = clip.load_model(TOKENS)
++            self.assertIs(result, clip.patcher)
++            self.assertEqual(records[0][1], {'memory_required': 12362})
++            expected = [clip.patcher] + ([group.owner.host] if group.owner else [])
++            self.assertEqual(records[0][0], expected)
++            self.assertEqual(clip.cond_stage_model.estimate_calls[-1], (id(TOKENS), CPU, 12362))
++            self.assertTrue(all(any(loaded.model is p for loaded in mm.current_loaded_models) for p in expected))
++            report = group.inventory(clip, require_loaded=True)
++            if group.owner:
++                self.assertEqual(group.owner.host.loaded_size(), group.owner.host_bytes)
++                self.assertEqual(clip.patcher.loaded_size() + group.owner.host.loaded_size(), group.original_bytes)
++                self.assertEqual(report['host']['parameters']['count'], 1)
++            group.detach_restore(clip)
++            mm.unload_all_models()
++
++    def test_clone_original_gc_state_refusals_and_complete_restore(self):
++        original = construct()
++        expected = state_bytes(original)
++        original.patcher.detach()
++        group = adapter.ClipOwnership(original, 'host-table')
++        first = adapter.HostEmbeddingCLIP.adopt(original, group)
++        del original
++        first.load_model(TOKENS)
++        second = first.clone()
++        first_ref = weakref.ref(first)
++        del first
++        gc.collect()
++        self.assertIsNone(first_ref())
++        third = second.clone()
++        second.load_model(TOKENS)
++        refusals = [second.get_sd, second.state_dict_for_saving,
++                    lambda: second.load_sd({}, full_model=True),
++                    second.cond_stage_model.state_dict,
++                    lambda: second.cond_stage_model.load_state_dict({}, strict=False),
++                    lambda: second.cond_stage_model.gemma3_12b.transformer.model.linear.load_state_dict({}, strict=False),
++                    group.owner.host.model.state_dict,
++                    lambda: group.owner.host.model.embedding.load_state_dict({}, strict=False),
++                    second.patcher.model_state_dict_for_saving]
++        for call in refusals:
++            with self.assertRaises(RuntimeError):
++                call()
++        with group.loader_state_access():
++            self.assertEqual(mm.module_size(second.cond_stage_model) + mm.module_size(group.owner.host.model), group.original_bytes)
++        report = group.detach_restore(second)
++        self.assertTrue(report['original_ownership_restored'])
++        self.assertEqual(report['after_host_registered_bytes'], 0)
++        self.assertEqual(state_bytes(second), expected)
++        self.assertEqual(state_bytes(third), expected)
++        second.load_sd(second.get_sd(), full_model=True)
++        self.assertEqual(state_bytes(second), expected)
++        for clip in (second, third):
++            with self.assertRaises(RuntimeError):
++                clip.load_model(TOKENS)
++        mm.unload_all_models()
++
++    def test_exact_encoding_observations_and_conditioning_identity(self):
++        reference = construct()
++        expected = reference.encode_from_tokens(TOKENS, return_dict=True)
++        for mode in adapter.MODES:
++            clip = adapted(mode)
++            conditioning = clip.encode_from_tokens_scheduled(TOKENS)
++            actual = conditioning[0][0]
++            self.assertEqual(base.raw(actual), base.raw(expected['cond']))
++            self.assertEqual(actual.dtype, expected['cond'].dtype)
++            self.assertEqual(actual.stride(), expected['cond'].stride())
++            group = clip._host_embedding
++            observed = json.loads(json.dumps(group.embedding_observations))
++            self.assertEqual(len(observed), 1)
++            self.assertEqual(observed[0]['input_ids'], {'shape': [1, 5], 'dtype': 'torch.int64', 'device': 'cpu'})
++            self.assertEqual(observed[0]['scaled_embedding'], {'shape': [1, 5, 8], 'dtype': 'torch.float32', 'device': 'cpu'})
++            with tempfile.TemporaryDirectory(prefix='host-placement-cpu-') as temp:
++                root = Path(temp)
++                run = root / 'encoder-server-fixture'
++                run.mkdir()
++                (root / 'model-verification.json').write_text('{"status":"passed"}')
++                (run / 'server-identity.json').write_text('{"fixture":"CPU"}')
++                with patch.object(placement, 'ROOT', root), patch.dict(os.environ, {'LTX_ENCODER_RUN_DIR': str(run)}):
++                    result = placement.LTXHostEmbeddingPlacementCheck().check(clip, conditioning, 'cpu-r01-' + mode, mode)
++                    self.assertIs(result[0], conditioning)
++                    receipt = json.loads((run / ('host-embedding-placement-cpu-r01-' + mode + '.json')).read_text())
++                    self.assertEqual(receipt['embedding_observations'], observed)
++                    self.assertEqual(group.embedding_observations, [])
++                    with self.assertRaises(RuntimeError):
++                        placement.LTXHostEmbeddingPlacementCheck().check(clip, conditioning, 'cpu-r02-' + mode, mode)
++            group.detach_restore(clip)
++            mm.unload_all_models()
++
++    def test_observation_bounds_and_no_tensor_retention(self):
++        clip = adapted('host-table')
++        group = clip._host_embedding
++        clip.encode_from_tokens(TOKENS)
++        frozen = json.loads(json.dumps(group.embedding_observations))
++        self.assertEqual(frozen, group.embedding_observations)
++        with self.assertRaises(RuntimeError):
++            clip.encode_from_tokens(TOKENS)  # A placement receipt must consume first.
++        consume(clip)
++        group.observation_active = True
++        ids = torch.tensor([[2]], dtype=torch.long)
++        output = torch.empty((1, 1, 8), dtype=torch.float32)
++        for _ in range(group.observation_limit):
++            group.observe_embedding(None, (ids,), {'out_dtype': torch.float32}, output)
++        with self.assertRaises(RuntimeError):
++            group.observe_embedding(None, (ids,), {'out_dtype': torch.float32}, output)
++        group.observation_active = False
++        group.embedding_observations.clear()
++        group.detach_restore(clip)
++        mm.unload_all_models()
++
++    def test_inference_mode_real_clip_adapter(self):
++        with torch.inference_mode():
++            clip = adapted('host-table')
++            group = clip._host_embedding
++            table = group.owner.weight
++            clip.encode_from_tokens(TOKENS)
++            self.assertFalse(group.owner.metadata()['weight_version_tracked'])
++            consume(clip)
++            group.detach_restore(clip)
++            self.assertIs(clip.cond_stage_model.gemma3_12b.transformer.model.embed_tokens.weight, table)
++            mm.unload_all_models()
++
++
++TEST_NAMES = sorted(name for name in dir(Tests) if name.startswith('test_'))
+--- /dev/null
++++ b/scripts/test-host-embedding-integration-cpu.py
+@@ -0,0 +1,229 @@
++#!/usr/bin/env python3
++"""Inactive guarded actual CLIP integration proof with metadata-only embedding observations. No compilation or accelerator access.
++
++Reuses the proven v3 process-local guards for the new actual CLIP fixture.
++--check-only is stdlib-only. Native CPU execution requires parent scheduling.
++"""
++import argparse
++import ast
++from datetime import datetime, timezone
++import hashlib
++import importlib.util
++import json
++import os
++from pathlib import Path
++import sys
++import time
++import traceback
++import unittest
++
++sys.dont_write_bytecode = True
++LANE = Path(__file__).resolve().parents[1]
++ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
++SOURCE = ROOT / 'prepared-encoder-na-axis-10/source'
++TRITON_UTILS = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_triton.py')
++HELPERS = {
++    'scripts/test-host-embedding-candidate-cpu-v3.py': '1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca',
++    'scripts/host_embedding_clip_v2.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994',
++    'scripts/host_embedding_placement_node_v2.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b',
++    'scripts/test-host-embedding-integration-cpu-fixture.py': '2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e',
++    'scripts/cpu_comfy_import_policy_v1.py': '7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec',
++    'scripts/test-host-embedding-candidate-cpu-v2.py': '9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3',
++    'scripts/test-host-embedding-candidate-cpu.py': '2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534',
++    'scripts/test-host-embedding-candidate-cpu-fixture-v2.py': 'b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32',
++    'scripts/ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9',
++    'native-cpp-block-01/accelerator_guard_v2.py': 'b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce',
++    'native-cpp-block-01/cpu_import_policy_v3.py': '03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a',
++}
++COMFY_MANAGEMENT_SHA = 'ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd'
++CPU_QUALIFICATION = ROOT / 'host-embedding-cpu-v3-native-01/result.json'
++CPU_QUALIFICATION_SHA = 'eacb3389cc9fd8065c135bc6dea2a11b9b4263520c3d88f8096ce08f4c762948'
++TRITON_SHA = '4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a'
++
++
++def require(value, message):
++    if not value:
++        raise RuntimeError(message)
++
++
++def sha(path):
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def load(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++def source_gate():
++    require(not (ROOT / 'FAULT.json').exists(), 'Fault latch prohibits native work')
++    for name, expected in HELPERS.items():
++        require(sha(LANE / name) == expected, 'Frozen helper changed: ' + name)
++    require(sha(SOURCE / 'comfy/model_management.py') == COMFY_MANAGEMENT_SHA, 'Pinned Comfy import source changed')
++    require(sha(TRITON_UTILS) == TRITON_SHA, 'Triton helper source changed')
++    tree = ast.parse((LANE / 'scripts/test-host-embedding-candidate-cpu-fixture-v2.py').read_text())
++    pins = ast.literal_eval(next(node.value for node in tree.body if isinstance(node, ast.Assign)
++        and any(isinstance(target, ast.Name) and target.id == 'PINS' for target in node.targets)))
++    pins.update({'comfy/sd.py': '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0',
++                 'scripts/encoder_diagnostics.py': 'f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a'})
++    require(sha(CPU_QUALIFICATION) == CPU_QUALIFICATION_SHA, 'Qualified CPU candidate receipt changed')
++    qualification = json.loads(CPU_QUALIFICATION.read_text())
++    require(qualification['status'] == 'passed-guarded-cpu-fixture' and qualification['tests_run'] == 6
++            and qualification['xpu_initialized'] is False and qualification['cuda_initialized'] is False
++            and qualification['final_guards_intact'] is True, 'Standalone CPU qualification missing')
++    for name, expected in pins.items():
++        require(sha(SOURCE / name) == expected, 'Frozen actual source changed: ' + name)
++    return pins
++
++
++def write_exclusive(path, value):
++    with path.open('x') as stream:
++        json.dump(value, stream, indent=2)
++        stream.write('\n')
++        stream.flush()
++        os.fsync(stream.fileno())
++
++
++def install_backend_refusals(torch, triton_utils, report, guard):
++    """Block every backend lookup/compile attempt; never call originals."""
++    guard.require_clean(report)
++    require('backend_refusals' not in report, 'Backend refusal cannot be reinstalled')
++    report['backend_refusals'] = {'scope': 'All triton_backend and torch.compile calls forbidden; no compilation',
++                                  'attempts': [], 'tripped': False}
++    def make_trap(label):
++        def blocked(*args, **kwargs):
++            report['accelerator_guard_tripped'] = True
++            record = {'entry': label, 'pid': os.getpid(), 'phase': report.get('phase'),
++                      'monotonic_ns': time.monotonic_ns(), 'stack': traceback.format_stack(limit=24)}
++            report['backend_refusals']['tripped'] = True
++            report['backend_refusals']['attempts'].append(record)
++            raise guard.AcceleratorAccessBlocked('CPU embedding proof forbids ' + label)
++        return blocked
++    backend_trap = make_trap('torch.utils._triton.triton_backend')
++    compile_trap = make_trap('torch.compile')
++    triton_utils.triton_backend = backend_trap
++    torch.compile = compile_trap
++    def intact():
++        guard.require_clean(report)
++        require(triton_utils.triton_backend is backend_trap and torch.compile is compile_trap,
++                'CPU backend refusal identity changed')
++    intact()
++    return intact
++
++
++class StopOnFailureResult(unittest.TextTestResult):
++    def addError(self, test, error):
++        super().addError(test, error)
++        self.stop()
++
++    def addFailure(self, test, error):
++        super().addFailure(test, error)
++        self.stop()
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--evidence-dir', type=Path, required=True)
++    parser.add_argument('--check-only', action='store_true')
++    args = parser.parse_args()
++    directory = args.evidence_dir
++    require(directory.is_absolute() and directory.parent == ROOT and
++            directory.name.startswith('host-embedding-cpu-') and not directory.exists()
++            and not directory.is_symlink(), 'Evidence directory must be a new bounded absolute path')
++    directory.mkdir()
++    report = {'schema': 'ltx.host-embedding-integration-guarded-cpu.v1', 'status': 'failed',
++              'pid': os.getpid(), 'ppid': os.getppid(), 'command': list(sys.argv),
++              'phase': 'source-gate', 'torch_imported': False, 'tests_run': 0,
++              'native_gpu_requests': 0, 'compilation_permitted': False,
++              'driver_sha256': sha(Path(__file__)), 'helper_sha256s': HELPERS,
++              'candidate_cpu_receipt_sha256': CPU_QUALIFICATION_SHA,
++              'triton_utils_sha256': TRITON_SHA, 'comfy_model_management_sha256': COMFY_MANAGEMENT_SHA,
++              'scope': 'Actual tiny CLIP constructor and CPU loader/clone/state/metadata fixture; logical XPU2 constructor target only, no accelerator allocation/query, full model, real clip, or speed qualification'}
++    torch = None
++    integrity = None
++    try:
++        require('torch' not in sys.modules, 'Fresh disposable interpreter required')
++        report['source_pins'] = source_gate()
++        startup = {**report, 'timestamp_utc': datetime.now(timezone.utc).isoformat(),
++            'proc_start_ticks': Path(f'/proc/{os.getpid()}/stat').read_text().split(') ')[1].split()[19],
++            'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
++            'status': 'startup-before-torch'}
++        write_exclusive(directory / 'startup-identity.json', startup)
++        report['startup_sha256'] = sha(directory / 'startup-identity.json')
++        if args.check_only:
++            report.update(status='passed-stdlib-source-check', phase='source-check-only', native_cpu_tests_executed=False)
++            return 0
++        report['phase'] = 'torch-import'
++        import torch as imported_torch
++        torch = imported_torch
++        report['torch_imported'] = True
++        guard = load('host_embedding_accelerator_guard', LANE / 'native-cpp-block-01/accelerator_guard_v2.py')
++        policy = load('host_embedding_cpu_import_policy', LANE / 'native-cpp-block-01/cpu_import_policy_v3.py')
++        guard.install(torch, report)
++        comfy_import_policy = load('host_embedding_comfy_import_policy', LANE / 'scripts/cpu_comfy_import_policy_v1.py')
++        import_controller = comfy_import_policy.ComfyImportPolicy(torch, report, guard,
++            model_management_source=SOURCE / 'comfy/model_management.py')
++        imports_complete = False
++        cpu_intact = policy.install(torch, report, guard)
++        report['phase'] = 'backend-refusal-install-before-Comfy'
++        import torch.utils._triton as triton_utils
++        require(Path(triton_utils.__file__).resolve() == TRITON_UTILS, 'Unexpected Triton helper module')
++        backend_intact = install_backend_refusals(torch, triton_utils, report, guard)
++        def integrity():
++            cpu_intact()
++            backend_intact()
++            import_controller.require_intact(require_complete=imports_complete)
++            require(not torch.xpu.is_initialized() and not torch.cuda.is_initialized(), 'Accelerator initialized')
++            require(not (ROOT / 'FAULT.json').exists(), 'Fault latch prohibits CPU work')
++        integrity()
++        report['phase'] = comfy_import_policy.EXPECTED_PHASE
++        fixture = load('guarded_host_embedding_actual_fixture', LANE / 'scripts/test-host-embedding-integration-cpu-fixture.py')
++        import_controller.finish_import(sys.modules['comfy.model_management'])
++        imports_complete = True
++        integrity()
++        report['identity_after_import'] = {'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False}
++        report['cpu_policy_reuse_note'] = 'Frozen policy description mentions compiled arms; this driver permits only these CPU eager tests and rejects every compile/backend lookup.'
++        torch.set_num_threads(1)
++        torch.set_num_interop_threads(1)
++        torch.use_deterministic_algorithms(True, warn_only=False)
++        report['determinism'] = {'enabled': torch.are_deterministic_algorithms_enabled(),
++                                'warn_only': torch.is_deterministic_algorithms_warn_only_enabled()}
++        fixture.Tests.setUp = lambda self: integrity()
++        fixture.Tests.tearDown = lambda self: integrity()
++        report['phase'] = 'actual-CPU-tests'
++        with (directory / 'tests.log').open('x') as stream:
++            result = unittest.TextTestRunner(stream=stream, verbosity=2,
++                resultclass=StopOnFailureResult).run(unittest.defaultTestLoader.loadTestsFromTestCase(fixture.Tests))
++        report['test_names'] = list(fixture.TEST_NAMES)
++        report['test_skips'] = [reason for _, reason in result.skipped]
++        report['tests_run'] = result.testsRun
++        report['test_failures'] = [text for _, text in result.failures]
++        report['test_errors'] = [text for _, text in result.errors]
++        integrity()
++        require(source_gate() == report['source_pins'], 'Source identity changed during tests')
++        require(result.wasSuccessful() and result.testsRun == 6 and not result.skipped, 'CPU fixture failed; no retry')
++        report.update(status='passed-guarded-cpu-integration', phase='finished', native_cpu_tests_executed=True,
++                      identity_after_tests={'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False})
++        return 0
++    except BaseException as error:
++        report.update(status='failed', error=repr(error), traceback=traceback.format_exc())
++        return 1
++    finally:
++        if torch is not None:
++            report['xpu_initialized'] = bool(torch.xpu.is_initialized())
++            report['cuda_initialized'] = bool(torch.cuda.is_initialized())
++            if integrity is not None:
++                try:
++                    integrity()
++                    report['final_guards_intact'] = True
++                except BaseException as error:
++                    report.update(status='failed', final_guards_intact=False, final_guard_error=repr(error))
++        write_exclusive(directory / 'result.json', report)
++        if report['status'] == 'failed':
++            return 1
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+--- /dev/null
++++ b/scripts/test-host-embedding-integration-stdlib.py
+@@ -0,0 +1,71 @@
++#!/usr/bin/env python3
++"""Stdlib regression checks for the guarded CLIP integration test preparation."""
++import ast
++import hashlib
++import importlib.util
++import json
++from pathlib import Path
++import sys
++import unittest
++
++LANE = Path(__file__).resolve().parents[1]
++DRIVER = LANE / 'scripts/test-host-embedding-integration-cpu.py'
++
++
++def load(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++driver = load('host_integration_guarded_driver', DRIVER)
++previous = load('host_integration_previous_stdlib', LANE / 'scripts/test-host-embedding-cpu-v3-stdlib.py')
++previous.driver = driver
++previous.DRIVER = DRIVER
++previous.previous.driver = driver
++previous.previous.DRIVER = DRIVER
++
++
++class Tests(previous.Tests):
++    def test_actual_source_pins_without_native_import(self):
++        self.assertEqual(len(driver.source_gate()), 6)
++        self.assertNotIn('torch', sys.modules)
++
++    def test_metadata_hook_is_observational_and_bounded(self):
++        tree = ast.parse((LANE / 'scripts/host_embedding_clip_v2.py').read_text())
++        group = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == 'ClipOwnership')
++        method = next(node for node in group.body if isinstance(node, ast.FunctionDef) and node.name == 'observe_embedding')
++        self.assertFalse(any(isinstance(node, ast.Return) for node in ast.walk(method)))
++        calls = [ast.unparse(node.func) for node in ast.walk(method) if isinstance(node, ast.Call)]
++        self.assertFalse(any(value.endswith(('.to', '.cpu', '.clone', '.item', '.numpy')) for value in calls))
++        self.assertIn('self.embedding_observations.append', calls)
++        text = (LANE / 'scripts/host_embedding_clip_v2.py').read_text()
++        self.assertIn('self.observation_limit = 4', text)
++        self.assertIn('self.embedding_observations.clear()', text)
++        node = (LANE / 'scripts/host_embedding_placement_node_v2.py').read_text()
++        self.assertIn('group.consume_observations()', node)
++        self.assertIn('return (conditioning,)', node)
++
++    def test_actual_fixture_and_native_result_contract(self):
++        text = (LANE / 'scripts/test-host-embedding-integration-cpu-fixture.py').read_text()
++        tree = ast.parse(text)
++        tests = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == 'Tests')
++        names = [node.name for node in tests.body if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')]
++        self.assertEqual(len(names), 6)
++        self.assertIn('return original_load(models, **kwargs)', text)
++        self.assertIn('comfy.sd.CLIP(target=', text)
++        self.assertIn('base.raw(actual)', text)
++        driver_text = DRIVER.read_text()
++        self.assertIn("report['test_names'] = list(fixture.TEST_NAMES)", driver_text)
++        self.assertIn('and not result.skipped', driver_text)
++
++
++if __name__ == '__main__':
++    result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
++    print(json.dumps({'status': 'passed' if result.wasSuccessful() else 'failed', 'tests': result.testsRun,
++        'driver_sha256': hashlib.sha256(DRIVER.read_bytes()).hexdigest(),
++        'test_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
++        'torch_imported': 'torch' in sys.modules, 'native_cpu_tests_executed': False,
++        'scope': 'Guard/refusal regression plus integration metadata/result source contracts only'}, sort_keys=True))
++    raise SystemExit(0 if result.wasSuccessful() else 1)
