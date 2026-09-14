@@ -49,6 +49,12 @@ python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /abs
 curl -fsS http://127.0.0.1:18124/v1/models
 ```
 
+Send a first message:
+
+```bash
+curl -fsS http://127.0.0.1:18124/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Explain prefill and decode in two short sentences."}],"temperature":0,"max_tokens":128,"chat_template_kwargs":{"enable_thinking":false}}'
+```
+
 Keep requests sequential for this configuration. Its capacity includes the
 chat template, conversation history, and answer. Keep some room for the answer
 instead of filling the entire context with input.
@@ -81,8 +87,13 @@ network overhead. These measurements have separate configuration labels:
 
 Prompt caching is off. Existing 2K–32K continuation checks matched all 18
 reference outputs; they do not establish general document retrieval accuracy.
-A clean-directory practical replay of this entry point is being recorded in
-[this bounded test plan](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-prereg.md).
+A clean-directory replay from public source passed **12/12 reference-output
+checks and 6/6 practical requests**, with exact repeated conversation, coding
+and document answers. The recommended capacity measured **54.20 output tokens/s**
+in that single strict replay. Start, healthy status, and owned stop all passed,
+along with GPU checks before and after. [Replay results and evidence](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md).
+Existing verified model files and Docker layers were reused; independent-host
+installation and prolonged use remain untested.
 
 ## Reproduce and inspect
 

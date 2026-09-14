@@ -80,7 +80,9 @@ forward.
 The [official 27B FP8 quickstart](packages/qwen38-27b-fp8-tp2-b70/README.md)
 now selects one current runtime and a one-user MTP1 setup with 32K input
 capacity. Its helper provides persistent start, status, and owned stop commands.
-Historical higher-draft speed records keep their original configuration labels.
+A [clean public-source replay](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md)
+passed 12/12 reference outputs, six practical requests with exact repeats,
+and clean stop. Historical higher-draft speed records keep their original labels.
 
 Official **27B FP8 reading speed** now includes a 2,048-token prompt measurement
 and a final bounded profiling review. [Results and evidence](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md)
@@ -119,7 +121,7 @@ defines its one-card, fixed-depth scope.
 | **[Muse-Glimmer 30B Q8/WOQ with DFlash on four Intel Arc Pro B70 cards](models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html)**<br>4&times; B70 · UD-Q8_K_XL / BF16 draft · llama.cpp SYCL | `candidate` · clean-host replay pending | **`100.3685 tok/s`**<br>pooled canonical mean | [reproduction guide](repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md) |
 | **[Qwen3.5 9B FP8-dynamic with its own MTP head on one Intel Arc Pro B70](models/qwen35-9b-fp8-b70.html)**<br>1&times; B70 · FP8-dynamic (compressed-tensors, per-channel FP8 weights, dynamic activations) · vLLM XPU | `candidate` · clean-host replay pending | **`98.139 tok/s`**<br>MTP depth 3 with the draft-only INT4 lm_head, one card, strict completions suite (center of two fresh servers, 98.251 / 98.027) | [reproduction guide](repro/qwen35-9b-fp8-b70/README.md) |
 | **[MiniMax M2.7 AutoRound INT4 on four Intel Arc Pro B70 cards](models/minimax-m27-b70-89tps-20260520.html)**<br>4&times; B70 · AutoRound W4A16 INT4 · vLLM XPU + llm-scaler | `candidate` · clean-host replay pending | **`89.314195 tok/s`**<br>mean output throughput | [reproduction guide](repro/minimax-m27-b70-89tps-20260520/README.md) |
-| **[Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards](models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html)**<br>2&times; B70 · FP8 · vLLM XPU | `candidate` · clean-host replay pending | **`86.181722 tok/s`**<br>strict varied-prompt decode (R187 MTP depth 5, whole-graph compile) | [reproduction guide](repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md) |
+| **[Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards](models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html)**<br>2&times; B70 · FP8 · vLLM XPU | `candidate` · clean-host replay pending | **`86.181722 tok/s`**<br>Historical writing speed · MTP depth 5 | [reproduction guide](repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md) |
 | **[Qwen3.8 27B Q4_K_M + MTP2 on two Intel Arc Pro B70 cards](models/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70.html)**<br>2&times; B70 · Q4_K_M target + Q4_0 MTP draft / F16 KV · llama.cpp SYCL | `candidate` · clean-host replay pending | **`64.237301 tok/s`**<br>strict varied-prompt decode | [reproduction guide](repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md) |
 | **[Qwen3.8 27B Q4_K_M on two Intel Arc Pro B70 cards](models/qwen38-27b-q4km-tp2-asrock-b70.html)**<br>2&times; B70 · Q4_K_M / F16 KV · llama.cpp SYCL | `candidate` · clean-host replay pending | **`49.717503 tok/s`**<br>conventional decode median | [reproduction guide](repro/qwen38-27b-q4km-tp2-asrock-b70/README.md) |
 | **[Qwen3.8 Flash-Next FP8 with lossless MTP1 and the GDN verifier rows in the kernel extension's exact serial mode, on four Intel Arc Pro B70 cards](models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html)**<br>4&times; B70 · FP8 block-128 weights / BF16 KV · vLLM XPU | `candidate` · clean-host replay pending | **`46.85425 tok/s`**<br>class-balanced decode median | [reproduction guide](repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md) |

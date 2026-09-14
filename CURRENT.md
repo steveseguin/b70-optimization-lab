@@ -25,6 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-14 UTC, two-B70 host: official FP8 quickstart replay complete.**
+The public-source helper ran one R304 TP2/MTP1 server at 33,024 capacity /
+4,096 batch / one sequence. Strict 12/12 complete outputs matched the qualified
+reference; all six practical requests passed with exact repeated outputs and
+zero cached tokens. Single-replay decode 54.201 tok/s; no optimization promoted.
+The documented exact-owned stop passed, all owned processes/listeners are gone,
+and both GPUs/XCCL plus the full journal postflight passed. State and logs are
+under `/mnt/fast-ai/bench-results/qwen-fp8-flagship-20260914`; the hash-bound
+[results packet](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md)
+records public commit, image/model checks and remaining installation limits.
+No restart chain or power/memory-setting changes; four-card LTX work preserved.
+
 **Four-B70 host, September13, LTX campaign started toward the revised goal.**
 User requires one second of new video in **under one second**, at24fps with no
 quality/losslessness sacrifice. Final output floor is256x256; <=3s is only an
@@ -40,6 +52,7 @@ retaining three campaign previews totaling170KB plus compact receipts. Two
 inactive candidate patches target accounting and unnecessary hidden-state CPU
 copies; no runtime change or further restart occurred. The server is idle.
 See the updated [plan](experiments/ltx25-b70/PLAN.md).
+
 
 **2026-09-13 EDT, two-B70 host: final FP8 prefill pass complete and stopped.**
 Official 27B FP8, R304 TP2/MTP1, measured 512/2048 inputs at 2,857/3,679 input

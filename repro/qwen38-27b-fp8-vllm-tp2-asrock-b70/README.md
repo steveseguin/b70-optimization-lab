@@ -5,9 +5,10 @@
 Use the [FP8 package quickstart](../../packages/qwen38-27b-fp8-tp2-b70/README.md)
 for the current digest-pinned runtime, one user, fixed MTP1, 33,024-token total
 capacity, and one persistent start/status/stop path. Its settings reproduce the
-already qualified 32K-input profile. The [bounded practical replay plan](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-prereg.md)
-tracks the public-source download and session check. Independent-host driver
-installation remains untested.
+already qualified 32K-input profile. The [public-source replay](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md)
+passed 12/12 complete reference outputs, six practical requests with exact
+repeats, and the documented start/status/stop path. This single replay measured
+54.20 output tokens/s. Independent-host driver installation remains untested.
 
 The [shared runtime publication manifest](../qwen38-27b-autoround-int4-b70/publication-manifest.json)
 contains the current image's source closure under `chains.r304`. Historical
