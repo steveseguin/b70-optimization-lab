@@ -62,7 +62,8 @@ for name in args.names:
     prompt = json.loads((request / 'prompt.json').read_text())
     assert prompt == history['prompt'][2], 'history does not match the submitted graph'
     for node, field in [('414', 'run_name'), ('413', 'filename_prefix'), ('75', 'filename_prefix')]:
-        prompt[node]['inputs'][field] = '<output-path>'
+        if node in prompt:
+            prompt[node]['inputs'][field] = '<output-path>'
     if reference_prompt is None:
         reference_prompt = prompt
     assert prompt == reference_prompt, 'generation identity changed'

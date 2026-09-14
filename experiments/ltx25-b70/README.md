@@ -1,9 +1,38 @@
 # LTX 2.5 native BF16 baseline on B70
 
-Status: **working baseline, three byte-identical generations**, September 13, 2026.
+Status: **validated exact-output speedup: 6.44–7.10 s warm clips**, September 13, 2026.
 User authorized bring-up and repeatability validation on September 13, 2026.
 
-## Verified result
+## Current optimized baseline
+
+The selected experimental setup uses all four 32 GiB B70s. The original BF16
+transformer is split across two GPUs; the other cards encode text and decode
+video/audio. A 256x256, 25-frame clip at 24 fps reaches playable preview in
+6.44–7.10 seconds after loading. Three boat generations and two other scenes
+match their original references byte-for-byte across all four saved tensors.
+Warm boat client completion improved **7.85×** against the original single-card
+baseline, using matched timing definitions. Text, sampling and decoding are
+recomputed each time; only loaded model components are retained.
+
+The first split placement request took 81.21 seconds to preview, including
+initialization. The transformer is fully resident but the encoder still
+partially offloads to CPU. The clip lasts about one second, so continuous
+real-time generation and prolonged operation remain unqualified. Resolution,
+frame count, sampler steps and precision are unchanged. Exactness is scoped to
+the tested native distilled checkpoint and fixtures, not another model/runtime.
+
+See the [speed results and limitations](SPEED-HANDOFF.md) and
+[structured measurements](data/speed-resident/summary.json).
+The selected split run's exact media passed an independent decode check:
+[lossless verification](data/speed-resident/float-lossless.verification.json).
+Its files are under `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`:
+
+- `output/resident-split-03/preview_00001_.mp4`: convenient lossy preview.
+- `output/resident-split-03/float-lossless.mkv`: exact float video/audio;
+  experimental FFV1 float profile, exported separately from the latency timer.
+- `output/validation/resident-split-03/tensors.safetensors`: all four raw outputs.
+
+## Original single-card baseline (preserved reference)
 
 LTX 2.5 distilled BF16 generated a 256x256, 25-frame clip at 24 fps on one B70
 with synchronous CPU weight offload. First/middle/last frames show a wooden boat
@@ -11,7 +40,8 @@ moving gently on water. All three runs fully recomputed the same prompt and seed
 decoded images, video latents, audio latents and waveform are bitwise identical,
 with zero unequal values and zero maximum difference. Strict deterministic
 algorithms remained enabled with warning-only mode off. No GPU fault, OOM or
-tiled-VAE fallback was recorded. The server remains running and idle.
+tiled-VAE fallback was recorded. This original process was later replaced once
+by the current speed server, after a planned graceful shutdown.
 
 | Run | Server execution | Client elapsed | Cached nodes |
 | --- | ---: | ---: | ---: |
@@ -27,7 +57,7 @@ experimental; the MP4 is the convenient lossy preview. PNG previews also convert
 the original float pixels to 8-bit values. The video lasts 25/24 seconds; original
 audio is 48,480 samples (1.010 seconds), preserved without padding or resampling.
 
-Scope: **one prompt/seed, one process, one hardware/software configuration**.
+Original baseline scope: **one prompt/seed, one process, one hardware/software configuration**.
 No fresh-process, different-seed/resolution, CUDA, dev-checkpoint or FP32-model
 parity claim is made. Distillation itself is not claimed lossless.
 
@@ -47,24 +77,34 @@ Media under `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`:
 
 ## Reuse the current server
 
-The current endpoint is `http://127.0.0.1:8188`, PID 11499. Do not start a second
+The current endpoint is `http://127.0.0.1:8188`, PID 24848. Do not start a second
 server or cycle this one to run another clip. Confirm the queue is idle and the
 fault latch is absent; the client enforces those conditions. Use a new output
 identifier, since evidence directories are never overwritten:
 
 ```bash
 cd /home/steve/llm-optimizations
-/home/steve/.venvs/ltx25-baseline/bin/python experiments/ltx25-b70/scripts/request-clip.py baseline-04
+/home/steve/.venvs/ltx25-baseline/bin/python experiments/ltx25-b70/scripts/profile-clip.py resident-split-next \
+  --graph experiments/ltx25-b70/data/speed-resident-split-api.json \
+  --server-run /mnt/fast-ai/bench-results/ltx25-baseline-20260913/speed-server
 ```
 
-The client uses the frozen `data/baseline-api.json` graph. Compare that new result
-against existing executions with `scripts/verify-repeats.py` (at least three
-unique run names and a fresh `--output` receipt). Export another exact media file
+Use a new run name each time. Keep node420 placement `split`; switching it
+reconstructs components and invalidates a warm-latency comparison. The original
+`request-clip.py` binds the old server identity and is a historical baseline
+client, not the current reuse command. Compare new split runs against the frozen
+baseline with `scripts/compare-clip.py baseline-01 NEW_RUN --output NEW_RECEIPT`.
+For same-graph repeats use `scripts/verify-repeats.py` with at least three unique
+run names and a fresh `--output` receipt. Export another exact media file
 with `scripts/export-lossless.py SOURCE_VALIDATION_DIRECTORY NEW_MKV_PATH`.
 Runtime versions are pinned in [environment capture](data/environment.txt);
-startup flags and host/source identity are in [server arguments](data/server-args.json)
-and [server identity](data/server-identity.json). The source itself is unmodified;
-the local capture node only saves original outputs and gates requests.
+current startup flags and host/source identity are in
+[server arguments](data/speed-resident/server-args.json) and
+[server identity](data/speed-resident/server-identity.json). ComfyUI core is
+unmodified. The capture extension saves outputs and gates requests; the speed
+extension retains components and routes original transformer blocks between GPUs.
+Loaded extension hashes are recorded in the server identity. Original startup
+receipts remain under `data/server-args.json` and `data/server-identity.json`.
 
 ## Preregistered baseline
 

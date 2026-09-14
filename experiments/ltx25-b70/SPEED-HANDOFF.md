@@ -4,7 +4,82 @@ User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,
 8+3 schedule and all four raw output tensors. Real-time throughput and time to
-first usable clip are separate metrics; neither is established yet.
+first usable clip are separate metrics. Warm first-clip latency is now measured;
+continuous real-time throughput has not been achieved.
+
+## Validated result, September 13, 2026, 22:23 EDT
+
+**Selected experimental graph: [resident split](data/speed-resident-split-api.json).**
+It uses all four 32 GiB B70s: existing transformer blocks on XPU0/XPU1 (21/27),
+text encoder on XPU2, video/audio VAEs on XPU3. Both transformer partitions are
+fully resident; the text encoder still partially offloads about 458–600 MB.
+Only model components are retained across requests. Text encoding, every sampler
+step, decoding and tensor capture execute again on each request.
+
+| Placement / run | Preview ready | Client completion | Exact four-output parity |
+| --- | ---: | ---: | --- |
+| Single, initial | 59.267 s | 59.564 s | Pass |
+| Single, warm | 45.344 s | 46.757 s | Pass |
+| Encoder/VAEs separated, initial | 117.738 s | 120.546 s | Pass |
+| Encoder/VAEs separated, warm | 31.502 s | 31.808 s | Pass |
+| Transformer split, initial | 81.206 s | 82.505 s | Pass |
+| Split, boat repeat 1 | 7.102 s | 7.317 s | Pass |
+| Split, boat repeat 2 | 6.441 s | 6.752 s | Pass |
+| Split, marble seed17 | 6.487 s | 6.795 s | Pass |
+| Split, bird seed123 | 6.457 s | 6.678 s | Pass |
+| Split with BasicGuider, boat screen | 6.443 s | 6.665 s | Pass; neutral |
+
+Preview readiness is the client-received SaveVideo completion event; client
+completion additionally waits for server history. Raw lossless tensors were
+ready in 6.307–6.954 s for the four warm selected-graph requests. First placement
+runs include construction, loading and first-use costs and are not warm latency.
+Original warm boat client times were 55.431/55.021 s; comparing their median to
+the two warm split boat client times gives **7.85×**. The original single-card
+server times of 54.009/52.774 s use a different timer from preview readiness.
+
+All three split boat executions match each other and the frozen original run.
+Marble and bird also match their independent original-graph references. All
+four outputs have zero unequal values and maximum difference zero. Strict
+determinism is enabled, warning-only mode is off, and no cached execution nodes
+were reported. This establishes these three fixtures across the original and
+optimized processes, plus same-process repeats; independent cold restarts of
+the optimized setup were not tested. Construction receipts saying numerical
+validation was pending are superseded by the linked passing comparisons.
+
+The speedup addresses CPU weight transfers: the separate placement retained
+14,390.68 MiB of transformer weights off GPU. Its first Euler iteration alone
+took 13.41 s; the exact contribution of transfers, cold allocations or mapped
+pages was not instrumented. The split removes transformer weight offload and
+reduces warm sampler loops to about 2.47 + 0.92 s. In split boat repeat2, node
+wall times were text encoding 1.852 s, samplers 2.571 + 1.012 s, audio/video
+decode 0.188 + 0.608 s. Do not attribute the earlier first-iteration stall to
+conditioning preparation: that executes before the measured sampling loop.
+
+BasicGuider skips unused negative conditioning at CFG1. Its one warm screen
+was exact but preview latency was neutral versus the preceding boat control;
+retain it as an experiment, not a demonstrated improvement. No further material
+graph-only exact optimization was identified in the independent source audit.
+
+The 25-frame clip lasts 1.042 s, so 6.4–7.1 s warm generation is still slower
+than continuous real time. Endlessly sustained operation and memory stability
+have not been qualified. There is no claim of a theoretical speed maximum.
+The selected recipe preserves original BF16 precision, dimensions, frames,
+noise seeds and all 8+3 steps, with no approximate denoising cache. FFV1 float
+RGB32/PCM float32 export of split boat repeat2 passed independent exact decoding;
+that separate export is outside the request timer. MP4 remains a lossy preview.
+
+Evidence: [structured summary](data/speed-resident/summary.json),
+[three-run verification](data/speed-resident/split-repeat-verification.json),
+[marble parity](data/speed-resident/resident-split-marble/parity.json),
+[bird parity](data/speed-resident/resident-split-bird/parity.json),
+[lossless export](data/speed-resident/float-lossless.verification.json),
+[runtime log](data/speed-resident/server-speed-through-basic.log),
+[post-run state](data/speed-resident/postrun-state.json).
+Each run directory retains submitted graph, history, identity, capture summary,
+profile and parity receipt. Raw tensors and media remain outside Git in the
+original evidence root. The server is idle at PID24848, port8188, with split
+components retained. No fault/OOM/restart chain or power/memory-setting change
+occurred during this campaign.
 
 ## Measurement and gate
 

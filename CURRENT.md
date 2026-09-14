@@ -25,14 +25,22 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, 2026-09-13 22:03 EDT: exact-output LTX speed campaign.**
+**Four-B70 host, 2026-09-13 22:23 EDT: exact-output LTX speed result.**
 User prioritizes first usable clip within a few seconds, while retaining exact
 baseline outputs. Baseline PID11499 exited cleanly after one planned SIGINT;
 new ComfyUI PID24848 owns `127.0.0.1:8188`, with the same exclusive locks,
 strict deterministic mode and cache-none computation. All four small startup
 preflights passed, with no device fault. Resident model components and exact
 layer placement are startup extensions; generated outputs and prompt encodings
-are always recomputed. First resident-single request is running. Further variants
+are always recomputed. **Validated warm 256x256/25-frame clips take 6.44–7.10 s
+to playable preview**, using all four B70s: transformer split across XPU0/1,
+encoder XPU2 and VAEs XPU3. Three boat repeats and marble/bird reference scenes
+match all four original tensors bitwise. Exact float media export also passed.
+Matched warm boat client medians improved 7.85×; first split initialization took
+81.21 s to preview. BasicGuider was exact but neutral and is not selected.
+The one-second clip is not yet continuous real time; prolonged operation remains
+untested. The transformer stays resident; the encoder still partially offloads.
+Server is idle with split components retained. Further variants
 use this same process; no restart chains/power/swap/cache-drop/driver changes.
 See [speed campaign handoff](experiments/ltx25-b70/SPEED-HANDOFF.md).
 Original baseline remains frozen; new process identity is under the original

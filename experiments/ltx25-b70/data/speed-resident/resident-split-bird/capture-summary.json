@@ -1,0 +1,64 @@
+{
+  "run_name": "resident-split-bird",
+  "sample_rate": 48000,
+  "deterministic_enabled": true,
+  "deterministic_warn_only": false,
+  "tensors": {
+    "images": {
+      "dtype": "torch.float32",
+      "shape": [
+        25,
+        256,
+        256,
+        3
+      ],
+      "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+      "finite": true,
+      "min": 0.0,
+      "max": 1.0,
+      "std": 0.20565633475780487
+    },
+    "video_latent": {
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        128,
+        4,
+        8,
+        8
+      ],
+      "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+      "finite": true,
+      "min": -5.637712478637695,
+      "max": 5.126581192016602,
+      "std": 1.2340888977050781
+    },
+    "audio_latent": {
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        8,
+        26,
+        16
+      ],
+      "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+      "finite": true,
+      "min": -6.488918304443359,
+      "max": 5.451141357421875,
+      "std": 1.6776491403579712
+    },
+    "waveform": {
+      "dtype": "torch.float32",
+      "shape": [
+        1,
+        2,
+        48480
+      ],
+      "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+      "finite": true,
+      "min": -0.017822265625,
+      "max": 0.01806640625,
+      "std": 0.0022500986233353615
+    }
+  }
+}
