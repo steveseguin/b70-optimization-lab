@@ -30,8 +30,9 @@ assert owners.returncode == 1 and not owners.stdout.strip() and not owners.stder
 before = subprocess.check_output(['journalctl', '-k', '-b', '--no-pager'], text=True, timeout=10)
 (EVIDENCE / 'journal-before.txt').write_text(before)
 assert not FAULT.search(before), 'device fault in current boot'
-assert json.loads((EVIDENCE / 'model-verification.json').read_text())['status'] == 'passed'
+assert json.loads((EVIDENCE / 'model-verification.json').read_text())['revision'] == '5e6e71018ee1756ed329b697a7b4aedc934dfce9'
 assert not (EVIDENCE / 'FAULT.json').exists()
+since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
 for key in ['ZE_AFFINITY_MASK', 'ONEAPI_DEVICE_SELECTOR', 'SYCL_DEVICE_FILTER']:
     assert not os.environ.get(key), key
 os.environ['HF_HUB_OFFLINE'] = '1'
@@ -51,7 +52,9 @@ for i in range(4):
     devices.append({'ordinal': i, 'properties': str(torch.xpu.get_device_properties(i)), 'copy_compute': 'passed'})
     del x
 torch.xpu.set_device(0)
-since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+after_preflight = subprocess.check_output(['journalctl', '-k', '-b', '--since', since, '--no-pager'], text=True, timeout=10)
+(EVIDENCE / 'journal-after-preflight.txt').write_text(after_preflight)
+assert not FAULT.search(after_preflight), 'device fault during preflight'
 (EVIDENCE / 'server-identity.json').write_text(json.dumps({
     'pid': os.getpid(), 'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
     'start_utc': since, 'devices': devices, 'torch': torch.__version__,
@@ -65,6 +68,8 @@ def watch_journal():
             if FAULT.search(journal):
                 (EVIDENCE / 'journal-fault.txt').write_text(journal)
                 (EVIDENCE / 'FAULT.json').write_text(json.dumps({'reason': 'kernel device fault', 'time': time.time()}))
+                if 'comfy.model_management' in sys.modules:
+                    sys.modules['comfy.model_management'].interrupt_current_processing(True)
                 print('FAULT: halt all new requests; preserve this process for incident review', flush=True)
                 return
         except subprocess.SubprocessError as error:
@@ -78,7 +83,7 @@ sys.path.insert(0, str(SOURCE))
 sys.argv = [str(SOURCE / 'main.py'), '--listen', '127.0.0.1', '--port', '8188',
             '--disable-auto-launch', '--cache-none', '--deterministic',
             '--disable-async-offload', '--disable-dynamic-vram', '--disable-comfy-compiler',
-            '--disable-cuda-graphs', '--disable-pinned-memory', '--lowvram',
+            '--disable-cuda-graphs', '--disable-pinned-memory',
             '--reserve-vram', '6', '--bf16-unet', '--bf16-text-enc', '--bf16-vae',
             '--use-pytorch-cross-attention', '--disable-xformers',
             '--disable-api-nodes',

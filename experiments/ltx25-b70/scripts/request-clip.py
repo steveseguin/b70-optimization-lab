@@ -16,6 +16,7 @@ lane = Path(__file__).resolve().parents[1]
 evidence = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 out = evidence / 'requests' / args.name
 out.mkdir(parents=True, exist_ok=False)
+assert json.loads((evidence / 'model-verification.json').read_text())['status'] == 'passed'
 
 def call(path, payload=None):
     if (evidence / 'FAULT.json').exists():

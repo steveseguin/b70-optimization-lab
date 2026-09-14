@@ -6,6 +6,22 @@ from pathlib import Path
 import torch
 import folder_paths
 from safetensors.torch import save_file
+from aiohttp import web
+from server import PromptServer
+
+
+@web.middleware
+async def fault_gate(request, handler):
+    root = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+    if request.method == 'POST' and request.path == '/prompt':
+        if (root / 'FAULT.json').exists():
+            return web.json_response({'error': 'device fault recorded; generation halted'}, status=503)
+        if json.loads((root / 'model-verification.json').read_text())['status'] != 'passed':
+            return web.json_response({'error': 'model verification is still pending'}, status=503)
+    return await handler(request)
+
+
+PromptServer.instance.app.middlewares.append(fault_gate)
 
 
 class LTXBaselineCapture:

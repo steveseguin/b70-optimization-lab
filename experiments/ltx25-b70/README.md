@@ -13,7 +13,7 @@ User authorized bring-up and repeatability validation on September 13, 2026.
   component precision and explicitly record any compute upcasting.
 - Official two-stage text-to-video workflow: 256x256, 25 frames at 24 fps,
   8-step first stage and 3-step refinement; fixed seed 42 in both noise nodes.
-- One XPU with synchronous CPU offload; CPU text encoder initially. One
+- One XPU with synchronous CPU offload, including the text encoder. One
   continuously running local server, sequential requests, no restart chains.
 - Save uncompressed generated tensors, lossless PNG frames, audio waveform,
   and a viewable video. Compare tensor hashes, finiteness and exact values
@@ -38,3 +38,8 @@ SHA-256 matched to the original intake manifest. Model bytes stay outside Git.
 Full evidence and media: `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
 The Qwen archive remains separately blocked on Corsair mount/verification;
 its local weights and all prior research artifacts are preserved.
+
+Before first execution, source review changed the encoder placement from CPU
+to the default XPU path and removed `--lowvram`: this CPU lacks native BF16
+matrix instructions. ComfyUI's normal memory mode retains partial-weight
+offloading, with 6 GiB reserved. No CPU-encoder measurement was made.
