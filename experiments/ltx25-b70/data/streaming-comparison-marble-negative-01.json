@@ -1,0 +1,153 @@
+{
+  "status": "failed-offline-evidence",
+  "scope": "exact output comparison; graph changes are intentional and must be reviewed separately",
+  "schema": "ltx25.streaming-exact-comparison.v1",
+  "executions": [
+    {
+      "name": "baseline-01",
+      "prompt_id": "0bfc092b-340d-4688-b5cf-22c20c227a6a",
+      "prompt_sha256": "7de3cdc3bdfaafc43769f8279b82d9a53027d125e2079a24bd504045625bd2ac",
+      "server_identity": {
+        "pid": 11499,
+        "boot_id": "39a36df1-8b22-498e-b74a-28384839a024",
+        "start_utc": "2026-09-14 00:42:22 UTC",
+        "devices": [
+          {
+            "ordinal": 0,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 1,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 2,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 3,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          }
+        ],
+        "torch": "2.14.0+xpu",
+        "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+        "proc_start_ticks": "147192",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_args_sha256": "8bb189ac732bc29ab906cca8718413b6945b344f0e3697dc934fb3d2fd826188"
+      },
+      "sample_rate": 48000,
+      "client_seconds": 100.94307933099935,
+      "evidence_sha256": {
+        "capture_summary.json": "63e3f1ce27fa1eeb1c8e3730f17811e108b55dcdd30f7b2d64b51cd525b5dfa0",
+        "history.json": "ae69f1de7da5cbf801e6ab26f121eab4c1d21c1eac1de11d174c0a96ec5bdf30",
+        "submission.json": "cd3e40a095657ce16ebd4c3026488e77b4cd64cc6095cff93d983428f50e056b",
+        "result.json": "31d72b6405cc9935ed4b10ff0a8fdcbc881f532a71ec478444840e0dcaca0f7e",
+        "prompt.json": "7de3cdc3bdfaafc43769f8279b82d9a53027d125e2079a24bd504045625bd2ac",
+        "identity.json": "e9cfb533d1c4ccbc7b1952d4a7bfcacc91e6f90a49e0d06e84c65270a112b663"
+      }
+    },
+    {
+      "name": "speed-oracle-marble",
+      "prompt_id": "48f3f9a7-b9be-490b-b091-87eb2397a5c7",
+      "prompt_sha256": "5f05e02e9a65ab610adb29de692f9fc574cb837f74ea0e4c5d69967f74119579",
+      "server_identity": {
+        "pid": 11499,
+        "boot_id": "39a36df1-8b22-498e-b74a-28384839a024",
+        "start_utc": "2026-09-14 00:42:22 UTC",
+        "devices": [
+          {
+            "ordinal": 0,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 1,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 2,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 3,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          }
+        ],
+        "torch": "2.14.0+xpu",
+        "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+        "proc_start_ticks": "147192",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_args_sha256": "8bb189ac732bc29ab906cca8718413b6945b344f0e3697dc934fb3d2fd826188"
+      },
+      "sample_rate": 48000,
+      "client_seconds": 53.00240880900037,
+      "evidence_sha256": {
+        "capture_summary.json": "e4833d10b9d473baa901061dfafae4f2219f150d554e3c22e75e42dbc861f745",
+        "history.json": "7b94ff02f32c23e724fab4b124ac2357291294a8a842bf780450f87430f86372",
+        "submission.json": "2cecdef82fed29320060d943d29f6f8b90c57cc26677bfb303f4d260645756d8",
+        "result.json": "362e38a9aaeaaf907201d3a370fed2598d6c1a63e5b215076ea9b45a1cb57f5e",
+        "prompt.json": "5f05e02e9a65ab610adb29de692f9fc574cb837f74ea0e4c5d69967f74119579",
+        "identity.json": "e9cfb533d1c4ccbc7b1952d4a7bfcacc91e6f90a49e0d06e84c65270a112b663"
+      }
+    }
+  ],
+  "comparisons": {
+    "audio_latent": {
+      "bitwise_equal": false,
+      "same_layout": true,
+      "unequal_values": 3328,
+      "unequal_f32_bit_patterns": 3328,
+      "first_unequal_sample": 0,
+      "max_abs_diff": 4.685204029083252,
+      "max_abs_diff_f32_bits": "0x4095ed31"
+    },
+    "images": {
+      "bitwise_equal": false,
+      "same_layout": true,
+      "unequal_values": 4911959,
+      "unequal_f32_bit_patterns": 4911959,
+      "first_unequal_sample": 0,
+      "max_abs_diff": 0.962890625,
+      "max_abs_diff_f32_bits": "0x3f768000"
+    },
+    "video_latent": {
+      "bitwise_equal": false,
+      "same_layout": true,
+      "unequal_values": 32768,
+      "unequal_f32_bit_patterns": 32768,
+      "first_unequal_sample": 0,
+      "max_abs_diff": 5.707254409790039,
+      "max_abs_diff_f32_bits": "0x40b6a1d4"
+    },
+    "waveform": {
+      "bitwise_equal": false,
+      "same_layout": true,
+      "unequal_values": 96895,
+      "unequal_f32_bit_patterns": 96895,
+      "first_unequal_sample": 0,
+      "max_abs_diff": 0.00809478759765625,
+      "max_abs_diff_f32_bits": "0x3c04a000"
+    }
+  },
+  "offline_evidence_only": true,
+  "eligible_for_live_gate": false,
+  "fault_present": true,
+  "diagnostics_definition": "finite IEEE754 F32 values; exact integer difference rounded once to F32 nearest-even; signed zeros numerically equal",
+  "diagnostics_native_torch_mode_qualified": false,
+  "tensor_read_bound_bytes": 65536,
+  "max_json_file_bytes": 1048576,
+  "restrictions": [
+    "F32, nonempty tensors, rank at most16",
+    "JSON duplicate keys and NaN/Infinity constants rejected, including diagnostic metadata",
+    "summary layout and finite flags checked as well as actual bytes",
+    "strict settings must be JSON booleans",
+    "opened file/header/range changes rejected"
+  ]
+}

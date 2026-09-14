@@ -81,6 +81,15 @@ This is verification overhead only, not a generation-speed improvement or
 promotion. No GPU request, restart or host-setting change occurred.
 [Exact candidate, patch and timing limits](experiments/ltx25-b70/notes/finite-f32-bit-intersections-01.md).
 
+An inactive streaming comparison client now checks complete F32 archive bytes
+without importing Torch or loading entire tensors. Fifteen contract tests and
+seven arithmetic tests pass. Saved baseline02 and resident-split03 match all
+four baseline01 outputs; a different-prompt marble capture correctly fails.
+The old comparer and frozen callers remain unchanged. Historical-evidence
+reports cannot satisfy a live gate; no generation-speed gain or runtime
+qualification is claimed. Host FAULT remains present.
+[Candidate and exact evidence](experiments/ltx25-b70/notes/streaming-comparison-01.md).
+
 **Historical startup, superseded by the fault above: native compiler comparison.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.
