@@ -44,7 +44,7 @@
     "featured_metric": {
       "value": 86.18172184524545,
       "unit": "tok/s",
-      "label": "Historical writing speed \u00b7 MTP depth 5",
+      "label": "Historical writing speed · MTP depth 5",
       "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-configuration MTP0 oracle (depth-5 target-verified speculative decoding; MTP1 54.935, depth 4 82.396, MTP0 33.097 on the same line), canaries before and after, cache zero; repeat-exact at 100-300-token prompts; output-identical through 16 concurrent users (MTP0: through 64).",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r200-whole-graph-depth5-strict-result.json"
     },
@@ -551,7 +551,15 @@
     "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/summary.json",
     "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/manifest.json",
     "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/evidence.tar.gz",
-    "experiments/qwen38-27b-b70/scripts/collect-fp8-flagship-evidence.py"
+    "experiments/qwen38-27b-b70/scripts/collect-fp8-flagship-evidence.py",
+    "experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md",
+    "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/summary.json",
+    "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/manifest.json",
+    "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/evidence.tar.gz",
+    "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/freeze-incident.json",
+    "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/incident-loader-source-review.json",
+    "experiments/qwen38-27b-b70/scripts/collect-amd-transfer-evidence.py",
+    "tools/sync-amd-transfer-prefill-profile.py"
   ],
   "performance_profiles": [
     {
@@ -1230,13 +1238,13 @@
     },
     {
       "id": "short-prompt-server-prefill-control",
-      "label": "Reading speed with a short prompt \u00b7 2 GPUs",
-      "public_label": "Reading speed \u00b7 2 GPUs \u00b7 1-token draft",
+      "label": "Reading speed with a short prompt · 2 GPUs",
+      "public_label": "Reading speed · 2 GPUs · 1-token draft",
       "metric": "prefill",
       "unit": "tok/s",
       "x_metric": "context_tokens",
       "x_label": "Input length (tokens)",
-      "scope": "One user, 2 GPUs, 128\u2013512 input tokens; no saved prompt cache. A separate short-input test, using the existing allocation method.",
+      "scope": "One user, 2 GPUs, 128–512 input tokens; no saved prompt cache. A separate short-input test, using the existing allocation method.",
       "public_scope": "How fast the server reads a short prompt before making its first token. One user; no saved prompt cache. A separate short-input test.",
       "measurement_kind": "server_prefill",
       "evidence": "experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md",
@@ -1279,14 +1287,14 @@
     },
     {
       "id": "server-prefill-fp8-focus-27b-fp8",
-      "label": "Reading speed at 512 and 2,048 input tokens \u00b7 2 GPUs",
-      "public_label": "Reading speed \u00b7 2 GPUs \u00b7 1-token draft \u00b7 4K capacity",
+      "label": "Reading speed at 512 and 2,048 input tokens · 2 GPUs",
+      "public_label": "Reading speed · 2 GPUs · 1-token draft · 4K capacity",
       "metric": "prefill",
       "unit": "tok/s",
       "x_metric": "context_tokens",
       "x_label": "Input length (tokens)",
       "measurement_kind": "server_prefill",
-      "scope": "One user, 2 GPUs, 512\u20132,048 input tokens; 4096-token capacity and batch budget; no saved prompt cache. Separate test on the published R304 runtime.",
+      "scope": "One user, 2 GPUs, 512–2,048 input tokens; 4096-token capacity and batch budget; no saved prompt cache. Separate test on the published R304 runtime.",
       "public_scope": "How fast the server reads your prompt before making its first token. One user, room for 4,096 tokens, no saved prompt cache. Unrepeated prose, code and documents.",
       "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md",
       "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-fp8-prefill-focus/summary.json",
@@ -1309,7 +1317,7 @@
         "profiler_configured": true,
         "profiler_active_during_measurement": false
       },
-      "technical_method": "Measured 2026-09-14 UTC on ASRock B70. Input tokens divided by vLLM server prefill duration from first scheduled execution to first token, obtained from one-request histogram deltas; not isolated GPU throughput or HTTP TTFT. Each point averages two control-arm rates. Each arm takes the median of three repeats per prose/code/documentation class, then the median across classes (18 measured requests per length). Unrepeated source excerpts truncated to exact numeric input IDs, 128 output tokens with ignore_eos, zero cached tokens; warmups and the optional profiler request excluded. Complete outputs repeat exactly. All 12 natural-completion strict-suite outputs matched the qualified reference. One loaded server per setup; no runtime optimization or new decode record promoted. The earlier short-prefill test used another corpus and a 1024-token capacity/batch budget; it is preserved separately and does not establish a speedup. At 2048 scheduled rows, W8A16 uses its natural oneDNN catalog beyond the fixed-K hook\u2019s 512-row range.",
+      "technical_method": "Measured 2026-09-14 UTC on ASRock B70. Input tokens divided by vLLM server prefill duration from first scheduled execution to first token, obtained from one-request histogram deltas; not isolated GPU throughput or HTTP TTFT. Each point averages two control-arm rates. Each arm takes the median of three repeats per prose/code/documentation class, then the median across classes (18 measured requests per length). Unrepeated source excerpts truncated to exact numeric input IDs, 128 output tokens with ignore_eos, zero cached tokens; warmups and the optional profiler request excluded. Complete outputs repeat exactly. All 12 natural-completion strict-suite outputs matched the qualified reference. One loaded server per setup; no runtime optimization or new decode record promoted. The earlier short-prefill test used another corpus and a 1024-token capacity/batch budget; it is preserved separately and does not establish a speedup. At 2048 scheduled rows, W8A16 uses its natural oneDNN catalog beyond the fixed-K hook’s 512-row range.",
       "promotion_qualified": false,
       "points": [
         {
@@ -1321,6 +1329,59 @@
           "context_tokens": 2048,
           "value": 3679.254296096209,
           "samples": 18
+        }
+      ]
+    },
+    {
+      "id": "server-prefill-recommended-fp8-33024-control",
+      "label": "Reading speed at 512–16,384 input tokens · recommended FP8 setup",
+      "public_label": "Reading speed · recommended setup · 2 GPUs · 1-token draft · 33,024-token capacity",
+      "metric": "prefill",
+      "unit": "tok/s",
+      "x_metric": "context_tokens",
+      "x_label": "Input length (tokens)",
+      "measurement_kind": "server_prefill",
+      "scope": "Original control on the recommended official FP8 setup: one user, two GPUs, MTP1, 33,024 total-token capacity, 4,096 scheduling budget and no saved prompt cache.",
+      "public_scope": "How fast the recommended setup reads your prompt before writing an answer. One user; 512, 2,048 and 16,384 input tokens; no saved prompt cache. Unrepeated prose, code and documents. These are baseline measurements.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md",
+      "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/summary.json",
+      "evidence_manifest": "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/manifest.json",
+      "operating_profile": {
+        "tensor_parallel_size": 2,
+        "speculative_tokens": 1,
+        "quantization": "FP8",
+        "parent_runtime": "R304",
+        "image_id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+        "activations": "FP16",
+        "kv_cache": "FP16",
+        "concurrency": 1,
+        "max_model_len": 33024,
+        "max_num_batched_tokens": 4096,
+        "max_num_seqs": 1,
+        "prefix_caching": false,
+        "classpad": 0,
+        "rowchunk": 32,
+        "block_size": 64,
+        "gpu_memory_utilization": 0.95,
+        "model_runner": "V1"
+      },
+      "technical_method": "September 14 original-control measurements on two ASRock B70s. Input tokens divided by server prefill duration, from first scheduled execution to first token, replayed from one-request histogram deltas. At each exact input length, two repeats per prose/code/documentation class: median within each class, then median across classes (six measured requests per point). Three separate warmups are excluded. Numeric input IDs; 128 forced output tokens; zero cached tokens and complete output repeat equality. The full natural-completion suite also passes 12/12 reference comparisons and canaries. After the failed combined newer-runtime/V2/DFlash startup and user reboot, the original qualified service was restored; its strict suite and all measured context outputs match the pre-reboot control. Restored-process timings are separate supporting evidence and are not pooled into these values. No candidate inference result, optimization speedup, new decode record or unmeasured-context performance is claimed. Historical 1K- and 4K-capacity prefill profiles remain separate.",
+      "promotion_qualified": false,
+      "points": [
+        {
+          "context_tokens": 512,
+          "value": 2858.8033113621277,
+          "samples": 6
+        },
+        {
+          "context_tokens": 2048,
+          "value": 3676.9300933162285,
+          "samples": 6
+        },
+        {
+          "context_tokens": 16384,
+          "value": 3305.1376561639677,
+          "samples": 6
         }
       ]
     }

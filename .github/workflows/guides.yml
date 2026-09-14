@@ -26,6 +26,7 @@ on:
       - "tools/sync-short-prefill-profiles.py"
       - "tools/sync-prefill-followup-profiles.py"
       - "tools/sync-fp8-prefill-focus-profile.py"
+      - "tools/sync-amd-transfer-prefill-profile.py"
       - "tools/test_sync_fp8_prefill_focus_profile.py"
       - "tools/test_sync_prefill_followup_profiles.py"
       - "tools/test_build_family_pages.py"
@@ -79,6 +80,7 @@ on:
       - "tools/sync-short-prefill-profiles.py"
       - "tools/sync-prefill-followup-profiles.py"
       - "tools/sync-fp8-prefill-focus-profile.py"
+      - "tools/sync-amd-transfer-prefill-profile.py"
       - "tools/test_sync_fp8_prefill_focus_profile.py"
       - "tools/test_sync_prefill_followup_profiles.py"
       - "tools/test_build_family_pages.py"
@@ -129,6 +131,7 @@ jobs:
       - run: python3 tools/sync-prefill-followup-profiles.py --check
       - run: python3 experiments/qwen38-27b-b70/scripts/verify-fp8-prefill-evidence.py
       - run: python3 tools/sync-fp8-prefill-focus-profile.py --check
+      - run: python3 tools/sync-amd-transfer-prefill-profile.py --check
       - run: python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts -p "test_*fp8_prefill*.py"
       - run: python3 -m unittest tools/test_sync_prefill_followup_profiles.py

@@ -82,6 +82,12 @@ network overhead. These measurements have separate configuration labels:
   at 512 input tokens** and **3,679 at 2,048**. HTTP first-token waits were
   182 and 568 ms. These are not measurements of the 33,024-capacity launcher.
   [Prefill results and graphs](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md).
+- The recommended **33,024-token capacity** setup was separately measured at
+  **2,859 / 3,677 / 3,305 input tokens/s** for 512 / 2,048 / 16,384-token
+  prompts. These are baseline readings from the bounded transfer study, not
+  an optimization gain. [Measurements and transfer results](../../experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md)
+  also record the rejected dispatch candidate and a newer-runtime/DFlash2
+  startup freeze. That experimental image is quarantined; it is not this recipe.
 - The **86.18 output tokens/s** historical record uses an older runtime and
   MTP depth 5. It is an advanced configuration, not this launcher's expected rate.
 

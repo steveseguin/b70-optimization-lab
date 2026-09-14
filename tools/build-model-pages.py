@@ -267,7 +267,7 @@ def svg_profile(profile):
     path = " ".join(f"{'M' if i == 0 else 'L'}{sx(x):.1f},{sy(y):.1f}" for i, (x, y) in enumerate(zip(xs, ys)))
     dots = "".join(
         f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="4" fill="var(--spot)" tabindex="0"><title>{esc(public_x_label(profile))}: {x:g}; {y} {esc(profile.get("unit", "tok/s"))}</title></circle>'
-        f'<text x="{sx(x):.1f}" y="{sy(y) + (22 if i % 2 and sx(x) - sx(xs[i - 1]) < 55 and sy(y) < height - bottom - 25 else -9):.1f}" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">{fmt(y)}</text>'
+        f'<text x="{sx(x):.1f}" y="{sy(y) + (22 if i % 2 and sx(x) - sx(xs[i - 1]) < 55 and abs(sy(y) - sy(ys[i - 1])) < 18 and sy(y) < height - bottom - 25 else -9):.1f}" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">{fmt(y)}</text>'
         for i, (x, y) in enumerate(zip(xs, ys))
     )
     def x_tick(v):

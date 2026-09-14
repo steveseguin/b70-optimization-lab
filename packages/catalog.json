@@ -5807,7 +5807,15 @@
         "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/summary.json",
         "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/manifest.json",
         "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/evidence.tar.gz",
-        "experiments/qwen38-27b-b70/scripts/collect-fp8-flagship-evidence.py"
+        "experiments/qwen38-27b-b70/scripts/collect-fp8-flagship-evidence.py",
+        "experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md",
+        "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/summary.json",
+        "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/manifest.json",
+        "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/evidence.tar.gz",
+        "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/freeze-incident.json",
+        "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/incident-loader-source-review.json",
+        "experiments/qwen38-27b-b70/scripts/collect-amd-transfer-evidence.py",
+        "tools/sync-amd-transfer-prefill-profile.py"
       ],
       "performance_profiles": [
         {
@@ -6577,6 +6585,59 @@
               "context_tokens": 2048,
               "value": 3679.254296096209,
               "samples": 18
+            }
+          ]
+        },
+        {
+          "id": "server-prefill-recommended-fp8-33024-control",
+          "label": "Reading speed at 512–16,384 input tokens · recommended FP8 setup",
+          "public_label": "Reading speed · recommended setup · 2 GPUs · 1-token draft · 33,024-token capacity",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Input length (tokens)",
+          "measurement_kind": "server_prefill",
+          "scope": "Original control on the recommended official FP8 setup: one user, two GPUs, MTP1, 33,024 total-token capacity, 4,096 scheduling budget and no saved prompt cache.",
+          "public_scope": "How fast the recommended setup reads your prompt before writing an answer. One user; 512, 2,048 and 16,384 input tokens; no saved prompt cache. Unrepeated prose, code and documents. These are baseline measurements.",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md",
+          "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/summary.json",
+          "evidence_manifest": "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/manifest.json",
+          "operating_profile": {
+            "tensor_parallel_size": 2,
+            "speculative_tokens": 1,
+            "quantization": "FP8",
+            "parent_runtime": "R304",
+            "image_id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+            "activations": "FP16",
+            "kv_cache": "FP16",
+            "concurrency": 1,
+            "max_model_len": 33024,
+            "max_num_batched_tokens": 4096,
+            "max_num_seqs": 1,
+            "prefix_caching": false,
+            "classpad": 0,
+            "rowchunk": 32,
+            "block_size": 64,
+            "gpu_memory_utilization": 0.95,
+            "model_runner": "V1"
+          },
+          "technical_method": "September 14 original-control measurements on two ASRock B70s. Input tokens divided by server prefill duration, from first scheduled execution to first token, replayed from one-request histogram deltas. At each exact input length, two repeats per prose/code/documentation class: median within each class, then median across classes (six measured requests per point). Three separate warmups are excluded. Numeric input IDs; 128 forced output tokens; zero cached tokens and complete output repeat equality. The full natural-completion suite also passes 12/12 reference comparisons and canaries. After the failed combined newer-runtime/V2/DFlash startup and user reboot, the original qualified service was restored; its strict suite and all measured context outputs match the pre-reboot control. Restored-process timings are separate supporting evidence and are not pooled into these values. No candidate inference result, optimization speedup, new decode record or unmeasured-context performance is claimed. Historical 1K- and 4K-capacity prefill profiles remain separate.",
+          "promotion_qualified": false,
+          "points": [
+            {
+              "context_tokens": 512,
+              "value": 2858.8033113621277,
+              "samples": 6
+            },
+            {
+              "context_tokens": 2048,
+              "value": 3676.9300933162285,
+              "samples": 6
+            },
+            {
+              "context_tokens": 16384,
+              "value": 3305.1376561639677,
+              "samples": 6
             }
           ]
         }
