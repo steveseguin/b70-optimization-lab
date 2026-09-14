@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Submit exactly one generation; failures never restart or retry the server."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import time
@@ -17,6 +18,12 @@ evidence = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 out = evidence / 'requests' / args.name
 out.mkdir(parents=True, exist_ok=False)
 assert json.loads((evidence / 'model-verification.json').read_text())['status'] == 'passed'
+identity = json.loads((evidence / 'server-identity.json').read_text())
+assert Path('/proc/sys/kernel/random/boot_id').read_text().strip() == identity['boot_id']
+assert Path(f"/proc/{identity['pid']}/cmdline").exists(), 'original server is no longer running'
+identity['proc_start_ticks'] = Path(f"/proc/{identity['pid']}/stat").read_text().split(') ')[1].split()[19]
+identity['model_verification_sha256'] = hashlib.sha256((evidence / 'model-verification.json').read_bytes()).hexdigest()
+(out / 'identity.json').write_text(json.dumps(identity, indent=2) + '\n')
 
 def call(path, payload=None):
     if (evidence / 'FAULT.json').exists():

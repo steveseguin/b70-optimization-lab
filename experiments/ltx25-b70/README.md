@@ -74,3 +74,19 @@ is preserved in `data/transformer-corruption-byte-delta.json` and the proof in
 region bytes and partial publisher download remain outside Git in the evidence
 root. The now-redundant download was stopped once, after verification succeeded;
 the ComfyUI server was not stopped or restarted.
+
+The encoder also failed staging: expected
+`ef7243612fdae7a75cb4d5cee9433e81380675fb6c213bd98ae74a9cd16561d1`,
+observed `24ab21fc0b5c3613f6f079393146c28a3ba68b0ec5886eeb671c437ec6d2e5e4`.
+The full rejected copy and failed receipt remain in the evidence root. A pinned
+replacement download is compared blockwise by `scripts/locate-encoder-damage.py`;
+`scripts/repair-encoder-candidate.py` can make one separate candidate from a
+localized difference cluster. It publishes only after full-file publisher and
+persisted direct-I/O hashes pass. The finalizer independently hashes all five
+final files and preserves original staging failures before opening the gate.
+
+Pre-execution review strengthened the client and repeat verifier to bind each
+actual server history to its submitted graph, unique prompt ID, server process,
+boot and model-verification receipt. All four tensor outputs and audio sample
+rate must match. The float-media exporter reads only needed tensors so BF16
+latents do not require unsupported NumPy BF16 conversion.

@@ -8,15 +8,15 @@ from pathlib import Path
 
 import av
 import numpy as np
-from safetensors.numpy import load_file
+from safetensors import safe_open
 
 
 def export(source, destination):
     assert not destination.exists(), destination
-    tensors = load_file(str(source / 'tensors.safetensors'))
     summary = json.loads((source / 'summary.json').read_text())
-    images = tensors['images']
-    audio = tensors['waveform'][0]
+    with safe_open(source / 'tensors.safetensors', framework='np') as tensors:
+        images = tensors.get_tensor('images')
+        audio = tensors.get_tensor('waveform')[0]
     sample_rate = summary['sample_rate']
     assert images.dtype == np.float32 and audio.dtype == np.float32
     assert audio.shape[0] in (1, 2)
@@ -43,8 +43,12 @@ def export(source, destination):
         for packet in sound.encode():
             out.mux(packet)
     with av.open(str(destination)) as inp:
+        decoded_rate = inp.streams.video[0].average_rate
+        assert decoded_rate == Fraction(24, 1)
         decoded_images = np.stack([f.to_ndarray(format='gbrpf32le') for f in inp.decode(video=0)])
     with av.open(str(destination)) as inp:
+        decoded_sample_rate = inp.streams.audio[0].rate
+        assert decoded_sample_rate == sample_rate
         decoded_audio = []
         for frame in inp.decode(audio=0):
             array = frame.to_ndarray()
@@ -57,6 +61,10 @@ def export(source, destination):
     report = {'path': str(destination), 'video_codec': 'FFV1 v4 float RGB32 (experimental codec profile)',
               'audio_codec': 'PCM float32', 'video_roundtrip_bitwise': video_equal,
               'audio_roundtrip_bitwise': audio_equal,
+              'source': str(source), 'decoded_fps': str(decoded_rate),
+              'decoded_sample_rate': decoded_sample_rate,
+              'source_tensors_sha256': hashlib.sha256((source / 'tensors.safetensors').read_bytes()).hexdigest(),
+              'source_summary_sha256': hashlib.sha256((source / 'summary.json').read_bytes()).hexdigest(),
               'sha256': hashlib.sha256(destination.read_bytes()).hexdigest()}
     destination.with_suffix('.verification.json').write_text(json.dumps(report, indent=2) + '\n')
     assert video_equal and audio_equal, report

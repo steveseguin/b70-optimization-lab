@@ -29,9 +29,11 @@ actions are historical, span multiple hosts, and are not current instructions.
 a very short native-precision clip and deterministic repeat checks. One local
 ComfyUI server (PID 11499, `127.0.0.1:8188`) is running with exclusive device
 locks; all four cards passed its small copy/compute preflight. No model request
-has been submitted yet. The RAID distilled transformer failed its fresh
-SHA-256 check; rejected bytes and the failed receipt are preserved. A pinned
-replacement is downloading to NVMe while other components are verified. The
+has been submitted yet. The RAID transformer and encoder failed fresh
+SHA-256 checks; rejected bytes and failed receipts are preserved. The transformer
+was repaired by replacing 79 damaged bytes and passed full publisher/direct-I/O
+hashes. A pinned encoder replacement is downloading, with completed blocks
+compared to locate its damaged region. Three smaller components passed staging. The
 API rejects generation until the full checksum receipt passes. Preserve the server, source and environment at
 `/home/steve/src/ComfyUI-ltx25-baseline` and
 `/home/steve/.venvs/ltx25-baseline`; no restart chain or power-setting changes.

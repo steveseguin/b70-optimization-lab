@@ -23,11 +23,19 @@ report = {'status': 'running', 'runs': [], 'comparisons': [],
           'cross_process_determinism': 'not tested',
           'parity_against_dev_or_cuda': 'not tested; distinct target/runtime'}
 reference_prompt = None
+reference_identity = None
+reference_sample_rate = None
+prompt_ids = set()
 for name in args.names:
     folder = root / 'output/validation' / name
     meta = json.loads((folder / 'summary.json').read_text())
     assert meta['deterministic_enabled'] and not meta['deterministic_warn_only']
     tensors = load_file(str(folder / 'tensors.safetensors'))
+    assert set(tensors) == set(meta['tensors']) == {'images', 'video_latent', 'audio_latent', 'waveform'}
+    assert isinstance(meta['sample_rate'], int) and meta['sample_rate'] > 0
+    if reference_sample_rate is None:
+        reference_sample_rate = meta['sample_rate']
+    assert meta['sample_rate'] == reference_sample_rate, 'audio sample rate changed'
     assert list(tensors['images'].shape) == [25, 256, 256, 3]
     assert tensors['images'].std() > 0.01, 'degenerate output'
     assert bool((tensors['images'][1:] != tensors['images'][:-1]).any()), 'all frames identical'
@@ -39,9 +47,20 @@ for name in args.names:
         assert str(t.dtype) == meta['tensors'][key]['dtype']
     request = root / 'requests' / name
     history = json.loads((request / 'history.json').read_text())
+    submission = json.loads((request / 'submission.json').read_text())
+    result = json.loads((request / 'result.json').read_text())
+    identity = json.loads((request / 'identity.json').read_text())
+    if reference_identity is None:
+        reference_identity = identity
+    assert identity == reference_identity, 'server/model identity changed'
+    assert identity['model_verification_sha256'] == hashlib.sha256((root / 'model-verification.json').read_bytes()).hexdigest()
+    assert history['prompt'][1] == submission['prompt_id'] == result['prompt_id']
+    assert submission['prompt_id'] not in prompt_ids, 'duplicate execution'
+    prompt_ids.add(submission['prompt_id'])
     assert history['status']['status_str'] == 'success'
     assert not any(msg[1].get('nodes') for msg in history['status']['messages'] if msg[0] == 'execution_cached')
     prompt = json.loads((request / 'prompt.json').read_text())
+    assert prompt == history['prompt'][2], 'history does not match the submitted graph'
     for node, field in [('414', 'run_name'), ('413', 'filename_prefix'), ('75', 'filename_prefix')]:
         prompt[node]['inputs'][field] = '<output-path>'
     if reference_prompt is None:
@@ -63,6 +82,7 @@ for i in range(1, len(all_tensors)):
                                        unequal_values=int((a != b).sum()))
     report['comparisons'].append(row)
 report['status'] = 'passed' if all(t['bitwise_equal'] for r in report['comparisons'] for t in r['tensors'].values()) else 'failed'
+report['server_identity'] = reference_identity
 args.output.write_text(json.dumps(report, indent=2) + '\n')
 print(json.dumps({'status': report['status'], 'runs': args.names, 'comparisons': report['comparisons']}, indent=2))
 raise SystemExit(0 if report['status'] == 'passed' else 1)
