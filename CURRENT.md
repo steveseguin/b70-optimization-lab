@@ -25,7 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14: decoder packet09 ready for native comparison.**
+**Four-B70 host, September14 16:33 UTC: packet09 node startup rejected; zero clip requests.**
+PID82046 serves `http://127.0.0.1:8188` (exec49702) with an empty queue.
+All four startup device checks passed and strict determinism is enabled, but
+`LTXNAAxisDecode` failed registration before router installation: its sd.py pin
+incorrectly names the upstream source rather than the inherited encoder source.
+No native campaign was launched, and no automatic retry follows. Preserve this
+idle application and packet09 while correcting the source integration offline.
+Old PID66846 exited0 after one SIGINT; computer boot remains
+`8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a`, no host reboot or settings changes.
+[Startup failure evidence](experiments/ltx25-b70/data/na-axis-migration-09/startup-failure.json).
+This supersedes every older live PID and next-launch statement below.
+
+**Four-B70 host, September14: decoder packet09 preparation (historical).**
 Packet `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-09`
 is sealed at manifest`a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed`.
 The private original-VAEDecode integration passed9 CPU groups; the11-request

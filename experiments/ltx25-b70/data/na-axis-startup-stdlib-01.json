@@ -1,0 +1,52 @@
+{
+  "status": "passed-stdlib-startup-integration",
+  "checks": {
+    "old_packet09_failure_reproduced": {
+      "error": "Original VAE decode source differs",
+      "events": []
+    },
+    "corrected_startup_registers_once": {
+      "registered": [
+        "LTXNAAxisDecode"
+      ],
+      "events": [
+        "context",
+        "install"
+      ],
+      "duplicate_startup_rejected": true
+    },
+    "wrong_nodes_refused": {
+      "error": "Original VAE decode source differs: nodes",
+      "events": []
+    },
+    "wrong_sd_refused": {
+      "error": "Original VAE decode source differs: comfy.sd",
+      "events": []
+    },
+    "wrong_decoder_refused": {
+      "error": "Original VAE decode source differs: comfy.ldm.lightricks.vae.na_diffusion_decoder",
+      "events": []
+    },
+    "wrong_router_refused": {
+      "error": "NA router source differs",
+      "events": []
+    },
+    "wrong_context_refused": {
+      "error": "NA startup environment/server identity changed",
+      "events": [
+        "context"
+      ]
+    },
+    "wrong_identity_refused": {
+      "error": "NA startup server identity differs",
+      "events": []
+    }
+  },
+  "node_sha256": "ffd7549d29828a11f336f07873f63a407df7722328df519f2bec3514964ad32b",
+  "old_node_sha256": "27e95788b3213adab52a72df46049cda2c17ed9c32afb85338c7c7f839bebf03",
+  "test_sha256": "b294fc1d1d740abc4e6e36b1db4193831489e9488a15f26cab3d6e4392744816",
+  "source_packet_manifest_sha256": "a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed",
+  "torch_imported": false,
+  "native_requests": 0,
+  "limitations": "Real initialize and inherited source hashes; stub modules/install/context, no real native startup or decode."
+}
