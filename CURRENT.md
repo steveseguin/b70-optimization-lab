@@ -47,6 +47,42 @@ on one persistent research process. No new result or default is promoted.
 [Implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
+**Four-B70 host, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
+Linux OOM-killed LTX PID116013 at18:12:58 UTC during the third component
+transition (host-table back to control), before the next clip completed.
+Exec15201 exited137. Xe GPU0 reported a bcs engine fault/reset at18:13:01,
+after the process kill. Client116455/exec91667 exited1 and submissions halted.
+The root FAULT.json now records the incident; no new native GPU/CPU work.
+No automatic reboot, driver reset, application restart or settings change.
+The computer remains on the same boot; passive postflight is preserved below.
+
+Ten completed clips passed all four raw oracles, including all five host-table
+clips with full remaining encoder residency. Host warm previews6.322–6.455s
+versus first-control6.378–6.576s; the final control is missing, so this is an
+incomplete screen and no speed promotion. Current work: preserve failed export,
+audit the RAM spike during component retirement/unload, and prepare a bounded
+source-only lifecycle fix. Keep successful raw parity evidence and all failures.
+[Incident postflight](experiments/ltx25-b70/data/host-embedding-screen-01-incident/postflight.json).
+
+**Four-B70 host, September14 18:07 UTC: packet11 ready; encoder comparison starting.**
+LTX PID116013/exec15201 serves `http://127.0.0.1:8188`, using
+`prepared-encoder-host-embedding-11` at manifest
+`34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08`.
+All four startup device checks, strict determinism, complete endpoint identity
+and both new node interfaces passed. Same computer boot, no host/settings action.
+Client PID116455/exec91667 runs the bounded15-clip `host-embedding-screen-01` comparison, with original
+transformer/decoder and all four raw oracles. No GPU quality/speed claim yet.
+[Startup admission](experiments/ltx25-b70/data/host-embedding-migration-11/startup-admission.json).
+
+**Four-B70 host, September14 18:05 UTC: controlled LTX application migration.**
+Packet10 PID84255/exec33936 exited0 after one SIGINT to load reviewed packet11.
+The computer is on the same boot; no host or memory/power settings action.
+Packet11 manifest34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08
+passed CPU integration, source assembly, builder and startup offline gates;
+the independently reviewed15-clip client passed10 stdlib checks and source
+admission. Starting the application and verifying registration precede all clips.
+[Migration evidence](experiments/ltx25-b70/data/host-embedding-migration-11/preflight.json).
+
 **Four-B70 host, September14 17:54 UTC: actual CLIP integration CPU gate passed.**
 The inactive host-table adapter passed all six actual tiny CPU CLIP integration
 groups, including unchanged memory estimation/native owner loading, clone and

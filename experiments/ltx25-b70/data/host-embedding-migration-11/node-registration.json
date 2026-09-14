@@ -1,0 +1,105 @@
+{
+  "LTXHostEmbeddingComponents": {
+    "input": {
+      "required": {
+        "placement": [
+          [
+            "split"
+          ]
+        ],
+        "encoder_mode": [
+          [
+            "control",
+            "host-table"
+          ]
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "placement",
+        "encoder_mode"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "MODEL",
+      "CLIP",
+      "VAE",
+      "VAE",
+      "LATENT_UPSCALE_MODEL"
+    ],
+    "output_is_list": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "output_name": [
+      "model",
+      "clip",
+      "video_vae",
+      "audio_vae",
+      "upscaler"
+    ],
+    "name": "LTXHostEmbeddingComponents",
+    "display_name": "LTXHostEmbeddingComponents",
+    "description": "",
+    "python_module": "custom_nodes.ltx_host_embedding_lab",
+    "category": "lab/validation",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "LTXHostEmbeddingPlacementCheck": {
+    "input": {
+      "required": {
+        "clip": [
+          "CLIP"
+        ],
+        "conditioning": [
+          "CONDITIONING"
+        ],
+        "run_name": [
+          "STRING",
+          {
+            "default": "assign-unique-request-name"
+          }
+        ],
+        "encoder_mode": [
+          [
+            "control",
+            "host-table"
+          ]
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "clip",
+        "conditioning",
+        "run_name",
+        "encoder_mode"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "CONDITIONING"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "CONDITIONING"
+    ],
+    "name": "LTXHostEmbeddingPlacementCheck",
+    "display_name": "LTXHostEmbeddingPlacementCheck",
+    "description": "",
+    "python_module": "custom_nodes.ltx_host_embedding_lab",
+    "category": "lab/validation",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  }
+}
