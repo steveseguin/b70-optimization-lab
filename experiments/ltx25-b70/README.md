@@ -90,3 +90,10 @@ actual server history to its submitted graph, unique prompt ID, server process,
 boot and model-verification receipt. All four tensor outputs and audio sample
 rate must match. The float-media exporter reads only needed tensors so BF16
 latents do not require unsupported NumPy BF16 conversion.
+
+Encoder repair succeeded: 112 changed bytes in the 8 MiB block starting at
+10,158,604,288 were replaced in a separate candidate. The full publisher hash
+and direct-I/O reread both matched; `data/encoder-repair-promotion.json` retains
+every changed byte and the verification receipt. Its redundant network download
+was stopped once after successful promotion, preserving the 11.17 GB publisher
+prefix. The server remained running and had still received no generation.

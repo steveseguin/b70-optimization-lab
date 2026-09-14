@@ -23,6 +23,7 @@ assert Path('/proc/sys/kernel/random/boot_id').read_text().strip() == identity['
 assert Path(f"/proc/{identity['pid']}/cmdline").exists(), 'original server is no longer running'
 identity['proc_start_ticks'] = Path(f"/proc/{identity['pid']}/stat").read_text().split(') ')[1].split()[19]
 identity['model_verification_sha256'] = hashlib.sha256((evidence / 'model-verification.json').read_bytes()).hexdigest()
+identity['server_args_sha256'] = hashlib.sha256((evidence / 'server-args.json').read_bytes()).hexdigest()
 (out / 'identity.json').write_text(json.dumps(identity, indent=2) + '\n')
 
 def call(path, payload=None):

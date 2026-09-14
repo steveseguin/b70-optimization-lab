@@ -28,13 +28,12 @@ actions are historical, span multiple hosts, and are not current instructions.
 **Four-B70 host, 2026-09-13 20:42 EDT: LTX baseline bring-up.** User authorized
 a very short native-precision clip and deterministic repeat checks. One local
 ComfyUI server (PID 11499, `127.0.0.1:8188`) is running with exclusive device
-locks; all four cards passed its small copy/compute preflight. No model request
-has been submitted yet. The RAID transformer and encoder failed fresh
+locks; all four cards passed its small copy/compute preflight. The first fixed-seed
+256x256/25-frame request `baseline-01` is running. The RAID transformer and encoder failed fresh
 SHA-256 checks; rejected bytes and failed receipts are preserved. The transformer
-was repaired by replacing 79 damaged bytes and passed full publisher/direct-I/O
-hashes. A pinned encoder replacement is downloading, with completed blocks
-compared to locate its damaged region. Three smaller components passed staging. The
-API rejects generation until the full checksum receipt passes. Preserve the server, source and environment at
+was repaired by replacing 79 damaged bytes, and the encoder by replacing 112.
+All five final component files passed publisher/direct-I/O hashes; the generation
+gate is now open. Rejected files and partial downloads remain preserved. Preserve the server, source and environment at
 `/home/steve/src/ComfyUI-ltx25-baseline` and
 `/home/steve/.venvs/ltx25-baseline`; no restart chain or power-setting changes.
 See [lane preregistration](experiments/ltx25-b70/README.md). Evidence root:
