@@ -25,7 +25,7 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September 14: native block compilation exact; timing active.**
+**Four-B70 host, September 14: native block compilation exact; paired timing complete.**
 PID17769 serves `http://127.0.0.1:8188`, server `encoder-server-compiler-05`,
 packet `prepared-encoder-compiler-05`, manifest
 `45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5`.
@@ -36,12 +36,19 @@ sigmoid and two tanh-GELU calls. This qualifies block24 only, with no demonstrat
 speed win (warm compiled median6.607s; restored boat about6.49s).
 Postflight: empty queue, matching identity, clean kernel and no FAULT latch.
 
-A bounded18-request `compiler-timing-01` is now active on the SAME process:
-two rounds of restored/compiled/restored per boat/marble/bird fixture. It reuses
-the qualified candidate, revalidates prior native/original-output evidence and
-keeps all live quality and retention gates. Inspect its progress before new GPU
-requests. No application reload occurred for this timing test. Continuous
-real-time generation remains incomplete.
+The bounded18-request `compiler-timing-01` completed on this same process, with
+all original-output checks passing. Median compiled-minus-adjacent-control mean
+was+99.797ms preview and+17.977ms sampler intervals: a measured speed loss, not
+promotion. The application is idle on restored dispatch, with the qualified
+compiled candidate retained and no fault. Across both campaigns27 clips passed,
+including11 compiled clips. [Paired results](experiments/ltx25-b70/notes/compiler-timing-01-results.md).
+
+An inactive registry-binding reuse patch removes one duplicate full registry
+walk per lifecycle validation while keeping all late-mutation/ownership checks.
+Parent and candidate native CPU lifecycle gates passed; no GPU speed result or
+deployment. Next: qualify overhead changes and prepare bounded multi-block
+selection without per-block application reloads. Continuous real-time generation
+remains incomplete. [Patch and CPU evidence](experiments/ltx25-b70/notes/compile-registry-reuse-01-cpu.md).
 [Exact native results](experiments/ltx25-b70/notes/compiler-screen-04-results.md),
 [scaling/guard audit](experiments/ltx25-b70/notes/compiler-screen-04-conditional-scaling-audit.md),
 [prepared source](experiments/ltx25-b70/notes/native-activations-runtime-05-prepared.md).

@@ -1,0 +1,39 @@
+--- a/source/scripts/ltx_block_compile.py
++++ b/source/scripts/ltx_block_compile.py
+@@ -117,7 +117,11 @@
+         return self.original_route(args, {**extra, 'original_block': self._call_native})
+ 
+ 
+-def _routes(patcher):
++def _routes(patcher, *, binding_index=None):
++    # Ordinary callers retain two results; lifecycle callers may request the
++    # binding selected by the same complete registry/placement validation.
++    if binding_index is not None and (type(binding_index) is not int or not 0 <= binding_index < 48):
++        raise ValueError('Select one native binding index from 0 through 47')
+     if type(patcher) is not LTXLayerShardedPatcher or patcher.is_dynamic():
+         raise TypeError('One-block compilation requires the native static layer-sharded patcher')
+     if (patcher.patches or patcher.hook_patches or patcher.forced_hooks or patcher.object_patches
+@@ -149,7 +153,10 @@
+     routes = patcher.model_options['transformer_options']['patches_replace']['dit']
+     if set(routes) != {('double_block', i) for i in range(48)}:
+         raise RuntimeError('Unexpected block route registry')
+-    _registered_binding(patcher, diffusion, routes, 0)
++    binding = _registered_binding(patcher, diffusion, routes,
++                                  0 if binding_index is None else binding_index)
++    if binding_index is not None:
++        return diffusion, routes, binding
+     return diffusion, routes
+ 
+ 
+@@ -202,10 +209,9 @@
+         shards = patcher.get_additional_models_with_key(KEY)
+         if len(shards) != 1 or shards[0].model is not self.secondary_owner:
+             raise RuntimeError('Executing secondary shard owner changed')
+-        diffusion, routes = _routes(patcher)
++        diffusion, routes, current = _routes(patcher, binding_index=self.index)
+         if routes[('double_block', self.index)] is not self.route:
+             raise RuntimeError('Executing compiler callback was replaced')
+-        current = _registered_binding(patcher, diffusion, routes, self.index)
+         if any(a is not b if isinstance(a, torch.nn.Module) else a != b
+                for a, b in zip(current, self.route._binding)):
+             raise RuntimeError('Executing compiler registration binding changed')

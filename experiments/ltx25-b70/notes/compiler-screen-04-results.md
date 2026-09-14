@@ -8,7 +8,8 @@ speed promotion or a qualification of all 48 blocks.
 
 Both native stage shapes passed eager/candidate and candidate/repeat equality:
 video [1,64,4096] and [1,256,4096], audio [1,26,2048], all BF16 on XPU1. Five
-compiled clips completed 55 registered block calls. Two emitted wrappers each
+compiled clips completed 55 gate invocations, plus two internal compiled
+qualification repeats and two eager reference forwards. Two emitted wrappers each
 retain 15 native RMS, six sigmoid and two tanh-GELU calls, independently counted
 from generated Python. There were exactly two compiled graphs. The unchanged
 state, route ownership, restoration and strict deterministic-mode gates passed.

@@ -1,0 +1,28 @@
+{
+  "schema": "ltx25.compile-registry-reuse-source.v1",
+  "status": "inactive-source-candidate",
+  "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-05",
+  "parent_manifest_sha256": "45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5",
+  "parent_adapter_sha256": "c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e",
+  "candidate_adapter_sha256": "4fe9f3e8ed962a0e50e53b00734c9095290f58e6a16dcff998db5282a819b970",
+  "files": {
+    "ltx_block_compile.original.py": "c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e",
+    "ltx_block_compile.candidate.py": "4fe9f3e8ed962a0e50e53b00734c9095290f58e6a16dcff998db5282a819b970",
+    "registry-reuse.patch": "5f2b45a8eb34e74fe1bce16c5f59f9b18ae077e7e78d0ecfaad794245b8b3862"
+  },
+  "change": "Reuse selected binding from one complete _routes registry validation inside _CompilePreRun._validate",
+  "api": "_routes(patcher) returns two values; _routes(patcher,binding_index=0..47) returns three",
+  "guards": "Keyword-only binding index rejects non-int (including bool), negative and >=48 values",
+  "source_checks": {
+    "exact_whole_source_reversal_passed": true,
+    "registered_binding_body_unchanged": true,
+    "compiled_route_class_unchanged": true,
+    "apply_and_remove_unchanged": true,
+    "pre_run_and_each_execution_validation_calls_unchanged": true
+  },
+  "lifecycle_negative_tests_run": false,
+  "native_imported_or_executed": false,
+  "live_source_changed": false,
+  "runtime_qualified": false,
+  "speed_qualified": false
+}
