@@ -1,0 +1,105 @@
+diff --git "a/dist/mlbottleneck-engine.mjs" "b/dist/mlbottleneck-engine.mjs"
+index 0a63c9620..d35884a6f 100644
+--- "a/dist/mlbottleneck-engine.mjs"
++++ "b/dist/mlbottleneck-engine.mjs"
+@@ -6795,8 +6795,10 @@ function createEngine(options = {}) {
+      */
+     function calculatePowerAndCost(devicesArray, tokensPerSecond, metricsArray = [], usage = null) {
+         const usageProfile = usage || (typeof getUsageAssumptionsFromDom === 'function' ? getUsageAssumptionsFromDom() : {});
+-        const electricityCostPerKWh = parseFloat(usageProfile.costPerKwh) || 0.12;
+-        const hoursPerDay = parseFloat(usageProfile.hoursPerDay) || 8;
++        const parsedCostPerKwh = parseFloat(usageProfile.costPerKwh);
++        const electricityCostPerKWh = Number.isFinite(parsedCostPerKwh) ? parsedCostPerKwh : 0.12;
++        const parsedHoursPerDay = parseFloat(usageProfile.hoursPerDay);
++        const hoursPerDay = Number.isFinite(parsedHoursPerDay) ? parsedHoursPerDay : 8;
+ 
+         let totalTDP = 0;
+         let actualPowerWatts = 0;
+diff --git "a/dist/mlbottleneck-engine.umd.js" "b/dist/mlbottleneck-engine.umd.js"
+index 8fa43459e..29b18fd3f 100644
+--- "a/dist/mlbottleneck-engine.umd.js"
++++ "b/dist/mlbottleneck-engine.umd.js"
+@@ -6804,8 +6804,10 @@
+          */
+         function calculatePowerAndCost(devicesArray, tokensPerSecond, metricsArray = [], usage = null) {
+             const usageProfile = usage || (typeof getUsageAssumptionsFromDom === 'function' ? getUsageAssumptionsFromDom() : {});
+-            const electricityCostPerKWh = parseFloat(usageProfile.costPerKwh) || 0.12;
+-            const hoursPerDay = parseFloat(usageProfile.hoursPerDay) || 8;
++            const parsedCostPerKwh = parseFloat(usageProfile.costPerKwh);
++            const electricityCostPerKWh = Number.isFinite(parsedCostPerKwh) ? parsedCostPerKwh : 0.12;
++            const parsedHoursPerDay = parseFloat(usageProfile.hoursPerDay);
++            const hoursPerDay = Number.isFinite(parsedHoursPerDay) ? parsedHoursPerDay : 8;
+ 
+             let totalTDP = 0;
+             let actualPowerWatts = 0;
+diff --git "a/engine.js" "b/engine.js"
+index d78475e47..7b9bbfe5a 100644
+--- "a/engine.js"
++++ "b/engine.js"
+@@ -6791,8 +6791,10 @@ function estimateDeviceTDP(device) {
+  */
+ function calculatePowerAndCost(devicesArray, tokensPerSecond, metricsArray = [], usage = null) {
+     const usageProfile = usage || (typeof getUsageAssumptionsFromDom === 'function' ? getUsageAssumptionsFromDom() : {});
+-    const electricityCostPerKWh = parseFloat(usageProfile.costPerKwh) || 0.12;
+-    const hoursPerDay = parseFloat(usageProfile.hoursPerDay) || 8;
++    const parsedCostPerKwh = parseFloat(usageProfile.costPerKwh);
++    const electricityCostPerKWh = Number.isFinite(parsedCostPerKwh) ? parsedCostPerKwh : 0.12;
++    const parsedHoursPerDay = parseFloat(usageProfile.hoursPerDay);
++    const hoursPerDay = Number.isFinite(parsedHoursPerDay) ? parsedHoursPerDay : 8;
+ 
+     let totalTDP = 0;
+     let actualPowerWatts = 0;
+diff --git "a/index.html" "b/index.html"
+index 3b8a83b3b..6e9fc0f36 100644
+--- "a/index.html"
++++ "b/index.html"
+@@ -52,7 +52,7 @@
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js" integrity="sha384-4mFQWIqZrcfYZkFPEgIoT//zTEU64gEoH2tGV72Koyhoa9Fxz43YgroFUGj4/RAx" crossorigin="anonymous"></script>
+ 	<script src="data/localmaxxing-snapshot.js?v=20260824080611"></script>
+ 	<script src="data/lab-evidence.js?v=47452ee3d12c"></script>
+-	<script src="engine.js?v=b0a4dc2abcd5"></script>
++	<script src="engine.js?v=3d736c3a343e"></script>
+ 	<!-- Structured Data for Google -->
+     <script type="application/ld+json">
+     {
+@@ -4997,9 +4997,11 @@ details[open] > .mobile-execution-summary .planner-input-summary-action::after {
+         // Usage assumptions for the power/cost estimate come from the page
+         // inputs; the engine takes them as an argument so the SDK can pass its own.
+         function getUsageAssumptionsFromDom() {
++            const parsedHours = parseFloat(document.getElementById('hoursPerDay')?.value);
++            const parsedCost = parseFloat(document.getElementById('costPerKwh')?.value);
+             return {
+-                hoursPerDay: parseFloat(document.getElementById('hoursPerDay')?.value) || 8,
+-                costPerKwh: parseFloat(document.getElementById('costPerKwh')?.value) || 0.12
++                hoursPerDay: Number.isFinite(parsedHours) ? parsedHours : 8,
++                costPerKwh: Number.isFinite(parsedCost) ? parsedCost : 0.12
+             };
+         }
+ 
+diff --git "a/tests/sdk.test.mjs" "b/tests/sdk.test.mjs"
+index 6a8974eb6..05ea586c2 100644
+--- "a/tests/sdk.test.mjs"
++++ "b/tests/sdk.test.mjs"
+@@ -178,3 +178,22 @@ test('dist/ is in sync with engine.js and sdk/api.js', () => {
+   assert.ok(probe && bundle.includes(`    ${probe}`), 'bundle is stale: run npm run build:sdk');
+   assert.ok(bundle.includes('function predict(request = {})'));
+ });
++
++test('explicit zero usage price or hours yield zero cost without altering predictions', () => {
++  const engine = sdk.createEngine();
++  const request = { model: 'llama3_8b', hardware: 'RTX 4090', runtime: 'vllm', quantization: 'fp16' };
++  const normal = engine.predict({ ...request, usage: { hoursPerDay: 8, costPerKwh: 0.12 } });
++  assert.ok(normal.power.costPerDay > 0, 'positive price must produce a positive daily cost');
++  assert.deepEqual(engine.predict(request).power, normal.power, 'omitted usage keeps documented defaults');
++
++  const zeroPrice = engine.predict({ ...request, usage: { hoursPerDay: 8, costPerKwh: 0 } });
++  assert.equal(zeroPrice.power.costPerDay, 0, 'zero price must yield zero daily cost');
++  assert.equal(zeroPrice.power.costPer1KTokens, 0, 'zero price must yield zero per-token cost');
++  assert.deepEqual(zeroPrice.decode, normal.decode, 'cost inputs must not change decode');
++  assert.deepEqual(zeroPrice.prefill, normal.prefill, 'cost inputs must not change prefill');
++
++  const zeroHours = engine.predict({ ...request, usage: { hoursPerDay: 0, costPerKwh: 0.12 } });
++  assert.equal(zeroHours.power.costPerDay, 0, 'zero hours must yield zero daily cost');
++  assert.deepEqual(zeroHours.decode, normal.decode, 'cost inputs must not change decode');
++  assert.deepEqual(zeroHours.prefill, normal.prefill, 'cost inputs must not change prefill');
++});

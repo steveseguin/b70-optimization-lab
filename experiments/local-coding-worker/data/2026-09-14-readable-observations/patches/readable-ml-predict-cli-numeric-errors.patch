@@ -1,0 +1,83 @@
+diff --git "a/scripts/predict.mjs" "b/scripts/predict.mjs"
+index 287e192d8..063488e2c 100644
+--- "a/scripts/predict.mjs"
++++ "b/scripts/predict.mjs"
+@@ -25,6 +25,24 @@ const option = (name, fallback) => {
+   const index = argv.indexOf(`--${name}`);
+   return index >= 0 && argv[index + 1] !== undefined ? argv[index + 1] : fallback;
+ };
++const positiveInt = (name, fallback) => {
++  const index = argv.indexOf(`--${name}`);
++  const raw = index >= 0 ? argv[index + 1] : fallback;
++  if (raw === undefined || raw === null || raw === '') {
++    console.error(`--${name} requires a positive whole number`);
++    process.exit(1);
++  }
++  if (!/^[0-9]+$/.test(String(raw))) {
++    console.error(`--${name} must be a positive whole number, got "${raw}"`);
++    process.exit(1);
++  }
++  const value = Number(raw);
++  if (!Number.isInteger(value) || value < 1) {
++    console.error(`--${name} must be a positive whole number, got "${raw}"`);
++    process.exit(1);
++  }
++  return value;
++};
+ const [presetKey, templateKey] = positional;
+ if (!presetKey || !templateKey) {
+   console.error('usage: node scripts/predict.mjs <presetKey> <deviceTemplate> [--quant q4] [--runtime auto] [--strategy pipeline] [--count 1] [--prompt 2048] [--output 256] [--batch 1] [--kv none] [--sweep]');
+@@ -42,10 +60,10 @@ if (!H.DEVICE_TEMPLATES[templateKey]) {
+   process.exit(1);
+ }
+ 
+-const count = Math.max(1, parseInt(option('count', '1'), 10));
+-const prompt = Math.max(1, parseInt(option('prompt', '2048'), 10));
+-const output = Math.max(1, parseInt(option('output', '256'), 10));
+-const batch = Math.max(1, parseInt(option('batch', '1'), 10));
++const count = positiveInt('count', '1');
++const prompt = positiveInt('prompt', '2048');
++const output = positiveInt('output', '256');
++const batch = positiveInt('batch', '1');
+ const strategy = option('strategy', 'pipeline');
+ H.setDevices(Array.from({ length: count }, (_, index) => ({
+   id: index + 1,
+diff --git "a/tests/predict-cli.test.mjs" "b/tests/predict-cli.test.mjs"
+new file mode 100644
+index 000000000..9900d5545
+--- /dev/null
++++ "b/tests/predict-cli.test.mjs"
+@@ -0,0 +1,33 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import path from 'node:path';
++import { spawnSync } from 'node:child_process';
++import { fileURLToPath } from 'node:url';
++
++const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
++const script = path.join(repoRoot, 'scripts', 'predict.mjs');
++const run = options => spawnSync(process.execPath, [script, 'llama3_8b', 'RTX 4090', ...options],
++  { cwd: repoRoot, encoding: 'utf8', timeout: 15000, maxBuffer: 1024 * 1024 });
++
++test('documented valid numeric arguments still succeed', () => {
++  const result = run(['--count', '1', '--prompt', '64', '--output', '32', '--batch', '2']);
++  assert.equal(result.error, undefined, result.stderr);
++  assert.equal(result.status, 0, result.stderr);
++  assert.match(result.stdout, /decode/i);
++  assert.match(result.stdout, /prefill/i);
++  assert.doesNotMatch(result.stdout, /NaN|Infinity/);
++});
++
++test('malformed numeric options are rejected with an actionable error', () => {
++  for (const option of ['count', 'prompt', 'output', 'batch']) {
++    for (const values of [['banana'], ['0'], ['-1'], ['1.5'], ['2junk'], []]) {
++      const result = run([`--${option}`, ...values]);
++      assert.equal(result.error, undefined, `CLI timed out for --${option} ${values.join(' ')}`);
++      assert.notEqual(result.status, 0, `Invalid --${option} ${values.join(' ')} must be rejected`);
++      const message = result.stderr + result.stdout;
++      assert.match(message, new RegExp(option, 'i'), `Error must identify --${option}: ${message}`);
++      assert.doesNotMatch(message, /TypeError:|ReferenceError:|\n\s+at (?:file:|\w)/,
++        `Invalid argument must not expose an internal stack trace: ${message}`);
++    }
++  }
++});

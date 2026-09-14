@@ -20,3 +20,5 @@ jobs:
       - run: python -m pip install --require-hashes -r worker/requirements.lock
       - run: python -m unittest discover -s worker -p 'test_*.py'
       - run: python worker/collect_results.py --verify --out experiments/local-coding-worker/data/2026-09-14-five-issues
+      - run: python worker/collect_overnight.py --verify --out experiments/local-coding-worker/data/2026-09-14-profile-screen
+      - run: python worker/collect_overnight.py --verify --out experiments/local-coding-worker/data/2026-09-14-readable-observations

@@ -1,0 +1,19 @@
+diff --git "a/scripts/llama-bench-context.mjs" "b/scripts/llama-bench-context.mjs"
+index 00155d0ab..d0acb3a92 100644
+--- "a/scripts/llama-bench-context.mjs"
++++ "b/scripts/llama-bench-context.mjs"
+@@ -11,10 +11,11 @@ export function parseLlamaBenchDecodeContext(command = '') {
+     return { ...unknown, decodeMeasurementIssue: 'llama-bench -pg requires per-test JSON to distinguish combined throughput from isolated decode' };
+   }
+   const flags = [...command.matchAll(/(?:^|\s)(?:-d|--n-depth)(?:=|\s+)([^\s]+)/g)];
++  const dangling = [...command.matchAll(/(?:^|\s)(?:-d|--n-depth)(?=[=\s]|$)/g)];
++  if (dangling.length && !flags.length) {
++    return { ...unknown, decodeMeasurementIssue: 'llama-bench depth flag has no single numeric value' };
++  }
+   if (!flags.length) {
+-    if (/(?:^|\s)(?:-d|--n-depth)(?=[=\s]|$)/.test(command)) {
+-      return { ...unknown, decodeMeasurementIssue: 'llama-bench depth flag has no single numeric value' };
+-    }
+     return { decodeDepthTokens: 0, decodeMeasurementIssue: null };
+   }
+   const token = flags[0][1].replace(/^(['"])(.*)\1$/, '$2');
