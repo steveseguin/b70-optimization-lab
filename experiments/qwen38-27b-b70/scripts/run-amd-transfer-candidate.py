@@ -67,6 +67,9 @@ def main():
     args[args.index('--served-model-name') + 1] = MODEL
     args[args.index('--speculative-config') + 1] = json.dumps(spec)
     name = 'amd-transfer-dflash-' + str(os.getpid())
+    preexisting = subprocess.run(['docker', 'inspect', name], capture_output=True, text=True, timeout=20)
+    if preexisting.returncode == 0:
+        raise RuntimeError('candidate container name already exists; refusing adoption')
     cache = a.out / 'cache'
     cache.mkdir()
     cmd = ['docker', 'run', '--name', name, '--network', 'bridge', '--restart', 'no',
@@ -90,16 +93,23 @@ def main():
         save(a.out / (label + '-command.json'), {'argv': list(map(str, command)), 'explicit_env': extra_env})
         with (a.out / (label + '.log')).open('w') as log:
             client = subprocess.Popen(list(map(str, command)), cwd=ROOT,
-                env={**os.environ, **(extra_env or {})}, stdout=log, stderr=subprocess.STDOUT)
+                env={**os.environ, **(extra_env or {})}, stdout=log, stderr=subprocess.STDOUT,
+                start_new_session=True)
             try:
                 code = client.wait(timeout=timeout)
                 if code:
                     raise RuntimeError(f'{label} failed ({code}); subsequent requests skipped')
             finally:
                 if client.poll() is None:
-                    client.send_signal(signal.SIGINT)
-                    client.wait(timeout=15)
-                client = None
+                    owned_client, client = client, None
+                    os.killpg(owned_client.pid, signal.SIGINT)
+                    try:
+                        owned_client.wait(timeout=15)
+                    except subprocess.TimeoutExpired:
+                        (a.out / 'CLIENT_EXIT_UNCONFIRMED').write_text(str(owned_client.pid) + '\n')
+                        raise
+                else:
+                    client = None
     try:
         with (a.out / 'server.log').open('w') as log:
             child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
@@ -139,7 +149,7 @@ def main():
         raise
     finally:
         if client is not None and client.poll() is None:
-            client.send_signal(signal.SIGINT)
+            os.killpg(client.pid, signal.SIGINT)
         found = subprocess.run(['docker', 'inspect', name], capture_output=True, text=True, timeout=20)
         if found.returncode == 0:
             record = json.loads(found.stdout)[0]

@@ -25,6 +25,20 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 14: user-reported freeze during candidate startup.**
+The user restarted the computer. Current boot is
+`5ba85b30-0455-466a-b9fc-d9132975417e`; the prior boot ended after logs stopped
+at about 09:27:55 EDT. The newest-base/V2/DFlash2 candidate never reached
+readiness or benchmark requests. Its last model log is target loading, not a
+completed draft or generation operation; cause remains unknown. Do not retry
+this candidate unchanged. No model endpoint is currently listening and both
+render devices are unowned. Preserve the stopped candidate container and all
+raw evidence under `/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914`;
+`FAULT.json` records the incident. Recovery is a bounded health check followed
+by restoration of the original R304 FP8 service if healthy. The earlier control
+and exact-but-neutral projection screen remain valid separate observations.
+[Incident receipt](experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/freeze-incident.json).
+
 **Four-B70 host, September14: retained profile captured; recorder failed after exact clip.**
 The same packet08 PID66846 remains alive and idle, now on **compiled all48**
 dispatch. One diagnostic clip matched all four original raw outputs; its graph,

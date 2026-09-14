@@ -1,0 +1,27 @@
+{
+  "schema": "neural.download.host-freeze-incident.v1",
+  "reported_by": "user",
+  "report": "The computer froze; user had to restart to resume.",
+  "recorded_at": "2026-09-14T15:51:08.205881+00:00",
+  "old_boot_id": "dc3e2634e7944087a695bf1b9ae96448",
+  "new_boot_id": "5ba85b30-0455-466a-b9fc-d9132975417e",
+  "candidate": "newest upstream + accepted FP8 overlay + V2 + DFlash2 K7",
+  "last_server_log_local": "2026-09-14 09:27:48 America/Toronto",
+  "last_previous_kernel_log_local": "2026-09-14 09:27:55 America/Toronto",
+  "candidate_ready": false,
+  "benchmark_requests_sent": 0,
+  "specific_cause": "unknown; no specific GPU fault/OOM recorded before journal stopped",
+  "candidate_disposition": "unsafe to retry unchanged",
+  "reboot_performed_by_agent": false,
+  "current_state": "no running model container, no endpoint, no render owner",
+  "current_boot_warning": "dma_buf_vmap KMS framebuffer preparation warning during boot; not evidence of the previous freeze cause",
+  "recovery_plan": "one bounded device/collective check; restore original qualified R304 FP8 service only if healthy; no candidate retry",
+  "original_evidence_hashes": {
+    "candidate-dflash/server.log": "e3098e6bae322b3204d00598957328dfdef1604a6a178662188ea24213854c8c",
+    "candidate-dflash/ABORTED": "dcf5e458d7601cc420b52f38336177e724d648fdbf2d029a907f259458706e78",
+    "candidate-monitor/kernel.log": "d1acaf965562a6cd66ff1b019288cd222039d5f26f4214a52278e6687eac8a55",
+    "projection-result.json": "885e19e202acde19fa78bbc894507142f8556d4d9198de6c5add1b9f0f5e9e1c",
+    "control-context/summary.json": "71a3dab02746b8264548ed52e59090f73a6f80c6d710c7c0066f9fdb6e24a18d",
+    "control-strict/performance.json": "12cab87f2ef952e282bd164602bd9e6ea834e78cc55b0dca1ed212c08edf9d35"
+  }
+}
