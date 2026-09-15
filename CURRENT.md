@@ -25,6 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 15 05:35 UTC: communicator NaN characterization done; user decision needed on NaN comparison.**
+Stage `nan-semantics-01` completed cleanly on the newest base with no faults.
+All four add formulations match XCCL on every non-NaN result at every shape and
+rank; the only differences are NaN payload/sign bits, which XCCL chooses by
+element position, so no fixed formula is bit-identical. Stage 05 (the IPC gate)
+was not run. Continuing requires the user to accept NaN-class comparison for
+this operator. No GPU work is running; port 18124 stays offline by user decision.
+[NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
+
 **Two-B70 host, September 15 05:25 UTC: metadata tweak validated exact but speed-neutral; exact communicator tests next.**
 On the newest base (`506fcc26`) the unchanged server matched all 12 reference
 outputs, the native gate passed 36 cases on both GPUs, and four alternating
