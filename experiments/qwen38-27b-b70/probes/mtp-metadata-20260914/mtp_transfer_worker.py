@@ -9,11 +9,18 @@ import ast
 import copy
 import hashlib
 import inspect
+import json
 from pathlib import Path
 
 EXPECTED_CANDIDATE_AST = '30d6d181060d10f9132c4cbe4163d97931b5a7a177ad6f63d7145b8fce8b17c0'
 EXPECTED_SOURCE = '95b0a3c079cb63f04a1a0b78b290c7496c63cc5ebc4dc567962de335ea894b9a'
 _STATE = None
+
+
+def plain(value):
+    """RPC results cross vLLM's msgspec output socket; a non-JSON value (e.g. a
+    TorchVersion) kills that thread and hangs the client (2026-09-15). Fail here."""
+    return json.loads(json.dumps(value))
 
 
 def candidate_function(module, original):
@@ -107,7 +114,7 @@ class MtpTransferWorkerExtension:
         if result.get('passed') is not True:
             raise RuntimeError('Native metadata comparison failed')
         _STATE['native_gate_passed'] = True
-        return {'rank': int(self.rank), 'result': result, 'status': self.mtp_transfer_status()}
+        return plain({'rank': int(self.rank), 'result': result, 'status': self.mtp_transfer_status()})
 
     def mtp_transfer_set_mode(self, mode):
         import torch
