@@ -31,6 +31,7 @@ LAYER_HASH_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-layer-hash'
 GDN_GROUPS_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-gdn-head-groups'
 FA_TRACE_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-fa-trace'
 FA_ROWS_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-fa-verify-rows'
+DRAFT_FP16_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-draft-fp16-shortlist'
 HELPER = ROOT / 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py'
 GUARD = ROOT / 'experiments/qwen38-27b-b70/scripts/host_memory_guard.py'
 PASSWORD_FILE = Path('/home/steve/SUDO_PASSWORD.txt')
@@ -76,6 +77,11 @@ def build(args, name, out, image_env):
                VLLM_XPU_DRAFT_LM_HEAD_INT4='1' if args.draft_int4 else '0')
     if args.shortlist:
         env['VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST'] = args.shortlist
+    if args.draft_fp16_shortlist:
+        if args.draft_int4 or args.shortlist:
+            raise RuntimeError('--draft-fp16-shortlist replaces --draft-int4/--shortlist')
+        # The proposer only calls the draft-copy hook when this variable is set; the overlay builds no INT4 buffers.
+        env.update(VLLM_XPU_DRAFT_LM_HEAD_INT4='1', B70_DRAFT_FP16_SHORTLIST=args.draft_fp16_shortlist)
     set_flag(cmd, '--tensor-parallel-size', '1')
     set_flag(cmd, '--gpu-memory-utilization', str(args.mem))
     set_flag(cmd, '--max-model-len', str(args.max_model_len))
@@ -89,7 +95,8 @@ def build(args, name, out, image_env):
         cmd.append('--enforce-eager')
     mounts = ['--mount', f'type=bind,source={MODEL_DIR},target=/model,readonly',
               '--mount', f'type=bind,source={out}/cache,target=/root/.cache/vllm']
-    if args.cpu_embed or args.layer_hash or args.gdn_head_groups or args.fa_trace or args.fa_verify_rows:
+    if args.cpu_embed or args.layer_hash or args.gdn_head_groups or args.fa_trace or args.fa_verify_rows \
+            or args.draft_fp16_shortlist:
         mounts += ['--mount', f'type=bind,source={out}/overlay,target=/overlay,readonly']
         env.update(PYTHONPATH='/overlay')
     if args.cpu_embed:
@@ -135,6 +142,7 @@ def main():
     ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',
                     help='override one variable already present in the qualified record')
     ap.add_argument('--gdn-head-groups', type=int, default=0, help='run one-card GDN prefill delta rule in G head groups')
+    ap.add_argument('--draft-fp16-shortlist', default='', help='draft-only FP16 row-subset head from this id file (in image)')
     ap.add_argument('--fa-verify-rows', action='store_true', help='compute verifier attention rows as decode calls')
     ap.add_argument('--fa-trace', action='store_true', help='diagnostic: record small-query flash-attention call arguments')
     ap.add_argument('--layer-hash', type=int, default=0, help='diagnostic: hash module outputs for N-token calls (use --eager)')
@@ -165,6 +173,9 @@ def main():
     if a.layer_hash:
         shutil.copytree(LAYER_HASH_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
                         dirs_exist_ok=True)
+    if a.draft_fp16_shortlist:
+        shutil.copytree(DRAFT_FP16_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
+                        dirs_exist_ok=True)
     if a.fa_verify_rows:
         shutil.copytree(FA_ROWS_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
                         dirs_exist_ok=True)
@@ -173,7 +184,7 @@ def main():
                         dirs_exist_ok=True)
     if a.layer_hash or a.fa_trace:
         (out / 'hash').mkdir()
-    if a.cpu_embed or a.layer_hash or a.gdn_head_groups or a.fa_trace or a.fa_verify_rows:
+    if a.cpu_embed or a.layer_hash or a.gdn_head_groups or a.fa_trace or a.fa_verify_rows or a.draft_fp16_shortlist:
         overlay_hashes = {str(p.relative_to(out / 'overlay')): sha(p) for p in sorted((out / 'overlay').rglob('*')) if p.is_file()}
     argv = build(a, name, out, image_info['Config']['Env'])
     started = helper.now()

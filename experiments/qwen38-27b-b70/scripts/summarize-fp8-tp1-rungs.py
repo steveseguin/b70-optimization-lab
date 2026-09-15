@@ -31,7 +31,8 @@ def rung_row(root: Path, label: str, reference: str):
         found = re.findall(r'GPU KV cache size: ([\d,]+)', log.read_text(errors='replace'))
         kv = int(found[-1].replace(',', '')) if found else None
     row = dict(label=label, mtp=rung.get('mtp'), context=rung.get('max_model_len'), mem=rung.get('mem'),
-               draft='int4-shortlist' if rung.get('shortlist') else ('int4' if rung.get('draft_int4') else 'fp16-shared'),
+               draft=('fp16-shortlist' if rung.get('draft_fp16_shortlist') else 'int4-shortlist' if rung.get('shortlist')
+                      else 'int4' if rung.get('draft_int4') else 'fp16-shared'),
                gdn_groups=rung.get('gdn_head_groups', 0), fa_rows=rung.get('fa_verify_rows', False),
                image=str(rung.get('image', ''))[:19], kv_tokens=kv)
     perf = load(root / f'{label}-strict' / 'performance.json')

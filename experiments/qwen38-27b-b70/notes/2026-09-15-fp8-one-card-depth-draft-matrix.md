@@ -40,6 +40,43 @@ tokens 1-100 of a forced 128-token continuation.
   512 tokens because the draft layer also processes the prompt, and within about
   6% at 2,048-12,288 tokens.
 
-Evidence: `/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-4[1-7]*`
+## A draft head with no quantization: FP16 shortlist
+
+[`b70_draft_fp16_shortlist`](../overlays/b70-draft-fp16-shortlist/b70_draft_fp16_shortlist.py)
+(launcher `--draft-fp16-shortlist <ids>`) builds the draft head from an exact
+FP16 copy of the same 67,248 shortlisted rows of the target head. That costs
+0.641 GiB and no INT4 buffers are created. It scores draft positions with the
+ordinary FP16 linear kernel.
+
+| Depth 5 draft head | Memory / context | KV tokens | Strict | Full answers | Prefill 512 / 2,048 / 12,288 | Decode after 512 / 2,048 / 12,288 |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| FP16 shared full head (rung 43) | 0.965 / 13,824 | 17,773 | 42.19 | 35.36 | 1,227 / 1,915 / 1,929 | 35.3 / 40.5 / 51.8 |
+| **FP16 67k shortlist** (rung 52) | 0.975 / 12,544 | 14,388 | 51.86 | 43.24 | 1,317 / 1,965 / 1,944 | 43.5 / 49.7 / 61.6 |
+| INT4 67k shortlist (rungs 41/42/50) | 0.965 / 13,824 | 16,193 | 53.40 | 45.16-45.30 | 1,340 / 1,979 / 1,947 | 46.2 / 56.1-56.5 / 61.7 |
+
+- **Result:** the FP16 shortlist is 12/12 strict and passed the context screen.
+  It needs 0.975 memory for a 12,544 context; at 0.965 the estimate was 11,648
+  (rung 49 refused to start).
+- **Against INT4:** 2.9% slower on the strict metric, 4.3% on full answers,
+  6-12% on short-prompt decode, and equal after a 12,288-token prompt.
+
+## Chat-mode quality suite (a different workload)
+
+[`qwen38-text-quality-suite.py`](../../../scripts/qwen38-text-quality-suite.py)
+goes through `/v1/chat/completions` with thinking off. It covers:
+
+- 7 exact-answer, arithmetic, logic, code and JSON cases
+- a repeat-hash case
+- a long-context needle (7,617 prompt tokens)
+
+It ran with exact normalised-output and hash parity required against MTP0
+(rung 51):
+
+- MTP0: all pass.
+- Depth 5 + FP16 shortlist (rung 52): all pass, baseline match all.
+- Depth 5 + INT4 shortlist (rung 53): all pass, baseline match all.
+
+Evidence: `/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-4[1-9]*`,
+`fp8-tp1-5[0-3]*`
 and [copied receipts](../data/2026-09-15-fp8-one-card-depth-draft-matrix/).
 Summary tool: [`summarize-fp8-tp1-rungs.py`](../scripts/summarize-fp8-tp1-rungs.py).
