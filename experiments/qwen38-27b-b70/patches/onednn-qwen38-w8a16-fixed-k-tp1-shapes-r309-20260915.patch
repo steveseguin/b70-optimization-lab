@@ -1,0 +1,18 @@
+diff --git a/src/gpu/intel/gemm/jit/gen_kernel.cpp b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+index 3caec8832..264e40ff8 100644
+--- a/src/gpu/intel/gemm/jit/gen_kernel.cpp
++++ b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+@@ -165,7 +165,12 @@ static bool use_qwen38_w8a16_fixed_k_strategy(ngen::HW hw,
+             = (m == 8192 && k == 5120) || (m == 5120 && k == 3072)
+             || (m == 7168 && k == 5120) || (m == 17408 && k == 5120)
+             || (m == 5120 && k == 8704);
+-    if (!production_shape) return false;
++    // One-card (TP1) full-width shapes of the same projections.
++    const bool production_shape_tp1
++            = (m == 16384 && k == 5120) || (m == 5120 && k == 6144)
++            || (m == 14336 && k == 5120) || (m == 34816 && k == 5120)
++            || (m == 5120 && k == 17408);
++    if (!production_shape && !production_shape_tp1) return false;
+ 
+     return problem.Ta_ext == Type::hf8 && problem.Ta == Type::hf8
+             && problem.Tb_ext == Type::f16 && problem.Tb == Type::f16

@@ -1,5 +1,9 @@
 # Official Qwen3.8 27B FP8 on one Intel Arc Pro B70
 
+> **Update (same day):** depths 4-6 are now exact on one card with the R309
+> kernel fix, and depth 5 plus the draft shortlist gives 53.5 tok/s lossless.
+> See [R309 results](2026-09-15-fp8-one-card-r309-depth5-exact.md).
+
 **Official FP8 now runs well on a single B70 without changing any output:
 46.9 tokens/s with MTP depth 3 and a 16,384-token context, matching the
 no-MTP answers exactly on two fresh servers.** Tested September 15, 2026 on the

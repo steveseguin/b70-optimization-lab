@@ -1,0 +1,8 @@
+# R309 (2026-09-15): R304 + kernel library rebuilt with oneDNN patch r309 (W8A16 fixed-K gate extended to the one-card
+# full-width Qwen3.8-27B projection shapes; build-kernels-0.1.14.1-r309-tp1-shapes.sh). Python is unchanged. TP2
+# per-rank shapes keep the same strategy; one-card depth-4/5 verify calls stop leaving the {1-4} row class.
+ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+FROM ${BASE}
+COPY _xpu_C.abi3.so libgdn_attn_kernels_xe_2.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/
+RUN python -c "import torch, vllm_xpu_kernels._xpu_C; print('kernels import ok', torch.__version__)"
+LABEL neural.download.build.lane="qwen38-fp8-v0290-r309-tp1-fixed-k" neural.download.kernel.patch="onednn r137a+r137b+r221+r309 on 0e2a5bfe"
