@@ -58,5 +58,42 @@ per forward instead of per block call. Its single completed graph clip
 median, but **one clip is not a result** and the arm is incomplete. Packet19's
 1.83x remains the qualified figure.
 
+## Update: the second lockup took the host down
+
+The host froze and the user rebooted it. The persistent journal survived and
+settles what happened. Boot `64bbd5d2` ends **19 seconds after the second
+lockup**, and its final two kernel lines are:
+
+```
+Sep 14 23:36:08 kernel: perf: interrupt took too long (7843 > 5051), lowering
+                        kernel.perf_event_max_sample_rate to 25000
+Sep 14 23:36:08 kernel: clocksource: Long readout interval, skipping watchdog
+                        check: cs_nsec: 71762026174 wd_nsec: 71761985802
+```
+
+A clocksource readout interval of **71.76 seconds** means the whole machine had
+already stalled for over a minute. Nothing follows; the boot ends there. So the
+sequence is: `xe` hangs in the GuC interrupt path on CPU21 -> NMI watchdog
+reports a hard lockup -> the system stalls system-wide -> the host is gone.
+
+The first lockup, 86 minutes earlier, produced the same trace and the machine
+recovered. So this signature is **survivable but not reliably so**, and it is
+the most likely cause of this host's earlier unexplained freezes, which were
+previously attributed to post-teardown `xpu-smi` telemetry. No `xpu-smi` call
+was made anywhere near either lockup here.
+
+**This is a host/driver fault, not a lane fault.** The evidence that it is not
+caused by graph capture is that the first occurrence ran ordinary eager clips
+before the graph adapter existed. Two events cannot establish whether graph
+capture changes the *rate*, and this note does not claim it does not.
+
+Practical consequences already applied: the successor launcher's fault pattern
+must match `watchdog:.*hard LOCKUP`, since only the second event tripped the
+existing pattern and only because it happened to also emit an RCU stall.
+
+The freeze also left the Git object store with 16 zero-length objects, including
+the commit `HEAD` pointed at. All of it was recoverable: the working tree was
+intact, and `git fetch` restored every object from the remote. Push early.
+
 Evidence: [`data/xe-lockup-incident-01/`](../data/xe-lockup-incident-01/) holds
 both kernel traces, the combined extract and the fault latch.
