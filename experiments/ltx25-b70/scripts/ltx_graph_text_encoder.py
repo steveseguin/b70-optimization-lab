@@ -75,12 +75,13 @@ class GraphedLayer:
         self.original = layer.forward
         self.source = sys.modules[type(layer).__module__]
         check_source(self.source)
-        state = tuple(layer.parameters()) + tuple(layer.buffers())
-        require(state, 'Gemma layer carries no state')
-        devices = {t.device for t in state}
-        require(len(devices) == 1, f'Gemma layer {index} state spans devices: {devices}')
-        self.device = devices.pop()
-        require(self.device.type == 'xpu', 'Text encoder graph capture requires an XPU layer')
+        require(tuple(layer.parameters()) or tuple(layer.buffers()),
+                f'Gemma layer {index} carries no state')
+        # The device is resolved at capture, not here. ComfyUI moves the text
+        # encoder onto its load device lazily, inside the encode itself, so at
+        # gate time these layers are still on the CPU; reading the device now
+        # refuses a perfectly capturable encoder.
+        self.device = None
         for module in layer.modules():
             require(not (module._forward_hooks or module._forward_pre_hooks or module._backward_hooks),
                     'Text encoder graph capture does not support additional module hooks')
@@ -94,6 +95,20 @@ class GraphedLayer:
         found = []
         walk(kwargs, found, f'layer{self.index}.kwargs')
         return found
+
+    def _resolve_device(self):
+        state = tuple(self.layer.parameters()) + tuple(self.layer.buffers())
+        devices = {t.device for t in state}
+        require(len(devices) == 1,
+                f'Gemma layer {self.index} state spans devices: {sorted(map(str, devices))}')
+        device = devices.pop()
+        require(device.type == 'xpu',
+                f'Gemma layer {self.index} is on {device} at encode time; text encoder graph '
+                'capture needs the encoder resident on an XPU')
+        require(self.device is None or self.device == device,
+                f'Gemma layer {self.index} moved from {self.device} to {device} after capture')
+        self.device = device
+        return device
 
     def _replay(self, graph):
         with torch.xpu.device(self.device):
@@ -116,6 +131,7 @@ class GraphedLayer:
     # -- capture ------------------------------------------------------------
     def _capture(self, kwargs, key):
         check_source(self.source)
+        self._resolve_device()
         static_kwargs = mirror(kwargs, static_like)
         flat = self._flatten(static_kwargs)
         require(len(flat) == len(self._flatten(kwargs)),
@@ -188,6 +204,9 @@ class GraphedLayer:
     def __call__(self, **kwargs):
         require(isinstance(kwargs.get('x'), torch.Tensor),
                 f'Gemma layer {self.index} was called without a tensor hidden state')
+        # ComfyUI may move the encoder between encodes; a graph whose static
+        # buffers live on a device the weights have left would replay stale.
+        self._resolve_device()
         key = self._signature(kwargs)
         entry = self.entries.get(key)
         if entry is None:
@@ -298,6 +317,8 @@ def measure(clip, iterations=20):
     for index, layer in enumerate(layers):
         shadow = vars(layer).get('forward')
         if not isinstance(shadow, GraphedLayer):
+            continue
+        if shadow.device is None:
             continue
         for entry in shadow.entries.values():
             with torch.xpu.device(shadow.device):
