@@ -1,0 +1,319 @@
+{
+  "closure": {
+    "client_not_run_reason": "The research server never became ready: its newest-base image exhausted host memory during model load (research-server/postflight.json). No native gate, RPC or endpoint arm ran.",
+    "final_service": {
+      "endpoint_available": false,
+      "error": "New GPU fault detected. Halting this server; evidence retained in kernel.log.",
+      "source_dir": "final-service",
+      "status": "failed"
+    },
+    "finished_at": "2026-09-15T02:09:01.710922+00:00",
+    "metadata_change": "unvalidated; not promoted",
+    "next_admission": "User decision on a host reboot; afterwards a newly admitted recovery root for the bounded health check, the qualified service and the full strict check.",
+    "schema": "neural.download.fp8-recovery-metadata-closure.v1",
+    "stages": {
+      "final-service": "failed: xe GPU memory fault on 0000:e3:00.0 during load at 2026-09-15T02:00:38Z; single graceful stop; FAULT.json latched",
+      "health": "passed 2026-09-14T19:18Z",
+      "health-after-research-oom": "passed 2026-09-15T01:58Z",
+      "recovered-service": "ready; strict 12/12 exact at 54.0136 tok/s; stopped once for the planned replacement",
+      "research-server": "failed during load: host memory exhaustion; container OOM-killed 2026-09-15T00:39:35Z; exit confirmed by later postflight"
+    },
+    "status": "closed-after-gpu-fault"
+  },
+  "context_attempts": {},
+  "final_service_verification": {
+    "ready_quality_verified": false,
+    "reported_status": "failed"
+  },
+  "frozen_reference": {
+    "context": {
+      "by_length": {
+        "16384": {
+          "aggregation": "median within each class, then median across classes",
+          "class_medians": {
+            "code": {
+              "decode_after_ttft_tps": 56.254758928813274,
+              "decode_token_1_to_100_tps": 56.12886257025629,
+              "http_prompt_tokens_per_ttft_s": 3297.474750844276,
+              "server_prefill_s": 4.95714073999261,
+              "server_prefill_tokens_per_s": 3305.1376561639677,
+              "ttft_s": 4.968655243006651
+            },
+            "docs": {
+              "decode_after_ttft_tps": 53.04126585001214,
+              "decode_token_1_to_100_tps": 56.23953283963038,
+              "http_prompt_tokens_per_ttft_s": 3297.1568611610373,
+              "server_prefill_s": 4.94960574551078,
+              "server_prefill_tokens_per_s": 3310.165949821133,
+              "ttft_s": 4.969133837497793
+            },
+            "prose": {
+              "decode_after_ttft_tps": 50.06603119039549,
+              "decode_token_1_to_100_tps": 50.184626200728246,
+              "http_prompt_tokens_per_ttft_s": 3294.027628303935,
+              "server_prefill_s": 4.963016731489915,
+              "server_prefill_tokens_per_s": 3301.2384381394622,
+              "ttft_s": 4.973886711508385
+            }
+          },
+          "decode_after_ttft_tps": 53.04126585001214,
+          "decode_token_1_to_100_tps": 56.12886257025629,
+          "http_prompt_tokens_per_ttft_s": 3297.1568611610373,
+          "samples": 6,
+          "server_prefill_s": 4.95714073999261,
+          "server_prefill_tokens_per_s": 3305.1376561639677,
+          "ttft_s": 4.969133837497793
+        },
+        "2048": {
+          "aggregation": "median within each class, then median across classes",
+          "class_medians": {
+            "code": {
+              "decode_after_ttft_tps": 55.84387271098726,
+              "decode_token_1_to_100_tps": 54.856637296985184,
+              "http_prompt_tokens_per_ttft_s": 3617.819410440888,
+              "server_prefill_s": 0.5586146614950849,
+              "server_prefill_tokens_per_s": 3666.2163718412257,
+              "ttft_s": 0.5661114599934081
+            },
+            "docs": {
+              "decode_after_ttft_tps": 58.28243581091236,
+              "decode_token_1_to_100_tps": 57.934378624931476,
+              "http_prompt_tokens_per_ttft_s": 3565.9899536288985,
+              "server_prefill_s": 0.5566130365041317,
+              "server_prefill_tokens_per_s": 3679.399155700189,
+              "ttft_s": 0.5743792430002941
+            },
+            "prose": {
+              "decode_after_ttft_tps": 54.12000729946577,
+              "decode_token_1_to_100_tps": 52.71116297432347,
+              "http_prompt_tokens_per_ttft_s": 3651.7721600896894,
+              "server_prefill_s": 0.5569985290057957,
+              "server_prefill_tokens_per_s": 3676.9300933162285,
+              "ttft_s": 0.5608308240043698
+            }
+          },
+          "decode_after_ttft_tps": 55.84387271098726,
+          "decode_token_1_to_100_tps": 54.856637296985184,
+          "http_prompt_tokens_per_ttft_s": 3617.819410440888,
+          "samples": 6,
+          "server_prefill_s": 0.5569985290057957,
+          "server_prefill_tokens_per_s": 3676.9300933162285,
+          "ttft_s": 0.5661114599934081
+        },
+        "512": {
+          "aggregation": "median within each class, then median across classes",
+          "class_medians": {
+            "code": {
+              "decode_after_ttft_tps": 58.496624849972136,
+              "decode_token_1_to_100_tps": 58.15658832716977,
+              "http_prompt_tokens_per_ttft_s": 2690.8491130439343,
+              "server_prefill_s": 0.17911160648509394,
+              "server_prefill_tokens_per_s": 2858.8033113621277,
+              "ttft_s": 0.1905712889856659
+            },
+            "docs": {
+              "decode_after_ttft_tps": 51.40194499932161,
+              "decode_token_1_to_100_tps": 52.981545314702686,
+              "http_prompt_tokens_per_ttft_s": 2599.280370845153,
+              "server_prefill_s": 0.1787362184986705,
+              "server_prefill_tokens_per_s": 2864.624414896317,
+              "ttft_s": 0.19707403249049094
+            },
+            "prose": {
+              "decode_after_ttft_tps": 50.64525243726226,
+              "decode_token_1_to_100_tps": 51.06811789231868,
+              "http_prompt_tokens_per_ttft_s": 2736.67070527654,
+              "server_prefill_s": 0.17926826149050612,
+              "server_prefill_tokens_per_s": 2856.228910243094,
+              "ttft_s": 0.18717714548984077
+            }
+          },
+          "decode_after_ttft_tps": 51.40194499932161,
+          "decode_token_1_to_100_tps": 52.981545314702686,
+          "http_prompt_tokens_per_ttft_s": 2690.8491130439343,
+          "samples": 6,
+          "server_prefill_s": 0.17911160648509394,
+          "server_prefill_tokens_per_s": 2858.8033113621277,
+          "ttft_s": 0.1905712889856659
+        }
+      },
+      "complete_outputs_match_frozen_and_repeats": true,
+      "measured_requests": 18,
+      "reported_passed": true,
+      "warmups": 3
+    },
+    "strict": {
+      "cache_zero": true,
+      "canaries_passed": true,
+      "class_balanced_decode_tok_s": 54.854664057239546,
+      "complete_12_prompt_qualification": true,
+      "complete_outputs_match_frozen": true,
+      "prompts": 12,
+      "workload_gate_reported_passed": true
+    }
+  },
+  "health": {
+    "boot_id": "5ba85b30-0455-466a-b9fc-d9132975417e",
+    "container_exit_verified": true,
+    "expected_value_output_hashes_rederived": 6,
+    "finished_at": "2026-09-14T19:18:49.238351+00:00",
+    "normal_group_cleanup_reported_both_ranks": true,
+    "passed_verified": true,
+    "phase": "health",
+    "ranks": 2,
+    "raw_tensor_outputs_archived": false,
+    "scope": "Deterministic expected-value standard Torch/XCCL health check; reported output hashes match independently generated FP16 expected bytes. Not model quality or custom communicator qualification.",
+    "started_at": "2026-09-14T19:18:39.827180+00:00",
+    "status": "passed"
+  },
+  "interpretation": "Recovery quality and within-process metadata screening are separate. No one-process speed promotion or automatic recommendation.",
+  "metadata_campaign": {
+    "completed_rpc_and_counter_replay": null,
+    "error": "The research server never became ready: its newest-base image exhausted host memory during model load (research-server/postflight.json). No native gate, RPC or endpoint arm ran.",
+    "fresh_process_performance_confirmation": false,
+    "promoted": false,
+    "status": "not-run"
+  },
+  "parity_reports_replayed": [
+    {
+      "exact_prompts": 12,
+      "path": "raw/recovery-strict-parity.json",
+      "reported_pair_qualified": true,
+      "total_prompts": 12
+    }
+  ],
+  "phase_presence": {
+    "client-campaign": false,
+    "client-monitor": false,
+    "final-service": true,
+    "final-strict": false,
+    "final-strict-monitor": false,
+    "health": true,
+    "health-after-research-oom": true,
+    "recovered-service": true,
+    "recovery-strict": true,
+    "recovery-strict-monitor": true,
+    "research-server": true
+  },
+  "post_incident_health": {
+    "boot_id": "5ba85b30-0455-466a-b9fc-d9132975417e",
+    "container_exit_verified": true,
+    "expected_value_output_hashes_rederived": 6,
+    "finished_at": "2026-09-15T01:58:27.289898+00:00",
+    "normal_group_cleanup_reported_both_ranks": true,
+    "passed_verified": true,
+    "phase": "health-after-research-oom",
+    "ranks": 2,
+    "raw_tensor_outputs_archived": false,
+    "scope": "Deterministic expected-value standard Torch/XCCL health check; reported output hashes match independently generated FP16 expected bytes. Not model quality or custom communicator qualification.",
+    "started_at": "2026-09-15T01:58:17.913116+00:00",
+    "status": "passed"
+  },
+  "prior_incident": {
+    "disposition": "Preserved historical incident; this recovery packet does not clear or overwrite its fault latch",
+    "fault_sha256": "ce0eeb9314fdc04a4556d4b4c8272b6c5bbd17a54a3387fb32afdcf1641b0d87",
+    "manifest_sha256": "aa418d58b6c8fd0491f36296d64a199d17079bd57fb0a00824767166681e8dca",
+    "repository_path": "experiments/qwen38-27b-b70/data/2026-09-14-mtp-lossless-transfer"
+  },
+  "ready_health_admission": {
+    "ready_claim": false
+  },
+  "research_stage": {
+    "allocation_failure_stack": [
+      "dump_stack_lvl",
+      "dump_stack",
+      "warn_alloc",
+      "__alloc_pages_slowpath.constprop.0",
+      "__alloc_frozen_pages_noprof",
+      "__alloc_pages_noprof",
+      "ttm_pool_alloc_page",
+      "__ttm_pool_alloc",
+      "ttm_pool_alloc",
+      "xe_ttm_tt_populate",
+      "ttm_tt_populate",
+      "ttm_bo_populate",
+      "ttm_bo_setup_export",
+      "xe_gem_prime_export",
+      "drm_gem_prime_handle_to_dmabuf",
+      "drm_prime_handle_to_fd_ioctl",
+      "drm_ioctl_kernel",
+      "drm_ioctl",
+      "xe_drm_ioctl",
+      "__x64_sys_ioctl",
+      "x64_sys_call",
+      "do_syscall_64",
+      "entry_SYSCALL_64_after_hwframe"
+    ],
+    "exit_code": 1,
+    "exit_confirmed": true,
+    "finished_at": "2026-09-15T00:39:35.642978857Z",
+    "full_kernel_window_sha256": {
+      "after_exit_to_capture": "a9211b86fe4b55cf3cb978d521efb838afc1a15a967aaf164e50feea3ccdc6a0",
+      "dmesg_ring_buffer": "5a2e05149bfa0212489f0c86c4298f651139bb44a977ae10838df7d45c40c6d5",
+      "launch_to_exit_plus_5min": "0d830d464721873052095586cf8a0bdfa3566d859bccb5f33b49aefeb388f7b2"
+    },
+    "full_kernel_windows_archived": false,
+    "gib_outside_normal_counters_at_first_oom": 12.65,
+    "global_oom_kills": 24,
+    "gpu_fault_signature_lines": 0,
+    "oom_killed": true,
+    "owner_receipts_unchanged": [
+      "STOP_UNCONFIRMED",
+      "image.json",
+      "kernel.log",
+      "launch.json",
+      "memory.jsonl",
+      "server.log",
+      "state.json",
+      "stop.json"
+    ],
+    "page_allocation_failures": 4,
+    "requests_served": 0,
+    "scope": "Host memory exhaustion during research target load; full kernel windows stay local because they contain whole-host process tables.",
+    "status": "failed-during-load"
+  },
+  "schema": "neural.download.fp8-recovery-metadata-evidence-summary.v1",
+  "service_log_snapshots": {
+    "final-service": {
+      "label": "closed-after-gpu-fault",
+      "reported_state": "failed",
+      "semantics": "point-in-time snapshot; process exit is not claimed"
+    },
+    "recovered-service": {
+      "label": "closed-after-gpu-fault",
+      "reported_state": "stopped",
+      "semantics": "closed stopped-service logs"
+    },
+    "research-server": {
+      "label": "closed-after-gpu-fault",
+      "reported_state": "stop_unconfirmed",
+      "semantics": "closed logs; exit confirmed by later postflight inspection"
+    }
+  },
+  "service_strict_bindings_replayed": [
+    {
+      "base_url": "http://127.0.0.1:18124",
+      "binding_receipt": "recovery-service-strict-binding.json",
+      "binding_sha256": "674dacbb9d9bd013a77e4ff2e2f9aa555f9984024898548578969f3d9fceb0b1",
+      "boot_id": "5ba85b30-0455-466a-b9fc-d9132975417e",
+      "captured_at": "2026-09-14T19:26:22.694167+00:00",
+      "container_id": "8a710e05b896209b9c651ef1a89f6d1481b9007aea4c1235617b56af1ee1a169",
+      "image_id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+      "model": "qwen38-27b-fp8",
+      "qualified_instance_and_outputs_verified": true,
+      "service_dir": "recovered-service",
+      "strict_dir": "recovery-strict"
+    }
+  ],
+  "strict_attempts": {
+    "raw/recovery-strict": {
+      "cache_zero": true,
+      "canaries_passed": true,
+      "class_balanced_decode_tok_s": 54.01361454213344,
+      "complete_12_prompt_qualification": true,
+      "complete_outputs_match_frozen": true,
+      "prompts": 12,
+      "workload_gate_reported_passed": true
+    }
+  }
+}

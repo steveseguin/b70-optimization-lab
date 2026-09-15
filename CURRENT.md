@@ -25,15 +25,53 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host, September 14 19:22 UTC: original FP8/MTP1 API ready; strict recovery check running.**
-The single bounded recovery check passed on both cards: exact local copy/compute,
-standard XCCL sums at both shapes, normal collective cleanup, confirmed container
-exit, no device owners and a clean new kernel window. Same boot; no reset or
-settings change. The original qualified image is ready on port18124 under
-`fp8-mtp-recovery-metadata-20260914/recovered-service`. The full 12-prompt
-strict/canary recovery check is running; no candidate is enabled.
-The custom communicator remains quarantined. Metadata testing follows only
-a successful model restoration and full reference-output gate.
+**Two-B70 host, September 15 02:20 UTC: GPU fault during FP8 restore; GPU work halted, API offline, reboot decision needed.**
+The bounded standard health check passed on both cards at 01:58 UTC. Loading
+the unchanged qualified R304 FP8/MTP1 service in `final-service` then faulted
+card 0000:e3:00.0 at 02:00:38 UTC as target weights finished loading: 33
+unsuccessful copy-engine (bcs) page-fault responses, 8 engine memory CAT errors,
+a bcs engine reset, a timed-out job and a device coredump. The helper halted and
+stopped once; the container is gone, no model process owns the GPUs and port
+18124 is closed. The campaign `FAULT.json` latch is set and the campaign is
+closed; the metadata change remains unvalidated. Same boot; no retry, reboot,
+driver reset or settings change by the agent. **Restoring the service needs the
+user's decision on a host reboot**; afterwards use a newly admitted recovery
+root (health check, qualified service, full strict check). Cause not
+established; a swap-out burst preceded the fault by seconds. The research
+launch's missing environment variables (see the entry below) do not explain
+this fault; the restore carried them.
+[Fault note](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-restore-gpu-fault.md).
+This supersedes the restore statement below.
+
+**Two-B70 host, September 15 02:00 UTC: research server ran the host out of memory during load; restoring original FP8 service.**
+The newest-base V1/native-MTP control on localhost18129 (image `506fcc26`,
+upstream `dc36fcce9`) never became ready and served no requests. From about
+19:40 UTC its model load exhausted host RAM: the root filesystem stalled, the
+owner's monitor blocked and could not stop it, and after about four hours the
+kernel OOM killer ended the desktop session, login-screen processes and one vLLM
+worker. The container exited at 00:39 UTC (Docker OOMKilled). About 12.7 GiB was
+held outside normal memory counters; worker allocations failed inside xe dma-buf
+export. No xe memory fault, CAT error or engine reset was recorded; memory has
+recovered and no model process owns the GPUs. Same boot; no reboot, driver
+reset or settings change. The metadata client never ran. Do not relaunch
+that research recipe unchanged: it and the 09:27 freeze candidate omitted five
+qualified environment variables, including
+`PYTORCH_ALLOC_CONF=expandable_segments:True`; the launcher now refuses. Next:
+one bounded standard health check, then
+restore the qualified R304 service on 18124 in `final-service` and repeat the
+full strict output check.
+[Incident note](experiments/qwen38-27b-b70/notes/2026-09-15-research-load-host-oom.md).
+This supersedes the loading statement below.
+
+**Two-B70 host, September 14 19:27 UTC: recovery qualified; metadata research loading.**
+The original FP8/MTP1 service passed all12 complete frozen-reference outputs,
+canaries and cache-zero checks at54.0136 output tokens/s. Its planned graceful
+stop completed with no owners and no new GPU fault. Loading the separate
+reviewed V1/native-MTP control on localhost18129 for metadata validation.
+Port18124 is temporarily offline during this planned test. No custom
+communicator, DFlash, target-arithmetic change or quality waiver is enabled.
+Same boot; no reboot/reset or host settings changes. The original service will
+be restored after the bounded comparison if device health remains clean.
 [Recovery and metadata plan](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-recovery-metadata-plan.md).
 Raw root: `/mnt/fast-ai/bench-results/fp8-mtp-recovery-metadata-20260914`.
 The prior incident entry below remains historical evidence of the halted run.
