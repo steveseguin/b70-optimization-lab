@@ -32,6 +32,10 @@ from ltx_layer_shard import (CACHE_KEY, KEY, LTXLayerShardedPatcher, _BlockRoute
 AV_SOURCE_SHA256 = '6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d'
 SHARD_SOURCE_SHA256 = '0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b'
 WARMUP_ITERATIONS = 3
+# Two shapes per block (the 128x128 and 256x256 sampler stages) are expected.
+# Anything more means the signature is tracking something that is not a real
+# input, and unbounded capture exhausts device memory and evicts the model.
+MAX_SIGNATURES_PER_BLOCK = 4
 # Exact keyword translation from the pinned LTXAVModel.block_wrap.
 KEYWORDS = ('v_context', 'a_context', 'attention_mask', 'v_timestep', 'a_timestep', 'v_pe', 'a_pe',
             'v_cross_pe', 'a_cross_pe', 'v_cross_scale_shift_timestep', 'a_cross_scale_shift_timestep',
@@ -262,7 +266,15 @@ def option_census(options):
 
 
 def split_options(options):
-    """Separate the numerical part of the options bag from its infrastructure."""
+    """Separate the numerical part of the options bag from its infrastructure.
+
+    The shard's own per-forward transfer cache (CACHE_KEY) is passed through but
+    deliberately excluded from the signature. It is scratch owned by the routing
+    wrapper, keyed by `(id(tensor), device)`, so on the secondary device -- where
+    `_move` actually copies -- its contents change every single forward. Signing
+    it made every block past the split re-capture on every step: 339 graphs
+    instead of 96, which exhausted device memory and evicted the shard to CPU.
+    """
     infra, data = {}, {}
     for key, value in options.items():
         if key == CACHE_KEY or key in OPTION_INFRASTRUCTURE:
@@ -270,6 +282,10 @@ def split_options(options):
         else:
             data[key] = value
     return infra, data
+
+
+def signed_infrastructure(infra):
+    return {k: v for k, v in infra.items() if k != CACHE_KEY}
 
 
 def static_like(tensor):
@@ -365,12 +381,11 @@ class GraphBlockRoute:
 
     # -- native execution ---------------------------------------------------
     def _invoke(self, img, kwargs):
-        return self.block(img, **{name: kwargs[name] for name in KEYWORDS})
-
-    def _kwargs(self, routed, options):
-        values = {name: routed.get(name) for name in KEYWORDS}
-        values['transformer_options'] = options
-        return values
+        # Pass the prepared mapping through whole: building a second key list
+        # here once silently dropped transformer_options, so the block saw None.
+        require(set(kwargs) == set(KEYWORDS) | {'transformer_options'},
+                'Block keyword translation lost or gained an argument')
+        return self.block(img, **kwargs)
 
     def _capture(self, routed, signature):
         """Record one graph for this signature and prove it matches eager bits."""
@@ -449,7 +464,8 @@ class GraphBlockRoute:
 
         entry = Entry(self.index, signature, static_kw, graph, out_vx, out_ax, in_flat, inplace)
         entry.static_img = static_img
-        entry.snapshot_restore = restore
+        # `snapshot` is a full clone of every mirrored tensor; it is only needed
+        # during capture, so it is deliberately not kept on the entry.
         self.entries[signature] = entry
         self.report.record_capture(self.index, signature, len(in_flat), inplace,
                                    describe_types(routed), option_census(options),
@@ -475,13 +491,17 @@ class GraphBlockRoute:
         signature = (self.index, describe(routed['img'], 'img'),
                      tuple(describe(routed.get(name), name) for name in KEYWORDS),
                      describe_option_data(data, 'transformer_options'),
-                     describe_infrastructure(infra, 'transformer_options.infrastructure'))
+                     describe_infrastructure(signed_infrastructure(infra),
+                                             'transformer_options.infrastructure'))
         if self.report.first_options is None:
             self.report.first_options = {'block_index': self.index,
                                          'argument_types': describe_types(routed),
                                          'options': option_census(options)}
         entry = self.entries.get(signature)
         if entry is None:
+            require(len(self.entries) < MAX_SIGNATURES_PER_BLOCK,
+                    f'Block {self.index} reached {len(self.entries)} distinct argument signatures; '
+                    'the signature is tracking something that is not a real input')
             entry = self._capture(routed, signature)
         else:
             self._fill(entry, routed)

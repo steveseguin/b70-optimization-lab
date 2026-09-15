@@ -54,7 +54,7 @@ def require(condition, message):
 
 H = load_helpers()
 walk, mirror, describe = H['walk'], H['mirror'], H['describe']
-split_options = H['split_options']
+split_options, signed_infrastructure = H['split_options'], H['signed_infrastructure']
 describe_infrastructure, describe_option_data = H['describe_infrastructure'], H['describe_option_data']
 attribute_names = H['attribute_names']
 option_census = H['option_census']
@@ -365,6 +365,29 @@ def test_runtime_options_mirror_end_to_end():
         assert x is not y and torch.equal(x, y)
     assert m['uuid'] is data['uuid']
     assert m['denoise_mask_function'] is data['denoise_mask_function']
+
+
+def test_shard_transfer_cache_is_excluded_from_the_signature():
+    """The shard's per-forward _move cache is keyed by (id(tensor), device), so
+    signing it makes every block past the split re-capture on every step."""
+    a = runtime_options()
+    b = dict(a)                      # same infrastructure objects, new forward
+    t1, t2 = torch.randn(3), torch.randn(3)
+    a[CACHE_KEY] = {(id(t1), 'xpu:1'): (t1, t1.clone())}
+    b[CACHE_KEY] = {(id(t2), 'xpu:1'): (t2, t2.clone())}
+    ia, _ = split_options(a); ib, _ = split_options(b)
+    assert describe_infrastructure(ia) != describe_infrastructure(ib), \
+        'the unfiltered cache must differ, otherwise this test proves nothing'
+    assert CACHE_KEY in ia and CACHE_KEY not in signed_infrastructure(ia)
+    assert describe_infrastructure(signed_infrastructure(ia)) == \
+           describe_infrastructure(signed_infrastructure(ib)), 'cache contents leaked into the signature'
+
+
+def test_signed_infrastructure_still_pins_callbacks():
+    a = runtime_options(); b = runtime_options()
+    ia, _ = split_options(a); ib, _ = split_options(b)
+    assert describe_infrastructure(signed_infrastructure(ia)) != \
+           describe_infrastructure(signed_infrastructure(ib))
 
 
 
