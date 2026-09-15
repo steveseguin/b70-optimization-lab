@@ -34,6 +34,19 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 15 13:30 UTC: qualified FP8/MTP1 service restored on 18124 and matched pre-test quality and speed.**
+The unchanged R304 FP8 TP2/MTP1 service (image `7cd7bb16`, helper state
+`/mnt/fast-ai/bench-results/optimization-validation-20260915/restored-service`)
+is ready at `http://127.0.0.1:18124/v1`, model `qwen38-27b-fp8`. Strict check:
+12/12 complete outputs match the pre-test reference, canaries pass, cache zero,
+54.306 tok/s versus 54.855 control (-1.0%, within session drift; the September
+14 post-reboot restore measured 54.316). Context profile: all 18 continuations
+exact; prefill 2,861/3,670/3,296 input tok/s at 512/2,048/16,384 versus
+2,859/3,677/3,305 before. No kernel faults. Today's stopped test containers were
+removed after their receipts were saved; incident containers are kept.
+[Restore results](experiments/qwen38-27b-b70/data/2026-09-15-post-test-restore/),
+[community cookbook claim review](community/sergiiob-b70-inference-cookbook/validation/2026-09-15-qwen38-engine-comparison-review.md).
+
 **Two-B70 host, September 15 13:10 UTC: both transfer optimizations validated; neither is worth adopting; GPUs idle.**
 Exact two-card communicator stage 05 passed every quality case at 1/2/512/4,096
 rows under the user-approved NaN-class rule, with peer IPC, clean retirement, no
