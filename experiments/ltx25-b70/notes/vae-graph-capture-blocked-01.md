@@ -106,6 +106,62 @@ The qualified position remains packet21's: warm clip **4.682 s** against a
 6.415 s control, sampler **1.942 s** at 1.86x, decode **0.560 s**, everything
 bytewise exact. Nothing in this note changes it.
 
+## Update, September15: three more blockers, each caught by a guard
+
+The host read was removed (`int(en.max())` -> `max(ends)`, **288/288 geometries
+bitwise equal** on CPU) and capture was retried. It failed three more times, and
+every failure was caught by a guard rather than producing wrong pixels:
+
+| Packet | Refusal | Cause |
+| --- | --- | --- |
+| 23 | `Node 'LTXNAAxisDecode' not found` | `CANDIDATE_SHA` is pinned as a literal in the router and the decode node. Changing the candidate made their import fail, so the node **silently never registered** |
+| 24 | `NA router source differs` | the node also pins `ROUTER_SHA`, invalidated by repointing the router. The chain is candidate -> router -> node |
+| 25 | `captured an inert graph; replay ignored its input` | the decoder is on xpu:3 while the current device is xpu:0. Setting only the capture *stream* is not enough; `torch.xpu.graph` synchronises and empty-caches the **current** device and records nothing |
+| 26 | `graph replay differs from eager execution` | the real blocker, below |
+
+The pinned-digest chain is the [sealed-literal](../../../docs/local-ops.md) trap:
+a stale pin fails *silently*, because ComfyUI catches the import error and simply
+omits the node. `/object_info/<name>` returns **200 with an empty body** for an
+unregistered node, so the obvious health check proves nothing unless it asserts
+the body actually contains the class. The preparer and checker now verify that
+every `*_SHA` pin in the NA chain names the file the packet actually ships.
+
+## The real blocker: host-to-device copies cannot be captured
+
+An isolated probe settles it:
+
+| Case | Replay matches eager | Stable |
+| --- | --- | --- |
+| A: `torch.tensor(host_list, device=...)` inside capture | **no** | no |
+| B: the same values already device-resident | yes | yes |
+| C: mutating the host list afterwards **changes replay output** | — | — |
+
+Case C is the proof: the captured graph holds a **pointer to host memory**, not a
+copy of the values. After capture that buffer is freed and reused, so replay
+reads whatever now occupies it.
+
+`_group_mask` builds its masks with `torch.tensor(starts, device=device)` and
+`torch.tensor(ends, device=device)` on **every call**, because `na3d` creates its
+`axis_cache` fresh per invocation (`axis_cache = {}`). So every capture of the
+decoder records dangling host pointers, and replay silently diverges. The
+bitwise proof caught it; without that proof this would have shipped visibly
+wrong video.
+
+**The fix path is clear but is its own change:** give the axis cache a lifetime
+longer than one invocation, keyed by geometry and device and bounded as it
+already is (64 entries, 4096 elements). The eager reference and warm-up calls the
+adapter already performs would then populate it, and the captured call would find
+the masks **already device-resident** -- case B, which captures correctly. That
+converts the decoder into a valid capture target without touching its arithmetic.
+
+This is not attempted here. The decoder is 0.560 s of a 4.682 s clip, so the
+whole prize is roughly 0.2 s, and the larger measured lever is elsewhere.
+
+**No GPU fault occurred in any of these four attempts** -- the capture teardown
+added after the first incident holds, and the kernel fault count for the boot
+stayed at zero throughout.
+
 Evidence: [`data/vae-capture-incident-01/`](../data/vae-capture-incident-01/)
-holds the kernel fault extract, the execution error and the five clips that did
-complete.
+holds the kernel fault extract, the execution error and the clips that completed;
+[`data/h2d-copy-under-capture-01.json`](../data/h2d-copy-under-capture-01.json)
+holds the host-to-device probe.

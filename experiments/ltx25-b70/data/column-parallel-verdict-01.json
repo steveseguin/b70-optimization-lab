@@ -1,0 +1,52 @@
+{
+  "schema": "ltx.column-parallel-verdict.v1",
+  "date_utc": "2026-09-15",
+  "question": "Is exact 2-way output-column parallelism across two B70s worth building for the sampler?",
+  "answer": "No. It is break-even at best and a net loss at the gather count exactness actually requires.",
+  "exactness_at_real_token_counts": {
+    "method": "N-split of every real LTX projection shape at the token counts that actually occur (video 64/256, audio 26, text context 128/256), compared bitwise as int16",
+    "two_way": {
+      "cases": 20,
+      "exact": 19,
+      "failures": [
+        [
+          "a2v to_q (video->audio dim)",
+          256
+        ]
+      ]
+    },
+    "four_way": {
+      "cases": 20,
+      "exact": 9
+    },
+    "note": "The audio layers ARE exact at their real 26-token count; an earlier probe that tested them at 256 tokens reported failures for shapes the audio path never sees. 4-way is only 9/20 exact, which rules out any 3- or 4-GPU lossless variant."
+  },
+  "economics": {
+    "production_serial_ms": 104.34,
+    "half_block_MB": 368.9,
+    "full_block_MB": 737.5,
+    "ideal_split_zero_comms_ms": 67.824,
+    "ideal_ceiling_speedup": 1.538,
+    "gather_pair_ms": 0.0492,
+    "replay_overhead_us": 7.4,
+    "projected": {
+      "4_gathers_per_block": 1.314,
+      "8_gathers_per_block": 1.138,
+      "12_gathers_per_block": 1.003,
+      "16_gathers_per_block": 0.897
+    }
+  },
+  "why_the_gathers_are_unavoidable": [
+    "The Megatron column-then-row pattern needs one cross-device SUM instead of two gathers, but a sum changes the floating-point reduction order and is therefore not bitwise exact.",
+    "Every RMSNorm reduces over the feature dimension, so it needs the whole vector, not half of it.",
+    "Every attention output projection needs all heads concatenated first.",
+    "That is about 16 gather points per block: 6 attentions x 2 plus 2 feed-forwards x 2.",
+    "A gather also cannot live inside a per-device graph, so each one splits the captured chain into another segment that must be replayed separately."
+  ],
+  "decision": "Retired. Two B70s do replay graphs with perfect concurrency (factor 1.999) and a gather is only 0.049 ms, but halving the weights only takes a 48-block chain from 104.3 to 67.8 ms (1.54x, not 2x, because small projections do not halve), and ~16 gathers per block spend more than that ceiling is worth.",
+  "limitations": [
+    "synthetic blocks with the checkpoint shapes, not the checkpoint code or weights",
+    "the gather count is derived from the real block structure, not from a built implementation",
+    "a non-exact variant using row-parallel all-reduce would be faster, and is excluded by the losslessness requirement, not by the measurement"
+  ]
+}
