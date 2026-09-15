@@ -55,10 +55,36 @@ clean = 'int(en.max())' not in code and '.max())' not in code
 still_present_in_original = 'int(en.max())' in '\n'.join(
     line.split('#', 1)[0] for line in ORIGINAL.read_text().splitlines())
 
-out = {'comparisons': len(results), 'all_bitwise_equal': all(results) and not mismatches,
+# The cache now outlives a call, so a HIT must return exactly what a cold miss
+# computes. Exercise both paths against the packet original.
+cache_results = []
+for length, kernel, causal in itertools.product((3, 8, 16, 25), (2, 4, 8), (False, True)):
+    starts, ends = b._window_bounds(length, kernel, causal)
+    rel = tuple((tuple(starts), tuple(ends)) for _ in range(3))
+    for dtype in (torch.bfloat16, torch.float32):
+        view = (lambda t: t.view(torch.int16)) if dtype == torch.bfloat16 else (lambda t: t.view(torch.int32))
+        cold = a._group_mask(rel, dtype, device, {})          # packet original, uncached
+        shared = {}
+        first = b._group_mask(rel, dtype, device, shared)      # fixed version, cold miss
+        second = b._group_mask(rel, dtype, device, shared)     # fixed version, cache HIT
+        third = b._group_mask(rel, dtype, device, b._PERSISTENT_AXIS_CACHE)
+        fourth = b._group_mask(rel, dtype, device, b._PERSISTENT_AXIS_CACHE)
+        cache_results.append(torch.equal(view(cold), view(first)) and
+                             torch.equal(view(cold), view(second)) and
+                             torch.equal(view(cold), view(third)) and
+                             torch.equal(view(cold), view(fourth)))
+        if not cache_results[-1]:
+            mismatches.append({'case': 'persistent cache', 'length': length, 'kernel': kernel,
+                               'causal': causal, 'dtype': str(dtype)})
+bounded = len(b._PERSISTENT_AXIS_CACHE) <= 64 and all(
+    t.numel() <= 4096 for t in b._PERSISTENT_AXIS_CACHE.values())
+
+out = {'cache_comparisons': len(cache_results), 'cache_all_equal': all(cache_results),
+       'persistent_cache_entries': len(b._PERSISTENT_AXIS_CACHE), 'cache_bounded': bounded,
+       'comparisons': len(results), 'all_bitwise_equal': all(results) and not mismatches,
        'mismatches': mismatches[:10], 'host_read_removed_from_code': clean,
        'host_read_present_in_original': still_present_in_original,
        'uncached_path_exercised': True,
        'note': 'axis_cache passed empty every call, so the previously host-reading branch runs every time'}
 print(json.dumps(out, indent=2))
-sys.exit(0 if out['all_bitwise_equal'] and clean else 1)
+sys.exit(0 if out['all_bitwise_equal'] and clean and out['cache_all_equal'] and out['cache_bounded'] else 1)

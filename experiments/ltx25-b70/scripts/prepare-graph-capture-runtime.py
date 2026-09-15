@@ -156,9 +156,19 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           if line.split('#', 1)[0].strip()]
     diff = [line for line in difflib.unified_diff(strip(original_na), strip(current_na), n=0)
             if line.startswith(('+', '-')) and not line.startswith(('+++', '---'))]
-    require(len(diff) == 2 and diff[0].strip() == '-            kj = torch.arange(int(en.max()), device=device)'
-            and diff[1].strip() == '+            kj = torch.arange(max(ends), device=device)',
-            'NA candidate differs from packet13 beyond the removed host read')
+    # Exactly three substantive changes, all required by graph capture and all
+    # proven bitwise equivalent on CPU (288 cold-path and 48 cache-hit cases):
+    # remove the host read, and give the geometry cache a lifetime longer than
+    # one call so the masks are device-resident when capture happens.
+    expected_na_diff = [
+        '+_PERSISTENT_AXIS_CACHE = {}',
+        '-            kj = torch.arange(int(en.max()), device=device)',
+        '+            kj = torch.arange(max(ends), device=device)',
+        '-    axis_cache = {}',
+        '+    axis_cache = _PERSISTENT_AXIS_CACHE',
+    ]
+    require([line.rstrip() for line in diff] == expected_na_diff,
+            'NA candidate differs from packet13 beyond the removed host read and the cache lifetime')
     require(not any('int(en.max())' in line for line in strip(current_na)),
             'NA candidate still reads a tensor for a size')
     require(capture['na_candidate_sha256'] == manifest['extension_sha256s']['ltx_na_axis_candidate.py'] and
