@@ -1,0 +1,261 @@
+{
+  "schema": "ltx.dispatch-bound-diagnosis.v1",
+  "date_utc": "2026-09-14",
+  "boot_id": "64bbd5d2-9e62-4a2e-b761-6539e5b73e00",
+  "server": {
+    "pid": 6431,
+    "run": "encoder-server-host-embedding-13",
+    "packet_manifest_sha256": "b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666",
+    "status": "stopped cleanly after campaign; queue empty, no FAULT latch, no kernel fault"
+  },
+  "scope": "control arm only: original graph, 256x256, 25 frames, 24 fps, BF16 8+3 steps",
+  "warm_control_clips": [
+    {
+      "run": "cpu-probe-02-control-boat",
+      "preview_ready_seconds": 6.3979,
+      "parity_status": "passed",
+      "bitwise_all_equal": true,
+      "comparisons": [
+        "audio_latent",
+        "images",
+        "video_latent",
+        "waveform"
+      ]
+    },
+    {
+      "run": "cpu-probe-03-control-boat",
+      "preview_ready_seconds": 6.3121,
+      "parity_status": "passed",
+      "bitwise_all_equal": true,
+      "comparisons": [
+        "audio_latent",
+        "images",
+        "video_latent",
+        "waveform"
+      ]
+    },
+    {
+      "run": "cpu-probe-04-control-boat",
+      "preview_ready_seconds": 6.4501,
+      "parity_status": "passed",
+      "bitwise_all_equal": true,
+      "comparisons": [
+        "audio_latent",
+        "images",
+        "video_latent",
+        "waveform"
+      ]
+    },
+    {
+      "run": "spy-probe-05-control-boat",
+      "preview_ready_seconds": 6.3276,
+      "parity_status": "passed",
+      "bitwise_all_equal": true,
+      "comparisons": [
+        "audio_latent",
+        "images",
+        "video_latent",
+        "waveform"
+      ]
+    }
+  ],
+  "warm_preview_median_s": 6.3627,
+  "node_medians": [
+    {
+      "node": "344",
+      "class_type": "SamplerCustomAdvanced",
+      "median_wall_s": 2.5452,
+      "median_cpu_core_s": 2.875,
+      "cpu_per_wall": 1.13
+    },
+    {
+      "node": "364",
+      "class_type": "CLIPTextEncode",
+      "median_wall_s": 1.8001,
+      "median_cpu_core_s": 2.46,
+      "cpu_per_wall": 1.367
+    },
+    {
+      "node": "368",
+      "class_type": "SamplerCustomAdvanced",
+      "median_wall_s": 1.0145,
+      "median_cpu_core_s": 1.2,
+      "cpu_per_wall": 1.183
+    },
+    {
+      "node": "374",
+      "class_type": "VAEDecode",
+      "median_wall_s": 0.6062,
+      "median_cpu_core_s": 0.69,
+      "cpu_per_wall": 1.138
+    },
+    {
+      "node": "358",
+      "class_type": "LTXVAudioVAEDecode",
+      "median_wall_s": 0.1763,
+      "median_cpu_core_s": 0.175,
+      "cpu_per_wall": 0.993
+    },
+    {
+      "node": "75",
+      "class_type": "SaveVideo",
+      "median_wall_s": 0.1149,
+      "median_cpu_core_s": 0.995,
+      "cpu_per_wall": 8.656
+    },
+    {
+      "node": "414",
+      "class_type": "LTXBaselineCapture",
+      "median_wall_s": 0.0258,
+      "median_cpu_core_s": 0.305,
+      "cpu_per_wall": 11.822
+    },
+    {
+      "node": "348",
+      "class_type": "LTXVLatentUpsampler",
+      "median_wall_s": 0.0239,
+      "median_cpu_core_s": 0.02,
+      "cpu_per_wall": 0.839
+    },
+    {
+      "node": "421",
+      "class_type": "LTXHostEmbeddingPlacementCheck",
+      "median_wall_s": 0.0113,
+      "median_cpu_core_s": 0.0,
+      "cpu_per_wall": 0.0
+    }
+  ],
+  "cpu_observation": "server-process utime+stime sampled at 50 Hz from /proc; read-only, no instrumentation",
+  "pyspy_attribution": {
+    "sampler": {
+      "samples": 381,
+      "top_leaves": [
+        {
+          "leaf": "forward (torch/nn/modules/linear.py:134)",
+          "samples": 86,
+          "pct": 22.6
+        },
+        {
+          "leaf": "rms_norm (torch/nn/functional.py:3012)",
+          "samples": 42,
+          "pct": 11.0
+        },
+        {
+          "leaf": "scaled_dot_product_attention (ops.py:61)",
+          "samples": 27,
+          "pct": 7.1
+        },
+        {
+          "leaf": "apply_rope_split_half1 (eager/rope.py:41)",
+          "samples": 17,
+          "pct": 4.5
+        },
+        {
+          "leaf": "forward (model.py:499)",
+          "samples": 17,
+          "pct": 4.5
+        },
+        {
+          "leaf": "expand_for_computation (av_model.py:67)",
+          "samples": 14,
+          "pct": 3.7
+        },
+        {
+          "leaf": "get_ada_values (av_model.py:216)",
+          "samples": 12,
+          "pct": 3.1
+        },
+        {
+          "leaf": "forward (ops.py:575)",
+          "samples": 8,
+          "pct": 2.1
+        },
+        {
+          "leaf": "apply_rope_split_half1 (eager/rope.py:40)",
+          "samples": 8,
+          "pct": 2.1
+        },
+        {
+          "leaf": "_call_impl (torch/nn/modules/module.py:1794)",
+          "samples": 8,
+          "pct": 2.1
+        }
+      ]
+    },
+    "clip_encode": {
+      "samples": 360,
+      "top_leaves": [
+        {
+          "leaf": "cast_to (model_management.py:1568)",
+          "samples": 284,
+          "pct": 78.9
+        },
+        {
+          "leaf": "cast_bias_weight (ops.py:432)",
+          "samples": 21,
+          "pct": 5.8
+        },
+        {
+          "leaf": "encode_token_weights (sd1_clip.py:73)",
+          "samples": 17,
+          "pct": 4.7
+        },
+        {
+          "leaf": "forward (gemma4.py:643)",
+          "samples": 10,
+          "pct": 2.8
+        },
+        {
+          "leaf": "encode_token_weights (sd1_clip.py:65)",
+          "samples": 7,
+          "pct": 1.9
+        },
+        {
+          "leaf": "scaled_dot_product_attention (ops.py:61)",
+          "samples": 4,
+          "pct": 1.1
+        },
+        {
+          "leaf": "forward_comfy_cast_weights (ops.py:568)",
+          "samples": 4,
+          "pct": 1.1
+        },
+        {
+          "leaf": "encode_token_weights (lt.py:191)",
+          "samples": 4,
+          "pct": 1.1
+        },
+        {
+          "leaf": "rms_norm (torch/nn/functional.py:3012)",
+          "samples": 3,
+          "pct": 0.8
+        },
+        {
+          "leaf": "forward (gemma4.py:349)",
+          "samples": 1,
+          "pct": 0.3
+        }
+      ]
+    }
+  },
+  "model_residency": {
+    "transformer_xpu0_MB": 19908.08,
+    "transformer_xpu1_MB": 20143.39,
+    "transformer_full_load": true,
+    "text_encoder_loaded_MB": 24541.0,
+    "text_encoder_offloaded_MB_progression": [
+      457.51,
+      510.0,
+      555.0,
+      600.0
+    ],
+    "text_encoder_full_load": false,
+    "reserve_vram_GB": 6
+  },
+  "limitations": [
+    "client node-event intervals are approximate wall time, not synchronized kernel timings",
+    "py-spy stack occupancy is not kernel duration; nonblocking sampling can miss frames",
+    "GEMM probe used synthetic weights of the checkpoint shapes, not loaded model weights",
+    "no speed optimization is promoted by this diagnosis"
+  ]
+}
