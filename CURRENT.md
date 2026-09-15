@@ -100,6 +100,35 @@ operator-stage snapshots and the earlier unrelated freeze packet below.
 [implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
+**Four-B70 host, September15 03:30 UTC: first exact LTX speedup landed; sampler 1.83x.**
+Per-block `torch.xpu.XPUGraph` capture of the 48 native transformer blocks cuts
+the sampler from 3.669 s to 2.001 s and the warm clip from 6.459 s to 4.792 s,
+with **all ten campaign clips bytewise identical** on images, video latent, audio
+latent and waveform. Checkpoint, precision, 256x256, 25 frames at 24 fps and the
+original 8+3 sampler schedule are unchanged. Packet
+`prepared-encoder-graph-capture-19`, manifest
+`e378498bb183982c59a76c366efc8d9e39f0197c747fb01e176299ab05ae84c7`, server
+`encoder-server-graph-capture-19` (PID22639) on user-reboot boot `64bbd5d2`.
+Each of the 96 graphs is proven bit-identical to a fresh eager execution of the
+same block before it is used, and proven non-inert. See
+[the result](experiments/ltx25-b70/notes/graph-capture-19-results.md) and
+[why the clip was dispatch-bound](experiments/ltx25-b70/notes/dispatch-bound-diagnosis-01.md).
+
+Two candidate levers were **retired on evidence** rather than pursued: the
+transformer output-column partition (the linear layers already run at the
+537 GB/s copy roofline, so it attacked the wrong term) and whole-model
+compilation (the lane's own all-48 screen is exact but 0.93 s *slower* in the
+sampler). Packet13's text-encoder full residency is exact and speed-neutral;
+it is kept as the base because it removes a per-request growing CPU offload.
+
+The sampler is now GPU-bound: 77.6% of profiler samples wait on the model call,
+the adapter's own Python is ~12%, and per-step cost finally scales with token
+count (165 ms at 64 tokens, 224 ms at 256) where eager barely did. The next
+structural inefficiency is that **only one of four B70s computes at any instant
+during sampling**: blocks 0-20 run on XPU0, then 21-47 on XPU1, strictly
+serially, while XPU2 and XPU3 sit idle. No reboot, driver reset or
+power/memory setting change was made.
+
 **Four-B70 host, September14: packet12 idle after safe memory refusal.**
 LTX PID11888/exec40923 remains healthy and idle at `http://127.0.0.1:8188`,
 packet12 manifest`b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666`.
