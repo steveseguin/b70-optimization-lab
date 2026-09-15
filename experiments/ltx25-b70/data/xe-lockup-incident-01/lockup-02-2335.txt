@@ -1,0 +1,73 @@
+Sep 14 22:09:20 steve-b70s kernel: perf: interrupt took too long (4041 > 2500), lowering kernel.perf_event_max_sample_rate to 49000
+Sep 14 22:09:20 steve-b70s kernel: clocksource: Long readout interval, skipping watchdog check: cs_nsec: 16294897152 wd_nsec: 16294888384
+Sep 14 22:12:41 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Sep 14 22:33:50 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 5 times, consider switching to WQ_UNBOUND
+Sep 14 22:40:16 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 7 times, consider switching to WQ_UNBOUND
+Sep 14 22:57:34 steve-b70s kernel: workqueue: delayed_fput hogged CPU for >10000us 11 times, consider switching to WQ_UNBOUND
+Sep 14 23:35:49 steve-b70s kernel: watchdog: CPU21: Watchdog detected hard LOCKUP on cpu 21
+Sep 14 23:35:49 steve-b70s kernel: Modules linked in: tcp_diag inet_diag xt_conntrack xt_MASQUERADE bridge stp llc xfrm_user xfrm_algo xt_set ip_set nft_chain_nat nf_nat nf_conntrack nf_defrag_ipv6 nf_defrag_ipv4 xt_addrtype nft_compat nf_tables mei_gsc_proxy mei_lb mei_gsc cmdlinepart mei_me mtd_intel_dg mei mtd qrtr overlay snd_hda_codec_intelhdmi snd_hda_codec_hdmi binfmt_misc nls_iso8859_1 amd_atl intel_rapl_msr intel_rapl_common ipmi_ssif xe edac_mce_amd kvm_amd drm_gpusvm_helper intel_vsec snd_usb_audio gpu_sched snd_hda_intel drm_gpuvm snd_usbmidi_lib snd_hda_codec drm_buddy kvm snd_ump drm_ttm_helper snd_seq_midi ttm snd_hda_core snd_seq_midi_event drm_exec snd_intel_dspcfg snd_rawmidi drm_suballoc_helper irqbypass snd_intel_sdw_acpi ee1004 snd_hwdep ghash_clmulni_intel snd_seq drm_display_helper aesni_intel cec wmi_bmof rapl snd_pcm ast snd_seq_device rc_core snd_timer video mc snd acpi_ipmi soundcore ipmi_si ccp i2c_piix4 ipmi_devintf i2c_smbus k10temp ipmi_msghandler input_leds joydev mac_hid sch_fq_codel nfsd auth_rpcgss nfs_acl
+Sep 14 23:35:49 steve-b70s kernel:  msr lockd parport_pc grace ppdev lp parport nvme_fabrics efi_pstore sunrpc nfnetlink dmi_sysfs ip_tables x_tables autofs4 ahci libahci uas usb_storage hid_generic usbhid rndis_host cdc_ether hid usbnet mii igb atlantic nvme i2c_algo_bit macsec dca nvme_core nvme_keyring nvme_auth hkdf wmi
+Sep 14 23:35:49 steve-b70s kernel: CPU: 21 UID: 0 PID: 0 Comm: swapper/21 Not tainted 7.0.0-31-generic #31~24.04.1-Ubuntu PREEMPT(lazy) 
+Sep 14 23:35:49 steve-b70s kernel: Hardware name: Supermicro Super Server/M12SWA-TF, BIOS 2.4a 07/17/2025
+Sep 14 23:35:49 steve-b70s kernel: RIP: 0010:memcpy_fromio+0x7f/0xd0
+Sep 14 23:35:49 steve-b70s kernel: Code: a2 09 3e ff 48 85 db 74 e6 41 f6 c4 01 75 51 48 83 fb 01 76 06 41 f6 c4 02 75 31 48 89 d9 4c 89 ef 4c 89 e6 48 c1 e9 02 f3 a5 <f6> c3 02 74 02 66 a5 f6 c3 01 74 01 a4 5b 41 5c 41 5d 5d 31 c0 31
+Sep 14 23:35:49 steve-b70s kernel: RSP: 0018:ffffcfcfc0888ca0 EFLAGS: 00000016
+Sep 14 23:35:49 steve-b70s kernel: RAX: 0000000000000000 RBX: 0000000000000014 RCX: 0000000000000000
+Sep 14 23:35:49 steve-b70s kernel: RDX: 0000000000000000 RSI: ffffcfd7f8d8dc30 RDI: ffff8bcdcac7cbc8
+Sep 14 23:35:49 steve-b70s kernel: RBP: ffffcfcfc0888cb8 R08: 0000000000002f07 R09: 0000000000000000
+Sep 14 23:35:49 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000000 R12: ffffcfd7f8d8dc1c
+Sep 14 23:35:49 steve-b70s kernel: R13: ffff8bcdcac7cbb4 R14: 0000000000000014 R15: 0000000000008000
+Sep 14 23:35:49 steve-b70s kernel: FS:  0000000000000000(0000) GS:ffff8bece7c63000(0000) knlGS:0000000000000000
+Sep 14 23:35:49 steve-b70s kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+Sep 14 23:35:49 steve-b70s kernel: CR2: 00007a68e73f7e84 CR3: 00000001452c0078 CR4: 0000000000f70ef0
+Sep 14 23:35:49 steve-b70s kernel: PKRU: 55555554
+Sep 14 23:35:49 steve-b70s kernel: Call Trace:
+Sep 14 23:35:49 steve-b70s kernel:  <IRQ>
+Sep 14 23:35:49 steve-b70s kernel:  g2h_read+0x42a/0x4b0 [xe]
+Sep 14 23:35:49 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+Sep 14 23:35:49 steve-b70s kernel:  xe_guc_ct_fast_path+0x78/0x1b0 [xe]
+Sep 14 23:35:49 steve-b70s kernel:  xe_guc_irq_handler+0x9e/0xb0 [xe]
+Sep 14 23:35:49 steve-b70s kernel:  gt_irq_handler+0x3f5/0x490 [xe]
+Sep 14 23:35:49 steve-b70s kernel:  dg1_irq_handler+0x193/0x280 [xe]
+Sep 14 23:35:49 steve-b70s kernel:  __handle_irq_event_percpu+0x58/0x280
+Sep 14 23:35:49 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+Sep 14 23:35:49 steve-b70s kernel:  handle_irq_event+0x39/0x80
+Sep 14 23:35:49 steve-b70s kernel:  handle_edge_irq+0xb2/0x1b0
+Sep 14 23:35:49 steve-b70s kernel:  __common_interrupt+0x53/0x150
+Sep 14 23:35:49 steve-b70s kernel:  common_interrupt+0xb1/0xe0
+Sep 14 23:35:49 steve-b70s kernel:  </IRQ>
+Sep 14 23:35:49 steve-b70s kernel:  <TASK>
+Sep 14 23:35:49 steve-b70s kernel:  asm_common_interrupt+0x27/0x40
+Sep 14 23:35:49 steve-b70s kernel: RIP: 0010:cpuidle_enter_state+0xda/0x720
+Sep 14 23:35:49 steve-b70s kernel: Code: b1 db fe e8 b8 ed ff ff 8b 53 04 49 89 c7 0f 1f 44 00 00 31 ff e8 76 92 d9 fe 80 7d d0 00 0f 85 ce 01 00 00 fb 0f 1f 44 00 00 <45> 85 f6 0f 88 4d 02 00 00 4d 63 ee 49 83 fd 0a 0f 83 35 05 00 00
+Sep 14 23:35:49 steve-b70s kernel: RSP: 0018:ffffcfcfc02dfe00 EFLAGS: 00000246
+Sep 14 23:35:49 steve-b70s kernel: RAX: 0000000000000000 RBX: ffff8bcdc2405000 RCX: 0000000000000000
+Sep 14 23:35:49 steve-b70s kernel: RDX: 0000000000000015 RSI: 0000000000000000 RDI: 0000000000000000
+Sep 14 23:35:49 steve-b70s kernel: RBP: ffffcfcfc02dfe50 R08: 0000000000000000 R09: 0000000000000000
+Sep 14 23:35:49 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000000 R12: ffffffff96767e20
+Sep 14 23:35:49 steve-b70s kernel: R13: 0000000000000002 R14: 0000000000000002 R15: 0000071b2f76f9b5
+Sep 14 23:35:49 steve-b70s kernel:  ? tick_nohz_stop_tick+0xed/0x260
+Sep 14 23:35:49 steve-b70s kernel:  ? raw_spin_rq_unlock+0x14/0x50
+Sep 14 23:35:49 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+Sep 14 23:35:49 steve-b70s kernel:  cpuidle_enter+0x2e/0x50
+Sep 14 23:35:49 steve-b70s kernel:  call_cpuidle+0x21/0x50
+Sep 14 23:35:49 steve-b70s kernel:  cpuidle_idle_call+0x173/0x200
+Sep 14 23:35:49 steve-b70s kernel:  do_idle+0x90/0xf0
+Sep 14 23:35:49 steve-b70s kernel:  cpu_startup_entry+0x29/0x30
+Sep 14 23:35:49 steve-b70s kernel:  start_secondary+0x128/0x170
+Sep 14 23:35:49 steve-b70s kernel:  common_startup_64+0x13e/0x141
+Sep 14 23:35:49 steve-b70s kernel:  </TASK>
+Sep 14 23:35:49 steve-b70s kernel: rcu: INFO: rcu_preempt detected stalls on CPUs/tasks:
+Sep 14 23:35:49 steve-b70s kernel: rcu:         21-...0: (14 ticks this GP) idle=5654/1/0x4000000000000002 softirq=33681/33682 fqs=19778
+Sep 14 23:35:49 steve-b70s kernel: rcu:                  hardirqs   softirqs   csw/system
+Sep 14 23:35:49 steve-b70s kernel: rcu:          number:        6          0            0
+Sep 14 23:35:49 steve-b70s kernel: rcu:         cputime:        0          0            0   ==> 29999(ms)
+Sep 14 23:35:49 steve-b70s kernel: rcu:         (detected by 13, t=60002 jiffies, g=413325, q=84530 ncpus=32)
+Sep 14 23:35:49 steve-b70s kernel: Sending NMI from CPU 13 to CPUs 21:
+Sep 14 23:35:49 steve-b70s kernel: NMI backtrace for cpu 21
+Sep 14 23:35:49 steve-b70s kernel: CPU: 21 UID: 0 PID: 0 Comm: swapper/21 Not tainted 7.0.0-31-generic #31~24.04.1-Ubuntu PREEMPT(lazy) 
+Sep 14 23:35:49 steve-b70s kernel: Hardware name: Supermicro Super Server/M12SWA-TF, BIOS 2.4a 07/17/2025
+Sep 14 23:35:49 steve-b70s kernel: RIP: 0010:memcpy_fromio+0x7d/0xd0
+Sep 14 23:35:49 steve-b70s kernel: Code: ff e9 a2 09 3e ff 48 85 db 74 e6 41 f6 c4 01 75 51 48 83 fb 01 76 06 41 f6 c4 02 75 31 48 89 d9 4c 89 ef 4c 89 e6 48 c1 e9 02 <f3> a5 f6 c3 02 74 02 66 a5 f6 c3 01 74 01 a4 5b 41 5c 41 5d 5d 31
+Sep 14 23:35:49 steve-b70s kernel: RSP: 0018:ffffcfcfc0888ca0 EFLAGS: 00000016
+Sep 14 23:35:49 steve-b70s kernel: RAX: 0000000000000000 RBX: 0000000000000014 RCX: 0000000000000004

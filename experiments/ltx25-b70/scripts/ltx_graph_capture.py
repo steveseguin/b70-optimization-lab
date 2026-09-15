@@ -327,24 +327,118 @@ def fill_static(buffer, value):
     target.copy_(value.as_strided(core, value.stride(), value.storage_offset()))
 
 
-class Entry:
-    """One captured graph plus the static buffers it reads and writes."""
+class Slot:
+    """Static buffers shared by every block on one device for one argument shape.
 
-    def __init__(self, index, signature, static_args, graph, out_vx, out_ax, in_flat, inplace):
+    All 48 blocks in a forward receive the *same* context, positional-embedding
+    and timestep tensors, and each block mutates its video/audio activations in
+    place and returns them. So one buffer set per device is enough: the first
+    block on a device fills it, the rest see their inputs are already the very
+    buffers they would copy into, and the captured graphs chain through shared
+    memory with no copy between blocks at all.
+    """
+
+    def __init__(self, static_img, static_kw, flat):
+        self.img = static_img
+        self.kw = static_kw
+        self.flat = flat
+        self.sources = [None] * len(flat)
+
+
+class DeviceGroup:
+    """Per-device shared state: buffers, and a cached argument signature.
+
+    Describing eighteen arguments per block per step was itself measurable, and
+    the description is identical for every block on a device within one forward.
+    It is computed once per forward and reused, keyed on the identity of the
+    incoming objects (strong references are held so an id cannot be recycled).
+    """
+
+    def __init__(self, device):
+        self.device = device
+        self.slots = {}
+        self._ids = None
+        self._refs = None
+        self._key = None
+        self.fresh_forward = False
+
+    def key_for(self, routed, options):
+        vx, ax = routed['img']
+        values = [vx, ax] + [routed.get(name) for name in KEYWORDS] + [options]
+        ids = tuple(id(v) for v in values)
+        if ids == self._ids:
+            self.fresh_forward = False
+            return self._key
+        infra, data = split_options(options)
+        key = (describe(routed['img'], 'img'),
+               tuple(describe(routed.get(name), name) for name in KEYWORDS),
+               describe_option_data(data, 'transformer_options'),
+               describe_infrastructure(signed_infrastructure(infra),
+                                       'transformer_options.infrastructure'))
+        self._ids, self._refs, self._key = ids, values, key
+        self.fresh_forward = True
+        return key
+
+    def slot_for(self, key, routed, options):
+        slot = self.slots.get(key)
+        if slot is not None:
+            return slot
+        require(len(self.slots) < MAX_SIGNATURES_PER_BLOCK,
+                f'Device {self.device} reached {len(self.slots)} distinct argument shapes; '
+                'the signature is tracking something that is not a real input')
+        infra, data = split_options(options)
+        expected = []
+        for name in ('img',) + KEYWORDS:
+            walk(routed.get(name), expected, name)
+        walk(data, expected, 'transformer_options', 'skip')
+        static_img = mirror(routed['img'], static_like)
+        static_kw = {name: mirror(routed.get(name), static_like) for name in KEYWORDS}
+        static_data = mirror(data, static_like, 'skip')
+        static_kw['transformer_options'] = {**static_data, **infra}
+        flat = []
+        walk(static_img, flat, 'img')
+        for name in KEYWORDS:
+            walk(static_kw[name], flat, name)
+        walk(static_data, flat, 'transformer_options', 'skip')
+        require(len(flat) == len(expected), 'Static mirror lost or gained a tensor')
+        slot = Slot(static_img, static_kw, flat)
+        self.slots[key] = slot
+        return slot
+
+    def fill(self, slot, routed, options):
+        """Copy only what actually changed since this slot was last filled."""
+        incoming = []
+        walk(routed['img'], incoming, 'img')
+        for name in KEYWORDS:
+            walk(routed.get(name), incoming, name)
+        walk(split_options(options)[1], incoming, 'transformer_options', 'skip')
+        require(len(incoming) == len(slot.flat), 'Argument tensor count changed for a captured shape')
+        copied = 0
+        for i, (buffer, value) in enumerate(zip(slot.flat, incoming)):
+            if buffer is value or slot.sources[i] is value:
+                slot.sources[i] = value
+                continue
+            fill_static(buffer, value)
+            slot.sources[i] = value
+            copied += 1
+        return copied
+
+
+class Entry:
+    """One captured graph. Its buffers belong to the device's shared slot."""
+
+    def __init__(self, index, key, graph, out_vx, out_ax):
         self.index = index
-        self.signature = signature
-        self.static_args = static_args
+        self.key = key
         self.graph = graph
         self.out_vx, self.out_ax = out_vx, out_ax
-        self.static_flat = in_flat
-        self.inplace = inplace
         self.replays = 0
 
 
 class GraphBlockRoute:
     """Replaces only the block callable; the original route is still in charge."""
 
-    def __init__(self, block, original_route, index, report):
+    def __init__(self, block, original_route, index, report, group):
         check_source()
         require(type(block) is av_model.BasicAVTransformerBlock, 'Expected the native LTXAV block')
         require(type(original_route) is _BlockRoute, 'Expected the native shard route')
@@ -357,17 +451,24 @@ class GraphBlockRoute:
         self.original_route = original_route
         self.index = index
         self.device = original_route.device
+        require(group.device == self.device, 'Route and device group disagree')
+        self.group = group
         self._route_identity = (original_route.device, original_route.primary, original_route.last)
         self.report = report
         self.entries = {}
-        self.census = None
 
     # -- validation ---------------------------------------------------------
-    def _validate(self):
+    def _validate_fast(self):
+        """Per-call identity check. Cheap on purpose: the expensive registration
+        and residency walk runs once per forward, and Comfy's own ON_PRE_RUN
+        callback already verifies full shard residency before every sampling run."""
         require(type(self.block) is av_model.BasicAVTransformerBlock, 'Captured block class changed')
         require(type(self.original_route) is _BlockRoute and
                 (self.original_route.device, self.original_route.primary,
                  self.original_route.last) == self._route_identity, 'Original route placement changed')
+
+    def _validate(self):
+        self._validate_fast()
         module_api = torch.nn.modules.module
         for name in ('_global_forward_hooks', '_global_forward_pre_hooks',
                      '_global_backward_hooks', '_global_backward_pre_hooks'):
@@ -387,32 +488,14 @@ class GraphBlockRoute:
                 'Block keyword translation lost or gained an argument')
         return self.block(img, **kwargs)
 
-    def _capture(self, routed, signature):
-        """Record one graph for this signature and prove it matches eager bits."""
+    def _capture(self, routed, slot, key):
+        """Record one graph for this shape and prove it matches eager bits."""
         self._validate()
         options = routed['transformer_options']
-        infra, data = split_options(options)
-        tensors = []
-        for name in ('img',) + KEYWORDS:
-            walk(routed.get(name), tensors, name)
-        walk(data, tensors, 'transformer_options', 'skip')
-
-        static_img = mirror(routed['img'], static_like)
-        static_kw = {name: mirror(routed.get(name), static_like) for name in KEYWORDS}
-        static_data = mirror(data, static_like, 'skip')
-        static_opts = {**static_data, **infra}
-        static_kw['transformer_options'] = static_opts
-        in_flat = []
-        walk(static_img, in_flat, 'img')
-        for name in KEYWORDS:
-            walk(static_kw[name], in_flat, name)
-        walk(static_data, in_flat, 'transformer_options', 'skip')
-        require(len(in_flat) == len(tensors), 'Static mirror lost or gained a tensor')
-
-        snapshot = [t.clone() for t in in_flat]
+        snapshot = [t.clone() for t in slot.flat]
 
         def restore():
-            for buffer, value in zip(in_flat, snapshot):
+            for buffer, value in zip(slot.flat, snapshot):
                 fill_static(buffer, value)
 
         # Reference: a fresh eager execution of the same block on the same bits.
@@ -427,8 +510,7 @@ class GraphBlockRoute:
         stream.wait_stream(torch.xpu.current_stream(self.device))
         with torch.xpu.stream(stream), torch.no_grad():
             for _ in range(WARMUP_ITERATIONS):
-                warm_img = mirror(static_img, lambda t: t.clone())
-                self._invoke(warm_img, static_kw)
+                self._invoke(mirror(slot.img, lambda t: t.clone()), slot.kw)
         torch.xpu.current_stream(self.device).wait_stream(stream)
         torch.xpu.synchronize(self.device)
         restore()
@@ -439,11 +521,13 @@ class GraphBlockRoute:
         # saw, which records an EMPTY graph on any other device.
         capture_stream = torch.xpu.Stream(device=self.device)
         with torch.no_grad(), torch.xpu.graph(graph, stream=capture_stream):
-            out_vx, out_ax = self._invoke(static_img, static_kw)
+            out_vx, out_ax = self._invoke(slot.img, slot.kw)
         torch.xpu.synchronize(self.device)
 
-        static_vx, static_ax = static_img
-        inplace = out_vx is static_vx and out_ax is static_ax
+        static_vx, static_ax = slot.img
+        require(out_vx is static_vx and out_ax is static_ax,
+                f'Block {self.index} did not update its activations in place; the shared-buffer '
+                'chain between blocks assumes it does')
 
         # Non-emptiness: a graph that ignores its input would replay unchanged.
         restore()
@@ -462,56 +546,40 @@ class GraphBlockRoute:
                 torch.equal(out_ax.view(torch.int16), eager_ax.view(torch.int16)),
                 f'Block {self.index} graph replay differs from eager execution; refuse graph mode')
 
-        entry = Entry(self.index, signature, static_kw, graph, out_vx, out_ax, in_flat, inplace)
-        entry.static_img = static_img
-        # `snapshot` is a full clone of every mirrored tensor; it is only needed
-        # during capture, so it is deliberately not kept on the entry.
-        self.entries[signature] = entry
-        self.report.record_capture(self.index, signature, len(in_flat), inplace,
+        entry = Entry(self.index, key, graph, out_vx, out_ax)
+        self.entries[key] = entry
+        self.report.record_capture(self.index, key, len(slot.flat), True,
                                    describe_types(routed), option_census(options),
-                                   sorted(infra, key=repr), sorted(data, key=repr))
+                                   sorted(split_options(options)[0], key=repr),
+                                   sorted(split_options(options)[1], key=repr))
         return entry
 
-    def _fill(self, entry, routed):
-        incoming = []
-        walk(routed['img'], incoming, 'img')
-        for name in KEYWORDS:
-            walk(routed.get(name), incoming, name)
-        walk(split_options(routed['transformer_options'])[1], incoming, 'transformer_options', 'skip')
-        require(len(incoming) == len(entry.static_flat), 'Argument tensor count changed for a captured signature')
-        for buffer, value in zip(entry.static_flat, incoming):
-            if buffer is not value:
-                fill_static(buffer, value)
-
     def _call_native(self, routed):
-        self._validate()
+        self._validate_fast()
         options = routed['transformer_options']
         require(CACHE_KEY in options, 'Graph capture requires the shard forward wrapper')
-        infra, data = split_options(options)
-        signature = (self.index, describe(routed['img'], 'img'),
-                     tuple(describe(routed.get(name), name) for name in KEYWORDS),
-                     describe_option_data(data, 'transformer_options'),
-                     describe_infrastructure(signed_infrastructure(infra),
-                                             'transformer_options.infrastructure'))
+        key = self.group.key_for(routed, options)
+        if self.group.fresh_forward:
+            self._validate()
         if self.report.first_options is None:
             self.report.first_options = {'block_index': self.index,
                                          'argument_types': describe_types(routed),
                                          'options': option_census(options)}
-        entry = self.entries.get(signature)
+        slot = self.group.slot_for(key, routed, options)
+        self.report.copies += self.group.fill(slot, routed, options)
+        entry = self.entries.get(key)
         if entry is None:
             require(len(self.entries) < MAX_SIGNATURES_PER_BLOCK,
                     f'Block {self.index} reached {len(self.entries)} distinct argument signatures; '
                     'the signature is tracking something that is not a real input')
-            entry = self._capture(routed, signature)
+            entry = self._capture(routed, slot, key)
         else:
-            self._fill(entry, routed)
             entry.graph.replay()
         entry.replays += 1
         self.report.replays += 1
         return {'img': (entry.out_vx, entry.out_ax)}
 
     def __call__(self, args, extra):
-        self._validate()
         return self.original_route(args, {**extra, 'original_block': self._call_native})
 
 
@@ -525,7 +593,9 @@ class Report:
 
     def __init__(self):
         self.captures = []
+        self.devices = []
         self.replays = 0
+        self.copies = 0
         self.first_options = None
         self.option_key_sets = []
 
@@ -541,12 +611,15 @@ class Report:
 
     def summary(self):
         return {'captured_graphs': len(self.captures), 'replays': self.replays,
+                'static_buffer_copies': self.copies,
+                'copies_per_replay': round(self.copies / self.replays, 3) if self.replays else None,
                 'blocks_captured': sorted({c['block_index'] for c in self.captures}),
                 'signatures_per_block': sorted({sum(1 for c in self.captures if c['block_index'] == i)
                                                 for i in {c['block_index'] for c in self.captures}}),
                 'all_outputs_are_input_buffers': all(c['output_is_input_buffer'] for c in self.captures),
                 'mirrored_tensor_counts': sorted({c['mirrored_tensors'] for c in self.captures}),
                 'argument_types': (self.captures[0]['argument_types'] if self.captures else {}),
+                'devices': self.devices,
                 'transformer_options_key_sets': self.option_key_sets,
                 'first_call_options': self.first_options,
                 'captures': self.captures}
@@ -581,13 +654,15 @@ def install(patcher, indices):
     require(all(type(registry[('double_block', i)]) is _BlockRoute for i in range(48)),
             'Blocks already carry a non-original route')
     report = Report()
-    originals = {}
+    originals, groups = {}, {}
     for i in indices:
         original = registry[('double_block', i)]
         originals[i] = original
+        group = groups.setdefault(original.device, DeviceGroup(original.device))
         patcher.set_model_patch_replace(
-            GraphBlockRoute(diffusion.transformer_blocks[i], original, i, report),
+            GraphBlockRoute(diffusion.transformer_blocks[i], original, i, report, group),
             'dit', 'double_block', i)
+    report.devices = sorted(str(d) for d in groups)
     validate_patcher(patcher)
     return report, originals
 
@@ -600,6 +675,7 @@ def restore(patcher, originals):
         require(type(current) is GraphBlockRoute and current.original_route is original,
                 'Unexpected route while restoring block ' + str(i))
         current.entries.clear()
+        current.group.slots.clear()
         patcher.set_model_patch_replace(original, 'dit', 'double_block', i)
     diffusion, registry = validate_patcher(patcher)
     require(all(type(registry[('double_block', i)]) is _BlockRoute for i in range(48)),

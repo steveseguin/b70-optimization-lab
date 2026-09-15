@@ -44,7 +44,7 @@ def load_helpers():
     body = 'import copy, hashlib, torch\n' + text[start:end]
     body = body.replace('def require(condition, message):', '', 1)
     ns = {}
-    exec(compile('''import copy, hashlib, torch\nimport types as _types\nCACHE_KEY = '_ltx_layer_shard_forward_transfers'
+    exec(compile('''import copy, hashlib, torch\nimport types as _types\nCACHE_KEY = '_ltx_layer_shard_forward_transfers'\nKEYWORDS = ('v_context', 'v_timestep')\nMAX_SIGNATURES_PER_BLOCK = 4
 def require(condition, message):
     if not condition:
         raise RuntimeError(message)
@@ -57,7 +57,8 @@ walk, mirror, describe = H['walk'], H['mirror'], H['describe']
 split_options, signed_infrastructure = H['split_options'], H['signed_infrastructure']
 describe_infrastructure, describe_option_data = H['describe_infrastructure'], H['describe_option_data']
 attribute_names = H['attribute_names']
-option_census = H['option_census']
+option_census, DeviceGroup = H['option_census'], H['DeviceGroup']
+MAX_SIGNATURES_PER_BLOCK = H['MAX_SIGNATURES_PER_BLOCK']
 CACHE_KEY = '_ltx_layer_shard_forward_transfers'
 static_like, fill_static, attribute_names = H['static_like'], H['fill_static'], H['attribute_names']
 results = []
@@ -388,6 +389,74 @@ def test_signed_infrastructure_still_pins_callbacks():
     ia, _ = split_options(a); ib, _ = split_options(b)
     assert describe_infrastructure(signed_infrastructure(ia)) != \
            describe_infrastructure(signed_infrastructure(ib))
+
+
+def group_call(vx, ax, vctx, vts, options):
+    return {'img': (vx, ax), 'v_context': vctx, 'v_timestep': vts, 'transformer_options': options}
+
+
+def test_device_group_reuses_the_signature_within_a_forward():
+    """Describing eighteen arguments per block per step was itself measurable;
+    every block on a device sees the same objects, so it is computed once."""
+    g = DeviceGroup('xpu:0')
+    opts = runtime_options()
+    vx, ax = torch.randn(1, 4, 8), torch.randn(1, 2, 4)
+    vctx, vts = torch.randn(1, 3, 8), torch.randn(1, 1, 8)
+    r = group_call(vx, ax, vctx, vts, opts)
+    k1 = g.key_for(r, opts)
+    assert g.fresh_forward is True
+    k2 = g.key_for(group_call(vx, ax, vctx, vts, opts), opts)
+    assert g.fresh_forward is False and k2 is k1
+    # a genuinely new forward supplies new activation objects
+    k3 = g.key_for(group_call(vx.clone(), ax, vctx, vts, opts), opts)
+    assert g.fresh_forward is True and k3 == k1
+
+
+def test_shared_slot_copies_only_what_changed():
+    g = DeviceGroup('xpu:0')
+    opts = runtime_options()
+    vx, ax = torch.randn(1, 4, 8), torch.randn(1, 2, 4)
+    vctx, vts = torch.randn(1, 3, 8), torch.randn(1, 1, 8)
+    r = group_call(vx, ax, vctx, vts, opts)
+    key = g.key_for(r, opts)
+    slot = g.slot_for(key, r, opts)
+    first = g.fill(slot, r, opts)
+    assert first > 0
+    # a second block in the same forward sees the identical objects
+    assert g.fill(slot, group_call(vx, ax, vctx, vts, opts), opts) == 0
+    # and a later block receives the shared buffer itself as its input
+    chained = group_call(slot.img[0], slot.img[1], vctx, vts, opts)
+    assert g.fill(slot, chained, opts) == 0
+    # only the activations change on the next step
+    assert g.fill(slot, group_call(vx.clone(), ax.clone(), vctx, vts, opts), opts) == 2
+
+
+def test_shared_slot_actually_tracks_new_values():
+    g = DeviceGroup('xpu:0')
+    opts = runtime_options()
+    vx, ax = torch.randn(1, 4, 8), torch.randn(1, 2, 4)
+    vctx, vts = torch.randn(1, 3, 8), torch.randn(1, 1, 8)
+    r = group_call(vx, ax, vctx, vts, opts)
+    slot = g.slot_for(g.key_for(r, opts), r, opts)
+    g.fill(slot, r, opts)
+    assert torch.equal(slot.img[0], vx)
+    nvx = torch.randn(1, 4, 8)
+    g.fill(slot, group_call(nvx, ax, vctx, vts, opts), opts)
+    assert torch.equal(slot.img[0], nvx)
+
+
+def test_device_group_refuses_runaway_shapes():
+    g = DeviceGroup('xpu:0')
+    opts = runtime_options()
+    try:
+        for n in range(3, 3 + MAX_SIGNATURES_PER_BLOCK + 2):
+            vx, ax = torch.randn(1, n, 8), torch.randn(1, 2, 4)
+            r = group_call(vx, ax, torch.randn(1, 3, 8), torch.randn(1, 1, 8), opts)
+            g.slot_for(g.key_for(r, opts), r, opts)
+    except RuntimeError as error:
+        assert 'distinct argument shapes' in str(error)
+        return
+    raise AssertionError('unbounded slot creation was allowed')
 
 
 
