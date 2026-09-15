@@ -34,6 +34,16 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 15 12:40 UTC: communicator NaN characterization done; stage 05 awaits a user decision on NaN comparison.**
+`nan-semantics-01` completed cleanly on the newest base (no faults, guard clean,
+exit confirmed). No fixed add formulation matches XCCL bit for bit: every
+mismatch is NaN versus NaN with a different payload or sign, XCCL's choice
+depends on element position, and all real numbers and infinities matched.
+Stage 05 is not admitted under the bit-exact NaN rule. It could continue only if
+NaNs are compared as a class; that oracle change is the user's decision. No GPU
+work running; same boot `b13caae3`.
+[NaN results](experiments/qwen38-27b-b70/notes/2026-09-15-exact-comm-nan-results.md).
+
 **Two-B70 host, September 15 05:25 UTC: metadata tweak validated exact but speed-neutral; exact communicator tests next.**
 On the newest base (`506fcc26`) the unchanged server matched all 12 reference
 outputs, the native gate passed 36 cases on both GPUs, and four alternating
