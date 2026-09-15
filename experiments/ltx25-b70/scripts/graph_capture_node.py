@@ -119,6 +119,10 @@ class LTXGraphCaptureGate:
                 require(_installed is not None, 'No graph routes are installed to restore')
                 patcher, originals, census, previous = _installed
                 require(patcher is model, 'Restore target is not the installed model')
+                # Time the real captured blocks before letting them go. XPU graph
+                # events cannot be profiled, so replaying each captured graph with
+                # a host sync is the only ground truth for what the 48 blocks cost.
+                report['graph_timing'] = adapter.measure(model, originals)
                 adapter.restore(model, originals)
                 report['restored_blocks'] = sorted(originals)
                 report['capture_summary_at_restore'] = census.summary()
