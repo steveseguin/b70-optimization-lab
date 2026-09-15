@@ -4,7 +4,7 @@ manifest regenerated to match the tampered tree."""
 import hashlib, json, shutil, subprocess, sys
 from pathlib import Path
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
-PK = ROOT / (sys.argv[1] if len(sys.argv) > 1 else 'prepared-encoder-graph-capture-23')
+PK = ROOT / (sys.argv[1] if len(sys.argv) > 1 else 'prepared-encoder-graph-capture-24')
 PYEXE = '/home/steve/.venvs/ltx25-baseline/bin/python'
 sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
@@ -32,6 +32,8 @@ def regen(pk):
     m['graph_capture']['vae_adapter_sha256'] = files['source/scripts/ltx_graph_vae.py']
     m['graph_capture']['vae_node_sha256'] = files['source/scripts/graph_vae_node.py']
     m['graph_capture']['na_candidate_sha256'] = files['source/scripts/ltx_na_axis_candidate.py']
+    m['graph_capture']['na_router_sha256'] = files['source/scripts/ltx_na_axis_router.py']
+    m['graph_capture']['na_decode_node_sha256'] = files['source/scripts/na_axis_decode_node.py']
     with (pk / 'manifest.json').open('w') as h:
         json.dump(m, h, indent=2, sort_keys=True); h.write('\n')
 
@@ -92,6 +94,20 @@ try:
     c.write_text(c.read_text().replace('kj = torch.arange(max(ends), device=device)',
                                        'kj = torch.arange(int(en.max()), device=device)', 1))
     regen(pk3g); cases.append(('host read reinstated in the NA candidate', *check(pk3g)))
+    # 4h. the pinned digest left stale, which silently unregisters the decode node
+    pk3h = ROOT / 'prepared-encoder-negative-gc-threeh'; made.append(pk3h); shutil.copytree(PK, pk3h)
+    for f in ('source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
+              'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'):
+        t = pk3h / f
+        t.write_text(t.read_text().replace(
+            'bdd41e44716ff1e287e13fe9993578ce7bf6ccb18ca8b85f7767340ea6d4429c',
+            '40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2', 1))
+    regen(pk3h); cases.append(('pinned NA digest left stale', *check(pk3h)))
+    # 4i. the decode custom-node copy diverging from its helper
+    pk3i = ROOT / 'prepared-encoder-negative-gc-threei'; made.append(pk3i); shutil.copytree(PK, pk3i)
+    t = pk3i / 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
+    t.write_text(t.read_text() + '\n# divergent\n')
+    regen(pk3i); cases.append(('NA decode custom-node copy diverges', *check(pk3i)))
     # 5. custom-node copy diverges from its scripts/ helper
     pk4 = ROOT / 'prepared-encoder-negative-gc-four'; made.append(pk4); shutil.copytree(PK, pk4)
     n = pk4 / 'source/custom_nodes/ltx_graph_vae_lab/__init__.py'

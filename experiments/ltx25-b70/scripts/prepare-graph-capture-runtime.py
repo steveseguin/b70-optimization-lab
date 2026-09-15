@@ -30,6 +30,13 @@ NODE = 'graph_capture_node.py'
 NODE_DIR = 'ltx_graph_capture_lab'
 CANDIDATE = 'source/scripts/ltx_na_axis_candidate.py'
 CANDIDATE_SRC = 'ltx_na_axis_candidate_v2.py'
+# Changing the candidate breaks two files that pin its digest as a literal; if
+# they are not repointed the decode node fails to import and simply never
+# registers, and the graph is rejected with "Node 'LTXNAAxisDecode' not found".
+NA_REPLACED = ((CANDIDATE, CANDIDATE_SRC),
+               ('source/scripts/ltx_na_axis_router.py', 'ltx_na_axis_router_v2.py'),
+               ('source/scripts/na_axis_decode_node.py', 'na_axis_decode_node_v2.py'))
+NA_NODE_COPY = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
 VAE_ADAPTER = 'ltx_graph_vae.py'
 VAE_NODE_FILE = 'graph_vae_node.py'
 VAE_NODE_DIR = 'ltx_graph_vae_lab'
@@ -111,19 +118,26 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'source/custom_nodes/ltx_graph_vae_lab/__init__.py',
              'provenance/graph-capture/parent/launch/encoder_runtime_common.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_candidate.py',
+             'provenance/graph-capture/parent/source/scripts/ltx_na_axis_router.py',
+             'provenance/graph-capture/parent/source/scripts/na_axis_decode_node.py',
              'host-residency-13-parent-manifest.json'}
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-vae', 'restored')}
-    replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py')
+    replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
+                'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py')
+    node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
     for name, digest in parent['files'].items():
         if name in replaced:
             require(manifest['files']['provenance/graph-capture/parent/' + name] == digest,
                     'Original packet13 source changed: ' + name)
+        elif name == node_copy:
+            require(manifest['files'][name] == manifest['files']['source/scripts/na_axis_decode_node.py'],
+                    'NA decode custom-node copy differs from its helper')
         else:
             require(manifest['files'].get(name) == digest, 'Inherited packet13 file changed: ' + name)
     require(set(manifest['files']) == set(parent['files']) | added, 'Packet14 file inventory changed')
     for name in parent['files']:
-        if name.startswith(('source/', 'graphs/')) and name not in replaced:
+        if name.startswith(('source/', 'graphs/')) and name not in replaced and name != node_copy:
             require(manifest['files'][name] == parent['files'][name],
                     'Inherited numerical source or original graph changed: ' + name)
 
@@ -139,8 +153,22 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             'NA candidate differs from packet13 beyond the removed host read')
     require(not any('int(en.max())' in line for line in strip(current_na)),
             'NA candidate still reads a tensor for a size')
-    require(capture['na_candidate_sha256'] == manifest['extension_sha256s']['ltx_na_axis_candidate.py'],
-            'NA candidate inventory mismatch')
+    require(capture['na_candidate_sha256'] == manifest['extension_sha256s']['ltx_na_axis_candidate.py'] and
+            capture['na_router_sha256'] == manifest['extension_sha256s']['ltx_na_axis_router.py'] and
+            capture['na_decode_node_sha256'] == manifest['extension_sha256s']['na_axis_decode_node.py'],
+            'NA source inventory mismatch')
+
+    # The two files that pin the candidate's digest differ by exactly that
+    # literal, and the literal must be the digest the packet actually ships.
+    shipped = manifest['extension_sha256s']['ltx_na_axis_candidate.py']
+    for name in ('source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py'):
+        before = safe_path(packet, 'provenance/graph-capture/parent/' + name).read_text()
+        after = safe_path(packet, name).read_text()
+        d = [line for line in difflib.unified_diff(strip(before), strip(after), n=0)
+             if line.startswith(('+', '-')) and not line.startswith(('+++', '---'))]
+        require(len(d) == 2 and d[0].startswith("-CANDIDATE_SHA = '") and
+                d[1] == "+CANDIDATE_SHA = '" + shipped + "'",
+                'NA digest pin differs from packet13 beyond the repointed literal: ' + name)
     for node_dir, helper in (('ltx_graph_capture_lab', 'graph_capture_node.py'),
                              ('ltx_graph_vae_lab', 'graph_vae_node.py')):
         require(manifest['files'][f'source/custom_nodes/{node_dir}/__init__.py'] ==
@@ -258,11 +286,19 @@ def main():
     shutil.copyfile(parent / CHECKER, prov / 'encoder_runtime_common.py')
     cand_prov = staging / PROV / 'source/scripts'
     cand_prov.mkdir(parents=True, exist_ok=False)
-    shutil.copyfile(parent / CANDIDATE, cand_prov / 'ltx_na_axis_candidate.py')
-    fixed = LANE / 'scripts' / CANDIDATE_SRC
-    require(fixed.is_file(), 'Missing the fixed NA candidate')
-    ast.parse(fixed.read_text())
-    shutil.copyfile(fixed, staging / CANDIDATE)
+    for packet_path, lane_name in NA_REPLACED:
+        shutil.copyfile(parent / packet_path, cand_prov / Path(packet_path).name)
+        fixed = LANE / 'scripts' / lane_name
+        require(fixed.is_file(), 'Missing prepared NA source: ' + lane_name)
+        ast.parse(fixed.read_text())
+        shutil.copyfile(fixed, staging / packet_path)
+    # The custom-node copy must stay byte-identical to its helper.
+    shutil.copyfile(LANE / 'scripts' / 'na_axis_decode_node_v2.py', staging / NA_NODE_COPY)
+    new_candidate = sha(staging / CANDIDATE)
+    for packet_path, _ in NA_REPLACED[1:]:
+        text = (staging / packet_path).read_text()
+        require(text.count("CANDIDATE_SHA = '" + new_candidate + "'") == 1,
+                'NA source does not pin the new candidate digest: ' + packet_path)
     shutil.copyfile(parent / 'manifest.json', staging / PARENT_MANIFEST_FILE)
     (staging / CHECKER).write_text(checker_new)
 
@@ -315,7 +351,8 @@ def main():
     added = {'source/scripts/' + ADAPTER, 'source/scripts/' + NODE,
              f'source/custom_nodes/{NODE_DIR}/__init__.py',
              PROV + 'launch/encoder_runtime_common.py',
-             PROV + 'source/scripts/ltx_na_axis_candidate.py', PARENT_MANIFEST_FILE}
+             PARENT_MANIFEST_FILE}
+    added |= {PROV + 'source/scripts/' + Path(pp).name for pp, _ in NA_REPLACED}
     added |= {graph_name(a[0]) for a in ARMS}
     added |= {'source/scripts/' + VAE_ADAPTER, 'source/scripts/' + VAE_NODE_FILE,
               f'source/custom_nodes/{VAE_NODE_DIR}/__init__.py'}
@@ -324,10 +361,11 @@ def main():
         if name == CHECKER:
             require(files[PROV + 'launch/encoder_runtime_common.py'] == digest, 'Provenance copy differs')
             require(files[name] != digest, 'Checker is unchanged')
-        elif name == CANDIDATE:
-            require(files[PROV + 'source/scripts/ltx_na_axis_candidate.py'] == digest,
-                    'Candidate provenance copy differs')
-            require(files[name] != digest, 'NA candidate is unchanged')
+        elif name in {pp for pp, _ in NA_REPLACED} or name == NA_NODE_COPY:
+            if name != NA_NODE_COPY:
+                require(files[PROV + 'source/scripts/' + Path(name).name] == digest,
+                        'NA provenance copy differs: ' + name)
+            require(files[name] != digest, 'NA source is unchanged: ' + name)
         else:
             require(files[name] == digest, 'Inherited file drifted: ' + name)
     for src_name, dir_name in ((NODE, NODE_DIR), (VAE_NODE_FILE, VAE_NODE_DIR)):
@@ -337,7 +375,8 @@ def main():
     extensions = dict(parent_manifest['extension_sha256s'])
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE):
         extensions[src_name] = files['source/scripts/' + src_name]
-    extensions['ltx_na_axis_candidate.py'] = files[CANDIDATE]
+    for packet_path, _ in NA_REPLACED:
+        extensions[Path(packet_path).name] = files[packet_path]
     manifest = {
         'schema': 'ltx.graph-capture-runtime-packet.v1',
         'status': 'prepared-inactive-not-deployed',
@@ -360,6 +399,9 @@ def main():
             'vae_captured_methods': ['forward_pre_diffusion', 'forward_diff_step'],
             'vae_not_captured': 'NADiffusionDecoder.forward draws x_t from a generator and stays eager',
             'na_candidate_sha256': extensions['ltx_na_axis_candidate.py'],
+            'na_router_sha256': extensions['ltx_na_axis_router.py'],
+            'na_decode_node_sha256': extensions['na_axis_decode_node.py'],
+            'na_pinned_digest_repointed': True,
             'na_candidate_change': 'int(en.max()) -> max(ends): the window ends are already a host tuple of '
                                    'ints, and a tensor read inside a graph capture returns unexecuted memory '
                                    'and was being used as an allocation size',
