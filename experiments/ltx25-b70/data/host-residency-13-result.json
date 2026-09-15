@@ -1,0 +1,81 @@
+{
+  "schema": "ltx.host-residency-13-result.v1",
+  "date_utc": "2026-09-14",
+  "packet": "prepared-encoder-host-residency-13",
+  "packet_manifest_sha256": "174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f",
+  "parent_manifest_sha256": "b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666",
+  "change": "launcher --reserve-vram 6 -> 2 GiB only; every source/ and graphs/ byte inherited",
+  "boot_id": "64bbd5d2-9e62-4a2e-b761-6539e5b73e00",
+  "server_run": "encoder-server-host-residency-13",
+  "server_pid": 9225,
+  "residency_before": "text encoder loaded partially; 457.51 -> 600.00 MB offloaded and growing per request",
+  "residency_after": "loaded completely; 28682.00 MB usable, 24999.98 MB loaded, full load: True",
+  "warm_rows": [
+    {
+      "run": "res13-r02-control-boat",
+      "preview_s": 6.4828,
+      "encode_s": 1.7783,
+      "sampler_s": 3.6146,
+      "video_decode_s": 0.656,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "res13-r03-control-boat",
+      "preview_s": 6.5256,
+      "encode_s": 1.7714,
+      "sampler_s": 3.6267,
+      "video_decode_s": 0.6183,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "res13-r05-control-boat",
+      "preview_s": 6.4893,
+      "encode_s": 1.7902,
+      "sampler_s": 3.6615,
+      "video_decode_s": 0.6497,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "res13-r06-control-boat",
+      "preview_s": 6.3397,
+      "encode_s": 1.7422,
+      "sampler_s": 3.6025,
+      "video_decode_s": 0.633,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "res13-r07-control-boat",
+      "preview_s": 6.4962,
+      "encode_s": 1.8321,
+      "sampler_s": 3.6354,
+      "video_decode_s": 0.649,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    }
+  ],
+  "warm_n": 5,
+  "medians": {
+    "preview_s": 6.4893,
+    "encode_s": 1.7783,
+    "sampler_s": 3.6267,
+    "video_decode_s": 0.649
+  },
+  "packet12_baseline_medians": {
+    "preview_s": 6.3627,
+    "encode_s": 1.8001,
+    "sampler_s": 3.5718,
+    "video_decode_s": 0.6062,
+    "warm_n": 4
+  },
+  "all_bitwise_exact": true,
+  "decision": "exact and mechanism-correct; speed-neutral. Not promoted as a speed result.",
+  "limitations": [
+    "five warm clips on one process; the lane has measured 4.38% control drift between arms",
+    "no paired interleaving with packet12; these are separate processes",
+    "residency is proven from the server log, not from a device memory census"
+  ]
+}
