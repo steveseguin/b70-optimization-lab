@@ -1,0 +1,240 @@
+{
+  "schema": "ltx.graph-capture-21-result.v1",
+  "date_utc": "2026-09-15",
+  "packet": "prepared-encoder-graph-capture-21",
+  "packet_manifest_sha256": "d515527a6f7eb1277df5f354a46522e6da1597b73fca08a91519caee70fa5498",
+  "server_run": "encoder-server-graph-capture-21",
+  "server_pid": 9039,
+  "boot_id": "831530c8-4682-4e52-a164-00f98fcd720f",
+  "design": "two independent dimensions: the transformer gate (original|graph) and the video decoder (original VAEDecode | already-qualified LTXNAAxisDecode axis-cache), interleaved",
+  "rows": [
+    {
+      "run": "g21-r01-orig",
+      "gate": "original",
+      "decoder": "original",
+      "preview_s": 101.8701,
+      "sampler_s": 55.9343,
+      "video_decode_s": 1.802,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r02-orig",
+      "gate": "original",
+      "decoder": "original",
+      "preview_s": 6.4466,
+      "sampler_s": 3.5976,
+      "video_decode_s": 0.6463,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r03-graph",
+      "gate": "graph",
+      "decoder": "original",
+      "preview_s": 11.6984,
+      "sampler_s": 8.783,
+      "video_decode_s": 0.7025,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r04-graph",
+      "gate": "graph",
+      "decoder": "original",
+      "preview_s": 4.7685,
+      "sampler_s": 1.9306,
+      "video_decode_s": 0.6357,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r05-graph-ac",
+      "gate": "graph",
+      "decoder": "axis-cache",
+      "preview_s": 4.7186,
+      "sampler_s": 1.9917,
+      "video_decode_s": 0.5657,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r06-graph",
+      "gate": "graph",
+      "decoder": "original",
+      "preview_s": 4.7135,
+      "sampler_s": 1.9423,
+      "video_decode_s": 0.6107,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r07-graph-ac",
+      "gate": "graph",
+      "decoder": "axis-cache",
+      "preview_s": 4.6448,
+      "sampler_s": 1.9311,
+      "video_decode_s": 0.5651,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r08-graph",
+      "gate": "graph",
+      "decoder": "original",
+      "preview_s": 4.783,
+      "sampler_s": 1.9929,
+      "video_decode_s": 0.6028,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r09-graph-ac",
+      "gate": "graph",
+      "decoder": "axis-cache",
+      "preview_s": 4.6262,
+      "sampler_s": 1.9253,
+      "video_decode_s": 0.5457,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r10-graph-ac",
+      "gate": "graph",
+      "decoder": "axis-cache",
+      "preview_s": 4.7371,
+      "sampler_s": 1.9679,
+      "video_decode_s": 0.5549,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r11-restored",
+      "gate": "restored",
+      "decoder": "original",
+      "preview_s": 7.5096,
+      "sampler_s": 4.5108,
+      "video_decode_s": 0.6163,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r12-orig",
+      "gate": "original",
+      "decoder": "original",
+      "preview_s": 6.3831,
+      "sampler_s": 3.635,
+      "video_decode_s": 0.6185,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g21-r13-orig-ac",
+      "gate": "original",
+      "decoder": "axis-cache",
+      "preview_s": 6.4283,
+      "sampler_s": 3.653,
+      "video_decode_s": 0.561,
+      "bitwise_all_equal": true
+    }
+  ],
+  "arms": {
+    "original+original": {
+      "n": 2,
+      "preview_s": [
+        6.4466,
+        6.3831
+      ],
+      "sampler_s": [
+        3.5976,
+        3.635
+      ],
+      "video_decode_s": [
+        0.6463,
+        0.6185
+      ],
+      "median_preview_s": 6.4148,
+      "median_sampler_s": 3.6163,
+      "median_decode_s": 0.6324
+    },
+    "original+axis-cache": {
+      "n": 1,
+      "preview_s": [
+        6.4283
+      ],
+      "sampler_s": [
+        3.653
+      ],
+      "video_decode_s": [
+        0.561
+      ],
+      "median_preview_s": 6.4283,
+      "median_sampler_s": 3.653,
+      "median_decode_s": 0.561
+    },
+    "graph+original": {
+      "n": 3,
+      "preview_s": [
+        4.7685,
+        4.7135,
+        4.783
+      ],
+      "sampler_s": [
+        1.9306,
+        1.9423,
+        1.9929
+      ],
+      "video_decode_s": [
+        0.6357,
+        0.6107,
+        0.6028
+      ],
+      "median_preview_s": 4.7685,
+      "median_sampler_s": 1.9423,
+      "median_decode_s": 0.6107
+    },
+    "graph+axis-cache": {
+      "n": 4,
+      "preview_s": [
+        4.7186,
+        4.6448,
+        4.6262,
+        4.7371
+      ],
+      "sampler_s": [
+        1.9917,
+        1.9311,
+        1.9253,
+        1.9679
+      ],
+      "video_decode_s": [
+        0.5657,
+        0.5651,
+        0.5457,
+        0.5549
+      ],
+      "median_preview_s": 4.6817,
+      "median_sampler_s": 1.9495,
+      "median_decode_s": 0.56
+    }
+  },
+  "effects": {
+    "graph_capture_on_sampler": {
+      "control_median_s": 3.6163,
+      "graph_median_s": 1.9423,
+      "speedup": 1.862
+    },
+    "axis_cache_on_decoder_within_graph_arm": {
+      "without_s": 0.6107,
+      "with_s": 0.56,
+      "saved_s": 0.0507,
+      "separation": "every axis-cache clip decoded faster than every non-cache clip in the same arm"
+    },
+    "axis_cache_on_decoder_within_control_arm": {
+      "without_s": 0.6324,
+      "with_s": 0.561,
+      "saved_s": 0.0714
+    },
+    "combined_vs_control": {
+      "control_preview_s": 6.4148,
+      "best_preview_s": 4.6817,
+      "saved_s": 1.7331,
+      "speedup": 1.37
+    }
+  },
+  "all_bitwise_exact": true,
+  "clip_count": 13,
+  "limitations": [
+    "one process, one boat fixture; two to four warm clips per arm",
+    "the axis cache was independently qualified earlier over 18 clips with a median decoder effect of -83.2 ms; this arm reproduces a smaller -50 ms inside the graph arm",
+    "capture cost is paid once per process and excluded from the warm medians"
+  ]
+}
