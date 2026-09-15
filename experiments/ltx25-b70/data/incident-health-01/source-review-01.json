@@ -1,0 +1,27 @@
+{
+  "schema": "ltx.health-assessment-source-review.v1",
+  "created_utc": "2026-09-14T19:28:10.659985+00:00",
+  "status": "obsolete-old-boot-never-executed",
+  "tests_run": 12,
+  "tests_passed": 12,
+  "native_executed": false,
+  "endpoint_or_device_queries": false,
+  "diagnostic_check_only_executed_by_reviewer": false,
+  "fault_or_runtime_mutations": false,
+  "source_sha256s": {
+    "scripts/check-incident-health-01.py": "c9b4b546ab5e4e9c475699d78e818f571612711dc16af13349b067a6012dbff4",
+    "scripts/test-incident-health-01-stdlib.py": "06dea40ef161093005186433cc8c055cc78928de3822e150543ec2c3f20ea1dc",
+    "scripts/kernel_fault_detector.py": "e7ff6824f2dbd108bdbdf53fca28ea7a25c58629a17a710273494f3f6f70539e",
+    "scripts/encoder_runtime_common.py": "81a1ca4476eff3dc733b923b06ed166a5827b71f5ab9296321c5b1a5211ce26a",
+    "data/incident-health-01/admission.json": "d6420ea027998c3938e3c39ffc70f40469da74a7f72f2caf84c1395b0eaa9966",
+    "data/incident-health-01/journal-baseline.jsonl": "f4e99177df6fb810060e61b051d56b83c54c260909b21fa63e628668c1e33dc2"
+  },
+  "scope": "Pure extracted journal functions plus AST closure/phase/one-child/no-reset inspection; no diagnostic imports.",
+  "superseded_by": "scripts/check-external-boot-health-02.py",
+  "historical_gaps_closed_by_successor": [
+    "worker-exclusive start receipt",
+    "parent/source/admission closure",
+    "helper pins",
+    "ordinal device UUID/properties before allocation"
+  ]
+}

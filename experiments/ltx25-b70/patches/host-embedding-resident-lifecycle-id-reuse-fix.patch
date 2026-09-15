@@ -1,0 +1,51 @@
+--- a/scripts/test-host-embedding-resident-lifecycle-cpu.py
++++ b/scripts/test-host-embedding-resident-lifecycle-cpu.py
+@@ -26,7 +26,7 @@
+     'scripts/test-host-embedding-integration-cpu.py': '6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d',
+     'scripts/host_embedding_resident_node_v2.py': 'bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7',
+     'scripts/host_embedding_transition_memory.py': '707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86',
+-    'scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py': '46194f7e9efbf317f97b9f19b6a56719b3e271873d7b1ab7d986fbbf89612606',
++    'scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py': '4e2d0d92eea345dcb0ae36a4143f7f0d8887dda5c996845c37c6eba30673ee73',
+     'scripts/test-host-embedding-candidate-cpu-v3.py': '1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca',
+     'scripts/host_embedding_clip_v2.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994',
+     'scripts/host_embedding_placement_node_v2.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b',
+--- a/scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py
++++ b/scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py
+@@ -122,7 +122,7 @@
+ class Tests(unittest.TestCase):
+     def test_actual_control_host_control_registry_death_and_exactness(self):
+         with assembly('roundtrip') as (a,m,node):
+-            expected=None;shared=None;old_refs=None;old_patcher_ids=set()
++            expected=None;shared=None;old_refs=None
+             for mode in ('control','host-table','control'):
+                 outputs=node.load('split',mode)
+                 clip=outputs[1]
+@@ -134,12 +134,15 @@
+                 self.assertEqual(ids,shared)
+                 if old_refs:
+                     self.assertTrue(all(ref() is None for ref in old_refs.values()))
+-                    self.assertFalse(old_patcher_ids & registry_ids())
++                    # Object IDs may be reused after replacement allocation.
++                    # The actual node checks native registry removal BEFORE it.
++                    release=json.loads((a.root/f'host-components-{m._generation:02d}-{mode}-retired-owner-release.json').read_text())
++                    self.assertTrue(release['retired_patcher_ids_absent_from_registry'])
+                 owned={id(clip.patcher)}
+                 if clip._host_embedding.owner is not None:
+                     owned.add(id(clip._host_embedding.owner.host))
+                 self.assertTrue(owned <= registry_ids())
+-                old_refs=m.retirement_refs(clip);old_patcher_ids=owned
++                old_refs=m.retirement_refs(clip)
+                 del clip,outputs
+             self.assertEqual(a.constructed,3)
+             self.assertEqual(a.nonencoder_calls,['diffusion','vae','vae','upscaler','shard'])
+--- a/scripts/test-host-embedding-resident-lifecycle-stdlib.py
++++ b/scripts/test-host-embedding-resident-lifecycle-stdlib.py
+@@ -72,7 +72,7 @@
+         names=[n.name for n in cls.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
+         self.assertEqual(len(names),6)
+         text=FIXTURE.read_text()
+-        for expected in ['base.base.raw(actual)','tuple(actual.stride())','old_patcher_ids & registry_ids()',
++        for expected in ['base.base.raw(actual)','tuple(actual.stride())',"release['retired_patcher_ids_absent_from_registry']",
+                          'all(ref() is None for ref in old_refs.values())',"self.assertEqual(a.constructed,3)"]:
+             self.assertIn(expected,text)
+         d=DRIVER.read_text();self.assertIn("write_exclusive(directory / 'fixture-evidence.json', fixture.EVIDENCE)",d)

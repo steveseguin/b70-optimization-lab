@@ -1,0 +1,76 @@
+{
+  "schema": "ltx.incident-health-admission.v1",
+  "created_utc": "2026-09-14T18:32:32.259432+00:00",
+  "boot_id": "8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a",
+  "fault_sha256": "3f5106bada68c5efd6746cab28fe89d1544b10d525f69e225bbc6b9794485126",
+  "journal_prefix_count": 2403,
+  "journal_prefix_sha256": "1f264445ce97c61a5f6a58c09fa675c55b7c177ec1c565ef046a40ab2eba4c78",
+  "journal_last_monotonic_us": 19148831750,
+  "historical_faults": [
+    {
+      "__CURSOR": "s=359fe6b42a4445d59ecab21b7f289b5f;i=1f7079c;b=8e4b1b651c3847bb8ca5e4fd6bbdf94a;m=4752f8048;t=65b7562449545;x=c547fd45cf407cf4",
+      "_BOOT_ID": "8e4b1b651c3847bb8ca5e4fd6bbdf94a",
+      "__MONOTONIC_TIMESTAMP": "19145916488",
+      "__REALTIME_TIMESTAMP": "1789409578227013",
+      "MESSAGE": "systemd invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0",
+      "PRIORITY": "4"
+    },
+    {
+      "__CURSOR": "s=359fe6b42a4445d59ecab21b7f289b5f;i=1f7081d;b=8e4b1b651c3847bb8ca5e4fd6bbdf94a;m=4752fc85b;t=65b756244dd59;x=19db87c18c24975b",
+      "_BOOT_ID": "8e4b1b651c3847bb8ca5e4fd6bbdf94a",
+      "__MONOTONIC_TIMESTAMP": "19145934939",
+      "__REALTIME_TIMESTAMP": "1789409578245465",
+      "MESSAGE": "oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=init.scope,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/session-2.scope,task=python,pid=116013,uid=1000",
+      "PRIORITY": "6"
+    },
+    {
+      "__CURSOR": "s=359fe6b42a4445d59ecab21b7f289b5f;i=1f7081e;b=8e4b1b651c3847bb8ca5e4fd6bbdf94a;m=4752fc86a;t=65b756244dd68;x=cfc02d9e7530babb",
+      "_BOOT_ID": "8e4b1b651c3847bb8ca5e4fd6bbdf94a",
+      "__MONOTONIC_TIMESTAMP": "19145934954",
+      "__REALTIME_TIMESTAMP": "1789409578245480",
+      "MESSAGE": "Out of memory: Killed process 116013 (python) total-vm:96903692kB, anon-rss:52789452kB, file-rss:436kB, shmem-rss:4kB, UID:1000 pgtables:175116kB oom_score_adj:0",
+      "PRIORITY": "3"
+    },
+    {
+      "__CURSOR": "s=359fe6b42a4445d59ecab21b7f289b5f;i=1f70825;b=8e4b1b651c3847bb8ca5e4fd6bbdf94a;m=4755bfab4;t=65b7562710fb2;x=6bc11ade162c8b58",
+      "_BOOT_ID": "8e4b1b651c3847bb8ca5e4fd6bbdf94a",
+      "__MONOTONIC_TIMESTAMP": "19148831412",
+      "__REALTIME_TIMESTAMP": "1789409581141938",
+      "MESSAGE": "xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+      "PRIORITY": "6"
+    },
+    {
+      "__CURSOR": "s=359fe6b42a4445d59ecab21b7f289b5f;i=1f70826;b=8e4b1b651c3847bb8ca5e4fd6bbdf94a;m=4755bfc06;t=65b7562711104;x=9e48879ecd2eb263",
+      "_BOOT_ID": "8e4b1b651c3847bb8ca5e4fd6bbdf94a",
+      "__MONOTONIC_TIMESTAMP": "19148831750",
+      "__REALTIME_TIMESTAMP": "1789409581142276",
+      "MESSAGE": "xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+      "PRIORITY": "6"
+    }
+  ],
+  "runtime": {
+    "files": {
+      "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a"
+    },
+    "python": "3.12.13",
+    "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "torch": "2.14.0+xpu"
+  },
+  "packet_manifest_sha256": "34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08",
+  "render_mapping": {
+    "pci-0000:23:00.0-render": "/dev/dri/renderD130",
+    "pci-0000:27:00.0-render": "/dev/dri/renderD131",
+    "pci-0000:43:00.0-render": "/dev/dri/renderD128",
+    "pci-0000:47:00.0-render": "/dev/dri/renderD129"
+  },
+  "retired_pids": [
+    116013,
+    116455
+  ],
+  "scope": "One bounded discovery/copy/compute/peer-copy assessment; FAULT unchanged; no model admission or recovery actions",
+  "active_probe_limit": 1,
+  "minimum_quiet_seconds": 60,
+  "native_worker_timeout_seconds": 60
+}

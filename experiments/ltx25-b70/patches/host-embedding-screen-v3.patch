@@ -1,0 +1,408 @@
+--- scripts/run-host-embedding-screen-v2.py
++++ scripts/run-host-embedding-screen-v3.py
+@@ -1,13 +1,12 @@
+ #!/usr/bin/env python3
+-"""Inactive diagnostic successor: preserve request failure if post-snapshot also fails.
+-
+-Packet11 admission is unchanged and remains fault-halted; this is not a client
+-for the unqualified residentv2 component schema."""
++"""Inactive packet12 screen: retained nonencoder owners and exact 15-clip gates."""
+ import argparse
+ import copy
+ import fcntl
+ import importlib.util
+ import json
++import hashlib
++import struct
+ import math
+ from pathlib import Path
+ import re
+@@ -17,12 +16,15 @@
+ sys.dont_write_bytecode = True
+ LANE = Path(__file__).resolve().parents[1]
+ ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+-PARENT_SHA = 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a'
+-PACKET_SHA = '34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08'
+-VALIDATOR_SHA = '085792c1b2148db86abca387e4142d15da948cb52b1b10e0b3ea4dd84d8a6efd'
++PARENT_SHA = '34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08'
++COLD_CONTRACT_SHA = 'f596d6b4ad0f83efce39342a0d4a897aedd267e7df0f2f23f4403e704cb96058'
++LIFECYCLE_SHA = 'c9c2d81db33ab5d3174aaaaa87a31c6cf03e5d7923f1b9c305bae554e51ea452'
++VALIDATOR_SHA = '8a86a290bfc7a225b86cf3e6fa50bfe985a64aaebd3d5aaa26cef7c95784d490'
+ CONTRACT_SHA = '80be5c70f42cbe004a0be7af7c8b43a02269d29d9b6fbb6eb53597176b6e4add'
+ V3_SHA = 'd8054e9866dfb314a5df37415811a5d4a5db79828b0494cca5f3526884ee3114'
+ EXTENSIONS = {
++    'host_embedding_resident_node.py': 'bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7',
++    'host_embedding_transition_memory.py': '707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86',
+     'host_embedding_clip.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994',
+     'host_embedding_placement_node.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b',
+     'ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9',
+@@ -40,7 +42,7 @@
+ v3 = load('na_axis_v3_helpers', LANE / 'scripts/run-multiblock-screen-v3.py')
+ screen, retention = v3.screen, v3.retention
+ require, sha, write_json = screen.require, screen.sha, screen.write_json
+-validators = load('host_embedding_receipts', LANE / 'scripts/ltx_host_embedding_receipts.py')
++validators = load('host_embedding_receipts_v3', LANE / 'scripts/ltx_host_embedding_receipts_v3.py')
+ 
+ 
+ def schedule(campaign):
+@@ -95,16 +97,17 @@
+ 
+ 
+ def prepared_sources(args, common):
+-    require(args.manifest_sha256 == PACKET_SHA, 'Client requires sealed packet11')
+-    require(isinstance(VALIDATOR_SHA, str) and sha(LANE / 'scripts/ltx_host_embedding_receipts.py') == VALIDATOR_SHA,
++    require(re.fullmatch(r'[a-f0-9]{64}', args.manifest_sha256) is not None and
++            args.packet == ROOT / 'prepared-encoder-host-embedding-12', 'Client requires explicit sealed packet12 identity')
++    require(isinstance(VALIDATOR_SHA, str) and sha(LANE / 'scripts/ltx_host_embedding_receipts_v3.py') == VALIDATOR_SHA,
+             'Receipt validator not frozen or changed')
+     require(sha(LANE / 'scripts/run-multiblock-screen-v3.py') == V3_SHA, 'Inherited identity helper changed')
+     require(sha(LANE / 'scripts/run-encoder-screen.py') == v3.ENCODER_CLIENT_SHA, 'Encoder helper changed')
+     for name, digest in screen.FROZEN.items():
+         require(sha(LANE / 'scripts' / name) == digest, 'Frozen helper changed: ' + name)
+     manifest = common.verify_packet(args.packet, args.manifest_sha256)
+-    require(manifest['schema'] == 'ltx.host-embedding-runtime-packet.v1' and
+-            manifest['parent_manifest_sha256'] == PARENT_SHA, 'Wrong packet11 source ancestry')
++    require(manifest['schema'] == 'ltx.host-embedding-runtime-packet.v2' and
++            manifest['parent_manifest_sha256'] == PARENT_SHA, 'Wrong packet12 source ancestry')
+     common.verify_runtime(manifest['runtime'])
+     common.verify_model_receipt()
+     host = manifest['host_embedding']
+@@ -112,6 +115,15 @@
+             host['construction_device'] == 'cpu' and host['encoder_load_device'] == 'xpu:2' and
+             host['table_device'] == 'cpu' and host['force_full_load'] is False and host['reserve_override'] is False,
+             'Prepared host model/loading scope changed')
++    require(host['component_receipt_schema'] == 'ltx.host-embedding-components.v2' and
++            host['cache_scope'] == 'nonencoder-components-retained; encoder-replaced' and
++            host['native_cpu_resident_lifecycle_qualified'] is True, 'Wrong retained-component lifecycle')
++    lifecycle = host['admissions']['resident_lifecycle']
++    require(lifecycle == {'path': 'provenance/host-transition/cpu-lifecycle-result.json', 'sha256': LIFECYCLE_SHA} and
++            sha(retention.safe_path(args.packet, lifecycle['path'])) == LIFECYCLE_SHA, 'Wrong actual CPU lifecycle qualification')
++    parent_host = manifest['host_embedding_parent11']
++    require(parent_host['extension_sha256s']['host_embedding_resident_node.py'] ==
++            'c34129c15bea2639a7916a6a4b2445428c22f2056cf9a7d419dc95b3b2c6ed7b', 'Lost original packet11 lifecycle provenance')
+     for name, digest in EXTENSIONS.items():
+         require(host['extension_sha256s'][name] == digest and sha(args.packet / 'source/scripts' / name) == digest,
+                 'Unqualified host source: ' + name)
+@@ -126,6 +138,10 @@
+     require(sha(path) == CONTRACT_SHA, 'Original registration contract changed')
+     contract = json.loads(path.read_text())
+     require(sha(Path(contract['source_path'])) == contract['source_sha256'], 'Original placement provenance changed')
++    require(isinstance(COLD_CONTRACT_SHA, str) and sha(LANE / 'data/host-embedding-cold-memory-contract-01.json') == COLD_CONTRACT_SHA,
++            'Cold source-memory contract not frozen or changed')
++    if args.check_only:
++        cold_source_identity()
+     return base, manifest, contract
+ 
+ 
+@@ -165,6 +181,75 @@
+     else:
+         # A failed postflight remains fatal even when the request returned.
+         record['after'] = snapshot_call()
++
++
++def cold_header(model, expected):
++    require(model.is_file() and not model.is_symlink(), 'Cold model must be a regular original file')
++    before = model.stat()
++    with model.open('rb') as stream:
++        prefix = stream.read(8)
++        require(len(prefix) == 8, 'Incomplete model header length')
++        length, = struct.unpack('<Q', prefix)
++        require(length == expected['header_bytes'] and 0 < length < 16 * 1024**2, 'Model header length changed')
++        header = stream.read(length)
++    after = model.stat()
++    require(all(getattr(before,k) == getattr(after,k) for k in ('st_dev','st_ino','st_size','st_mtime_ns','st_ctime_ns')),
++            'Model changed during bounded header read')
++    digest = hashlib.sha256(header).hexdigest()
++    require(len(header) == length and digest == expected['header_sha256'] and
++            after.st_size == expected['file_bytes'] == 8 + length + expected['tensor_payload_bytes'],
++            'Model header identity or declared extent changed: ' + str(model))
++    return {'path':str(model),'header_sha256':digest,'header_bytes':length,'file_bytes':after.st_size}
++
++
++def cold_source_identity():
++    path = LANE / 'data/host-embedding-cold-memory-contract-01.json'
++    require(sha(path) == COLD_CONTRACT_SHA, 'Cold source contract changed')
++    contract = json.loads(path.read_text())
++    for name, digest in {**contract['source_sha256s'], **contract['saved_evidence_sha256s']}.items():
++        require(sha(Path(name)) == digest, 'Cold source/evidence closure changed: ' + name)
++    headers = {}
++    require(set(contract['headers']) == {'diffusion','clip','video_vae','audio_vae','upscaler'}, 'Cold model set changed')
++    for name, expected in contract['headers'].items():
++        headers[name] = cold_header(Path(expected['path']), expected)
++    return contract, {'source_contract_sha256':COLD_CONTRACT_SHA,'headers':headers,
++        'source_and_saved_evidence_hashes_match':True,'full_weight_payload_rehashed':False,
++        'scope':'Current bounded header/source identity; saved model-verification and four exact raw oracles remain required'}
++
++
++def cold_server_args(args, common):
++    packet, run = args.packet, args.server_run
++    expected = [str(packet / 'source/main.py'), '--listen', '127.0.0.1', '--port', '8188',
++        '--disable-auto-launch', '--cache-none', '--deterministic', '--disable-async-offload',
++        '--disable-dynamic-vram', '--disable-comfy-compiler', '--disable-cuda-graphs', '--disable-pinned-memory',
++        '--reserve-vram', '6', '--bf16-unet', '--bf16-text-enc', '--bf16-vae', '--use-pytorch-cross-attention',
++        '--disable-xformers', '--disable-api-nodes', '--extra-model-paths-config', str(packet / 'model-paths.yaml'),
++        '--output-directory', str(common.ROOT / 'output'), '--user-directory', str(run / 'user'),
++        '--temp-directory', str(run / 'temp'), '--input-directory', str(run / 'input'),
++        '--disable-all-custom-nodes', '--whitelist-custom-nodes', *common.NODES]
++    require(json.loads((run/'server-args.json').read_text()) == expected, 'Audited cold initialization server flags changed')
++    return sha(run/'server-args.json')
++
++
++def cold_admission(server_sha, args, common):
++    contract, source_identity = cold_source_identity()
++    args_sha = cold_server_args(args, common)
++    raw = Path('/proc/meminfo').read_text()
++    fields = dict(line.split(':', 1) for line in raw.splitlines())
++    values = {}
++    for key in ('MemTotal', 'MemAvailable', 'MemFree', 'SwapFree', 'SwapTotal'):
++        parts = fields[key].split()
++        require(len(parts) == 2 and parts[1] == 'kB' and parts[0].isdigit(), 'Malformed current meminfo')
++        values[key] = int(parts[0]) * 1024
++    report = {'schema': 'ltx.host-embedding-cold-memory-admission.v1',
++        'stage': 'before-initial-component-allocation', 'server_identity_sha256': server_sha,
++        'source_contract_sha256': COLD_CONTRACT_SHA, 'required_available_bytes': 103102806218,
++        'source_identity':source_identity, 'server_args_sha256':args_sha,
++        'observed': {'source': '/proc/meminfo', 'raw': raw, 'bytes': values},
++        'passed': values['MemAvailable'] >= 103102806218,
++        'swap_counted_as_headroom': False, 'runtime_memory_settings_changed': False}
++    validators.cold_memory(report, contract, COLD_CONTRACT_SHA, server_sha, require_pass=False)
++    return report
+ 
+ 
+ def run_campaign(args, common):
+@@ -196,14 +281,14 @@
+         'client_sha256': sha(Path(__file__)), 'validator_sha256': VALIDATOR_SHA,
+         'inherited_v3_sha256': V3_SHA, 'frozen_helpers': screen.FROZEN, 'registered_contract_sha256': CONTRACT_SHA,
+         'loaded_node_info': node_info,
+-        'registered_contract': contract,
++        'registered_contract': contract, 'cold_memory_contract_sha256': COLD_CONTRACT_SHA,
+         'scope': 'original transformer/decoder; control/host-table/control, initialization excluded from timing pairs',
+         'failure_action': 'halt new requests; preserve geometry/ownership/parity failure; no retry or gate widening',
+         'timeout_action': 'halt client submissions, preserve running server request; timeout is not cancellation',
+         'retention': 'delete only own verified redundant raw archives; retain latest3 passing previews',
+         'speed_promotion': False, 'streaming_qualification': False})
+     completed, inventory, deleted = [], {}, set()
+-    previous, components = None, None
++    previous, components, prior_components = None, None, None
+     runs = {row['run'] for row in rows}
+     current, stage = None, 'preflight'
+     try:
+@@ -224,6 +309,12 @@
+             graph['421']['inputs']['run_name'] = run
+             graph_path = output / (run + '-graph.json')
+             write_json(graph_path, graph)
++            if current['generation'] == 1 and current['initialization']:
++                require(not list(args.server_run.glob('host-components-*')), 'Cold admission requires initial component generation')
++                require(screen.get_json('/queue') == {'queue_running': [], 'queue_pending': []}, 'Cold admission requires idle queue')
++                current['cold_memory_admission'] = cold_admission(identity_sha, args, common)
++                write_json(output / 'cold-memory-admission.json', current['cold_memory_admission'])
++                require(current['cold_memory_admission']['passed'], 'Insufficient source-budgeted host RAM for cold initialization')
+             stage = 'request'
+             command = [sys.executable, str(LANE / 'scripts/profile-clip.py'), run, '--graph', str(graph_path),
+                        '--server-run', str(args.server_run), '--timeout', '1200']
+@@ -248,18 +339,35 @@
+             started = json.loads(retention.safe_path(args.server_run, prefix + '-started.json').read_text())
+             observed = json.loads(retention.safe_path(args.server_run, prefix + '-result.json').read_text())
+             validators.component(started, observed, contract=contract, mode=mode, generation=current['generation'],
+-                                 server_sha=identity_sha, model_sha=identity['model_verification_sha256'])
++                                 server_sha=identity_sha, model_sha=identity['model_verification_sha256'],
++                                 previous_component=components if current['initialization'] else prior_components)
+             if current['initialization']:
++                retirement = None
+                 if components is not None:
+                     retirement = json.loads(retention.safe_path(args.server_run, prefix + '-unload.json').read_text())
+                     current['retirement_validation'] = validators.unload(retirement, contract=contract, previous=previous,
+                         old_generation=current['generation'] - 1, new_generation=current['generation'], mode=mode,
+                         server_sha=identity_sha, model_sha=identity['model_verification_sha256'])
+                     write_json(output / (prefix + '-unload.json'), retirement)
++                    release = json.loads(retention.safe_path(args.server_run, prefix + '-retired-owner-release.json').read_text())
++                    current['release_validation'] = validators.released(release, previous_mode=previous['mode'],
++                        old_generation=current['generation'] - 1, new_generation=current['generation'],
++                        shared=components['shared_owner_ids'], server_sha=identity_sha,
++                        model_sha=identity['model_verification_sha256'])
++                    write_json(output / (prefix + '-retired-owner-release.json'), release)
+                 else:
+                     require(current['generation'] == 1 and not (args.server_run / (prefix + '-unload.json')).exists(),
+                             'Initial component unexpectedly has prior ownership')
+-                components, previous = observed, None
++                stages = ['before-construction', 'after-construction']
++                if retirement is not None:
++                    stages += ['before-restore', 'after-release']
++                memory_reports = {}
++                for memory_stage in stages:
++                    filename = prefix + '-' + memory_stage + '-memory.json'
++                    memory_reports[memory_stage] = json.loads(retention.safe_path(args.server_run, filename).read_text())
++                    write_json(output / filename, memory_reports[memory_stage])
++                current['memory_validations'] = validators.transition_memory(observed, retirement, memory_reports)
++                prior_components, components, previous = components, observed, None
+                 write_json(output / (prefix + '-started.json'), started)
+                 write_json(output / (prefix + '-result.json'), observed)
+             else:
+--- scripts/ltx_host_embedding_receipts.py
++++ scripts/ltx_host_embedding_receipts_v3.py
+@@ -1,5 +1,10 @@
+-"""Stdlib-only gates for the bounded, exact-output host-table screen."""
++"""Stdlib-only packet12 gates; exact ownership plus retained-component lifecycle."""
+ import math
++
++REGISTERED_STATE_BYTES = 26231584372
++CHECKPOINT_TENSOR_BYTES = 26263774294
++HEADROOM_BYTES = 8 * 1024**3
++SHARED_KEYS = {'model_patcher', 'model', 'shard_patcher', 'shard_model', 'video_vae', 'audio_vae', 'upscaler'}
+ 
+ TABLE_NAME = 'gemma3_12b.transformer.model.embed_tokens.weight'
+ TABLE_BYTES = 2013265920
+@@ -159,10 +164,10 @@
+             'encoder_loaded_bytes': report['encoder']['accounting']['reported_loaded_weight_bytes']}
+ 
+ 
+-def component(started, result, *, contract, mode, generation, server_sha, model_sha):
++def component(started, result, *, contract, mode, generation, server_sha, model_sha, previous_component=None):
+     for report in (started, result):
+         identity(report, server_sha, model_sha)
+-        require(report['schema'] == 'ltx.host-embedding-components.v1' and report['encoder_mode'] == mode and
++        require(report['schema'] == 'ltx.host-embedding-components.v2' and report['encoder_mode'] == mode and
+                 type(report['generation']) is int and report['generation'] == generation and
+                 report['previous_generation'] == generation - 1 and report['placement'] == 'split' and
+                 report['previous_mode'] == (None if generation == 1 else ('control' if mode == 'host-table' else 'host-table')),
+@@ -174,6 +179,24 @@
+     require(result['text_encoder_load_device'] == 'xpu:2' and result['vae_devices'] == ['xpu:3', 'xpu:3'] and
+             result['model_load_device'] == 'xpu:0', 'Component device map changed')
+     ownership(result['encoder_initial_ownership'], contract, mode, initial=True)
++    require(result['retained'] == 'nonencoder components across all generations; one current CLIP', 'Wrong retention scope')
++    shared_ids(result['shared_owner_ids'])
++    geometry = result['memory_geometry']
++    require(geometry['checkpoint_tensor_bytes'] == CHECKPOINT_TENSOR_BYTES and
++            geometry['checkpoint_header_bytes'] == 83880 and
++            geometry['registered_state_bytes'] == REGISTERED_STATE_BYTES and
++            geometry['construction_overlap_bytes'] == CHECKPOINT_TENSOR_BYTES + REGISTERED_STATE_BYTES and
++            geometry['existing_headroom_bytes'] == HEADROOM_BYTES, 'Source-derived CPU construction geometry changed')
++    memory(result['construction_memory'], 'before-construction', geometry['construction_overlap_bytes'])
++    memory(result['constructed_memory'], 'after-construction', 0)
++    if generation == 1:
++        require(previous_component is None and not any(k in result for k in
++                ('shared_owner_ids_before', 'restore_memory', 'released_memory')), 'Initial generation has prior owners')
++    else:
++        require(previous_component is not None and previous_component['generation'] == generation - 1 and
++                result['shared_owner_ids_before'] == result['shared_owner_ids'] == previous_component['shared_owner_ids'],
++                'Nonencoder owners changed across generations')
++        memory(result['released_memory'], 'after-release', 0)
+ 
+ 
+ def unload(report, *, contract, previous, old_generation, new_generation, mode, server_sha, model_sha):
+@@ -199,3 +222,115 @@
+             account['marked_modules'] == [] and account['small_buffers_loaded'] is False,
+             'Retired encoder accounting not cleared')
+     return {'status': 'passed-complete-owner-retirement', 'old_generation': old_generation, 'new_generation': new_generation}
++
++
++def shared_ids(report):
++    require(set(report) == SHARED_KEYS, 'Missing or additional shared owner identity')
++    for value in report.values():
++        positive_id(value)
++    require(len(set(report.values())) == len(report), 'Shared owner identities alias')
++
++
++def memory(report, stage, allocation):
++    require(report['schema'] == 'ltx.host-embedding-memory-admission.v1' and report['stage'] == stage,
++            'Memory admission stage/schema differs')
++    require(type(report['tracked_allocation_bytes']) is int and report['tracked_allocation_bytes'] == allocation and
++            report['existing_headroom_bytes'] == HEADROOM_BYTES and
++            report['required_available_bytes'] == allocation + HEADROOM_BYTES and report['passed'] is True and
++            report['swap_counted_as_headroom'] is False and report['runtime_memory_settings_changed'] is False,
++            'Source memory floor changed or failed')
++    observed = report['observed']
++    require(observed['source'] == '/proc/meminfo', 'Memory observation source changed')
++    fields = dict(line.split(':', 1) for line in observed['raw'].splitlines())
++    parsed = {}
++    for key in ('MemTotal', 'MemAvailable', 'MemFree', 'SwapFree', 'SwapTotal'):
++        parts = fields[key].split()
++        require(len(parts) == 2 and parts[1] == 'kB' and parts[0].isdigit(), 'Invalid raw memory observation')
++        parsed[key] = int(parts[0]) * 1024
++    require(parsed == observed['bytes'] and all(type(v) is int for v in observed['bytes'].values()) and
++            0 < parsed['MemTotal'] and parsed['MemAvailable'] <= parsed['MemTotal'] and
++            parsed['MemFree'] <= parsed['MemTotal'] and parsed['SwapFree'] <= parsed['SwapTotal'] and
++            parsed['MemAvailable'] >= allocation + HEADROOM_BYTES, 'Memory arithmetic/raw evidence differs')
++    return {'status': 'passed-source-memory-admission', 'stage': stage, 'required_available_bytes': allocation + HEADROOM_BYTES}
++
++
++def released(report, *, previous_mode, old_generation, new_generation, shared, server_sha, model_sha):
++    identity(report, server_sha, model_sha)
++    expected = {'clip', 'group', 'encoder_patcher', 'encoder_model'}
++    if previous_mode == 'host-table':
++        expected.update(('host_owner', 'host_patcher', 'host_model', 'host_weight'))
++    require(previous_mode in MODES and report['old_generation'] == old_generation and
++            report['new_generation'] == new_generation == old_generation + 1 and
++            report['all_retired_weakrefs_dead'] is True and
++            report['retired_patcher_ids_absent_from_registry'] is True and
++            report['checked'] == sorted(expected) and
++            report['native_registry_cleanup'] == 'cleanup_models after weak-finalizer cleanup; no direct list mutation',
++            'Retired owner liveness/native registry gate failed')
++    shared_ids(report['shared_owner_ids'])
++    require(report['shared_owner_ids'] == shared, 'Shared owners changed during retirement')
++    return {'status': 'passed-retired-owner-release', 'old_generation': old_generation, 'new_generation': new_generation}
++
++
++def transition_memory(component_report, retirement, stage_reports):
++    stages = {'before-construction': ('construction_memory', CHECKPOINT_TENSOR_BYTES + REGISTERED_STATE_BYTES),
++              'after-construction': ('constructed_memory', 0)}
++    if retirement is not None:
++        allocation = sum(row['bytes'] for kind in ('parameters', 'buffers')
++                         for row in retirement['before']['encoder'][kind]['records'] if row['device'] != 'cpu')
++        stages.update({'before-restore': ('restore_memory', allocation), 'after-release': ('released_memory', 0)})
++    require(set(stage_reports) == set(stages), 'Incomplete or additional memory stage receipts')
++    result = []
++    for stage, (field, allocation) in stages.items():
++        require(stage_reports[stage] == component_report[field], 'Standalone memory receipt differs from component result')
++        result.append(memory(stage_reports[stage], stage, allocation))
++    return result
++
++
++def cold_memory(report, contract, contract_sha, server_sha, *, require_pass=True):
++    require(contract['schema'] == 'ltx.host-embedding-cold-memory-contract.v1' and
++            contract['status'] == 'source-audited-admission-budget' and
++            contract['largest_tracked_overlap_bytes'] == 94512871626 and
++            contract['existing_operational_headroom_bytes'] == HEADROOM_BYTES and
++            contract['required_available_bytes'] == 103102806218 and
++            max(row['total_bytes'] for row in contract['stages']) == 94512871626,
++            'Cold source budget differs')
++    require(report['schema'] == 'ltx.host-embedding-cold-memory-admission.v1' and
++            report['stage'] == 'before-initial-component-allocation' and
++            report['source_contract_sha256'] == contract_sha and report['server_identity_sha256'] == server_sha and
++            report['required_available_bytes'] == contract['required_available_bytes'] and
++            report['swap_counted_as_headroom'] is False and report['runtime_memory_settings_changed'] is False,
++            'Cold admission identity/budget differs')
++    source = report['source_identity']
++    require(source['source_contract_sha256'] == contract_sha and
++            source['source_and_saved_evidence_hashes_match'] is True and source['full_weight_payload_rehashed'] is False and
++            set(source['headers']) == set(contract['headers']), 'Cold header/source identity absent')
++    for name, expected in contract['headers'].items():
++        require(source['headers'][name] == {k: expected[k] for k in ('path','header_sha256','header_bytes','file_bytes')},
++                'Cold model header evidence differs')
++    require(isinstance(report['server_args_sha256'], str) and len(report['server_args_sha256']) == 64 and
++            all(c in '0123456789abcdef' for c in report['server_args_sha256']), 'Missing cold configuration identity')
++    observed = report['observed']
++    available = observed['bytes']['MemAvailable']
++    require(type(report['passed']) is bool and report['passed'] == (available >= contract['required_available_bytes']),
++            'Cold memory admission outcome differs')
++    # Reuse identical raw-memory arithmetic even for a deliberately preserved refusal.
++    normalized = {'schema': 'ltx.host-embedding-memory-admission.v1', 'stage': 'before-initial-component-allocation',
++        'tracked_allocation_bytes': 94512871626, 'existing_headroom_bytes': HEADROOM_BYTES,
++        'required_available_bytes': 103102806218, 'observed': observed, 'passed': report['passed'],
++        'swap_counted_as_headroom': False, 'runtime_memory_settings_changed': False}
++    if report['passed'] or require_pass:
++        memory(normalized, 'before-initial-component-allocation', 94512871626)
++    else:
++        # Refusals also require genuine raw byte agreement; no invented diagnostic numbers.
++        fields = dict(line.split(':', 1) for line in observed['raw'].splitlines())
++        parsed = {}
++        for key in ('MemTotal', 'MemAvailable', 'MemFree', 'SwapFree', 'SwapTotal'):
++            parts = fields[key].split()
++            require(len(parts) == 2 and parts[1] == 'kB' and parts[0].isdigit(), 'Malformed refused memory observation')
++            parsed[key] = int(parts[0]) * 1024
++        require(observed['source'] == '/proc/meminfo' and parsed == observed['bytes'] and
++                0 < parsed['MemTotal'] and parsed['MemAvailable'] <= parsed['MemTotal'] and
++                parsed['MemFree'] <= parsed['MemTotal'] and parsed['SwapFree'] <= parsed['SwapTotal'],
++                'Refused memory observation arithmetic differs')
++    return {'status': 'passed-cold-memory-admission' if report['passed'] else 'refused-cold-memory-admission',
++            'required_available_bytes': contract['required_available_bytes']}

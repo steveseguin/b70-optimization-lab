@@ -80,7 +80,55 @@ operator-stage snapshots and the earlier unrelated freeze packet below.
 [implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
-**Four-B70 host, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
+**Four-B70 host, September14: packet12 idle after safe memory refusal.**
+LTX PID11888/exec40923 remains healthy and idle at `http://127.0.0.1:8188`,
+packet12 manifest`b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666`.
+Screen02 client/exec12642 exited1: five control clips passed all four raw
+oracles, then the first encoder transition refused replacement construction.
+After full old-encoder weakref/registry release, available RAM was46.58GiB,
+below the unchanged56.89GiB construction floor. Diffusion/VAEs/upscaler stayed
+owned. No replacement encoder was allocated. Requests halted; no retry/reload.
+Postflight: same user-reboot boot5414a640, empty queue, only11888 owns renders,
+no FAULT latch and no new kernel entries. No agent reboot/reset/settings action.
+Preserve the failed screen; it does not qualify host timing or full transitions.
+Terminal evidence is exported (325 text files, exact archived hashes).
+Next: keep a fixed encoder mode for later sampler work; separately design
+private ownership reuse without checkpoint/constructor allocation. The next
+sampler candidate is a two-stage, same-device full-N versus half-N Linear
+exactness diagnostic; its new adapter needs source review before any reload.
+Existing constructor floor and all quality gates remain unchanged.
+[Postflight](experiments/ltx25-b70/data/host-embedding-screen-02-postflight.json).
+
+**Historical Four-B70 host, September14 19:32 UTC: bounded post-reboot health assessment passed.**
+One diagnostic (parent8068/worker8088) passed four exact copy/compute checks and
+twelve directed BF16 copies on the expected ordinal UUIDs. Both exited0;
+locked passive postflight confirmed released render nodes and no new kernel
+faults. No agent reboot/reset or host settings change. The root operator
+archived the old-boot FAULT byte-for-byte after separate evidence review;
+the prior failed model campaign remains invalid. LTX is still stopped.
+The guarded tiny CPU qualification then passed all six cases (child8812,
+exit0): actual encoder/registry release, exact CPU output and memory-refusal
+ordering; both GPU backends stayed uninitialized. Parent postflight was clean.
+Next: successor runtime/client preparation and cold-assembly RAM review.
+Large model transitions, full clip performance
+and endurance remain unqualified; a new fault halts requests.
+[Health result and admission](experiments/ltx25-b70/data/external-boot-health-02/recovery-admission.json).
+[CPU lifecycle result](experiments/ltx25-b70/notes/host-embedding-resident-lifecycle-native-01.md).
+
+**Historical four-B70 state, September14 19:20 UTC: user-reported freeze and user-confirmed reboot.**
+The computer is now on boot `5414a640-c223-4a67-baa2-ec2f4c4c5917`,
+started about19:12 UTC. The user confirms restarting it after a freeze; the
+agent did not reboot or reset it. LTX remains stopped and the original FAULT
+latch remains byte-identical. The planned same-boot health diagnostic never
+ran (its one-use output directory is absent); its old-boot admission is invalid.
+Passive checks find unowned render nodes and no detected current-boot kernel
+fault. These observations do not qualify GPU health. A new, separately reviewed
+bounded assessment is being prepared; no model or native CPU tests are admitted.
+The previous boot's kernel tail contains the earlier18:13 xe fault; it does not
+establish the cause or precise time of the later reported freeze.
+[Passive incident evidence](experiments/ltx25-b70/data/user-reported-freeze-02/report.json).
+
+**Historical four-B70 state, September14 18:13 UTC: LTX stopped after host OOM and xe fault.**
 Linux OOM-killed LTX PID116013 at18:12:58 UTC during the third component
 transition (host-table back to control), before the next clip completed.
 Exec15201 exited137. Xe GPU0 reported a bcs engine fault/reset at18:13:01,

@@ -1,0 +1,51 @@
+{
+  "schema": "ltx.host-embedding-resident-lifecycle-guarded-cpu.v1",
+  "status": "startup-before-torch",
+  "pid": 8690,
+  "ppid": 3495,
+  "command": [
+    "experiments/ltx25-b70/scripts/test-host-embedding-resident-lifecycle-cpu.py",
+    "--evidence-dir",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/host-embedding-cpu-resident-lifecycle-check-02",
+    "--check-only"
+  ],
+  "phase": "source-gate",
+  "torch_imported": false,
+  "tests_run": 0,
+  "native_gpu_requests": 0,
+  "compilation_permitted": false,
+  "driver_sha256": "2a19169ac8b8a898294603f9216fdca96d3fd3efd5bcb1564d332de522b0b844",
+  "helper_sha256s": {
+    "scripts/test-host-embedding-integration-cpu.py": "6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d",
+    "scripts/host_embedding_resident_node_v2.py": "bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7",
+    "scripts/host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+    "scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py": "4e2d0d92eea345dcb0ae36a4143f7f0d8887dda5c996845c37c6eba30673ee73",
+    "scripts/test-host-embedding-candidate-cpu-v3.py": "1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca",
+    "scripts/host_embedding_clip_v2.py": "53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994",
+    "scripts/host_embedding_placement_node_v2.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+    "scripts/test-host-embedding-integration-cpu-fixture.py": "2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e",
+    "scripts/cpu_comfy_import_policy_v1.py": "7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec",
+    "scripts/test-host-embedding-candidate-cpu-v2.py": "9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3",
+    "scripts/test-host-embedding-candidate-cpu.py": "2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534",
+    "scripts/test-host-embedding-candidate-cpu-fixture-v2.py": "b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32",
+    "scripts/ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+    "native-cpp-block-01/accelerator_guard_v2.py": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce",
+    "native-cpp-block-01/cpu_import_policy_v3.py": "03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a"
+  },
+  "candidate_cpu_receipt_sha256": "eacb3389cc9fd8065c135bc6dea2a11b9b4263520c3d88f8096ce08f4c762948",
+  "integration_cpu_receipt_sha256": "b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326",
+  "triton_utils_sha256": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+  "comfy_model_management_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+  "scope": "Actual tiny CPU CLIP loader registry and weakref lifecycle across resident modes; nonencoder owners and memory observations are fakes; no full model, GPU placement, real clip, speed or full-memory-peak qualification",
+  "source_pins": {
+    "comfy/text_encoders/llama.py": "7a1c57dd6e94ff1731f4cc6d98db2baaf8fed03e2fe996f79e49e06d9199717f",
+    "comfy/sd1_clip.py": "fc2c7e8442e00d525740699c936a00e93a87f58d7c63a1c23a87cd96226962f8",
+    "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0",
+    "comfy/model_patcher.py": "768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99",
+    "comfy/sd.py": "41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0",
+    "scripts/encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a"
+  },
+  "timestamp_utc": "2026-09-14T19:32:05.356461+00:00",
+  "proc_start_ticks": "116465",
+  "boot_id": "5414a640-c223-4a67-baa2-ec2f4c4c5917"
+}

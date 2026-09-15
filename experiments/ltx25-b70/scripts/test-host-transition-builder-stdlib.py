@@ -1,0 +1,217 @@
+#!/usr/bin/env python3
+"""Source-only packet12 admission tests; never prepare or mutate a packet.
+
+Uses real frozen packet11 checker and passed lifecycle receipt bytes. Generated
+transition checks execute against in-memory files, not a deployed runtime.
+"""
+import ast
+import copy
+import hashlib
+import importlib.util
+import io
+import json
+from pathlib import Path
+import sys
+import unittest
+
+sys.dont_write_bytecode = True
+HERE = Path(__file__).resolve().parent
+BUILDER = HERE / 'prepare-host-transition-runtime.py'
+spec = importlib.util.spec_from_file_location('transition_source_builder', BUILDER)
+b = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(b)
+
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+class MemoryFile:
+    def __init__(self, raw):
+        self.raw = raw
+
+    def read_text(self):
+        return self.raw.decode()
+
+
+class Tests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.parent_raw = (b.PARENT / 'manifest.json').read_bytes()
+        if digest(cls.parent_raw) != b.PARENT_SHA:
+            raise RuntimeError('Frozen parent identity differs')
+        cls.parent = json.loads(cls.parent_raw)
+        cls.original = (b.PARENT / b.CHECKER).read_text()
+        if digest(cls.original.encode()) != cls.parent['files'][b.CHECKER]:
+            raise RuntimeError('Frozen parent checker differs')
+        cls.cpu_raw = b.CPU.read_bytes()
+        if digest(cls.cpu_raw) != b.CPU_SHA:
+            raise RuntimeError('Actual lifecycle receipt identity differs')
+        cls.cpu = json.loads(cls.cpu_raw)
+        cls.virtual = {'host-embedding-11-parent-manifest.json': cls.parent_raw}
+        proofs = {}
+
+        def add(name, source, expected):
+            raw = b.regular(source).read_bytes()
+            if digest(raw) != expected:
+                raise RuntimeError('Actual proof identity differs: ' + name)
+            cls.virtual[name] = raw
+            proofs[name] = expected
+
+        add(b.PROVENANCE + '/cpu-lifecycle-result.json', b.CPU, b.CPU_SHA)
+        add(b.PROVENANCE + '/cpu-startup-identity.json', b.CPU.parent / 'startup-identity.json', cls.cpu['startup_sha256'])
+        add(b.PROVENANCE + '/fixture-evidence.json', b.CPU.parent / 'fixture-evidence.json', cls.cpu['fixture_evidence_sha256'])
+        add(b.PROVENANCE + '/cpu-sources/' + b.DRIVER, b.LANE / b.DRIVER, cls.cpu['driver_sha256'])
+        for name, expected in cls.cpu['helper_sha256s'].items():
+            add(b.PROVENANCE + '/cpu-sources/' + name, b.LANE / name, expected)
+        cls.host = copy.deepcopy(cls.parent['host_embedding'])
+        cls.host['extension_sha256s'].update({name: row[1] for name, row in b.INPUTS.items()})
+        cls.host.update(component_receipt_schema='ltx.host-embedding-components.v2',
+            cache_scope='nonencoder-components-retained; encoder-replaced', native_cpu_resident_lifecycle_qualified=True)
+        cls.host['admissions']['resident_lifecycle'] = {'path': b.PROVENANCE + '/cpu-lifecycle-result.json', 'sha256': b.CPU_SHA}
+        cls.host['proof_source_sha256s'].update(proofs)
+        for name, expected in cls.parent['host_embedding']['proof_source_sha256s'].items():
+            add(name, b.PARENT / name, expected)
+        cls.generated = b.checker_source(cls.original, cls.host)
+        cls.tree = ast.parse(cls.generated)
+        cls.verify = next(n for n in cls.tree.body if isinstance(n, ast.FunctionDef) and n.name == 'verify_packet')
+        # Execute only the new transition tail. Entire packet checks are root's
+        # separate check-only/build qualification, not mocked success here.
+        marker = "require(manifest['parent_manifest_sha256'] == " + repr(b.PARENT_SHA)
+        index = next(i for i, n in enumerate(cls.verify.body) if ast.unparse(n).startswith(marker))
+        cls.tail = compile(ast.Module(body=cls.verify.body[index:-1], type_ignores=[]), '<generated-transition-tail>', 'exec')
+        cls.schema_gate = next(n for n in cls.verify.body if "manifest['schema']" in ast.unparse(n))
+
+    def tearDown(self):
+        self.assertNotIn('torch', sys.modules)
+        self.assertFalse(any(name.startswith('comfy.') for name in sys.modules))
+
+    def manifest(self):
+        manifest = copy.deepcopy(self.parent)
+        manifest.update(schema=b.SCHEMA, parent_manifest_sha256=b.PARENT_SHA,
+            host_embedding_parent11=copy.deepcopy(self.parent['host_embedding']),
+            host_embedding=copy.deepcopy(self.host))
+        for name in b.CHANGED:
+            manifest['files'][b.PROVENANCE + '/parent/' + name] = self.parent['files'][name]
+            manifest['files'][name] = 'new-reviewed-source-' + name
+        manifest['extension_sha256s'].update(self.host['extension_sha256s'])
+        return manifest
+
+    def closure(self, manifest=None, virtual=None):
+        files = self.virtual if virtual is None else virtual
+        scope = {'manifest': self.manifest() if manifest is None else manifest,
+            'packet': None, 'require': b.require, 'json': json,
+            'safe_path': lambda packet, name: MemoryFile(files[name]),
+            'sha': lambda file: digest(file.raw), 'validate_lifecycle': b.validate_lifecycle}
+        exec(self.tail, scope)
+
+    def test_actual_pass_and_source_closure(self):
+        b.validate_lifecycle(self.cpu, self.host)
+        self.closure()
+        for name, expected in self.cpu['source_pins'].items():
+            self.assertEqual(self.parent['files']['source/' + name], expected)
+
+    def test_receipt_admission_negative_boundaries(self):
+        mutations = [
+            ('status', 'failed'), ('schema', 'wrong'), ('phase', 'actual-CPU-tests'),
+            ('tests_run', 5), ('native_cpu_tests_executed', False), ('torch_imported', False),
+            ('xpu_initialized', True), ('cuda_initialized', True), ('final_guards_intact', False),
+            ('native_gpu_requests', 1), ('compilation_permitted', True),
+            ('test_failures', ['failed']), ('test_errors', ['error']), ('test_skips', ['skipped']),
+            ('test_names', self.cpu['test_names'][:-1]),
+            ('determinism', {'enabled': True, 'warn_only': True}),
+            ('accelerator_guard_attempts', ['blocked']),
+            ('backend_refusals', {'attempts': ['blocked'], 'tripped': True}),
+            ('cpu_comfy_import_omissions', []), ('cpu_comfy_import_policy', {'complete': False}),
+            ('identity_after_import', {}), ('identity_after_tests', {}),
+            ('integration_cpu_receipt_sha256', '0' * 64),
+        ]
+        for key, value in mutations:
+            with self.subTest(key=key):
+                cpu = copy.deepcopy(self.cpu)
+                cpu[key] = value
+                with self.assertRaises(RuntimeError):
+                    b.validate_lifecycle(cpu, self.host)
+
+    def test_each_actual_implementation_pin_is_required(self):
+        names = ('host_embedding_resident_node_v2.py', 'host_embedding_transition_memory.py',
+            'host_embedding_clip_v2.py', 'host_embedding_placement_node_v2.py', 'ltx_host_embedding_candidate.py')
+        for name in names:
+            with self.subTest(source=name):
+                cpu = copy.deepcopy(self.cpu)
+                cpu['helper_sha256s']['scripts/' + name] = '0' * 64
+                with self.assertRaisesRegex(RuntimeError, 'Lifecycle source differs'):
+                    b.validate_lifecycle(cpu, self.host)
+
+    def test_generated_schema_and_unchanged_parent_functions(self):
+        gate = compile(ast.Module(body=[self.schema_gate], type_ignores=[]), '<generated-schema>', 'exec')
+        exec(gate, {'manifest': {'schema': b.SCHEMA}, 'require': b.require})
+        with self.assertRaises(RuntimeError):
+            exec(gate, {'manifest': {'schema': self.parent['schema']}, 'require': b.require})
+        old = {n.name: n for n in ast.parse(self.original).body if isinstance(n, ast.FunctionDef)}
+        new = {n.name: n for n in self.tree.body if isinstance(n, ast.FunctionDef)}
+        for name in old.keys() - {'verify_packet'}:
+            self.assertEqual(ast.dump(old[name]), ast.dump(new[name]), name)
+        self.assertIn('host_embedding_transition_memory.py', self.generated)
+        self.assertEqual(set(b.CHANGED), {b.CHECKER, b.RESIDENT, b.NODE})
+
+    def test_checker_unique_context_refuses_drift(self):
+        target = "manifest['schema'] == 'ltx.host-embedding-runtime-packet.v1'"
+        for source in (self.original.replace(target, 'False'), self.original + '\n# ' + target):
+            with self.assertRaisesRegex(RuntimeError, 'unique checker context'):
+                b.checker_source(source, self.host)
+
+    def test_generated_inherited_files_and_archives_reject_mutation(self):
+        numerical = ['graphs/host-embedding-control.json', 'source/comfy/sd.py', 'launch/serve-encoder.py']
+        for name in [*numerical, *(b.PROVENANCE + '/parent/' + name for name in b.CHANGED)]:
+            with self.subTest(path=name):
+                manifest = self.manifest()
+                manifest['files'][name] = '0' * 64
+                with self.assertRaisesRegex(RuntimeError, 'Inherited packet11 bytes changed'):
+                    self.closure(manifest)
+
+    def test_generated_metadata_and_qualification_reject_mutation(self):
+        for key, value in [('parent_manifest_sha256', '0' * 64), ('runtime', {}),
+                           ('host_embedding_parent11', {}), ('host_embedding', {})]:
+            with self.subTest(key=key):
+                manifest = self.manifest()
+                manifest[key] = value
+                with self.assertRaises(RuntimeError):
+                    self.closure(manifest)
+        manifest = self.manifest()
+        manifest['extension_sha256s']['host_embedding_resident_node.py'] = '0' * 64
+        with self.assertRaisesRegex(RuntimeError, 'Current lifecycle extension differs'):
+            self.closure(manifest)
+
+    def test_generated_proof_bytes_reject_mutation(self):
+        for name in self.virtual:
+            with self.subTest(path=name):
+                virtual = dict(self.virtual)
+                virtual[name] += b'\n'
+                with self.assertRaises(RuntimeError):
+                    self.closure(virtual=virtual)
+
+    def test_preparation_check_only_returns_before_mutations(self):
+        tree = ast.parse(BUILDER.read_text())
+        function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'prepare')
+        gate = next(n for n in function.body if isinstance(n, ast.If) and ast.unparse(n.test) == 'check_only')
+        self.assertIsInstance(gate.body[-1], ast.Return)
+        mutations = [n.lineno for n in ast.walk(function) if isinstance(n, ast.Call)
+            and isinstance(n.func, ast.Attribute) and n.func.attr in ('mkdir', 'write_text', 'copyfile')]
+        self.assertTrue(mutations)
+        self.assertGreater(min(mutations), gate.end_lineno)
+        self.assertNotIn('import torch', BUILDER.read_text())
+
+
+if __name__ == '__main__':
+    stream = io.StringIO()
+    result = unittest.TextTestRunner(stream=stream, verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
+    sys.stderr.write(stream.getvalue())
+    print(json.dumps({'schema': 'ltx.host-transition-builder-stdlib.v1',
+        'status': 'passed' if result.wasSuccessful() else 'failed', 'tests_run': result.testsRun,
+        'scope': 'Actual frozen proof bytes; generated transition tail against virtual files; no prepare/runtime calls or packet mutation',
+        'torch_imported': 'torch' in sys.modules, 'native_requests': 0,
+        'builder_sha256': b.sha(BUILDER), 'test_sha256': b.sha(Path(__file__)),
+        'parent_manifest_sha256': b.PARENT_SHA, 'cpu_receipt_sha256': b.CPU_SHA,
+        'failures': [text for _, text in result.failures], 'errors': [text for _, text in result.errors]}, indent=2))
+    raise SystemExit(0 if result.wasSuccessful() else 1)

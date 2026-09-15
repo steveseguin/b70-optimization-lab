@@ -1,0 +1,57 @@
+{
+  "schema": "ltx.host-embedding-release-memory-audit.v1",
+  "scope": "Saved receipts, pinned source and permitted read-only /proc files only; no native import, device query, endpoint or runtime mutation",
+  "utc": "2026-09-14T19:58:58.054009+00:00",
+  "pins": {
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/host-embedding-screen-02/progress.json": "04daff0881f5308287f24d9cc67c21f3482b9878aaa8732be8c9a49a3d467c0f",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/host-components-02-host-table-retired-owner-release.json": "a142355e405e96a33d0b0713d306567bd20d0fb99a26173071a7c485aa6b8186",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/host-components-02-host-table-unload.json": "e8796dde4ceb52e6b5da55adb0f8f24bcbc74a543ccb5fb4c0cafe6bae323458",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/host-components-02-host-table-before-restore-memory.json": "6cdf970326fb436cd0c7de027c85ce83a152c82ce928b826fe443c19260744f2",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/host-components-02-host-table-after-release-memory.json": "a780f6725929fb1e7060016df198079fc012c3e1bf29a92fdd3045de0c25ab63",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/host-components-02-host-table-result.json": "0f9980f0a70552f7ca1ad72396a828ac8dfed472f32f349c26d8f4f415fe7084",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/host-components-02-host-table-started.json": "5ad404b041fe020d924db8d72e745f1a3baaf64d7108e47c1a64b68b7fe6f22c",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/host-components-02-host-table-before-construction-memory.json": "eb3840765ae858cb94dd6787c787832d8c4ead444c056b1a99a12fd7a8ef724e",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/host_embedding_clip_v2.py": "53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/host_embedding_resident_node_v2.py": "bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/sd.py": "41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/model_management.py": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/model_patcher.py": "768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+  },
+  "before_restore_available_bytes": 49228554240,
+  "after_release_available_bytes": 50015182848,
+  "available_delta_bytes": 786628608,
+  "restore_non_cpu_registered_bytes": 25726483968,
+  "saved_request_process": {
+    "before": {
+      "utc": "2026-09-14T19:51:37.267460+00:00",
+      "bytes": {
+        "VmSize": 41522528256,
+        "VmRSS": 29827915776,
+        "RssAnon": 7463342080,
+        "RssFile": 22364569600,
+        "VmData": 35535974400,
+        "VmSwap": 0
+      }
+    },
+    "after": {
+      "utc": "2026-09-14T19:51:43.347034+00:00",
+      "bytes": {
+        "VmSize": 14760046592,
+        "VmRSS": 7654506496,
+        "RssAnon": 6997118976,
+        "RssFile": 657383424,
+        "VmData": 8804950016,
+        "VmSwap": 0
+      }
+    }
+  },
+  "saved_drm_accounting_unchanged": true,
+  "passive_current_proc": {
+    "status": "Name:\tpython\nUmask:\t0002\nState:\tS (sleeping)\nTgid:\t11888\nNgid:\t0\nPid:\t11888\nPPid:\t11887\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t2048\nGroups:\t4 24 27 30 44 46 100 114 984 992 1000 \nNStgid:\t11888\nNSpid:\t11888\nNSpgid:\t11887\nNSsid:\t11887\nKthread:\t0\nVmPeak:\t105706320 kB\nVmSize:\t14414108 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t98767324 kB\nVmRSS:\t 7475104 kB\nRssAnon:\t 6833124 kB\nRssFile:\t  641976 kB\nRssShmem:\t       4 kB\nVmData:\t 8598584 kB\nVmStk:\t     132 kB\nVmExe:\t   27344 kB\nVmLib:\t 1047200 kB\nVmPTE:\t   18156 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t65\nSigQ:\t0/477923\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t00000001000004ea\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tffffffff\nCpus_allowed_list:\t0-31\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t16310\nnonvoluntary_ctxt_switches:\t143\nx86_Thread_features:\t\nx86_Thread_features_locked:\t\n",
+    "smaps_rollup": "003ff000-7ffc65f2b000 ---p 00000000 00:00 0                              [rollup]\nRss:             7475104 kB\nPss:             7471110 kB\nPss_Dirty:       6833128 kB\nPss_Anon:        6833124 kB\nPss_File:         637982 kB\nPss_Shmem:             4 kB\nShared_Clean:       4536 kB\nShared_Dirty:          0 kB\nPrivate_Clean:    637440 kB\nPrivate_Dirty:   6833128 kB\nReferenced:      7216468 kB\nAnonymous:       6833124 kB\nKSM:                   0 kB\nLazyFree:              0 kB\nAnonHugePages:         0 kB\nShmemPmdMapped:        0 kB\nFilePmdMapped:         0 kB\nShared_Hugetlb:        0 kB\nPrivate_Hugetlb:       0 kB\nSwap:                  0 kB\nSwapPss:               0 kB\nLocked:                0 kB\n"
+  },
+  "conclusion": "Whole encoder ordinary CPU allocator retention is contradicted by small remaining anonymous RSS and actual owner death. Residual driver allocation/storage attribution is unproven; shared GTT cannot be summed as unique RAM.",
+  "recommendation": "Fixed-mode persistent lifetime for near-term work; private single-use restored-owner transfer only after separate qualification. No gate lowering or settings change."
+}

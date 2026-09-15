@@ -1,0 +1,176 @@
+{
+  "schema": "ltx.host-embedding-cold-memory-contract.v1",
+  "status": "source-audited-admission-budget",
+  "scope": "Header/source and saved qualified registration only; no native imports/allocations/device queries; not a measured or universal hard peak",
+  "headers": {
+    "diffusion": {
+      "path": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors",
+      "file_bytes": 42018190584,
+      "header_bytes": 677616,
+      "header_sha256": "641d57ff76ba1bbb2dac09b0110792652675ce83ad78b02b71ef750729995ab0",
+      "tensor_count": 4349,
+      "tensor_payload_bytes": 42017512960,
+      "bytes_by_dtype": {
+        "F32": 18923520,
+        "BF16": 41998589440
+      },
+      "all_checkpoint_elements_at_F32_bytes": 84016102400,
+      "largest_tensor_payload_bytes": 301989888,
+      "metadata_sha256": "729e65e06f2d8581cfff989ea08a4cbe9850ffdd6bf40866fa882f4cab63b758"
+    },
+    "clip": {
+      "path": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors",
+      "file_bytes": 26263858182,
+      "header_bytes": 83880,
+      "header_sha256": "92c776d4c939bae6f4bed637496a935aa277e0904a28e60087e09cf019c5db55",
+      "tensor_count": 686,
+      "tensor_payload_bytes": 26263774294,
+      "bytes_by_dtype": {
+        "BF16": 26231582816,
+        "U8": 32191478
+      },
+      "all_checkpoint_elements_at_F32_bytes": 52591931544,
+      "largest_tensor_payload_bytes": 2013265920,
+      "metadata_sha256": "362f21436eb63ef930a25af222f70fef3f0c59d9f84bc884b4cc92640d65f159"
+    },
+    "video_vae": {
+      "path": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors",
+      "file_bytes": 1472223346,
+      "header_bytes": 81544,
+      "header_sha256": "e08cc54b1f26f34372212f5757519d3747fa6dabdeac3d2faccba3f8f70b1a4b",
+      "tensor_count": 396,
+      "tensor_payload_bytes": 1472141794,
+      "bytes_by_dtype": {
+        "BF16": 1472141794
+      },
+      "all_checkpoint_elements_at_F32_bytes": 2944283588,
+      "largest_tensor_payload_bytes": 56623104,
+      "metadata_sha256": "3d99b9884c7f07be6e616ccae544fa3719a6e1ea374ef93de27231f89860c5e9"
+    },
+    "audio_vae": {
+      "path": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors",
+      "file_bytes": 364866540,
+      "header_bytes": 199664,
+      "header_sha256": "5728d7b5855767302dc02161036620a4d50d8352ef6930a09de967ddd9e5e9a0",
+      "tensor_count": 1329,
+      "tensor_payload_bytes": 364666868,
+      "bytes_by_dtype": {
+        "BF16": 364666868
+      },
+      "all_checkpoint_elements_at_F32_bytes": 729333736,
+      "largest_tensor_payload_bytes": 25952256,
+      "metadata_sha256": "b764ea848d22e74ac057c1de14fd1ed8b9659e5cd2c7e116927fc4b776f43c85"
+    },
+    "upscaler": {
+      "path": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+      "file_bytes": 995778752,
+      "header_bytes": 42936,
+      "header_sha256": "e2985e4a10baed50ac136d1bc0b670a091e1646f77daacaf5351df74c6b770fe",
+      "tensor_count": 72,
+      "tensor_payload_bytes": 995735808,
+      "bytes_by_dtype": {
+        "BF16": 995735808
+      },
+      "all_checkpoint_elements_at_F32_bytes": 1991471616,
+      "largest_tensor_payload_bytes": 75497472,
+      "metadata_sha256": "fd96a517d99c8e46cba8d45653a07ba7f6607e5e166e471344e0d9d8793f5548"
+    }
+  },
+  "clip_all_registered_state_bytes": 26231584372,
+  "observed_original_diffusion_registered_bytes": 42008091200,
+  "diffusion_header_budget_excess_over_observed_bytes": 9421760,
+  "stages": [
+    {
+      "stage": "diffusion_constructor_and_copy",
+      "retained_bytes": 0,
+      "checkpoint_bytes": 42017512960,
+      "constructor_and_destination_budget_bytes": 42017512960,
+      "total_bytes": 84035025920,
+      "formula": "diffusion checkpoint + conservatively header-sized BF16 registered state"
+    },
+    {
+      "stage": "clip_constructor_and_copy",
+      "retained_bytes": 42017512960,
+      "checkpoint_bytes": 26263774294,
+      "constructor_and_destination_budget_bytes": 26231584372,
+      "total_bytes": 94512871626,
+      "formula": "live CPU diffusion + CLIP checkpoint + actual all-registered CLIP state"
+    },
+    {
+      "stage": "video_vae_constructor_cast_and_copy",
+      "retained_bytes": 68249097332,
+      "checkpoint_bytes": 1472141794,
+      "constructor_and_destination_budget_bytes": 4416425382,
+      "total_bytes": 74137664508,
+      "formula": "retained diffusion+CLIP + checkpoint + full F32 constructor + full BF16 destination"
+    },
+    {
+      "stage": "audio_vae_constructor_cast_and_copy",
+      "retained_bytes": 69721239126,
+      "checkpoint_bytes": 364666868,
+      "constructor_and_destination_budget_bytes": 1094000604,
+      "total_bytes": 71179906598,
+      "formula": "retained diffusion+CLIP+videoVAE + checkpoint + full F32 constructor + full BF16 destination"
+    },
+    {
+      "stage": "upscaler_constructor_cast_and_copy",
+      "retained_bytes": 70085905994,
+      "checkpoint_bytes": 995735808,
+      "constructor_and_destination_budget_bytes": 2987207424,
+      "total_bytes": 74068849226,
+      "formula": "retained diffusion+CLIP+VAEs + checkpoint + full F32 constructor + full BF16 destination"
+    },
+    {
+      "stage": "layer_shard_registration",
+      "retained_bytes": 71081641802,
+      "checkpoint_bytes": 0,
+      "constructor_and_destination_budget_bytes": 0,
+      "total_bytes": 71081641802,
+      "formula": "registered components; shared references/ownership rearrangement, no full tensor copy"
+    }
+  ],
+  "largest_tracked_overlap_bytes": 94512871626,
+  "largest_tracked_overlap_stage": "clip_constructor_and_copy",
+  "existing_operational_headroom_bytes": 8589934592,
+  "required_available_bytes": 103102806218,
+  "required_available_gib": 96.02197093702853,
+  "source_sha256s": {
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/nodes.py": "dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/sd.py": "41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/model_base.py": "6280712f8315f00f19a1ada53e48bf243c818b017fa751b3412092fa0f381e68",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/supported_models.py": "007f8d1cc2e0d11c0b16c538f79c8f9a9d4e7513c79df405a7457435d14ee0b5",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/supported_models_base.py": "0b234d6f6ceacd04ff96e4126c388cd7c763e21a7d1aed672ba3a235d7a914a5",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/utils.py": "f3ee59baf72f6910b7662224854e372c713ba3ad01c89739ba092e5ee22460e6",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/model_management.py": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/ldm/lightricks/vae/na_diffusion_decoder.py": "7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/ldm/lightricks/vae/audio_vae.py": "f8a5818599859a93b8cb69240e4276fdc9e0eccc4c3e5fe64ca7608a480aa4c7",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy/ldm/lightricks/latent_upsampler.py": "4118bff65e1eb99d9b6a4d85f2b7ddaa3085550c2329a4a805d3f3160d20a2aa",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/comfy_extras/nodes_hunyuan.py": "b32ae8c9a357ababc8ddbc544fdae542b3c8965ad892536f4a2da9fbeaac9f8f",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-11/source/scripts/ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/host_embedding_resident_node_v2.py": "bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/host-embedding-registered-contract-01.json": "80be5c70f42cbe004a0be7af7c8b43a02269d29d9b6fbb6eb53597176b6e4add"
+  },
+  "constraints": [
+    "all original plain checkpoint hashes/model verification identity match",
+    "forced BF16 UNET/text/VAE flags; static patchers and dynamic VRAM disabled",
+    "unchanged model configs, load order and qualified residentv2/adapter",
+    "initial component generation absent, original transformer/decoder graph, queue idle",
+    "CPU CLIP initialization; no mmap disabling or parameter/output-cache changes",
+    "single admitted client; check immediately before first request; no swap/headroom credits"
+  ],
+  "limitations": [
+    "Model-storage overlap estimate, not native measured peak",
+    "Allocator retention, tokenizer materialization, auxiliary unregistered buffers, driver/system allocations are not exhaustively bounded",
+    "Mapped checkpoint pages are reclaimable but no credit is taken for guaranteed reclaim",
+    "MemAvailable admission has a time-of-check/time-of-use window against unrelated host activity",
+    "This cold floor does not replace resident per-transition restore/construction gates or per-request VRAM/residency/oracle checks"
+  ],
+  "recommended_location": "Separate stdlib client preflight after packet/runtime/server/queue identity checks and immediately before first profile request; optional earlier launcher check only as additional gate; qualified residentv2 unchanged",
+  "saved_evidence_sha256s": {
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-11/host-components-01-control-result.json": "df1f3d753c2e871650ae1bf943b6163e544b742b8c2e57c08d875222dea5fdee",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/model-verification.json": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f"
+  }
+}

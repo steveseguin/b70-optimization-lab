@@ -1,0 +1,56 @@
+{
+  "schema": "ltx.health-assessment-source-review.v1",
+  "created_utc": "2026-09-14T19:28:10.662070+00:00",
+  "status": "source-only-review-passed-no-native-execution",
+  "tests_run": 16,
+  "tests_passed": 16,
+  "native_executed": false,
+  "endpoint_or_device_queries": false,
+  "diagnostic_check_only_executed_by_reviewer": false,
+  "fault_or_runtime_mutations": false,
+  "source_sha256s": {
+    "scripts/check-external-boot-health-02.py": "1e55edc46ce3efe1642ea5847a376a5a9cfea6d3afbf3858835951b0c36f8abd",
+    "scripts/test-external-boot-health-02-stdlib.py": "37b490850b782ab2055872771dab74b990ef55d8a19d8665e73902506c933ba2",
+    "scripts/kernel_fault_detector.py": "e7ff6824f2dbd108bdbdf53fca28ea7a25c58629a17a710273494f3f6f70539e",
+    "scripts/encoder_runtime_common.py": "81a1ca4476eff3dc733b923b06ed166a5827b71f5ab9296321c5b1a5211ce26a",
+    "data/external-boot-health-02/admission.json": "131ab0b474d38c7bde4eceb6f64718e4ee1099ff559dc6d849f31f8a3b65e8ab",
+    "data/external-boot-health-02/journal-baseline.jsonl.gz": "b5015b3a715a34e785445edf7073cd2104fb62016c9b732aab44262b7840cc9d"
+  },
+  "scope": "Pure extracted journal functions plus AST closure/phase/one-child/no-reset inspection; no diagnostic imports.",
+  "historical_priority_3_errors_explicitly_in_exact_admitted_prefix": [
+    {
+      "priority": "3",
+      "message": "rndis_host 7-2.2:2.0: RNDIS_MSG_QUERY(0x00010202) failed, -110"
+    },
+    {
+      "priority": "3",
+      "message": "snd_hda_intel 0000:2a:00.4: no codecs found!"
+    },
+    {
+      "priority": "3",
+      "message": "snd_hda_intel 0000:44:00.0: Unknown capability 0"
+    },
+    {
+      "priority": "3",
+      "message": "snd_hda_intel 0000:48:00.0: Unknown capability 0"
+    },
+    {
+      "priority": "3",
+      "message": "snd_hda_intel 0000:24:00.0: Unknown capability 0"
+    },
+    {
+      "priority": "3",
+      "message": "snd_hda_intel 0000:28:00.0: Unknown capability 0"
+    },
+    {
+      "priority": "3",
+      "message": "usb 1-6: 19:0: cannot get min/max values for control 12 (id 19)"
+    }
+  ],
+  "concrete_blockers_found": [],
+  "limits": [
+    "Source tests do not demonstrate hardware health.",
+    "A limited diagnostic pass does not admit models or clear FAULT.",
+    "A hung native child may retain inherited locks after one SIGINT; there is no forced kill or retry."
+  ]
+}
