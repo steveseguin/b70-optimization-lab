@@ -37,7 +37,9 @@ closed; the metadata change remains unvalidated. Same boot; no retry, reboot,
 driver reset or settings change by the agent. **Restoring the service needs the
 user's decision on a host reboot**; afterwards use a newly admitted recovery
 root (health check, qualified service, full strict check). Cause not
-established; a swap-out burst preceded the fault by seconds.
+established; a swap-out burst preceded the fault by seconds. The research
+launch's missing environment variables (see the entry below) do not explain
+this fault; the restore carried them.
 [Fault note](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-restore-gpu-fault.md).
 This supersedes the restore statement below.
 
@@ -51,9 +53,11 @@ worker. The container exited at 00:39 UTC (Docker OOMKilled). About 12.7 GiB was
 held outside normal memory counters; worker allocations failed inside xe dma-buf
 export. No xe memory fault, CAT error or engine reset was recorded; memory has
 recovered and no model process owns the GPUs. Same boot; no reboot, driver
-reset or settings change. The metadata client never ran. Do not launch
-`dc36fcce9`-based images here again unchanged (the 09:27 freeze candidate
-`3be4c6c9` shares that base). Next: one bounded standard health check, then
+reset or settings change. The metadata client never ran. Do not relaunch
+that research recipe unchanged: it and the 09:27 freeze candidate omitted five
+qualified environment variables, including
+`PYTORCH_ALLOC_CONF=expandable_segments:True`; the launcher now refuses. Next:
+one bounded standard health check, then
 restore the qualified R304 service on 18124 in `final-service` and repeat the
 full strict output check.
 [Incident note](experiments/qwen38-27b-b70/notes/2026-09-15-research-load-host-oom.md).

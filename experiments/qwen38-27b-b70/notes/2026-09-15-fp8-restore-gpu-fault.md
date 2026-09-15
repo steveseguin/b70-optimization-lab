@@ -45,7 +45,11 @@ out-of-memory stall, so device or driver state is an equally open explanation.
 - After a reboot: a newly admitted recovery root, the bounded standard health
   check, the qualified service and the full strict output check. Recording host
   memory during that load would test the memory lead without changing settings.
-- Do not retry the newest-base research image.
+- Do not relaunch the research recipe until its environment contract is fixed
+  and the bounded diagnostic has run; see the
+  [incident note](2026-09-15-research-load-host-oom.md). This restore already
+  carried all five qualified variables, so their omission does not explain
+  this fault.
 
 ## Evidence
 

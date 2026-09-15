@@ -19,6 +19,16 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTROL_IMAGE = 'sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1dd8ea066'
 ORIGINAL = Path('/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/control-identity.json')
 MODEL_DIR = Path('/mnt/fast-ai/llm-models/qwen3.8-27b-fp8')
+# Every qualified FP8 service container sets these; ORIGINAL's recorded env
+# omits them. The 2026-09-14 launch without them exhausted host RAM while the
+# model was constructed (notes/2026-09-15-research-load-host-oom.md).
+QUALIFIED_ENV = {'PYTORCH_ALLOC_CONF': 'expandable_segments:True', 'FI_PROVIDER': 'tcp',
+                 'FI_TCP_IFACE': 'lo', 'PYTHONHASHSEED': '0', 'TORCHINDUCTOR_DETERMINISTIC': '1'}
+
+
+def qualified_env_missing(control):
+    env = dict(e.split('=', 1) for e in control['env'])
+    return sorted(key for key, value in QUALIFIED_ENV.items() if env.get(key) != value)
 
 
 def write(path, value):
@@ -109,6 +119,9 @@ def main():
     out = a.out.resolve()
     if (out.parent/'FAULT.json').exists():
         raise RuntimeError('Campaign fault latch: no new server allowed')
+    missing = qualified_env_missing(json.loads(ORIGINAL.read_text()))
+    if missing:
+        raise RuntimeError('Qualified environment incomplete, refusing launch: ' + ', '.join(missing))
     spec = importlib.util.spec_from_file_location('qualified_serve_helpers', ROOT/'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py')
     helper = importlib.util.module_from_spec(spec); spec.loader.exec_module(helper)
     lock = open('/tmp/qwen-short-prefill-stage.lock', 'a')
