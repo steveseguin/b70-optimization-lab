@@ -165,3 +165,46 @@ Evidence: [`data/vae-capture-incident-01/`](../data/vae-capture-incident-01/)
 holds the kernel fault extract, the execution error and the clips that completed;
 [`data/h2d-copy-under-capture-01.json`](../data/h2d-copy-under-capture-01.json)
 holds the host-to-device probe.
+
+
+## Second attempt, September15: the host read is gone, a new blocker is not
+
+The host read was removed and the geometry cache given a lifetime longer than one
+call, so the masks are device-resident when capture happens. Both changes are
+proven bitwise equivalent on CPU: **288 cold-path comparisons and 48 cache-hit
+comparisons**, with the cache bounded at 22 entries of at most 4096 elements.
+
+Two implementation details were forced by the lane's own design and are worth
+recording:
+
+- The router **sandboxes** the candidate: it extracts the four function
+  definitions by AST and execs them in a namespace holding only `torch`, `math`
+  and two pinned budget constants. A module-level cache cannot survive that, so
+  the cache is a **keyword-only default argument** whose mutable default persists
+  across calls.
+- Changing the candidate invalidates `CANDIDATE_SHA` in the router and the decode
+  node, and changing the router then invalidates `ROUTER_SHA` in the node. The
+  chain is candidate -> router -> node and has to be repointed in that order. The
+  preparer now refuses to seal a packet whose pins do not name the shipped files,
+  which is what caught it.
+
+With those fixed the decoder no longer dies on the allocation, and the
+transformer arm still runs exact at 1.969 s. But capture now fails a different
+gate: **`forward_pre_diffusion captured an inert graph; replay ignored its
+input`**, with **zero** "XPU Graph is empty" warnings from the driver. So the
+graph has recorded content, yet perturbing its static input does not change the
+replayed output. That is not the empty-capture failure fixed in packet26 by
+setting the device context, which is present and verified in the shipped file.
+
+Leading untested hypothesis: `forward_pre_diffusion` ends in a slice
+(`x = x[:, :-(n * temporal_upscale)]` when trailing padding is applied), so the
+returned tensor may be a view whose storage is not the one replay writes. That
+would make the output stale while the graph itself is live. Confirming it needs
+one more diagnostic cycle.
+
+**Status: still blocked, and deliberately parked.** The whole prize is about
+0.2 s on a 4.68 s clip, and three cycles have gone into it. The guard behaved
+correctly every time -- it refused rather than shipping wrong pixels, which is
+the only reason this is a schedule cost rather than a silent quality regression.
+The persistent-cache and host-read changes are committed and proven, so a future
+attempt starts from there rather than from scratch.
