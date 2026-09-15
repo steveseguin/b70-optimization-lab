@@ -34,6 +34,25 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 15 20:50 UTC: one-card FP8 broad matrix, no-quantization draft option, chat quality parity; GPUs in use by research queue.**
+
+- **Depths 3-6 with both determinism overlays:** all 12/12 strict and
+  context-screen identical to MTP0.
+  - No single metric decides: depth 6 leads early and long-context decode, depth
+    4 leads whole answers, and depth 5 stays the balanced default (53.40 tok/s).
+- **Draft-only INT4 shortlist head:** worth 20-25% over FP16 shared-head
+  drafting.
+- **FP16 67k-row draft shortlist (`b70_draft_fp16_shortlist`):** removes all
+  quantization. 51.86 tok/s, needs 0.975 memory for a 12,544 context.
+- **Chat-mode quality suite** (exact answers, JSON, repeat hash, 7.6K needle):
+  depth 5 with either head matches MTP0 exactly.
+- **Queued:** R310 kernel build with global memory fences in the GDN output
+  kernel, then a 200-repeat census. Its goal is to replace the head-group
+  overlay. The two-card service is stopped for this and will be restored
+  afterwards.
+
+[Matrix note](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-depth-draft-matrix.md).
+
 **Two-B70 host, September 15 18:30 UTC: one-card FP8 made deterministic and long-context exact (two overlays); service back on 18124 (54.705 tok/s, 12/12 vs control).**
 Broader tests found two one-card-only issues the short strict suite missed.
 
