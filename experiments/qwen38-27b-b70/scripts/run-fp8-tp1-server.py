@@ -70,6 +70,8 @@ def build(args, name, out, image_env):
     env, cmd = reference(image_env)
     env.update(ZE_AFFINITY_MASK=str(args.gpu), ONEAPI_DEVICE_SELECTOR='level_zero:0',
                VLLM_XPU_DRAFT_LM_HEAD_INT4='1' if args.draft_int4 else '0')
+    if args.shortlist:
+        env['VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST'] = args.shortlist
     set_flag(cmd, '--tensor-parallel-size', '1')
     set_flag(cmd, '--gpu-memory-utilization', str(args.mem))
     set_flag(cmd, '--max-model-len', str(args.max_model_len))
@@ -92,7 +94,7 @@ def build(args, name, out, image_env):
             '--security-opt', 'label=disable', '-p', f'127.0.0.1:{args.port}:8000', '--workdir', '/'] + mounts
     for key, value in sorted(env.items()):
         argv += ['--env', f'{key}={value}']
-    return argv + [IMAGE] + cmd
+    return argv + [args.image] + cmd
 
 
 def main():
@@ -103,10 +105,13 @@ def main():
     ap.add_argument('--mem', type=float, default=0.95)
     ap.add_argument('--max-model-len', type=int, default=8448)
     ap.add_argument('--batched', type=int, default=2048)
-    ap.add_argument('--mtp', type=int, default=0, choices=range(0, 6))
+    ap.add_argument('--mtp', type=int, default=0, choices=range(0, 8))
     ap.add_argument('--eager', action='store_true')
     ap.add_argument('--draft-int4', action='store_true')
     ap.add_argument('--cpu-embed', action='store_true')
+    ap.add_argument('--image', default=IMAGE, help='image id; env/cmd still come from the qualified R304 record')
+    ap.add_argument('--shortlist', default='', help='draft-only INT4 head shortlist path inside the image')
+    ap.add_argument('--warmup', action='store_true', help='one untimed 64-token completion before ready')
     ap.add_argument('--keep', action='store_true', help='stay up after ready until STOP file or signal')
     ap.add_argument('--startup-timeout', type=int, default=1500)
     a = ap.parse_args()
@@ -121,7 +126,7 @@ def main():
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     name = 'fp8-tp1-' + uuid.uuid4().hex[:12]
     helper.check_available(a.port, name)
-    image_info = json.loads(helper.run(['docker', 'image', 'inspect', IMAGE]).stdout)[0]
+    image_info = json.loads(helper.run(['docker', 'image', 'inspect', a.image]).stdout)[0]
     out.mkdir(parents=True)
     (out / 'cache').mkdir()
     overlay_hashes = {}
@@ -134,7 +139,7 @@ def main():
     write(out / 'launch.json', {'argv': argv, 'started': started, 'rung': vars(a) | {'out': str(out)},
                                 'reference_sha256': sha(REFERENCE), 'overlay_sha256': overlay_hashes,
                                 'guard_sha256': sha(GUARD), 'baseline_unaccounted': baseline})
-    state = {'status': 'starting', 'owner_pid': os.getpid(), 'container_name': name, 'image_id': IMAGE,
+    state = {'status': 'starting', 'owner_pid': os.getpid(), 'container_name': name, 'image_id': a.image,
              'port': a.port, 'started_at': started, 'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip()}
     write(out / 'state.json', state)
     stopping = []
@@ -168,7 +173,8 @@ def main():
                     raise RuntimeError(f'Host memory guard exited {guard_proc.returncode}')
                 if state['status'] == 'starting':
                     if state.get('container_id') and helper.healthy(a.port):
-                        state.update(status='ready', ready_at=helper.now())
+                        state.update(status='ready', warmup=helper.warm_up(a.port) if a.warmup else None,
+                                     ready_at=helper.now())
                         write(out / 'state.json', state)
                         print(f'Ready: http://127.0.0.1:{a.port}/v1', flush=True)
                         if not a.keep:

@@ -37,6 +37,9 @@ only 8 of 12 reference outputs on that older arithmetic
   host memory with an exact lookup lets compiled FP8 serve on one B70: 46.9 tok/s
   with MTP depth 3 and a 16,384-token context, answers identical to no-MTP on two
   fresh servers ([results](../../../experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-results.md)).
+  A later kernel fix (R309) made depth 5 exact on one card too: 53.5 tok/s with the
+  draft shortlist at 13,824 context
+  ([R309 results](../../../experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-r309-depth5-exact.md)).
   It is a research launcher, not yet a package.
 - **One card on vLLM:** AutoRound INT4
   ([recipe](../../../repro/qwen38-27b-autoround-int4-b70/README.md)).
