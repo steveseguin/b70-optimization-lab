@@ -1,5 +1,11 @@
 # One-card FP8: depths 4-6 made exact (R309), 53.5 tok/s lossless
 
+> **Update (same day):** broader tests found two further one-card issues the
+> strict suite missed: nondeterministic GDN prefill, and long-context verifier
+> attention. Both are fixed by research overlays; the full recipe below needs
+> `--gdn-head-groups 2 --fa-verify-rows`. See
+> [determinism results](2026-09-15-fp8-one-card-gdn-prefill-nondeterminism.md).
+
 **Official Qwen3.8-27B FP8 on one B70 now writes at 53.6 / 53.5 tok/s with MTP
 depth 5 and the draft-only shortlist head, all 12 strict answers identical to
 no-MTP on two fresh servers, at up to 13,824 tokens of context.** The previous

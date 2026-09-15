@@ -34,6 +34,27 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 15 18:30 UTC: one-card FP8 made deterministic and long-context exact (two overlays); service back on 18124.**
+Broader tests found two one-card-only issues the short strict suite missed.
+
+- **GDN prefill:** identical prompts changed logprobs on every repeat, because
+  the XPU chunked delta-rule output races with 48 value heads (7-71 of 200
+  repeats at 1K-8K tokens; TP2 24 heads 0/200, and the TP2 service replay is
+  bitwise stable).
+- **Long-context verify:** depth-5 verifier attention rows differ from decode
+  once key length exceeds 1,984 (FA2 census), flipping a near-tie after a
+  12,288-token prompt.
+- **Fixes:** research overlays `b70_gdn_head_groups` (delta rule in 2×24 head
+  groups) and `b70_fa_verify_rows` (verify rows as decode calls above 1,536
+  keys).
+- **Result:** R309 depth 5 + shortlist at 13,824 context is 12/12 strict and
+  18/18 long-context continuations identical to MTP0 on two fresh servers, at
+  53.40 tok/s (unchanged), prefill 1,340/1,979/1,947 tok/s at
+  512/2,048/12,288.
+- **Also fixed:** the embed plugin's dead 2.37 GiB host copy.
+
+[Notes](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-gdn-prefill-nondeterminism.md).
+
 **Two-B70 host, September 15 16:10 UTC: one-card FP8 depth 5 made exact (R309); 53.5 tok/s lossless; service back on 18124.**
 The one-card depth-4/5 answer changes came from the oneDNN W8A16 fixed-K gate
 (r137a), which covered only TP2 per-rank shapes; a new census showed full-width
