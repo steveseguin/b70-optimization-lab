@@ -1,0 +1,182 @@
+{
+  "schema": "ltx.graph-capture-19-result.v1",
+  "date_utc": "2026-09-14",
+  "packet": "prepared-encoder-graph-capture-19",
+  "packet_manifest_sha256": "e378498bb183982c59a76c366efc8d9e39f0197c747fb01e176299ab05ae84c7",
+  "parent_manifest_sha256": "174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f",
+  "server_run": "encoder-server-graph-capture-19",
+  "server_pid": 22639,
+  "boot_id": "64bbd5d2-9e62-4a2e-b761-6539e5b73e00",
+  "schedule": "original, original, graph(capture), graph, graph, graph, graph, restored, original, original",
+  "rows": [
+    {
+      "run": "gc19-r01-original",
+      "arm": "original",
+      "preview_s": 89.561,
+      "encode_s": 8.2952,
+      "sampler_s": 44.7676,
+      "video_decode_s": 1.6137,
+      "sampler_cpu_per_wall": 0.511,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r02-original",
+      "arm": "original",
+      "preview_s": 6.3468,
+      "encode_s": 1.722,
+      "sampler_s": 3.5899,
+      "video_decode_s": 0.6575,
+      "sampler_cpu_per_wall": 1.114,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r03-graph",
+      "arm": "graph",
+      "preview_s": 11.4693,
+      "encode_s": 1.7363,
+      "sampler_s": 8.6811,
+      "video_decode_s": 0.6642,
+      "sampler_cpu_per_wall": 0.954,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r04-graph",
+      "arm": "graph",
+      "preview_s": 4.8217,
+      "encode_s": 1.7621,
+      "sampler_s": 2.003,
+      "video_decode_s": 0.6502,
+      "sampler_cpu_per_wall": 1.178,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r05-graph",
+      "arm": "graph",
+      "preview_s": 4.9088,
+      "encode_s": 1.8317,
+      "sampler_s": 2.0457,
+      "video_decode_s": 0.6482,
+      "sampler_cpu_per_wall": 1.154,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r06-graph",
+      "arm": "graph",
+      "preview_s": 4.7614,
+      "encode_s": 1.7516,
+      "sampler_s": 1.9955,
+      "video_decode_s": 0.6286,
+      "sampler_cpu_per_wall": 1.238,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r07-graph",
+      "arm": "graph",
+      "preview_s": 4.7435,
+      "encode_s": 1.748,
+      "sampler_s": 1.9993,
+      "video_decode_s": 0.6216,
+      "sampler_cpu_per_wall": 1.175,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r08-restored",
+      "arm": "restored",
+      "preview_s": 7.9317,
+      "encode_s": 1.7849,
+      "sampler_s": 5.0989,
+      "video_decode_s": 0.6225,
+      "sampler_cpu_per_wall": 0.926,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r09-original",
+      "arm": "original",
+      "preview_s": 6.4826,
+      "encode_s": 1.7314,
+      "sampler_s": 3.7041,
+      "video_decode_s": 0.6189,
+      "sampler_cpu_per_wall": 1.126,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "gc19-r10-original",
+      "arm": "original",
+      "preview_s": 6.5487,
+      "encode_s": 1.7425,
+      "sampler_s": 3.7133,
+      "video_decode_s": 0.6141,
+      "sampler_cpu_per_wall": 1.099,
+      "parity": "passed",
+      "bitwise_all_equal": true
+    }
+  ],
+  "control_sampler_s": {
+    "values": [
+      3.5899,
+      3.7041,
+      3.7133
+    ],
+    "mean": 3.6691
+  },
+  "graph_sampler_s": {
+    "values": [
+      2.003,
+      2.0457,
+      1.9955,
+      1.9993
+    ],
+    "median": 2.0011
+  },
+  "control_preview_s": {
+    "values": [
+      6.3468,
+      6.4826,
+      6.5487
+    ],
+    "mean": 6.4594
+  },
+  "graph_preview_s": {
+    "values": [
+      4.8217,
+      4.9088,
+      4.7614,
+      4.7435
+    ],
+    "median": 4.7915
+  },
+  "sampler_speedup": 1.834,
+  "sampler_saved_s": 1.668,
+  "preview_saved_s": 1.668,
+  "capture": {
+    "captured_graphs": 96,
+    "replays": 2640,
+    "blocks": 48,
+    "signatures_per_block": [
+      2
+    ],
+    "all_outputs_are_input_buffers": true,
+    "mirrored_tensors_per_block": [
+      18
+    ],
+    "first_clip_cost_s": [
+      11.4693
+    ]
+  },
+  "all_bitwise_exact": true,
+  "limitations": [
+    "one process, one boat fixture, four warm graph clips against three warm controls",
+    "control drift between the bracketing arms is 3.2% of the control sampler mean",
+    "capture cost is paid once per process per stage shape and is excluded from the warm medians",
+    "only the 48 transformer blocks are captured; the rest of the forward stays eager"
+  ]
+}
