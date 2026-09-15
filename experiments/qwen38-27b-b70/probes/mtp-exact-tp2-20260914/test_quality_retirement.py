@@ -56,5 +56,55 @@ class RetirementTests(unittest.TestCase):
             self.assertEqual(calls, [])
 
 
+class GateRejectionTests(unittest.TestCase):
+    """gate.reject_quality: the integrated, active retirement path for quality mismatches."""
+    def pieces(self, calls, fail=False):
+        import os
+        from types import SimpleNamespace
+        torch = SimpleNamespace(xpu=SimpleNamespace(synchronize=lambda: calls.append(("synchronize", ()))))
+        dist = SimpleNamespace(destroy_process_group=lambda: calls.append(("destroy_process_group", ())))
+        sock = SimpleNamespace(close=lambda: calls.append(("sock_close", ())))
+        read_fd, write_fd = os.pipe()
+        self.addCleanup(lambda: [os.close(fd) for fd in (read_fd, write_fd) if self.is_open(fd)])
+        return torch, dist, Native(calls), Channel(calls, fail), sock, read_fd
+
+    @staticmethod
+    def is_open(fd):
+        import os
+        try:
+            os.fstat(fd)
+            return True
+        except OSError:
+            return False
+
+    def test_mutual_rejection_retires_then_destroys_group_without_os_exit(self):
+        import gate
+        from unittest import mock
+        calls = []
+        torch, dist, native, channel, sock, fd = self.pieces(calls)
+        with mock.patch("os._exit") as hard_exit, self.assertRaises(gate.QualityRejected):
+            gate.reject_quality(torch, dist, native, channel, sock, 1, 2, fd, 4, 5, 6, 1, "rank0-rows1-nan_matrix-0")
+        hard_exit.assert_not_called()
+        self.assertEqual([c[0] for c in calls], ["synchronize", "READY", "COPIED", "close", "READY", "COPIED",
+                                                 "put_export", "free", "free", "sock_close", "destroy_process_group"])
+        self.assertFalse(self.is_open(fd))
+
+    def test_missing_peer_ack_during_rejection_is_an_unknown_fault(self):
+        import gate
+        calls = []
+        torch, dist, native, channel, sock, fd = self.pieces(calls, fail=True)
+        with self.assertRaises(ConnectionError):
+            gate.reject_quality(torch, dist, native, channel, sock, 1, 2, fd, 4, 5, 6, 1, "p")
+        self.assertFalse(any(c[0] in ("put_export", "free", "destroy_process_group") for c in calls))
+
+    def test_gate_uses_helper_for_normal_and_rejection_retirement(self):
+        import gate
+        import quality_retirement
+        self.assertIs(gate.retire_completed_allocations, quality_retirement.retire_completed_allocations)
+        source = __import__("pathlib").Path(gate.__file__).read_text()
+        self.assertEqual(source.count("retire_completed_allocations("), 2)
+        self.assertNotIn('native.call("put_export"', source)
+
+
 if __name__ == "__main__":
     unittest.main()

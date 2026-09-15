@@ -8,7 +8,7 @@ from pathlib import Path
 import statistics
 
 SHAPES = (1, 2, 512, 4096)
-KINDS = ("varied", "cancel", "signed_zero", "subnormal", "overflow", "rounding", "nan_inf")
+KINDS = ("varied", "cancel", "signed_zero", "subnormal", "overflow", "rounding", "nan_inf", "nan_matrix")
 
 
 def sha(path):
@@ -62,7 +62,7 @@ def analyze(directory):
         try:
             for rank in range(2):
                 records = [r for r in quality[rank] if r["rows"] == rows]
-                if len(records) != 14 or {(r["kind"], r["repeat"]) for r in records} != {(k, r) for k in KINDS for r in (0, 1)}:
+                if len(records) != 2 * len(KINDS) or {(r["kind"], r["repeat"]) for r in records} != {(k, r) for k in KINDS for r in (0, 1)}:
                     raise ValueError("missing or duplicate quality cases")
                 by_key = {}
                 for record in records:

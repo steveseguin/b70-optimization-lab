@@ -7,6 +7,19 @@ import time
 
 U = C.c_size_t
 P = C.POINTER(U)
+# Kernel formulations; codes are the et_add_mode ABI (see exact_tp2.cpp).
+ADD_MODES = {"m0": 0, "m1": 1, "m2": 2, "m3": 3}
+SIGNATURES = {
+    "device_uuid": [U, C.c_void_p], "admit_peer": [U, C.c_void_p],
+    "validate_fd": [U, C.c_void_p],
+    "allocate": [U, U, P], "free": [U, U],
+    "export": [U, U, C.c_void_p], "put_export": [U, C.c_void_p],
+    "open": [U, C.c_void_p, P], "close": [U, U],
+    "marker": [U, P], "copy": [U, U, U, U, P],
+    "add": [U, U, U, U, C.c_int, P],
+    "add_mode": [U, U, U, U, C.c_int, C.c_int, P],  # Required: refuses pre-2026-09-15 builds.
+    "poll": [U, C.POINTER(C.c_int)], "release_event": [U],
+}
 
 
 class Native:
@@ -21,17 +34,7 @@ class Native:
         self.lib = C.CDLL(str(library))
         self.q, self.timeout = queue_pointer, timeout
         self.lib.et_error.restype = C.c_char_p
-        signatures = {
-            "device_uuid": [U, C.c_void_p], "admit_peer": [U, C.c_void_p],
-            "validate_fd": [U, C.c_void_p],
-            "allocate": [U, U, P], "free": [U, U],
-            "export": [U, U, C.c_void_p], "put_export": [U, C.c_void_p],
-            "open": [U, C.c_void_p, P], "close": [U, U],
-            "marker": [U, P], "copy": [U, U, U, U, P],
-            "add": [U, U, U, U, C.c_int, P],
-            "poll": [U, C.POINTER(C.c_int)], "release_event": [U],
-        }
-        for name, args in signatures.items():
+        for name, args in SIGNATURES.items():
             f = getattr(self.lib, "et_" + name)
             f.argtypes, f.restype = args, C.c_int
         self.poisoned = False
@@ -73,9 +76,12 @@ class Collective:
     terminates the worker without running potentially blocking GPU destructors.
     No graph, concurrent-stream or live-model integration is claimed.
     """
-    def __init__(self, native, channel, count, local, peer, output):
+    def __init__(self, native, channel, count, local, peer, output, add_mode=None):
+        if add_mode is not None and add_mode not in ADD_MODES:
+            raise ValueError(f"unknown add mode {add_mode!r}")
         self.native, self.channel = native, channel
         self.count, self.local, self.peer, self.output = count, local, peer, output
+        self.add_mode = add_mode  # None keeps the frozen et_add path.
         self.poisoned = False
 
     def run(self):
@@ -90,7 +96,10 @@ class Collective:
             # Thus even read/read concurrency to the same device allocation is
             # unnecessary. Unlike old peer mailboxes, no coherence flag is read.
             ch.exchange("COPIED", elements=self.count, dtype="fp16")
-            n.wait(n.pointer("add", self.local, self.output, self.count, ch.rank))
+            if self.add_mode is None:
+                n.wait(n.pointer("add", self.local, self.output, self.count, ch.rank))
+            else:
+                n.wait(n.pointer("add_mode", self.local, self.output, self.count, ch.rank, ADD_MODES[self.add_mode]))
             return self.output
         except BaseException:
             self.poisoned = True
