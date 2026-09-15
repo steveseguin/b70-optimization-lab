@@ -43,7 +43,7 @@ identical. On one card, depths 3/4/5 are now 12/12 against R309 no-MTP. Depth 5
 with the existing 67k draft shortlist measured 53.602 / 53.463 tok/s on two
 fresh servers at 11,264 / 13,824 context (was 46.9 at depth 3). Depth 6 gave
 54.6 once, with a lower full-answer rate. No kernel faults. The two-card service
-still runs R304 and was restarted afterwards (state `service-after-r309`).
+still runs R304 and was restarted afterwards (state `service-after-r309`): 54.767 tok/s, 12/12 identical to the pre-test control.
 [R309 results](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-r309-depth5-exact.md).
 
 **Two-B70 host, September 15 14:45 UTC: FP8 runs on one B70 (46.9 tok/s lossless); cold-start fix restores 54.8; service on 18124.**
