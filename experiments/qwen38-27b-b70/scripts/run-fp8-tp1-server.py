@@ -27,6 +27,8 @@ IMAGE = 'sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
 REFERENCE = Path('/mnt/fast-ai/bench-results/optimization-validation-20260915/restored-service/container-inspect.json')
 MODEL_DIR = Path('/mnt/fast-ai/llm-models/qwen3.8-27b-fp8')
 OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-cpu-embed'
+LAYER_HASH_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-layer-hash'
+GDN_GROUPS_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-gdn-head-groups'
 HELPER = ROOT / 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py'
 GUARD = ROOT / 'experiments/qwen38-27b-b70/scripts/host_memory_guard.py'
 PASSWORD_FILE = Path('/home/steve/SUDO_PASSWORD.txt')
@@ -85,9 +87,21 @@ def build(args, name, out, image_env):
         cmd.append('--enforce-eager')
     mounts = ['--mount', f'type=bind,source={MODEL_DIR},target=/model,readonly',
               '--mount', f'type=bind,source={out}/cache,target=/root/.cache/vllm']
-    if args.cpu_embed:
+    if args.cpu_embed or args.layer_hash or args.gdn_head_groups:
         mounts += ['--mount', f'type=bind,source={out}/overlay,target=/overlay,readonly']
-        env.update(PYTHONPATH='/overlay', B70_CPU_EMBED='1')
+        env.update(PYTHONPATH='/overlay')
+    if args.cpu_embed:
+        env.update(B70_CPU_EMBED='1')
+    if args.gdn_head_groups:
+        env.update(B70_GDN_HEAD_GROUPS=str(args.gdn_head_groups))
+    for item in args.env:
+        key, value = item.split('=', 1)
+        if key not in env:
+            raise RuntimeError(f'--env may only override a variable the qualified record already sets: {key}')
+        env[key] = value
+    if args.layer_hash:
+        mounts += ['--mount', f'type=bind,source={out}/hash,target=/hash']
+        env.update(B70_LAYER_HASH_TOKENS=str(args.layer_hash), B70_LAYER_HASH_DIR='/hash')
     argv = ['docker', 'run', '--name', name, '--restart', 'no', '--network', 'bridge',
             '--device', '/dev/dri', '--group-add', 'render', '--ipc', 'host', '--cap-add', 'SYS_PTRACE',
             '--shm-size', '8g', '--memory', '12g', '--memory-swap', '16g', '--ulimit', 'core=0',
@@ -104,7 +118,7 @@ def main():
     ap.add_argument('--gpu', type=int, default=0, choices=(0, 1))
     ap.add_argument('--mem', type=float, default=0.95)
     ap.add_argument('--max-model-len', type=int, default=8448)
-    ap.add_argument('--batched', type=int, default=2048)
+    ap.add_argument('--batched', type=int, default=4096)
     ap.add_argument('--mtp', type=int, default=0, choices=range(0, 8))
     ap.add_argument('--eager', action='store_true')
     ap.add_argument('--draft-int4', action='store_true')
@@ -112,6 +126,10 @@ def main():
     ap.add_argument('--image', default=IMAGE, help='image id; env/cmd still come from the qualified R304 record')
     ap.add_argument('--shortlist', default='', help='draft-only INT4 head shortlist path inside the image')
     ap.add_argument('--warmup', action='store_true', help='one untimed 64-token completion before ready')
+    ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',
+                    help='override one variable already present in the qualified record')
+    ap.add_argument('--gdn-head-groups', type=int, default=0, help='run one-card GDN prefill delta rule in G head groups')
+    ap.add_argument('--layer-hash', type=int, default=0, help='diagnostic: hash module outputs for N-token calls (use --eager)')
     ap.add_argument('--keep', action='store_true', help='stay up after ready until STOP file or signal')
     ap.add_argument('--startup-timeout', type=int, default=1500)
     a = ap.parse_args()
@@ -127,11 +145,20 @@ def main():
     name = 'fp8-tp1-' + uuid.uuid4().hex[:12]
     helper.check_available(a.port, name)
     image_info = json.loads(helper.run(['docker', 'image', 'inspect', a.image]).stdout)[0]
+    a.image = image_info['Id']  # record and run the resolved id, never a movable tag
     out.mkdir(parents=True)
     (out / 'cache').mkdir()
     overlay_hashes = {}
     if a.cpu_embed:
         shutil.copytree(OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'))
+    if a.gdn_head_groups:
+        shutil.copytree(GDN_GROUPS_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
+                        dirs_exist_ok=True)
+    if a.layer_hash:
+        shutil.copytree(LAYER_HASH_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
+                        dirs_exist_ok=True)
+        (out / 'hash').mkdir()
+    if a.cpu_embed or a.layer_hash or a.gdn_head_groups:
         overlay_hashes = {str(p.relative_to(out / 'overlay')): sha(p) for p in sorted((out / 'overlay').rglob('*')) if p.is_file()}
     argv = build(a, name, out, image_info['Config']['Env'])
     started = helper.now()

@@ -1,0 +1,1903 @@
+{
+ "schema": "neural.download.qwen38-gdn-prefill-determinism-census.v1",
+ "classification": "operator-diagnostic-only",
+ "torch": "2.13.0+xpu",
+ "cases": [
+  {
+   "tp": 1,
+   "n": 512,
+   "conv_state_shape": [
+    3,
+    10240
+   ],
+   "ssm_state_shape": [
+    48,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.01103973388671875,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  },
+  {
+   "tp": 1,
+   "n": 1024,
+   "conv_state_shape": [
+    3,
+    10240
+   ],
+   "ssm_state_shape": [
+    48,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.01364898681640625,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  },
+  {
+   "tp": 1,
+   "n": 2048,
+   "conv_state_shape": [
+    3,
+    10240
+   ],
+   "ssm_state_shape": [
+    48,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 5.960464477539063e-08,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.01276397705078125,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  },
+  {
+   "tp": 1,
+   "n": 4096,
+   "conv_state_shape": [
+    3,
+    10240
+   ],
+   "ssm_state_shape": [
+    48,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 5.364418029785156e-07,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0168609619140625,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  },
+  {
+   "tp": 2,
+   "n": 512,
+   "conv_state_shape": [
+    3,
+    5120
+   ],
+   "ssm_state_shape": [
+    24,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0114593505859375,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  },
+  {
+   "tp": 2,
+   "n": 1024,
+   "conv_state_shape": [
+    3,
+    5120
+   ],
+   "ssm_state_shape": [
+    24,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0127410888671875,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  },
+  {
+   "tp": 2,
+   "n": 2048,
+   "conv_state_shape": [
+    3,
+    5120
+   ],
+   "ssm_state_shape": [
+    24,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.01194000244140625,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  },
+  {
+   "tp": 2,
+   "n": 4096,
+   "conv_state_shape": [
+    3,
+    5120
+   ],
+   "ssm_state_shape": [
+    24,
+    128,
+    128
+   ],
+   "all_equal": false,
+   "trials": [
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "repeat",
+     "slot": 0,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "other-slot",
+     "slot": 1,
+     "states": "zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 0,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 2,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "allocator-churn",
+     "slot": 0,
+     "states": "churn",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "garbage-states",
+     "slot": 3,
+     "states": "garbage",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-random-2",
+     "slot": 0,
+     "states": "stale-random",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "stale-free-zeros-2",
+     "slot": 0,
+     "states": "stale-zero",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "output-offset-1",
+     "slot": 0,
+     "states": "out-offset",
+     "equal": {
+      "core_attn_out": false,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0132598876953125,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    },
+    {
+     "trial": "input-offset-1",
+     "slot": 0,
+     "states": "in-offset",
+     "equal": {
+      "core_attn_out": true,
+      "z": true,
+      "conv_state_slot": true,
+      "ssm_state_slot": true
+     },
+     "max_abs": {
+      "core_attn_out": 0.0,
+      "z": 0.0,
+      "conv_state_slot": 0.0,
+      "ssm_state_slot": 0.0
+     }
+    }
+   ]
+  }
+ ]
+}
