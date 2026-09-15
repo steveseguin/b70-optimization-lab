@@ -1,0 +1,49 @@
+{
+  "stages": [
+    {
+      "stage": "baseline",
+      "device_healthy": true
+    },
+    {
+      "stage": "clean capture+replay",
+      "ok": true
+    },
+    {
+      "stage": "after clean capture",
+      "device_healthy": true
+    },
+    {
+      "stage": "exception inside capture (teardown)",
+      "status": "raised",
+      "error": "RuntimeError('deliberate failure inside capture')"
+    },
+    {
+      "stage": "after exception+teardown",
+      "device_healthy": true
+    },
+    {
+      "stage": "host-read-sized arange inside capture",
+      "status": "captured",
+      "error": null
+    },
+    {
+      "stage": "after host-read capture",
+      "device_healthy": true
+    },
+    {
+      "stage": "host-side max(ends) inside capture",
+      "status": "captured",
+      "length": 52,
+      "matches_eager": true,
+      "values_exact": true
+    },
+    {
+      "stage": "after fixed capture",
+      "device_healthy": true
+    }
+  ],
+  "exception_teardown_left_device_healthy": true,
+  "eager_arange_length": 52,
+  "host_read_device_healthy_after": true,
+  "fix_device_healthy_after": true
+}
