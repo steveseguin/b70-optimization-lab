@@ -101,11 +101,16 @@ class GraphedLayer:
             torch.xpu.synchronize(self.device)
 
     def _run(self, kwargs):
+        # Prefill only, with no cache in and none out. A KV cache would make the
+        # layer stateful, and a graph that baked one step's cache in would
+        # silently serve stale keys forever after.
+        require(kwargs.get('past_key_value') is None,
+                f'Gemma layer {self.index} was given a KV cache; capture assumes stateless prefill')
+        require(kwargs.get('shared_kv') is None,
+                f'Gemma layer {self.index} was given a shared KV; capture assumes stateless prefill')
         out, present, shareable = self.original(**kwargs)
-        # Prefill only. A KV cache would make the layer stateful, and a graph
-        # that baked one step's cache in would silently return stale keys.
-        require(present is None and shareable is None,
-                f'Gemma layer {self.index} produced a KV cache; capture assumes stateless prefill')
+        # `present` and `shareable` are computed even on a cacheless prefill and
+        # are both provably dead here -- see the contract asserted in stack_of().
         return out
 
     # -- capture ------------------------------------------------------------
@@ -238,6 +243,20 @@ def stack_of(clip):
             f'Expected {LAYERS} Gemma layers, found {0 if layers is None else len(layers)}')
     require(all(type(l).__name__ == LAYER_CLASS for l in layers),
             'Unexpected Gemma layer class')
+    # Why a captured layer may return (output, None, None) instead of the KV
+    # pair the native layer returns. Gemma4Transformer.forward consumes the two
+    # KV outputs in exactly two places (gemma4.py:576-582 and 617-619), and both
+    # are guarded by `num_kv_shared_layers > 0`. With that zero, the store at 617
+    # is dead and `next_key_values` is returned only when `past_key_values is not
+    # None` (gemma4.py:651-653), which a prompt encode never passes. So on this
+    # configuration the KV outputs are discarded and dropping them is exact.
+    # If the configuration ever changes, this refuses instead of guessing.
+    config = getattr(stack, 'config', None)
+    require(config is not None, 'Gemma stack has no config to check the KV contract against')
+    require(getattr(config, 'num_kv_shared_layers', None) == 0,
+            'Gemma layers share a KV cache; the captured layers may not drop their KV outputs')
+    require(getattr(config, 'num_hidden_layers', None) == LAYERS,
+            'Gemma layer count disagrees with the configuration')
     return stack, layers
 
 
