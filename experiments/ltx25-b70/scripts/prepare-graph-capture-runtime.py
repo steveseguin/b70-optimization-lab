@@ -28,6 +28,8 @@ PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
 ADAPTER = 'ltx_graph_capture.py'
 NODE = 'graph_capture_node.py'
 NODE_DIR = 'ltx_graph_capture_lab'
+CANDIDATE = 'source/scripts/ltx_na_axis_candidate.py'
+CANDIDATE_SRC = 'ltx_na_axis_candidate_v2.py'
 VAE_ADAPTER = 'ltx_graph_vae.py'
 VAE_NODE_FILE = 'graph_vae_node.py'
 VAE_NODE_DIR = 'ltx_graph_vae_lab'
@@ -108,20 +110,37 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'source/scripts/ltx_graph_vae.py', 'source/scripts/graph_vae_node.py',
              'source/custom_nodes/ltx_graph_vae_lab/__init__.py',
              'provenance/graph-capture/parent/launch/encoder_runtime_common.py',
+             'provenance/graph-capture/parent/source/scripts/ltx_na_axis_candidate.py',
              'host-residency-13-parent-manifest.json'}
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-vae', 'restored')}
+    replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py')
     for name, digest in parent['files'].items():
-        if name == 'launch/encoder_runtime_common.py':
+        if name in replaced:
             require(manifest['files']['provenance/graph-capture/parent/' + name] == digest,
-                    'Original packet13 checker changed')
+                    'Original packet13 source changed: ' + name)
         else:
             require(manifest['files'].get(name) == digest, 'Inherited packet13 file changed: ' + name)
     require(set(manifest['files']) == set(parent['files']) | added, 'Packet14 file inventory changed')
     for name in parent['files']:
-        if name.startswith(('source/', 'graphs/')):
+        if name.startswith(('source/', 'graphs/')) and name not in replaced:
             require(manifest['files'][name] == parent['files'][name],
                     'Inherited numerical source or original graph changed: ' + name)
+
+    # The NA candidate differs from packet13 by exactly the removed host read.
+    original_na = safe_path(packet, 'provenance/graph-capture/parent/source/scripts/ltx_na_axis_candidate.py').read_text()
+    current_na = safe_path(packet, 'source/scripts/ltx_na_axis_candidate.py').read_text()
+    strip = lambda text: [line.split('#', 1)[0].rstrip() for line in text.splitlines()
+                          if line.split('#', 1)[0].strip()]
+    diff = [line for line in difflib.unified_diff(strip(original_na), strip(current_na), n=0)
+            if line.startswith(('+', '-')) and not line.startswith(('+++', '---'))]
+    require(len(diff) == 2 and diff[0].strip() == '-            kj = torch.arange(int(en.max()), device=device)'
+            and diff[1].strip() == '+            kj = torch.arange(max(ends), device=device)',
+            'NA candidate differs from packet13 beyond the removed host read')
+    require(not any('int(en.max())' in line for line in strip(current_na)),
+            'NA candidate still reads a tensor for a size')
+    require(capture['na_candidate_sha256'] == manifest['extension_sha256s']['ltx_na_axis_candidate.py'],
+            'NA candidate inventory mismatch')
     for node_dir, helper in (('ltx_graph_capture_lab', 'graph_capture_node.py'),
                              ('ltx_graph_vae_lab', 'graph_vae_node.py')):
         require(manifest['files'][f'source/custom_nodes/{node_dir}/__init__.py'] ==
@@ -237,6 +256,13 @@ def main():
     prov = staging / PROV / 'launch'
     prov.mkdir(parents=True, exist_ok=False)
     shutil.copyfile(parent / CHECKER, prov / 'encoder_runtime_common.py')
+    cand_prov = staging / PROV / 'source/scripts'
+    cand_prov.mkdir(parents=True, exist_ok=False)
+    shutil.copyfile(parent / CANDIDATE, cand_prov / 'ltx_na_axis_candidate.py')
+    fixed = LANE / 'scripts' / CANDIDATE_SRC
+    require(fixed.is_file(), 'Missing the fixed NA candidate')
+    ast.parse(fixed.read_text())
+    shutil.copyfile(fixed, staging / CANDIDATE)
     shutil.copyfile(parent / 'manifest.json', staging / PARENT_MANIFEST_FILE)
     (staging / CHECKER).write_text(checker_new)
 
@@ -288,7 +314,8 @@ def main():
 
     added = {'source/scripts/' + ADAPTER, 'source/scripts/' + NODE,
              f'source/custom_nodes/{NODE_DIR}/__init__.py',
-             PROV + 'launch/encoder_runtime_common.py', PARENT_MANIFEST_FILE}
+             PROV + 'launch/encoder_runtime_common.py',
+             PROV + 'source/scripts/ltx_na_axis_candidate.py', PARENT_MANIFEST_FILE}
     added |= {graph_name(a[0]) for a in ARMS}
     added |= {'source/scripts/' + VAE_ADAPTER, 'source/scripts/' + VAE_NODE_FILE,
               f'source/custom_nodes/{VAE_NODE_DIR}/__init__.py'}
@@ -297,6 +324,10 @@ def main():
         if name == CHECKER:
             require(files[PROV + 'launch/encoder_runtime_common.py'] == digest, 'Provenance copy differs')
             require(files[name] != digest, 'Checker is unchanged')
+        elif name == CANDIDATE:
+            require(files[PROV + 'source/scripts/ltx_na_axis_candidate.py'] == digest,
+                    'Candidate provenance copy differs')
+            require(files[name] != digest, 'NA candidate is unchanged')
         else:
             require(files[name] == digest, 'Inherited file drifted: ' + name)
     for src_name, dir_name in ((NODE, NODE_DIR), (VAE_NODE_FILE, VAE_NODE_DIR)):
@@ -306,6 +337,7 @@ def main():
     extensions = dict(parent_manifest['extension_sha256s'])
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE):
         extensions[src_name] = files['source/scripts/' + src_name]
+    extensions['ltx_na_axis_candidate.py'] = files[CANDIDATE]
     manifest = {
         'schema': 'ltx.graph-capture-runtime-packet.v1',
         'status': 'prepared-inactive-not-deployed',
@@ -327,6 +359,10 @@ def main():
             'vae_adapter_sha256': extensions[VAE_ADAPTER], 'vae_node_sha256': extensions[VAE_NODE_FILE],
             'vae_captured_methods': ['forward_pre_diffusion', 'forward_diff_step'],
             'vae_not_captured': 'NADiffusionDecoder.forward draws x_t from a generator and stays eager',
+            'na_candidate_sha256': extensions['ltx_na_axis_candidate.py'],
+            'na_candidate_change': 'int(en.max()) -> max(ends): the window ends are already a host tuple of '
+                                   'ints, and a tensor read inside a graph capture returns unexecuted memory '
+                                   'and was being used as an allocation size',
             'axis_cache_provenance': 'na-axis-confirm-01: 18 clips, all four raw oracles exact, '
                                      'median decoder effect -83.2 ms; drop-in for node 374',
             'mechanism': 'per-block torch.xpu.XPUGraph capture and replay behind the existing '
