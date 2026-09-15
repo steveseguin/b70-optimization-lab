@@ -3470,8 +3470,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("33 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 33)
+        self.assertIn("35 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 35)
         self.assertIn("Q4_K_M HTTP context × KV/graph", initial_html)
         self.assertIn("value=26.7217226139707 tok/s", initial_html)
         self.assertIn("value=23.221668353050664 tok/s", initial_html)

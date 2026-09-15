@@ -1192,6 +1192,33 @@
     "tested platform installation (venv, oneAPI runtime, xe driver)"
    ],
    "package": "packages/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/package.json"
+  },
+  {
+   "id": "qwen38-27b-fp8-vllm-tp1-b70",
+   "guide": "repro/qwen38-27b-fp8-vllm-tp1-b70/README.md",
+   "package": "packages/qwen38-27b-fp8-tp1-b70/package.json",
+   "classification": "candidate-portable-repro",
+   "audience": "intermediate",
+   "clean_host_tested": false,
+   "components": {
+    "platform_install": false,
+    "model_download": true,
+    "source_restore": true,
+    "build": true,
+    "launch": true,
+    "validation": true,
+    "patch_links": true,
+    "hashes": true
+   },
+   "dependency_links": [
+    "packages/qwen38-27b-fp8-tp1-b70/README.md",
+    "experiments/qwen38-27b-b70/data/2026-09-15-fp8-one-card-package",
+    "experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-package-results.md"
+   ],
+   "missing": [
+    "tested clean-host Intel driver and Docker installation",
+    "multiple simultaneous users"
+   ]
   }
  ]
 }

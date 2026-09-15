@@ -34,6 +34,23 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 16 00:30 UTC: one-card FP8 packet published; R310 kernel fix replaces the head-group overlay; service back on 18124.**
+
+- **New packet** `qwen38-27b-fp8-vllm-tp1-b70`: package, recipe, 7 measured graphs. It replaces
+  the August one-card eager entry, now marked replaced.
+- **Image** R310 `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb816507…`: R304
+  plus the oneDNN r309 one-card shapes and the kernels r310 GDN output fences.
+- **Recommended** (MTP depth 5, INT4 draft shortlist, 13,824 context): 53.45 / 53.55 tok/s on
+  two fresh servers, prefill 1,987-2,043 tok/s at 2K-12K.
+- **No-quantization profile:** 51.6 tok/s at 12,544 tokens. No MTP: 19.4 tok/s.
+- **Checks:** every depth 3-6 and both draft heads are 12/12 identical to no MTP. The context
+  screens, the chat quality suite and a 21-request logprob replay are all exact.
+- **Package test:** `serve.py` pulled the published image and passed strict 12/12 for both
+  profiles, with clean stops.
+- **Site checks:** validators and tests pass. `check-pinned-hashes` still reports the 231
+  historical Flash-Next drifts from before this work.
+- [Final measurements](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-package-results.md).
+
 **Two-B70 host, September 15 20:50 UTC: one-card FP8 broad matrix, no-quantization draft option, chat quality parity; GPUs in use by research queue.**
 
 - **Depths 3-6 with both determinism overlays:** all 12/12 strict and
