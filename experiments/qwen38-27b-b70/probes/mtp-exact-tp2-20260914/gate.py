@@ -3,6 +3,11 @@
 
 Launch only under the lane fault monitor after explicit ownership admission.
 Import and --help do not import torch or initialize a GPU.
+
+Stage 05 (2026-09-15): --add-mode selects the et_add_mode formulation chosen by
+nan-semantics-01. A mutually acknowledged quality mismatch retires peer
+mappings cooperatively (quality_retirement.py), destroys the process group,
+writes a receipt and exits 2. os._exit(70) remains only for unknown faults.
 """
 import argparse
 import ctypes as C
@@ -16,28 +21,56 @@ import statistics
 import time
 import traceback
 
-from native import Native, Collective
+from native import ADD_MODES, Native, Collective
 from protocol import Channel, exchange_ipc
+from quality_retirement import retire_completed_allocations
+import nan_analysis
+
+KINDS = ("varied", "cancel", "signed_zero", "subnormal", "overflow", "rounding", "nan_inf", "nan_matrix")
+PATTERNS = {
+    "cancel": ([0x3555, 0x7bff, 0x0001, 0x0400], [0xb555, 0xfbff, 0x8001, 0x8400]),
+    "signed_zero": ([0, 0x8000, 0, 0x8000], [0, 0, 0x8000, 0x8000]),
+    "subnormal": ([1, 0x3ff, 0x8001, 0x83ff], [1, 1, 0x8001, 0x8001]),
+    "overflow": ([0x7bff, 0xfbff, 0x7bff, 0x3555], [0x7bff, 0xfbff, 0x3c00, 0x3555]),
+    "rounding": ([0x3c00, 0x3c01, 0x3c02, 0xbc01], [0x1000, 0x1000, 0x1000, 0x9000]),
+    "nan_inf": ([0x7c00, 0xfc00, 0x7e01, 0xfe02], [0xfc00, 0x7c00, 0x3c00, 0x7e03]),
+    # Postmortem requirement: NaNs in both operand positions, both signs,
+    # quiet/signaling and varied payloads, against each other and finite/inf/zero.
+    "nan_matrix": tuple([pair[r] for pair in nan_analysis.PAIRS] for r in (0, 1)),
+}
+QUALITY_EXIT = 2
+FAULT_EXIT = 70
+
+
+class QualityRejected(Exception):
+    pass
 
 
 def fixture(torch, n, rank, kind, repeat):
     i = torch.arange(n, dtype=torch.int64)
     if kind == "varied":
         return (((i * (71 + rank * 4) + repeat * 173) % 65521 - 32760) / 4096).half()
-    patterns = {
-        "cancel": ([0x3555, 0x7bff, 0x0001, 0x0400], [0xb555, 0xfbff, 0x8001, 0x8400]),
-        "signed_zero": ([0, 0x8000, 0, 0x8000], [0, 0, 0x8000, 0x8000]),
-        "subnormal": ([1, 0x3ff, 0x8001, 0x83ff], [1, 1, 0x8001, 0x8001]),
-        "overflow": ([0x7bff, 0xfbff, 0x7bff, 0x3555], [0x7bff, 0xfbff, 0x3c00, 0x3555]),
-        "rounding": ([0x3c00, 0x3c01, 0x3c02, 0xbc01], [0x1000, 0x1000, 0x1000, 0x9000]),
-        "nan_inf": ([0x7c00, 0xfc00, 0x7e01, 0xfe02], [0xfc00, 0x7c00, 0x3c00, 0x7e03]),
-    }
-    bits = torch.tensor(patterns[kind][rank], dtype=torch.uint16)
+    bits = torch.tensor(PATTERNS[kind][rank], dtype=torch.uint16)
     return bits[((i + repeat) % len(bits))].view(torch.float16)
 
 
 def bytes_of(t):
     return t.contiguous().view(-1).view(__import__("torch").uint8).numpy().tobytes()
+
+
+def reject_quality(torch, dist, native, channel, sock, queue, peer, remote_fd, handle, output, local, rows, prefix):
+    """Mutually acknowledged mismatch: every candidate event completed, verdict frames matched.
+
+    Drain the current queue (XCCL reference and host copies) without submitting
+    work, then close imports, acknowledge, return exports, free, and tear down.
+    Any failure here propagates to the unknown-fault path.
+    """
+    torch.xpu.synchronize()
+    retire_completed_allocations(native, channel, queue, peer, remote_fd, handle, output, local, rows,
+                                 completed_and_agreed=True)
+    sock.close()
+    dist.destroy_process_group()
+    raise QualityRejected(f"{prefix}: exact-bit quality gate rejected")
 
 
 def main(args):
@@ -48,6 +81,8 @@ def main(args):
         raise ValueError("exactly two ranks required")
     if not args.admitted_exclusive_gpu_test:
         raise ValueError("run only under exclusive ownership and kernel fault monitor")
+    if args.add_mode not in ADD_MODES:
+        raise ValueError("explicit --add-mode required")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     torch.xpu.set_device(int(os.environ["LOCAL_RANK"]))
@@ -79,8 +114,8 @@ def main(args):
     if len(peer_uuid) != 16:
         raise ConnectionError("truncated peer UUID")
     native.call("admit_peer", queue, C.create_string_buffer(peer_uuid, 16))
-    channel.exchange("READY", peer_access_admitted=True)
-    channel.exchange("COPIED", peer_access_admitted=True)
+    channel.exchange("READY", peer_access_admitted=True, add_mode=args.add_mode)
+    channel.exchange("COPIED", peer_access_admitted=True, add_mode=args.add_mode)
     records = []
     for rows in map(int, args.rows.split(",")):
         if rows not in (1, 2, 512, 4096):
@@ -97,8 +132,8 @@ def main(args):
         # exporter still passed it above; SCM_RIGHTS/fstat validate the received
         # descriptor, and zeMemOpenIpcHandle performs actual driver admission.
         peer = native.pointer("open", remote_buffer)
-        collective = Collective(native, channel, n, local, peer, output)
-        for kind in ["varied", "cancel", "signed_zero", "subnormal", "overflow", "rounding", "nan_inf"]:
+        collective = Collective(native, channel, n, local, peer, output, add_mode=args.add_mode)
+        for kind in KINDS:
             for repeat in range(2):
                 cpu = fixture(torch, n, rank, kind, repeat)
                 original = bytes_of(cpu)
@@ -117,7 +152,7 @@ def main(args):
                 prefix = f"rank{rank}-rows{rows}-{kind}-{repeat}"
                 (out / f"{prefix}.candidate.bin").write_bytes(raw)
                 (out / f"{prefix}.xccl.bin").write_bytes(ref)
-                record = {"rows": rows, "kind": kind, "repeat": repeat, "exact": same,
+                record = {"rows": rows, "kind": kind, "repeat": repeat, "exact": same, "add_mode": args.add_mode,
                           "input_sha256": hashlib.sha256(original).hexdigest(),
                           "candidate_sha256": hashlib.sha256(raw).hexdigest(),
                           "xccl_sha256": hashlib.sha256(ref).hexdigest(),
@@ -132,7 +167,9 @@ def main(args):
                 channel.exchange("READY", **verdict)
                 channel.exchange("COPIED", **verdict)
                 if not same:
-                    raise AssertionError(f"{prefix}: XCCL bit equality/input lifetime failed")
+                    # Identical verdict frames on both ranks: both take this path.
+                    reject_quality(torch, dist, native, channel, sock, queue, peer, remote_fd,
+                                   handle, output, local, rows, prefix)
         timings = []
         for block in range(args.blocks):
             # Every block changes both messages. Setup copies are excluded for
@@ -157,25 +194,42 @@ def main(args):
                 elapsed = (time.perf_counter_ns() - start) / args.iterations
                 timings.append({"block": block, "arm": arm, "ns_per_call": elapsed})
         (out / f"rank{rank}-rows{rows}-timing.json").write_text(json.dumps(timings, indent=2) + "\n")
-        channel.exchange("READY", retiring_rows=rows)
-        channel.exchange("COPIED", retiring_rows=rows)
-        native.call("close", queue, peer)
-        os.close(remote_fd)
         # Both importers close BEFORE either exporter returns its IPC handle or
         # frees the underlying allocation. Explicit two-phase lifetime barrier.
-        channel.exchange("READY", importers_closed=rows)
-        channel.exchange("COPIED", importers_closed=rows)
-        native.call("put_export", queue, handle)
-        native.call("free", queue, output)
-        native.call("free", queue, local)
+        retire_completed_allocations(native, channel, queue, peer, remote_fd, handle, output, local, rows,
+                                     completed_and_agreed=True)
     sock.close()
     dist.destroy_process_group()
-    (out / f"rank{rank}-DONE.json").write_text(json.dumps({"status": "operator-screen-completed", "quality_cases": len(records), "runtime_qualified": False, "torch": torch.__version__}) + "\n")
+    (out / f"rank{rank}-DONE.json").write_text(json.dumps({"status": "operator-screen-completed", "quality_cases": len(records), "add_mode": args.add_mode, "runtime_qualified": False, "torch": torch.__version__}) + "\n")
     if rank == 0:
         os.unlink(sock_path)
 
 
-if __name__ == "__main__":
+def run(args, main_fn=main, hard_exit=os._exit):
+    """Returns the process exit code; unknown faults never return."""
+    rank = os.environ.get("RANK", "unknown")
+    try:
+        main_fn(args)
+    except QualityRejected as exc:
+        out = Path(args.out)
+        (out / f"rank{rank}-QUALITY-REJECTED.json").write_text(json.dumps({
+            "rank": rank, "error": str(exc), "add_mode": args.add_mode, "imports_retired": True,
+            "exporter_storage_released_after_peer_ack": True, "process_group_destroyed": True,
+            "os_exit": False}, indent=2) + "\n")
+        if rank == "0":
+            (out / "control.sock").unlink(missing_ok=True)
+        return QUALITY_EXIT  # Normal interpreter exit; no new GPU work or restart.
+    except BaseException:
+        # In fault cases do not call GPU destruction, synchronize, collective
+        # teardown, or automatic retries. The external monitor owns termination.
+        out = Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / f"rank{rank}-FAULT.txt").write_text(traceback.format_exc())
+        hard_exit(FAULT_EXIT)
+    return 0
+
+
+def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--library", required=True)
     p.add_argument("--out", required=True)
@@ -183,14 +237,10 @@ if __name__ == "__main__":
     p.add_argument("--blocks", type=int, default=5)
     p.add_argument("--iterations", type=int, default=12)
     p.add_argument("--timeout", type=float, default=15)
+    p.add_argument("--add-mode", choices=sorted(ADD_MODES), required=True)
     p.add_argument("--admitted-exclusive-gpu-test", action="store_true")
-    args = p.parse_args()
-    try:
-        main(args)
-    except BaseException:
-        # In fault cases do not call GPU destruction, synchronize, collective
-        # teardown, or automatic retries. The external monitor owns termination.
-        out = Path(args.out)
-        out.mkdir(parents=True, exist_ok=True)
-        (out / f"rank{os.environ.get('RANK', 'unknown')}-FAULT.txt").write_text(traceback.format_exc())
-        os._exit(70)
+    return p
+
+
+if __name__ == "__main__":
+    raise SystemExit(run(parser().parse_args()))

@@ -170,6 +170,62 @@ path with all non-FD metadata preserved. A numeric FD collision is resolved by
 duplicating only the received FD before closing that received copy. Exact
 arithmetic, output comparisons and the native library remain unchanged.
 
+## Stage 05 preparation (2026-09-15)
+
+Status: **prepared and CPU-checked only; nothing new has run on a GPU.**
+Stages 01-04 keep the unconditional quarantine. `run-native.py` admits only two
+newly reviewed one-shot stages, and only directly under
+`/mnt/fast-ai/bench-results/optimization-validation-20260915`. Admission requires
+no campaign `FAULT.json` and the passing post-reboot health receipt there.
+
+1. `nan-semantics-01` (no IPC). [`nan_semantics.py`](nan_semantics.py) all-reduces
+   every ordered pair of 21 FP16 values with standard XCCL. The values are quiet and
+   signaling NaNs of both signs with varied payloads, ±inf, ±0, ±1, ±max and
+   ±subnormal. The pairs are tiled over all four gate shapes. On each rank it also
+   runs four formulations through the new `et_add_mode` entry point on two local
+   allocations: m0 is FP32 with the rank-0 operand first (the Native04 arithmetic),
+   m1 is FP32 with rank 1 first, m2 is `sycl::half` with rank 0 first, and m3 is
+   `sycl::half` with rank 1 first. `et_add` is unchanged for the frozen ABI.
+   [`nan_analysis.py`](nan_analysis.py) selects a mode only if it equals XCCL on
+   every element, on both ranks, at every shape. Otherwise the verdict is
+   `no-single-formulation-matches`, with the smallest table of pairs that refutes
+   every mode. Mismatches are data: the worker frees its allocations and destroys
+   the process group normally.
+2. `communication-native-05`. `gate.py --add-mode mN` runs the selected kernel.
+   All 14 earlier cases per shape are kept, and a new `nan_matrix` kind adds the
+   full pair table (16 cases per shape). A mutually acknowledged mismatch now goes
+   through [`quality_retirement.py`](quality_retirement.py): drain the queue, close
+   imports, acknowledge, return exports, free, close the socket, destroy the process
+   group, write `rankN-QUALITY-REJECTED.json` and exit 2. `os._exit(70)` remains
+   only for unknown faults. Admission refuses unless `nan-semantics-01` completed
+   cleanly, its verdict hash matches, its selected mode equals `--add-mode` and its
+   library hash equals this stage's library.
+
+Both stages launch the newest-base image `sha256:506fcc26…`, as the user chose
+for these tests (also the Native04 image). The environment and transport
+contract is still checked against the qualified R304 container receipt
+(`7cd7bb16…`); both images carry the same torch, oneCCL and a byte-identical
+`libsycl.so.9`, so the ABI check holds for the launch image. Both stages carry
+`PYTORCH_ALLOC_CONF=expandable_segments:True`, `FI_PROVIDER=tcp`,
+`FI_TCP_IFACE=lo`, `PYTHONHASHSEED=0` and `TORCHINDUCTOR_DETERMINISTIC=1` in
+addition to the verified transport contract. The owner measures a host-memory
+baseline before `docker create`. Once the container ID is known, it starts the
+frozen `host_memory_guard.py` through `sudo -S`, with the password sent only to
+stdin, and waits for guard samples before `docker start`. Guard exit 3 is a
+failed stage (`MEMORY-GUARD-FIRED.json`) and latches the campaign. Every Docker
+and journal call in the monitor loop is bounded by `bounded_run`, which kills
+on its deadline and never waits on the killed child. The tail kernel window and
+render-owner check follow container exit.
+
+The snapshot freezes the worker, analysis, retirement helper, guard, ABI-checked
+library, runtime contract and (for stage 05) the NaN verdict. The library is
+`/mnt/fast-ai/research/exact-tp2-build-20260915-sycl9/libexact_tp2.so`, built
+with icpx 2026.1. It needs `libsycl.so.9`, and all 29 of its SYCL symbols are
+exported by the container's 2026.0 `libsycl.so.9`.
+[cpu-validation-20260915.json](cpu-validation-20260915.json) binds source and
+library hashes and 70 passing CPU tests. Commands and go/stop rules are in
+[the fixes note](../../notes/2026-09-15-exact-comm-fixes.md).
+
 ## Source references and limits
 
 - [Level Zero programming guide](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html): allocation-scoped concurrent-access rules require explicit ordering; ordinary peer access does not imply peer atomics or coherence.

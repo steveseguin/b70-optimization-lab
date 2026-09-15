@@ -167,6 +167,51 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(calls, ["marker", "READY", "copy", "COPIED"])
         self.assertTrue(n.poisoned and c.poisoned)
 
+    def fake_native(self, calls):
+        class Native:
+            poisoned = False
+            def pointer(self, name, *args):
+                calls.append((name, args))
+                return 1
+            def wait(self, _):
+                pass
+            def copy(self, *args):
+                calls.append(("copy", args))
+        class Chan:
+            rank = 1
+            def exchange(self, phase, **kw):
+                calls.append((phase, ()))
+        return Native(), Chan()
+
+    def test_collective_add_mode_passes_explicit_kernel_code_after_retirement(self):
+        calls = []
+        n, ch = self.fake_native(calls)
+        Collective(n, ch, 7, 100, 200, 300, add_mode="m2").run()
+        self.assertEqual([c[0] for c in calls], ["marker", "READY", "copy", "COPIED", "add_mode"])
+        self.assertEqual(calls[-1], ("add_mode", (100, 300, 7, 1, 2)))
+
+    def test_collective_without_mode_keeps_frozen_add(self):
+        calls = []
+        n, ch = self.fake_native(calls)
+        Collective(n, ch, 7, 100, 200, 300).run()
+        self.assertEqual(calls[-1], ("add", (100, 300, 7, 1)))
+
+    def test_unknown_add_mode_refused_before_any_call(self):
+        calls = []
+        n, ch = self.fake_native(calls)
+        with self.assertRaisesRegex(ValueError, "unknown add mode"):
+            Collective(n, ch, 7, 100, 200, 300, add_mode="m4")
+        self.assertEqual(calls, [])
+
+    def test_native_signatures_keep_add_and_require_add_mode(self):
+        import ctypes as C
+        from native import ADD_MODES, SIGNATURES
+        self.assertEqual(ADD_MODES, {"m0": 0, "m1": 1, "m2": 2, "m3": 3})
+        self.assertEqual(SIGNATURES["add"][4], C.c_int)
+        self.assertEqual(len(SIGNATURES["add"]), 6)
+        self.assertEqual(len(SIGNATURES["add_mode"]), 7)
+        self.assertEqual(SIGNATURES["add_mode"][4:6], [C.c_int, C.c_int])
+
     def test_reserved_identity_rejected(self):
         a, _ = self.pair()
         ch = Channel(a, 0, .01)

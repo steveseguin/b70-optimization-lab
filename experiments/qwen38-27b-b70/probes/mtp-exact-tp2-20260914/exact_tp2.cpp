@@ -135,6 +135,38 @@ int et_add(uintptr_t qp, uintptr_t local, uintptr_t output, size_t n, int rank, 
     }));
   });
 }
+// Explicit arithmetic formulation for NaN-semantics characterization and the
+// Stage 05 gate. et_add above is retained byte-for-byte for the frozen ABI.
+//   mode 0: FP32 add, rank-0 operand first   mode 1: FP32 add, rank-1 operand first
+//   mode 2: sycl::half add, rank-0 first     mode 3: sycl::half add, rank-1 first
+// local holds this rank's operand and output holds the other rank's operand.
+// Operand order is resolved on the host; each kernel body is branch-free.
+int et_add_mode(uintptr_t qp, uintptr_t local, uintptr_t output, size_t n, int rank, int mode, uintptr_t* ep) {
+  return protect([&] {
+    if (!local || !output || local == output || !n || (rank != 0 && rank != 1) || mode < 0 || mode > 3)
+      throw std::runtime_error("invalid add_mode");
+    auto& q = queue(qp);
+    auto* a = reinterpret_cast<const sycl::half*>(local);
+    auto* b = reinterpret_cast<sycl::half*>(output);
+    bool rank0_first = mode % 2 == 0;
+    const sycl::half* first = (rank0_first == (rank == 0)) ? a : b;
+    const sycl::half* second = (first == a) ? b : a;
+    sycl::range<1> r(n);
+    if (mode < 2) {
+      *ep = event(q.parallel_for(r, [=](sycl::id<1> i) {
+        float x = static_cast<float>(first[i]);
+        float y = static_cast<float>(second[i]);
+        b[i] = static_cast<sycl::half>(x + y);
+      }));
+    } else {
+      *ep = event(q.parallel_for(r, [=](sycl::id<1> i) {
+        sycl::half x = first[i];
+        sycl::half y = second[i];
+        b[i] = x + y;
+      }));
+    }
+  });
+}
 int et_poll(uintptr_t ep, int* complete) {
   return protect([&] {
     auto& e = *reinterpret_cast<sycl::event*>(ep);
