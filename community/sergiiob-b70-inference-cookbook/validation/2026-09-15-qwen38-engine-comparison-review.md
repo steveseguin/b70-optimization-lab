@@ -30,10 +30,14 @@ only 8 of 12 reference outputs on that older arithmetic
 
 ## What the lab packages
 
-- **FP8 on vLLM:** two cards only, in
+- **FP8 on vLLM, two cards:**
   [packages/qwen38-27b-fp8-tp2-b70](../../../packages/qwen38-27b-fp8-tp2-b70/README.md)
   with the [reproduction guide](../../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md).
-  There is no one-card FP8 package, and one is not recommended.
+- **FP8 on vLLM, one card (update, same day):** moving the input embedding to
+  host memory with an exact lookup lets compiled FP8 serve on one B70: 46.9 tok/s
+  with MTP depth 3 and a 16,384-token context, answers identical to no-MTP on two
+  fresh servers ([results](../../../experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-results.md)).
+  It is a research launcher, not yet a package.
 - **One card on vLLM:** AutoRound INT4
   ([recipe](../../../repro/qwen38-27b-autoround-int4-b70/README.md)).
 - **One card on llama.cpp:** GGUF Q4_K_M and Q8_0 packages, with and without
@@ -63,8 +67,9 @@ input tok/s at p512/p1024). The lab's FP8 rates are server prefill (2,859,
 
 ## Bottom line
 
-- The two-card FP8 statement is an overstatement: FP8 fits one B70, but only as
-  a slow, short-context server that the lab does not package.
+- The two-card FP8 statement is incorrect: with the input embedding in host
+  memory, official FP8 serves on one B70 at 46.9 tok/s (16K context, lossless).
+  Two cards remain faster (54.9-86.2 tok/s) and allow a 33K context.
 - The cookbook's one-card INT4 draft-overlay results are higher than the lab's
   one-card INT4 row, but they use a different checkpoint, draft and method.
   They need a matched run on the lab's strict suite before any comparison.

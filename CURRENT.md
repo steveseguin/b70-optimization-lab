@@ -34,6 +34,20 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 15 14:45 UTC: FP8 runs on one B70 (46.9 tok/s lossless); cold-start fix restores 54.8; service on 18124.**
+The earlier 54.3 restore readings were a first-request cost: a fresh server
+JIT-compiles two MTP draft kernels during the strict suite's first prompt.
+`serve.py` now sends one untimed warm-up completion before ready; the restored
+service (`final-service-warmup`) measured 54.762 tok/s cold, first prompt 56.54,
+12/12 outputs identical to the pre-test control. Official FP8 on one card: a new
+lossless host-embedding plugin frees 2.37 GiB, and compiled serving then gives
+MTP0 19.3, MTP1 32.5 (20,480 context) and MTP3 46.9 tok/s (16,384 context), all
+12/12 identical across fresh servers and to MTP0; MTP4/5 reach 49.7/51.7 but
+change three answers and are not qualified. No kernel faults. Research launcher
+only; no one-card package yet.
+[One-card results](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-results.md),
+[warm-up fix](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-cold-start-warmup.md).
+
 **Two-B70 host, September 15 13:30 UTC: qualified FP8/MTP1 service restored on 18124 and matched pre-test quality and speed.**
 The unchanged R304 FP8 TP2/MTP1 service (image `7cd7bb16`, helper state
 `/mnt/fast-ai/bench-results/optimization-validation-20260915/restored-service`)
