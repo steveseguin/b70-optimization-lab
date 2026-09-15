@@ -25,6 +25,22 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 15 02:20 UTC: GPU fault during FP8 restore; GPU work halted, API offline, reboot decision needed.**
+The bounded standard health check passed on both cards at 01:58 UTC. Loading
+the unchanged qualified R304 FP8/MTP1 service in `final-service` then faulted
+card 0000:e3:00.0 at 02:00:38 UTC as target weights finished loading: 33
+unsuccessful copy-engine (bcs) page-fault responses, 8 engine memory CAT errors,
+a bcs engine reset, a timed-out job and a device coredump. The helper halted and
+stopped once; the container is gone, no model process owns the GPUs and port
+18124 is closed. The campaign `FAULT.json` latch is set and the campaign is
+closed; the metadata change remains unvalidated. Same boot; no retry, reboot,
+driver reset or settings change by the agent. **Restoring the service needs the
+user's decision on a host reboot**; afterwards use a newly admitted recovery
+root (health check, qualified service, full strict check). Cause not
+established; a swap-out burst preceded the fault by seconds.
+[Fault note](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-restore-gpu-fault.md).
+This supersedes the restore statement below.
+
 **Two-B70 host, September 15 02:00 UTC: research server ran the host out of memory during load; restoring original FP8 service.**
 The newest-base V1/native-MTP control on localhost18129 (image `506fcc26`,
 upstream `dc36fcce9`) never became ready and served no requests. From about

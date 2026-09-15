@@ -71,7 +71,9 @@ as a failure; it is not a result about the metadata change.
   executed. It needs a base image that loads on this 16 GB host.
 - Next admitted steps: one bounded standard health check, then restore the
   qualified R304 FP8/MTP1 service on port 18124 in `final-service` and repeat
-  the full strict output check.
+  the full strict output check. The health check passed, but the restore
+  stopped on a GPU fault during load; see the
+  [restore fault note](2026-09-15-fp8-restore-gpu-fault.md).
 
 ## Evidence
 
