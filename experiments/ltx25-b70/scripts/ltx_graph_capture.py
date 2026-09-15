@@ -439,16 +439,20 @@ class Entry:
 class GraphBlockRoute:
     """Replaces only the block callable; the original route is still in charge."""
 
-    def __init__(self, block, original_route, index, report, group):
+    def __init__(self, blocks, original_route, index, report, group):
         check_source()
-        require(type(block) is av_model.BasicAVTransformerBlock, 'Expected the native LTXAV block')
+        blocks = tuple(blocks)
+        require(blocks, 'A graph route needs at least one block')
         require(type(original_route) is _BlockRoute, 'Expected the native shard route')
-        for module in block.modules():
-            require(not (module._forward_hooks or module._forward_pre_hooks or module._backward_hooks),
-                    'Graph capture does not support additional module hooks')
-        state = tuple(block.parameters()) + tuple(block.buffers())
-        require(state and all(t.dtype == torch.bfloat16 for t in state), 'Native BF16 block state required')
-        self.block = block
+        for block in blocks:
+            require(type(block) is av_model.BasicAVTransformerBlock, 'Expected the native LTXAV block')
+            for module in block.modules():
+                require(not (module._forward_hooks or module._forward_pre_hooks or module._backward_hooks),
+                        'Graph capture does not support additional module hooks')
+            state = tuple(block.parameters()) + tuple(block.buffers())
+            require(state and all(t.dtype == torch.bfloat16 for t in state), 'Native BF16 block state required')
+        self.blocks = blocks
+        self.block = blocks[0]
         self.original_route = original_route
         self.index = index
         self.device = original_route.device
@@ -463,7 +467,8 @@ class GraphBlockRoute:
         """Per-call identity check. Cheap on purpose: the expensive registration
         and residency walk runs once per forward, and Comfy's own ON_PRE_RUN
         callback already verifies full shard residency before every sampling run."""
-        require(type(self.block) is av_model.BasicAVTransformerBlock, 'Captured block class changed')
+        require(all(type(b) is av_model.BasicAVTransformerBlock for b in self.blocks),
+                'Captured block class changed')
         require(type(self.original_route) is _BlockRoute and
                 (self.original_route.device, self.original_route.primary,
                  self.original_route.last) == self._route_identity, 'Original route placement changed')
@@ -474,12 +479,15 @@ class GraphBlockRoute:
         for name in ('_global_forward_hooks', '_global_forward_pre_hooks',
                      '_global_backward_hooks', '_global_backward_pre_hooks'):
             require(not getattr(module_api, name, {}), 'Global module hooks are unsupported')
-        for module in self.block.modules():
-            for name in ('_forward_hooks', '_forward_pre_hooks', '_backward_hooks', '_backward_pre_hooks'):
-                require(not getattr(module, name, {}), 'Block acquired unsupported module hooks')
-        state = tuple(self.block.parameters()) + tuple(self.block.buffers())
-        require(state and all(t.dtype == torch.bfloat16 for t in state), 'Block state is no longer native BF16')
-        require(all(t.device == self.device for t in state), 'Block state is on the wrong route device')
+        for block in self.blocks:
+            for module in block.modules():
+                for name in ('_forward_hooks', '_forward_pre_hooks', '_backward_hooks', '_backward_pre_hooks'):
+                    require(not getattr(module, name, {}), 'Block acquired unsupported module hooks')
+            state = tuple(block.parameters()) + tuple(block.buffers())
+            require(state and all(t.dtype == torch.bfloat16 for t in state),
+                    'Block state is no longer native BF16')
+            require(all(t.device == self.device for t in state),
+                    'Block state is on the wrong route device')
 
     # -- native execution ---------------------------------------------------
     def _invoke(self, img, kwargs):
@@ -487,7 +495,12 @@ class GraphBlockRoute:
         # here once silently dropped transformer_options, so the block saw None.
         require(set(kwargs) == set(KEYWORDS) | {'transformer_options'},
                 'Block keyword translation lost or gained an argument')
-        return self.block(img, **kwargs)
+        # av_model's own loop threads ONLY (vx, ax) from one block to the next:
+        # every other argument it passes is loop-invariant. So a run of blocks
+        # that share a device is exactly this loop, and one graph can hold it.
+        for block in self.blocks:
+            img = block(img, **kwargs)
+        return img
 
     def _capture(self, routed, slot, key):
         """Record one graph for this shape and prove it matches eager bits."""
@@ -566,12 +579,21 @@ class GraphBlockRoute:
                                    describe_types(routed), option_census(options),
                                    sorted(split_options(options)[0], key=repr),
                                    sorted(split_options(options)[1], key=repr))
+        self.report.captures[-1]['chain_span'] = [self.index, self.index + len(self.blocks) - 1]
         return entry
 
     def _call_native(self, routed):
         self._validate_fast()
         options = routed['transformer_options']
         require(CACHE_KEY in options, 'Graph capture requires the shard forward wrapper')
+        if len(self.blocks) > 1:
+            # Chaining skips the loop body between blocks. That body varies the
+            # per-block options only for STG, and pops a prefetch queue that is
+            # None unless dynamic prefetch is on. Refuse if either is live.
+            require(not options.get('stg_self_attn_blocks', ()),
+                    'STG varies transformer_options per block; chained capture is unsound')
+            require(not options.get('prefetch_dynamic_vbars', False),
+                    'Dynamic prefetch pops a queue between blocks; chained capture would skip it')
         key = self.group.key_for(routed, options)
         if self.group.fresh_forward:
             self._validate()
@@ -597,6 +619,28 @@ class GraphBlockRoute:
         return self.original_route(args, {**extra, 'original_block': self._call_native})
 
 
+class PassthroughRoute:
+    """A block folded into a chain: its work already ran in the head's graph.
+
+    av_model threads only (vx, ax) between blocks, and the head returned the
+    state as of the tail, so the correct thing for every other block in the run
+    is to hand that state straight back.
+    """
+
+    def __init__(self, index, head):
+        self.index = index
+        self.head = head
+        self.calls = 0
+
+    def __call__(self, args, extra):
+        require(type(self.head) is GraphBlockRoute and self.index in
+                range(self.head.index + 1, self.head.index + len(self.head.blocks)),
+                f'Block {self.index} is not inside its chain head\'s run')
+        require(self.head.entries, f'Chain head {self.head.index} has not run before block {self.index}')
+        self.calls += 1
+        return {'img': args['img']}
+
+
 def describe_types(routed):
     return {name: type(routed.get(name)).__module__ + '.' + type(routed.get(name)).__name__
             for name in ('img',) + KEYWORDS}
@@ -612,6 +656,8 @@ class Report:
         self.copies = 0
         self.first_options = None
         self.option_key_sets = []
+        self.chains = []
+        self.chain = 1
 
     def record_capture(self, index, signature, tensor_count, inplace, types, census, infra, data):
         self.captures.append({'block_index': index, 'mirrored_tensors': tensor_count,
@@ -624,7 +670,8 @@ class Report:
             self.captures[-1]['option_census'] = census
 
     def summary(self):
-        return {'captured_graphs': len(self.captures), 'replays': self.replays,
+        return {'chain': self.chain, 'chains': self.chains,
+                'captured_graphs': len(self.captures), 'replays': self.replays,
                 'static_buffer_copies': self.copies,
                 'copies_per_replay': round(self.copies / self.replays, 3) if self.replays else None,
                 'blocks_captured': sorted({c['block_index'] for c in self.captures}),
@@ -662,21 +709,62 @@ def validate_patcher(patcher):
     return diffusion, registry
 
 
-def install(patcher, indices):
-    """Replace the selected block callables with graph-backed ones."""
+def chain_runs(indices, registry, chain):
+    """Split the selection into runs that one graph may legally hold.
+
+    A run must be consecutive (av_model feeds block i's output to block i+1),
+    on one device (a graph is per-device), and must not continue past a route
+    that returns the state to the primary device.
+    """
+    runs, current = [], []
+    for index in sorted(indices):
+        route = registry[('double_block', index)]
+        if current:
+            previous = registry[('double_block', current[-1])]
+            if not (index == current[-1] + 1 and previous.device == route.device
+                    and not previous.last and len(current) < chain):
+                runs.append(current)
+                current = []
+        current.append(index)
+    if current:
+        runs.append(current)
+    return runs
+
+
+def install(patcher, indices, chain=1):
+    """Replace the selected block callables with graph-backed ones.
+
+    With chain > 1 a run of consecutive same-device blocks is captured as ONE
+    graph. That removes the per-block shard route (which re-moves eighteen
+    arguments), the per-block Python dispatch and the per-block replay launch,
+    none of which are numerical work. chain=1 is the per-block behaviour.
+    """
     diffusion, registry = validate_patcher(patcher)
     require(all(type(registry[('double_block', i)]) is _BlockRoute for i in range(48)),
             'Blocks already carry a non-original route')
+    require(isinstance(chain, int) and not isinstance(chain, bool) and chain >= 1,
+            'chain must be a positive integer')
     report = Report()
     originals, groups = {}, {}
-    for i in indices:
-        original = registry[('double_block', i)]
-        originals[i] = original
-        group = groups.setdefault(original.device, DeviceGroup(original.device))
-        patcher.set_model_patch_replace(
-            GraphBlockRoute(diffusion.transformer_blocks[i], original, i, report, group),
-            'dit', 'double_block', i)
+    for index in indices:
+        originals[index] = registry[('double_block', index)]
+    for run in chain_runs(indices, registry, chain):
+        head, tail = registry[('double_block', run[0])], registry[('double_block', run[-1])]
+        # The head must carry the TAIL's move-back flag: block 47 returns the
+        # state to the primary device, and folding it into a chain would
+        # otherwise drop that move.
+        effective = head if len(run) == 1 else _BlockRoute(head.device, head.primary, tail.last)
+        group = groups.setdefault(head.device, DeviceGroup(head.device))
+        route = GraphBlockRoute([diffusion.transformer_blocks[i] for i in run],
+                                effective, run[0], report, group)
+        patcher.set_model_patch_replace(route, 'dit', 'double_block', run[0])
+        for index in run[1:]:
+            patcher.set_model_patch_replace(PassthroughRoute(index, route), 'dit', 'double_block', index)
     report.devices = sorted(str(d) for d in groups)
+    report.chains = [{'head': r[0], 'tail': r[-1], 'blocks': len(r),
+                      'device': str(registry[('double_block', r[0])].device)}
+                     for r in chain_runs(indices, registry, chain)]
+    report.chain = chain
     validate_patcher(patcher)
     return report, originals
 
@@ -695,6 +783,8 @@ def measure(patcher, originals, iterations=20):
     rows = []
     for index in sorted(originals):
         route = registry[('double_block', index)]
+        if type(route) is PassthroughRoute:
+            continue
         require(type(route) is GraphBlockRoute, 'Expected a graph route at block ' + str(index))
         for entry in route.entries.values():
             device = route.device
@@ -736,9 +826,9 @@ def attribute(patcher, originals, iterations=15, probe_blocks=(0, 24)):
                 ('no_video_stream', {'run_vx': False}))
     rows = []
     for index in sorted(originals):
-        if index not in probe_blocks:
-            continue
         route = registry[('double_block', index)]
+        if type(route) is PassthroughRoute or index not in probe_blocks:
+            continue
         require(type(route) is GraphBlockRoute, 'Expected a graph route at block ' + str(index))
         for key in list(route.entries):
             slot = route.group.slots[key]
@@ -817,10 +907,26 @@ def restore(patcher, originals):
     diffusion, registry = validate_patcher(patcher)
     for i, original in originals.items():
         current = registry[('double_block', i)]
-        require(type(current) is GraphBlockRoute and current.original_route is original,
-                'Unexpected route while restoring block ' + str(i))
-        current.entries.clear()
-        current.group.slots.clear()
+        if type(current) is GraphBlockRoute:
+            require(current.index == i, 'Chain head index drifted while restoring block ' + str(i))
+            if len(current.blocks) == 1:
+                require(current.original_route is original,
+                        'Unexpected route while restoring block ' + str(i))
+            else:
+                # A chain head runs under a synthesized route carrying the head's
+                # placement and the TAIL's move-back flag; check both ends.
+                tail = originals[i + len(current.blocks) - 1]
+                require(type(current.original_route) is _BlockRoute and
+                        current.original_route.device == original.device and
+                        current.original_route.primary == original.primary and
+                        current.original_route.last == tail.last,
+                        'Chain route placement drifted while restoring block ' + str(i))
+            current.entries.clear()
+            current.group.slots.clear()
+        else:
+            require(type(current) is PassthroughRoute and
+                    current.head.index < i <= current.head.index + len(current.head.blocks) - 1,
+                    'Unexpected route while restoring block ' + str(i))
         patcher.set_model_patch_replace(original, 'dit', 'double_block', i)
     diffusion, registry = validate_patcher(patcher)
     require(all(type(registry[('double_block', i)]) is _BlockRoute for i in range(48)),
