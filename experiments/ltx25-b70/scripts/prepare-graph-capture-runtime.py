@@ -30,6 +30,15 @@ NODE = 'graph_capture_node.py'
 NODE_DIR = 'ltx_graph_capture_lab'
 SELECTION = 'all48'
 MODES = ('original', 'graph', 'restored')
+# 'axis-cache' is the decoder candidate qualified in na-axis-confirm-01: 18 clips,
+# all four raw oracles exact, median decoder effect -83.2 ms. It is a drop-in
+# replacement for the original VAEDecode node with the same samples and VAE.
+DECODERS = ('original', 'axis-cache')
+
+
+def graph_name(mode, decode):
+    suffix = '' if decode == 'original' else '-axis-cache'
+    return 'graphs/graph-capture-all48-' + mode + suffix + '.json'
 BASE_GRAPH = 'graphs/host-embedding-control.json'
 
 NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
@@ -89,7 +98,9 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'source/custom_nodes/ltx_graph_capture_lab/__init__.py',
              'provenance/graph-capture/parent/launch/encoder_runtime_common.py',
              'host-residency-13-parent-manifest.json'}
-    added |= {'graphs/graph-capture-all48-' + mode + '.json' for mode in ('original', 'graph', 'restored')}
+    added |= {'graphs/graph-capture-all48-' + mode + suffix + '.json'
+              for mode in ('original', 'graph', 'restored')
+              for suffix in ('', '-axis-cache')}
     for name, digest in parent['files'].items():
         if name == 'launch/encoder_runtime_common.py':
             require(manifest['files']['provenance/graph-capture/parent/' + name] == digest,
@@ -112,19 +123,28 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     control = json.loads(safe_path(packet, 'graphs/host-embedding-control.json').read_text())
     expected_graphs = []
     for mode in ('original', 'graph', 'restored'):
-        name = 'graphs/graph-capture-all48-' + mode + '.json'
-        expected_graphs.append(name)
-        graph = json.loads(safe_path(packet, name).read_text())
-        require(graph.pop('422') == {'class_type': 'LTXGraphCaptureGate', 'inputs': {
-                'model': ['420', 0], 'mode': mode, 'selection': 'all48',
-                'run_name': 'assign-unique-request-name'}}, 'Graph-capture gate node changed')
-        for node in ('388', '391'):
-            require(graph[node]['inputs']['model'] == ['422', 0], 'Graph-capture edge changed')
-            graph[node]['inputs']['model'] = ['420', 0]
-        require(graph == control, 'Graph-capture graph changed the original quality recipe')
+        for decode in ('original', 'axis-cache'):
+            suffix = '' if decode == 'original' else '-axis-cache'
+            name = 'graphs/graph-capture-all48-' + mode + suffix + '.json'
+            expected_graphs.append(name)
+            graph = json.loads(safe_path(packet, name).read_text())
+            require(graph.pop('422') == {'class_type': 'LTXGraphCaptureGate', 'inputs': {
+                    'model': ['420', 0], 'mode': mode, 'selection': 'all48',
+                    'run_name': 'assign-unique-request-name'}}, 'Graph-capture gate node changed')
+            for node in ('388', '391'):
+                require(graph[node]['inputs']['model'] == ['422', 0], 'Graph-capture edge changed')
+                graph[node]['inputs']['model'] = ['420', 0]
+            if decode != 'original':
+                require(graph['374'] == {'class_type': 'LTXNAAxisDecode', 'inputs': {
+                        'samples': ['369', 0], 'vae': ['420', 2], 'mode': 'axis-cache',
+                        'run_name': 'assign-unique-request-name'}}, 'Axis-cache decode node changed')
+                graph['374'] = {'class_type': 'VAEDecode',
+                                'inputs': {'samples': ['369', 0], 'vae': ['420', 2]}}
+            require(graph == control, 'Graph-capture graph changed the original quality recipe')
     require(capture['graphs'] == expected_graphs, 'Graph-capture graph inventory changed')
     require(capture['selection'] == 'all48' and capture['block_indices'] == list(range(48)) and
             capture['modes'] == ['original', 'graph', 'restored'] and
+            capture['decoders'] == ['original', 'axis-cache'] and
             capture['numerical_source_changed'] is False and capture['graphs_changed'] is False and
             capture['native_gpu_qualified'] is False and capture['full_clip_qualified'] is False and
             capture['speed_qualified'] is False, 'Graph-capture contract changed')
@@ -200,18 +220,28 @@ def main():
     shutil.copyfile(node_src, node_dir / '__init__.py')
 
     control = json.loads((staging / BASE_GRAPH).read_text())
+    require(control['374'] == {'class_type': 'VAEDecode',
+                               'inputs': {'samples': ['369', 0], 'vae': ['420', 2]}},
+            'Unexpected original video decode node')
     for mode in MODES:
-        graph = copy.deepcopy(control)
-        graph['422'] = {'class_type': 'LTXGraphCaptureGate', 'inputs': {
-            'model': ['420', 0], 'mode': mode, 'selection': SELECTION,
-            'run_name': 'assign-unique-request-name'}}
-        for node in ('388', '391'):
-            require(graph[node]['inputs']['model'] == ['420', 0], 'Unexpected control graph edge')
-            graph[node]['inputs']['model'] = ['422', 0]
-        path = staging / 'graphs' / ('graph-capture-' + SELECTION + '-' + mode + '.json')
-        with path.open('x') as handle:
-            json.dump(graph, handle, indent=2, sort_keys=True)
-            handle.write('\n')
+        for decode in DECODERS:
+            graph = copy.deepcopy(control)
+            graph['422'] = {'class_type': 'LTXGraphCaptureGate', 'inputs': {
+                'model': ['420', 0], 'mode': mode, 'selection': SELECTION,
+                'run_name': 'assign-unique-request-name'}}
+            for node in ('388', '391'):
+                require(graph[node]['inputs']['model'] == ['420', 0], 'Unexpected control graph edge')
+                graph[node]['inputs']['model'] = ['422', 0]
+            if decode != 'original':
+                # Already-qualified decoder: 18 confirmation clips, all bytewise
+                # exact, median decoder effect -83.2 ms. Same samples, same VAE.
+                graph['374'] = {'class_type': 'LTXNAAxisDecode', 'inputs': {
+                    'samples': ['369', 0], 'vae': ['420', 2], 'mode': decode,
+                    'run_name': 'assign-unique-request-name'}}
+            path = staging / graph_name(mode, decode)
+            with path.open('x') as handle:
+                json.dump(graph, handle, indent=2, sort_keys=True)
+                handle.write('\n')
 
     files = {}
     for p in sorted(staging.rglob('*')):
@@ -225,7 +255,7 @@ def main():
     added = {'source/scripts/' + ADAPTER, 'source/scripts/' + NODE,
              f'source/custom_nodes/{NODE_DIR}/__init__.py',
              PROV + 'launch/encoder_runtime_common.py', PARENT_MANIFEST_FILE}
-    added |= {f'graphs/graph-capture-{SELECTION}-{m}.json' for m in MODES}
+    added |= {graph_name(m, d) for m in MODES for d in DECODERS}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
     for name, digest in parent_manifest['files'].items():
         if name == CHECKER:
@@ -255,7 +285,10 @@ def main():
             'parent_packet': PARENT_NAME, 'parent_manifest_sha256': PARENT_SHA,
             'adapter_sha256': extensions[ADAPTER], 'node_sha256': extensions[NODE],
             'selection': SELECTION, 'block_indices': list(range(48)), 'modes': list(MODES),
-            'graphs': [f'graphs/graph-capture-{SELECTION}-{m}.json' for m in MODES],
+            'graphs': [graph_name(m, d) for m in MODES for d in DECODERS],
+            'decoders': list(DECODERS),
+            'axis_cache_provenance': 'na-axis-confirm-01: 18 clips, all four raw oracles exact, '
+                                     'median decoder effect -83.2 ms; drop-in for node 374',
             'mechanism': 'per-block torch.xpu.XPUGraph capture and replay behind the existing '
                          'set_model_patch_replace route; the native block, its registration and the '
                          'shard routing are unchanged',

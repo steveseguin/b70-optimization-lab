@@ -1,0 +1,162 @@
+{
+  "schema": "ltx.graph-capture-20-result.v1",
+  "date_utc": "2026-09-15",
+  "packet": "prepared-encoder-graph-capture-20",
+  "packet_manifest_sha256": "5cfda07e35a4af655274c317726e9e12a874bc5b96969188ab94a581ffee2127",
+  "server_run": "encoder-server-graph-capture-20b",
+  "server_pid": 3926,
+  "boot_id": "831530c8-4682-4e52-a164-00f98fcd720f",
+  "change_from_packet19": "one shared static buffer set per device instead of per block; the argument signature computed once per forward instead of per block; full registration validation once per forward instead of per block call",
+  "rows": [
+    {
+      "run": "g20b-r01-original",
+      "arm": "original",
+      "preview_s": 56.2167,
+      "encode_s": 8.4559,
+      "sampler_s": 14.2257,
+      "video_decode_s": 1.6629,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r02-original",
+      "arm": "original",
+      "preview_s": 6.2406,
+      "encode_s": 1.7221,
+      "sampler_s": 3.5107,
+      "video_decode_s": 0.63,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r03-graph",
+      "arm": "graph",
+      "preview_s": 10.7219,
+      "encode_s": 1.7225,
+      "sampler_s": 7.8828,
+      "video_decode_s": 0.6392,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r04-graph",
+      "arm": "graph",
+      "preview_s": 4.7704,
+      "encode_s": 1.8384,
+      "sampler_s": 1.9352,
+      "video_decode_s": 0.6166,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r05-graph",
+      "arm": "graph",
+      "preview_s": 4.6811,
+      "encode_s": 1.7468,
+      "sampler_s": 1.9268,
+      "video_decode_s": 0.6117,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r06-graph",
+      "arm": "graph",
+      "preview_s": 4.6488,
+      "encode_s": 1.728,
+      "sampler_s": 1.9204,
+      "video_decode_s": 0.6085,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r07-graph",
+      "arm": "graph",
+      "preview_s": 4.7102,
+      "encode_s": 1.7478,
+      "sampler_s": 1.9799,
+      "video_decode_s": 0.6082,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r08-restored",
+      "arm": "restored",
+      "preview_s": 7.2627,
+      "encode_s": 1.738,
+      "sampler_s": 4.5086,
+      "video_decode_s": 0.6126,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r09-original",
+      "arm": "original",
+      "preview_s": 6.3308,
+      "encode_s": 1.7407,
+      "sampler_s": 3.6107,
+      "video_decode_s": 0.6132,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g20b-r10-original",
+      "arm": "original",
+      "preview_s": 6.4424,
+      "encode_s": 1.7349,
+      "sampler_s": 3.6314,
+      "video_decode_s": 0.6106,
+      "bitwise_all_equal": true
+    }
+  ],
+  "control_sampler_s": {
+    "values": [
+      3.5107,
+      3.6107,
+      3.6314
+    ],
+    "mean": 3.5843
+  },
+  "graph_sampler_s": {
+    "values": [
+      1.9352,
+      1.9268,
+      1.9204,
+      1.9799
+    ],
+    "median": 1.931
+  },
+  "control_preview_s": {
+    "values": [
+      6.2406,
+      6.3308,
+      6.4424
+    ],
+    "mean": 6.3379
+  },
+  "graph_preview_s": {
+    "values": [
+      4.7704,
+      4.6811,
+      4.6488,
+      4.7102
+    ],
+    "median": 4.6957
+  },
+  "sampler_speedup": 1.856,
+  "sampler_saved_s": 1.653,
+  "preview_saved_s": 1.642,
+  "packet19_graph_sampler_median_s": 2.0011,
+  "improvement_over_packet19_s": 0.0701,
+  "capture": {
+    "captured_graphs": 96,
+    "replays": 2640,
+    "signatures_per_block": [
+      2
+    ],
+    "devices": [
+      "xpu:0",
+      "xpu:1"
+    ],
+    "static_buffer_copies": 1935,
+    "copies_per_replay": 0.733,
+    "packet19_copies_per_replay": 18,
+    "copy_reduction_factor": 24.6
+  },
+  "all_bitwise_exact": true,
+  "limitations": [
+    "one process, one boat fixture, four warm graph clips against three warm controls",
+    "capture cost is paid once per process and excluded from the warm medians",
+    "this arm ran after a host freeze and reboot; the previous attempt on the dead boot produced one matching graph clip (1.924 s) before the fault latched"
+  ]
+}
