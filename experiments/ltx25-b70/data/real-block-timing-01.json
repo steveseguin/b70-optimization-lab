@@ -1,0 +1,44 @@
+{
+  "schema": "ltx.real-block-timing.v1",
+  "date_utc": "2026-09-15",
+  "source": "graph_timing in the packet29 restore receipt: every captured graph replayed 20 times with a host sync, on the real checkpoint blocks",
+  "measured": {
+    "stage1_64tok_ms_per_step": 131.729,
+    "stage2_256tok_ms_per_step": 173.072,
+    "stage1_mean_block_ms": 2.7444,
+    "stage2_mean_block_ms": 3.6057,
+    "timed_graphs": 96
+  },
+  "clip": {
+    "blocks_s": 1.573,
+    "sampler_s": 1.929,
+    "blocks_pct": 81.5,
+    "not_blocks_s": 0.356,
+    "not_blocks_pct": 18.5
+  },
+  "correction": {
+    "earlier_claim": "blocks are 61% of the sampler and 39% is not blocks",
+    "earlier_method": "scaled a synthetic 48-block chain (102.8 ms) by the weight ratio",
+    "why_it_was_wrong": "the synthetic block is 2.14 ms while the real block is 2.744 ms at the same token count, 28% cheaper, so it understated the blocks",
+    "corrected": "blocks are 81.5% of the sampler; only 18.5% is orchestration plus the non-block forward"
+  },
+  "roofline": {
+    "block_weight_bytes_per_step_GB": 38.93,
+    "roofline_ms_per_step": 72.5,
+    "stage1_above_roofline": 1.82,
+    "stage2_above_roofline": 2.39
+  },
+  "weight_vs_activation": {
+    "method": "stage 2 has 4x the video tokens and identical weights, so the difference isolates the token-dependent work; assuming it scales linearly with tokens",
+    "activation_ms_at_64tok": 13.78,
+    "weight_bound_ms": 117.95,
+    "weight_bound_effective_GBps": 330.1,
+    "weight_bound_pct_of_roofline": 61.5,
+    "reading": "The weight-reading part of the blocks achieves only about 59% of the measured copy roofline. That, not elementwise work, is the dominant remaining inefficiency -- and it is consistent with the block holding many small projections: an isolated audio q/k/v triple runs at 186 GB/s against 537."
+  },
+  "consequence": [
+    "Extending graph capture to whole contiguous runs is worth far less than estimated: the non-block share is 0.357 s, and capture would only remove part of it.",
+    "The remaining prize is inside the blocks. Lifting the weight-bound part from 59% to 90% of roofline would save roughly 0.45 s, which is the difference between missing and reaching the goal.",
+    "Fusing the three qualifying q/k/v sites is a down payment on exactly that mechanism, worth about 0.1 s."
+  ]
+}
