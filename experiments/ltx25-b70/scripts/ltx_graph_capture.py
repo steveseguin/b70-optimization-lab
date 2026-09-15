@@ -520,8 +520,21 @@ class GraphBlockRoute:
         # otherwise reuses one class-level stream bound to the first device it
         # saw, which records an EMPTY graph on any other device.
         capture_stream = torch.xpu.Stream(device=self.device)
-        with torch.no_grad(), torch.xpu.graph(graph, stream=capture_stream):
-            out_vx, out_ax = self._invoke(slot.img, slot.kw)
+        try:
+            with torch.no_grad(), torch.xpu.graph(graph, stream=capture_stream):
+                out_vx, out_ax = self._invoke(slot.img, slot.kw)
+        except BaseException:
+            # A capture abandoned part-way leaves the device recording. On
+            # 2026-09-15 an exception inside capture (a host read of tensor
+            # contents returning garbage, which asked the allocator for a
+            # petabyte) was followed by a GPU CAT error and an engine reset.
+            # Tear the partial graph down and drain before re-raising.
+            try:
+                graph.reset()
+            except BaseException:
+                pass
+            torch.xpu.synchronize(self.device)
+            raise
         torch.xpu.synchronize(self.device)
 
         static_vx, static_ax = slot.img

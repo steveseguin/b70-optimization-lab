@@ -158,6 +158,32 @@ operator-stage snapshots and the earlier unrelated freeze packet below.
 [implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
+**Four-B70 host, September15 05:25 UTC: clip 6.415 -> 4.682 s, all exact; GPU work paused for a reboot.**
+Qualified position (packet21, `prepared-encoder-graph-capture-21`, manifest
+`d515527a6f7eb1277df5f354a46522e6da1597b73fca08a91519caee70fa5498`): warm clip
+preview **4.682 s** against a 6.415 s control, sampler **1.942 s** at **1.86x**,
+video decode **0.560 s**, text encode unchanged at 1.741 s. Thirteen clips,
+**every one bytewise identical** on images, video latent, audio latent and
+waveform, at 256x256, 25 frames, 24 fps, native BF16, 8+3 steps. Two independent
+exact changes: per-block `torch.xpu.XPUGraph` capture of the 48 transformer
+blocks, and the already-qualified axis-cache decoder.
+[Result](experiments/ltx25-b70/notes/graph-capture-21-results.md).
+
+**Paused:** packet22 tried to extend graph capture to the video decoder. It was
+blocked by a single host read of tensor contents used as a shape
+(`int(en.max())`), which returns garbage inside a capture and asked the allocator
+for 1,044,902 GiB. Abandoning the capture left a GPU **CAT error and engine
+reset** on one card. The driver recovered and the host is up with all four render
+devices free, but the sealed launcher greps the whole boot journal for device
+faults and will now refuse every launch on boot `831530c8`. **A reboot is needed
+before GPU work resumes**; nothing else is blocked.
+[Analysis and the one-line fix](experiments/ltx25-b70/notes/vae-graph-capture-blocked-01.md).
+
+Earlier on the previous boot, two spontaneous `xe` GuC hard lockups occurred, the
+second of which froze the host; the first ran ordinary eager clips before graph
+capture existed, so it is not attributable to this work.
+[Incident](experiments/ltx25-b70/notes/xe-lockup-incident-01.md).
+
 **Four-B70 host, September15 03:30 UTC: first exact LTX speedup landed; sampler 1.83x.**
 Per-block `torch.xpu.XPUGraph` capture of the 48 native transformer blocks cuts
 the sampler from 3.669 s to 2.001 s and the warm clip from 6.459 s to 4.792 s,
