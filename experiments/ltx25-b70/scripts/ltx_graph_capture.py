@@ -64,6 +64,10 @@ def attribute_names(value):
         if isinstance(slots, str):
             slots = (slots,)
         for name in slots or ():
+            # __weakref__ and __dict__ appear in __slots__ but are not writable
+            # data attributes (uuid.UUID is one such argument seen at runtime).
+            if name.startswith('__') and name.endswith('__'):
+                continue
             if name not in names and hasattr(value, name):
                 names.append(name)
     names.extend(k for k in getattr(value, '__dict__', {}) if k not in names)
@@ -138,6 +142,11 @@ def mirror(value, make, opaque='refuse'):
     if isinstance(value, dict):
         return {k: mirror(v, make, opaque) for k, v in value.items()}
     if _is_plain_instance(value):
+        # Only objects that actually hold a tensor are rebuilt. Reconstructing
+        # arbitrary immutable values (uuid.UUID and friends) is both pointless
+        # and fragile, and leaving them alone keeps walk() and mirror() aligned.
+        if not contains_tensor(value):
+            return value
         clone = copy.copy(value)
         for k in attribute_names(value):
             object.__setattr__(clone, k, mirror(getattr(value, k), make, opaque))
@@ -171,13 +180,47 @@ def describe(value, path='arg'):
                        f'{type(value).__name__} at {path}')
 
 
-def describe_identity(value, path='options', with_id=True):
-    """Stability signature for an option value that is not numerical input.
+def contains_tensor(value):
+    probe = []
+    walk(value, probe, 'probe', 'skip')
+    return bool(probe)
 
-    Callables, modules and classes are pinned by module, qualified name and
-    object identity: they are owned by the patcher for the life of the process,
-    so a changed identity means the sampler's infrastructure changed and every
-    captured graph must be refused.
+
+def describe_infrastructure(value, path='infrastructure'):
+    """Identity pin for the sampler's own machinery inside the options bag.
+
+    Containers are recursed; everything else is pinned by module, qualified name
+    and object identity. Attributes are deliberately NOT followed: the route
+    registry reaches the model's parameters and each route's own captured static
+    buffers, so recursing would be both enormous and self-referential. These
+    objects are owned by the patcher for the life of the process, so a changed
+    identity means the sampler's infrastructure changed and every captured graph
+    must be refused.
+    """
+    if isinstance(value, (bool, int, float, str, bytes, type(None))):
+        return ('S', repr(value))
+    if isinstance(value, (torch.dtype, torch.device, torch.Size)):
+        return ('S', str(value))
+    if isinstance(value, tuple):
+        return ('tuple', tuple(describe_infrastructure(v, f'{path}[{i}]') for i, v in enumerate(value)))
+    if isinstance(value, list):
+        return ('list', tuple(describe_infrastructure(v, f'{path}[{i}]') for i, v in enumerate(value)))
+    if isinstance(value, dict):
+        return ('dict', tuple((repr(k), describe_infrastructure(value[k], f'{path}[{k!r}]'))
+                              for k in sorted(value, key=repr)))
+    return ('identity', getattr(value, '__module__', type(value).__module__),
+            getattr(value, '__qualname__', type(value).__qualname__), id(value))
+
+
+def describe_option_data(value, path='options'):
+    """Signature for the numerical part of the options bag.
+
+    Tensors and scalars are described exactly, because the block reads flags such
+    as run_vx/run_ax from here and a captured graph bakes those decisions in.
+    An object that holds no tensor is described by type only: ComfyUI puts
+    per-request identity tokens (uuid.UUID) in this bag, and including their
+    values would invalidate every captured graph on every request while changing
+    nothing the block computes.
     """
     if isinstance(value, torch.Tensor):
         return describe(value, path)
@@ -186,19 +229,18 @@ def describe_identity(value, path='options', with_id=True):
     if isinstance(value, (torch.dtype, torch.device, torch.Size)):
         return ('S', str(value))
     if isinstance(value, tuple):
-        return ('tuple', tuple(describe_identity(v, f'{path}[{i}]', with_id) for i, v in enumerate(value)))
+        return ('tuple', tuple(describe_option_data(v, f'{path}[{i}]') for i, v in enumerate(value)))
     if isinstance(value, list):
-        return ('list', tuple(describe_identity(v, f'{path}[{i}]', with_id) for i, v in enumerate(value)))
+        return ('list', tuple(describe_option_data(v, f'{path}[{i}]') for i, v in enumerate(value)))
     if isinstance(value, dict):
-        return ('dict', tuple((repr(k), describe_identity(value[k], f'{path}[{k!r}]', with_id))
+        return ('dict', tuple((repr(k), describe_option_data(value[k], f'{path}[{k!r}]'))
                               for k in sorted(value, key=repr)))
-    if _is_plain_instance(value):
+    if _is_plain_instance(value) and contains_tensor(value):
         return (type(value).__module__ + '.' + type(value).__name__,
-                tuple((k, describe_identity(getattr(value, k), f'{path}.{k}', with_id))
+                tuple((k, describe_option_data(getattr(value, k), f'{path}.{k}'))
                       for k in attribute_names(value)))
-    identity = (getattr(value, '__module__', type(value).__module__),
-                getattr(value, '__qualname__', type(value).__qualname__))
-    return ('opaque',) + identity + ((id(value),) if with_id else ())
+    return ('valueless', getattr(value, '__module__', type(value).__module__),
+            getattr(value, '__qualname__', type(value).__qualname__))
 
 
 def option_census(options):
@@ -432,8 +474,8 @@ class GraphBlockRoute:
         infra, data = split_options(options)
         signature = (self.index, describe(routed['img'], 'img'),
                      tuple(describe(routed.get(name), name) for name in KEYWORDS),
-                     describe_identity(data, 'transformer_options', with_id=False),
-                     describe_identity(infra, 'transformer_options.infrastructure'))
+                     describe_option_data(data, 'transformer_options'),
+                     describe_infrastructure(infra, 'transformer_options.infrastructure'))
         if self.report.first_options is None:
             self.report.first_options = {'block_index': self.index,
                                          'argument_types': describe_types(routed),

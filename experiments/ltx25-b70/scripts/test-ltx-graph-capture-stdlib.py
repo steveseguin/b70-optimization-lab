@@ -5,7 +5,7 @@ No XPU, no ComfyUI model, no server. These check the invariant the capture path
 depends on: `walk` and `mirror` agree on which tensors exist and in what order,
 so filling static buffers by zip() cannot cross-assign or miss one.
 """
-import sys, json, types
+import sys, json, types, uuid
 from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -54,7 +54,9 @@ def require(condition, message):
 
 H = load_helpers()
 walk, mirror, describe = H['walk'], H['mirror'], H['describe']
-split_options, describe_identity = H['split_options'], H['describe_identity']
+split_options = H['split_options']
+describe_infrastructure, describe_option_data = H['describe_infrastructure'], H['describe_option_data']
+attribute_names = H['attribute_names']
 option_census = H['option_census']
 CACHE_KEY = '_ltx_layer_shard_forward_transfers'
 static_like, fill_static, attribute_names = H['static_like'], H['fill_static'], H['attribute_names']
@@ -242,6 +244,8 @@ def runtime_options():
         'run_vx': True, 'run_ax': True, 'a2v_cross_attn': True, 'v2a_cross_attn': True,
         'sample_sigmas': torch.linspace(1.0, 0.0, 5),
         'denoise_mask_function': (lambda x: x),
+        'uuid': uuid.uuid4(),
+        'inner': {'nested': [uuid.uuid4(), torch.randn(2)]},
         'callbacks': {'on_pre_run': {'ltx_layer_shard': [_verify_placement]}},
         'wrappers': {'diffusion_model': {'ltx_layer_shard': [_verify_placement]}},
         'patches_replace': {'dit': {('double_block', 0): Route(block)}},
@@ -253,7 +257,7 @@ def test_split_options_separates_infrastructure():
     infra, data = split_options(runtime_options())
     assert set(infra) == {'callbacks', 'wrappers', 'patches_replace', CACHE_KEY}, sorted(infra)
     assert set(data) == {'run_vx', 'run_ax', 'a2v_cross_attn', 'v2a_cross_attn',
-                         'sample_sigmas', 'denoise_mask_function'}, sorted(data)
+                         'sample_sigmas', 'denoise_mask_function', 'uuid', 'inner'}, sorted(data)
 
 
 def test_infrastructure_is_never_walked_for_tensors():
@@ -262,7 +266,7 @@ def test_infrastructure_is_never_walked_for_tensors():
     infra, data = split_options(runtime_options())
     found = []
     walk(data, found, 'options', 'skip')
-    assert len(found) == 1 and found[0].numel() == 5, found
+    assert len(found) == 2 and sorted(t.numel() for t in found) == [2, 5], found
 
 
 def test_stray_callable_in_options_is_tolerated_not_refused():
@@ -273,7 +277,7 @@ def test_stray_callable_in_options_is_tolerated_not_refused():
     assert torch.equal(m['sample_sigmas'], data['sample_sigmas'])
     a, b = [], []
     walk(data, a, 'o', 'skip'); walk(m, b, 'o', 'skip')
-    assert len(a) == len(b) == 1
+    assert len(a) == len(b) == 2
 
 
 def test_options_walk_still_refuses_by_default():
@@ -286,19 +290,38 @@ def test_options_walk_still_refuses_by_default():
     raise AssertionError('a callable was accepted under the strict policy')
 
 
-def test_describe_identity_pins_infrastructure_by_identity():
+def test_describe_infrastructure_pins_by_identity():
     a = runtime_options(); b = runtime_options()
     ia, _ = split_options(a); ib, _ = split_options(b)
-    assert describe_identity(ia) == describe_identity(ia)
-    assert describe_identity(ia) != describe_identity(ib), 'rebuilt callbacks must not compare equal'
+    assert describe_infrastructure(ia) == describe_infrastructure(ia)
+    assert describe_infrastructure(ia) != describe_infrastructure(ib), 'rebuilt callbacks must not compare equal'
 
 
-def test_describe_identity_without_id_is_stable_across_rebuilds():
+def test_describe_infrastructure_does_not_recurse_into_objects():
+    """patches_replace reaches the model parameters and each route's own static
+    buffers; recursing there would be enormous and self-referential."""
+    class Deep:
+        def __init__(self): self.buffers = [torch.randn(1000) for _ in range(3)]
+    infra = {'patches_replace': {'dit': {('double_block', 0): Deep()}}}
+    d = describe_infrastructure(infra)
+    assert 'identity' in repr(d) and 'torch' not in repr(d), repr(d)[:200]
+
+
+def test_option_data_signature_is_stable_across_requests():
+    """A fresh uuid.UUID per request must not invalidate every captured graph,
+    while a changed behavioural flag must."""
     _, da = split_options(runtime_options())
     _, db = split_options(runtime_options())
-    assert describe_identity(da, with_id=False) == describe_identity(db, with_id=False)
+    assert da['uuid'] != db['uuid']
+    assert describe_option_data(da) == describe_option_data(db)
     db['run_vx'] = False
-    assert describe_identity(da, with_id=False) != describe_identity(db, with_id=False)
+    assert describe_option_data(da) != describe_option_data(db)
+
+
+def test_option_data_signature_still_tracks_tensor_shape():
+    _, da = split_options(runtime_options())
+    db = dict(da); db['sample_sigmas'] = torch.linspace(1.0, 0.0, 9)
+    assert describe_option_data(da) != describe_option_data(db)
 
 
 def test_option_census_records_types_and_shapes():
@@ -306,6 +329,42 @@ def test_option_census_records_types_and_shapes():
     assert census["'sample_sigmas'"]['shape'] == [5]
     assert census["'callbacks'"]['keys'] == ["'on_pre_run'"]
     assert census["'run_vx'"]['value'] == 'True'
+
+
+def test_uuid_and_other_tensorless_objects_pass_through():
+    """uuid.UUID declares __weakref__ in __slots__ and is immutable; rebuilding
+    it raised AttributeError and broke a whole packet."""
+    u = uuid.uuid4()
+    assert not attribute_names(u) or '__weakref__' not in attribute_names(u)
+    m = mirror({'u': u}, static_like, 'skip')
+    assert m['u'] is u
+    found = []
+    walk({'u': u}, found, 'r', 'skip')
+    assert found == []
+
+
+def test_tensorless_object_passes_through_under_strict_policy_too():
+    u = uuid.uuid4()
+    m = mirror({'u': u}, static_like)
+    assert m['u'] is u
+
+
+def test_object_holding_a_tensor_is_still_rebuilt():
+    obj = SlottedMask(1, 1, torch.randn(2), torch.randn(3))
+    m = mirror(obj, lambda t: t.clone() + 5)
+    assert m is not obj and torch.equal(m.noisy_mask, obj.noisy_mask + 5)
+
+
+def test_runtime_options_mirror_end_to_end():
+    _, data = split_options(runtime_options())
+    m = mirror(data, static_like, 'skip')
+    a, b = [], []
+    walk(data, a, 'o', 'skip'); walk(m, b, 'o', 'skip')
+    assert len(a) == len(b) == 2, (len(a), len(b))
+    for x, y in zip(a, b):
+        assert x is not y and torch.equal(x, y)
+    assert m['uuid'] is data['uuid']
+    assert m['denoise_mask_function'] is data['denoise_mask_function']
 
 
 
