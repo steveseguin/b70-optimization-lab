@@ -108,6 +108,8 @@ def na3d(
     kernel_size: list[int],
     is_causal: list[bool] | None = None,
     scale: float | None = None,
+    *,
+    _axis_cache: dict = {},
 ) -> torch.Tensor:
     """3D neighborhood attention over ``(B, T, H, W, NH, HD)`` tensors."""
     batch, t, h, w, nh, hd = q.shape
@@ -143,7 +145,17 @@ def na3d(
                     (slice(rt0, rt1), slice(rh0, rh1), slice(rw0, rw1)),
                 ))
 
-    axis_cache = {}  # Invocation-local, read-only geometry; released on return.
+    # Persistent across calls, deliberately, via the keyword-only default above:
+    # the router admits only these functions plus two pinned budget constants
+    # into its namespace, so a module-level global would not survive. The entries
+    # are pure geometry keyed by (starts, ends, device), so reusing them returns
+    # the identical tensors and is bitwise exact. The lifetime matters for a
+    # second reason: an XPU graph capture records a POINTER to host memory, so
+    # `torch.tensor(starts, device=...)` on a cold miss would be captured as a
+    # dangling host read and replay would silently return wrong values. A warm
+    # cache means the masks are already device-resident when capture happens.
+    # Bounded exactly as before: at most 64 entries of at most 4096 elements.
+    axis_cache = _axis_cache
     out = torch.empty((batch, t, h, w, nh, hd), device=device, dtype=v.dtype)
     for rel, tiles in groups.items():
         mask = _group_mask(rel, q.dtype, device, axis_cache)

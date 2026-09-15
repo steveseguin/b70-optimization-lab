@@ -27,8 +27,11 @@ base = json.loads((Path(a.graph)).read_text())
 assert base['420']['inputs'] == {'placement': 'split', 'encoder_mode': 'control'}
 assert base['422']['inputs']['mode'] == a.mode and base['422']['inputs']['selection'] == 'all48'
 base['422']['inputs']['run_name'] = a.name
-if base['374']['class_type'] == 'LTXNAAxisDecode':
-    base['374']['inputs']['run_name'] = a.name
+# Set run_name on EVERY node that takes one. Naming them individually meant a
+# newly added gate kept its default and its receipt collided on the second clip.
+for _node in base.values():
+    if 'run_name' in _node.get('inputs', {}):
+        _node['inputs']['run_name'] = a.name
 base['421']['inputs']['run_name'] = a.name
 base['414']['inputs']['run_name'] = a.name
 base['75']['inputs']['filename_prefix'] = a.name + '/preview'

@@ -1,0 +1,83 @@
+{
+  "schema": "ltx.fusion-ab.v1",
+  "date_utc": "2026-09-15",
+  "packet": "prepared-encoder-graph-capture-30",
+  "server_run": "encoder-server-graph-capture-30c",
+  "design": "Within one process and in the order that matters: fusion installs at node 424 BEFORE graph capture at 422, so the captured graphs contain the fused projections. Then restore both and re-capture unfused for the comparison.",
+  "rows": [
+    {
+      "run": "g30c-r01-control",
+      "preview_s": 116.0477,
+      "sampler_s": 55.9031,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r02-fused",
+      "preview_s": 13.3889,
+      "sampler_s": 9.2371,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r03-fused",
+      "preview_s": 4.7612,
+      "sampler_s": 1.9538,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r04-fused",
+      "preview_s": 4.6122,
+      "sampler_s": 1.9284,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r05-restored",
+      "preview_s": 14.9023,
+      "sampler_s": 4.9195,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r06-graph",
+      "preview_s": 10.3626,
+      "sampler_s": 7.6385,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r07-graph",
+      "preview_s": 4.6715,
+      "sampler_s": 1.9285,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r08-graph",
+      "preview_s": 4.5934,
+      "sampler_s": 1.9182,
+      "bitwise_all_equal": true
+    },
+    {
+      "run": "g30c-r09-graph",
+      "preview_s": 4.6258,
+      "sampler_s": 1.9293,
+      "bitwise_all_equal": true
+    }
+  ],
+  "result": {
+    "fused_sampler_s": [
+      1.9538,
+      1.9284
+    ],
+    "fused_median": 1.9411,
+    "unfused_sampler_s": [
+      1.9285,
+      1.9182,
+      1.9293
+    ],
+    "unfused_median": 1.9285,
+    "effect_s": 0.0126,
+    "verdict": "neutral; if anything marginally worse, well inside noise"
+  },
+  "all_bitwise_exact": true,
+  "why_the_projection_failed": "The 0.109 s projection came from isolated GEMM timings: three separate audio projections measured 0.1245 ms against 0.0412 ms fused, which is 193 GB/s against 583 GB/s. But those isolated calls each paid per-call dispatch overhead, and graph replay had ALREADY removed it. Inside a captured graph the three separate GEMMs run at roughly 3 x 15.5 us = 46 us, which is already close to the fused 41 us. Fusing removed overhead that was no longer there.",
+  "methodological_lesson": "This is the same error as reading py-spy occupancy at a blocking call as removable latency: a cost measured in one execution context was assumed to exist in another. Any projection for the graph-replayed sampler must be measured under graph replay, not in isolation.",
+  "consequence": "The 61.5%-of-roofline figure still stands, because it was derived by differencing real graph-replay timings at two token counts. But its CAUSE is not per-GEMM dispatch overhead, which graph replay already removes. Whatever keeps the blocks 1.82x above roofline is real GPU-side work, and fusing projections is not the lever for it.",
+  "status": "Fusion is exact and retained as a correct-but-neutral mechanism. Not promoted."
+}

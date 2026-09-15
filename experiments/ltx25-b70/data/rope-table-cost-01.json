@@ -1,0 +1,100 @@
+{
+  "per_site": [
+    {
+      "site": "video pe",
+      "tokens": 64,
+      "half_HD": 2048,
+      "ms": 0.1077,
+      "out_shape": [
+        1,
+        64,
+        32,
+        64,
+        2,
+        2
+      ],
+      "out_MB": 1.0
+    },
+    {
+      "site": "video pe",
+      "tokens": 256,
+      "half_HD": 2048,
+      "ms": 0.1106,
+      "out_shape": [
+        1,
+        256,
+        32,
+        64,
+        2,
+        2
+      ],
+      "out_MB": 4.0
+    },
+    {
+      "site": "audio pe",
+      "tokens": 26,
+      "half_HD": 1024,
+      "ms": 0.1085,
+      "out_shape": [
+        1,
+        26,
+        32,
+        32,
+        2,
+        2
+      ],
+      "out_MB": 0.2
+    },
+    {
+      "site": "av cross video",
+      "tokens": 64,
+      "half_HD": 1024,
+      "ms": 0.1084,
+      "out_shape": [
+        1,
+        64,
+        32,
+        32,
+        2,
+        2
+      ],
+      "out_MB": 0.5
+    },
+    {
+      "site": "av cross video",
+      "tokens": 256,
+      "half_HD": 1024,
+      "ms": 0.1093,
+      "out_shape": [
+        1,
+        256,
+        32,
+        32,
+        2,
+        2
+      ],
+      "out_MB": 2.0
+    },
+    {
+      "site": "av cross audio",
+      "tokens": 26,
+      "half_HD": 1024,
+      "ms": 0.1074,
+      "out_shape": [
+        1,
+        26,
+        32,
+        32,
+        2,
+        2
+      ],
+      "out_MB": 0.2
+    }
+  ],
+  "per_step_stage1_ms": 0.432,
+  "per_step_stage2_ms": 0.436,
+  "clip_total_s": 0.0048,
+  "sampler_s": 1.929,
+  "share_of_sampler_pct": 0.2,
+  "note": "memoising these is bitwise exact: identical inputs, identical output tensors"
+}

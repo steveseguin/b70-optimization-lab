@@ -1,0 +1,3602 @@
+{
+  "block_attribution": {
+    "attribution": [
+      {
+        "a2v_ms": 0.2141,
+        "audio_stream_ms": 0.7962,
+        "baseline_ms": 2.7155,
+        "block_index": 0,
+        "v2a_ms": 0.1972,
+        "video_stream_ms": 1.9355,
+        "video_tokens": 64
+      },
+      {
+        "a2v_ms": 0.3015,
+        "audio_stream_ms": 0.8887,
+        "baseline_ms": 3.5714,
+        "block_index": 0,
+        "v2a_ms": 0.2875,
+        "video_stream_ms": 2.7011,
+        "video_tokens": 256
+      },
+      {
+        "a2v_ms": 0.2114,
+        "audio_stream_ms": 0.8069,
+        "baseline_ms": 2.7606,
+        "block_index": 24,
+        "v2a_ms": 0.1981,
+        "video_stream_ms": 1.9776,
+        "video_tokens": 64
+      },
+      {
+        "a2v_ms": 0.3049,
+        "audio_stream_ms": 0.8969,
+        "baseline_ms": 3.6529,
+        "block_index": 24,
+        "v2a_ms": 0.2776,
+        "video_stream_ms": 2.7842,
+        "video_tokens": 256
+      }
+    ],
+    "iterations": 15,
+    "method": "the model's own run_vx / run_ax / a2v_cross_attn / v2a_cross_attn switches; outputs are meaningless, only timing is",
+    "probe_blocks": [
+      0,
+      24
+    ],
+    "rows": [
+      {
+        "block_index": 0,
+        "ms": 2.7155,
+        "variant": "baseline",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 0,
+        "ms": 1.9193,
+        "variant": "no_audio_stream",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 0,
+        "ms": 2.5014,
+        "variant": "no_a2v",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 0,
+        "ms": 2.5183,
+        "variant": "no_v2a",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 0,
+        "ms": 0.78,
+        "variant": "no_video_stream",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 0,
+        "ms": 3.5714,
+        "variant": "baseline",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 0,
+        "ms": 2.6827,
+        "variant": "no_audio_stream",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 0,
+        "ms": 3.2699,
+        "variant": "no_a2v",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 0,
+        "ms": 3.2839,
+        "variant": "no_v2a",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 0,
+        "ms": 0.8703,
+        "variant": "no_video_stream",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 24,
+        "ms": 2.7606,
+        "variant": "baseline",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 24,
+        "ms": 1.9537,
+        "variant": "no_audio_stream",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 24,
+        "ms": 2.5492,
+        "variant": "no_a2v",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 24,
+        "ms": 2.5625,
+        "variant": "no_v2a",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 24,
+        "ms": 0.783,
+        "variant": "no_video_stream",
+        "video_tokens": 64
+      },
+      {
+        "block_index": 24,
+        "ms": 3.6529,
+        "variant": "baseline",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 24,
+        "ms": 2.756,
+        "variant": "no_audio_stream",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 24,
+        "ms": 3.348,
+        "variant": "no_a2v",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 24,
+        "ms": 3.3753,
+        "variant": "no_v2a",
+        "video_tokens": 256
+      },
+      {
+        "block_index": 24,
+        "ms": 0.8687,
+        "variant": "no_video_stream",
+        "video_tokens": 256
+      }
+    ]
+  },
+  "capture_proof": "each captured graph must replay bit-identically to a fresh eager execution of the same block on the same inputs, and must be proven non-inert by perturbing its static input",
+  "capture_summary_at_restore": {
+    "all_outputs_are_input_buffers": true,
+    "argument_types": {
+      "a_context": "torch.Tensor",
+      "a_cross_gate_timestep": "torch.Tensor",
+      "a_cross_pe": "builtins.tuple",
+      "a_cross_scale_shift_timestep": "torch.Tensor",
+      "a_pe": "builtins.tuple",
+      "a_prompt_timestep": "torch.Tensor",
+      "a_timestep": "torch.Tensor",
+      "attention_mask": "builtins.NoneType",
+      "img": "builtins.tuple",
+      "self_attention_mask": "builtins.NoneType",
+      "v_context": "torch.Tensor",
+      "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+      "v_cross_pe": "builtins.tuple",
+      "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+      "v_pe": "builtins.tuple",
+      "v_prompt_timestep": "torch.Tensor",
+      "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+    },
+    "blocks_captured": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "captured_graphs": 96,
+    "captures": [
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 0,
+        "mirrored_tensors": 18,
+        "option_census": {
+          "'_ltx_layer_shard_forward_transfers'": {
+            "keys": [],
+            "type": "builtins.dict"
+          },
+          "'callbacks'": {
+            "keys": [
+              "'on_pre_run'"
+            ],
+            "type": "builtins.dict"
+          },
+          "'cond_or_uncond'": {
+            "length": 1,
+            "type": "builtins.list"
+          },
+          "'patches_replace'": {
+            "keys": [
+              "'dit'"
+            ],
+            "type": "builtins.dict"
+          },
+          "'prefetch_dynamic_vbars'": {
+            "type": "builtins.bool",
+            "value": "False"
+          },
+          "'sample_sigmas'": {
+            "device": "xpu:0",
+            "dtype": "torch.float32",
+            "shape": [
+              9
+            ],
+            "type": "torch.Tensor"
+          },
+          "'sigmas'": {
+            "device": "xpu:0",
+            "dtype": "torch.float32",
+            "shape": [
+              1
+            ],
+            "type": "torch.Tensor"
+          },
+          "'uuids'": {
+            "length": 1,
+            "type": "builtins.list"
+          },
+          "'wrappers'": {
+            "keys": [
+              "'diffusion_model'"
+            ],
+            "type": "builtins.dict"
+          }
+        },
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 1,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 2,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 3,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 4,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 5,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 6,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 7,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 8,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 9,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 10,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 11,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 12,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 13,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 14,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 15,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 16,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 17,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 18,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 19,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 20,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "35811252f5983f5d9800ca3204e815de5682422893f432f69f4404bc882481a4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 21,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 22,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 23,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 24,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 25,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 26,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 27,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 28,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 29,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 30,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 31,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 32,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 33,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 34,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 35,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 36,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 37,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 38,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 39,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 40,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 41,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 42,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 43,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 44,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 45,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 46,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 47,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "145335b02678afdfa941cc20e72a7fbfc05c99e1aac7a0dcb4cc7ac4f9a1d36f"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 0,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 1,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 2,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 3,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 4,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 5,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 6,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 7,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 8,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 9,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 10,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 11,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 12,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 13,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 14,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 15,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 16,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 17,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 18,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 19,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 20,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "f80519159d1d6678fe16235c66603c552522910e51462f5d6f97306b9fc02463"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 21,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 22,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 23,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 24,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 25,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 26,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 27,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 28,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 29,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 30,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 31,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 32,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 33,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 34,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 35,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 36,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 37,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 38,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 39,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 40,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 41,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 42,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 43,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 44,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 45,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 46,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      },
+      {
+        "argument_types": {
+          "a_context": "torch.Tensor",
+          "a_cross_gate_timestep": "torch.Tensor",
+          "a_cross_pe": "builtins.tuple",
+          "a_cross_scale_shift_timestep": "torch.Tensor",
+          "a_pe": "builtins.tuple",
+          "a_prompt_timestep": "torch.Tensor",
+          "a_timestep": "torch.Tensor",
+          "attention_mask": "builtins.NoneType",
+          "img": "builtins.tuple",
+          "self_attention_mask": "builtins.NoneType",
+          "v_context": "torch.Tensor",
+          "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_cross_pe": "builtins.tuple",
+          "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+          "v_pe": "builtins.tuple",
+          "v_prompt_timestep": "torch.Tensor",
+          "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+        },
+        "block_index": 47,
+        "mirrored_tensors": 18,
+        "output_is_input_buffer": true,
+        "signature_sha256": "5d4d301679ad9b5672789335dc79da60c8823bd6255cf35e37086c0dc6ec38f4"
+      }
+    ],
+    "copies_per_replay": 0.733,
+    "devices": [
+      "xpu:0",
+      "xpu:1"
+    ],
+    "first_call_options": {
+      "argument_types": {
+        "a_context": "torch.Tensor",
+        "a_cross_gate_timestep": "torch.Tensor",
+        "a_cross_pe": "builtins.tuple",
+        "a_cross_scale_shift_timestep": "torch.Tensor",
+        "a_pe": "builtins.tuple",
+        "a_prompt_timestep": "torch.Tensor",
+        "a_timestep": "torch.Tensor",
+        "attention_mask": "builtins.NoneType",
+        "img": "builtins.tuple",
+        "self_attention_mask": "builtins.NoneType",
+        "v_context": "torch.Tensor",
+        "v_cross_gate_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+        "v_cross_pe": "builtins.tuple",
+        "v_cross_scale_shift_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep",
+        "v_pe": "builtins.tuple",
+        "v_prompt_timestep": "torch.Tensor",
+        "v_timestep": "comfy.ldm.lightricks.av_model.CompressedTimestep"
+      },
+      "block_index": 0,
+      "options": {
+        "'_ltx_layer_shard_forward_transfers'": {
+          "keys": [],
+          "type": "builtins.dict"
+        },
+        "'callbacks'": {
+          "keys": [
+            "'on_pre_run'"
+          ],
+          "type": "builtins.dict"
+        },
+        "'cond_or_uncond'": {
+          "length": 1,
+          "type": "builtins.list"
+        },
+        "'patches_replace'": {
+          "keys": [
+            "'dit'"
+          ],
+          "type": "builtins.dict"
+        },
+        "'prefetch_dynamic_vbars'": {
+          "type": "builtins.bool",
+          "value": "False"
+        },
+        "'sample_sigmas'": {
+          "device": "xpu:0",
+          "dtype": "torch.float32",
+          "shape": [
+            9
+          ],
+          "type": "torch.Tensor"
+        },
+        "'sigmas'": {
+          "device": "xpu:0",
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ],
+          "type": "torch.Tensor"
+        },
+        "'uuids'": {
+          "length": 1,
+          "type": "builtins.list"
+        },
+        "'wrappers'": {
+          "keys": [
+            "'diffusion_model'"
+          ],
+          "type": "builtins.dict"
+        }
+      }
+    },
+    "mirrored_tensor_counts": [
+      18
+    ],
+    "replays": 1056,
+    "signatures_per_block": [
+      2
+    ],
+    "static_buffer_copies": 774,
+    "transformer_options_key_sets": [
+      {
+        "infrastructure": [
+          "_ltx_layer_shard_forward_transfers",
+          "callbacks",
+          "patches_replace",
+          "wrappers"
+        ],
+        "mirrored": [
+          "cond_or_uncond",
+          "prefetch_dynamic_vbars",
+          "sample_sigmas",
+          "sigmas",
+          "uuids"
+        ]
+      }
+    ]
+  },
+  "extension_sha256s": {
+    "graph_capture_node.py": "4c608bc238d4ef168696de01835fde3f268b5f2932e5807eb551ce21a6a92c4e",
+    "ltx_graph_capture.py": "383d1b591e3a58045f9a9ddbe3b42991ae92848368d0381c1b355e01a376fbfa"
+  },
+  "graph_timing": {
+    "iterations": 20,
+    "per_stage": {
+      "256": {
+        "blocks": 48,
+        "mean_block_ms": 3.5987,
+        "sum_ms": 172.738
+      },
+      "64": {
+        "blocks": 48,
+        "mean_block_ms": 2.7491,
+        "sum_ms": 131.958
+      }
+    },
+    "rows": [
+      {
+        "audio_tokens": 26,
+        "block_index": 0,
+        "device": "xpu:0",
+        "replay_ms": 3.0671,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 0,
+        "device": "xpu:0",
+        "replay_ms": 3.5111,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 1,
+        "device": "xpu:0",
+        "replay_ms": 2.7235,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 1,
+        "device": "xpu:0",
+        "replay_ms": 3.5552,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 2,
+        "device": "xpu:0",
+        "replay_ms": 2.7119,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 2,
+        "device": "xpu:0",
+        "replay_ms": 3.564,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 3,
+        "device": "xpu:0",
+        "replay_ms": 2.703,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 3,
+        "device": "xpu:0",
+        "replay_ms": 3.5411,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 4,
+        "device": "xpu:0",
+        "replay_ms": 2.7109,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 4,
+        "device": "xpu:0",
+        "replay_ms": 3.5317,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 5,
+        "device": "xpu:0",
+        "replay_ms": 2.7158,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 5,
+        "device": "xpu:0",
+        "replay_ms": 3.5368,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 6,
+        "device": "xpu:0",
+        "replay_ms": 2.7194,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 6,
+        "device": "xpu:0",
+        "replay_ms": 3.5301,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 7,
+        "device": "xpu:0",
+        "replay_ms": 2.7193,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 7,
+        "device": "xpu:0",
+        "replay_ms": 3.5379,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 8,
+        "device": "xpu:0",
+        "replay_ms": 2.73,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 8,
+        "device": "xpu:0",
+        "replay_ms": 3.5459,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 9,
+        "device": "xpu:0",
+        "replay_ms": 2.7139,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 9,
+        "device": "xpu:0",
+        "replay_ms": 3.5316,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 10,
+        "device": "xpu:0",
+        "replay_ms": 2.7217,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 10,
+        "device": "xpu:0",
+        "replay_ms": 3.5457,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 11,
+        "device": "xpu:0",
+        "replay_ms": 2.7192,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 11,
+        "device": "xpu:0",
+        "replay_ms": 3.5612,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 12,
+        "device": "xpu:0",
+        "replay_ms": 2.7177,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 12,
+        "device": "xpu:0",
+        "replay_ms": 3.552,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 13,
+        "device": "xpu:0",
+        "replay_ms": 2.7205,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 13,
+        "device": "xpu:0",
+        "replay_ms": 3.5618,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 14,
+        "device": "xpu:0",
+        "replay_ms": 2.7226,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 14,
+        "device": "xpu:0",
+        "replay_ms": 3.562,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 15,
+        "device": "xpu:0",
+        "replay_ms": 2.7198,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 15,
+        "device": "xpu:0",
+        "replay_ms": 3.5686,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 16,
+        "device": "xpu:0",
+        "replay_ms": 2.7166,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 16,
+        "device": "xpu:0",
+        "replay_ms": 3.5608,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 17,
+        "device": "xpu:0",
+        "replay_ms": 2.7242,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 17,
+        "device": "xpu:0",
+        "replay_ms": 3.5738,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 18,
+        "device": "xpu:0",
+        "replay_ms": 2.7162,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 18,
+        "device": "xpu:0",
+        "replay_ms": 3.5613,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 19,
+        "device": "xpu:0",
+        "replay_ms": 2.7247,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 19,
+        "device": "xpu:0",
+        "replay_ms": 3.5662,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 20,
+        "device": "xpu:0",
+        "replay_ms": 2.7152,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 20,
+        "device": "xpu:0",
+        "replay_ms": 3.576,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 21,
+        "device": "xpu:1",
+        "replay_ms": 2.9329,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 21,
+        "device": "xpu:1",
+        "replay_ms": 3.5945,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 22,
+        "device": "xpu:1",
+        "replay_ms": 2.7596,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 22,
+        "device": "xpu:1",
+        "replay_ms": 3.6488,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 23,
+        "device": "xpu:1",
+        "replay_ms": 2.7407,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 23,
+        "device": "xpu:1",
+        "replay_ms": 3.6237,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 24,
+        "device": "xpu:1",
+        "replay_ms": 2.7483,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 24,
+        "device": "xpu:1",
+        "replay_ms": 3.619,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 25,
+        "device": "xpu:1",
+        "replay_ms": 2.7506,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 25,
+        "device": "xpu:1",
+        "replay_ms": 3.64,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 26,
+        "device": "xpu:1",
+        "replay_ms": 2.7549,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 26,
+        "device": "xpu:1",
+        "replay_ms": 3.6366,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 27,
+        "device": "xpu:1",
+        "replay_ms": 2.7492,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 27,
+        "device": "xpu:1",
+        "replay_ms": 3.6437,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 28,
+        "device": "xpu:1",
+        "replay_ms": 2.7445,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 28,
+        "device": "xpu:1",
+        "replay_ms": 3.6118,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 29,
+        "device": "xpu:1",
+        "replay_ms": 2.7665,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 29,
+        "device": "xpu:1",
+        "replay_ms": 3.6502,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 30,
+        "device": "xpu:1",
+        "replay_ms": 2.7528,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 30,
+        "device": "xpu:1",
+        "replay_ms": 3.6383,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 31,
+        "device": "xpu:1",
+        "replay_ms": 2.7564,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 31,
+        "device": "xpu:1",
+        "replay_ms": 3.6445,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 32,
+        "device": "xpu:1",
+        "replay_ms": 2.7518,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 32,
+        "device": "xpu:1",
+        "replay_ms": 3.648,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 33,
+        "device": "xpu:1",
+        "replay_ms": 2.7471,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 33,
+        "device": "xpu:1",
+        "replay_ms": 3.6373,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 34,
+        "device": "xpu:1",
+        "replay_ms": 2.7574,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 34,
+        "device": "xpu:1",
+        "replay_ms": 3.6327,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 35,
+        "device": "xpu:1",
+        "replay_ms": 2.758,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 35,
+        "device": "xpu:1",
+        "replay_ms": 3.633,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 36,
+        "device": "xpu:1",
+        "replay_ms": 2.7547,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 36,
+        "device": "xpu:1",
+        "replay_ms": 3.6487,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 37,
+        "device": "xpu:1",
+        "replay_ms": 2.7582,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 37,
+        "device": "xpu:1",
+        "replay_ms": 3.6487,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 38,
+        "device": "xpu:1",
+        "replay_ms": 2.7611,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 38,
+        "device": "xpu:1",
+        "replay_ms": 3.6317,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 39,
+        "device": "xpu:1",
+        "replay_ms": 2.7588,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 39,
+        "device": "xpu:1",
+        "replay_ms": 3.6338,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 40,
+        "device": "xpu:1",
+        "replay_ms": 2.7605,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 40,
+        "device": "xpu:1",
+        "replay_ms": 3.6104,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 41,
+        "device": "xpu:1",
+        "replay_ms": 2.756,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 41,
+        "device": "xpu:1",
+        "replay_ms": 3.6224,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 42,
+        "device": "xpu:1",
+        "replay_ms": 2.7541,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 42,
+        "device": "xpu:1",
+        "replay_ms": 3.6492,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 43,
+        "device": "xpu:1",
+        "replay_ms": 2.7537,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 43,
+        "device": "xpu:1",
+        "replay_ms": 3.6419,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 44,
+        "device": "xpu:1",
+        "replay_ms": 2.7552,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 44,
+        "device": "xpu:1",
+        "replay_ms": 3.6467,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 45,
+        "device": "xpu:1",
+        "replay_ms": 2.7429,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 45,
+        "device": "xpu:1",
+        "replay_ms": 3.6354,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 46,
+        "device": "xpu:1",
+        "replay_ms": 2.7526,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 46,
+        "device": "xpu:1",
+        "replay_ms": 3.6475,
+        "video_tokens": 256
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 47,
+        "device": "xpu:1",
+        "replay_ms": 2.7464,
+        "video_tokens": 64
+      },
+      {
+        "audio_tokens": 26,
+        "block_index": 47,
+        "device": "xpu:1",
+        "replay_ms": 3.6445,
+        "video_tokens": 256
+      }
+    ],
+    "timed_graphs": 96
+  },
+  "installed_blocks": [],
+  "memory_after": {
+    "xpu:0": {
+      "allocated_bytes": 22145149952,
+      "reserved_bytes": 25331499008
+    },
+    "xpu:1": {
+      "allocated_bytes": 20902217728,
+      "reserved_bytes": 24836571136
+    },
+    "xpu:2": {
+      "allocated_bytes": 26315823616,
+      "reserved_bytes": 26558332928
+    },
+    "xpu:3": {
+      "allocated_bytes": 1854981632,
+      "reserved_bytes": 1887436800
+    }
+  },
+  "memory_before": {
+    "xpu:0": {
+      "allocated_bytes": 22219979776,
+      "reserved_bytes": 25331499008
+    },
+    "xpu:1": {
+      "allocated_bytes": 20951906304,
+      "reserved_bytes": 24809308160
+    },
+    "xpu:2": {
+      "allocated_bytes": 26315823616,
+      "reserved_bytes": 29618077696
+    },
+    "xpu:3": {
+      "allocated_bytes": 1854981632,
+      "reserved_bytes": 1887436800
+    }
+  },
+  "mode": "restored",
+  "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "passed": true,
+  "restored_blocks": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47
+  ],
+  "run_name": "g31-r03-restored",
+  "schema": "ltx.graph-capture-request.v1",
+  "seconds": 9.101596643999073,
+  "selection": "all48",
+  "server_identity_sha256": "474d9c32fe2d7a21abf632f54d55df03b5fc2a6d59a29895b8c65cb92a91daff",
+  "shard": {
+    "block_count": 48,
+    "numerical_validation": "pending",
+    "original_bytes": 42008091200,
+    "primary": "xpu:0",
+    "primary_bytes": 21127647680,
+    "secondary": "xpu:1",
+    "secondary_bytes": 20880443520,
+    "split_index": 21
+  },
+  "warmup_iterations": 3
+}

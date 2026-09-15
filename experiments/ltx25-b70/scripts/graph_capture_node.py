@@ -123,6 +123,7 @@ class LTXGraphCaptureGate:
                 # events cannot be profiled, so replaying each captured graph with
                 # a host sync is the only ground truth for what the 48 blocks cost.
                 report['graph_timing'] = adapter.measure(model, originals)
+                report['block_attribution'] = adapter.attribute(model, originals)
                 adapter.restore(model, originals)
                 report['restored_blocks'] = sorted(originals)
                 report['capture_summary_at_restore'] = census.summary()

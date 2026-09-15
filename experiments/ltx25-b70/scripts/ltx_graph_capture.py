@@ -722,6 +722,96 @@ def measure(patcher, originals, iterations=20):
     return summary
 
 
+def attribute(patcher, originals, iterations=15, probe_blocks=(0, 24)):
+    """Attribute a REAL block's GPU time using the model's own stream switches.
+
+    BasicAVTransformerBlock.forward already reads run_vx, run_ax, a2v_cross_attn
+    and v2a_cross_attn from transformer_options, so a variant can be captured and
+    timed without touching numerical source. Outputs are meaningless; only the
+    timing is. Run at restore time, when corrupting the shared buffers is safe.
+    """
+    diffusion, registry = validate_patcher(patcher)
+    variants = (('baseline', {}), ('no_audio_stream', {'run_ax': False}),
+                ('no_a2v', {'a2v_cross_attn': False}), ('no_v2a', {'v2a_cross_attn': False}),
+                ('no_video_stream', {'run_vx': False}))
+    rows = []
+    for index in sorted(originals):
+        if index not in probe_blocks:
+            continue
+        route = registry[('double_block', index)]
+        require(type(route) is GraphBlockRoute, 'Expected a graph route at block ' + str(index))
+        for key in list(route.entries):
+            slot = route.group.slots[key]
+            snapshot = [t.clone() for t in slot.flat]
+
+            def reset():
+                for buffer, value in zip(slot.flat, snapshot):
+                    fill_static(buffer, value)
+
+            tokens = int(slot.img[0].shape[1])
+            for name, override in variants:
+                options = {**slot.kw['transformer_options'], **override}
+                kwargs = {**slot.kw, 'transformer_options': options}
+                try:
+                    reset()
+                    graph = torch.xpu.XPUGraph()
+                    with torch.xpu.device(route.device):
+                        stream = torch.xpu.Stream(device=route.device)
+                        stream.wait_stream(torch.xpu.current_stream(route.device))
+                        with torch.xpu.stream(stream), torch.no_grad():
+                            for _ in range(2):
+                                route._invoke(mirror(slot.img, lambda t: t.clone()), kwargs)
+                        torch.xpu.current_stream(route.device).wait_stream(stream)
+                        torch.xpu.synchronize(route.device)
+                        reset()
+                        with torch.no_grad(), torch.xpu.graph(
+                                graph, stream=torch.xpu.Stream(device=route.device)):
+                            route._invoke(slot.img, kwargs)
+                        torch.xpu.synchronize(route.device)
+                        for _ in range(3):
+                            graph.replay()
+                        torch.xpu.synchronize(route.device)
+                        start = time.perf_counter()
+                        for _ in range(iterations):
+                            graph.replay()
+                        torch.xpu.synchronize(route.device)
+                    rows.append({'block_index': index, 'video_tokens': tokens, 'variant': name,
+                                 'ms': round((time.perf_counter() - start) / iterations * 1e3, 4)})
+                    graph.reset()
+                except BaseException as error:
+                    rows.append({'block_index': index, 'video_tokens': tokens, 'variant': name,
+                                 'error': repr(error)[:160]})
+                    try:
+                        graph.reset()
+                    except BaseException:
+                        pass
+                    torch.xpu.synchronize(route.device)
+            reset()
+    # difference each variant against its own baseline
+    summary = {}
+    for row in rows:
+        if 'ms' not in row:
+            continue
+        cell = summary.setdefault((row['block_index'], row['video_tokens']), {})
+        cell[row['variant']] = row['ms']
+    attribution = []
+    for (index, tokens), cell in sorted(summary.items()):
+        base = cell.get('baseline')
+        if base is None:
+            continue
+        attribution.append({'block_index': index, 'video_tokens': tokens, 'baseline_ms': base,
+                            'audio_stream_ms': round(base - cell['no_audio_stream'], 4)
+                                               if 'no_audio_stream' in cell else None,
+                            'a2v_ms': round(base - cell['no_a2v'], 4) if 'no_a2v' in cell else None,
+                            'v2a_ms': round(base - cell['no_v2a'], 4) if 'no_v2a' in cell else None,
+                            'video_stream_ms': round(base - cell['no_video_stream'], 4)
+                                               if 'no_video_stream' in cell else None})
+    return {'iterations': iterations, 'probe_blocks': list(probe_blocks),
+            'method': "the model's own run_vx / run_ax / a2v_cross_attn / v2a_cross_attn switches; "
+                      'outputs are meaningless, only timing is',
+            'attribution': attribution, 'rows': rows}
+
+
 def restore(patcher, originals):
     """Put the original native routes back and drop every captured graph."""
     diffusion, registry = validate_patcher(patcher)
