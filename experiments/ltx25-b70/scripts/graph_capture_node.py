@@ -20,6 +20,8 @@ from encoder_diagnostics import _context
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 SELECTIONS = {'all48': tuple(range(48)), 'single24': (24,), 'boundary4': (0, 20, 21, 47)}
 MODES = ('original', 'graph', 'restored')
+# How many consecutive same-device blocks one graph may hold. 1 is per-block.
+CHAINS = ('1', '4', '8', '48')
 _installed = None      # (patcher, originals, report, selection)
 _original_model = None
 _failed = False
@@ -50,25 +52,28 @@ class LTXGraphCaptureGate:
     def INPUT_TYPES(cls):
         return {'required': {'model': ('MODEL',), 'mode': (list(MODES),),
                              'selection': (list(SELECTIONS),),
+                             'chain': (list(CHAINS),),
                              'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
 
     RETURN_TYPES = ('MODEL',)
     FUNCTION = 'apply'
     CATEGORY = 'lab/validation'
 
-    def apply(self, model, mode, selection, run_name):
+    def apply(self, model, mode, selection, run_name, chain='1'):
         global _failed
         try:
-            return self._apply(model, mode, selection, run_name)
+            return self._apply(model, mode, selection, run_name, chain)
         except BaseException:
             # Sticky: preserve the process and evidence, never retry or reset.
             _failed = True
             raise
 
-    def _apply(self, model, mode, selection, run_name):
+    def _apply(self, model, mode, selection, run_name, chain):
         global _installed, _original_model
         require(not _failed, 'Previous graph-capture failure; halt submissions and inspect evidence')
         require(mode in MODES and selection in SELECTIONS, 'Only preregistered modes/selections are admitted')
+        require(chain in CHAINS, 'Only preregistered chain lengths are admitted')
+        chain = int(chain)
         require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
                 'Unsafe request name')
         run, identity = _context()
@@ -91,7 +96,7 @@ class LTXGraphCaptureGate:
         require(model.ltx_layer_shard_report['split_index'] == 21, 'Expected the native 21/27 split')
 
         report = {'schema': 'ltx.graph-capture-request.v1', **identity, 'run_name': run_name,
-                  'mode': mode, 'selection': selection, 'extension_sha256s': hashes,
+                  'mode': mode, 'selection': selection, 'chain': chain, 'extension_sha256s': hashes,
                   'shard': dict(model.ltx_layer_shard_report),
                   'warmup_iterations': adapter.WARMUP_ITERATIONS,
                   'capture_proof': 'each captured graph must replay bit-identically to a fresh eager '
@@ -106,13 +111,13 @@ class LTXGraphCaptureGate:
             elif mode == 'graph':
                 if _installed is None:
                     indices = SELECTIONS[selection]
-                    census, originals = adapter.install(model, indices)
-                    _installed = (model, originals, census, selection)
+                    census, originals = adapter.install(model, indices, chain=chain)
+                    _installed = (model, originals, census, (selection, chain))
                     report['installed_now'] = True
                 else:
                     patcher, originals, census, previous = _installed
-                    require(patcher is model and previous == selection,
-                            'A different graph selection is already installed')
+                    require(patcher is model and previous == (selection, chain),
+                            'A different graph selection or chain length is already installed')
                     report['installed_now'] = False
                 report['installed_blocks'] = sorted(_installed[1])
             else:
