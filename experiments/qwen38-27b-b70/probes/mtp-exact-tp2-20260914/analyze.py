@@ -7,7 +7,10 @@ import math
 from pathlib import Path
 import statistics
 
+import nan_analysis
+
 SHAPES = (1, 2, 512, 4096)
+RULES = nan_analysis.RULES  # nan-class: user decision 2026-09-15, any two NaNs count as equal.
 KINDS = ("varied", "cancel", "signed_zero", "subnormal", "overflow", "rounding", "nan_inf", "nan_matrix")
 
 
@@ -49,16 +52,19 @@ def paired_latency(ranks):
             "threshold": "at least 5% paired median improvement and all five blocks positive"}
 
 
-def analyze(directory):
-    result = {"schema": "neural.download.exact-tp2-operator-screen.v1", "shapes": [],
+def analyze(directory, nan_rule="bit-exact", shapes=SHAPES):
+    if nan_rule not in RULES:
+        raise ValueError("unknown NaN comparison rule")
+    result = {"schema": "neural.download.exact-tp2-operator-screen.v1", "shapes": [], "nan_rule": nan_rule,
               "runtime_qualified": False, "promoted": False, "errors": []}
     quality = []
     for rank in range(2):
         quality.append(json.loads((directory / f"rank{rank}-quality.json").read_text()))
         if not (directory / f"rank{rank}-DONE.json").is_file():
             result["errors"].append(f"rank{rank} has no completion receipt")
-    for rows in SHAPES:
+    for rows in shapes:
         hashes = []
+        bit_exact = 0
         try:
             for rank in range(2):
                 records = [r for r in quality[rank] if r["rows"] == rows]
@@ -73,19 +79,26 @@ def analyze(directory):
                         raise ValueError("raw output length mismatch")
                     if not record["exact"] or not record["input_unchanged"]:
                         raise ValueError("operator quality or input-lifetime failure")
-                    actual = sha(candidate)
-                    if actual != sha(control) or actual != record["candidate_sha256"] or actual != record["xccl_sha256"]:
-                        raise ValueError("raw XCCL output or evidence hash mismatch")
-                    by_key[(record["kind"], record["repeat"])] = actual
+                    actual, reference = sha(candidate), sha(control)
+                    if actual != record["candidate_sha256"] or reference != record["xccl_sha256"]:
+                        raise ValueError("raw output differs from its evidence hash")
+                    if nan_rule == "bit-exact":
+                        if actual != reference:
+                            raise ValueError("raw XCCL output or evidence hash mismatch")
+                    elif nan_analysis.class_mismatch_count(candidate.read_bytes(), control.read_bytes()):
+                        raise ValueError("candidate differs from XCCL outside NaN-class equality")
+                    bit_exact += actual == reference
+                    by_key[(record["kind"], record["repeat"])] = (actual, reference)
                 hashes.append(by_key)
             if hashes[0] != hashes[1]:
                 raise ValueError("rank output disagreement")
             ranks = [json.loads((directory / f"rank{rank}-rows{rows}-timing.json").read_text()) for rank in range(2)]
-            result["shapes"].append({"rows": rows, "elements": rows * 5120,
-                                     "quality_passed": True, **paired_latency(ranks)})
+            result["shapes"].append({"rows": rows, "elements": rows * 5120, "quality_passed": True,
+                                     "bit_exact_cases": bit_exact, "quality_cases": 4 * len(KINDS),
+                                     **paired_latency(ranks)})
         except (OSError, ValueError, KeyError, TypeError) as exc:
             result["errors"].append(f"rows{rows}: {type(exc).__name__}: {exc}")
-    result["quality_passed"] = not result["errors"] and len(result["shapes"]) == len(SHAPES)
+    result["quality_passed"] = not result["errors"] and len(result["shapes"]) == len(shapes)
     result["qualified_operator_shapes"] = [s["rows"] for s in result["shapes"] if s["operator_speed_gate"]] if result["quality_passed"] else []
     result["endpoint_integration_admitted"] = bool(result["qualified_operator_shapes"])
     return result
@@ -95,5 +108,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("directory", type=Path)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--nan-rule", choices=RULES, default="bit-exact")
     args = ap.parse_args()
-    args.out.write_text(json.dumps(analyze(args.directory), indent=2) + "\n")
+    args.out.write_text(json.dumps(analyze(args.directory, args.nan_rule), indent=2) + "\n")

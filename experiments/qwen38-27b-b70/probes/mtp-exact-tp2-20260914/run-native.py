@@ -620,7 +620,9 @@ def main_new_stage(args):
                 if analysis["status"] not in ("selected", "no-single-formulation-matches", "xccl-ranks-disagree"):
                     raise RuntimeError(f"NaN-semantics evidence incomplete: {analysis['errors']}")
             else:
-                result = helper.run(["python3", str(snapshot / "analyze.py"), str(results), "--out", str(out / "analysis.json")], check=False, timeout=120)
+                rule = (admission["nan_semantics_receipt"] or {}).get("nan_rule", "bit-exact")
+                result = helper.run(["python3", str(snapshot / "analyze.py"), str(results), "--out", str(out / "analysis.json"),
+                                     "--nan-rule", rule], check=False, timeout=900)
                 if result.returncode:
                     raise RuntimeError("CPU result analysis failed")
                 analysis = json.loads((out / "analysis.json").read_text())
