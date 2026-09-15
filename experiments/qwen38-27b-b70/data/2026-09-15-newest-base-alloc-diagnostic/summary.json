@@ -1,0 +1,72 @@
+{
+  "schema": "neural.download.newest-base-alloc-diagnostic.v1",
+  "finished": "2026-09-15T04:44:50.398735+00:00",
+  "results": [
+    {
+      "label": "one-gpu-default",
+      "env": {
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "ZE_AFFINITY_MASK": "0"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "guard_fired": false,
+      "fault_lines": [],
+      "driver_growth_gib": 0.128,
+      "min_available_gib": 12.933,
+      "prime_exports": 0,
+      "alloc_done": true,
+      "guard_samples": 28,
+      "container_id": "38c41148ecf1f0ba5f4eed8cf5d32f5d62986047f66ffaf22fbc377255f673b2",
+      "guard_exit": 0,
+      "stop_confirmed": true
+    },
+    {
+      "label": "two-gpu-expandable",
+      "env": {
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "PYTORCH_ALLOC_CONF": "expandable_segments:True"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "guard_fired": false,
+      "fault_lines": [],
+      "driver_growth_gib": 0.063,
+      "min_available_gib": 12.913,
+      "prime_exports": 14,
+      "alloc_done": true,
+      "guard_samples": 22,
+      "container_id": "82282ed1cbfbe11b2c4dd84bbb05600f270de43faaa3b6e0b590ce1bd1aeadeb",
+      "guard_exit": 0,
+      "stop_confirmed": true
+    },
+    {
+      "label": "two-gpu-default",
+      "env": {
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1",
+        "ZE_AFFINITY_MASK": "0,1"
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "guard_fired": false,
+      "fault_lines": [],
+      "driver_growth_gib": 2.047,
+      "min_available_gib": 10.899,
+      "prime_exports": 16,
+      "alloc_done": true,
+      "guard_samples": 22,
+      "container_id": "c58164d74eaa6cc4cbb0cac7380a5a2286a4d95379bb850356c5c47a0fecbe56",
+      "guard_exit": 0,
+      "stop_confirmed": true
+    }
+  ],
+  "verdict": {
+    "expandable_two_gpu_clean": true,
+    "one_gpu_clean": true,
+    "default_two_gpu_reproduces": true,
+    "gpu_fault": false,
+    "model_launch_admissible": true
+  },
+  "runs_planned": 3
+}

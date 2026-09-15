@@ -24,11 +24,31 @@ MODEL_DIR = Path('/mnt/fast-ai/llm-models/qwen3.8-27b-fp8')
 # model was constructed (notes/2026-09-15-research-load-host-oom.md).
 QUALIFIED_ENV = {'PYTORCH_ALLOC_CONF': 'expandable_segments:True', 'FI_PROVIDER': 'tcp',
                  'FI_TCP_IFACE': 'lo', 'PYTHONHASHSEED': '0', 'TORCHINDUCTOR_DETERMINISTIC': '1'}
+GUARD = Path(__file__).with_name('host_memory_guard.py')
+PASSWORD_FILE = Path('/home/steve/SUDO_PASSWORD.txt')
 
 
-def qualified_env_missing(control):
+def qualified_env(control):
     env = dict(e.split('=', 1) for e in control['env'])
-    return sorted(key for key, value in QUALIFIED_ENV.items() if env.get(key) != value)
+    conflicts = sorted(key for key, value in QUALIFIED_ENV.items() if key in env and env[key] != value)
+    if conflicts:
+        raise RuntimeError('Recorded contract conflicts with the qualified environment: ' + ', '.join(conflicts))
+    return {**env, **QUALIFIED_ENV}
+
+
+def load_guard():
+    spec = importlib.util.spec_from_file_location('host_memory_guard', GUARD)
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    return module
+
+
+def start_guard(container_id, out, baseline):
+    """Root guard kills the container cgroup on driver-held RAM growth; no Docker calls."""
+    proc = subprocess.Popen(['sudo', '-S', '-p', '', 'python3', str(GUARD), '--container-id', container_id,
+                             '--out', str(out), '--baseline-unaccounted', str(baseline)],
+                            stdin=subprocess.PIPE, text=True, start_new_session=True)
+    proc.stdin.write(PASSWORD_FILE.read_text().strip() + '\n'); proc.stdin.close()
+    return proc
 
 
 def write(path, value):
@@ -119,9 +139,7 @@ def main():
     out = a.out.resolve()
     if (out.parent/'FAULT.json').exists():
         raise RuntimeError('Campaign fault latch: no new server allowed')
-    missing = qualified_env_missing(json.loads(ORIGINAL.read_text()))
-    if missing:
-        raise RuntimeError('Qualified environment incomplete, refusing launch: ' + ', '.join(missing))
+    qualified_env(json.loads(ORIGINAL.read_text()))  # Refuse a conflicting contract before any side effect.
     spec = importlib.util.spec_from_file_location('qualified_serve_helpers', ROOT/'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py')
     helper = importlib.util.module_from_spec(spec); spec.loader.exec_module(helper)
     lock = open('/tmp/qwen-short-prefill-stage.lock', 'a')
@@ -131,7 +149,7 @@ def main():
     started = helper.now(); helper.journal(started)
     out.mkdir(parents=True, exist_ok=False); (out/'cache').mkdir()
     control = json.loads(ORIGINAL.read_text())
-    env = dict(e.split('=', 1) for e in control['env'])
+    env = qualified_env(control)
     if env.get('VLLM_USE_V2_MODEL_RUNNER') != '0' or env.get('VLLM_XPU_DRAFT_LM_HEAD_INT4') != '1':
         raise RuntimeError('Original native MTP arithmetic settings changed')
     args = list(control['command'])
@@ -160,7 +178,9 @@ def main():
     write(out/'image.json', json.loads(image.stdout))
     write(out/'launch.json', {'argv': cmd, 'started': started, 'extensions': extensions,
          'scope': 'new upstream native-MTP control; optional localhost-only research RPC; starts unwrapped control',
-         'original_control_sha256': hashlib.sha256(ORIGINAL.read_bytes()).hexdigest()})
+         'original_control_sha256': hashlib.sha256(ORIGINAL.read_bytes()).hexdigest(),
+         'qualified_env_added': sorted(QUALIFIED_ENV),
+         'memory_guard_sha256': hashlib.sha256(GUARD.read_bytes()).hexdigest()})
     state = {'status': 'starting', 'owner_pid': os.getpid(), 'container_name': name,
              'image_id': CONTROL_IMAGE, 'port': a.port, 'started_at': started,
              'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip()}
@@ -168,7 +188,9 @@ def main():
     stopped = []
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda signum, frame: stopped.append(signum))
-    child = None; failure = None; ready = False
+    child = None; failure = None; ready = False; guard_proc = None
+    memory_guard = load_guard()
+    baseline = memory_guard.unaccounted_bytes(memory_guard.parse_meminfo(Path('/proc/meminfo').read_text()))
     try:
         with (out/'server.log').open('x') as log, (out/'memory.jsonl').open('x') as memory:
             child = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=helper.clean_env())
@@ -197,6 +219,10 @@ def main():
                             entry['cgroup'] = 'unavailable'
                     memory.write(json.dumps(entry)+'\n'); memory.flush(); os.fsync(memory.fileno())
                     last_memory = time.monotonic()
+                if guard_proc is None and state.get('container_id'):
+                    guard_proc = start_guard(state['container_id'], out, baseline)
+                if guard_proc is not None and guard_proc.poll() not in (None, 0):
+                    raise RuntimeError(f'Host memory guard exited {guard_proc.returncode}; see MEMORY-GUARD.json; no retry')
                 if not ready:
                     if state.get('container_id') and helper.healthy(a.port):
                         ready = True; state.update(status='ready', ready_at=helper.now())

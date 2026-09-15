@@ -1,0 +1,39 @@
+{
+  "image": "sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1dd8ea066",
+  "runs": [
+    {
+      "label": "one-gpu-default",
+      "env": {
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "ZE_AFFINITY_MASK": "0"
+      }
+    },
+    {
+      "label": "two-gpu-expandable",
+      "env": {
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "PYTORCH_ALLOC_CONF": "expandable_segments:True"
+      }
+    },
+    {
+      "label": "two-gpu-default",
+      "env": {
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1",
+        "ZE_AFFINITY_MASK": "0,1"
+      }
+    }
+  ],
+  "alloc_bytes": 2147483648,
+  "guard": {
+    "max_growth_gib": 3,
+    "min_available_gib": 6
+  },
+  "sources": {
+    "diagnostic": "9e42e17203c730cb51bd4e5d8e4031c8496ecbdc6f4bc437289d1272b0986a85",
+    "guard": "cd6ab4d2334cf2cd3a60966b06f0d7f507a3d8542b23e593ce0208c203a8f151",
+    "helper": "af50b4c3208a28dda5bcbd488c0484e9fb80f4c18b5117c60c694c9267f4385a"
+  },
+  "started": "2026-09-15T04:44:30.322902+00:00",
+  "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c"
+}
