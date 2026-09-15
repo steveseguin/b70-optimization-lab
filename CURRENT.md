@@ -25,6 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 15 03:00 UTC: user decision — validate the optimizations on the newest base; the service can wait; host restart pending.**
+The user set the goal to validating the transfer optimizations, not restoring
+the API. Decisions: (1) run the metadata tweak campaign on the newest upstream
+base (`506fcc26`) after fixing its launch environment; (2) fix the exact
+two-card communication prototype offline (NaN operand selection versus XCCL,
+abrupt-exit retirement), then test it on the cards. The user will restart the
+host to clear the GPU fault. After the restart, in order: bounded health check;
+research launcher environment fix plus a host-memory watchdog; a small no-model
+allocation diagnostic on the newest image; the full metadata campaign; then the
+communicator fixes, a no-IPC NaN characterization and its native exact gate.
+Any GPU fault halts the work for review; no retries. DFlash stays excluded.
+
 **Two-B70 host, September 15 02:20 UTC: GPU fault during FP8 restore; GPU work halted, API offline, reboot decision needed.**
 The bounded standard health check passed on both cards at 01:58 UTC. Loading
 the unchanged qualified R304 FP8/MTP1 service in `final-service` then faulted
