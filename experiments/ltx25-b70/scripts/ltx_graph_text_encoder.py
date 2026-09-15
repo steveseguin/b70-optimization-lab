@@ -46,6 +46,23 @@ from ltx_graph_capture import (MAX_SIGNATURES_PER_BLOCK, WARMUP_ITERATIONS, desc
 # capture), so nothing a graph must keep lives in the pool, and the layers
 # capture and replay in the same order.
 _POOLS = {}
+# ...and ONE capture stream per device, reused by all 48 captures.
+#
+# The caching allocator segregates free blocks by stream, so a fresh capture
+# stream per graph means blocks freed by layer i's capture cannot be handed to
+# layer i+1's, and the shared pool grows by a whole layer's transients (~210 MB)
+# every time. Measured: a private pool per graph cost 0.66 GB per layer, a
+# shared pool on fresh streams still cost 0.22 GB per layer (10.5 GB over 48),
+# against 0.06 GB per graph for the video blocks, whose transients are far
+# smaller. One stream lets the pool settle at roughly a single layer's peak.
+_STREAMS = {}
+
+
+def _capture_stream(device):
+    stream = _STREAMS.get(device)
+    if stream is None:
+        stream = _STREAMS[device] = torch.xpu.Stream(device=device)
+    return stream
 GEMMA_SOURCE_SHA256 = 'a0bec322e45e94e5c938c2b8bde0112d23805166a533612077915d594d18dbbc'
 LAYER_CLASS = 'TransformerBlockGemma4'
 STACK_CLASS = 'Gemma4Transformer'
@@ -163,7 +180,7 @@ class GraphedLayer:
             reference = self._run(mirror(kwargs, lambda t: t.clone())).clone()
 
         with torch.xpu.device(self.device):
-            stream = torch.xpu.Stream(device=self.device)
+            stream = _capture_stream(self.device)
             stream.wait_stream(torch.xpu.current_stream(self.device))
             with torch.xpu.stream(stream), torch.no_grad():
                 for _ in range(WARMUP_ITERATIONS):
@@ -177,14 +194,14 @@ class GraphedLayer:
             pool = _POOLS.get(self.device)
             if pool is None:
                 pool = _POOLS[self.device] = torch.xpu.graph_pool_handle()
+            capture_stream = _capture_stream(self.device)
         try:
             # The encoder lives on xpu:2 while the sampler's current device is
             # xpu:0. torch.xpu.graph synchronises and empty_caches the *current*
             # device, so without this context it records an EMPTY graph that
             # replays as a no-op and returns stale text conditioning.
             with torch.xpu.device(self.device), torch.no_grad(), \
-                    torch.xpu.graph(graph, pool=pool,
-                                    stream=torch.xpu.Stream(device=self.device)):
+                    torch.xpu.graph(graph, pool=pool, stream=capture_stream):
                 output = self._run(static_kwargs)
         except BaseException:
             # A capture abandoned part-way leaves the device recording; tear the
