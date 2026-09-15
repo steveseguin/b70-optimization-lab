@@ -131,6 +131,45 @@ class NanAnalysisTests(unittest.TestCase):
         self.assertEqual((verdict["status"], verdict["selected_mode"]), ("incomplete", None))
         self.assertEqual(len(verdict["errors"]), 2)
 
+    def test_class_mismatch_counts_only_non_nan_differences(self):
+        a = array("H", [0x7e00, 0xfe02, 0x3c00, 0x7c00, 0x7e01])
+        b = array("H", [0x7fff, 0x7e03, 0x3c00, 0x7c00, 0x3c00])
+        self.assertEqual(NA.class_mismatch_count(a.tobytes(), b.tobytes()), 1)
+        self.assertEqual(NA.mismatch_count(a.tobytes(), b.tobytes()), 3)
+        c = array("H", b)
+        c[2] = 0x3c01
+        self.assertEqual(NA.class_mismatch_count(a.tobytes(), c.tobytes()), 2)
+
+    def test_class_rule_selects_preferred_mode_when_xccl_nan_choice_moves(self):
+        outputs = outputs_for(RULES["m1"])
+        j = next(i for i, (a, b) in enumerate(NA.PAIRS)
+                 if NA.is_nan(a) and NA.is_nan(b) and RULES["m0"](a, b) != RULES["m1"](a, b))
+        element = j + NA.PERIOD * 100
+        other = array("H", [RULES["m0"](*NA.PAIRS[j])]).tobytes()
+        for r in (0, 1):
+            raw = bytearray(outputs[r][4096]["xccl"])
+            raw[2 * element:2 * element + 2] = other
+            outputs[r][4096]["xccl"] = bytes(raw)
+        self.assertEqual(NA.evaluate(outputs)["status"], "no-single-formulation-matches")
+        verdict = NA.evaluate_class(outputs)
+        self.assertEqual((verdict["status"], verdict["selected_mode"], verdict["rule"]), ("selected", "m0", "nan-class"))
+        self.assertEqual(verdict["bit_exact_status"], "no-single-formulation-matches")
+        json.dumps(verdict)
+
+    def test_class_rule_still_refuses_non_nan_difference(self):
+        outputs = outputs_for(RULES["m0"], shapes=(1,))
+        j = NA.PAIRS.index((0x3c00, 0x3c00))
+        for r in (0, 1):
+            raw = bytearray(outputs[r][1]["xccl"])
+            raw[2 * j] ^= 1
+            outputs[r][1]["xccl"] = bytes(raw)
+        verdict = NA.evaluate_class(outputs, shapes=(1,))
+        self.assertEqual((verdict["status"], verdict["selected_mode"]), ("no-single-formulation-matches", None))
+
+    def test_unknown_rule_refused(self):
+        with self.assertRaises(ValueError):
+            NA.analyze(Path("/nonexistent"), rule="loose")
+
     def write_run(self, directory, outputs, shapes, unchanged=True):
         for rank in (0, 1):
             receipt = {"status": "completed", "group_destroyed": True, "torch": "test", "library_sha256": "lib",

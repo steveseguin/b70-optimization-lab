@@ -1,0 +1,14 @@
+{
+  "schema": "neural.download.exact-tp2-nan-class-decision.v1",
+  "at": "2026-09-15T12:41:00.406613+00:00",
+  "decided_by": "user",
+  "question": "For the card-to-card test, may any two 'not a number' results count as equal? Every real number would still have to match exactly.",
+  "answer": "Yes, NaNs count as equal",
+  "rule": "nan-class",
+  "scope": "Exact two-card communicator stage communication-native-05 under this campaign root only. Every output element whose XCCL result is not NaN must match bit for bit; an element counts as equal when both XCCL and the candidate return any NaN. Input preservation stays bit-exact. Model-level token parity is unchanged.",
+  "evidence": {
+    "verdict_sha256": "10daa453c95b4673bb1a88a0493cf6fd724945cbdb540df9e4f83f7c0daf2f5a",
+    "done_sha256": "0122f6cdbe24db5bdbad898a287fa931ad8824d30d6e4732780b675b24c2dc7d",
+    "finding": "All strict mismatches were NaN versus NaN with different payload or sign; XCCL operand choice depends on element position; no non-NaN differences."
+  }
+}

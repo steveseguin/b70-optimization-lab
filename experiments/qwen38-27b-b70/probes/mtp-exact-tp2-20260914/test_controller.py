@@ -213,6 +213,37 @@ class NewStageTests(unittest.TestCase):
         self.assertIn("nan-semantics-verdict.json", admission["blobs"])
         self.assertIn("--add-mode", controller.stage_argv(controller.GATE_STAGE, "m2"))
 
+    def nan_class_decision(self, verdict_sha=None, rule="nan-class"):
+        raw = (self.root / controller.NAN_STAGE / "nan-semantics-verdict.json").read_bytes()
+        (self.root / controller.NAN_CLASS_DECISION).write_text(json.dumps({
+            "rule": rule, "decided_by": "user", "evidence": {"verdict_sha256": verdict_sha or controller.sha(raw)}}))
+
+    def test_stage05_admitted_under_user_nan_class_decision(self):
+        self.nan_receipt(selected=None, status="no-single-formulation-matches")
+        self.nan_class_decision()
+        selected = {"status": "selected", "selected_mode": "m0", "matching_modes": ["m0", "m1", "m2", "m3"],
+                    "class_mismatch_counts": {}, "bit_exact_status": "no-single-formulation-matches"}
+        with mock.patch.object(controller, "class_verdict", return_value=selected) as reanalysis:
+            receipt = self.admit(controller.GATE_STAGE, "m0")["nan_semantics_receipt"]
+            self.assertTrue(receipt["satisfied"])
+            self.assertEqual(receipt["nan_rule"], "nan-class")
+            self.assertEqual(reanalysis.call_args[0][0].name, "results")
+            with self.assertRaisesRegex(RuntimeError, "stage 05 refused"):
+                self.admit(controller.GATE_STAGE, "m2")
+        with mock.patch.object(controller, "class_verdict",
+                               return_value=dict(selected, status="no-single-formulation-matches", selected_mode=None)):
+            with self.assertRaisesRegex(RuntimeError, "stage 05 refused"):
+                self.admit(controller.GATE_STAGE, "m0")
+
+    def test_nan_class_decision_must_be_users_and_bound_to_verdict(self):
+        self.nan_receipt(selected=None, status="no-single-formulation-matches")
+        for kwargs in (dict(verdict_sha="0" * 64), dict(rule="loose")):
+            self.nan_class_decision(**kwargs)
+            with mock.patch.object(controller, "class_verdict") as reanalysis:
+                with self.assertRaisesRegex(RuntimeError, "stage 05 refused"):
+                    self.admit(controller.GATE_STAGE, "m0")
+                reanalysis.assert_not_called()
+
     def test_env_carries_exact_qualified_service_variables(self):
         env = self.admit(controller.NAN_STAGE)["env"]
         for key, value in controller.QUALIFIED_ENV.items():
@@ -236,6 +267,12 @@ class NewStageTests(unittest.TestCase):
             self.assertNotIn("--standalone", argv)
         self.assertNotIn("--add-mode", controller.stage_argv(controller.NAN_STAGE))
         self.assertIn("/probe/nan_semantics.py", controller.stage_argv(controller.NAN_STAGE))
+        gate_argv = controller.stage_argv(controller.GATE_STAGE, "m0", "nan-class")
+        self.assertEqual(gate_argv[gate_argv.index("--nan-rule") + 1], "nan-class")
+        default = controller.stage_argv(controller.GATE_STAGE, "m0")
+        self.assertEqual(default[default.index("--nan-rule") + 1], "bit-exact")
+        with self.assertRaises(ValueError):
+            controller.stage_argv(controller.GATE_STAGE, "m0", "loose")
         with self.assertRaises(ValueError):
             controller.stage_argv(controller.GATE_STAGE, None)
 

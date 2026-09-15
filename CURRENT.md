@@ -34,6 +34,27 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 15 13:10 UTC: both transfer optimizations validated; neither is worth adopting; GPUs idle.**
+Exact two-card communicator stage 05 passed every quality case at 1/2/512/4,096
+rows under the user-approved NaN-class rule, with peer IPC, clean retirement, no
+kernel faults, a clean memory guard and container exit 0. Paired operator timing:
+153% and 124% slower at 1 and 2 rows (decode), 30% slower at 512 rows, 8.2%
+faster at 4,096 rows (5/5 blocks). The gain covers only long-prompt chunks, is
+about 1% of prefill before integration copies, and decode gets slower, so XCCL
+stays. The metadata tweak (earlier entry) is exact but speed-neutral and stays
+off. No GPU work or service is running; port 18124 remains offline by user
+decision and can be restored on request.
+[Communicator results](experiments/qwen38-27b-b70/notes/2026-09-15-exact-comm-nan-results.md),
+[metadata results](experiments/qwen38-27b-b70/notes/2026-09-15-metadata-tweak-results.md).
+
+**Two-B70 host, September 15 12:55 UTC: user approved NaN-class comparison; communicator stage 05 running.**
+The user chose to count any two NaN outputs as equal for the exact two-card
+communicator; every other bit must still match XCCL. Under that rule all four
+formulations match the saved characterization, and stage 05 runs the Native04
+arithmetic (`m0`) on the newest base: exact checks at 1/2/512/4,096 rows, then
+alternating XCCL-versus-candidate timing, under the memory guard and fault
+monitor. It uses peer IPC, the path that coincided with the September 14 fault.
+
 **Two-B70 host, September 15 12:40 UTC: communicator NaN characterization done; stage 05 awaits a user decision on NaN comparison.**
 `nan-semantics-01` completed cleanly on the newest base (no faults, guard clean,
 exit confirmed). No fixed add formulation matches XCCL bit for bit: every
