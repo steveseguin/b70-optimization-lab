@@ -1,0 +1,57 @@
+{
+  "schema": "ltx.xpugraph-validation.v1",
+  "date_utc": "2026-09-14",
+  "scope": "offline only: no ComfyUI, no checkpoint, no server. One nn.Module with the LTX block shapes (6 attentions, 2 feed-forwards, ada tables, 737.5 MB BF16 state) executed 48 times per step, which matches one sampler step reading 48 x ~773 MB from VRAM. Random weights: this measures time and eager-vs-replay identity, not model outputs.",
+  "torch": "2.14.0+xpu",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "single_device": {
+    "nondeterministic": {
+      "eager_step_ms": 258.519,
+      "replay_step_ms": 102.316,
+      "speedup": 2.527,
+      "bit_equal_to_eager": true,
+      "replay_repeatable": true
+    },
+    "deterministic": {
+      "eager_step_ms": 253.128,
+      "replay_step_ms": 104.431,
+      "speedup": 2.424,
+      "bit_equal_to_eager": true,
+      "replay_repeatable": true
+    }
+  },
+  "two_device_shard": {
+    "split_index": 21,
+    "devices": [
+      "xpu:0",
+      "xpu:1"
+    ],
+    "eager_step_ms": 257.772,
+    "replay_step_ms": 104.451,
+    "speedup": 2.468,
+    "bit_equal_to_eager": true,
+    "handoff_copy_ms": 0.0397
+  },
+  "integration_shape": {
+    "eager_step_ms": 254.921,
+    "single_graph_ms": 104.416,
+    "per_block_graph_ms": 104.773,
+    "single_graph_speedup": 2.441,
+    "per_block_speedup": 2.433,
+    "per_replay_overhead_us": 7.4,
+    "both_bit_equal": true
+  },
+  "trap": {
+    "symptom": "torch.xpu.graph caches ONE class-level default_capture_stream, created lazily and bound to whichever device was current at first use. Capturing on a second device with it records an EMPTY graph and only emits a UserWarning.",
+    "first_observation": "a 5.612x \"speedup\" with bit-equality False",
+    "fix": "pass an explicit stream=torch.xpu.Stream(device=dev) per device, run under -W error::UserWarning, and prove non-emptiness by perturbing the static input and requiring the replayed output to move"
+  },
+  "limitations": [
+    "synthetic block: same shapes and operation mix as the checkpoint, not the checkpoint code",
+    "text-context length 128 assumed for cross-attention; the real conditioning length differs",
+    "no ComfyUI patcher, routing wrapper or sampler overhead is included, so the real eager baseline is higher (3.63 s vs a 2.80 s projection) and the real gain is not yet established",
+    "capture-safety of the real block forward (host syncs, custom ops, masks) is unverified",
+    "no speed result is promoted; this validates a mechanism only"
+  ],
+  "conclusion": "XPU graph capture works on B70, is bit-identical to eager under deterministic mode, works across the two-device shard, and per-block capture costs only 7.4 us per replay -- so the existing set_model_patch_replace block hook is a sufficient integration point."
+}
