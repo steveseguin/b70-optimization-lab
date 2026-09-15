@@ -34,7 +34,7 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
-**Two-B70 host, September 15 18:30 UTC: one-card FP8 made deterministic and long-context exact (two overlays); service back on 18124.**
+**Two-B70 host, September 15 18:30 UTC: one-card FP8 made deterministic and long-context exact (two overlays); service back on 18124 (54.705 tok/s, 12/12 vs control).**
 Broader tests found two one-card-only issues the short strict suite missed.
 
 - **GDN prefill:** identical prompts changed logprobs on every repeat, because
