@@ -1,0 +1,31 @@
+{
+  "schema": "ltx.fusion-final-set.v1",
+  "date_utc": "2026-09-15",
+  "mechanism": "The block reaches only 61.5% of weight-read roofline because it issues many small GEMMs, each paying about 28 us of fixed overhead. Fusing projections that share an input reduces the GEMM count. Whether that is bitwise exact depends on the resulting shape, so every group is measured at every token count it sees, across three seeds.",
+  "gate_finding": "Including the [32, K] gate projection in a stack BREAKS exactness where the same stack without it is exact: audio_attn1 q,k,v is exact and 3.02x, but q,k,v,gate is not exact at 26 tokens. So the six tiny gate GEMMs per block -- pure overhead, about 0.5 us of work each for 28 us of launch -- cannot be removed losslessly.",
+  "qualifying_groups": [
+    "a2v k,v",
+    "audio_attn1 self q,k,v (no gate)",
+    "audio_attn2 k,v",
+    "v2a k,v"
+  ],
+  "rejected_groups": [
+    "attn1 self q,k,v,gate",
+    "attn2 cross q,gate",
+    "attn2 cross k,v",
+    "audio_attn1 self q,k,v,gate",
+    "audio_attn2 q,gate",
+    "a2v q,gate",
+    "v2a q,gate"
+  ],
+  "projected": {
+    "per_block_saving_stage1_ms": 0.2069,
+    "per_step_ms": 9.93,
+    "clip_saving_s_estimate": 0.109
+  },
+  "limitations": [
+    "isolated GEMMs with synthetic weights, not measured in-model",
+    "the real conditioning length is not pinned, so cross k,v groups are only verified up to 256 tokens; audio_attn2 k,v was NOT exact at 512 in an earlier sweep",
+    "a fused weight is a second copy unless the originals are freed, so placement and memory accounting must be redone in any implementation"
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "groups": 10,
+  "qualifying": 3,
+  "fuse": [
+    "audio_attn2 k,v",
+    "a2v k,v",
+    "v2a k,v"
+  ],
+  "reject": [
+    "attn1 self q,k,v,gate",
+    "attn2 cross q,gate",
+    "attn2 cross k,v",
+    "audio_attn1 self q,k,v,gate",
+    "audio_attn2 q,gate",
+    "a2v q,gate",
+    "v2a q,gate"
+  ],
+  "table": [
+    {
+      "group": "attn1 self q,k,v,gate",
+      "K": 4096,
+      "widths": [
+        4096,
+        4096,
+        4096,
+        32
+      ],
+      "parts": 4,
+      "qualifies": false,
+      "shapes": [
+        {
+          "tokens": 64,
+          "bit_exact": true,
+          "gemms_saved": 3,
+          "separate_ms": 0.2775,
+          "fused_ms": 0.1928,
+          "saved_ms": 0.0847,
+          "speedup": 1.439
+        },
+        {
+          "tokens": 256,
+          "bit_exact": false,
+          "gemms_saved": 3,
+          "separate_ms": 0.3324,
+          "fused_ms": 0.2965,
+          "saved_ms": 0.0359,
+          "speedup": 1.121
+        }
+      ]
+    },
+    {
+      "group": "attn2 cross q,gate",
+      "K": 4096,
+      "widths": [
+        4096,
+        32
+      ],
+      "parts": 2,
+      "qualifies": false,
+      "shapes": [
+        {
+          "tokens": 64,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0802,
+          "fused_ms": 0.0693,
+          "saved_ms": 0.0109,
+          "speedup": 1.157
+        },
+        {
+          "tokens": 256,
+          "bit_exact": false,
+          "gemms_saved": 1,
+          "separate_ms": 0.1162,
+          "fused_ms": 0.1125,
+          "saved_ms": 0.0037,
+          "speedup": 1.033
+        }
+      ]
+    },
+    {
+      "group": "attn2 cross k,v",
+      "K": 4096,
+      "widths": [
+        4096,
+        4096
+      ],
+      "parts": 2,
+      "qualifies": false,
+      "shapes": [
+        {
+          "tokens": 32,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.1238,
+          "fused_ms": 0.1197,
+          "saved_ms": 0.004,
+          "speedup": 1.034
+        },
+        {
+          "tokens": 64,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.2118,
+          "fused_ms": 0.124,
+          "saved_ms": 0.0878,
+          "speedup": 1.708
+        },
+        {
+          "tokens": 128,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.1288,
+          "fused_ms": 0.1252,
+          "saved_ms": 0.0037,
+          "speedup": 1.029
+        },
+        {
+          "tokens": 192,
+          "bit_exact": false,
+          "gemms_saved": 1,
+          "separate_ms": 0.2016,
+          "fused_ms": 0.1344,
+          "saved_ms": 0.0672,
+          "speedup": 1.5
+        },
+        {
+          "tokens": 256,
+          "bit_exact": false,
+          "gemms_saved": 1,
+          "separate_ms": 0.2163,
+          "fused_ms": 0.1448,
+          "saved_ms": 0.0715,
+          "speedup": 1.494
+        }
+      ]
+    },
+    {
+      "group": "audio_attn1 self q,k,v,gate",
+      "K": 2048,
+      "widths": [
+        2048,
+        2048,
+        2048,
+        32
+      ],
+      "parts": 4,
+      "qualifies": false,
+      "shapes": [
+        {
+          "tokens": 26,
+          "bit_exact": false,
+          "gemms_saved": 3,
+          "separate_ms": 0.1685,
+          "fused_ms": 0.041,
+          "saved_ms": 0.1275,
+          "speedup": 4.111
+        }
+      ]
+    },
+    {
+      "group": "audio_attn2 q,gate",
+      "K": 2048,
+      "widths": [
+        2048,
+        32
+      ],
+      "parts": 2,
+      "qualifies": false,
+      "shapes": [
+        {
+          "tokens": 26,
+          "bit_exact": false,
+          "gemms_saved": 1,
+          "separate_ms": 0.0826,
+          "fused_ms": 0.0396,
+          "saved_ms": 0.043,
+          "speedup": 2.085
+        }
+      ]
+    },
+    {
+      "group": "audio_attn2 k,v",
+      "K": 2048,
+      "widths": [
+        2048,
+        2048
+      ],
+      "parts": 2,
+      "qualifies": true,
+      "shapes": [
+        {
+          "tokens": 32,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.1054,
+          "fused_ms": 0.0594,
+          "saved_ms": 0.046,
+          "speedup": 1.775
+        },
+        {
+          "tokens": 64,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0814,
+          "fused_ms": 0.0412,
+          "saved_ms": 0.0402,
+          "speedup": 1.976
+        },
+        {
+          "tokens": 128,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0807,
+          "fused_ms": 0.0391,
+          "saved_ms": 0.0416,
+          "speedup": 2.063
+        },
+        {
+          "tokens": 192,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0827,
+          "fused_ms": 0.0494,
+          "saved_ms": 0.0333,
+          "speedup": 1.674
+        },
+        {
+          "tokens": 256,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0824,
+          "fused_ms": 0.0516,
+          "saved_ms": 0.0307,
+          "speedup": 1.596
+        }
+      ]
+    },
+    {
+      "group": "a2v q,gate",
+      "K": 4096,
+      "widths": [
+        2048,
+        32
+      ],
+      "parts": 2,
+      "qualifies": false,
+      "shapes": [
+        {
+          "tokens": 64,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0805,
+          "fused_ms": 0.0397,
+          "saved_ms": 0.0408,
+          "speedup": 2.027
+        },
+        {
+          "tokens": 256,
+          "bit_exact": false,
+          "gemms_saved": 1,
+          "separate_ms": 0.0824,
+          "fused_ms": 0.0896,
+          "saved_ms": -0.0072,
+          "speedup": 0.92
+        }
+      ]
+    },
+    {
+      "group": "a2v k,v",
+      "K": 2048,
+      "widths": [
+        2048,
+        2048
+      ],
+      "parts": 2,
+      "qualifies": true,
+      "shapes": [
+        {
+          "tokens": 26,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0955,
+          "fused_ms": 0.041,
+          "saved_ms": 0.0546,
+          "speedup": 2.331
+        }
+      ]
+    },
+    {
+      "group": "v2a q,gate",
+      "K": 2048,
+      "widths": [
+        2048,
+        32
+      ],
+      "parts": 2,
+      "qualifies": false,
+      "shapes": [
+        {
+          "tokens": 26,
+          "bit_exact": false,
+          "gemms_saved": 1,
+          "separate_ms": 0.0822,
+          "fused_ms": 0.0391,
+          "saved_ms": 0.0431,
+          "speedup": 2.1
+        }
+      ]
+    },
+    {
+      "group": "v2a k,v",
+      "K": 4096,
+      "widths": [
+        2048,
+        2048
+      ],
+      "parts": 2,
+      "qualifies": true,
+      "shapes": [
+        {
+          "tokens": 64,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.0808,
+          "fused_ms": 0.0578,
+          "saved_ms": 0.023,
+          "speedup": 1.397
+        },
+        {
+          "tokens": 256,
+          "bit_exact": true,
+          "gemms_saved": 1,
+          "separate_ms": 0.1224,
+          "fused_ms": 0.1041,
+          "saved_ms": 0.0183,
+          "speedup": 1.176
+        }
+      ]
+    }
+  ]
+}
