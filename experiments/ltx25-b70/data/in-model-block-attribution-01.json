@@ -1,0 +1,90 @@
+{
+  "schema": "ltx.in-model-block-attribution.v1",
+  "date_utc": "2026-09-15",
+  "method": "captured and timed variants of the REAL block using the model's own run_vx / run_ax / a2v_cross_attn / v2a_cross_attn switches, so no numerical source was touched; outputs are meaningless, only timing is",
+  "attribution": [
+    {
+      "a2v_ms": 0.2141,
+      "audio_stream_ms": 0.7962,
+      "baseline_ms": 2.7155,
+      "block_index": 0,
+      "v2a_ms": 0.1972,
+      "video_stream_ms": 1.9355,
+      "video_tokens": 64
+    },
+    {
+      "a2v_ms": 0.3015,
+      "audio_stream_ms": 0.8887,
+      "baseline_ms": 3.5714,
+      "block_index": 0,
+      "v2a_ms": 0.2875,
+      "video_stream_ms": 2.7011,
+      "video_tokens": 256
+    },
+    {
+      "a2v_ms": 0.2114,
+      "audio_stream_ms": 0.8069,
+      "baseline_ms": 2.7606,
+      "block_index": 24,
+      "v2a_ms": 0.1981,
+      "video_stream_ms": 1.9776,
+      "video_tokens": 64
+    },
+    {
+      "a2v_ms": 0.3049,
+      "audio_stream_ms": 0.8969,
+      "baseline_ms": 3.6529,
+      "block_index": 24,
+      "v2a_ms": 0.2776,
+      "video_stream_ms": 2.7842,
+      "video_tokens": 256
+    }
+  ],
+  "graph_timing_per_stage": {
+    "256": {
+      "blocks": 48,
+      "mean_block_ms": 3.5987,
+      "sum_ms": 172.738
+    },
+    "64": {
+      "blocks": 48,
+      "mean_block_ms": 2.7491,
+      "sum_ms": 131.958
+    }
+  },
+  "headline": {
+    "block_ms_at_64tok": 2.7606,
+    "audio_stream_ms": 0.8069,
+    "audio_share_pct": 29.2,
+    "a2v_plus_v2a_ms": 0.4095,
+    "video_stream_ms": 1.9776
+  },
+  "roofline_check": {
+    "block_roofline_ms": 1.51,
+    "block_above_roofline": 1.83,
+    "audio_weights_MB": 131.0,
+    "audio_roofline_ms": 0.256,
+    "audio_above_roofline": 3.15,
+    "cross_weights_MB": 96.0,
+    "cross_above_roofline": 2.18
+  },
+  "clip_cost": {
+    "audio_stream_s": 0.439,
+    "note": "48 blocks, 8 stage-1 steps plus 3 stage-2 steps"
+  },
+  "findings": [
+    "The audio stream is 29% of every block while carrying only 26 tokens, and its cost barely changes when the video stream goes from 64 to 256 tokens (0.807 -> 0.897 ms), so it is weight and kernel-overhead bound, not token bound.",
+    "At 131 MB of weights the audio stream should take 0.244 ms; it takes 0.807, which is 3.3x above roofline -- the worst ratio anywhere in the model. The video stream is 2.2x and the two cross attentions 2.3x.",
+    "Nothing in the block is near roofline. The whole block is 1.92x above, and that is consistent with small kernels paying fixed GPU-side cost that graph replay does not remove: a kernel reading 8 MB needs 15 us at roofline, so a ~25 us floor per kernel alone explains the ratio."
+  ],
+  "lever_implied": {
+    "idea": "The video and audio streams are independent within a block until a2v/v2a, so the audio path could run on an idle card concurrently with the video path. This changes no arithmetic -- same weights, same order, same reductions -- so it is lossless in principle, and the two cards were measured to replay graphs with perfect concurrency (factor 1.999).",
+    "arithmetic": "block becomes max(video 1.978, audio 0.807) + cross 0.41 + transfers, against 2.761 today: about 0.37 ms per block before communication. Two activation exchanges per block cost roughly 0.1 ms, so the net is about 0.27 ms per block, or 0.14 s per clip.",
+    "verdict": "Real and lossless in principle, but ~0.14 s for a substantial restructuring of the block into two device-resident halves. Recorded, not built."
+  },
+  "limitations": [
+    "two probe blocks (0 and 24) of 48, though they agree to within 2%",
+    "the switch variants change what the block computes; only timing is meaningful",
+    "the weight-byte figures per stream are derived from the checkpoint shapes, not measured"
+  ]
+}
