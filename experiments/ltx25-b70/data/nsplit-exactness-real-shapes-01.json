@@ -1,0 +1,434 @@
+{
+  "cases": 40,
+  "all_bit_exact": false,
+  "failures": [
+    {
+      "layer": "video attn1/attn2 to_q,to_k,to_v",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "video attn to_out",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "video ff.net.0.proj",
+      "N": 16384,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "video ff.net.2",
+      "N": 4096,
+      "K": 16384,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "audio attn to_q,to_k,to_v",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "audio attn to_out",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "a2v to_q (video->audio dim)",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": false
+    },
+    {
+      "layer": "a2v to_out",
+      "N": 4096,
+      "K": 2048,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "v2a to_q",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "v2a to_out",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "text cross to_k,to_v (ctx len)",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 128,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "text cross to_k,to_v (ctx len)",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    }
+  ],
+  "by_ways": {
+    "2": {
+      "cases": 20,
+      "exact": 19
+    },
+    "4": {
+      "cases": 20,
+      "exact": 9
+    }
+  },
+  "rows": [
+    {
+      "layer": "video attn1/attn2 to_q,to_k,to_v",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video attn1/attn2 to_q,to_k,to_v",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "video attn1/attn2 to_q,to_k,to_v",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video attn1/attn2 to_q,to_k,to_v",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "video attn to_out",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video attn to_out",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "video attn to_out",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video attn to_out",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "video ff.net.0.proj",
+      "N": 16384,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video ff.net.0.proj",
+      "N": 16384,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "video ff.net.0.proj",
+      "N": 16384,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video ff.net.0.proj",
+      "N": 16384,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "video ff.net.2",
+      "N": 4096,
+      "K": 16384,
+      "tokens": 64,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video ff.net.2",
+      "N": 4096,
+      "K": 16384,
+      "tokens": 64,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "video ff.net.2",
+      "N": 4096,
+      "K": 16384,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "video ff.net.2",
+      "N": 4096,
+      "K": 16384,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "audio attn to_q,to_k,to_v",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "audio attn to_q,to_k,to_v",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "audio attn to_out",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "audio attn to_out",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "audio_ff.net.0.proj",
+      "N": 8192,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "audio_ff.net.0.proj",
+      "N": 8192,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "audio_ff.net.2",
+      "N": 2048,
+      "K": 8192,
+      "tokens": 26,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "audio_ff.net.2",
+      "N": 2048,
+      "K": 8192,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "a2v to_q (video->audio dim)",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "a2v to_q (video->audio dim)",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 64,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "a2v to_q (video->audio dim)",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": false
+    },
+    {
+      "layer": "a2v to_q (video->audio dim)",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "a2v to_out",
+      "N": 4096,
+      "K": 2048,
+      "tokens": 64,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "a2v to_out",
+      "N": 4096,
+      "K": 2048,
+      "tokens": 64,
+      "ways": 4,
+      "bit_exact": true
+    },
+    {
+      "layer": "a2v to_out",
+      "N": 4096,
+      "K": 2048,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "a2v to_out",
+      "N": 4096,
+      "K": 2048,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "v2a to_q",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "v2a to_q",
+      "N": 2048,
+      "K": 2048,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "v2a to_out",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 26,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "v2a to_out",
+      "N": 2048,
+      "K": 4096,
+      "tokens": 26,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "text cross to_k,to_v (ctx len)",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 128,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "text cross to_k,to_v (ctx len)",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 128,
+      "ways": 4,
+      "bit_exact": false
+    },
+    {
+      "layer": "text cross to_k,to_v (ctx len)",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 2,
+      "bit_exact": true
+    },
+    {
+      "layer": "text cross to_k,to_v (ctx len)",
+      "N": 4096,
+      "K": 4096,
+      "tokens": 256,
+      "ways": 4,
+      "bit_exact": false
+    }
+  ]
+}
