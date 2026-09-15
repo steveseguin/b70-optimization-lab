@@ -1,0 +1,1027 @@
+{
+ "schema": "neural.download.qwen38-fp8-gemm-alignment-census.v1",
+ "classification": "operator-diagnostic-only",
+ "torch": "2.13.0+xpu",
+ "shapes": {
+  "tp1_gdn_in_proj_qkvz": {
+   "1": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "6": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "128": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "512": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "513": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "1024": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "2048": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "4096": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   }
+  },
+  "tp1_attn_o_proj": {
+   "1": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "6": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "128": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "512": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "513": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "1024": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "2048": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "4096": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   }
+  },
+  "tp1_mlp_gate_up_proj": {
+   "1": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "6": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "128": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "512": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "513": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "1024": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "2048": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "4096": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   }
+  },
+  "tp1_mlp_down_proj": {
+   "1": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "6": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "128": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "512": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "513": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "1024": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "2048": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "4096": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   }
+  },
+  "tp2_mlp_gate_up_proj": {
+   "1": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "6": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "128": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "512": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "513": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "1024": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "2048": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "4096": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   }
+  },
+  "tp2_mlp_down_proj": {
+   "1": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "6": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "128": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "512": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "513": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "1024": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "2048": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   },
+   "4096": {
+    "repeat_equal": true,
+    "offset_equal": {
+     "1": false,
+     "2": true,
+     "3": false,
+     "7": false,
+     "8": true,
+     "16": true,
+     "33": false
+    },
+    "allocator_churn_equal": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "all_equal": false
+   }
+  }
+ }
+}
