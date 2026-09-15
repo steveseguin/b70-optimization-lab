@@ -113,5 +113,29 @@
     "synthetic weights of the checkpoint shapes, isolated GEMMs, not in-model",
     "a fused weight is a second copy unless the originals are released, so the placement and memory accounting must be redone",
     "no clip-level result; the four-tensor oracle remains the authority"
-  ]
+  ],
+  "CORRECTION": {
+    "superseded_field": "projected",
+    "what_was_wrong": "The first projection assumed 120 MB of fusable small projections per block and applied a blanket 186 -> 569 GB/s improvement, giving 21.3% of the block chain. That was an estimate from bytes, not from the measured times, and it counted sites that turn out not to qualify.",
+    "corrected_by": "data/qkv-fusion-sweep-01.json, which tests every fusable site at every token count it can see, across three seeds, and keeps only sites exact at all of them.",
+    "qualifying_sites": [
+      "audio_attn1 self qkv (3.02x)",
+      "a2v cross kv (1.99x)",
+      "v2a cross kv (1.17-1.95x)"
+    ],
+    "rejected_sites": [
+      "attn1 video self qkv (not exact at 256 tokens; only 1.03-1.10x anyway)",
+      "attn2 video cross kv (not exact at 192 and 256)",
+      "audio_attn2 cross kv (not exact at 512; excluded conservatively because the real conditioning length is not pinned)"
+    ],
+    "corrected_projection": {
+      "per_block_saving_stage1_ms": 0.1799,
+      "per_block_saving_stage2_ms": 0.1418,
+      "clip_saving_s": 0.09,
+      "sampler_before_s": 1.942,
+      "sampler_after_s": 1.852,
+      "share_of_sampler_pct": 4.6
+    },
+    "verdict": "Real and exact, but worth about 0.09 s, not the 0.2+ s the first estimate implied. Keep it as a cheap addition to a packet that is being built anyway; it does not justify a packet cycle of its own."
+  }
 }
