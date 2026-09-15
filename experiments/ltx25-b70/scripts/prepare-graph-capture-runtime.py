@@ -161,14 +161,26 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     # The two files that pin the candidate's digest differ by exactly that
     # literal, and the literal must be the digest the packet actually ships.
     shipped = manifest['extension_sha256s']['ltx_na_axis_candidate.py']
+    pins = {'CANDIDATE_SHA': shipped,
+            'ROUTER_SHA': manifest['extension_sha256s']['ltx_na_axis_router.py']}
     for name in ('source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py'):
         before = safe_path(packet, 'provenance/graph-capture/parent/' + name).read_text()
         after = safe_path(packet, name).read_text()
         d = [line for line in difflib.unified_diff(strip(before), strip(after), n=0)
              if line.startswith(('+', '-')) and not line.startswith(('+++', '---'))]
-        require(len(d) == 2 and d[0].startswith("-CANDIDATE_SHA = '") and
-                d[1] == "+CANDIDATE_SHA = '" + shipped + "'",
-                'NA digest pin differs from packet13 beyond the repointed literal: ' + name)
+        # Only digest-pin lines may move, and each must name the shipped file.
+        for line in d:
+            body = line[1:].strip()
+            const = body.split(' =')[0]
+            require(re.fullmatch(r"[A-Z_]+_SHA[0-9]* = '[0-9a-f]{64}'", body) is not None and const in pins,
+                    'NA source differs from packet13 beyond its digest pins: ' + name)
+            if line.startswith('+'):
+                require(body == const + " = '" + pins[const] + "'",
+                        'Repointed ' + const + ' does not name the shipped file in ' + name)
+        for const, want in pins.items():
+            if const + ' = ' in after:
+                require(after.count(const + " = '" + want + "'") == 1,
+                        'Stale ' + const + ' pin in ' + name)
     for node_dir, helper in (('ltx_graph_capture_lab', 'graph_capture_node.py'),
                              ('ltx_graph_vae_lab', 'graph_vae_node.py')):
         require(manifest['files'][f'source/custom_nodes/{node_dir}/__init__.py'] ==
@@ -294,11 +306,19 @@ def main():
         shutil.copyfile(fixed, staging / packet_path)
     # The custom-node copy must stay byte-identical to its helper.
     shutil.copyfile(LANE / 'scripts' / 'na_axis_decode_node_v2.py', staging / NA_NODE_COPY)
-    new_candidate = sha(staging / CANDIDATE)
+    # Every pinned digest in the NA chain must name the file actually shipped.
+    # The chain is candidate -> router -> node; a stale pin does not fail loudly,
+    # it makes the custom node fail to import and silently never register, and
+    # the graph is then rejected with "Node 'LTXNAAxisDecode' not found".
+    pins = {'CANDIDATE_SHA': sha(staging / CANDIDATE),
+            'ROUTER_SHA': sha(staging / 'source/scripts/ltx_na_axis_router.py')}
     for packet_path, _ in NA_REPLACED[1:]:
         text = (staging / packet_path).read_text()
-        require(text.count("CANDIDATE_SHA = '" + new_candidate + "'") == 1,
-                'NA source does not pin the new candidate digest: ' + packet_path)
+        for const, want in pins.items():
+            if const + ' = ' in text:
+                require(text.count(const + " = '" + want + "'") == 1,
+                        'Stale ' + const + ' pin in ' + packet_path)
+    shutil.copyfile(staging / 'source/scripts/na_axis_decode_node.py', staging / NA_NODE_COPY)
     shutil.copyfile(parent / 'manifest.json', staging / PARENT_MANIFEST_FILE)
     (staging / CHECKER).write_text(checker_new)
 
