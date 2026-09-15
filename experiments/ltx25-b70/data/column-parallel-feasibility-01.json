@@ -1,0 +1,36 @@
+{
+  "schema": "ltx.column-parallel-feasibility.v1",
+  "date_utc": "2026-09-15",
+  "question": "Now that the sampler is GPU-bound, is 2-way output-column parallelism across two B70s worth building?",
+  "method": "offline, exclusive GPUs, synthetic LTX-shaped blocks, everything graph-captured per device exactly as the landed packet does",
+  "measurements": {
+    "serial_one_device_ms": 104.31,
+    "block_state_MB": 737.5,
+    "half_block_state_MB": 368.8,
+    "half_chain_xpu0_ms": 66.352,
+    "half_chain_xpu1_ms": 66.449,
+    "both_devices_concurrent_ms": 66.427,
+    "concurrency_factor": 1.999,
+    "one_gather_pair_ms": 0.0399,
+    "gathers_4_per_block_total_ms": 7.66
+  },
+  "findings": [
+    "Two B70s replay their graphs FULLY concurrently: running both costs the same as either alone (factor 1.999). Cross-device concurrency is real and needs no special scheduling.",
+    "Cross-device gathers are cheap: 0.0399 ms per activation pair, so even six per block across 48 blocks is 11.5 ms per step.",
+    "But halving the weights does NOT halve the time: 737.5 MB takes 104.31 ms and 368.8 MB takes 66.43 ms, a 1.57x ratio, not 2x. Small projections do not scale: an earlier probe measured ff.net.0.proj at 1.977x for a half-width split but attn.to_q at only 1.256x.",
+    "Fitting time = a + b*bytes gives a fixed floor of about 28.5 ms per 48-block chain that does not shrink with the split: duplicated elementwise and normalisation work plus small-GEMM inefficiency."
+  ],
+  "projection": {
+    "today_serial_ms": 104.31,
+    "split_with_4_gathers_per_block_ms": 74.09,
+    "speedup_on_block_gpu_time": 1.41
+  },
+  "four_way_note": "A 4-way split is not placeable: a quarter transformer is 10.5 GB per card, but XPU2 holds the 25 GB text encoder, so 35.5 GB would be needed there. A 3-way split over XPU0/1/3 fits (about 14 GB each, XPU3 also holding 2.7 GB of VAEs) and extrapolates to roughly 1.6x.",
+  "decision": "Real but bounded: about 1.41x on the GPU portion of the sampler for a large re-sharding build with its own exactness re-qualification. Recorded and deferred behind the cheaper removal of the remaining per-call Python.",
+  "limitations": [
+    "synthetic blocks with the checkpoint shapes, not the real checkpoint code or weights",
+    "the split model is an idealisation: it omits the norm/gather placement rules a real implementation must respect",
+    "audio_ff N-splits were previously found NOT bit-identical at 256 tokens, so a real build cannot split every layer",
+    "no exactness claim is made for any split here; only timing"
+  ]
+}
