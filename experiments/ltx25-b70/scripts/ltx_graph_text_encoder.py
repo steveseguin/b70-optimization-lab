@@ -35,6 +35,34 @@ import torch
 from ltx_graph_capture import (MAX_SIGNATURES_PER_BLOCK, WARMUP_ITERATIONS, describe,
                                fill_static, mirror, require, static_like, walk)
 
+# One graph memory pool shared by all 48 layer graphs, per device.
+#
+# Without this each capture takes a private pool and the 48 of them reserved
+# **59.2 GB on a ~32 GB card** (packet36 receipts), so the allocator fell back to
+# paging and every weight access crossed PCIe: replays measured ~30 ms/layer and
+# even the eager encode slowed from 1.81 s to 3.6 s. Sharing is sound here
+# because a pool only ever holds a layer's transients -- each layer's output is
+# written into its own external static buffer (`output = x`, asserted at
+# capture), so nothing a graph must keep lives in the pool, and the layers
+# capture and replay in the same order.
+_POOLS = {}
+# ...and ONE capture stream per device, reused by all 48 captures.
+#
+# The caching allocator segregates free blocks by stream, so a fresh capture
+# stream per graph means blocks freed by layer i's capture cannot be handed to
+# layer i+1's, and the shared pool grows by a whole layer's transients (~210 MB)
+# every time. Measured: a private pool per graph cost 0.66 GB per layer, a
+# shared pool on fresh streams still cost 0.22 GB per layer (10.5 GB over 48),
+# against 0.06 GB per graph for the video blocks, whose transients are far
+# smaller. One stream lets the pool settle at roughly a single layer's peak.
+_STREAMS = {}
+
+
+def _capture_stream(device):
+    stream = _STREAMS.get(device)
+    if stream is None:
+        stream = _STREAMS[device] = torch.xpu.Stream(device=device)
+    return stream
 GEMMA_SOURCE_SHA256 = 'a0bec322e45e94e5c938c2b8bde0112d23805166a533612077915d594d18dbbc'
 LAYER_CLASS = 'TransformerBlockGemma4'
 STACK_CLASS = 'Gemma4Transformer'
@@ -110,10 +138,15 @@ class GraphedLayer:
         self.device = device
         return device
 
-    def _replay(self, graph):
+    def _replay(self, graph, sync=True):
         with torch.xpu.device(self.device):
             graph.replay()
-            torch.xpu.synchronize(self.device)
+            if sync:
+                # Only the capture-time proofs need the queue drained. Syncing on
+                # the hot path would serialise the CPU against the GPU once per
+                # layer, 48 times per encode; the native code does not, and the
+                # following work is queued on the same stream either way.
+                torch.xpu.synchronize(self.device)
 
     def _run(self, kwargs):
         # Prefill only, with no cache in and none out. A KV cache would make the
@@ -147,7 +180,7 @@ class GraphedLayer:
             reference = self._run(mirror(kwargs, lambda t: t.clone())).clone()
 
         with torch.xpu.device(self.device):
-            stream = torch.xpu.Stream(device=self.device)
+            stream = _capture_stream(self.device)
             stream.wait_stream(torch.xpu.current_stream(self.device))
             with torch.xpu.stream(stream), torch.no_grad():
                 for _ in range(WARMUP_ITERATIONS):
@@ -157,13 +190,18 @@ class GraphedLayer:
         restore()
 
         graph = torch.xpu.XPUGraph()
+        with torch.xpu.device(self.device):
+            pool = _POOLS.get(self.device)
+            if pool is None:
+                pool = _POOLS[self.device] = torch.xpu.graph_pool_handle()
+            capture_stream = _capture_stream(self.device)
         try:
             # The encoder lives on xpu:2 while the sampler's current device is
             # xpu:0. torch.xpu.graph synchronises and empty_caches the *current*
             # device, so without this context it records an EMPTY graph that
             # replays as a no-op and returns stale text conditioning.
             with torch.xpu.device(self.device), torch.no_grad(), \
-                    torch.xpu.graph(graph, stream=torch.xpu.Stream(device=self.device)):
+                    torch.xpu.graph(graph, pool=pool, stream=capture_stream):
                 output = self._run(static_kwargs)
         except BaseException:
             # A capture abandoned part-way leaves the device recording; tear the
@@ -221,7 +259,7 @@ class GraphedLayer:
             for buffer, value in zip(entry.flat, incoming):
                 if buffer is not value:
                     fill_static(buffer, value)
-            self._replay(entry.graph)
+            self._replay(entry.graph, sync=False)
         entry.replays += 1
         self.report.replays += 1
         # The caller rebinds x to this buffer and the parent loop clones it into
@@ -242,6 +280,7 @@ class Report:
 
     def summary(self):
         return {'captured_graphs': len(self.captures), 'replays': self.replays,
+                'graph_pools': len(_POOLS),
                 'layers_captured': sorted({c['layer_index'] for c in self.captures}),
                 'signatures_per_layer': sorted({sum(1 for c in self.captures if c['layer_index'] == i)
                                                 for i in {c['layer_index'] for c in self.captures}}),
@@ -282,6 +321,12 @@ def stack_of(clip):
 def install(clip):
     """Shadow every Gemma layer's forward with a graph-backed stand-in."""
     stack, layers = stack_of(clip)
+    # A pool handle must not outlive the graphs that hold it. Reusing one whose
+    # graphs were all destroyed at restore aborts the process inside
+    # capture_begin with `use_count > 0 INTERNAL ASSERT FAILED`
+    # (CachingHostAllocator.h:921), which is how packet38's server died after a
+    # restore/install cycle. Start every generation with a fresh pool.
+    _POOLS.clear()
     for layer in layers:
         require('forward' not in vars(layer), 'Gemma layer forward is already shadowed')
     report = Report()
@@ -302,6 +347,9 @@ def restore(clip, originals):
                 f'Unexpected Gemma layer forward while restoring layer {index}')
         current.entries.clear()
         del layer.forward
+    # Every graph that referenced the pool is gone now; drop the handle with
+    # them so the next install cannot capture into a dead pool.
+    _POOLS.clear()
     for layer in layers:
         require('forward' not in vars(layer), 'Gemma layer forward stayed shadowed')
         require(callable(getattr(layer, 'forward', None)), 'Gemma layer lost its forward')
