@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 15 04:50 UTC: after restart, allocation diagnostic confirmed the OOM cause; metadata research server starting on 18129.**
+The user restarted the host (boot `b13caae3`); the bounded health check passed
+with no kernel faults. A no-model 2 GiB allocation on the newest image reproduced
+the research-launch memory problem at small scale: with both GPUs visible and no
+`PYTORCH_ALLOC_CONF`, driver-held host memory grew 2.05 GiB; with
+`expandable_segments:True` it grew 0.06 GiB, and with one GPU 0.13 GiB. No GPU
+faults. The research launcher now adds the five qualified environment variables
+and starts a root host-memory guard that kills the container cgroup without
+Docker (live-tested on a throwaway container). The metadata research server is
+starting on localhost18129; the preregistered client campaign follows. Port
+18124 stays offline by user decision. The exact two-card communication fixes
+are being prepared offline. Evidence:
+`/mnt/fast-ai/bench-results/optimization-validation-20260915`;
+[diagnostic summary](experiments/qwen38-27b-b70/data/2026-09-15-newest-base-alloc-diagnostic/summary.json).
+
 **Two-B70 host, September 15 03:00 UTC: user decision — validate the optimizations on the newest base; the service can wait; host restart pending.**
 The user set the goal to validating the transfer optimizations, not restoring
 the API. Decisions: (1) run the metadata tweak campaign on the newest upstream

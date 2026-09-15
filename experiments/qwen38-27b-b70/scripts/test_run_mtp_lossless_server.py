@@ -96,4 +96,33 @@ class ShutdownTests(unittest.TestCase):
                 for p in snap.iterdir():p.chmod(0o644)
 
 
+class QualifiedEnvironmentTests(unittest.TestCase):
+    def test_contract_gains_the_five_qualified_variables(self):
+        env=server.qualified_env({'env':['VLLM_USE_V2_MODEL_RUNNER=0']})
+        self.assertEqual({k:env[k] for k in server.QUALIFIED_ENV},server.QUALIFIED_ENV)
+        self.assertEqual(env['VLLM_USE_V2_MODEL_RUNNER'],'0')
+
+    def test_conflicting_contract_value_refused(self):
+        with self.assertRaises(RuntimeError):
+            server.qualified_env({'env':['PYTORCH_ALLOC_CONF=expandable_segments:False']})
+
+    def test_actual_recorded_contract_merges_without_conflict(self):
+        if not server.ORIGINAL.exists():self.skipTest('recorded contract unavailable')
+        env=server.qualified_env(json.loads(server.ORIGINAL.read_text()))
+        self.assertEqual(env['PYTORCH_ALLOC_CONF'],'expandable_segments:True')
+
+    def test_actual_launch_env_comes_from_qualified_env(self):
+        tree=ast.parse(path.read_text())
+        main=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='main')
+        assigns=[n for n in ast.walk(main) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='env' for t in n.targets)]
+        self.assertEqual(len(assigns),1)
+        call=assigns[0].value
+        self.assertTrue(isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='qualified_env')
+
+    def test_client_expects_the_same_qualified_environment(self):
+        spec=importlib.util.spec_from_file_location('client_env_check',path.with_name('run-mtp-metadata-client-campaign.py'))
+        client=importlib.util.module_from_spec(spec);spec.loader.exec_module(client)
+        self.assertEqual(client.QUALIFIED_ENV,server.QUALIFIED_ENV)
+
+
 if __name__=='__main__':unittest.main()

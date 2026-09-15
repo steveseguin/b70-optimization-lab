@@ -29,6 +29,9 @@ CONTROL_IMAGE = 'sha256:506fcc26897b12915cb9e27c28e0adc256d278666fa745602a1ae5e1
 ORIGINAL_IDENTITY = Path('/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914/control-identity.json')
 MODEL_DIR = '/mnt/fast-ai/llm-models/qwen3.8-27b-fp8'
 ARMS = (('control-1','control'),('candidate-1','candidate'),('control-2','control'),('candidate-2','candidate'))
+# Qualified service env the recorded contract omits; the research launcher adds it (2026-09-15).
+QUALIFIED_ENV = {'PYTORCH_ALLOC_CONF': 'expandable_segments:True', 'FI_PROVIDER': 'tcp',
+                 'FI_TCP_IFACE': 'lo', 'PYTHONHASHSEED': '0', 'TORCHINDUCTOR_DETERMINISTIC': '1'}
 
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -76,7 +79,7 @@ def server_identity_gate(path, model):
     if one_value(model_args, '--served-model-name') != model:
         raise RuntimeError('Requested model alias differs from admitted server')
     expected_env = dict(e.split('=',1) for e in original['env'])
-    expected_env.update(PYTHONPATH='/research', VLLM_SERVER_DEV_MODE='1')
+    expected_env.update(QUALIFIED_ENV, PYTHONPATH='/research', VLLM_SERVER_DEV_MODE='1')
     pairs = [e.split('=',1) for e in repeated_values(docker_args,'--env')]
     actual_env = dict(pairs)
     if len(actual_env) != len(pairs) or actual_env != expected_env or actual_env.get('VLLM_USE_V2_MODEL_RUNNER') != '0':

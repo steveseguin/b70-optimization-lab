@@ -102,6 +102,7 @@ class ClientGuards(unittest.TestCase):
                 '--mount',f'type=bind,source={client.MODEL_DIR},target=/model,readonly',
                 '--mount',f'type=bind,source={snapshot},target=/research,readonly',
                 '--env','VLLM_USE_V2_MODEL_RUNNER=0','--env','PYTHONPATH=/research','--env','VLLM_SERVER_DEV_MODE=1',
+                *[item for key,value in client.QUALIFIED_ENV.items() for item in ('--env',f'{key}={value}')],
                 client.CONTROL_IMAGE]+commands+['--worker-extension-cls','mtp_transfer_worker.MtpTransferWorkerExtension'],
                 'extensions':extensions,'original_control_sha256':client.sha(origin)}
             state={'status':'ready','image_id':client.CONTROL_IMAGE,'port':18129,'container_id':'a'*64,
@@ -111,6 +112,11 @@ class ClientGuards(unittest.TestCase):
             with mock.patch.object(client,'ORIGINAL_IDENTITY',origin):
                 self.assertEqual(client.server_identity_gate(root/'launch.json','model')[0],launch)
                 original_argv=list(launch['argv'])
+                env_index=original_argv.index('PYTORCH_ALLOC_CONF=expandable_segments:True')
+                launch['argv']=original_argv[:env_index-1]+original_argv[env_index+1:]
+                (root/'launch.json').write_text(json.dumps(launch))
+                with self.assertRaises(RuntimeError):client.server_identity_gate(root/'launch.json','model')
+                launch['argv']=list(original_argv)
                 cap_index=launch['argv'].index('--cap-add')
                 del launch['argv'][cap_index:cap_index+2]
                 (root/'launch.json').write_text(json.dumps(launch))
