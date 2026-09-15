@@ -1,0 +1,80 @@
+{
+  "comparison": {
+    "complete_token_arrays_exact": false,
+    "divergent_prompts": [
+      {
+        "first_divergence_token_zero_based": 479,
+        "left_token_count": 512,
+        "prompt_id": "performance-hypotheses",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 127,
+        "left_token_count": 512,
+        "prompt_id": "risk-register",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 160,
+        "left_token_count": 512,
+        "prompt_id": "technical-guide",
+        "right_token_count": 512
+      }
+    ],
+    "exact_prompts": 9,
+    "total_prompts": 12
+  },
+  "left": {
+    "artifacts": {
+      "canaries": {
+        "path": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-06-compiled-mtp0-cpu-embed-20k-strict/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-06-compiled-mtp0-cpu-embed-20k-strict/campaign-identity.json",
+        "sha256": "6a213c9202f147968eb04f84a99e24c1900d4d93a4624ddd7cc6da66564ab28a"
+      },
+      "performance": {
+        "path": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-06-compiled-mtp0-cpu-embed-20k-strict/performance.json",
+        "sha256": "bcb49de027f23729f990b8af22a639ea4ea6ee57d326eb80a19d7dfe7536278d"
+      }
+    },
+    "attempt": "fp8-tp1-06-compiled-mtp0-cpu-embed-20k-strict",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 19.318097298903865,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "fp8-tp1-06-compiled-mtp0-cpu-embed-20k"
+  },
+  "qualification": {
+    "all_workload_and_canary_gates_passed": true,
+    "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+    "strict_pair_qualified": false
+  },
+  "right": {
+    "artifacts": {
+      "canaries": {
+        "path": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-12-compiled-mtp4-cpu-embed-13k-strict/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-12-compiled-mtp4-cpu-embed-13k-strict/campaign-identity.json",
+        "sha256": "59cc5d5aa58e52ae14bd0f89d22a3ace069d3a69727ae4655dbd6eb8c3a4377d"
+      },
+      "performance": {
+        "path": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-12-compiled-mtp4-cpu-embed-13k-strict/performance.json",
+        "sha256": "3545ef7a2c670cd9a9a9de169780e53bae81ffb9062af1e7283500b2d4008a57"
+      }
+    },
+    "attempt": "fp8-tp1-12-compiled-mtp4-cpu-embed-13k-strict",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 49.70644570928887,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "fp8-tp1-12-compiled-mtp4-cpu-embed-13k"
+  },
+  "schema": "neural.download.strict-attempt-output-comparison.v1",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+}
