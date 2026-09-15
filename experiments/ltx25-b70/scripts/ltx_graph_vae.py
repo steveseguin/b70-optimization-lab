@@ -47,6 +47,11 @@ class GraphedMethod:
         self.device = next(owner.parameters()).device
         self.entries = {}
 
+    def _replay(self, graph):
+        with torch.xpu.device(self.device):
+            graph.replay()
+            torch.xpu.synchronize(self.device)
+
     # -- helpers ------------------------------------------------------------
     def _signature(self, args, kwargs):
         return (self.name, describe(args, self.name + '.args'),
@@ -78,13 +83,20 @@ class GraphedMethod:
                 self.name + ' did not return a single tensor; capture assumes it does')
         reference = reference.clone()
 
-        stream = torch.xpu.Stream(device=self.device)
-        stream.wait_stream(torch.xpu.current_stream(self.device))
-        with torch.xpu.stream(stream), torch.no_grad():
-            for _ in range(WARMUP_ITERATIONS):
-                self.original(*static_args, **static_kwargs)
-        torch.xpu.current_stream(self.device).wait_stream(stream)
-        torch.xpu.synchronize(self.device)
+        # The decoder lives on xpu:3 while the current device is xpu:0. Setting
+        # only the stream is not enough: torch.xpu.graph synchronises and
+        # empty_caches the *current* device, and capture then records nothing.
+        # An empty graph replays as a no-op and would silently return stale
+        # output, so the device context is set explicitly around every capture,
+        # warm-up and replay. The non-inertness proof below is what caught this.
+        with torch.xpu.device(self.device):
+            stream = torch.xpu.Stream(device=self.device)
+            stream.wait_stream(torch.xpu.current_stream(self.device))
+            with torch.xpu.stream(stream), torch.no_grad():
+                for _ in range(WARMUP_ITERATIONS):
+                    self.original(*static_args, **static_kwargs)
+            torch.xpu.current_stream(self.device).wait_stream(stream)
+            torch.xpu.synchronize(self.device)
         restore()
 
         graph = torch.xpu.XPUGraph()
@@ -92,7 +104,8 @@ class GraphedMethod:
         # otherwise reuses one class-level stream bound to the first device it
         # saw, which records an EMPTY graph on any other device.
         try:
-            with torch.no_grad(), torch.xpu.graph(graph, stream=torch.xpu.Stream(device=self.device)):
+            with torch.xpu.device(self.device), torch.no_grad(), \
+                    torch.xpu.graph(graph, stream=torch.xpu.Stream(device=self.device)):
                 output = self.original(*static_args, **static_kwargs)
         except BaseException:
             # A capture abandoned part-way leaves the device recording. On
@@ -113,12 +126,10 @@ class GraphedMethod:
         require(flat, self.name + ' has no tensor inputs to perturb')
         restore()
         flat[0].add_(1.0)
-        graph.replay()
-        torch.xpu.synchronize(self.device)
+        self._replay(graph)
         perturbed = output.clone()
         restore()
-        graph.replay()
-        torch.xpu.synchronize(self.device)
+        self._replay(graph)
         require(not torch.equal(output.view(torch.int16) if output.dtype == torch.bfloat16 else output,
                                 perturbed.view(torch.int16) if output.dtype == torch.bfloat16 else perturbed),
                 self.name + ' captured an inert graph; replay ignored its input')
@@ -149,7 +160,7 @@ class GraphedMethod:
             for buffer, value in zip(entry.flat, incoming):
                 if buffer is not value:
                     fill_static(buffer, value)
-            entry.graph.replay()
+            self._replay(entry.graph)
         entry.replays += 1
         self.report.replays += 1
         # The captured output lives in this graph's private pool and the next
