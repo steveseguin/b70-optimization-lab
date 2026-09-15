@@ -27,6 +27,8 @@ base = json.loads((Path(a.graph)).read_text())
 assert base['420']['inputs'] == {'placement': 'split', 'encoder_mode': 'control'}
 assert base['422']['inputs']['mode'] == a.mode and base['422']['inputs']['selection'] == 'all48'
 base['422']['inputs']['run_name'] = a.name
+if base['374']['class_type'] == 'LTXNAAxisDecode':
+    base['374']['inputs']['run_name'] = a.name
 base['421']['inputs']['run_name'] = a.name
 base['414']['inputs']['run_name'] = a.name
 base['75']['inputs']['filename_prefix'] = a.name + '/preview'
