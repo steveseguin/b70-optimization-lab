@@ -25,6 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 15 05:25 UTC: metadata tweak validated exact but speed-neutral; exact communicator tests next.**
+On the newest base (`506fcc26`) the unchanged server matched all 12 reference
+outputs, the native gate passed 36 cases on both GPUs, and four alternating
+normal/tweak rounds all matched exactly with zero cached tokens. Writing speed
+54.245/54.392/54.450/54.543 tok/s and reading speeds within 0.4% show no gain
+beyond control drift; the tweak stays off. Research server 18129 is being
+stopped once. Next: the no-IPC NaN characterization (`nan-semantics-01`) for the
+exact two-card communicator on the same image, then its stage-05 gate only if a
+single add formulation matches XCCL. Port 18124 stays offline by user decision.
+[Results](experiments/qwen38-27b-b70/notes/2026-09-15-metadata-tweak-results.md),
+[communicator preparation](experiments/qwen38-27b-b70/notes/2026-09-15-exact-comm-fixes.md).
+
 **Two-B70 host, September 15 04:50 UTC: after restart, allocation diagnostic confirmed the OOM cause; metadata research server starting on 18129.**
 The user restarted the host (boot `b13caae3`); the bounded health check passed
 with no kernel faults. A no-model 2 GiB allocation on the newest image reproduced
