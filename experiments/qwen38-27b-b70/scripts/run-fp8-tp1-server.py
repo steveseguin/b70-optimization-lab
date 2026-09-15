@@ -29,6 +29,8 @@ MODEL_DIR = Path('/mnt/fast-ai/llm-models/qwen3.8-27b-fp8')
 OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-cpu-embed'
 LAYER_HASH_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-layer-hash'
 GDN_GROUPS_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-gdn-head-groups'
+FA_TRACE_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-fa-trace'
+FA_ROWS_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-fa-verify-rows'
 HELPER = ROOT / 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py'
 GUARD = ROOT / 'experiments/qwen38-27b-b70/scripts/host_memory_guard.py'
 PASSWORD_FILE = Path('/home/steve/SUDO_PASSWORD.txt')
@@ -87,7 +89,7 @@ def build(args, name, out, image_env):
         cmd.append('--enforce-eager')
     mounts = ['--mount', f'type=bind,source={MODEL_DIR},target=/model,readonly',
               '--mount', f'type=bind,source={out}/cache,target=/root/.cache/vllm']
-    if args.cpu_embed or args.layer_hash or args.gdn_head_groups:
+    if args.cpu_embed or args.layer_hash or args.gdn_head_groups or args.fa_trace or args.fa_verify_rows:
         mounts += ['--mount', f'type=bind,source={out}/overlay,target=/overlay,readonly']
         env.update(PYTHONPATH='/overlay')
     if args.cpu_embed:
@@ -99,7 +101,11 @@ def build(args, name, out, image_env):
         if key not in env:
             raise RuntimeError(f'--env may only override a variable the qualified record already sets: {key}')
         env[key] = value
-    if args.layer_hash:
+    if args.fa_trace:
+        env.update(B70_FA_TRACE='/hash/fa-trace.jsonl')
+    if args.fa_verify_rows:
+        env.update(B70_FA_VERIFY_ROWS='1')
+    if args.layer_hash or args.fa_trace:
         mounts += ['--mount', f'type=bind,source={out}/hash,target=/hash']
         env.update(B70_LAYER_HASH_TOKENS=str(args.layer_hash), B70_LAYER_HASH_DIR='/hash')
     argv = ['docker', 'run', '--name', name, '--restart', 'no', '--network', 'bridge',
@@ -129,6 +135,8 @@ def main():
     ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',
                     help='override one variable already present in the qualified record')
     ap.add_argument('--gdn-head-groups', type=int, default=0, help='run one-card GDN prefill delta rule in G head groups')
+    ap.add_argument('--fa-verify-rows', action='store_true', help='compute verifier attention rows as decode calls')
+    ap.add_argument('--fa-trace', action='store_true', help='diagnostic: record small-query flash-attention call arguments')
     ap.add_argument('--layer-hash', type=int, default=0, help='diagnostic: hash module outputs for N-token calls (use --eager)')
     ap.add_argument('--keep', action='store_true', help='stay up after ready until STOP file or signal')
     ap.add_argument('--startup-timeout', type=int, default=1500)
@@ -157,8 +165,15 @@ def main():
     if a.layer_hash:
         shutil.copytree(LAYER_HASH_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
                         dirs_exist_ok=True)
+    if a.fa_verify_rows:
+        shutil.copytree(FA_ROWS_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
+                        dirs_exist_ok=True)
+    if a.fa_trace:
+        shutil.copytree(FA_TRACE_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
+                        dirs_exist_ok=True)
+    if a.layer_hash or a.fa_trace:
         (out / 'hash').mkdir()
-    if a.cpu_embed or a.layer_hash or a.gdn_head_groups:
+    if a.cpu_embed or a.layer_hash or a.gdn_head_groups or a.fa_trace or a.fa_verify_rows:
         overlay_hashes = {str(p.relative_to(out / 'overlay')): sha(p) for p in sorted((out / 'overlay').rglob('*')) if p.is_file()}
     argv = build(a, name, out, image_info['Config']['Env'])
     started = helper.now()
