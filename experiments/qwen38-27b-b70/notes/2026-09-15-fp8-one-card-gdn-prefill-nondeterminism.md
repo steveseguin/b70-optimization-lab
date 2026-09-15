@@ -74,6 +74,52 @@ where 24 do not. The suggested kernel fix, not built or tested, is
   | 2,048 | 2,214 | 2,158 |
   | 12,288 | 2,088 | 2,044 |
 
+## Second issue: long-context depth 5 vs no-MTP (verifier attention rows)
+
+With the GDN fix, depth 5 + shortlist still matched MTP0 on the strict suite
+and at 512/2,048 input tokens, but after a 12,288-token prompt `prose-12288`
+flipped at token 32 (rung 36), a near-tie that the older nondeterminism had also
+flipped.
+
+- **Served-argument trace** ([`b70_fa_trace`](../overlays/b70-fa-trace/b70_fa_trace.py)):
+  no-MTP decode and depth-5 verify call the same FA2 paged kernel with identical
+  arguments except the query row count (1 vs 6) and key length.
+- **Census** ([`qwen38-fa-verify-row-census.py`](../scripts/qwen38-fa-verify-row-census.py),
+  served interleaved cache layout, expanded descales, 26-page tables): row r of
+  a 6-query causal call equals the same query alone for key lengths up to 1,984.
+  From 1,985 it differs by FP16 ULPs, row by row exactly as each row's key length
+  crosses 1,985. This holds for contiguous and scattered page tables, and the
+  chunk itself repeats exactly.
+- **The existing r38 switch `VLLM_XPU_FA_SERIAL_SPEC_DECODE=1` is not a fix**
+  (rung 38, 10/12 strict): it also splits prefill chunks into single rows.
+
+[`b70_fa_verify_rows`](../overlays/b70-fa-verify-rows/b70_fa_verify_rows.py)
+(`B70_FA_VERIFY_ROWS=1`, launcher `--fa-verify-rows`):
+
+- It applies only to one-request calls with 2-8 query rows and a key length
+  above 1,536.
+- Each row becomes a single-query call with the decode arguments: `seqused_k`
+  and `max_seqlen_k` shortened per row, the same caches, block table and
+  descales.
+- Prefill, shorter contexts and no-MTP decode are unchanged, and it adds no host
+  synchronisation.
+
+## Final one-card recipe results (R309, both overlays, depth 5 + 67k draft shortlist, 13,824 context)
+
+| Rung | Strict vs MTP0 (rung 35) | Context screen vs MTP0 (512/2,048/12,288, 2 repeats) | Strict tok/s | Prefill 512 / 2,048 / 12,288 tok/s | Decode after 12,288 prompt (tokens 1-100) |
+| --- | --- | --- | ---: | --- | ---: |
+| 41 | 12/12 | 18/18 exact + warmups | 53.395 | 1,340 / 1,979 / 1,947 | 61.7 |
+| 42 (fresh server) | 12/12 | 18/18 exact + warmups | 53.395 | 1,343 / 1,981 / 1,948 | 61.7 |
+
+- **Strict speed** without either overlay was 53.602 / 53.463 (rungs 22/23), so
+  the overlays are within noise.
+- **Prefill** is lower with MTP than MTP0 (1,614 / 2,158 / 2,044) because the
+  draft layer also processes the prompt.
+- **Host memory:** the fixed embedding plugin raised the minimum available host
+  memory during a depth-5 run from 5.33 to 6.97 GiB.
+- **Health:** no kernel faults; cached tokens zero on every run.
+
 Evidence: `/mnt/fast-ai/bench-results/optimization-validation-20260915/`
-(`fp8-tp1-25`…`37`, `gdn-*census*`, `gemm-alignment-census-r309`,
-`tp2-history-probe`) and [copied receipts](../data/2026-09-15-fp8-one-card-determinism/).
+(`fp8-tp1-25`…`42`, `gdn-*census*`, `fa-verify-row-*`,
+`gemm-alignment-census-r309`, `tp2-history-probe`) and
+[copied receipts](../data/2026-09-15-fp8-one-card-determinism/).
