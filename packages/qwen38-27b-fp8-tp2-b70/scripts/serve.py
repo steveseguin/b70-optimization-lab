@@ -148,6 +148,28 @@ def journal(since):
     return result.stdout
 
 
+WARMUP_PROMPT = 'Warm-up request sent before readiness. List the numbers from one to twenty.'
+
+
+def warm_up(port):
+    """One untimed greedy completion before readiness (2026-09-15).
+
+    A fresh server JIT-compiles the MTP draft kernels on its first speculative
+    step; without this, the first real request pays that cost (the strict
+    suite's first prompt measured 42.8 instead of 56.5 tok/s). Prefix caching
+    is off, so this request cannot benefit any later prompt.
+    """
+    body = json.dumps({'model': MODEL, 'prompt': WARMUP_PROMPT, 'max_tokens': 64, 'temperature': 0}).encode()
+    request = urllib.request.Request(f'http://127.0.0.1:{port}/v1/completions', data=body,
+                                     headers={'Content-Type': 'application/json'})
+    started = time.monotonic()
+    with urllib.request.urlopen(request, timeout=300) as response:
+        usage = json.loads(response.read()).get('usage', {})
+    if not usage.get('completion_tokens'):
+        raise RuntimeError('Warm-up request returned no tokens; see server.log. No restart attempted.')
+    return {'completion_tokens': usage['completion_tokens'], 'seconds': round(time.monotonic() - started, 3)}
+
+
 def healthy(port):
     try:
         with urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=2) as response:
@@ -217,7 +239,7 @@ def start(args):
                             break
                         if record['status'] == 'starting':
                             if record['container_id'] and healthy(args.port):
-                                record.update(status='ready', ready_at=now())
+                                record.update(status='ready', warmup=warm_up(args.port), ready_at=now())
                                 write_json(state / 'state.json', record)
                                 print(f'Ready: http://127.0.0.1:{args.port}/v1\nModel: {MODEL}\nLeave this terminal open. Ctrl+C stops this owned server.', flush=True)
                             elif time.monotonic() > deadline:
