@@ -57,6 +57,9 @@ still_present_in_original = 'int(en.max())' in '\n'.join(
 
 # The cache now outlives a call, so a HIT must return exactly what a cold miss
 # computes. Exercise both paths against the packet original.
+# the persistent store now lives in na3d's keyword-only default
+import inspect
+_persist = inspect.signature(b.na3d).parameters['_axis_cache'].default
 cache_results = []
 for length, kernel, causal in itertools.product((3, 8, 16, 25), (2, 4, 8), (False, True)):
     starts, ends = b._window_bounds(length, kernel, causal)
@@ -67,8 +70,8 @@ for length, kernel, causal in itertools.product((3, 8, 16, 25), (2, 4, 8), (Fals
         shared = {}
         first = b._group_mask(rel, dtype, device, shared)      # fixed version, cold miss
         second = b._group_mask(rel, dtype, device, shared)     # fixed version, cache HIT
-        third = b._group_mask(rel, dtype, device, b._PERSISTENT_AXIS_CACHE)
-        fourth = b._group_mask(rel, dtype, device, b._PERSISTENT_AXIS_CACHE)
+        third = b._group_mask(rel, dtype, device, _persist)
+        fourth = b._group_mask(rel, dtype, device, _persist)
         cache_results.append(torch.equal(view(cold), view(first)) and
                              torch.equal(view(cold), view(second)) and
                              torch.equal(view(cold), view(third)) and
@@ -76,11 +79,11 @@ for length, kernel, causal in itertools.product((3, 8, 16, 25), (2, 4, 8), (Fals
         if not cache_results[-1]:
             mismatches.append({'case': 'persistent cache', 'length': length, 'kernel': kernel,
                                'causal': causal, 'dtype': str(dtype)})
-bounded = len(b._PERSISTENT_AXIS_CACHE) <= 64 and all(
-    t.numel() <= 4096 for t in b._PERSISTENT_AXIS_CACHE.values())
+bounded = len(_persist) <= 64 and all(
+    t.numel() <= 4096 for t in _persist.values())
 
 out = {'cache_comparisons': len(cache_results), 'cache_all_equal': all(cache_results),
-       'persistent_cache_entries': len(b._PERSISTENT_AXIS_CACHE), 'cache_bounded': bounded,
+       'persistent_cache_entries': len(_persist), 'cache_bounded': bounded,
        'comparisons': len(results), 'all_bitwise_equal': all(results) and not mismatches,
        'mismatches': mismatches[:10], 'host_read_removed_from_code': clean,
        'host_read_present_in_original': still_present_in_original,

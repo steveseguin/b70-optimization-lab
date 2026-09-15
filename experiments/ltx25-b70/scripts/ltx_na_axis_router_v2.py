@@ -14,7 +14,7 @@ import re
 import threading
 
 ORIGINAL_SHA = '4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995'
-CANDIDATE_SHA = '8ead9990f5dff5e0c5b7eeccb3f11446b038b6c67867e211b7924895bcef0bd1'
+CANDIDATE_SHA = 'd2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a'
 FUNCTIONS = ('_window_bounds', '_pick_tiles', '_group_mask', 'na3d')
 
 

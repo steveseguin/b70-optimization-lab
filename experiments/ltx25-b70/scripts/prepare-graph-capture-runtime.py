@@ -160,12 +160,20 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     # proven bitwise equivalent on CPU (288 cold-path and 48 cache-hit cases):
     # remove the host read, and give the geometry cache a lifetime longer than
     # one call so the masks are device-resident when capture happens.
+    # Exactly these substantive changes, all required by graph capture and all
+    # proven bitwise equivalent on CPU (288 cold-path and 48 cache-hit cases):
+    # remove the host read of tensor contents, and give the geometry cache a
+    # lifetime longer than one call so the masks are device-resident when capture
+    # happens. The cache is a keyword-only default rather than a module global
+    # because the router admits only the four functions plus two pinned budget
+    # constants into its namespace.
     expected_na_diff = [
-        '+_PERSISTENT_AXIS_CACHE = {}',
         '-            kj = torch.arange(int(en.max()), device=device)',
         '+            kj = torch.arange(max(ends), device=device)',
+        '+    *,',
+        '+    _axis_cache: dict = {},',
         '-    axis_cache = {}',
-        '+    axis_cache = _PERSISTENT_AXIS_CACHE',
+        '+    axis_cache = _axis_cache',
     ]
     require([line.rstrip() for line in diff] == expected_na_diff,
             'NA candidate differs from packet13 beyond the removed host read and the cache lifetime')
