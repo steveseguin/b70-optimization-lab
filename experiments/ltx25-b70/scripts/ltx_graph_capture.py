@@ -17,6 +17,7 @@ This module allocates no model state and moves no weights.
 """
 import copy
 import hashlib
+import time
 import types as _types
 import json
 import weakref
@@ -678,6 +679,47 @@ def install(patcher, indices):
     report.devices = sorted(str(d) for d in groups)
     validate_patcher(patcher)
     return report, originals
+
+
+def measure(patcher, originals, iterations=20):
+    """Time every captured graph's replay, on the real blocks.
+
+    This is the only way to learn what the 48 blocks actually cost: XPU graph
+    events cannot be profiled, and a synthetic stand-in only approximates the
+    real block. Replaying outside a forward is harmless -- it recomputes into the
+    shared static buffers, and the next forward refills them (block 0 refills the
+    activations because their source changed, and the invariants refill because
+    the forward token changed).
+    """
+    diffusion, registry = validate_patcher(patcher)
+    rows = []
+    for index in sorted(originals):
+        route = registry[('double_block', index)]
+        require(type(route) is GraphBlockRoute, 'Expected a graph route at block ' + str(index))
+        for entry in route.entries.values():
+            device = route.device
+            with torch.xpu.device(device):
+                for _ in range(3):
+                    entry.graph.replay()
+                torch.xpu.synchronize(device)
+                start = time.perf_counter()
+                for _ in range(iterations):
+                    entry.graph.replay()
+                torch.xpu.synchronize(device)
+            seconds = (time.perf_counter() - start) / iterations
+            rows.append({'block_index': index, 'device': str(device),
+                         'video_tokens': int(entry.out_vx.shape[1]),
+                         'audio_tokens': int(entry.out_ax.shape[1]),
+                         'replay_ms': round(seconds * 1e3, 4)})
+    stages = {}
+    for row in rows:
+        stages.setdefault(row['video_tokens'], []).append(row['replay_ms'])
+    summary = {'iterations': iterations, 'timed_graphs': len(rows),
+               'per_stage': {str(tok): {'blocks': len(v), 'sum_ms': round(sum(v), 3),
+                                        'mean_block_ms': round(sum(v) / len(v), 4)}
+                             for tok, v in sorted(stages.items())},
+               'rows': rows}
+    return summary
 
 
 def restore(patcher, originals):

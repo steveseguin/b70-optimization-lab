@@ -107,12 +107,20 @@ class LTXVAEGraphGate:
                     require(resident is vae, 'A different VAE is already shadowed')
                     report['installed_now'] = False
             else:
-                require(_installed is not None, 'No decoder methods are shadowed to restore')
-                resident, originals, captures = _installed
-                require(resident is vae, 'Restore target is not the shadowed VAE')
-                adapter.restore(vae, originals)
-                report['capture_summary_at_restore'] = captures.summary()
-                _installed = None
+                # 'restored' means "ensure the original state". An arm that never
+                # shadowed the decoder is already in that state, so this is a
+                # no-op rather than an error; the receipt records which it was.
+                if _installed is None:
+                    adapter.decoder_of(vae)
+                    report['restored_blocks'] = []
+                    report['was_shadowed'] = False
+                else:
+                    resident, originals, captures = _installed
+                    require(resident is vae, 'Restore target is not the shadowed VAE')
+                    adapter.restore(vae, originals)
+                    report['capture_summary_at_restore'] = captures.summary()
+                    report['was_shadowed'] = True
+                    _installed = None
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
