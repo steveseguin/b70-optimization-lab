@@ -321,6 +321,12 @@ def stack_of(clip):
 def install(clip):
     """Shadow every Gemma layer's forward with a graph-backed stand-in."""
     stack, layers = stack_of(clip)
+    # A pool handle must not outlive the graphs that hold it. Reusing one whose
+    # graphs were all destroyed at restore aborts the process inside
+    # capture_begin with `use_count > 0 INTERNAL ASSERT FAILED`
+    # (CachingHostAllocator.h:921), which is how packet38's server died after a
+    # restore/install cycle. Start every generation with a fresh pool.
+    _POOLS.clear()
     for layer in layers:
         require('forward' not in vars(layer), 'Gemma layer forward is already shadowed')
     report = Report()
@@ -341,6 +347,9 @@ def restore(clip, originals):
                 f'Unexpected Gemma layer forward while restoring layer {index}')
         current.entries.clear()
         del layer.forward
+    # Every graph that referenced the pool is gone now; drop the handle with
+    # them so the next install cannot capture into a dead pool.
+    _POOLS.clear()
     for layer in layers:
         require('forward' not in vars(layer), 'Gemma layer forward stayed shadowed')
         require(callable(getattr(layer, 'forward', None)), 'Gemma layer lost its forward')
