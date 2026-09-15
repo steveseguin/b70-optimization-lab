@@ -34,6 +34,14 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 15 12:55 UTC: user approved NaN-class comparison; communicator stage 05 running.**
+The user chose to count any two NaN outputs as equal for the exact two-card
+communicator; every other bit must still match XCCL. Under that rule all four
+formulations match the saved characterization, and stage 05 runs the Native04
+arithmetic (`m0`) on the newest base: exact checks at 1/2/512/4,096 rows, then
+alternating XCCL-versus-candidate timing, under the memory guard and fault
+monitor. It uses peer IPC, the path that coincided with the September 14 fault.
+
 **Two-B70 host, September 15 12:40 UTC: communicator NaN characterization done; stage 05 awaits a user decision on NaN comparison.**
 `nan-semantics-01` completed cleanly on the newest base (no faults, guard clean,
 exit confirmed). No fixed add formulation matches XCCL bit for bit: every

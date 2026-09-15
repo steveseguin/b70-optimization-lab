@@ -55,6 +55,29 @@ class GateFixtureTests(unittest.TestCase):
         self.assertEqual(gate.parser().parse_args(base + ["--add-mode", "m3"]).add_mode, "m3")
 
 
+    def test_nan_rule_defaults_to_bit_exact_and_accepts_class(self):
+        base = ["--library", "x.so", "--out", "o", "--add-mode", "m0"]
+        self.assertEqual(gate.parser().parse_args(base).nan_rule, "bit-exact")
+        self.assertEqual(gate.parser().parse_args(base + ["--nan-rule", "nan-class"]).nan_rule, "nan-class")
+        with mock.patch("sys.stderr"), self.assertRaises(SystemExit):
+            gate.parser().parse_args(base + ["--nan-rule", "loose"])
+
+    def test_outputs_equal_rules(self):
+        from array import array
+        ref = array("H", [0x7e03, 0x3c00, 0x0000]).tobytes()
+        nan_payload = array("H", [0xfe02, 0x3c00, 0x0000]).tobytes()
+        finite = array("H", [0x7e03, 0x3c01, 0x0000]).tobytes()
+        signed_zero = array("H", [0x7e03, 0x3c00, 0x8000]).tobytes()
+        nan_vs_number = array("H", [0x3c00, 0x3c00, 0x0000]).tobytes()
+        self.assertTrue(gate.outputs_equal(ref, ref, "bit-exact"))
+        self.assertFalse(gate.outputs_equal(nan_payload, ref, "bit-exact"))
+        self.assertTrue(gate.outputs_equal(nan_payload, ref, "nan-class"))
+        for other in (finite, signed_zero, nan_vs_number):
+            self.assertFalse(gate.outputs_equal(other, ref, "nan-class"))
+        with self.assertRaises(ValueError):
+            gate.outputs_equal(ref, ref, "loose")
+
+
 class GateExitTests(unittest.TestCase):
     def args(self, d):
         return SimpleNamespace(out=str(d), add_mode="m1")

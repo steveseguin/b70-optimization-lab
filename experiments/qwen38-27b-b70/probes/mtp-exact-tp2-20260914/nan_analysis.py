@@ -17,6 +17,8 @@ from pathlib import Path
 import sys
 
 SCHEMA = "neural.download.exact-tp2-nan-semantics.v1"
+CLASS_SCHEMA = "neural.download.exact-tp2-nan-class.v1"
+RULES = ("bit-exact", "nan-class")  # nan-class: user decision 2026-09-15, any two NaNs count as equal.
 ELEMENTS_PER_ROW = 5120
 SHAPES = (1, 2, 512, 4096)
 MODES = ("m0", "m1", "m2", "m3")  # Selection preference order when several match.
@@ -75,6 +77,19 @@ def mismatch_count(a, b):
     for (x, y), k in Counter(zip(_chunks(a, 2 * PERIOD), _chunks(b, 2 * PERIOD))).items():
         if x != y:
             total += k * sum(u != v for u, v in zip(array("H", x), array("H", y)))
+    return total
+
+
+def class_mismatch_count(a, b):
+    """Element mismatches when any two NaNs count as equal; every other bit must match."""
+    if len(a) != len(b) or len(a) % 2:
+        raise ValueError("raw FP16 length mismatch")
+    if a == b:
+        return 0
+    total = 0
+    for (x, y), k in Counter(zip(_chunks(a, 2 * PERIOD), _chunks(b, 2 * PERIOD))).items():
+        if x != y:
+            total += k * sum(u != v and not (is_nan(u) and is_nan(v)) for u, v in zip(array("H", x), array("H", y)))
     return total
 
 
@@ -140,6 +155,28 @@ def evaluate(outputs, shapes=SHAPES):
     return verdict
 
 
+def evaluate_class(outputs, shapes=SHAPES):
+    """As evaluate, except any two NaN outputs count as equal (user decision 2026-09-15).
+
+    Every non-NaN output bit must still equal XCCL and XCCL must agree bitwise
+    across ranks. The strict verdict fields are kept alongside for transparency.
+    """
+    verdict = evaluate(outputs, shapes)
+    verdict.update(schema=CLASS_SCHEMA, rule="nan-class", bit_exact_status=verdict["status"],
+                   bit_exact_matching_modes=verdict["matching_modes"])
+    verdict.pop("distinguishing_table", None)
+    if verdict["errors"] or verdict["status"] == "xccl-ranks-disagree":
+        verdict.update(selected_mode=None, matching_modes=[])
+        return verdict
+    counts = {m: {f"rank{r}": {str(rows): class_mismatch_count(outputs[r][rows][m], outputs[r][rows]["xccl"])
+                               for rows in shapes} for r in (0, 1)} for m in MODES}
+    verdict["class_mismatch_counts"] = counts
+    verdict["matching_modes"] = [m for m in MODES if all(v == 0 for r in counts[m].values() for v in r.values())]
+    verdict["selected_mode"] = verdict["matching_modes"][0] if verdict["matching_modes"] else None
+    verdict["status"] = "selected" if verdict["selected_mode"] else "no-single-formulation-matches"
+    return verdict
+
+
 def distinguishing_table(outputs, tables, shapes=SHAPES):
     """Smallest set of fixture pairs whose rows together refute every mode."""
     refutes = {}
@@ -175,8 +212,10 @@ def distinguishing_table(outputs, tables, shapes=SHAPES):
     return {"rows": table, "position_dependent_refutations": notes}
 
 
-def analyze(directory, shapes=SHAPES):
+def analyze(directory, shapes=SHAPES, rule="bit-exact"):
     """Load both rank receipts and raw bins, verify hashes and inputs, evaluate."""
+    if rule not in RULES:
+        raise ValueError("unknown NaN comparison rule")
     directory = Path(directory)
     outputs, errors, receipts = {0: {}, 1: {}}, [], {}
     for rank in (0, 1):
@@ -199,7 +238,8 @@ def analyze(directory, shapes=SHAPES):
                     outputs[rank].setdefault(rows, {})[arm] = raw
         except (OSError, ValueError, KeyError, TypeError) as exc:
             errors.append(f"rank{rank}: {type(exc).__name__}: {exc}")
-    verdict = evaluate(outputs, shapes) if not errors else {"schema": SCHEMA, "status": "incomplete",
+    verdict = (evaluate_class if rule == "nan-class" else evaluate)(outputs, shapes) if not errors else {
+        "schema": CLASS_SCHEMA if rule == "nan-class" else SCHEMA, "status": "incomplete",
                                                     "selected_mode": None, "matching_modes": [], "errors": []}
     verdict["errors"] = errors + verdict["errors"]
     if verdict["errors"]:
@@ -214,5 +254,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("directory", type=Path)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--rule", choices=RULES, default="bit-exact")
     args = ap.parse_args()
-    args.out.write_text(json.dumps(analyze(args.directory), indent=2) + "\n")
+    args.out.write_text(json.dumps(analyze(args.directory, rule=args.rule), indent=2) + "\n")

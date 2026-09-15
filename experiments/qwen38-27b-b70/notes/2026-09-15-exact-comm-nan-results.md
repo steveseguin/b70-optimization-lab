@@ -36,5 +36,15 @@ could only continue if NaN results were compared as a class (any NaN equals any
 NaN, while every non-NaN bit must still match). That is a change to the lab's
 quality oracle and needs the user's decision.
 
+## User decision
+
+The user chose to count any two NaN results as equal for this communicator,
+with every other output bit still required to match XCCL and inputs still
+required to stay unchanged. The decision is recorded as `NAN-CLASS-DECISION.json`
+in the campaign root, bound to this verdict's hash. Stage 05 admission re-analyzes
+the saved outputs under that rule: all four formulations then match on every
+element, and the Native04 arithmetic (`m0`) is selected. The gate records both
+the rule result and whether each output was also bit-exact.
+
 Evidence: `/mnt/fast-ai/bench-results/optimization-validation-20260915/nan-semantics-01`
 and [verdict copy](../data/2026-09-15-exact-comm-nan-semantics/nan-semantics-verdict.json).

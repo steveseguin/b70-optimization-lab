@@ -46,6 +46,8 @@ NEW_RECEIPT = "cpu-validation-20260915.json"
 GUARD = ROOT / "experiments/qwen38-27b-b70/scripts/host_memory_guard.py"
 SUDO_PASSWORD = Path("/home/steve/SUDO_PASSWORD.txt")
 GUARD_FIRED_EXIT = 3
+NAN_CLASS_DECISION = "NAN-CLASS-DECISION.json"
+NAN_RULES = ("bit-exact", "nan-class")
 NEW_FILES = ("exact_tp2.cpp", "native.py", "protocol.py", "gate.py", "analyze.py", "run-native.py",
              "quality_retirement.py", "nan_semantics.py", "nan_analysis.py", "ipc-import-source-review.json", NEW_RECEIPT)
 CHECKED_SOURCES = ("exact_tp2.cpp", "native.py", "protocol.py", "gate.py", "analyze.py", "run-native.py",
@@ -271,14 +273,35 @@ def nan_semantics_admission(root, add_mode, library_sha256):
             raise ValueError("nan-semantics verdict hash differs from its DONE receipt")
         if done.get("library_sha256") != library_sha256:
             raise ValueError("stage 05 library differs from the characterized library")
-        if verdict.get("status") != "selected" or verdict.get("selected_mode") not in ADD_MODES:
-            raise ValueError(f"nan-semantics verdict selected no mode (status {verdict.get('status')!r})")
-        if verdict["selected_mode"] != add_mode:
-            raise ValueError(f"--add-mode {add_mode} differs from selected mode {verdict['selected_mode']}")
+        extra = {}
+        if verdict.get("status") == "selected" and verdict.get("selected_mode") in ADD_MODES:
+            rule, chosen, matching = "bit-exact", verdict["selected_mode"], verdict.get("matching_modes")
+        else:
+            # User decision 2026-09-15: NaN outputs may be compared as a class. It
+            # must name this exact verdict; the saved raw outputs are re-analyzed.
+            decision_raw = (Path(root) / NAN_CLASS_DECISION).read_bytes()
+            decision = json.loads(decision_raw)
+            if (decision.get("rule") != "nan-class" or decision.get("decided_by") != "user"
+                    or decision.get("evidence", {}).get("verdict_sha256") != sha(raw)):
+                raise ValueError(f"nan-semantics verdict selected no mode (status {verdict.get('status')!r}) "
+                                 "and no user nan-class decision is bound to this verdict")
+            reanalysis = class_verdict(stage / "results")
+            if reanalysis.get("status") != "selected" or reanalysis.get("selected_mode") not in ADD_MODES:
+                raise ValueError(f"nan-class re-analysis selected no mode (status {reanalysis.get('status')!r})")
+            rule, chosen, matching = "nan-class", reanalysis["selected_mode"], reanalysis.get("matching_modes")
+            extra = {"decision_sha256": sha(decision_raw), "bit_exact_status": reanalysis.get("bit_exact_status"),
+                     "class_mismatch_counts": reanalysis.get("class_mismatch_counts")}
+        if chosen != add_mode:
+            raise ValueError(f"--add-mode {add_mode} differs from selected mode {chosen}")
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
         return {"satisfied": False, "reason": f"{type(exc).__name__}: {exc}"}, None
-    return {"satisfied": True, "selected_mode": add_mode, "verdict_sha256": sha(raw),
-            "matching_modes": verdict.get("matching_modes")}, raw
+    return {"satisfied": True, "selected_mode": add_mode, "verdict_sha256": sha(raw), "nan_rule": rule,
+            "matching_modes": matching, **extra}, raw
+
+
+def class_verdict(results):
+    """CPU re-analysis of saved nan-semantics outputs under the user's nan-class rule."""
+    return load_module("nan_analysis_class_admission", HERE / "nan_analysis.py").analyze(results, rule="nan-class")
 
 
 def stage_admission(out, add_mode, check_only, library, root=CAMPAIGN_ROOT, **inputs_kwargs):
@@ -310,7 +333,9 @@ def stage_admission(out, add_mode, check_only, library, root=CAMPAIGN_ROOT, **in
             "env": stage_env(contract), "nan_semantics_receipt": nan_receipt}
 
 
-def stage_argv(stage, add_mode=None):
+def stage_argv(stage, add_mode=None, nan_rule="bit-exact"):
+    if nan_rule not in NAN_RULES:
+        raise ValueError("unknown NaN comparison rule")
     head = [IMAGE, "--nnodes=1", "--node-rank=0", "--nproc-per-node=2",
             "--master-addr=127.0.0.1", "--master-port=29500", "--max-restarts=0"]
     if stage == NAN_STAGE:
@@ -319,7 +344,7 @@ def stage_argv(stage, add_mode=None):
     if stage == GATE_STAGE and add_mode in ADD_MODES:
         return head + ["/probe/gate.py", "--library", "/probe/libexact_tp2.so", "--out", "/results",
                        "--rows", "1,2,512,4096", "--blocks", "5", "--iterations", "12",
-                       "--timeout", "15", "--add-mode", add_mode, "--admitted-exclusive-gpu-test"]
+                       "--timeout", "15", "--add-mode", add_mode, "--nan-rule", nan_rule, "--admitted-exclusive-gpu-test"]
     raise ValueError("unknown stage or add mode")
 
 
@@ -467,7 +492,7 @@ def main_new_stage(args):
     library = NEW_LIBRARY if args.library == LEGACY_LIBRARY else args.library
     admission = stage_admission(args.out, args.add_mode, args.check_only, library)
     out, root, stage = admission["out"], admission["root"], admission["stage"]
-    argv_tail = stage_argv(stage, args.add_mode)
+    argv_tail = stage_argv(stage, args.add_mode, (admission["nan_semantics_receipt"] or {}).get("nan_rule", "bit-exact"))
     if args.check_only:
         print(json.dumps({"status": "CPU-only input admission passed", "stage": stage, "image": IMAGE,
                           "out": str(out), "gpu_discovery": False, "docker_calls": 0, "runtime_env": admission["env"],

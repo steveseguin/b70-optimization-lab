@@ -46,6 +46,15 @@ class QualityRejected(Exception):
     pass
 
 
+def outputs_equal(raw, ref, rule):
+    """bit-exact: every bit. nan-class (user decision 2026-09-15): any two NaNs equal, all else bit-exact."""
+    if rule == "bit-exact":
+        return raw == ref
+    if rule == "nan-class":
+        return nan_analysis.class_mismatch_count(raw, ref) == 0
+    raise ValueError("unknown NaN comparison rule")
+
+
 def fixture(torch, n, rank, kind, repeat):
     i = torch.arange(n, dtype=torch.int64)
     if kind == "varied":
@@ -70,7 +79,7 @@ def reject_quality(torch, dist, native, channel, sock, queue, peer, remote_fd, h
                                  completed_and_agreed=True)
     sock.close()
     dist.destroy_process_group()
-    raise QualityRejected(f"{prefix}: exact-bit quality gate rejected")
+    raise QualityRejected(f"{prefix}: quality gate rejected")
 
 
 def main(args):
@@ -114,8 +123,8 @@ def main(args):
     if len(peer_uuid) != 16:
         raise ConnectionError("truncated peer UUID")
     native.call("admit_peer", queue, C.create_string_buffer(peer_uuid, 16))
-    channel.exchange("READY", peer_access_admitted=True, add_mode=args.add_mode)
-    channel.exchange("COPIED", peer_access_admitted=True, add_mode=args.add_mode)
+    channel.exchange("READY", peer_access_admitted=True, add_mode=args.add_mode, nan_rule=args.nan_rule)
+    channel.exchange("COPIED", peer_access_admitted=True, add_mode=args.add_mode, nan_rule=args.nan_rule)
     records = []
     for rows in map(int, args.rows.split(",")):
         if rows not in (1, 2, 512, 4096):
@@ -148,11 +157,13 @@ def main(args):
                 preserved = torch.empty_like(cpu)
                 native.copy(preserved.data_ptr(), local, size)
                 raw, ref = bytes_of(got), bytes_of(reference_bits)
-                same = raw == ref and bytes_of(preserved) == original
+                bit_exact = raw == ref
+                same = outputs_equal(raw, ref, args.nan_rule) and bytes_of(preserved) == original
                 prefix = f"rank{rank}-rows{rows}-{kind}-{repeat}"
                 (out / f"{prefix}.candidate.bin").write_bytes(raw)
                 (out / f"{prefix}.xccl.bin").write_bytes(ref)
                 record = {"rows": rows, "kind": kind, "repeat": repeat, "exact": same, "add_mode": args.add_mode,
+                          "nan_rule": args.nan_rule, "bit_exact": bit_exact,
                           "input_sha256": hashlib.sha256(original).hexdigest(),
                           "candidate_sha256": hashlib.sha256(raw).hexdigest(),
                           "xccl_sha256": hashlib.sha256(ref).hexdigest(),
@@ -161,7 +172,7 @@ def main(args):
                 (out / f"rank{rank}-quality.json").write_text(json.dumps(records, indent=2) + "\n")
                 # Communicate the verdict before further GPU submission. A rank
                 # mismatch poisons both peers; do not let the passing rank advance.
-                verdict = {"quality_passed": same, "rows": rows, "kind": kind,
+                verdict = {"quality_passed": same, "nan_rule": args.nan_rule, "rows": rows, "kind": kind,
                            "repeat": repeat, "candidate_sha256": record["candidate_sha256"],
                            "xccl_sha256": record["xccl_sha256"]}
                 channel.exchange("READY", **verdict)
@@ -200,7 +211,7 @@ def main(args):
                                      completed_and_agreed=True)
     sock.close()
     dist.destroy_process_group()
-    (out / f"rank{rank}-DONE.json").write_text(json.dumps({"status": "operator-screen-completed", "quality_cases": len(records), "add_mode": args.add_mode, "runtime_qualified": False, "torch": torch.__version__}) + "\n")
+    (out / f"rank{rank}-DONE.json").write_text(json.dumps({"status": "operator-screen-completed", "quality_cases": len(records), "add_mode": args.add_mode, "nan_rule": args.nan_rule, "runtime_qualified": False, "torch": torch.__version__}) + "\n")
     if rank == 0:
         os.unlink(sock_path)
 
@@ -238,6 +249,7 @@ def parser():
     p.add_argument("--iterations", type=int, default=12)
     p.add_argument("--timeout", type=float, default=15)
     p.add_argument("--add-mode", choices=sorted(ADD_MODES), required=True)
+    p.add_argument("--nan-rule", choices=nan_analysis.RULES, default="bit-exact")
     p.add_argument("--admitted-exclusive-gpu-test", action="store_true")
     return p
 
