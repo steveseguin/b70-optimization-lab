@@ -1,0 +1,141 @@
+{
+  "schema": "ltx.qkv-fusion.v1",
+  "date_utc": "2026-09-15",
+  "idea": "Self-attention computes to_q/to_k/to_v from the same input, so the three weight matrices stack into one [3*inner, K] GEMM. Each output row keeps its full K reduction, so the arithmetic per element is unchanged, but the GEMM shape changes and the kernel may change with it. Exactness therefore has to be measured, not assumed.",
+  "measurements": {
+    "all_bit_exact": false,
+    "failures": [
+      "video self-attn qkv @256",
+      "video cross kv @256"
+    ],
+    "mean_speedup": 1.826,
+    "rows": [
+      {
+        "case": "video self-attn qkv",
+        "inner": 4096,
+        "K": 4096,
+        "parts": 3,
+        "tokens": 64,
+        "bit_exact": true,
+        "separate_ms": 0.1947,
+        "fused_ms": 0.1865,
+        "speedup": 1.044
+      },
+      {
+        "case": "video self-attn qkv",
+        "inner": 4096,
+        "K": 4096,
+        "parts": 3,
+        "tokens": 256,
+        "bit_exact": false,
+        "separate_ms": 0.3222,
+        "fused_ms": 0.295,
+        "speedup": 1.092
+      },
+      {
+        "case": "audio self-attn qkv",
+        "inner": 2048,
+        "K": 2048,
+        "parts": 3,
+        "tokens": 26,
+        "bit_exact": true,
+        "separate_ms": 0.1249,
+        "fused_ms": 0.0409,
+        "speedup": 3.056
+      },
+      {
+        "case": "v2a self-attn qkv",
+        "inner": 2048,
+        "K": 2048,
+        "parts": 3,
+        "tokens": 26,
+        "bit_exact": true,
+        "separate_ms": 0.1228,
+        "fused_ms": 0.0405,
+        "speedup": 3.032
+      },
+      {
+        "case": "video cross kv",
+        "inner": 4096,
+        "K": 4096,
+        "parts": 2,
+        "tokens": 128,
+        "bit_exact": true,
+        "separate_ms": 0.1287,
+        "fused_ms": 0.1261,
+        "speedup": 1.021
+      },
+      {
+        "case": "video cross kv",
+        "inner": 4096,
+        "K": 4096,
+        "parts": 2,
+        "tokens": 256,
+        "bit_exact": false,
+        "separate_ms": 0.2155,
+        "fused_ms": 0.145,
+        "speedup": 1.486
+      },
+      {
+        "case": "a2v cross kv",
+        "inner": 2048,
+        "K": 2048,
+        "parts": 2,
+        "tokens": 26,
+        "bit_exact": true,
+        "separate_ms": 0.0847,
+        "fused_ms": 0.0413,
+        "speedup": 2.05
+      }
+    ]
+  },
+  "exact_cases": 5,
+  "total_cases": 7,
+  "non_exact": [
+    "video self-attn qkv @256",
+    "video cross kv @256"
+  ],
+  "key_finding": "The small 2048-wide projections at 26 tokens were running at about 186 GB/s against a 537 GB/s roofline. Fused they reach roughly 569 GB/s -- a 3.0x speedup on those layers, and bitwise exact.",
+  "design": "Fuse only where the fusion is exact at every shape that module actually sees. The audio and cross projections at 26 tokens qualify and give 2.3-3.1x. The video projections are already at roofline (1.04x at 64 tokens) and are NOT exact at 256, so they stay unfused -- no shape-conditional numerics are needed.",
+  "projected": {
+    "fusable_small_projection_MB_per_block": 120.0,
+    "saving_per_block_ms": 0.455,
+    "saving_per_48_block_chain_ms": 21.9,
+    "chain_baseline_ms": 102.8,
+    "chain_share_pct": 21.3
+  },
+  "still_to_test": [
+    "audio cross k/v at the real text-context length",
+    "v2a k/v at 64 and 256 video tokens",
+    "the same fusions with the real checkpoint weights rather than random ones"
+  ],
+  "limitations": [
+    "synthetic weights of the checkpoint shapes, isolated GEMMs, not in-model",
+    "a fused weight is a second copy unless the originals are released, so the placement and memory accounting must be redone",
+    "no clip-level result; the four-tensor oracle remains the authority"
+  ],
+  "CORRECTION": {
+    "superseded_field": "projected",
+    "what_was_wrong": "The first projection assumed 120 MB of fusable small projections per block and applied a blanket 186 -> 569 GB/s improvement, giving 21.3% of the block chain. That was an estimate from bytes, not from the measured times, and it counted sites that turn out not to qualify.",
+    "corrected_by": "data/qkv-fusion-sweep-01.json, which tests every fusable site at every token count it can see, across three seeds, and keeps only sites exact at all of them.",
+    "qualifying_sites": [
+      "audio_attn1 self qkv (3.02x)",
+      "a2v cross kv (1.99x)",
+      "v2a cross kv (1.17-1.95x)"
+    ],
+    "rejected_sites": [
+      "attn1 video self qkv (not exact at 256 tokens; only 1.03-1.10x anyway)",
+      "attn2 video cross kv (not exact at 192 and 256)",
+      "audio_attn2 cross kv (not exact at 512; excluded conservatively because the real conditioning length is not pinned)"
+    ],
+    "corrected_projection": {
+      "per_block_saving_stage1_ms": 0.1799,
+      "per_block_saving_stage2_ms": 0.1418,
+      "clip_saving_s": 0.09,
+      "sampler_before_s": 1.942,
+      "sampler_after_s": 1.852,
+      "share_of_sampler_pct": 4.6
+    },
+    "verdict": "Real and exact, but worth about 0.09 s, not the 0.2+ s the first estimate implied. Keep it as a cheap addition to a packet that is being built anyway; it does not justify a packet cycle of its own."
+  }
+}

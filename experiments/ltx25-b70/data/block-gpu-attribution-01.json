@@ -1,0 +1,32 @@
+{
+  "blocks": 48,
+  "full_chain_ms": 102.769,
+  "per_block_ms": 2.141,
+  "variants": {
+    "no_feedforward": 70.715,
+    "no_attention": 32.226,
+    "no_norms": 100.591,
+    "no_sdpa": 99.484,
+    "no_rope": 89.062,
+    "no_gate": 97.73
+  },
+  "attribution_ms": {
+    "feedforward": 32.05,
+    "attention_block": 70.54,
+    "norms_and_elementwise": 2.18,
+    "sdpa_only": 3.29,
+    "rope_only": 13.71,
+    "attention_gate_only": 5.04
+  },
+  "attribution_pct": {
+    "feedforward": 31.2,
+    "attention_block": 68.6,
+    "norms_and_elementwise": 2.1,
+    "sdpa_only": 3.2,
+    "rope_only": 13.3,
+    "attention_gate_only": 4.9
+  },
+  "weight_bytes_GB": 37.12,
+  "roofline_ms_at_537GBps": 69.12,
+  "above_roofline": 1.49
+}

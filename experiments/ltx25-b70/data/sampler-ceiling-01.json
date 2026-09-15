@@ -1,0 +1,66 @@
+{
+  "schema": "ltx.sampler-ceiling.v1",
+  "date_utc": "2026-09-15",
+  "attribution": {
+    "blocks": 48,
+    "full_chain_ms": 102.769,
+    "per_block_ms": 2.141,
+    "variants": {
+      "no_feedforward": 70.715,
+      "no_attention": 32.226,
+      "no_norms": 100.591,
+      "no_sdpa": 99.484,
+      "no_rope": 89.062,
+      "no_gate": 97.73
+    },
+    "attribution_ms": {
+      "feedforward": 32.05,
+      "attention_block": 70.54,
+      "norms_and_elementwise": 2.18,
+      "sdpa_only": 3.29,
+      "rope_only": 13.71,
+      "attention_gate_only": 5.04
+    },
+    "attribution_pct": {
+      "feedforward": 31.2,
+      "attention_block": 68.6,
+      "norms_and_elementwise": 2.1,
+      "sdpa_only": 3.2,
+      "rope_only": 13.3,
+      "attention_gate_only": 4.9
+    },
+    "weight_bytes_GB": 37.12,
+    "roofline_ms_at_537GBps": 69.12,
+    "above_roofline": 1.49
+  },
+  "real_model": {
+    "transformer_bytes": 42018190584,
+    "sampler_steps": 11,
+    "bytes_read_per_clip_GB": 462.2,
+    "measured_copy_roofline_GBps": 537.0,
+    "weight_read_floor_s": 0.861,
+    "measured_sampler_s": 1.942,
+    "above_floor": 2.26
+  },
+  "goal_arithmetic": {
+    "clip_video_seconds": 1.042,
+    "floor_is_below_realtime": true,
+    "fps_at_floor": 29.0,
+    "fps_now_per_frame_path": 10.0,
+    "fps_if_decode_pipelined": 12.9,
+    "target_fps": 24,
+    "sampler_seconds_needed_for_24fps": 1.042
+  },
+  "findings": [
+    "Scaled dot-product attention is only 3.2% of block time. The attention path is expensive because of its projections and elementwise work, not its attention math.",
+    "Norms and the ada-modulation elementwise chain are 2.1%. Fusing them is worthless.",
+    "RoPE is 13.3% and the attention gate 4.9% -- together four times everything the norms cost. NOTE: the probe models RoPE as a cat of two scaled halves; the real model calls a fused custom op (comfy.quant_ops.ck.apply_rope_split_half1), so the real share is probably lower and this number is an upper bound, not a measurement of the shipped path.",
+    "The captured chain runs 1.49x above its own weight-read roofline; the real sampler runs 2.26x above the real model floor, the difference being Python orchestration and the non-block forward."
+  ],
+  "ceiling": "The weight-read floor is 0.861 s per clip, which is BELOW the 1.042 s of video the clip contains. So 24 fps is not arithmetically excluded: it needs the sampler at or under 1.042 s, i.e. closing most of the 2.26x gap to roofline, with decode pipelined off the critical path. It is not reachable by any single remaining lever.",
+  "limitations": [
+    "synthetic blocks with the checkpoint shapes, not the checkpoint code or weights",
+    "skip-differencing changes what the block computes; only timing is meaningful",
+    "the roofline uses the measured 537 GB/s device copy rate as a stand-in for achievable weight-read bandwidth"
+  ]
+}

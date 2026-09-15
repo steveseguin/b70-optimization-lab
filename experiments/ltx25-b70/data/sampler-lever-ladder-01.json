@@ -1,0 +1,60 @@
+{
+  "schema": "ltx.sampler-lever-ladder.v1",
+  "date_utc": "2026-09-15",
+  "sampler_s": 1.942,
+  "weight_read_floor_s": 0.861,
+  "above_floor": 2.26,
+  "decomposition": {
+    "blocks_s": 1.186,
+    "blocks_pct": 61.1,
+    "not_blocks_s": 0.756,
+    "not_blocks_pct": 38.9,
+    "not_blocks_contains": [
+      "per-block Python orchestration (measured at ~15% of sampler wall time)",
+      "the non-block forward: patchify, timestep and positional embeddings, final norm and output projection, unpatchify",
+      "two blocking cross-device transfers per step at the shard boundary",
+      "the euler_ancestral sampler loop arithmetic"
+    ],
+    "derivation": "a graph-replayed 48-block chain measures 102.8 ms for 737.5 MB blocks; the real blocks are 773.5 MB, so 102.8 x 1.049 x 11 steps = 1.186 s of the 1.942 s sampler"
+  },
+  "ladder": [
+    {
+      "lever": "extend graph capture from 48 per-block graphs to whole contiguous runs per device",
+      "targets": "most of the 0.756 s that is not blocks",
+      "estimate_s": 0.4,
+      "status": "designed, not built",
+      "note": "three graphs per step instead of 48 pairs: pre-block plus blocks 0-20 on xpu:0, blocks 21-47 on xpu:1, final layers on xpu:0"
+    },
+    {
+      "lever": "graph-capture the video decoder",
+      "targets": "decode 0.560 s",
+      "estimate_s": 0.2,
+      "status": "blocked on making the axis cache outlive one invocation so masks are device-resident"
+    },
+    {
+      "lever": "fuse the three qualifying q/k/v projection sites",
+      "targets": "small attention projections",
+      "estimate_s": 0.09,
+      "status": "measured exact, cheap to add to a packet already being built"
+    },
+    {
+      "lever": "pipeline decode onto xpu:3",
+      "targets": "removes decode from the per-frame path",
+      "estimate_s": 0.56,
+      "status": "needs the Stage 3 streaming harness",
+      "note": "continuous metric only; does not improve single-clip latency"
+    }
+  ],
+  "retired": [
+    "exact 2-way column parallelism: 1.54x ceiling, 0.90x at the gather count exactness needs",
+    "fusing the norm and modulation elementwise chain: 2.1% of block time",
+    "anything targeting attention math: SDPA is 3.2% of block time",
+    "whole-model compilation: exact but 0.93 s slower in the sampler"
+  ],
+  "arithmetic_to_the_goal": {
+    "sampler_needed_for_24fps_s": 1.042,
+    "sampler_after_all_identified_levers_s": 1.452,
+    "still_short_by": 1.39,
+    "honest_reading": "Every identified lever together lands the sampler near 1.45 s against the 1.042 s needed for 24 fps with decode pipelined. That is about 15.6 fps continuous, up from 10.0 now. The remaining 1.4x has no identified lever yet; the excess over roofline is activation-bound elementwise work, not weight reads."
+  }
+}
