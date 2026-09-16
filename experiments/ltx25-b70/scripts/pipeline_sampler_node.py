@@ -43,6 +43,61 @@ def write_json(path, value):
         stream.write('\n')
 
 
+_ACTIVE = [0]
+_ACTIVE_LOCK = __import__('threading').Lock()
+_PINNED = {}
+
+
+def pin_current_patcher(base_model):
+    """Stop a finishing sampler from clearing `current_patcher` under a running one.
+
+    `comfy.model_base.BaseModel.current_patcher` is a plain attribute on the ONE
+    shared model object, set at the start of a sample and set back to None at the
+    end (model_patcher.py:1394). With two clips sampling at once, the first to
+    finish clears it while the second is mid-forward, which fails as
+    "'NoneType' object has no attribute 'prepare_state'".
+
+    Both concurrent samplers use the same patcher -- there is one model in the
+    graph -- so holding the attribute at that patcher while any sampler is active
+    is inert: every read that mattered already returned this value. Assignments
+    of a real patcher are honoured as normal; only the None clear is deferred
+    until the last sampler leaves. Asserted on every entry, and the four raw
+    oracles gate the result either way.
+    """
+    cls = type(base_model)
+    if cls in _PINNED:
+        return
+    store = {}
+    previous = base_model.__dict__.pop('current_patcher', None)
+    if previous is not None:
+        store[id(base_model)] = previous
+
+    def getter(self):
+        return store.get(id(self))
+
+    def setter(self, value):
+        if value is None and _ACTIVE[0] > 0:
+            return
+        store[id(self)] = value
+
+    cls.current_patcher = property(getter, setter)
+    _PINNED[cls] = store
+
+
+class _Active:
+    """Counts samplers in flight, so the pin knows when the last one leaves."""
+
+    def __enter__(self):
+        with _ACTIVE_LOCK:
+            _ACTIVE[0] += 1
+        return self
+
+    def __exit__(self, *exc):
+        with _ACTIVE_LOCK:
+            _ACTIVE[0] -= 1
+        return False
+
+
 def _node(name):
     import nodes
     cls = nodes.NODE_CLASS_MAPPINGS.get(name)
@@ -59,6 +114,17 @@ def sample_clip(noise_a, guider_a, sampler_a, sigmas_a,
     upsampler = _node('LTXVLatentUpsampler')
     sampler_node = _node('SamplerCustomAdvanced')
 
+    with _Active():
+        return _sample_chain(concat, separate, upsampler, sampler_node,
+                             noise_a, guider_a, sampler_a, sigmas_a,
+                             noise_b, guider_b, sampler_b, sigmas_b,
+                             video_latent, audio_latent, upscale_model, vae)
+
+
+def _sample_chain(concat, separate, upsampler, sampler_node,
+                  noise_a, guider_a, sampler_a, sigmas_a,
+                  noise_b, guider_b, sampler_b, sigmas_b,
+                  video_latent, audio_latent, upscale_model, vae):
     av = concat.execute(video_latent=video_latent, audio_latent=audio_latent).result[0]
     stage_a = sampler_node.execute(noise=noise_a, guider=guider_a, sampler=sampler_a,
                                    sigmas=sigmas_a, latent_image=av).result[0]
@@ -127,6 +193,12 @@ class LTXPipelineSampler:
                   'passed': False}
         started = time.monotonic()
         try:
+            if mode != 'original':
+                patcher = getattr(chain['guider_a'], 'model_patcher', None)
+                require(patcher is not None, 'Guider has no model patcher to pin')
+                require(getattr(chain['guider_b'], 'model_patcher', None) is patcher,
+                        'The two sampler stages use different patchers; pinning would be unsound')
+                pin_current_patcher(patcher.model)
             if mode == 'original':
                 with torch.inference_mode():
                     out = sample_clip(**chain)
