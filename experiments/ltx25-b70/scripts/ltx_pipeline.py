@@ -24,13 +24,19 @@ import traceback
 import torch
 
 MODES = ('original', 'pipeline')
+# One worker per stage, because the stages live on different cards: the encode
+# runs on xpu:2 and the decode on xpu:3, so they must be able to run at once.
+STAGES = ('encode', 'decode')
+MAX_PENDING = 4
 
 _LOCK = threading.Lock()
-_JOBS = {}            # index -> _Job
-_WORKER = None
-_QUEUE = []
+_STAGES = {}          # stage -> {'jobs': {index: _Job}, 'queue': [], 'worker': Thread}
 _QUEUE_EVENT = threading.Condition(_LOCK)
-MAX_PENDING = 4
+
+
+def _state(stage):
+    require(stage in STAGES, 'Unknown pipeline stage: ' + repr(stage))
+    return _STAGES.setdefault(stage, {'jobs': {}, 'queue': [], 'worker': None})
 
 
 def require(value, message):
@@ -51,13 +57,14 @@ class _Job:
         self.finished = None
 
 
-def _worker_loop():
+def _worker_loop(stage):
     import time
+    st = _state(stage)
     while True:
         with _QUEUE_EVENT:
-            while not _QUEUE:
+            while not st['queue']:
                 _QUEUE_EVENT.wait()
-            job = _QUEUE.pop(0)
+            job = st['queue'].pop(0)
         job.started = time.monotonic()
         try:
             # ComfyUI executes nodes inside torch.inference_mode(), and that is
@@ -74,63 +81,106 @@ def _worker_loop():
             job.done.set()
 
 
-def _ensure_worker():
-    global _WORKER
-    if _WORKER is None or not _WORKER.is_alive():
-        _WORKER = threading.Thread(target=_worker_loop, name='ltx-encode-ahead', daemon=True)
-        _WORKER.start()
+def _ensure_worker(stage):
+    st = _state(stage)
+    if st['worker'] is None or not st['worker'].is_alive():
+        st['worker'] = threading.Thread(target=_worker_loop, args=(stage,),
+                                        name='ltx-' + stage + '-ahead', daemon=True)
+        st['worker'].start()
 
 
-def submit(index, fn):
-    """Queue the encode for `index` if it is not already queued or finished."""
+def submit(stage, index, fn):
+    """Queue `stage` work for `index` if it is not already queued or finished."""
     with _QUEUE_EVENT:
-        _ensure_worker()
-        if index in _JOBS:
+        _ensure_worker(stage)
+        st = _state(stage)
+        if index in st['jobs']:
             return False
         job = _Job(index, fn)
-        _JOBS[index] = job
-        _QUEUE.append(job)
-        _QUEUE_EVENT.notify()
+        st['jobs'][index] = job
+        st['queue'].append(job)
+        _QUEUE_EVENT.notify_all()
         return True
 
 
-def collect(index):
-    """Wait for `index` and hand it over exactly once."""
+def collect(stage, index):
+    """Wait for `stage`/`index` and hand it over exactly once."""
     with _LOCK:
-        job = _JOBS.get(index)
-    require(job is not None, f'No encode was queued for clip {index}')
+        job = _state(stage)['jobs'].get(index)
+    require(job is not None, f'No {stage} was queued for clip {index}')
     job.done.wait()
     with _LOCK:
-        _JOBS.pop(index, None)
-    require(job.error is None, f'Encode-ahead for clip {index} failed:\n{job.error}')
+        _state(stage)['jobs'].pop(index, None)
+    require(job.error is None, f'{stage.capitalize()}-ahead for clip {index} failed:\n{job.error}')
     return job.value, {'queued_ahead': job.started is not None,
-                       'encode_seconds': round((job.finished or 0) - (job.started or 0), 4)}
+                       'stage_seconds': round((job.finished or 0) - (job.started or 0), 4)}
 
 
-def pending():
+def peek(stage, index):
+    """Wait for `stage`/`index` but leave it in place for a later collect."""
     with _LOCK:
-        return sorted(_JOBS)
+        job = _state(stage)['jobs'].get(index)
+    require(job is not None, f'No {stage} was queued for clip {index}')
+    job.done.wait()
+    require(job.error is None, f'{stage.capitalize()} for clip {index} failed:\n{job.error}')
+    return job.value, {'queued_ahead': job.started is not None,
+                       'stage_seconds': round((job.finished or 0) - (job.started or 0), 4)}
+
+
+def pending(stage):
+    with _LOCK:
+        return sorted(_state(stage)['jobs'])
 
 
 def clear():
     with _LOCK:
-        _JOBS.clear()
-        del _QUEUE[:]
+        for st in _STAGES.values():
+            st['jobs'].clear()
+            del st['queue'][:]
 
 
-def run(index, depth, fn):
-    """Return clip `index`'s conditioning, and start the next `depth` ahead.
+def run_ahead(stage, index, depth, fn):
+    """Return clip `index`'s value, and start the next `depth` clips ahead.
 
-    The first clip has nothing queued, so it computes inline; from then on the
-    value is already being produced while the previous clip was sampling.
+    For work that does not depend on this clip's sampler output -- the text
+    encode. The first clip has nothing queued so it computes inline; from then on
+    the value is already being produced while the previous clip was sampling.
     """
     require(isinstance(index, int) and index >= 0, 'Clip index must be a non-negative integer')
     require(isinstance(depth, int) and 1 <= depth <= MAX_PENDING, 'Unsupported pipeline depth')
-    submitted_inline = submit(index, fn)
-    value, detail = collect(index)
+    submitted_inline = submit(stage, index, fn)
+    value, detail = collect(stage, index)
     # Start the next clips only AFTER handing this one over, so the worker runs
-    # against this prompt's sampling rather than competing with this encode.
-    started = [i for i in range(index + 1, index + 1 + depth) if submit(i, fn)]
+    # against this prompt's sampling rather than competing with this clip.
+    started = [i for i in range(index + 1, index + 1 + depth) if submit(stage, i, fn)]
     detail.update({'computed_inline': submitted_inline, 'started_ahead': started,
-                   'pending_after': pending()})
+                   'pending_after': pending(stage)})
+    return value, detail
+
+
+def run_behind(stage, index, depth, fn):
+    """Start clip `index`'s work, then return clip `index - depth`'s result.
+
+    For work that DEPENDS on this clip's sampler output -- the decode. Clip N's
+    decode is started here and runs on its own card while clip N+1 samples; this
+    prompt emits the clip that was decoded `depth` prompts ago. The first `depth`
+    prompts have nothing to emit yet, so they wait for their own decode.
+    """
+    require(isinstance(index, int) and index >= 0, 'Clip index must be a non-negative integer')
+    require(isinstance(depth, int) and 1 <= depth <= MAX_PENDING, 'Unsupported pipeline depth')
+    submit(stage, index, fn)
+    emit = index - depth
+    if emit < 0:
+        # Priming. Nothing was decoded `depth` prompts ago, so this prompt waits
+        # for its own clip and emits it -- with no overlap, and WITHOUT
+        # consuming it, because the next prompt is the one that owns it. Clip 0
+        # is therefore emitted twice across the first two prompts. That is a
+        # pipeline fill, disclosed in every receipt as `emitted_index`; it is not
+        # a reused computation, and the steady-state interval excludes it.
+        value, detail = peek(stage, index)
+        detail.update({'emitted_index': index, 'primed': False,
+                       'pending_after': pending(stage)})
+        return value, detail
+    value, detail = collect(stage, emit)
+    detail.update({'emitted_index': emit, 'primed': True, 'pending_after': pending(stage)})
     return value, detail

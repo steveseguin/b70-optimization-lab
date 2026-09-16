@@ -51,6 +51,9 @@ TEXT_NODE = '425'
 PIPE_ADAPTER = 'ltx_pipeline.py'
 PIPE_NODE_FILE = 'pipeline_node.py'
 PIPE_NODE_DIR = 'ltx_pipeline_lab'
+PDEC_NODE_FILE = 'pipeline_decode_node.py'
+PDEC_NODE_DIR = 'ltx_pipeline_decode_lab'
+DECODE_NODE = '426'
 TEXT_ENCODE_NODE = '364'
 PLACEMENT_NODE = '421'
 SELECTION = 'all48'
@@ -75,7 +78,7 @@ ARMS = (
     ('graph-c48',   'graph',    'original', 'axis-cache', 'original', '48', 'original', 'original'),
     ('text',        'original', 'original', 'original',   'original', '1',  'graph',    'original'),
     ('graph-text',  'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'original'),
-    ('pipe',        'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'pipeline'),
+    ('pipe',        'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline'),
     ('graph-fused', 'graph',    'original', 'axis-cache', 'fused',    '1',  'original', 'original'),
     ('graph-vae',   'graph',    'graph',    'axis-cache', 'original', '1',  'original', 'original'),
     ('restored',    'restored', 'restored', 'original',   'restored', '1',  'restored', 'original'),
@@ -150,6 +153,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'source/custom_nodes/ltx_graph_text_encoder_lab/__init__.py',
              'source/scripts/ltx_pipeline.py', 'source/scripts/pipeline_node.py',
              'source/custom_nodes/ltx_pipeline_lab/__init__.py',
+             'source/scripts/pipeline_decode_node.py',
+             'source/custom_nodes/ltx_pipeline_decode_lab/__init__.py',
              'provenance/graph-capture/parent/launch/encoder_runtime_common.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_candidate.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_router.py',
@@ -238,7 +243,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                              ('ltx_graph_vae_lab', 'graph_vae_node.py'),
                              ('ltx_qkv_fusion_lab', 'graph_fusion_node.py'),
                              ('ltx_graph_text_encoder_lab', 'graph_text_encoder_node.py'),
-                             ('ltx_pipeline_lab', 'pipeline_node.py')):
+                             ('ltx_pipeline_lab', 'pipeline_node.py'),
+                             ('ltx_pipeline_decode_lab', 'pipeline_decode_node.py')):
         require(manifest['files'][f'source/custom_nodes/{node_dir}/__init__.py'] ==
                 manifest['files']['source/scripts/' + helper],
                 'Graph custom-node copy differs from its helper: ' + node_dir)
@@ -252,7 +258,9 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             capture['text_node_sha256'] == manifest['extension_sha256s']['graph_text_encoder_node.py'] and
             capture['pipe_adapter_sha256'] ==
             manifest['extension_sha256s']['ltx_pipeline.py'] and
-            capture['pipe_node_sha256'] == manifest['extension_sha256s']['pipeline_node.py'],
+            capture['pipe_node_sha256'] == manifest['extension_sha256s']['pipeline_node.py'] and
+            capture['pipe_decode_node_sha256'] ==
+            manifest['extension_sha256s']['pipeline_decode_node.py'],
             'Graph-capture source inventory mismatch')
     require(capture['fusion_groups'] == [['audio_attn1', ['to_q', 'to_k', 'to_v']],
                                          ['audio_attn2', ['to_k', 'to_v']],
@@ -269,7 +277,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['graph-c48', 'graph', 'original', 'axis-cache', 'original', '48', 'original', 'original'],
                      ['text', 'original', 'original', 'original', 'original', '1', 'graph', 'original'],
                      ['graph-text', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'original'],
-                     ['pipe', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'pipeline'],
+                     ['pipe', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline'],
                      ['graph-fused', 'graph', 'original', 'axis-cache', 'fused', '1', 'original', 'original'],
                      ['graph-vae', 'graph', 'graph', 'axis-cache', 'original', '1', 'original', 'original'],
                      ['restored', 'restored', 'restored', 'original', 'restored', '1', 'restored', 'original']]
@@ -290,6 +298,31 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             graph['421'] = {'class_type': 'LTXHostEmbeddingPlacementCheck', 'inputs': {
                 'clip': ['420', 1], 'conditioning': ['364', 0], 'encoder_mode': 'control',
                 'run_name': 'assign-unique-request-name'}}
+        if pipe_mode != 'original':
+            require('374' not in graph and '358' not in graph,
+                    'Pipelined arm still carries the separate decode nodes')
+            require(graph.pop('426') == {'class_type': 'LTXPipelineDecode', 'inputs': {
+                    'vae': ['423', 0], 'audio_vae': ['420', 3],
+                    'video_latent': ['369', 0], 'audio_latent': ['369', 1],
+                    'mode': pipe_mode, 'clip_index': 0, 'depth': 1,
+                    'run_name': 'assign-unique-request-name'}}, 'Pipelined decode node changed')
+            require(graph['370']['inputs']['images'] == ['426', 0] and
+                    graph['370']['inputs']['audio'] == ['426', 1] and
+                    graph['414']['inputs']['images'] == ['426', 0] and
+                    graph['414']['inputs']['audio'] == ['426', 1] and
+                    graph['414']['inputs']['video_latent'] == ['426', 2] and
+                    graph['414']['inputs']['audio_latent'] == ['426', 3],
+                    'Pipelined decode edges changed')
+            graph['370']['inputs']['images'] = ['374', 0]
+            graph['370']['inputs']['audio'] = ['358', 0]
+            graph['414']['inputs']['images'] = ['374', 0]
+            graph['414']['inputs']['audio'] = ['358', 0]
+            graph['414']['inputs']['video_latent'] = ['369', 0]
+            graph['414']['inputs']['audio_latent'] = ['369', 1]
+            graph['358'] = {'class_type': 'LTXVAudioVAEDecode',
+                            'inputs': {'audio_vae': ['420', 3], 'samples': ['369', 1]}}
+            graph['374'] = {'class_type': 'VAEDecode',
+                            'inputs': {'samples': ['369', 0], 'vae': ['423', 0]}}
         require(graph['364']['class_type'] == 'LTXPipelineTextEncode' and
                 graph['364']['inputs']['mode'] == pipe_mode and
                 graph['364']['inputs']['clip_index'] == 0 and
@@ -363,7 +396,8 @@ def build_checker(text):
                                        "              'ltx_graph_vae.py', 'graph_vae_node.py',\n"
                                        "              'ltx_qkv_fusion.py', 'graph_fusion_node.py',\n"
                                        "              'ltx_graph_text_encoder.py', 'graph_text_encoder_node.py',\n"
-                                       "              'ltx_pipeline.py', 'pipeline_node.py')", 1)
+                                       "              'ltx_pipeline.py', 'pipeline_node.py',\n"
+                                       "              'pipeline_decode_node.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -371,7 +405,8 @@ def build_checker(text):
                                          "         'ltx_graph_vae_lab': 'graph_vae_node.py',\n"
                                          "         'ltx_qkv_fusion_lab': 'graph_fusion_node.py',\n"
                                          "         'ltx_graph_text_encoder_lab': 'graph_text_encoder_node.py',\n"
-                                         "         'ltx_pipeline_lab': 'pipeline_node.py'}", 1)
+                                         "         'ltx_pipeline_lab': 'pipeline_node.py',\n"
+                                         "         'ltx_pipeline_decode_lab': 'pipeline_decode_node.py'}", 1)
     ast.parse(updated)
     return updated
 
@@ -434,7 +469,8 @@ def main():
                                (VAE_ADAPTER, None), (VAE_NODE_FILE, VAE_NODE_DIR),
                                (FUSE_ADAPTER, None), (FUSE_NODE_FILE, FUSE_NODE_DIR),
                                (TEXT_ADAPTER, None), (TEXT_NODE_FILE, TEXT_NODE_DIR),
-                               (PIPE_ADAPTER, None), (PIPE_NODE_FILE, PIPE_NODE_DIR)):
+                               (PIPE_ADAPTER, None), (PIPE_NODE_FILE, PIPE_NODE_DIR),
+                               (PDEC_NODE_FILE, PDEC_NODE_DIR)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -484,7 +520,32 @@ def main():
             graph['365']['inputs']['negative'] = [TEXT_ENCODE_NODE, 0]
             graph['365']['inputs']['positive'] = [TEXT_ENCODE_NODE, 0]
             del graph[PLACEMENT_NODE]
-        if decode == 'original':
+        if pipe_mode != 'original':
+            # Video and audio are decoded and emitted together, with their
+            # latents, so a prompt's four oracle inputs always describe the same
+            # clip. The plain VAEDecode is used: the axis-cache decoder memoises
+            # mask tensors and is retired under the no-caching rule.
+            require(graph['370']['inputs']['images'] == ['374', 0] and
+                    graph['370']['inputs']['audio'] == ['358', 0],
+                    'Unexpected video assembly wiring')
+            require(graph['414']['inputs']['images'] == ['374', 0] and
+                    graph['414']['inputs']['audio'] == ['358', 0] and
+                    graph['414']['inputs']['video_latent'] == ['369', 0] and
+                    graph['414']['inputs']['audio_latent'] == ['369', 1],
+                    'Unexpected oracle capture wiring')
+            graph[DECODE_NODE] = {'class_type': 'LTXPipelineDecode', 'inputs': {
+                'vae': [VAE_NODE, 0], 'audio_vae': ['420', 3],
+                'video_latent': ['369', 0], 'audio_latent': ['369', 1],
+                'mode': pipe_mode, 'clip_index': 0, 'depth': 1,
+                'run_name': 'assign-unique-request-name'}}
+            graph['370']['inputs']['images'] = [DECODE_NODE, 0]
+            graph['370']['inputs']['audio'] = [DECODE_NODE, 1]
+            graph['414']['inputs']['images'] = [DECODE_NODE, 0]
+            graph['414']['inputs']['audio'] = [DECODE_NODE, 1]
+            graph['414']['inputs']['video_latent'] = [DECODE_NODE, 2]
+            graph['414']['inputs']['audio_latent'] = [DECODE_NODE, 3]
+            del graph['374'], graph['358']
+        elif decode == 'original':
             graph['374'] = {'class_type': 'VAEDecode',
                             'inputs': {'samples': ['369', 0], 'vae': [VAE_NODE, 0]}}
         else:
@@ -518,7 +579,9 @@ def main():
               'source/scripts/' + TEXT_ADAPTER, 'source/scripts/' + TEXT_NODE_FILE,
               f'source/custom_nodes/{TEXT_NODE_DIR}/__init__.py',
               'source/scripts/' + PIPE_ADAPTER, 'source/scripts/' + PIPE_NODE_FILE,
-              f'source/custom_nodes/{PIPE_NODE_DIR}/__init__.py'}
+              f'source/custom_nodes/{PIPE_NODE_DIR}/__init__.py',
+              'source/scripts/' + PDEC_NODE_FILE,
+              f'source/custom_nodes/{PDEC_NODE_DIR}/__init__.py'}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
     for name, digest in parent_manifest['files'].items():
         if name == CHECKER:
@@ -533,13 +596,13 @@ def main():
             require(files[name] == digest, 'Inherited file drifted: ' + name)
     for src_name, dir_name in ((NODE, NODE_DIR), (VAE_NODE_FILE, VAE_NODE_DIR),
                                (FUSE_NODE_FILE, FUSE_NODE_DIR), (TEXT_NODE_FILE, TEXT_NODE_DIR),
-                               (PIPE_NODE_FILE, PIPE_NODE_DIR)):
+                               (PIPE_NODE_FILE, PIPE_NODE_DIR), (PDEC_NODE_FILE, PDEC_NODE_DIR)):
         require(files[f'source/custom_nodes/{dir_name}/__init__.py'] == files['source/scripts/' + src_name],
                 'Custom-node copy differs from helper: ' + dir_name)
 
     extensions = dict(parent_manifest['extension_sha256s'])
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
-                     TEXT_ADAPTER, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE):
+                     TEXT_ADAPTER, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -566,6 +629,7 @@ def main():
             'text_adapter_sha256': extensions[TEXT_ADAPTER], 'text_node_sha256': extensions[TEXT_NODE_FILE],
             'pipe_adapter_sha256': extensions[PIPE_ADAPTER],
             'pipe_node_sha256': extensions[PIPE_NODE_FILE],
+            'pipe_decode_node_sha256': extensions[PDEC_NODE_FILE],
             'fusion_groups': [[g[0], list(g[1])] for g in __import__('ltx_qkv_fusion_groups').GROUPS]
                              if False else [['audio_attn1', ['to_q', 'to_k', 'to_v']],
                                             ['audio_attn2', ['to_k', 'to_v']],
