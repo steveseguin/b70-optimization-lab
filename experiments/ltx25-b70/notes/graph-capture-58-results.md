@@ -37,18 +37,21 @@ Two things are new relative to every earlier number in this lane:
 
 ## The pipelined-sampler fault
 
-`f58-psamp-00` sampled in 10.07 s (its worker captured graphs), `psamp-01` in
-**2.32 s** on the second worker, which is far too fast for a thread that had
-to capture its own 96 graphs. Both workers were therefore replaying one set of
-captured graphs through one set of static input buffers. With identical
-clips that is invisible (both threads write the same bytes); with distinct
-fixtures the two clips overwrite each other's inputs, and on the third clip
-xe reported a page fault at address 0x1000 on `0000:27:00.0` (ccs engine,
-`Fault response: Unsuccessful -ENOENT`, device coredump), Level Zero
-returned `UR_RESULT_ERROR_DEVICE_LOST` to the sample-ahead worker, the
-launcher latched `FAULT.json` at 23:26:55 UTC, and ComfyUI's prompt worker
-thread died in `soft_empty_cache`. The host did not freeze. No new request
-was made; nothing was retried.
+`f58-psamp-00` sampled in 10.07 s (its worker captured graphs); `psamp-01`
+in **2.32 s**, which is a pure replay, so the shared job queue handed that clip
+to the already-warm worker rather than the idle second one. Clips `3002` and
+`3003` then ran at the same time on the two workers: `3002` was the first clip
+on the second worker thread, so it had to capture its own graphs (captures are
+keyed per thread), and those captures (`torch.xpu.graph` synchronises and
+empties the cache on the device) ran concurrently with the first worker's
+replays on the same cards. xe reported a page fault at address 0x1000 on
+`0000:27:00.0` (ccs engine, `Fault response: Unsuccessful -ENOENT`, device
+coredump), Level Zero returned `UR_RESULT_ERROR_DEVICE_LOST` to the
+sample-ahead worker for clip `3002`, the launcher latched `FAULT.json` at
+23:26:55 UTC, and ComfyUI's prompt worker thread died in `soft_empty_cache`.
+The host did not freeze. No new request was made; nothing was retried.
+Packet 55 never reached this interleaving: its second clip also landed on the
+warm worker, and it crashed on the `current_patcher` race first.
 
 Combined with packet 55's own evidence (3.3 s steady tail, stale parked
 clips), the two-thread pipelined sampler is **retired**: it is slower than

@@ -30,8 +30,8 @@ Packet 58 first delivered the corrected results on ten distinct fixtures:
 serial 4.584 s per clip (12/12 exact), three-stage pipe **2.519 s per distinct
 clip (19/19 exact, 9.9 fps equivalent)**. The pipelined-sampler arm then
 faulted `0000:27:00.0` (page fault, devcoredump, DEVICE_LOST) on its third
-clip: both sampler threads were replaying one graph set through shared static
-buffers, a race the identical-clip harness had hidden. The arm is retired.
+clip: the second worker's graph captures ran concurrently with the first
+worker's replays on the same cards. The arm is retired.
 The server stays up halted as evidence; the sealed launcher refuses launches
 while the boot journal carries fault lines. Next lever (latent-upsampler
 graph capture, packet 60) is prepared inactive and check-only passed.
