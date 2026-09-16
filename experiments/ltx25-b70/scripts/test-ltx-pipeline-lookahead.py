@@ -50,5 +50,11 @@ v, d = p.run_behind('decode', 0, 1, enc('d0'))
 assert d['emitted_index'] == 0 and not d['primed'] and p.pending('decode') == [0], d
 v, d = p.run_behind('decode', 1, 1, enc('d1'))
 assert v == 'cond(d0)' and d['emitted_index'] == 0 and d['primed'] and p.pending('decode') == [1], d
+# 7. Reusing a run-behind index that an earlier stream parked is refused, not served.
+try:
+    p.run_behind('decode', 1, 1, enc('again'))
+    raise SystemExit('expected refusal of a stale index')
+except RuntimeError as e:
+    assert 'stale index' in str(e), e
 p.clear()
-print('ltx_pipeline lookahead checks: 6/6 passed')
+print('ltx_pipeline lookahead checks: 7/7 passed')

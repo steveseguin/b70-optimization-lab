@@ -222,7 +222,13 @@ def run_behind(stage, index, depth, fn):
     """
     require(isinstance(index, int) and index >= 0, 'Clip index must be a non-negative integer')
     require(isinstance(depth, int) and 1 <= depth <= MAX_PENDING, 'Unsupported pipeline depth')
-    submit(stage, index, fn)
+    # A run-behind stage is fed only by the prompt that owns the index, exactly
+    # once. If a job already sits at this index it was parked by an EARLIER
+    # stream (a warm clip's un-consumed fill, or a stream restarted at 0), and
+    # collecting it later would emit a stale clip. Streams must use fresh clip
+    # indices; reuse is a hard error, never a silent substitution.
+    require(submit(stage, index, fn),
+            f'{stage} job already exists for clip {index}: stale index from an earlier stream')
     emit = index - depth
     with _LOCK:
         have_predecessor = emit in _state(stage)['jobs']

@@ -39,6 +39,8 @@ ap.add_argument('--count', type=int, default=20)
 ap.add_argument('--fixtures', default=str(LANE / 'data/stability-01-prereg.json'))
 ap.add_argument('--out', required=True)
 ap.add_argument('--timeout', type=int, default=1500)
+ap.add_argument('--index-base', type=int, required=True,
+                help='first clip_index of this stream; pipeline stages key jobs by clip_index for the life of the server, so every stream on a server must use a fresh range')
 a = ap.parse_args()
 import re
 if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,100}', a.prefix):
@@ -79,7 +81,7 @@ for i in range(a.count):
         if 'run_name' in node.get('inputs', {}):
             node['inputs']['run_name'] = name
         if 'clip_index' in node.get('inputs', {}):
-            node['inputs']['clip_index'] = i
+            node['inputs']['clip_index'] = a.index_base + i
     g['364']['inputs']['text'] = fx['prompt']
     g['339']['inputs']['noise_seed'] = fx['seed']
     g['338']['inputs']['noise_seed'] = fx['seed']
@@ -144,7 +146,8 @@ rows = []
 for p in prompts:
     dec = server_run / ('pipeline-decode-' + p['name'] + '.json')
     if dec.is_file():
-        emitted = json.loads(dec.read_text())['detail']['emitted_index']
+        emitted = json.loads(dec.read_text())['detail']['emitted_index'] - a.index_base
+        assert emitted >= 0, (p['name'], emitted)
     else:
         emitted = p['index']
     fx = fixtures[emitted % len(fixtures)]
@@ -167,7 +170,7 @@ ivs = [round(b['t_done'] - a_['t_done'], 3) for a_, b in zip(distinct, distinct[
 steady = ivs[1:] if len(ivs) > 1 else ivs
 mean = sum(steady) / len(steady) if steady else None
 p95 = sorted(steady)[int(round(0.95 * (len(steady) - 1)))] if steady else None
-summary = {'schema': 'ltx.throughput-fixtures.v1', 'prefix': a.prefix, 'arm': a.arm,
+summary = {'schema': 'ltx.throughput-fixtures.v1', 'prefix': a.prefix, 'arm': a.arm, 'index_base': a.index_base,
            'graph': str(a.graph), 'server_run': str(server_run), 'count': a.count,
            'fixture_count': len(fixtures), 'distinct_clips_emitted': len(distinct),
            'fills_excluded': [r['prompt'] for r in rows if r['fill']],

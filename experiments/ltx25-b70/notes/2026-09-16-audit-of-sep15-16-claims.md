@@ -40,6 +40,22 @@ Opus recorded caveat (1) in
 [throughput-is-the-goal-metric](throughput-is-the-goal-metric.md) and then
 did not act on it; (2) was not identified.
 
+## A confirmed stale delivery in packet 55
+
+Pipeline stages key their jobs by `clip_index` for the life of the server, and
+a run-behind stage's `submit` silently returned False when a job already sat at
+that index. In packet 55 the three oracle prompts `g55-s0/s1/s2` used indices
+0-2 on the sampler stage (depth 2), which left the jobs for indices 1 and 2
+parked. The throughput stream `tya` then restarted at index 0: `tya-00` was
+fresh, but `tya-01` and `tya-02` found parked jobs at their indices and
+emitted **the oracle prompts' clips** instead of sampling their own (receipt
+`pipeline-sampler-tya-00.json` shows `pending_after: [0, 1, 2]` before `tya-01`
+was even submitted; the 1.57 s and 0.29 s intervals are those prompts
+finishing without work). Because every prompt was the boat clip, every byte
+still matched. The guard added in `ltx_pipeline.run_behind` now refuses an
+index that already has a job, and the fixture driver gives every stream a
+fresh index range.
+
 ## Pipeline fill accounting
 
 With `pipe-samp` (sampler depth 2 + decode depth 1) the first three prompts all
