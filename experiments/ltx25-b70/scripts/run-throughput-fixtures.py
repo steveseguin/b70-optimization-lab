@@ -61,7 +61,8 @@ fixtures = json.loads(Path(a.fixtures).read_text())['fixtures']
 assert len(fixtures) == 10 and len({f['seed'] for f in fixtures}) == 10
 for f in fixtures:
     f.setdefault('reference', 'stability-01-r01-' + f['id'])
-    assert (ROOT / 'output/validation' / f['reference'] / 'tensors.safetensors').is_file(), f['reference']
+    assert (ROOT / 'output/validation' / f['reference'] / 'summary.json').is_file(), f['reference']
+    assert (ROOT / 'requests' / f['reference'] / 'history.json').is_file(), f['reference']
 
 base = json.loads(Path(a.graph).read_text())
 assert base['364']['class_type'] == 'LTXPipelineTextEncode'
@@ -154,13 +155,16 @@ for p in prompts:
     fill = emitted in seen
     seen.add(emitted)
     parity_path = out / (p['name'] + '-parity.json')
-    cp = subprocess.run([PY, '-B', str(LANE / 'scripts/compare-clip.py'), fx['reference'], p['name'],
+    raw = (ROOT / 'output/validation' / fx['reference'] / 'tensors.safetensors').is_file()
+    comparator = 'scripts/compare-clip.py' if raw else 'scripts/compare-clip-hash.py'
+    cp = subprocess.run([PY, '-B', str(LANE / comparator), fx['reference'], p['name'],
                          '--output', str(parity_path)], capture_output=True, text=True, timeout=300)
     parity = json.loads(parity_path.read_text()) if parity_path.exists() else {'status': 'missing', 'stderr': cp.stderr[-800:]}
     exact = parity.get('status') == 'passed' and all(v.get('bitwise_equal') is True for v in parity.get('comparisons', {}).values())
     rows.append({'prompt': p['name'], 'index': p['index'], 'prompt_fixture': p['fixture'],
                  'emitted_index': emitted, 'emitted_fixture': fx['id'], 'reference': fx['reference'],
-                 'fill': fill, 't_done': p['t_done'], 'exact': exact, 'parity_status': parity.get('status')})
+                 'fill': fill, 't_done': p['t_done'], 'exact': exact, 'parity_status': parity.get('status'),
+                 'comparator': comparator})
     print('  %s emitted clip %d (%s) vs %s: %s%s' % (p['name'], emitted, fx['id'], fx['reference'],
           'EXACT' if exact else 'MISMATCH ' + str(parity.get('status')), ' [fill]' if fill else ''), flush=True)
 
