@@ -114,8 +114,9 @@ class LTXPipelineTextEncode:
                 conditioning = native_encode(clip, text)
                 report['detail'] = {'computed_inline': True}
             else:
-                conditioning, detail = pipeline.run(
-                    clip_index, depth, lambda: native_encode(clip, text, consume_observations=True))
+                conditioning, detail = pipeline.run_ahead(
+                    'encode', clip_index, depth,
+                    lambda: native_encode(clip, text, consume_observations=True))
                 detail['placement_observations'] = 'consumed by the pipeline worker'
                 report['detail'] = detail
             report['passed'] = True
