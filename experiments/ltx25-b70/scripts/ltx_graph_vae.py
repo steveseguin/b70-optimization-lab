@@ -99,6 +99,15 @@ class GraphedMethod:
             torch.xpu.synchronize(self.device)
         restore()
 
+        # The captured region must land its result in a buffer allocated OUTSIDE
+        # the capture. A tensor the capture allocates itself is only valid for
+        # the call that produced it: the bitwise check right after capture passes
+        # on it, and then every replay leaves it stale -- which is exactly what
+        # three attempts saw as "an inert graph no input moves", with a non-empty
+        # graph and no driver warning. Copying into a stable buffer inside the
+        # captured region makes replay land somewhere this code still owns.
+        static_output = torch.empty_like(reference)
+
         graph = torch.xpu.XPUGraph()
         # An explicit per-device capture stream is required: torch.xpu.graph
         # otherwise reuses one class-level stream bound to the first device it
@@ -106,7 +115,9 @@ class GraphedMethod:
         try:
             with torch.xpu.device(self.device), torch.no_grad(), \
                     torch.xpu.graph(graph, stream=torch.xpu.Stream(device=self.device)):
-                output = self.original(*static_args, **static_kwargs)
+                produced = self.original(*static_args, **static_kwargs)
+                static_output.copy_(produced)
+            output = static_output
         except BaseException:
             # A capture abandoned part-way leaves the device recording. On
             # 2026-09-15 an exception inside capture (a host read of tensor
@@ -120,7 +131,10 @@ class GraphedMethod:
             torch.xpu.synchronize(self.device)
             raise
         torch.xpu.synchronize(self.device)
-        require(isinstance(output, torch.Tensor), self.name + ' capture did not produce a tensor')
+        require(isinstance(produced, torch.Tensor),
+                self.name + ' capture did not produce a tensor')
+        require(produced.shape == reference.shape and produced.dtype == reference.dtype,
+                self.name + ' capture changed the output shape or dtype')
 
         # Non-inert: the replayed output must move when an input moves. Earlier
         # attempts perturbed only flat[0] and reported a bare "inert graph",
