@@ -34,6 +34,19 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 16 06:05 UTC: GPU fault during a two-card service start; port 18124 is DOWN and no GPU work is running.**
+`serve.py` detected the fault, halted and did not retry, exactly as designed.
+
+- **What happened:** the one-card two-user screen finished and stopped cleanly at 06:00:11Z. The two-card service
+  started at 06:00:11Z and faulted at 06:02:02Z, about 111 s in, during weight load/compile.
+- **Kernel:** `xe 0000:03:00.0` (card2) Tile0 GT0, EngineClass 3 (copy engine): repeated
+  `Fault response: Unsuccessful -EINVAL`, then `Timedout job ... in python3`, then a device coredump. No reset,
+  recovery or wedged line followed.
+- **State now:** no containers, no GPU processes, no driver reset, no reboot, devcoredump still present.
+- **Evidence:** `/mnt/fast-ai/bench-results/gpu-fault-20260916T0602/` (kernel log, journal window, states, summary).
+- **Next step needs the user:** faults halt work, and a driver reset, power change or reboot is not mine to make.
+  A bounded XPU/XCCL health probe is the normal first check once approved.
+
 **Two-B70 host, September 16 00:30 UTC: one-card FP8 packet published; R310 kernel fix replaces the head-group overlay; service back on 18124.**
 
 - **New packet** `qwen38-27b-fp8-vllm-tp1-b70`: package, recipe, 7 measured graphs. It replaces
