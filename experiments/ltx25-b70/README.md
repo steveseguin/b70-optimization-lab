@@ -1,19 +1,31 @@
 # LTX 2.5 native BF16 baseline on B70
 
-Status: **validated exact-output speedup: 6.44–7.10 s warm clips**, September 13, 2026.
-User authorized bring-up and repeatability validation on September 13, 2026.
+Status: **audited September 16, 2026.** Single-clip warm latency is about
+4.5 s (graph-captured blocks and text encoder, bytewise exact on the boat
+fixture). Back-to-back identical clips through the three-stage pipeline
+(encode-ahead, sampler, decode-behind) complete every 2.57 s, about 0.41 s of
+video per wall second. The goal is one second of video per wall second at 24
+fps and at least 256x256; it is not met. See the
+[audit of the September 15-16 claims](notes/2026-09-16-audit-of-sep15-16-claims.md):
+exactness held, but every throughput prompt used one prompt and one seed,
+which hid three pipeline races; they are fixed and a ten-fixture re-validation
+(packet 58) is the current campaign.
 
 Direction: [north star, milestones and next work](PLAN.md).
 The actual goal is one second of new video in under one second at 24 fps,
 with final output at least 256x256 and no quality loss. Continuous recording
 is unnecessary; keep a small review set and exact verification receipts.
+The measured lossless ceiling on this hardware is recorded in
+[what 24 fps requires](notes/what-24fps-requires.md): total per-clip work
+(sampler 2.02 s on two cards, text encode 1.59 s, decode 0.74 s) divided over
+four cards is 1.09 s at perfect balance, against a 1.042 s budget, so 24 fps
+needs both a full pipeline re-architecture and a real reduction of the
+sampler's own time. Earlier campaign history (first 30-request campaign,
+6.44-7.10 s split placement) remains below as the preserved reference.
+
 The [first 30-request campaign](notes/stability-01-results.md) passed all ten
 fixture repeats at 6.515 s median preview. It reclaimed 607 MB of verified
-temporary output and kept only three small campaign previews. Two source
-patches are prepared for further validation; the loaded runtime is unchanged.
-The [next diagnostic](notes/stack-profile-01-results.md) identifies tiny encoder
-state repeatedly copied from CPU. Its residency candidate and an actual LTX
-block compiler both have CPU test evidence, while GPU validation remains pending.
+temporary output and kept only three small campaign previews.
 
 ## Current optimized baseline
 

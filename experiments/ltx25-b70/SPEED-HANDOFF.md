@@ -3,6 +3,14 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
+September 16 audit: the September 15-16 graph-capture and pipeline results are
+summarised and checked in
+[the audit note](notes/2026-09-16-audit-of-sep15-16-claims.md). Standing
+numbers: 4.5 s single-clip warm latency, 2.57 s interval for identical clips
+through the three-stage pipeline, exact on the boat fixture. The pipelined
+sampler (packet 55) was slower and served stale clips; corrected sources are
+under test in packet 58. Everything below this paragraph predates that audit.
+
 Latest September14: the retained nonblocking profile captured one exact compiled
 clip, then its recorder failed on a run-name/retention contract mismatch.
 PID66846 remains idle on compiled all48, queue/kernel healthy. No restored
