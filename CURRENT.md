@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 16 23:20 UTC: LTX packet 58 server launched (PID 6955, port 8188) for the corrected ten-fixture pipeline campaign.**
+The host rebooted at 17:23 UTC during Opus's packet 56 start (silent lockup, no
+kernel fault line; not this session). An offline audit of the September 15-16
+claims found the exactness claims hold for the boat fixture (452 clips hashed,
+19 comparator passes) but every throughput prompt used one prompt and one
+seed, which hid a stale-conditioning race in encode-ahead, a global-RNG race
+between two sampler threads, and a confirmed stale delivery in packet 55
+(parked oracle-prompt clips served as stream output). Encode-ahead now binds
+to the queued next prompt's text, noise generation is serialised, reused
+pipeline indices are refused, and a new driver cycles ten distinct fixtures
+with a per-clip oracle. Campaign order: warm clip, serial 12, three-stage pipe
+20, pipelined sampler 20; log `campaign-58.log` in the evidence root.
+[Audit](experiments/ltx25-b70/notes/2026-09-16-audit-of-sep15-16-claims.md).
+No power, swap, driver or reboot action; one launch, no restart chain.
+
 **Two-B70 host, September 15 05:35 UTC: communicator NaN characterization done; user decision needed on NaN comparison.**
 Stage `nan-semantics-01` completed cleanly on the newest base with no faults.
 All four add formulations match XCCL on every non-NaN result at every shape and
