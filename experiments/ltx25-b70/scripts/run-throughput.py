@@ -21,6 +21,15 @@ ap.add_argument('--out', required=True)
 a = ap.parse_args()
 out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
 
+# The gates accept only lowercase run names ([a-z0-9][a-z0-9-]{0,119}). A single
+# uppercase letter in the prefix made every prompt fail with "Unsafe request
+# name", tripped a gate's sticky-failure latch, and -- because the poll loop
+# below only ever looked for completion -- hung for ten minutes instead of
+# saying so. Check it here, and check for execution errors there.
+import re as _re
+if not _re.fullmatch(r'[a-z0-9][a-z0-9-]{0,110}', a.prefix):
+    raise SystemExit('prefix must match [a-z0-9][a-z0-9-]* (lowercase): ' + a.prefix)
+
 
 def call(path, payload=None):
     data = json.dumps(payload).encode() if payload is not None else None
@@ -47,15 +56,32 @@ for i in range(a.count):
 print('queued %d prompts in %.2f s' % (len(ids), time.time() - t_submit))
 
 done = {}
-deadline = time.time() + 1800
+deadline = time.time() + 900
 while len(done) < len(ids) and time.time() < deadline:
     for name, pid in ids:
         if pid in done:
             continue
         h = call('/history/' + pid)
-        if pid in h and h[pid].get('status', {}).get('completed'):
+        entry = h.get(pid)
+        if not entry:
+            continue
+        status = entry.get('status', {})
+        # Fail fast. A prompt that errored will never report completed, and
+        # several gates latch sticky on failure, so every later prompt fails
+        # too; polling on would just burn the clock.
+        for message in status.get('messages', []):
+            if message[0] == 'execution_error':
+                detail = message[1] or {}
+                print('EXECUTION ERROR in %s: %s | %s' % (
+                    name, detail.get('exception_type'),
+                    str(detail.get('exception_message'))[:300]))
+                raise SystemExit(2)
+        if status.get('status_str') == 'error':
+            print('PROMPT %s reported status error' % name)
+            raise SystemExit(2)
+        if status.get('completed'):
             done[pid] = (name, time.time())
-    time.sleep(0.05)
+    time.sleep(0.25)
 
 if len(done) < len(ids):
     print('TIMED OUT: %d/%d finished' % (len(done), len(ids)))
