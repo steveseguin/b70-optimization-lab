@@ -86,6 +86,7 @@ def build(args, name, out, image_env):
     set_flag(cmd, '--gpu-memory-utilization', str(args.mem))
     set_flag(cmd, '--max-model-len', str(args.max_model_len))
     set_flag(cmd, '--max-num-batched-tokens', str(args.batched))
+    set_flag(cmd, '--max-num-seqs', str(args.seqs))
     index = cmd.index('--speculative-config')
     if args.mtp == 0:
         del cmd[index:index + 2]
@@ -132,6 +133,7 @@ def main():
     ap.add_argument('--mem', type=float, default=0.95)
     ap.add_argument('--max-model-len', type=int, default=8448)
     ap.add_argument('--batched', type=int, default=4096)
+    ap.add_argument('--seqs', type=int, default=1, help='concurrent sequences the server accepts (qualified value is 1)')
     ap.add_argument('--mtp', type=int, default=0, choices=range(0, 8))
     ap.add_argument('--eager', action='store_true')
     ap.add_argument('--draft-int4', action='store_true')
