@@ -5673,7 +5673,7 @@
           "mixed-step GDN split"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "The recommended 32K-input setup measured 54.20 output tokens/s in one public-source replay; all 12 complete outputs matched the qualified reference. Six practical requests passed with exact repeated text and token arrays, and cache zero. The featured 86.18 tokens/s record is an older MTP depth-5 configuration. Prefill tests retain their separate capacity labels. Independent-host driver installation and prolonged use remain untested.",
+        "benchmark_status": "The recommended 32K-input setup measured 54.88 output tokens/s in its September 16 public-source replay; all 12 complete outputs matched the qualified reference. Six practical requests passed with exact repeated text and token arrays, and cache zero. The featured 86.18 tokens/s record is an older MTP depth-5 configuration. Prefill tests retain their separate capacity labels. Independent-host driver installation and prolonged use remain untested.",
         "featured_metric": {
           "value": 86.18172184524545,
           "unit": "tok/s",
@@ -5681,7 +5681,7 @@
           "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-configuration MTP0 oracle (depth-5 target-verified speculative decoding; MTP1 54.935, depth 4 82.396, MTP0 33.097 on the same line), canaries before and after, cache zero; repeat-exact at 100-300-token prompts; output-identical through 16 concurrent users (MTP0: through 64).",
           "evidence": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r200-whole-graph-depth5-strict-result.json"
         },
-        "public_summary": "Recommended: two B70s, one user, MTP1, and room for a 32K-token input plus a 256-token answer. The public-source replay passed 12 reference-output checks and six practical requests, with a writing speed of 54.20 tokens/s. Historical writing speed shown below uses an older five-token draft configuration. Open the guide for the tested start, status, and stop commands."
+        "public_summary": "Recommended: two B70s, one user, MTP1, and room for a 32K-token input plus a 256-token answer. The public-source replay passed 12 reference-output checks and six practical requests, with a writing speed of 54.88 tokens/s. Historical writing speed shown below uses an older five-token draft configuration. Open the guide for the tested start, status, and stop commands."
       },
       "contributors": [
         {
@@ -6181,9 +6181,10 @@
         "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
         "experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py",
         "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md",
-        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/summary.json",
-        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/manifest.json",
-        "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/evidence.tar.gz",
+        "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-flagship-replay.md",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/manifest.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/evidence.tar.gz",
         "experiments/qwen38-27b-b70/scripts/collect-fp8-flagship-evidence.py",
         "experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md",
         "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/summary.json",
@@ -7069,9 +7070,9 @@
         "acceptance_status": "passed-on-configured-lab-host",
         "clean_host_tested": false,
         "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md",
-        "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/summary.json",
-        "evidence_manifest": "experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship/manifest.json",
-        "strict_single_replay_decode_tokens_s": 54.200966149888075,
+        "source_data": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json",
+        "evidence_manifest": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/manifest.json",
+        "strict_single_replay_decode_tokens_s": 54.87921753088091,
         "speed_promotion": false
       }
     },

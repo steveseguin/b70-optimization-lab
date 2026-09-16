@@ -10,7 +10,8 @@ from pathlib import Path
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-14-fp8-flagship'
+# 2026-09-16: re-collected after serve.py gained its pre-readiness warm-up; the 2026-09-14 packet stays frozen.
+DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship'
 REFERENCE = Path('/mnt/fast-ai/bench-results/qwen38-fp8-rebase-v0290-rb1-20260913/mtp1-a/strict')
 DEPTH = Path('/mnt/fast-ai/bench-results/qwen38-fp8-r304-real-content-depth-20260913b')
 
