@@ -80,7 +80,7 @@ class LTXPipelineSampler:
             'noise_b': ('NOISE',), 'guider_b': ('GUIDER',), 'sampler_b': ('SAMPLER',),
             'sigmas_b': ('SIGMAS',),
             'video_latent': ('LATENT',), 'audio_latent': ('LATENT',),
-            'upscale_model': ('UPSCALE_MODEL',), 'vae': ('VAE',),
+            'upscale_model': ('LATENT_UPSCALE_MODEL',), 'vae': ('VAE',),
             'mode': (list(pipeline.MODES),),
             'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
             'depth': ('INT', {'default': 2, 'min': 1, 'max': pipeline.MAX_PENDING}),
