@@ -53,5 +53,9 @@ and the answer.
 - The `recommended` profile scores draft guesses with a small INT4 copy of
   the output layer. The FP8 model still checks every token at full precision, so
   answers are unchanged. `no-quantization` avoids that copy at a small speed cost.
-- Not yet tested: a clean install on another machine, and more than one user at
-  a time.
+- **Replayed from a fresh download:** on September 16 the steps above were run
+  from a new anonymous download of this repository on the lab host, reusing only
+  the verified model files and the Docker layer cache: model verify, image pull,
+  start, strict suite 12/12 identical to no-MTP at 53.497 tok/s, clean stop.
+- Not yet tested: a machine without Intel drivers, Docker or the model already
+  in place, and more than one user at a time.

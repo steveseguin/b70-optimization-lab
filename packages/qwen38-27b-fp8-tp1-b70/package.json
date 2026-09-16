@@ -35,7 +35,7 @@
    "deterministic"
   ],
   "published_at": "2026-09-15",
-  "benchmark_status": "Strict 12-prompt suite on two fresh servers: 53.45 / 53.55 tok/s, 12/12 identical to no MTP. Long-prompt continuations, a chat quality suite and a 21-request repeat test also match exactly. Clean-host install and multiple users are untested.",
+  "benchmark_status": "Strict 12-prompt suite on two fresh servers: 53.45 / 53.55 tok/s, 12/12 identical to no MTP. Long-prompt continuations, a chat quality suite and a 21-request repeat test also match exactly. Clean-host install and multiple users are untested. A September 16 replay from a fresh anonymous download of this repository (verified model, pulled image, package scripts only) measured 53.497 tok/s with 12/12 identical outputs and a clean stop.",
   "featured_metric": {
    "value": 53.498926957844326,
    "unit": "tok/s",
@@ -113,7 +113,9 @@
   "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-tp1-shapes-r309-20260915.patch",
   "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch",
   "packages/qwen38-27b-fp8-tp1-b70/scripts/download-model.sh",
-  "packages/qwen38-27b-fp8-tp1-b70/scripts/verify.sh"
+  "packages/qwen38-27b-fp8-tp1-b70/scripts/verify.sh",
+  "experiments/qwen38-27b-b70/data/2026-09-16-fp8-tp1-clean-install/steps.json",
+  "experiments/qwen38-27b-b70/data/2026-09-16-fp8-tp1-clean-install/strict-performance.json"
  ],
  "performance_profiles": [
   {
@@ -354,7 +356,7 @@
   }
  ],
  "missing": [
-  "tested clean-host Intel driver and Docker installation",
+  "a machine without Intel drivers, Docker or the pinned model already present",
   "multiple simultaneous users",
   "contexts above 13,824 tokens on one card"
  ],

@@ -1,7 +1,11 @@
 # Qwen3.8 27B official FP8 on one Intel Arc Pro B70: recipe
 
 > **Status: `candidate-portable-repro`.** Built, launched and measured on the lab
-> host from the files below. A clean install on another host is still pending.
+> host from the files below, and replayed on September 16 from a fresh anonymous
+> download of this repository (verified model, pulled image, package scripts
+> only): strict 12/12 at 53.497 tok/s and a clean stop
+> ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-16-fp8-tp1-clean-install/)).
+> A machine without Intel drivers, Docker or the model in place is still untested.
 
 Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp1-b70/README.md).
 
