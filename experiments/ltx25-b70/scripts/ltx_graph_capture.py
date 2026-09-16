@@ -17,6 +17,7 @@ This module allocates no model state and moves no weights.
 """
 import copy
 import hashlib
+import threading
 import time
 import types as _types
 import json
@@ -346,8 +347,41 @@ class Slot:
         self.sources = [None] * len(flat)
 
 
+class GroupRegistry:
+    """One DeviceGroup per (device, thread).
+
+    The dual-CFG guider runs a conditional and an unconditional forward per
+    sampler step, and they are independent. Running them on two threads lets one
+    occupy xpu:1's blocks while the other occupies xpu:0's. That only works if
+    each thread has its OWN static buffers, captured graphs and signature cache:
+    two forwards sharing one set would overwrite each other's activations.
+    """
+
+    def __init__(self):
+        self.groups = {}
+        self.lock = threading.Lock()
+
+    def for_device(self, device):
+        key = (device, threading.get_ident())
+        group = self.groups.get(key)
+        if group is None:
+            with self.lock:
+                group = self.groups.get(key)
+                if group is None:
+                    group = self.groups[key] = DeviceGroup(device)
+        return group
+
+    def all_groups(self):
+        with self.lock:
+            return list(self.groups.values())
+
+    def threads(self):
+        with self.lock:
+            return sorted({tid for _, tid in self.groups})
+
+
 class DeviceGroup:
-    """Per-device shared state: buffers, and a cached argument signature.
+    """Per-device, per-thread state: buffers, and a cached argument signature.
 
     Describing eighteen arguments per block per step was itself measurable, and
     the description is identical for every block on a device within one forward.
@@ -439,7 +473,7 @@ class Entry:
 class GraphBlockRoute:
     """Replaces only the block callable; the original route is still in charge."""
 
-    def __init__(self, blocks, original_route, index, report, group):
+    def __init__(self, blocks, original_route, index, report, registry):
         check_source()
         blocks = tuple(blocks)
         require(blocks, 'A graph route needs at least one block')
@@ -456,11 +490,11 @@ class GraphBlockRoute:
         self.original_route = original_route
         self.index = index
         self.device = original_route.device
-        require(group.device == self.device, 'Route and device group disagree')
-        self.group = group
+        self.registry = registry
+        self.group = None          # resolved per calling thread
         self._route_identity = (original_route.device, original_route.primary, original_route.last)
         self.report = report
-        self.entries = {}
+        self.entries = {}          # thread id -> {signature: Entry}
 
     # -- validation ---------------------------------------------------------
     def _validate_fast(self):
@@ -502,7 +536,7 @@ class GraphBlockRoute:
             img = block(img, **kwargs)
         return img
 
-    def _capture(self, routed, slot, key):
+    def _capture(self, routed, slot, key, entries):
         """Record one graph for this shape and prove it matches eager bits."""
         self._validate()
         options = routed['transformer_options']
@@ -574,7 +608,7 @@ class GraphBlockRoute:
                 f'Block {self.index} graph replay differs from eager execution; refuse graph mode')
 
         entry = Entry(self.index, key, graph, out_vx, out_ax)
-        self.entries[key] = entry
+        entries[key] = entry
         self.report.record_capture(self.index, key, len(slot.flat), True,
                                    describe_types(routed), option_census(options),
                                    sorted(split_options(options)[0], key=repr),
@@ -584,6 +618,10 @@ class GraphBlockRoute:
 
     def _call_native(self, routed):
         self._validate_fast()
+        tid = threading.get_ident()
+        group = self.registry.for_device(self.device)
+        self.group = group
+        entries = self.entries.setdefault(tid, {})
         options = routed['transformer_options']
         require(CACHE_KEY in options, 'Graph capture requires the shard forward wrapper')
         if len(self.blocks) > 1:
@@ -594,21 +632,21 @@ class GraphBlockRoute:
                     'STG varies transformer_options per block; chained capture is unsound')
             require(not options.get('prefetch_dynamic_vbars', False),
                     'Dynamic prefetch pops a queue between blocks; chained capture would skip it')
-        key = self.group.key_for(routed, options)
-        if self.group.fresh_forward:
+        key = group.key_for(routed, options)
+        if group.fresh_forward:
             self._validate()
         if self.report.first_options is None:
             self.report.first_options = {'block_index': self.index,
                                          'argument_types': describe_types(routed),
                                          'options': option_census(options)}
-        slot = self.group.slot_for(key, routed, options)
-        self.report.copies += self.group.fill(slot, routed, options)
-        entry = self.entries.get(key)
+        slot = group.slot_for(key, routed, options)
+        self.report.copies += group.fill(slot, routed, options)
+        entry = entries.get(key)
         if entry is None:
-            require(len(self.entries) < MAX_SIGNATURES_PER_BLOCK,
-                    f'Block {self.index} reached {len(self.entries)} distinct argument signatures; '
-                    'the signature is tracking something that is not a real input')
-            entry = self._capture(routed, slot, key)
+            require(len(entries) < MAX_SIGNATURES_PER_BLOCK,
+                    f'Block {self.index} reached {len(entries)} distinct argument signatures on '
+                    'this thread; the signature is tracking something that is not a real input')
+            entry = self._capture(routed, slot, key, entries)
         else:
             entry.graph.replay()
         entry.replays += 1
@@ -636,7 +674,8 @@ class PassthroughRoute:
         require(type(self.head) is GraphBlockRoute and self.index in
                 range(self.head.index + 1, self.head.index + len(self.head.blocks)),
                 f'Block {self.index} is not inside its chain head\'s run')
-        require(self.head.entries, f'Chain head {self.head.index} has not run before block {self.index}')
+        require(any(self.head.entries.values()),
+                f'Chain head {self.head.index} has not run before block {self.index}')
         self.calls += 1
         return {'img': args['img']}
 
@@ -658,6 +697,7 @@ class Report:
         self.option_key_sets = []
         self.chains = []
         self.chain = 1
+        self.registry = None
 
     def record_capture(self, index, signature, tensor_count, inplace, types, census, infra, data):
         self.captures.append({'block_index': index, 'mirrored_tensors': tensor_count,
@@ -671,6 +711,7 @@ class Report:
 
     def summary(self):
         return {'chain': self.chain, 'chains': self.chains,
+                'forward_threads': (self.registry.threads() if self.registry else []),
                 'captured_graphs': len(self.captures), 'replays': self.replays,
                 'static_buffer_copies': self.copies,
                 'copies_per_replay': round(self.copies / self.replays, 3) if self.replays else None,
@@ -699,8 +740,18 @@ def validate_patcher(patcher):
             'Expected the native 48-block LTXAV model')
     registry = patcher.model_options.get('transformer_options', {}).get('patches_replace', {}).get('dit', {})
     require(set(registry) == {('double_block', i) for i in range(48)}, 'Unexpected block route registry')
-    require(patcher.wrappers == {WrappersMP.DIFFUSION_MODEL: {KEY: [_forward_transfers]}},
+    # The shard's DIFFUSION_MODEL wrapper is mandatory and exact. One further
+    # wrapper is admitted: the concurrent dual-CFG split, which changes no
+    # arithmetic -- it runs the guider's two already-independent forwards on two
+    # threads, each with its own static buffers (see GroupRegistry).
+    wrappers = dict(patcher.wrappers)
+    cfg_wrappers = wrappers.pop(WrappersMP.CALC_COND_BATCH, None)
+    require(wrappers == {WrappersMP.DIFFUSION_MODEL: {KEY: [_forward_transfers]}},
             'Foreign model wrappers are unsupported')
+    if cfg_wrappers:
+        require(set(cfg_wrappers) == {'ltx_concurrent_cfg'} and
+                len(cfg_wrappers['ltx_concurrent_cfg']) == 1,
+                'Unexpected CALC_COND_BATCH wrappers')
     require(patcher.callbacks == {CallbacksMP.ON_PRE_RUN: {KEY: [_verify_placement]}},
             'Foreign model callbacks are unsupported')
     options = patcher.model_options.get('transformer_options', {})
@@ -745,7 +796,8 @@ def install(patcher, indices, chain=1):
     require(isinstance(chain, int) and not isinstance(chain, bool) and chain >= 1,
             'chain must be a positive integer')
     report = Report()
-    originals, groups = {}, {}
+    registry = GroupRegistry()
+    originals = {}
     for index in indices:
         originals[index] = registry[('double_block', index)]
     for run in chain_runs(indices, registry, chain):
@@ -754,13 +806,13 @@ def install(patcher, indices, chain=1):
         # state to the primary device, and folding it into a chain would
         # otherwise drop that move.
         effective = head if len(run) == 1 else _BlockRoute(head.device, head.primary, tail.last)
-        group = groups.setdefault(head.device, DeviceGroup(head.device))
         route = GraphBlockRoute([diffusion.transformer_blocks[i] for i in run],
-                                effective, run[0], report, group)
+                                effective, run[0], report, registry)
         patcher.set_model_patch_replace(route, 'dit', 'double_block', run[0])
         for index in run[1:]:
             patcher.set_model_patch_replace(PassthroughRoute(index, route), 'dit', 'double_block', index)
-    report.devices = sorted(str(d) for d in groups)
+    report.devices = sorted({str(route.device) for route in originals.values()})
+    report.registry = registry
     report.chains = [{'head': r[0], 'tail': r[-1], 'blocks': len(r),
                       'device': str(registry[('double_block', r[0])].device)}
                      for r in chain_runs(indices, registry, chain)]
@@ -786,7 +838,7 @@ def measure(patcher, originals, iterations=20):
         if type(route) is PassthroughRoute:
             continue
         require(type(route) is GraphBlockRoute, 'Expected a graph route at block ' + str(index))
-        for entry in route.entries.values():
+        for entry in [e for per_thread in route.entries.values() for e in per_thread.values()]:
             device = route.device
             with torch.xpu.device(device):
                 for _ in range(3):
@@ -830,7 +882,8 @@ def attribute(patcher, originals, iterations=15, probe_blocks=(0, 24)):
         if type(route) is PassthroughRoute or index not in probe_blocks:
             continue
         require(type(route) is GraphBlockRoute, 'Expected a graph route at block ' + str(index))
-        for key in list(route.entries):
+        per_thread = next((v for v in route.entries.values() if v), {})
+        for key in list(per_thread):
             slot = route.group.slots[key]
             snapshot = [t.clone() for t in slot.flat]
 
@@ -922,7 +975,8 @@ def restore(patcher, originals):
                         current.original_route.last == tail.last,
                         'Chain route placement drifted while restoring block ' + str(i))
             current.entries.clear()
-            current.group.slots.clear()
+            for group in current.registry.all_groups():
+                group.slots.clear()
         else:
             require(type(current) is PassthroughRoute and
                     current.head.index < i <= current.head.index + len(current.head.blocks) - 1,
