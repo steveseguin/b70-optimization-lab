@@ -21,6 +21,8 @@ oracles would catch it.
 import threading
 import traceback
 
+import torch
+
 MODES = ('original', 'pipeline')
 
 _LOCK = threading.Lock()
@@ -58,7 +60,13 @@ def _worker_loop():
             job = _QUEUE.pop(0)
         job.started = time.monotonic()
         try:
-            job.value = job.fn()
+            # ComfyUI executes nodes inside torch.inference_mode(), and that is
+            # THREAD-LOCAL. Without it here the encode runs in a different
+            # autograd context from the one its buffers were built in, and the
+            # graphed text encoder dies writing them: "Inplace update to
+            # inference tensor outside InferenceMode is not allowed".
+            with torch.inference_mode():
+                job.value = job.fn()
         except BaseException as exc:                     # noqa: BLE001
             job.error = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
         finally:
