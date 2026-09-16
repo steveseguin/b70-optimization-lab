@@ -1,0 +1,8 @@
+# R310 (2026-09-15): R304 + kernel library rebuilt with oneDNN r309 (W8A16 fixed-K gate for one-card shapes) and
+# vllm-xpu-kernels r310 (global memory fences in the chunked gated-delta-rule output kernel;
+# build-kernels-0.1.14.1-r310-gdn-barriers.sh). Python is unchanged.
+ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+FROM ${BASE}
+COPY _xpu_C.abi3.so libgdn_attn_kernels_xe_2.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/
+RUN python -c "import torch, vllm_xpu_kernels._xpu_C; print('kernels import ok', torch.__version__)"
+LABEL neural.download.build.lane="qwen38-fp8-v0290-r310-gdn-barriers" neural.download.kernel.patch="onednn r137a+r137b+r221+r309 on 0e2a5bfe; vllm-xpu-kernels r310"

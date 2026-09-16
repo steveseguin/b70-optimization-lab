@@ -1,0 +1,49 @@
+diff --git a/csrc/xpu/gdn_attn/xe_2/chunk_gated_delta_rule_kernels_xe2.hpp b/csrc/xpu/gdn_attn/xe_2/chunk_gated_delta_rule_kernels_xe2.hpp
+index 88d232e..080bcd8 100644
+--- a/csrc/xpu/gdn_attn/xe_2/chunk_gated_delta_rule_kernels_xe2.hpp
++++ b/csrc/xpu/gdn_attn/xe_2/chunk_gated_delta_rule_kernels_xe2.hpp
+@@ -982,7 +982,7 @@ CUTE_DEVICE void chunk_fwd_o_kernel(
+       // still be reading g_slm_ptr/g_multi_slm_ptr/g_exp_slm_ptr in
+       // their output/state GEMM epilogues; all must arrive before any
+       // sub-group refills these SLM buffers for this chunk.
+-      item.barrier(sycl::access::fence_space::local_space);
++      item.barrier(sycl::access::fence_space::global_and_local);
+       CUTE_UNROLL
+       for (int e = local_id; e < current_chunk_size; e += local_range) {
+         float g_cumsum_value =
+@@ -999,7 +999,7 @@ CUTE_DEVICE void chunk_fwd_o_kernel(
+         g_multi_slm_ptr[e] = 0.0f;
+         g_exp_slm_ptr[e] = 0.0f;
+       }
+-      item.barrier(sycl::access::fence_space::local_space);
++      item.barrier(sycl::access::fence_space::global_and_local);
+ 
+       auto W_ptr = w + v_head_id * total_virtual_seqlen * head_k_dim +
+                    chunk_offset * head_k_dim;
+@@ -1085,6 +1085,9 @@ CUTE_DEVICE void chunk_fwd_o_kernel(
+       }
+       reorder(tSrO2_c, tCrO2_c);
+       copy(copy_O2_c, tCrO2_c, tCgO2_c);
++      // O2 lives in global (USM) memory and every sub-group reads all of it in the output GEMM below; a
++      // local_space fence does not make other sub-groups' global writes visible (r310).
++      item.barrier(sycl::access::fence_space::global_and_local);
+ 
+       auto U_tensor_T_shape = make_shape(head_v_dim, chunk_size);
+       auto U_tensor_T = make_tensor(
+@@ -1157,7 +1160,7 @@ CUTE_DEVICE void chunk_fwd_o_kernel(
+ 
+           // Barrier: ensure U_new[dv] is visible across all subgroups
+           // before O2U reads it via U_tensor_T.
+-          item.barrier(sycl::access::fence_space::local_space);
++          item.barrier(sycl::access::fence_space::global_and_local);
+ 
+           // --- O2U MMA: O[dv] += O1[dv] + O2 × U_T[dv] ---
+           gemm_TTS(O2_tensor, U_tensor_T, tSrO_c, 0, dv, mma);
+@@ -1212,6 +1215,7 @@ CUTE_DEVICE void chunk_fwd_o_kernel(
+       }
+ 
+       if (!has_prev_state) {
++        item.barrier(sycl::access::fence_space::global_and_local);
+         for (int dv = 0; dv < head_v_dim / chunk_size; ++dv) {
+           Tensor gO_C =
+               local_tile(cO, wg_tile, make_coord(0, dv, 0), Step<_1, _1, X>{});

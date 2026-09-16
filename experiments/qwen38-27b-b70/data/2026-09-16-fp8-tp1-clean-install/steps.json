@@ -1,0 +1,94 @@
+{
+  "service_stop": {
+    "argv": [
+      "python3",
+      "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
+      "stop",
+      "--state-dir",
+      "/mnt/fast-ai/bench-results/optimization-validation-20260916/service-restored"
+    ],
+    "rc": 0,
+    "stdout": "Graceful stop requested for the saved container only. No restart is scheduled.\n",
+    "stderr": ""
+  },
+  "verify_model": {
+    "argv": [
+      "bash",
+      "packages/qwen38-27b-fp8-tp1-b70/scripts/verify.sh"
+    ],
+    "rc": 0,
+    "stdout": "1e87d61e77d2b802 ordinary=1e87d61e77d2b802\nOK   layers-16.safetensors direct=8bcdbf4e2c7a8dda ordinary=8bcdbf4e2c7a8dda\nOK   layers-17.safetensors direct=571cea44717878cc ordinary=571cea44717878cc\nOK   layers-18.safetensors direct=d8700627ca2267fb ordinary=d8700627ca2267fb\nOK   layers-19.safetensors direct=2b24cfb752bbed95 ordinary=2b24cfb752bbed95\nOK   layers-20.safetensors direct=52fd00c68d4f1df9 ordinary=52fd00c68d4f1df9\nOK   layers-21.safetensors direct=e3c29dd949808c13 ordinary=e3c29dd949808c13\nOK   layers-22.safetensors direct=63446546e3e09c23 ordinary=63446546e3e09c23\nOK   layers-23.safetensors direct=4166ed11d0329985 ordinary=4166ed11d0329985\nOK   layers-24.safetensors direct=720bdcfe12b6627b ordinary=720bdcfe12b6627b\nOK   layers-25.safetensors direct=1b188e7e4e8ae6f5 ordinary=1b188e7e4e8ae6f5\nOK   layers-26.safetensors direct=ad8c3e3d4b79dfed ordinary=ad8c3e3d4b79dfed\nOK   layers-27.safetensors direct=8d63f46143004596 ordinary=8d63f46143004596\nOK   layers-28.safetensors direct=f78557cda66107ce ordinary=f78557cda66107ce\nOK   layers-29.safetensors direct=09f264d6fdddab0f ordinary=09f264d6fdddab0f\nOK   layers-30.safetensors direct=54afe4fc7262ee59 ordinary=54afe4fc7262ee59\nOK   layers-31.safetensors direct=2779338203d0715c ordinary=2779338203d0715c\nOK   layers-32.safetensors direct=f4af8893594458b6 ordinary=f4af8893594458b6\nOK   layers-33.safetensors direct=8f038505b9fc7d0b ordinary=8f038505b9fc7d0b\nOK   layers-34.safetensors direct=0b28f43cc4d3ae50 ordinary=0b28f43cc4d3ae50\nOK   layers-35.safetensors direct=535b61b9eabbcda5 ordinary=535b61b9eabbcda5\nOK   layers-36.safetensors direct=2babd209cafbe12a ordinary=2babd209cafbe12a\nOK   layers-37.safetensors direct=651cae579808983f ordinary=651cae579808983f\nOK   layers-38.safetensors direct=1c60932dec650cc7 ordinary=1c60932dec650cc7\nOK   layers-39.safetensors direct=b0c7df4d51b99637 ordinary=b0c7df4d51b99637\nOK   layers-40.safetensors direct=6908f1ab1a3d7828 ordinary=6908f1ab1a3d7828\nOK   layers-41.safetensors direct=21ee5d9842074888 ordinary=21ee5d9842074888\nOK   layers-42.safetensors direct=565379d4291c06cd ordinary=565379d4291c06cd\nOK   layers-43.safetensors direct=4bb8c0a4fadda1f1 ordinary=4bb8c0a4fadda1f1\nOK   layers-44.safetensors direct=14339304cd520a86 ordinary=14339304cd520a86\nOK   layers-45.safetensors direct=7a076aca542f937c ordinary=7a076aca542f937c\nOK   layers-46.safetensors direct=d82d472cfc479201 ordinary=d82d472cfc479201\nOK   layers-47.safetensors direct=a83fc757fb11bc50 ordinary=a83fc757fb11bc50\nOK   layers-48.safetensors direct=f6aa126d006c7d97 ordinary=f6aa126d006c7d97\nOK   layers-49.safetensors direct=7ed54c375407c2ba ordinary=7ed54c375407c2ba\nOK   layers-50.safetensors direct=73825e1f056c3de5 ordinary=73825e1f056c3de5\nOK   layers-51.safetensors direct=b6abd8b62b5c4b7b ordinary=b6abd8b62b5c4b7b\nOK   layers-52.safetensors direct=6251d51e6fbec6f4 ordinary=6251d51e6fbec6f4\nOK   layers-53.safetensors direct=a9f2f43b4978bba2 ordinary=a9f2f43b4978bba2\nOK   layers-54.safetensors direct=f0246c9974a4b120 ordinary=f0246c9974a4b120\nOK   layers-55.safetensors direct=649c400495616cf8 ordinary=649c400495616cf8\nOK   layers-56.safetensors direct=eb0a8139a3613863 ordinary=eb0a8139a3613863\nOK   layers-57.safetensors direct=d7616ad33f925634 ordinary=d7616ad33f925634\nOK   layers-58.safetensors direct=a8dff0e37d0e3903 ordinary=a8dff0e37d0e3903\nOK   layers-59.safetensors direct=573ed65fd455ec9b ordinary=573ed65fd455ec9b\nOK   layers-60.safetensors direct=9a19c30b190bf552 ordinary=9a19c30b190bf552\nOK   layers-61.safetensors direct=ff744debd4dd0eef ordinary=ff744debd4dd0eef\nOK   layers-62.safetensors direct=d9b3b9e472f78bca ordinary=d9b3b9e472f78bca\nOK   layers-63.safetensors direct=59ba4a3af5e6bc20 ordinary=59ba4a3af5e6bc20\nOK   mtp.safetensors direct=e5e4464a3793cc26 ordinary=e5e4464a3793cc26\nOK   outside.safetensors direct=ddff1d6665a2b39f ordinary=ddff1d6665a2b39f\nmodel revision and all recorded file identities verified (direct modes: odirect; ordinary cache path also matched)\n",
+    "stderr": ""
+  },
+  "pull_image": {
+    "argv": [
+      "docker",
+      "pull",
+      "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04"
+    ],
+    "rc": 0,
+    "stdout": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04: Pulling from steveseguin/vllm-openai-xpu-qwen38-int4\nDigest: sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04\nStatus: Image is up to date for ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04\nghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04\n",
+    "stderr": ""
+  },
+  "start": {
+    "status": "ready"
+  },
+  "status": {
+    "argv": [
+      "python3",
+      "packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py",
+      "status",
+      "--state-dir",
+      "/mnt/fast-ai/bench-results/qwen38-fp8-tp1-clean-install-20260916/session"
+    ],
+    "rc": 0,
+    "stdout": "{\n  \"status\": \"ready\",\n  \"profile\": \"recommended\",\n  \"container_running\": true,\n  \"api_healthy\": true,\n  \"endpoint\": \"http://127.0.0.1:18140/v1\",\n  \"model\": \"qwen38-27b-fp8\",\n  \"max_model_len\": 13824,\n  \"error\": null\n}\n",
+    "stderr": ""
+  },
+  "strict": {
+    "argv": [
+      "bash",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh"
+    ],
+    "rc": 0,
+    "stdout": "class_balanced_median_tok_s=53.497402543079\nworkload_cache_zero_canary_gate=pass\ntarget_and_repeat_parity=not_evaluated_by_single_attempt\nPASS workload/cache/canaries: /mnt/fast-ai/bench-results/qwen38-fp8-tp1-clean-install-20260916/strict\nTHIS ATTEMPT ALONE IS NOT QUALIFIED: preserve two fresh MTP1 and two matched-image MTP0 attempts with every comparison 12/12 exact\n",
+    "stderr": ""
+  },
+  "comparison": {
+    "argv": [
+      "python3",
+      "scripts/compare-strict-attempt-outputs.py",
+      "/mnt/fast-ai/bench-results/qwen38-fp8-tp1-clean-install-20260916/strict",
+      "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-35-r309-groups-mtp0-20k-strict",
+      "--output",
+      "/mnt/fast-ai/bench-results/qwen38-fp8-tp1-clean-install-20260916/strict-comparison.json"
+    ],
+    "rc": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "stop": {
+    "argv": [
+      "python3",
+      "packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py",
+      "stop",
+      "--state-dir",
+      "/mnt/fast-ai/bench-results/qwen38-fp8-tp1-clean-install-20260916/session"
+    ],
+    "rc": 0,
+    "stdout": "Graceful stop requested. No restart is scheduled.\n",
+    "stderr": ""
+  },
+  "post_stop_status": {
+    "argv": [
+      "python3",
+      "packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py",
+      "status",
+      "--state-dir",
+      "/mnt/fast-ai/bench-results/qwen38-fp8-tp1-clean-install-20260916/session"
+    ],
+    "rc": 0,
+    "stdout": "{\n  \"status\": \"stopped\",\n  \"profile\": \"recommended\",\n  \"container_running\": false,\n  \"api_healthy\": false,\n  \"endpoint\": \"http://127.0.0.1:18140/v1\",\n  \"model\": \"qwen38-27b-fp8\",\n  \"max_model_len\": 13824,\n  \"error\": null\n}\n",
+    "stderr": ""
+  }
+}

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# R310 kernel library (2026-09-15): the R309 build (oneDNN r137a+r137b+r221+r309) plus vllm-xpu-kernels patch r310.
+# r310 turns the local_space fences in chunk_fwd_o_kernel into global_and_local fences and adds two more before the
+# output GEMM reads O2/U from USM memory. With 48 value heads per call (one-card Qwen3.8-27B) the local-only fences let
+# the output read other sub-groups' writes late, so identical prefills returned different core_attn_out values.
+# Same sources, builder and flags as build-kernels-0.1.14.1-r309-tp1-shapes.sh; set MIRRORS to the local bare mirrors.
+set -euo pipefail
+lab=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../.." && pwd)
+build_root=${BUILD_ROOT:?set BUILD_ROOT to a new empty directory}
+[[ ! -e "${build_root}" ]] || { echo "BUILD_ROOT exists: ${build_root}" >&2; exit 1; }
+base=${BASE_IMAGE:-vllm/vllm-openai-xpu@sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901}
+if [[ -n "${MIRRORS:-}" ]]; then
+  export GIT_CONFIG_COUNT=3
+  export GIT_CONFIG_KEY_0=url.${MIRRORS}/vllm-xpu-kernels.git.insteadOf GIT_CONFIG_VALUE_0=https://github.com/vllm-project/vllm-xpu-kernels.git
+  export GIT_CONFIG_KEY_1=url.${MIRRORS}/onednn.git.insteadOf GIT_CONFIG_VALUE_1=https://github.com/uxlfoundation/oneDNN.git
+  export GIT_CONFIG_KEY_2=url.${MIRRORS}/sycl-tla.git.insteadOf GIT_CONFIG_VALUE_2=https://github.com/intel/sycl-tla.git
+fi
+P=${lab}/experiments/qwen38-27b-b70/patches
+mkdir -p "${build_root}/compile"
+git clone --no-checkout https://github.com/vllm-project/vllm-xpu-kernels.git "${build_root}/vllm-xpu-kernels"
+git -C "${build_root}/vllm-xpu-kernels" checkout --detach 6d92b1bfbf32767ecda8e819613eb151e70030ad
+git -C "${build_root}/vllm-xpu-kernels" apply "${P}/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch"
+git clone --no-checkout https://github.com/uxlfoundation/oneDNN.git "${build_root}/onednn"
+git -C "${build_root}/onednn" checkout --detach 0e2a5bfeef1bfbffc3137464606540233086ce9b
+for p in onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch onednn-qwen38-w8a16-fixed-k-tp1-shapes-r309-20260915.patch; do
+  git -C "${build_root}/onednn" apply "${P}/${p}"
+done
+git -C "${build_root}/onednn" diff --check
+git clone --no-checkout https://github.com/intel/sycl-tla.git "${build_root}/sycl-tla"
+git -C "${build_root}/sycl-tla" checkout --detach cd763790ad2f74d7294435ecf77682bac0062c3a
+t0=$(date +%s)
+docker run --rm --network none --memory 14g --memory-swap 28g --entrypoint /bin/bash \
+  --volume /opt/intel/oneapi:/opt/intel/oneapi:ro --volume "${build_root}/vllm-xpu-kernels:/src:ro" --volume "${build_root}/compile:/run" \
+  --volume "${build_root}/onednn:/deps/onednn:ro" --volume "${build_root}/sycl-tla:/deps/cutlass:ro" --volume "${lab}:/lab:ro" \
+  --env KERNELS_DIR=/src --env VENV_DIR=/opt/venv --env ONEAPI_VARS=/opt/intel/oneapi/compiler/2026.1/env/vars.sh \
+  --env BUILD_DIR=/run/build --env INSTALL_PREFIX=/run/install --env FETCHCONTENT_DIR=/run/fetchcontent \
+  --env ONEDNN_SOURCE=/deps/onednn --env CUTLASS_SOURCE=/deps/cutlass --env AOT_DEVICES=bmg-g21-a0 --env JOBS="${JOBS:-10}" \
+  --env GDN_KERNELS=ON --env MOE_KERNELS=OFF "${base}" /lab/scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+echo "kernel build took $(( $(date +%s) - t0 )) s"
+out=${build_root}/compile/install/vllm_xpu_kernels
+readelf -d "${out}/_xpu_C.abi3.so" | grep -Fq 'Library runpath: [$ORIGIN]' || { echo "non-portable RUNPATH on _xpu_C" >&2; exit 1; }
+sha256sum "${out}/_xpu_C.abi3.so" "${out}/libgdn_attn_kernels_xe_2.so"

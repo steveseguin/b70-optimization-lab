@@ -74,6 +74,31 @@ where 24 do not. The suggested kernel fix, not built or tested, is
   | 2,048 | 2,214 | 2,158 |
   | 12,288 | 2,088 | 2,044 |
 
+## Kernel fix (R310) replaces the head-group overlay
+
+vllm-xpu-kernels patch
+[r310](../patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch)
+changes `chunk_fwd_o_kernel`:
+
+- It turns the `local_space` fences into `global_and_local`.
+- It adds two more fences before the output GEMM reads O2/U from USM memory.
+
+The image is R310 (`eb816507`): R304 plus kernels built with
+[`build-kernels-0.1.14.1-r310-gdn-barriers.sh`](../docker/rebase-v0290/build-kernels-0.1.14.1-r310-gdn-barriers.sh).
+
+| Test on R310, no head-group overlay | Result |
+| --- | --- |
+| Stage stress, whole 48-head calls, 200 repeats | 0 mismatches at 1,024/2,048/4,096/8,192 tokens (R309: 7/33/38/71); bitwise equal to the head-group split |
+| MTP0 21-request history replay, logprobs | zero token and zero logprob differences |
+| MTP0 strict vs rung 35 | 12/12 |
+| Depth 5 + INT4 shortlist: strict / context screen / chat quality vs MTP0 | 12/12 / 18/18 / all match |
+| MTP0 prefill 512 / 2,048 / 12,288 | 1,650 / 2,220 / 2,088 tok/s (head groups: 1,614 / 2,158 / 2,044) |
+| Depth 5 prefill 512 / 2,048 / 12,288 | 1,370 / 2,025 / 1,984 tok/s (head groups: 1,340 / 1,979 / 1,947) |
+| Depth 5 strict decode | 53.452 tok/s |
+
+The fence fix makes prefill deterministic at no speed cost, and the head-group
+overlay is no longer needed.
+
 ## Second issue: long-context depth 5 vs no-MTP (verifier attention rows)
 
 With the GDN fix, depth 5 + shortlist still matched MTP0 on the strict suite

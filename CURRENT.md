@@ -34,6 +34,62 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 16 06:40 UTC: recovered from the fault; service back on 18124 at 54.801 tok/s, 12/12 exact.**
+After the user approved a retry: the bounded XPU/XCCL health probe passed on both cards (single-device compute and
+rank-to-rank allreduce), a fresh service start reached ready with no new fault, and the strict suite measured
+**54.801 tok/s** with all 12 complete outputs identical to the frozen control. No driver reset, power change or reboot
+was performed. Fault evidence stays at `/mnt/fast-ai/bench-results/gpu-fault-20260916T0602/`; treat the fault as a
+one-off unless it repeats.
+
+**Two-B70 host, September 16 06:05 UTC: GPU fault during a two-card service start; port 18124 is DOWN and no GPU work is running.**
+`serve.py` detected the fault, halted and did not retry, exactly as designed.
+
+- **What happened:** the one-card two-user screen finished and stopped cleanly at 06:00:11Z. The two-card service
+  started at 06:00:11Z and faulted at 06:02:02Z, about 111 s in, during weight load/compile.
+- **Kernel:** `xe 0000:03:00.0` (card2) Tile0 GT0, EngineClass 3 (copy engine): repeated
+  `Fault response: Unsuccessful -EINVAL`, then `Timedout job ... in python3`, then a device coredump. No reset,
+  recovery or wedged line followed.
+- **State now:** no containers, no GPU processes, no driver reset, no reboot, devcoredump still present.
+- **Evidence:** `/mnt/fast-ai/bench-results/gpu-fault-20260916T0602/` (kernel log, journal window, states, summary).
+- **Next step needs the user:** faults halt work, and a driver reset, power change or reboot is not mine to make.
+  A bounded XPU/XCCL health probe is the normal first check once approved.
+
+**Two-B70 host, September 16 00:30 UTC: one-card FP8 packet published; R310 kernel fix replaces the head-group overlay; service back on 18124.**
+
+- **New packet** `qwen38-27b-fp8-vllm-tp1-b70`: package, recipe, 7 measured graphs. It replaces
+  the August one-card eager entry, now marked replaced.
+- **Image** R310 `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb816507…`: R304
+  plus the oneDNN r309 one-card shapes and the kernels r310 GDN output fences.
+- **Recommended** (MTP depth 5, INT4 draft shortlist, 13,824 context): 53.45 / 53.55 tok/s on
+  two fresh servers, prefill 1,987-2,043 tok/s at 2K-12K.
+- **No-quantization profile:** 51.6 tok/s at 12,544 tokens. No MTP: 19.4 tok/s.
+- **Checks:** every depth 3-6 and both draft heads are 12/12 identical to no MTP. The context
+  screens, the chat quality suite and a 21-request logprob replay are all exact.
+- **Package test:** `serve.py` pulled the published image and passed strict 12/12 for both
+  profiles, with clean stops.
+- **Site checks:** validators and tests pass. `check-pinned-hashes` still reports the 231
+  historical Flash-Next drifts from before this work.
+- [Final measurements](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-package-results.md).
+
+**Two-B70 host, September 15 20:50 UTC: one-card FP8 broad matrix, no-quantization draft option, chat quality parity; GPUs in use by research queue.**
+
+- **Depths 3-6 with both determinism overlays:** all 12/12 strict and
+  context-screen identical to MTP0.
+  - No single metric decides: depth 6 leads early and long-context decode, depth
+    4 leads whole answers, and depth 5 stays the balanced default (53.40 tok/s).
+- **Draft-only INT4 shortlist head:** worth 20-25% over FP16 shared-head
+  drafting.
+- **FP16 67k-row draft shortlist (`b70_draft_fp16_shortlist`):** removes all
+  quantization. 51.86 tok/s, needs 0.975 memory for a 12,544 context.
+- **Chat-mode quality suite** (exact answers, JSON, repeat hash, 7.6K needle):
+  depth 5 with either head matches MTP0 exactly.
+- **Queued:** R310 kernel build with global memory fences in the GDN output
+  kernel, then a 200-repeat census. Its goal is to replace the head-group
+  overlay. The two-card service is stopped for this and will be restored
+  afterwards.
+
+[Matrix note](experiments/qwen38-27b-b70/notes/2026-09-15-fp8-one-card-depth-draft-matrix.md).
+
 **Two-B70 host, September 15 18:30 UTC: one-card FP8 made deterministic and long-context exact (two overlays); service back on 18124 (54.705 tok/s, 12/12 vs control).**
 Broader tests found two one-card-only issues the short strict suite missed.
 
