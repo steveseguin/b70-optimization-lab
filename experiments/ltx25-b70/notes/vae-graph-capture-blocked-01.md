@@ -208,3 +208,43 @@ correctly every time -- it refused rather than shipping wrong pixels, which is
 the only reason this is a schedule cost rather than a silent quality regression.
 The persistent-cache and host-read changes are committed and proven, so a future
 attempt starts from there rather than from scratch.
+
+## Fourth attempt, 2026-09-16: the real cause, and why it stays blocked
+
+Two separate defects, found by making the proof report *why* it failed instead
+of asserting a bare "inert graph".
+
+**1. The captured output was allocated inside the capture.** The proof was
+changed to perturb every input in turn and record which ones the output follows.
+It reported one input -- `z`, `[1, 128, 4, 8, 8]` bf16 -- and `moved: False`,
+with a non-empty graph and no driver warning. `forward_pre_diffusion` plainly
+depends on z's values (`conv_in` of a permute of z), so the graph was fine and
+the *output tensor* was stale: a tensor the capture allocates is only valid for
+the call that produced it, which is why the bitwise check immediately after
+capture passed and every replay afterwards left it unchanged. Copying into a
+buffer allocated **outside** the captured region fixed it -- the error moved
+from "no input moves it" to "replay differs from eager".
+
+**2. A host-to-device copy on every forward.** `na_diffusion_decoder.py:137`
+builds the RoPE tables inside the forward:
+
+```python
+inv_freqs = tuple(rope_inv_freqs(d, self.rope_base, device=x.device) for d in self.rope_split)
+tables = _rope_tables((t, h, w), inv_freqs, x.device)
+```
+
+and `rope_inv_freqs` contains `torch.tensor(float(base), ..., device=device)` --
+a copy from a Python float, i.e. from host memory -- plus a CPU fallback for the
+whole fp64 computation when the device lacks fp64, as the B70 does. A capture
+records the host pointer, so replay reads freed memory and returns different
+values. This is the same class as
+[[audit-host-reads-before-graph-capture]] and the packet26 failure.
+
+**Why it stays blocked.** Making it capturable means precomputing those constant
+tables once and keeping them -- which is exactly the kind of memoisation the
+lane has now retired under the no-caching rule, as the axis-cache decoder was.
+So the decoder capture is not "hard", it is **ruled out**: the only known fix is
+a cache.
+
+Both diagnostic improvements are kept, because they are what turned three
+uninformative failures into a definite answer.
