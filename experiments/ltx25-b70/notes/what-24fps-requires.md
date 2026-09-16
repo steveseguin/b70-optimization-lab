@@ -79,3 +79,49 @@ three-stage pipeline now in place is the same mechanism at clip granularity.
 
 Everything through 9.8 fps is measured and bytewise exact. The 4-way figure is a
 projection from measured per-stage cost, not a result.
+
+## The 4-stage pipeline, measured
+
+*Added 2026-09-16, [`scripts/stage-pipeline-probe.py`](../scripts/stage-pipeline-probe.py),
+exclusive cards.*
+
+Four card-stages, real GEMM work of the measured stage size, eight clips pushed
+through with one lock per stage:
+
+| | per clip |
+| --- | ---: |
+| serial (one clip at a time through four stages) | 1.801 s |
+| pipelined (eight clips in flight) | **0.577 s** |
+| **speedup** | **3.12x** (ideal 4x) |
+
+The 22% shortfall is GIL and lock overhead, not the hardware. So the mechanism
+is real, and the sampler's 2.023 s would become about **0.65 s**.
+
+## But that moves the bottleneck again, and the arithmetic gets tight
+
+Once the sampler is pipelined, the other stages become binding, and all three
+compete for the same four cards. The honest figure is total work per clip
+divided across four cards:
+
+| Stage | Per clip |
+| --- | ---: |
+| Sampler | 2.023 s |
+| Text encode (fp32, irreducible) | 1.590 s |
+| Decode, uncontended | ~0.740 s |
+| **Total** | **4.35 s** |
+
+24 fps needs an interval of 1.042 s, so it needs total work per clip of at most
+**4 x 1.042 = 4.17 s** at perfect balance and 100% pipeline efficiency. We have
+4.35 s, at 78% measured efficiency.
+
+| Scenario | Interval | fps |
+| --- | ---: | ---: |
+| Today (three-stage pipeline) | 2.563 s | **9.8** |
+| All work balanced over 4 cards, ideal | 1.09 s | 22.9 |
+| All work balanced over 4 cards, at the measured 78% | 1.39 s | 17.9 |
+| Same, with the sampler also at its 0.74 s floor | 0.77-0.98 s | 25-32 |
+
+**24 fps sits just past perfect four-card balance.** It needs the full
+re-architecture *and* real reduction in the sampler's own 2.023 s, whose floor is
+0.74 s. It is not excluded, but nothing about it is comfortable, and the
+build is a rewrite of the sampling path rather than another gate node.
