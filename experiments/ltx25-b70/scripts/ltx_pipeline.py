@@ -11,14 +11,21 @@ measures ~100% efficient. So the encode for the NEXT clip is started on a worker
 thread as soon as the current clip's conditioning has been handed over, and it
 runs while the sampler works.
 
-**This is not a cache.** Every clip's conditioning is computed from scratch by
-its own encode; a value is consumed exactly once, by the clip it was computed
-for, and is dropped afterwards. Nothing is reused between clips. The only thing
-that changes is *when* the work runs, never whether it runs or what it produces.
-A prefetched value that raced would change the sampler's input, and the four raw
-oracles would catch it.
+**This is not a cache, and it does not guess.** Every clip's conditioning is
+computed from scratch by its own encode, from the prompt text of the request
+that is actually queued for that clip (looked up in the server's own queue); a
+value is consumed exactly once, by the clip it was computed for, and is dropped
+afterwards. A queued job is tagged with the SHA-256 of the text it encoded, and
+a collecting prompt whose text differs discards it and encodes inline. Nothing
+is reused between clips. The only thing that changes is *when* the work runs,
+never whether it runs or what it produces.
+
+Earlier versions (packets 45-56) submitted the CURRENT prompt's text for the
+next clip index and never checked it. That was correct only while every prompt
+was identical, which is exactly what the harness of the time did.
 """
 import threading
+import time
 import traceback
 
 import torch
@@ -51,11 +58,14 @@ def require(value, message):
 
 
 class _Job:
-    __slots__ = ('index', 'fn', 'done', 'value', 'error', 'started', 'finished')
+    __slots__ = ('index', 'fn', 'tag', 'done', 'value', 'error', 'started', 'finished')
 
-    def __init__(self, index, fn):
+    def __init__(self, index, fn, tag=None):
         self.index = index
         self.fn = fn
+        # What the job was computed FOR (for the encode: the SHA-256 of the
+        # prompt text). A collect with a different tag must not accept it.
+        self.tag = tag
         self.done = threading.Event()
         self.value = None
         self.error = None
@@ -97,22 +107,27 @@ def _ensure_worker(stage):
         worker.start()
 
 
-def submit(stage, index, fn):
+def submit(stage, index, fn, tag=None):
     """Queue `stage` work for `index` if it is not already queued or finished."""
     with _QUEUE_EVENT:
         _ensure_worker(stage)
         st = _state(stage)
         if index in st['jobs']:
             return False
-        job = _Job(index, fn)
+        job = _Job(index, fn, tag)
         st['jobs'][index] = job
         st['queue'].append(job)
         _QUEUE_EVENT.notify_all()
         return True
 
 
-def collect(stage, index):
-    """Wait for `stage`/`index` and hand it over exactly once."""
+def collect(stage, index, tag=None):
+    """Wait for `stage`/`index` and hand it over exactly once.
+
+    If `tag` is given, the job must have been computed for that tag. A job
+    computed for something else (an encode of a different prompt text) is
+    discarded and reported as a speculation miss; the caller computes inline.
+    """
     with _LOCK:
         job = _state(stage)['jobs'].get(index)
     require(job is not None, f'No {stage} was queued for clip {index}')
@@ -120,8 +135,14 @@ def collect(stage, index):
     with _LOCK:
         _state(stage)['jobs'].pop(index, None)
     require(job.error is None, f'{stage.capitalize()}-ahead for clip {index} failed:\n{job.error}')
-    return job.value, {'queued_ahead': job.started is not None,
-                       'stage_seconds': round((job.finished or 0) - (job.started or 0), 4)}
+    detail = {'queued_ahead': job.started is not None,
+              'stage_seconds': round((job.finished or 0) - (job.started or 0), 4),
+              'tag': job.tag}
+    if tag is not None and job.tag != tag:
+        detail.update({'speculation_miss': True, 'discarded_tag': job.tag})
+        return None, detail
+    detail['speculation_miss'] = False
+    return job.value, detail
 
 
 def peek(stage, index):
@@ -147,20 +168,45 @@ def clear():
             del st['queue'][:]
 
 
-def run_ahead(stage, index, depth, fn):
+def run_ahead(stage, index, depth, fn, tag=None, lookahead=None):
     """Return clip `index`'s value, and start the next `depth` clips ahead.
 
     For work that does not depend on this clip's sampler output -- the text
     encode. The first clip has nothing queued so it computes inline; from then on
     the value is already being produced while the previous clip was sampling.
+
+    `tag` identifies what THIS clip needs (the SHA-256 of its prompt text).
+    `lookahead(i)` must return `(fn_i, tag_i)` for a future clip `i` whose
+    request is already known (it is looked up in the server's own queue), or
+    None when it is not. Nothing is guessed: a future clip whose prompt is not
+    yet queued is not encoded ahead, and a queued job whose tag does not match
+    the collecting prompt is discarded and the clip is encoded inline.
     """
     require(isinstance(index, int) and index >= 0, 'Clip index must be a non-negative integer')
     require(isinstance(depth, int) and 1 <= depth <= MAX_PENDING, 'Unsupported pipeline depth')
-    submitted_inline = submit(stage, index, fn)
-    value, detail = collect(stage, index)
+    require(tag is None or lookahead is not None,
+            'A tagged stage must supply a lookahead; it must not assume the next prompt')
+    submitted_inline = submit(stage, index, fn, tag)
+    value, detail = collect(stage, index, tag)
+    if detail.get('speculation_miss'):
+        # The queued job was for a different prompt text. Compute this clip
+        # inline, on this thread, from this prompt's own inputs.
+        started_at = time.monotonic()
+        value = fn()
+        detail['stage_seconds'] = round(time.monotonic() - started_at, 4)
+        submitted_inline = True
     # Start the next clips only AFTER handing this one over, so the worker runs
     # against this prompt's sampling rather than competing with this clip.
-    started = [i for i in range(index + 1, index + 1 + depth) if submit(stage, i, fn)]
+    started = []
+    for i in range(index + 1, index + 1 + depth):
+        if lookahead is None:
+            nxt = (fn, None)
+        else:
+            nxt = lookahead(i)
+            if nxt is None:
+                continue
+        if submit(stage, i, nxt[0], nxt[1]):
+            started.append({'index': i, 'tag': nxt[1]})
     detail.update({'computed_inline': submitted_inline, 'started_ahead': started,
                    'pending_after': pending(stage)})
     return value, detail

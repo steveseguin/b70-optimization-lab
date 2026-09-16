@@ -15,6 +15,14 @@ noise; nothing is cached or shared between clips. Only the overlap changes.
 Each worker thread gets its own static buffers and captured graphs
 (`ltx_graph_capture.GroupRegistry` keys them by (device, thread)), which is what
 makes two concurrent forwards safe.
+
+One more shared thing: the initial noise. `comfy.sample.prepare_noise` seeds
+the GLOBAL CPU generator (`torch.manual_seed(seed)`) and then draws from it.
+Two sampler threads interleaving seed and draw would hand one clip the other
+clip's noise. With equal seeds that is invisible; with distinct seeds it
+corrupts a clip. Every `Noise` handed to the sampler here is wrapped so
+`generate_noise` runs under one process-wide lock. Same generator sequence,
+never interleaved: bit-identical by construction.
 """
 import hashlib
 import json
@@ -46,6 +54,19 @@ def write_json(path, value):
 _ACTIVE = [0]
 _ACTIVE_LOCK = __import__('threading').Lock()
 _PINNED = {}
+_NOISE_LOCK = __import__('threading').Lock()
+
+
+class _SerialisedNoise:
+    """A Noise whose generate_noise cannot interleave with another thread's."""
+
+    def __init__(self, inner):
+        self.inner = inner
+        self.seed = getattr(inner, 'seed', 0)
+
+    def generate_noise(self, input_latent):
+        with _NOISE_LOCK:
+            return self.inner.generate_noise(input_latent)
 
 
 def pin_current_patcher(base_model):
@@ -116,8 +137,8 @@ def sample_clip(noise_a, guider_a, sampler_a, sigmas_a,
 
     with _Active():
         return _sample_chain(concat, separate, upsampler, sampler_node,
-                             noise_a, guider_a, sampler_a, sigmas_a,
-                             noise_b, guider_b, sampler_b, sigmas_b,
+                             _SerialisedNoise(noise_a), guider_a, sampler_a, sigmas_a,
+                             _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
                              video_latent, audio_latent, upscale_model, vae)
 
 
@@ -189,7 +210,9 @@ class LTXPipelineSampler:
                   'claim': 'every clip is sampled exactly once by its own sampler, from its own '
                            'conditioning and its own noise; nothing is cached or shared between '
                            'clips. Two clips sample at once so one occupies xpu:1 while the other '
-                           'occupies xpu:0. Each worker has its own static buffers and graphs.',
+                           'occupies xpu:0. Each worker has its own static buffers and graphs; '
+                           'initial-noise generation is serialised so the global CPU generator '
+                           'cannot interleave between clips.',
                   'passed': False}
         started = time.monotonic()
         try:

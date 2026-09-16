@@ -6,8 +6,14 @@ call, but starts the NEXT clip's encode on a worker thread as soon as this
 clip's conditioning has been handed over, so it runs on xpu:2 while the sampler
 works on xpu:0 and xpu:1.
 
-Nothing is cached: each conditioning is produced by its own encode, consumed
-once by the clip it was computed for, and dropped. Only the timing changes.
+The next clip's text comes from the next clip's own request: the node looks
+the queued prompt with `clip_index == index + 1` up in ComfyUI's prompt queue
+and encodes THAT text. If no such prompt is queued yet, nothing runs ahead. A
+job is tagged with the SHA-256 of the text it encoded, and a prompt whose text
+differs from its queued job's tag discards the job and encodes inline
+(`speculation_miss` in the receipt). Nothing is guessed and nothing is cached:
+each conditioning is produced by its own encode, consumed once by the clip it
+was computed for, and dropped. Only the timing changes.
 """
 import hashlib
 import json
@@ -54,6 +60,44 @@ def native_encode(clip, text, consume_observations=False):
         require(group is not None, 'Pipelined encode expects the host-embedding CLIP adapter')
         group.consume_observations()
     return encoded[0]
+
+
+def _text_sha256(text):
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+
+def _queued_text(index):
+    """The prompt text of the queued request for clip `index`, from the server's own queue.
+
+    Returns None when no pending prompt carries a pipeline-mode
+    LTXPipelineTextEncode node with that clip index. Only pending prompts are
+    considered; the running prompt is the caller.
+    """
+    try:
+        import server
+    except ImportError:
+        return None
+    instance = getattr(server.PromptServer, 'instance', None)
+    if instance is None:
+        return None
+    _running, queued = instance.prompt_queue.get_current_queue_volatile()
+    found = None
+    for item in queued:
+        prompt = item[2] if len(item) > 2 else None
+        if not isinstance(prompt, dict):
+            continue
+        for node in prompt.values():
+            if not isinstance(node, dict) or node.get('class_type') != 'LTXPipelineTextEncode':
+                continue
+            inputs = node.get('inputs', {})
+            if inputs.get('mode') == 'pipeline' and inputs.get('clip_index') == index:
+                text = inputs.get('text')
+                if not isinstance(text, str):
+                    return None
+                require(found is None or found == text,
+                        f'Two queued prompts claim clip {index} with different text')
+                found = text
+    return found
 
 
 class LTXPipelineTextEncode:
@@ -104,9 +148,10 @@ class LTXPipelineTextEncode:
         report = {'schema': 'ltx.pipeline-request.v1', **identity, 'run_name': run_name,
                   'mode': mode, 'clip_index': clip_index, 'depth': depth,
                   'extension_sha256s': hashes,
-                  'claim': 'every clip computes its own conditioning with the native encode and '
-                           'consumes it once; nothing is cached or reused between clips. Only the '
-                           'moment the work runs changes, so it overlaps the sampler on other cards.',
+                  'claim': 'every clip computes its own conditioning with the native encode from '
+                           'the text of its own queued request and consumes it once; nothing is '
+                           'cached, reused or guessed between clips. Only the moment the work runs '
+                           'changes, so it overlaps the sampler on other cards.',
                   'passed': False}
         started = time.monotonic()
         try:
@@ -114,10 +159,25 @@ class LTXPipelineTextEncode:
                 conditioning = native_encode(clip, text)
                 report['detail'] = {'computed_inline': True}
             else:
+                tag = _text_sha256(text)
+                lookups = []
+
+                def lookahead(i):
+                    queued = _queued_text(i)
+                    lookups.append({'index': i, 'queued': queued is not None,
+                                    'text_sha256': None if queued is None else _text_sha256(queued)})
+                    if queued is None:
+                        return None
+                    return (lambda: native_encode(clip, queued, consume_observations=True),
+                            _text_sha256(queued))
+
                 conditioning, detail = pipeline.run_ahead(
                     'encode', clip_index, depth,
-                    lambda: native_encode(clip, text, consume_observations=True))
+                    lambda: native_encode(clip, text, consume_observations=True),
+                    tag=tag, lookahead=lookahead)
                 detail['placement_observations'] = 'consumed by the pipeline worker'
+                detail['text_sha256'] = tag
+                detail['lookahead'] = {'source': 'server prompt queue', 'lookups': lookups}
                 report['detail'] = detail
             report['passed'] = True
         finally:

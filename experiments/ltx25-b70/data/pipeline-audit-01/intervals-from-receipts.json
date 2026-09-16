@@ -1,0 +1,174 @@
+{
+  "schema": "ltx.pipeline-audit-intervals.v1",
+  "date_utc": "2026-09-16",
+  "method": "completion time of each prompt approximated by the latest mtime among that prompt's gate receipts in the server run directory; intervals are differences between consecutive prompts; the first interval (fill/capture) is excluded from the mean. The original run-throughput.py JSON outputs were never committed and are not on disk.",
+  "caveat": "every prompt in every run used the boat prompt and seed 42, so these clips are bytewise identical by construction; mtime resolution is nanoseconds but receipt writes lag node completion by milliseconds. pipe-samp (tya) intervals include a three-prompt fill; its steady tail (prompts 8-11) is 3.26-4.01 s, slower than the three-stage pipe.",
+  "runs": {
+    "tp39": {
+      "arm": "graph-text serial",
+      "packet": "packet39",
+      "prompts": 6,
+      "intervals_s": [
+        73.148,
+        4.682,
+        4.836,
+        4.527,
+        4.551
+      ],
+      "mean_warm_interval_s": 4.649
+    },
+    "tpa": {
+      "arm": "graph-text serial control",
+      "packet": "packet41",
+      "prompts": 6,
+      "intervals_s": [
+        4.878,
+        4.433,
+        4.554,
+        4.837,
+        4.464
+      ],
+      "mean_warm_interval_s": 4.572
+    },
+    "tpb": {
+      "arm": "stream cache arm, FAILED on clip 2 (placement check)",
+      "packet": "packet41",
+      "prompts": 6,
+      "intervals_s": [
+        3.132,
+        0.021,
+        0.011,
+        0.009,
+        0.011
+      ],
+      "mean_warm_interval_s": 0.013
+    },
+    "tqa": {
+      "arm": "graph-text serial control",
+      "packet": "packet42",
+      "prompts": 6,
+      "intervals_s": [
+        4.884,
+        4.521,
+        4.56,
+        4.836,
+        4.541
+      ],
+      "mean_warm_interval_s": 4.614
+    },
+    "tqb": {
+      "arm": "stream conditioning cache (retired)",
+      "packet": "packet42",
+      "prompts": 6,
+      "intervals_s": [
+        3.199,
+        2.797,
+        2.888,
+        2.891,
+        3.147
+      ],
+      "mean_warm_interval_s": 2.931
+    },
+    "tra": {
+      "arm": "graph-text serial control",
+      "packet": "packet43",
+      "prompts": 6,
+      "intervals_s": [
+        4.921,
+        4.521,
+        4.637,
+        4.822,
+        4.564
+      ],
+      "mean_warm_interval_s": 4.636
+    },
+    "tsb": {
+      "arm": "encode-ahead first try, FAILED",
+      "packet": "packet44",
+      "prompts": 6,
+      "intervals_s": [
+        2.993,
+        0.011,
+        0.008,
+        0.008,
+        0.008
+      ],
+      "mean_warm_interval_s": 0.009
+    },
+    "tub": {
+      "arm": "encode-ahead (pipe, no decode-behind yet)",
+      "packet": "packet45",
+      "prompts": 6,
+      "intervals_s": [
+        3.628,
+        3.348,
+        3.244,
+        3.488,
+        3.237
+      ],
+      "mean_warm_interval_s": 3.329
+    },
+    "twa": {
+      "arm": "three-stage pipe first run",
+      "packet": "packet47",
+      "prompts": 8,
+      "intervals_s": [
+        2.793,
+        2.511,
+        2.562,
+        2.559,
+        2.72,
+        2.534,
+        2.544
+      ],
+      "mean_warm_interval_s": 2.572
+    },
+    "txa": {
+      "arm": "graph-text serial control",
+      "packet": "packet48",
+      "prompts": 6,
+      "intervals_s": [
+        4.768,
+        4.526,
+        4.617,
+        4.836,
+        4.513
+      ],
+      "mean_warm_interval_s": 4.623
+    },
+    "txb": {
+      "arm": "three-stage pipe (encode-ahead + decode-behind)",
+      "packet": "packet48",
+      "prompts": 8,
+      "intervals_s": [
+        3.2,
+        2.527,
+        2.537,
+        2.546,
+        2.733,
+        2.516,
+        2.56
+      ],
+      "mean_warm_interval_s": 2.57
+    },
+    "tya": {
+      "arm": "pipe-samp: two-thread pipelined sampler; crashed at prompt 7",
+      "packet": "packet55",
+      "prompts": 12,
+      "intervals_s": [
+        2.656,
+        1.566,
+        0.295,
+        2.786,
+        1.505,
+        1.012,
+        3.279,
+        4.01,
+        3.261,
+        3.259,
+        3.348
+      ],
+      "mean_warm_interval_s": 2.432
+    }
+  }
+}
