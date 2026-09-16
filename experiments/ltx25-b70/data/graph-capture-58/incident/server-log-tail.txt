@@ -1,0 +1,400 @@
+    output = model.apply_model(input_x, timestep_, **c).chunk(batch_chunks)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/model_base.py", line 209, in apply_model
+    return comfy.patcher_extension.WrapperExecutor.new_class_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/model_base.py", line 253, in _apply_model
+    model_output = self.diffusion_model(xc, t, context=context, control=control, transformer_options=transformer_options, **extra_conds)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1783, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1794, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/av_model.py", line 1103, in forward
+    return super().forward(
+           ^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/model.py", line 966, in forward
+    return comfy.patcher_extension.WrapperExecutor.new_class_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 114, in execute
+    return self.wrappers[self.idx](self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_layer_shard.py", line 62, in _forward_transfers
+    return executor(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 106, in __call__
+    return new_executor.execute(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/model.py", line 1019, in _forward
+    x = self._process_transformer_blocks(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/av_model.py", line 975, in _process_transformer_blocks
+    out = blocks_replace[("double_block", i)](
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 657, in __call__
+    return self.original_route(args, {**extra, 'original_block': self._call_native})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_layer_shard.py", line 79, in __call__
+    result = extra["original_block"](routed)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 649, in _call_native
+    entry = self._capture(routed, slot, key, entries)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 597, in _capture
+    torch.xpu.synchronize(self.device)
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/__init__.py", line 703, in synchronize
+    return torch._C._xpu_synchronize(device)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+
+ERROR:root:Traceback (most recent call last):
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 541, in execute
+    output_data, output_ui, has_subgraph, has_pending_tasks = await get_output_data(prompt_id, unique_id, obj, input_data_all, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 348, in get_output_data
+    return_values = await _async_map_node_over_list(prompt_id, unique_id, obj, input_data_all, obj.FUNCTION, allow_interrupt=True, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 322, in _async_map_node_over_list
+    await process_inputs(input_dict, i)
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 310, in process_inputs
+    result = f(**inputs)
+             ^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 184, in apply
+    return self._apply(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 230, in _apply
+    out, detail = pipeline.run_behind(
+                  ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 252, in run_behind
+    value, detail = collect(stage, emit)
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 137, in collect
+    require(job.error is None, f'{stage.capitalize()}-ahead for clip {index} failed:\n{job.error}')
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 57, in require
+    raise RuntimeError(message)
+RuntimeError: Sample-ahead for clip 3002 failed:
+Traceback (most recent call last):
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 92, in _worker_loop
+    job.value = job.fn()
+                ^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 231, in <lambda>
+    'sample', clip_index, depth, lambda: sample_clip(**chain))
+                                         ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 139, in sample_clip
+    return _sample_chain(concat, separate, upsampler, sampler_node,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 150, in _sample_chain
+    stage_a = sampler_node.execute(noise=noise_a, guider=guider_a, sampler=sampler_a,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy_extras/nodes_custom_sampler.py", line 1055, in execute
+    samples = guider.sample(noise.generate_noise(latent), latent_image, sampler, sigmas, denoise_mask=noise_mask, callback=callback, disable_pbar=disable_pbar, seed=noise.seed)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy_extras/nodes_lt.py", line 1222, in sample
+    return super().sample(noise, latent_image, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1335, in sample
+    output = executor.execute(noise, latent_image, sampler, sigmas, denoise_mask, callback, disable_pbar, seed, latent_shapes=latent_shapes)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1262, in outer_sample
+    output = self.inner_sample(noise, latent_image, device, sampler, sigmas, denoise_mask, callback, disable_pbar, seed, latent_shapes=latent_shapes)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1237, in inner_sample
+    samples = executor.execute(self, sigmas, extra_args, callback, noise, latent_image, denoise_mask, disable_pbar)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1005, in sample
+    samples = self.sampler_function(model_k, noise, sigmas, extra_args=extra_args, callback=k_callback, disable=disable_pbar, **self.extra_options)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/k_diffusion/sampling.py", line 218, in sample_euler_ancestral
+    return sample_euler_ancestral_RF(model, x, sigmas, extra_args, callback, disable, eta, s_noise, noise_sampler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/k_diffusion/sampling.py", line 248, in sample_euler_ancestral_RF
+    denoised = model(x, sigmas[i] * s_in, **extra_args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 640, in __call__
+    out = self.inner_model(x, sigma, model_options=model_options, seed=seed)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1208, in __call__
+    return self.outer_predict_noise(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1215, in outer_predict_noise
+    ).execute(x, timestep, model_options, seed)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy_extras/nodes_lt.py", line 1229, in predict_noise
+    return super().predict_noise(x, timestep, model_options, seed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1218, in predict_noise
+    return sampling_function(self.inner_model, x, timestep, self.conds.get("negative", None), self.conds.get("positive", None), self.cfg, model_options=model_options, seed=seed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 620, in sampling_function
+    out = calc_cond_batch(model, conds, x, timestep, model_options)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 211, in calc_cond_batch
+    return _calc_cond_batch_outer(model, conds, x_in, timestep, model_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 219, in _calc_cond_batch_outer
+    return executor.execute(model, conds, x_in, timestep, model_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 335, in _calc_cond_batch
+    output = model.apply_model(input_x, timestep_, **c).chunk(batch_chunks)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/model_base.py", line 209, in apply_model
+    return comfy.patcher_extension.WrapperExecutor.new_class_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/model_base.py", line 253, in _apply_model
+    model_output = self.diffusion_model(xc, t, context=context, control=control, transformer_options=transformer_options, **extra_conds)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1783, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1794, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/av_model.py", line 1103, in forward
+    return super().forward(
+           ^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/model.py", line 966, in forward
+    return comfy.patcher_extension.WrapperExecutor.new_class_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 114, in execute
+    return self.wrappers[self.idx](self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_layer_shard.py", line 62, in _forward_transfers
+    return executor(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 106, in __call__
+    return new_executor.execute(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/model.py", line 1019, in _forward
+    x = self._process_transformer_blocks(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/av_model.py", line 975, in _process_transformer_blocks
+    out = blocks_replace[("double_block", i)](
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 657, in __call__
+    return self.original_route(args, {**extra, 'original_block': self._call_native})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_layer_shard.py", line 79, in __call__
+    result = extra["original_block"](routed)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 649, in _call_native
+    entry = self._capture(routed, slot, key, entries)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 597, in _capture
+    torch.xpu.synchronize(self.device)
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/__init__.py", line 703, in synchronize
+    return torch._C._xpu_synchronize(device)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+
+
+[1m[31m[ERROR][0m Traceback (most recent call last):
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 541, in execute
+    output_data, output_ui, has_subgraph, has_pending_tasks = await get_output_data(prompt_id, unique_id, obj, input_data_all, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 348, in get_output_data
+    return_values = await _async_map_node_over_list(prompt_id, unique_id, obj, input_data_all, obj.FUNCTION, allow_interrupt=True, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 322, in _async_map_node_over_list
+    await process_inputs(input_dict, i)
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/execution.py", line 310, in process_inputs
+    result = f(**inputs)
+             ^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 184, in apply
+    return self._apply(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 230, in _apply
+    out, detail = pipeline.run_behind(
+                  ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 252, in run_behind
+    value, detail = collect(stage, emit)
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 137, in collect
+    require(job.error is None, f'{stage.capitalize()}-ahead for clip {index} failed:\n{job.error}')
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 57, in require
+    raise RuntimeError(message)
+RuntimeError: Sample-ahead for clip 3002 failed:
+Traceback (most recent call last):
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_pipeline.py", line 92, in _worker_loop
+    job.value = job.fn()
+                ^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 231, in <lambda>
+    'sample', clip_index, depth, lambda: sample_clip(**chain))
+                                         ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 139, in sample_clip
+    return _sample_chain(concat, separate, upsampler, sampler_node,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py", line 150, in _sample_chain
+    stage_a = sampler_node.execute(noise=noise_a, guider=guider_a, sampler=sampler_a,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy_extras/nodes_custom_sampler.py", line 1055, in execute
+    samples = guider.sample(noise.generate_noise(latent), latent_image, sampler, sigmas, denoise_mask=noise_mask, callback=callback, disable_pbar=disable_pbar, seed=noise.seed)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy_extras/nodes_lt.py", line 1222, in sample
+    return super().sample(noise, latent_image, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1335, in sample
+    output = executor.execute(noise, latent_image, sampler, sigmas, denoise_mask, callback, disable_pbar, seed, latent_shapes=latent_shapes)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1262, in outer_sample
+    output = self.inner_sample(noise, latent_image, device, sampler, sigmas, denoise_mask, callback, disable_pbar, seed, latent_shapes=latent_shapes)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1237, in inner_sample
+    samples = executor.execute(self, sigmas, extra_args, callback, noise, latent_image, denoise_mask, disable_pbar)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1005, in sample
+    samples = self.sampler_function(model_k, noise, sigmas, extra_args=extra_args, callback=k_callback, disable=disable_pbar, **self.extra_options)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/k_diffusion/sampling.py", line 218, in sample_euler_ancestral
+    return sample_euler_ancestral_RF(model, x, sigmas, extra_args, callback, disable, eta, s_noise, noise_sampler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/k_diffusion/sampling.py", line 248, in sample_euler_ancestral_RF
+    denoised = model(x, sigmas[i] * s_in, **extra_args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 640, in __call__
+    out = self.inner_model(x, sigma, model_options=model_options, seed=seed)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1208, in __call__
+    return self.outer_predict_noise(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1215, in outer_predict_noise
+    ).execute(x, timestep, model_options, seed)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy_extras/nodes_lt.py", line 1229, in predict_noise
+    return super().predict_noise(x, timestep, model_options, seed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 1218, in predict_noise
+    return sampling_function(self.inner_model, x, timestep, self.conds.get("negative", None), self.conds.get("positive", None), self.cfg, model_options=model_options, seed=seed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 620, in sampling_function
+    out = calc_cond_batch(model, conds, x, timestep, model_options)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 211, in calc_cond_batch
+    return _calc_cond_batch_outer(model, conds, x_in, timestep, model_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 219, in _calc_cond_batch_outer
+    return executor.execute(model, conds, x_in, timestep, model_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/samplers.py", line 335, in _calc_cond_batch
+    output = model.apply_model(input_x, timestep_, **c).chunk(batch_chunks)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/model_base.py", line 209, in apply_model
+    return comfy.patcher_extension.WrapperExecutor.new_class_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/model_base.py", line 253, in _apply_model
+    model_output = self.diffusion_model(xc, t, context=context, control=control, transformer_options=transformer_options, **extra_conds)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1783, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1794, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/av_model.py", line 1103, in forward
+    return super().forward(
+           ^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/model.py", line 966, in forward
+    return comfy.patcher_extension.WrapperExecutor.new_class_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 114, in execute
+    return self.wrappers[self.idx](self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_layer_shard.py", line 62, in _forward_transfers
+    return executor(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 106, in __call__
+    return new_executor.execute(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/patcher_extension.py", line 113, in execute
+    return self.original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/model.py", line 1019, in _forward
+    x = self._process_transformer_blocks(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/ldm/lightricks/av_model.py", line 975, in _process_transformer_blocks
+    out = blocks_replace[("double_block", i)](
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 657, in __call__
+    return self.original_route(args, {**extra, 'original_block': self._call_native})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_layer_shard.py", line 79, in __call__
+    result = extra["original_block"](routed)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 649, in _call_native
+    entry = self._capture(routed, slot, key, entries)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/scripts/ltx_graph_capture.py", line 597, in _capture
+    torch.xpu.synchronize(self.device)
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/__init__.py", line 703, in synchronize
+    return torch._C._xpu_synchronize(device)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+
+
+INFO:root:Prompt executed in 4.00 seconds
+[32m[INFO][0m [32mPrompt executed in 4.00 seconds[0m
+Exception in thread Thread-2 (prompt_worker):
+Traceback (most recent call last):
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/main.py", line 403, in prompt_worker
+    comfy.model_management.soft_empty_cache()
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/source/comfy/model_management.py", line 2088, in soft_empty_cache
+    torch.xpu.empty_cache()
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/xpu/memory.py", line 36, in empty_cache
+    torch._C._xpu_emptyCache()
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)

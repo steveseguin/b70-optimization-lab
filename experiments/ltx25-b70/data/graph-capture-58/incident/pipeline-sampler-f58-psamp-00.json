@@ -1,0 +1,24 @@
+{
+  "claim": "every clip is sampled exactly once by its own sampler, from its own conditioning and its own noise; nothing is cached or shared between clips. Two clips sample at once so one occupies xpu:1 while the other occupies xpu:0. Each worker has its own static buffers and graphs; initial-noise generation is serialised so the global CPU generator cannot interleave between clips.",
+  "clip_index": 3000,
+  "depth": 2,
+  "detail": {
+    "emitted_index": 3000,
+    "pending_after": [
+      3000
+    ],
+    "primed": false,
+    "queued_ahead": true,
+    "stage_seconds": 10.0653
+  },
+  "extension_sha256s": {
+    "pipeline_sampler_node.py": "c3813b833c983391b89889e6ad5ef17b505c0a7e98663dbe2da628826009510e"
+  },
+  "mode": "pipeline",
+  "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "passed": true,
+  "run_name": "f58-psamp-00",
+  "schema": "ltx.pipeline-sampler-request.v1",
+  "seconds": 10.065819169998576,
+  "server_identity_sha256": "66f16adb8819b80f8d89a2bf9b0c46acd416ef0c36e090f59002b634f9161d6c"
+}

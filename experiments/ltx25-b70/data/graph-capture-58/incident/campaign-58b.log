@@ -1,0 +1,161 @@
+=== 2026-09-16T23:24:02Z waiting for server health
+=== 2026-09-16T23:24:02Z server pid 6955 up
+=== 2026-09-16T23:24:02Z 1 warm clip already passed on this server: g58-warm exact; skipping
+=== 2026-09-16T23:24:02Z 2 serial ten-fixture stream, graph-text arm
+queued 12 prompts (10 fixtures) in 0.03 s
+  done f58-ser-00 (boat) at +4.547 s
+  done f58-ser-01 (marble) at +9.325 s
+  done f58-ser-02 (bird) at +13.845 s
+  done f58-ser-03 (pendulum) at +18.357 s
+  done f58-ser-04 (rain) at +23.097 s
+  done f58-ser-05 (paper) at +27.573 s
+  done f58-ser-06 (candle) at +32.089 s
+  done f58-ser-07 (pour) at +36.854 s
+  done f58-ser-08 (fabric) at +41.391 s
+  done f58-ser-09 (wheel) at +45.884 s
+  done f58-ser-10 (boat) at +50.669 s
+  done f58-ser-11 (marble) at +55.162 s
+  f58-ser-00 emitted clip 0 (boat) vs baseline-01: EXACT
+  f58-ser-01 emitted clip 1 (marble) vs speed-oracle-marble: EXACT
+  f58-ser-02 emitted clip 2 (bird) vs speed-oracle-bird: EXACT
+  f58-ser-03 emitted clip 3 (pendulum) vs stability-01-r01-pendulum: EXACT
+  f58-ser-04 emitted clip 4 (rain) vs stability-01-r01-rain: EXACT
+  f58-ser-05 emitted clip 5 (paper) vs stability-01-r01-paper: EXACT
+  f58-ser-06 emitted clip 6 (candle) vs stability-01-r01-candle: EXACT
+  f58-ser-07 emitted clip 7 (pour) vs stability-01-r01-pour: EXACT
+  f58-ser-08 emitted clip 8 (fabric) vs stability-01-r01-fabric: EXACT
+  f58-ser-09 emitted clip 9 (wheel) vs stability-01-r01-wheel: EXACT
+  f58-ser-10 emitted clip 10 (boat) vs baseline-01: EXACT
+  f58-ser-11 emitted clip 11 (marble) vs speed-oracle-marble: EXACT
+{
+  "schema": "ltx.throughput-fixtures.v1",
+  "prefix": "f58-ser",
+  "arm": "graph-text",
+  "index_base": 1000,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/graphs/graph-capture-all48-graph-text.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-graph-capture-58",
+  "count": 12,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 12,
+  "fills_excluded": [],
+  "all_exact": true,
+  "intervals_between_distinct_clips_s": [
+    4.778,
+    4.52,
+    4.512,
+    4.74,
+    4.476,
+    4.516,
+    4.765,
+    4.537,
+    4.493,
+    4.785,
+    4.493
+  ],
+  "steady_mean_s": 4.5837,
+  "steady_p95_s": 4.785,
+  "steady_min_s": 4.476,
+  "steady_max_s": 4.785,
+  "seconds_of_wall_per_second_of_video": 4.400352,
+  "effective_fps": 5.454109125815389,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that re-emit an already-emitted clip during pipeline fill"
+}
+=== 2026-09-16T23:25:12Z 3 three-stage pipe ten-fixture stream
+queued 20 prompts (10 fixtures) in 0.05 s
+  done f58-pipe-00 (boat) at +4.877 s
+  done f58-pipe-01 (marble) at +7.604 s
+  done f58-pipe-02 (bird) at +10.091 s
+  done f58-pipe-03 (pendulum) at +12.577 s
+  done f58-pipe-04 (rain) at +15.058 s
+  done f58-pipe-05 (paper) at +17.771 s
+  done f58-pipe-06 (candle) at +20.249 s
+  done f58-pipe-07 (pour) at +22.691 s
+  done f58-pipe-08 (fabric) at +25.169 s
+  done f58-pipe-09 (wheel) at +27.935 s
+  done f58-pipe-10 (boat) at +30.477 s
+  done f58-pipe-11 (marble) at +32.948 s
+  done f58-pipe-12 (bird) at +35.404 s
+  done f58-pipe-13 (pendulum) at +38.115 s
+  done f58-pipe-14 (rain) at +40.586 s
+  done f58-pipe-15 (paper) at +43.061 s
+  done f58-pipe-16 (candle) at +45.543 s
+  done f58-pipe-17 (pour) at +48.268 s
+  done f58-pipe-18 (fabric) at +50.727 s
+  done f58-pipe-19 (wheel) at +52.922 s
+  f58-pipe-00 emitted clip 0 (boat) vs baseline-01: EXACT
+  f58-pipe-01 emitted clip 0 (boat) vs baseline-01: EXACT [fill]
+  f58-pipe-02 emitted clip 1 (marble) vs speed-oracle-marble: EXACT
+  f58-pipe-03 emitted clip 2 (bird) vs speed-oracle-bird: EXACT
+  f58-pipe-04 emitted clip 3 (pendulum) vs stability-01-r01-pendulum: EXACT
+  f58-pipe-05 emitted clip 4 (rain) vs stability-01-r01-rain: EXACT
+  f58-pipe-06 emitted clip 5 (paper) vs stability-01-r01-paper: EXACT
+  f58-pipe-07 emitted clip 6 (candle) vs stability-01-r01-candle: EXACT
+  f58-pipe-08 emitted clip 7 (pour) vs stability-01-r01-pour: EXACT
+  f58-pipe-09 emitted clip 8 (fabric) vs stability-01-r01-fabric: EXACT
+  f58-pipe-10 emitted clip 9 (wheel) vs stability-01-r01-wheel: EXACT
+  f58-pipe-11 emitted clip 10 (boat) vs baseline-01: EXACT
+  f58-pipe-12 emitted clip 11 (marble) vs speed-oracle-marble: EXACT
+  f58-pipe-13 emitted clip 12 (bird) vs speed-oracle-bird: EXACT
+  f58-pipe-14 emitted clip 13 (pendulum) vs stability-01-r01-pendulum: EXACT
+  f58-pipe-15 emitted clip 14 (rain) vs stability-01-r01-rain: EXACT
+  f58-pipe-16 emitted clip 15 (paper) vs stability-01-r01-paper: EXACT
+  f58-pipe-17 emitted clip 16 (candle) vs stability-01-r01-candle: EXACT
+  f58-pipe-18 emitted clip 17 (pour) vs stability-01-r01-pour: EXACT
+  f58-pipe-19 emitted clip 18 (fabric) vs stability-01-r01-fabric: EXACT
+{
+  "schema": "ltx.throughput-fixtures.v1",
+  "prefix": "f58-pipe",
+  "arm": "pipe",
+  "index_base": 2000,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-58/graphs/graph-capture-all48-pipe.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-graph-capture-58",
+  "count": 20,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 19,
+  "fills_excluded": [
+    "f58-pipe-01"
+  ],
+  "all_exact": true,
+  "intervals_between_distinct_clips_s": [
+    5.214,
+    2.486,
+    2.481,
+    2.713,
+    2.478,
+    2.442,
+    2.478,
+    2.766,
+    2.542,
+    2.471,
+    2.456,
+    2.711,
+    2.471,
+    2.475,
+    2.482,
+    2.725,
+    2.459,
+    2.195
+  ],
+  "steady_mean_s": 2.5194705882352944,
+  "steady_p95_s": 2.725,
+  "steady_min_s": 2.195,
+  "steady_max_s": 2.766,
+  "seconds_of_wall_per_second_of_video": 2.4186917647058825,
+  "effective_fps": 9.922719525577268,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that re-emit an already-emitted clip during pipeline fill"
+}
+=== 2026-09-16T23:26:30Z 4 pipelined-sampler ten-fixture stream
+queued 20 prompts (10 fixtures) in 0.05 s
+  done f58-psamp-00 (boat) at +12.857 s
+  done f58-psamp-01 (marble) at +15.772 s
+  done f58-psamp-02 (bird) at +18.557 s
+  done f58-psamp-03 (pendulum) at +21.367 s
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-throughput-fixtures.py", line 116, in <module>
+    h = call('/history/' + p['prompt_id'])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-throughput-fixtures.py", line 53, in call
+    assert not (ROOT / 'FAULT.json').exists(), 'device fault; halt requests'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: device fault; halt requests
+=== 2026-09-16T23:26:55Z pipe-samp stream failed

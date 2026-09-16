@@ -1,0 +1,44 @@
+{
+  "claim": "every clip computes its own conditioning with the native encode from the text of its own queued request and consumes it once; nothing is cached, reused or guessed between clips. Only the moment the work runs changes, so it overlaps the sampler on other cards.",
+  "clip_index": 3002,
+  "depth": 1,
+  "detail": {
+    "computed_inline": false,
+    "lookahead": {
+      "lookups": [
+        {
+          "index": 3003,
+          "queued": true,
+          "text_sha256": "4b46dbfe652c6d8d1906a031feaeef3a35da8e54794d7a832abf27163317171d"
+        }
+      ],
+      "source": "server prompt queue"
+    },
+    "pending_after": [
+      3003
+    ],
+    "placement_observations": "consumed by the pipeline worker",
+    "queued_ahead": true,
+    "speculation_miss": false,
+    "stage_seconds": 1.6933,
+    "started_ahead": [
+      {
+        "index": 3003,
+        "tag": "4b46dbfe652c6d8d1906a031feaeef3a35da8e54794d7a832abf27163317171d"
+      }
+    ],
+    "tag": "aeef3dcbe038bf94f5b5c64218d8cfe74ab4468d8f0bc42866d7dcc07d8cedb3",
+    "text_sha256": "aeef3dcbe038bf94f5b5c64218d8cfe74ab4468d8f0bc42866d7dcc07d8cedb3"
+  },
+  "extension_sha256s": {
+    "ltx_pipeline.py": "31319e1dda991c38c6046b497e1dba09c0a4574b3253739be13014dd8bc2e952",
+    "pipeline_node.py": "2afa9f6050f204dca2ffeaad7f2a58bee69b004c67b2fe5e3e9397014949030b"
+  },
+  "mode": "pipeline",
+  "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "passed": true,
+  "run_name": "f58-psamp-02",
+  "schema": "ltx.pipeline-request.v1",
+  "seconds": 0.0001899070011859294,
+  "server_identity_sha256": "66f16adb8819b80f8d89a2bf9b0c46acd416ef0c36e090f59002b634f9161d6c"
+}
