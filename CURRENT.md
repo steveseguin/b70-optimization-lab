@@ -34,6 +34,13 @@ was not run. Continuing requires the user to accept NaN-class comparison for
 this operator. No GPU work is running; port 18124 stays offline by user decision.
 [NaN result](experiments/qwen38-27b-b70/notes/2026-09-15-nan-semantics-results.md).
 
+**Two-B70 host, September 16 06:40 UTC: recovered from the fault; service back on 18124 at 54.801 tok/s, 12/12 exact.**
+After the user approved a retry: the bounded XPU/XCCL health probe passed on both cards (single-device compute and
+rank-to-rank allreduce), a fresh service start reached ready with no new fault, and the strict suite measured
+**54.801 tok/s** with all 12 complete outputs identical to the frozen control. No driver reset, power change or reboot
+was performed. Fault evidence stays at `/mnt/fast-ai/bench-results/gpu-fault-20260916T0602/`; treat the fault as a
+one-off unless it repeats.
+
 **Two-B70 host, September 16 06:05 UTC: GPU fault during a two-card service start; port 18124 is DOWN and no GPU work is running.**
 `serve.py` detected the fault, halted and did not retry, exactly as designed.
 
