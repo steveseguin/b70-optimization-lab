@@ -36,12 +36,23 @@ def write_json(path, value):
         stream.write('\n')
 
 
-def native_encode(clip, text):
+def native_encode(clip, text, consume_observations=False):
     import nodes
     require(clip is not None, 'CLIP input is invalid: None')
     encoded = nodes.CLIPTextEncode().encode(clip, text)
     require(isinstance(encoded, tuple) and len(encoded) == 1,
             'CLIPTextEncode no longer returns a single conditioning')
+    if consume_observations:
+        # The lab's embedding instrumentation enforces one-encode-then-consume,
+        # and its consumer is LTXHostEmbeddingPlacementCheck, which a pipelined
+        # arm cannot carry: under encode-ahead the encode that finishes during a
+        # request belongs to the NEXT clip, so the accounting no longer lines up
+        # with a request boundary. Every encode here runs on the one worker
+        # thread, so consuming right after each encode keeps the protocol
+        # satisfied. This discards a diagnostic; it touches no numerical value.
+        group = getattr(clip, '_host_embedding', None)
+        require(group is not None, 'Pipelined encode expects the host-embedding CLIP adapter')
+        group.consume_observations()
     return encoded[0]
 
 
@@ -103,8 +114,9 @@ class LTXPipelineTextEncode:
                 conditioning = native_encode(clip, text)
                 report['detail'] = {'computed_inline': True}
             else:
-                conditioning, detail = pipeline.run(clip_index, depth,
-                                                   lambda: native_encode(clip, text))
+                conditioning, detail = pipeline.run(
+                    clip_index, depth, lambda: native_encode(clip, text, consume_observations=True))
+                detail['placement_observations'] = 'consumed by the pipeline worker'
                 report['detail'] = detail
             report['passed'] = True
         finally:
