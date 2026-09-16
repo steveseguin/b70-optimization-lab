@@ -19,6 +19,7 @@ ap.add_argument('--interval', type=float, default=0.02)
 ap.add_argument('--out', required=True)
 ap.add_argument('--graph', required=True)
 ap.add_argument('--mode', required=True)
+ap.add_argument('--clip-index', type=int, default=0)
 a = ap.parse_args()
 out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
 
@@ -32,6 +33,8 @@ base['422']['inputs']['run_name'] = a.name
 for _node in base.values():
     if 'run_name' in _node.get('inputs', {}):
         _node['inputs']['run_name'] = a.name
+    if 'clip_index' in _node.get('inputs', {}):
+        _node['inputs']['clip_index'] = a.clip_index
 # The generic loop above already set run_name on every node that has one. These
 # two were named explicitly before that loop existed; keep them as assertions
 # rather than assignments, because a cached arm has no placement node at all.

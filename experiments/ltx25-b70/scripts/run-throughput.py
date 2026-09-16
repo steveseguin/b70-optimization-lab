@@ -50,6 +50,11 @@ for i in range(a.count):
     for node in g.values():
         if 'run_name' in node.get('inputs', {}):
             node['inputs']['run_name'] = name
+        # Encode-ahead keys its jobs on the clip index, so a stream has to
+        # advance it; leaving every clip at 0 would make clip 1 collect a value
+        # queued for clip 0 and stall.
+        if 'clip_index' in node.get('inputs', {}):
+            node['inputs']['clip_index'] = i
     g['75']['inputs']['filename_prefix'] = name + '/preview'
     r = call('/prompt', {'prompt': g, 'client_id': 'throughput-' + a.prefix})
     ids.append((name, r['prompt_id']))

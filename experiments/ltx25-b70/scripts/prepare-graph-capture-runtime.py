@@ -48,9 +48,9 @@ TEXT_ADAPTER = 'ltx_graph_text_encoder.py'
 TEXT_NODE_FILE = 'graph_text_encoder_node.py'
 TEXT_NODE_DIR = 'ltx_graph_text_encoder_lab'
 TEXT_NODE = '425'
-TCACHE_ADAPTER = 'ltx_text_conditioning_cache.py'
-TCACHE_NODE_FILE = 'text_cache_node.py'
-TCACHE_NODE_DIR = 'ltx_text_cache_lab'
+PIPE_ADAPTER = 'ltx_pipeline.py'
+PIPE_NODE_FILE = 'pipeline_node.py'
+PIPE_NODE_DIR = 'ltx_pipeline_lab'
 TEXT_ENCODE_NODE = '364'
 PLACEMENT_NODE = '421'
 SELECTION = 'all48'
@@ -64,18 +64,21 @@ MODES = ('original', 'graph', 'restored')
 # c4/c8/c48 ladder measures what the per-block route costs: the blocks, the
 # kernels and the order are identical, so every chain length must stay exact.
 # (arm, transformer gate, VAE gate, decoder, projection fusion, chain, text gate,
-#  text conditioning cache)
+#  encode-ahead pipeline)
+# Result caching is disqualified, so no arm enables it and the cache node is no
+# longer shipped. 'pipeline' does not cache: every clip computes its own
+# conditioning with the native encode and consumes it once; only the moment the
+# work runs changes, so it overlaps the sampler on other cards.
 ARMS = (
-    ('control',      'original', 'original', 'original',   'original', '1',  'original', 'original'),
-    ('graph',        'graph',    'original', 'axis-cache', 'original', '1',  'original', 'original'),
-    ('graph-c48',    'graph',    'original', 'axis-cache', 'original', '48', 'original', 'original'),
-    ('text',         'original', 'original', 'original',   'original', '1',  'graph',    'original'),
-    ('graph-text',   'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'original'),
-    ('stream',       'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'cache'),
-    ('stream-verify','graph',    'original', 'axis-cache', 'original', '1',  'graph',    'verify'),
-    ('graph-fused',  'graph',    'original', 'axis-cache', 'fused',    '1',  'original', 'original'),
-    ('graph-vae',    'graph',    'graph',    'axis-cache', 'original', '1',  'original', 'original'),
-    ('restored',     'restored', 'restored', 'original',   'restored', '1',  'restored', 'original'),
+    ('control',     'original', 'original', 'original',   'original', '1',  'original', 'original'),
+    ('graph',       'graph',    'original', 'axis-cache', 'original', '1',  'original', 'original'),
+    ('graph-c48',   'graph',    'original', 'axis-cache', 'original', '48', 'original', 'original'),
+    ('text',        'original', 'original', 'original',   'original', '1',  'graph',    'original'),
+    ('graph-text',  'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'original'),
+    ('pipe',        'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'pipeline'),
+    ('graph-fused', 'graph',    'original', 'axis-cache', 'fused',    '1',  'original', 'original'),
+    ('graph-vae',   'graph',    'graph',    'axis-cache', 'original', '1',  'original', 'original'),
+    ('restored',    'restored', 'restored', 'original',   'restored', '1',  'restored', 'original'),
 )
 VAE_NODE = '423'
 
@@ -145,16 +148,16 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'source/custom_nodes/ltx_qkv_fusion_lab/__init__.py',
              'source/scripts/ltx_graph_text_encoder.py', 'source/scripts/graph_text_encoder_node.py',
              'source/custom_nodes/ltx_graph_text_encoder_lab/__init__.py',
-             'source/scripts/ltx_text_conditioning_cache.py', 'source/scripts/text_cache_node.py',
-             'source/custom_nodes/ltx_text_cache_lab/__init__.py',
+             'source/scripts/ltx_pipeline.py', 'source/scripts/pipeline_node.py',
+             'source/custom_nodes/ltx_pipeline_lab/__init__.py',
              'provenance/graph-capture/parent/launch/encoder_runtime_common.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_candidate.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_router.py',
              'provenance/graph-capture/parent/source/scripts/na_axis_decode_node.py',
              'host-residency-13-parent-manifest.json'}
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
-              for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'stream',
-                          'stream-verify', 'graph-fused', 'graph-vae', 'restored')}
+              for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'pipe',
+                          'graph-fused', 'graph-vae', 'restored')}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py')
     node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
@@ -235,7 +238,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                              ('ltx_graph_vae_lab', 'graph_vae_node.py'),
                              ('ltx_qkv_fusion_lab', 'graph_fusion_node.py'),
                              ('ltx_graph_text_encoder_lab', 'graph_text_encoder_node.py'),
-                             ('ltx_text_cache_lab', 'text_cache_node.py')):
+                             ('ltx_pipeline_lab', 'pipeline_node.py')):
         require(manifest['files'][f'source/custom_nodes/{node_dir}/__init__.py'] ==
                 manifest['files']['source/scripts/' + helper],
                 'Graph custom-node copy differs from its helper: ' + node_dir)
@@ -247,9 +250,9 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             capture['fusion_node_sha256'] == manifest['extension_sha256s']['graph_fusion_node.py'] and
             capture['text_adapter_sha256'] == manifest['extension_sha256s']['ltx_graph_text_encoder.py'] and
             capture['text_node_sha256'] == manifest['extension_sha256s']['graph_text_encoder_node.py'] and
-            capture['tcache_adapter_sha256'] ==
-            manifest['extension_sha256s']['ltx_text_conditioning_cache.py'] and
-            capture['tcache_node_sha256'] == manifest['extension_sha256s']['text_cache_node.py'],
+            capture['pipe_adapter_sha256'] ==
+            manifest['extension_sha256s']['ltx_pipeline.py'] and
+            capture['pipe_node_sha256'] == manifest['extension_sha256s']['pipeline_node.py'],
             'Graph-capture source inventory mismatch')
     require(capture['fusion_groups'] == [['audio_attn1', ['to_q', 'to_k', 'to_v']],
                                          ['audio_attn2', ['to_k', 'to_v']],
@@ -266,32 +269,33 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['graph-c48', 'graph', 'original', 'axis-cache', 'original', '48', 'original', 'original'],
                      ['text', 'original', 'original', 'original', 'original', '1', 'graph', 'original'],
                      ['graph-text', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'original'],
-                     ['stream', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'cache'],
-                     ['stream-verify', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'verify'],
+                     ['pipe', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'pipeline'],
                      ['graph-fused', 'graph', 'original', 'axis-cache', 'fused', '1', 'original', 'original'],
                      ['graph-vae', 'graph', 'graph', 'axis-cache', 'original', '1', 'original', 'original'],
                      ['restored', 'restored', 'restored', 'original', 'restored', '1', 'restored', 'original']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
     expected_graphs = []
-    for arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, tcache_mode in expected_arms:
+    for arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode in expected_arms:
         name = 'graphs/graph-capture-all48-' + arm + '.json'
         expected_graphs.append(name)
         graph = json.loads(safe_path(packet, name).read_text())
         # Undo the gate rewiring before comparing, innermost edge first.
-        if tcache_mode != 'original':
-            require('421' not in graph, 'Cached arm still carries the placement observer')
+        if pipe_mode != 'original':
+            require('421' not in graph, 'Pipelined arm still carries the placement observer')
             require(graph['365']['inputs']['negative'] == ['364', 0] and
                     graph['365']['inputs']['positive'] == ['364', 0],
-                    'Cached arm conditioning edge changed')
+                    'Pipelined arm conditioning edge changed')
             graph['365']['inputs']['negative'] = ['421', 0]
             graph['365']['inputs']['positive'] = ['421', 0]
             graph['421'] = {'class_type': 'LTXHostEmbeddingPlacementCheck', 'inputs': {
                 'clip': ['420', 1], 'conditioning': ['364', 0], 'encoder_mode': 'control',
                 'run_name': 'assign-unique-request-name'}}
-        require(graph['364']['class_type'] == 'LTXCachedTextEncode' and
-                graph['364']['inputs']['mode'] == tcache_mode and
+        require(graph['364']['class_type'] == 'LTXPipelineTextEncode' and
+                graph['364']['inputs']['mode'] == pipe_mode and
+                graph['364']['inputs']['clip_index'] == 0 and
+                graph['364']['inputs']['depth'] == 1 and
                 graph['364']['inputs']['run_name'] == 'assign-unique-request-name',
-                'Cached text-encode node changed')
+                'Pipeline text-encode node changed')
         graph['364'] = {'class_type': 'CLIPTextEncode', 'inputs': {
             'clip': graph['364']['inputs']['clip'], 'text': graph['364']['inputs']['text']}}
         require(graph['364']['inputs']['clip'] == ['425', 0], 'Text-encoder gate edge changed')
@@ -359,7 +363,7 @@ def build_checker(text):
                                        "              'ltx_graph_vae.py', 'graph_vae_node.py',\n"
                                        "              'ltx_qkv_fusion.py', 'graph_fusion_node.py',\n"
                                        "              'ltx_graph_text_encoder.py', 'graph_text_encoder_node.py',\n"
-                                       "              'ltx_text_conditioning_cache.py', 'text_cache_node.py')", 1)
+                                       "              'ltx_pipeline.py', 'pipeline_node.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -367,7 +371,7 @@ def build_checker(text):
                                          "         'ltx_graph_vae_lab': 'graph_vae_node.py',\n"
                                          "         'ltx_qkv_fusion_lab': 'graph_fusion_node.py',\n"
                                          "         'ltx_graph_text_encoder_lab': 'graph_text_encoder_node.py',\n"
-                                         "         'ltx_text_cache_lab': 'text_cache_node.py'}", 1)
+                                         "         'ltx_pipeline_lab': 'pipeline_node.py'}", 1)
     ast.parse(updated)
     return updated
 
@@ -430,7 +434,7 @@ def main():
                                (VAE_ADAPTER, None), (VAE_NODE_FILE, VAE_NODE_DIR),
                                (FUSE_ADAPTER, None), (FUSE_NODE_FILE, FUSE_NODE_DIR),
                                (TEXT_ADAPTER, None), (TEXT_NODE_FILE, TEXT_NODE_DIR),
-                               (TCACHE_ADAPTER, None), (TCACHE_NODE_FILE, TCACHE_NODE_DIR)):
+                               (PIPE_ADAPTER, None), (PIPE_NODE_FILE, PIPE_NODE_DIR)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -444,7 +448,7 @@ def main():
     require(control['374'] == {'class_type': 'VAEDecode',
                                'inputs': {'samples': ['369', 0], 'vae': ['420', 2]}},
             'Unexpected original video decode node')
-    for arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, tcache_mode in ARMS:
+    for arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode in ARMS:
         graph = copy.deepcopy(control)
         require(graph['364']['inputs']['clip'] == ['420', 1], 'Unexpected control text-encode edge')
         require(graph['364']['class_type'] == 'CLIPTextEncode', 'Unexpected control text-encode node')
@@ -454,9 +458,9 @@ def main():
         graph['364']['inputs']['clip'] = [TEXT_NODE, 0]
         # The encode node itself becomes the cache-capable one in every arm, so
         # the arms differ only by mode. 'original' calls the native node.
-        graph[TEXT_ENCODE_NODE] = {'class_type': 'LTXCachedTextEncode', 'inputs': {
-            'clip': [TEXT_NODE, 0], 'text': prompt_text, 'mode': tcache_mode,
-            'run_name': 'assign-unique-request-name'}}
+        graph[TEXT_ENCODE_NODE] = {'class_type': 'LTXPipelineTextEncode', 'inputs': {
+            'clip': [TEXT_NODE, 0], 'text': prompt_text, 'mode': pipe_mode,
+            'clip_index': 0, 'depth': 1, 'run_name': 'assign-unique-request-name'}}
         graph['422'] = {'class_type': 'LTXGraphCaptureGate', 'inputs': {
             'model': ['420', 0], 'mode': mode, 'selection': SELECTION, 'chain': chain,
             'run_name': 'assign-unique-request-name'}}
@@ -468,7 +472,7 @@ def main():
         graph[FUSE_NODE] = {'class_type': 'LTXFusionGate', 'inputs': {
             'model': ['420', 0], 'mode': fuse_mode, 'run_name': 'assign-unique-request-name'}}
         graph['422']['inputs']['model'] = [FUSE_NODE, 0]
-        if tcache_mode != 'original':
+        if pipe_mode != 'original':
             # LTXHostEmbeddingPlacementCheck requires exactly one new completed
             # encoding per request, and a clip served from cache performs none.
             # It is a pure pass-through observer (`return (conditioning,)`), so
@@ -513,8 +517,8 @@ def main():
               f'source/custom_nodes/{FUSE_NODE_DIR}/__init__.py',
               'source/scripts/' + TEXT_ADAPTER, 'source/scripts/' + TEXT_NODE_FILE,
               f'source/custom_nodes/{TEXT_NODE_DIR}/__init__.py',
-              'source/scripts/' + TCACHE_ADAPTER, 'source/scripts/' + TCACHE_NODE_FILE,
-              f'source/custom_nodes/{TCACHE_NODE_DIR}/__init__.py'}
+              'source/scripts/' + PIPE_ADAPTER, 'source/scripts/' + PIPE_NODE_FILE,
+              f'source/custom_nodes/{PIPE_NODE_DIR}/__init__.py'}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
     for name, digest in parent_manifest['files'].items():
         if name == CHECKER:
@@ -529,13 +533,13 @@ def main():
             require(files[name] == digest, 'Inherited file drifted: ' + name)
     for src_name, dir_name in ((NODE, NODE_DIR), (VAE_NODE_FILE, VAE_NODE_DIR),
                                (FUSE_NODE_FILE, FUSE_NODE_DIR), (TEXT_NODE_FILE, TEXT_NODE_DIR),
-                               (TCACHE_NODE_FILE, TCACHE_NODE_DIR)):
+                               (PIPE_NODE_FILE, PIPE_NODE_DIR)):
         require(files[f'source/custom_nodes/{dir_name}/__init__.py'] == files['source/scripts/' + src_name],
                 'Custom-node copy differs from helper: ' + dir_name)
 
     extensions = dict(parent_manifest['extension_sha256s'])
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
-                     TEXT_ADAPTER, TEXT_NODE_FILE, TCACHE_ADAPTER, TCACHE_NODE_FILE):
+                     TEXT_ADAPTER, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -560,8 +564,8 @@ def main():
             'vae_adapter_sha256': extensions[VAE_ADAPTER], 'vae_node_sha256': extensions[VAE_NODE_FILE],
             'fusion_adapter_sha256': extensions[FUSE_ADAPTER], 'fusion_node_sha256': extensions[FUSE_NODE_FILE],
             'text_adapter_sha256': extensions[TEXT_ADAPTER], 'text_node_sha256': extensions[TEXT_NODE_FILE],
-            'tcache_adapter_sha256': extensions[TCACHE_ADAPTER],
-            'tcache_node_sha256': extensions[TCACHE_NODE_FILE],
+            'pipe_adapter_sha256': extensions[PIPE_ADAPTER],
+            'pipe_node_sha256': extensions[PIPE_NODE_FILE],
             'fusion_groups': [[g[0], list(g[1])] for g in __import__('ltx_qkv_fusion_groups').GROUPS]
                              if False else [['audio_attn1', ['to_q', 'to_k', 'to_v']],
                                             ['audio_attn2', ['to_k', 'to_v']],
