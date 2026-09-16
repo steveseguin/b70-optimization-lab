@@ -17,7 +17,7 @@ server-side prompt reading.
 
 | Profile | Context | Writing speed | Full answers | Prompt reading 2K / 4K / 8K / 12K | Writing after 2K / 4K / 8K / 12K input |
 | --- | ---: | ---: | ---: | --- | --- |
-| MTP depth 5, INT4 draft shortlist (`recommended`) | 13,824 | **53.5** | 45.2 | 2,025 / 2,043 / 2,021 / 1,987 | 56.5 / 65.1 / 72.3 / 61.7 |
+| MTP depth 5, INT4 draft shortlist (`recommended`) | 16,384 | **53.5** | 45.3 | 2,025 / 2,041 / 2,021 / 1,986 | 56.5 / 65.0 / 72.1 / 61.5 |
 | MTP depth 5, FP16 draft shortlist (`no-quantization`) | 12,544 | 51.6 | 43.2 | 2,010 / 2,035 / 2,016 / 1,981 | 49.7 / 61.6 / 68.4 / 61.5 |
 | No MTP (reference) | 20,480 | 19.4 | 19.3 | 2,214 / 2,189 / 2,134 / 2,087 | 19.3 / 19.0 / 18.8 / 18.6 |
 
@@ -39,10 +39,12 @@ Other depths on the same setup:
 | --- | ---: | ---: | ---: | ---: |
 | Writing speed (strict suite) | 48.46 | 50.47 | 53.50 | 54.78 |
 | Full answers | 43.78 | 45.26 | 45.18 | 44.75 |
-| Context | 13,824 | 13,824 | 13,824 | 12,544 |
+| Context measured | 13,824 | 13,824 | 13,824 | 12,544 |
 
-Depth 6 writes a little faster but finishes whole answers slightly slower and
-fits less context, so depth 5 is the default.
+The depth comparison was measured at those contexts; depth 5 was then confirmed
+at 16,384 tokens on two fresh servers (53.576 / 53.454 tok/s), which is the
+package default. Depth 6 writes a little faster but finishes whole answers
+slightly slower and fits less context, so depth 5 stays the default.
 
 ## What makes it work
 
@@ -77,7 +79,7 @@ OUT_DIR=/path/strict BASE_URL=http://127.0.0.1:18130 MODEL_NAME=qwen38-27b-fp8 \
   bash repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
 python3 experiments/qwen38-27b-b70/scripts/bench-prefill-followup.py --base-url http://127.0.0.1:18130 \
   --model qwen38-27b-fp8 --out /path/context --corpus experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/corpus.json \
-  --lengths 2048,4096,8192,12288 --max-model-len 13824 --max-tokens 128 --repeats 2
+  --lengths 2048,4096,8192,12288 --max-model-len 16384 --max-tokens 128 --repeats 2
 ```
 
 ## Evidence

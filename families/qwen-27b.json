@@ -1794,7 +1794,7 @@
    "coverage": [
     "MTP depth 5",
     "outputs identical to no MTP",
-    "13,824-token context",
+    "16,384-token context",
     "prefill 2K-12K",
     "F16 KV",
     "one user"
@@ -6017,7 +6017,7 @@
     "mtp": 5,
     "graph": "on",
     "kv": "f16",
-    "configured_max_context_tokens": 13824,
+    "configured_max_context_tokens": 16384,
     "draft_head": "int4-shortlist"
    },
    "profile_id": "strict-completions-512",
@@ -6027,11 +6027,11 @@
    "workload": "Fixed 12-prompt six-class completions suite, 512-token cap, cache zero; class-balanced conventional 99-interval decode rate",
    "metrics": {
     "decode_tok_s": [
-     53.45237336551983,
-     53.54548055016882
+     53.57586792283578,
+     53.45447005701281
     ]
    },
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-15-fp8-one-card-package/fp8-tp1-55-r310-mtp5-int4shortlist-13k-strict-performance.json"
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-one-card-followups/fp8-tp1-67-r310-mtp5-16k-repeat-strict-performance.json"
   },
   {
    "revision": "qwen3.8-27b",
@@ -12936,7 +12936,7 @@
     "graph": "on",
     "kv": "f16",
     "parallel_slots": 1,
-    "configured_max_context_tokens": 13824,
+    "configured_max_context_tokens": 16384,
     "prefix_caching": false
    },
    "workload": "Exact 2,048/4,096/8,192/12,288-token inputs of unrepeated prose, code and documentation; 128-token continuations; cache zero",
@@ -12944,40 +12944,40 @@
    "points": [
     {
      "x": 2048,
-     "decode_tok_s": 56.487573390293306,
-     "prefill_tok_s": 2024.5451662042474,
-     "ttft_ms": 1020.6361105010728,
+     "decode_tok_s": 56.54217221906936,
+     "prefill_tok_s": 2025.4752394053367,
+     "ttft_ms": 1020.5288149954868,
      "cached_tokens": 0,
      "samples": 6
     },
     {
      "x": 4096,
-     "decode_tok_s": 65.09850739399008,
-     "prefill_tok_s": 2042.9752206846952,
-     "ttft_ms": 2013.6644300000626,
+     "decode_tok_s": 65.04918502044023,
+     "prefill_tok_s": 2040.8571927025505,
+     "ttft_ms": 2016.1205290060025,
      "cached_tokens": 0,
      "samples": 6
     },
     {
      "x": 8192,
-     "decode_tok_s": 72.25302432602078,
-     "prefill_tok_s": 2021.17769303855,
-     "ttft_ms": 4064.1832889996294,
+     "decode_tok_s": 72.11067982343023,
+     "prefill_tok_s": 2021.3729368331824,
+     "ttft_ms": 4065.647061004711,
      "cached_tokens": 0,
      "samples": 6
     },
     {
      "x": 12288,
-     "decode_tok_s": 61.705453311958095,
-     "prefill_tok_s": 1986.5350462348379,
-     "ttft_ms": 6199.162126500596,
+     "decode_tok_s": 61.493092707183514,
+     "prefill_tok_s": 1986.4005599211164,
+     "ttft_ms": 6196.1474799973075,
      "cached_tokens": 0,
      "samples": 6
     }
    ],
    "quality": "Every continuation repeated exactly and matched the no-MTP server on the same image.",
    "caveat": "Measured points only; no zero-context or longer-context value is implied.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-15-fp8-one-card-package/fp8-tp1-58-r310-mtp5-int4shortlist-grid-context-summary.json"
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-one-card-followups/fp8-tp1-67-r310-mtp5-16k-repeat-context-summary.json"
   },
   {
    "id": "q38-fp8-tp1-r310-mtp5-fp16-context",

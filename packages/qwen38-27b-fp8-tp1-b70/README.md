@@ -6,7 +6,7 @@ FP8 model, and outputs are identical to running without MTP.
 
 | Profile | Context | Writing speed | Prompt reading (2K / 12K input) |
 | --- | ---: | ---: | --- |
-| `recommended` | 13,824 tokens | **53.5 tok/s** | 2,025 / 1,987 tok/s |
+| `recommended` | 16,384 tokens | **53.5 tok/s** | 2,025 / 1,986 tok/s |
 | `no-quantization` (full-precision draft head) | 12,544 tokens | 51.6 tok/s | 2,010 / 1,981 tok/s |
 
 Graphs and every measured point are on the
@@ -56,6 +56,6 @@ and the answer.
 - **Replayed from a fresh download:** on September 16 the steps above were run
   from a new anonymous download of this repository on the lab host, reusing only
   the verified model files and the Docker layer cache: model verify, image pull,
-  start, strict suite 12/12 identical to no-MTP at 53.497 tok/s, clean stop.
+  start, strict suite 12/12 identical to no-MTP at 53.497 tok/s (13,824-token profile), clean stop.
 - Not yet tested: a machine without Intel drivers, Docker or the model already
   in place, and more than one user at a time.

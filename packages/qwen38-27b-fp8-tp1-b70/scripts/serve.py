@@ -26,7 +26,7 @@ FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine re
 
 # Profiles measured on 2026-09-15: every profile's outputs are identical to no-MTP decoding.
 PROFILES = {
-    'recommended': dict(max_model_len=13824, memory=0.965, draft='int4-shortlist'),
+    'recommended': dict(max_model_len=16384, memory=0.975, draft='int4-shortlist'),
     'no-quantization': dict(max_model_len=12544, memory=0.975, draft='fp16-shortlist'),
 }
 
