@@ -32,8 +32,12 @@ base['422']['inputs']['run_name'] = a.name
 for _node in base.values():
     if 'run_name' in _node.get('inputs', {}):
         _node['inputs']['run_name'] = a.name
-base['421']['inputs']['run_name'] = a.name
-base['414']['inputs']['run_name'] = a.name
+# The generic loop above already set run_name on every node that has one. These
+# two were named explicitly before that loop existed; keep them as assertions
+# rather than assignments, because a cached arm has no placement node at all.
+for _legacy in ('421', '414'):
+    if _legacy in base:
+        assert base[_legacy]['inputs']['run_name'] == a.name
 base['75']['inputs']['filename_prefix'] = a.name + '/preview'
 graph_path = out / (a.name + '-graph.json')
 graph_path.write_text(json.dumps(base, indent=2) + '\n')
