@@ -52,6 +52,7 @@ TCACHE_ADAPTER = 'ltx_text_conditioning_cache.py'
 TCACHE_NODE_FILE = 'text_cache_node.py'
 TCACHE_NODE_DIR = 'ltx_text_cache_lab'
 TEXT_ENCODE_NODE = '364'
+PLACEMENT_NODE = '421'
 SELECTION = 'all48'
 MODES = ('original', 'graph', 'restored')
 # Four named arms rather than a cross product, so one process can attribute each
@@ -277,6 +278,16 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
         expected_graphs.append(name)
         graph = json.loads(safe_path(packet, name).read_text())
         # Undo the gate rewiring before comparing, innermost edge first.
+        if tcache_mode != 'original':
+            require('421' not in graph, 'Cached arm still carries the placement observer')
+            require(graph['365']['inputs']['negative'] == ['364', 0] and
+                    graph['365']['inputs']['positive'] == ['364', 0],
+                    'Cached arm conditioning edge changed')
+            graph['365']['inputs']['negative'] = ['421', 0]
+            graph['365']['inputs']['positive'] = ['421', 0]
+            graph['421'] = {'class_type': 'LTXHostEmbeddingPlacementCheck', 'inputs': {
+                'clip': ['420', 1], 'conditioning': ['364', 0], 'encoder_mode': 'control',
+                'run_name': 'assign-unique-request-name'}}
         require(graph['364']['class_type'] == 'LTXCachedTextEncode' and
                 graph['364']['inputs']['mode'] == tcache_mode and
                 graph['364']['inputs']['run_name'] == 'assign-unique-request-name',
@@ -457,6 +468,18 @@ def main():
         graph[FUSE_NODE] = {'class_type': 'LTXFusionGate', 'inputs': {
             'model': ['420', 0], 'mode': fuse_mode, 'run_name': 'assign-unique-request-name'}}
         graph['422']['inputs']['model'] = [FUSE_NODE, 0]
+        if tcache_mode != 'original':
+            # LTXHostEmbeddingPlacementCheck requires exactly one new completed
+            # encoding per request, and a clip served from cache performs none.
+            # It is a pure pass-through observer (`return (conditioning,)`), so
+            # dropping it changes no arithmetic, and the four raw oracles still
+            # gate the arm. Only arms that skip the encode lose the observer.
+            require(graph['365']['inputs']['negative'] == [PLACEMENT_NODE, 0] and
+                    graph['365']['inputs']['positive'] == [PLACEMENT_NODE, 0],
+                    'Unexpected placement-check consumer wiring')
+            graph['365']['inputs']['negative'] = [TEXT_ENCODE_NODE, 0]
+            graph['365']['inputs']['positive'] = [TEXT_ENCODE_NODE, 0]
+            del graph[PLACEMENT_NODE]
         if decode == 'original':
             graph['374'] = {'class_type': 'VAEDecode',
                             'inputs': {'samples': ['369', 0], 'vae': [VAE_NODE, 0]}}
