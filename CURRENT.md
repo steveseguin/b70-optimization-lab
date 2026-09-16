@@ -25,6 +25,20 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 16 23:27 UTC: GPU fault latched during the LTX pipelined-sampler arm; PID 6955 halted, no new launches possible on this boot.**
+Packet 58 first delivered the corrected results on ten distinct fixtures:
+serial 4.584 s per clip (12/12 exact), three-stage pipe **2.519 s per distinct
+clip (19/19 exact, 9.9 fps equivalent)**. The pipelined-sampler arm then
+faulted `0000:27:00.0` (page fault, devcoredump, DEVICE_LOST) on its third
+clip: both sampler threads were replaying one graph set through shared static
+buffers, a race the identical-clip harness had hidden. The arm is retired.
+The server stays up halted as evidence; the sealed launcher refuses launches
+while the boot journal carries fault lines. Next lever (latent-upsampler
+graph capture, packet 60) is prepared inactive and check-only passed.
+No retry, reset, power change or reboot was performed; the reboot/reset
+decision belongs to the user.
+[Results and incident](experiments/ltx25-b70/notes/graph-capture-58-results.md).
+
 **Four-B70 host, September 16 23:20 UTC: LTX packet 58 server launched (PID 6955, port 8188) for the corrected ten-fixture pipeline campaign.**
 The host rebooted at 17:23 UTC during Opus's packet 56 start (silent lockup, no
 kernel fault line; not this session). An offline audit of the September 15-16
