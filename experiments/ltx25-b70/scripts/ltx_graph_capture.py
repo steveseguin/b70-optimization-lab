@@ -796,7 +796,9 @@ def install(patcher, indices, chain=1):
     require(isinstance(chain, int) and not isinstance(chain, bool) and chain >= 1,
             'chain must be a positive integer')
     report = Report()
-    registry = GroupRegistry()
+    # Named `groups` to keep it distinct from `registry`, which is the block
+    # route registry this function already holds.
+    groups = GroupRegistry()
     originals = {}
     for index in indices:
         originals[index] = registry[('double_block', index)]
@@ -807,12 +809,12 @@ def install(patcher, indices, chain=1):
         # otherwise drop that move.
         effective = head if len(run) == 1 else _BlockRoute(head.device, head.primary, tail.last)
         route = GraphBlockRoute([diffusion.transformer_blocks[i] for i in run],
-                                effective, run[0], report, registry)
+                                effective, run[0], report, groups)
         patcher.set_model_patch_replace(route, 'dit', 'double_block', run[0])
         for index in run[1:]:
             patcher.set_model_patch_replace(PassthroughRoute(index, route), 'dit', 'double_block', index)
     report.devices = sorted({str(route.device) for route in originals.values()})
-    report.registry = registry
+    report.registry = groups
     report.chains = [{'head': r[0], 'tail': r[-1], 'blocks': len(r),
                       'device': str(registry[('double_block', r[0])].device)}
                      for r in chain_runs(indices, registry, chain)]
