@@ -119,11 +119,16 @@ class LTXPipelineDecode:
         try:
             if mode == 'original':
                 out = decode_clip(vae, audio_vae, video_latent, audio_latent)
-                report['detail'] = {'emitted_index': clip_index - upstream_depth, 'primed': True}
+                report['detail'] = {'emitted_index': max(0, clip_index - upstream_depth),
+                                    'primed': True}
             else:
                 latents = (video_latent, audio_latent)
+                # During the upstream stage's own fill it emits its own clip, so
+                # the index this prompt is really carrying is clamped at zero.
+                # Those first few prompts re-emit an early clip; every clip is
+                # still decoded exactly once, and emitted_index records which.
                 out, detail = pipeline.run_behind(
-                    'decode', clip_index - upstream_depth, depth,
+                    'decode', max(0, clip_index - upstream_depth), depth,
                     lambda: decode_clip(vae, audio_vae, *latents))
                 report['detail'] = detail
             report['passed'] = True
