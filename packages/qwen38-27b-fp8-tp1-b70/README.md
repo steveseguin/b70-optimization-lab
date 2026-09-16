@@ -22,10 +22,14 @@ How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/RE
 ## Start
 
 ```bash
-huggingface-cli download Qwen/Qwen3.8-27B-FP8 --revision 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a --local-dir /path/qwen3.8-27b-fp8
+MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/download-model.sh
+MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/verify.sh
 docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
 python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-one-card-session
 ```
+
+The download and verify steps check the pinned revision, every file size and
+every SHA-256, so a pass means the exact bytes these measurements used.
 
 Add `--profile no-quantization` for the full-precision draft head, or `--gpu 1`
 to use the second card. Startup takes several minutes; wait for `Ready`.
