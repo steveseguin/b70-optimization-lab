@@ -122,17 +122,34 @@ class GraphedMethod:
         torch.xpu.synchronize(self.device)
         require(isinstance(output, torch.Tensor), self.name + ' capture did not produce a tensor')
 
-        # Non-inert: perturb a static input and require the replayed output to move.
+        # Non-inert: the replayed output must move when an input moves. Earlier
+        # attempts perturbed only flat[0] and reported a bare "inert graph",
+        # which said nothing about WHY. Perturb each input in turn and record
+        # which ones the output follows, so a failure is a diagnosis.
         require(flat, self.name + ' has no tensor inputs to perturb')
         restore()
-        flat[0].add_(1.0)
         self._replay(graph)
-        perturbed = output.clone()
+        baseline = output.clone()
+        sensitivity = []
+        for position, buffer in enumerate(flat):
+            if not buffer.is_floating_point():
+                sensitivity.append({'input': position, 'dtype': str(buffer.dtype),
+                                    'shape': list(buffer.shape), 'moved': None,
+                                    'note': 'not perturbed: non-floating input'})
+                continue
+            restore()
+            buffer.add_(1.0)
+            self._replay(graph)
+            moved = not bitwise_equal(output, baseline)
+            sensitivity.append({'input': position, 'dtype': str(buffer.dtype),
+                                'shape': list(buffer.shape), 'moved': moved})
         restore()
         self._replay(graph)
-        require(not torch.equal(output.view(torch.int16) if output.dtype == torch.bfloat16 else output,
-                                perturbed.view(torch.int16) if output.dtype == torch.bfloat16 else perturbed),
-                self.name + ' captured an inert graph; replay ignored its input')
+        require(bitwise_equal(output, baseline),
+                self.name + ' replay is not reproducible after restoring its inputs')
+        self.report.sensitivity[self.name] = sensitivity
+        require(any(row['moved'] for row in sensitivity),
+                self.name + ' captured a graph no input moves; sensitivity=' + repr(sensitivity))
 
         # Bitwise proof against the eager reference.
         require(output.dtype == reference.dtype and output.shape == reference.shape,
@@ -180,6 +197,7 @@ class Report:
     def __init__(self):
         self.captures = []
         self.replays = 0
+        self.sensitivity = {}
 
     def record(self, name, key, tensor_count, out_shape, out_dtype):
         self.captures.append({'method': name, 'mirrored_tensors': tensor_count,
@@ -188,6 +206,7 @@ class Report:
 
     def summary(self):
         return {'captured_graphs': len(self.captures), 'replays': self.replays,
+                'input_sensitivity': self.sensitivity,
                 'methods': sorted({c['method'] for c in self.captures}),
                 'captures': self.captures}
 
