@@ -63,6 +63,11 @@ class LTXPipelineDecode:
                              'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
                              'depth': ('INT', {'default': 1, 'min': 1,
                                                'max': pipeline.MAX_PENDING}),
+                             # How many prompts the latents arriving here already
+                             # lag by, when an upstream stage runs behind too.
+                             # Keeps `emitted_index` naming the clip it really is.
+                             'upstream_depth': ('INT', {'default': 0, 'min': 0,
+                                                        'max': pipeline.MAX_PENDING}),
                              'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
 
     RETURN_TYPES = ('IMAGE', 'AUDIO', 'LATENT', 'LATENT')
@@ -70,17 +75,19 @@ class LTXPipelineDecode:
     FUNCTION = 'apply'
     CATEGORY = 'lab/validation'
 
-    def apply(self, vae, audio_vae, video_latent, audio_latent, mode, clip_index, depth, run_name):
+    def apply(self, vae, audio_vae, video_latent, audio_latent, mode, clip_index, depth,
+              run_name, upstream_depth=0):
         global _failed
         try:
             return self._apply(vae, audio_vae, video_latent, audio_latent,
-                               mode, clip_index, depth, run_name)
+                               mode, clip_index, depth, run_name, upstream_depth)
         except BaseException:
             _failed = True
             pipeline.clear()
             raise
 
-    def _apply(self, vae, audio_vae, video_latent, audio_latent, mode, clip_index, depth, run_name):
+    def _apply(self, vae, audio_vae, video_latent, audio_latent, mode, clip_index, depth,
+               run_name, upstream_depth=0):
         require(not _failed, 'Previous pipeline failure; halt submissions and inspect evidence')
         require(mode in pipeline.MODES, 'Only preregistered modes are admitted')
         require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
@@ -102,6 +109,7 @@ class LTXPipelineDecode:
 
         report = {'schema': 'ltx.pipeline-decode-request.v1', **identity, 'run_name': run_name,
                   'mode': mode, 'clip_index': clip_index, 'depth': depth,
+                  'upstream_depth': upstream_depth,
                   'extension_sha256s': hashes,
                   'claim': 'every clip is decoded once by its own decode and emitted once in '
                            'steady state; nothing is cached or reused. Only the moment the work '
@@ -111,11 +119,11 @@ class LTXPipelineDecode:
         try:
             if mode == 'original':
                 out = decode_clip(vae, audio_vae, video_latent, audio_latent)
-                report['detail'] = {'emitted_index': clip_index, 'primed': True}
+                report['detail'] = {'emitted_index': clip_index - upstream_depth, 'primed': True}
             else:
                 latents = (video_latent, audio_latent)
                 out, detail = pipeline.run_behind(
-                    'decode', clip_index, depth,
+                    'decode', clip_index - upstream_depth, depth,
                     lambda: decode_clip(vae, audio_vae, *latents))
                 report['detail'] = detail
             report['passed'] = True

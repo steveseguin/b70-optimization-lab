@@ -26,7 +26,13 @@ import torch
 MODES = ('original', 'pipeline')
 # One worker per stage, because the stages live on different cards: the encode
 # runs on xpu:2 and the decode on xpu:3, so they must be able to run at once.
-STAGES = ('encode', 'decode')
+STAGES = ('encode', 'decode', 'sample')
+# Workers per stage. The encode and decode are one card each, so one worker
+# saturates them. The sampler spans xpu:0 and xpu:1 and uses one at a time, so
+# TWO sampler workers let one clip occupy xpu:1's blocks while the next occupies
+# xpu:0's -- inter-clip pipeline parallelism. Each worker keeps its own thread
+# identity, so each gets its own static buffers and captured graphs.
+STAGE_WORKERS = {'encode': 1, 'decode': 1, 'sample': 2}
 MAX_PENDING = 4
 
 _LOCK = threading.Lock()
@@ -36,7 +42,7 @@ _QUEUE_EVENT = threading.Condition(_LOCK)
 
 def _state(stage):
     require(stage in STAGES, 'Unknown pipeline stage: ' + repr(stage))
-    return _STAGES.setdefault(stage, {'jobs': {}, 'queue': [], 'worker': None})
+    return _STAGES.setdefault(stage, {'jobs': {}, 'queue': [], 'workers': []})
 
 
 def require(value, message):
@@ -83,10 +89,12 @@ def _worker_loop(stage):
 
 def _ensure_worker(stage):
     st = _state(stage)
-    if st['worker'] is None or not st['worker'].is_alive():
-        st['worker'] = threading.Thread(target=_worker_loop, args=(stage,),
-                                        name='ltx-' + stage + '-ahead', daemon=True)
-        st['worker'].start()
+    st['workers'] = [w for w in st['workers'] if w.is_alive()]
+    while len(st['workers']) < STAGE_WORKERS.get(stage, 1):
+        worker = threading.Thread(target=_worker_loop, args=(stage,), daemon=True,
+                                  name='ltx-%s-%d' % (stage, len(st['workers'])))
+        st['workers'].append(worker)
+        worker.start()
 
 
 def submit(stage, index, fn):
