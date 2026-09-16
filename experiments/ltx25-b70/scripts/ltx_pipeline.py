@@ -170,6 +170,14 @@ def run_behind(stage, index, depth, fn):
     require(isinstance(depth, int) and 1 <= depth <= MAX_PENDING, 'Unsupported pipeline depth')
     submit(stage, index, fn)
     emit = index - depth
+    with _LOCK:
+        have_predecessor = emit in _state(stage)['jobs']
+    if emit >= 0 and not have_predecessor:
+        # The first prompt of any index sequence has no predecessor in flight,
+        # so it primes like clip 0 does. Self-healing rather than fatal: every
+        # clip is still decoded once by its own decode and emitted once; that
+        # one prompt simply gets no overlap.
+        emit = -1
     if emit < 0:
         # Priming. Nothing was decoded `depth` prompts ago, so this prompt waits
         # for its own clip and emits it -- with no overlap, and WITHOUT
