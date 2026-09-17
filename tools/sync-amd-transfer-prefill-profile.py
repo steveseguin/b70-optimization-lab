@@ -86,12 +86,16 @@ def profile(package):
     require(compilation['splitting_ops'] == [] and
             compilation['inductor_compile_config']['deterministic'] is True,
             'Control compilation contract differs')
-    recommended = package['recommended_setup']
+    # This profile measured the September 14 setup (depth 1, R304). Since September 17 the package recommends
+    # depth 5 on R310 and keeps that setup as its `depth-1` profile, recorded under recommended_setup.previous_recipe.
+    setup = package['recommended_setup']
+    if setup.get('mtp_depth') != 1:
+        setup = setup['previous_recipe']
     for key, expected in [('cards', 2), ('mtp_depth', 1), ('max_model_len', 33024),
                           ('max_num_batched_tokens', 4096), ('max_num_seqs', 1),
                           ('prefix_caching', False)]:
-        require(recommended[key] == expected, 'Recommended setup differs: ' + key)
-    require(recommended['image'].endswith('@' + IMAGE), 'Recommended runtime differs')
+        require(setup[key] == expected, 'Depth-1 setup differs: ' + key)
+    require(setup['image'].endswith('@' + IMAGE), 'Depth-1 runtime differs')
     require(control['strict_prompt_count'] == 12 and control['canaries_passed'] is True and
             control['realistic_workload_gate_passed'] is True, 'Control strict gates failed')
     parity = control['complete_token_reference_parity']
@@ -131,13 +135,13 @@ def profile(package):
         points.append({'context_tokens': length, 'value': value, 'samples': 6})
     return {
         'id': PROFILE_ID,
-        'label': 'Reading speed at 512–16,384 input tokens · recommended FP8 setup',
-        'public_label': 'Reading speed · recommended setup · 2 GPUs · 1-token draft · 33,024-token capacity',
+        'label': 'Reading speed at 512–16,384 input tokens · FP8 depth-1 profile',
+        'public_label': 'Reading speed · depth-1 profile · 2 GPUs · 1-token draft · 33,024-token capacity',
         'metric': 'prefill', 'unit': 'tok/s', 'x_metric': 'context_tokens',
         'x_label': 'Input length (tokens)', 'measurement_kind': 'server_prefill',
-        'scope': 'Original control on the recommended official FP8 setup: one user, two GPUs, MTP1, '
+        'scope': 'Original control on the September 14 official FP8 setup (now the depth-1 profile): one user, two GPUs, MTP1, '
                  '33,024 total-token capacity, 4,096 scheduling budget and no saved prompt cache.',
-        'public_scope': 'How fast the recommended setup reads your prompt before writing an answer. '
+        'public_scope': 'How fast the depth-1 profile (the September 14 recipe) reads your prompt before writing an answer. '
                         'One user; 512, 2,048 and 16,384 input tokens; no saved prompt cache. '
                         'Unrepeated prose, code and documents. These are baseline measurements.',
         'evidence': REPORT, 'source_data': SOURCE, 'evidence_manifest': DATA + '/manifest.json',

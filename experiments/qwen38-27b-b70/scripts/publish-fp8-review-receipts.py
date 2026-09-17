@@ -95,7 +95,7 @@ def main():
         package = json.loads(PACKAGE.read_text())
         keep = [p for p in package['performance_profiles'] if not p['id'].startswith('r310-')]
         package['performance_profiles'] = new + keep
-        PACKAGE.write_text(json.dumps(package, indent=1, ensure_ascii=False) + '\n')
+        PACKAGE.write_text(json.dumps(package, indent=2, ensure_ascii=False) + '\n')
         print('package profiles written')
 
 

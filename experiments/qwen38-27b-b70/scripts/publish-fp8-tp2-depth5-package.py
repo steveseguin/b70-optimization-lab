@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[3]
 PACKAGE = ROOT / 'packages/qwen38-27b-fp8-tp2-b70/package.json'
 DATA = 'experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/'
 R310 = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
+R304 = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2'
 NEW_DEPENDENCIES = [
     'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
     'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
@@ -85,7 +86,7 @@ def main():
         'base': 'R310 = R304 (the R294b stack rebased onto stock vLLM XPU v0.29.0; public closure chains.r304 in '
                 'repro/qwen38-27b-autoround-int4-b70/publication-manifest.json) plus the oneDNN r309 one-card fixed-K shapes and the '
                 'vllm-xpu-kernels r310 GDN output fences. Python unchanged.',
-        'previous_image_r304': package['runtime'].get('image'),
+        'previous_image_r304': R304,
         'historical_image_ids': {k: v for k, v in package['runtime'].items() if k.endswith('_validated')},
     }
     package['project_patches'] = {'required': True, 'items': [
@@ -113,8 +114,11 @@ def main():
         'launcher': 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py', 'acceptance_status': 'passed-on-configured-lab-host' if a.acceptance else 'pending-acceptance-replay',
         'clean_host_tested': False, 'evidence': 'experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md',
         'strict_pair_decode_tokens_s': pair, 'no_mtp_decode_tokens_s': no_mtp, 'depth1_decode_tokens_s': depth1,
-        'previous_recipe': {'mtp_depth': 1, 'profile': 'depth-1', 'evidence': 'experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json'}}
-    PACKAGE.write_text(json.dumps(package, indent=1, ensure_ascii=False) + '\n')
+        'previous_recipe': {'profile': 'depth-1', 'cards': 2, 'mtp_depth': 1, 'max_model_len': 33024, 'max_num_batched_tokens': 4096,
+                            'max_num_seqs': 1, 'prefix_caching': False, 'image': R304,
+                            'evidence': 'experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json',
+                            'r310_decode_tokens_s': depth1}}
+    PACKAGE.write_text(json.dumps(package, indent=2, ensure_ascii=False) + '\n')
     print(f'manifest updated: featured {statistics.median(pair):.3f} tok/s from {pair}')
 
 

@@ -5727,18 +5727,7 @@
         "image_build": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r310-gdn-barriers",
         "base": "R310 = R304 (the R294b stack rebased onto stock vLLM XPU v0.29.0; public closure chains.r304 in repro/qwen38-27b-autoround-int4-b70/publication-manifest.json) plus the oneDNN r309 one-card fixed-K shapes and the vllm-xpu-kernels r310 GDN output fences. Python unchanged.",
         "previous_image_r304": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
-        "historical_image_ids": {
-          "overlay_image_id_validated": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
-          "mtp1_overlay_image_id_validated": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
-          "dynamic_mtp_overlay_image_id_validated": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
-          "deterministic_eager_overlay_image_id_validated": "sha256:47507a8ca2a78e83666a6f300ec94c5b5c5915740f147bf9d1565c938de8f25b",
-          "deterministic_compiled_overlay_image_id_validated": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
-          "deterministic_mtp1_overlay_image_id_validated": "sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b",
-          "qualified_mtp1_overlay_image_id_validated": "sha256:2932e495b560e79c6301f5cc64584af928a2260f0d0d19c145142b2ef35860d3",
-          "clean_rebuild_mtp1_overlay_image_id_validated": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
-          "qualified_r62_overlay_image_id_validated": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
-          "image_id_validated": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2"
-        }
+        "historical_image_ids": {}
       },
       "project_patches": {
         "required": true,
@@ -7126,15 +7115,15 @@
         },
         {
           "id": "server-prefill-recommended-fp8-33024-control",
-          "label": "Reading speed at 512–16,384 input tokens · recommended FP8 setup",
-          "public_label": "Reading speed · recommended setup · 2 GPUs · 1-token draft · 33,024-token capacity",
+          "label": "Reading speed at 512–16,384 input tokens · FP8 depth-1 profile",
+          "public_label": "Reading speed · depth-1 profile · 2 GPUs · 1-token draft · 33,024-token capacity",
           "metric": "prefill",
           "unit": "tok/s",
           "x_metric": "context_tokens",
           "x_label": "Input length (tokens)",
           "measurement_kind": "server_prefill",
-          "scope": "Original control on the recommended official FP8 setup: one user, two GPUs, MTP1, 33,024 total-token capacity, 4,096 scheduling budget and no saved prompt cache.",
-          "public_scope": "How fast the recommended setup reads your prompt before writing an answer. One user; 512, 2,048 and 16,384 input tokens; no saved prompt cache. Unrepeated prose, code and documents. These are baseline measurements.",
+          "scope": "Original control on the September 14 official FP8 setup (now the depth-1 profile): one user, two GPUs, MTP1, 33,024 total-token capacity, 4,096 scheduling budget and no saved prompt cache.",
+          "public_scope": "How fast the depth-1 profile (the September 14 recipe) reads your prompt before writing an answer. One user; 512, 2,048 and 16,384 input tokens; no saved prompt cache. Unrepeated prose, code and documents. These are baseline measurements.",
           "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md",
           "source_data": "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/summary.json",
           "evidence_manifest": "experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/manifest.json",
@@ -7229,9 +7218,16 @@
         "no_mtp_decode_tokens_s": 33.03516454010384,
         "depth1_decode_tokens_s": 54.89813975243729,
         "previous_recipe": {
-          "mtp_depth": 1,
           "profile": "depth-1",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json"
+          "cards": 2,
+          "mtp_depth": 1,
+          "max_model_len": 33024,
+          "max_num_batched_tokens": 4096,
+          "max_num_seqs": 1,
+          "prefix_caching": false,
+          "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json",
+          "r310_decode_tokens_s": 54.89813975243729
         }
       }
     },
