@@ -25,6 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 05:00 UTC: server 65 stopped cleanly; packet 66 (batch-2 row-equality proof) launches after the five-minute gap.**
+The blocks are weight-read bound (1.57 s of the 2.03 s clip), so two clips in
+one batch would read each weight once for both. That is admissible only if a
+batch-2 forward is bitwise equal, row for row, to two batch-1 forwards on
+this stack. Packet 66 runs that proof on the resident model (three clips,
+every forward compared: original row, perturbed second row, stacked batch)
+and then repeats the fast+save arm. Runner commits per arm; log
+`campaign-66.log`.
+
 **Four-B70 host, September 17 04:55 UTC: LTX packet 65 complete: 2.029 s per distinct clip, 19/19 exact (12.3 fps equivalent); server PID 22356 idle on port 8188.**
 Fast path + save-behind 2.029 s; fast-path repeat 2.140 s; pipe control
 2.499 s (matches packet 58); forward-timing diagnostic: 1.67 s of forwards
