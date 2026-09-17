@@ -25,6 +25,11 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 17 13:10 UTC: rebooted (boot `9f41bfb8`), health probe passed, depth-5 service UP on 18124 at 88.28 tok/s, 12/12 vs the no-MTP reference, no fault lines since boot.**
+Unit `fp8-service-20260917-postboot`, state `/mnt/fast-ai/bench-results/service-postboot-20260917`. Keep the cycle
+count low on this boot. The oneCCL threshold A/B is closed (peer-access kernels fault both cards); the remaining
+two-card lever is fewer or cheaper collectives per step, and on one card the single-checkpoint GDN state plan.
+
 **Two-B70 host, September 17 07:50 UTC: rebooting with the user's approval after the third fault; the service needs one manual start after the boot.**
 After the boot, from the repo: `nohup scripts/autolaunch-fp8-service.sh &` (health probe, then one two-card package
 start on 18124; log `/mnt/fast-ai/bench-results/service-autolaunch.log`, state `service-autolaunch-<time>`), then the
