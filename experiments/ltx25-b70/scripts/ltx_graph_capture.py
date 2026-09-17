@@ -746,6 +746,15 @@ def validate_patcher(patcher):
     # threads, each with its own static buffers (see GroupRegistry).
     wrappers = dict(patcher.wrappers)
     cfg_wrappers = wrappers.pop(WrappersMP.CALC_COND_BATCH, None)
+    # A second DIFFUSION_MODEL wrapper is admitted: the lab's forward timer
+    # (concurrent_cfg_node.timed_diffusion_model), a diagnostic that only
+    # synchronises the cards and reads the clock around the original call.
+    diffusion_wrappers = dict(wrappers.get(WrappersMP.DIFFUSION_MODEL, {}))
+    timer = diffusion_wrappers.pop('ltx_forward_timer', None)
+    if timer is not None:
+        require(len(timer) == 1 and getattr(timer[0], '__name__', '') == 'timed_diffusion_model',
+                'Unexpected forward timer wrapper')
+    wrappers[WrappersMP.DIFFUSION_MODEL] = diffusion_wrappers
     require(wrappers == {WrappersMP.DIFFUSION_MODEL: {KEY: [_forward_transfers]}},
             'Foreign model wrappers are unsupported')
     if cfg_wrappers:
