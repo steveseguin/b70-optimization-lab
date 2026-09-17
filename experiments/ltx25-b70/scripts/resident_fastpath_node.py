@@ -144,7 +144,12 @@ class LTXResidentFastPath:
         started = time.monotonic()
         try:
             if mode == 'original':
-                require(_installed_mode is None, 'Fast path installed; run restored first')
+                # 'original' means "ensure the original function"; an arm that
+                # follows a fast/timed arm restores it here and says so.
+                if _installed_mode is not None:
+                    report['restored_from'] = _installed_mode
+                    mm.load_models_gpu = _original
+                    _installed_mode = None
             elif mode in ('timed', 'fast'):
                 if _installed_mode != mode:
                     report['switched_from'] = _installed_mode

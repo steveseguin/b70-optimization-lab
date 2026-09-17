@@ -170,7 +170,10 @@ class LTXConcurrentCFG:
         started = time.monotonic()
         try:
             if mode == 'original':
-                require(_installed is None, 'Concurrent CFG is installed; run restored first')
+                if _installed is not None:
+                    require(_installed is model, 'A different model has the wrapper')
+                    report['restored_from'] = _installed_mode
+                    _uninstall(model)
             elif mode in ('concurrent', 'timed'):
                 if _installed is not None and _installed_mode != mode:
                     require(_installed is model, 'A different model already has the wrapper')

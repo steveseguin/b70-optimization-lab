@@ -88,7 +88,12 @@ class LTXUpsamplerGraphGate:
         started = time.monotonic()
         try:
             if mode == 'original':
-                require(_installed is None, 'Upsampler forward is shadowed; run the restored mode first')
+                if _installed is not None:
+                    resident, original, stand_in, captures, installed_mode = _installed
+                    require(resident is upscale_model, 'A different upscale model is shadowed')
+                    adapter.restore(upscale_model, original)
+                    report['restored_from'] = installed_mode
+                    _installed = None
             elif mode in ('timed', 'graph'):
                 if _installed is None:
                     # The stand-in binds to the weights' device, so they must be
