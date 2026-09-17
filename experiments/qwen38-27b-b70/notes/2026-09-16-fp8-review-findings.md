@@ -194,6 +194,26 @@ kernel projects. The service stays down until the user decides on a reset; this 
 The HTTP profiler endpoints do not deliver the engine worker's trace on this build (the API server drops the stop
 connection before forwarding it); the overlay above profiles from inside the worker instead.
 
+## Two-card collectives, campaign 2 (September 17, 13:26-14:04 UTC): allgather + fixed-order add
+
+The two-rank allreduce (134 per decode step, 47% of device time in the two-card profile) replaced by one
+`all_gather_into_tensor` plus `gathered[0] + gathered[1]` on each rank ([overlay](../overlays/b70-allgather-allreduce/b70_allgather_allreduce.py),
+[runner](../scripts/run-20260917-fp8-comm2-campaign.py), results `/mnt/fast-ai/bench-results/fp8-comm2-20260917`).
+The oneCCL environment is untouched (the pinned ring thresholds stay; no peer-access kernels, so not a retry of
+campaign 1). A two-operand floating-point add is commutative, so the sum is the ring kernel's sum bit for bit, and
+the strict gate confirms it:
+
+| Server (two cards, R310) | Strict vs R310 no-MTP | tok/s | Ladder | 2K/8K/16K | Chat quality |
+| --- | --- | ---: | --- | --- | --- |
+| no MTP, overlay | 12/12 (same outputs as the ring allreduce) | 33.86 (was 33.04) | 64/64 + queued exact | exact | exact |
+| depth 5 + INT4 shortlist + verifier rows, overlay | 12/12, 12/12 | 90.37, 90.28 (control 88.3-88.5) | exact | exact | exact |
+| shipped service restored (no overlay) | 12/12 | 88.44 | | | |
+
+So the exchange is lossless and worth +2.3%, not the ~25% the per-call latency suggested: the ring allreduce's
+223 us per call is mostly the synchronisation both ranks pay for any collective, and the allgather pays it too.
+The remaining two-card cost is the number of collectives per step, which the replicated drafter (no collectives in
+the draft passes) addresses next. Shipping the overlay in the two-card package would take it to about 90.4 tok/s.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed

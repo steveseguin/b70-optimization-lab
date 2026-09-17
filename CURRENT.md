@@ -25,8 +25,10 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host, September 17 13:10 UTC: rebooted (boot `9f41bfb8`), health probe passed, depth-5 service UP on 18124 at 88.28 tok/s, 12/12 vs the no-MTP reference, no fault lines since boot.**
-Unit `fp8-service-20260917-postboot`, state `/mnt/fast-ai/bench-results/service-postboot-20260917`. Keep the cycle
+**Two-B70 host, September 17 14:04 UTC: boot `9f41bfb8`, depth-5 service UP on 18124 at 88.44 tok/s, 12/12 vs the no-MTP reference, no fault lines since boot.**
+Unit `fp8-service-20260917-comm2`, state `/mnt/fast-ai/bench-results/fp8-comm2-20260917/service`. Comm-2 (allgather + fixed-order add
+for the two-rank allreduce) is lossless on every gate at 90.3-90.4 tok/s, not shipped yet; the R311 single-checkpoint
+GDN kernel is building (`kernels-r311-build`), then the one-card ckpt-1 campaign (one more service cycle). Keep the cycle
 count low on this boot. The oneCCL threshold A/B is closed (peer-access kernels fault both cards); the remaining
 two-card lever is fewer or cheaper collectives per step, and on one card the single-checkpoint GDN state plan.
 **Four-B70 host, September 17 13:10 UTC: LTX two-clip sampler lands: 1.607 s per distinct clip, 21/21 exact (15.6 fps equivalent); server PID 4280 stays up idle (never stopped this boot).**

@@ -62,3 +62,37 @@ step on one card) and frees 0.75 GiB per request at depth 5.
 Two to four days of kernel and runner work, all on the research image, gated before any package change. The main
 risk is the runner split (V1 in production, RecoverSSM plumbing in V2). The payoff is lossless 32K+ on one card at
 full depth and a smaller KV footprint on two cards as well.
+
+## Implementation (r311, 2026-09-17, untested until the ckpt-1 campaign)
+
+The plan above assumed a separate commit launch. The implementation folds the commit into the next step instead, so
+no launch is added and the drafter (a full-attention layer, no recurrent state) is untouched:
+
+- **Kernel** ([patch r311](../patches/vllm-xpu-kernels-gdn-single-checkpoint-r311-20260917.patch), built by
+  [`build-kernels-0.1.14.1-r311-gdn-checkpoint.sh`](../docker/rebase-v0290/build-kernels-0.1.14.1-r311-gdn-checkpoint.sh)
+  into the R311 image, [`Dockerfile.r311-gdn-checkpoint`](../docker/rebase-v0290/Dockerfile.r311-gdn-checkpoint)).
+  `gated_delta_rule_spec_kernel` gets a second protocol selected by a non-null `stash` pointer: every column of the
+  slot table is the request's one block; the kernel loads that block, replays the first `num_accepted_tokens` rows of
+  the previous window's stashed `{q, k, v, b, a}` (the values exactly as the kernel loaded them then), writes the
+  block once (the commit), then runs the new window from registers without writing any state, and stashes the new
+  window's rows. Per-token arithmetic is one shared `step()`; the per-slot protocol and the no-MTP path are unchanged.
+  `stash_meta[block] = {parity, len}` selects the buffer to replay from and the new rows go to the other buffer, so no
+  work-group reads what another writes. A commit mode (1-D slot table, zero window tokens, `commit_mask`) replays for
+  requests leaving the speculative path. New op `gdn_attention_ckpt` = `gdn_attention` + `stash, stash_meta,
+  stash_rows, commit_num_accepted?, commit_mask?`; the old ops are untouched.
+- **Overlay** [`b70-gdn-checkpoint`](../overlays/b70-gdn-checkpoint/b70_gdn_checkpoint.py) (`B70_GDN_CHECKPOINT=1`,
+  active only with a speculative config): the Qwen3-Next Mamba spec gets `num_speculative_blocks = 0` and a third
+  in-page state, the stash `(2, K+1, 2*nk*hk + nv*hv + 2*nv)` in the model dtype (0.24 MiB per block per layer at
+  depth 5, against the 5 x 3.25 MiB it replaces); the GDN layer binds it and `forward_xpu` calls a registered custom
+  op `vllm.b70_gdn_attention_core_ckpt` that mirrors the image's split-mixed / spec-group dispatch with the new op;
+  the metadata builder widens column 0 of the block table to the active window width, attaches the non-spec rows'
+  accepted counts and `has_initial_state` as the commit inputs, and records the meta updates (spec rows: flip parity,
+  len = width; non-spec rows: len = 0). Those updates are applied at the first GDN layer of the next forward, i.e.
+  after every kernel of the step that recorded them and before any kernel that reads them.
+- **Bookkeeping cases:** first speculative step after a prefill (len 0, no replay); a freed block reused by a new
+  request (stale meta, but the first chunk has no initial state, so no commit, and its build zeroes len); chunked
+  prefill continuation (len 0); a decode without drafts after a speculative step (commit with that step's accepted
+  count; the stock path reads column 0 there, i.e. the state after the window's first token only).
+- **Gates:** [`run-20260917-fp8-ckpt1-campaign.py`](../scripts/run-20260917-fp8-ckpt1-campaign.py): one card at
+  24,576 (strict twice, ladder, 2K/8K/16K, chat quality, logprob replay vs the R310 no-MTP references), then 32,768 at
+  0.975 with the 30,720 probe, then the two-card service back.

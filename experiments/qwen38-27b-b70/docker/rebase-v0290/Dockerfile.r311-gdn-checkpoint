@@ -1,0 +1,8 @@
+# R311 (2026-09-17): R310 + kernel library rebuilt with vllm-xpu-kernels r311 (single-checkpoint speculative GDN
+# state: new op gdn_attention_ckpt; existing ops unchanged; build-kernels-0.1.14.1-r311-gdn-checkpoint.sh).
+# Python is unchanged; the protocol is enabled only by the b70-gdn-checkpoint overlay (B70_GDN_CHECKPOINT=1).
+ARG BASE=ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
+FROM ${BASE}
+COPY _xpu_C.abi3.so libgdn_attn_kernels_xe_2.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/
+RUN python -c "import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, 'gdn_attention_ckpt'); print('kernels import ok', torch.__version__)"
+LABEL neural.download.build.lane="qwen38-fp8-v0290-r311-gdn-checkpoint" neural.download.kernel.patch="onednn r137a+r137b+r221+r309 on 0e2a5bfe; vllm-xpu-kernels r310+r311"
