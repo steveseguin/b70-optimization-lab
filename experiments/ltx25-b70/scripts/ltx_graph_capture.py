@@ -754,6 +754,10 @@ def validate_patcher(patcher):
     if timer is not None:
         require(len(timer) == 1 and getattr(timer[0], '__name__', '') == 'timed_diffusion_model',
                 'Unexpected forward timer wrapper')
+    proof = diffusion_wrappers.pop('ltx_batch_proof', None)
+    if proof is not None:
+        require(len(proof) == 1 and getattr(proof[0], '__name__', '') == 'batch_proof_diffusion_model',
+                'Unexpected batch proof wrapper')
     wrappers[WrappersMP.DIFFUSION_MODEL] = diffusion_wrappers
     require(wrappers == {WrappersMP.DIFFUSION_MODEL: {KEY: [_forward_transfers]}},
             'Foreign model wrappers are unsupported')

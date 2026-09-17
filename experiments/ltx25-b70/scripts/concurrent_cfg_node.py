@@ -35,7 +35,7 @@ from comfy.patcher_extension import WrappersMP
 from encoder_diagnostics import _context
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-MODES = ('original', 'concurrent', 'timed', 'restored')
+MODES = ('original', 'concurrent', 'timed', 'batchproof', 'restored')
 KEY = 'ltx_concurrent_cfg'
 TIMER_KEY = 'ltx_forward_timer'
 _installed = None
@@ -43,6 +43,106 @@ _installed_mode = None
 _failed = False
 _stats = {'splits': 0, 'passthrough': 0, 'errors': 0}
 _forward_seconds = []      # diagnostic: synchronised wall time of each diffusion forward
+_batch_proofs = []         # diagnostic: batch-2 vs batch-1 row equality per forward
+PROOF_KEY = 'ltx_batch_proof'
+
+
+def _bits_equal(a, b):
+    if a.dtype in (torch.bfloat16, torch.float16):
+        return bool(torch.equal(a.view(torch.int16), b.view(torch.int16)))
+    if a.dtype == torch.float32:
+        return bool(torch.equal(a.view(torch.int32), b.view(torch.int32)))
+    return bool(torch.equal(a, b))
+
+
+def _perturb(t, generator):
+    """A second clip's worth of values: same dtype/shape, different content."""
+    if not t.is_floating_point():
+        return t
+    noise = torch.randn(t.shape, generator=generator, device='cpu').to(dtype=t.dtype, device=t.device)
+    return t + noise * 0.05
+
+
+def _compressed_timestep_class():
+    try:
+        from comfy.ldm.lightricks.av_model import CompressedTimestep
+        return CompressedTimestep
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _stack_rows(value, second):
+    """Batch-2 argument from two batch-1 arguments, recursively.
+
+    Dicts (transformer_options and its caches) are shared, not walked. LTX's
+    CompressedTimestep carries its batch in `.data` and is rebuilt.
+    """
+    CT = _compressed_timestep_class()
+    if isinstance(value, torch.Tensor):
+        if value.dim() >= 1 and value.shape[0] == 1:
+            return torch.cat([value, second], dim=0)
+        return value
+    if CT is not None and isinstance(value, CT):
+        return CT(_stack_rows(value.data, second.data), value.patches_per_frame, per_frame=True)
+    if isinstance(value, (list, tuple)):
+        out = [_stack_rows(v, s) for v, s in zip(value, second)]
+        return type(value)(out) if isinstance(value, tuple) else out
+    return value
+
+
+def _map_rows(value, fn):
+    CT = _compressed_timestep_class()
+    if isinstance(value, torch.Tensor):
+        return fn(value) if value.dim() >= 1 and value.shape[0] == 1 else value
+    if CT is not None and isinstance(value, CT):
+        return CT(_map_rows(value.data, fn), value.patches_per_frame, per_frame=True)
+    if isinstance(value, (list, tuple)):
+        out = [_map_rows(v, fn) for v in value]
+        return type(value)(out) if isinstance(value, tuple) else out
+    return value
+
+
+def _rows(value, index):
+    if isinstance(value, torch.Tensor):
+        return value[index:index + 1] if value.dim() >= 1 and value.shape[0] == 2 else value
+    if isinstance(value, (list, tuple)):
+        out = [_rows(v, index) for v in value]
+        return type(value)(out) if isinstance(value, tuple) else out
+    return value
+
+
+def batch_proof_diffusion_model(executor, *args, **kwargs):
+    """Diagnostic: is a batch-2 forward bitwise equal, row by row, to two batch-1 forwards?
+
+    Returns the ORIGINAL batch-1 result for the clip, so the clip stays exact.
+    The second row is a perturbed copy of every batch-1 tensor argument (x,
+    context, timesteps alike), so the two rows differ everywhere a real second
+    clip would. Only tensors with a leading batch dimension of 1 are stacked;
+    scalars, ints and unbatched tensors pass through unchanged.
+    """
+    original_out = executor(*args, **kwargs)
+    generator = torch.Generator(device='cpu')
+    generator.manual_seed(20260917)
+    second_args = _map_rows(list(args), lambda t: _perturb(t, generator))
+    second_kwargs = _map_rows(dict(kwargs), lambda t: _perturb(t, generator))
+    try:
+        second_out = executor(*second_args, **second_kwargs)
+        stacked_args = _stack_rows(list(args), second_args)
+        stacked_kwargs = _stack_rows(dict(kwargs), second_kwargs)
+        stacked_out = executor(*stacked_args, **stacked_kwargs)
+        rec = {'output_shape_batch1': list(original_out.shape), 'output_shape_batch2': list(stacked_out.shape)}
+        if stacked_out.shape[0] == 2 and stacked_out.shape[1:] == original_out.shape[1:]:
+            rec['row0_equals_batch1'] = _bits_equal(stacked_out[0:1], original_out)
+            rec['row1_equals_batch1'] = _bits_equal(stacked_out[1:2], second_out)
+            rec['row0_max_abs_diff'] = float((stacked_out[0:1].float() - original_out.float()).abs().max())
+            rec['row1_max_abs_diff'] = float((stacked_out[1:2].float() - second_out.float()).abs().max())
+        else:
+            rec['row0_equals_batch1'] = rec['row1_equals_batch1'] = None
+            rec['note'] = 'batch-2 output shape does not split into two batch-1 rows'
+    except BaseException as error:  # noqa: BLE001
+        rec = {'error': repr(error)[:400]}
+    _batch_proofs.append(rec)
+    return original_out
 
 
 def timed_diffusion_model(executor, *args, **kwargs):
@@ -118,8 +218,10 @@ def _uninstall(model):
     global _installed, _installed_mode
     if _installed_mode == 'concurrent':
         model.remove_wrappers_with_key(WrappersMP.CALC_COND_BATCH, KEY)
-    else:
+    elif _installed_mode == 'timed':
         model.remove_wrappers_with_key(WrappersMP.DIFFUSION_MODEL, TIMER_KEY)
+    else:
+        model.remove_wrappers_with_key(WrappersMP.DIFFUSION_MODEL, PROOF_KEY)
     _installed = None
     _installed_mode = None
 
@@ -174,7 +276,7 @@ class LTXConcurrentCFG:
                     require(_installed is model, 'A different model has the wrapper')
                     report['restored_from'] = _installed_mode
                     _uninstall(model)
-            elif mode in ('concurrent', 'timed'):
+            elif mode in ('concurrent', 'timed', 'batchproof'):
                 if _installed is not None and _installed_mode != mode:
                     require(_installed is model, 'A different model already has the wrapper')
                     _uninstall(model)
@@ -183,9 +285,12 @@ class LTXConcurrentCFG:
                     if mode == 'concurrent':
                         model.add_wrapper_with_key(
                             WrappersMP.CALC_COND_BATCH, KEY, concurrent_calc_cond_batch)
-                    else:
+                    elif mode == 'timed':
                         model.add_wrapper_with_key(
                             WrappersMP.DIFFUSION_MODEL, TIMER_KEY, timed_diffusion_model)
+                    else:
+                        model.add_wrapper_with_key(
+                            WrappersMP.DIFFUSION_MODEL, PROOF_KEY, batch_proof_diffusion_model)
                     _installed = model
                     _installed_mode = mode
                     report['installed_now'] = True
@@ -204,6 +309,14 @@ class LTXConcurrentCFG:
             # NEXT gate call (or the restore) carries the previous prompt's rows.
             report['forward_seconds_before_this_prompt'] = list(_forward_seconds)
             del _forward_seconds[:]
+            report['batch_proofs_before_this_prompt'] = list(_batch_proofs)
+            if _batch_proofs:
+                rows = [r for r in _batch_proofs if 'row0_equals_batch1' in r]
+                report['batch_proof_summary'] = {
+                    'forwards': len(_batch_proofs), 'errors': sum(1 for r in _batch_proofs if 'error' in r),
+                    'row0_all_equal': all(r['row0_equals_batch1'] for r in rows) if rows else None,
+                    'row1_all_equal': all(r['row1_equals_batch1'] for r in rows) if rows else None}
+            del _batch_proofs[:]
             report['stats'] = dict(_stats)
             report['passed'] = True
         finally:
