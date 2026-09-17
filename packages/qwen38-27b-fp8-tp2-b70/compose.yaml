@@ -1,10 +1,10 @@
 # GENERATED FILE - do not edit by hand.
 # Regenerate with: packages/qwen38-27b-fp8-tp2-b70/scripts/render-compose.sh
-# Source of truth: experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh
+# Source of truth: packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py
 # CI check:        tools/check-container-packet.py
 
 x-b70-common: &b70-common
-  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
+  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
   ulimits:
     core: 0
   mem_limit: 12g
@@ -22,6 +22,7 @@ x-b70-common: &b70-common
   volumes:
     - "${MODEL_DIR:?set MODEL_DIR to the verified Qwen/Qwen3.8-27B-FP8 directory}:/model:ro"
     - "${VLLM_CACHE_DIR:-./cache}:/root/.cache/vllm"
+    - "./overlays:/overlay:ro"
   healthcheck:
     test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status==200 else 1)"]
     interval: 30s
@@ -29,6 +30,7 @@ x-b70-common: &b70-common
     retries: 40
     start_period: 300s
   environment:
+    B70_FA_VERIFY_ROWS: "1"
     CCL_ATL_TRANSPORT: "ofi"
     CCL_RECV: "direct"
     CCL_SEND: "direct"
@@ -41,6 +43,7 @@ x-b70-common: &b70-common
     FI_TCP_IFACE: "lo"
     ONEAPI_DEVICE_SELECTOR: "level_zero:0,1"
     PYTHONHASHSEED: "0"
+    PYTHONPATH: "/overlay"
     PYTORCH_ALLOC_CONF: "expandable_segments:True"
     TORCHINDUCTOR_DETERMINISTIC: "1"
     VLLM_BATCH_INVARIANT: "0"
@@ -58,6 +61,7 @@ x-b70-common: &b70-common
     VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS: "2048"
     VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE: "128"
     VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE: "bf16"
+    VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST: "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt"
     VLLM_XPU_ENABLE_XPU_GRAPH: "0"
     VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
     VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"
@@ -109,11 +113,12 @@ x-b70-common: &b70-common
 services:
   two-gpu:
     <<: *b70-common
-    # two B70s; measured profile, MTP depth 1 with the draft INT4 head and full decode-only graph capture.
+    # two B70s; measured profile, MTP depth 5 with the draft-only INT4 shortlist head and decode-identical verifier rows (XPU graphs off).
     container_name: ${CONTAINER_NAME:-qwen38-27b-fp8-two-gpu}
     ports:
       - "127.0.0.1:${PORT:-18131}:8000"
     environment:
+      B70_FA_VERIFY_ROWS: "1"
       CCL_ATL_TRANSPORT: "ofi"
       CCL_RECV: "direct"
       CCL_SEND: "direct"
@@ -126,6 +131,7 @@ services:
       FI_TCP_IFACE: "lo"
       ONEAPI_DEVICE_SELECTOR: "level_zero:0,1"
       PYTHONHASHSEED: "0"
+      PYTHONPATH: "/overlay"
       PYTORCH_ALLOC_CONF: "expandable_segments:True"
       TORCHINDUCTOR_DETERMINISTIC: "1"
       VLLM_BATCH_INVARIANT: "0"
@@ -143,6 +149,7 @@ services:
       VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS: "2048"
       VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE: "128"
       VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE: "bf16"
+      VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST: "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt"
       VLLM_XPU_ENABLE_XPU_GRAPH: "0"
       VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
       VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"
@@ -222,6 +229,6 @@ services:
       - "--enable-prompt-tokens-details"
       - "--language-model-only"
       - "--speculative-config"
-      - "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":1}"
+      - "{\"method\": \"qwen3_next_mtp\", \"num_speculative_tokens\": 5}"
       - "--compilation-config"
       - "{\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[1],\"max_cudagraph_capture_size\":1,\"splitting_ops\":[],\"inductor_compile_config\":{\"combo_kernels\":false,\"benchmark_combo_kernel\":false,\"deterministic\":true,\"triton.autotune_pointwise\":false,\"benchmark_epilogue_fusion\":false}}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Own one single-B70 official-FP8 research server; fault and host-memory monitored; no retries.
+"""Own one official-FP8 research server (one B70, or the qualified two-card topology with --tp 2); fault and host-memory monitored; no retries.
 
 Environment and command come from the qualified R304 TP2 container recorded on
 2026-09-15 (restored-service/container-inspect.json). Only these change: one
@@ -73,8 +73,12 @@ def reference(image_env):
 
 def build(args, name, out, image_env):
     env, cmd = reference(image_env)
-    env.update(ZE_AFFINITY_MASK=str(args.gpu), ONEAPI_DEVICE_SELECTOR='level_zero:0',
-               VLLM_XPU_DRAFT_LM_HEAD_INT4='1' if args.draft_int4 else '0')
+    if args.tp == 2:
+        # Both cards, exactly as the qualified two-card record: the reference env already names both devices.
+        env.update(ZE_AFFINITY_MASK='0,1', ONEAPI_DEVICE_SELECTOR='level_zero:0,1')
+    else:
+        env.update(ZE_AFFINITY_MASK=str(args.gpu), ONEAPI_DEVICE_SELECTOR='level_zero:0')
+    env.update(VLLM_XPU_DRAFT_LM_HEAD_INT4='1' if args.draft_int4 else '0')
     if args.shortlist:
         env['VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST'] = args.shortlist
     if args.draft_fp16_shortlist:
@@ -82,7 +86,7 @@ def build(args, name, out, image_env):
             raise RuntimeError('--draft-fp16-shortlist replaces --draft-int4/--shortlist')
         # The proposer only calls the draft-copy hook when this variable is set; the overlay builds no INT4 buffers.
         env.update(VLLM_XPU_DRAFT_LM_HEAD_INT4='1', B70_DRAFT_FP16_SHORTLIST=args.draft_fp16_shortlist)
-    set_flag(cmd, '--tensor-parallel-size', '1')
+    set_flag(cmd, '--tensor-parallel-size', str(args.tp))
     set_flag(cmd, '--gpu-memory-utilization', str(args.mem))
     set_flag(cmd, '--max-model-len', str(args.max_model_len))
     set_flag(cmd, '--max-num-batched-tokens', str(args.batched))
@@ -130,6 +134,7 @@ def main():
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--port', type=int, default=18132)
     ap.add_argument('--gpu', type=int, default=0, choices=(0, 1))
+    ap.add_argument('--tp', type=int, default=1, choices=(1, 2), help='cards (2 = the qualified two-card topology)')
     ap.add_argument('--mem', type=float, default=0.95)
     ap.add_argument('--max-model-len', type=int, default=8448)
     ap.add_argument('--batched', type=int, default=4096)
@@ -154,6 +159,8 @@ def main():
     out = a.out.resolve()
     if out.exists() or (out.parent / 'FAULT.json').exists():
         raise RuntimeError('Output must be new and the campaign must not be fault-latched')
+    if a.tp == 2 and a.cpu_embed:
+        raise RuntimeError('--cpu-embed is a one-card overlay')
     if not 0.5 <= a.mem <= 0.975:
         raise RuntimeError('Memory utilization must stay within 0.5-0.975')
     helper = load('fp8_tp1_helper', HELPER)

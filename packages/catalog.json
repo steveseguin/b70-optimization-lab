@@ -5266,7 +5266,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead.",
+        "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -5299,7 +5299,7 @@
           "scope": "Median of two fresh R310 servers (53.576 / 53.454) at a 16,384-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-one-card-followups/fp8-tp1-67-r310-mtp5-16k-repeat-strict-performance.json"
         },
-        "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead."
+        "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one."
       },
       "contributors": [
         {
@@ -5650,7 +5650,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, fixed MTP depth 1, and 33,024 total tokens (32K input plus 256 tokens for an answer). A public-source replay passed 12 reference-output checks and six practical conversation, coding, and document requests, followed by a clean stop. The package quickstart provides one persistent start, status, and stop path.",
+        "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head, 33,024 total tokens (a 32K input plus 256 for the answer), 88.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -5671,24 +5671,21 @@
           "two cards",
           "Docker",
           "official checkpoint",
-          "target only",
-          "MTP0",
-          "MTP1",
-          "dynamic MTP8 to MTP1",
-          "W8A16",
-          "row-invariant W8A16",
-          "mixed-step GDN split"
+          "MTP depth 5",
+          "lossless",
+          "deterministic",
+          "32K input"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "The recommended 32K-input setup measured 54.88 output tokens/s in its September 16 public-source replay; all 12 complete outputs matched the qualified reference. Six practical requests passed with exact repeated text and token arrays, and cache zero. The featured 86.18 tokens/s record is an older MTP depth-5 configuration. Prefill tests retain their separate capacity labels. Independent-host driver installation and prolonged use remain untested.",
+        "benchmark_status": "September 16 review campaign on the R310 runtime: depth 5 measured 88.32 tok/s on a fresh server, 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; depths 3 and 4 and the depth-1 profile (54.90 tok/s) passed the same gates. The public-source acceptance replay of this launcher, the second fresh server, is pending; the featured rate is one fresh server until it lands. Clean-host install and multiple users are untested.",
         "featured_metric": {
-          "value": 86.18172184524545,
+          "value": 88.320170008887,
           "unit": "tok/s",
-          "label": "Historical writing speed · MTP depth 5",
-          "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-configuration MTP0 oracle (depth-5 target-verified speculative decoding; MTP1 54.935, depth 4 82.396, MTP0 33.097 on the same line), canaries before and after, cache zero; repeat-exact at 100-300-token prompts; output-identical through 16 concurrent users (MTP0: through 64).",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r200-whole-graph-depth5-strict-result.json"
+          "label": "Writing speed · MTP depth 5 · two cards",
+          "scope": "One fresh R310 two-card server (88.320) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.04 tok/s on the same image), 64/64 on the sequential oracle.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-strict-performance.json"
         },
-        "public_summary": "Recommended: two B70s, one user, MTP1, and room for a 32K-token input plus a 256-token answer. The public-source replay passed 12 reference-output checks and six practical requests, with a writing speed of 54.88 tokens/s. Historical writing speed shown below uses an older five-token draft configuration. Open the guide for the tested start, status, and stop commands."
+        "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head, 33,024 total tokens (a 32K input plus 256 for the answer), 88.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
       },
       "contributors": [
         {
@@ -5726,62 +5723,36 @@
       },
       "runtime": {
         "kind": "container",
-        "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
-        "overlay_image_id_validated": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
-        "mtp1_overlay_image_id_validated": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
-        "dynamic_mtp_overlay_image_id_validated": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
-        "deterministic_eager_overlay_image_id_validated": "sha256:47507a8ca2a78e83666a6f300ec94c5b5c5915740f147bf9d1565c938de8f25b",
-        "deterministic_compiled_overlay_image_id_validated": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
-        "deterministic_mtp1_overlay_image_id_validated": "sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b",
-        "qualified_mtp1_overlay_image_id_validated": "sha256:2932e495b560e79c6301f5cc64584af928a2260f0d0d19c145142b2ef35860d3",
-        "clean_rebuild_mtp1_overlay_image_id_validated": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
-        "qualified_r62_overlay_image_id_validated": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
-        "overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
-        "deterministic_eager_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-eager-image.sh",
-        "deterministic_compiled_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh",
-        "deterministic_mtp1_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
-        "qualified_r62_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-draft-int4-r62-image.sh",
-        "dynamic_mtp_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh",
-        "image_id_validated": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
-        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304",
-        "xpu_extension_sha256": "bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932",
-        "xpu_ops_sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
-        "vllm": "0.29.0 (stock vllm/vllm-openai-xpu@sha256:96db42e2)",
-        "kernel_head": "6d92b1bfbf32767ecda8e819613eb151e70030ad",
-        "onednn_head": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
-        "base": "R304 (2026-09-13): the R294b stack rebased onto stock vLLM XPU v0.29.0 - draft-only INT4 lm_head + R256 + R294 shortlist, R213b pad op, R224+R290-R293 class-consistent FP16 linear (CLASSPAD), R156/R228/R276 GDN split-mixed + grouping, packed-serial-exact Gemma RMSNorm - kernel library rebuilt from public sources (vllm-xpu-kernels 0.1.14.1 with upstream GDN fix #544; oneDNN 0e2a5bfe + r137a + r137b + r221) plus open upstream vLLM fixes #53059 (uniform-decode alias guard), #51565 (GDN first-chunk classification), #53542 (active runtime-K width). Fixes two failures live on the previous image: every one-token prompt and every (1+K)-token prompt at depth K degenerated into single-character walls. Served with VLLM_USE_V2_MODEL_RUNNER=0. The FP8 lane's R187 profile (whole-graph piecewise compile, block W8A16, GDN split-mixed, MTP depth 1) needs only oneDNN r137a/r137b from the library, which R304 carries."
+        "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+        "image_build": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r310-gdn-barriers",
+        "base": "R310 = R304 (the R294b stack rebased onto stock vLLM XPU v0.29.0; public closure chains.r304 in repro/qwen38-27b-autoround-int4-b70/publication-manifest.json) plus the oneDNN r309 one-card fixed-K shapes and the vllm-xpu-kernels r310 GDN output fences. Python unchanged.",
+        "previous_image_r304": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+        "historical_image_ids": {
+          "overlay_image_id_validated": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+          "mtp1_overlay_image_id_validated": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+          "dynamic_mtp_overlay_image_id_validated": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+          "deterministic_eager_overlay_image_id_validated": "sha256:47507a8ca2a78e83666a6f300ec94c5b5c5915740f147bf9d1565c938de8f25b",
+          "deterministic_compiled_overlay_image_id_validated": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+          "deterministic_mtp1_overlay_image_id_validated": "sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b",
+          "qualified_mtp1_overlay_image_id_validated": "sha256:2932e495b560e79c6301f5cc64584af928a2260f0d0d19c145142b2ef35860d3",
+          "clean_rebuild_mtp1_overlay_image_id_validated": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+          "qualified_r62_overlay_image_id_validated": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+          "image_id_validated": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2"
+        }
       },
       "project_patches": {
         "required": true,
         "items": [
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r301-v0290-rebase",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r302-alias-guard",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r303-gdn-phase-fix",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r304-gdn-active-width",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-clean-clone.sh",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/base-workspace.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-xpu_ops.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-utils.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-vocab.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-proposer.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-mpxpu.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-gdnattn.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-comm.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-scaledmm.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/r302-uniform-decode-alias-guard-pr53059.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/r303-gdn-first-chunk-classification-pr51565.diff",
-          "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch"
-        ],
-        "reason": "The qualified R187 profile is the R156 profile served with one whole-graph torch.compile (COMPILATION_CONFIG splitting_ops=[]; on the piecewise split at the attention/GDN ops MTP depth 2 emitted a phantom first token on one request in 64, which no whole-graph pass has shown; the cause is an unfixed upstream defect also seen on the unmodified image, R182-R194). R156 is the R62 image plus a Python mixed-step GDN split (vllm/_xpu_ops.py, VLLM_XPU_GDN_SPLIT_MIXED=1) and a rebuilt vllm-xpu-kernels extension whose oneDNN W8A16 GEMM uses a fixed-K row-invariant strategy selector (two oneDNN patches), so greedy output no longer depends on batch shape for batch sizes 1-512 and is repeat-exact at every prompt length. Everything else is the R62 chain: block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, the deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection with an FP16 target verifier. The compiled extension is published as a release binary with whole-file and section digests, and can be rebuilt from the pinned sources with host oneAPI 2026.1. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
+          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-tp1-shapes-r309-20260915.patch",
+          "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch",
+          "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py"
+        ]
       },
       "commands": {
-        "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
-        "launch": "python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/fp8-session --port 18124",
+        "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+        "launch": "python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/fp8-session",
         "health": "python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /absolute/path/fp8-session",
-        "benchmark": "BASE_URL=http://127.0.0.1:18124 OUT_DIR=/absolute/path/new-strict-attempt MODEL_NAME=qwen38-27b-fp8 PROFILE_LABEL=recommended-fp8-mtp1-32k repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "benchmark": "BASE_URL=http://127.0.0.1:18124 OUT_DIR=/absolute/path/new-strict-attempt MODEL_NAME=qwen38-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
         "stop": "python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /absolute/path/fp8-session"
       },
       "dependencies": [
@@ -6205,9 +6176,184 @@
         "experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md",
         "experiments/qwen38-27b-b70/data/2026-09-14-mtp-lossless-transfer/summary.json",
         "experiments/qwen38-27b-b70/data/2026-09-14-mtp-lossless-transfer/manifest.json",
-        "experiments/qwen38-27b-b70/data/2026-09-14-mtp-lossless-transfer/evidence-01.tar.gz"
+        "experiments/qwen38-27b-b70/data/2026-09-14-mtp-lossless-transfer/evidence-01.tar.gz",
+        "packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py",
+        "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md",
+        "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-campaign-prereg.md",
+        "experiments/qwen38-27b-b70/scripts/run-20260916-fp8-review-campaign.py",
+        "experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py",
+        "experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py",
+        "experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+        "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-tp1-shapes-r309-20260915.patch",
+        "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r310-gdn-barriers",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r310-gdn-barriers.sh",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/results.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-strict-vs-reference.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-context-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-ladder-vs-mtp0.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-quality.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp0-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp0-strict-vs-reference.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp0-context-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp0-ladder.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp4-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp3-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp1-shortlist-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp1-control-strict-performance.json"
       ],
       "performance_profiles": [
+        {
+          "id": "r310-decode-vs-context-tp2-mtp5",
+          "label": "Writing speed after the prompt · MTP depth 5 · INT4 draft shortlist",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-context-summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 87.957,
+              "samples": 6
+            },
+            {
+              "context_tokens": 8192,
+              "value": 114.013,
+              "samples": 6
+            },
+            {
+              "context_tokens": 16384,
+              "value": 96.292,
+              "samples": 6
+            }
+          ],
+          "public_label": "Writing speed after the prompt · recommended (MTP depth 5)"
+        },
+        {
+          "id": "r310-prefill-vs-context-tp2-mtp5",
+          "label": "Prompt reading speed · MTP depth 5 · INT4 draft shortlist",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Prompt reading is input tokens divided by server prefill time from the vLLM histogram.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-context-summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 3642.1,
+              "samples": 6
+            },
+            {
+              "context_tokens": 8192,
+              "value": 3436.1,
+              "samples": 6
+            },
+            {
+              "context_tokens": 16384,
+              "value": 3282.2,
+              "samples": 6
+            }
+          ],
+          "public_label": "Prompt reading speed · recommended (MTP depth 5)"
+        },
+        {
+          "id": "r310-decode-vs-context-tp2-mtp0",
+          "label": "Writing speed after the prompt · No MTP",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp0-context-summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 32.71,
+              "samples": 6
+            },
+            {
+              "context_tokens": 8192,
+              "value": 31.752,
+              "samples": 6
+            },
+            {
+              "context_tokens": 16384,
+              "value": 31.028,
+              "samples": 6
+            }
+          ],
+          "public_label": "Writing speed after the prompt · no MTP"
+        },
+        {
+          "id": "r310-prefill-vs-context-tp2-mtp0",
+          "label": "Prompt reading speed · No MTP",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_metric": "context_tokens",
+          "x_label": "Input tokens",
+          "scope": "Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, 33,024-token context. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Prompt reading is input tokens divided by server prefill time from the vLLM histogram.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp0-context-summary.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 3762.8,
+              "samples": 6
+            },
+            {
+              "context_tokens": 8192,
+              "value": 3535.1,
+              "samples": 6
+            },
+            {
+              "context_tokens": 16384,
+              "value": 3384.0,
+              "samples": 6
+            }
+          ],
+          "public_label": "Prompt reading speed · no MTP"
+        },
+        {
+          "id": "r310-decode-vs-mtp-depth",
+          "label": "Writing speed by MTP depth · INT4 draft shortlist",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_metric": "speculative_tokens",
+          "x_label": "MTP draft tokens",
+          "scope": "Strict 12-prompt suite (512-token answers, class-balanced median of tokens 1-100) on fresh R310 two-card servers in one session, 33,024-token context; every depth 12/12 identical to no MTP and 64/64 on the sequential oracle. Depth 1 here uses the draft shortlist; the depth-1 control without it is in results.json.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/results.json",
+          "points": [
+            {
+              "speculative_tokens": 0,
+              "value": 33.035,
+              "samples": 1
+            },
+            {
+              "speculative_tokens": 1,
+              "value": 55.253,
+              "samples": 1
+            },
+            {
+              "speculative_tokens": 3,
+              "value": 80.435,
+              "samples": 1
+            },
+            {
+              "speculative_tokens": 4,
+              "value": 83.968,
+              "samples": 1
+            },
+            {
+              "speculative_tokens": 5,
+              "value": 88.32,
+              "samples": 1
+            }
+          ],
+          "public_label": "Writing speed by MTP depth (strict suite)"
+        },
         {
           "id": "http-r156-mtp1-identity-qualified-aggregate-vs-concurrent-users",
           "label": "R187 FP8 TP2 MTP1 identity-qualified aggregate decode vs concurrent users (c1-c16)",
@@ -7066,21 +7212,27 @@
       },
       "recommended_setup": {
         "cards": 2,
-        "mtp_depth": 1,
+        "mtp_depth": 5,
+        "draft_shortlist": "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt",
         "max_model_len": 33024,
         "max_num_batched_tokens": 4096,
         "max_num_seqs": 1,
         "prefix_caching": false,
-        "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+        "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
         "launcher": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
-        "public_source_commit": "3bcfc8b230d18c42c9092352714a2afee8263f18",
-        "acceptance_status": "passed-on-configured-lab-host",
+        "acceptance_status": "pending-acceptance-replay",
         "clean_host_tested": false,
-        "evidence": "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md",
-        "source_data": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json",
-        "evidence_manifest": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/manifest.json",
-        "strict_single_replay_decode_tokens_s": 54.87921753088091,
-        "speed_promotion": false
+        "evidence": "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md",
+        "strict_pair_decode_tokens_s": [
+          88.320170008887
+        ],
+        "no_mtp_decode_tokens_s": 33.03516454010384,
+        "depth1_decode_tokens_s": 54.89813975243729,
+        "previous_recipe": {
+          "mtp_depth": 1,
+          "profile": "depth-1",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json"
+        }
       }
     },
     {

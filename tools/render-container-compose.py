@@ -12,6 +12,7 @@ usage: render-container-compose.py ONE_GPU_ARGV TWO_GPU_ARGV OUT_YAML IMAGE_DIGE
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -105,6 +106,9 @@ def main() -> int:
     lines.append("  volumes:")
     lines.append(f'    - "${{MODEL_DIR:?set MODEL_DIR to the verified {model_desc} directory}}:/model:ro"')
     lines.append('    - "${VLLM_CACHE_DIR:-./cache}:/root/.cache/vllm"')
+    # A packet whose launcher mounts pure-Python overlay plugins (PYTHONPATH=/overlay) ships them next to compose.yaml.
+    if os.environ.get("OVERLAY_VOLUME"):
+        lines.append(f'    - {yaml_scalar(os.environ["OVERLAY_VOLUME"])}')
     lines.append("  healthcheck:")
     lines.append('    test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(\'http://127.0.0.1:8000/health\', timeout=5).status==200 else 1)"]')
     lines.append("    interval: 30s")
@@ -118,7 +122,8 @@ def main() -> int:
     for name, env, serve, cards in profiles:
         lines.append(f"  {name}:")
         lines.append("    <<: *b70-common")
-        lines.append(f"    # {cards}; measured profile, MTP depth {depth} with the draft INT4 head and full decode-only graph capture.")
+        lines.append(f"    # {cards}; measured profile, MTP depth {depth}"
+                     + (f" {os.environ['PROFILE_NOTE']}" if os.environ.get("PROFILE_NOTE") else " with the draft INT4 head and full decode-only graph capture.") )
         lines.append(f"    container_name: ${{CONTAINER_NAME:-{served_prefix}-{name}}}")
         lines.append("    ports:")
         lines.append(f'      - "127.0.0.1:${{PORT:-18131}}:8000"')

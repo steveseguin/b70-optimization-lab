@@ -339,11 +339,11 @@
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span></div>
 </a><a class="packet-card" href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b></span></div>
-  <h3 title="Qwen3.8 FP8 · TP2">Qwen3.8 FP8 · TP2</h3>
-  <p class="packet-promise">Reproduce <b>86.18 tok/s</b> on 2× B70 · candidate package</p>
-  <small class="packet-workload">Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-configuration MTP0 oracle (depth-5 target-verified speculative decoding; MTP1 54.935, depth 4 82.396, MTP0 33.097 on the same line), canaries before and after, cache zero; repeat-exact at 100-300-token prompts; output-identical through 16 concurrent users (MTP0: through 64).</small>
+  <h3 title="Qwen3.8 FP8 · two cards · MTP depth 5">Qwen3.8 FP8 · two cards · MTP depth 5</h3>
+  <p class="packet-promise">Reproduce <b>88.32 tok/s</b> on 2× B70 · candidate package</p>
+  <small class="packet-workload">One fresh R310 two-card server (88.320) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.04 tok/s on the same image), 64/64 on the sequential oracle.</small>
   <div class="grade-rail"></div>
-  <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span><span>queued latency</span></div>
+  <div class="coverage-rail"><span>MTP depth 5</span><span>outputs identical to no MTP</span><span>33,024-token context</span><span>prefill 2K-16K</span><span>F16 KV</span><span>one user</span><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span><span>queued latency</span></div>
 </a><a class="packet-card" href="qwen38-27b-autoround-int4-b70.html">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Qwen3.8 AutoRound INT4 · fixed-K · TP2 MTP4">Qwen3.8 AutoRound INT4 · fixed-K · TP2 MTP4</h3>

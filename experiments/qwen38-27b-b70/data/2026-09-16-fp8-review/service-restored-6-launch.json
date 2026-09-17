@@ -1,0 +1,30 @@
+{
+  "argv": [
+    "bash",
+    "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh"
+  ],
+  "environment": {
+    "IMAGE": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+    "EXPECTED_IMAGE_ID": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+    "EXPECTED_KERNEL_HEAD": "6d92b1bfbf32767ecda8e819613eb151e70030ad",
+    "EXPECTED_XPU_EXTENSION_SHA256": "bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932",
+    "EXPECTED_XPU_OPS_SHA256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
+    "MODEL_DIR": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8",
+    "VLLM_CACHE_DIR": "/mnt/fast-ai/bench-results/fp8-review-20260916/service-restored-6/cache",
+    "PORT": "18124",
+    "CONTAINER_NAME": "neural-fp8-a256ae6ee70b420bb69a147a5b0eaad1",
+    "SERVED_MODEL_NAME": "qwen38-27b-fp8",
+    "TENSOR_PARALLEL_SIZE": "2",
+    "XPU_DEVICE_MASK": "0,1",
+    "MAX_MODEL_LEN": "33024",
+    "MAX_NUM_SEQS": "1",
+    "MAX_NUM_BATCHED_TOKENS": "4096",
+    "GPU_MEMORY_UTILIZATION": "0.95",
+    "CONTAINER_MEMORY": "12g",
+    "CONTAINER_MEMORY_SWAP": "16g",
+    "VLLM_USE_V2_MODEL_RUNNER": "0",
+    "VLLM_XPU_FP16_LINEAR_CLASSPAD": "0",
+    "VLLM_XPU_FP16_LINEAR_ROWCHUNK": "32",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "0"
+  }
+}

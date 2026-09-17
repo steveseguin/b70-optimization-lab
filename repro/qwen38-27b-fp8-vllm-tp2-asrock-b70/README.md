@@ -1,6 +1,57 @@
 # Reproduce official Qwen3.8 27B FP8 TP2 on two B70s
 
-## Recommended one-user setup
+> **Status: `candidate-portable-repro`.** Built, launched and measured on the lab host from the files below. The
+> September 17 depth-5 recipe below is the recommended setup; the public-source acceptance replay of its package
+> launcher is produced by [run-fp8-tp2-acceptance-session.py](../../experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py)
+> and frozen by [collect-fp8-tp2-acceptance-evidence.py](../../experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py) once it has run. A machine without Intel drivers, Docker or the model in place is still untested.
+
+Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp2-b70/README.md).
+
+## Recommended: MTP depth 5 on the R310 runtime (September 2026)
+
+Two B70s, official FP8 weights, FP16 activations and KV cache, one user, prompt caching off, 33,024-token context.
+Writing speed is the lab's strict 12-prompt suite. Prefill is server-side prompt reading. All measured in one
+session on September 16, 2026 ([review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md),
+[receipts](../../experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/)); every row is 12/12 identical to the no-MTP
+server on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K
+prompts and on the chat quality suite.
+
+| MTP depth (INT4 draft shortlist) | Writing speed | Prompt reading 2K / 8K / 16K | Writing after 2K / 8K / 16K input |
+| --- | ---: | --- | --- |
+| 5 (`recommended`) | **88.32** | 3,642 / 3,436 / 3,282 | 88.0 / 114.0 / 96.3 |
+| 4 | 83.97 | | |
+| 3 | 80.44 | | |
+| 1 with the shortlist | 55.25 | | |
+| 1 without it (`depth-1`, the September 14 recipe) | 54.90 | 3,763 / 3,535 / 3,384 (no MTP) | |
+| No MTP (reference) | 33.04 | 3,763 / 3,535 / 3,384 | 32.7 / 31.8 / 31.0 |
+
+All speeds are tokens/s. The depth-5 rate is one fresh server; the second (the package acceptance replay) completes
+the pair required for a headline.
+
+**Why it is exact now.** The September 3 depth-2 campaign on the R156 image found a phantom first token on one
+request in 64 under async scheduling and froze the recipe at depth 1. The lane has since moved to vLLM 0.29 (R304)
+and gained three one-card fixes that also serve two cards: the oneDNN fixed-K W8A16 shapes for one-card rows
+(r309), global memory fences in the chunked GDN output kernel (R310), and decode-identical verifier attention rows
+above 1,536 keys ([b70_fa_verify_rows.py](../../packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py)).
+On R310 the no-MTP two-card server matches the frozen R304 control 12/12, and depths 3, 4 and 5 pass every gate
+above. The runtime image is the one-card package's R310 image; build it from public sources with the steps in the
+[one-card recipe](../qwen38-27b-fp8-vllm-tp1-b70/README.md#build-the-runtime-image-yourself).
+
+Launch and measure:
+
+```bash
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/session
+OUT_DIR=/path/strict BASE_URL=http://127.0.0.1:18124 MODEL_NAME=qwen38-27b-fp8 \
+  bash repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+python3 scripts/bench-openai-concurrency-oracle.py --base-url http://127.0.0.1:18124 --model qwen38-27b-fp8 \
+  --api-mode completions --suite experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json \
+  --concurrency 64 --repeats 2 --max-tokens 128 --seed 42 --return-token-ids --out /path/ladder.json
+python3 experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py /path/ladder.json /path/no-mtp-ladder.json
+```
+
+## Historical: the September 14 depth-1 recipe and older records
+
+### The September 14 one-user setup (depth 1)
 
 Use the [FP8 package quickstart](../../packages/qwen38-27b-fp8-tp2-b70/README.md)
 for the current digest-pinned runtime, one user, fixed MTP1, 33,024-token total

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Qwen3.8 27B official FP8 on one Intel Arc Pro B70 — 53.5 tok/s measured — neural.download</title>
-<meta name="description" content="Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead.">
+<meta name="description" content="Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.">
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html">
 <meta property="og:title" content="Qwen3.8 27B official FP8 on one Intel Arc Pro B70 — 53.5 tok/s measured">
-<meta property="og:description" content="Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead.">
+<meta property="og:description" content="Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.">
 <meta property="og:image" content="https://neural.download/models/cards/qwen38-27b-fp8-vllm-tp1-b70.png">
 <meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen38-27b-fp8-vllm-tp1-b70.png">
 <meta property="og:image:type" content="image/png">
@@ -28,11 +28,11 @@
 <meta name="twitter:creator" content="@xyster">
 <meta name="twitter:url" content="https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html">
 <meta name="twitter:title" content="Qwen3.8 27B official FP8 on one Intel Arc Pro B70 — 53.5 tok/s measured">
-<meta name="twitter:description" content="Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead.">
+<meta name="twitter:description" content="Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.">
 <meta name="twitter:image" content="https://neural.download/models/cards/qwen38-27b-fp8-vllm-tp1-b70.png">
 <meta name="twitter:image:alt" content="Qwen3.8 27B official FP8 on one Intel Arc Pro B70: 53.5 tok/s measured on Intel Arc Pro B70 — neural.download">
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B official FP8 on one Intel Arc Pro B70", "description": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead. Measured 53.5 tok/s Writing speed · MTP depth 5 · one card on 1× Intel Arc Pro B70 32 GiB with vLLM XPU (FP8). Exact pins, patches, and proof; no unmatched projection is implied.", "url": "https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html", "dateModified": "2026-09-15", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B official FP8 on one Intel Arc Pro B70", "description": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one. Measured 53.5 tok/s Writing speed · MTP depth 5 · one card on 1× Intel Arc Pro B70 32 GiB with vLLM XPU (FP8). Exact pins, patches, and proof; no unmatched projection is implied.", "url": "https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html", "dateModified": "2026-09-15", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
 </script>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Qwen 27B · 3.6 → 3.8", "item": "https://neural.download/models/qwen-27b.html"}, {"@type": "ListItem", "position": 4, "name": "Qwen3.8 27B official FP8 on one Intel Arc Pro B70", "item": "https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html"}]}
@@ -120,7 +120,7 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="qwen-27b.html">Qwen 27B · 3.6 → 3.8</a> / 27B official FP8</p>
   <p class="eyebrow">Candidate package · vLLM XPU · 1× Intel Arc Pro B70</p>
   <h1>Qwen3.8 27B official FP8 on one Intel Arc Pro B70</h1>
-  <p>Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead.</p>
+  <p>Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page">

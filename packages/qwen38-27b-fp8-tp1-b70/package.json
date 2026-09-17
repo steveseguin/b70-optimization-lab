@@ -10,7 +10,7 @@
   "model_family": "Qwen3.8",
   "publisher": "Alibaba / Qwen",
   "variant": "27B official FP8",
-  "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead.",
+  "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.",
   "quantization": "FP8",
   "runtime_label": "vLLM XPU",
   "operating_systems": [
@@ -43,7 +43,7 @@
    "scope": "Median of two fresh R310 servers (53.576 / 53.454) at a 16,384-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding.",
    "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-one-card-followups/fp8-tp1-67-r310-mtp5-16k-repeat-strict-performance.json"
   },
-  "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 13,824 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy instead."
+  "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 16,384 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one."
  },
  "contributors": [
   {

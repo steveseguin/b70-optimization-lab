@@ -147,8 +147,20 @@ def inspect_container(identity):
 
 def owned(record, container):
     if (container['Id'] != record['container_id'] or container['Name'].lstrip('/') != record['container_name']
-            or container['Image'] != IMAGE_ID):
+            or container['Image'] != record.get('local_image_id', IMAGE_ID)):
         raise RuntimeError('Container ownership or image does not match the saved receipt; refusing action.')
+
+
+def local_image_id():
+    """The pulled image's local ID. Docker's containerd store names it by the registry digest; the classic store names
+    it by the config digest and lists the registry digest under RepoDigests. Both are the same pinned image."""
+    result = run(['docker', 'image', 'inspect', IMAGE], check=False)
+    if result.returncode:
+        raise RuntimeError(f'Pull the pinned runtime first: docker pull {IMAGE}')
+    image = json.loads(result.stdout)[0]
+    if image['Id'] == IMAGE_ID or any(str(digest).endswith('@' + IMAGE_ID) for digest in image.get('RepoDigests') or []):
+        return image['Id']
+    raise RuntimeError(f'The local image is not the pinned runtime; pull it again: docker pull {IMAGE}')
 
 
 def read_record(state):
@@ -266,14 +278,12 @@ def start(args):
     check_available(args.port, name, args.gpu)
     since = now()
     journal(since)
-    image = run(['docker', 'image', 'inspect', IMAGE, '--format', '{{.Id}}'], check=False)
-    if image.returncode or image.stdout.strip() != IMAGE_ID:
-        raise RuntimeError(f'Pull the pinned runtime first: docker pull {IMAGE}')
+    image_id = local_image_id()
     state.mkdir(parents=True, exist_ok=False)
     (state / 'cache').mkdir()
     shutil.copytree(PACKAGE / 'overlays', state / 'overlay', ignore=shutil.ignore_patterns('__pycache__'))
     record = {'schema': 'neural.download.fp8-tp1-serving-state.v1', 'started_at': since, 'owner_pid': os.getpid(),
-              'container_name': name, 'container_id': None, 'image_id': IMAGE_ID, 'model': MODEL,
+              'container_name': name, 'container_id': None, 'image_id': IMAGE_ID, 'local_image_id': image_id, 'model': MODEL,
               'profile': args.profile, 'model_dir': str(model), 'state_dir': str(state), 'port': args.port,
               'status': 'starting'}
     write_json(state / 'state.json', record)

@@ -1,121 +1,73 @@
 # Run Qwen3.8 27B official FP8 on two B70s
 
-Start here for the lab's recommended FP8 setup: **two Intel Arc Pro B70
-32 GiB cards, one active user, fixed MTP depth 1, and 33,024 total tokens**.
-That allows a 32,768-token input with 256 tokens left for the answer; shorter
-inputs leave more room for answers. MTP drafts tokens that the target verifies.
-The official FP8 checkpoint and target arithmetic are unchanged.
+The official Qwen FP8 weights on **two Intel Arc Pro B70 (32 GiB)** cards, one user, with the model's own MTP
+draft at depth 5. Every draft token is checked by the full FP8 model, and outputs are identical to running without
+MTP. The context is 33,024 tokens: a 32,768-token input plus 256 tokens for the answer, or shorter inputs with longer
+answers.
 
-You need Linux with working Intel GPU drivers, Docker, Python 3, both cards
-available, and room for the 30.9 GB model plus the container and compile cache.
-The scripts do not install drivers. Independent-host installation remains
-untested; this is a candidate portable recipe.
+| Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
+| --- | ---: | ---: | --- |
+| `recommended` (MTP depth 5, draft shortlist) | 33,024 tokens | **88.3 tok/s** | 3,642 / 3,436 / 3,282 tok/s |
+| `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | 3,763 / 3,535 / 3,384 tok/s |
 
-## Download and start
+Graphs and every measured point are on the
+[details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html).
+How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
+[review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 
-From a checkout of this repository, download the pinned weights (or use your
-existing matching model directory):
+## What you need
 
-```bash
-MODEL_DIR=/absolute/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/download-model.sh
-```
+- Linux with working Intel GPU drivers, Docker and Python 3
+- Two B70s not used by anything else, 16 GiB host RAM, about 60 GiB of disk
+- The model: `Qwen/Qwen3.8-27B-FP8` at revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`
 
-Pull the exact public runtime once:
-
-```bash
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
-```
-
-The image name includes INT4 because the two model packages share a runtime;
-this command serves the official **FP8** weights. Start with a new state directory:
+## Start
 
 ```bash
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/fp8-session --port 18124
+MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/download-model.sh
+MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp2-b70/scripts/verify.sh
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-session
 ```
 
-Leave this terminal running. Initial verification, model loading, and compilation
-take time. Wait for the helper to print that the endpoint is ready. The helper
-checks the pinned model and runtime, fixes the qualified settings, preserves
-logs, and refuses competing GPU work. It never restarts the server automatically.
+The download and verify steps check the pinned revision, every file size and every SHA-256, so a pass means the
+exact bytes these measurements used. The image name says INT4 because two packages share one runtime; this command
+serves the official **FP8** weights. Add `--profile depth-1` for the previous recipe. Startup takes several minutes;
+wait for `Ready`. The launcher checks the pinned model and runtime, fixes the qualified settings, preserves logs,
+refuses competing GPU work, and never restarts the server on its own.
 
-## Connect, check, and stop
-
-Use an OpenAI-compatible client with base URL `http://127.0.0.1:18124/v1`.
-The model name is printed at startup and available from `/v1/models`.
-From another terminal:
+## Use and stop
 
 ```bash
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /absolute/path/fp8-session
-curl -fsS http://127.0.0.1:18124/v1/models
+curl -s http://127.0.0.1:18124/v1/chat/completions -H 'Content-Type: application/json' \
+  -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Say hello in five words."}],"max_tokens":64,"chat_template_kwargs":{"enable_thinking":false}}'
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py status --state-dir /path/fp8-session
+python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /path/fp8-session
 ```
 
-Send a first message:
+Send one request at a time. The context limit covers the prompt, chat history and the answer. Stop verifies the
+recorded container identity before acting; logs and status stay in the state directory. A GPU fault ends the
+session and is recorded; nothing is retried.
 
-```bash
-curl -fsS http://127.0.0.1:18124/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Explain prefill and decode in two short sentences."}],"temperature":0,"max_tokens":128,"chat_template_kwargs":{"enable_thinking":false}}'
-```
+[Compose](compose.yaml) is a generated view of the same `recommended` settings for `docker compose` users; the
+launcher above owns the tested start, status and stop path.
 
-Keep requests sequential for this configuration. Its capacity includes the
-chat template, conversation history, and answer. Keep some room for the answer
-instead of filling the entire context with input.
+## Good to know
 
-Stop with Ctrl-C in the serving terminal, or:
-
-```bash
-python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /absolute/path/fp8-session
-```
-
-Stop verifies the recorded container identity before acting. Logs and status
-stay in the state directory. If startup or a request fails, inspect those logs
-and resolve the cause before a new manually started session with a new state
-directory. A GPU fault ends this session; do not send more requests.
-
-## What performance means here
-
-Reading speed (prefill) describes processing your input. Writing speed (decode)
-describes producing the answer. HTTP first-token wait also includes the API and
-network overhead. These measurements have separate configuration labels:
-
-- The current runtime's qualified one-user MTP1 strict tests measured about
-  **54.8 output tokens/s**. [Runtime qualification](../../experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md).
-- A separate **4,096-token capacity** profile measured **2,857 input tokens/s
-  at 512 input tokens** and **3,679 at 2,048**. HTTP first-token waits were
-  182 and 568 ms. These are not measurements of the 33,024-capacity launcher.
-  [Prefill results and graphs](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md).
-- The recommended **33,024-token capacity** setup was separately measured at
-  **2,859 / 3,677 / 3,305 input tokens/s** for 512 / 2,048 / 16,384-token
-  prompts. These are baseline readings from the bounded transfer study, not
-  an optimization gain. [Measurements and transfer results](../../experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md)
-  also record the rejected dispatch candidate and a newer-runtime/DFlash2
-  startup freeze. That experimental image is quarantined; it is not this recipe.
-- The **86.18 output tokens/s** historical record uses an older runtime and
-  MTP depth 5. It is an advanced configuration, not this launcher's expected rate.
-
-A later [FP8/native-MTP optimization attempt](../../experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md)
-implemented two candidates but stopped after a communication exactness failure
-and GPU faults. Neither candidate is included in this recipe, and no new speed
-measurement was qualified. The metadata candidate remains untested in inference.
-
-Prompt caching is off. Existing 2K–32K continuation checks matched all 18
-reference outputs; they do not establish general document retrieval accuracy.
-A clean-directory replay from public source passed **12/12 reference-output
-checks and 6/6 practical requests**, with exact repeated conversation, coding
-and document answers. The recommended capacity measured **54.20 output tokens/s**
-in that single strict replay. Start, healthy status, and owned stop all passed,
-along with GPU checks before and after. [Replay results and evidence](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-flagship-results.md).
-Existing verified model files and Docker layers were reused; independent-host
-installation and prolonged use remain untested.
-
-## Reproduce and inspect
-
-The [full reproduction guide](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md)
-retains strict benchmark commands and historical variants. The recommended
-runtime's public source/build closure is the shared
-[publication manifest, `chains.r304`](../../repro/qwen38-27b-autoround-int4-b70/publication-manifest.json).
-The older FP8 image builders below reproduce their own historical images.
-[package.json](package.json) records exact model, image, and evidence identities.
-[Compose](compose.yaml) is an optional generated view of the same recommended
-capacity and draft settings; the helper above owns the tested session lifecycle.
+- **Why depth 5 is back.** Deeper drafts measured 86 tok/s in early September but were held back because one
+  request in 64 could start with a wrong first token. On the current runtime (vLLM 0.29 with the lab's kernel fixes)
+  the September 16 review campaign sent 64 prompts one at a time and then twice more queued, at depths 3, 4 and 5, and
+  every answer matched the no-MTP server. The same campaign checked the strict suite, 2K-16K prompts and a chat
+  quality suite. Depth 1 still runs at 54.9 tok/s on this runtime, so nothing was lost by the move.
+- **The draft shortlist** scores draft guesses with a small INT4 copy of the output layer restricted to 67,248
+  common tokens. The FP8 model still checks every token at full precision, so answers are unchanged; the list only
+  affects how often a draft is accepted.
+- **Tested:** a fresh depth-5 server in the review campaign, 12/12 identical to no-MTP on the strict suite, 64/64 on
+  the sequential oracle, exact after 2K/8K/16K prompts and on the chat quality suite. The public-source acceptance
+  replay through this launcher (the second fresh server) is recorded in the evidence packet linked from
+  `package.json` once it has run.
+- **Not yet tested:** a machine without Intel drivers, Docker or the model already in place; more than one user at
+  a time (drafting is exact only one request at a time); prolonged use.
 
 <details>
 <summary>Historical configurations, results, and build commands</summary>

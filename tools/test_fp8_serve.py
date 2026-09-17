@@ -23,19 +23,43 @@ class ServingTests(unittest.TestCase):
         return {'Id': 'a' * 64, 'Name': '/neural-fp8-example', 'Image': serve.IMAGE_ID,
                 'State': {'Running': True}}
 
-    def test_runtime_overrides_are_discarded(self):
+    def test_launch_is_pinned_and_ignores_the_caller_environment(self):
         with patch.dict(os.environ, {'IMAGE': 'bad', 'EXTRA_SERVE_ARGS': '--enable-prefix-caching',
                                     'VLLM_USE_V2_MODEL_RUNNER': '1', 'VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST': '/bad',
                                     'DOCKER_HOST': 'tcp://unrelated-host:1234', 'BASH_ENV': '/bad'}):
-            env = serve.runtime_env(Path('/model'), Path('/state'), 18124, 'owned')
-        self.assertEqual(env['IMAGE'], serve.IMAGE)
-        self.assertEqual(env['VLLM_USE_V2_MODEL_RUNNER'], '0')
-        self.assertEqual(env['MAX_MODEL_LEN'], '33024')
-        self.assertEqual(env['MAX_NUM_SEQS'], '1')
-        self.assertEqual(env['MAX_NUM_BATCHED_TOKENS'], '4096')
+            argv = serve.docker_argv('recommended', Path('/model'), Path('/state'), 18124, 'owned')
+            env = serve.clean_env()
         self.assertEqual(env['DOCKER_HOST'], 'unix:///var/run/docker.sock')
-        for key in ('EXTRA_SERVE_ARGS', 'BASH_ENV', 'VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST'):
-            self.assertNotIn(key, env)
+        self.assertNotIn('BASH_ENV', env)
+        self.assertIn(serve.IMAGE, argv)
+        self.assertNotIn('bad', argv)
+        self.assertNotIn('--enable-prefix-caching', argv)
+        self.assertIn('--no-enable-prefix-caching', argv)
+        container_env = dict(argv[i + 1].split('=', 1) for i in range(len(argv)) if argv[i] == '--env')
+        self.assertEqual(container_env['VLLM_USE_V2_MODEL_RUNNER'], '0')
+        self.assertEqual(container_env['VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST'], serve.SHORTLIST)
+        self.assertEqual(container_env['ZE_AFFINITY_MASK'], '0,1')
+        for flag, value in (('--tensor-parallel-size', '2'), ('--max-model-len', '33024'), ('--max-num-seqs', '1'),
+                            ('--max-num-batched-tokens', '4096'), ('--gpu-memory-utilization', '0.95')):
+            self.assertEqual(argv[argv.index(flag) + 1], value)
+        self.assertIn('"num_speculative_tokens": 5', argv[argv.index('--speculative-config') + 1])
+        depth1 = serve.docker_argv('depth-1', Path('/model'), Path('/state'), 18124, 'owned')
+        self.assertIn('"num_speculative_tokens": 1', depth1[depth1.index('--speculative-config') + 1])
+        self.assertNotIn('VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST', dict(a.split('=', 1) for a in depth1 if '=' in a and a.startswith('VLLM')))
+
+    def test_pinned_image_accepted_under_both_docker_image_stores(self):
+        registry = {'Id': serve.IMAGE_ID, 'RepoDigests': [serve.IMAGE]}
+        classic = {'Id': 'sha256:' + 'c' * 64, 'RepoDigests': [serve.IMAGE]}
+        other = {'Id': 'sha256:' + 'd' * 64, 'RepoDigests': ['ghcr.io/x/y@sha256:' + 'e' * 64]}
+        for image, expected in ((registry, serve.IMAGE_ID), (classic, classic['Id'])):
+            with patch.object(serve, 'run', return_value=subprocess.CompletedProcess([], 0, json.dumps([image]), '')):
+                self.assertEqual(serve.local_image_id(), expected)
+        with patch.object(serve, 'run', return_value=subprocess.CompletedProcess([], 0, json.dumps([other]), '')):
+            with self.assertRaisesRegex(RuntimeError, 'not the pinned runtime'):
+                serve.local_image_id()
+        with patch.object(serve, 'run', return_value=subprocess.CompletedProcess([], 1, '', 'No such image')):
+            with self.assertRaisesRegex(RuntimeError, 'Pull the pinned runtime'):
+                serve.local_image_id()
 
     def test_replacement_id_name_and_image_are_rejected(self):
         for key in ('Id', 'Name', 'Image'):
@@ -126,9 +150,9 @@ class ServingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'model').mkdir()
-            args = SimpleNamespace(model_dir=root / 'model', state_dir=root / 'state', port=18124, startup_timeout=1800)
+            args = SimpleNamespace(model_dir=root / 'model', state_dir=root / 'state', port=18124, startup_timeout=1800, profile='recommended')
             child = MagicMock()
-            with patch('builtins.open', unittest.mock.mock_open()), patch.object(serve.fcntl, 'flock'), patch.object(serve, 'check_available'), patch.object(serve, 'journal', side_effect=['', 'xe 0000:03:00.0: GPU reset']), patch.object(serve, 'capture_owned') as capture, patch.object(serve, 'stop_owned') as stop, patch.object(serve.subprocess, 'Popen', return_value=child) as launch:
+            with patch('builtins.open', unittest.mock.mock_open()), patch.object(serve.fcntl, 'flock'), patch.object(serve, 'check_available'), patch.object(serve, 'local_image_id', return_value=serve.IMAGE_ID), patch.object(serve.shutil, 'copytree'), patch.object(serve, 'inspect_container', return_value=None), patch.object(serve, 'journal', side_effect=['', 'xe 0000:03:00.0: GPU reset']), patch.object(serve, 'capture_owned') as capture, patch.object(serve, 'stop_owned') as stop, patch.object(serve.subprocess, 'Popen', return_value=child) as launch:
                 def remember(state, record):
                     record['container_id'] = 'a' * 64
                 capture.side_effect = remember
@@ -145,10 +169,10 @@ class ServingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'model').mkdir()
-            args = SimpleNamespace(model_dir=root / 'model', state_dir=root / 'state', port=18124, startup_timeout=1800)
+            args = SimpleNamespace(model_dir=root / 'model', state_dir=root / 'state', port=18124, startup_timeout=1800, profile='recommended')
             child = MagicMock(returncode=7)
             child.poll.return_value = 7
-            with patch('builtins.open', unittest.mock.mock_open()), patch.object(serve.fcntl, 'flock'), patch.object(serve, 'check_available'), patch.object(serve, 'journal', return_value=''), patch.object(serve, 'capture_owned'), patch.object(serve.subprocess, 'Popen', return_value=child) as launch:
+            with patch('builtins.open', unittest.mock.mock_open()), patch.object(serve.fcntl, 'flock'), patch.object(serve, 'check_available'), patch.object(serve, 'local_image_id', return_value=serve.IMAGE_ID), patch.object(serve.shutil, 'copytree'), patch.object(serve, 'journal', return_value=''), patch.object(serve, 'capture_owned'), patch.object(serve.subprocess, 'Popen', return_value=child) as launch:
                 with self.assertRaisesRegex(RuntimeError, 'exited'):
                     serve.start(args)
                 launch.assert_called_once()

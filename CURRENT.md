@@ -25,6 +25,22 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 17 01:40 UTC: review of the one-card FP8 work passed; two-card MTP depth 5 reclaimed at 88.3 tok/s; service on 18124 (depth 1, 54.71 tok/s, 12/12).**
+A review campaign re-tested the shipped one-card package through its own launcher with the gate the earlier work had
+skipped (64 prompts back to back plus two queued passes, all identical to no-MTP), plus strict 12/12 at 53.31 tok/s,
+long prompts, the chat quality suite and a logprob replay: it holds up. Two fixes landed on the way: the launchers
+now start under both Docker image stores, and the package text says 16,384 tokens of context.
+
+- **Two cards:** on the R310 image, no-MTP matches the frozen control 12/12; MTP depths 3, 4 and 5 with the draft
+  shortlist pass every gate (strict, 64-prompt oracle, 2K-16K prompts, chat quality) at 80.4 / 84.0 / **88.3 tok/s**;
+  depth 1 still measures 54.90, so nothing was lost. The two-card package now ships depth 5 on R310 (`depth-1`
+  profile kept); its public-source acceptance replay is the second fresh server and runs in the follow-up campaign.
+- **Service:** the depth-1 R304 service was restored by the review runner (unit `fp8-service-20260916`, state
+  `/mnt/fast-ai/bench-results/fp8-review-20260916/service-restored-6`). The follow-up campaign stops it once, runs the
+  one-card `no-quantization` oracle, one-card context probes, two-card depth 6 and the acceptance replay, then starts
+  the new depth-5 service.
+- No GPU faults. [Findings](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md),
+  [receipts](experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/).
 **Four-B70 host, September 16 23:27 UTC: GPU fault latched during the LTX pipelined-sampler arm; PID 6955 halted, no new launches possible on this boot.**
 Packet 58 first delivered the corrected results on ten distinct fixtures:
 serial 4.584 s per clip (12/12 exact), three-stage pipe **2.519 s per distinct
