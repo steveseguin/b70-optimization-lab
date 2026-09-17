@@ -64,3 +64,22 @@ as well, with a heavier build and more ways to be wrong.
 Either way, after this lever the remaining distance to 1.042 s is block
 kernel work: the audio stream's launch-bound small kernels and the proven
 adaLN fusion.
+
+## Probes, 2026-09-17 06:30–06:45 UTC (exclusive cards, block-sized GEMM graphs, all bitwise exact)
+
+| Variant | Speedup vs serial |
+| --- | ---: |
+| baton hand-off, one issuing thread at a time | 0.997x |
+| two free threads, shared default streams, blocking device copies | 1.19x |
+| two free threads, per-clip streams, non-blocking device copies with events | 0.996x |
+| two free threads, device copies, no device context around xpu:1 replays | 1.28x |
+| **two free threads, explicit device contexts, per-clip streams, activation staged device→pinned host→device** | **1.68x** (ideal 1.78x) |
+
+Graph replay and the cross-card copy both return in under 0.1 ms, so the
+issuing thread is never the bottleneck; what kills overlap is the driver's
+peer copy path and replays issued under the wrong device context. Route A
+(batching) is closed by packet 72. Route B is therefore: two worker threads
+as in `pipeline_sampler_node`, replay-only once warm (captures taken under
+an exclusive lock, replays under a shared one), one stream per clip per
+card, and the shard boundary move replaced by pinned-host staging with
+events. Evidence: `data/baton-probe/`.
