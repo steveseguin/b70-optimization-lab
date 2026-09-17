@@ -34,10 +34,56 @@ def register():
         if str(my_rank) not in ranks.split(','):
             logger.warning('b70_step_profiler: rank %d not selected (%s); not profiling', my_rank, ranks)
             return
-    state = {'calls': 0, 'profiler': None, 'done': False, 'started': None}
+    state = {'calls': 0, 'profiler': None, 'done': False, 'started': None, 'pending': 0, 'label': None, 'window_calls': 0}
     original = cls.execute_model
+    # B70_PROFILE_BY_PREFILL=1: instead of one window after `skip` calls, open a window of `steps` decode calls after
+    # every prefill of at least B70_PROFILE_MIN_PREFILL tokens (default 8192), named by the prefilled token count, so
+    # one server can be profiled at several context lengths.
+    by_prefill = os.environ.get('B70_PROFILE_BY_PREFILL', '').strip() == '1'
+    min_prefill = int(os.environ.get('B70_PROFILE_MIN_PREFILL', '8192'))
+
+    def export(label, elapsed, n_steps):
+        rank = int(os.environ.get('RANK', os.environ.get('LOCAL_RANK', '0')))
+        try:
+            from vllm.distributed.parallel_state import get_tensor_model_parallel_rank
+            rank = get_tensor_model_parallel_rank()
+        except Exception:
+            pass
+        path = os.path.join(directory, f'worker-rank{rank}-{label}.json')
+        state['profiler'].export_chrome_trace(path)
+        with open(os.path.join(directory, f'worker-rank{rank}-{label}.meta.json'), 'w') as handle:
+            handle.write('{"steps": %d, "wall_seconds": %.6f, "label": "%s"}\n' % (n_steps, elapsed, label))
+        logger.warning('b70_step_profiler: wrote %s (%d steps, %.2f s wall)', path, n_steps, elapsed)
+        state['profiler'] = None
 
     def execute_model(self, *args, **kwargs):
+        if by_prefill:
+            scheduled = getattr(args[0] if args else kwargs.get('scheduler_output'), 'total_num_scheduled_tokens', 0) or 0
+            if scheduled >= 1024:
+                state['pending'] += int(scheduled)
+                if state['profiler'] is not None:  # a new prefill interrupts a window: drop it
+                    state['profiler'].__exit__(None, None, None); state['profiler'] = None
+                return original(self, *args, **kwargs)
+            if state['profiler'] is None and state['pending'] >= min_prefill:
+                activities = [torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.XPU]
+                state['profiler'] = torch.profiler.profile(activities=activities, record_shapes=False, with_stack=False)
+                state['profiler'].__enter__()
+                state['started'] = time.perf_counter()
+                state['label'] = f'ctx{state["pending"]}'
+                state['window_calls'] = 0
+                state['pending'] = 0
+                logger.warning('b70_step_profiler: window %s: %d decode calls', state['label'], steps)
+            elif state['profiler'] is None:
+                state['pending'] = 0
+            result = original(self, *args, **kwargs)
+            if state['profiler'] is not None:
+                state['window_calls'] += 1
+                if state['window_calls'] >= steps:
+                    torch.xpu.synchronize()
+                    elapsed = time.perf_counter() - state['started']
+                    state['profiler'].__exit__(None, None, None)
+                    export(state['label'], elapsed, steps)
+            return result
         if state['done']:
             return original(self, *args, **kwargs)
         state['calls'] += 1
