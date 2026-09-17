@@ -150,6 +150,31 @@ The one-card package now ships 24,576 tokens of context (pair 53.43 / 53.43 tok/
   tarball packet; `2026-09-17-clean-host-replay-plan.md` lays out the four-B70 replay that would move the packages
   from candidate to published.
 
+## One-card decode profile (September 17, 02:08 UTC)
+
+In-worker torch/XPU trace of 60 decode steps at the shipped one-card settings
+([overlay](../overlays/b70-step-profiler/b70_step_profiler.py), [summary](../data/2026-09-17-fp8-night3/tp1-decode-profile-summary.json)):
+
+| Quantity | Value |
+| --- | ---: |
+| Wall per decode step | 78 ms (60 steps in 4.7 s; unprofiled the step is 75-90 ms) |
+| Device busy | 74% of wall; idle 26% |
+| oneDNN `gemm_kernel` (W8A16) | 92% of device time: 318 launches per step, 168 µs each, 53 ms per step |
+| Effective weight streaming | 25.2 GiB per step in 53 ms, about 507 GB/s, roughly 83% of the card's bandwidth |
+| Everything else on the device | GDN spec kernels 1.3 ms, attention 0.2 ms, fused norm/act kernels about 1.5 ms per step |
+| Launches | about 1,330 device launches and 12,000 host operations per step |
+
+So the GEMMs are near their memory-bandwidth ceiling and the only remaining lever on one card is the 26% of gaps:
+fewer launches (fused epilogues; the 87 small memcpys per step, of which the host-embedding gather is a handful) or
+graph replay. Graph replay is out for this recipe as long as the input embedding lives in host memory: the drafter
+looks up its own sampled tokens inside the step, which a replayed graph cannot do (measured: 9/12 changed). A one-card
+"speed" profile with the embedding back on the card and graphs on would trade 2.4 GiB of context for that 26%, and
+on this platform the earlier capture probes were slower anyway. The two-card lane, with half the GEMM work per step
+and the same overhead, has more of its step in gaps; its trace is next.
+
+The HTTP profiler endpoints do not deliver the engine worker's trace on this build (the API server drops the stop
+connection before forwarding it); the overlay above profiles from inside the worker instead.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed

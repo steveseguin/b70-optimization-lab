@@ -24,6 +24,16 @@ def register():
         return
     skip = int(os.environ.get('B70_PROFILE_SKIP', '40'))
     steps = int(os.environ.get('B70_PROFILE_STEPS', '60'))
+    ranks = os.environ.get('B70_PROFILE_RANKS', '').strip()  # e.g. "0": only that tensor-parallel rank profiles
+    if ranks:
+        try:
+            from vllm.distributed.parallel_state import get_tensor_model_parallel_rank
+            my_rank = get_tensor_model_parallel_rank()
+        except Exception:
+            my_rank = int(os.environ.get('RANK', os.environ.get('LOCAL_RANK', '0')))
+        if str(my_rank) not in ranks.split(','):
+            logger.warning('b70_step_profiler: rank %d not selected (%s); not profiling', my_rank, ranks)
+            return
     state = {'calls': 0, 'profiler': None, 'done': False, 'started': None}
     original = cls.execute_model
 

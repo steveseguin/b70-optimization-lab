@@ -1,0 +1,205 @@
+{
+  "trace": "/mnt/fast-ai/bench-results/fp8-profile3-20260917/tp1-profile-trace/worker-rank0-pid189.json",
+  "events": 871623,
+  "device_events": 79758,
+  "host_events": 791865,
+  "categories": {
+    "cpu_op": 370897,
+    "xpu_driver": 341208,
+    "xpu_runtime": 79758,
+    "kernel": 73359,
+    "gpu_memcpy": 6399,
+    "Trace": 2
+  },
+  "wall_ms": 4705.560321289063,
+  "device_busy_ms": 3487.807234375,
+  "device_idle_share": 0.2587902404320822,
+  "distinct_kernels": 93,
+  "top_kernels": [
+    {
+      "name": "gemm_kernel",
+      "count": 19069,
+      "total_ms": 3200.7656740001466,
+      "mean_us": 167.85178425717902
+    },
+    {
+      "name": "gdn::gated_delta_rule_spec_kernel<sycl::_V1::detail::half_impl::half, float, 4>",
+      "count": 2640,
+      "total_ms": 49.15359199999877,
+      "mean_us": 18.61878484848438
+    },
+    {
+      "name": "gdn::causal_conv1d_spec_kernel<sycl::_V1::detail::half_impl::half, 4, true>",
+      "count": 2640,
+      "total_ms": 27.27178700000024,
+      "mean_us": 10.33022234848494
+    },
+    {
+      "name": "gdn::ChunkComputeWUKernel<cutlass::half_t, float>",
+      "count": 96,
+      "total_ms": 24.90360700000001,
+      "mean_us": 259.41257291666676
+    },
+    {
+      "name": "gdn::ChunkComputeAKernel<cutlass::half_t, float>",
+      "count": 96,
+      "total_ms": 21.572565000000004,
+      "mean_us": 224.71421875000007
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_20",
+      "count": 1767,
+      "total_ms": 16.98298299999992,
+      "mean_us": 9.611195812110877
+    },
+    {
+      "name": "_ZTSN6compat12experimental6detail13KernelFunctorIXadL_ZN7cutlass13device_kernelINS3_4fmha6kernel22XeFMHAFwdSplitKVKernel",
+      "count": 1192,
+      "total_ms": 13.532285999999944,
+      "mean_us": 11.35258892617445
+    },
+    {
+      "name": "triton_poi_fused_fp8_gemm_w8a16_mul_silu_slice_t_6",
+      "count": 3648,
+      "total_ms": 12.609467000000015,
+      "mean_us": 3.4565424890350918
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fused_add_rms_norm_21",
+      "count": 1710,
+      "total_ms": 12.185900999999975,
+      "mean_us": 7.126257894736827
+    },
+    {
+      "name": "at::native::xpu::ReduceKernel<1, at::native::xpu::ReduceOp<c10::Half, at::native::xpu::ArgMaxOps<float>, unsigned int, l",
+      "count": 280,
+      "total_ms": 9.034546000000004,
+      "mean_us": 32.26623571428573
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_11",
+      "count": 2047,
+      "total_ms": 8.59914699999999,
+      "mean_us": 4.20085344406448
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_10",
+      "count": 1767,
+      "total_ms": 6.6434580000001615,
+      "mean_us": 3.759738539898224
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_fp8_gemm_w8a16_mean_mul_pow_rsqrt_silu_t_view_4",
+      "count": 2736,
+      "total_ms": 6.591153000000101,
+      "mean_us": 2.4090471491228436
+    },
+    {
+      "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::FillFunctor<c10::Half>, at::detail::Array<char*, 1>, Tr",
+      "count": 3592,
+      "total_ms": 6.216823000000101,
+      "mean_us": 1.7307413697104959
+    },
+    {
+      "name": "triton_per_fused__to_copy_mean_pow_view_3",
+      "count": 2736,
+      "total_ms": 4.723257000000042,
+      "mean_us": 1.726336622807033
+    },
+    {
+      "name": "Memcpy D2D (DEVICE -> DEVICE)",
+      "count": 3520,
+      "total_ms": 4.589828000000052,
+      "mean_us": 1.303928409090924
+    },
+    {
+      "name": "at::native::xpu::ReduceKernel<1, at::native::xpu::ReduceOp<float, at::native::xpu::ArgMaxOps<float>, unsigned int, long,",
+      "count": 110,
+      "total_ms": 3.7027799999999975,
+      "mean_us": 33.66163636363634
+    },
+    {
+      "name": "triton_poi_fused_zeros_2",
+      "count": 2736,
+      "total_ms": 2.980066000000048,
+      "mean_us": 1.0892054093567427
+    },
+    {
+      "name": "gdn::tiled_kernel_launcher<sycl::_V1::detail::half_impl::half, 4, 8, true>(sycl::_V1::queue&, sycl::_V1::detail::half_im",
+      "count": 96,
+      "total_ms": 2.5837099999999995,
+      "mean_us": 26.91364583333333
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_cat_clone_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_15",
+      "count": 912,
+      "total_ms": 2.252889999999998,
+      "mean_us": 2.4702741228070155
+    },
+    {
+      "name": "Memcpy H2D (HOST -> DEVICE)",
+      "count": 1707,
+      "total_ms": 2.2506099999999862,
+      "mean_us": 1.3184592852958326
+    },
+    {
+      "name": "triton_red_fused_clone_rms_norm_split_split_with_sizes_view_12",
+      "count": 912,
+      "total_ms": 2.2305469999999916,
+      "mean_us": 2.4457752192982367
+    },
+    {
+      "name": "vllm::reshape_and_cache_flash_strided_kernel<c10::Half, c10::Half, (vllm::Fp8KVCacheDataType)0>",
+      "count": 1192,
+      "total_ms": 2.2256799999999948,
+      "mean_us": 1.867181208053687
+    },
+    {
+      "name": "gdn::ChunkFwdOKernel<cutlass::half_t, float>",
+      "count": 96,
+      "total_ms": 1.9843330000000001,
+      "mean_us": 20.670135416666668
+    },
+    {
+      "name": "triton_poi_fused_arange_bitwise_and_eq_index_lt_remainder_select_split_where_14",
+      "count": 912,
+      "total_ms": 1.9104120000000235,
+      "mean_us": 2.0947500000000256
+    },
+    {
+      "name": "at::native::xpu::ElementwiseGlobalRangeKernel<at::native::xpu::LegacyKernelScalarFunctor<int, 2, OffsetCalculator<2, uns",
+      "count": 934,
+      "total_ms": 1.6070739999999943,
+      "mean_us": 1.7206359743040625
+    },
+    {
+      "name": "at::native::xpu::ElementwiseGlobalRangeKernel<at::native::xpu::LegacyKernelScalarFunctor<int, 3, OffsetCalculator<3, uns",
+      "count": 934,
+      "total_ms": 1.581267999999992,
+      "mean_us": 1.6930064239828606
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_cat_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_16",
+      "count": 912,
+      "total_ms": 1.5668479999999934,
+      "mean_us": 1.718035087719291
+    },
+    {
+      "name": "triton_poi_fused__unsafe_view_clone_fp8_gemm_w8a16_mul_sigmoid_split_split_with_sizes_t_view_19",
+      "count": 912,
+      "total_ms": 1.538526999999984,
+      "mean_us": 1.6869813596491052
+    },
+    {
+      "name": "gdn::ChunkInverseOptKernel<cutlass::half_t, float>",
+      "count": 96,
+      "total_ms": 1.5339190000000003,
+      "mean_us": 15.97832291666667
+    }
+  ],
+  "steps": {
+    "count": 0,
+    "mean_ms": null,
+    "names": []
+  }
+}
