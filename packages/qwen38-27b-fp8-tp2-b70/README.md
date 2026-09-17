@@ -12,8 +12,8 @@ answers.
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html). LocalMaxxing:
-[`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17) (88.41 tok/s, the ring-allreduce
-recipe, approved September 17); the 90.5 tok/s allgather recipe is submitted separately (see `results/localmaxxing-submissions.md`).
+[`cmu5qk0kz07zglq01eh1opkhx`](https://www.localmaxxing.com/runs/cmu5qk0kz07zglq01eh1opkhx) (90.48 tok/s, approved September 17;
+the ring-allreduce recipe's [`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17), 88.41 tok/s, stands as history).
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
 [review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 
