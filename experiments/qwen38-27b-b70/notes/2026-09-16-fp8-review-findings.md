@@ -274,6 +274,21 @@ embedding and fc; head only). The single-checkpoint state is exact on two cards 
 collectives, not by those writes, and memory was never the two-card constraint (268K-token KV budget). It stays a
 research result; the two-card package keeps R310.
 
+## Two-card campaign 4 (September 17, 21:09-21:30 UTC): which drafter parts to replicate
+
+All exact (12/12, 12/12 vs the comm-2 no-MTP reference); speeds are the two strict runs (`/mnt/fast-ai/bench-results/fp8-comm4-20260917`):
+
+| Replicated drafter parts | tok/s | Against the allgather control (90.3-90.6) |
+| --- | ---: | --- |
+| embedding, fc, MLP, head (comm-3) | 86.72, 85.93 | -4% (the MLP GEMM doubles per card) |
+| embedding, fc, head | 89.25, 88.96 | -1.5% |
+| embedding, fc | 89.72, 89.45 | -1% |
+| head | 90.15, 89.59 | -0.4% |
+
+Removing the drafter's collectives does not pay: the exchanges it removes are short (a few hundred microseconds each,
+five passes per step) and every replicated part costs at least as much in extra per-card compute or in the larger
+unsharded lookups. Closed; the drafter stays sharded. The overlay remains for reference.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
@@ -282,7 +297,8 @@ research result; the two-card package keeps R310.
   at 0.983 (KV budget 45,139 tokens); beyond that the attention KV itself (64 KB per token) is the limit.
 - A 30,720-token-plus prompt probe needs a longer unrepeated corpus for bench-prefill-followup (the AMD-transfer
   corpus tokenizes shorter than 30,720); the 2K/8K/16K screen is what every 32K gate ran.
-- Two-card: the remaining collective cost is the count of collectives per step; a replicated (unsharded) MTP drafter
-  would remove the draft passes' allreduce/allgather and is the next two-card candidate.
+- Two-card: the replicated drafter (campaigns 3-4) is exact but never faster; the collective count per step is set by
+  the 64 target layers, so the next two-card lever would be fusing the per-layer allreduce pairs (out_proj + MLP down)
+  or overlapping them with compute, both deeper changes than an overlay.
 - The R311b image must be pushed to ghcr by the user (`publish-r311b-image-ghcr.sh`); the one-card package pins its
   digest already, and the one-card LocalMaxxing payload is held until then.

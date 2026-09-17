@@ -300,3 +300,8 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   no-MTP reference on 2/12 prompts (same tokens on repeat) while the block-size controls were exact. With icpx's fast
   floating-point model, "same source" at two sites is not "same arithmetic". Keep one code instance (one loop body)
   for anything that must reproduce a value computed elsewhere, and test the rewritten kernel on the old protocol too.
+- **Replicated (unsharded) MTP drafter on two cards (comm-3/4, 2026-09-17):** exact on every gate in every selection
+  (all parts 86.7; embedding+fc+head 89.3; embedding+fc 89.7; head 90.2) but never above the 90.3-90.6 control. The
+  drafter's five collectives per pass are cheap; replicating any part costs more compute or larger lookups. Do not
+  retry with other part selections; the remaining two-card cost is the target layers' allreduce pairs.
+
