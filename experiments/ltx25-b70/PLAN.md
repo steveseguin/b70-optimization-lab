@@ -87,32 +87,28 @@ reference must define anchoring in both stages, count boundary frames only
 once, and resolve audio timing. No continuation graph or quality result is
 qualified yet.
 
-## Status, September 16, 2026
+## Status, September 17, 2026
 
-Validated on ten distinct prompt/seed fixtures with per-clip exact oracles
-([packet 58](notes/graph-capture-58-results.md)): serial 4.58 s per clip,
-three-stage pipeline (encode-ahead from the queued next prompt, sampler,
-decode-behind) **2.52 s per distinct clip, 9.9 fps equivalent**. The goal
-needs 1.042 s. Measured per-clip work is sampler 2.02 s (two cards, 0.74 s
-weight-read floor), text encode 1.59 s (fp32 by upstream design), decode
-0.74 s; spread perfectly over four cards that is 1.09 s, so 24 fps is not
-reachable by scheduling alone and needs real sampler reduction as well.
-The two-thread pipelined sampler is retired (slower, shared-buffer race,
-faulted a card). Ranked next levers, all exact by construction:
+Validated on ten distinct prompt/seed fixtures with per-clip exact oracles:
+**2.029 s per distinct clip, 12.3 fps equivalent** ([packet 65](notes/graph-capture-65-results.md)),
+from 2.52 s on September 16, by skipping ComfyUI model-management bookkeeping
+for resident models (0.42 s per clip, [packet 64](notes/graph-capture-64-results.md))
+and writing the MP4 preview on the decode worker. Timed forwards put the
+sampler at 1.67 s per clip, of which the captured block region is 1.57 s and
+the model glue 0.09 s; everything outside the forwards is about 0.35 s. The
+block region alone exceeds the 1.042 s budget, so the goal now needs, in this
+order:
 
-1. Trim the in-clip non-sampler time (about 0.5 s of the 2.52 s): graph-capture
-   the latent upsampler (0.24 s eager; packet 61, prepared), move SaveVideo
-   behind the pipeline (0.13 s), trim gate-node overhead (0.12 s).
-2. Sampler kernel work that is provably bitwise equal: the audio path's adaLN
-   fused kernel (proven equal, ~0.05 s), measure the real fused RoPE cost,
-   and the launch-bound audio stream (29% of every block).
-3. A single-scheduler multi-clip sampler that issues work to both shard cards
-   asynchronously from one thread, with per-clip static buffers; only after
-   1 and 2 make the arithmetic close.
+1. A single-scheduler two-clip sampler that keeps both shard cards busy
+   (one issuing thread, per-clip static buffers, event-ordered transfers;
+   not the retired two-thread design).
+2. Block-level exact kernel work: the audio stream on the idle card, the
+   proven adaLN fused kernel, the small-projection bandwidth.
+3. The small remainders: glue capture (0.09 s), oracle capture behind the
+   pipeline (0.05 s), prompt turnaround.
 
-GPU admission on the current boot is blocked by the September 16 23:27 UTC
-fault until the user decides on reset or reboot; everything above can be
-prepared and CPU-tested meanwhile.
+The host locked up silently four times on September 16–17, twice on idle
+boots with nothing running; runners commit after every arm.
 
 ## Next optimization questions, in order
 

@@ -1,15 +1,17 @@
 # LTX 2.5 native BF16 baseline on B70
 
-Status: **audited September 16, 2026.** Single-clip warm latency is about
-4.5 s (graph-captured blocks and text encoder, bytewise exact on the boat
-fixture). Back-to-back identical clips through the three-stage pipeline
-(encode-ahead, sampler, decode-behind) complete every 2.57 s, about 0.41 s of
-video per wall second. The goal is one second of video per wall second at 24
-fps and at least 256x256; it is not met. See the
-[audit of the September 15-16 claims](notes/2026-09-16-audit-of-sep15-16-claims.md):
-exactness held, but every throughput prompt used one prompt and one seed,
-which hid three pipeline races; they are fixed and a ten-fixture re-validation
-(packet 58) is the current campaign.
+Status: **2.029 s per distinct clip, bytewise exact on ten fixtures, September 17, 2026** (packet 65:
+resident model-management fast path plus MP4 written on the decode worker,
+on top of the three-stage pipeline with graph-captured blocks and text
+encoder). That is 1.95 s of wall per second of video, about 12.3 fps
+equivalent; the goal is 1.00 s (24 fps) and it is not met. The sampler's
+captured block region alone is 1.57 s per clip, so the remaining path runs
+through inter-clip parallelism across the two shard cards and block-level
+kernel work, not through anything outside the blocks. History: the
+[September 16 audit](notes/2026-09-16-audit-of-sep15-16-claims.md) of the
+earlier claims, then packets [58](notes/graph-capture-58-results.md),
+[61](notes/graph-capture-61-results.md), [62](notes/graph-capture-62-results.md),
+[64](notes/graph-capture-64-results.md) and [65](notes/graph-capture-65-results.md).
 
 Direction: [north star, milestones and next work](PLAN.md).
 The actual goal is one second of new video in under one second at 24 fps,

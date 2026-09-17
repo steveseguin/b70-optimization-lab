@@ -25,6 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 04:55 UTC: LTX packet 65 complete: 2.029 s per distinct clip, 19/19 exact (12.3 fps equivalent); server PID 22356 idle on port 8188.**
+Fast path + save-behind 2.029 s; fast-path repeat 2.140 s; pipe control
+2.499 s (matches packet 58); forward-timing diagnostic: 1.67 s of forwards
+per clip, blocks 1.57 s, glue 0.09 s. The block region alone exceeds the
+1.042 s budget, so the next lever is a single-scheduler two-clip sampler
+across the shard cards, then block-level kernel work. No fault; the server
+stays up idle. [Results](experiments/ltx25-b70/notes/graph-capture-65-results.md).
+
 **Four-B70 host, September 17 04:48 UTC: LTX resident fast path lands, 2.52 → 2.135 s per distinct clip (19/19 exact, 11.7 fps equivalent); packet 65 queued.**
 Packet 64 timed ComfyUI's model-management calls with every model resident:
 0.42 s per clip, almost all in the transformer's call before the first
