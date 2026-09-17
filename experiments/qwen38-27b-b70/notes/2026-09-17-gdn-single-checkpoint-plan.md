@@ -43,6 +43,20 @@ the committed state is the same function of the same accepted tokens, computed o
    2K-16K screen, the chat quality suite, the logprob replay, on one and two cards. Then the memory result: expected
    attention-only budget at depth 5 on one card is 2.9 + 0.75 GiB, enough for 32K with margin at 0.975.
 
+## What the XPU kernel already has (source: `/mnt/fast-ai/build/kernels-r310-gdn-barriers-20260915/vllm-xpu-kernels/csrc/xpu/gdn_attn/`)
+
+`gdn_attn_interface.cpp` exposes the speculative path with `spec_state_indices_tensor [num_spec_decodes, K+1]` and a
+`num_accepted_tokens [num_spec_decodes]` argument: the step already knows how many draft tokens the previous step
+accepted and selects the base slot from it. The non-speculative path takes `has_initial_state` and
+`non_spec_state_indices_tensor`, i.e. a chunked pass from a given state into a given slot, which is the commit pass.
+
+Concrete design for GDN: (1) verify computes all K+1 outputs from the checkpoint slot alone (the same recurrence the
+spec kernel runs today, minus the per-slot state writes) and stashes that step's projected q, k, v, gate and beta for
+the K+1 positions per layer (a few MiB in total); (2) after acceptance, one launch per layer replays `num_accepted`
+positions from the checkpoint into the checkpoint slot using the non-spec path with `has_initial_state`; (3) the
+MambaSpec then needs one slot per request. The recompute costs about what the spec kernels cost today (1.3 ms per
+step on one card) and frees 0.75 GiB per request at depth 5.
+
 ## Cost and risk
 
 Two to four days of kernel and runner work, all on the research image, gated before any package change. The main
