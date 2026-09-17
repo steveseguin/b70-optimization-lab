@@ -77,33 +77,41 @@ def register():
             configs.append(draft_cfg.compilation_config)
         with solo_tp(), scratch_static_context(*configs):
             full = orig_get_model(self)
-        # Transplant the unsharded pieces; the attention layer keeps the served (sharded) copy.
-        model.model.embed_tokens = full.model.embed_tokens
-        model.model.fc = full.model.fc
-        for served, whole in zip(model.model.layers, full.model.layers):
-            served.mlp = whole.mlp
-        model._b70_full_lm_head = full.lm_head
+        # Transplant the selected unsharded pieces; the attention layer always keeps the served (sharded) copy.
+        # B70_REPLICATED_DRAFTER_PARTS (default embed,fc,mlp,head): replicating the MLP doubles its compute per card
+        # (comm-3: exact but 86.7 vs 90.4 tok/s), so the lighter selections leave it sharded.
+        parts = {p.strip() for p in os.environ.get('B70_REPLICATED_DRAFTER_PARTS', 'embed,fc,mlp,head').split(',') if p.strip()}
+        state['parts'] = parts
+        if 'embed' in parts:
+            model.model.embed_tokens = full.model.embed_tokens
+        if 'fc' in parts:
+            model.model.fc = full.model.fc
+        if 'mlp' in parts:
+            for served, whole in zip(model.model.layers, full.model.layers):
+                served.mlp = whole.mlp
+        if 'head' in parts:
+            model._b70_full_lm_head = full.lm_head
+            orig_compute_logits = model.compute_logits
+
+            def compute_logits(hidden_states, spec_step_idx=0):
+                with solo_tp():
+                    return orig_compute_logits(hidden_states, spec_step_idx)
+
+            model.compute_logits = compute_logits
         del full
         torch.xpu.empty_cache()
-        orig_compute_logits = model.compute_logits
-
-        def compute_logits(hidden_states, spec_step_idx=0):
-            with solo_tp():
-                return orig_compute_logits(hidden_states, spec_step_idx)
-
-        model.compute_logits = compute_logits
-        logger.warning('b70_replicated_drafter: embedding %s, fc %s, mlp tp_size %d transplanted; logits under the one-rank group',
-                       tuple(model.model.embed_tokens.weight.shape), tuple(model.model.fc.weight.shape),
-                       model.model.layers[0].mlp.down_proj.tp_size)
+        logger.warning('b70_replicated_drafter: parts %s; embedding tp %d, fc tp %d, mlp tp %d, head %s',
+                       sorted(parts), model.model.embed_tokens.tp_size, model.model.fc.tp_size,
+                       model.model.layers[0].mlp.down_proj.tp_size, 'unsharded' if 'head' in parts else 'shared shard')
         return model
 
     def _maybe_share_embeddings(self, target_language_model):
-        if state['solo'] is None:
+        if state['solo'] is None or 'embed' not in state.get('parts', ()):
             return orig_share_embeddings(self, target_language_model)
         logger.warning('b70_replicated_drafter: keeping the drafter\'s own unsharded embedding (not sharing the target shard)')
 
     def _maybe_share_lm_head(self, target_language_model):
-        if state['solo'] is None:
+        if state['solo'] is None or 'head' not in state.get('parts', ()):
             return orig_share_lm_head(self, target_language_model)
         head = self.model._b70_full_lm_head
         draft_int4 = os.environ.get('VLLM_XPU_DRAFT_LM_HEAD_INT4', '0').strip().lower() in {'1', 'true', 'yes', 'on'}
