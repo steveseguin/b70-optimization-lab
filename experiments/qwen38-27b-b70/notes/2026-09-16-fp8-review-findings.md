@@ -124,6 +124,16 @@ The one-card package now ships 24,576 tokens of context (pair 53.43 / 53.43 tok/
 - **Memory-utilization ceiling:** 0.985 is refused (29.84 GiB target vs 29.81 GiB free at startup); 0.983 is the most
   the card accepts, +0.24 GiB over the shipped 0.975, still about 40 MB short of 32K at depth 5. Probes: 30,720 at
   depth 5 and 32,768 at depth 4 (second night campaign).
+- **Context ceiling probes (second night campaign):** 30,720 tokens at depth 5 with 0.983 memory passes every gate
+  (strict 12/12 at 53.41 tok/s, 64/64 + queued, 2K/8K/16K exact, prefill 2,019 / 2,006 / 1,927). The 32K depth-4 probe
+  and the graph-capture probe were lost to a false alarm: the driver's `Xe device coredump has been deleted` line (the
+  23:10 dump expiring) matched the research launcher's fault pattern, which stopped a healthy server mid-suite. The
+  pattern now matches only `coredump has been created`; the probes rerun in the third campaign.
+- **Broad-text draft shortlist (v3):** built from WikiText-103 (91.9M tokens) plus the CPython standard library
+  (1.2M tokens), no lab text. Only 22,845 distinct tokens appear in that corpus, so every v3 list is really the whole
+  corpus vocabulary; v3-top65536 covers 95.3% of the strict suite's output tokens against 99.8% for the shipped
+  list (Jaccard 0.39). The shipped list is broader, not narrower, than general English plus Python; the two-card
+  speed comparison in the third campaign puts a number on the difference.
 - **LocalMaxxing:** the two-card record is submitted and approved as `cmu4zwfht07nzlq01tyj03f17` (88.407 tok/s pair
   median), bound by `data/2026-09-17-fp8-tp2-mtp5-r310-promotion-attestation.json`.
 - **Tooling:** `fp8-gate-suite.py` runs the whole gate set against a live endpoint and freezes the evidence as one

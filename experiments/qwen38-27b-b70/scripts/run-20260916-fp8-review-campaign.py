@@ -105,9 +105,12 @@ def sh(argv, log_name, timeout, env=None):
     return rc
 
 
+FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
+
+
 def journal_faults(since):
     text = helper.journal(since)
-    return [line for line in text.splitlines() if helper.FAULT.search(line)]
+    return [line for line in text.splitlines() if FAULT.search(line)]
 
 
 def fault_check(since):

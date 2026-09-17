@@ -35,6 +35,9 @@ DRAFT_FP16_OVERLAY = ROOT / 'experiments/qwen38-27b-b70/overlays/b70-draft-fp16-
 HELPER = ROOT / 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py'
 GUARD = ROOT / 'experiments/qwen38-27b-b70/scripts/host_memory_guard.py'
 PASSWORD_FILE = Path('/home/steve/SUDO_PASSWORD.txt')
+# The package pattern matched 'coredump' in the driver's 'Xe device coredump has been deleted' line (2026-09-17 00:14, a
+# stale dump from the 23:10 fault expiring) and stopped a healthy server mid-suite; only the creation line is a fault.
+FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
 MEMORY_LINES = re.compile(r'Model loading took|Loading weights took|torch\.compile took|Available KV cache memory|'
                           r'GPU KV cache size|Maximum concurrency|CUDA graph|init engine|Free memory|requested|'
                           r'b70_cpu_embed|Actual usage|OutOfMemory|out of memory|Error|ValueError', re.I)
@@ -119,6 +122,9 @@ def build(args, name, out, image_env):
             raise RuntimeError(f'--extra-env is for variables the qualified record does not set; use --env for {key}')
         env[key] = value
     cmd += list(args.serve_arg)
+    for item in args.mount_file:
+        host, target = item.split(':', 1)
+        mounts += ['--mount', f'type=bind,source={Path(host).resolve()},target={target},readonly']
     if args.fa_trace:
         env.update(B70_FA_TRACE='/hash/fa-trace.jsonl')
     if args.fa_verify_rows:
@@ -154,6 +160,8 @@ def main():
     ap.add_argument('--warmup', action='store_true', help='one untimed 64-token completion before ready')
     ap.add_argument('--extra-env', action='append', default=[], metavar='KEY=VALUE',
                     help='add a variable the qualified record does not set (research probes only; recorded in launch.json)')
+    ap.add_argument('--mount-file', action='append', default=[], metavar='HOST:CONTAINER',
+                    help='bind one host file read-only into the container (research probes only, e.g. a candidate shortlist)')
     ap.add_argument('--serve-arg', action='append', default=[], metavar='ARG',
                     help='append one vllm serve argument (research probes only; recorded in launch.json)')
     ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',
@@ -224,7 +232,7 @@ def main():
             child = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=helper.clean_env())
             deadline = time.monotonic() + a.startup_timeout
             while not stopping and not (out / 'STOP').exists():
-                faults = [line for line in helper.journal(started).splitlines() if helper.FAULT.search(line)]
+                faults = [line for line in helper.journal(started).splitlines() if FAULT.search(line)]
                 if faults:
                     write(out.parent / 'FAULT.json', {'at': helper.now(), 'stage': str(out), 'lines': faults})
                     raise RuntimeError('Kernel GPU fault; campaign latched')
