@@ -1,5 +1,5 @@
 diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
-index 445ff26..d9c7241 100644
+index 445ff26..952f9e1 100644
 --- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
 +++ b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
 @@ -279,6 +279,9 @@ struct gated_delta_rule_kernel {
@@ -68,7 +68,7 @@ index 445ff26..d9c7241 100644
  
    static inline sycl::nd_range<3> get_nd_range(
        const int num_spec_decodes, const int num_v_heads, const int head_v_dim) {
-@@ -361,6 +395,94 @@ struct gated_delta_rule_spec_kernel {
+@@ -361,6 +395,15 @@ struct gated_delta_rule_spec_kernel {
        return x;
    }
  
@@ -81,101 +81,20 @@ index 445ff26..d9c7241 100644
 +  inline int stash_a_off() const { return stash_b_off() + num_v_heads; }
 +  inline int stash_row_elems() const { return stash_a_off() + num_v_heads; }
 +
-+  // One delta-rule token: the same statements for both protocols and for
-+  // replayed and new tokens. Inputs are the raw loaded values (q/k not yet
-+  // normalised); the state is updated in place; the output row is returned.
-+  inline void step(
-+      const sycl::sub_group& sg,
-+      const float scale,
-+      const float A_log_local,
-+      const float dt_bias_local,
-+      float b_local,
-+      float a_local,
-+      float* q_local,
-+      float* k_local,
-+      const float* v_local,
-+      float* state_local,
-+      float* res) const {
-+    float beta = act_sigmoid(b_local);
-+    a_local = a_local + dt_bias_local;
-+    float g = sycl::exp(A_log_local * act_softplus(a_local));
-+
-+    float q_sum = 0.0f;
-+    float k_sum = 0.0f;
-+#pragma unroll
-+    for (int i = 0; i < k_bucket_size; ++i) {
-+      q_sum += q_local[i] * q_local[i];
-+      k_sum += k_local[i] * k_local[i];
-+    }
-+    q_sum = sycl::reduce_over_group(sg, q_sum, sycl::plus<>());
-+    k_sum = sycl::reduce_over_group(sg, k_sum, sycl::plus<>());
-+    q_sum += eps;
-+    k_sum += eps;
-+#pragma unroll
-+    for (int i = 0; i < k_bucket_size; ++i) {
-+      q_local[i] /= sycl::sqrt(q_sum);
-+      q_local[i] *= scale;
-+      k_local[i] /= sycl::sqrt(k_sum);
-+    }
-+
-+    float kv_mem[v_dim_per_sg];
-+#pragma unroll
-+    for (int i = 0; i < v_dim_per_sg; ++i) {
-+      kv_mem[i] = 0.0f;
-+    }
-+#pragma unroll
-+    for (int j = 0; j < v_dim_per_sg; ++j) {
-+#pragma unroll
-+      for (int i = 0; i < k_bucket_size; ++i) {
-+        state_local[j * k_bucket_size + i] *= g;
-+        kv_mem[j] += state_local[j * k_bucket_size + i] * k_local[i];
-+      }
-+    }
-+#pragma unroll
-+    for (int i = 0; i < v_dim_per_sg; ++i) {
-+      kv_mem[i] = sycl::reduce_over_group(sg, kv_mem[i], sycl::plus<>());
-+    }
-+
-+    float delta[v_dim_per_sg];
-+#pragma unroll
-+    for (int i = 0; i < v_dim_per_sg; ++i) {
-+      delta[i] = (v_local[i] - kv_mem[i]) * beta;
-+    }
-+
-+#pragma unroll
-+    for (int i = 0; i < v_dim_per_sg; ++i) {
-+      res[i] = 0.0f;
-+    }
-+#pragma unroll
-+    for (int j = 0; j < v_dim_per_sg; ++j) {
-+#pragma unroll
-+      for (int i = 0; i < k_bucket_size; ++i) {
-+        state_local[j * k_bucket_size + i] += k_local[i] * delta[j];
-+        res[j] += state_local[j * k_bucket_size + i] * q_local[i];
-+      }
-+    }
-+#pragma unroll
-+    for (int i = 0; i < v_dim_per_sg; ++i) {
-+      res[i] = sycl::reduce_over_group(sg, res[i], sycl::plus<>());
-+    }
-+  }
-+
    [[sycl::reqd_sub_group_size(sub_group_size)]] void
    operator()(sycl::nd_item<3> item) const {
      int batch_id = item.get_group(0);
-@@ -386,124 +508,153 @@ struct gated_delta_rule_spec_kernel {
-     float q_local[k_bucket_size];
+@@ -387,50 +430,115 @@ struct gated_delta_rule_spec_kernel {
      float k_local[k_bucket_size];
      float v_local[v_dim_per_sg];
-+    float res[v_dim_per_sg];
-+
+ 
 +    const bool checkpoint = (stash != nullptr);
 +    const int k_head_off = (num_v_heads_id / kv_ratio) * head_k_dim +
 +        k_bucket_size * sg_local_id;
 +    const int v_head_off = num_v_heads_id * head_v_dim + head_v_dim_id;
 +    const int state_off = num_v_heads_id * head_k_dim * head_v_dim +
 +        k_bucket_size * sg_local_id;
- 
++
      // -- Load initial state ---------------------------------------------------
 -    // init_col = num_accepted_tokens[batch_id] - 1 (clamped to >= 0).
 -    int init_col = num_accepted_tokens[batch_id] - 1;
@@ -205,25 +124,81 @@ index 445ff26..d9c7241 100644
 -                                    (head_v_dim_id + j) * head_k_dim]);
 +        state_local[j * k_bucket_size + i] = static_cast<float>(
 +            init_state_ptr[state_off + i + (head_v_dim_id + j) * head_k_dim]);
++      }
++    }
++
++    // -- Single-checkpoint protocol: how many stashed rows to replay ----------
++    const T* old_rows = nullptr;
++    T* new_rows = nullptr;
++    int n_replay = 0;
++    int row_elems = 0;
++    if (checkpoint) {
++      row_elems = stash_row_elems();
++      const int* meta = stash_meta + 2 * static_cast<int64_t>(init_state_idx);
++      const int parity = meta[0] & 1;
++      const int len = meta[1];
++      if (len > 0) {
++        n_replay = num_accepted_tokens[batch_id];
++        if (n_replay > len) n_replay = len;
++        if (n_replay < 0) n_replay = 0;
++      }
++      if (commit_mask != nullptr && !commit_mask[batch_id]) {
++        n_replay = 0;
        }
++      T* block_rows =
++          stash + static_cast<int64_t>(init_state_idx) * stash_stride_0;
++      old_rows = block_rows +
++          static_cast<int64_t>(parity) * stash_rows * row_elems;
++      new_rows = block_rows +
++          static_cast<int64_t>(parity ^ 1) * stash_rows * row_elems;
      }
++    const bool write_qk = checkpoint && (num_v_heads_id % kv_ratio == 0) &&
++        v_bucket_id == 0 && sg_id == 0;
++    const bool write_v = checkpoint && sg_local_id == 0;
++    const bool write_ba = checkpoint && v_bucket_id == 0 && sg_id == 0 &&
++        sg_local_id == 0;
  
 -    // -- Iterate over the num_spec_tokens tokens of this sequence -------------
 -    for (int t_local = 0; t_local < num_spec_tokens; ++t_local) {
--      // Local token index inside q/k/v/b/a (which were sized
--      // num_spec_decodes * num_spec_tokens and ordered by
--      // spec_query_start_loc).
--      const int t = batch_id * num_spec_tokens + t_local;
--
++    // -- One loop over the replayed rows, then the window tokens -------------
++    // The arithmetic below is the per-slot kernel's, statement for statement,
++    // and one code instance serves both the replayed rows and the window
++    // tokens, so a replayed token is computed exactly as it was when it was a
++    // window token. Only the loads differ (stash row vs. this step's q/k/v).
++    const int total = n_replay + num_spec_tokens;
++    for (int step_idx = 0; step_idx < total; ++step_idx) {
++      const bool replaying = step_idx < n_replay;
++      const int t_local = step_idx - n_replay;
+       // Local token index inside q/k/v/b/a (which were sized
+       // num_spec_decodes * num_spec_tokens and ordered by
+       // spec_query_start_loc).
+       const int t = batch_id * num_spec_tokens + t_local;
++      const T* row = replaying
++          ? old_rows + static_cast<int64_t>(step_idx) * row_elems
++          : nullptr;
++      T* out_row = (checkpoint && !replaying)
++          ? new_rows + static_cast<int64_t>(t_local) * row_elems
++          : nullptr;
+ 
 -      float b_local = b[t * num_v_heads + num_v_heads_id];
--      float beta = act_sigmoid(b_local);
++      const T b_raw = replaying ? row[stash_b_off() + num_v_heads_id]
++                                : b[t * num_v_heads + num_v_heads_id];
++      const T a_raw = replaying ? row[stash_a_off() + num_v_heads_id]
++                                : a[t * num_v_heads + num_v_heads_id];
++      if (write_ba && !replaying) {
++        out_row[stash_b_off() + num_v_heads_id] = b_raw;
++        out_row[stash_a_off() + num_v_heads_id] = a_raw;
++      }
++      float b_local = b_raw;
+       float beta = act_sigmoid(b_local);
 -      float a_local = a[t * num_v_heads + num_v_heads_id] + dt_bias_local;
--      float g = sycl::exp(A_log_local * act_softplus(a_local));
--
--      float q_sum = 0.0f;
--      float k_sum = 0.0f;
--#pragma unroll
--      for (int i = 0; i < k_bucket_size; ++i) {
++      float a_local = a_raw + dt_bias_local;
+       float g = sycl::exp(A_log_local * act_softplus(a_local));
+ 
+       float q_sum = 0.0f;
+       float k_sum = 0.0f;
+ #pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
 -        q_local[i] =
 -            q[t * num_k_heads * head_k_dim +
 -              (num_v_heads_id / kv_ratio) * head_k_dim +
@@ -232,162 +207,67 @@ index 445ff26..d9c7241 100644
 -            k[t * num_k_heads * head_k_dim +
 -              (num_v_heads_id / kv_ratio) * head_k_dim +
 -              (k_bucket_size * sg_local_id + i)];
--        q_sum += q_local[i] * q_local[i];
--        k_sum += k_local[i] * k_local[i];
--      }
--      q_sum = sycl::reduce_over_group(sg, q_sum, sycl::plus<>());
--      k_sum = sycl::reduce_over_group(sg, k_sum, sycl::plus<>());
--      q_sum += eps;
--      k_sum += eps;
--#pragma unroll
--      for (int i = 0; i < k_bucket_size; ++i) {
--        q_local[i] /= sycl::sqrt(q_sum);
--        q_local[i] *= scale;
--        k_local[i] /= sycl::sqrt(k_sum);
-+    // -- Single-checkpoint protocol: replay the accepted prefix, commit -------
-+    const T* old_rows = nullptr;
-+    T* new_rows = nullptr;
-+    if (checkpoint) {
-+      const int row_elems = stash_row_elems();
-+      const int* meta = stash_meta + 2 * static_cast<int64_t>(init_state_idx);
-+      const int parity = meta[0] & 1;
-+      const int len = meta[1];
-+      int n_replay = 0;
-+      if (len > 0) {
-+        n_replay = num_accepted_tokens[batch_id];
-+        if (n_replay > len) n_replay = len;
-+        if (n_replay < 0) n_replay = 0;
-       }
--
--      float kv_mem[v_dim_per_sg];
--#pragma unroll
--      for (int i = 0; i < v_dim_per_sg; ++i) {
--        kv_mem[i] = 0.0f;
-+      if (commit_mask != nullptr && !commit_mask[batch_id]) {
-+        n_replay = 0;
-       }
--#pragma unroll
--      for (int j = 0; j < v_dim_per_sg; ++j) {
-+      T* block_rows =
-+          stash + static_cast<int64_t>(init_state_idx) * stash_stride_0;
-+      old_rows = block_rows +
-+          static_cast<int64_t>(parity) * stash_rows * row_elems;
-+      new_rows = block_rows +
-+          static_cast<int64_t>(parity ^ 1) * stash_rows * row_elems;
-+      for (int r = 0; r < n_replay; ++r) {
-+        const T* row = old_rows + static_cast<int64_t>(r) * row_elems;
-+        float b_local = row[stash_b_off() + num_v_heads_id];
-+        float a_local = row[stash_a_off() + num_v_heads_id];
- #pragma unroll
-         for (int i = 0; i < k_bucket_size; ++i) {
--          state_local[j * k_bucket_size + i] *= g;
--          kv_mem[j] += state_local[j * k_bucket_size + i] * k_local[i];
-+          q_local[i] = row[k_head_off + i];
-+          k_local[i] = row[stash_k_off() + k_head_off + i];
-         }
--      }
- #pragma unroll
--      for (int i = 0; i < v_dim_per_sg; ++i) {
--        kv_mem[i] = sycl::reduce_over_group(sg, kv_mem[i], sycl::plus<>());
-+        for (int i = 0; i < v_dim_per_sg; ++i) {
-+          v_local[i] = row[stash_v_off() + v_head_off + i];
++        const T q_raw = replaying
++            ? row[k_head_off + i]
++            : q[t * num_k_heads * head_k_dim + k_head_off + i];
++        const T k_raw = replaying
++            ? row[stash_k_off() + k_head_off + i]
++            : k[t * num_k_heads * head_k_dim + k_head_off + i];
++        if (write_qk && !replaying) {
++          out_row[k_head_off + i] = q_raw;
++          out_row[stash_k_off() + k_head_off + i] = k_raw;
 +        }
-+        step(sg, scale, A_log_local, dt_bias_local, b_local, a_local, q_local,
-+             k_local, v_local, state_local, res);
++        q_local[i] = q_raw;
++        k_local[i] = k_raw;
+         q_sum += q_local[i] * q_local[i];
+         k_sum += k_local[i] * k_local[i];
        }
--
-+      if (n_replay > 0) {
-+        StateT* commit_ptr = ssm_state +
-+            static_cast<int64_t>(init_state_idx) * ssm_state_stride_0;
+@@ -465,9 +573,13 @@ struct gated_delta_rule_spec_kernel {
+ 
  #pragma unroll
--      for (int i = 0; i < v_dim_per_sg; ++i) {
+       for (int i = 0; i < v_dim_per_sg; ++i) {
 -        v_local[i] =
 -            v[t * num_v_heads * head_v_dim + num_v_heads_id * head_v_dim +
 -              head_v_dim_id + i];
--      }
--      float delta[v_dim_per_sg];
-+        for (int j = 0; j < v_dim_per_sg; ++j) {
++        const T v_raw = replaying
++            ? row[stash_v_off() + v_head_off + i]
++            : v[t * num_v_heads * head_v_dim + v_head_off + i];
++        if (write_v && !replaying) {
++          out_row[stash_v_off() + v_head_off + i] = v_raw;
++        }
++        v_local[i] = v_raw;
+       }
+       float delta[v_dim_per_sg];
  #pragma unroll
--      for (int i = 0; i < v_dim_per_sg; ++i) {
--        delta[i] = (v_local[i] - kv_mem[i]) * beta;
-+          for (int i = 0; i < k_bucket_size; ++i) {
-+            const StateT stored =
-+                static_cast<StateT>(state_local[j * k_bucket_size + i]);
-+            commit_ptr[state_off + i + (head_v_dim_id + j) * head_k_dim] =
-+                stored;
-+            // Continue from the stored value, as a reload would.
-+            state_local[j * k_bucket_size + i] = static_cast<float>(stored);
+@@ -493,6 +605,27 @@ struct gated_delta_rule_spec_kernel {
+         res[i] = sycl::reduce_over_group(sg, res[i], sycl::plus<>());
+       }
+ 
++      if (replaying) {
++        if (step_idx == n_replay - 1) {
++          // The commit: the checkpoint after the accepted prefix.
++          StateT* commit_ptr = ssm_state +
++              static_cast<int64_t>(init_state_idx) * ssm_state_stride_0;
++#pragma unroll
++          for (int j = 0; j < v_dim_per_sg; ++j) {
++#pragma unroll
++            for (int i = 0; i < k_bucket_size; ++i) {
++              const StateT stored =
++                  static_cast<StateT>(state_local[j * k_bucket_size + i]);
++              commit_ptr[state_off + i + (head_v_dim_id + j) * head_k_dim] =
++                  stored;
++              // Continue from the stored value, as a reload would.
++              state_local[j * k_bucket_size + i] = static_cast<float>(stored);
++            }
 +          }
 +        }
-       }
-+    }
- 
--      float res[v_dim_per_sg];
--#pragma unroll
--      for (int i = 0; i < v_dim_per_sg; ++i) {
--        res[i] = 0.0f;
-+    // -- Iterate over the num_spec_tokens tokens of this sequence -------------
-+    const bool write_qk = checkpoint && (num_v_heads_id % kv_ratio == 0) &&
-+        v_bucket_id == 0 && sg_id == 0;
-+    const bool write_v = checkpoint && sg_local_id == 0;
-+    const bool write_ba = checkpoint && v_bucket_id == 0 && sg_id == 0 &&
-+        sg_local_id == 0;
-+    for (int t_local = 0; t_local < num_spec_tokens; ++t_local) {
-+      // Local token index inside q/k/v/b/a (which were sized
-+      // num_spec_decodes * num_spec_tokens and ordered by
-+      // spec_query_start_loc).
-+      const int t = batch_id * num_spec_tokens + t_local;
-+      T* row = checkpoint
-+          ? new_rows + static_cast<int64_t>(t_local) * stash_row_elems()
-+          : nullptr;
-+
-+      const T b_raw = b[t * num_v_heads + num_v_heads_id];
-+      const T a_raw = a[t * num_v_heads + num_v_heads_id];
-+      float b_local = b_raw;
-+      float a_local = a_raw;
-+      if (write_ba) {
-+        row[stash_b_off() + num_v_heads_id] = b_raw;
-+        row[stash_a_off() + num_v_heads_id] = a_raw;
-       }
- #pragma unroll
--      for (int j = 0; j < v_dim_per_sg; ++j) {
--#pragma unroll
--        for (int i = 0; i < k_bucket_size; ++i) {
--          state_local[j * k_bucket_size + i] += k_local[i] * delta[j];
--          res[j] += state_local[j * k_bucket_size + i] * q_local[i];
-+      for (int i = 0; i < k_bucket_size; ++i) {
-+        const T q_raw = q[t * num_k_heads * head_k_dim + k_head_off + i];
-+        const T k_raw = k[t * num_k_heads * head_k_dim + k_head_off + i];
-+        q_local[i] = q_raw;
-+        k_local[i] = k_raw;
-+        if (write_qk) {
-+          row[k_head_off + i] = q_raw;
-+          row[stash_k_off() + k_head_off + i] = k_raw;
-         }
-       }
- #pragma unroll
-       for (int i = 0; i < v_dim_per_sg; ++i) {
--        res[i] = sycl::reduce_over_group(sg, res[i], sycl::plus<>());
-+        const T v_raw = v[t * num_v_heads * head_v_dim + v_head_off + i];
-+        v_local[i] = v_raw;
-+        if (write_v) {
-+          row[stash_v_off() + v_head_off + i] = v_raw;
-+        }
-       }
- 
-+      step(sg, scale, A_log_local, dt_bias_local, b_local, a_local, q_local,
-+           k_local, v_local, state_local, res);
++        continue;
++      }
 +
        // Write O(t) to GLOBAL core_attn_out via token_indx remap.
        if (sg_local_id == 0) {
          const int global_t = (token_indx != nullptr) ? token_indx[t] : t;
- #pragma unroll
-         for (int i = 0; i < v_dim_per_sg; ++i) {
--          core_attn_out
--              [global_t * num_v_heads * head_v_dim +
--               num_v_heads_id * head_v_dim + head_v_dim_id + i] = res[i];
-+          core_attn_out[global_t * num_v_heads * head_v_dim + v_head_off + i] =
-+              res[i];
+@@ -504,6 +637,9 @@ struct gated_delta_rule_spec_kernel {
          }
        }
  
@@ -397,21 +277,7 @@ index 445ff26..d9c7241 100644
        // Write the new SSM state back to this token's dedicated cache slot,
        // so that the next forward can pick the right rollback column based on
        // num_accepted_tokens.
-@@ -516,11 +667,8 @@ struct gated_delta_rule_spec_kernel {
-       for (int j = 0; j < v_dim_per_sg; ++j) {
- #pragma unroll
-         for (int i = 0; i < k_bucket_size; ++i) {
--          final_state_ptr
--              [num_v_heads_id * head_k_dim * head_v_dim +
--               (k_bucket_size * sg_local_id + i) +
--               (head_v_dim_id + j) * head_k_dim] =
--                  static_cast<StateT>(state_local[j * k_bucket_size + i]);
-+          final_state_ptr[state_off + i + (head_v_dim_id + j) * head_k_dim] =
-+              static_cast<StateT>(state_local[j * k_bucket_size + i]);
-         }
-       }
-     }
-@@ -547,6 +695,11 @@ struct gated_delta_rule_spec_kernel {
+@@ -547,6 +683,11 @@ struct gated_delta_rule_spec_kernel {
    const int head_k_dim;
    const int num_v_heads;
    const int head_v_dim;
@@ -423,7 +289,7 @@ index 445ff26..d9c7241 100644
  };
  
  template <typename T, typename StateT, int k_bucket_size>
-@@ -625,7 +778,12 @@ void kernel_launcher_spec(
+@@ -625,7 +766,12 @@ void kernel_launcher_spec(
      const int num_k_heads,
      const int head_k_dim,
      const int num_v_heads,
@@ -437,7 +303,7 @@ index 445ff26..d9c7241 100644
    using KERNEL = gated_delta_rule_spec_kernel<T, StateT, k_bucket_size>;
    auto range = KERNEL::get_nd_range(num_spec_decodes, num_v_heads, head_v_dim);
    assert(head_v_dim % KERNEL::v_dim_per_group == 0);
-@@ -650,7 +808,12 @@ void kernel_launcher_spec(
+@@ -650,7 +796,12 @@ void kernel_launcher_spec(
          num_k_heads,
          head_k_dim,
          num_v_heads,
@@ -451,7 +317,7 @@ index 445ff26..d9c7241 100644
      cgh.parallel_for(range, task);
    });
  }
-@@ -677,7 +840,11 @@ void gated_delta_rule(
+@@ -677,7 +828,11 @@ void gated_delta_rule(
          num_accepted_tokens,  // [batch_size] or None
      const int num_prefills,
      const int num_decodes,
@@ -464,7 +330,7 @@ index 445ff26..d9c7241 100644
    TORCH_CHECK(query_start_loc.has_value() && cache_indices.has_value());
  
    // Spec path is selected when num_accepted_tokens is provided. In that case
-@@ -699,11 +866,39 @@ void gated_delta_rule(
+@@ -699,11 +854,39 @@ void gated_delta_rule(
  
    int num_spec_tokens = 0;
    int cache_indices_stride_0 = 0;
@@ -507,7 +373,7 @@ index 445ff26..d9c7241 100644
      TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
    }
  
-@@ -748,7 +943,16 @@ void gated_delta_rule(
+@@ -748,7 +931,16 @@ void gated_delta_rule(
          num_k_heads,                                                 \
          head_k_dim,                                                  \
          num_v_heads,                                                 \
