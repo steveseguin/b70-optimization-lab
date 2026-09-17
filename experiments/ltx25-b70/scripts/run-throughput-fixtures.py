@@ -21,7 +21,7 @@ result does not demonstrate a stream of new video. This driver:
 No retries, no restarts. An execution error stops the driver and preserves
 everything already written.
 """
-import argparse, json, hashlib, subprocess, sys, time, urllib.request
+import argparse, json, hashlib, subprocess, sys, time, urllib.request, urllib.error
 from pathlib import Path
 
 LANE = Path(__file__).resolve().parents[1]
@@ -49,12 +49,23 @@ out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
 server_run = Path(a.server_run)
 
 
-def call(path, payload=None):
+def call(path, payload=None, retries=30):
+    """One HTTP call. A GET is retried on transport errors, because the server's
+    web loop stalls for minutes while sampler workers capture graphs (GIL);
+    a POST (prompt submission) is never retried."""
     assert not (ROOT / 'FAULT.json').exists(), 'device fault; halt requests'
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(API + path, data=data, headers={'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read() or b'{}')
+    attempt = 0
+    while True:
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r:
+                return json.loads(r.read() or b'{}')
+        except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError) as e:
+            attempt += 1
+            if payload is not None or attempt > retries:
+                raise
+            time.sleep(10)
 
 
 fixtures = json.loads(Path(a.fixtures).read_text())['fixtures']
