@@ -1,0 +1,66 @@
+{
+  "schema": "ltx.throughput-fixtures.v1",
+  "prefix": "f66-proof",
+  "arm": "pipe-batchproof",
+  "index_base": 1000,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-66/graphs/graph-capture-all48-pipe-batchproof.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-graph-capture-66",
+  "count": 3,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 2,
+  "fills_excluded": [
+    "f66-proof-01"
+  ],
+  "all_exact": true,
+  "intervals_between_distinct_clips_s": [
+    9.663
+  ],
+  "steady_mean_s": 9.663,
+  "steady_p95_s": 9.663,
+  "steady_min_s": 9.663,
+  "steady_max_s": 9.663,
+  "seconds_of_wall_per_second_of_video": 9.27648,
+  "effective_fps": 2.58718824381662,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that re-emit an already-emitted clip during pipeline fill",
+  "rows": [
+    {
+      "prompt": "f66-proof-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "reference": "baseline-01",
+      "fill": false,
+      "t_done": 1789621607.04,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f66-proof-01",
+      "index": 1,
+      "prompt_fixture": "marble",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "reference": "baseline-01",
+      "fill": true,
+      "t_done": 1789621612.672,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f66-proof-02",
+      "index": 2,
+      "prompt_fixture": "bird",
+      "emitted_index": 1,
+      "emitted_fixture": "marble",
+      "reference": "speed-oracle-marble",
+      "fill": false,
+      "t_done": 1789621616.703,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    }
+  ]
+}
