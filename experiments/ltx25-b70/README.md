@@ -1,17 +1,16 @@
 # LTX 2.5 native BF16 baseline on B70
 
-Status: **2.029 s per distinct clip, bytewise exact on ten fixtures, September 17, 2026** (packet 65:
-resident model-management fast path plus MP4 written on the decode worker,
-on top of the three-stage pipeline with graph-captured blocks and text
-encoder). That is 1.95 s of wall per second of video, about 12.3 fps
-equivalent; the goal is 1.00 s (24 fps) and it is not met. The sampler's
-captured block region alone is 1.57 s per clip, so the remaining path runs
-through inter-clip parallelism across the two shard cards and block-level
-kernel work, not through anything outside the blocks. History: the
-[September 16 audit](notes/2026-09-16-audit-of-sep15-16-claims.md) of the
-earlier claims, then packets [58](notes/graph-capture-58-results.md),
-[61](notes/graph-capture-61-results.md), [62](notes/graph-capture-62-results.md),
-[64](notes/graph-capture-64-results.md) and [65](notes/graph-capture-65-results.md).
+Status: **1.607 s per distinct clip, bytewise exact on ten fixtures, September 17, 2026**
+(packet 74: two clips in flight across the two shard cards, on top of the
+graph-captured pipeline with the resident fast path and save-behind). That
+is 1.54 s of wall per second of video, about 15.6 fps equivalent; the goal
+is 1.00 s (24 fps) and it is not met. The stream now sits on the text
+encoder's ceiling (one 1.59 s fp32 encode per clip on one card), so the
+next lever is the encoder two prompts deep across two cards. History: the
+[September 16 audit](notes/2026-09-16-audit-of-sep15-16-claims.md), then
+packets [58](notes/graph-capture-58-results.md), [64](notes/graph-capture-64-results.md),
+[65](notes/graph-capture-65-results.md), [72](notes/graph-capture-72-results.md)
+and [74](notes/graph-capture-74-results.md).
 
 Direction: [north star, milestones and next work](PLAN.md).
 The actual goal is one second of new video in under one second at 24 fps,

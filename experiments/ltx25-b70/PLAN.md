@@ -87,28 +87,27 @@ reference must define anchoring in both stages, count boundary frames only
 once, and resolve audio timing. No continuation graph or quality result is
 qualified yet.
 
-## Status, September 17, 2026
+## Status, September 17, 2026 (evening)
 
 Validated on ten distinct prompt/seed fixtures with per-clip exact oracles:
-**2.029 s per distinct clip, 12.3 fps equivalent** ([packet 65](notes/graph-capture-65-results.md)),
-from 2.52 s on September 16, by skipping ComfyUI model-management bookkeeping
-for resident models (0.42 s per clip, [packet 64](notes/graph-capture-64-results.md))
-and writing the MP4 preview on the decode worker. Timed forwards put the
-sampler at 1.67 s per clip, of which the captured block region is 1.57 s and
-the model glue 0.09 s; everything outside the forwards is about 0.35 s. The
-block region alone exceeds the 1.042 s budget, so the goal now needs, in this
-order:
+**1.607 s per distinct clip, 15.6 fps equivalent** ([packet 74](notes/graph-capture-74-results.md)),
+from 2.52 s on September 16: resident fast path (0.42 s of bookkeeping),
+save-behind, and two clips in flight across the shard cards (per-clip
+streams, pinned-host staged activations, capture/replay lock). Batching two
+clips in one forward is closed by proof (not bit-exact even for identical
+rows). The stream is now text-encoder-bound (1.59 s fp32 encode per clip on
+one card, ceiling 15.7 fps). In order:
 
-1. A single-scheduler two-clip sampler that keeps both shard cards busy
-   (one issuing thread, per-clip static buffers, event-ordered transfers;
-   not the retired two-thread design).
-2. Block-level exact kernel work: the audio stream on the idle card, the
-   proven adaLN fused kernel, the small-projection bandwidth.
-3. The small remainders: glue capture (0.09 s), oracle capture behind the
-   pipeline (0.05 s), prompt turnaround.
+1. Encoder two prompts deep across xpu:2 and xpu:3 (layer shard plus two
+   encode workers), expected ~0.8 s per clip of encode throughput; the
+   stream would then be sampler-bound near 1.2 s per clip.
+2. Transformer split rebalance toward 24/24 if graph-pool memory allows,
+   and the small exact remainders (glue capture, oracle behind, adaLN).
+3. Block kernel work on the launch-bound audio stream.
 
-The host locked up silently four times on September 16–17, twice on idle
-boots with nothing running; runners commit after every arm.
+Host: freezes are traced to two causes, runtime suspend of two B70s (fixed:
+udev bind-time rule) and a kernel lock stall after xe process teardown
+(open); one server per boot, never stopped.
 
 ## Next optimization questions, in order
 

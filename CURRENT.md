@@ -29,6 +29,12 @@ actions are historical, span multiple hosts, and are not current instructions.
 Unit `fp8-service-20260917-postboot`, state `/mnt/fast-ai/bench-results/service-postboot-20260917`. Keep the cycle
 count low on this boot. The oneCCL threshold A/B is closed (peer-access kernels fault both cards); the remaining
 two-card lever is fewer or cheaper collectives per step, and on one card the single-checkpoint GDN state plan.
+**Four-B70 host, September 17 13:10 UTC: LTX two-clip sampler lands: 1.607 s per distinct clip, 21/21 exact (15.6 fps equivalent); server PID 4280 stays up idle (never stopped this boot).**
+Control on the same server 2.045 s. The stream now sits on the text
+encoder's 1.59 s ceiling; the next lever (encoder sharded two prompts deep
+across xpu:2/xpu:3) needs a new packet and therefore a server restart,
+which is the user's call given the teardown-triggered lockups.
+[Results](experiments/ltx25-b70/notes/graph-capture-74-results.md).
 
 **Two-B70 host, September 17 07:50 UTC: rebooting with the user's approval after the third fault; the service needs one manual start after the boot.**
 After the boot, from the repo: `nohup scripts/autolaunch-fp8-service.sh &` (health probe, then one two-card package
