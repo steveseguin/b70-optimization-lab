@@ -343,7 +343,9 @@ That is a kernel project in the FA2 XPU (cutlass/sycl-tla) source, of the same s
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
   both times minutes earlier. Until the user decides on a reset, no GPU work.
 - One-card context above 40,960 tokens: the single-checkpoint state (r311b) settled 32K lossless at 0.975 and 40,960
-  at 0.983 (KV budget 45,139 tokens); beyond that the attention KV itself (64 KB per token) is the limit.
+  at 0.983 (KV budget 45,139 tokens). The engine refuses 46,080 at depth 5 and 0.983 (3.20 GiB needed, 3.09 free; its
+  estimate of the ceiling is 44,800), so 40,960 is the shipped maximum and about 44K the hard one; beyond that the
+  attention KV itself (64 KB per token) is the limit, and an FP8 cache is off the table (not lossless).
 - A 30,720-token-plus prompt probe needs a longer unrepeated corpus for bench-prefill-followup (the AMD-transfer
   corpus tokenizes shorter than 30,720); the 2K/8K/16K screen is what every 32K gate ran.
 - Two-card: the replicated drafter (campaigns 3-4) is exact but never faster; the collective count per step is set by

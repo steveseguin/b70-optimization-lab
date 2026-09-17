@@ -38,14 +38,14 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 17 22:18 UTC: boot `9f41bfb8`, depth-5 service UP on 18124 at 90.30 tok/s (the shipped allgather
-recipe), 12/12 vs the no-MTP reference, no fault lines since boot.** Unit `fp8-service-20260917-probe2`, state
-`/mnt/fast-ai/bench-results/fp8-probe2-20260917/service`. Published today: two-card package = allgather allreduce overlay
-(90.48 tok/s, LocalMaxxing `cmu5qk0kz07zglq01eh1opkhx`); one-card package = R311b single-checkpoint GDN state (image on ghcr),
-32,768-token default at 54.3 tok/s (LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`), max-context 40,960, no-quantization 28,672;
-long-prompt probes exact to 30,720 (recommended) and 36,864 (max-context). Closed as negative: the replicated MTP drafter
-(exact, never faster) and the two-card checkpoint state (exact, speed-neutral; not shipped). Next one-card lever: the
-verify pass after 24K+ prompts (writing drops from 66 to 40 tok/s). Service cycles on this boot: 13 starts, all clean.
+**Two-B70 host, September 17 23:46 UTC: boot `9f41bfb8`, depth-5 service UP on 18124 (the shipped allgather recipe), 12/12 vs
+the no-MTP reference, no fault lines since boot.** Unit `fp8-service-20260917-lc1`, state
+`/mnt/fast-ai/bench-results/fp8-lc1-20260917/service`. Today: two-card package = allgather allreduce (90.48 tok/s, LocalMaxxing
+`cmu5qk0kz07zglq01eh1opkhx`); one-card package = R311b single-checkpoint state, 32,768 default at 54.3 tok/s (LocalMaxxing
+`cmu5wc2e50804lq01r0br2i5p`), max-context 40,960 (engine ceiling ~44,800 at 0.983), probes exact to 36,864 tokens. Closed:
+replicated drafter (never faster), two-card checkpoint state (speed-neutral). Next one-card lever: a multi-row verifier
+attention kernel with single-row arithmetic (the per-row calls cost +8% per 8K of context). MiniMax-H3 (a video+audio
+generator, not an LLM) is downloading: `experiments/minimax-h3-b70/README.md`. Service cycles on this boot: 14 starts, all clean.
 
 **Two-B70 host, September 17 07:50 UTC: rebooting with the user's approval after the third fault; the service needs one manual start after the boot.**
 After the boot, from the repo: `nohup scripts/autolaunch-fp8-service.sh &` (health probe, then one two-card package
