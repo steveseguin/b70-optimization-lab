@@ -104,7 +104,7 @@ def build(args, name, out, image_env):
     mounts = ['--mount', f'type=bind,source={MODEL_DIR},target=/model,readonly',
               '--mount', f'type=bind,source={out}/cache,target=/root/.cache/vllm']
     if args.cpu_embed or args.layer_hash or args.gdn_head_groups or args.fa_trace or args.fa_verify_rows \
-            or args.draft_fp16_shortlist:
+            or args.draft_fp16_shortlist or args.overlay:
         mounts += ['--mount', f'type=bind,source={out}/overlay,target=/overlay,readonly']
         env.update(PYTHONPATH='/overlay')
     if args.cpu_embed:
@@ -164,6 +164,8 @@ def main():
     ap.add_argument('--warmup', action='store_true', help='one untimed 64-token completion before ready')
     ap.add_argument('--extra-env', action='append', default=[], metavar='KEY=VALUE',
                     help='add a variable the qualified record does not set (research probes only; recorded in launch.json)')
+    ap.add_argument('--overlay', action='append', default=[], metavar='NAME',
+                    help='also copy experiments/qwen38-27b-b70/overlays/NAME into the mounted overlay (research probes only)')
     ap.add_argument('--mount-file', action='append', default=[], metavar='HOST:CONTAINER',
                     help='bind one host file read-only into the container (research probes only, e.g. a candidate shortlist)')
     ap.add_argument('--mount-dir', action='append', default=[], metavar='HOST:CONTAINER',
@@ -215,9 +217,12 @@ def main():
     if a.fa_trace:
         shutil.copytree(FA_TRACE_OVERLAY, out / 'overlay', ignore=shutil.ignore_patterns('__pycache__', 'test_*'),
                         dirs_exist_ok=True)
+    for extra in a.overlay:
+        shutil.copytree(ROOT / 'experiments/qwen38-27b-b70/overlays' / extra, out / 'overlay',
+                        ignore=shutil.ignore_patterns('__pycache__', 'test_*'), dirs_exist_ok=True)
     if a.layer_hash or a.fa_trace:
         (out / 'hash').mkdir()
-    if a.cpu_embed or a.layer_hash or a.gdn_head_groups or a.fa_trace or a.fa_verify_rows or a.draft_fp16_shortlist:
+    if a.cpu_embed or a.layer_hash or a.gdn_head_groups or a.fa_trace or a.fa_verify_rows or a.draft_fp16_shortlist or a.overlay:
         overlay_hashes = {str(p.relative_to(out / 'overlay')): sha(p) for p in sorted((out / 'overlay').rglob('*')) if p.is_file()}
     argv = build(a, name, out, image_info['Config']['Env'])
     started = helper.now()
