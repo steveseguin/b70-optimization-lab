@@ -81,7 +81,7 @@ for i in range(a.count):
     for node in g.values():
         if 'run_name' in node.get('inputs', {}):
             node['inputs']['run_name'] = name
-        if 'clip_index' in node.get('inputs', {}):
+        if 'clip_index' in node.get('inputs', {}) and not isinstance(node['inputs']['clip_index'], list):
             node['inputs']['clip_index'] = a.index_base + i
     g['364']['inputs']['text'] = fx['prompt']
     g['339']['inputs']['noise_seed'] = fx['seed']
@@ -148,10 +148,18 @@ rows = []
 for p in prompts:
     dec = server_run / ('pipeline-decode-' + p['name'] + '.json')
     if dec.is_file():
-        emitted = json.loads(dec.read_text())['detail']['emitted_index'] - a.index_base
-        assert emitted >= 0, (p['name'], emitted)
+        raw = json.loads(dec.read_text())['detail']['emitted_index']
+        emitted = -1 if raw < 0 else raw - a.index_base
+        assert emitted >= -1, (p['name'], emitted)
     else:
         emitted = p['index']
+    if emitted < 0:
+        # Pipeline fill: the prompt emitted nothing. No oracle, no interval.
+        rows.append({'prompt': p['name'], 'index': p['index'], 'prompt_fixture': p['fixture'],
+                     'emitted_index': -1, 'emitted_fixture': None, 'reference': None, 'fill': True,
+                     't_done': p['t_done'], 'exact': True, 'parity_status': 'fill', 'comparator': None})
+        print('  %s emitted nothing (pipeline fill)' % p['name'], flush=True)
+        continue
     fx = fixtures[emitted % len(fixtures)]
     fill = emitted in seen
     seen.add(emitted)

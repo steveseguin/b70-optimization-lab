@@ -239,16 +239,13 @@ def run_behind(stage, index, depth, fn):
         # one prompt simply gets no overlap.
         emit = -1
     if emit < 0:
-        # Priming. Nothing was decoded `depth` prompts ago, so this prompt waits
-        # for its own clip and emits it -- with no overlap, and WITHOUT
-        # consuming it, because the next prompt is the one that owns it. Clip 0
-        # is therefore emitted twice across the first two prompts. That is a
-        # pipeline fill, disclosed in every receipt as `emitted_index`; it is not
-        # a reused computation, and the steady-state interval excludes it.
-        value, detail = peek(stage, index)
-        detail.update({'emitted_index': index, 'primed': False,
-                       'pending_after': pending(stage)})
-        return value, detail
+        # Pipeline fill: nothing is `depth` prompts behind yet. This prompt
+        # emits NOTHING (emitted_index -1) rather than a preview of its own
+        # clip, so every real clip is emitted exactly once, by the prompt
+        # `depth` places later, and no index is ever submitted twice. Callers
+        # return placeholder outputs for a fill and the driver skips them.
+        return None, {'emitted_index': -1, 'primed': False, 'fill': True,
+                      'queued_ahead': True, 'stage_seconds': 0.0, 'pending_after': pending(stage)}
     value, detail = collect(stage, emit)
     detail.update({'emitted_index': emit, 'primed': True, 'pending_after': pending(stage)})
     return value, detail

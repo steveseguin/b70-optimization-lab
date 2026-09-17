@@ -88,7 +88,7 @@ class LTXPipelineDecode:
         return {'required': {'vae': ('VAE',), 'audio_vae': ('VAE',),
                              'video_latent': ('LATENT',), 'audio_latent': ('LATENT',),
                              'mode': (list(DECODE_MODES),),
-                             'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
+                             'clip_index': ('INT', {'default': 0, 'min': -1, 'max': 1000000}),
                              'depth': ('INT', {'default': 1, 'min': 1,
                                                'max': pipeline.MAX_PENDING}),
                              # How many prompts the latents arriving here already
@@ -149,6 +149,13 @@ class LTXPipelineDecode:
                 out = decode_clip(vae, audio_vae, video_latent, audio_latent)
                 report['detail'] = {'emitted_index': max(0, clip_index - upstream_depth),
                                     'primed': True}
+            elif clip_index < 0:
+                # Upstream fill (the pipelined sampler emitted nothing): emit
+                # nothing here either. Small placeholders; never decoded, never
+                # saved, skipped by the driver.
+                out = (torch.zeros(1, 8, 8, 3), {'waveform': torch.zeros(1, 2, 8), 'sample_rate': 48000},
+                       video_latent, audio_latent, 'fill')
+                report['detail'] = {'emitted_index': -1, 'fill': True, 'upstream_fill': True}
             else:
                 latents = (video_latent, audio_latent)
                 save_prefix = (run_name + '/preview') if mode == 'pipeline-save' else None
@@ -159,6 +166,9 @@ class LTXPipelineDecode:
                 out, detail = pipeline.run_behind(
                     'decode', max(0, clip_index - upstream_depth), depth,
                     lambda: decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix))
+                if out is None:
+                    out = (torch.zeros(1, 8, 8, 3), {'waveform': torch.zeros(1, 2, 8), 'sample_rate': 48000},
+                           video_latent, audio_latent, 'fill')
                 detail['saved_file'] = out[4]
                 report['detail'] = detail
             report['passed'] = True
@@ -183,6 +193,8 @@ class LTXPipelineSaveRecord:
 
     def apply(self, saved_file, run_name):
         require(isinstance(saved_file, str) and saved_file, 'The decode worker did not write a preview')
+        if saved_file == 'fill':
+            return {'ui': {'text': ['pipeline fill: nothing emitted']}}
         run, _identity = _context()
         write_json(run / ('pipeline-save-' + run_name + '.json'),
                    {'schema': 'ltx.pipeline-save-record.v1', 'run_name': run_name, 'saved_file': saved_file})

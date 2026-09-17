@@ -408,8 +408,10 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                     'run_name': 'assign-unique-request-name'}}, 'Pipelined sampler node changed')
             require(graph['426']['inputs']['video_latent'] == ['428', 0] and
                     graph['426']['inputs']['audio_latent'] == ['428', 1] and
-                    graph['426']['inputs']['upstream_depth'] == 2,
+                    graph['426']['inputs']['clip_index'] == ['428', 2] and
+                    graph['426']['inputs']['upstream_depth'] == 0,
                     'Pipelined sampler edges changed')
+            graph['426']['inputs']['clip_index'] = 0
             graph['426']['inputs']['video_latent'] = ['369', 0]
             graph['426']['inputs']['audio_latent'] = ['369', 1]
             graph['426']['inputs']['upstream_depth'] = 0
@@ -745,7 +747,10 @@ def main():
                     'run_name': 'assign-unique-request-name'}}
                 graph[DECODE_NODE]['inputs']['video_latent'] = [SAMPLER_NODE, 0]
                 graph[DECODE_NODE]['inputs']['audio_latent'] = [SAMPLER_NODE, 1]
-                graph[DECODE_NODE]['inputs']['upstream_depth'] = SAMPLER_DEPTH
+                # The sampler emits the clip index it actually released (or -1
+                # for a fill); the decode stage keys on that, not on a guess.
+                graph[DECODE_NODE]['inputs']['clip_index'] = [SAMPLER_NODE, 2]
+                graph[DECODE_NODE]['inputs']['upstream_depth'] = 0
                 for node_id in SAMPLER_CHAIN:
                     del graph[node_id]
         elif decode == 'original':

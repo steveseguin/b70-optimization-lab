@@ -196,8 +196,8 @@ class LTXPipelineSampler:
             'depth': ('INT', {'default': 2, 'min': 1, 'max': pipeline.MAX_PENDING}),
             'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
 
-    RETURN_TYPES = ('LATENT', 'LATENT')
-    RETURN_NAMES = ('video_latent', 'audio_latent')
+    RETURN_TYPES = ('LATENT', 'LATENT', 'INT')
+    RETURN_NAMES = ('video_latent', 'audio_latent', 'emitted_index')
     FUNCTION = 'apply'
     CATEGORY = 'lab/validation'
 
@@ -249,15 +249,22 @@ class LTXPipelineSampler:
                 with torch.inference_mode():
                     out = sample_clip_original(**chain)
                 report['detail'] = {'emitted_index': clip_index, 'primed': True}
+                emitted = clip_index
             else:
                 out, detail = pipeline.run_behind(
                     'sample', clip_index, depth, lambda: sample_clip(**chain))
                 report['detail'] = detail
+                emitted = detail['emitted_index']
+                if out is None:
+                    # Fill: nothing to emit yet. Placeholder latents of the
+                    # input shapes; the decode stage treats index -1 as a fill.
+                    out = ({**chain['video_latent'], 'samples': torch.zeros_like(chain['video_latent']['samples'])},
+                           {**chain['audio_latent'], 'samples': torch.zeros_like(chain['audio_latent']['samples'])})
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
             write_json(run / ('pipeline-sampler-' + run_name + '.json'), report)
-        return out
+        return (out[0], out[1], emitted)
 
 
 NODE_CLASS_MAPPINGS = {'LTXPipelineSampler': LTXPipelineSampler}

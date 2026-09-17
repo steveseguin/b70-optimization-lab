@@ -44,10 +44,11 @@ except RuntimeError as e:
 p.clear()
 v, d = p.run_ahead('encode', 0, 2, enc('X'))
 assert d['started_ahead'] == [{'index': 1, 'tag': None}, {'index': 2, 'tag': None}], d
-# 6. run_behind is unchanged: prompt N emits N-depth; fill emits its own without consuming.
+# 6. run_behind: a fill emits nothing (index -1) and does not peek its own clip;
+#    the prompt `depth` later emits it exactly once.
 p.clear()
 v, d = p.run_behind('decode', 0, 1, enc('d0'))
-assert d['emitted_index'] == 0 and not d['primed'] and p.pending('decode') == [0], d
+assert v is None and d['emitted_index'] == -1 and d['fill'] and p.pending('decode') == [0], d
 v, d = p.run_behind('decode', 1, 1, enc('d1'))
 assert v == 'cond(d0)' and d['emitted_index'] == 0 and d['primed'] and p.pending('decode') == [1], d
 # 7. Reusing a run-behind index that an earlier stream parked is refused, not served.
