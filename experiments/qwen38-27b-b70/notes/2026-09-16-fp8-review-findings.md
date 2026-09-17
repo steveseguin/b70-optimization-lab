@@ -255,6 +255,25 @@ did not run: the corpus tool refused to build a 30,720-token prompt without repe
 (`/tokenize did not return enough valid numeric tokens`); the night-2 campaign's 30,720 probe used the same corpus,
 so this needs a look at the tool, not the server. Left for the one-card package acceptance.
 
+## Two-card campaign 3 (September 17, 20:05-21:15 UTC): replicated drafter, single-checkpoint state on two cards
+
+All servers carry the shipped allgather-allreduce overlay (`/mnt/fast-ai/bench-results/fp8-comm3-20260917`):
+
+| Server (two cards, depth 5, INT4 shortlist, verifier rows) | Strict | tok/s | Ladder | 2K/8K/16K | Chat quality |
+| --- | --- | ---: | --- | --- | --- |
+| no MTP, `--block-size 896` (references for the checkpoint page) | 12/12 vs the 832 reference | 33.89 | recorded | recorded | recorded |
+| replicated drafter, all parts ([overlay](../overlays/b70-replicated-drafter/b70_replicated_drafter.py)) | 12/12, 12/12 | 86.72, 85.93 | exact | exact | exact |
+| single-checkpoint state (R311b + [overlay](../overlays/b70-gdn-checkpoint/b70_gdn_checkpoint.py)) | 12/12, 12/12 vs 896 refs | 90.40, 90.15 | exact | exact | exact |
+| both | 12/12, 12/12 | 86.71, 86.35 | exact | exact | exact |
+
+The replicated drafter works as designed (drafts identical on both ranks, outputs identical) but loses 4%: replicating
+the drafter's MLP doubles that GEMM per card (about 1 ms per draft pass, five passes per step), more than the three
+collectives it removes (about 0.2 ms each). Campaign 4 tries the lighter selections (embedding, fc and head only;
+embedding and fc; head only). The single-checkpoint state is exact on two cards and speed-neutral (90.4 vs the
+90.3-90.6 control): each card writes one state block per step instead of six, but the two-card step is bound by the
+collectives, not by those writes, and memory was never the two-card constraint (268K-token KV budget). It stays a
+research result; the two-card package keeps R310.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
