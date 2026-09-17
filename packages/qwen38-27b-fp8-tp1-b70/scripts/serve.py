@@ -24,10 +24,12 @@ MODEL = 'qwen38-27b-fp8'
 SHORTLIST = '/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt'
 FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
 
-# Profiles measured on 2026-09-15: every profile's outputs are identical to no-MTP decoding.
+# Profiles measured on 2026-09-15/17: every profile's outputs are identical to no-MTP decoding. A 2,048-token prefill
+# chunk lowers peak activation memory by 0.35 GiB, which buys the recommended profile 24,576 tokens of context at the
+# same writing and prompt-reading speed (follow-up campaign, 2026-09-17).
 PROFILES = {
-    'recommended': dict(max_model_len=16384, memory=0.975, draft='int4-shortlist'),
-    'no-quantization': dict(max_model_len=12544, memory=0.975, draft='fp16-shortlist'),
+    'recommended': dict(max_model_len=24576, memory=0.975, draft='int4-shortlist', batched=2048),
+    'no-quantization': dict(max_model_len=12544, memory=0.975, draft='fp16-shortlist', batched=4096),
 }
 
 # Qualified runtime environment (one card, official FP8, deterministic W8A16/GDN paths).
@@ -210,7 +212,7 @@ def docker_argv(profile, model, state, port, name, gpu):
     argv += [IMAGE, '--model', '/model', '--served-model-name', MODEL, '--host', '0.0.0.0', '--port', '8000',
              '--tensor-parallel-size', '1', '--dtype', 'float16', '--quantization', 'fp8', '--kv-cache-dtype', 'auto',
              '--gpu-memory-utilization', str(settings['memory']), '--max-model-len', str(settings['max_model_len']),
-             '--block-size', '64', '--max-num-seqs', '1', '--max-num-batched-tokens', '4096',
+             '--block-size', '64', '--max-num-seqs', '1', '--max-num-batched-tokens', str(settings['batched']),
              '--no-enable-prefix-caching', '--enable-prompt-tokens-details', '--language-model-only',
              '--speculative-config', json.dumps({'method': 'qwen3_next_mtp', 'num_speculative_tokens': 5}),
              '--compilation-config', COMPILATION]

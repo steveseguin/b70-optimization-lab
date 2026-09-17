@@ -4,10 +4,10 @@ The official Qwen FP8 weights on **one Intel Arc Pro B70 (32 GiB)**, one user,
 with the model's own MTP draft at depth 5. Every answer is checked by the full
 FP8 model, and outputs are identical to running without MTP.
 
-| Profile | Context | Writing speed | Prompt reading (2K / 12K input) |
+| Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` | 16,384 tokens | **53.5 tok/s** | 2,025 / 1,986 tok/s |
-| `no-quantization` (full-precision draft head) | 12,544 tokens | 51.6 tok/s | 2,010 / 1,981 tok/s |
+| `recommended` | 24,576 tokens | **53.4 tok/s** | 2,026 / 2,017 / 1,934 tok/s |
+| `no-quantization` (full-precision draft head) | 12,544 tokens | 51.6 tok/s | 2,010 / 2,016 (8K) / 1,981 (12K) tok/s |
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html).
@@ -53,6 +53,13 @@ and the answer.
 - The `recommended` profile scores draft guesses with a small INT4 copy of
   the output layer. The FP8 model still checks every token at full precision, so
   answers are unchanged. `no-quantization` avoids that copy at a small speed cost.
+- **24,576 tokens of context (September 17):** the launcher reads prompts in 2,048-token chunks instead of
+  4,096, which frees 0.35 GiB of GPU memory and buys 50% more context at the same writing and reading speed. Two
+  fresh servers at this setting: 53.43 / 53.43 tok/s, 12/12 identical to no MTP, 64 prompts back to back plus queued
+  passes identical, 2K/8K/16K prompts identical, chat quality and a logprob replay identical. 32K does not fit yet
+  (0.3 GiB short).
+- **Both profiles passed the 64-prompt back-to-back test** against a no-MTP server (September 16-17), the check
+  that catches rare wrong first tokens in draft decoding.
 - **Replayed from a fresh download:** on September 16 the steps above were run
   from a new anonymous download of this repository on the lab host, reusing only
   the verified model files and the Docker layer cache: model verify, image pull,

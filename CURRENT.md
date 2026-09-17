@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 17 03:30 UTC: GPU FAULT during the final two-card service start; port 18124 is DOWN, no GPU work running, user decision needed. Everything else tonight passed and is published.**
+
+- **What happened:** the one-card 24K campaign finished its tests and started the two-card depth-5 service at
+  03:09:38Z; at 03:10:45Z `xe 0000:03:00.0` (renderD129) raised repeated copy-engine page faults and an engine memory
+  CAT error with a device coredump, about 67 s into weight load. The launcher halted the server; the runner halted
+  with no restore. No reset, power change or reboot. This is the **second identical fault today** (06:02Z, same
+  card, same engine, same phase: a two-card start after long one-card work). Evidence:
+  `/mnt/fast-ai/bench-results/gpu-fault-20260917T0310/`.
+- **Next step needs the user:** a driver reset or reboot is not mine to make. Once approved, the normal path is
+  `scripts/check-qwen36-xpu-xccl-health.sh`, then one `packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start`
+  (new state dir) and the strict parity check.
+- **Published tonight:** two-card package at MTP depth 5 on R310 (88.32 / 88.49 tok/s pair, accepted from public
+  source, was 54.8); one-card package at 24,576 tokens of context (53.43 / 53.43 tok/s, was 16,384); both one-card
+  profiles passed the 64-prompt sequential oracle. CI green through commit `28c4aab9e`.
+  [Findings](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 **Four-B70 host, September 17 03:05 UTC: LTX server 61 stopped cleanly (one SIGINT, 6 s); packet 62 launches after a five-minute gap.**
 Packet 61 measured the latent upsampler's forward at 0.025 s of the node's
 0.24 s (11 distinct clips exact); the remainder is model-management and

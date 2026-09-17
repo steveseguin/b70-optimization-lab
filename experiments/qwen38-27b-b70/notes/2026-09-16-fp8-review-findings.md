@@ -98,8 +98,22 @@ writing speed unchanged), so the one-card package moves to 24,576 tokens of cont
 shipped launcher is verified at that setting in a third campaign. One receipt correction: the session runner wrote the
 `git_worktree` field inverted; the receipt records the correction and the re-check (no `.git` directory).
 
+## One-card 24K campaign (September 17, 02:38-03:11 UTC)
+
+[Runner](../scripts/run-20260917-fp8-onecard-24k-campaign.py), receipts in [data/2026-09-17-fp8-onecard-24k](../data/2026-09-17-fp8-onecard-24k/).
+
+| Stage | Result |
+| --- | --- |
+| Shipped one-card launcher, `recommended` at 24,576 context (2,048-token chunk) | 27,136 KV tokens; strict 12/12 at 53.43 tok/s; 64/64 sequential + 2x64 queued; 2K/8K/16K exact (prefill 2,026 / 2,017 / 1,934, writing 56.6 / 72.2 / 62.0); chat quality matched; logprob replay zero differences; clean stop |
+| `no-quantization` (FP16 draft shortlist) at 20,480 context, 2,048 chunk, research launcher | starts (21,432 KV tokens); strict 12/12 at 51.77 tok/s; 64/64 sequential + queued. One server, not through the package launcher, so the shipped profile stays at 12,544 and this is a documented option |
+| Two-card service start afterwards | **GPU fault** on `xe 0000:03:00.0` (copy-engine page faults, CAT error, coredump) 67 s into weight load; halted, no retry; the second identical fault in 24 hours, both two-card starts after long one-card sessions; `/mnt/fast-ai/bench-results/gpu-fault-20260917T0310/` |
+
+The one-card package now ships 24,576 tokens of context (pair 53.43 / 53.43 tok/s).
+
 ## Left open
 
+- Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
+  both times minutes earlier. Until the user decides on a reset, no GPU work.
 - One-card context above 24,576 tokens: the engine estimates 28,288 at depth 5 with the 2,048-token chunk; 32K needs
   another 0.3 GiB. Candidates are a smaller draft head, a page layout with less padding, or a labelled FP8-KV
   profile (not lossless, so never the default).
