@@ -1,9 +1,11 @@
 # Reproduce official Qwen3.8 27B FP8 TP2 on two B70s
 
 > **Status: `candidate-portable-repro`.** Built, launched and measured on the lab host from the files below. The
-> September 17 depth-5 recipe below is the recommended setup; the public-source acceptance replay of its package
-> launcher is produced by [run-fp8-tp2-acceptance-session.py](../../experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py)
-> and frozen by [collect-fp8-tp2-acceptance-evidence.py](../../experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py) once it has run. A machine without Intel drivers, Docker or the model in place is still untested.
+> September 17 depth-5 recipe below is the recommended setup. Its package launcher was replayed from an anonymous
+> download of this repository at commit `5b494649f` (verified model, pulled image, package scripts only): strict 12/12
+> identical to no-MTP at 88.49 tok/s, six practical requests with exact repeats, clean stop
+> ([frozen packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/), produced by
+> [run-fp8-tp2-acceptance-session.py](../../experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py)). A machine without Intel drivers, Docker or the model in place is still untested.
 
 Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp2-b70/README.md).
 
@@ -25,8 +27,8 @@ prompts and on the chat quality suite.
 | 1 without it (`depth-1`, the September 14 recipe) | 54.90 | 3,763 / 3,535 / 3,384 (no MTP) | |
 | No MTP (reference) | 33.04 | 3,763 / 3,535 / 3,384 | 32.7 / 31.8 / 31.0 |
 
-All speeds are tokens/s. The depth-5 rate is one fresh server; the second (the package acceptance replay) completes
-the pair required for a headline.
+All speeds are tokens/s. The depth-5 pair is 88.32 (this campaign) and 88.49 (the package acceptance replay), median
+88.41; the depth-6 server measured 89.78 on the first 100 tokens but 2% slower over whole answers, so depth 5 stays.
 
 **Why it is exact now.** The September 3 depth-2 campaign on the R156 image found a phantom first token on one
 request in 64 under async scheduling and froze the recipe at depth 1. The lane has since moved to vLLM 0.29 (R304)

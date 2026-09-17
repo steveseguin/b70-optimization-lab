@@ -104,7 +104,8 @@ def main():
         if item not in deps:
             deps.append(item)
     if a.acceptance:
-        for item in (str(a.acceptance.relative_to(ROOT)), str(a.acceptance.parent.relative_to(ROOT) / 'manifest.json')):
+        accepted = a.acceptance.resolve().relative_to(ROOT)
+        for item in (str(accepted), str(accepted.parent / 'manifest.json')):
             if item not in deps:
                 deps.append(item)
     package['dependencies'] = deps

@@ -140,6 +140,20 @@ def wait_gpus_free(timeout=600):
     raise RuntimeError('GPUs did not become free')
 
 
+def wait_port_free(port, timeout=180):
+    """A stopped server's port stays in teardown for some seconds; a start inside that window fails with EADDRINUSE."""
+    import socket
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        with socket.socket() as probe:
+            try:
+                probe.bind(('127.0.0.1', port))
+                return
+            except OSError:
+                time.sleep(3)
+    raise RuntimeError(f'port {port} did not become free')
+
+
 def wait_state(state_file, proc, timeout):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -479,6 +493,7 @@ def main():
     unit = 'fp8-service-20260916'
     argv = ['systemd-run', '--user', '--unit', unit, '--working-directory', str(ROOT), '--collect',
             sys.executable, str(PKG_TP2), 'start', '--model-dir', str(MODEL), '--state-dir', str(state_dir), '--port', '18124']
+    wait_port_free(18124)
     (OUT / 'restore.command.json').write_text(json.dumps({'argv': argv, 'started': now()}) + '\n')
     subprocess.run(argv, check=True)
     deadline = time.monotonic() + 2400

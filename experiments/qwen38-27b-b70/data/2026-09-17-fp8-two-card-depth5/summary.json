@@ -1,0 +1,118 @@
+{
+  "configuration": {
+    "cards": 2,
+    "draft_shortlist": "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt",
+    "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+    "max_model_len": 33024,
+    "max_num_batched_tokens": 4096,
+    "max_num_seqs": 1,
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "mtp_depth": 5,
+    "prefix_caching": false
+  },
+  "gates": {
+    "owned_clean_stop": true,
+    "post_stop_absent": true,
+    "practical_cache_zero": true,
+    "practical_six_pass": true,
+    "practical_token_repeat_exact": true,
+    "pre_post_health": true,
+    "public_source_bytes": true,
+    "runtime_matches_qualified_depth5": true,
+    "strict_12_no_mtp_reference_outputs_exact": true,
+    "strict_cache_zero": true,
+    "strict_canaries": true,
+    "strict_natural_quality_gate": true
+  },
+  "limits": [
+    "one configured lab host; existing hash-verified model files and Docker layers reused",
+    "clean source/state directories, not clean driver installation or independent-host replay",
+    "three supplied chat tasks, not long-context retrieval quality or a prolonged soak"
+  ],
+  "passed": true,
+  "practical": {
+    "repeats": 2,
+    "requests": 6,
+    "rows": [
+      {
+        "http_ttft_ms": 162.46004300774075,
+        "input_tokens": 129,
+        "output_tokens": 37,
+        "passed": true,
+        "repeat": 1,
+        "task": "conversation",
+        "token_identity": null
+      },
+      {
+        "http_ttft_ms": 135.66478301072493,
+        "input_tokens": 122,
+        "output_tokens": 44,
+        "passed": true,
+        "repeat": 1,
+        "task": "code",
+        "token_identity": null
+      },
+      {
+        "http_ttft_ms": 148.32918299362063,
+        "input_tokens": 182,
+        "output_tokens": 74,
+        "passed": true,
+        "repeat": 1,
+        "task": "document",
+        "token_identity": null
+      },
+      {
+        "http_ttft_ms": 131.06035298551433,
+        "input_tokens": 129,
+        "output_tokens": 37,
+        "passed": true,
+        "repeat": 2,
+        "task": "conversation",
+        "token_identity": {
+          "text_exact": true,
+          "token_ids_available_both": true,
+          "token_ids_exact": true
+        }
+      },
+      {
+        "http_ttft_ms": 126.42544400296174,
+        "input_tokens": 122,
+        "output_tokens": 44,
+        "passed": true,
+        "repeat": 2,
+        "task": "code",
+        "token_identity": {
+          "text_exact": true,
+          "token_ids_available_both": true,
+          "token_ids_exact": true
+        }
+      },
+      {
+        "http_ttft_ms": 139.0583250031341,
+        "input_tokens": 182,
+        "output_tokens": 74,
+        "passed": true,
+        "repeat": 2,
+        "task": "document",
+        "token_identity": {
+          "text_exact": true,
+          "token_ids_available_both": true,
+          "token_ids_exact": true
+        }
+      }
+    ],
+    "tasks": 3
+  },
+  "public_source_archive_sha256": "c2168162f543b26c328afe8c9864cd3c2f2ad2b04fbef35d029244b41eb58654",
+  "public_source_commit": "5b494649f91a54e77df6dc0d3f01ff45bb1987c1",
+  "schema": "neural.download.fp8-tp2-acceptance-result.v1",
+  "strict": {
+    "decode_tokens_s": 88.49386739459351,
+    "interpretation": "second fresh depth-5 server of the two-run pair (the first is the review campaign tp2-mtp5 stage); outputs identical to the same-image no-MTP reference",
+    "no_mtp_reference_decode_tokens_s": 33.03516454010384,
+    "no_mtp_reference_exact": 12,
+    "requests": 12,
+    "speedup_vs_no_mtp": 2.6787778606994443
+  },
+  "timing_scope": "Practical HTTP TTFT is a transport measurement; no server-prefill headline inferred. Strict decode uses the canonical first-100-token interval definition."
+}

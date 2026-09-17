@@ -1,0 +1,409 @@
+{
+  "started": "2026-09-17T01:36:48.659227+00:00",
+  "preflight_health_rc": 0,
+  "tp1-mtp0-long": {
+    "server": "ready",
+    "context": {
+      "rc": 0,
+      "baseline": null,
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 228722,
+      "container_name": "fp8-tp1-913bb9ee4162",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18150,
+      "started_at": "2026-09-17T01:37:08.016221+00:00",
+      "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c",
+      "container_id": "468403eff939f44cef2ee0049cb8ca4c27871ea794f8e3fc1a9df3cb1106550a",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 3.809
+      },
+      "ready_at": "2026-09-17T01:39:15.455464+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-09-17T01:43:20.823607+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=134) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=134) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=134) INFO 09-17 01:37:47 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=134) INFO 09-17 01:37:57 [default_loader.py:430] Loading weights took 9.92 seconds",
+        "(EngineCore pid=134) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=134) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=134) INFO 09-17 01:38:00 [gpu_model_runner.py:5486] Model loading took 25.2 GiB memory and 11.647728 seconds",
+        "(EngineCore pid=134) INFO 09-17 01:38:59 [monitor.py:53] torch.compile took 56.36 s in total",
+        "(EngineCore pid=134) INFO 09-17 01:39:01 [gpu_worker.py:625] Available KV cache memory: 3.05 GiB",
+        "(EngineCore pid=134) INFO 09-17 01:39:01 [kv_cache_utils.py:2032] GPU KV cache size: 43,885 tokens, Maximum concurrency for 20,480 tokens per request: 2.14x",
+        "(EngineCore pid=134) WARNING 09-17 01:39:04 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(EngineCore pid=134) INFO 09-17 01:39:04 [gpu_worker.py:860] Free memory on device (29.81/30.3 GiB) on startup. Desired GPU memory utilization is (0.965, 29.24 GiB). Actual usage is 25.59 GiB for consumed memory (weights + non-torch), 0.59 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=3115156009` (2.9 GiB) to fit into requested memory, or `--kv-cache-memory=3733118976` (3.48 GiB) to fully utilize gpu memory. Current kv cache memory in use is 3.05 GiB.",
+        "(EngineCore pid=134) INFO 09-17 01:39:05 [core.py:361] init engine (profile, create kv cache, warmup model) took 64.39 s (compilation: 56.36 s)"
+      ]
+    }
+  },
+  "tp1-pkg-no-quantization": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T01:45:41.904459+00:00"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 51.77155956735606,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-54-r310-mtp0-20k-strict"
+    },
+    "status_rc": 0,
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "tp1-ctx-24k-b4096": {
+    "server": {
+      "status": "failed",
+      "error": "RuntimeError: Server exited 1",
+      "ready_at": null
+    },
+    "memory_log": [
+      "(EngineCore pid=187) INFO 09-17 01:55:58 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 14.947247 seconds",
+      "(EngineCore pid=187) INFO 09-17 01:57:04 [gpu_worker.py:625] Available KV cache memory: 2.55 GiB",
+      "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     raise ValueError(",
+      "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374] ValueError: To serve at least one request with the model's max seq len (24576), (2.59 GiB KV cache is needed, which is larger than the available KV cache memory (2.49 GiB). Based on the available memory, the estimated maximum model length is 23296. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+      "(EngineCore pid=187)     raise ValueError(",
+      "(EngineCore pid=187) ValueError: To serve at least one request with the model's max seq len (24576), (2.59 GiB KV cache is needed, which is larger than the available KV cache memory (2.49 GiB). Based on the available memory, the estimated maximum model length is 23296. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details."
+    ],
+    "stop": {
+      "status": "failed",
+      "owner_pid": 231913,
+      "container_name": "fp8-tp1-121949c7f524",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18152,
+      "started_at": "2026-09-17T01:54:54.714029+00:00",
+      "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c",
+      "container_id": "8cb3dc4f69de2771dd471777a34f9af23bf395e19be5b8e02b0f3211b4f0292d",
+      "error": "RuntimeError: Server exited 1",
+      "stop_confirmed": true,
+      "finished_at": "2026-09-17T01:57:17.265488+00:00",
+      "memory_log": [
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) INFO 09-17 01:55:41 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=187) INFO 09-17 01:55:52 [default_loader.py:430] Loading weights took 10.32 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 01:55:54 [default_loader.py:430] Loading weights took 1.42 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 01:55:58 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 14.947247 seconds",
+        "(EngineCore pid=187) INFO 09-17 01:56:57 [monitor.py:53] torch.compile took 56.59 s in total",
+        "(EngineCore pid=187) INFO 09-17 01:57:01 [monitor.py:53] torch.compile took 4.59 s in total",
+        "(EngineCore pid=187) INFO 09-17 01:57:04 [gpu_worker.py:625] Available KV cache memory: 2.55 GiB",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374] EngineCore failed to start.",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374] Traceback (most recent call last):",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1336, in run_engine_core",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py\", line 178, in sync_wrapper",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     return func(*args, **kwargs)",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]            ^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1093, in __init__",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     super().__init__(",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 145, in __init__",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     kv_cache_config = self._initialize_kv_caches(vllm_config)",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py\", line 178, in sync_wrapper",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     return func(*args, **kwargs)",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]            ^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 319, in _initialize_kv_caches",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     kv_cache_configs = get_kv_cache_configs(",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]                        ^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/core/kv_cache_utils.py\", line 2331, in get_kv_cache_configs",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     _check_enough_kv_cache_memory(",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/core/kv_cache_utils.py\", line 879, in _check_enough_kv_cache_memory",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374]     raise ValueError(",
+        "(EngineCore pid=187) ERROR 09-17 01:57:04 [core.py:1374] ValueError: To serve at least one request with the model's max seq len (24576), (2.59 GiB KV cache is needed, which is larger than the available KV cache memory (2.49 GiB). Based on the available memory, the estimated maximum model length is 23296. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+        "(EngineCore pid=187)     raise ValueError(",
+        "(EngineCore pid=187) ValueError: To serve at least one request with the model's max seq len (24576), (2.59 GiB KV cache is needed, which is larger than the available KV cache memory (2.49 GiB). Based on the available memory, the estimated maximum model length is 23296. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+        "(APIServer pid=1)     raise RuntimeError(",
+        "(APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+      ]
+    }
+  },
+  "tp1-ctx-24k-b2048": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T01:59:40.506033+00:00"
+    },
+    "memory_log": [
+      "(EngineCore pid=187) INFO 09-17 01:58:23 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 14.352065 seconds",
+      "(EngineCore pid=187) INFO 09-17 01:59:28 [gpu_worker.py:625] Available KV cache memory: 2.9 GiB",
+      "(EngineCore pid=187) INFO 09-17 01:59:28 [kv_cache_utils.py:2032] GPU KV cache size: 27,136 tokens, Maximum concurrency for 24,576 tokens per request: 1.10x",
+      "(EngineCore pid=187) INFO 09-17 01:59:31 [gpu_worker.py:860] Free memory on device (29.81/30.3 GiB) on startup. Desired GPU memory utilization is (0.975, 29.54 GiB). Actual usage is 26.34 GiB for consumed memory (weights + non-torch), 0.3 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=2959992935` (2.76 GiB) to fit into requested memory, or `--kv-cache-memory=3252813824` (3.03 GiB) to fully utilize gpu memory. Current kv cache memory in use is 2.9 GiB."
+    ],
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 53.425946799368205,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-54-r310-mtp0-20k-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-followup-20260917/tp1-mtp0-long-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 232623,
+      "container_name": "fp8-tp1-7cd99dc4951c",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18153,
+      "started_at": "2026-09-17T01:57:19.892153+00:00",
+      "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c",
+      "container_id": "2394ef539ad1c2666e20c1a2c007f7952c40ac8d8e2b9e76d5eed3b6490ceeea",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 1.973
+      },
+      "ready_at": "2026-09-17T01:59:40.506033+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-09-17T02:10:46.733647+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) INFO 09-17 01:58:06 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=187) INFO 09-17 01:58:17 [default_loader.py:430] Loading weights took 9.70 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 01:58:19 [default_loader.py:430] Loading weights took 1.47 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 01:58:23 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 14.352065 seconds",
+        "(EngineCore pid=187) INFO 09-17 01:59:21 [monitor.py:53] torch.compile took 56.42 s in total",
+        "(EngineCore pid=187) INFO 09-17 01:59:26 [monitor.py:53] torch.compile took 4.53 s in total",
+        "(EngineCore pid=187) INFO 09-17 01:59:28 [gpu_worker.py:625] Available KV cache memory: 2.9 GiB",
+        "(EngineCore pid=187) INFO 09-17 01:59:28 [kv_cache_utils.py:2032] GPU KV cache size: 27,136 tokens, Maximum concurrency for 24,576 tokens per request: 1.10x",
+        "(EngineCore pid=187) WARNING 09-17 01:59:31 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(EngineCore pid=187) INFO 09-17 01:59:31 [gpu_worker.py:860] Free memory on device (29.81/30.3 GiB) on startup. Desired GPU memory utilization is (0.975, 29.54 GiB). Actual usage is 26.34 GiB for consumed memory (weights + non-torch), 0.3 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=2959992935` (2.76 GiB) to fit into requested memory, or `--kv-cache-memory=3252813824` (3.03 GiB) to fully utilize gpu memory. Current kv cache memory in use is 2.9 GiB.",
+        "(EngineCore pid=187) INFO 09-17 01:59:32 [core.py:361] init engine (profile, create kv cache, warmup model) took 68.98 s (compilation: 60.94 s)"
+      ]
+    }
+  },
+  "tp1-ctx-32k-b2048": {
+    "server": {
+      "status": "failed",
+      "error": "RuntimeError: Server exited 1",
+      "ready_at": null
+    },
+    "memory_log": [
+      "(EngineCore pid=187) INFO 09-17 02:11:50 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 14.762235 seconds",
+      "(EngineCore pid=187) INFO 09-17 02:12:56 [gpu_worker.py:625] Available KV cache memory: 2.9 GiB",
+      "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     raise ValueError(",
+      "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374] ValueError: To serve at least one request with the model's max seq len (32768), (3.13 GiB KV cache is needed, which is larger than the available KV cache memory (2.85 GiB). Based on the available memory, the estimated maximum model length is 28288. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+      "(EngineCore pid=187)     raise ValueError(",
+      "(EngineCore pid=187) ValueError: To serve at least one request with the model's max seq len (32768), (3.13 GiB KV cache is needed, which is larger than the available KV cache memory (2.85 GiB). Based on the available memory, the estimated maximum model length is 28288. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details."
+    ],
+    "stop": {
+      "status": "failed",
+      "owner_pid": 233900,
+      "container_name": "fp8-tp1-758597797df4",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18154,
+      "started_at": "2026-09-17T02:10:46.952707+00:00",
+      "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c",
+      "container_id": "80ad51559ea20302b5a2bcb362cbb3d0337277e0ec91ee06a99fcb6f74b622ad",
+      "error": "RuntimeError: Server exited 1",
+      "stop_confirmed": true,
+      "finished_at": "2026-09-17T02:13:09.649404+00:00",
+      "memory_log": [
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) INFO 09-17 02:11:33 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=187) INFO 09-17 02:11:44 [default_loader.py:430] Loading weights took 10.25 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 02:11:46 [default_loader.py:430] Loading weights took 1.43 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 02:11:50 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 14.762235 seconds",
+        "(EngineCore pid=187) INFO 09-17 02:12:48 [monitor.py:53] torch.compile took 56.78 s in total",
+        "(EngineCore pid=187) INFO 09-17 02:12:53 [monitor.py:53] torch.compile took 4.55 s in total",
+        "(EngineCore pid=187) INFO 09-17 02:12:56 [gpu_worker.py:625] Available KV cache memory: 2.9 GiB",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374] EngineCore failed to start.",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374] Traceback (most recent call last):",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1336, in run_engine_core",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py\", line 178, in sync_wrapper",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     return func(*args, **kwargs)",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]            ^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 1093, in __init__",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     super().__init__(",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 145, in __init__",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     kv_cache_config = self._initialize_kv_caches(vllm_config)",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py\", line 178, in sync_wrapper",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     return func(*args, **kwargs)",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]            ^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py\", line 319, in _initialize_kv_caches",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     kv_cache_configs = get_kv_cache_configs(",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]                        ^^^^^^^^^^^^^^^^^^^^^",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/core/kv_cache_utils.py\", line 2331, in get_kv_cache_configs",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     _check_enough_kv_cache_memory(",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/core/kv_cache_utils.py\", line 879, in _check_enough_kv_cache_memory",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374]     raise ValueError(",
+        "(EngineCore pid=187) ERROR 09-17 02:12:56 [core.py:1374] ValueError: To serve at least one request with the model's max seq len (32768), (3.13 GiB KV cache is needed, which is larger than the available KV cache memory (2.85 GiB). Based on the available memory, the estimated maximum model length is 28288. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+        "(EngineCore pid=187)     raise ValueError(",
+        "(EngineCore pid=187) ValueError: To serve at least one request with the model's max seq len (32768), (3.13 GiB KV cache is needed, which is larger than the available KV cache memory (2.85 GiB). Based on the available memory, the estimated maximum model length is 28288. Try increasing `gpu_memory_utilization` (which also controls CPU memory on the CPU backend) or decreasing `max_model_len` when initializing the engine. See https://docs.vllm.ai/en/latest/configuration/conserving_memory/ for more details.",
+        "(APIServer pid=1)     raise RuntimeError(",
+        "(APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}"
+      ]
+    }
+  },
+  "tp2-mtp6": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T02:15:47.391219+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 89.77621314760941,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64",
+        "batch-c64-r2": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "quality": {
+      "rc": 0,
+      "pass_all": true,
+      "baseline_match_all": true,
+      "baseline_status": "passed"
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 234639,
+      "container_name": "fp8-tp1-d62b86827e5c",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18160,
+      "started_at": "2026-09-17T02:13:12.057581+00:00",
+      "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c",
+      "container_id": "fed5430d2d30070e40fb5045aa9ad21365f68c666abef6c2dd002290ad78f43a",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 1.624
+      },
+      "ready_at": "2026-09-17T02:15:47.391219+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-09-17T02:24:38.404128+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(Worker_TP0 pid=249) INFO 09-17 02:14:10 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(Worker_TP0 pid=249) INFO 09-17 02:14:20 [default_loader.py:430] Loading weights took 9.16 seconds",
+        "(Worker_TP0 pid=249) INFO 09-17 02:14:22 [default_loader.py:430] Loading weights took 1.95 seconds",
+        "(Worker_TP0 pid=249) INFO 09-17 02:14:24 [gpu_model_runner.py:5486] Model loading took 14.21 GiB memory and 12.482483 seconds",
+        "(Worker_TP0 pid=249) INFO 09-17 02:15:25 [monitor.py:53] torch.compile took 59.67 s in total",
+        "(Worker_TP0 pid=249) INFO 09-17 02:15:32 [monitor.py:53] torch.compile took 5.49 s in total",
+        "(Worker_TP0 pid=249) INFO 09-17 02:15:34 [gpu_worker.py:625] Available KV cache memory: 12.68 GiB",
+        "(EngineCore pid=187) INFO 09-17 02:15:34 [kv_cache_utils.py:2032] GPU KV cache size: 254,447 tokens, Maximum concurrency for 33,024 tokens per request: 7.70x",
+        "(Worker_TP1 pid=276) WARNING 09-17 02:15:37 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP1 pid=276) INFO 09-17 02:15:37 [gpu_worker.py:860] Free memory on device (29.36/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.72 GiB for consumed memory (weights + non-torch), 1.26 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13584765133` (12.65 GiB) to fit into requested memory, or `--kv-cache-memory=14209798144` (13.23 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.8 GiB.",
+        "(Worker_TP0 pid=249) WARNING 09-17 02:15:37 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP0 pid=249) INFO 09-17 02:15:37 [gpu_worker.py:860] Free memory on device (29.07/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.84 GiB for consumed memory (weights + non-torch), 1.26 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13461131469` (12.54 GiB) to fit into requested memory, or `--kv-cache-memory=13771399168` (12.83 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.68 GiB.",
+        "(EngineCore pid=187) INFO 09-17 02:15:38 [core.py:361] init engine (profile, create kv cache, warmup model) took 74.07 s (compilation: 65.16 s)",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py."
+      ]
+    }
+  },
+  "acceptance": {
+    "commit": "5b494649f91a54e77df6dc0d3f01ff45bb1987c1",
+    "rc": 0,
+    "rcs": {
+      "verify": 0,
+      "pull": 0,
+      "preflight": 0,
+      "strict": 0,
+      "comparator": 0,
+      "practical": 0,
+      "stop": 0,
+      "helper": 0,
+      "postflight": 0
+    }
+  },
+  "service_health_rc": 0,
+  "service": {
+    "status": "ready",
+    "error": null,
+    "unit": "fp8-service-20260917",
+    "state_dir": "/mnt/fast-ai/bench-results/fp8-followup-20260917/service",
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 87.75792702714796,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict"
+    }
+  },
+  "finished": "2026-09-17T02:37:36.624210+00:00"
+}

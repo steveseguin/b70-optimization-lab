@@ -7,7 +7,7 @@ answers.
 
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` (MTP depth 5, draft shortlist) | 33,024 tokens | **88.3 tok/s** | 3,642 / 3,436 / 3,282 tok/s |
+| `recommended` (MTP depth 5, draft shortlist) | 33,024 tokens | **88.4 tok/s** | 3,642 / 3,436 / 3,282 tok/s |
 | `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | 3,763 / 3,535 / 3,384 tok/s |
 
 Graphs and every measured point are on the
@@ -62,10 +62,11 @@ launcher above owns the tested start, status and stop path.
 - **The draft shortlist** scores draft guesses with a small INT4 copy of the output layer restricted to 67,248
   common tokens. The FP8 model still checks every token at full precision, so answers are unchanged; the list only
   affects how often a draft is accepted.
-- **Tested:** a fresh depth-5 server in the review campaign, 12/12 identical to no-MTP on the strict suite, 64/64 on
-  the sequential oracle, exact after 2K/8K/16K prompts and on the chat quality suite. The public-source acceptance
-  replay through this launcher (the second fresh server) is recorded in the evidence packet linked from
-  `package.json` once it has run.
+- **Tested:** two fresh depth-5 servers, 88.32 and 88.49 tok/s. The first (review campaign) was 12/12 identical to
+  no-MTP on the strict suite, 64/64 on the sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and
+  on the chat quality suite. The second was this launcher run from an anonymous download of the repository: model
+  verify, image pull, start, strict 12/12 identical to no-MTP, six practical chat requests with exact repeats, clean
+  stop ([evidence packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/)).
 - **Not yet tested:** a machine without Intel drivers, Docker or the model already in place; more than one user at
   a time (drafting is exact only one request at a time); prolonged use.
 

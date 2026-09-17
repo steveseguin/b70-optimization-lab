@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head, 33,024 total tokens (a 32K input plus 256 for the answer), 88.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
+    "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head, 33,024 total tokens (a 32K input plus 256 for the answer), 88.4 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -37,15 +37,15 @@
       "32K input"
     ],
     "published_at": "2026-08-27",
-    "benchmark_status": "September 16 review campaign on the R310 runtime: depth 5 measured 88.32 tok/s on a fresh server, 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; depths 3 and 4 and the depth-1 profile (54.90 tok/s) passed the same gates. The public-source acceptance replay of this launcher, the second fresh server, is pending; the featured rate is one fresh server until it lands. Clean-host install and multiple users are untested.",
+    "benchmark_status": "September 16 review campaign on the R310 runtime: depth 5 measured 88.32 tok/s on a fresh server, 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; depths 3 and 4 and the depth-1 profile (54.90 tok/s) passed the same gates. The public-source acceptance replay through this launcher measured 88.49 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 5b494649f). Clean-host install and multiple users are untested.",
     "featured_metric": {
-      "value": 88.320170008887,
+      "value": 88.40701870174026,
       "unit": "tok/s",
       "label": "Writing speed · MTP depth 5 · two cards",
-      "scope": "One fresh R310 two-card server (88.320) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.04 tok/s on the same image), 64/64 on the sequential oracle.",
+      "scope": "Median of two fresh R310 two-card servers (88.320 / 88.494) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.04 tok/s on the same image), 64/64 on the sequential oracle.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp5-strict-performance.json"
     },
-    "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head, 33,024 total tokens (a 32K input plus 256 for the answer), 88.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
+    "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head, 33,024 total tokens (a 32K input plus 256 for the answer), 88.4 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
   },
   "contributors": [
     {
@@ -550,7 +550,9 @@
     "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp4-strict-performance.json",
     "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp3-strict-performance.json",
     "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp1-shortlist-strict-performance.json",
-    "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp1-control-strict-performance.json"
+    "experiments/qwen38-27b-b70/data/2026-09-16-fp8-review/tp2-mtp1-control-strict-performance.json",
+    "experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/summary.json",
+    "experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/manifest.json"
   ],
   "performance_profiles": [
     {
@@ -1569,11 +1571,12 @@
     "prefix_caching": false,
     "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
     "launcher": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
-    "acceptance_status": "pending-acceptance-replay",
+    "acceptance_status": "passed-on-configured-lab-host",
     "clean_host_tested": false,
     "evidence": "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md",
     "strict_pair_decode_tokens_s": [
-      88.320170008887
+      88.320170008887,
+      88.49386739459351
     ],
     "no_mtp_decode_tokens_s": 33.03516454010384,
     "depth1_decode_tokens_s": 54.89813975243729,

@@ -20,7 +20,7 @@ TP2_SCOPE = ('Two Intel Arc Pro B70s, official Qwen3.8-27B-FP8, FP16 activations
              'Every continuation is identical to the no-MTP server. ')
 
 
-def copy_receipts(raw):
+def copy_receipts(raw, DATA=DATA, STAGES=STAGES):
     DATA.mkdir(parents=True, exist_ok=True)
     for name in ('results.json', 'campaign.log'):
         shutil.copy(raw / name, DATA / name)
@@ -87,7 +87,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--raw', type=Path, default=Path('/mnt/fast-ai/bench-results/fp8-review-20260916'))
     ap.add_argument('--write-package', action='store_true')
+    ap.add_argument('--data', type=Path, help='copy receipts into this repository directory instead of the review one')
+    ap.add_argument('--stages', help='comma-separated stage names to copy (with --data)')
     a = ap.parse_args()
+    if a.data:
+        copy_receipts(a.raw, a.data, a.stages.split(',') if a.stages else STAGES)
+        return
     copy_receipts(a.raw)
     new = profiles()
     print(json.dumps([(p['id'], [(x.get('context_tokens', x.get('speculative_tokens')), x['value']) for x in p['points']]) for p in new], indent=0))

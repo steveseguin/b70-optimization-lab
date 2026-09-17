@@ -141,6 +141,7 @@ def main():
     unit = 'fp8-service-20260917'
     argv = ['systemd-run', '--user', '--unit', unit, '--working-directory', str(ROOT), '--collect',
             sys.executable, str(PKG_TP2), 'start', '--model-dir', str(R.MODEL), '--state-dir', str(state_dir), '--port', '18124']
+    R.wait_port_free(18124)
     (OUT / 'service.command.json').write_text(json.dumps({'argv': argv, 'started': R.now()}) + '\n')
     subprocess.run(argv, check=True)
     deadline = time.monotonic() + 2400

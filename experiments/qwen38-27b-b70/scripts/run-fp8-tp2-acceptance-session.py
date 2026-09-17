@@ -116,7 +116,7 @@ def main():
     docker_auth = json.loads((Path.home() / '.docker/config.json').read_text()).get('auths', {}) if (Path.home() / '.docker/config.json').exists() else {}
     dump(public / 'source-receipt.json', {
         'commit': a.commit, 'url': url, 'archive_sha256': sha(archive_bytes), 'archive_bytes': len(archive_bytes),
-        'source_dir': str(source_dir), 'new_directory': True, 'git_worktree': not (source_dir / '.git').exists(),
+        'source_dir': str(source_dir), 'new_directory': True, 'git_worktree': (source_dir / '.git').exists(),
         'anonymous_download': True, 'model_files_reused_after_fresh_verification': True, 'docker_layer_cache_reused': True,
         'registry_credentials_present_for_ghcr': any('ghcr.io' in k for k in docker_auth), 'files': files})
     say(f'source {source_dir.name}: pinned files match working tree: {all(f["matches_working_tree"] for f in files)}')

@@ -80,12 +80,26 @@ package launcher from an anonymous public-source download (`run-fp8-tp2-acceptan
 
 Receipts: [data/2026-09-16-fp8-review](../data/2026-09-16-fp8-review/) (`results.json` has every gate per stage).
 
+## Follow-up campaign (September 17, 01:36-02:35 UTC)
+
+[Runner](../scripts/run-20260917-fp8-followup-campaign.py), raw root `/mnt/fast-ai/bench-results/fp8-followup-20260917/`.
+
+| Stage | Result |
+| --- | --- |
+| One-card `no-quantization` profile through the shipped launcher | 64/64 sequential oracle + 64/64 queued vs no-MTP; strict 12/12 at 51.77 tok/s; clean stop |
+| One-card depth 5 at 24,576 context, 4,096-token prefill chunk | refused: 2.59 GiB of KV needed, 2.49 available |
+| One-card depth 5 at 24,576 context, **2,048-token chunk** | starts (2.9 GiB KV, 27,136 tokens); strict 12/12 at 53.43 tok/s; 64/64 oracle + queued pass; 2K/8K/16K prompts exact vs no-MTP; prefill 2,023 / 2,014 / 1,933, writing 56.4 / 72.1 / 61.9 |
+| One-card depth 5 at 32,768 context, 2,048-token chunk | refused: 3.13 GiB needed, 2.85 available (engine estimate: 28,288 maximum) |
+| Two-card depth 6 + shortlist | every gate exact; 89.78 tok/s on the first 100 tokens, 73.4 tok/s over whole answers (depth 5: 88.32 / 75.0) |
+| Two-card package acceptance replay (anonymous download at `5b494649f`) | model verify, image pull, start, strict 12/12 vs no-MTP at **88.49 tok/s**, practical 6/6 with exact repeats, clean stop, health before and after; [packet](../data/2026-09-17-fp8-two-card-depth5/) |
+
+The smaller prefill chunk costs nothing measurable (prompt reading within 0.5% of the 16K profile at every length,
+writing speed unchanged), so the one-card package moves to 24,576 tokens of context with a 2,048-token chunk; the
+shipped launcher is verified at that setting in a third campaign. One receipt correction: the session runner wrote the
+`git_worktree` field inverted; the receipt records the correction and the re-check (no `.git` directory).
+
 ## Left open
 
-- Depth 6 on two cards (one card showed a small first-100 gain and a small whole-answer loss).
-- The one-card `no-quantization` profile's sequential oracle (the recommended profile passed; the runner's port
-  reuse skipped this one).
-- One-card context above 16,384 tokens: at depth 5 the card has 2.55 GiB left for KV (about 20K tokens at this
-  model's page layout, 132 KB per token including page padding); probes at 24K/32K with a 2,048-token prefill chunk
-  are queued in the follow-up runner. Any real gain needs freed memory (smaller prefill chunk, smaller draft head, or
-  a page layout with less padding), not tuning.
+- One-card context above 24,576 tokens: the engine estimates 28,288 at depth 5 with the 2,048-token chunk; 32K needs
+  another 0.3 GiB. Candidates are a smaller draft head, a page layout with less padding, or a labelled FP8-KV
+  profile (not lossless, so never the default).

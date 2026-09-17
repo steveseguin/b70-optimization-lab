@@ -25,7 +25,17 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host, September 17 01:40 UTC: review of the one-card FP8 work passed; two-card MTP depth 5 reclaimed at 88.3 tok/s; service on 18124 (depth 1, 54.71 tok/s, 12/12).**
+**Two-B70 host, September 17 02:45 UTC: two-card depth-5 package accepted from public source (88.32 / 88.49 tok/s pair); the new depth-5 service is on 18124 (87.76 tok/s, 12/12 vs no-MTP); one-card 24K context verified and being promoted.**
+The follow-up campaign passed the one-card `no-quantization` profile's back-to-back test (64/64, strict 12/12 at
+51.77), found that a 2,048-token prefill chunk lets the one-card depth-5 recipe run 24,576 tokens of context at the
+same speed (32K still 0.3 GiB short), showed two-card depth 6 is exact but slower over whole answers, and replayed
+the two-card package from an anonymous download of commit `5b494649f`: strict 12/12 identical to no-MTP at 88.49
+tok/s, six practical requests with exact repeats, clean stop ([packet](experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/)).
+Service: unit `fp8-service-20260917`, state `/mnt/fast-ai/bench-results/fp8-followup-20260917/service`, model
+`qwen38-27b-fp8`, 33,024 tokens, one request at a time. Next: the one-card 24K campaign stops it once to verify the
+updated one-card launcher, then starts it again (unit `fp8-service-20260917b`).
+
+**Two-B70 host, September 17 01:40 UTC (superseded above): review of the one-card FP8 work passed; two-card MTP depth 5 reclaimed at 88.3 tok/s; service on 18124 (depth 1, 54.71 tok/s, 12/12).**
 A review campaign re-tested the shipped one-card package through its own launcher with the gate the earlier work had
 skipped (64 prompts back to back plus two queued passes, all identical to no-MTP), plus strict 12/12 at 53.31 tok/s,
 long prompts, the chat quality suite and a logprob replay: it holds up. Two fixes landed on the way: the launchers
