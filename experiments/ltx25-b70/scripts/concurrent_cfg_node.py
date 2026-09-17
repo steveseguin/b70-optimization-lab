@@ -122,12 +122,24 @@ def _census(value, path='arg'):
     return out
 
 
-def _double_batch_lists(options):
-    """ComfyUI keys the batch in transformer_options too: cond_or_uncond and uuids."""
+def _double_batch_lists(options, second_options=None):
+    """ComfyUI keys the batch in transformer_options too: cond_or_uncond, uuids, sigmas."""
     out = dict(options)
     for key in ('cond_or_uncond', 'uuids'):
         if isinstance(out.get(key), list) and len(out[key]) == 1:
             out[key] = out[key] * 2
+    sig = out.get('sigmas')
+    if isinstance(sig, torch.Tensor) and sig.dim() >= 1 and sig.shape[0] == 1:
+        other = (second_options or {}).get('sigmas', sig)
+        out['sigmas'] = torch.cat([sig, other], dim=0)
+    return out
+
+
+def _perturb_options(options, generator):
+    out = dict(options)
+    sig = out.get('sigmas')
+    if isinstance(sig, torch.Tensor) and sig.dim() >= 1 and sig.shape[0] == 1:
+        out['sigmas'] = _perturb(sig, generator)
     return out
 
 
@@ -153,17 +165,24 @@ def batch_proof_diffusion_model(executor, *args, **kwargs):
     generator = torch.Generator(device='cpu')
     generator.manual_seed(20260917)
     second_args = _map_rows(list(args), lambda t: _perturb(t, generator))
-    second_kwargs = _map_rows(dict(kwargs), lambda t: _perturb(t, generator))
+    # The top-level keyword dict is walked (a_timestep, denoise masks); nested
+    # option dicts are shared, except their batch-shaped sigma entry.
+    second_kwargs = {k: _map_rows(v, lambda t: _perturb(t, generator)) for k, v in kwargs.items()}
+    if len(second_args) > 5 and isinstance(second_args[5], dict):
+        second_args[5] = _perturb_options(second_args[5], generator)
+    if isinstance(second_kwargs.get('transformer_options'), dict):
+        second_kwargs['transformer_options'] = _perturb_options(second_kwargs['transformer_options'], generator)
     stage = 'second'
     try:
         second_out = executor(*second_args, **second_kwargs)
         stage = 'stacked'
         stacked_args = _stack_rows(list(args), second_args)
-        stacked_kwargs = _stack_rows(dict(kwargs), second_kwargs)
+        stacked_kwargs = {k: _stack_rows(v, second_kwargs[k]) for k, v in kwargs.items()}
         if len(stacked_args) > 5 and isinstance(stacked_args[5], dict):
-            stacked_args[5] = _double_batch_lists(stacked_args[5])
+            stacked_args[5] = _double_batch_lists(args[5], second_args[5])
         if isinstance(stacked_kwargs.get('transformer_options'), dict):
-            stacked_kwargs['transformer_options'] = _double_batch_lists(stacked_kwargs['transformer_options'])
+            stacked_kwargs['transformer_options'] = _double_batch_lists(
+                kwargs['transformer_options'], second_kwargs['transformer_options'])
         stacked_out = executor(*stacked_args, **stacked_kwargs)
         rec = {'output_shape_batch1': list(original_out.shape), 'output_shape_batch2': list(stacked_out.shape)}
         if stacked_out.shape[0] == 2 and stacked_out.shape[1:] == original_out.shape[1:]:
@@ -182,7 +201,7 @@ def batch_proof_diffusion_model(executor, *args, **kwargs):
         rec['census_batch1'] = {**_census(list(args), 'args'), **_census(dict(kwargs), 'kwargs')}
         try:
             rec['census_stacked'] = {**_census(_stack_rows(list(args), second_args), 'args'),
-                                     **_census(_stack_rows(dict(kwargs), second_kwargs), 'kwargs')}
+                                     **_census({k: _stack_rows(v, second_kwargs[k]) for k, v in kwargs.items()}, 'kwargs')}
         except BaseException as error:  # noqa: BLE001
             rec['census_stacked_error'] = repr(error)[:200]
     _batch_proofs.append(rec)
