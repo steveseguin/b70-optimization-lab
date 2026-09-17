@@ -17,7 +17,7 @@ from pathlib import Path
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5'
+DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather'  # the current recipe's packet; the ring-allreduce packet (2026-09-17-fp8-two-card-depth5) pins the earlier launcher
 EXPECTED_IMAGE = 'sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
 # Same-image no-MTP strict run (two cards, R310) and the qualified depth-5 research container, both from the
 # 2026-09-16 review campaign (experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
@@ -121,7 +121,7 @@ def derive(files):
             'configuration': CONFIGURATION,
             'strict': {'no_mtp_reference_exact': exact, 'requests': len(right), 'decode_tokens_s': speed,
                        'no_mtp_reference_decode_tokens_s': reference_speed, 'speedup_vs_no_mtp': speed / reference_speed,
-                       'interpretation': 'second fresh depth-5 server of the two-run pair (the first is the review campaign tp2-mtp5 stage); outputs identical to the same-image no-MTP reference'},
+                       'interpretation': os.environ.get('FIRST_SERVER_NOTE', 'second fresh depth-5 server of the two-run pair (the first is the review campaign tp2-mtp5 stage); outputs identical to the same-image no-MTP reference')},
             'practical': {'requests': len(practical['rows']), 'tasks': 3, 'repeats': 2, 'rows': [{'task': r['task'], 'repeat': r['repeat'], 'passed': r['passed'], 'input_tokens': r.get('prompt_tokens'), 'output_tokens': r.get('completion_tokens'), 'http_ttft_ms': 1000 * r['http_ttft_s'] if 'http_ttft_s' in r else None, 'token_identity': r.get('repeat_identity')} for r in practical['rows']]},
             'timing_scope': 'Practical HTTP TTFT is a transport measurement; no server-prefill headline inferred. Strict decode uses the canonical first-100-token interval definition.',
             'limits': ['one configured lab host; existing hash-verified model files and Docker layers reused',

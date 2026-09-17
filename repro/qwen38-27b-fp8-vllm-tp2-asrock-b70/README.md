@@ -1,10 +1,13 @@
 # Reproduce official Qwen3.8 27B FP8 TP2 on two B70s
 
 > **Status: `candidate-portable-repro`.** Built, launched and measured on the lab host from the files below. The
-> September 17 depth-5 recipe below is the recommended setup. Its package launcher was replayed from an anonymous
-> download of this repository at commit `5b494649f` (verified model, pulled image, package scripts only): strict 12/12
-> identical to no-MTP at 88.49 tok/s, six practical requests with exact repeats, clean stop
-> ([frozen packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/), produced by
+> September 17 depth-5 recipe below is the recommended setup; since the afternoon of September 17 it also does the
+> two-rank allreduce as one allgather plus a fixed-order add (90.37 / 90.58 tok/s, same outputs; comm-2 campaign in the
+> [findings note](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md)). Its package launcher was
+> replayed from an anonymous download of this repository at commit `e24479d7f` (verified model, pulled image, package
+> scripts only): strict 12/12 identical to no-MTP at 90.58 tok/s, six practical requests with exact repeats, clean stop
+> ([frozen packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/); the ring-allreduce replay at
+> `5b494649f`, 88.49 tok/s, is the [earlier packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/)), produced by
 > [run-fp8-tp2-acceptance-session.py](../../experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py)). A machine without Intel drivers, Docker or the model in place is still untested.
 
 Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp2-b70/README.md).
@@ -20,15 +23,17 @@ prompts and on the chat quality suite.
 
 | MTP depth (INT4 draft shortlist) | Writing speed | Prompt reading 2K / 8K / 16K | Writing after 2K / 8K / 16K input |
 | --- | ---: | --- | --- |
-| 5 (`recommended`) | **88.32** | 3,642 / 3,436 / 3,282 | 88.0 / 114.0 / 96.3 |
+| 5 with the allgather allreduce (`recommended` since September 17 afternoon) | **90.37** | | |
+| 5, ring allreduce | 88.32 | 3,642 / 3,436 / 3,282 | 88.0 / 114.0 / 96.3 |
 | 4 | 83.97 | | |
 | 3 | 80.44 | | |
 | 1 with the shortlist | 55.25 | | |
 | 1 without it (`depth-1`, the September 14 recipe) | 54.90 | 3,763 / 3,535 / 3,384 (no MTP) | |
 | No MTP (reference) | 33.04 | 3,763 / 3,535 / 3,384 | 32.7 / 31.8 / 31.0 |
 
-All speeds are tokens/s. The depth-5 pair is 88.32 (this campaign) and 88.49 (the package acceptance replay), median
-88.41; the depth-6 server measured 89.78 on the first 100 tokens but 2% slower over whole answers, so depth 5 stays.
+All speeds are tokens/s. The ring-allreduce depth-5 pair is 88.32 (this campaign) and 88.49 (the package acceptance
+replay), median 88.41; with the allgather allreduce the pair is 90.37 (comm-2 campaign) and 90.58 (acceptance replay),
+median 90.48. The depth-6 server measured 89.78 on the first 100 tokens but 2% slower over whole answers, so depth 5 stays.
 
 **Why it is exact now.** The September 3 depth-2 campaign on the R156 image found a phantom first token on one
 request in 64 under async scheduling and froze the recipe at depth 1. The lane has since moved to vLLM 0.29 (R304)

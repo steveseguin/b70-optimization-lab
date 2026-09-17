@@ -7,12 +7,13 @@ answers.
 
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` (MTP depth 5, draft shortlist) | 33,024 tokens | **88.4 tok/s** | 3,642 / 3,436 / 3,282 tok/s |
+| `recommended` (MTP depth 5, draft shortlist, allgather allreduce) | 33,024 tokens | **90.5 tok/s** | 3,642 / 3,436 / 3,282 tok/s |
 | `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | 3,763 / 3,535 / 3,384 tok/s |
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html). LocalMaxxing:
-[`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17) (88.41 tok/s, approved September 17).
+[`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17) (88.41 tok/s, the ring-allreduce
+recipe, approved September 17); the 90.5 tok/s allgather recipe is submitted separately (see `results/localmaxxing-submissions.md`).
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
 [review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 
@@ -64,9 +65,17 @@ launcher above owns the tested start, status and stop path.
   common tokens. The FP8 model still checks every token at full precision, so answers are unchanged; the list only
   affects how often a draft is accepted. The list was built from the lab's own documents, system documentation and
   Python sources, which resemble the test prompts; a list built only from general English (Wikipedia) and the Python
-  standard library measured 85.2 tok/s on the same suite in the same session (shipped list: 88.4), with identical
+  standard library measured 85.2 tok/s on the same suite in the same session (shipped list then: 88.4), with identical
   answers. Expect the lower figure on text unlike the lab's.
-- **Tested:** two fresh depth-5 servers, 88.32 and 88.49 tok/s. The first (review campaign) was 12/12 identical to
+- **Allgather allreduce (September 17):** on two ranks a sum-allreduce is exactly `x0 + x1`, so the launcher's
+  [b70_allgather_allreduce.py](overlays/b70_allgather_allreduce.py) replaces oneCCL's ring allreduce (134 per decode
+  step) with one allgather and a fixed-order add on each card. Floating-point addition of two operands is commutative,
+  so the sum is the ring kernel's bit for bit: the no-MTP server under the overlay reproduced the ring-allreduce outputs
+  12/12, and depth 5 measured 90.37 / 90.28 tok/s on one fresh server and 90.58 on the acceptance replay (ring: 88.3-88.5),
+  exact on every gate ([comm-2 receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/),
+  [acceptance packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/)). The oneCCL settings
+  are unchanged.
+- **Tested (ring allreduce, September 16-17):** two fresh depth-5 servers, 88.32 and 88.49 tok/s. The first (review campaign) was 12/12 identical to
   no-MTP on the strict suite, 64/64 on the sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and
   on the chat quality suite. The second was this launcher run from an anonymous download of the repository: model
   verify, image pull, start, strict 12/12 identical to no-MTP, six practical chat requests with exact repeats, clean

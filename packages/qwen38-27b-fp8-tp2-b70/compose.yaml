@@ -30,6 +30,7 @@ x-b70-common: &b70-common
     retries: 40
     start_period: 300s
   environment:
+    B70_ALLGATHER_ALLREDUCE: "1"
     B70_FA_VERIFY_ROWS: "1"
     CCL_ATL_TRANSPORT: "ofi"
     CCL_RECV: "direct"
@@ -118,6 +119,7 @@ services:
     ports:
       - "127.0.0.1:${PORT:-18131}:8000"
     environment:
+      B70_ALLGATHER_ALLREDUCE: "1"
       B70_FA_VERIFY_ROWS: "1"
       CCL_ATL_TRANSPORT: "ofi"
       CCL_RECV: "direct"
