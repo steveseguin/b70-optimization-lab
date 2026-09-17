@@ -289,6 +289,25 @@ Removing the drafter's collectives does not pay: the exchanges it removes are sh
 five passes per step) and every replicated part costs at least as much in extra per-card compute or in the larger
 unsharded lookups. Closed; the drafter stays sharded. The overlay remains for reference.
 
+## One-card long-prompt probes (September 17, 21:30-22:15 UTC): exact to 36,864 tokens
+
+With the long unrepeated corpus ([data/2026-09-17-long-corpus](../data/2026-09-17-long-corpus/), 62K+ tokens per
+class, built by [build-long-corpus.py](../scripts/build-long-corpus.py)), the no-MTP server at 40,960 context
+(R311b, 0.983) recorded continuations at 2,048 / 8,192 / 16,384 / 24,576 / 30,720 / 36,864 tokens (three classes,
+two repeats); both package profiles reproduced them token for token
+([probe-1](../data/2026-09-17-fp8-probe1/), [probe-2](../data/2026-09-17-fp8-probe2/); the recommended profile
+used the [five-length subset](../scripts/subset-prefill-baseline.py) of the same reference since it serves 32,768):
+
+| Prompt tokens | 2,048 | 8,192 | 16,384 | 24,576 | 30,720 | 36,864 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| No MTP: reading tok/s / writing tok/s | 2,215 / 19.3 | 2,125 / 18.9 | 2,025 / 18.5 | 1,941 / 18.2 | 1,884 / 17.9 | 1,829 / 17.7 |
+| `recommended` (32,768): reading / writing | 2,032 / 59.2 | 2,020 / 76.8 | 1,935 / 65.7 | 1,857 / 39.7 | 1,804 / 37.5 | |
+| `max-context` (40,960): reading / writing | 2,026 / 59.2 | 2,011 / 76.9 | 1,930 / 65.8 | 1,853 / 39.8 | 1,799 / 37.5 | 1,748 / 38.4 |
+
+So the 32K claim now rests on 30,720-token prompts, and the 40,960 profile on 36,864-token ones. The writing speed
+after a prompt drops from 65 tok/s at 16K to 40 at 24K while the no-MTP rate barely moves (18.5 to 18.2): the cost is
+in the speculative verify pass (six query rows against a 24K+ KV cache per step), the next one-card lever.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed

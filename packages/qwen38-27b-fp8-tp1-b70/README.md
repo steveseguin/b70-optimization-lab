@@ -68,6 +68,10 @@ and the answer.
   identical, 2K/8K/16K prompts identical, chat quality and a 21-request logprob replay identical
   ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/)). The max-context (40,960) and
   no-quantization (28,672) profiles passed the same strict, back-to-back and 2K-16K checks through this launcher.
+  Long prompts, same evening: with an unrepeated corpus the `recommended` profile reproduced the no-MTP
+  continuations token for token after 24,576- and 30,720-token prompts, and `max-context` after 36,864-token ones
+  (three content types, two repeats each; [probe receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-probe1/)).
+  Writing speed right after a 24K+ prompt is about 38-40 tok/s (66 after 16K; the no-MTP server writes 18).
 - **24,576 tokens of context (September 17, morning):** the launcher reads prompts in 2,048-token chunks instead of
   4,096, which frees 0.35 GiB of GPU memory. Two fresh servers at that setting: 53.43 / 53.43 tok/s, every gate exact.
 - **Both profiles passed the 64-prompt back-to-back test** against a no-MTP server (September 16-17), the check
