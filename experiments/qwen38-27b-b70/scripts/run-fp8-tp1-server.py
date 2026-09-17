@@ -125,6 +125,10 @@ def build(args, name, out, image_env):
     for item in args.mount_file:
         host, target = item.split(':', 1)
         mounts += ['--mount', f'type=bind,source={Path(host).resolve()},target={target},readonly']
+    for item in args.mount_dir:
+        host, target = item.split(':', 1)
+        Path(host).mkdir(parents=True, exist_ok=True)
+        mounts += ['--mount', f'type=bind,source={Path(host).resolve()},target={target}']
     if args.fa_trace:
         env.update(B70_FA_TRACE='/hash/fa-trace.jsonl')
     if args.fa_verify_rows:
@@ -162,6 +166,8 @@ def main():
                     help='add a variable the qualified record does not set (research probes only; recorded in launch.json)')
     ap.add_argument('--mount-file', action='append', default=[], metavar='HOST:CONTAINER',
                     help='bind one host file read-only into the container (research probes only, e.g. a candidate shortlist)')
+    ap.add_argument('--mount-dir', action='append', default=[], metavar='HOST:CONTAINER',
+                    help='bind one host directory read-write into the container (research probes only, e.g. a profiler output dir)')
     ap.add_argument('--serve-arg', action='append', default=[], metavar='ARG',
                     help='append one vllm serve argument (research probes only; recorded in launch.json)')
     ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',

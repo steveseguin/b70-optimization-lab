@@ -11,7 +11,8 @@ FP8 model, and outputs are identical to running without MTP.
 | `no-quantization` (full-precision draft head) | 20,480 tokens | 51.8 tok/s | 2,012 / 2,009 / 1,925 tok/s |
 
 Graphs and every measured point are on the
-[details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html).
+[details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html). LocalMaxxing:
+[`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr) (53.43 tok/s, approved September 17).
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md).
 
 ## What you need
