@@ -121,7 +121,7 @@ def derive(files):
             'configuration': CONFIGURATION,
             'strict': {'no_mtp_reference_exact': exact, 'requests': len(right), 'decode_tokens_s': speed,
                        'no_mtp_reference_decode_tokens_s': reference_speed, 'speedup_vs_no_mtp': speed / reference_speed,
-                       'interpretation': os.environ.get('FIRST_SERVER_NOTE', 'second fresh depth-5 server of the two-run pair (the first is the review campaign tp2-mtp5 stage); outputs identical to the same-image no-MTP reference')},
+                       'interpretation': os.environ.get('FIRST_SERVER_NOTE', 'second fresh depth-5 server of the two-run pair (the first is the comm-2 campaign tp2-ag-mtp5 stage, 2026-09-17, allgather allreduce overlay); outputs identical to the same-image no-MTP reference')},
             'practical': {'requests': len(practical['rows']), 'tasks': 3, 'repeats': 2, 'rows': [{'task': r['task'], 'repeat': r['repeat'], 'passed': r['passed'], 'input_tokens': r.get('prompt_tokens'), 'output_tokens': r.get('completion_tokens'), 'http_ttft_ms': 1000 * r['http_ttft_s'] if 'http_ttft_s' in r else None, 'token_identity': r.get('repeat_identity')} for r in practical['rows']]},
             'timing_scope': 'Practical HTTP TTFT is a transport measurement; no server-prefill headline inferred. Strict decode uses the canonical first-100-token interval definition.',
             'limits': ['one configured lab host; existing hash-verified model files and Docker layers reused',
