@@ -237,6 +237,24 @@ r311b (campaign 3, running): one loop over replayed rows then window tokens, wit
 verbatim in the single loop body, so both are computed by the same code; the ckpt-3 runner also checks the
 rewritten kernel without the overlay against the R310 reference.
 
+## Single-checkpoint GDN state, campaign 3 (September 17, 15:20-15:56 UTC): r311b is lossless and reaches 32K
+
+R311b (one loop body for replayed rows and window tokens) on one card, shipped settings unless noted
+(`/mnt/fast-ai/bench-results/fp8-ckpt3-20260917`, receipts in [data/2026-09-17-fp8-ckpt3](../data/2026-09-17-fp8-ckpt3/)):
+
+| Server (one card, depth 5, INT4 shortlist, host embedding, verifier rows) | Strict | tok/s | Ladder | 2K/8K/16K | Chat quality | KV budget |
+| --- | --- | ---: | --- | --- | --- | --- |
+| R311b, per-slot protocol (no overlay), 24,576 | 12/12 vs the R310 832-block reference | 53.49 | | | | 26,178 tokens (as R310) |
+| R311b + checkpoint overlay, 24,576 | 12/12, 12/12 vs the 896-block no-MTP reference | 54.28, 53.96 | 64/64 + two queued passes exact | exact | exact, baseline match | **38,845 tokens** |
+| R311b + checkpoint overlay, **32,768** at 0.975 | 12/12 | 54.36 | | exact | | 40,140 tokens (1.23 requests of 32K) |
+
+So the single-checkpoint state is lossless at every gate, costs nothing in speed (slightly faster: one state write per
+step instead of six), and turns the one-card KV budget from 26K into 40K tokens at the same 2.9 GiB. 32K context at
+depth 5 on one card is now a plain 0.975 setting (the R310 package needed 0.983 for 30,720). The 30,720-token probe
+did not run: the corpus tool refused to build a 30,720-token prompt without repeating its source
+(`/tokenize did not return enough valid numeric tokens`); the night-2 campaign's 30,720 probe used the same corpus,
+so this needs a look at the tool, not the server. Left for the one-card package acceptance.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
