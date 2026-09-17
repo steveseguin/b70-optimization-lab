@@ -25,6 +25,17 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 04:48 UTC: LTX resident fast path lands, 2.52 → 2.135 s per distinct clip (19/19 exact, 11.7 fps equivalent); packet 65 queued.**
+Packet 64 timed ComfyUI's model-management calls with every model resident:
+0.42 s per clip, almost all in the transformer's call before the first
+sampling stage. Skipping the bookkeeping for fully resident models (no tensor
+touched) took the interval to 2.135 s on ten distinct fixtures, all exact.
+The remaining arms were refused by a gate's `original` mode (now
+self-restoring); server 64 stopped cleanly. Packet 65 combines the fast path
+with save-behind, repeats the fast arm, runs the pipe control and the
+forward-timing diagnostic; launches after the five-minute gap.
+[Packet 64 results](experiments/ltx25-b70/notes/graph-capture-64-results.md).
+
 **Four-B70 host, September 17 04:37 UTC: LTX packet 63 stopped after its diagnostic arm was refused by a guard; packet 64 launches after the five-minute gap.**
 The graph-capture gate's patcher check refused the new forward-timer wrapper
 (whitelist, now extended); its latch is sticky, so server 63 was stopped with
