@@ -25,6 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 04:37 UTC: LTX packet 63 stopped after its diagnostic arm was refused by a guard; packet 64 launches after the five-minute gap.**
+The graph-capture gate's patcher check refused the new forward-timer wrapper
+(whitelist, now extended); its latch is sticky, so server 63 was stopped with
+one SIGINT (3 s). Packet 64 runs the lever arms first: resident fast path
+(timed, then on), save-behind, pipe control, then the forward timer last. The
+runner commits after every arm. Log `campaign-64.log`.
+[Packet 63 note](experiments/ltx25-b70/notes/graph-capture-63-results.md).
+
 **Two-B70 host, September 17 03:30 UTC: GPU FAULT during the final two-card service start; port 18124 is DOWN, no GPU work running, user decision needed. Everything else tonight passed and is published.**
 
 - **What happened:** the one-card 24K campaign finished its tests and started the two-card depth-5 service at
