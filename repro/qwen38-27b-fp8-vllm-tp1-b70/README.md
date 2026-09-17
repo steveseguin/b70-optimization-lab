@@ -17,11 +17,14 @@ server-side prompt reading.
 
 | Profile | Context | Writing speed | Full answers | Prompt reading 2K / 4K / 8K / 12K | Writing after 2K / 4K / 8K / 12K input |
 | --- | ---: | ---: | ---: | --- | --- |
-| MTP depth 5, INT4 draft shortlist (`recommended`, 2,048-token prefill chunk) | 24,576 | **53.4** | 45.3 | 2,026 / – / 2,017 / (16K: 1,934) | 56.6 / – / 72.2 / (16K: 62.0) |
-| `max-context`: depth 5, INT4 shortlist, 0.983 memory | 30,720 | 53.5 | | 2,018 / – / 2,010 / (16K: 1,929) | 56.4 / – / 72.1 / (16K: 61.8) |
+| MTP depth 5, INT4 draft shortlist, single-checkpoint state (`recommended`, R311b, 2,048-token chunk) | 32,768 | **54.3** | | 2,031 / – / 2,019 / (16K: 1,935) | 57.3 / – / 72.9 / (16K: 62.3) |
+| `max-context`: the same at 0.983 memory | 40,960 | 54.3 | | 2,024 / – / 2,011 / (16K: 1,930) | 57.1 / – / 72.9 / (16K: 62.4) |
+| `no-quantization` (FP16 draft shortlist), single-checkpoint state | 28,672 | 52.4 | | 2,014 / – / 2,008 / (16K: 1,927) | 50.2 / – / 69.0 / (16K: 59.4) |
+| the R310 `recommended` (September 17 morning, six state copies) | 24,576 | 53.4 | 45.3 | 2,026 / – / 2,017 / (16K: 1,934) | 56.6 / – / 72.2 / (16K: 62.0) |
+| the R310 `max-context` | 30,720 | 53.5 | | 2,018 / – / 2,010 / (16K: 1,929) | 56.4 / – / 72.1 / (16K: 61.8) |
 | the same at 16,384 tokens, 4,096-token chunk (September 16) | 16,384 | 53.5 | 45.3 | 2,025 / 2,041 / 2,021 / 1,986 | 56.5 / 65.0 / 72.1 / 61.5 |
 | MTP depth 4, INT4 shortlist, 0.983 memory (one research server; every gate exact; not a shipped profile) | 32,768 | 51.0 | | | |
-| MTP depth 5, FP16 draft shortlist (`no-quantization`, 2,048-token chunk) | 20,480 | 51.8 | 43.2 | 2,012 / – / 2,009 / (16K: 1,925) | 49.7 / – / 68.6 / (16K: 59.0) |
+| the R310 `no-quantization` | 20,480 | 51.8 | 43.2 | 2,012 / – / 2,009 / (16K: 1,925) | 49.7 / – / 68.6 / (16K: 59.0) |
 | No MTP (reference) | 20,480 | 19.4 | 19.3 | 2,214 / 2,189 / 2,134 / 2,087 | 19.3 / 19.0 / 18.8 / 18.6 |
 
 All speeds are tokens/s.
@@ -47,9 +50,15 @@ Other depths on the same setup:
 The depth comparison was measured at those contexts; depth 5 was then confirmed
 at 16,384 tokens on two fresh servers (53.576 / 53.454 tok/s) and, on September 17,
 at 24,576 tokens with a 2,048-token prefill chunk on two more (53.43 / 53.43 tok/s;
-[receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/)), which
-is now the package default. The smaller chunk lowers peak activation memory by 0.35 GiB
-(2.55 to 2.9 GiB of KV) at no measured cost; 32,768 needs 3.13 GiB and does not fit.
+[receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/)). The smaller
+chunk lowers peak activation memory by 0.35 GiB (2.55 to 2.9 GiB of KV) at no measured cost.
+On the afternoon of September 17 the R311b image's single-checkpoint recurrent state (one GDN
+state block per request instead of six; [design and results](../../experiments/qwen38-27b-b70/notes/2026-09-17-gdn-single-checkpoint-plan.md))
+raised the KV budget from 26,178 to 40,140 tokens at 0.975, and 32,768 tokens became the package
+default on two more fresh servers (54.36 / 54.29 tok/s, every gate exact including the logprob
+replay; [receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/)).
+Its no-MTP reference runs at the 896-token attention block the larger page implies and is
+12/12 identical to the 832-token reference.
 Depth 6 writes a little faster but finishes whole answers slightly slower and fits
 less context, so depth 5 stays the default. Both profiles also passed the 64-prompt
 sequential oracle plus queued passes against no-MTP

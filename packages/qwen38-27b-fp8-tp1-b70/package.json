@@ -10,7 +10,7 @@
   "model_family": "Qwen3.8",
   "publisher": "Alibaba / Qwen",
   "variant": "27B official FP8",
-  "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 24,576 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 30,720 tokens at the same speed, and a no-quantization profile (51.8 tok/s, 20,480 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.",
+  "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head and a single-checkpoint recurrent state, 32,768 tokens of context, 54.3 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 40,960 tokens at 54.3 tok/s, and a no-quantization profile (52.4 tok/s, 28,672 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.",
   "quantization": "FP8",
   "runtime_label": "vLLM XPU",
   "operating_systems": [
@@ -33,18 +33,19 @@
    "MTP depth 5",
    "lossless",
    "deterministic",
-   "24K context"
+   "32K context",
+   "32K context"
   ],
   "published_at": "2026-09-15",
-  "benchmark_status": "Strict 12-prompt suite on two fresh servers at the 24,576-token context: 53.43 / 53.43 tok/s, 12/12 identical to no MTP; 64-prompt sequential oracle plus queued passes 64/64; 2K/8K/16K prompts, a chat quality suite and a 21-request logprob replay all match no MTP (September 17). The 16,384-token setting measured the same on September 16; a 2,048-token prefill chunk frees the memory for the longer context at no measured cost. Clean-host install and multiple users are untested. Two more profiles were verified through the launcher on September 17: max-context (30,720 tokens at 0.983 memory, 53.41 / 53.51 tok/s) and no-quantization at 20,480 tokens (51.77 / 51.78 tok/s), each 12/12 identical to no MTP, 64/64 on the sequential oracle and exact on 2K/8K/16K prompts.",
+  "benchmark_status": "Strict 12-prompt suite on two fresh servers at the 32,768-token context: 54.36 / 54.29 tok/s, 12/12 identical to no MTP; 64-prompt sequential oracle plus queued passes 64/64; 2K/8K/16K prompts and a chat quality suite match no MTP (September 17). The single-checkpoint recurrent state (R311b kernel + overlay) keeps one GDN state block per request instead of six, raising the KV budget from 26,178 to 40,140 tokens at the same memory setting and the same speed; its no-MTP reference at the resulting 896-token attention block is identical to the 832-token one. Clean-host install and multiple users are untested.",
   "featured_metric": {
-   "value": 53.43028891153887,
+   "value": 54.32497439122723,
    "unit": "tok/s",
    "label": "Writing speed · MTP depth 5 · one card",
-   "scope": "Median of two fresh R310 servers (53.426 / 53.435) at a 24,576-token context (2,048-token prefill chunk) on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding, 64/64 on the sequential oracle.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/tp1-pkg-24k-strict-performance.json"
+   "scope": "Median of two fresh R311b servers (54.362 / 54.288) at a 32,768-token context (2,048-token prefill chunk, single-checkpoint recurrent state) on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding, 64/64 on the sequential oracle.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-strict-performance.json"
   },
-  "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 24,576 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 30,720 tokens at the same speed, and a no-quantization profile (51.8 tok/s, 20,480 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one."
+  "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head and a single-checkpoint recurrent state, 32,768 tokens of context, 54.3 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 40,960 tokens at 54.3 tok/s, and a no-quantization profile (52.4 tok/s, 28,672 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one."
  },
  "contributors": [
   {
@@ -72,21 +73,25 @@
  },
  "runtime": {
   "kind": "container",
-  "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
-  "image_build": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r310-gdn-barriers"
+  "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7",
+  "image_build": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r311-gdn-checkpoint",
+  "base": "R311b = R310 plus the vllm-xpu-kernels r311 single-checkpoint speculative GDN op (gdn_attention_ckpt); existing ops and Python unchanged.",
+  "previous_image_r310": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04"
  },
  "project_patches": {
   "required": true,
   "items": [
    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-tp1-shapes-r309-20260915.patch",
    "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch",
+   "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-single-checkpoint-r311-20260917.patch",
    "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_cpu_embed.py",
    "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_fa_verify_rows.py",
-   "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_draft_fp16_shortlist.py"
+   "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_draft_fp16_shortlist.py",
+   "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_gdn_checkpoint.py"
   ]
  },
  "commands": {
-  "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+  "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7",
   "launch": "python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/fp8-one-card-session",
   "health": "python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py status --state-dir /absolute/path/fp8-one-card-session",
   "benchmark": "BASE_URL=http://127.0.0.1:18130 OUT_DIR=/absolute/path/new-strict-attempt MODEL_NAME=qwen38-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
@@ -148,7 +153,36 @@
   "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night2/tp1-30k-d5-m983-context-summary.json",
   "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/tp1-nq-20k-b2048-strict-performance.json",
   "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-night3-campaign.py",
-  "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-night2-campaign.py"
+  "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-night2-campaign.py",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/results.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-strict-vs-reference.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-run2-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-context-summary.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-ladder-vs-mtp0.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-quality.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-history-summary.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-max-context-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-no-quantization-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt3/results.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt3/tp1-ckpt-32k-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt3/tp1-ckpt-mtp5-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt3/tp1-ckpt-mtp5-ladder-vs-mtp0.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt3/tp1-ckpt-mtp5-quality.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt3/tp1-ckpt-mtp5-context-summary.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt3/tp1-r311b-stock-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt2/results.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt2/tp1-mtp0-b896-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt2/tp1-stock-b896-strict-performance.json",
+  "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-onecard-32k-campaign.py",
+  "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-ckpt3-campaign.py",
+  "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-ckpt2-campaign.py",
+  "experiments/qwen38-27b-b70/overlays/b70-gdn-checkpoint/b70_gdn_checkpoint.py",
+  "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-single-checkpoint-r311-20260917.patch",
+  "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r311-gdn-checkpoint",
+  "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r311-gdn-checkpoint.sh",
+  "experiments/qwen38-27b-b70/notes/2026-09-17-gdn-single-checkpoint-plan.md",
+  "packages/qwen38-27b-fp8-tp1-b70/overlays/b70_gdn_checkpoint.py"
  ],
  "performance_profiles": [
   {
@@ -158,22 +192,22 @@
    "unit": "tok/s",
    "x_metric": "context_tokens",
    "x_label": "Input tokens",
-   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image at the 24,576-token context with a 2,048-token prefill chunk, through the package launcher. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/tp1-pkg-24k-context-summary.json",
+   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R311b image (single-checkpoint recurrent state) at the 32,768-token context with a 2,048-token prefill chunk, through the package launcher. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-context-summary.json",
    "points": [
     {
      "context_tokens": 2048,
-     "value": 56.565,
+     "value": 57.263,
      "samples": 6
     },
     {
      "context_tokens": 8192,
-     "value": 72.208,
+     "value": 72.885,
      "samples": 6
     },
     {
      "context_tokens": 16384,
-     "value": 61.954,
+     "value": 62.334,
      "samples": 6
     }
    ],
@@ -186,22 +220,22 @@
    "unit": "tok/s",
    "x_metric": "context_tokens",
    "x_label": "Input tokens",
-   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image at the 24,576-token context with a 2,048-token prefill chunk, through the package launcher. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Prompt reading is input tokens divided by server prefill time from the vLLM histogram.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/tp1-pkg-24k-context-summary.json",
+   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R311b image (single-checkpoint recurrent state) at the 32,768-token context with a 2,048-token prefill chunk, through the package launcher. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Prompt reading is input tokens divided by server prefill time from the vLLM histogram.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-32k-context-summary.json",
    "points": [
     {
      "context_tokens": 2048,
-     "value": 2026.3,
+     "value": 2031.2,
      "samples": 6
     },
     {
      "context_tokens": 8192,
-     "value": 2016.6,
+     "value": 2018.9,
      "samples": 6
     },
     {
      "context_tokens": 16384,
-     "value": 1933.6,
+     "value": 1934.6,
      "samples": 6
     }
    ],
@@ -371,64 +405,94 @@
  "missing": [
   "a machine without Intel drivers, Docker or the pinned model already present",
   "multiple simultaneous users",
-  "contexts above 30,720 tokens on one card"
+  "contexts above 40,960 tokens on one card"
  ],
  "recommended_setup": {
   "cards": 1,
   "mtp_depth": 5,
-  "max_model_len": 24576,
+  "max_model_len": 32768,
   "max_num_batched_tokens": 2048,
   "max_num_seqs": 1,
   "prefix_caching": false,
-  "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+  "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7",
   "launcher": "packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py",
   "acceptance_status": "passed-on-configured-lab-host",
   "clean_host_tested": false,
   "evidence": "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md",
   "strict_pair_decode_tokens_s": [
-   53.425946799368205,
-   53.43463102370953
+   54.36241556751663,
+   54.287533214937824
   ],
   "previous_context": {
-   "max_model_len": 16384,
-   "max_num_batched_tokens": 4096,
+   "max_model_len": 32768,
+   "max_num_batched_tokens": 2048,
+   "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7",
    "strict_pair_decode_tokens_s": [
-    53.57586792283578,
-    53.45447005701281
+    54.36241556751663,
+    54.287533214937824
    ],
-   "evidence": "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-one-card-followups.md"
+   "profiles": {
+    "recommended": {
+     "max_model_len": 32768,
+     "gpu_memory_utilization": 0.975,
+     "max_num_batched_tokens": 2048,
+     "strict_pair_decode_tokens_s": [
+      54.36241556751663,
+      54.287533214937824
+     ]
+    },
+    "max-context": {
+     "max_model_len": 40960,
+     "gpu_memory_utilization": 0.983,
+     "max_num_batched_tokens": 2048,
+     "strict_decode_tokens_s": 54.251366272461624,
+     "gates_exact": true,
+     "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-max-context-strict-performance.json"
+    },
+    "no-quantization": {
+     "max_model_len": 28672,
+     "gpu_memory_utilization": 0.975,
+     "max_num_batched_tokens": 2048,
+     "draft": "fp16-shortlist",
+     "strict_decode_tokens_s": 52.39263161184765,
+     "gates_exact": true,
+     "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-no-quantization-strict-performance.json"
+    }
+   },
+   "evidence": "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md"
   },
   "profiles": {
    "recommended": {
-    "max_model_len": 24576,
+    "max_model_len": 32768,
     "gpu_memory_utilization": 0.975,
     "max_num_batched_tokens": 2048,
     "strict_pair_decode_tokens_s": [
-     53.425946799368205,
-     53.43463102370953
+     54.36241556751663,
+     54.287533214937824
     ]
    },
    "max-context": {
-    "max_model_len": 30720,
+    "max_model_len": 40960,
     "gpu_memory_utilization": 0.983,
     "max_num_batched_tokens": 2048,
-    "strict_pair_decode_tokens_s": [
-     53.41221409877078,
-     53.507236605330206
-    ],
-    "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-max-context-strict-performance.json"
+    "strict_decode_tokens_s": 54.251366272461624,
+    "gates_exact": true,
+    "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-max-context-strict-performance.json"
    },
    "no-quantization": {
-    "max_model_len": 20480,
+    "max_model_len": 28672,
     "gpu_memory_utilization": 0.975,
     "max_num_batched_tokens": 2048,
     "draft": "fp16-shortlist",
-    "strict_pair_decode_tokens_s": [
-     51.765041042973415,
-     51.77798429011564
-    ],
-    "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-no-quantization-20k-strict-performance.json"
+    "strict_decode_tokens_s": 52.39263161184765,
+    "gates_exact": true,
+    "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-32k/tp1-pkg-no-quantization-strict-performance.json"
    }
+  },
+  "single_checkpoint_state": true,
+  "kv_budget_tokens": {
+   "r310": 26178,
+   "r311b": 40140
   }
  }
 }

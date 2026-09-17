@@ -115,6 +115,7 @@ def main():
                  'experiments/qwen38-27b-b70/scripts/run-20260917-fp8-ckpt3-campaign.py',
                  'experiments/qwen38-27b-b70/scripts/run-20260917-fp8-ckpt2-campaign.py',
                  'experiments/qwen38-27b-b70/overlays/b70-gdn-checkpoint/b70_gdn_checkpoint.py',
+                 'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_gdn_checkpoint.py',
                  'experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-single-checkpoint-r311-20260917.patch',
                  'experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r311-gdn-checkpoint',
                  'experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r311-gdn-checkpoint.sh',

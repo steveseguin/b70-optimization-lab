@@ -18,26 +18,29 @@ import urllib.request
 import uuid
 
 PACKAGE = Path(__file__).resolve().parents[1]
-IMAGE_ID = 'sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
+IMAGE_ID = 'sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7'  # R311b: R310 + single-checkpoint GDN op
 IMAGE = os.environ.get('B70_FP8_TP1_IMAGE', 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@' + IMAGE_ID)
 MODEL = 'qwen38-27b-fp8'
 SHORTLIST = '/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt'
 FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
 
 # Profiles measured on 2026-09-15/17: every profile's outputs are identical to no-MTP decoding. A 2,048-token prefill
-# chunk lowers peak activation memory by 0.35 GiB, which buys the recommended profile 24,576 tokens of context at the
-# same writing and prompt-reading speed (follow-up campaign, 2026-09-17).
+# chunk lowers peak activation memory by 0.35 GiB (follow-up campaign, 2026-09-17). The single-checkpoint recurrent
+# state (R311b kernel + b70_gdn_checkpoint overlay, ckpt-3 campaign, 2026-09-17) keeps one GDN state block per request
+# instead of six at depth 5, which raises the KV budget from 26,178 to 40,140 tokens at 0.975 and makes 32,768 tokens
+# of context the recommended profile at the same writing speed.
 PROFILES = {
-    'recommended': dict(max_model_len=24576, memory=0.975, draft='int4-shortlist', batched=2048),
+    'recommended': dict(max_model_len=32768, memory=0.975, draft='int4-shortlist', batched=2048),
     # 0.983 is the most this card accepts (29.81 of 30.3 GiB free at startup); 0.24 GiB more than recommended.
-    'max-context': dict(max_model_len=30720, memory=0.983, draft='int4-shortlist', batched=2048),
-    'no-quantization': dict(max_model_len=20480, memory=0.975, draft='fp16-shortlist', batched=2048),
+    'max-context': dict(max_model_len=40960, memory=0.983, draft='int4-shortlist', batched=2048),
+    'no-quantization': dict(max_model_len=28672, memory=0.975, draft='fp16-shortlist', batched=2048),
 }
 
 # Qualified runtime environment (one card, official FP8, deterministic W8A16/GDN paths).
 BASE_ENV = {
     'B70_CPU_EMBED': '1',
     'B70_FA_VERIFY_ROWS': '1',
+    'B70_GDN_CHECKPOINT': '1',
     'CCL_ATL_TRANSPORT': 'ofi',
     'CCL_RECV': 'direct',
     'CCL_SEND': 'direct',
