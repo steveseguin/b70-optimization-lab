@@ -1,0 +1,388 @@
+{
+  "338": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 42
+    }
+  },
+  "339": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 42
+    }
+  },
+  "340": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "audio_latent": [
+        "367",
+        1
+      ],
+      "video_latent": [
+        "348",
+        0
+      ]
+    }
+  },
+  "341": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    }
+  },
+  "344": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "guider": [
+        "388",
+        0
+      ],
+      "latent_image": [
+        "377",
+        0
+      ],
+      "noise": [
+        "339",
+        0
+      ],
+      "sampler": [
+        "352",
+        0
+      ],
+      "sigmas": [
+        "404",
+        0
+      ]
+    }
+  },
+  "348": {
+    "class_type": "LTXVLatentUpsampler",
+    "inputs": {
+      "samples": [
+        "367",
+        0
+      ],
+      "upscale_model": [
+        "429",
+        0
+      ],
+      "vae": [
+        "420",
+        2
+      ]
+    }
+  },
+  "352": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    }
+  },
+  "356": {
+    "class_type": "EmptyLTXVLatentVideo",
+    "inputs": {
+      "batch_size": 1,
+      "height": 128,
+      "length": 25,
+      "width": 128
+    }
+  },
+  "364": {
+    "class_type": "LTXPipelineTextEncode",
+    "inputs": {
+      "clip": [
+        "425",
+        0
+      ],
+      "clip_index": 900,
+      "depth": 1,
+      "mode": "pipeline",
+      "run_name": "g61-warm",
+      "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+    }
+  },
+  "365": {
+    "class_type": "LTXVConditioning",
+    "inputs": {
+      "frame_rate": 24.0,
+      "negative": [
+        "364",
+        0
+      ],
+      "positive": [
+        "364",
+        0
+      ]
+    }
+  },
+  "366": {
+    "class_type": "LTXVEmptyLatentAudio",
+    "inputs": {
+      "audio_vae": [
+        "420",
+        3
+      ],
+      "batch_size": 1,
+      "frame_rate": 24.0,
+      "frames_number": 25
+    }
+  },
+  "367": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": {
+      "av_latent": [
+        "344",
+        0
+      ]
+    }
+  },
+  "368": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "guider": [
+        "391",
+        0
+      ],
+      "latent_image": [
+        "340",
+        0
+      ],
+      "noise": [
+        "338",
+        0
+      ],
+      "sampler": [
+        "341",
+        0
+      ],
+      "sigmas": [
+        "395",
+        0
+      ]
+    }
+  },
+  "369": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": {
+      "av_latent": [
+        "368",
+        0
+      ]
+    }
+  },
+  "370": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "audio": [
+        "426",
+        1
+      ],
+      "bit_depth": 8,
+      "codec": "none",
+      "color_space": "sRGB",
+      "fps": 24.0,
+      "images": [
+        "426",
+        0
+      ]
+    }
+  },
+  "377": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "audio_latent": [
+        "366",
+        0
+      ],
+      "video_latent": [
+        "356",
+        0
+      ]
+    }
+  },
+  "388": {
+    "class_type": "LTXVDualCFGGuider",
+    "inputs": {
+      "audio_cfg": 1.0,
+      "model": [
+        "422",
+        0
+      ],
+      "negative": [
+        "365",
+        1
+      ],
+      "positive": [
+        "365",
+        0
+      ],
+      "video_cfg": 1.0
+    }
+  },
+  "391": {
+    "class_type": "LTXVDualCFGGuider",
+    "inputs": {
+      "audio_cfg": 1.0,
+      "model": [
+        "422",
+        0
+      ],
+      "negative": [
+        "365",
+        1
+      ],
+      "positive": [
+        "365",
+        0
+      ],
+      "video_cfg": 1.0
+    }
+  },
+  "395": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+    }
+  },
+  "404": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    }
+  },
+  "414": {
+    "class_type": "LTXBaselineCapture",
+    "inputs": {
+      "audio": [
+        "426",
+        1
+      ],
+      "audio_latent": [
+        "426",
+        3
+      ],
+      "images": [
+        "426",
+        0
+      ],
+      "run_name": "g61-warm",
+      "video_latent": [
+        "426",
+        2
+      ]
+    }
+  },
+  "420": {
+    "class_type": "LTXHostEmbeddingComponents",
+    "inputs": {
+      "encoder_mode": "control",
+      "placement": "split"
+    }
+  },
+  "422": {
+    "class_type": "LTXGraphCaptureGate",
+    "inputs": {
+      "chain": "1",
+      "mode": "graph",
+      "model": [
+        "427",
+        0
+      ],
+      "run_name": "g61-warm",
+      "selection": "all48"
+    }
+  },
+  "423": {
+    "class_type": "LTXVAEGraphGate",
+    "inputs": {
+      "mode": "original",
+      "run_name": "g61-warm",
+      "vae": [
+        "420",
+        2
+      ]
+    }
+  },
+  "424": {
+    "class_type": "LTXFusionGate",
+    "inputs": {
+      "mode": "original",
+      "model": [
+        "420",
+        0
+      ],
+      "run_name": "g61-warm"
+    }
+  },
+  "425": {
+    "class_type": "LTXTextEncoderGraphGate",
+    "inputs": {
+      "clip": [
+        "420",
+        1
+      ],
+      "mode": "graph",
+      "run_name": "g61-warm"
+    }
+  },
+  "426": {
+    "class_type": "LTXPipelineDecode",
+    "inputs": {
+      "audio_latent": [
+        "369",
+        1
+      ],
+      "audio_vae": [
+        "420",
+        3
+      ],
+      "clip_index": 900,
+      "depth": 1,
+      "mode": "pipeline",
+      "run_name": "g61-warm",
+      "upstream_depth": 0,
+      "vae": [
+        "423",
+        0
+      ],
+      "video_latent": [
+        "369",
+        0
+      ]
+    }
+  },
+  "427": {
+    "class_type": "LTXConcurrentCFG",
+    "inputs": {
+      "mode": "original",
+      "model": [
+        "424",
+        0
+      ],
+      "run_name": "g61-warm"
+    }
+  },
+  "429": {
+    "class_type": "LTXUpsamplerGraphGate",
+    "inputs": {
+      "mode": "original",
+      "run_name": "g61-warm",
+      "upscale_model": [
+        "420",
+        4
+      ]
+    }
+  },
+  "75": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "g61-warm/preview",
+      "format": "mp4",
+      "format.codec": "auto",
+      "video": [
+        "370",
+        0
+      ]
+    }
+  }
+}
