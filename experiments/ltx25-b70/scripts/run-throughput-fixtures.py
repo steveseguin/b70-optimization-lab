@@ -86,7 +86,8 @@ for i in range(a.count):
     g['364']['inputs']['text'] = fx['prompt']
     g['339']['inputs']['noise_seed'] = fx['seed']
     g['338']['inputs']['noise_seed'] = fx['seed']
-    g['75']['inputs']['filename_prefix'] = name + '/preview'
+    if '75' in g:                      # save-behind arms write the preview from the decode worker
+        g['75']['inputs']['filename_prefix'] = name + '/preview'
     req = ROOT / 'requests' / name
     req.mkdir(parents=True, exist_ok=False)
     (req / 'prompt.json').write_text(json.dumps(g, indent=2) + '\n')

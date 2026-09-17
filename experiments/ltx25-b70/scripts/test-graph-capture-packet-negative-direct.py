@@ -45,6 +45,7 @@ def regen(pk):
                    ('vae_adapter_sha256', 'ltx_graph_vae.py'), ('vae_node_sha256', 'graph_vae_node.py'),
                    ('upsampler_adapter_sha256', 'ltx_graph_upsampler.py'),
                    ('upsampler_node_sha256', 'graph_upsampler_node.py'),
+                   ('phase_node_sha256', 'phase_timed_upsampler_node.py'),
                    ('pipe_adapter_sha256', 'ltx_pipeline.py'), ('pipe_node_sha256', 'pipeline_node.py'),
                    ('na_candidate_sha256', 'ltx_na_axis_candidate.py'),
                    ('na_router_sha256', 'ltx_na_axis_router.py'),
@@ -99,6 +100,10 @@ try:
         (pk / 'source/custom_nodes/ltx_graph_upsampler_lab/__init__.py').read_text() + '\n# divergent\n'))
     tampered('pipeline text-encode edge changed in pipe', lambda pk: edit_graph(
         pk, 'pipe', lambda d: d['365']['inputs'].__setitem__('positive', ['364', 0]) or d['365']['inputs'].__setitem__('negative', ['420', 1])))
+    tampered('phase-timed node silently set to original in pipe-upphase', lambda pk: edit_graph(
+        pk, 'pipe-upphase', lambda d: d['348']['inputs'].__setitem__('mode', 'original')))
+    tampered('save-record node rewired to a different decode output', lambda pk: edit_graph(
+        pk, 'pipe-up-save', lambda d: d['430']['inputs'].__setitem__('saved_file', ['426', 0])))
     tampered('extra file added to source/scripts', lambda pk: (pk / 'source/scripts/sneaky.py').write_text('x = 1\n'))
 finally:
     for pk in made:

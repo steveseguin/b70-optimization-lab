@@ -64,6 +64,9 @@ UPS_ADAPTER = 'ltx_graph_upsampler.py'
 UPS_NODE_FILE = 'graph_upsampler_node.py'
 UPS_NODE_DIR = 'ltx_graph_upsampler_lab'
 UPS_NODE = '429'
+SAVE_NODE = '430'
+PHASE_NODE_FILE = 'phase_timed_upsampler_node.py'
+PHASE_NODE_DIR = 'ltx_phase_timed_upsampler_lab'
 SAMPLER_DEPTH = 2
 # The sealed sampler chain this node replaces, innermost first.
 SAMPLER_CHAIN = ('377', '344', '367', '348', '340', '368', '369')
@@ -86,19 +89,21 @@ MODES = ('original', 'graph', 'restored')
 # conditioning with the native encode and consumes it once; only the moment the
 # work runs changes, so it overlaps the sampler on other cards.
 ARMS = (
-    ('control',     'original', 'original', 'original',   'original', '1',  'original', 'original', 'original', 'original', 'original'),
-    ('graph',       'graph',    'original', 'axis-cache', 'original', '1',  'original', 'original', 'original', 'original', 'original'),
-    ('graph-c48',   'graph',    'original', 'axis-cache', 'original', '48', 'original', 'original', 'original', 'original', 'original'),
-    ('text',        'original', 'original', 'original',   'original', '1',  'graph',    'original', 'original', 'original', 'original'),
-    ('graph-text',  'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'original', 'original', 'original', 'original'),
-    ('pipe',        'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'original'),
-    ('pipe-ccfg',   'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'concurrent', 'original', 'original'),
-    ('graph-fused', 'graph',    'original', 'axis-cache', 'fused',    '1',  'original', 'original', 'original', 'original', 'original'),
-    ('graph-vae',   'graph',    'graph',    'axis-cache', 'original', '1',  'original', 'original', 'original', 'original', 'original'),
-    ('restored',    'restored', 'restored', 'original',   'restored', '1',  'restored', 'original', 'restored', 'original', 'restored'),
-    ('pipe-samp',   'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'pipeline', 'original'),
-    ('pipe-uptime', 'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'timed'),
-    ('pipe-up',     'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'graph'),)
+    ('control',     'original', 'original', 'original',   'original', '1',  'original', 'original', 'original', 'original', 'original', 'original'),
+    ('graph',       'graph',    'original', 'axis-cache', 'original', '1',  'original', 'original', 'original', 'original', 'original', 'original'),
+    ('graph-c48',   'graph',    'original', 'axis-cache', 'original', '48', 'original', 'original', 'original', 'original', 'original', 'original'),
+    ('text',        'original', 'original', 'original',   'original', '1',  'graph',    'original', 'original', 'original', 'original', 'original'),
+    ('graph-text',  'graph',    'original', 'axis-cache', 'original', '1',  'graph',    'original', 'original', 'original', 'original', 'original'),
+    ('pipe',        'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'original', 'original'),
+    ('pipe-ccfg',   'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'concurrent', 'original', 'original', 'original'),
+    ('graph-fused', 'graph',    'original', 'axis-cache', 'fused',    '1',  'original', 'original', 'original', 'original', 'original', 'original'),
+    ('graph-vae',   'graph',    'graph',    'axis-cache', 'original', '1',  'original', 'original', 'original', 'original', 'original', 'original'),
+    ('restored',    'restored', 'restored', 'original',   'restored', '1',  'restored', 'original', 'restored', 'original', 'restored', 'original'),
+    ('pipe-samp',   'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'pipeline', 'original', 'original'),
+    ('pipe-uptime', 'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'timed', 'original'),
+    ('pipe-up',     'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'graph', 'original'),
+    ('pipe-up-save', 'graph',   'original', 'original',   'original', '1',  'graph',    'pipeline-save', 'original', 'original', 'graph', 'original'),
+    ('pipe-upphase', 'graph',   'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'original', 'timed'),)
 VAE_NODE = '423'
 
 
@@ -177,6 +182,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py',
              'source/scripts/ltx_graph_upsampler.py', 'source/scripts/graph_upsampler_node.py',
              'source/custom_nodes/ltx_graph_upsampler_lab/__init__.py',
+             'source/scripts/phase_timed_upsampler_node.py',
+             'source/custom_nodes/ltx_phase_timed_upsampler_lab/__init__.py',
              'provenance/graph-capture/parent/launch/encoder_runtime_common.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_candidate.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_router.py',
@@ -185,7 +192,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'pipe',
                           'pipe-ccfg', 'graph-fused', 'graph-vae', 'restored', 'pipe-samp',
-                          'pipe-uptime', 'pipe-up')}
+                          'pipe-uptime', 'pipe-up', 'pipe-up-save', 'pipe-upphase')}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py')
     node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
@@ -265,6 +272,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     for node_dir, helper in (('ltx_graph_capture_lab', 'graph_capture_node.py'),
                              ('ltx_graph_vae_lab', 'graph_vae_node.py'),
                              ('ltx_graph_upsampler_lab', 'graph_upsampler_node.py'),
+                             ('ltx_phase_timed_upsampler_lab', 'phase_timed_upsampler_node.py'),
                              ('ltx_qkv_fusion_lab', 'graph_fusion_node.py'),
                              ('ltx_graph_text_encoder_lab', 'graph_text_encoder_node.py'),
                              ('ltx_pipeline_lab', 'pipeline_node.py'),
@@ -294,7 +302,9 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             capture['upsampler_adapter_sha256'] ==
             manifest['extension_sha256s']['ltx_graph_upsampler.py'] and
             capture['upsampler_node_sha256'] ==
-            manifest['extension_sha256s']['graph_upsampler_node.py'],
+            manifest['extension_sha256s']['graph_upsampler_node.py'] and
+            capture['phase_node_sha256'] ==
+            manifest['extension_sha256s']['phase_timed_upsampler_node.py'],
             'Graph-capture source inventory mismatch')
     require(capture['fusion_groups'] == [['audio_attn1', ['to_q', 'to_k', 'to_v']],
                                          ['audio_attn2', ['to_k', 'to_v']],
@@ -307,27 +317,46 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
 
     # Gate graphs are the original control recipe plus one restorable gate node.
     control = json.loads(safe_path(packet, 'graphs/host-embedding-control.json').read_text())
-    expected_arms = [['control', 'original', 'original', 'original', 'original', '1', 'original', 'original', 'original', 'original', 'original'],
-                     ['graph', 'graph', 'original', 'axis-cache', 'original', '1', 'original', 'original', 'original', 'original', 'original'],
-                     ['graph-c48', 'graph', 'original', 'axis-cache', 'original', '48', 'original', 'original', 'original', 'original', 'original'],
-                     ['text', 'original', 'original', 'original', 'original', '1', 'graph', 'original', 'original', 'original', 'original'],
-                     ['graph-text', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'original', 'original', 'original', 'original'],
-                     ['pipe', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'original'],
-                     ['pipe-ccfg', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'concurrent', 'original', 'original'],
-                     ['graph-fused', 'graph', 'original', 'axis-cache', 'fused', '1', 'original', 'original', 'original', 'original', 'original'],
-                     ['graph-vae', 'graph', 'graph', 'axis-cache', 'original', '1', 'original', 'original', 'original', 'original', 'original'],
-                     ['restored', 'restored', 'restored', 'original', 'restored', '1', 'restored', 'original', 'restored', 'original', 'restored'],
-                     ['pipe-samp', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'pipeline', 'original'],
-                     ['pipe-uptime', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'timed'],
-                     ['pipe-up', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'graph']]
+    expected_arms = [['control', 'original', 'original', 'original', 'original', '1', 'original', 'original', 'original', 'original', 'original', 'original'],
+                     ['graph', 'graph', 'original', 'axis-cache', 'original', '1', 'original', 'original', 'original', 'original', 'original', 'original'],
+                     ['graph-c48', 'graph', 'original', 'axis-cache', 'original', '48', 'original', 'original', 'original', 'original', 'original', 'original'],
+                     ['text', 'original', 'original', 'original', 'original', '1', 'graph', 'original', 'original', 'original', 'original', 'original'],
+                     ['graph-text', 'graph', 'original', 'axis-cache', 'original', '1', 'graph', 'original', 'original', 'original', 'original', 'original'],
+                     ['pipe', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'original', 'original'],
+                     ['pipe-ccfg', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'concurrent', 'original', 'original', 'original'],
+                     ['graph-fused', 'graph', 'original', 'axis-cache', 'fused', '1', 'original', 'original', 'original', 'original', 'original', 'original'],
+                     ['graph-vae', 'graph', 'graph', 'axis-cache', 'original', '1', 'original', 'original', 'original', 'original', 'original', 'original'],
+                     ['restored', 'restored', 'restored', 'original', 'restored', '1', 'restored', 'original', 'restored', 'original', 'restored', 'original'],
+                     ['pipe-samp', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'pipeline', 'original', 'original'],
+                     ['pipe-uptime', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'timed', 'original'],
+                     ['pipe-up', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'graph', 'original'],
+                     ['pipe-up-save', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline-save', 'original', 'original', 'graph', 'original'],
+                     ['pipe-upphase', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'original', 'timed']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
     expected_graphs = []
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,
-         samp_mode, ups_mode) in expected_arms:
+         samp_mode, ups_mode, phase_mode) in expected_arms:
         name = 'graphs/graph-capture-all48-' + arm + '.json'
         expected_graphs.append(name)
         graph = json.loads(safe_path(packet, name).read_text())
         # Undo the gate rewiring before comparing, innermost edge first.
+        if pipe_mode == 'pipeline-save':
+            require('370' not in graph and '75' not in graph, 'Save-behind arm still carries the video assembly')
+            require(graph.pop('430') == {'class_type': 'LTXPipelineSaveRecord', 'inputs': {
+                    'saved_file': ['426', 4], 'run_name': 'assign-unique-request-name'}},
+                    'Save-record node changed')
+            graph['370'] = copy.deepcopy(control['370'])
+            graph['75'] = copy.deepcopy(control['75'])
+            graph['370']['inputs']['images'] = ['426', 0]
+            graph['370']['inputs']['audio'] = ['426', 1]
+        if phase_mode != 'original':
+            require(samp_mode == 'original', 'Phase timing and the pipelined sampler cannot combine')
+            require(graph['348'] == {'class_type': 'LTXPhaseTimedUpsampler', 'inputs': {
+                    'samples': ['367', 0], 'upscale_model': ['429', 0], 'vae': ['420', 2],
+                    'mode': phase_mode, 'run_name': 'assign-unique-request-name'}},
+                    'Phase-timed upsampler node changed')
+            graph['348'] = {'class_type': 'LTXVLatentUpsampler', 'inputs': {
+                'samples': ['367', 0], 'upscale_model': ['429', 0], 'vae': ['420', 2]}}
         ups_consumer = '428' if samp_mode != 'original' else '348'
         require(graph[ups_consumer]['inputs']['upscale_model'] == ['429', 0],
                 'Upsampler gate edge changed')
@@ -403,7 +432,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             graph['374'] = {'class_type': 'VAEDecode',
                             'inputs': {'samples': ['369', 0], 'vae': ['423', 0]}}
         require(graph['364']['class_type'] == 'LTXPipelineTextEncode' and
-                graph['364']['inputs']['mode'] == pipe_mode and
+                graph['364']['inputs']['mode'] == ('original' if pipe_mode == 'original' else 'pipeline') and
                 graph['364']['inputs']['clip_index'] == 0 and
                 graph['364']['inputs']['depth'] == 1 and
                 graph['364']['inputs']['run_name'] == 'assign-unique-request-name',
@@ -484,7 +513,8 @@ def build_checker(text):
                                        "              'pipeline_decode_node.py',\n"
                                        "              'concurrent_cfg_node.py',\n"
                                        "              'pipeline_sampler_node.py',\n"
-                                       "              'ltx_graph_upsampler.py', 'graph_upsampler_node.py')", 1)
+                                       "              'ltx_graph_upsampler.py', 'graph_upsampler_node.py',\n"
+                                       "              'phase_timed_upsampler_node.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -496,7 +526,8 @@ def build_checker(text):
                                          "         'ltx_pipeline_decode_lab': 'pipeline_decode_node.py',\n"
                                          "         'ltx_concurrent_cfg_lab': 'concurrent_cfg_node.py',\n"
                                          "         'ltx_pipeline_sampler_lab': 'pipeline_sampler_node.py',\n"
-                                         "         'ltx_graph_upsampler_lab': 'graph_upsampler_node.py'}", 1)
+                                         "         'ltx_graph_upsampler_lab': 'graph_upsampler_node.py',\n"
+                                         "         'ltx_phase_timed_upsampler_lab': 'phase_timed_upsampler_node.py'}", 1)
     ast.parse(updated)
     return updated
 
@@ -562,7 +593,8 @@ def main():
                                (PIPE_ADAPTER, None), (PIPE_NODE_FILE, PIPE_NODE_DIR),
                                (PDEC_NODE_FILE, PDEC_NODE_DIR), (CCFG_NODE_FILE, CCFG_NODE_DIR),
                                (PSAMP_NODE_FILE, PSAMP_NODE_DIR),
-                               (UPS_ADAPTER, None), (UPS_NODE_FILE, UPS_NODE_DIR)):
+                               (UPS_ADAPTER, None), (UPS_NODE_FILE, UPS_NODE_DIR),
+                               (PHASE_NODE_FILE, PHASE_NODE_DIR)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -577,12 +609,17 @@ def main():
                                'inputs': {'samples': ['369', 0], 'vae': ['420', 2]}},
             'Unexpected original video decode node')
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,
-         samp_mode, ups_mode) in ARMS:
+         samp_mode, ups_mode, phase_mode) in ARMS:
         graph = copy.deepcopy(control)
         require(graph['348']['inputs']['upscale_model'] == ['420', 4], 'Unexpected upsampler edge')
         graph[UPS_NODE] = {'class_type': 'LTXUpsamplerGraphGate', 'inputs': {
             'upscale_model': ['420', 4], 'mode': ups_mode, 'run_name': 'assign-unique-request-name'}}
         graph['348']['inputs']['upscale_model'] = [UPS_NODE, 0]
+        if phase_mode != 'original':
+            require(samp_mode == 'original', 'Phase timing and the pipelined sampler cannot combine')
+            graph['348'] = {'class_type': 'LTXPhaseTimedUpsampler', 'inputs': {
+                'samples': ['367', 0], 'upscale_model': [UPS_NODE, 0], 'vae': ['420', 2],
+                'mode': phase_mode, 'run_name': 'assign-unique-request-name'}}
         require(graph['364']['inputs']['clip'] == ['420', 1], 'Unexpected control text-encode edge')
         require(graph['364']['class_type'] == 'CLIPTextEncode', 'Unexpected control text-encode node')
         prompt_text = graph[TEXT_ENCODE_NODE]['inputs']['text']
@@ -592,7 +629,8 @@ def main():
         # The encode node itself becomes the cache-capable one in every arm, so
         # the arms differ only by mode. 'original' calls the native node.
         graph[TEXT_ENCODE_NODE] = {'class_type': 'LTXPipelineTextEncode', 'inputs': {
-            'clip': [TEXT_NODE, 0], 'text': prompt_text, 'mode': pipe_mode,
+            'clip': [TEXT_NODE, 0], 'text': prompt_text,
+            'mode': 'original' if pipe_mode == 'original' else 'pipeline',
             'clip_index': 0, 'depth': 1, 'run_name': 'assign-unique-request-name'}}
         graph['422'] = {'class_type': 'LTXGraphCaptureGate', 'inputs': {
             'model': ['420', 0], 'mode': mode, 'selection': SELECTION, 'chain': chain,
@@ -645,6 +683,12 @@ def main():
             graph['414']['inputs']['video_latent'] = [DECODE_NODE, 2]
             graph['414']['inputs']['audio_latent'] = [DECODE_NODE, 3]
             del graph['374'], graph['358']
+            if pipe_mode == 'pipeline-save':
+                # The decode worker writes the preview itself; the prompt only
+                # records the path. The video assembly and SaveVideo nodes go.
+                graph[SAVE_NODE] = {'class_type': 'LTXPipelineSaveRecord', 'inputs': {
+                    'saved_file': [DECODE_NODE, 4], 'run_name': 'assign-unique-request-name'}}
+                del graph['370'], graph['75']
             if samp_mode != 'original':
                 # One node replaces the sealed sampler chain and runs it on a worker,
                 # so two clips sample at once: one occupies xpu:1's blocks while the
@@ -718,7 +762,9 @@ def main():
               'source/scripts/' + PSAMP_NODE_FILE,
               f'source/custom_nodes/{PSAMP_NODE_DIR}/__init__.py',
               'source/scripts/' + UPS_ADAPTER, 'source/scripts/' + UPS_NODE_FILE,
-              f'source/custom_nodes/{UPS_NODE_DIR}/__init__.py'}
+              f'source/custom_nodes/{UPS_NODE_DIR}/__init__.py',
+              'source/scripts/' + PHASE_NODE_FILE,
+              f'source/custom_nodes/{PHASE_NODE_DIR}/__init__.py'}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
     for name, digest in parent_manifest['files'].items():
         if name == CHECKER:
@@ -735,14 +781,14 @@ def main():
                                (FUSE_NODE_FILE, FUSE_NODE_DIR), (TEXT_NODE_FILE, TEXT_NODE_DIR),
                                (PIPE_NODE_FILE, PIPE_NODE_DIR), (PDEC_NODE_FILE, PDEC_NODE_DIR),
                                (CCFG_NODE_FILE, CCFG_NODE_DIR), (PSAMP_NODE_FILE, PSAMP_NODE_DIR),
-                               (UPS_NODE_FILE, UPS_NODE_DIR)):
+                               (UPS_NODE_FILE, UPS_NODE_DIR), (PHASE_NODE_FILE, PHASE_NODE_DIR)):
         require(files[f'source/custom_nodes/{dir_name}/__init__.py'] == files['source/scripts/' + src_name],
                 'Custom-node copy differs from helper: ' + dir_name)
 
     extensions = dict(parent_manifest['extension_sha256s'])
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
                      TEXT_ADAPTER, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
-                     CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE):
+                     CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE, PHASE_NODE_FILE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -775,6 +821,7 @@ def main():
             'upsampler_adapter_sha256': extensions[UPS_ADAPTER],
             'upsampler_node_sha256': extensions[UPS_NODE_FILE],
             'upsampler_captured_methods': ['forward'],
+            'phase_node_sha256': extensions[PHASE_NODE_FILE],
             'fusion_groups': [[g[0], list(g[1])] for g in __import__('ltx_qkv_fusion_groups').GROUPS]
                              if False else [['audio_attn1', ['to_q', 'to_k', 'to_v']],
                                             ['audio_attn2', ['to_k', 'to_v']],

@@ -100,11 +100,27 @@ class LTXUpsamplerGraphGate:
                     _installed = (upscale_model, original, stand_in, captures, mode)
                     report['installed_now'] = True
                 else:
-                    resident, _original, _stand_in, _captures, installed_mode = _installed
+                    resident, original, stand_in, captures, installed_mode = _installed
                     require(resident is upscale_model, 'A different upscale model is already shadowed')
-                    require(installed_mode == mode, 'Upsampler is shadowed in mode ' + installed_mode +
-                            '; run the restored mode before switching')
-                    report['installed_now'] = False
+                    if installed_mode != mode:
+                        # Switching between timed and graph: restore the class
+                        # method first, keep the outgoing stand-in's evidence,
+                        # then install the requested one. Recorded, not refused.
+                        adapter.restore(upscale_model, original)
+                        report['switched_from'] = installed_mode
+                        if installed_mode == 'timed':
+                            report['eager_forward_seconds_before_switch'] = list(stand_in.seconds)
+                        else:
+                            report['capture_summary_before_switch'] = captures.summary()
+                        _installed = None
+                        import comfy.model_management
+                        comfy.model_management.load_models_gpu([upscale_model])
+                        report['device'] = str(adapter.resident_on_xpu(model))
+                        captures, original, stand_in = adapter.install(upscale_model, timed=(mode == 'timed'))
+                        _installed = (upscale_model, original, stand_in, captures, mode)
+                        report['installed_now'] = True
+                    else:
+                        report['installed_now'] = False
             else:
                 if _installed is None:
                     report['was_shadowed'] = False

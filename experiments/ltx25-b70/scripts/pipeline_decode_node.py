@@ -14,7 +14,15 @@ consuming it, and the next prompt emits that same clip. Every receipt records
 
 Video and audio are decoded and emitted together, with their latents, so a
 prompt's four oracle inputs always describe the same clip.
+
+`pipeline-save` additionally assembles and writes the lossy MP4 preview on the
+same worker, right after the decode, so the 0.13 s of container encoding leaves
+the prompt thread too. The written file is what the sealed SaveVideo node
+would write (same container, codec, fps, bit depth and colour space; no
+embedded prompt metadata). The prompt emits its path through
+LTXPipelineSaveRecord, an output node that records but does not encode.
 """
+import os
 import hashlib
 import json
 import os
@@ -28,6 +36,7 @@ import ltx_pipeline as pipeline
 from encoder_diagnostics import _context
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
+DECODE_MODES = pipeline.MODES + ('pipeline-save',)
 _failed = False
 
 
@@ -42,8 +51,8 @@ def write_json(path, value):
         stream.write('\n')
 
 
-def decode_clip(vae, audio_vae, video_latent, audio_latent):
-    """Exactly what VAEDecode and LTXVAudioVAEDecode do, and nothing else."""
+def decode_clip(vae, audio_vae, video_latent, audio_latent, save_prefix=None):
+    """Exactly what VAEDecode and LTXVAudioVAEDecode do, then optionally the MP4 write."""
     import nodes
     from comfy_extras.nodes_lt_audio import LTXVAudioVAEDecode
     decoded = nodes.VAEDecode().decode(vae, video_latent)
@@ -51,7 +60,26 @@ def decode_clip(vae, audio_vae, video_latent, audio_latent):
             'VAEDecode no longer returns a single image batch')
     images = decoded[0]
     audio = LTXVAudioVAEDecode.execute(samples=audio_latent, audio_vae=audio_vae).result[0]
-    return images, audio, video_latent, audio_latent
+    saved = ''
+    if save_prefix:
+        saved = save_preview(images, audio, save_prefix)
+    return images, audio, video_latent, audio_latent, saved
+
+
+def save_preview(images, audio, prefix):
+    """What the sealed CreateVideo(fps 24, 8-bit sRGB, codec none) + SaveVideo(mp4, auto) pair writes."""
+    import folder_paths
+    from comfy_api.latest import Types
+    from comfy_extras.nodes_video import CreateVideo
+    video = CreateVideo.execute(images=images, fps=24.0, audio=audio, bit_depth=8,
+                                color_space='sRGB', codec='none').result[0]
+    width, height = video.get_dimensions()
+    folder, filename, counter, subfolder, _prefix = folder_paths.get_save_image_path(
+        prefix, folder_paths.get_output_directory(), width, height)
+    file = f"{filename}_{counter:05}_.mp4"
+    video.save_to(os.path.join(folder, file), format=Types.VideoContainer('mp4'),
+                  codec=Types.VideoCodec('auto'), metadata=None, crf=None)
+    return os.path.join(subfolder, file)
 
 
 class LTXPipelineDecode:
@@ -59,7 +87,7 @@ class LTXPipelineDecode:
     def INPUT_TYPES(cls):
         return {'required': {'vae': ('VAE',), 'audio_vae': ('VAE',),
                              'video_latent': ('LATENT',), 'audio_latent': ('LATENT',),
-                             'mode': (list(pipeline.MODES),),
+                             'mode': (list(DECODE_MODES),),
                              'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
                              'depth': ('INT', {'default': 1, 'min': 1,
                                                'max': pipeline.MAX_PENDING}),
@@ -70,8 +98,8 @@ class LTXPipelineDecode:
                                                         'max': pipeline.MAX_PENDING}),
                              'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
 
-    RETURN_TYPES = ('IMAGE', 'AUDIO', 'LATENT', 'LATENT')
-    RETURN_NAMES = ('images', 'audio', 'video_latent', 'audio_latent')
+    RETURN_TYPES = ('IMAGE', 'AUDIO', 'LATENT', 'LATENT', 'STRING')
+    RETURN_NAMES = ('images', 'audio', 'video_latent', 'audio_latent', 'saved_file')
     FUNCTION = 'apply'
     CATEGORY = 'lab/validation'
 
@@ -89,7 +117,7 @@ class LTXPipelineDecode:
     def _apply(self, vae, audio_vae, video_latent, audio_latent, mode, clip_index, depth,
                run_name, upstream_depth=0):
         require(not _failed, 'Previous pipeline failure; halt submissions and inspect evidence')
-        require(mode in pipeline.MODES, 'Only preregistered modes are admitted')
+        require(mode in DECODE_MODES, 'Only preregistered modes are admitted')
         require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
                 'Unsafe request name')
         run, identity = _context()
@@ -123,13 +151,15 @@ class LTXPipelineDecode:
                                     'primed': True}
             else:
                 latents = (video_latent, audio_latent)
+                save_prefix = (run_name + '/preview') if mode == 'pipeline-save' else None
                 # During the upstream stage's own fill it emits its own clip, so
                 # the index this prompt is really carrying is clamped at zero.
                 # Those first few prompts re-emit an early clip; every clip is
                 # still decoded exactly once, and emitted_index records which.
                 out, detail = pipeline.run_behind(
                     'decode', max(0, clip_index - upstream_depth), depth,
-                    lambda: decode_clip(vae, audio_vae, *latents))
+                    lambda: decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix))
+                detail['saved_file'] = out[4]
                 report['detail'] = detail
             report['passed'] = True
         finally:
@@ -138,4 +168,26 @@ class LTXPipelineDecode:
         return out
 
 
-NODE_CLASS_MAPPINGS = {'LTXPipelineDecode': LTXPipelineDecode}
+class LTXPipelineSaveRecord:
+    """Output node: records the preview already written by the decode worker."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'saved_file': ('STRING', {'forceInput': True}),
+                             'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, saved_file, run_name):
+        require(isinstance(saved_file, str) and saved_file, 'The decode worker did not write a preview')
+        run, _identity = _context()
+        write_json(run / ('pipeline-save-' + run_name + '.json'),
+                   {'schema': 'ltx.pipeline-save-record.v1', 'run_name': run_name, 'saved_file': saved_file})
+        subfolder, file = os.path.split(saved_file)
+        return {'ui': {'images': [{'filename': file, 'subfolder': subfolder, 'type': 'output'}]}}
+
+
+NODE_CLASS_MAPPINGS = {'LTXPipelineDecode': LTXPipelineDecode, 'LTXPipelineSaveRecord': LTXPipelineSaveRecord}
