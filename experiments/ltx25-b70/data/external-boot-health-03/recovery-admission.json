@@ -1,0 +1,39 @@
+{
+  "schema": "ltx.external-boot-recovery-admission.v2",
+  "utc": "2026-09-17T02:57:53.506104+00:00",
+  "boot_id": "a8b906bc-5554-445e-9eec-964ab7fd958b",
+  "previous_boot_id": "d9f2e066-f972-4f3b-bf44-ab47b922049f",
+  "user_confirmed_restart": true,
+  "agent_rebooted": false,
+  "source_sha256": "2e72ea510bb54ad83754badaa7290974c1be49b32a69107b178a56d3ee77e1d6",
+  "archival_script_sha256": "d0e336225eff9042bed5ba39088ab6abf15c925e12caf4452e29042f02797548",
+  "health_result_sha256": "fc51cd11350d11c78eb78674c075d1c662ee7a22745a5b5ba7c5d58099ff1b7a",
+  "worker_result_sha256": "50d395f0a6ec44bbbd16135c5d218e139c77fe02682f8dd04be4ef363fcaee08",
+  "historical_fault_sha256": "ad42767da370b755b0defa28c9512bd04d6d1586be4c02feb1355ac771a117d4",
+  "passive": {
+    "render_mapping": {
+      "pci-0000:23:00.0-render": "/dev/dri/renderD130",
+      "pci-0000:27:00.0-render": "/dev/dri/renderD131",
+      "pci-0000:43:00.0-render": "/dev/dri/renderD128",
+      "pci-0000:47:00.0-render": "/dev/dri/renderD129"
+    },
+    "render_nodes_unowned": true,
+    "no_running_containers": true,
+    "port_8188_unbound": true,
+    "incident_processes_absent": true,
+    "quiet_since_historical_kernel_tail_seconds": 198.91174555099997,
+    "meminfo": "MemTotal:       131754528 kB\nMemFree:        124353692 kB\nMemAvailable:   127060452 kB\nBuffers:          934712 kB\nCached:          2586120 kB\nSwapCached:            0 kB\nActive:          2238836 kB\nInactive:        1799320 kB\nActive(anon):     523964 kB\nInactive(anon):        0 kB\nActive(file):    1714872 kB\nInactive(file):  1799320 kB\nUnevictable:        3072 kB\nMlocked:               0 kB\nSwapTotal:       8388604 kB\nSwapFree:        8388604 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:             37288 kB\nWriteback:             0 kB\nAnonPages:        520960 kB\nMapped:           334848 kB\nShmem:              6540 kB\nKReclaimable:     403384 kB\nSlab:             773500 kB\nSReclaimable:     403384 kB\nSUnreclaim:       370116 kB\nKernelStack:       10608 kB\nPageTables:         8272 kB\nSecPageTables:      2336 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    74265868 kB\nCommitted_AS:    1815976 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      112376 kB\nVmallocChunk:          0 kB\nPercpu:            23296 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:    266240 kB\nFilePmdMapped:         0 kB\nCmaTotal:              0 kB\nCmaFree:         9318400 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      340912 kB\nDirectMap2M:     6862848 kB\nDirectMap1G:    126877696 kB\n",
+    "journal": {
+      "historical_prefix_matches": true,
+      "historical_records": 2270,
+      "new_records": 0,
+      "new_faults": [],
+      "last_cursor": "s=1661112bb21846a8b27f4043eef003fe;i=1f7738f;b=a8b906bc5554445e9eec964ab7fd958b;m=1bb4e1cc;t=65ba4e758da13;x=bb34518fac7aced4"
+    }
+  },
+  "decision": "Archive old-boot hold after root review of successful bounded health assessment and released processes/devices; admit the packet 61 upsampler-gate campaign next, one launch, no restart chain",
+  "model_service_started": false,
+  "model_transition_or_speed_qualified": false,
+  "reset_or_host_settings_changes": false,
+  "future_fault_rule": "New fault halts new requests; no retry or restart chain"
+}

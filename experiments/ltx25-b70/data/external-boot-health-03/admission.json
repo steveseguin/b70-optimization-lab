@@ -1,0 +1,68 @@
+{
+  "schema": "ltx.external-boot-health-admission.v2",
+  "created_utc": "2026-09-17T02:57:05.793954+00:00",
+  "boot_id": "a8b906bc-5554-445e-9eec-964ab7fd958b",
+  "fault_sha256": "ad42767da370b755b0defa28c9512bd04d6d1586be4c02feb1355ac771a117d4",
+  "journal_prefix_count": 2270,
+  "journal_prefix_sha256": "c5be64cfb9c01aebb3ecaedbea6a67c782c8a16ca2e82cd94e2f10af4b86f197",
+  "journal_last_monotonic_us": 464839116,
+  "historical_faults": [],
+  "runtime": {
+    "torch": "2.14.0+xpu",
+    "python": "3.12.13",
+    "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "files": {
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+      "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a",
+      "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8"
+    }
+  },
+  "packet_manifest_sha256": "c99c117208721c442b924f45a1f6d8121adf4d86ea4189c2020b8cadeb761621",
+  "render_mapping": {
+    "pci-0000:23:00.0-render": "/dev/dri/renderD130",
+    "pci-0000:27:00.0-render": "/dev/dri/renderD131",
+    "pci-0000:43:00.0-render": "/dev/dri/renderD128",
+    "pci-0000:47:00.0-render": "/dev/dri/renderD129"
+  },
+  "retired_pids": [
+    6955,
+    8318
+  ],
+  "scope": "One bounded discovery/copy/compute/peer-copy assessment; FAULT unchanged; no model admission or recovery actions",
+  "active_probe_limit": 1,
+  "minimum_quiet_seconds": 60,
+  "native_worker_timeout_seconds": 60,
+  "previous_boot_id": "d9f2e066-f972-4f3b-bf44-ab47b922049f",
+  "user_confirmed_restart": true,
+  "user_words": "the computer froze, fyi, so i just restarted it (2026-09-17, after the 2026-09-16 23:27 UTC fault; host froze 00:10 UTC)",
+  "expected_devices": [
+    {
+      "ordinal": 0,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    },
+    {
+      "ordinal": 1,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    },
+    {
+      "ordinal": 2,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    },
+    {
+      "ordinal": 3,
+      "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+      "copy_compute": "passed"
+    }
+  ],
+  "priority3_prefix_lines": [
+    "snd_hda_intel 0000:2a:00.4: no codecs found!",
+    "snd_hda_intel 0000:44:00.0: Unknown capability 0",
+    "snd_hda_intel 0000:48:00.0: Unknown capability 0",
+    "snd_hda_intel 0000:24:00.0: Unknown capability 0",
+    "snd_hda_intel 0000:28:00.0: Unknown capability 0",
+    "usb 1-6: 19:0: cannot get min/max values for control 12 (id 19)"
+  ]
+}
