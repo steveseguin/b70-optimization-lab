@@ -20,6 +20,7 @@ import json
 import os
 from pathlib import Path
 import re
+import threading
 import time
 
 import torch
@@ -45,7 +46,27 @@ def write_json(path, value):
 def native_encode(clip, text, consume_observations=False):
     import nodes
     require(clip is not None, 'CLIP input is invalid: None')
-    encoded = nodes.CLIPTextEncode().encode(clip, text)
+    # On a worker thread the encode issues on this thread's own streams and
+    # stages any cross-card moves (sharded encoder) through pinned memory.
+    import ltx_graph_capture as capture
+    import ltx_graph_text_encoder as tenc
+    worker = threading.current_thread().name.startswith('ltx-encode')
+    if worker:
+        capture.set_pipelined(True)
+        try:
+            tenc.reset_forward_caches(clip)
+        except Exception:  # noqa: BLE001  (encoder not shadowed: nothing to reset)
+            pass
+    try:
+        encoded = nodes.CLIPTextEncode().encode(clip, text)
+    finally:
+        if worker:
+            for i in range(torch.xpu.device_count()):
+                try:
+                    capture.thread_stream(torch.device('xpu', i)).synchronize()
+                except Exception:  # noqa: BLE001
+                    pass
+            capture.set_pipelined(False)
     require(isinstance(encoded, tuple) and len(encoded) == 1,
             'CLIPTextEncode no longer returns a single conditioning')
     if consume_observations:

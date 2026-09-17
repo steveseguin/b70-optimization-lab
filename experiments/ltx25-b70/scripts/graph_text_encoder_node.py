@@ -17,10 +17,13 @@ import time
 import torch
 
 import ltx_graph_text_encoder as adapter
+import ltx_pipeline
+import ltx_text_shard
 from encoder_diagnostics import _context
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-MODES = ('original', 'graph', 'restored')
+MODES = ('original', 'graph', 'graph-shard', 'restored')
+SHARD = ('xpu:2', 'xpu:3', 24)      # primary, secondary, split index
 _installed = None      # (clip, originals, report)
 _original_clip = None
 _failed = False
@@ -99,10 +102,32 @@ class LTXTextEncoderGraphGate:
         started = time.monotonic()
         try:
             if mode == 'original':
-                require(_installed is None, 'Gemma layers are shadowed; run the restored mode first')
-            elif mode == 'graph':
+                if _installed is not None:
+                    resident, originals, captures = _installed
+                    require(resident is clip, 'A different CLIP is shadowed')
+                    require(not getattr(adapter.stack_of(clip)[0], '_ltx_text_shard_applied', False),
+                            'The encoder is sharded across two cards for this server; only graph-shard arms may follow')
+                    adapter.restore(clip, originals)
+                    report['restored_from'] = 'graph'
+                    _installed = None
+            elif mode in ('graph', 'graph-shard'):
+                if _installed is not None and mode == 'graph':
+                    require(not getattr(adapter.stack_of(clip)[0], '_ltx_text_shard_applied', False),
+                            'The encoder is sharded across two cards for this server; only graph-shard arms may follow')
                 if _installed is None:
-                    captures, originals = adapter.install(clip)
+                    shard = None
+                    if mode == 'graph-shard':
+                        # Split the encoder across two cards before its first placement,
+                        # load the shard now, and let two encode workers run.
+                        stack, layers = adapter.stack_of(clip)
+                        shard_patcher = ltx_text_shard.install(
+                            clip, stack, layers, torch.device(SHARD[0]), torch.device(SHARD[1]), SHARD[2])
+                        import comfy.model_management
+                        comfy.model_management.load_models_gpu([shard_patcher], force_full_load=True)
+                        ltx_pipeline.STAGE_WORKERS['encode'] = 2
+                        shard = SHARD
+                        report['text_shard'] = stack._ltx_text_shard_identity
+                    captures, originals = adapter.install(clip, shard=shard)
                     _installed = (clip, originals, captures)
                     report['installed_now'] = True
                 else:

@@ -32,8 +32,11 @@ from pathlib import Path
 
 import torch
 
-from ltx_graph_capture import (MAX_SIGNATURES_PER_BLOCK, WARMUP_ITERATIONS, describe,
-                               fill_static, mirror, require, static_like, walk)
+import threading
+
+from ltx_graph_capture import (CAPTURE_LOCK, MAX_SIGNATURES_PER_BLOCK, WARMUP_ITERATIONS, describe,
+                               fill_static, mirror, pipelined_enabled, require, staged_move,
+                               static_like, thread_stream, walk)
 
 # One graph memory pool shared by all 48 layer graphs, per device.
 #
@@ -113,7 +116,16 @@ class GraphedLayer:
         for module in layer.modules():
             require(not (module._forward_hooks or module._forward_pre_hooks or module._backward_hooks),
                     'Text encoder graph capture does not support additional module hooks')
-        self.entries = {}
+        # Entries (static buffers and graphs) are per thread, so two encode
+        # workers never share a buffer. `route` is set for sharded layers: the
+        # hidden state is staged to the layer's card and the output back.
+        self.entries_by_thread = {}
+        self.route = None          # (primary_device, secondary_device) for sharded layers
+        self._staged = threading.local()
+
+    @property
+    def entries(self):
+        return self.entries_by_thread.setdefault(threading.get_ident(), {})
 
     # -- helpers ------------------------------------------------------------
     def _signature(self, kwargs):
@@ -239,33 +251,88 @@ class GraphedLayer:
         self.report.record(self.index, key, len(flat), tuple(output.shape), str(output.dtype))
         return entry
 
+    def _stage_in(self, kwargs):
+        """Sharded layer: move every tensor argument to this layer's card through pinned
+        host memory on this thread's streams; small per-forward tensors are cached by id."""
+        primary, secondary = self.route
+        require(pipelined_enabled(), 'Sharded text encoder needs the pipelined (per-thread stream) mode')
+        cache = getattr(self._staged, 'cache', None)
+        if cache is None:
+            cache = self._staged.cache = {}
+        out = {}
+        for k, v in kwargs.items():
+            if isinstance(v, torch.Tensor) and v.device != secondary:
+                if k == 'x':
+                    out[k] = staged_move(v, secondary, ('tx', self.index))
+                else:
+                    ck = (id(v), str(secondary))
+                    if ck not in cache:
+                        cache[ck] = (v, staged_move(v, secondary, ('targ', k, tuple(v.shape))))
+                    out[k] = cache[ck][1]
+            elif isinstance(v, (tuple, list)):
+                moved = []
+                for i, t in enumerate(v):
+                    if isinstance(t, torch.Tensor) and t.device != secondary:
+                        ck = (id(t), str(secondary))
+                        if ck not in cache:
+                            cache[ck] = (t, staged_move(t, secondary, ('targ', k, i, tuple(t.shape))))
+                        moved.append(cache[ck][1])
+                    else:
+                        moved.append(t)
+                out[k] = tuple(moved) if isinstance(v, tuple) else moved
+            else:
+                out[k] = v
+        return out
+
+    def reset_forward_cache(self):
+        self._staged.cache = {}
+
     def __call__(self, **kwargs):
         require(isinstance(kwargs.get('x'), torch.Tensor),
                 f'Gemma layer {self.index} was called without a tensor hidden state')
+        if self.route is not None:
+            kwargs = self._stage_in(kwargs)
         # ComfyUI may move the encoder between encodes; a graph whose static
         # buffers live on a device the weights have left would replay stale.
         self._resolve_device()
         key = self._signature(kwargs)
-        entry = self.entries.get(key)
+        entries = self.entries
+        entry = entries.get(key)
         if entry is None:
-            require(len(self.entries) < MAX_SIGNATURES_PER_BLOCK,
-                    f'Gemma layer {self.index} reached {len(self.entries)} distinct argument '
+            require(len(entries) < MAX_SIGNATURES_PER_BLOCK,
+                    f'Gemma layer {self.index} reached {len(entries)} distinct argument '
                     'signatures; the signature is tracking something that is not a real input')
-            entry = self._capture(kwargs, key)
+            CAPTURE_LOCK.acquire_exclusive()
+            try:
+                torch.xpu.synchronize(self.device)
+                entry = self._capture(kwargs, key)
+            finally:
+                CAPTURE_LOCK.release_exclusive()
         else:
             incoming = self._flatten(kwargs)
             require(len(incoming) == len(entry.flat),
                     f'Argument tensor count changed for Gemma layer {self.index}')
-            for buffer, value in zip(entry.flat, incoming):
-                if buffer is not value:
-                    fill_static(buffer, value)
-            self._replay(entry.graph, sync=False)
+            CAPTURE_LOCK.acquire_shared()
+            try:
+                stream_ctx = torch.xpu.stream(thread_stream(self.device)) if pipelined_enabled() else torch.xpu.device(self.device)
+                with torch.xpu.device(self.device), stream_ctx:
+                    for buffer, value in zip(entry.flat, incoming):
+                        if buffer is not value:
+                            fill_static(buffer, value)
+                    entry.graph.replay()
+            finally:
+                CAPTURE_LOCK.release_shared()
         entry.replays += 1
         self.report.replays += 1
+        output = entry.output
+        if self.route is not None:
+            # Back to the primary card: the parent loop clones it into the
+            # intermediate stack there and feeds the next layer.
+            output = staged_move(output, self.route[0], ('tout', self.index))
         # The caller rebinds x to this buffer and the parent loop clones it into
         # all_intermediate before the next layer runs, so handing back the static
         # buffer is what the native in-place layer does too.
-        return entry.output, None, None
+        return output, None, None
 
 
 class Report:
@@ -318,8 +385,11 @@ def stack_of(clip):
     return stack, layers
 
 
-def install(clip):
-    """Shadow every Gemma layer's forward with a graph-backed stand-in."""
+def install(clip, shard=None):
+    """Shadow every Gemma layer's forward with a graph-backed stand-in.
+
+    `shard` = (primary_device, secondary_device, split_index) routes layers at
+    and above split_index to the secondary card (see ltx_text_shard)."""
     stack, layers = stack_of(clip)
     # A pool handle must not outlive the graphs that hold it. Reusing one whose
     # graphs were all destroyed at restore aborts the process inside
@@ -333,9 +403,20 @@ def install(clip):
     originals = {}
     for index, layer in enumerate(layers):
         shadow = GraphedLayer(layer, index, report)
+        if shard is not None and index >= shard[2]:
+            shadow.route = (torch.device(shard[0]), torch.device(shard[1]))
         originals[index] = shadow.original
         layer.forward = shadow
     return report, originals
+
+
+def reset_forward_caches(clip):
+    """Call at the start of every encode on a worker thread."""
+    _stack, layers = stack_of(clip)
+    for layer in layers:
+        current = vars(layer).get('forward')
+        if isinstance(current, GraphedLayer):
+            current.reset_forward_cache()
 
 
 def restore(clip, originals):
@@ -345,7 +426,7 @@ def restore(clip, originals):
         current = vars(layer).get('forward')
         require(isinstance(current, GraphedLayer) and current.original is originals[index],
                 f'Unexpected Gemma layer forward while restoring layer {index}')
-        current.entries.clear()
+        current.entries_by_thread.clear()
         del layer.forward
     # Every graph that referenced the pool is gone now; drop the handle with
     # them so the next install cannot capture into a dead pool.
