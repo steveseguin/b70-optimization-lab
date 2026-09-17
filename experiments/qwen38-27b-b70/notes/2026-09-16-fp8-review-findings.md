@@ -259,6 +259,11 @@ so this needs a look at the tool, not the server. Left for the one-card package 
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
   both times minutes earlier. Until the user decides on a reset, no GPU work.
-- One-card context above 24,576 tokens: the engine estimates 28,288 at depth 5 with the 2,048-token chunk; 32K needs
-  another 0.3 GiB. Candidates are a smaller draft head, a page layout with less padding, or a labelled FP8-KV
-  profile (not lossless, so never the default).
+- One-card context above 40,960 tokens: the single-checkpoint state (r311b) settled 32K lossless at 0.975 and 40,960
+  at 0.983 (KV budget 45,139 tokens); beyond that the attention KV itself (64 KB per token) is the limit.
+- A 30,720-token-plus prompt probe needs a longer unrepeated corpus for bench-prefill-followup (the AMD-transfer
+  corpus tokenizes shorter than 30,720); the 2K/8K/16K screen is what every 32K gate ran.
+- Two-card: the remaining collective cost is the count of collectives per step; a replicated (unsharded) MTP drafter
+  would remove the draft passes' allreduce/allgather and is the next two-card candidate.
+- The R311b image must be pushed to ghcr by the user (`publish-r311b-image-ghcr.sh`); the one-card package pins its
+  digest already, and the one-card LocalMaxxing payload is held until then.

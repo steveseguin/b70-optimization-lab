@@ -38,18 +38,15 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 17 14:04 UTC: boot `9f41bfb8`, depth-5 service UP on 18124 at 88.44 tok/s, 12/12 vs the no-MTP reference, no fault lines since boot.**
-Unit `fp8-service-20260917-comm2`, state `/mnt/fast-ai/bench-results/fp8-comm2-20260917/service`. Comm-2 (allgather + fixed-order add
-for the two-rank allreduce) is lossless on every gate at 90.3-90.4 tok/s, not shipped yet; the R311 single-checkpoint
-GDN kernel is building (`kernels-r311-build`), then the one-card ckpt-1 campaign (one more service cycle). Keep the cycle
-count low on this boot. The oneCCL threshold A/B is closed (peer-access kernels fault both cards); the remaining
-two-card lever is fewer or cheaper collectives per step, and on one card the single-checkpoint GDN state plan.
-**Four-B70 host, September 17 13:10 UTC: LTX two-clip sampler lands: 1.607 s per distinct clip, 21/21 exact (15.6 fps equivalent); server PID 4280 stays up idle (never stopped this boot).**
-Control on the same server 2.045 s. The stream now sits on the text
-encoder's 1.59 s ceiling; the next lever (encoder sharded two prompts deep
-across xpu:2/xpu:3) needs a new packet and therefore a server restart,
-which is the user's call given the teardown-triggered lockups.
-[Results](experiments/ltx25-b70/notes/graph-capture-74-results.md).
+**Two-B70 host, September 17 17:07 UTC: boot `9f41bfb8`, depth-5 service UP on 18124 at 90.46 tok/s (the shipped allgather
+recipe), 12/12 vs the no-MTP reference, no fault lines since boot.** Unit `fp8-service-20260917-onecard32k`, state
+`/mnt/fast-ai/bench-results/fp8-onecard-32k-b-20260917/service`. Published today: two-card package = allgather allreduce
+overlay (90.48 tok/s median, LocalMaxxing `cmu5qk0kz07zglq01eh1opkhx` approved); one-card package = R311b single-checkpoint
+GDN state, 32,768-token default at 54.3 tok/s, max-context 40,960, no-quantization 28,672, every gate exact through the
+launcher. **Pending user action:** push the R311b image (`bash repro/qwen38-27b-fp8-vllm-tp1-b70/publish-r311b-image-ghcr.sh`);
+the one-card package already pins its digest (`sha256:7baa32bd…`, the local image id on this containerd host), and the
+one-card LocalMaxxing payload (`data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r311b-32k-strict-20260917.queue.json`,
+dry-run valid) is held until the image is public. Service cycles on this boot: 8 starts, all clean.
 
 **Two-B70 host, September 17 07:50 UTC: rebooting with the user's approval after the third fault; the service needs one manual start after the boot.**
 After the boot, from the repo: `nohup scripts/autolaunch-fp8-service.sh &` (health probe, then one two-card package
