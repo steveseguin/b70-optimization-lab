@@ -184,12 +184,19 @@ def batch_proof_diffusion_model(executor, *args, **kwargs):
             stacked_kwargs['transformer_options'] = _double_batch_lists(
                 kwargs['transformer_options'], second_kwargs['transformer_options'])
         stacked_out = executor(*stacked_args, **stacked_kwargs)
-        rec = {'output_shape_batch1': list(original_out.shape), 'output_shape_batch2': list(stacked_out.shape)}
-        if stacked_out.shape[0] == 2 and stacked_out.shape[1:] == original_out.shape[1:]:
-            rec['row0_equals_batch1'] = _bits_equal(stacked_out[0:1], original_out)
-            rec['row1_equals_batch1'] = _bits_equal(stacked_out[1:2], second_out)
-            rec['row0_max_abs_diff'] = float((stacked_out[0:1].float() - original_out.float()).abs().max())
-            rec['row1_max_abs_diff'] = float((stacked_out[1:2].float() - second_out.float()).abs().max())
+        # The LTXAV model returns [video_out, audio_out]; compare every component.
+        outs1 = list(original_out) if isinstance(original_out, (list, tuple)) else [original_out]
+        outs2 = list(second_out) if isinstance(second_out, (list, tuple)) else [second_out]
+        outsS = list(stacked_out) if isinstance(stacked_out, (list, tuple)) else [stacked_out]
+        rec = {'output_shape_batch1': [list(t.shape) for t in outs1],
+               'output_shape_batch2': [list(t.shape) for t in outsS], 'components': len(outsS)}
+        if len(outsS) == len(outs1) and all(s.shape[0] == 2 and s.shape[1:] == o.shape[1:] for s, o in zip(outsS, outs1)):
+            rec['row0_equals_batch1'] = all(_bits_equal(s[0:1], o) for s, o in zip(outsS, outs1))
+            rec['row1_equals_batch1'] = all(_bits_equal(s[1:2], o) for s, o in zip(outsS, outs2))
+            rec['row0_max_abs_diff'] = max(float((s[0:1].float() - o.float()).abs().max()) for s, o in zip(outsS, outs1))
+            rec['row1_max_abs_diff'] = max(float((s[1:2].float() - o.float()).abs().max()) for s, o in zip(outsS, outs2))
+            rec['per_component'] = [{'row0': _bits_equal(s[0:1], o), 'row1': _bits_equal(s[1:2], p)}
+                                    for s, o, p in zip(outsS, outs1, outs2)]
         else:
             rec['row0_equals_batch1'] = rec['row1_equals_batch1'] = None
             rec['note'] = 'batch-2 output shape does not split into two batch-1 rows'
