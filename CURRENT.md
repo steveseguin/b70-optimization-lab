@@ -25,6 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 03:05 UTC: LTX server 61 stopped cleanly (one SIGINT, 6 s); packet 62 launches after a five-minute gap.**
+Packet 61 measured the latent upsampler's forward at 0.025 s of the node's
+0.24 s (11 distinct clips exact); the remainder is model-management and
+cross-device glue, so packet 62 adds a phase-timed drop-in of that node, the
+captured-forward arm, a save-behind decode mode (MP4 written on the decode
+worker) and a pipe control; the upsampler gate now restores itself across
+mode switches. Runner `run-campaign-62.sh`, log `campaign-62.log`.
+[Packet 61 results](experiments/ltx25-b70/notes/graph-capture-61-results.md).
+
 **Four-B70 host, September 17 02:58 UTC: user-confirmed reboot after a second silent freeze; boot-03 health passed; LTX packet 61 server launched (PID 4523, port 8188).**
 The previous boot froze at 00:10 UTC with only the halted DEVICE_LOST LTX
 process resident (no launch pending), 43 minutes after the 23:27 UTC fault.
