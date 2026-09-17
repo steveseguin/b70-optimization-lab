@@ -78,9 +78,9 @@ def main():
     R.fault_check(since)
 
     profiler = ['--overlay', 'b70-step-profiler', '--extra-env', 'B70_PROFILE_DIR=/trace', '--extra-env', 'B70_PROFILE_SKIP=40', '--extra-env', 'B70_PROFILE_STEPS=30', '--extra-env', 'B70_PROFILE_RANKS=0']
-    for name, port, args in (
+    for name, port, args in [
         ('tp2-profile', 18191, ['--tp', '2', '--mem', '0.95', '--max-model-len', '33024', '--batched', '4096', '--mtp', '5',
-                                '--draft-int4', '--shortlist', R.SHORTLIST, '--fa-verify-rows'])):
+                                '--draft-int4', '--shortlist', R.SHORTLIST, '--fa-verify-rows'])]:
         srv = R.Research(name, port, args + profiler + ['--mount-dir', f'{OUT / (name + "-trace")}:/trace'])
         r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
         if srv.ready:

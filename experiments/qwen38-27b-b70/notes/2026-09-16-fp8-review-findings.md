@@ -172,6 +172,16 @@ looks up its own sampled tokens inside the step, which a replayed graph cannot d
 on this platform the earlier capture probes were slower anyway. The two-card lane, with half the GEMM work per step
 and the same overhead, has more of its step in gaps; its trace is next.
 
+**Two-card decode profile (03:06 UTC, 30 steps, rank 0;
+[summary](../data/2026-09-17-fp8-night3/tp2-decode-profile-summary.json)):** the profiled step is inflated to about
+108 ms (two profiled processes), so only shares are read from it. Device busy 59%, idle 41%. The oneCCL PCIe ring
+allreduce is **47% of device time** (134 calls per step at 223 µs, about 30 ms per step) against 28 ms per step for
+all GEMMs (312 launches at 90 µs). Attention, GDN and the fused kernels are under 3 ms per step together. The lever on
+two cards is therefore the collective, not the GEMMs: the recipe pins `CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=4 GiB`
+(since the first FP8 TP2 recipe on August 16, no recorded reason), which forces the ring "simple" kernel for every
+message size and bypasses oneCCL's small-message and low-latency kernels. A same-session A/B with the default
+thresholds and the low-latency path, each gated for exactness against its own no-MTP reference, is the next campaign.
+
 The HTTP profiler endpoints do not deliver the engine worker's trace on this build (the API server drops the stop
 connection before forwarding it); the overlay above profiles from inside the worker instead.
 
