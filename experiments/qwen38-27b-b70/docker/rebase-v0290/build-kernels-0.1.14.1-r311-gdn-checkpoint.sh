@@ -8,9 +8,12 @@ set -euo pipefail
 lab=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../.." && pwd)
 r310=${R310_ROOT:-/mnt/fast-ai/build/kernels-r310-gdn-barriers-20260915}
 build_root=${BUILD_ROOT:?set BUILD_ROOT to a new empty directory}
-[[ ! -e "${build_root}" ]] || { echo "BUILD_ROOT exists: ${build_root}" >&2; exit 1; }
+# RESUME=1 reruns the compile in an existing build root (ninja rebuilds only what failed, e.g. after an OOM kill).
+resume=${RESUME:-0}
+[[ "${resume}" == 1 || ! -e "${build_root}" ]] || { echo "BUILD_ROOT exists: ${build_root}" >&2; exit 1; }
 base=${BASE_IMAGE:-vllm/vllm-openai-xpu@sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901}
 P=${lab}/experiments/qwen38-27b-b70/patches
+if [[ "${resume}" != 1 ]]; then
 mkdir -p "${build_root}"
 git clone --no-checkout https://github.com/vllm-project/vllm-xpu-kernels.git "${build_root}/vllm-xpu-kernels" 2>/dev/null \
   || cp -a "${r310}/vllm-xpu-kernels" "${build_root}/vllm-xpu-kernels"
@@ -21,6 +24,8 @@ git apply "${P}/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch"
 git apply "${P}/vllm-xpu-kernels-gdn-single-checkpoint-r311-20260917.patch"
 cd "${build_root}"
 cp -a "${r310}/compile" "${build_root}/compile"
+fi
+cd "${build_root}"
 t0=$(date +%s)
 docker run --rm --network none --memory "${BUILD_MEMORY:-10g}" --memory-swap "${BUILD_MEMORY_SWAP:-20g}" --entrypoint /bin/bash \
   --volume /opt/intel/oneapi:/opt/intel/oneapi:ro --volume "${build_root}/vllm-xpu-kernels:/src:ro" --volume "${build_root}/compile:/run" \

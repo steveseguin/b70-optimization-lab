@@ -36,7 +36,6 @@ def register():
     if not hasattr(torch.ops._xpu_C, 'gdn_attention_ckpt'):
         raise RuntimeError('b70_gdn_checkpoint: the kernel library has no gdn_attention_ckpt (needs the r311 build)')
     Layer = layer_mod.QwenGatedDeltaNetAttention
-    Model = model_mod.Qwen3NextForCausalLM
     Builder = builder_mod.GDNAttentionMetadataBuilder
     if getattr(Layer, '_b70_gdn_checkpoint', False):
         return
@@ -51,12 +50,15 @@ def register():
         sc = vllm_config.speculative_config
         return int(sc.num_speculative_tokens) if sc and sc.num_speculative_tokens else 0
 
-    orig_model_shape = Model.get_mamba_state_shape_from_config.__func__
-    orig_model_dtype = Model.get_mamba_state_dtype_from_config.__func__
-    orig_model_copy = Model.get_mamba_state_copy_func.__func__
+    # The page size used to align the attention block is computed from the model class the registry resolves
+    # (Qwen3.8-27B is Qwen3_5ForConditionalGeneration, not Qwen3NextForCausalLM), so every class in these modules
+    # that defines the state hooks itself is wrapped.
+    from vllm.model_executor.models import qwen3_5 as model_mod_35
+    model_classes = [c for mod in (model_mod, model_mod_35) for c in vars(mod).values()
+                     if isinstance(c, type) and 'get_mamba_state_shape_from_config' in vars(c)]
 
     def model_shape(cls, vllm_config):
-        shapes = tuple(orig_model_shape(cls, vllm_config))
+        shapes = tuple(cls._b70_orig_shape(vllm_config))
         k = num_spec_of(vllm_config)
         if k == 0:
             return shapes
@@ -66,18 +68,24 @@ def register():
                                      hf.linear_value_head_dim, k),)
 
     def model_dtype(cls, vllm_config):
-        dtypes = tuple(orig_model_dtype(cls, vllm_config))
+        dtypes = tuple(cls._b70_orig_dtype(vllm_config))
         if num_spec_of(vllm_config) == 0:
             return dtypes
         return dtypes + (vllm_config.model_config.dtype,)
 
     def model_copy(cls):
         from vllm.model_executor.layers.mamba.mamba_utils import get_temporal_copy_spec
-        return tuple(orig_model_copy(cls)) + (get_temporal_copy_spec,)
+        return tuple(cls._b70_orig_copy()) + (get_temporal_copy_spec,)
 
-    Model.get_mamba_state_shape_from_config = classmethod(model_shape)
-    Model.get_mamba_state_dtype_from_config = classmethod(model_dtype)
-    Model.get_mamba_state_copy_func = classmethod(model_copy)
+    hooks = (('get_mamba_state_shape_from_config', '_b70_orig_shape', model_shape),
+             ('get_mamba_state_dtype_from_config', '_b70_orig_dtype', model_dtype),
+             ('get_mamba_state_copy_func', '_b70_orig_copy', model_copy))
+    for cls_ in model_classes:
+        for name, keep, wrapper in hooks:
+            if name in vars(cls_):  # a hook inherited from a wrapped base keeps that base's wrapper and original
+                setattr(cls_, keep, classmethod(vars(cls_)[name].__func__))
+                setattr(cls_, name, classmethod(wrapper))
+    logger.warning('b70_gdn_checkpoint: state hooks wrapped on %s', [c.__name__ for c in model_classes])
 
     def layer_stash_shape(self):
         return stash_shape(self.tp_size, self.num_k_heads, self.num_v_heads, self.head_k_dim, self.head_v_dim, self.num_spec)
