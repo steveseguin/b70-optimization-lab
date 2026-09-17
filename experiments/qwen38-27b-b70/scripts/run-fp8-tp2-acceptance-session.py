@@ -33,6 +33,8 @@ XPU_PYTHON = Path.home() / '.venvs/vllm-xpu/bin/python'
 PINNED = ['packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
           'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows-0.1.0.dist-info/entry_points.txt',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
+          'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce-0.1.0.dist-info/entry_points.txt',
           'packages/qwen38-27b-fp8-tp2-b70/package.json',
           'packages/qwen38-27b-fp8-tp2-b70/compose.yaml',
           'experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py',

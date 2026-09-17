@@ -33,8 +33,10 @@ PROFILES = {
 MAX_MODEL_LEN = 33024
 
 # Qualified runtime environment (two cards, official FP8, deterministic W8A16/GDN paths); identical to the qualified
-# R304 two-card container of 2026-09-15 apart from the decode-identical verifier-rows overlay.
+# R304 two-card container of 2026-09-15 apart from two decode-identical overlays: verifier rows, and the two-rank
+# allreduce as one allgather plus a fixed-order add (comm-2 campaign, 2026-09-17: same outputs, +2.3%).
 BASE_ENV = {
+    'B70_ALLGATHER_ALLREDUCE': '1',
     'B70_FA_VERIFY_ROWS': '1',
     'CCL_ATL_TRANSPORT': 'ofi',
     'CCL_RECV': 'direct',
