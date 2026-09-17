@@ -7,7 +7,8 @@ FP8 model, and outputs are identical to running without MTP.
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
 | `recommended` | 24,576 tokens | **53.4 tok/s** | 2,026 / 2,017 / 1,934 tok/s |
-| `no-quantization` (full-precision draft head) | 12,544 tokens | 51.6 tok/s | 2,010 / 2,016 (8K) / 1,981 (12K) tok/s |
+| `max-context` (0.983 of GPU memory) | 30,720 tokens | 53.5 tok/s | 2,018 / 2,010 / 1,929 tok/s |
+| `no-quantization` (full-precision draft head) | 20,480 tokens | 51.8 tok/s | 2,012 / 2,009 / 1,925 tok/s |
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html).
@@ -31,8 +32,8 @@ python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py start --model-dir /path
 The download and verify steps check the pinned revision, every file size and
 every SHA-256, so a pass means the exact bytes these measurements used.
 
-Add `--profile no-quantization` for the full-precision draft head, or `--gpu 1`
-to use the second card. Startup takes several minutes; wait for `Ready`.
+Add `--profile max-context` for 30,720 tokens (it uses 0.983 of the card's memory instead of 0.975, so it has
+less headroom), `--profile no-quantization` for the full-precision draft head, or `--gpu 1` to use the second card. Startup takes several minutes; wait for `Ready`.
 
 ## Use and stop
 
@@ -52,7 +53,8 @@ and the answer.
   and the cache fit on one card; lookups are exact.
 - The `recommended` profile scores draft guesses with a small INT4 copy of
   the output layer. The FP8 model still checks every token at full precision, so
-  answers are unchanged. `no-quantization` avoids that copy at a small speed cost.
+  answers are unchanged. `no-quantization` avoids that copy at a small speed cost. Every profile was verified through
+  this launcher on two fresh servers (12/12 identical to no MTP, 64 prompts back to back, 2K-16K prompts).
 - **24,576 tokens of context (September 17):** the launcher reads prompts in 2,048-token chunks instead of
   4,096, which frees 0.35 GiB of GPU memory and buys 50% more context at the same writing and reading speed. Two
   fresh servers at this setting: 53.43 / 53.43 tok/s, 12/12 identical to no MTP, 64 prompts back to back plus queued

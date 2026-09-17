@@ -22,14 +22,16 @@ IMAGE_ID = 'sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1
 IMAGE = os.environ.get('B70_FP8_TP1_IMAGE', 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@' + IMAGE_ID)
 MODEL = 'qwen38-27b-fp8'
 SHORTLIST = '/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt'
-FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
+FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
 
 # Profiles measured on 2026-09-15/17: every profile's outputs are identical to no-MTP decoding. A 2,048-token prefill
 # chunk lowers peak activation memory by 0.35 GiB, which buys the recommended profile 24,576 tokens of context at the
 # same writing and prompt-reading speed (follow-up campaign, 2026-09-17).
 PROFILES = {
     'recommended': dict(max_model_len=24576, memory=0.975, draft='int4-shortlist', batched=2048),
-    'no-quantization': dict(max_model_len=12544, memory=0.975, draft='fp16-shortlist', batched=4096),
+    # 0.983 is the most this card accepts (29.81 of 30.3 GiB free at startup); 0.24 GiB more than recommended.
+    'max-context': dict(max_model_len=30720, memory=0.983, draft='int4-shortlist', batched=2048),
+    'no-quantization': dict(max_model_len=20480, memory=0.975, draft='fp16-shortlist', batched=2048),
 }
 
 # Qualified runtime environment (one card, official FP8, deterministic W8A16/GDN paths).

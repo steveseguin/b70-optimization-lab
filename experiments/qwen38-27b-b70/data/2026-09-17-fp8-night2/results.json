@@ -1,0 +1,175 @@
+{
+  "started": "2026-09-17T03:56:29.161838+00:00",
+  "preflight_health_rc": 0,
+  "tp1-30k-d5-m983": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T03:58:55.976517+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 53.41221409877078,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/optimization-validation-20260915/fp8-tp1-54-r310-mtp0-20k-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-followup-20260917/tp1-mtp0-long-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 249116,
+      "container_name": "fp8-tp1-8add8f877edb",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18172,
+      "started_at": "2026-09-17T03:56:38.210555+00:00",
+      "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c",
+      "container_id": "9096fbd6f50a1c73ba31fd539617fb5c127a99763d871b87ee87dba4923dc507",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 2.053
+      },
+      "ready_at": "2026-09-17T03:58:55.976517+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-09-17T04:09:59.636781+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) INFO 09-17 03:57:21 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=187) INFO 09-17 03:57:32 [default_loader.py:430] Loading weights took 10.16 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 03:57:36 [default_loader.py:430] Loading weights took 2.77 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 03:57:39 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 15.948700 seconds",
+        "(EngineCore pid=187) INFO 09-17 03:58:37 [monitor.py:53] torch.compile took 56.22 s in total",
+        "(EngineCore pid=187) INFO 09-17 03:58:42 [monitor.py:53] torch.compile took 4.56 s in total",
+        "(EngineCore pid=187) INFO 09-17 03:58:45 [gpu_worker.py:625] Available KV cache memory: 3.15 GiB",
+        "(EngineCore pid=187) INFO 09-17 03:58:45 [kv_cache_utils.py:2032] GPU KV cache size: 32,395 tokens, Maximum concurrency for 30,720 tokens per request: 1.05x",
+        "(EngineCore pid=187) WARNING 09-17 03:58:47 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(EngineCore pid=187) INFO 09-17 03:58:47 [gpu_worker.py:860] Free memory on device (29.81/30.3 GiB) on startup. Desired GPU memory utilization is (0.983, 29.78 GiB). Actual usage is 26.34 GiB for consumed memory (weights + non-torch), 0.3 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=3220234392` (3.0 GiB) to fit into requested memory, or `--kv-cache-memory=3254923264` (3.03 GiB) to fully utilize gpu memory. Current kv cache memory in use is 3.15 GiB.",
+        "(EngineCore pid=187) INFO 09-17 03:58:48 [core.py:361] init engine (profile, create kv cache, warmup model) took 68.76 s (compilation: 60.78 s)"
+      ]
+    },
+    "memory_lines": [
+      " [loggers.py:310] Engine 000: Avg prompt throughput: 1638.2 tokens/s, Avg generation throughput: 12.8 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 54.4%, Prefix cache hit rate: 0.0%",
+      " [loggers.py:310] Engine 000: Avg prompt throughput: 2457.3 tokens/s, Avg generation throughput: 14.5 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 49.1%, Prefix cache hit rate: 0.0%",
+      "3 [loggers.py:310] Engine 000: Avg prompt throughput: 819.2 tokens/s, Avg generation throughput: 23.9 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 40.4%, Prefix cache hit rate: 0.0%",
+      "3 [loggers.py:310] Engine 000: Avg prompt throughput: 819.2 tokens/s, Avg generation throughput: 12.8 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 57.9%, Prefix cache hit rate: 0.0%",
+      " [loggers.py:310] Engine 000: Avg prompt throughput: 1638.3 tokens/s, Avg generation throughput: 12.8 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 54.4%, Prefix cache hit rate: 0.0%",
+      " [loggers.py:310] Engine 000: Avg prompt throughput: 1638.4 tokens/s, Avg generation throughput: 12.8 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 49.1%, Prefix cache hit rate: 0.0%",
+      " [loggers.py:310] Engine 000: Avg prompt throughput: 1843.2 tokens/s, Avg generation throughput: 24.6 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 36.8%, Prefix cache hit rate: 0.0%",
+      "53 [loggers.py:310] Engine 000: Avg prompt throughput: 409.6 tokens/s, Avg generation throughput: 26.6 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%"
+    ]
+  },
+  "tp1-32k-d4-m983": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T04:12:23.596524+00:00"
+    },
+    "strict": {
+      "rc": 1,
+      "tok_s_1_100": 50.840605655146156
+    },
+    "ladder": {
+      "verdict": "not run"
+    },
+    "context": {
+      "rc": 1,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-followup-20260917/tp1-mtp0-long-context/summary.json",
+      "passed": false,
+      "error": "HTTPError: HTTP Error 500: Internal Server Error",
+      "rows": 0,
+      "by_length": {}
+    },
+    "stop": {
+      "status": "failed",
+      "owner_pid": 251008,
+      "container_name": "fp8-tp1-e26e1c19a031",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18173,
+      "started_at": "2026-09-17T04:09:59.882535+00:00",
+      "boot_id": "b13caae3-beac-4d93-a958-10626d150d2c",
+      "container_id": "7527049a3c1abb10cafeb4f77ab519e8e26b1b4a3ea7da42edf06fd357c91d0b",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 2.065
+      },
+      "ready_at": "2026-09-17T04:12:23.596524+00:00",
+      "error": "RuntimeError: Kernel GPU fault; campaign latched",
+      "stop_confirmed": true,
+      "finished_at": "2026-09-17T04:14:41.042053+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) INFO 09-17 04:10:46 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=187) INFO 09-17 04:10:59 [default_loader.py:430] Loading weights took 12.28 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 04:11:02 [default_loader.py:430] Loading weights took 1.80 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-17 04:11:06 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 17.361605 seconds",
+        "(EngineCore pid=187) INFO 09-17 04:12:04 [monitor.py:53] torch.compile took 56.43 s in total",
+        "(EngineCore pid=187) INFO 09-17 04:12:09 [monitor.py:53] torch.compile took 4.51 s in total",
+        "(EngineCore pid=187) INFO 09-17 04:12:11 [gpu_worker.py:625] Available KV cache memory: 3.14 GiB",
+        "(EngineCore pid=187) INFO 09-17 04:12:11 [kv_cache_utils.py:2032] GPU KV cache size: 34,555 tokens, Maximum concurrency for 32,768 tokens per request: 1.05x",
+        "(EngineCore pid=187) WARNING 09-17 04:12:14 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(EngineCore pid=187) INFO 09-17 04:12:14 [gpu_worker.py:860] Free memory on device (29.81/30.3 GiB) on startup. Desired GPU memory utilization is (0.983, 29.78 GiB). Actual usage is 26.34 GiB for consumed memory (weights + non-torch), 0.3 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=3218075800` (3.0 GiB) to fit into requested memory, or `--kv-cache-memory=3252719616` (3.03 GiB) to fully utilize gpu memory. Current kv cache memory in use is 3.14 GiB.",
+        "(EngineCore pid=187) INFO 09-17 04:12:15 [core.py:361] init engine (profile, create kv cache, warmup model) took 69.02 s (compilation: 60.94 s)",
+        "(APIServer pid=1) INFO:     172.17.0.1:39292 - \"POST /v1/chat/completions HTTP/1.1\" 500 Internal Server Error",
+        "(APIServer pid=1) ERROR:    Exception in ASGI application",
+        "(APIServer pid=1)   File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 186, in __call__",
+        "(APIServer pid=1)   File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 164, in __call__",
+        "(APIServer pid=1)     raise RuntimeError('cannot schedule new futures after shutdown')",
+        "(APIServer pid=1) RuntimeError: cannot schedule new futures after shutdown",
+        "(APIServer pid=1) INFO:     172.17.0.1:39304 - \"POST /v1/completions HTTP/1.1\" 500 Internal Server Error",
+        "(APIServer pid=1) ERROR:    Exception in ASGI application",
+        "(APIServer pid=1)   File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 186, in __call__",
+        "(APIServer pid=1)   File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 164, in __call__",
+        "(APIServer pid=1)     raise RuntimeError('cannot schedule new futures after shutdown')",
+        "(APIServer pid=1) RuntimeError: cannot schedule new futures after shutdown",
+        "(APIServer pid=1) INFO:     172.17.0.1:39306 - \"POST /tokenize HTTP/1.1\" 500 Internal Server Error",
+        "(APIServer pid=1) ERROR:    Exception in ASGI application",
+        "(APIServer pid=1)   File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 186, in __call__",
+        "(APIServer pid=1)   File \"/opt/venv/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 164, in __call__",
+        "(APIServer pid=1)     raise RuntimeError('cannot schedule new futures after shutdown')",
+        "(APIServer pid=1) RuntimeError: cannot schedule new futures after shutdown"
+      ]
+    },
+    "memory_lines": [
+      ":19 [loggers.py:310] Engine 000: Avg prompt throughput: 5.3 tokens/s, Avg generation throughput: 40.3 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 28.1%, Prefix cache hit rate: 0.0%",
+      ":29 [loggers.py:310] Engine 000: Avg prompt throughput: 5.5 tokens/s, Avg generation throughput: 48.1 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 28.1%, Prefix cache hit rate: 0.0%",
+      ":39 [loggers.py:310] Engine 000: Avg prompt throughput: 5.9 tokens/s, Avg generation throughput: 46.0 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 28.1%, Prefix cache hit rate: 0.0%",
+      "3:49 [loggers.py:310] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 47.7 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%",
+      ":59 [loggers.py:310] Engine 000: Avg prompt throughput: 5.7 tokens/s, Avg generation throughput: 45.7 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 28.1%, Prefix cache hit rate: 0.0%",
+      ":09 [loggers.py:310] Engine 000: Avg prompt throughput: 4.9 tokens/s, Avg generation throughput: 42.5 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 28.1%, Prefix cache hit rate: 0.0%",
+      ":19 [loggers.py:310] Engine 000: Avg prompt throughput: 5.2 tokens/s, Avg generation throughput: 41.4 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 28.1%, Prefix cache hit rate: 0.0%",
+      ":29 [loggers.py:310] Engine 000: Avg prompt throughput: 4.8 tokens/s, Avg generation throughput: 44.1 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 28.1%, Prefix cache hit rate: 0.0%"
+    ]
+  }
+}

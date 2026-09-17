@@ -62,7 +62,10 @@ launcher above owns the tested start, status and stop path.
   quality suite. Depth 1 still runs at 54.9 tok/s on this runtime, so nothing was lost by the move.
 - **The draft shortlist** scores draft guesses with a small INT4 copy of the output layer restricted to 67,248
   common tokens. The FP8 model still checks every token at full precision, so answers are unchanged; the list only
-  affects how often a draft is accepted.
+  affects how often a draft is accepted. The list was built from the lab's own documents, system documentation and
+  Python sources, which resemble the test prompts; a list built only from general English (Wikipedia) and the Python
+  standard library measured 85.2 tok/s on the same suite in the same session (shipped list: 88.4), with identical
+  answers. Expect the lower figure on text unlike the lab's.
 - **Tested:** two fresh depth-5 servers, 88.32 and 88.49 tok/s. The first (review campaign) was 12/12 identical to
   no-MTP on the strict suite, 64/64 on the sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and
   on the chat quality suite. The second was this launcher run from an anonymous download of the repository: model

@@ -25,6 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 17 05:30 UTC: depth-5 service is UP on 18124 (88.09 tok/s, 12/12); the night's goals are done; no GPU work running.**
+Three unattended campaigns after the user chose to try the GPUs without a reset: two clean two-card starts (from idle
+88.35, after one-card work 88.09, both 12/12 vs no-MTP), no new fault. One card gained two verified profiles through the
+shipped launcher: `max-context` (30,720 tokens at 0.983 memory, 53.41 / 53.51 tok/s) and `no-quantization` at 20,480
+tokens (51.77 / 51.78); 32K fits at depth 4 (50.97, research server). The two-card record is on LocalMaxxing as
+`cmu4zwfht07nzlq01tyj03f17` (88.41). A general-text draft shortlist costs 3.6% on the suite with identical outputs (now
+disclosed in the package). Graph capture on one card is disqualified (9/12). Service: unit `fp8-service-20260917f`,
+state `/mnt/fast-ai/bench-results/fp8-night3-20260917/service-d`, one request at a time.
+[Findings](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 **Four-B70 host, September 17 05:00 UTC: server 65 stopped cleanly; packet 66 (batch-2 row-equality proof) launches after the five-minute gap.**
 The blocks are weight-read bound (1.57 s of the 2.03 s clip), so two clips in
 one batch would read each weight once for both. That is admissible only if a

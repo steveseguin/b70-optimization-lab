@@ -10,7 +10,7 @@
   "model_family": "Qwen3.8",
   "publisher": "Alibaba / Qwen",
   "variant": "27B official FP8",
-  "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 24,576 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.",
+  "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 24,576 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 30,720 tokens at the same speed, and a no-quantization profile (51.8 tok/s, 20,480 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one.",
   "quantization": "FP8",
   "runtime_label": "vLLM XPU",
   "operating_systems": [
@@ -36,7 +36,7 @@
    "24K context"
   ],
   "published_at": "2026-09-15",
-  "benchmark_status": "Strict 12-prompt suite on two fresh servers at the 24,576-token context: 53.43 / 53.43 tok/s, 12/12 identical to no MTP; 64-prompt sequential oracle plus queued passes 64/64; 2K/8K/16K prompts, a chat quality suite and a 21-request logprob replay all match no MTP (September 17). The 16,384-token setting measured the same on September 16; a 2,048-token prefill chunk frees the memory for the longer context at no measured cost. Clean-host install and multiple users are untested.",
+  "benchmark_status": "Strict 12-prompt suite on two fresh servers at the 24,576-token context: 53.43 / 53.43 tok/s, 12/12 identical to no MTP; 64-prompt sequential oracle plus queued passes 64/64; 2K/8K/16K prompts, a chat quality suite and a 21-request logprob replay all match no MTP (September 17). The 16,384-token setting measured the same on September 16; a 2,048-token prefill chunk frees the memory for the longer context at no measured cost. Clean-host install and multiple users are untested. Two more profiles were verified through the launcher on September 17: max-context (30,720 tokens at 0.983 memory, 53.41 / 53.51 tok/s) and no-quantization at 20,480 tokens (51.77 / 51.78 tok/s), each 12/12 identical to no MTP, 64/64 on the sequential oracle and exact on 2K/8K/16K prompts.",
   "featured_metric": {
    "value": 53.43028891153887,
    "unit": "tok/s",
@@ -44,7 +44,7 @@
    "scope": "Median of two fresh R310 servers (53.426 / 53.435) at a 24,576-token context (2,048-token prefill chunk) on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding, 64/64 on the sequential oracle.",
    "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/tp1-pkg-24k-strict-performance.json"
   },
-  "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 24,576 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A no-quantization profile (51.6 tok/s, 12,544 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one."
+  "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head, 24,576 tokens of context, 53.5 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 30,720 tokens at the same speed, and a no-quantization profile (51.8 tok/s, 20,480 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one."
  },
  "contributors": [
   {
@@ -135,7 +135,20 @@
   "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-followup-campaign.py",
   "experiments/qwen38-27b-b70/scripts/run-20260916-fp8-review-campaign.py",
   "experiments/qwen38-27b-b70/scripts/compare-ladder-oracles.py",
-  "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md"
+  "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/results.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-max-context-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-max-context-context-summary.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-max-context-ladder-vs-mtp0.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-no-quantization-20k-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-no-quantization-20k-context-summary.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-no-quantization-20k-ladder-vs-mtp0.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night2/tp1-30k-d5-m983-strict-performance.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night2/tp1-30k-d5-m983-ladder-vs-mtp0.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night2/tp1-30k-d5-m983-context-summary.json",
+  "experiments/qwen38-27b-b70/data/2026-09-17-fp8-onecard-24k/tp1-nq-20k-b2048-strict-performance.json",
+  "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-night3-campaign.py",
+  "experiments/qwen38-27b-b70/scripts/run-20260917-fp8-night2-campaign.py"
  ],
  "performance_profiles": [
   {
@@ -201,27 +214,22 @@
    "unit": "tok/s",
    "x_metric": "context_tokens",
    "x_label": "Input tokens",
-   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image. Exact 2K/4K/8K/12K-token inputs from unrepeated prose, code and documentation, 128-token continuations; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-15-fp8-one-card-package/fp8-tp1-59-r310-mtp5-fp16shortlist-grid-context-summary.json",
+   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, no-quantization profile (FP16 draft shortlist) at the 20,480-token context with a 2,048-token prefill chunk, through the package launcher. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Writing speed is tokens 1-100 after the first token.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-no-quantization-20k-context-summary.json",
    "points": [
     {
      "context_tokens": 2048,
-     "value": 49.711,
-     "samples": 6
-    },
-    {
-     "context_tokens": 4096,
-     "value": 61.617,
+     "value": 49.748,
      "samples": 6
     },
     {
      "context_tokens": 8192,
-     "value": 68.423,
+     "value": 68.602,
      "samples": 6
     },
     {
-     "context_tokens": 12288,
-     "value": 61.452,
+     "context_tokens": 16384,
+     "value": 59.032,
      "samples": 6
     }
    ],
@@ -234,27 +242,22 @@
    "unit": "tok/s",
    "x_metric": "context_tokens",
    "x_label": "Input tokens",
-   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image. Exact 2K/4K/8K/12K-token inputs from unrepeated prose, code and documentation, 128-token continuations; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Prompt reading is input tokens divided by server prefill time from the vLLM histogram.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-15-fp8-one-card-package/fp8-tp1-59-r310-mtp5-fp16shortlist-grid-context-summary.json",
+   "scope": "One Intel Arc Pro B70, official Qwen3.8-27B-FP8, FP16 activations and KV, one user, prompt caching off, R310 image, no-quantization profile (FP16 draft shortlist) at the 20,480-token context with a 2,048-token prefill chunk, through the package launcher. Exact 2K/8K/16K-token inputs from unrepeated prose, code and documentation, 128-token continuations, two repeats; median within each of three content types, then across types (6 requests per point). Every continuation is identical to the no-MTP server. Prompt reading is input tokens divided by server prefill time from the vLLM histogram.",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-no-quantization-20k-context-summary.json",
    "points": [
     {
      "context_tokens": 2048,
-     "value": 2010.1,
-     "samples": 6
-    },
-    {
-     "context_tokens": 4096,
-     "value": 2034.7,
+     "value": 2011.5,
      "samples": 6
     },
     {
      "context_tokens": 8192,
-     "value": 2016.2,
+     "value": 2008.8,
      "samples": 6
     },
     {
-     "context_tokens": 12288,
-     "value": 1981.5,
+     "context_tokens": 16384,
+     "value": 1925.0,
      "samples": 6
     }
    ],
@@ -368,7 +371,7 @@
  "missing": [
   "a machine without Intel drivers, Docker or the pinned model already present",
   "multiple simultaneous users",
-  "contexts above 24,576 tokens on one card"
+  "contexts above 30,720 tokens on one card"
  ],
  "recommended_setup": {
   "cards": 1,
@@ -394,6 +397,38 @@
     53.45447005701281
    ],
    "evidence": "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-one-card-followups.md"
+  },
+  "profiles": {
+   "recommended": {
+    "max_model_len": 24576,
+    "gpu_memory_utilization": 0.975,
+    "max_num_batched_tokens": 2048,
+    "strict_pair_decode_tokens_s": [
+     53.425946799368205,
+     53.43463102370953
+    ]
+   },
+   "max-context": {
+    "max_model_len": 30720,
+    "gpu_memory_utilization": 0.983,
+    "max_num_batched_tokens": 2048,
+    "strict_pair_decode_tokens_s": [
+     53.41221409877078,
+     53.507236605330206
+    ],
+    "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-max-context-strict-performance.json"
+   },
+   "no-quantization": {
+    "max_model_len": 20480,
+    "gpu_memory_utilization": 0.975,
+    "max_num_batched_tokens": 2048,
+    "draft": "fp16-shortlist",
+    "strict_pair_decode_tokens_s": [
+     51.765041042973415,
+     51.77798429011564
+    ],
+    "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-night3/tp1-pkg-no-quantization-20k-strict-performance.json"
+   }
   }
  }
 }

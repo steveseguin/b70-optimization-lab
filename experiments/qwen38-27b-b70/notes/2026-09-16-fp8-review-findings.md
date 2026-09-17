@@ -112,10 +112,12 @@ The one-card package now ships 24,576 tokens of context (pair 53.43 / 53.43 tok/
 
 ## Night of September 17 (after the second fault; user chose to try the GPUs without a reset)
 
-- **Fault pattern, arm A:** a two-card depth-5 start from idle came up clean (88.35 tok/s, 12/12 vs no-MTP, clean
-  stop). With the morning's post-fault restore that is two clean from-idle starts against two faults, both of which
-  followed hours of one-card work on the same boot. Arm B (a two-card start right after one-card probes) runs at the
-  end of the second night campaign.
+- **Fault pattern:** arm A, a two-card depth-5 start from idle, came up clean (88.35 tok/s, 12/12, clean stop); arm B,
+  a two-card start right after 65 minutes of one-card and two-card research servers, also came up clean (88.09 tok/s,
+  12/12) and is the running service. So the boot has now seen four clean two-card starts and two faults, and "after
+  one-card work" alone does not reproduce the fault. The two faults followed much longer sessions (four to six hours
+  of servers on the same boot); a stale devcoredump and a possible thermal or firmware component remain open. Fewer
+  stop/start cycles per evening is still the practical rule.
 - **Where one-card memory goes (from the vLLM source):** attention KV is exactly 64 KB per token (16 full-attention
   layers, 4 KV heads x 256); the hybrid page padding is 3%; the large item is speculative decoding itself, which keeps
   1+K copies of every GDN layer's recurrent state per request (48 layers x 3.25 MiB per copy): 0.9 GiB at depth 5
@@ -129,11 +131,19 @@ The one-card package now ships 24,576 tokens of context (pair 53.43 / 53.43 tok/
   and the graph-capture probe were lost to a false alarm: the driver's `Xe device coredump has been deleted` line (the
   23:10 dump expiring) matched the research launcher's fault pattern, which stopped a healthy server mid-suite. The
   pattern now matches only `coredump has been created`; the probes rerun in the third campaign.
+- **Third night campaign, one card (through the shipped launcher unless noted):** `max-context` (30,720 tokens,
+  0.983 memory) 53.51 tok/s, and `no-quantization` at 20,480 tokens 51.78 tok/s, each 12/12, 64/64 + queued,
+  2K/8K/16K exact; both are package profiles now, with the earlier research servers as their pair (53.41 / 51.77).
+  A research probe at 32,768 tokens with MTP depth 4 (0.983) also passed every gate at 50.97 tok/s: 32K on one card
+  costs about 5% of writing speed; documented in the recipe, not shipped as a profile until replayed through the
+  launcher. Graph capture with prompt embeddings was disqualified (9/12 outputs changed, 49.57 tok/s).
 - **Broad-text draft shortlist (v3):** built from WikiText-103 (91.9M tokens) plus the CPython standard library
   (1.2M tokens), no lab text. Only 22,845 distinct tokens appear in that corpus, so every v3 list is really the whole
   corpus vocabulary; v3-top65536 covers 95.3% of the strict suite's output tokens against 99.8% for the shipped
   list (Jaccard 0.39). The shipped list is broader, not narrower, than general English plus Python; the two-card
-  speed comparison in the third campaign puts a number on the difference.
+  speed comparison in the third campaign puts a number on the difference: **85.19 tok/s with v3 against 88.36 with the
+  shipped list in the same session** (both 12/12, 64/64, context exact). The shipped list is worth 3.6% on this suite;
+  the package guide now says so.
 - **LocalMaxxing:** the two-card record is submitted and approved as `cmu4zwfht07nzlq01tyj03f17` (88.407 tok/s pair
   median), bound by `data/2026-09-17-fp8-tp2-mtp5-r310-promotion-attestation.json`.
 - **Tooling:** `fp8-gate-suite.py` runs the whole gate set against a live endpoint and freezes the evidence as one

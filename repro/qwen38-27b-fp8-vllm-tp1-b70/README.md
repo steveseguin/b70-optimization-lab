@@ -18,8 +18,10 @@ server-side prompt reading.
 | Profile | Context | Writing speed | Full answers | Prompt reading 2K / 4K / 8K / 12K | Writing after 2K / 4K / 8K / 12K input |
 | --- | ---: | ---: | ---: | --- | --- |
 | MTP depth 5, INT4 draft shortlist (`recommended`, 2,048-token prefill chunk) | 24,576 | **53.4** | 45.3 | 2,026 / – / 2,017 / (16K: 1,934) | 56.6 / – / 72.2 / (16K: 62.0) |
+| `max-context`: depth 5, INT4 shortlist, 0.983 memory | 30,720 | 53.5 | | 2,018 / – / 2,010 / (16K: 1,929) | 56.4 / – / 72.1 / (16K: 61.8) |
 | the same at 16,384 tokens, 4,096-token chunk (September 16) | 16,384 | 53.5 | 45.3 | 2,025 / 2,041 / 2,021 / 1,986 | 56.5 / 65.0 / 72.1 / 61.5 |
-| MTP depth 5, FP16 draft shortlist (`no-quantization`) | 12,544 | 51.6 | 43.2 | 2,010 / 2,035 / 2,016 / 1,981 | 49.7 / 61.6 / 68.4 / 61.5 |
+| MTP depth 4, INT4 shortlist, 0.983 memory (one research server; every gate exact; not a shipped profile) | 32,768 | 51.0 | | | |
+| MTP depth 5, FP16 draft shortlist (`no-quantization`, 2,048-token chunk) | 20,480 | 51.8 | 43.2 | 2,012 / – / 2,009 / (16K: 1,925) | 49.7 / – / 68.6 / (16K: 59.0) |
 | No MTP (reference) | 20,480 | 19.4 | 19.3 | 2,214 / 2,189 / 2,134 / 2,087 | 19.3 / 19.0 / 18.8 / 18.6 |
 
 All speeds are tokens/s.
