@@ -12,6 +12,7 @@ import io
 import importlib.util
 import re
 import json
+import os
 from pathlib import Path
 import tarfile
 
@@ -21,7 +22,9 @@ EXPECTED_IMAGE = 'sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab8
 # Same-image no-MTP strict run (two cards, R310) and the qualified depth-5 research container, both from the
 # 2026-09-16 review campaign (experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 REFERENCE_STRICT = Path('/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict')
-QUALIFIED_CONTAINER = Path('/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp5/container-final.json')
+# The qualified fresh server this replay must match (image, arguments, environment). Default: the review campaign's
+# depth-5 server; QUALIFIED_CONTAINER selects another qualified receipt (the comm-2 allgather server since 2026-09-17).
+QUALIFIED_CONTAINER = Path(os.environ.get('QUALIFIED_CONTAINER', '/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp5/container-final.json'))
 CONFIGURATION = {'image_id': EXPECTED_IMAGE, 'model': 'Qwen/Qwen3.8-27B-FP8', 'cards': 2, 'mtp_depth': 5,
                  'draft_shortlist': '/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt', 'max_model_len': 33024,
                  'max_num_batched_tokens': 4096, 'max_num_seqs': 1, 'prefix_caching': False}
