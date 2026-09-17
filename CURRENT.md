@@ -25,6 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 02:58 UTC: user-confirmed reboot after a second silent freeze; boot-03 health passed; LTX packet 61 server launched (PID 4523, port 8188).**
+The previous boot froze at 00:10 UTC with only the halted DEVICE_LOST LTX
+process resident (no launch pending), 43 minutes after the 23:27 UTC fault.
+The user restarted the host at 02:47 UTC. Following the external-boot-health
+precedent: a boot-03 admission pinned this boot, the unchanged FAULT bytes, the
+2,270-record kernel prefix, runtime, packet 61 and the device properties; the
+passive check and the one bounded four-card copy/compute/peer-copy probe both
+passed with no new kernel records; the old fault was archived under root
+review. Packet 61 now runs the latent-upsampler gate campaign (warm clip,
+pipe-uptime 12, pipe-up 20, pipe control 12; log `campaign-61.log`). No
+driver reset, power change or retry chain.
+[Admission and receipts](experiments/ltx25-b70/data/external-boot-health-03/).
+
 **Two-B70 host, September 17 02:45 UTC: two-card depth-5 package accepted from public source (88.32 / 88.49 tok/s pair); the new depth-5 service is on 18124 (87.76 tok/s, 12/12 vs no-MTP); one-card 24K context verified and being promoted.**
 The follow-up campaign passed the one-card `no-quantization` profile's back-to-back test (64/64, strict 12/12 at
 51.77), found that a 2,048-token prefill chunk lets the one-card depth-5 recipe run 24,576 tokens of context at the
