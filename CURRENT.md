@@ -25,6 +25,12 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 17 07:50 UTC: rebooting with the user's approval after the third fault; the service needs one manual start after the boot.**
+After the boot, from the repo: `nohup scripts/autolaunch-fp8-service.sh &` (health probe, then one two-card package
+start on 18124; log `/mnt/fast-ai/bench-results/service-autolaunch.log`, state `service-autolaunch-<time>`), then the
+strict parity against `/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict`. The collective A/B must not be
+retried (oneCCL's peer-access kernels fault both cards); the pinned thresholds stay.
+
 **Two-B70 host, September 17 07:25 UTC: GPU FAULT on BOTH cards during the collective A/B; port 18124 is DOWN; all GPU work halted; user decision needed (reset or reboot).**
 The first server with oneCCL's default small-message kernels (`CCL_SYCL_*_SIMPLE_THRESHOLD=0`) faulted both cards two
 minutes in (compute-engine page faults, CAT errors, coredumps devcd3/devcd4); the pinned-environment control had just run
