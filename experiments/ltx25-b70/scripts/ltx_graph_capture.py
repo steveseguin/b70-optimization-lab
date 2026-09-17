@@ -28,7 +28,7 @@ import torch
 
 from comfy.ldm.lightricks import av_model
 from comfy.patcher_extension import CallbacksMP, WrappersMP
-from ltx_layer_shard import (CACHE_KEY, KEY, LTXLayerShardedPatcher, _BlockRoute,
+from ltx_layer_shard import (CACHE_KEY, KEY, LTXLayerShardedPatcher, _BlockRoute, _move,
                              _forward_transfers, _verify_placement)
 
 AV_SOURCE_SHA256 = '6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d'
@@ -470,6 +470,96 @@ class Entry:
         self.replays = 0
 
 
+class CaptureReplayLock:
+    """Captures are exclusive; replays are shared. Two clip threads may issue
+    replays at once, but a capture (which synchronises and empties the device
+    cache) never overlaps another thread's issue, and it waits for the device
+    to drain before recording. This is what packet 58 lacked."""
+
+    def __init__(self):
+        self.cv = threading.Condition()
+        self.readers = 0
+        self.writer = False
+        self.captures = 0
+
+    def acquire_shared(self):
+        with self.cv:
+            while self.writer:
+                self.cv.wait()
+            self.readers += 1
+
+    def release_shared(self):
+        with self.cv:
+            self.readers -= 1
+            self.cv.notify_all()
+
+    def acquire_exclusive(self):
+        with self.cv:
+            while self.writer or self.readers:
+                self.cv.wait()
+            self.writer = True
+            self.captures += 1
+
+    def release_exclusive(self):
+        with self.cv:
+            self.writer = False
+            self.cv.notify_all()
+
+
+CAPTURE_LOCK = CaptureReplayLock()
+# Pipelined (two-clip) mode is per thread: the sampler worker turns it on
+# around a clip; every block route then issues on that thread's own streams
+# and stages cross-card activations through pinned host memory.
+_pipelined = threading.local()
+
+
+def pipelined_enabled():
+    return getattr(_pipelined, 'on', False)
+
+
+def set_pipelined(on):
+    _pipelined.on = bool(on)
+    if on and not hasattr(_pipelined, 'streams'):
+        _pipelined.streams = {}
+        _pipelined.pinned = {}
+
+
+def thread_stream(device):
+    key = str(device)
+    stream = _pipelined.streams.get(key)
+    if stream is None:
+        stream = _pipelined.streams[key] = torch.xpu.Stream(device=device)
+    return stream
+
+
+def _pinned(shape, dtype, tag):
+    key = (tag, tuple(shape), str(dtype))
+    buf = _pipelined.pinned.get(key)
+    if buf is None:
+        buf = _pipelined.pinned[key] = torch.empty(shape, dtype=dtype).pin_memory()
+    return buf
+
+
+def staged_move(value, device, tag):
+    """Move a tensor to another card without the driver's peer path: device ->
+    pinned host on the source stream, host wait, pinned host -> device on the
+    destination stream. Exact (copies), and it keeps the other clip's card
+    free of fences (probe 5: 1.68x against 1.28x for peer copies)."""
+    if not isinstance(value, torch.Tensor) or value.device == device:
+        return value
+    src_dev = value.device
+    host = _pinned(value.shape, value.dtype, tag)
+    with torch.xpu.device(src_dev), torch.xpu.stream(thread_stream(src_dev)):
+        host.copy_(value, non_blocking=True)
+        event = torch.xpu.Event()
+        event.record(thread_stream(src_dev))
+    event.synchronize()
+    with torch.xpu.device(device), torch.xpu.stream(thread_stream(device)):
+        out = torch.empty(value.shape, dtype=value.dtype, device=device)
+        out.copy_(host, non_blocking=True)
+    return out
+
+
 class GraphBlockRoute:
     """Replaces only the block callable; the original route is still in charge."""
 
@@ -639,22 +729,76 @@ class GraphBlockRoute:
             self.report.first_options = {'block_index': self.index,
                                          'argument_types': describe_types(routed),
                                          'options': option_census(options)}
-        slot = group.slot_for(key, routed, options)
-        self.report.copies += group.fill(slot, routed, options)
         entry = entries.get(key)
         if entry is None:
             require(len(entries) < MAX_SIGNATURES_PER_BLOCK,
                     f'Block {self.index} reached {len(entries)} distinct argument signatures on '
                     'this thread; the signature is tracking something that is not a real input')
-            entry = self._capture(routed, slot, key, entries)
+            CAPTURE_LOCK.acquire_exclusive()
+            try:
+                torch.xpu.synchronize(self.device)
+                slot = group.slot_for(key, routed, options)
+                self.report.copies += group.fill(slot, routed, options)
+                entry = self._capture(routed, slot, key, entries)
+            finally:
+                CAPTURE_LOCK.release_exclusive()
         else:
-            entry.graph.replay()
+            CAPTURE_LOCK.acquire_shared()
+            try:
+                slot = group.slot_for(key, routed, options)
+                self.report.copies += group.fill(slot, routed, options)
+                entry.graph.replay()
+            finally:
+                CAPTURE_LOCK.release_shared()
         entry.replays += 1
         self.report.replays += 1
         return {'img': (entry.out_vx, entry.out_ax)}
 
     def __call__(self, args, extra):
-        return self.original_route(args, {**extra, 'original_block': self._call_native})
+        if not pipelined_enabled():
+            return self.original_route(args, {**extra, 'original_block': self._call_native})
+        # Pipelined: this thread owns one clip. Cross-card moves of the
+        # activations ('img') and of the per-forward tensors are staged through
+        # pinned host memory on this thread's streams; the block runs under
+        # its device context on this thread's stream. Same arithmetic, same
+        # order; only the transport and the queue change.
+        route = self.original_route
+        cache = args['transformer_options'][CACHE_KEY]
+        routed = {}
+        for k, v in args.items():
+            if k == 'img':
+                routed[k] = tuple(staged_move(t, route.device, ('img', i)) for i, t in enumerate(v)) \
+                    if isinstance(v, (tuple, list)) else staged_move(v, route.device, ('img', 0))
+            elif k == 'transformer_options':
+                routed[k] = v
+            else:
+                routed[k] = _staged_cached(v, route.device, cache, k)
+        with torch.xpu.device(route.device), torch.xpu.stream(thread_stream(route.device)):
+            result = self._call_native(routed)
+        if route.last:
+            img = result['img']
+            moved = tuple(staged_move(t, route.primary, ('out', i)) for i, t in enumerate(img)) \
+                if isinstance(img, (tuple, list)) else staged_move(img, route.primary, ('out', 0))
+            result = {**result, 'img': moved}
+        return result
+
+
+def _staged_cached(value, device, cache, name):
+    """Per-forward cache of staged moves, mirroring the shard's _move semantics."""
+    if isinstance(value, torch.Tensor):
+        if value.device == device:
+            return value
+        key = (id(value), device)
+        if key not in cache:
+            cache[key] = (value, staged_move(value, device, ('arg', name, tuple(value.shape))))
+        return cache[key][1]
+    if isinstance(value, (tuple, list)):
+        out = [_staged_cached(v, device, cache, name) for v in value]
+        return tuple(out) if isinstance(value, tuple) else out
+    if isinstance(value, dict):
+        return {k: (v if k == CACHE_KEY else _staged_cached(v, device, cache, name)) for k, v in value.items()}
+    # CompressedTimestep and other objects: fall back to the shard's own mover
+    return _move(value, device, cache)
 
 
 class PassthroughRoute:

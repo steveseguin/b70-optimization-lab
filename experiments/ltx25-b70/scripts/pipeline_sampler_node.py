@@ -126,6 +126,17 @@ def _node(name):
     return cls
 
 
+def sample_clip_original(noise_a, guider_a, sampler_a, sigmas_a,
+                         noise_b, guider_b, sampler_b, sigmas_b,
+                         video_latent, audio_latent, upscale_model, vae):
+    """The sealed chain on the prompt thread, default streams, no staging."""
+    return _sample_chain(_node('LTXVConcatAVLatent'), _node('LTXVSeparateAVLatent'),
+                         _node('LTXVLatentUpsampler'), _node('SamplerCustomAdvanced'),
+                         noise_a, guider_a, sampler_a, sigmas_a,
+                         noise_b, guider_b, sampler_b, sigmas_b,
+                         video_latent, audio_latent, upscale_model, vae)
+
+
 def sample_clip(noise_a, guider_a, sampler_a, sigmas_a,
                 noise_b, guider_b, sampler_b, sigmas_b,
                 video_latent, audio_latent, upscale_model, vae):
@@ -135,11 +146,23 @@ def sample_clip(noise_a, guider_a, sampler_a, sigmas_a,
     upsampler = _node('LTXVLatentUpsampler')
     sampler_node = _node('SamplerCustomAdvanced')
 
-    with _Active():
-        return _sample_chain(concat, separate, upsampler, sampler_node,
-                             _SerialisedNoise(noise_a), guider_a, sampler_a, sigmas_a,
-                             _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
-                             video_latent, audio_latent, upscale_model, vae)
+    import ltx_graph_capture as capture
+    capture.set_pipelined(True)
+    # This thread owns one clip: everything it issues goes to its own streams
+    # on both shard cards (probe 5: the overlap needs per-clip streams and
+    # staged cross-card moves; shared default streams fence the clips).
+    streams = [capture.thread_stream(torch.device('xpu', i)) for i in range(2)]
+    try:
+        with _Active(), torch.xpu.stream(streams[0]):
+            torch.xpu.set_stream(streams[1])
+            return _sample_chain(concat, separate, upsampler, sampler_node,
+                                 _SerialisedNoise(noise_a), guider_a, sampler_a, sigmas_a,
+                                 _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
+                                 video_latent, audio_latent, upscale_model, vae)
+    finally:
+        for st in streams:
+            st.synchronize()
+        capture.set_pipelined(False)
 
 
 def _sample_chain(concat, separate, upsampler, sampler_node,
@@ -224,7 +247,7 @@ class LTXPipelineSampler:
                 pin_current_patcher(patcher.model)
             if mode == 'original':
                 with torch.inference_mode():
-                    out = sample_clip(**chain)
+                    out = sample_clip_original(**chain)
                 report['detail'] = {'emitted_index': clip_index, 'primed': True}
             else:
                 out, detail = pipeline.run_behind(
