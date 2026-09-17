@@ -25,6 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 14:28 UTC: packet 76 launched (encoder sharded across xpu:2/xpu:3 with two encode workers, load lock in the fast path); firmware review done.**
+Server 74b segfaulted on the fourth prompt of a 120-prompt endurance run:
+both sampler workers' first clips fell through the fast path into
+ComfyUI's non-thread-safe loader (module.to() under a concurrent replay);
+fixed with a load lock. Firmware review: the installed GuC 70.72.1 is a
+manual, upstream "testing-only" blob replacing the package's 70.44.1 (backup
+on disk); the kernel moved to 7.0.0-31 on 09-05, the closest correlate of
+the lockups; recommendation is to boot 7.0.0-30 first, then restore
+70.44.1, then kdump. Packet 76 arms: warm, `pipe-samp2-tsh` 30 prompts,
+`pipe-samp2` control 24. Log `campaign-76.log`.
+[Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
+[crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
+
 **Two-B70 host, September 17 14:04 UTC: boot `9f41bfb8`, depth-5 service UP on 18124 at 88.44 tok/s, 12/12 vs the no-MTP reference, no fault lines since boot.**
 Unit `fp8-service-20260917-comm2`, state `/mnt/fast-ai/bench-results/fp8-comm2-20260917/service`. Comm-2 (allgather + fixed-order add
 for the two-rank allreduce) is lossless on every gate at 90.3-90.4 tok/s, not shipped yet; the R311 single-checkpoint
