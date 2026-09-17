@@ -1,6 +1,6 @@
 #!/bin/bash
-# Packet 63 campaign: one server; forward timing, resident fast path (timed, then on),
-# save-behind rerun, pipe control. Commits and pushes after every arm because the host
+# Packet 76 campaign: one server; warm, encoder shard + two-clip sampler (30), samp2 control (24),
+# then a 120-prompt endurance stream on the sharded arm. Commits and pushes after every arm because the host
 # freezes silently and zeroes unflushed files. No retries.
 set -u
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
@@ -37,4 +37,6 @@ $PY -B $LANE/scripts/run-graph-capture-clip.py g76-warm --pid $PID --server-run 
 save warm
 arm f76-tsh pipe-samp2-tsh 30 1000
 arm f76-samp2 pipe-samp2 24 2000
+step "endurance: 120 prompts on the sharded two-clip arm, load lock under sustained sampling"
+arm f76-endure pipe-samp2-tsh 120 5200
 step campaign complete
