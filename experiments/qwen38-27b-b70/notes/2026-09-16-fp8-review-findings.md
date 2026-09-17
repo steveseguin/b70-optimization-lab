@@ -110,6 +110,26 @@ shipped launcher is verified at that setting in a third campaign. One receipt co
 
 The one-card package now ships 24,576 tokens of context (pair 53.43 / 53.43 tok/s).
 
+## Night of September 17 (after the second fault; user chose to try the GPUs without a reset)
+
+- **Fault pattern, arm A:** a two-card depth-5 start from idle came up clean (88.35 tok/s, 12/12 vs no-MTP, clean
+  stop). With the morning's post-fault restore that is two clean from-idle starts against two faults, both of which
+  followed hours of one-card work on the same boot. Arm B (a two-card start right after one-card probes) runs at the
+  end of the second night campaign.
+- **Where one-card memory goes (from the vLLM source):** attention KV is exactly 64 KB per token (16 full-attention
+  layers, 4 KV heads x 256); the hybrid page padding is 3%; the large item is speculative decoding itself, which keeps
+  1+K copies of every GDN layer's recurrent state per request (48 layers x 3.25 MiB per copy): 0.9 GiB at depth 5
+  against 0.15 GiB with no draft. vLLM avoids this for KDA models with a single checkpoint (RecoverSSM); a GDN
+  equivalent would be the lossless way to 32K and beyond on one card.
+- **Memory-utilization ceiling:** 0.985 is refused (29.84 GiB target vs 29.81 GiB free at startup); 0.983 is the most
+  the card accepts, +0.24 GiB over the shipped 0.975, still about 40 MB short of 32K at depth 5. Probes: 30,720 at
+  depth 5 and 32,768 at depth 4 (second night campaign).
+- **LocalMaxxing:** the two-card record is submitted and approved as `cmu4zwfht07nzlq01tyj03f17` (88.407 tok/s pair
+  median), bound by `data/2026-09-17-fp8-tp2-mtp5-r310-promotion-attestation.json`.
+- **Tooling:** `fp8-gate-suite.py` runs the whole gate set against a live endpoint and freezes the evidence as one
+  tarball packet; `2026-09-17-clean-host-replay-plan.md` lays out the four-B70 replay that would move the packages
+  from candidate to published.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed

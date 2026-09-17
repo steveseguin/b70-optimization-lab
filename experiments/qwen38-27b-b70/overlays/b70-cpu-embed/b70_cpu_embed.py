@@ -32,8 +32,10 @@ def register():
     logger = init_logger('b70_cpu_embed')
     if getattr(loader_utils, '_b70_cpu_embed', False):
         return
-    if os.environ.get('VLLM_XPU_ENABLE_XPU_GRAPH', '0') != '0':
-        raise RuntimeError('b70_cpu_embed requires VLLM_XPU_ENABLE_XPU_GRAPH=0')
+    if os.environ.get('VLLM_XPU_ENABLE_XPU_GRAPH', '0') != '0' and os.environ.get('B70_CPU_EMBED_ALLOW_GRAPH') != '1':
+        # Research probe only: with --enable-prompt-embeds the runner embeds outside the captured graph, but the MTP
+        # drafter may still embed inside its own; a probe must gate outputs against no-MTP before any use.
+        raise RuntimeError('b70_cpu_embed requires VLLM_XPU_ENABLE_XPU_GRAPH=0 (or B70_CPU_EMBED_ALLOW_GRAPH=1 for a gated probe)')
 
     def b70_cpu_embedding(input_ids: torch.Tensor, key: str) -> torch.Tensor:
         rows = torch.nn.functional.embedding(input_ids.to('cpu'), _WEIGHTS[key])

@@ -189,12 +189,17 @@ class Research:
         return f'http://127.0.0.1:{self.port}'
 
     def stop(self):
+        if not self.out.exists():  # the launcher exited before creating its directory (argument error)
+            self.log.close()
+            return {'status': 'never started', 'error': 'launcher exited before start'}
         (self.out / 'STOP').touch()
         try:
             self.proc.wait(timeout=180)
         except subprocess.TimeoutExpired:
             log(f'{self.name}: owner did not exit after STOP (left as is, no kill)')
         self.log.close()
+        if not (self.out / 'state.json').exists():
+            return {'status': 'never started', 'error': 'no state receipt'}
         final = json.loads((self.out / 'state.json').read_text())
         log(f'{self.name}: final {final.get("status")} stop_confirmed={final.get("stop_confirmed")}')
         return final

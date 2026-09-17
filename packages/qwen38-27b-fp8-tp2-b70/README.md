@@ -11,7 +11,8 @@ answers.
 | `depth-1` (the September 14 recipe) | 33,024 tokens | 54.9 tok/s | 3,763 / 3,535 / 3,384 tok/s |
 
 Graphs and every measured point are on the
-[details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html).
+[details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html). LocalMaxxing:
+[`cmu4zwfht07nzlq01tyj03f17`](https://www.localmaxxing.com/runs/cmu4zwfht07nzlq01tyj03f17) (88.41 tok/s, approved September 17).
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md),
 [review campaign](../../experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
 

@@ -113,6 +113,12 @@ def build(args, name, out, image_env):
         if key not in env:
             raise RuntimeError(f'--env may only override a variable the qualified record already sets: {key}')
         env[key] = value
+    for item in args.extra_env:
+        key, value = item.split('=', 1)
+        if key in env:
+            raise RuntimeError(f'--extra-env is for variables the qualified record does not set; use --env for {key}')
+        env[key] = value
+    cmd += list(args.serve_arg)
     if args.fa_trace:
         env.update(B70_FA_TRACE='/hash/fa-trace.jsonl')
     if args.fa_verify_rows:
@@ -146,6 +152,10 @@ def main():
     ap.add_argument('--image', default=IMAGE, help='image id; env/cmd still come from the qualified R304 record')
     ap.add_argument('--shortlist', default='', help='draft-only INT4 head shortlist path inside the image')
     ap.add_argument('--warmup', action='store_true', help='one untimed 64-token completion before ready')
+    ap.add_argument('--extra-env', action='append', default=[], metavar='KEY=VALUE',
+                    help='add a variable the qualified record does not set (research probes only; recorded in launch.json)')
+    ap.add_argument('--serve-arg', action='append', default=[], metavar='ARG',
+                    help='append one vllm serve argument (research probes only; recorded in launch.json)')
     ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',
                     help='override one variable already present in the qualified record')
     ap.add_argument('--gdn-head-groups', type=int, default=0, help='run one-card GDN prefill delta rule in G head groups')
@@ -161,8 +171,8 @@ def main():
         raise RuntimeError('Output must be new and the campaign must not be fault-latched')
     if a.tp == 2 and a.cpu_embed:
         raise RuntimeError('--cpu-embed is a one-card overlay')
-    if not 0.5 <= a.mem <= 0.975:
-        raise RuntimeError('Memory utilization must stay within 0.5-0.975')
+    if not 0.5 <= a.mem <= 0.99:
+        raise RuntimeError('Memory utilization must stay within 0.5-0.99')
     helper = load('fp8_tp1_helper', HELPER)
     guard = load('fp8_tp1_guard', GUARD)
     lock = open('/tmp/qwen-short-prefill-stage.lock', 'a')
