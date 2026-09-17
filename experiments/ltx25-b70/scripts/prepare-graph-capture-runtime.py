@@ -103,7 +103,8 @@ ARMS = (
     ('pipe-uptime', 'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'timed', 'original'),
     ('pipe-up',     'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'graph', 'original'),
     ('pipe-up-save', 'graph',   'original', 'original',   'original', '1',  'graph',    'pipeline-save', 'original', 'original', 'graph', 'original'),
-    ('pipe-upphase', 'graph',   'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'original', 'timed'),)
+    ('pipe-upphase', 'graph',   'original', 'original',   'original', '1',  'graph',    'pipeline', 'original', 'original', 'original', 'timed'),
+    ('pipe-fwdtimed', 'graph',  'original', 'original',   'original', '1',  'graph',    'pipeline', 'timed',    'original', 'original', 'original'),)
 VAE_NODE = '423'
 
 
@@ -192,7 +193,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'pipe',
                           'pipe-ccfg', 'graph-fused', 'graph-vae', 'restored', 'pipe-samp',
-                          'pipe-uptime', 'pipe-up', 'pipe-up-save', 'pipe-upphase')}
+                          'pipe-uptime', 'pipe-up', 'pipe-up-save', 'pipe-upphase', 'pipe-fwdtimed')}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py')
     node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
@@ -331,7 +332,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['pipe-uptime', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'timed', 'original'],
                      ['pipe-up', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'graph', 'original'],
                      ['pipe-up-save', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline-save', 'original', 'original', 'graph', 'original'],
-                     ['pipe-upphase', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'original', 'timed']]
+                     ['pipe-upphase', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'original', 'original', 'original', 'timed'],
+                     ['pipe-fwdtimed', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'timed', 'original', 'original', 'original']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
     expected_graphs = []
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,

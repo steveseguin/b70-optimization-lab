@@ -35,11 +35,32 @@ from comfy.patcher_extension import WrappersMP
 from encoder_diagnostics import _context
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-MODES = ('original', 'concurrent', 'restored')
+MODES = ('original', 'concurrent', 'timed', 'restored')
 KEY = 'ltx_concurrent_cfg'
+TIMER_KEY = 'ltx_forward_timer'
 _installed = None
+_installed_mode = None
 _failed = False
 _stats = {'splits': 0, 'passthrough': 0, 'errors': 0}
+_forward_seconds = []      # diagnostic: synchronised wall time of each diffusion forward
+
+
+def timed_diffusion_model(executor, *args, **kwargs):
+    """Diagnostic only: sync every card, run the forward, sync again, record the wall.
+
+    Numerically the original call. The syncs add a little latency per step, so
+    this arm's interval is not a speed result; its receipt separates the model
+    forward (blocks plus glue) from the sampler loop around it.
+    """
+    for i in range(torch.xpu.device_count()):
+        torch.xpu.synchronize(i)
+    started = time.perf_counter()
+    try:
+        return executor(*args, **kwargs)
+    finally:
+        for i in range(torch.xpu.device_count()):
+            torch.xpu.synchronize(i)
+        _forward_seconds.append(round(time.perf_counter() - started, 5))
 
 
 def require(value, message):
@@ -93,6 +114,16 @@ def concurrent_calc_cond_batch(executor, model, conds, x_in, timestep, model_opt
     return results
 
 
+def _uninstall(model):
+    global _installed, _installed_mode
+    if _installed_mode == 'concurrent':
+        model.remove_wrappers_with_key(WrappersMP.CALC_COND_BATCH, KEY)
+    else:
+        model.remove_wrappers_with_key(WrappersMP.DIFFUSION_MODEL, TIMER_KEY)
+    _installed = None
+    _installed_mode = None
+
+
 class LTXConcurrentCFG:
     @classmethod
     def INPUT_TYPES(cls):
@@ -112,7 +143,7 @@ class LTXConcurrentCFG:
             raise
 
     def _apply(self, model, mode, run_name):
-        global _installed
+        global _installed, _installed_mode
         require(not _failed, 'Previous concurrent-CFG failure; halt and inspect evidence')
         require(mode in MODES, 'Only preregistered modes are admitted')
         require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
@@ -140,11 +171,20 @@ class LTXConcurrentCFG:
         try:
             if mode == 'original':
                 require(_installed is None, 'Concurrent CFG is installed; run restored first')
-            elif mode == 'concurrent':
+            elif mode in ('concurrent', 'timed'):
+                if _installed is not None and _installed_mode != mode:
+                    require(_installed is model, 'A different model already has the wrapper')
+                    _uninstall(model)
+                    report['switched_from'] = _installed_mode
                 if _installed is None:
-                    model.add_wrapper_with_key(
-                        WrappersMP.CALC_COND_BATCH, KEY, concurrent_calc_cond_batch)
+                    if mode == 'concurrent':
+                        model.add_wrapper_with_key(
+                            WrappersMP.CALC_COND_BATCH, KEY, concurrent_calc_cond_batch)
+                    else:
+                        model.add_wrapper_with_key(
+                            WrappersMP.DIFFUSION_MODEL, TIMER_KEY, timed_diffusion_model)
                     _installed = model
+                    _installed_mode = mode
                     report['installed_now'] = True
                 else:
                     require(_installed is model, 'A different model already has the wrapper')
@@ -154,9 +194,13 @@ class LTXConcurrentCFG:
                     report['was_installed'] = False
                 else:
                     require(_installed is model, 'Restore target is not the wrapped model')
-                    model.remove_wrappers_with_key(WrappersMP.CALC_COND_BATCH, KEY)
-                    _installed = None
+                    report['restored_mode'] = _installed_mode
+                    _uninstall(model)
                     report['was_installed'] = True
+            # The forward timer accumulates across a prompt; the receipt of the
+            # NEXT gate call (or the restore) carries the previous prompt's rows.
+            report['forward_seconds_before_this_prompt'] = list(_forward_seconds)
+            del _forward_seconds[:]
             report['stats'] = dict(_stats)
             report['passed'] = True
         finally:
