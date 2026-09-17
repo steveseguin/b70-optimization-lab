@@ -25,6 +25,17 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 06:52 UTC: two-clip sampler v2 launched (packet 73) after five probes established the recipe: per-clip streams, device contexts, pinned-host staged activations give 1.68x overlap bit-exact.**
+Batching is closed (packet 72). Probes 1–5 (exclusive cards, block-sized
+graphs): baton hand-off 0.997x, free threads on default streams 1.19x,
+per-clip streams with peer copies 0.996x, explicit device contexts plus
+pinned-host staging **1.68x** (ideal 1.78x), all bitwise exact. Packet 73
+runs two sampler workers with a capture/replay reader-writer lock (captures
+exclusive after a device drain), per-clip streams on both shard cards,
+staged cross-card moves, the resident fast path and save-behind; 24 prompts
+on ten fixtures with per-clip oracles, then a fast+save control. Log
+`campaign-73.log`. Host stable since the runtime-PM fix (05:57 UTC).
+
 **Four-B70 host, September 17 06:25 UTC: batch-2 route closed by proof (identical rows differ by up to 0.98); server 72 idle; next lever is the single-scheduler two-clip sampler.**
 Since the runtime-PM fix at 05:57 UTC: four launches and three clean stops
 with five-minute gaps, no lockup, no fault line. Packets 69–72 ran the
