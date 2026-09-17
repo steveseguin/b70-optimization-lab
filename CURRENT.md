@@ -25,6 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 06:25 UTC: batch-2 route closed by proof (identical rows differ by up to 0.98); server 72 idle; next lever is the single-scheduler two-clip sampler.**
+Since the runtime-PM fix at 05:57 UTC: four launches and three clean stops
+with five-minute gaps, no lockup, no fault line. Packets 69–72 ran the
+batch-2 row-equality proof to completion: rows differ even for identical
+inputs, so batching is not bit-exact on this stack and is not pursued.
+Standing position unchanged: 2.03 s per distinct clip, exact.
+[Verdict](experiments/ltx25-b70/notes/graph-capture-72-results.md).
+
 **Four-B70 host, September 17 05:57 UTC: freeze cause fixed (two B70s were runtime-suspending: boot policy raced the xe probe); all four endpoints pinned on, bind-time udev rule installed; LTX packet 69 launched.**
 Eight silent lockups since 09-14 all sat on idle transitions, two on idle
 boots. `0000:23:00.0` and `0000:27:00.0` had `power/control=auto` because
