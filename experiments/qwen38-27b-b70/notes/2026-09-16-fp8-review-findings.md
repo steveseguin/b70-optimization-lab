@@ -214,6 +214,29 @@ So the exchange is lossless and worth +2.3%, not the ~25% the per-call latency s
 The remaining two-card cost is the number of collectives per step, which the replicated drafter (no collectives in
 the draft passes) addresses next. Shipping the overlay in the two-card package would take it to about 90.4 tok/s.
 
+## Single-checkpoint GDN state, campaigns 1-2 (September 17, 14:16-15:20 UTC)
+
+R311 kernel + `b70-gdn-checkpoint` overlay on one card at the shipped settings (`/mnt/fast-ai/bench-results/fp8-ckpt1b-20260917`, `fp8-ckpt2-20260917`):
+
+| Server (one card, 24,576 context, depth 5) | Strict vs no-MTP | tok/s | Note |
+| --- | --- | ---: | --- |
+| R311 + checkpoint overlay (first kernel version) | 10/12 vs the 832-block reference, 10/12 vs an 896-block reference; the same two prompts diverge at the same tokens (341, 127) in both runs | 52.9, 52.8 | deterministic; both divergent outputs are coherent text, i.e. a rounding-level difference at one step |
+| R310 no MTP, `--block-size 896` | 12/12 vs the 832-block reference | 19.4 | the attention block size does not change the no-MTP outputs |
+| R310 depth 5, `--block-size 896` | 12/12 vs 832 and vs 896 references | 53.6 | the block size is innocent for the speculative path too |
+
+The overlay's page grows by the stash (0.24 MiB), so vLLM raises the attention block from 832 to 896 tokens; the two
+rows above rule that out as the cause. What remains is the kernel: the first version factored the per-token
+arithmetic into a helper called from two places (replay loop, window loop). With icpx's default fast floating-point
+model the two call sites need not compile to the same instruction sequence, so a replayed token can differ from the
+same token computed as a window token by an ulp, and the committed state drifts from what the per-slot kernel stored.
+The first campaign also found a Python-side error: the page-size alignment resolves the model class through the
+registry (`Qwen3_5ForConditionalGeneration`), so the state-shape hooks have to be wrapped on every class that defines
+them, not on `Qwen3NextForCausalLM` alone.
+
+r311b (campaign 3, running): one loop over replayed rows then window tokens, with the per-slot kernel's statements
+verbatim in the single loop body, so both are computed by the same code; the ckpt-3 runner also checks the
+rewritten kernel without the overlay against the R310 reference.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
