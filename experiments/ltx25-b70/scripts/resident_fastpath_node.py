@@ -32,6 +32,12 @@ _original = mm.load_models_gpu
 _installed_mode = None
 _failed = False
 _calls = []          # per call: {'seconds', 'resident', 'skipped', 'models'}
+# ComfyUI's loader moves weights with module.to() and is not thread-safe. Two
+# sampler workers whose first clips both fall through to it segfaulted the
+# server on 2026-09-17 (packet 74b, endurance prompt 4). Every fall-through
+# runs under this lock, and the residency check is re-read under it, so the
+# second thread sees the first thread's completed load and skips.
+_LOAD_LOCK = __import__('threading').Lock()
 
 
 def require(value, message):
@@ -72,33 +78,35 @@ def _describe(models):
 
 def timed_load_models_gpu(models, *args, **kwargs):
     models = list(models)
-    resident = _resident(models)
-    started = time.perf_counter()
-    try:
-        return _original(models, *args, **kwargs)
-    finally:
-        _calls.append({'seconds': round(time.perf_counter() - started, 5), 'resident': resident,
-                       'skipped': False, 'models': _describe(models)})
+    with _LOAD_LOCK:
+        resident = _resident(models)
+        started = time.perf_counter()
+        try:
+            return _original(models, *args, **kwargs)
+        finally:
+            _calls.append({'seconds': round(time.perf_counter() - started, 5), 'resident': resident,
+                           'skipped': False, 'models': _describe(models)})
 
 
 def fast_load_models_gpu(models, *args, **kwargs):
     models = list(models)
     if kwargs.get('force_patch_weights') or kwargs.get('force_full_load'):
         return timed_load_models_gpu(models, *args, **kwargs)
-    resident = _resident(models)
-    if resident:
-        for m in models:
-            for loaded in mm.current_loaded_models:
-                if loaded.model is m:
-                    loaded.currently_used = True
-        _calls.append({'seconds': 0.0, 'resident': True, 'skipped': True, 'models': _describe(models)})
-        return None
-    started = time.perf_counter()
-    try:
-        return _original(models, *args, **kwargs)
-    finally:
-        _calls.append({'seconds': round(time.perf_counter() - started, 5), 'resident': False,
-                       'skipped': False, 'models': _describe(models)})
+    with _LOAD_LOCK:
+        resident = _resident(models)
+        if resident:
+            for m in models:
+                for loaded in mm.current_loaded_models:
+                    if loaded.model is m:
+                        loaded.currently_used = True
+            _calls.append({'seconds': 0.0, 'resident': True, 'skipped': True, 'models': _describe(models)})
+            return None
+        started = time.perf_counter()
+        try:
+            return _original(models, *args, **kwargs)
+        finally:
+            _calls.append({'seconds': round(time.perf_counter() - started, 5), 'resident': False,
+                           'skipped': False, 'models': _describe(models)})
 
 
 class LTXResidentFastPath:
