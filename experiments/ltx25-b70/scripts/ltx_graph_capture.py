@@ -37,7 +37,7 @@ WARMUP_ITERATIONS = 3
 # Two shapes per block (the 128x128 and 256x256 sampler stages) are expected.
 # Anything more means the signature is tracking something that is not a real
 # input, and unbounded capture exhausts device memory and evicts the model.
-MAX_SIGNATURES_PER_BLOCK = 4
+MAX_SIGNATURES_PER_BLOCK = 8   # batch-1 and batch-2 shapes for both sampler stages (the batch proof needs four)
 # Exact keyword translation from the pinned LTXAVModel.block_wrap.
 KEYWORDS = ('v_context', 'a_context', 'attention_mask', 'v_timestep', 'a_timestep', 'v_pe', 'a_pe',
             'v_cross_pe', 'a_cross_pe', 'v_cross_scale_shift_timestep', 'a_cross_scale_shift_timestep',
