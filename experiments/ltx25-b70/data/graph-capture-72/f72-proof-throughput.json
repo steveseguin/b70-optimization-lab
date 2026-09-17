@@ -1,0 +1,51 @@
+{
+  "schema": "ltx.throughput-fixtures.v1",
+  "prefix": "f72-proof",
+  "arm": "pipe-batchproof",
+  "index_base": 1000,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-72/graphs/graph-capture-all48-pipe-batchproof.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-graph-capture-72",
+  "count": 2,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 1,
+  "fills_excluded": [
+    "f72-proof-01"
+  ],
+  "all_exact": true,
+  "intervals_between_distinct_clips_s": [],
+  "steady_mean_s": null,
+  "steady_p95_s": null,
+  "steady_min_s": null,
+  "steady_max_s": null,
+  "seconds_of_wall_per_second_of_video": null,
+  "effective_fps": null,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that re-emit an already-emitted clip during pipeline fill",
+  "rows": [
+    {
+      "prompt": "f72-proof-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "reference": "baseline-01",
+      "fill": false,
+      "t_done": 1789626180.314,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f72-proof-01",
+      "index": 1,
+      "prompt_fixture": "marble",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "reference": "baseline-01",
+      "fill": true,
+      "t_done": 1789626191.689,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    }
+  ]
+}
