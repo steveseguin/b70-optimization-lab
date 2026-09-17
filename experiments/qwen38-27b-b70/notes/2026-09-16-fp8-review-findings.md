@@ -308,6 +308,36 @@ So the 32K claim now rests on 30,720-token prompts, and the 40,960 profile on 36
 after a prompt drops from 65 tok/s at 16K to 40 at 24K while the no-MTP rate barely moves (18.5 to 18.2): the cost is
 in the speculative verify pass (six query rows against a 24K+ KV cache per step), the next one-card lever.
 
+## Where the writing speed goes after long prompts (September 17, 23:20 UTC): the verifier's per-row attention
+
+Per-step device time from the per-prefill profiler ([overlay](../overlays/b70-step-profiler/b70_step_profiler.py),
+`B70_PROFILE_BY_PREFILL=1`) on the one-card 32K recipe, 30 decode steps after one prose prompt of each length
+(`/mnt/fast-ai/bench-results/fp8-lc1-20260917/prof-*-summary.json`):
+
+| Context | Device busy per step | FA2 attention (cutlass) per step | Calls per step | Per call | GEMMs per step | GDN spec kernel |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 16,384 | 76.1 ms | 14.8 ms | 106 | 140 us | 53.8 ms | 1.5 ms |
+| 24,576 | 82.6 ms | 21.2 ms | 106 | 201 us | 53.8 ms | 1.3 ms |
+| 32,768 | 89.1 ms | 27.6 ms | 106 | 261 us | 53.8 ms | 1.2 ms |
+
+Two things are true at once:
+
+- **Content dominates the headline.** The per-class after-prompt writing speeds vary far more with the text than
+  with the length (prose: 34.6 tok/s after 8K, 69.1 after 16K; docs: 44.2 after 2K, 76.9 after 8K), because the draft
+  acceptance depends on how predictable the continuation is. Only the code class declines smoothly with length
+  (85.9, 77.1, 65.7, 60.7, 54.5, 38.4 tok/s from 2K to 36K), and that is the context cost.
+- **The context cost is the verifier's attention.** The [verifier-rows overlay](../../packages/qwen38-27b-fp8-tp1-b70/overlays/b70_fa_verify_rows.py)
+  keeps depth-5 verification bit-identical to decode by issuing one single-query attention call per draft row above
+  1,536 keys: six calls per attention layer, 106 per step, each rereading the whole cache (at 32K, 16 layers x 6 rows
+  x 128 MB = 12 GB per step, 24 ms at 500 GB/s). It grows linearly: +6.4 ms per 8K of context on a 76 ms step, i.e.
+  about 8% per 8K. The GEMMs (54 ms) and the GDN kernels do not move with context.
+
+The lever is a multi-row attention kernel that reads each cache tile once for all six rows while computing every
+row with the single-row arithmetic (the census found the stock multi-row path differs from single-row above ~1,980
+keys). If its output equals the six single-row calls bit for bit, the verifier cost falls from 6 reads to 1: about
+-12 ms per step at 16K and -22 ms at 32K (+16% and +25% writing speed at those lengths), nothing below 1,536 keys.
+That is a kernel project in the FA2 XPU (cutlass/sycl-tla) source, of the same size as the GDN checkpoint work.
+
 ## Left open
 
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
