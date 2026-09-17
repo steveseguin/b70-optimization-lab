@@ -260,6 +260,9 @@ class LTXPipelineSampler:
                     # input shapes; the decode stage treats index -1 as a fill.
                     out = ({**chain['video_latent'], 'samples': torch.zeros_like(chain['video_latent']['samples'])},
                            {**chain['audio_latent'], 'samples': torch.zeros_like(chain['audio_latent']['samples'])})
+            report['memory'] = {f'xpu:{i}': {'allocated_bytes': int(torch.xpu.memory_allocated(i)),
+                                           'reserved_bytes': int(torch.xpu.memory_reserved(i))}
+                                for i in range(torch.xpu.device_count())}
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
