@@ -14,8 +14,8 @@ which is what makes 32K of context fit on the card.
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html). LocalMaxxing:
-[`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr) (53.43 tok/s, the 24,576-token
-recipe, approved September 17); the 32K recipe's submission is listed in `results/localmaxxing-submissions.md`.
+[`cmu5wc2e50804lq01r0br2i5p`](https://www.localmaxxing.com/runs/cmu5wc2e50804lq01r0br2i5p) (54.33 tok/s, approved September 17;
+the 24,576-token recipe's [`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr), 53.43 tok/s, stands as history).
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md).
 
 ## What you need

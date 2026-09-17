@@ -43,10 +43,8 @@ recipe), 12/12 vs the no-MTP reference, no fault lines since boot.** Unit `fp8-s
 `/mnt/fast-ai/bench-results/fp8-onecard-32k-b-20260917/service`. Published today: two-card package = allgather allreduce
 overlay (90.48 tok/s median, LocalMaxxing `cmu5qk0kz07zglq01eh1opkhx` approved); one-card package = R311b single-checkpoint
 GDN state, 32,768-token default at 54.3 tok/s, max-context 40,960, no-quantization 28,672, every gate exact through the
-launcher. **Pending user action:** push the R311b image (`bash repro/qwen38-27b-fp8-vllm-tp1-b70/publish-r311b-image-ghcr.sh`);
-the one-card package already pins its digest (`sha256:7baa32bd…`, the local image id on this containerd host), and the
-one-card LocalMaxxing payload (`data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r311b-32k-strict-20260917.queue.json`,
-dry-run valid) is held until the image is public. Service cycles on this boot: 8 starts, all clean.
+launcher. R311b image pushed to ghcr (digest `sha256:7baa32bd…`, the pinned one) and the one-card record
+`cmu5wc2e50804lq01r0br2i5p` approved at 54.325 tok/s. Service cycles on this boot: 8 starts, all clean.
 
 **Two-B70 host, September 17 07:50 UTC: rebooting with the user's approval after the third fault; the service needs one manual start after the boot.**
 After the boot, from the repo: `nohup scripts/autolaunch-fp8-service.sh &` (health probe, then one two-card package
