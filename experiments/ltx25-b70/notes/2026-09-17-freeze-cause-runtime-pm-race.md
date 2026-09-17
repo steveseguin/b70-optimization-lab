@@ -69,6 +69,8 @@ silently half-applied on every boot since it was installed.
    endpoint reports `power/control` other than `on`, so a future regression
    is caught before work instead of after a lockup.
 
+Applied 2026-09-17 05:57 UTC: all four endpoints report `control=on status=active`, the udev rule is installed and udev reloaded. GPU work resumed with packet 69.
+
 Nothing here changes model arithmetic. It raises idle platform power. It is
 a hypothesis with strong circumstantial support, not a proof; the test is
 whether the host stays up through idle periods and transitions from here.

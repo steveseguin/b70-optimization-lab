@@ -25,6 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 17 05:57 UTC: freeze cause fixed (two B70s were runtime-suspending: boot policy raced the xe probe); all four endpoints pinned on, bind-time udev rule installed; LTX packet 69 launched.**
+Eight silent lockups since 09-14 all sat on idle transitions, two on idle
+boots. `0000:23:00.0` and `0000:27:00.0` had `power/control=auto` because
+`b70-runtime-performance-policy.service` wrote `on` before the xe probe
+finished and the probe reset it. Fix applied at 05:57 UTC (sysfs) and made
+durable with `systemd/60-b70-runtime-pm-on.rules`; runners now refuse to
+start unless `scripts/check-b70-runtime-pm.sh` passes, and
+`scripts/check-packet-integrity.sh` refuses freeze-truncated packets (packet
+68 was zeroed). Packet 69 runs the batch-2 row-equality proof; log
+`campaign-69.log`. Standing position 2.03 s per distinct clip, exact.
+[Cause note](experiments/ltx25-b70/notes/2026-09-17-freeze-cause-runtime-pm-race.md).
+
 **Two-B70 host, September 17 05:30 UTC: depth-5 service is UP on 18124 (88.09 tok/s, 12/12); the night's goals are done; no GPU work running.**
 Three unattended campaigns after the user chose to try the GPUs without a reset: two clean two-card starts (from idle
 88.35, after one-card work 88.09, both 12/12 vs no-MTP), no new fault. One card gained two verified profiles through the
