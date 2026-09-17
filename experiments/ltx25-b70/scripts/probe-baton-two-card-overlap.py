@@ -164,8 +164,76 @@ def run_baton(clips):
     return [results.get(c.name) for c in clips], time.perf_counter() - t, errors
 
 
+def run_free(clips):
+    """Two threads, no baton: each clip issues freely on its own; graphs were captured serially first."""
+    results, errors = {}, {}
+
+    def worker(c):
+        try:
+            x = c.x0.clone()
+            for _ in range(STEPS):
+                x = c.serial_forward(x)
+            results[c.name] = x
+        except BaseException as e:  # noqa
+            errors[c.name] = repr(e)
+
+    ths = [threading.Thread(target=worker, args=(c,)) for c in clips]
+    torch.xpu.synchronize(0); torch.xpu.synchronize(1)
+    t = time.perf_counter()
+    for th in ths: th.start()
+    for th in ths: th.join()
+    torch.xpu.synchronize(0); torch.xpu.synchronize(1)
+    return [results.get(c.name) for c in clips], time.perf_counter() - t, errors
+
+
+def run_free_streams(clips):
+    """Two threads, each with its OWN stream on each card, so one clip's copies and
+    waits are never queued behind the other clip's replays on a shared default stream."""
+    results, errors = {}, {}
+
+    def worker(c):
+        try:
+            s0 = torch.xpu.Stream(device='xpu:0'); s1 = torch.xpu.Stream(device='xpu:1')
+            x = c.x0.clone()
+            for _ in range(STEPS):
+                with torch.xpu.device(0), torch.xpu.stream(s0):
+                    c.in0.copy_(x); c.g0.replay()
+                    c.in1.copy_(c.out0, non_blocking=True)
+                    ev = torch.xpu.Event(); ev.record(s0)
+                with torch.xpu.device(1), torch.xpu.stream(s1):
+                    s1.wait_event(ev)
+                    c.g1.replay()
+                    x = torch.empty_like(c.out1, device='xpu:0')
+                    x.copy_(c.out1, non_blocking=True)
+                    ev2 = torch.xpu.Event(); ev2.record(s1)
+                with torch.xpu.device(0), torch.xpu.stream(s0):
+                    s0.wait_event(ev2)
+            s0.synchronize(); s1.synchronize()
+            results[c.name] = x
+        except BaseException as e:  # noqa
+            errors[c.name] = repr(e)
+
+    ths = [threading.Thread(target=worker, args=(c,)) for c in clips]
+    torch.xpu.synchronize(0); torch.xpu.synchronize(1)
+    t = time.perf_counter()
+    for th in ths: th.start()
+    for th in ths: th.join()
+    torch.xpu.synchronize(0); torch.xpu.synchronize(1)
+    return [results.get(c.name) for c in clips], time.perf_counter() - t, errors
+
+
 clips = [Clip('A', 1), Clip('B', 2)]
 for c in clips: c.capture()
+# Does replay() return before the work completes?
+c0 = clips[0]; c0.in0.copy_(c0.x0); torch.xpu.synchronize(0)
+t = time.perf_counter(); c0.g0.replay(); t_issue = time.perf_counter() - t
+torch.xpu.synchronize(0); t_done = time.perf_counter() - t
+print({'replay_issue_ms': round(t_issue * 1e3, 2), 'replay_done_ms': round(t_done * 1e3, 2),
+       'replay_is_async': t_issue < 0.3 * t_done}, flush=True)
+# Does a cross-card copy block the issuing thread?
+t = time.perf_counter(); c0.g0.replay(); c0.in1.copy_(c0.out0, non_blocking=True); t_copy_issue = time.perf_counter() - t
+torch.xpu.synchronize(0); torch.xpu.synchronize(1); t_copy_done = time.perf_counter() - t
+print({'replay_plus_copy_issue_ms': round(t_copy_issue * 1e3, 2), 'done_ms': round(t_copy_done * 1e3, 2)}, flush=True)
 ref, t_serial = run_serial(clips)
 ref2, t_serial2 = run_serial(clips)
 print('weights per card: xpu:0 %.1f GB, xpu:1 %.1f GB' % (BLOCKS0 * 6 * D * H * 2 / 1e9, BLOCKS1 * 6 * D * H * 2 / 1e9), flush=True)
@@ -173,6 +241,16 @@ same_serial = all(torch.equal(a.view(torch.int16), b.view(torch.int16)) for a, b
 outs, t_baton, errors = run_baton(clips)
 outs2, t_baton2, errors2 = run_baton(clips)
 equal = [o is not None and torch.equal(o.view(torch.int16), r.view(torch.int16)) for o, r in zip(outs, ref)]
+free, t_free, ferr = run_free(clips)
+free2, t_free2, ferr2 = run_free(clips)
+fequal = [o is not None and torch.equal(o.view(torch.int16), r.view(torch.int16)) for o, r in zip(free2, ref)]
+print({'free_threads_s': round(t_free2, 4), 'free_speedup_vs_serial': round(t_serial2 / t_free2, 3),
+       'free_bitwise_equal_to_serial': fequal, 'free_errors': ferr or ferr2}, flush=True)
+fs, t_fs, fserr = run_free_streams(clips)
+fs2, t_fs2, fserr2 = run_free_streams(clips)
+fsequal = [o is not None and torch.equal(o.view(torch.int16), r.view(torch.int16)) for o, r in zip(fs2, ref)]
+print({'free_streams_s': round(t_fs2, 4), 'free_streams_speedup_vs_serial': round(t_serial2 / t_fs2, 3),
+       'free_streams_bitwise_equal_to_serial': fsequal, 'errors': fserr or fserr2}, flush=True)
 print({'serial_s': round(t_serial2, 4), 'baton_s': round(t_baton2, 4), 'speedup': round(t_serial2 / t_baton2, 3),
        'serial_reproducible': same_serial, 'baton_bitwise_equal_to_serial': equal, 'errors': errors or errors2,
        'per_clip_serial_ms': round(t_serial2 / STEPS / 2 * 1e3, 1), 'per_clip_baton_ms': round(t_baton2 / STEPS / 2 * 1e3, 1),
