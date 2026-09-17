@@ -21,6 +21,7 @@ arm() { # name graph-arm count index-base
     --arm $2 --server-run $RUN --count $3 --index-base $4 --out $OUT || { step "$1 failed"; save "$1 (failed)"; exit 1; }
   save "$1"
 }
+/home/steve/llm-optimizations/scripts/check-b70-runtime-pm.sh || { step "runtime PM unsafe; refusing to run"; exit 1; }
 step waiting for server health
 for i in $(seq 1 360); do
   [ -f $R/FAULT.json ] && { step FAULT latched; exit 1; }

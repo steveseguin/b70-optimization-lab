@@ -1,0 +1,10 @@
+# Keep Intel Arc Pro B70 (8086:e223) endpoints out of runtime suspend.
+# The boot-time policy unit (b70-runtime-performance-policy.service) races the xe
+# driver probe: any card that finishes probing after the unit ran gets its
+# power/control reset to 'auto' and runtime-suspends after 1 s idle. On
+# 2026-09-17 two of four cards were in that state and the host locked up
+# silently on every idle transition, twice on idle boots. The PCI bind event
+# fires after probe, so this rule is applied last and cannot be raced.
+# Install: sudo cp systemd/60-b70-runtime-pm-on.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules
+# Revert:  sudo rm /etc/udev/rules.d/60-b70-runtime-pm-on.rules (takes effect at next boot)
+ACTION=="add|bind|change", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xe223", TEST=="power/control", ATTR{power/control}="on"
