@@ -164,14 +164,17 @@ def batch_proof_diffusion_model(executor, *args, **kwargs):
     original_out = executor(*args, **kwargs)
     generator = torch.Generator(device='cpu')
     generator.manual_seed(20260917)
-    second_args = _map_rows(list(args), lambda t: _perturb(t, generator))
-    # The top-level keyword dict is walked (a_timestep, denoise masks); nested
-    # option dicts are shared, except their batch-shaped sigma entry.
-    second_kwargs = {k: _map_rows(v, lambda t: _perturb(t, generator)) for k, v in kwargs.items()}
-    if len(second_args) > 5 and isinstance(second_args[5], dict):
-        second_args[5] = _perturb_options(second_args[5], generator)
-    if isinstance(second_kwargs.get('transformer_options'), dict):
-        second_kwargs['transformer_options'] = _perturb_options(second_kwargs['transformer_options'], generator)
+    # LOCKSTEP variant (packet 72): a second clip differs in its latent
+    # (args[0]) and its conditioning (args[2]) but samples at the same sigma,
+    # so only those two are perturbed. Timesteps, option sigmas and every
+    # other input stay identical (still stacked to batch 2 with equal rows).
+    # Packet 71 perturbed the timesteps too and found rows differing by up to
+    # 2.2, which a cross-row timestep interaction would explain.
+    second_args = list(args)
+    for i in (0, 2):
+        if len(second_args) > i:
+            second_args[i] = _map_rows(second_args[i], lambda t: _perturb(t, generator))
+    second_kwargs = dict(kwargs)
     stage = 'second'
     try:
         second_out = executor(*second_args, **second_kwargs)
@@ -184,6 +187,17 @@ def batch_proof_diffusion_model(executor, *args, **kwargs):
             stacked_kwargs['transformer_options'] = _double_batch_lists(
                 kwargs['transformer_options'], second_kwargs['transformer_options'])
         stacked_out = executor(*stacked_args, **stacked_kwargs)
+        # Identical-rows control: cat(x, x) must reproduce the original in both rows.
+        stage = 'identical-rows control'
+        same_args = _stack_rows(list(args), list(args))
+        same_kwargs = {k: _stack_rows(v, kwargs[k]) for k, v in kwargs.items()}
+        if len(same_args) > 5 and isinstance(same_args[5], dict):
+            same_args[5] = _double_batch_lists(args[5], args[5])
+        if isinstance(same_kwargs.get('transformer_options'), dict):
+            same_kwargs['transformer_options'] = _double_batch_lists(
+                kwargs['transformer_options'], kwargs['transformer_options'])
+        same_out = executor(*same_args, **same_kwargs)
+        outsI = list(same_out) if isinstance(same_out, (list, tuple)) else [same_out]
         # The LTXAV model returns [video_out, audio_out]; compare every component.
         outs1 = list(original_out) if isinstance(original_out, (list, tuple)) else [original_out]
         outs2 = list(second_out) if isinstance(second_out, (list, tuple)) else [second_out]
@@ -197,6 +211,10 @@ def batch_proof_diffusion_model(executor, *args, **kwargs):
             rec['row1_max_abs_diff'] = max(float((s[1:2].float() - o.float()).abs().max()) for s, o in zip(outsS, outs2))
             rec['per_component'] = [{'row0': _bits_equal(s[0:1], o), 'row1': _bits_equal(s[1:2], p)}
                                     for s, o, p in zip(outsS, outs1, outs2)]
+            rec['identical_rows_control'] = {
+                'row0_equals_batch1': all(_bits_equal(s[0:1], o) for s, o in zip(outsI, outs1)),
+                'row1_equals_batch1': all(_bits_equal(s[1:2], o) for s, o in zip(outsI, outs1)),
+                'max_abs_diff': max(float((s.float() - torch.cat([o, o]).float()).abs().max()) for s, o in zip(outsI, outs1))}
         else:
             rec['row0_equals_batch1'] = rec['row1_equals_batch1'] = None
             rec['note'] = 'batch-2 output shape does not split into two batch-1 rows'
