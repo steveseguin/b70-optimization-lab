@@ -182,6 +182,15 @@ two cards is therefore the collective, not the GEMMs: the recipe pins `CCL_SYCL_
 message size and bypasses oneCCL's small-message and low-latency kernels. A same-session A/B with the default
 thresholds and the low-latency path, each gated for exactness against its own no-MTP reference, is the next campaign.
 
+**Collective A/B (07:11-07:18 UTC): stopped by a fault attributable to the experiment.** The same-session control
+(pinned environment) ran cleanly at 88.50 tok/s. The first server with the oneCCL simple thresholds lifted (default
+small-message kernels) faulted *both* cards at once about two minutes in: compute-engine page faults, CAT errors, a
+scheduler timeout and two coredumps (`gpu-fault-20260917T0717`). The non-simple oneCCL paths use peer memory access
+over PCIe, the class of the September 14 peer-IPC fault, so the pinned 4 GiB threshold is a guard and the collective
+cannot be sped up by oneCCL algorithm selection on this host. Remaining levers for the two-card allreduce are fewer
+calls per step (the model does two per layer) or a device-side collective that does not rely on peer access; both are
+kernel projects. The service stays down until the user decides on a reset; this is the third fault on this boot.
+
 The HTTP profiler endpoints do not deliver the engine worker's trace on this build (the API server drops the stop
 connection before forwarding it); the overlay above profiles from inside the worker instead.
 

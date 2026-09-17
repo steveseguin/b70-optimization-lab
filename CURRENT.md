@@ -25,6 +25,25 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 17 07:25 UTC: GPU FAULT on BOTH cards during the collective A/B; port 18124 is DOWN; all GPU work halted; user decision needed (reset or reboot).**
+The first server with oneCCL's default small-message kernels (`CCL_SYCL_*_SIMPLE_THRESHOLD=0`) faulted both cards two
+minutes in (compute-engine page faults, CAT errors, coredumps devcd3/devcd4); the pinned-environment control had just run
+cleanly at 88.50 tok/s. The fault is attributable to the experiment: those kernels use peer memory access over PCIe, the
+September 14 fault class. The pinned thresholds are now documented as a guard. Third fault on this boot; the two earlier
+ones were copy-engine faults on one card. Evidence `/mnt/fast-ai/bench-results/gpu-fault-20260917T0717/`. Once you
+decide: health probe, then `packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start` with a new state directory.
+[Findings](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
+
+**Two-B70 host, September 17 07:15 UTC: two-card collective A/B running (service down for about 45 minutes, returns as unit `fp8-service-20260917k`); both FP8 records on LocalMaxxing; decode profiles done.**
+Records: two cards `cmu4zwfht07nzlq01tyj03f17` (88.41 tok/s), one card `cmu53h4l407o3lq01od0vwjrr` (53.43 tok/s at
+24,576 tokens). Profiles (in-worker torch/XPU traces): on one card the W8A16 GEMM is 92% of device time at about 83% of
+memory bandwidth, so only the 26% of launch gaps remain; on two cards the PCIe allreduce is 47% of device time (134
+calls per step at 223 µs), so the running A/B tests oneCCL's default and low-latency allreduce paths against the
+pinned ring kernel, each gated against its own no-MTP reference. One-card profiles `max-context` (30,720) and
+`no-quantization` (20,480) shipped and verified. Graph capture on one card disqualified. Plan for lossless 32K+ on
+one card: [single-checkpoint GDN state](experiments/qwen38-27b-b70/notes/2026-09-17-gdn-single-checkpoint-plan.md).
+[Findings](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
+
 **Four-B70 host, September 17 06:52 UTC: two-clip sampler v2 launched (packet 73) after five probes established the recipe: per-clip streams, device contexts, pinned-host staged activations give 1.68x overlap bit-exact.**
 Batching is closed (packet 72). Probes 1–5 (exclusive cards, block-sized
 graphs): baton hand-off 0.997x, free threads on default streams 1.19x,
