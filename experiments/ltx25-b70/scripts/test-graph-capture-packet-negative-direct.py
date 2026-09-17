@@ -46,6 +46,7 @@ def regen(pk):
                    ('upsampler_adapter_sha256', 'ltx_graph_upsampler.py'),
                    ('upsampler_node_sha256', 'graph_upsampler_node.py'),
                    ('phase_node_sha256', 'phase_timed_upsampler_node.py'),
+                   ('fast_node_sha256', 'resident_fastpath_node.py'),
                    ('pipe_adapter_sha256', 'ltx_pipeline.py'), ('pipe_node_sha256', 'pipeline_node.py'),
                    ('na_candidate_sha256', 'ltx_na_axis_candidate.py'),
                    ('na_router_sha256', 'ltx_na_axis_router.py'),
@@ -104,6 +105,10 @@ try:
         pk, 'pipe-upphase', lambda d: d['348']['inputs'].__setitem__('mode', 'original')))
     tampered('save-record node rewired to a different decode output', lambda pk: edit_graph(
         pk, 'pipe-up-save', lambda d: d['430']['inputs'].__setitem__('saved_file', ['426', 0])))
+    tampered('fast-path node silently set to original in pipe-fast', lambda pk: edit_graph(
+        pk, 'pipe-fast', lambda d: d['431']['inputs'].__setitem__('mode', 'original')))
+    tampered('fusion gate rewired around the fast-path node', lambda pk: edit_graph(
+        pk, 'pipe-fast', lambda d: d['424']['inputs'].__setitem__('model', ['420', 0])))
     tampered('extra file added to source/scripts', lambda pk: (pk / 'source/scripts/sneaky.py').write_text('x = 1\n'))
 finally:
     for pk in made:

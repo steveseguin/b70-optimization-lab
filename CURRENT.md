@@ -40,6 +40,18 @@ actions are historical, span multiple hosts, and are not current instructions.
   source, was 54.8); one-card package at 24,576 tokens of context (53.43 / 53.43 tok/s, was 16,384); both one-card
   profiles passed the 64-prompt sequential oracle. CI green through commit `28c4aab9e`.
   [Findings](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
+**Four-B70 host, September 17 04:45 UTC: three more silent lockups (03:14 UTC mid-campaign, then two idle boots); user restarted 04:11 UTC; packet 63 launched.**
+Packet 62 completed two arms exact on ten fixtures before the host locked up
+with no fault line: the latent upsampler's node cost is ComfyUI model
+management (0.068 s per call on a resident model), not its forward (0.024 s);
+capturing the forward gained nothing (2.529 s vs 2.519 s). The next two boots
+locked up idle (23:40 and 23:48 EDT) with nothing running, which points at the
+platform rather than the workload. No fault latch exists on this boot. Packet
+63 (timed diffusion forwards, resident fast path for model management,
+save-behind rerun, pipe control) runs on one server; its runner commits after
+every arm because the freezes zero unflushed files. Log `campaign-63.log`.
+[Packet 62 results](experiments/ltx25-b70/notes/graph-capture-62-results.md).
+
 **Four-B70 host, September 17 03:05 UTC: LTX server 61 stopped cleanly (one SIGINT, 6 s); packet 62 launches after a five-minute gap.**
 Packet 61 measured the latent upsampler's forward at 0.025 s of the node's
 0.24 s (11 distinct clips exact); the remainder is model-management and
