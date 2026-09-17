@@ -49,6 +49,16 @@ pinned ring kernel, each gated against its own no-MTP reference. One-card profil
 `no-quantization` (20,480) shipped and verified. Graph capture on one card disqualified. Plan for lossless 32K+ on
 one card: [single-checkpoint GDN state](experiments/qwen38-27b-b70/notes/2026-09-17-gdn-single-checkpoint-plan.md).
 [Findings](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
+**Four-B70 host, September 17 13:03 UTC: rebooted by the user after the 07:00 UTC kernel stall hard-locked; LTX packet 74 launched as the single server for this boot (never to be stopped).**
+The udev rule pinned all four B70s on at boot without help. The stall that
+formed at 07:00 UTC (all cards pinned on, five minutes after a clean server
+stop, triggered by a process that only imported torch) shows runtime PM was
+necessary but not sufficient: teardown followed by a new xe initialisation
+remains a lockup trigger on this kernel/driver. Rule from here: one sealed
+server per boot, never stopped; no second torch process while it runs.
+Packet 74 runs the two-clip sampler with explicit fills (24 prompts, ten
+fixtures, per-clip oracles) then a fast+save control; log `campaign-74.log`.
+[Incident](experiments/ltx25-b70/notes/2026-09-17-incident-kernel-spin-after-stop.md).
 
 **Four-B70 host, September 17 06:52 UTC: two-clip sampler v2 launched (packet 73) after five probes established the recipe: per-clip streams, device contexts, pinned-host staged activations give 1.68x overlap bit-exact.**
 Batching is closed (packet 72). Probes 1–5 (exclusive cards, block-sized
