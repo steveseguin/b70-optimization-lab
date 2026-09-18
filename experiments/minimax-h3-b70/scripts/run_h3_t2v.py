@@ -824,7 +824,7 @@ def build_pipeline(args, transformer, timings: dict):
     the per-row timestep plan and the row unpacking all stay upstream code.
     """
     from diffusers import MiniMaxH3Scheduler
-    from diffusers.modular_pipelines.minimax_h3 import MiniMaxH3CoreDenoiseStep
+    from diffusers.modular_pipelines.minimax_h3.modular_blocks_minimax_h3 import MiniMaxH3CoreDenoiseStep
 
     with phase("sample.build_pipeline", timings):
         pipe = MiniMaxH3CoreDenoiseStep().init_pipeline()

@@ -57,7 +57,8 @@ echo "diffusers source commit: ${DIFFUSERS_COMMIT}"
   "numpy==2.5.2" \
   "av==18.1.0" \
   "accelerate" \
-  "huggingface-hub"
+  "huggingface-hub" \
+  "requests" "regex" "Pillow" "importlib_metadata"
 
 # 3. diffusers from the checkout on disk. The MiniMax-H3 checkpoints declare 0.36.0.dev0, i.e. a
 #    git-main build: there is no release that carries MiniMaxH3Transformer3DModel.
@@ -77,7 +78,7 @@ print("safetensors ", safetensors.__version__)
 print("xpu visible ", torch.xpu.is_available(), torch.xpu.device_count(), "device(s)")
 from diffusers import MiniMaxH3Transformer3DModel, MiniMaxH3Scheduler  # noqa: F401
 from diffusers import AutoencoderKLMiniMaxH3, AutoencoderKLMiniMaxH3Audio  # noqa: F401
-from diffusers.modular_pipelines.minimax_h3 import MiniMaxH3CoreDenoiseStep  # noqa: F401
+from diffusers.modular_pipelines.minimax_h3.modular_blocks_minimax_h3 import MiniMaxH3CoreDenoiseStep  # noqa: F401
 from transformers import Qwen3VLForConditionalGeneration  # noqa: F401
 print("every MiniMax-H3 class this lane needs imported cleanly")
 PY
