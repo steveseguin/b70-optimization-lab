@@ -407,12 +407,60 @@ builds, and restores it (`/mnt/fast-ai/bench-results/r312-session4*.sh`, logs `r
   ([runner](../scripts/run-20260918-fp8-lc3-campaign.py)) **only if every census case is bit-exact**, then the
   MiniMax-H3 first-light session.
 
+## r312c census against the shipped kernel: not exact; toolchain variants (September 18)
+
+Session 4c built the 32-object `_xpu_C` multiq library and ran the census against the **untouched upstream single-row
+path** -- the gate that everything downstream reads. It failed.
+
+| Census | Result |
+| --- | --- |
+| v-tile 64 (`/mnt/fast-ai/bench-results/fp8-r312-session4c-20260918/multiq-v64.json`) | **not exact: 8 of 22 cases differ**, max abs 7.6e-6 |
+| v-tile 256 (`.../multiq-v256.json`) | **not exact: the same 8 of 22**, same 7.6e-6 |
+
+The v-tile size does not move it, so this is not an accumulation-order effect of the tiling: the same eight cases differ
+by the same amount either way. 7.6e-6 is small but it is not zero, and the gate is bit-exactness -- lc-3 is blocked and
+**never ran**.
+
+### The compiler version is ruled out
+
+The first hypothesis was the obvious one: the multiq library is built with the lab toolchain while the shipped
+`_vllm_fa2_C` came out of a different DPC++. **Variant a** tests exactly that -- only the multiq library rebuilt, with
+DPC++ 2026.0.0, the compiler that built the upstream `_vllm_fa2_C`. It produces the **identical per-case result**
+(`/mnt/fast-ai/bench-results/fp8-r312d-session6-20260918/multiq-a-v64.json`): same eight cases, same maximum. Whatever
+differs is not the host compiler's version.
+
+### Variants b and c, neither built
+
+Both come from
+[`build-kernels-0.1.14.1-r312d-multiq-toolchain.sh`](../docker/rebase-v0290/build-kernels-0.1.14.1-r312d-multiq-toolchain.sh)
+and both were killed before producing a library (see below):
+
+- **variant b** -- the upstream device-side toolchain: IGC 2.34.4 / ocloc 26.18. This moves the test from the host
+  compiler to the code generator that actually emits the GPU ISA, which is the next place the arithmetic can differ.
+- **variant c** -- b plus the **sycl-tla revision `87f6850` that the kernel CMake actually pins**. Everything from r309
+  through r312c was built against `cd76379`, a March revision, because that is what the build tree had checked out. If
+  the tile/copy templates changed between the two, that is a real arithmetic difference hiding in plain sight, and it is
+  the single most specific candidate on the list.
+
+### Why neither exists
+
+The b/c builds were killed by the host out-of-memory event: variant b's `icpx` frontends were OOM-killed at 03:05:07 UTC
+(and the session log wrongly reported `rc=0` -- it was the artefact check, `variant b: no library`, that caught it), and
+the `JOBS=1` rebuild `r312d-build-bc-20260918` died at build object 2 of 8 when `systemd-oomd` killed the user manager
+at 03:09:59. Full account in the [host OOM incident](2026-09-18-host-oomd-incident.md). Both must be re-queued, one at
+a time, with the FP8 service down and nothing else running beside them.
+
 ## Left open
 
-- **The r312c census (running now).** Session 4c builds the 32-object `_xpu_C` multiq library, then runs the census at
-  v-tile 64 and 256 against the upstream lone-row path. Every case must be bit-exact (`all_equal`, `max_abs == 0.0`,
-  and the repeat check) or nothing downstream runs: that is the gate the chain script reads.
-- **lc-3 (queued, gated on that census).** The same three stages as lc-2 on the r312c image
+- **The r312c census failed, so the whole multi-row branch is stalled.** The census against the upstream lone-row path
+  is **not exact** at either v-tile: 8 of 22 cases, max abs 7.6e-6 (section above). The compiler version is ruled out by
+  variant a. The two remaining candidates -- variant b (upstream IGC 2.34.4 / ocloc 26.18) and variant c (b plus the
+  sycl-tla revision `87f6850` the kernel CMake pins, against the `cd76379` everything from r309 on was built with) --
+  **are not built**: both were killed by the September 18 host out-of-memory event
+  ([incident](2026-09-18-host-oomd-incident.md)). Re-queue them one at a time, service down, nothing running beside
+  them. If neither closes the gap, the next question is whether a 7.6e-6 kernel can ship at all, which is a separate
+  decision and not one to take on speed alone.
+- **lc-3 never ran and stays gated on that census.** The same three stages as lc-2 on the r312c image
   ([runner](../scripts/run-20260918-fp8-lc3-campaign.py), receipts `/mnt/fast-ai/bench-results/fp8-lc3-20260918`):
   fresh R312 references from a no-MTP arm that must be **12/12** against the R311b reference this time, then the
   depth-5 candidate with `b70-fa-multiq` -- strict twice, ladder, the long screen, quality and the logprob replay.

@@ -53,23 +53,29 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 18 02:40 UTC: boot `9f41bfb8`, the depth-5 service on 18124 is DOWN on purpose -- the r312c
-kernel build session (unit `fp8-r312-session4c-20260918`) holds the cards.** That session restores it as unit
-`fp8-service-20260918-r312c3`, state `/mnt/fast-ai/bench-results/fp8-r312-session4c-20260918/service`. Two queued
-sessions may cycle it again after that: lc-3 if the r312c census is bit-exact (state
-`/mnt/fast-ai/bench-results/fp8-lc3-20260918/service`), then the MiniMax-H3 first-light session (unit
-`fp8-service-20260918-h3`, state `/mnt/fast-ai/bench-results/minimax-h3/service-restore`). The last measured service
-(unit `fp8-service-20260918-lc2`) was 12/12 vs the no-MTP reference at 90.52 tok/s. Today: two-card package = allgather
-allreduce (90.48 tok/s, LocalMaxxing `cmu5qk0kz07zglq01eh1opkhx`); one-card package = R311b single-checkpoint state,
-32,768 default at 54.3 tok/s (LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`), max-context 40,960 (engine ceiling ~44,800 at
-0.983), probes exact to 36,864 tokens. Closed: replicated drafter (never faster), two-card checkpoint state
-(speed-neutral). Next one-card lever: the multi-row verifier attention kernel (r312c) -- lc-2's candidate never started
-(the overlay wanted the op in `_xpu_C`, the r312b image had it in `_vllm_fa2_C`), so there is still no candidate number.
-Git: the other host's commit `03830fa00` pushed 302 tracked files as zero-length blobs (including `DO-NOT-REPEAT.md`);
-restored from `b0c85ccc5` in `283383ed6` and local work rebased on top -- check `git diff --stat` before rebasing onto
-anything from that host, whose own checkout is probably still zeroed. MiniMax-H3 (a video+audio generator, not an LLM)
-is staged and armed: `experiments/minimax-h3-b70/README.md`. Service cycles on this boot: 18 clean starts and one that
-lost the port race after a graceful stop (`[Errno 98]`, unit `fp8-service-20260918-r312c2`).
+**Two-B70 host, September 18 03:20 UTC: HALTED after a host out-of-memory event. The service on 18124 is DOWN since
+02:43 UTC, `systemd-oomd` killed the user manager at 03:09 UTC, and every queued session died with it. Waiting on the
+user; the agent restarts nothing.** A kernel build in a container overlapped with the MiniMax-H3 first-light run (a
+27 GB text-encoder load under `MemoryMax=4G`, which thrashed instead of failing fast) on this 15 GiB host;
+`systemd-oomd` killed by memory pressure up through the GNOME session to `user@1000.service` itself, so
+`fp8-r312d-session6-20260918` (before its service restore), the b/c rebuild `r312d-build-bc-20260918`, the armed
+`fp8-r312d-session7-20260918` and the monitors all died. No `xe` fault, both cards free, no container running. The
+02:43 restore had already lost the port race (`[Errno 98]`, `serve.py` binds without `SO_REUSEADDR`). Full account,
+evidence paths and the preconditions before the MiniMax lane runs again:
+[host OOM incident](experiments/qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md). On the user's next login the
+manager respawns; then re-queue one at a time, service down, no MiniMax run beside a build: the service restore first,
+then r312d variants b and c (neither library exists). lc-3 never ran -- the r312c census against the untouched upstream
+single-row kernel is **not** exact (8/22 cases, max 7.6e-6, at both v-tile 64 and 256), and variant a rules out the
+compiler version. Still true from earlier on this boot: the last measured service (unit `fp8-service-20260918-lc2`) was
+12/12 vs the no-MTP reference at 90.52 tok/s; two-card package = allgather allreduce (90.48 tok/s, LocalMaxxing
+`cmu5qk0kz07zglq01eh1opkhx`); one-card package = R311b single-checkpoint state, 32,768 default at 54.3 tok/s
+(LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`), max-context 40,960 (engine ceiling ~44,800 at 0.983), probes exact to
+36,864 tokens. Closed: replicated drafter (never faster), two-card checkpoint state (speed-neutral). Next one-card
+lever is still the multi-row verifier attention kernel, and there is still no candidate number. Git: the other host's
+commit `03830fa00` pushed 302 tracked files as zero-length blobs (including `DO-NOT-REPEAT.md`); restored from
+`b0c85ccc5` in `283383ed6` and local work rebased on top -- check `git diff --stat` before rebasing onto anything from
+that host, whose own checkout is probably still zeroed. MiniMax-H3 (a video+audio generator, not an LLM) is halted, not
+armed: `experiments/minimax-h3-b70/README.md`.
 
 **Two-B70 host, September 17 07:50 UTC: rebooting with the user's approval after the third fault; the service needs one manual start after the boot.**
 After the boot, from the repo: `nohup scripts/autolaunch-fp8-service.sh &` (health probe, then one two-card package

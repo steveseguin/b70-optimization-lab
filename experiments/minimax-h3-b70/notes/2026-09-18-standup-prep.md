@@ -248,3 +248,47 @@ then waits for port 18124 to be free and restores the service as unit `fp8-servi
 `STEPS=8` is deliberate and is **not** a claim about the right step count (50 remains an assumption, see the table
 above). First light asks two questions only: does this stack run on the cards at all, and does it repeat bit for bit.
 Eight steps answers both at about a sixth of the wall clock; the step sweep comes after the repeat gate has a verdict.
+
+## First light 2 (02:05 UTC): killed the host session
+
+The first-light run started at **03:05:07 UTC** (`smoke_h3.sh one`, `STEPS=8`, run
+`smoke-20260918T030507Z`) under `systemd-run --user --scope --property=MemoryMax=4G`. It reached phase
+`encode.load` -- the 27 GB INT8 text encoder under `/mnt/fast-ai/llm-models/minimax-h3-comfy` -- at
+03:05:11, and **its log has nothing after that line**. There is no clip, no receipt, no repeat gate and no
+answer to either of the two questions first light was supposed to ask.
+
+What happened instead: it started in the same second as a `JOBS=2` r312d kernel build in an 8 GiB Docker
+container, on a host with 15 GiB of RAM. The build's `icpx` frontends were OOM-killed at 03:05:07;
+`systemd-oomd` then killed by memory pressure up through the user's GNOME session and, at 03:09:59,
+`user@1000.service` itself. That killed every `systemd-run --user` unit on the host, including the queued
+FP8 sessions and the service restore. The runner (python 137924) was orphaned and reaped by the kernel at
+03:18:41. No GPU was involved -- there is no `xe` fault line anywhere in the window, and both cards are
+free. Full account: [host OOM incident](../../qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md);
+evidence in `/mnt/fast-ai/bench-results/host-oom-20260917T2310/`.
+
+**The `MemoryMax=4G` was the mistake, not the safeguard.** It was armed as a tripwire on the theory that
+the cgroup would kill the runner before the host noticed. A cgroup limit far below the real working set
+does not fail fast -- it thrashes in reclaim, and sustained reclaim pressure is precisely what
+`systemd-oomd` kills on. The tripwire manufactured the pressure that took the desktop.
+
+### Preconditions before any rerun
+
+Every one of these, in order, before the lane is armed again:
+
+1. **Measure the host-RAM need of `encode.load` on a CPU-only pass** -- no GPU, no container beside it, no
+   `MemoryMax`. Record peak host RSS for that phase specifically. The dry run's "resident bytes 27.141 GB"
+   is a device-side figure and says nothing about what the *loader* holds in host memory.
+2. **That measured peak must sit well under free host RAM.** If it does not, the loader changes before the
+   run does: dequantize and stream the encoder **tensor by tensor to the GPU**, so no full host-side copy
+   ever exists.
+3. **No `MemoryMax` below the measured peak.** Either size it above, or drop it and use a watchdog that
+   reads `/proc/meminfo` and kills the runner on low *available* memory.
+4. **Nothing else running.** No compiler container, no kernel build, no other lane -- one host-RAM-heavy
+   job at a time on this host.
+5. **FP8 service down for the run, and the restore waits for the port.** The 02:43 restore in this same
+   session lost the race and died on `[Errno 98] Address already in use`; poll `ss -ltn` for `:18124`
+   until it is gone.
+6. **Re-queue behind the FP8 work, not beside it.** The r312d b/c builds come first; the lane is not armed
+   while one is running.
+
+Until 1 and 2 have numbers, this lane does not touch a GPU.
