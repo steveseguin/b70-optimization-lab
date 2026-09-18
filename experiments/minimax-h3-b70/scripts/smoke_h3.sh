@@ -11,16 +11,33 @@
 # gives the run its own cgroup memory bound (this host has 15 GiB of RAM and about 10 GiB of it
 # is held by the FP8 service when that service is up).
 #
-# PRECONDITIONS for the GPU modes -- check them, this script does not:
+# PRECONDITIONS for the GPU modes. Since 2026-09-18 this script CHECKS them and refuses to start
+# if they do not hold (it still never changes anything -- it stops, it does not fix):
 #   1. Both B70s are free. They are NOT free while the FP8 service on 127.0.0.1:18124 is up.
-#      Stopping it is a user decision (AGENTS.md); this script never touches a service.
+#      Stopping it is a user decision (AGENTS.md); this script never touches a service. Checked
+#      as: port 18124 not listening, and no running container.
 #   2. /mnt/fast-ai/venvs/minimax-h3 exists with torch 2.14.0+xpu. Build it with setup-venv.sh
 #      (it downloads; that needs explicit approval).
+#   3. At least MIN_HOST_AVAIL_MIB (11 GiB) of MemAvailable. Less than that means the FP8 service,
+#      a kernel-build container or another lane is still resident -- which is the exact
+#      combination that took the desktop out on 2026-09-17 23:09 EDT
+#      (../../qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md).
+#   4. Nothing else memory-heavy: any running container aborts the run.
+#
+# Every GPU run is wrapped in `mem-watchdog.sh` at a 2048 MiB floor on MemAvailable. The watchdog
+# kills THIS job, in its own process group, before systemd-oomd (50 % pressure for 20 s on
+# user@1000.service) starts killing the user's session. `set -m` below is what gives the job its
+# own process group, which is what makes the watchdog's group kill precise.
 #
 set -euo pipefail
+set -m          # job control: each background job gets its own process group (see the watchdog)
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNNER="${HERE}/run_h3_t2v.py"
+
+WATCHDOG="${HERE}/mem-watchdog.sh"
+MIN_HOST_AVAIL_MIB="${MIN_HOST_AVAIL_MIB:-11264}"   # 11 GiB: below this, something big is resident
+WATCHDOG_MIN_AVAIL_MIB="${WATCHDOG_MIN_AVAIL_MIB:-2048}"
 
 GPU_VENV="${GPU_VENV:-/mnt/fast-ai/venvs/minimax-h3}"
 CPU_VENV="${CPU_VENV:-/mnt/fast-ai/venvs/minimax-h3-cpu}"
@@ -46,20 +63,90 @@ SCOPE_PROPS=(
   --property=MemorySwapMax=0
 )
 
+# Refuse to start a GPU run on a host that is not actually free. Checks only; changes nothing.
+preflight() {
+  local fail=0 avail containers
+
+  if [ ! -x "${GPU_VENV}/bin/python" ]; then
+    echo "PREFLIGHT FAIL: ${GPU_VENV}/bin/python is missing -- build it with ./setup-venv.sh" >&2
+    fail=1
+  fi
+  if [ ! -x "${WATCHDOG}" ]; then
+    echo "PREFLIGHT FAIL: ${WATCHDOG} is missing or not executable; it is not optional" >&2
+    fail=1
+  fi
+
+  avail="$(awk '/^MemAvailable:/ {printf "%d", $2/1024; exit}' /proc/meminfo)"
+  echo "preflight: MemAvailable ${avail} MiB (need >= ${MIN_HOST_AVAIL_MIB}), \
+some avg10 $(awk '/^some/ {sub("avg10=","",$2); print $2; exit}' /proc/pressure/memory)"
+  if [ "${avail}" -lt "${MIN_HOST_AVAIL_MIB}" ]; then
+    echo "PREFLIGHT FAIL: only ${avail} MiB available; the FP8 service, a build container or" >&2
+    echo "  another lane is still resident. One host-RAM-heavy job at a time on this host." >&2
+    fail=1
+  fi
+
+  if ss -ltn 2>/dev/null | grep -qE '127\.0\.0\.1:18124|0\.0\.0\.0:18124'; then
+    echo "PREFLIGHT FAIL: something is still listening on 18124 (the FP8 service holds both cards)." >&2
+    fail=1
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    containers="$(docker ps -q 2>/dev/null | wc -l)"
+    if [ "${containers}" -gt 0 ]; then
+      echo "PREFLIGHT FAIL: ${containers} container(s) running:" >&2
+      docker ps --format '  {{.ID}}  {{.Image}}  {{.Status}}  {{.Names}}' >&2 2>/dev/null || true
+      fail=1
+    else
+      echo "preflight: no containers running"
+    fi
+  fi
+
+  if [ "${fail}" -ne 0 ]; then
+    echo >&2
+    echo "Refusing to start. Nothing was stopped or changed -- stopping the FP8 service or a" >&2
+    echo "container is a user decision (AGENTS.md)." >&2
+    exit 4
+  fi
+  echo "preflight: OK"
+}
+
 run_gpu() {   # run_gpu <run-name> [extra args...]
   local name="$1"; shift
+  local rc=0 job wd
   echo "=== GPU run ${name} ==============================================================="
-  systemd-run --user --scope --quiet --collect \
-    --unit="h3-${name}-$$" \
-    "${SCOPE_PROPS[@]}" \
-    "${GPU_VENV}/bin/python" "${RUNNER}" \
-      --prompt "${PROMPT}" \
-      --height "${HEIGHT}" --width "${WIDTH}" \
-      --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
-      --out-dir "${OUT_ROOT}" --run-name "${name}" \
-      --save-tensors \
-      "$@" \
-      2>&1 | tee "${OUT_ROOT}/${name}.log"
+
+  # The job goes to the background so it becomes its own process group (set -m), which is what
+  # lets the watchdog group-kill exactly this run -- systemd-run, python and tee -- and nothing else.
+  (
+    systemd-run --user --scope --quiet --collect \
+      --unit="h3-${name}-$$" \
+      "${SCOPE_PROPS[@]}" \
+      "${GPU_VENV}/bin/python" "${RUNNER}" \
+        --prompt "${PROMPT}" \
+        --height "${HEIGHT}" --width "${WIDTH}" \
+        --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
+        --out-dir "${OUT_ROOT}" --run-name "${name}" \
+        --save-tensors \
+        "$@" \
+        2>&1 | tee "${OUT_ROOT}/${name}.log"
+  ) &
+  job=$!
+
+  "${WATCHDOG}" "${job}" "${WATCHDOG_MIN_AVAIL_MIB}" "${OUT_ROOT}/${name}.watchdog.log" &
+  wd=$!
+
+  wait "${job}" || rc=$?
+  # The watchdog ends itself within one poll of the job disappearing, and logs its summary line
+  # (poll count, low MemAvailable, peak pressure) on the way out -- so wait for it, do not kill it.
+  wait "${wd}" 2>/dev/null || true
+
+  if [ "${rc}" -ne 0 ]; then
+    echo "run ${name} exited ${rc}" >&2
+    if grep -q "KILL pid=" "${OUT_ROOT}/${name}.watchdog.log" 2>/dev/null; then
+      echo "THE WATCHDOG KILLED THIS RUN -- host memory, not the GPU. See ${OUT_ROOT}/${name}.watchdog.log" >&2
+    fi
+  fi
+  return "${rc}"
 }
 
 compare_receipts() {   # compare_receipts <name-a> <name-b>
@@ -97,11 +184,13 @@ case "${mode}" in
 
   one)
     mkdir -p "${OUT_ROOT}"
+    preflight
     run_gpu "smoke-$(date -u +%Y%m%dT%H%M%SZ)"
     ;;
 
   repeat)
     mkdir -p "${OUT_ROOT}"
+    preflight
     stamp="$(date -u +%Y%m%dT%H%M%SZ)"
     run_gpu "repeat-${stamp}-a"
     run_gpu "repeat-${stamp}-b"

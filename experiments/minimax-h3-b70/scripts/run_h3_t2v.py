@@ -23,8 +23,18 @@ Hard constraints this script respects
 * `--dry-run` never imports torch.xpu, diffusers or transformers and never allocates a device
   tensor: it reads configs and safetensors *headers* only.  It is the CPU validation path.
 * GPU work is expected to run under `systemd-run --user` (see `smoke_h3.sh`), per the lab rule
-  that the interactive harness may kill long GPU jobs.
+  that the interactive harness may kill long GPU jobs, and under `mem-watchdog.sh`, per the
+  2026-09-18 host OOM incident: this host has 15 GiB of RAM and `systemd-oomd` kills the user's
+  whole session on sustained memory pressure.
 * Nothing here starts, stops or restarts a service or container.
+
+Environment switches
+--------------------
+* `B70_H3_LOG_MEM=1` -- log host VmRSS / RssAnon / RssFile / MemAvailable every 50 tensors during
+  both load loops (`B70_H3_LOG_MEM_EVERY` changes the interval).
+* `B70_H3_DROP_PAGECACHE=1` -- posix_fadvise(DONTNEED) the checkpoint being streamed every 50
+  tensors, to hold the mmap page cache down (`B70_H3_DROP_PAGECACHE_EVERY`). Off by default.
+  `scripts/profile-encoder-load.py` measures both, on CPU, before any GPU run.
 
 Run `--help` for the options.  `smoke_h3.sh` holds the exact command lines.
 """
@@ -506,6 +516,85 @@ def host_rss_bytes() -> int:
 
 
 # ---------------------------------------------------------------------------------------------
+# Host-memory instrumentation for the load loops
+#
+# The 2026-09-18 03:05 first light died in `encode.load` with a 15 GiB host (incident:
+# ../../qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md).  Both loaders stream tensor by
+# tensor and hold no full state dict, but "holds no state dict" was an argument, not a
+# measurement.  These two env switches make the load loops say what they actually cost:
+#
+#   B70_H3_LOG_MEM=1              log VmRSS / RssAnon / RssFile / MemAvailable every 50 tensors
+#                                 (B70_H3_LOG_MEM_EVERY changes the interval)
+#   B70_H3_DROP_PAGECACHE=1       posix_fadvise(DONTNEED) the checkpoint every 50 tensors
+#                                 (B70_H3_DROP_PAGECACHE_EVERY changes the interval)
+#
+# RssAnon is what the loader itself holds; RssFile is the checkpoint's mmap page cache, which is
+# reclaimable but whose reclaim is exactly the memory pressure systemd-oomd kills on.  The
+# page-cache drop is OFF by default because it is advisory and costs re-reads if a tensor is
+# touched twice; `scripts/profile-encoder-load.py --drop-pagecache` is the A/B that says whether
+# it is worth turning on for a given card/host.
+# ---------------------------------------------------------------------------------------------
+
+LOG_MEM = os.environ.get("B70_H3_LOG_MEM") == "1"
+LOG_MEM_EVERY = max(1, int(os.environ.get("B70_H3_LOG_MEM_EVERY", "50")))
+DROP_PAGECACHE = os.environ.get("B70_H3_DROP_PAGECACHE") == "1"
+DROP_PAGECACHE_EVERY = max(1, int(os.environ.get("B70_H3_DROP_PAGECACHE_EVERY", "50")))
+
+
+def host_mem_fields() -> dict:
+    """VmRSS / VmHWM / RssAnon / RssFile from /proc/self/status, plus MemAvailable, in bytes."""
+    want = ("VmRSS", "VmHWM", "RssAnon", "RssFile")
+    out = {k: 0 for k in want}
+    try:
+        with open("/proc/self/status") as fh:
+            for line in fh:
+                key, _, rest = line.partition(":")
+                if key in want:
+                    out[key] = int(rest.split()[0]) * 1024
+        with open("/proc/meminfo") as fh:
+            for line in fh:
+                if line.startswith("MemAvailable:"):
+                    out["MemAvailable"] = int(line.split()[1]) * 1024
+                    break
+    except OSError:
+        pass
+    return out
+
+
+def log_host_mem(tag: str, index: int, total: int | None = None, force: bool = False) -> None:
+    """Log host memory every LOG_MEM_EVERY tensors when B70_H3_LOG_MEM=1."""
+    if not LOG_MEM:
+        return
+    if not force and index % LOG_MEM_EVERY != 0:
+        return
+    m = host_mem_fields()
+    LOG.info(
+        "[mem] %s %s: VmRSS %s  anon %s  file %s  hwm %s  MemAvailable %s",
+        tag,
+        f"{index}/{total}" if total else str(index),
+        gib(m.get("VmRSS", 0)),
+        gib(m.get("RssAnon", 0)),
+        gib(m.get("RssFile", 0)),
+        gib(m.get("VmHWM", 0)),
+        gib(m.get("MemAvailable", 0)),
+    )
+
+
+def drop_file_pagecache(path: pathlib.Path, index: int) -> None:
+    """Advisory page-cache drop for a checkpoint being streamed (B70_H3_DROP_PAGECACHE=1)."""
+    if not DROP_PAGECACHE or index % DROP_PAGECACHE_EVERY != 0:
+        return
+    try:
+        fd = os.open(str(path), os.O_RDONLY)
+        try:
+            os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+        finally:
+            os.close(fd)
+    except OSError as exc:  # advisory only; never fail a load over it
+        LOG.debug("posix_fadvise(DONTNEED) on %s failed: %s", path, exc)
+
+
+# ---------------------------------------------------------------------------------------------
 # Phase 1 -- text encoder
 # ---------------------------------------------------------------------------------------------
 
@@ -621,9 +710,16 @@ def _build_text_encoder(torch, config, device, args):
             if name not in live:
                 LOG.debug("skipping unmatched checkpoint key %s", key)
                 continue
+            # `get_tensor` is a zero-copy view on the mmap (safetensors 0.8.0, verified); `.to()`
+            # allocates on the card and reads the source pages, and the view is dropped on the
+            # next statement.  `del t` hands our reference to the device tensor straight back --
+            # the module owns it now -- so nothing host-side survives this iteration.
             t = fh.get_tensor(key).to(device=device)
             set_submodule_tensor(model, name, t)
+            del t
             loaded += 1
+            log_host_mem("encode.load", loaded, len(header))
+            drop_file_pagecache(INT8_TEXT_ENCODER, loaded)
 
         # 2. Quantized Linears -> ConvRotLinear.
         for base in sorted(quantized):
@@ -641,7 +737,10 @@ def _build_text_encoder(torch, config, device, args):
             qw = fh.get_tensor(base + ".weight").to(device=device)
             sc = fh.get_tensor(base + ".weight_scale").to(device=device, dtype=torch.float32)
             setattr(parent, leaf, ConvRotLinear(qw, sc, bias, rotation, group_size))
+            del qw, sc, bias  # the ConvRotLinear buffers own them now; drop our host-side names
             loaded += 1
+            log_host_mem("encode.load", loaded, len(header))
+            drop_file_pagecache(INT8_TEXT_ENCODER, loaded)
 
     # The checkpoint carries no final norm (see the `hidden_states[50]` note in `encode_prompt`).
     # Assert that, then make the norm an identity so `last_hidden_state` is the unnormalized state.
@@ -658,6 +757,7 @@ def _build_text_encoder(torch, config, device, args):
     else:
         raise RuntimeError(f"could not find the final norm at {lm_path}.norm; inspect the model layout")
 
+    log_host_mem("encode.load", loaded, len(header), force=True)
     LOG.info("text encoder: placed %d tensors (%d quantized Linears) on %s", loaded, len(quantized), device)
     leftover = [n for n, p in model.named_parameters() if p.device.type == "meta"]
     leftover += [n for n, b in model.named_buffers() if b.device.type == "meta"]
@@ -728,9 +828,13 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                     t = torch.cat((t[half:], t[:half]), dim=0)
                 t = t.to(device=dev, dtype=target_dtype(name, args.adaln_dtype)).contiguous()
                 set_submodule_tensor(model, name, t)
+                del t  # the module owns the device tensor; drop the host-side name and the view
                 placed += 1
                 if placed % 100 == 0:
                     LOG.info("  placed %d/%d tensors (host peak RSS %s)", placed, len(remap), gib(host_rss_bytes()))
+                log_host_mem("load.stream", placed, len(remap))
+                drop_file_pagecache(PRUNED_DENOISER, placed)
+        log_host_mem("load.stream", placed, len(remap), force=True)
         # `rope.inv_freq` is non-persistent and recomputed from the config, not loaded
         # (transformer_minimax_h3.py L88-91).  Rebuild it on the primary card and cross-check.
         freq_dim = config["rope_freq_dim"]

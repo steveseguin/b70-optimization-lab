@@ -1,6 +1,10 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
-Status: **weights downloading; nothing run yet.**
+Status (2026-09-18): **weights on disk except the full INT8 ConvRot denoiser (15.7 %, see the
+[disk audit](notes/2026-09-18-disk-audit.md)); no clip generated yet.** First light on 2026-09-18 03:05 UTC died
+in the text-encoder load and took the user's desktop session with it (a 4 GiB cgroup ceiling on a 27 GB load,
+beside a kernel build, on a 15 GiB host). The lane is gated on a CPU host-memory measurement and now runs under
+`scripts/mem-watchdog.sh`: [first-light plan](notes/2026-09-18-first-light-plan.md).
 
 ## What the model is
 
@@ -42,9 +46,20 @@ needs the four-card host, 128 GiB).
 
 `/mnt/fast-ai/llm-models/minimax-h3` (original: `transformer/`, `vae/`, `audio_vae/`, schedulers, processor,
 tokenizer, docs; the BF16 text encoder is skipped for disk) and `/mnt/fast-ai/llm-models/minimax-h3-comfy`
-(INT8 ConvRot denoiser and text encoder, fp16/fp32 VAEs). Script: `/mnt/fast-ai/llm-models/minimax-h3-download.sh`.
+(the **pruned BF16** denoiser, the INT8 ConvRot text encoder, fp16/fp32/int8 VAEs).
+Script: `/mnt/fast-ai/llm-models/minimax-h3-download.sh`.
+
+**Correction, 2026-09-18 ([disk audit](notes/2026-09-18-disk-audit.md)): the full INT8 ConvRot denoiser is NOT on
+disk.** Its download was cut off at 5.34 GB of 34.04 GB (15.7 %) on 2026-09-17 and never resumed, so the only denoiser
+this host can load is the pruned BF16 one -- which is what `scripts/run_h3_t2v.py` loads, unconditionally. Everything
+else listed above is complete and size-verified against the Hugging Face repos. The audit has the resume command and
+the fidelity question that the missing file leaves open.
 
 Detailed stand-up plan: [notes/2026-09-17-pipeline-plan.md](notes/2026-09-17-pipeline-plan.md).
+First-light sequence, go/no-go rule and failure playbook:
+[notes/2026-09-18-first-light-plan.md](notes/2026-09-18-first-light-plan.md).
+Host-memory safety: `scripts/mem-watchdog.sh` (kills our job before systemd-oomd kills the session) and
+`scripts/profile-encoder-load.py` (CPU-only measurement of the loaders' host footprint).
 
 ## Next steps (not started)
 
