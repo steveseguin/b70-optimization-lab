@@ -515,21 +515,85 @@ no-MTP references: strict twice, the ladder, the context screen, quality, and th
 restores the two-card service itself at the end, as unit `fp8-service-20260918-lc3` with state
 `/mnt/fast-ai/bench-results/fp8-lc3-20260918/service`, after a port-free poll on 18124.
 
+## lc-4: exact on every gate, +10-17% writing speed past 16K (September 18, 04:20-04:45 UTC)
+
+lc-3 never measured the candidate past the ladder: its short screen died on `ValueError: baseline prompt IDs differ`
+(it ran the long corpus against a baseline built on the AMD-transfer corpus), and the long screen killed the engine
+because the overlay's precondition read `max_seqlen_k`, a host integer that is not always the key length. Both are
+fixed in `a7fd43dcd` -- the short screen now runs on the baseline's own corpus, and the precondition reads
+`seqused_k[0]`. lc-4 is the same runner, re-run on the same `r312d-c` image
+([runner](../scripts/run-20260918-fp8-lc3-campaign.py), `CAMPAIGN_OUT=/mnt/fast-ai/bench-results/fp8-lc4-20260918`,
+receipts [data/2026-09-18-fp8-lc4](../data/2026-09-18-fp8-lc4/)).
+
+Candidate `tp1-r312c-multiq`: one card, MTP depth 5, INT4 draft + shortlist, host embedding, the `b70-gdn-checkpoint`
+and `b70-fa-multiq` overlays, 32,768 tokens at 0.975, KV budget 40,140 tokens. Every comparison is against the R311b
+896-block no-MTP references (`fp8-ckpt2-20260917`), the same ones the shipped 32K numbers were gated on.
+
+| Gate | Result |
+| --- | --- |
+| Strict, run 1 / run 2, vs the R311b no-MTP reference | **12/12 and 12/12**, 54.21 / 53.90 tok/s (the reference writes 54.21 without MTP at run 2 in `results.json`) |
+| 64-prompt ladder: sequential oracle + two queued passes | **64/64, 64/64, 64/64**, exact |
+| Context screen 2K/8K/16K (AMD-transfer corpus) | **exact**, 18 rows |
+| Long corpus 2,048-30,720, code / docs / prose, two repeats | **exact**, 30 rows |
+| Chat quality, two repeats, vs the no-MTP baseline | **pass**, every answer matched |
+| 21-request logprob replay | **no divergence**, cached tokens all zero |
+
+**Writing speed after the prompt** (tokens 1-100, median within each content type then across types, 6 requests per
+point), against the same package on R311b -- probe-1's `tp1-pkg-max-context` (40,960) and probe-2's `tp1-pkg-32k`
+(32,768), which agree with each other to within 0.2%:
+
+| Input tokens | R311b (32K) | R311b (max) | R312d-c | Change |
+| ---: | ---: | ---: | ---: | ---: |
+| 2,048 | 59.24 | 59.23 | 58.43 | **-1.4%** |
+| 8,192 | 76.82 | 76.91 | 79.66 | **+3.7%** |
+| 16,384 | 65.71 | 65.82 | 72.09 | **+9.7%** |
+| 24,576 | 39.73 | 39.76 | 45.38 | **+14.2%** |
+| 30,720 | 37.48 | 37.50 | 43.87 | **+17.0%** |
+
+By content type at 30,720 tokens: code 54.5 -> 63.2, documentation 28.7 -> 33.4, prose 37.5 -> 43.9 tok/s. The 2K row
+is the reason the package sets `B70_FA_MULTIQ_MIN_K=4096` instead of the overlay's 1,536 default: below about 4,000
+keys the one-pass kernel is 1-2% slower than the per-row path (85.9 tok/s on the per-row path for the 2K code class),
+and both paths are the same decode arithmetic, so the choice costs nothing but speed. Prompt reading is unchanged
+(2,025 tok/s at 2K down to 1,805 at 30,720).
+
+The census ratio did not translate one for one: 1.6-2.2x on the kernel in isolation became +10-17% end to end, which
+is what a verifier-attention change can be worth when the rest of the step (the draft passes, the GDN state, the two
+GEMM stacks) is unchanged.
+
+**lc-3's final two-card service strict was not a fault.** lc-3 restored the service at 04:17:20 UTC and its strict run
+returned `rc=1` at 04:17:44; lc-4 started at 04:17:40 and stopped that service at 04:17:47, mid-request. The container
+exited 0, there are no fault lines, and lc-4's own restore (unit `fp8-service-20260918-lc4`) was **12/12 at 87.23
+tok/s** against the comm-2 no-MTP reference. Two campaigns were queued back to back without one waiting for the
+other's restore; that is the only thing that went wrong.
+
+**One change since lc-4, not covered by it.** The package runs `b70-fa-multiq` *and* `b70-fa-verify-rows`; lc-4 ran
+multiq alone. Both are vLLM general plugins on `PYTHONPATH=/overlay` and the loader's order over the overlay directory
+is not defined, so whichever registers last becomes the outer wrapper -- and if verify-rows is outer, its per-row
+calls reach multiq one row at a time and the one-pass kernel is never used. `register()` in `b70_fa_multiq` now
+installs `b70_fa_verify_rows` itself before capturing the function it wraps (verify-rows' own `_b70_fa_verify_rows`
+guard makes the loader's later call a no-op), so multiq is always outer: one pass above `MIN_K` with the rows
+computed as decode calls below it and whenever they straddle a 64-key tile. The acceptance campaign
+([runner](../scripts/run-20260918-fp8-onecard-r312d-campaign.py)) is what tests that composition through the shipped
+launcher.
+
 ## Left open
 
-- **The census gate is met: variant c is 22/22 exact.** The 7.6e-6 gap was the sycl-tla (CUTLASS) revision, not the
-  compiler, the code generator or the multi-row algorithm (section above). Nothing left open here except the rule below.
-- **lc-3 is running on the r312d-c image** (launched 03:58 UTC,
-  [runner](../scripts/run-20260918-fp8-lc3-campaign.py), receipts `/mnt/fast-ai/bench-results/fp8-lc3-20260918`,
-  log `/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/lc3.log`): fresh R312 references from a no-MTP arm that must be **12/12** against the R311b reference,
-  then the depth-5 candidate with `b70-fa-multiq` -- strict twice, ladder, the long screen, quality and the logprob
-  replay against REF5. The number to look for is the writing speed after a long prompt against R311b's 66 tok/s at 16K
-  and 40 at 24K. The census says the kernel is 1.6-2.2x faster than the single-row path at v-tile 64 in isolation; that
-  is not a server number. The runner restores the two-card service itself at the end (unit `fp8-service-20260918-lc3`,
-  state `/mnt/fast-ai/bench-results/fp8-lc3-20260918/service`).
-- **Then packaging, only if it is both exact and faster.** A one-pass verifier that is bit-identical but not faster is
-  a closed experiment, not a package revision; the one-card package keeps R311b until lc-3 shows both. A package
-  revision on r312d-c also has to carry the new toolchain and CUTLASS pin in its recipe, not just the overlay.
+- **The census gate is met and lc-4 met the server gate: exact and faster.** The 7.6e-6 gap was the sycl-tla (CUTLASS)
+  revision, not the compiler, the code generator or the multi-row algorithm; on the server the one-pass verifier is
+  exact on every gate and worth +10 to +17% writing speed above 16K (section above). Nothing left open on either.
+- **The one-card package is staged on r312d-c and the acceptance campaign has not run.** `serve.py` pins
+  `sha256:ea61e698...` with `B70_FA_MULTIQ=1` and `B70_FA_MULTIQ_MIN_K=4096`, the overlay and its dist-info ship in
+  `packages/qwen38-27b-fp8-tp1-b70/overlays/`, and the manifest carries the new toolchain and CUTLASS pin in its
+  recipe. What is missing is the run through the shipped launcher on all three profiles:
+  [`run-20260918-fp8-onecard-r312d-campaign.py`](../scripts/run-20260918-fp8-onecard-r312d-campaign.py)
+  (`SERVICE_STATE=<the running service's state dir>`, `CAMPAIGN_OUT=/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918`;
+  it defaults `B70_FP8_TP1_IMAGE` to the local tag because the image is not pushed). Until it passes, the manifest's
+  `acceptance_status` is `staged-pending-acceptance-campaign`, the max-context and no-quantization profiles are marked
+  `pending_on_r312d`, and the published charts stay on the R311b measurement.
+- **The r312d-c image must be pushed to ghcr by the user**
+  ([`publish-r312d-image-ghcr.sh`](../docker/rebase-v0290/publish-r312d-image-ghcr.sh), tag
+  `r312d-fp8-tp1-20260918`). The package pins the local image id; on this containerd host that is the same value as
+  the registry digest, as it was for R311b, and the manifest says the digest is verified after the push.
 - **Every future kernel build uses the pinned CUTLASS revision.** `87f6850` for vllm-xpu-kernels 0.1.14.1, read from
   the kernel's own `CMakeLists.txt` (`CUTLASS_REVISION`) rather than from whatever the build tree has checked out. The
   clean-clone recipe still names `cd76379` and its header now says so. Nothing shipped is affected -- r311b's GDN
@@ -546,5 +610,6 @@ restores the two-card service itself at the end, as unit `fp8-service-20260918-l
 - Two-card: the replicated drafter (campaigns 3-4) is exact but never faster; the collective count per step is set by
   the 64 target layers, so the next two-card lever would be fusing the per-layer allreduce pairs (out_proj + MLP down)
   or overlapping them with compute, both deeper changes than an overlay.
-- The R311b image must be pushed to ghcr by the user (`publish-r311b-image-ghcr.sh`); the one-card package pins its
-  digest already, and the one-card LocalMaxxing payload is held until then.
+- The R311b image must be pushed to ghcr by the user (`publish-r311b-image-ghcr.sh`); it is still the image every
+  published one-card number was measured on, and the one-card LocalMaxxing payload is held until then. The package
+  itself now pins r312d-c, so both pushes are outstanding.

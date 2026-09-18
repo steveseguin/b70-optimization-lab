@@ -4,7 +4,9 @@ The official Qwen FP8 weights on **one Intel Arc Pro B70 (32 GiB)**, one user,
 with the model's own MTP draft at depth 5. Every answer is checked by the full
 FP8 model, and outputs are identical to running without MTP. Since September 17 the
 launcher keeps one copy of the model's recurrent state per request instead of six,
-which is what makes 32K of context fit on the card.
+which is what makes 32K of context fit on the card. Since September 18 it also checks
+the draft's five guesses in one pass over the cache instead of five separate passes,
+which is worth 10-17% more writing speed after a long prompt and changes no output.
 
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
@@ -29,7 +31,7 @@ How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/RE
 ```bash
 MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/download-model.sh
 MODEL_DIR=/path/qwen3.8-27b-fp8 packages/qwen38-27b-fp8-tp1-b70/scripts/verify.sh
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a
 python3 packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py start --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-one-card-session
 ```
 
@@ -53,6 +55,41 @@ and the answer.
 
 ## Good to know
 
+- **Faster after a long prompt (September 18, R312d-c image):** checking the draft's guesses used to issue one
+  attention call per guessed position, each re-reading the whole cache; the new kernel reads the cache once and
+  computes all the rows together ([overlay](overlays/b70_fa_multiq.py)). Every row is still computed with exactly the
+  arithmetic a single token uses, so nothing about the answers changes -- and that was measured, not assumed: on a
+  fresh server the strict suite was 12/12 identical to no MTP twice (54.21 / 53.90 tok/s), the 64-prompt test 64/64
+  three times, the 2K/8K/16K screen exact, the 2,048-30,720-token long corpus exact in all three content types, the
+  chat quality suite and the 21-request replay exact
+  ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/)). Writing speed right after a prompt, against
+  the same package on the R311b image:
+
+  | Prompt | 2,048 | 8,192 | 16,384 | 24,576 | 30,720 |
+  | --- | ---: | ---: | ---: | ---: | ---: |
+  | R311b | 59.2 | 76.8 | 65.7 | 39.7 | 37.5 |
+  | **R312d-c** | **58.4** | **79.7** | **72.1** | **45.4** | **43.9** |
+  | Change | -1% | +4% | +10% | +14% | +17% |
+
+  All in tokens/s, median across code, documentation and prose, two repeats each. Short prompts stay on the old
+  per-guess path on purpose (`B70_FA_MULTIQ_MIN_K=4096`): below about 4,000 tokens of cache the one-pass kernel
+  measured 1-2% slower. The by-content-type numbers at 30,720 tokens: code 54.5 to 63.2, documentation 28.7 to 33.4,
+  prose 37.5 to 43.9 tok/s.
+- **Which image, and how it was built.** The pinned runtime is
+  `sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a`, published as
+  `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918`. **The registry digest is verified after the
+  push** (`experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh`, run by the repository owner);
+  on the lab host, which uses Docker's containerd store, the registry digest is the same value as the local image id,
+  as it was for R311b. The source-build route is four steps on top of the public R310 image:
+  R310 -> **r311** (`Dockerfile.r311-gdn-checkpoint`, the single-checkpoint GDN op) -> **r312c**
+  (`Dockerfile.r312c-multiq` with `build-kernels-0.1.14.1-r312c-multiq.sh`, which adds `paged_decode_multiq` to
+  `_xpu_C` and leaves the upstream flash-attention library untouched) -> **r312d-c**
+  (`Dockerfile.r312d-multiq` with `build-kernels-0.1.14.1-r312d-multiq-toolchain.sh VARIANT=c`, which rebuilds only
+  `libattn_multiq_kernels_xe_2.so`). The last step exists because of one rule: **a kernel rebuild must use the
+  `CUTLASS_REVISION` the kernel's own `CMakeLists.txt` pins** -- `87f6850` for vllm-xpu-kernels 0.1.14.1, with DPC++
+  2026.0.0, IGC 2.34.4 and ocloc 26.18. Built against the older `cd76379` the same kernel is off by 7.6e-6 on 8 of 22
+  census cases; built against the pinned revision it is bit-exact on all 22
+  ([census](../../experiments/qwen38-27b-b70/data/2026-09-18-fa-multiq-census/)).
 - The input word table (2.4 GiB) is kept in host memory so the model, its draft
   and the cache fit on one card; lookups are exact.
 - The `recommended` profile scores draft guesses with a small INT4 copy of
@@ -71,7 +108,8 @@ and the answer.
   Long prompts, same evening: with an unrepeated corpus the `recommended` profile reproduced the no-MTP
   continuations token for token after 24,576- and 30,720-token prompts, and `max-context` after 36,864-token ones
   (three content types, two repeats each; [probe receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-probe1/)).
-  Writing speed right after a 24K+ prompt is about 38-40 tok/s (66 after 16K; the no-MTP server writes 18).
+  Writing speed right after a 24K+ prompt was about 38-40 tok/s on that image (66 after 16K; the no-MTP server
+  writes 18); the September 18 kernel raises those to 45 and 72 -- see the first item above.
 - **24,576 tokens of context (September 17, morning):** the launcher reads prompts in 2,048-token chunks instead of
   4,096, which frees 0.35 GiB of GPU memory. Two fresh servers at that setting: 53.43 / 53.43 tok/s, every gate exact.
 - **Both profiles passed the 64-prompt back-to-back test** against a no-MTP server (September 16-17), the check
@@ -81,4 +119,8 @@ and the answer.
   the verified model files and the Docker layer cache: model verify, image pull,
   start, strict suite 12/12 identical to no-MTP at 53.497 tok/s (13,824-token profile), clean stop.
 - Not yet tested: a machine without Intel drivers, Docker or the model already
-  in place, and more than one user at a time.
+  in place, and more than one user at a time. The R312d-c image's own run above was made on a research server; the
+  three profiles are being re-checked through this launcher
+  ([acceptance campaign](../../experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py)), and the
+  speed table above is the only number this image changes -- the profile table at the top is still the R311b
+  measurement, which the strict suite reproduces on R312d-c within run-to-run noise.

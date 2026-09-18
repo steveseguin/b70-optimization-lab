@@ -77,19 +77,32 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 18 04:00 UTC: session 8 is done and the census gate is MET -- lc-3 is running on the exact
-image; the service on 18124 is still down and the lc-3 runner restores it at the end.** Session
+**Two-B70 host, September 18 04:50 UTC: lc-4 PASSED every gate and is faster -- the one-card package update to the
+r312d-c image is staged in the repository, the acceptance campaign is the next GPU job, and the registry push waits on
+the user.** The depth-5 two-card service is back UP on 18124 (unit `fp8-service-20260918-lc4`, state
+`/mnt/fast-ai/bench-results/fp8-lc4-20260918/service`), 12/12 vs the comm-2 no-MTP reference at 87.23 tok/s. lc-4 is
+lc-3 re-run after two fixes in `a7fd43dcd` (the short screen runs on its baseline's own corpus; the overlay's
+precondition reads `seqused_k[0]`, not `max_seqlen_k`): candidate `tp1-r312c-multiq` on the `r312d-c` image
+(`sha256:ea61e698...`), one card, depth 5, 32,768 at 0.975, receipts
+`/mnt/fast-ai/bench-results/fp8-lc4-20260918/` and [data/2026-09-18-fp8-lc4](experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/).
+Strict 12/12 twice (54.21 / 53.90 tok/s), ladder 64/64 three times, the 2K/8K/16K screen, the 2,048-30,720-token long
+corpus in three content types, chat quality and the 21-request logprob replay all exact against the R311b no-MTP
+references -- and **writing speed after a long prompt is +9.7% at 16K, +14.2% at 24K and +17.0% at 30K** (30,720:
+37.5 to 43.9 tok/s), with 2K 1.4% slower, which is why the package sets `B70_FA_MULTIQ_MIN_K=4096`. lc-3's own final
+service strict `rc=1` was lc-4 stopping that service mid-request three seconds after it started (container exited 0),
+not a fault. **Staged in the repository, not yet measured through the launcher:** `serve.py` pins the r312d-c id with
+`B70_FA_MULTIQ=1`, the overlay ships in the package, the manifest carries the toolchain and CUTLASS pin, and
+`acceptance_status` is `staged-pending-acceptance-campaign`. **Next GPU job:**
+`SERVICE_STATE=/mnt/fast-ai/bench-results/fp8-lc4-20260918/service CAMPAIGN_OUT=/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918 python3 experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py`
+(all three profiles through `serve.py`, then the service back as unit `fp8-service-20260918-onecard-r312d`). **Waiting
+on the user:** `experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh` (tag
+`r312d-fp8-tp1-20260918`); the R311b push is still outstanding too. Earlier on this boot, session
 `fp8-r312d-session8-20260918` rebuilt the multiq library twice with the cards idle, one compiler job at a time: variant
 b (upstream DPC++ 2026.0.0 + IGC 2.34.4 / ocloc 26.18, 03:25-03:40) is still 8/22 exact at 7.63e-6, the same cases as
 r312c, so the toolchain was never the cause; **variant c (b plus sycl-tla `87f6850`, the revision the kernel
 `CMakeLists.txt` actually pins, 03:40-03:56) is bit-exact, 22/22, max abs 0.0 at both v-tile 64 and 256.** Every lab
 build from r309 on had used the March `cd76379`. Nothing shipped is invalidated, but every future `_xpu_C`/GDN rebuild
-must use the pinned revision. Since 03:58 UTC session 8 itself (still unit `fp8-r312d-session8-20260918`) is running
-lc-3 inline on the `r312d-c` image (`sha256:ea61e698...`; receipts `/mnt/fast-ai/bench-results/fp8-lc3-20260918/`, log
-`/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/lc3.log`): no-MTP references
-that must be 12/12 vs R311b, then the depth-5 `tp1-r312c-multiq` candidate -- strict twice, ladder, context, quality,
-long corpus. When it finishes it restores the two-card service itself as unit `fp8-service-20260918-lc3`, state
-`/mnt/fast-ai/bench-results/fp8-lc3-20260918/service`. MiniMax-H3 stays off (its smoke runner no longer sets a cgroup
+must use the pinned revision. MiniMax-H3 stays off (its smoke runner no longer sets a cgroup
 memory ceiling; it must never run beside a build or the service). A kernel build in a container overlapped with the MiniMax-H3 first-light run (a
 27 GB text-encoder load under `MemoryMax=4G`, which thrashed instead of failing fast) on this 15 GiB host;
 `systemd-oomd` killed by memory pressure up through the GNOME session to `user@1000.service` itself, so

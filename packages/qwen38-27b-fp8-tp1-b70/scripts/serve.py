@@ -18,7 +18,11 @@ import urllib.request
 import uuid
 
 PACKAGE = Path(__file__).resolve().parents[1]
-IMAGE_ID = 'sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7'  # R311b: R310 + single-checkpoint GDN op
+IMAGE_ID = 'sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a'  # R312d-c: R311b + the one-pass
+# verifier attention op paged_decode_multiq in _xpu_C, its device library built against the sycl-tla revision the
+# kernel CMakeLists pins (87f6850) with DPC++ 2026.0.0 / IGC 2.34.4 / ocloc 26.18; the upstream flash-attention
+# library is the untouched upstream binary. On this host the registry digest equals this local image id; it is
+# re-verified after publish-r312d-image-ghcr.sh pushes the image.
 IMAGE = os.environ.get('B70_FP8_TP1_IMAGE', 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@' + IMAGE_ID)
 MODEL = 'qwen38-27b-fp8'
 SHORTLIST = '/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt'
@@ -28,7 +32,9 @@ FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine re
 # chunk lowers peak activation memory by 0.35 GiB (follow-up campaign, 2026-09-17). The single-checkpoint recurrent
 # state (R311b kernel + b70_gdn_checkpoint overlay, ckpt-3 campaign, 2026-09-17) keeps one GDN state block per request
 # instead of six at depth 5, which raises the KV budget from 26,178 to 40,140 tokens at 0.975 and makes 32,768 tokens
-# of context the recommended profile at the same writing speed.
+# of context the recommended profile at the same writing speed. The context sizes and memory settings are unchanged by
+# the R312d-c kernel: it only changes how the verifier's 2..6 attention rows are computed (lc-4, 2026-09-18), which is
+# worth +9 to +17% writing speed after prompts above 16,384 tokens and nothing at all to the memory budget.
 PROFILES = {
     'recommended': dict(max_model_len=32768, memory=0.975, draft='int4-shortlist', batched=2048),
     # 0.983 is the most this card accepts (29.81 of 30.3 GiB free at startup); 0.24 GiB more than recommended.
@@ -39,6 +45,11 @@ PROFILES = {
 # Qualified runtime environment (one card, official FP8, deterministic W8A16/GDN paths).
 BASE_ENV = {
     'B70_CPU_EMBED': '1',
+    # The one-pass verifier attention (R312d-c op) above 4,096 keys; below it, and whenever the rows straddle a 64-key
+    # tile, b70_fa_verify_rows issues the same per-row decode calls. Both paths are the single-token decode arithmetic.
+    # 4,096 rather than the overlay's 1,536 default: 2K prompts measured 1-2% slower on the one-pass path (lc-4).
+    'B70_FA_MULTIQ': '1',
+    'B70_FA_MULTIQ_MIN_K': '4096',
     'B70_FA_VERIFY_ROWS': '1',
     'B70_GDN_CHECKPOINT': '1',
     'CCL_ATL_TRANSPORT': 'ofi',

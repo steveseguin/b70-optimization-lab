@@ -1,0 +1,123 @@
+{
+  "started": "2026-09-18T04:17:40.055091+00:00",
+  "preflight_health_rc": 0,
+  "tp1-r312c-multiq": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-18T04:20:20.191014+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 54.21161759197449,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "strict_run2": {
+      "rc": 0,
+      "tok_s_1_100": 53.89646669862766,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64",
+        "batch-c64-r2": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "context_long": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-probe1-20260917/tp1-mtp0-40k-context-5lengths/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 30,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {},
+        "24576": {},
+        "30720": {}
+      }
+    },
+    "quality": {
+      "rc": 0,
+      "pass_all": true,
+      "baseline_match_all": true,
+      "baseline_status": "passed"
+    },
+    "history": {
+      "rc": 0,
+      "divergent": [],
+      "logprob_divergent": [],
+      "cached_tokens_all_zero": true
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 147413,
+      "container_name": "fp8-tp1-e4614fd7d8e9",
+      "image_id": "sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
+      "port": 18220,
+      "started_at": "2026-09-18T04:17:59.617973+00:00",
+      "boot_id": "9f41bfb8-04d2-496d-a13d-ad12c6a76fcb",
+      "container_id": "ac65a79c65a112c4a63fd94bbc9a53f0da99400c3876886581d115564d676bdf",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 1.958
+      },
+      "ready_at": "2026-09-18T04:20:20.191014+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-09-18T04:45:40.443031+00:00",
+      "memory_log": [
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) INFO 09-18 04:18:46 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=187) INFO 09-18 04:18:57 [default_loader.py:430] Loading weights took 10.13 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-18 04:18:59 [default_loader.py:430] Loading weights took 1.42 seconds",
+        "(EngineCore pid=187) b70_cpu_embed: model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=187) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=187) INFO 09-18 04:19:03 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 14.708111 seconds",
+        "(EngineCore pid=187) INFO 09-18 04:20:01 [monitor.py:53] torch.compile took 56.69 s in total",
+        "(EngineCore pid=187) INFO 09-18 04:20:06 [monitor.py:53] torch.compile took 4.58 s in total",
+        "(EngineCore pid=187) INFO 09-18 04:20:09 [gpu_worker.py:625] Available KV cache memory: 2.9 GiB",
+        "(EngineCore pid=187) INFO 09-18 04:20:09 [kv_cache_utils.py:2032] GPU KV cache size: 40,140 tokens, Maximum concurrency for 32,768 tokens per request: 1.23x",
+        "(EngineCore pid=187) WARNING 09-18 04:20:11 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(EngineCore pid=187) INFO 09-18 04:20:11 [gpu_worker.py:860] Free memory on device (29.87/30.3 GiB) on startup. Desired GPU memory utilization is (0.975, 29.54 GiB). Actual usage is 26.34 GiB for consumed memory (weights + non-torch), 0.3 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=2960304231` (2.76 GiB) to fit into requested memory, or `--kv-cache-memory=3321090048` (3.09 GiB) to fully utilize gpu memory. Current kv cache memory in use is 2.9 GiB.",
+        "(EngineCore pid=187) INFO 09-18 04:20:12 [core.py:361] init engine (profile, create kv cache, warmup model) took 69.35 s (compilation: 61.27 s)"
+      ]
+    }
+  },
+  "service_health_rc": 0,
+  "service": {
+    "status": "ready",
+    "error": null,
+    "unit": "fp8-service-20260918-lc4",
+    "state_dir": "/mnt/fast-ai/bench-results/fp8-lc4-20260918/service",
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 87.23469617540256,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict"
+    }
+  },
+  "finished": "2026-09-18T04:49:53.491076+00:00"
+}
