@@ -8,8 +8,13 @@ The difference from attempt 2 is not the pipeline. The pipeline was never shown 
 never got past `encode.load`. The difference is that **the host-RAM question is now answered before
 the GPU is touched, and every step has something that kills our job instead of the user's session.**
 
-Nothing in this note has been run. Steps 1-2 are safe with the FP8 service up; from step 3 on, the
-cards and the host must be free, and stopping the service is the user's decision (AGENTS.md).
+**STATUS 2026-09-18 15:06 UTC: this plan is HALTED at step 4 by a GPU fault.** Session 10 ran
+steps 1-4 and the run died three seconds into sampling with a copy-engine fault on `0000:03:00.0`
+(xpu:0); the host, the loader and the two-card load all behaved. The full write-up is
+[the fault note](2026-09-18-gpu-fault-first-light.md). No GPU work happens on this host until the
+user chooses between a health probe and a reboot; the FP8 service is down until then. What
+follows is updated with what sessions 9 and 10 established, so the next session can resume from
+step 4 rather than re-derive it.
 
 ---
 
@@ -23,6 +28,12 @@ cards and the host must be free, and stopping the service is the user's decision
 | 4 | Nothing else running: no build container, no other lane, service down | `smoke_h3.sh preflight` refuses: MemAvailable < 11 GiB, port 18124 listening, or any running container |
 | 5 | The service restore waits for the port | step 7 below |
 | 6 | Queued behind the FP8 work, not beside it | the session script's `until ! systemctl --user is-active ...` waits |
+| 7 | `PYTORCH_ALLOC_CONF=expandable_segments:True` in the run's environment (**new, session 10**) | `smoke_h3.sh` exports it for every GPU run and prints it in preflight |
+| 8 | No card carries an uncleared device coredump (**new, session 10**) | `smoke_h3.sh preflight` refuses and names the card |
+
+Preconditions 7 and 8 are not style. Without 7, every GiB placed on a card costs a GiB of host RAM
+with both cards visible, which is what killed session 9; without 8, a run starts on a card whose
+last fault has never been cleared, which is exactly the state this host is in now.
 
 ## Step 1 -- regenerate the rotation (CPU, seconds, safe now)
 
@@ -126,6 +137,54 @@ and the rest of the process take a few, and anything under 6 GiB leaves the marg
 a NO-GO, the loader was replaced, and session 8 re-measured. NO-GO does not mean "try it and
 watch".
 
+### Session 9: NO-GO on host memory, with the runner innocent
+
+`/mnt/fast-ai/bench-results/minimax-h3-s9-20260918/`. The first smoke run under the `pread` loader
+was killed by `mem-watchdog.sh` at 1.2 GiB MemAvailable during `encode.load` -- while the runner's
+own RSS was 0.7 GiB. The host memory was not in our process.
+
+### Session 10: the allocator flag is the fix, and it is a precondition
+
+`/mnt/fast-ai/bench-results/minimax-h3-s10-20260918/`, `scripts/xpu-host-memory-probe.py` (eight
+runs, under a minute each, 8 GiB placed on `xpu:0` one GiB at a time):
+
+| Cards visible | `PYTORCH_ALLOC_CONF` | fill: host MiB per 8 GiB | copy: host MiB per 8 GiB | dma-buf fds |
+| --- | --- | --- | --- | --- |
+| both | unset | **+8,125** | **+7,993** | 1 |
+| both | `expandable_segments:True` | +54 | +149 | 1 |
+| one (`level_zero:0`) | unset | +35 | +155 | 1 |
+| one | `expandable_segments:True` | +12 | +102 | 1 |
+
+Peer residency across two visible cards mirrors device allocations into host pages unless the
+allocator uses expandable segments. The fd count never moves, so it is not a leak. With the flag
+set, the same run then walked straight through the phases it had never reached:
+
+| Phase | Session 10 |
+| --- | --- |
+| `encode.load` | 12.64 s, 902 tensors on xpu:0, VmRSS flat at 0.778 GiB |
+| `encode.forward` | 1.46 s, prompt embeds (1, 46, 5120) |
+| `load.stream` | 20.61 s, 634 tensors, `rope.inv_freq` drift 0.000e+00 |
+| split | block 24: 18.797 GiB on xpu:0, 18.747 GiB on xpu:1 |
+| `sample` | started 11:03:53.675, **dead at 11:03:56** |
+
+### Session 10: the fault -- and why step 4 is now blocked
+
+Three seconds into the first denoise step, `xe 0000:03:00.0` (card2 / renderD129 = xpu:0) logged
+25 copy-engine (`EngineClass: 3 bcs`) page faults, 9 CAT errors, a bcs engine reset, a timed-out
+job and a device coredump; the runner died with `UR_RESULT_ERROR_DEVICE_LOST` in `scheduler.step`.
+The instant it died is the instant hidden states first cross from xpu:0 to xpu:1 at the block-24
+split. The stated (unproven) hypothesis is that `x.to(secondary)` is a peer-to-peer PCIe copy on
+the blitter, the class this host faulted on at 2026-09-16 06:02Z, 2026-09-17 03:10Z and (ccs, via
+oneCCL peer access) 2026-09-17 07:17Z.
+
+`run_h3_t2v.py` therefore gained `B70_H3_XFER=host|direct`, default `host`: every cross-card move
+is staged through a CPU tensor with an explicit synchronize on each side. Both routes are
+bit-exact. `smoke_h3.sh` pins `host` for every GPU run.
+
+**The next GPU session's first job is the host-staged smoke run** -- it is the experiment that
+tests the hypothesis. It cannot run until the user picks health-probe-then-restart or reboot; see
+[the fault note](2026-09-18-gpu-fault-first-light.md).
+
 ## Step 3 -- stop the service (user-authorized session script only)
 
 Not interactively, and not by me. The live service today is unit
@@ -153,6 +212,11 @@ any of that fails; then it puts the run in its own process group and wraps it in
 at a 2048 MiB floor. `STEPS=8` is still not a claim about the right step count (50 remains an
 assumption). First light asks two questions only: does this stack run on the cards at all, and does
 it repeat bit for bit.
+
+Since session 10 the script also exports `PYTORCH_ALLOC_CONF=expandable_segments:True` and
+`B70_H3_XFER=host` into the run, and refuses to start while any card holds an uncleared device
+coredump. **Right now it refuses**: `card2` (`0000:03:00.0`) still has one, and clearing it or
+rebooting is the user's decision.
 
 Optional, and cheap: `B70_H3_LOG_MEM=1` in the environment logs VmRSS / RssAnon / RssFile /
 MemAvailable every 50 tensors through both load phases, so the real load's host curve is on the
@@ -209,7 +273,7 @@ and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`).
 | `smoke_h3.sh` exits 4 with PREFLIGHT FAIL | service, container or another lane is still resident | stop nothing yourself; the run waits for the user's decision |
 | The run dies and `*.watchdog.log` has a `KILL pid=` line | **we ran out of host RAM and our watchdog caught it** -- the desired failure | record the low MemAvailable and the phase it died in; this is a loader result, not a GPU result. Do not retry unchanged. |
 | The run dies with no `KILL` line and no output after `encode.load` | the 2026-09-17 failure mode repeating, i.e. something outside our cgroup | check `oomctl` and `journalctl -k`; stop the lane and write it up before anything else |
-| `Fault response`, CAT error, engine reset or coredump in `journalctl -k` | a GPU fault | stop issuing work, write the evidence, **do not reset the driver and do not reboot** (AGENTS.md; the 2026-09-16 fault on this host is still open) |
+| `Fault response`, CAT error, engine reset or coredump in `journalctl -k` | a GPU fault | stop issuing work, write the evidence, **do not reset the driver and do not reboot** (AGENTS.md; the 2026-09-16 fault on this host is still open). **This happened on 2026-09-18 at the first denoise step**: [fault note](2026-09-18-gpu-fault-first-light.md). |
 | Step 5 prints `NOT bytewise-equal` | the stack does not repeat | **a result to record, not a reason to re-run until it passes.** Record which of the four hashes differ; `--deterministic` may fail closed on XPU, and if it does, say so instead of softening the claim to "visually identical". |
 | Step 6 restore fails with `[Errno 98]` | the port poll was too short | extend the poll, restore again; the service coming back is the last obligation of the session |
 

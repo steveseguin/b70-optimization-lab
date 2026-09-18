@@ -1,6 +1,8 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-11 15:50 UTC** (2026-09-11 11:50 EDT); the four-B70 host section below was added then.
+Last reviewed: **2026-09-18 15:30 UTC** (2026-09-18 11:30 EDT); the two-B70 host is in a GPU-fault
+halt, see the top of "Local Host And Active Review". The four-B70 host section below was added
+2026-09-11.
 
 ## Authority And Update Rule
 
@@ -24,6 +26,30 @@ previous 4,577-line page verbatim. Its live-service statements and queued
 actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
+
+**Two-B70 host `steve-TURIND8-2L2T`, September 18 15:06 UTC: GPU FAULT HALT. No GPU work of any kind
+until the user decides; the FP8 service is DOWN and stays down.**
+The MiniMax-H3 first-light run (session 10) got further than any before it -- encoder loaded in
+12.6 s, conditioning in 1.5 s, the pruned denoiser streamed onto both cards in 20.6 s at the
+block-24 split (18.797 / 18.747 GiB) -- and then died three seconds into the first denoise step:
+`xe 0000:03:00.0` (card2 / renderD129 = xpu:0) logged 25 copy-engine (`bcs`) page faults, 9 CAT
+errors, a bcs engine reset, a timed-out job and a device coredump, and the runner raised
+`UR_RESULT_ERROR_DEVICE_LOST`. The moment it died is the moment hidden states first cross from
+xpu:0 to xpu:1. **Nothing was reset, reloaded or rebooted**, the hung python was killed by pid,
+and `card2` still holds an uncleared devcoredump.
+Two things were learned and are now pinned as preconditions. (1) With both cards visible and
+`PYTORCH_ALLOC_CONF` unset, **every GiB placed on a card costs a GiB of host RAM** (8 GiB ->
++8,125 MiB); with `expandable_segments:True` it costs +54 MiB. That mirroring, not our process,
+is what killed session 9 and what the 4G cgroup cap turned into the 09-17 desktop kill. (2) The
+runner now stages every cross-card tensor move through host RAM (`B70_H3_XFER=host`, the new
+default, bit-exact against `direct`), because the leading -- unproven -- explanation for the
+fault is that `x.to(other_card)` is a peer-to-peer PCIe copy on the blitter, the class this host
+faulted on at 09-16 06:02Z, 09-17 03:10Z and (ccs, via oneCCL peer access) 09-17 07:17Z.
+**User decision needed: health probe then restart, or reboot first.** Either way the first GPU
+work afterwards should be the host-staged smoke run, because it is what tests the hypothesis.
+[Fault note](experiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md),
+[plan](experiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md), evidence
+`/mnt/fast-ai/bench-results/gpu-fault-20260918T1506/`.
 
 **Four-B70 host, September 18 04:40 UTC: packet 78 launched as server 78 after two clean reloads on the new kernel/firmware (no freeze, no fault).**
 Server 77b's sharded warm failed on the second clip: the host-embedding

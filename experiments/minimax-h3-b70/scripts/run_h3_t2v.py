@@ -27,6 +27,11 @@ Hard constraints this script respects
   2026-09-18 host OOM incident: this host has 15 GiB of RAM and `systemd-oomd` kills the user's
   whole session on sustained memory pressure.
 * Nothing here starts, stops or restarts a service or container.
+* `PYTORCH_ALLOC_CONF=expandable_segments:True` is a precondition, not a tuning knob, whenever
+  both cards are visible: session 10's probe matrix measured ~1 GiB of host RAM consumed per GiB
+  placed on a card without it, and +54/+149 MiB for 8 GiB with it
+  (`scripts/xpu-host-memory-probe.py`, `notes/2026-09-18-gpu-fault-first-light.md`).
+  `smoke_h3.sh` sets it for every GPU run.
 
 Environment switches
 --------------------
@@ -41,6 +46,9 @@ Environment switches
 * `B70_H3_DROP_PAGECACHE=1` -- posix_fadvise(DONTNEED) the checkpoint being streamed every 50
   tensors, to hold the mmap page cache down (`B70_H3_DROP_PAGECACHE_EVERY`). Off by default.
   `scripts/profile-encoder-load.py` measures both, on CPU, before any GPU run.
+* `B70_H3_XFER=host|direct` -- how a tensor crosses the two-card boundary. `host` (the default
+  since the 2026-09-18 GPU fault) stages every cross-card move through host RAM; `direct` keeps
+  the old `t.to(other_card)` device-to-device copy. Both are bit-exact; see `cross_card()`.
 
 Run `--help` for the options.  `smoke_h3.sh` holds the exact command lines.
 """
@@ -545,6 +553,8 @@ def host_rss_bytes() -> int:
 #                                 (B70_H3_DROP_PAGECACHE_EVERY changes the interval)
 #   B70_H3_LOADER=pread|mmap      which tensor reader the load loops use (default pread; see the
 #                                 reader section below for what sessions 6/7 measured)
+#   B70_H3_XFER=host|direct       route for every cross-card tensor move (default host; see the
+#                                 cross-card section below and the 2026-09-18 fault note)
 #
 # RssAnon is what the loader itself holds; RssFile is the checkpoint's mmap page cache, which is
 # reclaimable but whose reclaim is exactly the memory pressure systemd-oomd kills on.  The
@@ -639,6 +649,21 @@ def drop_file_pagecache(path: pathlib.Path, index: int) -> None:
 # The host cost is therefore one tensor's buffer at a time (plus the converted copy while a dtype
 # changes), and RssFile stays flat. `B70_H3_LOADER=mmap` restores the old path for A/B.
 #
+# IS IT SAFE TO DROP THE HOST BUFFER THE INSTANT `.to(device)` RETURNS?  Yes -- verified against
+# this venv's torch 2.14.0+xpu (`torch.version.xpu` 20260100, git 08187d9e0), 2026-09-18. No XPU
+# C++ sources ship with the wheel, but `torch/lib/libtorch_xpu.so` is not stripped and the SYCL
+# `code_location` constants carry the original file and line. `copy_stub` for XPU dispatches to
+# `at::native::xpu::_copy_xpu`, which branches on `non_blocking`; the `non_blocking == false`
+# branch is `queue.memcpy(dst, src, nbytes).wait()` -- an unconditional host-side
+# `sycl::event::wait()` right after the memcpy, at `torch-xpu-ops/src/ATen/native/xpu/Copy.cpp`
+# line 313, with no `is_pinned` test on that path. So when `.to(device)` returns, the host bytes
+# have already been read, and `del t` (which frees the pread buffer) and `release()` (which only
+# fadvises the page cache) are both safe with no `torch.xpu.synchronize()` in between.
+# For the record, the `non_blocking=True` pageable path is also buffer-safe by a different route:
+# it stages through the caching host allocator (a CPU `memcpy` into a pinned block, then an async
+# device copy from the staging block, then `record_event`) -- the destination, not the source, is
+# what needs a synchronize there. Re-check this if the venv's torch is rebased.
+#
 # A row slice is a contiguous byte range in a row-major tensor, so `get_tensor(key, row_slice)`
 # reads only those rows -- the qkv split reads a third of `qkv_proj` three times instead of the
 # whole tensor three times.
@@ -647,6 +672,69 @@ def drop_file_pagecache(path: pathlib.Path, index: int) -> None:
 LOADER = os.environ.get("B70_H3_LOADER", "pread").strip().lower()
 if LOADER not in ("pread", "mmap"):
     raise SystemExit(f"B70_H3_LOADER must be 'pread' or 'mmap', not {LOADER!r}")
+
+
+# ---------------------------------------------------------------------------------------------
+# Cross-card transfers (`B70_H3_XFER`, default `host`)
+# ---------------------------------------------------------------------------------------------
+#
+# 2026-09-18, session 10: the first run that reached `sample` died three seconds in with
+# `UR_RESULT_ERROR_DEVICE_LOST`, and the kernel logged 25 copy-engine (`EngineClass: 3 bcs`) page
+# faults on `xe 0000:03:00.0` -- the card holding blocks 0..23 -- followed by CAT errors, a bcs
+# engine reset and a device coredump. The moment it died is the moment hidden states first cross
+# from xpu:0 to xpu:1 at the block-24 split, i.e. the first device-to-device copy this process
+# ever issues.  See `notes/2026-09-18-gpu-fault-first-light.md`.
+#
+# HYPOTHESIS, not proof: `x.to(other_card)` between two XPUs in one process is a peer-to-peer
+# PCIe copy issued on the blitter, and this host has faulted on peer access before -- the
+# 2026-09-17 07:17Z ccs fault on both cards was attributed to oneCCL's non-simple SYCL kernels
+# using peer memory access (qwen38 lane `DO-NOT-REPEAT.md`, 2026-09-17 row). The FP8 service,
+# which runs on both cards for hours, never does P2P: its oneCCL simple thresholds are pinned at
+# 4 GiB and its allreduce is host-waited.
+#
+# So the default route is through host RAM: synchronize the source card, copy device->host into a
+# fresh CPU tensor, copy host->device onto the target card, synchronize the target. Two PCIe
+# transfers instead of one, and the staging buffer is one tensor's worth of host RAM (the packed
+# hidden state at 256x448x124, not a weight), which is why this is affordable per block boundary.
+#
+# A COPY IS A COPY: `host` and `direct` move the same bytes and produce bitwise identical
+# tensors. This switch changes the route, never the arithmetic, so a `host` run and a `direct`
+# run are comparable hash for hash.
+XFER = os.environ.get("B70_H3_XFER", "host").strip().lower()
+if XFER not in ("host", "direct"):
+    raise SystemExit(f"B70_H3_XFER must be 'host' or 'direct', not {XFER!r}")
+
+
+def cross_card(torch, t, target, *, mode: str | None = None):
+    """Move `t` to `target`, staging through host RAM unless `B70_H3_XFER=direct`.
+
+    Bit-exact either way: a copy does not change values, so `host` and `direct` return tensors
+    that compare equal bit for bit and hash identically. The only difference is the route -- two
+    PCIe transfers through a host buffer, or one device-to-device transfer on the blitter.
+
+    On the `host` route the source card is synchronized before the device->host copy (so the
+    bytes read are the bytes the last kernel wrote) and the target card after the host->device
+    copy. That second synchronize is belt and braces rather than a correctness requirement: this
+    venv's torch issues a blocking `queue.memcpy(...).wait()` for `non_blocking=False`, so the
+    staging tensor is already safe to free when `.to()` returns (see the loader section above,
+    where the same fact is what makes `release()` safe). It is cheap and it is explicit, so it
+    stays. Non-XPU endpoints and same-device moves fall through to a plain `.to()`; a same-device
+    move returns the tensor untouched.
+    """
+    if not isinstance(t, torch.Tensor):
+        return t
+    target = torch.device(target)
+    if t.device == target:
+        return t
+    chosen = (mode or XFER).strip().lower()
+    if chosen == "direct" or t.device.type != "xpu" or target.type != "xpu":
+        return t.to(target, non_blocking=False)
+    torch.xpu.synchronize(t.device)
+    staged = t.to("cpu", copy=True)
+    out = staged.to(target)
+    torch.xpu.synchronize(target)
+    del staged
+    return out
 
 # safetensors dtype string -> torch dtype attribute name. Resolved lazily against the live torch:
 # this module must import with no torch at all (`--dry-run` is the CPU validation path).
@@ -1067,6 +1155,7 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         raise RuntimeError(f"denoiser is not fully resident on the cards: {stragglers[:10]}")
 
     _install_boundary_hooks(torch, model, plan.split_index, primary, secondary)
+    LOG.info("cross-card transfer route: %s (B70_H3_XFER)", XFER)
     LOG.info(
         "denoiser split at block %d: %s on %s, %s on %s",
         plan.split_index,
@@ -1085,6 +1174,9 @@ def _install_boundary_hooks(torch, model, split_index: int, primary, secondary) 
     and the two `rope` outputs are read by *every* block from the model's forward frame, so each
     secondary block would pull them across again -- hence the per-forward transfer cache, which is
     the same device-crossing policy as `ltx_layer_shard.py::_move` / `_forward_transfers`.
+
+    Every crossing here goes through `cross_card()`, i.e. through host RAM unless
+    `B70_H3_XFER=direct`: these are the transfers the 2026-09-18 copy-engine fault happened on.
     """
     cache: dict = {}
 
@@ -1094,7 +1186,9 @@ def _install_boundary_hooks(torch, model, split_index: int, primary, secondary) 
                 return value
             key = id(value)
             if key not in cache:
-                cache[key] = (value, value.to(secondary, non_blocking=False))
+                # the source tensor is kept in the cache entry so `id(value)` cannot be reused by
+                # another tensor while this forward runs
+                cache[key] = (value, cross_card(torch, value, secondary))
             return cache[key][1]
         if isinstance(value, tuple):
             return tuple(move(v) for v in value)
@@ -1111,7 +1205,8 @@ def _install_boundary_hooks(torch, model, split_index: int, primary, secondary) 
         return tuple(move(a) for a in args)
 
     def post_hook(_module, _args, output):
-        return output.to(primary, non_blocking=False) if isinstance(output, torch.Tensor) else output
+        # the gather back to the primary card after the last block, for norm_out and the VAE
+        return cross_card(torch, output, primary) if isinstance(output, torch.Tensor) else output
 
     blocks = model.transformer_blocks
     for block in list(blocks)[split_index:]:
@@ -1542,7 +1637,8 @@ def main(argv: list[str] | None = None) -> int:
 
     # ---- phase 2: the denoiser ---------------------------------------------------------------
     transformer, primary, secondary = load_sharded_transformer(args, plan, config, timings)
-    prompt_embeds = prompt_embeds.to(primary)
+    # `--encoder-card` may differ from `--cards[0]`, in which case this is a card crossing
+    prompt_embeds = cross_card(torch, prompt_embeds, primary)
 
     # ---- phase 3: sampling -------------------------------------------------------------------
     pipe = build_pipeline(args, transformer, timings)
@@ -1582,7 +1678,8 @@ def main(argv: list[str] | None = None) -> int:
     with phase("decode.video", timings):
         latents_mean = torch.tensor(vae.config.latents_mean, device=decode_device).view(1, -1, 1, 1, 1)
         latents_std = torch.tensor(vae.config.latents_std, device=decode_device).view(1, -1, 1, 1, 1)
-        video = vae.decode((latents.to(decode_device) * latents_std + latents_mean).to(vae.dtype), return_dict=False)[0]
+        latents = cross_card(torch, latents, decode_device)
+        video = vae.decode((latents * latents_std + latents_mean).to(vae.dtype), return_dict=False)[0]
         pixel_mean = torch.tensor((0.485, 0.456, 0.406), device=decode_device).view(1, -1, 1, 1, 1)
         pixel_std = torch.tensor((0.229, 0.224, 0.225), device=decode_device).view(1, -1, 1, 1, 1)
         video = (video.float() * pixel_std + pixel_mean).clamp(0, 1)
@@ -1591,7 +1688,8 @@ def main(argv: list[str] | None = None) -> int:
     with phase("decode.audio", timings):
         a_mean = torch.tensor(audio_vae.config.latents_mean, device=decode_device).view(1, -1, 1)
         a_std = torch.tensor(audio_vae.config.latents_std, device=decode_device).view(1, -1, 1)
-        audio = audio_vae.decode((audio_latents.to(decode_device) * a_std + a_mean).float(), return_dict=False)[0]
+        audio_latents = cross_card(torch, audio_latents, decode_device)
+        audio = audio_vae.decode((audio_latents * a_std + a_mean).float(), return_dict=False)[0]
         # decode returns (2, 1, N); decoders.py L248 permutes it to (1, 2, N).
         audio = audio.float().permute(1, 0, 2).contiguous()
         sampling_rate = int(audio_vae.config.sampling_rate)
@@ -1662,6 +1760,8 @@ def main(argv: list[str] | None = None) -> int:
         },
         "environment": {k: v for k, v in os.environ.items() if k.startswith(("ZE_", "SYCL_", "PYTORCH_", "ONEAPI", "IPEX"))},
         "deterministic": bool(args.deterministic),
+        "loader": LOADER,
+        "cross_card_transfer": XFER,
     }
     (out_dir / "receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
     LOG.info("video sha256 %s", receipt["hashes"]["video_tensor_sha256"])

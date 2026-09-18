@@ -23,6 +23,26 @@
 #      combination that took the desktop out on 2026-09-17 23:09 EDT
 #      (../../qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md).
 #   4. Nothing else memory-heavy: any running container aborts the run.
+#   5. No uncleared GPU fault: a card with `/sys/class/drm/card*/device/devcoredump/data` still
+#      present has faulted and the driver has not been cleared. The script names the card and
+#      refuses. Clearing it (or rebooting) is a user decision (AGENTS.md); this script never
+#      writes to the devcoredump node.
+#
+# ENVIRONMENT this script pins for every GPU run, both proven on 2026-09-18 (session 10):
+#
+#   PYTORCH_ALLOC_CONF=expandable_segments:True
+#       With both cards visible and this unset, the probe matrix measured about 1 GiB of HOST
+#       memory consumed per GiB placed on xpu:0 (8 GiB -> +8125 MiB filled, +7993 MiB copied);
+#       with it, +54 and +149 MiB. That mirroring is what killed session 9 (watchdog at 1.2 GiB
+#       MemAvailable with the runner's own RSS at 0.7 GiB) and, with a 4G cgroup cap, the
+#       desktop session on 2026-09-17. See scripts/xpu-host-memory-probe.py and
+#       notes/2026-09-18-gpu-fault-first-light.md.
+#
+#   B70_H3_XFER=host
+#       Cross-card tensor moves are staged through host RAM instead of copied device to device.
+#       Session 10 faulted the copy engine (bcs) on 0000:03:00.0 at the first denoise step, the
+#       instant hidden states first crossed the block-24 split. Hypothesis, not proof -- but the
+#       host route is the control that tests it, and it is bit-exact either way.
 #
 # Every GPU run is wrapped in `mem-watchdog.sh` at a 2048 MiB floor on MemAvailable. The watchdog
 # kills THIS job, in its own process group, before systemd-oomd (50 % pressure for 20 s on
@@ -38,6 +58,10 @@ RUNNER="${HERE}/run_h3_t2v.py"
 WATCHDOG="${HERE}/mem-watchdog.sh"
 MIN_HOST_AVAIL_MIB="${MIN_HOST_AVAIL_MIB:-11264}"   # 11 GiB: below this, something big is resident
 WATCHDOG_MIN_AVAIL_MIB="${WATCHDOG_MIN_AVAIL_MIB:-2048}"
+
+# Proven on 2026-09-18; see the header. Overridable for a deliberate A/B, but not by accident.
+export PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF:-expandable_segments:True}"
+export B70_H3_XFER="${B70_H3_XFER:-host}"
 
 GPU_VENV="${GPU_VENV:-/mnt/fast-ai/venvs/minimax-h3}"
 CPU_VENV="${CPU_VENV:-/mnt/fast-ai/venvs/minimax-h3-cpu}"
@@ -90,6 +114,18 @@ some avg10 $(awk '/^some/ {sub("avg10=","",$2); print $2; exit}' /proc/pressure/
     fail=1
   fi
 
+  # An uncleared device coredump means a card faulted and nothing has cleared it. Read only:
+  # this loop never writes to the node (writing is what clears it, and that is the user's call).
+  local dump card
+  for dump in /sys/class/drm/card*/device/devcoredump/data; do
+    [ -e "${dump}" ] || continue
+    card="${dump#/sys/class/drm/}"; card="${card%%/*}"
+    echo "PREFLIGHT FAIL: ${card} has an uncleared device coredump at ${dump}" >&2
+    echo "  (failing device: $(readlink -f "$(dirname "${dump}")/failing_device" 2>/dev/null || echo unknown))" >&2
+    echo "  A GPU fault has not been cleared. Clearing it or rebooting is the user's decision." >&2
+    fail=1
+  done
+
   if command -v docker >/dev/null 2>&1; then
     containers="$(docker ps -q 2>/dev/null | wc -l)"
     if [ "${containers}" -gt 0 ]; then
@@ -107,6 +143,7 @@ some avg10 $(awk '/^some/ {sub("avg10=","",$2); print $2; exit}' /proc/pressure/
     echo "container is a user decision (AGENTS.md)." >&2
     exit 4
   fi
+  echo "preflight: PYTORCH_ALLOC_CONF=${PYTORCH_ALLOC_CONF}  B70_H3_XFER=${B70_H3_XFER}"
   echo "preflight: OK"
 }
 
@@ -121,6 +158,7 @@ run_gpu() {   # run_gpu <run-name> [extra args...]
     systemd-run --user --scope --quiet --collect \
       --unit="h3-${name}-$$" \
       "${SCOPE_PROPS[@]}" \
+      env PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF}" B70_H3_XFER="${B70_H3_XFER}" \
       "${GPU_VENV}/bin/python" "${RUNNER}" \
         --prompt "${PROMPT}" \
         --height "${HEIGHT}" --width "${WIDTH}" \
