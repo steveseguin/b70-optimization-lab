@@ -215,3 +215,36 @@ the audio tensor and both latent tensors, the resolved split plan, and the input
 * A failed bytewise repeat is a result to record, not a reason to re-run until it passes.
 * Do not promote any number from this lane until quality is labelled and the repeat gate has a
   verdict.
+
+## The venv is a fact now, and the first-light session is armed (2026-09-18 02:35 UTC)
+
+`setup-venv.sh` ran. Two things in it were wrong and are fixed in commit `a00ba16dc`:
+
+* it installed diffusers with `--no-deps`, so nothing pulled in diffusers' own runtime imports and the script's final
+  import check failed on `requests`, then on `importlib_metadata`. The pip line now also installs
+  `requests regex Pillow importlib_metadata`.
+* `MiniMaxH3CoreDenoiseStep` is **not** re-exported by `diffusers.modular_pipelines.minimax_h3`; it has to come from
+  `...minimax_h3.modular_blocks_minimax_h3`. Both `setup-venv.sh` and `run_h3_t2v.py` import it from the module.
+
+`/mnt/fast-ai/venvs/minimax-h3` now holds torch 2.14.0+xpu, transformers 5.17.0 and diffusers built from the git
+checkout at `7221eef4`; the full freeze is recorded in [data/environment.txt](../data/environment.txt). `./smoke_h3.sh
+dry` passes against it -- 14/14 remaps exact, 634 diffusers parameters from 532 checkpoint tensors, 0 left over
+(`/mnt/fast-ai/bench-results/minimax-h3-dry.log`). So item 2 of "what still needs the GPU session" above is closed:
+the venv is no longer a script.
+
+**The first-light session is armed** as unit `h3-session5d-20260918`
+(`/mnt/fast-ai/bench-results/h3-session5-20260918.sh`). It waits for the r312c kernel session (and for lc-3, if the
+r312c census is exact and lc-3 runs), re-checks the venv imports and refuses to continue if they fail, stops the FP8
+service gracefully, and then runs:
+
+1. `STEPS=8 ./smoke_h3.sh one` -- one clip at the smoke canvas, **256x448, 124 frames**, seed 42, 90-minute timeout;
+2. only if that returns 0, `STEPS=8 ./smoke_h3.sh repeat` -- two runs at the same seed with their receipt hashes
+   compared, which is the bytewise gate;
+
+then waits for port 18124 to be free and restores the service as unit `fp8-service-20260918-h3`
+(state `/mnt/fast-ai/bench-results/minimax-h3/service-restore`). Evidence lands in
+`/mnt/fast-ai/bench-results/minimax-h3/`.
+
+`STEPS=8` is deliberate and is **not** a claim about the right step count (50 remains an assumption, see the table
+above). First light asks two questions only: does this stack run on the cards at all, and does it repeat bit for bit.
+Eight steps answers both at about a sixth of the wall clock; the step sweep comes after the repeat gate has a verdict.

@@ -1,0 +1,120 @@
+{
+  "started": "2026-09-18T01:40:03.177654+00:00",
+  "preflight_health_rc": 0,
+  "tp1-r312-mtp0": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-18T01:42:27.513462+00:00"
+    },
+    "strict_vs_r311b": {
+      "rc": 0,
+      "tok_s_1_100": 19.36070448914078,
+      "exact": "9/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "context": {
+      "rc": 0,
+      "baseline": null,
+      "passed": true,
+      "error": null,
+      "rows": 30,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {},
+        "24576": {},
+        "30720": {}
+      }
+    },
+    "quality": {
+      "rc": 0,
+      "pass_all": true,
+      "baseline_match_all": null,
+      "baseline_status": "not_run"
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 120255,
+      "container_name": "fp8-tp1-f8bf70c99205",
+      "image_id": "sha256:627aade471b020fb9d16560b62e799e444f4d13ff15422efa96984099b86169d",
+      "port": 18218,
+      "started_at": "2026-09-18T01:40:22.685014+00:00",
+      "boot_id": "9f41bfb8-04d2-496d-a13d-ad12c6a76fcb",
+      "container_id": "5a5f78deb6876d4093bdbb4ef7d847cae084012b7b7788f233db5bd21bd0f651",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 3.788
+      },
+      "ready_at": "2026-09-18T01:42:27.513462+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-09-18T02:18:46.482864+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=134) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=134) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=134) INFO 09-18 01:41:02 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(EngineCore pid=134) INFO 09-18 01:41:13 [default_loader.py:430] Loading weights took 9.67 seconds",
+        "(EngineCore pid=134) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+        "(EngineCore pid=134) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+        "(EngineCore pid=134) INFO 09-18 01:41:15 [gpu_model_runner.py:5486] Model loading took 25.2 GiB memory and 11.422091 seconds",
+        "(EngineCore pid=134) INFO 09-18 01:42:14 [monitor.py:53] torch.compile took 56.51 s in total",
+        "(EngineCore pid=134) INFO 09-18 01:42:16 [gpu_worker.py:625] Available KV cache memory: 3.91 GiB",
+        "(EngineCore pid=134) INFO 09-18 01:42:16 [kv_cache_utils.py:2032] GPU KV cache size: 57,915 tokens, Maximum concurrency for 32,768 tokens per request: 1.77x",
+        "(EngineCore pid=134) WARNING 09-18 01:42:18 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(EngineCore pid=134) INFO 09-18 01:42:18 [gpu_worker.py:860] Free memory on device (29.81/30.3 GiB) on startup. Desired GPU memory utilization is (0.983, 29.78 GiB). Actual usage is 25.57 GiB for consumed memory (weights + non-torch), 0.3 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=4040425624` (3.76 GiB) to fit into requested memory, or `--kv-cache-memory=4073000960` (3.79 GiB) to fully utilize gpu memory. Current kv cache memory in use is 3.91 GiB.",
+        "(EngineCore pid=134) INFO 09-18 01:42:19 [core.py:361] init engine (profile, create kv cache, warmup model) took 63.12 s (compilation: 56.51 s)",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819] AsyncLLM output_handler failed.",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819] Traceback (most recent call last):",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/async_llm.py\", line 765, in output_handler",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819]     outputs = await engine_core.get_output_async()",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819]   File \"/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py\", line 1105, in get_output_async",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819]     raise self._format_exception(outputs) from None",
+        "(APIServer pid=1) ERROR 09-18 02:18:40 [async_llm.py:819] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause."
+      ]
+    }
+  },
+  "tp1-r312-multiq": {
+    "server": {
+      "status": "failed",
+      "error": "RuntimeError: Server exited 1",
+      "ready_at": null
+    },
+    "stop": {
+      "status": "failed",
+      "owner_pid": 124216,
+      "container_name": "fp8-tp1-5353a285d76c",
+      "image_id": "sha256:627aade471b020fb9d16560b62e799e444f4d13ff15422efa96984099b86169d",
+      "port": 18219,
+      "started_at": "2026-09-18T02:18:46.746316+00:00",
+      "boot_id": "9f41bfb8-04d2-496d-a13d-ad12c6a76fcb",
+      "container_id": "67047f63ad9894147609671892a64a7e47276140b7d0ceda04060292710d6863",
+      "error": "RuntimeError: Server exited 1",
+      "stop_confirmed": true,
+      "finished_at": "2026-09-18T02:19:14.019202+00:00",
+      "memory_log": [
+        "    raise RuntimeError('b70_fa_multiq: the kernel library has no paged_decode_multiq (needs the r312 build)')",
+        "RuntimeError: b70_fa_multiq: the kernel library has no paged_decode_multiq (needs the r312 build)",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py."
+      ]
+    }
+  },
+  "service_health_rc": 0,
+  "service": {
+    "status": "ready",
+    "error": null,
+    "unit": "fp8-service-20260918-lc2",
+    "state_dir": "/mnt/fast-ai/bench-results/fp8-lc2-20260918/service",
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 90.52379317576437,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict"
+    }
+  },
+  "finished": "2026-09-18T02:23:29.100271+00:00"
+}

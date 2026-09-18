@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/opt/venv/bin/vllm", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/cli/main.py", line 90, in main
+    cmd.subparser_init(subparsers).set_defaults(dispatch_function=cmd.cmd)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/cli/serve.py", line 169, in subparser_init
+    serve_parser = make_arg_parser(serve_parser)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/cli_args.py", line 415, in make_arg_parser
+    parser = AsyncEngineArgs.add_cli_args(parser)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/vllm/engine/arg_utils.py", line 2977, in add_cli_args
+    load_general_plugins()
+  File "/opt/venv/lib/python3.12/site-packages/vllm/plugins/__init__.py", line 90, in load_general_plugins
+    func()
+  File "/overlay/b70_fa_multiq.py", line 26, in register
+    raise RuntimeError('b70_fa_multiq: the kernel library has no paged_decode_multiq (needs the r312 build)')
+RuntimeError: b70_fa_multiq: the kernel library has no paged_decode_multiq (needs the r312 build)
+[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.

@@ -338,8 +338,87 @@ keys). If its output equals the six single-row calls bit for bit, the verifier c
 -12 ms per step at 16K and -22 ms at 32K (+16% and +25% writing speed at those lengths), nothing below 1,536 keys.
 That is a kernel project in the FA2 XPU (cutlass/sycl-tla) source, of the same size as the GDN checkpoint work.
 
+## lc-2 and the r312c build sessions (September 18, 01:40-02:30 UTC): the candidate never started
+
+Campaign lc-2 ([runner](../scripts/run-20260918-fp8-lc2-campaign.py), receipts in
+[data/2026-09-18-fp8-lc2](../data/2026-09-18-fp8-lc2/), raw `/mnt/fast-ai/bench-results/fp8-lc2-20260918`) was meant to
+be the first end-to-end run of the one-pass verifier attention: a no-MTP arm on the new image to build R312 references,
+then the depth-5 candidate with the `b70-fa-multiq` overlay against them. Only the first arm ran.
+
+**The reference arm (`tp1-r312-mtp0`, r312b image `sha256:627aade4…`, no MTP, 32,768 at 0.983, one card).** Ready in two
+minutes, every self-referenced gate passed, and it reproduced the R311b *speeds* almost exactly -- but not the R311b
+*outputs*:
+
+| Gate | Result |
+| --- | --- |
+| Strict vs the R311b 896 no-MTP reference (`fp8-ckpt2-20260917/tp1-mtp0-b896-strict`) | **9/12**, 19.36 tok/s against the reference's 19.43 |
+| 64-prompt ladder, two passes | 64/64 and 64/64 (self), 19.30 and 19.29 tok/s aggregate |
+| Long screen 2K/8K/16K/24K/30K, three classes, two repeats | 30/30 rows, reading 2,217 tok/s at 2K down to 1,887 at 30,720, writing 19.25 down to 17.9 |
+| Chat quality, two repeats | pass (no baseline compare) |
+
+The three prompts that moved are `architecture-tradeoff` (token 341), `customer-email` (token 124, and the answer ends
+8 tokens shorter) and `risk-register` (token 127) -- so this is exactly the r312a/b defect already written up in
+[DO-NOT-REPEAT](../DO-NOT-REPEAT.md): an image whose upstream flash-attention library was rebuilt from source computes
+slightly different numbers, and every reference built on it is worthless to everything else. The speeds above say the
+rebuild costs nothing; the 9/12 says it may not ship.
+
+**The candidate (`tp1-r312-multiq`) never reached readiness.** The overlay looks the op up as
+`torch.ops._xpu_C.paged_decode_multiq`, and the r312b image had built it into `_vllm_fa2_C` instead, so the server
+exited on its own guard before loading weights:
+
+```
+RuntimeError: b70_fa_multiq: the kernel library has no paged_decode_multiq (needs the r312 build)
+```
+
+There is therefore **no candidate number of any kind** from lc-2 -- no strict pair, no ladder, no writing speed after a
+long prompt. The runner did the right thing (one attempt, no retry) and went straight to the service restore.
+
+**The service came back clean.** Unit `fp8-service-20260918-lc2`, state `fp8-lc2-20260918/service`, strict **12/12**
+against the comm-2 no-MTP reference at **90.52 tok/s** (that reference itself runs at 33.86 tok/s without MTP). The
+two-card package is unaffected by any of this.
+
+### The r312c rebuild: three sessions, two cmake bugs and a port race
+
+r312c is the correction: the new op goes into `_xpu_C` with its own device library and the upstream attention library
+stays the upstream binary. Getting it to compile took three unattended sessions, each of which stops the service,
+builds, and restores it (`/mnt/fast-ai/bench-results/r312-session4*.sh`, logs `r312-session4*.log` and
+`fp8-r312-session4*/build.log`).
+
+- **Session 4 (02:23-02:24 UTC) -- wrong kernel set, then a missing include.** The builder did not pass a config, so the
+  top-level `VLLM_PAGED_DECODE_CONFIG` default resolved to the full **118-translation-unit** kernel set, and the first
+  two of them failed at once: `fatal error: './collective/chunk_prefill_mainloop.hpp' file not found`. The multiq
+  library simply never had the upstream attention directory on its include path. Two fixes: the builder now passes
+  `-DVLLM_MULTIQ_DECODE_CONFIG` explicitly (commit `6e1a2f615`, `scripts/build-vllm-xpu-kernels-xpu-c-only.sh`), and the
+  dev tree adds `target_include_directories(... csrc/xpu/attn/xe_2)` (dev commit `825959e`).
+- **Session 4b (02:27 UTC) -- the config name did not resolve.** cmake stopped before compiling anything:
+  `Paged decode kernel config not found: paged_decode_qwen38.conf / Available presets: paged_decode_full.conf,
+  paged_decode_default.conf`. The multiq configure only accepted a path, while the top-level `CMakeLists.txt` also
+  resolves a bare preset name inside `kernel_configs`. Fixed in dev commit `3b1e5c5`, re-exported into the lab patch as
+  `c6cb8b9a5`.
+- **Session 4b also lost the service.** Its restore ran immediately after the graceful stop and the listener was still
+  holding the port: `ERROR: [Errno 98] Address already in use`, unit `fp8-service-20260918-r312c2` dead one second after
+  it started. The service stayed down until session 4c picked it up three minutes later. Every session script now polls
+  `ss -ltn` until 18124 is free before starting the service -- the same lesson as the September 16 acceptance run, in a
+  new place (new [DO-NOT-REPEAT](../DO-NOT-REPEAT.md) row).
+- **Session 4c (from 02:30 UTC) is the live one.** `RESUME=1`, `JOBS=2`, **32 build objects** where session 4 had 144, then the image
+  `neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r312c-multiq`, then the census at v-tile 64 and 256 against the
+  upstream lone-row path, then the service back as unit `fp8-service-20260918-r312c3`
+  (state `fp8-r312-session4c-20260918/service`). Queued behind it: lc-3
+  ([runner](../scripts/run-20260918-fp8-lc3-campaign.py)) **only if every census case is bit-exact**, then the
+  MiniMax-H3 first-light session.
+
 ## Left open
 
+- **The r312c census (running now).** Session 4c builds the 32-object `_xpu_C` multiq library, then runs the census at
+  v-tile 64 and 256 against the upstream lone-row path. Every case must be bit-exact (`all_equal`, `max_abs == 0.0`,
+  and the repeat check) or nothing downstream runs: that is the gate the chain script reads.
+- **lc-3 (queued, gated on that census).** The same three stages as lc-2 on the r312c image
+  ([runner](../scripts/run-20260918-fp8-lc3-campaign.py), receipts `/mnt/fast-ai/bench-results/fp8-lc3-20260918`):
+  fresh R312 references from a no-MTP arm that must be **12/12** against the R311b reference this time, then the
+  depth-5 candidate with `b70-fa-multiq` -- strict twice, ladder, the long screen, quality and the logprob replay.
+  The number to look for is the writing speed after a long prompt against R311b's 66 tok/s at 16K and 40 at 24K.
+- **Then packaging, only if it is both exact and faster.** A one-pass verifier that is bit-identical but not faster is
+  a closed experiment, not a package revision; the one-card package keeps R311b until lc-3 shows both.
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
   both times minutes earlier. Until the user decides on a reset, no GPU work.
 - One-card context above 40,960 tokens: the single-checkpoint state (r311b) settled 32K lossless at 0.975 and 40,960
