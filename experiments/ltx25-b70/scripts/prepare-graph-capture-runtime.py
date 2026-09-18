@@ -46,6 +46,7 @@ FUSE_NODE_DIR = 'ltx_qkv_fusion_lab'
 FUSE_NODE = '424'
 TEXT_ADAPTER = 'ltx_graph_text_encoder.py'
 TEXT_NODE_FILE = 'graph_text_encoder_node.py'
+TEXT_SHARD = 'ltx_text_shard.py'
 TEXT_NODE_DIR = 'ltx_graph_text_encoder_lab'
 TEXT_NODE = '425'
 PIPE_ADAPTER = 'ltx_pipeline.py'
@@ -180,7 +181,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'source/custom_nodes/ltx_graph_vae_lab/__init__.py',
              'source/scripts/ltx_qkv_fusion.py', 'source/scripts/graph_fusion_node.py',
              'source/custom_nodes/ltx_qkv_fusion_lab/__init__.py',
-             'source/scripts/ltx_graph_text_encoder.py', 'source/scripts/graph_text_encoder_node.py',
+             'source/scripts/ltx_graph_text_encoder.py', 'source/scripts/ltx_text_shard.py',
+             'source/scripts/graph_text_encoder_node.py',
              'source/custom_nodes/ltx_graph_text_encoder_lab/__init__.py',
              'source/scripts/ltx_pipeline.py', 'source/scripts/pipeline_node.py',
              'source/custom_nodes/ltx_pipeline_lab/__init__.py',
@@ -526,6 +528,30 @@ def sha(path):
     return result.hexdigest()
 
 
+
+def verify_custom_node_imports(staging):
+    """Every top-level import of every custom node must resolve from the packet's own
+    source tree or the interpreter (packet 76 shipped a node importing a module the
+    generator never copied; the server's startup check does not import custom nodes)."""
+    import importlib.util
+    roots = [str(staging / 'source/scripts'), str(staging / 'source')]
+    saved = list(sys.path)
+    sys.path[:0] = roots
+    try:
+        for init in sorted((staging / 'source/custom_nodes').glob('*/__init__.py')):
+            for node in ast.parse(init.read_text()).body:
+                names = []
+                if isinstance(node, ast.Import):
+                    names = [alias.name.split('.')[0] for alias in node.names]
+                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                    names = [node.module.split('.')[0]]
+                for name in names:
+                    require(importlib.util.find_spec(name) is not None,
+                            f'{init.parent.name} imports {name!r}, which is not in the packet or the interpreter')
+    finally:
+        sys.path[:] = saved
+
+
 def build_checker(text):
     require(text.count('def verify_packet(') == 1, 'Ambiguous verify_packet')
     start = text.index('def verify_packet(packet, expected_manifest_sha256):')
@@ -537,7 +563,7 @@ def build_checker(text):
                                        "              'ltx_graph_capture.py', 'graph_capture_node.py',\n"
                                        "              'ltx_graph_vae.py', 'graph_vae_node.py',\n"
                                        "              'ltx_qkv_fusion.py', 'graph_fusion_node.py',\n"
-                                       "              'ltx_graph_text_encoder.py', 'graph_text_encoder_node.py',\n"
+                                       "              'ltx_graph_text_encoder.py', 'ltx_text_shard.py', 'graph_text_encoder_node.py',\n"
                                        "              'ltx_pipeline.py', 'pipeline_node.py',\n"
                                        "              'pipeline_decode_node.py',\n"
                                        "              'concurrent_cfg_node.py',\n"
@@ -620,7 +646,7 @@ def main():
     for src_name, dir_name in ((ADAPTER, None), (NODE, NODE_DIR),
                                (VAE_ADAPTER, None), (VAE_NODE_FILE, VAE_NODE_DIR),
                                (FUSE_ADAPTER, None), (FUSE_NODE_FILE, FUSE_NODE_DIR),
-                               (TEXT_ADAPTER, None), (TEXT_NODE_FILE, TEXT_NODE_DIR),
+                               (TEXT_ADAPTER, None), (TEXT_SHARD, None), (TEXT_NODE_FILE, TEXT_NODE_DIR),
                                (PIPE_ADAPTER, None), (PIPE_NODE_FILE, PIPE_NODE_DIR),
                                (PDEC_NODE_FILE, PDEC_NODE_DIR), (CCFG_NODE_FILE, CCFG_NODE_DIR),
                                (PSAMP_NODE_FILE, PSAMP_NODE_DIR),
@@ -634,6 +660,8 @@ def main():
             target = staging / 'source/custom_nodes' / dir_name
             target.mkdir(exist_ok=False)
             shutil.copyfile(src, target / '__init__.py')
+
+    verify_custom_node_imports(staging)
 
     control = json.loads((staging / BASE_GRAPH).read_text())
     require(control['374'] == {'class_type': 'VAEDecode',
@@ -789,7 +817,7 @@ def main():
               f'source/custom_nodes/{VAE_NODE_DIR}/__init__.py',
               'source/scripts/' + FUSE_ADAPTER, 'source/scripts/' + FUSE_NODE_FILE,
               f'source/custom_nodes/{FUSE_NODE_DIR}/__init__.py',
-              'source/scripts/' + TEXT_ADAPTER, 'source/scripts/' + TEXT_NODE_FILE,
+              'source/scripts/' + TEXT_ADAPTER, 'source/scripts/' + TEXT_SHARD, 'source/scripts/' + TEXT_NODE_FILE,
               f'source/custom_nodes/{TEXT_NODE_DIR}/__init__.py',
               'source/scripts/' + PIPE_ADAPTER, 'source/scripts/' + PIPE_NODE_FILE,
               f'source/custom_nodes/{PIPE_NODE_DIR}/__init__.py',
@@ -828,7 +856,7 @@ def main():
 
     extensions = dict(parent_manifest['extension_sha256s'])
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
-                     TEXT_ADAPTER, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
+                     TEXT_ADAPTER, TEXT_SHARD, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
                      CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE, PHASE_NODE_FILE,
                      FAST_NODE_FILE):
         extensions[src_name] = files['source/scripts/' + src_name]
