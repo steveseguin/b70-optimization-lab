@@ -1202,6 +1202,7 @@ def main(argv: list[str] | None = None) -> int:
     header = read_header(PRUNED_DENOISER)
     plan = plan_split(header, config, args.adaln_dtype, args.split_index)
     devices = [torch.device(f"xpu:{i}") for i in args.cards]
+    torch.xpu.init()  # the allocator stats calls below raise "Invalid device argument" before lazy init
     for dev in devices:
         torch.xpu.reset_peak_memory_stats(dev)
 

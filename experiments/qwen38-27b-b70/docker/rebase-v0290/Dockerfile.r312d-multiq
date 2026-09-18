@@ -1,0 +1,7 @@
+# R312d: the r312c image with only libattn_multiq_kernels_xe_2.so replaced by a build from the upstream
+# toolchain (see build-kernels-0.1.14.1-r312d-multiq-toolchain.sh). Build context: a directory holding
+# that one file. The _xpu_C host glue is unchanged; it resolves the device library by $ORIGIN at load.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r312c-multiq
+COPY libattn_multiq_kernels_xe_2.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libattn_multiq_kernels_xe_2.so
+RUN python3 -c "import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, 'paged_decode_multiq'); print('paged_decode_multiq present')" \
+ && readelf -p .comment /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libattn_multiq_kernels_xe_2.so | grep -i dpc++

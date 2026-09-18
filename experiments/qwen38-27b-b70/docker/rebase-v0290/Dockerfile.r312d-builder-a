@@ -1,0 +1,12 @@
+# Builder image A (2026-09-18): the pinned vLLM XPU base (its /opt/venv torch is what CMake configures
+# against) plus the DPC++ 2026.0.0 compiler the upstream vllm-xpu-kernels 0.1.14.1 wheel was built with
+# (readelf -p .comment on its _vllm_fa2_C.abi3.so: "2026.0.0.20260331"), copied from the only local image
+# that carries it. GPU compute runtime (ocloc 26.27 / IGC 2.38.2) is the base image's own.
+FROM gemma4-26b-q8-record:oneapi-2026.0-b9769 AS oneapi
+FROM vllm/vllm-openai-xpu@sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901
+COPY --from=oneapi /opt/intel/oneapi/compiler/2026.0 /opt/oneapi-2026.0/compiler/2026.0
+COPY --from=oneapi /opt/intel/oneapi/tbb /opt/oneapi-2026.0/tbb
+COPY --from=oneapi /opt/intel/oneapi/umf /opt/oneapi-2026.0/umf
+COPY --from=oneapi /opt/intel/oneapi/tcm /opt/oneapi-2026.0/tcm
+COPY --from=oneapi /opt/intel/oneapi/common /opt/oneapi-2026.0/common
+RUN ln -s 2026.0 /opt/oneapi-2026.0/compiler/latest && bash -c 'source /opt/oneapi-2026.0/compiler/2026.0/env/vars.sh && icpx --version | head -1 && ocloc --version | head -1'
