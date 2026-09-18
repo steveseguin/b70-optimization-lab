@@ -637,6 +637,7 @@ this campaign's package launcher (54.236), median 54.224 tok/s. The queue file i
 
 ## Left open
 
+- **Stock-vs-lab GDN rounding (queued for the next GPU window, after the user's reset decision):** every lab image since r309 rebuilt `_xpu_C` (including the stock GDN kernel) against sycl-tla `cd76379`, so the one-card package's no-MTP outputs may differ from the pristine `vllm/vllm-openai-xpu` image's at the ULP level, exactly as the attention library did. Nothing shipped is invalidated (gates are same-image), but measure it: strict suite no-MTP on the pristine base image vs R312d-c no-MTP, 12 prompts. If they differ, an r313 rebuild of `_xpu_C` with the pinned revision (variant-c toolchain) is the candidate, followed by the full acceptance again.
 - **The census gate is met and lc-4 met the server gate: exact and faster.** The 7.6e-6 gap was the sycl-tla (CUTLASS)
   revision, not the compiler, the code generator or the multi-row algorithm; on the server the one-pass verifier is
   exact on every gate and worth +10 to +17% writing speed above 16K (section above). Nothing left open on either.
