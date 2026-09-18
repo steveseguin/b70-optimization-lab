@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""MiniMax-H3 text-to-video-with-audio on two Intel B70s, from the pruned BF16 FL2VA denoiser.
+"""MiniMax-H3 text-to-video-with-audio on two Intel B70s, from either FL2VA denoiser build.
 
     Phase 0  plan       read safetensors headers, resolve the byte-balanced layer split
     Phase 1  encode     Qwen3-VL-32B INT8 ConvRot text encoder on xpu:0, hidden state after
                         decoder layer 50, then the encoder is freed before anything else loads
-    Phase 2  load       pruned BF16 denoiser streamed tensor-by-tensor across xpu:0 / xpu:1
+    Phase 2  load       the chosen denoiser streamed tensor-by-tensor across xpu:0 / xpu:1
     Phase 3  sample     diffusers MiniMaxH3 modular blocks, cfg-free, one forward per step,
                         video shift 12 / audio shift 3
     Phase 4  decode     video VAE (float16) and audio VAE (float32), one at a time on xpu:0
@@ -33,8 +33,36 @@ Hard constraints this script respects
   (`scripts/xpu-host-memory-probe.py`, `notes/2026-09-18-gpu-fault-first-light.md`).
   `smoke_h3.sh` sets it for every GPU run.
 
+The two denoisers (`--denoiser`, env `B70_H3_DENOISER`)
+------------------------------------------------------
+Neither build is exact -- the exact BF16 denoiser is 66.3 GB and needs four cards -- so the choice
+is *where* the error lives, not whether there is one:
+
+* `pruned` (the default): Comfy's pruned BF16 file, 532 tensors, 40.23 GB.  Every weight in the
+  residual stream is the released BF16 weight, bit for bit.  The timestep embedder and the 50
+  AdaLN projections are replaced by an `adaln_t_table [1025, 8]` rank-8 fit, whose worst error
+  (8e-4 / 1.2e-3) is *below* the BF16 weights' own error against float32
+  (notes/2026-09-17-adaln-table-exactness.md).  The approximation is confined to the modulation
+  branch.  This path installs `AdaLNTableEmbedder` / `PrunedAdaLNModulation` / `PrunedAdaLNOut`.
+* `int8`: Comfy's full INT8 ConvRot file, 1035 tensors, 34.04 GB.  The AdaLN branch is the
+  *unpruned* one (`time_embedder.proj_in/proj_out`, `adaln_proj.linear` 2688 -> 96768), so the
+  modulation is exact in form and **no module swap happens at all** -- the stock diffusers
+  modules and the stock arithmetic run unchanged.  In exchange, 250 of the block Linears are
+  rotate-then-quantize int8 with a per-output-row float32 scale, i.e. the error moves out of the
+  modulation branch and into every weight of the block stack.  Those Linears become
+  `ConvRotLinear` modules, the same class and the same dequant arithmetic the INT8 text encoder
+  already uses.
+
+The ConvRot rotation is shared: the denoiser's attention and MLP Linears declare
+`convrot_groupsize: 256`, exactly the rotation recovered from the video-VAE pair in
+`data/convrot-hadamard-256.safetensors`.  Its `adaln_proj` declares `convrot_groupsize: 64`,
+because 2688 is not a multiple of 256 -- and that order-64 rotation is the *leading 64x64 block*
+of the one already recovered, so nothing new has to be recovered.  See `convrot_rotation()` for
+the algebra and for the measurements that confirmed it against real weights.
+
 Environment switches
 --------------------
+* `B70_H3_DENOISER=pruned|int8` -- the default for `--denoiser`.
 * `B70_H3_LOADER=pread|mmap` -- how checkpoint tensors are read.  `pread` (the default) parses the
   safetensors header once, `os.pread`s each tensor's byte range into a private buffer and then
   `posix_fadvise(DONTNEED)`s that range: the file is never mapped, so RssFile stays flat.  `mmap`
@@ -77,8 +105,37 @@ REPO_ORIGINAL = pathlib.Path("/mnt/fast-ai/llm-models/minimax-h3")
 REPO_COMFY = pathlib.Path("/mnt/fast-ai/llm-models/minimax-h3-comfy")
 
 PRUNED_DENOISER = REPO_COMFY / "diffusion_models" / "minimax_h3_fl2va_pruned_bf16.safetensors"
+INT8_DENOISER = REPO_COMFY / "diffusion_models" / "minimax_h3_fl2va_int8_convrot.safetensors"
 INT8_TEXT_ENCODER = REPO_COMFY / "text_encoders" / "qwen3vl_32b_minimax_h3_int8_convrot.safetensors"
 CONVROT_ROTATION = pathlib.Path(__file__).resolve().parent.parent / "data" / "convrot-hadamard-256.safetensors"
+
+# The two denoiser checkpoints, and what each one costs in fidelity.
+#
+#   pruned  BF16, 532 tensors, 40.23 GB.  Every weight is the released BF16 weight, but the
+#           timestep embedder and the 50 AdaLN projections are re-parameterised through a
+#           `adaln_t_table [1025, 8]` rank-8 fit (notes/2026-09-17-adaln-table-exactness.md:
+#           worst error 8e-4 / 1.2e-3, *below* the BF16 weights' own error against float32).
+#           Approximation confined to the modulation branch; the residual stream is untouched.
+#   int8    INT8 ConvRot, 1035 tensors, 34.04 GB.  The AdaLN branch is the *unpruned* one
+#           (`time_embedder.proj_in/proj_out`, `adaln_proj.linear` 2688 -> 96768), so the
+#           modulation is exact in form -- but 250 of the block Linears are rotate-then-quantize
+#           int8 with a per-output-row float32 scale, so every weight in the block stack carries
+#           quantization error instead.
+#
+# Neither is exact: the exact BF16 denoiser is 66.3 GB and needs four cards.  The two paths trade
+# *where* the error lives, which is why both exist here and why the pruned one is the control.
+DENOISERS = {
+    "pruned": PRUNED_DENOISER,
+    "int8": INT8_DENOISER,
+}
+DEFAULT_DENOISER = os.environ.get("B70_H3_DENOISER", "pruned").strip().lower()
+
+
+def denoiser_path(variant: str) -> pathlib.Path:
+    try:
+        return DENOISERS[variant]
+    except KeyError:
+        raise ValueError(f"unknown denoiser {variant!r}; choose one of {sorted(DENOISERS)}") from None
 
 TRANSFORMER_CONFIG = REPO_ORIGINAL / "transformer" / "config.json"
 TEXT_ENCODER_DIR = REPO_ORIGINAL / "text_encoder"
@@ -168,8 +225,73 @@ class SourceSlice:
         return total * (self.row_slice[1] - self.row_slice[0]) // rows
 
 
-def build_remap(num_layers: int, num_refiner_layers: int) -> dict[str, SourceSlice]:
-    """diffusers parameter name -> where it comes from in the pruned Comfy checkpoint."""
+@dataclasses.dataclass(frozen=True)
+class QuantSlice:
+    """How one diffusers `nn.Linear` is replaced wholesale by a `ConvRotLinear`.
+
+    The int8 checkpoint stores each quantized Linear as three tensors under one base name:
+
+        <base>.weight        I8  [out, in]   == round(W R / scale)
+        <base>.weight_scale  F32 [out, 1]    per *output row*
+        <base>.comfy_quant   U8  ASCII JSON  {"format", "convrot", "convrot_groupsize"}
+
+    plus an optional `<base>.bias`.  `row_slice` and `swap_halves` mean exactly what they mean in
+    `SourceSlice`, and they are safe here for the same reason: both act on the **output** axis,
+    which is the axis the scale is indexed by and the axis the rotation does *not* touch.  So
+    slicing rows of `weight` and of `weight_scale` together, or swapping their halves together,
+    reproduces the sub-Linear exactly -- which is what turns Comfy's fused `qkv_proj` into
+    diffusers' separate `to_q` / `to_k` / `to_v`, and Comfy's `[gate ; value]` `mlp.fc1` into
+    diffusers' `[value ; gate]` `ff.net.0.proj`.
+    """
+
+    key: str  # base name in the int8 checkpoint, e.g. "blocks.0.attn.qkv_proj"
+    row_slice: tuple[int, int] | None = None
+    swap_halves: bool = False
+    group_size: int = 256  # authoritative value comes from `.comfy_quant`; this is the fallback
+    has_bias: bool = False
+
+    def tensor_keys(self, header: dict) -> list[str]:
+        """Every checkpoint tensor this substitution consumes."""
+        keys = [f"{self.key}.weight", f"{self.key}.weight_scale", f"{self.key}.comfy_quant"]
+        if f"{self.key}.bias" in header:
+            keys.append(f"{self.key}.bias")
+        return keys
+
+    def param_names(self, module: str, header: dict) -> list[str]:
+        """Every diffusers parameter this substitution stands in for."""
+        names = [f"{module}.weight"]
+        if f"{self.key}.bias" in header:
+            names.append(f"{module}.bias")
+        return names
+
+    def nbytes(self, header: dict) -> int:
+        """Card bytes once resident: int8 weight + float32 scale + bias, all as stored.
+
+        Nothing is widened at load time on this path -- `ConvRotLinear` keeps the int8 weight and
+        widens it per call -- so unlike `SourceSlice` the stored width *is* the resident width.
+        """
+        total = 0
+        for suffix, sliced in ((".weight", True), (".weight_scale", True), (".bias", False)):
+            name = self.key + suffix
+            if name not in header:
+                continue
+            entry = header[name]
+            n = tensor_bytes(entry)
+            if sliced and self.row_slice is not None:
+                n = n * (self.row_slice[1] - self.row_slice[0]) // entry["shape"][0]
+            total += n
+        return total  # `.comfy_quant` is metadata; it is never placed on a card
+
+
+def build_remap(num_layers: int, num_refiner_layers: int, variant: str = "pruned") -> dict[str, SourceSlice]:
+    """diffusers parameter name -> where it comes from in the Comfy checkpoint.
+
+    `variant="pruned"` returns every parameter, because the pruned file stores every one of them
+    densely.  `variant="int8"` returns only the parameters that are *not* replaced by a
+    `ConvRotLinear` (see `build_quant_map`), plus the four unpruned timestep-embedder tensors the
+    pruned file does not have at all.
+    """
+    quantized = variant == "int8"
     remap: dict[str, SourceSlice] = {
         "proj_in.weight": SourceSlice("video_patch_proj.weight"),
         "proj_in.bias": SourceSlice("video_patch_proj.bias"),
@@ -187,8 +309,26 @@ def build_remap(num_layers: int, num_refiner_layers: int) -> dict[str, SourceSli
         "audio_proj_out.weight": SourceSlice("final_layer.audio_out.weight"),
         "audio_proj_out.bias": SourceSlice("final_layer.audio_out.bias"),
     }
+    if quantized:
+        # The unpruned AdaLN branch, which the pruned file replaces by `adaln_t_table`.
+        # `TimestepEmbedding` (diffusers) calls them linear_1 / linear_2; Comfy calls them
+        # proj_in / proj_out.  Shapes and dtypes match the full BF16 diffusers checkpoint exactly:
+        #   proj_in  F32 [5376, 256]  == time_embedder.linear_1  (freq_dim -> time_embed_hidden)
+        #   proj_out F32 [2688, 5376] == time_embedder.linear_2  (-> time_embed_dim)
+        remap["time_embedder.linear_1.weight"] = SourceSlice("time_embedder.proj_in.weight")
+        remap["time_embedder.linear_1.bias"] = SourceSlice("time_embedder.proj_in.bias")
+        remap["time_embedder.linear_2.weight"] = SourceSlice("time_embedder.proj_out.weight")
+        remap["time_embedder.linear_2.bias"] = SourceSlice("time_embedder.proj_out.bias")
 
-    def add_attn(dst_prefix: str, src_prefix: str) -> None:
+    def add_attn(dst_prefix: str, src_prefix: str, quant: bool = False) -> None:
+        # `quant=True` drops the six Linears this block hands to `build_quant_map` and keeps only
+        # the norms, which stay BF16 in the int8 checkpoint.
+        remap[f"{dst_prefix}.attn.norm_q.weight"] = SourceSlice(f"{src_prefix}.attn.q_norm.weight")
+        remap[f"{dst_prefix}.attn.norm_k.weight"] = SourceSlice(f"{src_prefix}.attn.k_norm.weight")
+        remap[f"{dst_prefix}.norm1.weight"] = SourceSlice(f"{src_prefix}.norm1.weight")
+        remap[f"{dst_prefix}.norm2.weight"] = SourceSlice(f"{src_prefix}.norm2.weight")
+        if quant:
+            return
         remap[f"{dst_prefix}.attn.to_q.weight"] = SourceSlice(f"{src_prefix}.attn.qkv_proj.weight", (0, INNER_DIM))
         remap[f"{dst_prefix}.attn.to_k.weight"] = SourceSlice(
             f"{src_prefix}.attn.qkv_proj.weight", (INNER_DIM, 2 * INNER_DIM)
@@ -196,22 +336,87 @@ def build_remap(num_layers: int, num_refiner_layers: int) -> dict[str, SourceSli
         remap[f"{dst_prefix}.attn.to_v.weight"] = SourceSlice(
             f"{src_prefix}.attn.qkv_proj.weight", (2 * INNER_DIM, 3 * INNER_DIM)
         )
-        remap[f"{dst_prefix}.attn.norm_q.weight"] = SourceSlice(f"{src_prefix}.attn.q_norm.weight")
-        remap[f"{dst_prefix}.attn.norm_k.weight"] = SourceSlice(f"{src_prefix}.attn.k_norm.weight")
         remap[f"{dst_prefix}.attn.to_out.0.weight"] = SourceSlice(f"{src_prefix}.attn.out_proj.weight")
-        remap[f"{dst_prefix}.norm1.weight"] = SourceSlice(f"{src_prefix}.norm1.weight")
-        remap[f"{dst_prefix}.norm2.weight"] = SourceSlice(f"{src_prefix}.norm2.weight")
         # SwiGLU: Comfy stores [gate ; value], diffusers reads [value ; gate].
         remap[f"{dst_prefix}.ff.net.0.proj.weight"] = SourceSlice(f"{src_prefix}.mlp.fc1.weight", swap_halves=True)
         remap[f"{dst_prefix}.ff.net.2.weight"] = SourceSlice(f"{src_prefix}.mlp.fc2.weight")
 
     for i in range(num_layers):
-        add_attn(f"transformer_blocks.{i}", f"blocks.{i}")
-        remap[f"transformer_blocks.{i}.adaln_proj.linear.weight"] = SourceSlice(f"blocks.{i}.adaln_proj.linear.weight")
-        remap[f"transformer_blocks.{i}.adaln_proj.linear.bias"] = SourceSlice(f"blocks.{i}.adaln_proj.linear.bias")
+        add_attn(f"transformer_blocks.{i}", f"blocks.{i}", quant=quantized)
+        if not quantized:
+            remap[f"transformer_blocks.{i}.adaln_proj.linear.weight"] = SourceSlice(
+                f"blocks.{i}.adaln_proj.linear.weight"
+            )
+            remap[f"transformer_blocks.{i}.adaln_proj.linear.bias"] = SourceSlice(
+                f"blocks.{i}.adaln_proj.linear.bias"
+            )
+    # The two token-refiner blocks are BF16 in *both* checkpoints -- Comfy quantizes only the 50
+    # denoiser blocks -- so they always take the dense path.
     for i in range(num_refiner_layers):
         add_attn(f"token_refiner.refiner_blocks.{i}", f"token_refiner.blocks.{i}")
     return remap
+
+
+# `<base>.comfy_quant` is a U8 tensor holding ~90 bytes of ASCII JSON.  It is the authoritative
+# declaration of the quantization format, so the loader and the dry run both read it rather than
+# assume: 250 blobs, about 22 KB in total for the denoiser.  `read_comfy_quant` uses a bare
+# `os.pread` so the dry run stays torch-free.
+def read_comfy_quant(path: pathlib.Path, header: dict | None = None) -> dict[str, dict]:
+    """`{base name: parsed comfy_quant dict}` for every quantized Linear in `path`."""
+    parsed, data_start = read_header_and_data_start(path)
+    header = parsed if header is None else header
+    out: dict[str, dict] = {}
+    fd = os.open(str(path), os.O_RDONLY)
+    try:
+        for key in header:
+            if not key.endswith(".comfy_quant"):
+                continue
+            begin, end = header[key]["data_offsets"]
+            blob = os.pread(fd, end - begin, data_start + begin)
+            out[key[: -len(".comfy_quant")]] = json.loads(blob.decode().rstrip("\x00"))
+    finally:
+        os.close(fd)
+    return out
+
+
+def build_quant_map(num_layers: int, header: dict, quant_meta: dict[str, dict]) -> dict[str, QuantSlice]:
+    """diffusers *module* path -> the int8 ConvRot Linear that replaces it.
+
+    Header-driven: the module list comes from the `.comfy_quant` keys actually present in the
+    file, and each entry's group size comes from that blob, never from a constant here.  A
+    quantized Linear the map does not know how to place is a hard error, not a silent skip.
+    """
+    quant: dict[str, QuantSlice] = {}
+
+    def group_of(base: str) -> int:
+        meta = quant_meta[base]
+        if meta.get("format") != "int8_tensorwise" or meta.get("convrot") is not True:
+            raise RuntimeError(f"{base}: unsupported comfy_quant {meta!r} (expected int8 convrot)")
+        return int(meta["convrot_groupsize"])
+
+    for i in range(num_layers):
+        src, dst = f"blocks.{i}", f"transformer_blocks.{i}"
+        # Comfy's fused qkv -> diffusers' three Linears, sliced on the output axis.
+        for name, rows in (
+            ("to_q", (0, INNER_DIM)),
+            ("to_k", (INNER_DIM, 2 * INNER_DIM)),
+            ("to_v", (2 * INNER_DIM, 3 * INNER_DIM)),
+        ):
+            base = f"{src}.attn.qkv_proj"
+            quant[f"{dst}.attn.{name}"] = QuantSlice(base, rows, False, group_of(base))
+        for dst_mod, base, swap in (
+            (f"{dst}.attn.to_out.0", f"{src}.attn.out_proj", False),
+            (f"{dst}.ff.net.0.proj", f"{src}.mlp.fc1", True),  # [gate ; value] -> [value ; gate]
+            (f"{dst}.ff.net.2", f"{src}.mlp.fc2", False),
+            (f"{dst}.adaln_proj.linear", f"{src}.adaln_proj.linear", False),
+        ):
+            quant[dst_mod] = QuantSlice(base, None, swap, group_of(base), f"{base}.bias" in header)
+
+    placed = {q.key for q in quant.values()}
+    stray = sorted(set(quant_meta) - placed)
+    if stray:
+        raise RuntimeError(f"{len(stray)} quantized Linears have no diffusers destination, e.g. {stray[:5]}")
+    return quant
 
 
 # Mirrors MiniMaxH3Transformer3DModel._keep_in_fp32_modules
@@ -220,11 +425,18 @@ def build_remap(num_layers: int, num_refiner_layers: int) -> dict[str, SourceSli
 FP32_SUBSTRINGS = ("proj_in", "audio_proj_in", "proj_out", "audio_proj_out", "rope")
 
 
-def target_dtype(name: str, adaln_dtype: str):
+def target_dtype(name: str, adaln_dtype: str, variant: str = "pruned"):
     import torch
 
     if any(s in name for s in FP32_SUBSTRINGS):
         return torch.float32
+    if variant == "int8":
+        # `time_embedder` is float32 in `_keep_in_fp32_modules` and float32 as stored, and the
+        # int8 file's AdaLN projections are its *own* bf16/int8 tensors, not a rank-8 fit -- so
+        # `--adaln-dtype`, which only names the width of that fit, has nothing to widen here.
+        # Every remaining dense tensor (`norm_out.linear` BF16, the norms, the refiner) keeps
+        # the dtype it is stored in.
+        return torch.float32 if "time_embedder." in name else torch.bfloat16
     if "adaln_proj.linear" in name or name.startswith("norm_out.linear"):
         # ComfyUI passes `adaln_dtype=float32` to every AdalnProj in the `use_adaln_curves` branch,
         # even though W8 is stored F16 (notes/2026-09-17-adaln-table-exactness.md).
@@ -246,12 +458,20 @@ class SplitPlan:
     card0_bytes: int
     card1_bytes: int
     table_bytes: int
+    variant: str = "pruned"
+    quant_bytes: int = 0  # int8 weights + f32 scales + biases inside the block stack
+    rotation_bytes: int = 0  # the ConvRot rotation matrices, resident on *each* card
+    dequant_peak_bytes: int = 0  # transient: the largest quantized weight widened to bf16
 
     def as_dict(self) -> dict:
         return {
+            "variant": self.variant,
             "split_index": self.split_index,
             "num_layers": self.num_layers,
             "non_block_bytes": self.non_block_bytes,
+            "quant_bytes": self.quant_bytes,
+            "rotation_bytes_per_card": self.rotation_bytes,
+            "dequant_peak_bytes": self.dequant_peak_bytes,
             "card0_bytes": self.card0_bytes,
             "card1_bytes": self.card1_bytes,
             "card0_gib": round(self.card0_bytes / 2**30, 3),
@@ -261,7 +481,14 @@ class SplitPlan:
         }
 
 
-def plan_split(header: dict, config: dict, adaln_dtype: str, split_index: int | None = None) -> SplitPlan:
+def plan_split(
+    header: dict,
+    config: dict,
+    adaln_dtype: str,
+    split_index: int | None = None,
+    variant: str = "pruned",
+    quant_meta: dict[str, dict] | None = None,
+) -> SplitPlan:
     """Byte-balanced split of the block stack over two cards.
 
     The policy is `experiments/ltx25-b70/scripts/ltx_layer_shard.py` (`LTXLayerShardedPatcher.install`):
@@ -273,10 +500,26 @@ def plan_split(header: dict, config: dict, adaln_dtype: str, split_index: int | 
 
     Bytes are counted *after* the remap and the dtype policy, not as stored, because the AdaLN
     projections are widened F16 -> F32 when `--adaln-dtype fp32` and that is real card memory.
+
+    On the `int8` path the arithmetic changes in three ways:
+
+    * a quantized Linear is *not* widened at load time -- `ConvRotLinear` keeps the int8 weight
+      and widens it per call -- so its resident cost is `1 B/elem` for the weight plus `4 B/row`
+      for the scale plus the bias, i.e. the stored width is the resident width;
+    * each card holds its own copy of the ConvRot rotation matrices (a 256x256 and a 64x64 bf16
+      matrix, 139 KB together), because blocks on both cards call them;
+    * there is a *transient* on top of the resident total: the largest quantized weight widened
+      to bfloat16 for one `F.linear`.  That peak is reported separately and must be left free.
     """
     num_layers = config["num_layers"]
     num_refiner = config["num_refiner_layers"]
-    remap = build_remap(num_layers, num_refiner)
+    quantized = variant == "int8"
+    remap = build_remap(num_layers, num_refiner, variant)
+    quant: dict[str, QuantSlice] = {}
+    if quantized:
+        if quant_meta is None:
+            raise ValueError("plan_split(variant='int8') needs quant_meta from read_comfy_quant()")
+        quant = build_quant_map(num_layers, header, quant_meta)
     width = {"fp32": 4, "bf16": 2}
 
     def size_of(name: str) -> int:
@@ -285,29 +528,53 @@ def plan_split(header: dict, config: dict, adaln_dtype: str, split_index: int | 
         stored = _DTYPE_BYTES[header[src.key]["dtype"]]
         if any(s in name for s in FP32_SUBSTRINGS):
             want = 4
+        elif quantized:
+            want = 4 if "time_embedder." in name else 2
         elif "adaln_proj.linear" in name or name.startswith("norm_out.linear"):
             want = width[adaln_dtype]
         else:
             want = 2
         return raw // stored * want
 
-    block_bytes = [
-        sum(size_of(n) for n in remap if n.startswith(f"transformer_blocks.{i}.")) for i in range(num_layers)
-    ]
-    block_names = {n for i in range(num_layers) for n in remap if n.startswith(f"transformer_blocks.{i}.")}
+    def block_of(prefix: str, names) -> list[str]:
+        return [n for n in names if n.startswith(prefix)]
+
+    block_bytes = []
+    for i in range(num_layers):
+        prefix = f"transformer_blocks.{i}."
+        n = sum(size_of(x) for x in block_of(prefix, remap))
+        n += sum(quant[x].nbytes(header) for x in block_of(prefix, quant))
+        block_bytes.append(n)
+    block_names = {n for i in range(num_layers) for n in block_of(f"transformer_blocks.{i}.", remap)}
     non_block = sum(size_of(n) for n in remap if n not in block_names)
-    # The AdaLN table replaces `time_embedder`; it is shared, so it lives on the primary card and
-    # is broadcast to the secondary once per forward (it is [1025, 8] float32 = 32.8 KB).
-    table_bytes = tensor_bytes(header["adaln_t_table"])
-    non_block += table_bytes
+
+    quant_bytes = sum(q.nbytes(header) for q in quant.values())
+    rotation_bytes = 0
+    dequant_peak = 0
+    table_bytes = 0
+    if quantized:
+        # One bf16 matrix per distinct group size, shared by every Linear that uses it, per card.
+        rotation_bytes = sum(g * g * 2 for g in sorted({q.group_size for q in quant.values()}))
+        non_block += rotation_bytes  # the primary card's copy; the secondary's is added below
+        dequant_peak = max(
+            (tensor_bytes(header[q.key + ".weight"]) * 2 for q in quant.values()), default=0
+        )
+    else:
+        # The AdaLN table replaces `time_embedder`; it is shared, so it lives on the primary card
+        # and is broadcast to the secondary once per forward ([1025, 8] float32 = 32.8 KB).
+        table_bytes = tensor_bytes(header["adaln_t_table"])
+        non_block += table_bytes
     # `rope.inv_freq` is a non-persistent buffer diffusers recomputes; count it anyway (64 B).
     non_block += tensor_bytes(header["rope.inv_freq"])
 
     total_blocks = sum(block_bytes)
     if split_index is None:
+        # Balance card0 = non_block + blocks[:n] against card1 = blocks[n:] + rotation_bytes.
+        # `non_block` already carries the primary's rotation copy, so it cancels out here.
+        offset = non_block - rotation_bytes
         split_index = min(
             range(1, num_layers),
-            key=lambda n: abs(non_block + 2 * sum(block_bytes[:n]) - total_blocks),
+            key=lambda n: abs(offset + 2 * sum(block_bytes[:n]) - total_blocks),
         )
     if not 0 < split_index < num_layers:
         raise ValueError(f"split_index must leave at least one block on each card, got {split_index}")
@@ -318,8 +585,13 @@ def plan_split(header: dict, config: dict, adaln_dtype: str, split_index: int | 
         block_bytes=block_bytes,
         non_block_bytes=non_block,
         card0_bytes=non_block + sum(block_bytes[:split_index]),
-        card1_bytes=sum(block_bytes[split_index:]),
+        # The secondary card carries its own copy of the rotation matrices (0 on the pruned path).
+        card1_bytes=sum(block_bytes[split_index:]) + rotation_bytes,
         table_bytes=table_bytes,
+        variant=variant,
+        quant_bytes=quant_bytes,
+        rotation_bytes=rotation_bytes,
+        dequant_peak_bytes=dequant_peak,
     )
 
 
@@ -440,29 +712,94 @@ def make_pruned_adaln_modules(torch, nn):
 
 def make_convrot_linear(torch, nn, F):
     class ConvRotLinear(nn.Module):
-        def __init__(self, qweight, scale, bias, rotation, group_size: int):
+        """`compute_dtype` / `out_dtype` default to `None`, i.e. "follow the activation".
+
+        That default is the text encoder's behaviour, unchanged.  The denoiser's block
+        `adaln_proj.linear` needs both: diffusers reads `get_parameter_dtype(self.linear)` before
+        calling it, and with no Parameters that walk lands on the first floating-point *buffer*,
+        which is the float32 `scale` -- so the activation would arrive float32, the int8 weight
+        would be widened to float32 (a 1.04 GB transient for the 96768x2688 AdaLN projection,
+        twice the bf16 one) and the modulation would come back float32 and promote the whole
+        packed sequence.  Pinning `compute_dtype=bfloat16` reproduces the unpruned checkpoint,
+        whose `adaln_proj` *is* bf16 and whose input is cast to bf16 by exactly that call.
+        """
+
+        def __init__(self, qweight, scale, bias, rotation, group_size: int, compute_dtype=None, out_dtype=None):
             super().__init__()
+            if qweight.shape[1] % group_size:
+                raise ValueError(
+                    f"in_features {qweight.shape[1]} is not a multiple of the ConvRot group size {group_size}"
+                )
             self.register_buffer("qweight", qweight, persistent=False)  # int8 [out, in]
             self.register_buffer("scale", scale, persistent=False)  # float32 [out, 1]
             self.register_buffer("bias", bias, persistent=False)
             self.register_buffer("rotation", rotation, persistent=False)  # [G, G] or None
             self.group_size = group_size
+            self.compute_dtype = compute_dtype
+            self.out_dtype = out_dtype
             self.in_features = qweight.shape[1]
             self.out_features = qweight.shape[0]
 
         def forward(self, x):
+            compute = self.compute_dtype or x.dtype
+            out = self.out_dtype or x.dtype
+            if compute != x.dtype:
+                x = x.to(compute)
             if self.rotation is not None:
                 shape = x.shape
                 x = x.reshape(*shape[:-1], shape[-1] // self.group_size, self.group_size)
-                x = x @ self.rotation.to(x.dtype)
+                x = x @ self.rotation.to(compute)
                 x = x.reshape(shape)
-            y = F.linear(x, self.qweight.to(x.dtype))
-            y = (y.float() * self.scale.reshape(1, -1)).to(x.dtype)
+            y = F.linear(x, self.qweight.to(compute))
+            # The scale is applied after the accumulation, at no less than float32: that is both
+            # cheaper and more accurate than scaling the weight first.  `promote_types` rather
+            # than a bare `.float()` so a float64 activation is not silently *narrowed* to
+            # float32 -- for the bf16/f16 activations the cards actually run, it is the same
+            # float32 it always was.
+            acc = torch.promote_types(y.dtype, torch.float32)
+            y = (y.to(acc) * self.scale.reshape(1, -1).to(acc)).to(out)
             if self.bias is not None:
-                y = y + self.bias.to(y.dtype)
+                y = y + self.bias.to(out)
             return y
 
     return ConvRotLinear
+
+
+def convrot_rotation(torch, signs256, group_size: int):
+    """The orthogonal ConvRot rotation `R` for `group_size`, from the recovered order-256 signs.
+
+    Comfy's ConvRot rotation is not an arbitrary Hadamard matrix: measured on this host
+    (2026-09-18) the recovered order-256 sign matrix is *exactly* `A (x) A (x) A (x) A`, the
+    fourth Kronecker power of the symmetric order-4 Hadamard matrix
+
+        A = [[ 1,  1,  1, -1],
+             [ 1,  1, -1,  1],
+             [ 1, -1,  1,  1],
+             [-1,  1,  1,  1]]
+
+    and `A[0, 0] = 1`, so the leading `4^j x 4^j` block of `A^(x)k` is `A^(x)j`.  The order-64
+    rotation the denoiser's `adaln_proj` needs (`convrot_groupsize: 64`, because its 2688 inputs
+    are not a multiple of 256) is therefore *already in the file we have*: it is the top-left
+    64x64 block, no second recovery pass and no second checkpoint pair required.
+
+    Checked against real weights, not just algebra: least-squares recovery of `R` from
+    `transformer_blocks.0.adaln_proj.linear.weight` in the full BF16 diffusers checkpoint against
+    `blocks.0.adaln_proj.linear.{weight,weight_scale}` in the int8 file agreed on the sign of
+    every entry over four different 64-column groups, and `max|W R - W'| = 2.105e-3` against an
+    int8 half-step of 2.161e-3 -- i.e. the residual is the rounding floor and nothing else.  The
+    same check on `qkv_proj`, `mlp.fc2` and `attn.out_proj` at group 256 also sits exactly at
+    their half-steps, so the denoiser shares the encoder's and the VAE's rotation family.
+
+    Fails closed: the returned matrix is asserted exactly orthogonal before it is handed out.
+    """
+    order = signs256.shape[0]
+    if group_size > order or order % group_size or (group_size & (group_size - 1)):
+        raise ValueError(f"group size {group_size} is not a power-of-two divisor of the recovered order {order}")
+    block = signs256[:group_size, :group_size].to(torch.float32)
+    err = (block.T @ block - group_size * torch.eye(group_size)).abs().max().item()
+    if err != 0.0:
+        raise RuntimeError(f"the order-{group_size} ConvRot block is not exactly orthogonal (err {err:.3e})")
+    return block / math.sqrt(group_size)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -958,6 +1295,14 @@ def _build_text_encoder(torch, config, device, args):
 
     header = read_header(INT8_TEXT_ENCODER)
     quantized = {k[: -len(".comfy_quant")] for k in header if k.endswith(".comfy_quant")}
+    # The encoder's group size used to be a constant here.  It is the file's to declare, and the
+    # denoiser proved why that matters: *its* adaln_proj declares 64, not 256.  Read and check.
+    declared = {int(m["convrot_groupsize"]) for m in read_comfy_quant(INT8_TEXT_ENCODER, header).values()}
+    if declared != {256}:
+        raise RuntimeError(
+            f"the text encoder declares ConvRot group sizes {sorted(declared)}, not just 256; "
+            "this loader places one rotation for all of its Linears and would be wrong"
+        )
     group_size = 256
     rotation = None
     if args.te_rotation == "hadamard256":
@@ -1079,11 +1424,16 @@ def _free(torch) -> None:
 def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict):
     import torch
     import torch.nn as nn
+    import torch.nn.functional as F
     from diffusers import MiniMaxH3Transformer3DModel
 
     primary = torch.device(f"xpu:{args.cards[0]}")
     secondary = torch.device(f"xpu:{args.cards[1]}")
+    variant = args.denoiser
+    quantized = variant == "int8"
+    path = denoiser_path(variant)
     AdaLNTableEmbedder, PrunedAdaLNModulation, PrunedAdaLNOut = make_pruned_adaln_modules(torch, nn)
+    ConvRotLinear = make_convrot_linear(torch, nn, F)
     block_dtype = torch.bfloat16
     adaln_out_dtype = torch.float32 if args.adaln_out_dtype == "fp32" else torch.bfloat16
 
@@ -1091,16 +1441,47 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         # Everything here is built on `meta`: no host allocation, no init, nothing to page.
         with torch.device("meta"):
             model = MiniMaxH3Transformer3DModel.from_config(config)
-            # Install the pruned AdaLN form.  `time_proj` becomes an identity and `time_embedder`
-            # becomes the table lerp, so the stock `forward` (L641-642) needs no patching at all.
-            model.time_proj = nn.Identity()
-            for block in model.transformer_blocks:
-                block.adaln_proj = PrunedAdaLNModulation(HIDDEN_SIZE, adaln_out_dtype)
-            model.norm_out = PrunedAdaLNOut(HIDDEN_SIZE, config["final_norm_eps"], adaln_out_dtype)
+            if not quantized:
+                # Install the pruned AdaLN form.  `time_proj` becomes an identity and
+                # `time_embedder` becomes the table lerp, so the stock `forward` (L641-642) needs
+                # no patching at all.
+                model.time_proj = nn.Identity()
+                for block in model.transformer_blocks:
+                    block.adaln_proj = PrunedAdaLNModulation(HIDDEN_SIZE, adaln_out_dtype)
+                model.norm_out = PrunedAdaLNOut(HIDDEN_SIZE, config["final_norm_eps"], adaln_out_dtype)
+            # On the int8 path there is NO module swap: the checkpoint carries the unpruned AdaLN
+            # branch, so `time_proj`, `time_embedder`, every `adaln_proj` and `norm_out` stay the
+            # stock diffusers modules and the stock arithmetic (silu, then the 2688-wide
+            # projection) runs unchanged.  Only the *weights* of the quantized Linears are
+            # substituted, below.
         model.eval()
 
-    header = read_header(PRUNED_DENOISER)
-    remap = build_remap(config["num_layers"], config["num_refiner_layers"])
+    header = read_header(path)
+    remap = build_remap(config["num_layers"], config["num_refiner_layers"], variant)
+    quant: dict[str, QuantSlice] = {}
+    rotations: dict[tuple, object] = {}
+    if quantized:
+        quant = build_quant_map(config["num_layers"], header, read_comfy_quant(path, header))
+        groups = sorted({q.group_size for q in quant.values()})
+        LOG.info("int8 denoiser: %d quantized Linears, ConvRot group sizes %s", len(quant), groups)
+        if args.denoiser_rotation == "hadamard":
+            if not CONVROT_ROTATION.exists():
+                raise FileNotFoundError(
+                    f"{CONVROT_ROTATION} is missing. Regenerate it with "
+                    "scripts/recover-convrot-rotation.py (CPU-only), or pass "
+                    "--denoiser-rotation none to A/B the unrotated path."
+                )
+            with open_tensor_reader(CONVROT_ROTATION) as fh:
+                signs = fh.get_tensor("convrot_signs")
+            # One bf16 copy per (group size, card): every ConvRotLinear on a card shares it.
+            for g in groups:
+                base = convrot_rotation(torch, signs, g)
+                for dev in (primary, secondary):
+                    rotations[(g, dev)] = base.to(device=dev, dtype=torch.bfloat16)
+            del signs, base
+        else:
+            LOG.warning("--denoiser-rotation none: this is the A/B control and WILL produce garbage "
+                        "if the rotation is real")
 
     def device_for(name: str):
         if name.startswith("transformer_blocks."):
@@ -1108,11 +1489,12 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         return primary
 
     with phase("load.stream", timings):
-        LOG.info("denoiser loader: %s (B70_H3_LOADER)", LOADER)
-        with open_tensor_reader(PRUNED_DENOISER, header) as fh:
-            table = fh.get_tensor("adaln_t_table").to(device=primary, dtype=torch.float32)
-            model.time_embedder = AdaLNTableEmbedder(table)
-            fh.release("adaln_t_table")
+        LOG.info("denoiser loader: %s (B70_H3_LOADER), checkpoint %s", LOADER, path.name)
+        with open_tensor_reader(path, header) as fh:
+            if not quantized:
+                table = fh.get_tensor("adaln_t_table").to(device=primary, dtype=torch.float32)
+                model.time_embedder = AdaLNTableEmbedder(table)
+                fh.release("adaln_t_table")
             placed = 0
             for name, src in remap.items():
                 dev = device_for(name)
@@ -1123,7 +1505,7 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                 if src.swap_halves:
                     half = t.shape[0] // 2
                     t = torch.cat((t[half:], t[:half]), dim=0)
-                t = t.to(device=dev, dtype=target_dtype(name, args.adaln_dtype)).contiguous()
+                t = t.to(device=dev, dtype=target_dtype(name, args.adaln_dtype, variant)).contiguous()
                 set_submodule_tensor(model, name, t)
                 del t  # the module owns the device tensor; drop the host-side name and the buffer
                 fh.release(src.key, src.row_slice)
@@ -1131,8 +1513,58 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                 if placed % 100 == 0:
                     LOG.info("  placed %d/%d tensors (host peak RSS %s)", placed, len(remap), gib(host_rss_bytes()))
                 log_host_mem("load.stream", placed, len(remap))
-                drop_file_pagecache(PRUNED_DENOISER, placed)
-        log_host_mem("load.stream", placed, len(remap), force=True)
+                drop_file_pagecache(path, placed)
+
+            # --- the quantized Linears, int8 path only -------------------------------------
+            # Same dequant contract as the text encoder (`_build_text_encoder`, step 2): the int8
+            # weight and its per-row float32 scale go to the card as they are stored, and
+            # `ConvRotLinear` rotates the activation and applies the scale after accumulation.
+            # The only differences are that the destination Linears here are *sliced* out of
+            # Comfy's fused tensors, and that two group sizes are in play.
+            total = len(remap) + len(quant)
+            for module, q in quant.items():
+                dev = device_for(module)
+                parent_path, _, leaf = module.rpartition(".")
+                parent = model.get_submodule(parent_path)
+                qw = fh.get_tensor(q.key + ".weight", q.row_slice)
+                sc = fh.get_tensor(q.key + ".weight_scale", q.row_slice)
+                bias = None
+                if q.has_bias:
+                    bias = fh.get_tensor(q.key + ".bias").to(device=dev, dtype=torch.bfloat16)
+                if q.swap_halves:
+                    # The output axis again -- weight and scale must be permuted together.
+                    half = qw.shape[0] // 2
+                    qw = torch.cat((qw[half:], qw[:half]), dim=0)
+                    sc = torch.cat((sc[half:], sc[:half]), dim=0)
+                qw = qw.to(device=dev).contiguous()
+                sc = sc.to(device=dev, dtype=torch.float32).contiguous()
+                # `adaln_proj.linear` is the one Linear diffusers probes with
+                # `get_parameter_dtype` before calling; pin it to the unpruned checkpoint's bf16.
+                is_adaln = module.endswith("adaln_proj.linear")
+                setattr(
+                    parent,
+                    leaf,
+                    ConvRotLinear(
+                        qw,
+                        sc,
+                        bias,
+                        rotations.get((q.group_size, dev)),
+                        q.group_size,
+                        compute_dtype=torch.bfloat16 if is_adaln else None,
+                        out_dtype=adaln_out_dtype if is_adaln else None,
+                    ),
+                )
+                del qw, sc, bias  # the ConvRotLinear buffers own them now
+                for suffix in (".weight", ".weight_scale"):
+                    fh.release(q.key + suffix, q.row_slice)
+                if q.has_bias:
+                    fh.release(q.key + ".bias")
+                placed += 1
+                if placed % 100 == 0:
+                    LOG.info("  placed %d/%d tensors (host peak RSS %s)", placed, total, gib(host_rss_bytes()))
+                log_host_mem("load.stream", placed, total)
+                drop_file_pagecache(path, placed)
+        log_host_mem("load.stream", placed, len(remap) + len(quant), force=True)
         # `rope.inv_freq` is non-persistent and recomputed from the config, not loaded
         # (transformer_minimax_h3.py L88-91).  Rebuild it on the primary card and cross-check.
         freq_dim = config["rope_freq_dim"]
@@ -1140,7 +1572,7 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
             config["rope_theta"] ** (torch.arange(0, 2 * freq_dim, 2, dtype=torch.float32) / (2 * freq_dim))
         )
         set_submodule_tensor(model, "rope.inv_freq", inv_freq.to(primary))
-        with open_tensor_reader(PRUNED_DENOISER, header) as fh:
+        with open_tensor_reader(path, header) as fh:
             stored = fh.get_tensor("rope.inv_freq").float()
             fh.release("rope.inv_freq")
         drift = (stored - inv_freq).abs().max().item()
@@ -1156,8 +1588,15 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
 
     _install_boundary_hooks(torch, model, plan.split_index, primary, secondary)
     LOG.info("cross-card transfer route: %s (B70_H3_XFER)", XFER)
+    if quantized:
+        LOG.info(
+            "int8 denoiser: %d ConvRotLinears placed, transient dequant peak %s (leave it free)",
+            len(quant),
+            gib(plan.dequant_peak_bytes),
+        )
     LOG.info(
-        "denoiser split at block %d: %s on %s, %s on %s",
+        "denoiser (%s) split at block %d: %s on %s, %s on %s",
+        variant,
         plan.split_index,
         gib(plan.card0_bytes),
         primary,
@@ -1373,6 +1812,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--video-shift", type=float, default=None, help="override the video scheduler shift (default 12.0)")
     p.add_argument("--audio-shift", type=float, default=None, help="override the audio scheduler shift (default 3.0)")
+    p.add_argument(
+        "--denoiser",
+        choices=sorted(DENOISERS),
+        default=DEFAULT_DENOISER,
+        help="which denoiser checkpoint to load (env B70_H3_DENOISER). `pruned` is the BF16 file "
+        "whose AdaLN branch is a rank-8 fit, error below the bf16 noise floor, every other weight "
+        "exact; `int8` is the full INT8 ConvRot file, whose AdaLN branch is exact in form but "
+        "whose 250 block Linears are int8. Default stays `pruned` until the pruned control has "
+        "rendered a clip.",
+    )
     p.add_argument("--cards", type=int, nargs=2, default=[0, 1], help="the two XPU indices for the denoiser")
     p.add_argument("--encoder-card", type=int, default=0, help="card the text encoder runs on, alone")
     p.add_argument("--split-index", type=int, default=None, help="force the block split instead of balancing bytes")
@@ -1398,6 +1847,15 @@ def build_parser() -> argparse.ArgumentParser:
         "recovered from the fp16/int8 video-VAE pair on disk; `none` is the A/B control and will "
         "produce garbage if the rotation is real.",
     )
+    p.add_argument(
+        "--denoiser-rotation",
+        choices=["hadamard", "none"],
+        default="hadamard",
+        help="the ConvRot activation rotation for `--denoiser int8`. `hadamard` takes both orders "
+        "it needs (256 for the attention/MLP Linears, 64 for adaln_proj) from "
+        "data/convrot-hadamard-256.safetensors -- the order-64 one is that matrix's leading 64x64 "
+        "block, see convrot_rotation(). `none` is the A/B control. Ignored on the pruned path.",
+    )
     p.add_argument("--out-dir", type=pathlib.Path, default=pathlib.Path("/mnt/fast-ai/bench-results/minimax-h3"))
     p.add_argument("--run-name", default=None, help="subdirectory name; default is a UTC timestamp")
     p.add_argument("--crf", type=int, default=16, help="x264 quality for the mp4 (the receipt hashes are exact)")
@@ -1414,15 +1872,116 @@ def build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------------------------
 
 
+def diffusers_parameter_names() -> set[str] | None:
+    """The authoritative diffusers parameter set, from the full BF16 checkpoint's index.
+
+    This is what `MiniMaxH3Transformer3DModel(config).state_dict()` would list, read as JSON so
+    the dry run never has to import diffusers or torch.  `rope.inv_freq` is not in it: diffusers
+    registers it non-persistent and recomputes it (transformer_minimax_h3.py L88-91), and the
+    loader recomputes it too, so it is added here to keep the two sides comparable.
+    """
+    index_path = REPO_ORIGINAL / "transformer" / "diffusion_pytorch_model.safetensors.index.json"
+    if not index_path.exists():
+        return None
+    return set(json.loads(index_path.read_text())["weight_map"]) | {"rope.inv_freq"}
+
+
+def check_coverage(variant: str, header: dict, config: dict, quant_meta: dict[str, dict]) -> int:
+    """Both directions of the load contract, from headers alone.
+
+    1. every tensor in the checkpoint is consumed by something, and
+    2. every diffusers parameter is produced -- by the dense remap, by a ConvRotLinear
+       substitution, or by a named structural substitution (the pruned AdaLN table) --
+    with nothing left over on either side.
+    """
+    num_layers, num_refiner = config["num_layers"], config["num_refiner_layers"]
+    remap = build_remap(num_layers, num_refiner, variant)
+    quant = build_quant_map(num_layers, header, quant_meta) if variant == "int8" else {}
+
+    # ---- checkpoint side ----------------------------------------------------------------
+    missing = sorted({s.key for s in remap.values()} - set(header))
+    if missing:
+        print(f"  FAIL: {len(missing)} remapped source keys are absent, e.g. {missing[:5]}")
+        return 1
+    consumed = {s.key for s in remap.values()} | {"rope.inv_freq"}
+    for module, q in quant.items():
+        consumed |= set(q.tensor_keys(header))
+    if variant == "pruned":
+        consumed.add("adaln_t_table")
+    unconsumed = sorted(set(header) - consumed)
+
+    # ---- diffusers side -----------------------------------------------------------------
+    produced = set(remap)
+    substituted: set[str] = set()
+    for module, q in quant.items():
+        substituted |= set(q.param_names(module, header))
+    # `rope.inv_freq` is recomputed from the config by the loader and cross-checked against the
+    # checkpoint's copy (max drift must be < 1e-6), so it is produced without being remapped.
+    structural: set[str] = {"rope.inv_freq"}
+    if variant == "pruned":
+        # The rank-8 table stands in for the whole unpruned timestep MLP; `adaln_t_table` is an
+        # `AdaLNTableEmbedder` buffer, not any of these four parameters.
+        structural |= {
+            "time_embedder.linear_1.weight",
+            "time_embedder.linear_1.bias",
+            "time_embedder.linear_2.weight",
+            "time_embedder.linear_2.bias",
+        }
+    expected = diffusers_parameter_names()
+
+    print(f"  checkpoint tensors    : {len(header)}")
+    print(f"  dense remap           : {len(remap)} diffusers parameters from "
+          f"{len({s.key for s in remap.values()})} tensors")
+    if quant:
+        groups = sorted({q.group_size for q in quant.values()})
+        print(f"  ConvRot substitutions : {len(quant)} Linears -> {len(substituted)} parameters, "
+              f"from {sum(len(q.tensor_keys(header)) for q in quant.values())} tensors "
+              f"(group sizes {groups})")
+    if len(structural) > 1:
+        print(f"  structural substitute : {len(structural) - 1} parameters replaced by adaln_t_table, "
+              "+ rope.inv_freq recomputed")
+    else:
+        print("  structural substitute : rope.inv_freq recomputed from the config")
+    print(f"  tensors not consumed  : {len(unconsumed)}"
+          f"{' -> ' + str(unconsumed[:5]) if unconsumed else '  (0, every tensor is used)'}")
+
+    rc = 1 if unconsumed else 0
+    if expected is None:
+        print("  (skipping the diffusers-parameter check: the full BF16 checkpoint is not on this host)")
+        return rc
+    accounted = produced | substituted | structural
+    unproduced = sorted(expected - accounted)
+    extra = sorted(accounted - expected)
+    print(f"  diffusers parameters  : {len(expected)} expected, {len(accounted)} accounted for")
+    if unproduced:
+        print(f"  FAIL: {len(unproduced)} diffusers parameters would stay on meta, e.g. {unproduced[:5]}")
+        rc = 1
+    if extra:
+        print(f"  FAIL: {len(extra)} produced names are not diffusers parameters, e.g. {extra[:5]}")
+        rc = 1
+    if not unproduced and not extra:
+        print("  coverage              : EXACT -- 0 tensors left over, 0 parameters left on meta")
+    return rc
+
+
 def dry_run(args) -> int:
-    """Configs + safetensors headers only. No torch.xpu, no diffusers, no device tensor."""
+    """Configs + safetensors headers only. No torch.xpu, no diffusers, no device tensor.
+
+    The one exception to "headers only" is `read_comfy_quant`, which preads the ~90-byte ASCII
+    JSON blob of each quantized Linear (about 22 KB for the whole int8 denoiser). Those blobs are
+    the file's own declaration of its quantization format, so deriving the remap from them is the
+    difference between a header-driven plan and a hardcoded guess. It still imports no torch.
+    """
     config = json.loads(TRANSFORMER_CONFIG.read_text())
+    variant = args.denoiser
+    denoiser = denoiser_path(variant)
     print("=" * 96)
-    print("MiniMax-H3 two-B70 pipeline -- DRY RUN (CPU only, headers only, nothing placed)")
+    print(f"MiniMax-H3 two-B70 pipeline -- DRY RUN (CPU only, headers only, nothing placed)")
+    print(f"denoiser: {variant}  {denoiser.name}")
     print("=" * 96)
 
     for label, path in [
-        ("pruned denoiser", PRUNED_DENOISER),
+        (f"denoiser ({variant})", denoiser),
         ("int8 text encoder", INT8_TEXT_ENCODER),
         ("video vae (fp32 repo)", VAE_DIR / "diffusion_pytorch_model.safetensors.index.json"),
         ("audio vae (fp32 repo)", AUDIO_VAE_DIR / "diffusion_pytorch_model.safetensors"),
@@ -1433,24 +1992,28 @@ def dry_run(args) -> int:
         print(f"  {'OK ' if ok else 'MISSING'} {label:24s} {size / 1e9:8.2f} GB  {path}")
     print()
 
-    header = read_header(PRUNED_DENOISER)
+    header = read_header(denoiser)
     print(f"denoiser header: {len(header)} tensors, {sum(tensor_bytes(e) for e in header.values()) / 1e9:.2f} GB stored")
 
-    # Every diffusers parameter must be reachable from the checkpoint.
-    remap = build_remap(config["num_layers"], config["num_refiner_layers"])
-    missing = sorted({s.key for s in remap.values()} - set(header))
-    if missing:
-        print(f"  FAIL: {len(missing)} remapped source keys are absent, e.g. {missing[:5]}")
-        return 1
-    consumed = {s.key for s in remap.values()} | {"adaln_t_table", "rope.inv_freq"}
-    unconsumed = sorted(set(header) - consumed)
-    print(f"  remap covers {len(remap)} diffusers parameters from {len(consumed)} checkpoint tensors")
-    print(f"  checkpoint tensors not consumed: {len(unconsumed)}{' -> ' + str(unconsumed[:5]) if unconsumed else ''}")
-    table = header["adaln_t_table"]
-    print(f"  adaln_t_table: {table['dtype']} {table['shape']}  (grid of {table['shape'][0] - 1} + terminal row)")
+    quant_meta = read_comfy_quant(denoiser, header) if variant == "int8" else {}
+    rc = check_coverage(variant, header, config, quant_meta)
+    if rc:
+        return rc
+    if variant == "pruned":
+        table = header["adaln_t_table"]
+        print(f"  adaln_t_table         : {table['dtype']} {table['shape']}  "
+              f"(grid of {table['shape'][0] - 1} + terminal row)")
+    else:
+        fmt = sorted({(m["format"], m["convrot"], m["convrot_groupsize"]) for m in quant_meta.values()})
+        for f in fmt:
+            n = sum(1 for m in quant_meta.values()
+                    if (m["format"], m["convrot"], m["convrot_groupsize"]) == f)
+            print(f"  comfy_quant           : {n:4d} Linears  format={f[0]} convrot={f[1]} groupsize={f[2]}")
+        print(f"  rotation source       : {'present' if CONVROT_ROTATION.exists() else 'MISSING'} "
+              f"{CONVROT_ROTATION.name} ({args.denoiser_rotation}; the order-64 block is its leading 64x64)")
     print()
 
-    plan = plan_split(header, config, args.adaln_dtype, args.split_index)
+    plan = plan_split(header, config, args.adaln_dtype, args.split_index, variant, quant_meta or None)
     print("layer split (LTX byte-balancing policy, ltx_layer_shard.py::install):")
     print(f"  blocks                : {plan.num_layers}")
     print(f"  per-block bytes       : min {plan.block_bytes[0] / 1e6:.1f} MB, max {max(plan.block_bytes) / 1e6:.1f} MB")
@@ -1460,6 +2023,15 @@ def dry_run(args) -> int:
     print(f"  card {args.cards[1]} (secondary)    : {plan.card1_bytes / 1e9:8.3f} GB  {gib(plan.card1_bytes)}")
     print(f"  imbalance             : {abs(plan.card0_bytes - plan.card1_bytes) / 1e6:.1f} MB")
     print(f"  free per card (32 GiB): {gib(32 * 2**30 - plan.card0_bytes)} / {gib(32 * 2**30 - plan.card1_bytes)}")
+    if plan.variant == "int8":
+        print(f"  of which quantized    : {plan.quant_bytes / 1e9:8.3f} GB  {gib(plan.quant_bytes)} "
+              f"(int8 weights + f32 scales + biases)")
+        print(f"  rotation per card     : {plan.rotation_bytes / 1e3:8.1f} kB")
+        print(f"  transient dequant peak: {plan.dequant_peak_bytes / 1e6:8.1f} MB  "
+              f"{gib(plan.dequant_peak_bytes)}  <-- must stay free ON TOP of the resident bytes")
+        worst = max(plan.card0_bytes, plan.card1_bytes) + plan.dequant_peak_bytes
+        print(f"  worst card + transient: {worst / 1e9:8.3f} GB  {gib(worst)}  "
+              f"-> {gib(32 * 2**30 - worst)} free")
     print()
 
     te_header = read_header(INT8_TEXT_ENCODER)
@@ -1504,7 +2076,7 @@ def dry_run(args) -> int:
     print()
 
     if args.verify_remap:
-        rc = verify_remap_against_full(config)
+        rc = verify_remap_against_full(config, variant)
         if rc:
             return rc
 
@@ -1512,31 +2084,44 @@ def dry_run(args) -> int:
     return 0
 
 
-def verify_remap_against_full(config: dict) -> int:
+VERIFY_ROWS = 256  # output rows sampled per quantized Linear; keeps every read a few MB
+
+
+def verify_remap_against_full(config: dict, variant: str = "pruned") -> int:
     """Compare a sample of remapped tensors against the full BF16 diffusers checkpoint.
 
-    The pruned build only replaces the AdaLN branch, so every non-AdaLN tensor must be identical.
-    This is what pinned the qkv split order and the SwiGLU half order.  Needs `safetensors` only.
-    """
-    from safetensors import safe_open
+    Dense tensors must be *bit-identical*: neither build re-derives them, so the qkv split order
+    and the SwiGLU half order are pinned by this check.
 
+    Quantized tensors cannot be identical by construction, so they are checked against the thing
+    that must be true instead: dequantizing them, `W' = int8 * scale`, must reproduce `W R` to
+    within the int8 rounding floor, where `R` is the ConvRot rotation for that Linear's declared
+    group size.  A failure here means the rotation, the group size, the scale axis or the row
+    mapping is wrong -- all four of which would otherwise only show up as a garbage clip.
+
+    Reads are row slices through the pread reader, a few MB per sample, never a whole tensor.
+    """
     index_path = REPO_ORIGINAL / "transformer" / "diffusion_pytorch_model.safetensors.index.json"
     if not index_path.exists():
         print("  (skipping --verify-remap: the full BF16 checkpoint is not on this host)")
         return 0
     weight_map = json.loads(index_path.read_text())["weight_map"]
-    remap = build_remap(config["num_layers"], config["num_refiner_layers"])
-    handles: dict[str, object] = {}
-
-    def full_slice(name: str):
-        shard = weight_map[name]
-        if shard not in handles:
-            handles[shard] = safe_open(str(REPO_ORIGINAL / "transformer" / shard), framework="pt")
-        return handles[shard].get_slice(name)
+    num_layers, num_refiner = config["num_layers"], config["num_refiner_layers"]
+    remap = build_remap(num_layers, num_refiner, variant)
+    path = denoiser_path(variant)
+    header = read_header(path)
+    quant = build_quant_map(num_layers, header, read_comfy_quant(path, header)) if variant == "int8" else {}
 
     import torch
 
-    pruned = safe_open(str(PRUNED_DENOISER), framework="pt")
+    handles: dict[str, PreadTensorReader] = {}
+
+    def full_rows(name: str, rows: tuple[int, int] | None):
+        shard = weight_map[name]
+        if shard not in handles:
+            handles[shard] = PreadTensorReader(REPO_ORIGINAL / "transformer" / shard)
+        return handles[shard].get_tensor(name, rows)
+
     sample = [
         "proj_in.weight",
         "audio_proj_in.weight",
@@ -1552,26 +2137,71 @@ def verify_remap_against_full(config: dict) -> int:
         "norm_out.norm.weight",
         "proj_out.weight",
         "audio_proj_out.weight",
+        "time_embedder.linear_1.weight",
+        "time_embedder.linear_2.weight",
     ]
-    print("remap verification against the full BF16 checkpoint (first 64 input columns):")
     failures = 0
-    for name in sample:
-        if name not in weight_map:
-            continue
-        src = remap[name]
-        t = pruned.get_slice(src.key)
-        lo, hi = src.row_slice if src.row_slice else (0, t.get_shape()[0])
-        a = t[lo:hi]
-        if src.swap_halves:
-            half = a.shape[0] // 2
-            a = torch.cat((a[half:], a[:half]), dim=0)
-        a = a[:, :64] if a.ndim == 2 else a
-        b = full_slice(name)
-        b = b[:, :64] if len(b.get_shape()) == 2 else b[:]
-        ok = a.shape == b.shape and torch.equal(a, b)
-        failures += 0 if ok else 1
-        print(f"  {'EXACT ' if ok else 'DIFFER'} {name:52s} <- {src.key}")
-    print(f"  {len(sample) - failures}/{len(sample)} exact")
+    checked = 0
+    try:
+        with PreadTensorReader(path, header) as fh:
+            print("dense remap verification against the full BF16 checkpoint (first 64 input columns):")
+            for name in sample:
+                if name not in weight_map or name not in remap:
+                    continue  # quantized on this path, or absent from this build
+                src = remap[name]
+                a = fh.get_tensor(src.key, src.row_slice)
+                if src.swap_halves:
+                    half = a.shape[0] // 2
+                    a = torch.cat((a[half:], a[:half]), dim=0)
+                b = full_rows(name, None)
+                if a.ndim == 2:
+                    a, b = a[:, :64], b[:, :64]
+                ok = a.shape == b.shape and a.dtype == b.dtype and torch.equal(a, b)
+                failures += 0 if ok else 1
+                checked += 1
+                print(f"  {'EXACT ' if ok else 'DIFFER'} {name:52s} <- {src.key}")
+
+            if quant:
+                print(f"\nConvRot dequant verification ({VERIFY_ROWS} output rows per Linear, "
+                      "against the full BF16 weights):")
+                with open_tensor_reader(CONVROT_ROTATION) as rot_fh:
+                    signs = rot_fh.get_tensor("convrot_signs")
+                probes = [
+                    "transformer_blocks.0.attn.to_q",
+                    "transformer_blocks.0.attn.to_v",
+                    "transformer_blocks.0.attn.to_out.0",
+                    "transformer_blocks.0.ff.net.0.proj",
+                    "transformer_blocks.25.ff.net.2",
+                    "transformer_blocks.0.adaln_proj.linear",
+                    "transformer_blocks.49.adaln_proj.linear",
+                ]
+                for module in probes:
+                    q = quant[module]
+                    name = module + ".weight"
+                    if name not in weight_map:
+                        continue
+                    lo = q.row_slice[0] if q.row_slice else 0
+                    src_rows = (lo, lo + VERIFY_ROWS)
+                    if q.swap_halves:
+                        # diffusers row i is Comfy row i + half; sample the diffusers rows.
+                        half = header[q.key + ".weight"]["shape"][0] // 2
+                        src_rows = (half, half + VERIFY_ROWS)
+                    qw = fh.get_tensor(q.key + ".weight", src_rows).float()
+                    sc = fh.get_tensor(q.key + ".weight_scale", src_rows).float()
+                    w = full_rows(name, (0, VERIFY_ROWS)).float()
+                    R = convrot_rotation(torch, signs, q.group_size)
+                    cols = q.group_size  # one group is enough: R is block-diagonal
+                    err = ((w[:, :cols] @ R) - (qw * sc)[:, :cols]).abs().max().item()
+                    half_step = (sc.abs().max().item()) / 2
+                    ok = err <= 1.05 * half_step
+                    failures += 0 if ok else 1
+                    checked += 1
+                    print(f"  {'FLOOR ' if ok else 'ABOVE '} {module:44s} G={q.group_size:<4d} "
+                          f"max|WR-W'|={err:.3e} vs int8 half-step {half_step:.3e}")
+    finally:
+        for h in handles.values():
+            h.close()
+    print(f"  {checked - failures}/{checked} pass")
     return 1 if failures else 0
 
 
@@ -1609,8 +2239,10 @@ def main(argv: list[str] | None = None) -> int:
 
     timings: dict[str, float] = {}
     config = json.loads(TRANSFORMER_CONFIG.read_text())
-    header = read_header(PRUNED_DENOISER)
-    plan = plan_split(header, config, args.adaln_dtype, args.split_index)
+    denoiser = denoiser_path(args.denoiser)
+    header = read_header(denoiser)
+    quant_meta = read_comfy_quant(denoiser, header) if args.denoiser == "int8" else None
+    plan = plan_split(header, config, args.adaln_dtype, args.split_index, args.denoiser, quant_meta)
     devices = [torch.device(f"xpu:{i}") for i in args.cards]
     torch.xpu.init()  # the allocator stats calls below raise "Invalid device argument" before lazy init
     for dev in devices:
@@ -1745,8 +2377,10 @@ def main(argv: list[str] | None = None) -> int:
             "audio_latents_sha256": sha256_tensor(audio_latents.cpu()),
         },
         "inputs": {
-            "denoiser": str(PRUNED_DENOISER),
-            "denoiser_header_sha256": file_digest(PRUNED_DENOISER, limit=1 << 20),
+            "denoiser": str(denoiser),
+            "denoiser_variant": args.denoiser,
+            "denoiser_rotation": args.denoiser_rotation if args.denoiser == "int8" else None,
+            "denoiser_header_sha256": file_digest(denoiser, limit=1 << 20),
             "text_encoder": str(INT8_TEXT_ENCODER) if args.prompt_embeds is None else str(args.prompt_embeds),
             "convrot_rotation_sha256": file_digest(CONVROT_ROTATION) if CONVROT_ROTATION.exists() else None,
             "vae": str(VAE_DIR),

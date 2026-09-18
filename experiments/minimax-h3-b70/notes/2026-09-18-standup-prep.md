@@ -356,3 +356,144 @@ from 532 checkpoint tensors, 0 left over.
 So precondition 1 is closed and precondition 2 -- "that measured peak must sit well under free host
 RAM" -- is met with room: 1.663 GiB against the ~13-14 GiB the host has with the service down. The
 remaining preconditions (3-6) are unchanged and still gate the GPU run.
+
+## The full INT8 ConvRot denoiser is on disk, and the runner can load it (2026-09-18)
+
+The download that the [disk audit](2026-09-18-disk-audit.md) caught at 15.7 % has finished:
+`minimax_h3_fl2va_int8_convrot.safetensors`, 34,038,892,334 bytes, 1035 tensors, and the header's
+declared data end lands exactly on the file's last byte. That closes the audit's one open item and
+makes its "only one of the two denoisers exists on this host" paragraph stale.
+
+`scripts/run_h3_t2v.py` now has a second load path for it. `--denoiser {pruned,int8}` (env
+`B70_H3_DENOISER`) selects between a two-entry `DENOISERS` table; **the default stays `pruned`**
+until the pruned control has actually rendered a clip.
+
+### What the two headers say, side by side
+
+The int8 file is not the pruned file quantized. It is the *unpruned* model quantized, which is the
+whole reason it needs its own load path rather than a flag:
+
+| | pruned BF16 (532 tensors) | int8 ConvRot (1035 tensors) |
+| --- | --- | --- |
+| `adaln_t_table` | `F32 [1025, 8]` | **absent** |
+| `time_embedder.proj_in / proj_out` | **absent** | `F32 [5376, 256]` / `F32 [2688, 5376]` |
+| `blocks.N.adaln_proj.linear.weight` | `F16 [96768, 8]` | `I8 [96768, 2688]` + `F32 [96768, 1]` scale |
+| `final_layer.adaln_proj.linear.weight` | `F16 [10752, 8]` | `BF16 [10752, 2688]` (**not** quantized) |
+| `blocks.N.attn.qkv_proj / out_proj / mlp.fc1 / fc2` | BF16 | `I8` + `F32` per-row scale |
+| `token_refiner.blocks.N.*` | BF16 | BF16 (**not** quantized -- only the 50 denoiser blocks are) |
+| `blocks.N.norm1/norm2`, `attn.q_norm/k_norm` | BF16 | BF16 |
+
+So: 250 quantized Linears (5 per block x 50), 50 of which carry a bias; 234 dense tensors; 1
+`rope.inv_freq`; 1035 total, all consumed. The `time_embedder.proj_in/proj_out` pair maps onto
+diffusers' `TimestepEmbedding.linear_1/linear_2` with identical shapes and dtypes to the full BF16
+checkpoint, and both were checked bit-exact against it.
+
+### The rotation question: answered, and it cost nothing
+
+This was the one thing that could have blocked the path. The denoiser's `comfy_quant` blobs declare
+**two** group sizes, not one: 256 for the 200 attention/MLP Linears, and **64** for the 50
+`adaln_proj.linear`s -- necessarily, since their 2688 inputs are not a multiple of 256. The recovered
+`data/convrot-hadamard-256.safetensors` only covers order 256.
+
+A second least-squares recovery pass turned out to be unnecessary. The recovered order-256 sign
+matrix is *exactly* the fourth Kronecker power of
+
+    A = [[ 1,  1,  1, -1],
+         [ 1,  1, -1,  1],
+         [ 1, -1,  1,  1],
+         [-1,  1,  1,  1]]
+
+(checked with `torch.equal`, not `allclose`), and `A[0,0] = +1`, so the leading `4^j x 4^j` block of
+`A^(x)k` is `A^(x)j`. The order-64 rotation is therefore the top-left 64x64 block of the file we
+already have. `convrot_rotation()` returns it and asserts exact orthogonality before handing it out.
+
+Confirmed against real weights rather than only algebra, by least-squares recovery from the full
+BF16 diffusers checkpoint against the int8 file (row slices through the pread reader, ~100 MB total,
+under the watchdog):
+
+| Linear | Group | sign agreement | `max|W R - W'|` | int8 half-step |
+| --- | ---: | ---: | ---: | ---: |
+| `blocks.0.adaln_proj.linear` (4 column groups) | 64 | 1.000000 | 2.105e-3 | 2.161e-3 |
+| `blocks.0.attn.qkv_proj` | 256 | 1.000000 | 3.523e-3 | 3.527e-3 |
+| `blocks.3.mlp.fc2` | 256 | 1.000000 | 3.408e-3 | 3.410e-3 |
+| `blocks.3.attn.out_proj` | 256 | 1.000000 | 5.653e-3 | 5.708e-3 |
+
+Every residual sits *at* the rounding floor and none above it, which is as tight as this can be: the
+rotation is right, the group sizes are right, and the scale is per output row. Nothing is left
+unresolved about the rotation, and no further download or recovery run is needed.
+
+### What the loader does differently on the int8 path
+
+* **No pruned-AdaLN module swap.** The stock diffusers modules and the stock arithmetic (silu, then
+  the 2688-wide projection) run unchanged; `make_pruned_adaln_modules` is not used.
+* **350 `nn.Linear`s become `ConvRotLinear`** -- the same class and the same dequant arithmetic the
+  INT8 text encoder has been using, reused as-is. The only new work is the *row algebra*: Comfy's
+  fused `qkv_proj` is sliced into `to_q`/`to_k`/`to_v` and its `[gate ; value]` `mlp.fc1` is
+  half-swapped into diffusers' `[value ; gate]` `ff.net.0.proj`. Both act on the output axis, which
+  is the axis the per-row scale is indexed by, so **weight and scale must be sliced and swapped
+  together**. That pairing is what `scripts/test_convrot_linear.py` pins, including a negative case
+  that swaps the weight without the scale and checks the result is grossly different.
+* **`compute_dtype=bfloat16` is pinned on the 50 AdaLN Linears.** diffusers calls
+  `get_parameter_dtype(self.linear)` before invoking them; a `ConvRotLinear` has no Parameters, so
+  that walk falls through to its first floating-point buffer -- the float32 scale. Unpinned, the
+  activation would arrive float32, the int8 weight would widen to float32 (1.04 GB transient instead
+  of 520 MB) and the modulation would return float32 and promote the entire packed sequence. bf16 is
+  also what the unpruned checkpoint stores, so this matches the reference rather than departing from
+  it.
+* One small wart fixed while there: `ConvRotLinear` applied its scale through a hardcoded `.float()`,
+  which *narrows* a float64 activation. It now promotes to at least float32 instead. Bitwise
+  identical for every dtype the cards run; it is what lets the unit test hold a float64 reference.
+
+### The int8 split plan (256x448x124, STEPS=8)
+
+```
+blocks                : 50           per-block bytes : 646.3 MB   (pruned: 774.2 MB)
+non-block bytes       :  1.723 GB    1.605 GiB
+split_index           : 24           -> blocks 0..23 | 24..49
+card 0 (primary)      : 17.235 GB   16.051 GiB       (pruned: 18.797 GiB)
+card 1 (secondary)    : 16.804 GB   15.650 GiB       (pruned: 18.747 GiB)
+imbalance             : 430.6 MB                     (pruned:  54.1 MB)
+of which quantized    : 32.314 GB   30.095 GiB       int8 weights + f32 scales + biases
+rotation per card     :  139.3 kB                    one bf16 256x256 + one 64x64
+transient dequant peak:  520.2 MB    0.484 GiB       <-- must stay free ON TOP of the resident bytes
+worst card + transient: 17.755 GB   16.536 GiB       -> 15.464 GiB free on a 32 GiB card
+```
+
+The imbalance is larger than the pruned form's because the block granularity (646 MB) is now large
+relative to the non-block total; it is still well inside one block and both cards have >15 GiB free.
+
+### CPU gates, both denoisers
+
+`./smoke_h3.sh dry` now runs the dry run for **both** denoisers and then the ConvRot unit test.
+
+| | pruned | int8 |
+| --- | --- | --- |
+| checkpoint tensors consumed | 532 / 532 | 1035 / 1035 |
+| diffusers parameters accounted for | 639 / 639 (634 dense + 4 replaced by `adaln_t_table` + `rope.inv_freq` recomputed) | 639 / 639 (238 dense + 400 quantized-substituted + `rope.inv_freq`) |
+| left over, either side | 0 | 0 |
+| `--verify-remap` | 14/14 exact | 16/16 (9 dense exact, 7 dequant at the int8 floor) |
+
+The "639 diffusers parameters" figure is not a count this script invents: it is read out of the full
+BF16 checkpoint's `weight_map`, which is the authoritative parameter list, so the dry run stays
+torch-free and diffusers-free while still checking the diffusers side. Separately, every produced
+parameter's shape was compared against that checkpoint's headers: **0 mismatches on the int8 path**
+across all 638 stored parameters, and 51 on the pruned path -- which are precisely the 50 block
+`adaln_proj.linear` weights plus `norm_out.linear`, i.e. the pruning itself.
+
+`scripts/test_convrot_linear.py` (CPU, ~1.2 MB read from the real file) covers: the
+`((x R) Q^T) * scale + b` identity bitwise against a float64 reference; the folded form to float64
+rounding; the int8 error floor; bitwise determinism in float64 and bf16; `compute_dtype` /
+`out_dtype`; the group-size guard; the row-slice and half-swap pairing plus the negative case; the
+Kronecker structure and exact orthogonality of both rotation orders; and a real 64-row slice of
+`blocks.0.attn.out_proj` (group 256) and `blocks.0.adaln_proj.linear` (group 64) pushed through the
+module.
+
+### Still open
+
+* **`--steps` is still a guess.** Nothing about the int8 build changes that; the turbo LoRA in the
+  audit's recommendation 2 is still undownloaded.
+* **Which denoiser is actually better** is still undecided and cannot be decided on CPU. Both paths
+  now load, which is what makes the question answerable at all: same canvas, same seed, same
+  conditioning via `--prompt-embeds`, one difference. That A/B is step 7 of the first-light plan, and
+  it runs *after* the pruned control passes.
+* **Nothing here has touched a card.** The host is still in the GPU-fault halt from session 10.

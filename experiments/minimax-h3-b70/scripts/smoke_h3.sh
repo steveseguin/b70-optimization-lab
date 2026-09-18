@@ -63,6 +63,12 @@ WATCHDOG_MIN_AVAIL_MIB="${WATCHDOG_MIN_AVAIL_MIB:-2048}"
 export PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF:-expandable_segments:True}"
 export B70_H3_XFER="${B70_H3_XFER:-host}"
 
+# Which denoiser: `pruned` (BF16 weights, rank-8 AdaLN fit) or `int8` (full INT8 ConvRot,
+# unpruned AdaLN). `pruned` stays the default until it has rendered a clip; the int8 build is
+# the second first-light candidate and the control that isolates the pruned AdaLN
+# re-parameterisation. See the README's fidelity table.
+export B70_H3_DENOISER="${B70_H3_DENOISER:-pruned}"
+
 GPU_VENV="${GPU_VENV:-/mnt/fast-ai/venvs/minimax-h3}"
 CPU_VENV="${CPU_VENV:-/mnt/fast-ai/venvs/minimax-h3-cpu}"
 OUT_ROOT="${OUT_ROOT:-/mnt/fast-ai/bench-results/minimax-h3}"
@@ -159,6 +165,7 @@ run_gpu() {   # run_gpu <run-name> [extra args...]
       --unit="h3-${name}-$$" \
       "${SCOPE_PROPS[@]}" \
       env PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF}" B70_H3_XFER="${B70_H3_XFER}" \
+          B70_H3_DENOISER="${B70_H3_DENOISER}" \
       "${GPU_VENV}/bin/python" "${RUNNER}" \
         --prompt "${PROMPT}" \
         --height "${HEIGHT}" --width "${WIDTH}" \
@@ -215,9 +222,19 @@ case "${mode}" in
   dry)
     # No GPU, no diffusers, no transformers: configs and safetensors headers only.
     # `--verify-remap` additionally re-checks the Comfy -> diffusers key remap against the full
-    # BF16 checkpoint (qkv split order, SwiGLU half order) by comparing tensor slices.
-    exec "${CPU_VENV}/bin/python" "${RUNNER}" --dry-run --verify-remap \
-      --height "${HEIGHT}" --width "${WIDTH}" --frames "${FRAMES}" --steps "${STEPS}"
+    # BF16 checkpoint (qkv split order, SwiGLU half order) by comparing tensor slices, and on the
+    # int8 path re-checks that dequantizing each sampled Linear reproduces `W R` to within the
+    # int8 rounding floor. Both denoisers are checked, because both have to stay loadable.
+    rc=0
+    for d in pruned int8; do
+      echo "################ dry run: --denoiser ${d} ################"
+      "${CPU_VENV}/bin/python" "${RUNNER}" --dry-run --verify-remap --denoiser "${d}" \
+        --height "${HEIGHT}" --width "${WIDTH}" --frames "${FRAMES}" --steps "${STEPS}" || rc=1
+      echo
+    done
+    echo "################ INT8 ConvRot dequant unit test ################"
+    "${CPU_VENV}/bin/python" "${HERE}/test_convrot_linear.py" || rc=1
+    exit "${rc}"
     ;;
 
   one)
@@ -254,6 +271,12 @@ esac
 #
 #   ./smoke_h3.sh one -- --adaln-out-dtype fp32   # modulation kept in float32
 #   ./smoke_h3.sh one -- --te-rotation none       # ConvRot control; expected to be garbage
+#
+# and then the other denoiser, which is the control that isolates the pruned AdaLN fit from
+# everything else -- same canvas, same seed, same conditioning, one difference:
+#
+#   B70_H3_DENOISER=int8 ./smoke_h3.sh one
+#   B70_H3_DENOISER=int8 ./smoke_h3.sh one -- --denoiser-rotation none   # ConvRot control
 #
 # To hold the conditioning fixed while changing the denoiser, run once with --save-tensors, then
 # feed the saved embedding back with --prompt-embeds.

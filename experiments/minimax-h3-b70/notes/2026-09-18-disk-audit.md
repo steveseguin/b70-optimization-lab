@@ -6,6 +6,16 @@ listings (`https://huggingface.co/api/models/<repo>/tree/main?recursive=true&exp
 sizes, read-only), and the large safetensors were opened far enough to read the **header only**
 (8-byte length + JSON) to confirm the declared tensor table ends exactly at the file's last byte.
 
+> **Superseded in part, 2026-09-18 (later the same day).** Recommendation 1 was carried out: the
+> full INT8 ConvRot denoiser is now **complete** on disk -- 34,038,892,334 bytes, 1035 tensors,
+> header data end == EOF. Headline item 1 below, and the "15.7 %" rows in the table, no longer
+> describe this host. Headline item 4 is also stale: `run_h3_t2v.py` now has two denoiser load
+> paths (`--denoiser {pruned,int8}`, env `B70_H3_DENOISER`, default `pruned`), so the "that is a
+> session of work, not a flag" paragraph has been done -- including the question it left open about
+> the rotation, which turned out to need no second recovery pass (the denoiser's order-64 rotation
+> is the leading 64x64 block of the order-256 one already on disk). See the stand-up note's
+> "The full INT8 ConvRot denoiser is on disk" section. Everything else in this audit still holds.
+
 ## Headline
 
 1. **The full INT8 ConvRot denoiser is NOT on disk.** `minimax_h3_fl2va_int8_convrot.safetensors`

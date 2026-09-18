@@ -264,6 +264,60 @@ already in use` because `serve.py` binds without `SO_REUSEADDR`.
 Then, and only then, the follow-ups: the canvas walk (320x576, 544x960, 768x1344), the step sweep,
 and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`).
 
+## Step 7 -- the second first-light candidate: `--denoiser int8`
+
+Added 2026-09-18, after the full INT8 ConvRot denoiser finished downloading (34.04 GB, 1035 tensors,
+header data end == EOF). `run_h3_t2v.py` now has a second load path for it: `--denoiser {pruned,int8}`,
+env `B70_H3_DENOISER`, default still `pruned`.
+
+**It runs after the pruned control passes, not instead of it, and not beside it.** The order is not
+arbitrary:
+
+1. the pruned path is the one whose CPU evidence is strongest (its AdaLN fit is measurably below the
+   bf16 noise floor; every other weight is bit-exact against the full diffusers checkpoint), so it is
+   the run most likely to tell us whether the *pipeline* works;
+2. if the int8 path went first and produced a bad clip, we could not tell a broken pipeline from a
+   broken dequant. With a passing pruned clip in hand, a bad int8 clip is a dequant result;
+3. the int8 path is then the control that isolates the pruned AdaLN re-parameterisation -- same
+   canvas, same seed, same conditioning (feed the saved `--prompt-embeds` back), one difference.
+
+```bash
+# after step 5 passes, with the cards still free:
+B70_H3_DENOISER=int8 ./smoke_h3.sh one
+# and the ConvRot A/B control, expected to be garbage if the rotation is real:
+B70_H3_DENOISER=int8 ./smoke_h3.sh one -- --denoiser-rotation none
+```
+
+What is different about this path, and what to watch:
+
+* **No module swap happens.** The int8 checkpoint carries the unpruned AdaLN branch
+  (`time_embedder.proj_in/proj_out`, `adaln_proj.linear` 2688 -> 96768), so `time_proj`,
+  `time_embedder`, every `adaln_proj` and `norm_out` stay the stock diffusers modules. Nothing from
+  `make_pruned_adaln_modules` is installed. If a traceback mentions `AdaLNTableEmbedder` on this
+  path, the variant plumbing is wrong.
+* **Card residency is lower but the transient is new**: 16.051 / 15.650 GiB resident (split at block
+  24) against the pruned form's 18.797 / 18.747, *plus* 0.484 GiB that must stay free on top. That
+  transient is the largest quantized weight -- `adaln_proj.linear`, 96768x2688 int8 -- widened to
+  bfloat16 for one `F.linear`, because there is no fused int8 GEMM on XPU. Worst card plus transient
+  is 16.536 GiB, leaving 15.464 GiB. Comfortable, but it is a real allocation and an XPU OOM here
+  would point at it first.
+* **Two ConvRot group sizes are live**, 256 for the 200 attention/MLP Linears and 64 for the 50
+  AdaLN projections. Both come from one file; see the rotation note below.
+* **The AdaLN Linear's dtype is pinned deliberately.** diffusers calls
+  `get_parameter_dtype(self.linear)` before invoking it, and a `ConvRotLinear` has no Parameters, so
+  that walk lands on its first floating-point *buffer* -- the float32 scale. Left alone, the
+  activation would arrive float32, the int8 weight would widen to float32 (a 1.04 GB transient, twice
+  the bf16 one) and the modulation would come back float32 and promote the whole packed sequence. So
+  the loader pins `compute_dtype=bfloat16` on exactly those 50 Linears, which is what the unpruned
+  bf16 checkpoint does anyway. If card memory on this path looks ~2x the plan, check that pin first.
+
+CPU evidence already in hand, before any card is touched: `./smoke_h3.sh dry` runs `--verify-remap`
+for both denoisers and the ConvRot unit test. On the int8 path that is 1035/1035 checkpoint tensors
+consumed, 639/639 diffusers parameters produced or substituted, 0 left over; 9 dense tensors exact
+against the full BF16 checkpoint (including the two unpruned `time_embedder` tensors); and 7
+quantized Linears whose dequant reproduces `W R` to within the int8 rounding floor, covering both
+group sizes and the SwiGLU half swap.
+
 ## What a fail looks like, and what each one means
 
 | Symptom | What it means | What to do |
@@ -273,6 +327,8 @@ and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`).
 | `smoke_h3.sh` exits 4 with PREFLIGHT FAIL | service, container or another lane is still resident | stop nothing yourself; the run waits for the user's decision |
 | The run dies and `*.watchdog.log` has a `KILL pid=` line | **we ran out of host RAM and our watchdog caught it** -- the desired failure | record the low MemAvailable and the phase it died in; this is a loader result, not a GPU result. Do not retry unchanged. |
 | The run dies with no `KILL` line and no output after `encode.load` | the 2026-09-17 failure mode repeating, i.e. something outside our cgroup | check `oomctl` and `journalctl -k`; stop the lane and write it up before anything else |
+| `--denoiser int8` OOMs a card at ~2x the planned residency | the `compute_dtype=bfloat16` pin on the 50 AdaLN `ConvRotLinear`s is not taking, so the int8 weight is widening to float32 | check `load_sharded_transformer`'s `is_adaln` branch; this is a code bug, not a capacity one |
+| `--denoiser int8` renders structured noise while `pruned` renders a clip | the dequant, not the pipeline -- which is exactly why the pruned control runs first | re-run `--denoiser-rotation none`: if *both* are garbage the rotation is not the variable; if only `none` is, the rotation is right and the fault is elsewhere |
 | `Fault response`, CAT error, engine reset or coredump in `journalctl -k` | a GPU fault | stop issuing work, write the evidence, **do not reset the driver and do not reboot** (AGENTS.md; the 2026-09-16 fault on this host is still open). **This happened on 2026-09-18 at the first denoise step**: [fault note](2026-09-18-gpu-fault-first-light.md). |
 | Step 5 prints `NOT bytewise-equal` | the stack does not repeat | **a result to record, not a reason to re-run until it passes.** Record which of the four hashes differ; `--deterministic` may fail closed on XPU, and if it does, say so instead of softening the claim to "visually identical". |
 | Step 6 restore fails with `[Errno 98]` | the port poll was too short | extend the poll, restore again; the service coming back is the last obligation of the session |

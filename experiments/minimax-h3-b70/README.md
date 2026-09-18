@@ -1,7 +1,9 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
-Status (2026-09-18): **weights on disk except the full INT8 ConvRot denoiser (15.7 %, see the
-[disk audit](notes/2026-09-18-disk-audit.md)); no clip generated yet.** First light on 2026-09-18 03:05 UTC died
+Status (2026-09-18): **all weights on disk, both denoisers loadable, no clip generated yet.** The
+full INT8 ConvRot denoiser finished downloading (34.04 GB, 1035 tensors, header data-end == EOF), so
+`scripts/run_h3_t2v.py` now has two denoiser load paths -- `--denoiser {pruned,int8}`, env
+`B70_H3_DENOISER`, default still `pruned`. Both pass the CPU dry run with exact coverage. First light on 2026-09-18 03:05 UTC died
 in the text-encoder load and took the user's desktop session with it (a 4 GiB cgroup ceiling on a 27 GB load,
 beside a kernel build, on a 15 GiB host). The lane is gated on a CPU host-memory measurement and now runs under
 `scripts/mem-watchdog.sh`: [first-light plan](notes/2026-09-18-first-light-plan.md).
@@ -35,7 +37,36 @@ The BF16 denoiser alone (66 GB) does not fit two cards with activations. Third-p
 
 The user's brief is best quality that fits comfortably, no quality loss by design. No two-card option is exact: the full BF16 denoiser needs four cards. Ranked by fidelity: (1) the **pruned BF16
 denoiser (37 GiB) split across the two cards** (rank-8 AdaLN fit, error below the BF16 noise floor), (2) the full denoiser at
-INT8 ConvRot (34 GB, quantization error), (3) pruned + FP8/GGUF. The text encoder can stay exact (BF16, 51.5 GB, streamed
+INT8 ConvRot (34 GB, quantization error), (3) pruned + FP8/GGUF.
+
+### The fidelity choice, and what each load path actually does
+
+Both denoisers are on disk and both are loadable (`--denoiser {pruned,int8}`, env `B70_H3_DENOISER`, default `pruned`).
+Neither is exact, and they are not on a single quality axis -- they put the error in *different places*, which is why
+each one is the other's control:
+
+| | `--denoiser pruned` (default) | `--denoiser int8` |
+| --- | --- | --- |
+| File | `minimax_h3_fl2va_pruned_bf16.safetensors`, 40.23 GB, 532 tensors | `minimax_h3_fl2va_int8_convrot.safetensors`, 34.04 GB, 1035 tensors |
+| Block-stack weights | **exact** released BF16, bit for bit (verified against the full diffusers checkpoint) | **int8**, rotate-then-quantize, per-output-row float32 scale -- 250 of 250 block Linears |
+| AdaLN / timestep branch | **approximated**: `adaln_t_table [1025, 8]` rank-8 fit, linearly interpolated; the timestep MLP and all 50 `adaln_proj` projections are re-parameterised | **exact in form**: the unpruned `time_embedder.proj_in/proj_out` and `adaln_proj.linear` 2688 -> 96768 are present, so the stock diffusers modules and stock arithmetic run unchanged (the projection weights are themselves int8) |
+| Measured error | 8e-4 / 1.2e-3 on values spanning +-3.3 / +-7.3, i.e. *below* the BF16 weights' own error against float32 (4e-3 / 7e-3) | at the int8 rounding floor everywhere it was checked: `max|W R - W'|` = 2.1e-3 against a half-step of 2.2e-3 (adaln), 3.5e-3 vs 3.5e-3 (qkv), 4.7e-3 vs 4.7e-3 (out_proj) |
+| What the loader does | installs `AdaLNTableEmbedder`, `PrunedAdaLNModulation`, `PrunedAdaLNOut` in place of the stock modules; `time_proj` becomes an identity | **no module swap at all**; 350 `nn.Linear`s become `ConvRotLinear`, the same class and dequant arithmetic the INT8 text encoder already uses |
+| Card residency (256x448x124) | 18.797 / 18.747 GiB, split at block 24 | 16.051 / 15.650 GiB, split at block 24, **plus a 0.484 GiB transient** (the largest quantized weight widened to bf16 for one `F.linear`) |
+
+The pruned build keeps the residual stream exact and approximates only the modulation; the int8 build keeps the
+modulation structurally exact and quantizes the residual stream. On paper the pruned one wins, because its
+approximation is measurably smaller than the noise floor of the format it is stored in, while int8 touches every
+weight -- but that comparison is a header-level argument plus a CPU curve fit, and it stays that until both have
+rendered the same prompt at the same seed. That A/B is the point of having both paths.
+
+**The ConvRot rotation is shared, and nothing new had to be recovered.** The denoiser's attention and MLP Linears
+declare `convrot_groupsize: 256` -- the rotation already in `data/convrot-hadamard-256.safetensors`. Its `adaln_proj`
+declares `convrot_groupsize: 64`, because its 2688 inputs are not a multiple of 256. That order-64 rotation turned out
+to be the *leading 64x64 block* of the one already recovered: the recovered order-256 sign matrix is exactly the fourth
+Kronecker power of the symmetric order-4 Hadamard matrix, and since its `[0,0]` entry is +1, every `4^j` leading block
+is the order-`4^j` member of the same family. Confirmed against real weights, not just algebra (see the table row
+above). So one 65 KB file supplies both orders, for the denoiser, the encoder and the VAE alike. The text encoder can stay exact (BF16, 51.5 GB, streamed
 layer by layer once per prompt) or use the INT8 ConvRot build (27 GB). The plan here is (1) with the streamed BF16 encoder,
 and the full BF16 model on the four-card host as the reference for measuring the pruned form's actual output difference, with the INT8 text encoder run first on one card and
 unloaded, and the fp16 video VAE (5.2 GB) plus audio VAE. The pruned builds are a fallback, not the plan, until their
@@ -49,15 +80,21 @@ tokenizer, docs; the BF16 text encoder is skipped for disk) and `/mnt/fast-ai/ll
 (the **pruned BF16** denoiser, the INT8 ConvRot text encoder, fp16/fp32/int8 VAEs).
 Script: `/mnt/fast-ai/llm-models/minimax-h3-download.sh`.
 
-**Correction, 2026-09-18 ([disk audit](notes/2026-09-18-disk-audit.md)): the full INT8 ConvRot denoiser is NOT on
-disk.** Its download was cut off at 5.34 GB of 34.04 GB (15.7 %) on 2026-09-17 and never resumed, so the only denoiser
-this host can load is the pruned BF16 one -- which is what `scripts/run_h3_t2v.py` loads, unconditionally. Everything
-else listed above is complete and size-verified against the Hugging Face repos. The audit has the resume command and
-the fidelity question that the missing file leaves open.
+**Update, 2026-09-18:** the full INT8 ConvRot denoiser is now complete on disk (34,038,892,334 bytes, 1035 tensors,
+the header's declared data end matches the file's last byte), superseding the [disk audit](notes/2026-09-18-disk-audit.md)'s
+"15.7 %" line. Everything else in that audit still holds and everything listed above is size-verified against the
+Hugging Face repos.
 
 Detailed stand-up plan: [notes/2026-09-17-pipeline-plan.md](notes/2026-09-17-pipeline-plan.md).
 First-light sequence, go/no-go rule and failure playbook:
 [notes/2026-09-18-first-light-plan.md](notes/2026-09-18-first-light-plan.md).
+CPU gates that must pass before any GPU run (`./scripts/smoke_h3.sh dry` runs all three):
+`run_h3_t2v.py --dry-run --verify-remap` for **both** denoisers -- every checkpoint tensor consumed, every one of the
+639 diffusers parameters produced or explicitly substituted, 0 left over either way -- plus
+`scripts/test_convrot_linear.py`, which pins the INT8 ConvRot dequant arithmetic on CPU (a float64 synthetic case,
+bitwise determinism, the weight/scale row pairing that the qkv split and the SwiGLU half swap depend on, and a real
+64-row slice of the 34 GB checkpoint read through the pread reader).
+
 Host-memory safety: `scripts/mem-watchdog.sh` (kills our job before systemd-oomd kills the session) and
 `scripts/profile-encoder-load.py` (CPU-only measurement of the loaders' host footprint). That measurement was a
 NO-GO on the `safetensors.safe_open` path -- RssFile grew with every byte touched, 6.29 GiB at a 6 GiB budget,
