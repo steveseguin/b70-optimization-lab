@@ -21,7 +21,8 @@ def register():
     if getattr(fa, '_b70_fa_multiq', False):
         return
     logger = init_logger('b70_fa_multiq')
-    if not hasattr(torch.ops._vllm_fa2_C, 'paged_decode_multiq'):
+    import vllm_xpu_kernels._xpu_C  # noqa: F401
+    if not hasattr(torch.ops._xpu_C, 'paged_decode_multiq'):
         raise RuntimeError('b70_fa_multiq: the kernel library has no paged_decode_multiq (needs the r312 build)')
     max_q = int(os.environ.get('B70_FA_MULTIQ_MAX_Q', '8'))
     min_k = int(os.environ.get('B70_FA_MULTIQ_MIN_K', '1536'))
@@ -47,7 +48,7 @@ def register():
 
     def multiq_call(**kw):
         q, out, n = kw['q'], kw['out'], kw['q'].shape[0]
-        torch.ops._vllm_fa2_C.paged_decode_multiq(
+        torch.ops._xpu_C.paged_decode_multiq(
             q, kw['k'], kw['v'], out, kw['cu_seqlens_q'], kw['seqused_k'], kw['block_table'], n, kw['max_seqlen_k'],
             kw.get('k_descale'), kw.get('v_descale'), kw['softmax_scale'], None, v_tile)
         return out

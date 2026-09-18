@@ -1,0 +1,8 @@
+# R312c (2026-09-18): R311b + _xpu_C rebuilt with vllm-xpu-kernels r312 (paged_decode_multiq in _xpu_C with its own device
+# library; build-kernels-0.1.14.1-r312c-multiq.sh). The upstream flash-attention extension and library are untouched.
+# Python unchanged; the op is used only by the b70-fa-multiq overlay (B70_FA_MULTIQ=1).
+ARG BASE=ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7
+FROM ${BASE}
+COPY _xpu_C.abi3.so libgdn_attn_kernels_xe_2.so libattn_multiq_kernels_xe_2.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/
+RUN python -c "import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, 'paged_decode_multiq') and hasattr(torch.ops._xpu_C, 'gdn_attention_ckpt'); print('kernels import ok', torch.__version__)"
+LABEL neural.download.build.lane="qwen38-fp8-v0290-r312c-multiq" neural.download.kernel.patch="onednn r137a+r137b+r221+r309; vllm-xpu-kernels r310+r311+r312 (_xpu_C only)"

@@ -1,65 +1,236 @@
-diff --git a/csrc/flash_attn/flash_api.cpp b/csrc/flash_attn/flash_api.cpp
-index 0b2cf1a..01beb89 100644
---- a/csrc/flash_attn/flash_api.cpp
-+++ b/csrc/flash_attn/flash_api.cpp
-@@ -5,6 +5,7 @@
- #include "xpu/attn/paged_kv_utils.h"
- #include "utils.h"
- #include <torch/all.h>
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 74c4130..4b10197 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -71,6 +71,10 @@ option(FA2_KERNELS_ENABLED
+ option(MOE_KERNELS_ENABLED
+        "Build MoE kernels (_moe_C extension + grouped_gemm TLA)" ON)
+ option(GDN_KERNELS_ENABLED "Build GDN attention kernels (gdn_attn TLA)" ON)
++option(
++  MULTIQ_KERNELS_ENABLED
++  "Build the multi-query paged decode kernels (paged_decode_multiq op in _xpu_C)"
++  ON)
+ option(MQA_LOGITS_KERNELS_ENABLED "Build MQA logits kernels" ON)
+ option(MHC_KERNELS_ENABLED
+        "Build MHC (Manifold-Constrained Hyper-Connections) kernels" ON)
+@@ -142,6 +146,7 @@ message(STATUS "  BASIC_KERNELS_ENABLED        = ${BASIC_KERNELS_ENABLED}")
+ message(STATUS "  FA2_KERNELS_ENABLED          = ${FA2_KERNELS_ENABLED}")
+ message(STATUS "  MOE_KERNELS_ENABLED          = ${MOE_KERNELS_ENABLED}")
+ message(STATUS "  GDN_KERNELS_ENABLED          = ${GDN_KERNELS_ENABLED}")
++message(STATUS "  MULTIQ_KERNELS_ENABLED       = ${MULTIQ_KERNELS_ENABLED}")
+ message(STATUS "  MQA_LOGITS_KERNELS_ENABLED   = ${MQA_LOGITS_KERNELS_ENABLED}")
+ message(STATUS "  MHC_KERNELS_ENABLED          = ${MHC_KERNELS_ENABLED}")
+ message(
+@@ -394,6 +399,7 @@ endif()
+ set(ATTN_KERNEL_LIB_NAME "")
+ set(GROUPED_GEMM_LIB_NAME "")
+ set(GDN_ATTN_LIB_NAME "")
++set(ATTN_MULTIQ_LIB_NAME "")
+ set(MQA_LOGITS_LIB_NAME "")
+ set(MHC_LIB_NAME "")
+ 
+@@ -431,6 +437,13 @@ if(BUILD_SYCL_TLA_KERNELS)
+       add_subdirectory(csrc/xpu/gdn_attn/xe_2)
+       list(APPEND GDN_ATTN_LIB_NAME "gdn_attn_kernels_xe_2")
+     endif()
++    # Independent of FA2_KERNELS_ENABLED on purpose: the multi-query decode
++    # kernels reuse the paged-decode headers but compile into their own library,
++    # so the prebuilt upstream attention library is never rebuilt.
++    if(MULTIQ_KERNELS_ENABLED)
++      add_subdirectory(csrc/xpu/attn_multiq/xe_2)
++      list(APPEND ATTN_MULTIQ_LIB_NAME "attn_multiq_kernels_xe_2")
++    endif()
+     if(MQA_LOGITS_KERNELS_ENABLED)
+       add_subdirectory(csrc/xpu/mqa_logits/xe_2)
+       list(APPEND MQA_LOGITS_LIB_NAME "mqa_logits_kernels_xe_2")
+@@ -453,6 +466,9 @@ endif()
+ if(GDN_KERNELS_ENABLED)
+   list(APPEND VLLM_GPU_COMPILE_FLAGS -DVLLM_GDN_ENABLED)
+ endif()
++if(MULTIQ_KERNELS_ENABLED)
++  list(APPEND VLLM_GPU_COMPILE_FLAGS -DVLLM_MULTIQ_ENABLED)
++endif()
+ if(MQA_LOGITS_KERNELS_ENABLED)
+   list(APPEND VLLM_GPU_COMPILE_FLAGS -DVLLM_MQA_LOGITS_ENABLED)
+ endif()
+@@ -641,6 +657,9 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+   if(GDN_KERNELS_ENABLED)
+     list(APPEND VLLM_EXT_XPU_SRC "csrc/xpu/gdn_attn/gdn_attn_interface.cpp")
+   endif()
++  if(MULTIQ_KERNELS_ENABLED)
++    list(APPEND VLLM_EXT_XPU_SRC "csrc/xpu/attn_multiq/multiq_interface.cpp")
++  endif()
+   if(MQA_LOGITS_KERNELS_ENABLED)
+     list(APPEND VLLM_EXT_XPU_SRC "csrc/xpu/mqa_logits/mqa_logits_interface.cpp")
+   endif()
+@@ -675,7 +694,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+     INCLUDE_DIRECTORIES
+     ${VLLM_XPU_INCLUDE_DIR}
+     LIBRARIES
+-    ${GROUPED_GEMM_LIB_NAME};${GDN_ATTN_LIB_NAME};${MQA_LOGITS_LIB_NAME};${MHC_LIB_NAME}
++    ${GROUPED_GEMM_LIB_NAME};${GDN_ATTN_LIB_NAME};${MQA_LOGITS_LIB_NAME};${MHC_LIB_NAME};${ATTN_MULTIQ_LIB_NAME}
+     USE_SABI
+     3
+     WITH_SOABI)
+diff --git a/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf b/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf
+new file mode 100644
+index 0000000..c1d2321
+--- /dev/null
++++ b/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf
+@@ -0,0 +1,4 @@
++# Qwen3.8-27B one-card research set: head 256, paged, causal and non-causal, no local/sink/lse.
++# Format: headsize,paged,causal,local,sink,lse
++256,true,true,false,false,false
++256,true,false,false,false,false
+diff --git a/csrc/xpu/attn/kernel_configs/paged_decode_qwen38.conf b/csrc/xpu/attn/kernel_configs/paged_decode_qwen38.conf
+new file mode 100644
+index 0000000..abeb9fc
+--- /dev/null
++++ b/csrc/xpu/attn/kernel_configs/paged_decode_qwen38.conf
+@@ -0,0 +1,4 @@
++# Qwen3.8-27B one-card research set: head 256 only (page 832 -> the _64 decode policy; prefill causal paged).
++# Format: qgroup,headsize,pagesize,causal,local,sink
++8,256,64,false,false,false
++16,256,64,false,false,false
+diff --git a/csrc/xpu/attn_multiq/multiq_interface.cpp b/csrc/xpu/attn_multiq/multiq_interface.cpp
+new file mode 100644
+index 0000000..a2157fa
+--- /dev/null
++++ b/csrc/xpu/attn_multiq/multiq_interface.cpp
+@@ -0,0 +1,331 @@
++#include <algorithm>
 +#include <cstdlib>
- 
- namespace FLASH_NAMESPACE {
- 
-@@ -426,6 +427,241 @@ std::vector<at::Tensor> mha_varlen_fwd(
-     return {out, softmax_lse};
-   }
- }
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
 +
-+// Multi-query paged decode: speculative-decoding verification.
-+//
-+// Every sequence contributes the same q_len = max_seqlen_q (2..8) consecutive
-+// query positions, laid out as q[i * q_len + j] for sequence i and position j,
-+// and position j attends to KV positions
-+//   [0, seqused_k[i] - (q_len - 1 - j)).
-+// The kernel loads each KV tile once for all positions but keeps a separate
-+// accumulator, softmax state and column mask per position, so every position's
-+// output is bit-identical to the single-position decode call
-+//   varlen_fwd(q[i*q_len+j], ..., max_seqlen_q=1, causal=false,
-+//              seqused_k=seqused_k[i]-(q_len-1-j))
-+// provided the split plan is shared, which is what the precondition below
-+// and the batch_size=1 num_splits computation guarantee.
-+//
-+// This op does not change varlen_fwd's routing in any way; it is opt-in.
-+//
-+// v_tile selects how many V/output columns one work-group owns (0 = the
-+// decode policy's own width). Narrower tiles split the columns across
-+// grid.x, so each work-group keeps only its slice of the q_len accumulators;
-+// K is re-read (and Q*K + softmax redone) once per slice, and every column's
-+// value is unchanged, so the output stays bit-identical.
-+//
++#include "utils.h"
++#include "xpu/attn/paged_kv_utils.h"
++#include "xpu/ops.h"
++
++#ifdef VLLM_XPU_ENABLE_XE2
++  #include "xe_2/paged_decode_multiq_xe2.h"
++#endif
++
++namespace {
++
++// Verbatim copy of get_num_splits() from csrc/flash_attn/flash_api.cpp
++// (r311 base). The multi-query path must pick *exactly* the split count the
++// single-position decode reference picks, and flash_api.cpp is not ours to
++// extend any more (the flash-attention extension ships prebuilt), so the
++// formula is duplicated here. Keep in sync if upstream changes it -- a
++// divergence shows up immediately as a bitwise census failure.
++int multiq_get_num_splits(
++    const sycl::queue& queue,
++    const int& batch_size,
++    const int& num_heads_q,
++    const int& num_heads_kv,
++    const int& max_seqlen_k,
++    const int& block_size) {
++  auto device = queue.get_device();
++  int num_xe_cores =
++      device.get_info<sycl::ext::intel::info::device::gpu_slices>() *
++      device
++          .get_info<sycl::ext::intel::info::device::gpu_subslices_per_slice>();
++
++  // The decode kernel iterates kv_tile-sized work units within each page,
++  // not page-sized units. The dispatch (see paged_decode_utils.hpp::
++  // dispatch_by_page_size) routes
++  //   block_size == 16              -> kv_tile=_16 (SubgroupLayoutQK<_1,_1,_1>,
++  //   SGPerWG=1) block_size == 32              -> kv_tile=_32
++  //   (SubgroupLayoutQK<_1,_2,_1>, SGPerWG=2) block_size > 0 && %% 64 == 0  ->
++  //   kv_tile=_64  (SubgroupLayoutQK<_1,_4,_1>, SGPerWG=4)
++  int kv_tile;
++  int sg_per_wg;
++  int policy_split_cap;
++  if (block_size == 16) {
++    kv_tile = 16;
++    sg_per_wg = 1;
++    policy_split_cap = 16;
++  } else if (block_size == 32) {
++    kv_tile = 32;
++    sg_per_wg = 2;
++    policy_split_cap = 32;
++  } else {
++    kv_tile = 64;
++    sg_per_wg = 4;
++    policy_split_cap = 64;
++  }
++
++  int kv_tiles = (max_seqlen_k + kv_tile - 1) / kv_tile;
++
++  // Below ~16 tiles total the kernel falls back to single-split anyway; any
++  // splitting only adds ReduceSplitK overhead.
++  if (kv_tiles < 16) return 1;
++
++  // Effective number of WG slots on the GPU.  Each Xe core hosts up to
++  // (4 / sg_per_wg) decode WGs concurrently (4 SGs per Xe core at sg_size=16
++  // on Intel Xe2; smaller kv_tile policies use fewer SGs per WG and therefore
++  // pack more WGs per core).
++  int num_wg_slots = num_xe_cores * 4 / sg_per_wg;
++
++  int wgs_per_split = batch_size * num_heads_kv;
++
++  // Saturation guard: if the FMHA already saturates WG slots and the sequence
++  // is not long enough for splitting to deliver bandwidth gains, splitting
++  // only adds ReduceSplitK overhead.
++  if (wgs_per_split >= num_wg_slots && kv_tiles < 64) return 1;
++
++  // (1) Parallelism term: enough splits so total FMHA WGs reach 4x WG-slot
++  //     oversubscription, hiding memory latency.
++  int splits_par =
++      std::max(1, (4 * num_wg_slots + wgs_per_split - 1) / wgs_per_split);
++
++  // (2) Bandwidth term: long sequences benefit from finer K splits even when
++  //     parallelism is already met (per-WG K reduction shortens, total memory
++  //     traffic is invariant to splits).  ~12 tiles per split is the empirical
++  //     knee.
++  int splits_bw = std::max(1, kv_tiles / 12);
++
++  int splits = std::max(splits_par, splits_bw);
++
++  // (3) Reduction-cost cap: ReduceSplitK output volume scales with
++  //     batch_size * num_heads_q * num_kv_splits.  Cap so that this does not
++  //     dwarf the FMHA epilogue.  Empirically 128 * num_xe_cores partial
++  //     "head-rows" total is a good ceiling.
++  int red_work = std::max(1, batch_size * num_heads_q);
++  int red_cap = std::max(2, 128 * num_xe_cores / red_work);
++  splits = std::min(splits, red_cap);
++
++  // (4) Each split must process at least ~4 KV tiles to amortize overhead.
++  int max_splits_tiles = std::max(1, kv_tiles / 4);
++  // (5) Hard cap of 32 (beyond this the ReduceSplitK kernel dominates).
++  return std::max(
++      1, std::min({splits, max_splits_tiles, 32, policy_split_cap}));
++}
++
 +// Skip the (host-synchronising) precondition check with
 +// VLLM_XPU_MULTIQ_HOST_CHECK=0 when benchmarking a configuration that has
 +// already been validated.
-+static const bool kMultiQHostCheck = []() {
++const bool kMultiQHostCheck = []() {
 +  const char* env = std::getenv("VLLM_XPU_MULTIQ_HOST_CHECK");
 +  return !(env != nullptr && env[0] == '0');
 +}();
 +
-+at::Tensor mha_paged_decode_multiq(
-+    const at::Tensor& q,  // [total_q, num_heads_q, head_size]
-+    const at::Tensor& k,  // [num_blocks, block_size, num_heads_kv, head_size]
++}  // namespace
++
++at::Tensor paged_decode_multiq(
++    const at::Tensor& q,
++    const at::Tensor& k,
 +    const at::Tensor& v,
-+    std::optional<at::Tensor>& out_,
-+    const at::Tensor& cu_seqlens_q,  // b+1
-+    const at::Tensor& seqused_k,     // b
-+    const at::Tensor& block_table,   // b x max_num_blocks_per_seq
-+    int max_seqlen_q,
-+    int max_seqlen_k,
-+    std::optional<const at::Tensor>& k_scale,
-+    std::optional<const at::Tensor>& v_scale,
-+    float softmax_scale,
-+    std::optional<int> num_splits,
-+    std::optional<int> v_tile) {
++    std::optional<at::Tensor> out_,
++    const at::Tensor& cu_seqlens_q,
++    const at::Tensor& seqused_k,
++    const at::Tensor& block_table,
++    int64_t max_seqlen_q_,
++    int64_t max_seqlen_k_,
++    const std::optional<at::Tensor>& k_scale,
++    const std::optional<at::Tensor>& v_scale,
++    double softmax_scale,
++    std::optional<int64_t> num_splits,
++    std::optional<int64_t> v_tile) {
++  int max_seqlen_q = static_cast<int>(max_seqlen_q_);
++  int max_seqlen_k = static_cast<int>(max_seqlen_k_);
++
 +  auto q_type = q.scalar_type();
 +  auto k_type = k.scalar_type();
 +  TORCH_CHECK(
@@ -120,7 +291,7 @@ index 0b2cf1a..01beb89 100644
 +
 +  TORCH_CHECK(
 +      max_seqlen_q >= 2,
-+      "paged_decode_multiq needs max_seqlen_q >= 2 (use varlen_fwd for "
++      "paged_decode_multiq needs max_seqlen_q >= 2 (use the decode path for "
 +      "single-position decode), got ",
 +      max_seqlen_q);
 +  TORCH_CHECK(
@@ -190,7 +361,7 @@ index 0b2cf1a..01beb89 100644
 +          (kv_len - 1) % kv_tile,
 +          " < q_len - 1 = ",
 +          max_seqlen_q - 1,
-+          ". Fall back to per-position varlen_fwd calls for this step.");
++          ". Fall back to per-position decode calls for this step.");
 +    }
 +  }
 +
@@ -206,13 +377,14 @@ index 0b2cf1a..01beb89 100644
 +  // batch of one so the plan matches a lone decode row, and it only depends on
 +  // max_seqlen_k through the KV tile count, which the precondition above makes
 +  // identical for every verified position.
-+  int num_kv_splits = num_splits.value_or(get_num_splits(
-+      queue,
-+      /*batch_size=*/1,
-+      num_heads_q,
-+      num_heads_kv,
-+      max_seqlen_k,
-+      block_size));
++  int num_kv_splits = num_splits.has_value() ? static_cast<int>(*num_splits)
++                                             : multiq_get_num_splits(
++                                                   queue,
++                                                   /*batch_size=*/1,
++                                                   num_heads_q,
++                                                   num_heads_kv,
++                                                   max_seqlen_k,
++                                                   block_size);
 +
 +  at::Tensor tmp_out =
 +      num_kv_splits == 1
@@ -227,99 +399,15 @@ index 0b2cf1a..01beb89 100644
 +      {num_tokens, num_heads_q, num_kv_splits},
 +      q.options().dtype(at::kFloat).device(q.device()));
 +
-+  cutlass_paged_decode_multiq_interface(
-+      queue,
-+      q,
-+      k,
-+      v,
-+      out,
-+      tmp_out,
-+      exp_sums,
-+      max_logits,
-+      block_table,
-+      cu_seqlens_q,
-+      seqused_k,
-+      max_seqlen_q,
-+      max_seqlen_k,
-+      k_scale,
-+      v_scale,
-+      softmax_scale,
-+      num_kv_splits,
-+      v_tile.value_or(0));
-+
-+  return out;
-+}
- }  // namespace FLASH_NAMESPACE
- 
- TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
-@@ -445,6 +681,20 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
-       "varlen_fwd",
-       torch::kXPU,
-       make_pytorch_shim(&FLASH_NAMESPACE::mha_varlen_fwd));
-+
-+  // Speculative-decoding verification: q_len (2..8) consecutive positions of
-+  // each sequence in one pass over the paged KV cache, bit-identical to the
-+  // equivalent per-position varlen_fwd decode calls. Opt-in; varlen_fwd is
-+  // untouched.
-+  ops.def(
-+      "paged_decode_multiq(Tensor q, Tensor k, Tensor v, Tensor!? out, "
-+      "Tensor cu_seqlens_q, Tensor seqused_k, Tensor block_table, "
-+      "int max_seqlen_q, int max_seqlen_k, Tensor? k_scale, Tensor? v_scale, "
-+      "float softmax_scale, int? num_splits, int? v_tile) -> Tensor");
-+  ops.impl(
-+      "paged_decode_multiq",
-+      torch::kXPU,
-+      make_pytorch_shim(&FLASH_NAMESPACE::mha_paged_decode_multiq));
- }
- 
- REGISTER_EXTENSION(TORCH_EXTENSION_NAME)
-\ No newline at end of file
-diff --git a/csrc/xpu/attn/attn_interface.cpp b/csrc/xpu/attn/attn_interface.cpp
-index 30e5776..dd2ed19 100644
---- a/csrc/xpu/attn/attn_interface.cpp
-+++ b/csrc/xpu/attn/attn_interface.cpp
-@@ -4,6 +4,7 @@
- #ifdef VLLM_XPU_ENABLE_XE2
-   #include "csrc/xpu/attn/xe_2/fmha_xe2.h"
-   #include "csrc/xpu/attn/xe_2/paged_decode_xe2.h"
-+  #include "csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.h"
- #endif
- 
- void cutlass_chunk_prefill_interface(
-@@ -134,3 +135,52 @@ void cutlass_paged_decode_interface(
-     TORCH_CHECK(false, "Only XE2/XE3 cutlass kernel is supported currently.");
-   }
- }
-+
-+void cutlass_paged_decode_multiq_interface(
-+    sycl::queue& queue,
-+    const at::Tensor& query,      // [total_q, heads, head_size]
-+    const at::Tensor& key_cache,  // [num_block, block_size, heads, head_size]
-+    const at::Tensor& value_cache,
-+    at::Tensor& out,
-+    at::Tensor& temp_out,    // [total_q, num_head_q * num_kv_splits, head_vo]
-+    at::Tensor& exp_sums,    // [total_q, num_head_q, num_kv_splits]
-+    at::Tensor& max_logits,  // [total_q, num_head_q, num_kv_splits]
-+    const at::Tensor& block_table,
-+    const at::Tensor& cu_seqlens_q,
-+    const at::Tensor& seqused_k,
-+    int max_seqlen_q,
-+    int max_seqlen_k,
-+    std::optional<const at::Tensor>& k_scale,
-+    std::optional<const at::Tensor>& v_scale,
-+    double sm_scale,
-+    int num_kv_splits,
-+    int v_tile) {
 +  if (vllm::xpu::is_xe2_arch() || vllm::xpu::is_xe3_arch()) {
 +#ifdef VLLM_XPU_ENABLE_XE2
-+    // Use XE2 cutlass kernel (also used as WA for XE3/XE3P)
 +    cutlass_paged_decode_multiq_xe2(
 +        queue,
-+        query,
-+        key_cache,
-+        value_cache,
++        q,
++        k,
++        v,
 +        out,
-+        temp_out,
++        tmp_out,
 +        exp_sums,
 +        max_logits,
 +        block_table,
@@ -329,110 +417,44 @@ index 30e5776..dd2ed19 100644
 +        max_seqlen_k,
 +        k_scale,
 +        v_scale,
-+        sm_scale,
++        softmax_scale,
 +        num_kv_splits,
-+        v_tile);
++        v_tile.has_value() ? static_cast<int>(*v_tile) : 0);
 +#else
 +    TORCH_CHECK(false, "XE2 cutlass kernel is not enabled in this build.");
 +#endif
 +  } else {
 +    TORCH_CHECK(false, "Only XE2/XE3 cutlass kernel is supported currently.");
 +  }
++
++  return out;
 +}
-diff --git a/csrc/xpu/attn/attn_interface.h b/csrc/xpu/attn/attn_interface.h
-index 7e822d3..fc56fbd 100644
---- a/csrc/xpu/attn/attn_interface.h
-+++ b/csrc/xpu/attn/attn_interface.h
-@@ -54,3 +54,29 @@ void cutlass_paged_decode_interface(
-     std::optional<const at::Tensor>& is_prefill,
-     std::optional<at::Tensor>& splits_per_seq,
-     std::optional<at::Tensor>& work_list);
-+
-+// Multi-query paged decode (speculative-decoding verification): every
-+// sequence contributes max_seqlen_q consecutive query positions, position j
-+// attending to KV positions [0, seqused_k - (max_seqlen_q - 1 - j)). Always
-+// varlen + paged; masking is expressed through those per-position limits, so
-+// there are no causal/local/sink flags.
-+void cutlass_paged_decode_multiq_interface(
-+    sycl::queue& queue,
-+    const at::Tensor& query,      // [total_q, heads, head_size]
-+    const at::Tensor& key_cache,  // [num_block, block_size, heads, head_size]
-+    const at::Tensor& value_cache,
-+    at::Tensor& out,
-+    at::Tensor& temp_out,    // [total_q, num_head_q * num_kv_splits, head_vo]
-+    at::Tensor& exp_sums,    // [total_q, num_head_q, num_kv_splits]
-+    at::Tensor& max_logits,  // [total_q, num_head_q, num_kv_splits]
-+    const at::Tensor& block_table,
-+    const at::Tensor& cu_seqlens_q,
-+    const at::Tensor& seqused_k,
-+    int max_seqlen_q,
-+    int max_seqlen_k,
-+    std::optional<const at::Tensor>& k_scale,
-+    std::optional<const at::Tensor>& v_scale,
-+    double sm_scale,
-+    int num_kv_splits,
-+    // Per-work-group V/output tile width; 0 = the policy's decode default.
-+    int v_tile);
-diff --git a/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf b/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf
+diff --git a/csrc/xpu/attn_multiq/xe_2/CMakeLists.txt b/csrc/xpu/attn_multiq/xe_2/CMakeLists.txt
 new file mode 100644
-index 0000000..c1d2321
+index 0000000..b0607aa
 --- /dev/null
-+++ b/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf
-@@ -0,0 +1,4 @@
-+# Qwen3.8-27B one-card research set: head 256, paged, causal and non-causal, no local/sink/lse.
-+# Format: headsize,paged,causal,local,sink,lse
-+256,true,true,false,false,false
-+256,true,false,false,false,false
-diff --git a/csrc/xpu/attn/kernel_configs/paged_decode_default.conf b/csrc/xpu/attn/kernel_configs/paged_decode_default.conf
-index cb369ff..363158d 100644
---- a/csrc/xpu/attn/kernel_configs/paged_decode_default.conf
-+++ b/csrc/xpu/attn/kernel_configs/paged_decode_default.conf
-@@ -91,3 +91,15 @@
- # --- google/gemma-3-1b-it-512 decode heads ----------------------------------
- 8,256,16,false,true,false
- 8,256,16,false,false,false
++++ b/csrc/xpu/attn_multiq/xe_2/CMakeLists.txt
+@@ -0,0 +1,15 @@
++cmake_minimum_required(VERSION 3.18)
 +
-+# --- Speculative-decoding verification (paged_decode_multiq) ----------------
-+# The multi-query decode kernel is generated once per *policy* enabled here
-+# (see paged_decode_multiq_configure.cmake), independent of the causal/local/
-+# sink flags. These entries round out the q_packed {8,16} x head {128,256} x
-+# page {16,32,64} coverage the verifier path needs; they also add the matching
-+# non-causal decode kernels, which is harmless.
-+8,256,32,false,false,false
-+16,128,32,false,false,false
-+16,256,16,false,false,false
-+16,256,32,false,false,false
-+16,256,64,false,false,false
-diff --git a/csrc/xpu/attn/kernel_configs/paged_decode_qwen38.conf b/csrc/xpu/attn/kernel_configs/paged_decode_qwen38.conf
-new file mode 100644
-index 0000000..abeb9fc
---- /dev/null
-+++ b/csrc/xpu/attn/kernel_configs/paged_decode_qwen38.conf
-@@ -0,0 +1,4 @@
-+# Qwen3.8-27B one-card research set: head 256 only (page 832 -> the _64 decode policy; prefill causal paged).
-+# Format: qgroup,headsize,pagesize,causal,local,sink
-+8,256,64,false,false,false
-+16,256,64,false,false,false
-diff --git a/csrc/xpu/attn/xe_2/CMakeLists.txt b/csrc/xpu/attn/xe_2/CMakeLists.txt
-index 83f1719..cb11d27 100644
---- a/csrc/xpu/attn/xe_2/CMakeLists.txt
-+++ b/csrc/xpu/attn/xe_2/CMakeLists.txt
-@@ -7,4 +7,10 @@ fmha_forward_configure(chunk_prefill_kernel_template)
- include("paged_decode_configure.cmake")
- paged_decode_configure(paged_decode_kernel_template)
- 
-+# Multi-query (speculative-decoding verification) decode kernels. Reuses the
-+# paged decode config: one kernel per enabled policy, no causal/local/sink
-+# dimensions.
++# Multi-query (speculative-decoding verification) decode kernels.
++#
++# Deliberately a separate device library from attn_kernels_xe_2: the upstream
++# flash-attention extension and its kernel library ship prebuilt and must not be
++# rebuilt, because that would change the rounding of published reference
++# outputs. Nothing here is compiled into that library, and nothing here links
++# against it -- only its headers are reused.
++set(ATTN_KERNEL_SRCS_GEN) # output of the generator below
++
 +include("paged_decode_multiq_configure.cmake")
 +paged_decode_multiq_configure(paged_decode_multiq_kernel_template)
 +
- add_xe2_kernel_library(attn_kernels_xe_2 INCLUDE_CMAKE_SOURCE_DIR)
-diff --git a/csrc/xpu/attn/xe_2/collective/decode_multiq_mainloop.hpp b/csrc/xpu/attn/xe_2/collective/decode_multiq_mainloop.hpp
++add_xe2_kernel_library(attn_multiq_kernels_xe_2 INCLUDE_CMAKE_SOURCE_DIR)
+diff --git a/csrc/xpu/attn_multiq/xe_2/collective/decode_multiq_mainloop.hpp b/csrc/xpu/attn_multiq/xe_2/collective/decode_multiq_mainloop.hpp
 new file mode 100644
-index 0000000..2e6a5f6
+index 0000000..6f72fc0
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/collective/decode_multiq_mainloop.hpp
++++ b/csrc/xpu/attn_multiq/xe_2/collective/decode_multiq_mainloop.hpp
 @@ -0,0 +1,489 @@
 +/***************************************************************************************************
 + * Copyright (C) 2025 Intel Corporation, All rights reserved.
@@ -441,7 +463,7 @@ index 0000000..2e6a5f6
 +
 +#pragma once
 +
-+#include "chunk_prefill_mainloop.hpp"
++#include "csrc/xpu/attn/xe_2/collective/chunk_prefill_mainloop.hpp"
 +
 +namespace cutlass::fmha::collective {
 +
@@ -923,65 +945,11 @@ index 0000000..2e6a5f6
 +}
 +
 +}  // namespace cutlass::fmha::collective
-diff --git a/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp b/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp
-index e6ee515..7cd87cd 100644
---- a/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp
-+++ b/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp
-@@ -762,18 +762,39 @@ class ReduceSplitK {
-           const_cast<ElementLSE*>(p.max_logits + offset_max_logits);
-       auto ptrO = p.O + offset_o;
- 
--      auto stride_o = is_var_len
--                          ? cutlass::make_cute_packed_stride(StrideO{}, shape_O)
--                          : p.dO;
-+      // Varlen buffers are token-major and packed as
-+      //   O          : [total_q_tokens, num_heads_q, head_size_vo]
-+      //   Oaccum     : [total_q_tokens, num_heads_q * num_kv_splits,
-+      //                 head_size_vo]
-+      //   exp_sums   : [total_q_tokens, num_heads_q, num_kv_splits]
-+      //   max_logits : same shape as exp_sums
-+      // (see flash_api.cpp, which allocates them, and XeFMHAFwdSplitKVKernel,
-+      // which writes them through make_ordered_layout with the same packing).
-+      // The offsets above already move to this sequence's first token, so
-+      // mode 0 of the stride has to be the *token* stride of the whole buffer
-+      // and mode 2 the head stride. make_cute_packed_stride() instead derives
-+      // both from this sequence's seq_len_qo, which only coincides with the
-+      // buffer layout while seq_len_qo == 1 (plain decode: one query row per
-+      // sequence). Spelling the strides out is bit-identical there (mode 0 is
-+      // multiplied by seq_idx == 0 and mode 2 evaluates to head_size_vo /
-+      // num_kv_splits either way) and is what lets the multi-query decode
-+      // path (seq_len_qo > 1, see XeFMHAFwdSplitKVMultiQKernel) combine
-+      // positions > 0. Mode 3 (batch) is never applied for varlen: batch_dim
-+      // == 1 and l_coord == 0.
-+      const int o_token_stride = num_heads_q * head_size_vo;
-+      const int oaccum_token_stride = o_token_stride * num_kv_splits;
-+      const int lse_token_stride = num_heads_q * num_kv_splits;
-+      auto stride_o =
-+          is_var_len ? StrideO{o_token_stride, _1{}, head_size_vo, 0} : p.dO;
-       auto stride_o_accum =
--          is_var_len ? cutlass::make_cute_packed_stride(StrideO{}, shape_Oaccum)
-+          is_var_len ? StrideO{oaccum_token_stride, _1{}, head_size_vo, 0}
-                      : p.dOaccum;
--      auto stride_exp_sums = is_var_len ? cutlass::make_cute_packed_stride(
--                                              StrideO{}, shape_exp_sums)
--                                        : p.dExp_sums;
--      auto stride_max_logits = is_var_len ? cutlass::make_cute_packed_stride(
--                                                StrideO{}, shape_max_logits)
--                                          : p.dMax_logits;
-+      auto stride_exp_sums =
-+          is_var_len ? StrideO{lse_token_stride, _1{}, num_kv_splits, 0}
-+                     : p.dExp_sums;
-+      auto stride_max_logits =
-+          is_var_len ? StrideO{lse_token_stride, _1{}, num_kv_splits, 0}
-+                     : p.dMax_logits;
- 
-       Tensor Oaccum = make_tensor(
-           make_gmem_ptr(dcOaccum), make_layout(shape_Oaccum, stride_o_accum));
-diff --git a/csrc/xpu/attn/xe_2/kernel/paged_decode_multiq_kernel.hpp b/csrc/xpu/attn/xe_2/kernel/paged_decode_multiq_kernel.hpp
+diff --git a/csrc/xpu/attn_multiq/xe_2/kernel/paged_decode_multiq_kernel.hpp b/csrc/xpu/attn_multiq/xe_2/kernel/paged_decode_multiq_kernel.hpp
 new file mode 100644
-index 0000000..6c27cce
+index 0000000..ca5b12d
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/kernel/paged_decode_multiq_kernel.hpp
++++ b/csrc/xpu/attn_multiq/xe_2/kernel/paged_decode_multiq_kernel.hpp
 @@ -0,0 +1,477 @@
 +/***************************************************************************************************
 + * Copyright (C) 2025 Intel Corporation, All rights reserved.
@@ -990,8 +958,8 @@ index 0000000..6c27cce
 +
 +#pragma once
 +
-+#include "paged_decode_kernel.hpp"
-+#include "./collective/decode_multiq_mainloop.hpp"
++#include "csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp"
++#include "csrc/xpu/attn_multiq/xe_2/collective/decode_multiq_mainloop.hpp"
 +
 +namespace cutlass::fmha::kernel {
 +
@@ -1460,40 +1428,411 @@ index 0000000..6c27cce
 +};
 +
 +}  // namespace cutlass::fmha::kernel
-diff --git a/csrc/xpu/attn/xe_2/paged_decode.hpp b/csrc/xpu/attn/xe_2/paged_decode.hpp
-index d31702b..9e6e604 100644
---- a/csrc/xpu/attn/xe_2/paged_decode.hpp
-+++ b/csrc/xpu/attn/xe_2/paged_decode.hpp
-@@ -141,6 +141,13 @@ struct paged_decode_args_t {
-   int64_t q_stride_heads = 0;
-   int64_t q_stride_batch = 0;
-   int page_stride_elements = 0;
-+  // Multi-query decode only (paged_decode_multiq): number of V/output columns
-+  // one work-group owns. The decode tile scheduler derives
-+  // grid.x = ceil_div(head_size_vo, this), so a narrower tile splits the
-+  // output columns -- and with them the per-position O accumulators -- across
-+  // more work-groups. 0 = keep the policy's own ShapeOut width, which is what
-+  // the single-position decode path always uses. Ignored by that path.
-+  int multiq_v_tile = 0;
- };
- 
- template <class FMHAKernel, class ReductionSplitKernel, bool isVarLen>
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq.hpp b/csrc/xpu/attn/xe_2/paged_decode_multiq.hpp
+diff --git a/csrc/xpu/attn_multiq/xe_2/kernel/reduce_split_k_multiq.hpp b/csrc/xpu/attn_multiq/xe_2/kernel/reduce_split_k_multiq.hpp
 new file mode 100644
-index 0000000..069fde0
+index 0000000..27492a1
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq.hpp
-@@ -0,0 +1,265 @@
++++ b/csrc/xpu/attn_multiq/xe_2/kernel/reduce_split_k_multiq.hpp
+@@ -0,0 +1,379 @@
++/***************************************************************************************************
++ * Copyright (C) 2025 Intel Corporation, All rights reserved.
++ * SPDX-License-Identifier: BSD-3-Clause
++ **************************************************************************************************/
++
++#pragma once
++
++#include "csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp"
++
++namespace cutlass::fmha::kernel {
++
++using namespace cute;
++
++///////////////////////////////////////////////////////////////////////////////
++//
++// Split-K combine for the multi-query decode path.
++//
++// This is a private copy of ReduceSplitK (kernel/paged_decode_kernel.hpp) with
++// one fix: the varlen strides for O / Oaccum / exp_sums / max_logits. Upstream
++// derives them with make_cute_packed_stride() from the per-sequence
++// seq_len_qo, which only matches the buffer layout while seq_len_qo == 1, so
++// the combine cannot index query positions > 0. The fix is bit-neutral for
++// seq_len_qo == 1.
++//
++// It lives here, rather than as an edit to the shared header, so the upstream
++// attention library is not rebuilt: that library ships prebuilt and its
++// rounding must not change.
++//
++///////////////////////////////////////////////////////////////////////////////
++
++template <class ProblemShape_, class TileScheduler_, class FMHAKernel_>
++class ReduceSplitKMultiQ {
++ public:
++  using ProblemShape = ProblemShape_;
++  using VariableLength = cutlass::fmha::collective::VariableLength;
++  static constexpr bool is_var_len =
++      cutlass::fmha::collective::is_variable_length_v<
++          typename ProblemShape::SeqLenType>;
++  using TileScheduler = TileScheduler_;
++  static_assert(
++      is_same_v<
++          TileScheduler,
++          cutlass::fmha::kernel::XeReduceSplitKTileScheduler>,
++      "ReduceSplitK kernel requires XeReduceSplitKTileScheduler");
++  using TileSchedulerParams = typename TileScheduler::Params;
++
++  using ElementO = typename FMHAKernel_::ElementO;
++  using StrideO = typename FMHAKernel_::StrideO;
++  using TileShapeO = typename FMHAKernel_::TileShapeO;
++  using TileShapeQK = typename FMHAKernel_::TileShapeQK;
++
++  using ElementLSE = typename FMHAKernel_::ElementLSE;
++
++  using SGPerWG = typename FMHAKernel_::SGPerWG;
++
++  // num values (head_dim) processed by each thread
++  constexpr static int num_vals_per_thread =
++      int(get<1>(TileShapeO{}) / (SGPerWG::value * intel::sg_size));
++
++  //
++  // Types
++  //
++
++  struct KernelArguments {
++    ProblemShape shape;
++    // outputs:
++    ElementO* O;
++    StrideO dO;
++    // below are inputs
++    // TODO: whether same dtype as output or accum?
++    const ElementO* Oaccum;
++    StrideO dOaccum;
++    const ElementLSE* exp_sums;
++    StrideO dExp_sums;
++    const ElementLSE* max_logits;
++    StrideO dMax_logits;
++    int window_size_left = -1;
++
++    // per-batch mask: true = prefill, false = decode; nullptr = process all
++    const bool* is_prefill;
++    const int* splits_per_seq = nullptr;  // per-seq split counts
++  };
++  using KernelParams = KernelArguments;
++
++  struct Arguments {
++    KernelArguments kernel{};
++    KernelHardwareInfo hw_info{};
++    int num_kv_splits = -1;  // no split by default
++  };
++
++  /// Params structure
++  struct Params {
++    KernelParams kernel;
++    TileSchedulerParams scheduler;
++  };
++
++  struct SharedStorage {
++    cutlass::Array<ElementLSE, FMHAKernel_::max_num_kv_splits>
++        max_logits_slm_array;
++    cutlass::Array<ElementLSE, FMHAKernel_::max_num_kv_splits>
++        exp_sums_slm_array;
++  };
++
++  static constexpr int SharedStorageSize =
++      is_empty_v<SharedStorage> ? size_t(0) : sizeof(SharedStorage);
++
++ public:
++  static Params
++  to_underlying_arguments(Arguments const& args, void* workspace) {
++    return {
++        args.kernel,
++        TileScheduler::to_underlying_arguments(
++            args.kernel.shape, args.hw_info, TileShapeO{}, args.num_kv_splits)};
++  }
++
++  static bool can_implement(Arguments const& args) {
++    // only support decode
++    if (!is_var_len && args.kernel.shape.seq_len_qo > 1) {
++      return false;
++    }
++
++    if (args.num_kv_splits > FMHAKernel_::max_num_kv_splits) {
++      return false;
++    }
++    return true;
++  }
++
++  static int get_workspace_size(Arguments const& args) { return 0; }
++
++  static cutlass::Status initialize_workspace(
++      Arguments const& args,
++      void* workspace = nullptr,
++      cudaStream_t stream = nullptr,
++      CudaHostAdapter* cuda_adapter = nullptr) {
++    return Status::kSuccess;
++  }
++
++  static dim3 get_grid_shape(Params const& params) {
++    return TileScheduler::template get_grid_shape<SGPerWG::value>(
++        params.scheduler);
++  }
++
++  static dim3 get_block_shape() {
++    return dim3(SGPerWG::value * intel::sg_size, 1, 1);
++  }
++
++  CUTLASS_DEVICE
++  Shape<int, int> get_sequence_length_shape(
++      ProblemShape const& problem_shape, int const& batch) {
++    if constexpr (is_var_len) {
++      auto q_len = cutlass::fmha::collective::apply_variable_length(
++          Shape<VariableLength>{problem_shape.seq_len_qo}, batch);
++      return Shape<int, int>{
++          get<0>(q_len), problem_shape.seq_len_kv.cumulative_length[batch]};
++    } else {
++      return Shape<int, int>{
++          problem_shape.seq_len_qo, problem_shape.seq_len_kv};
++    }
++  }
++
++  /// Perform a reduction
++  CUTLASS_DEVICE
++  void operator()(Params const& params, char* smem_buf) {
++    using namespace sycl::ext::oneapi::this_work_item;
++
++    SharedStorage& shared_storage = *reinterpret_cast<SharedStorage*>(smem_buf);
++
++    auto& p = params.kernel;
++    ProblemShape const& s = p.shape;
++
++    int thr_id = int(ThreadIdxX());
++    int sub_group_id = thr_id / intel::sg_size;
++    int tid_in_sg = thr_id % intel::sg_size;
++
++    TileScheduler tile_scheduler{params.scheduler};
++    auto num_kv_splits = params.scheduler.num_kv_splits;
++
++    auto batch_dim = is_var_len ? 1 : s.batch;
++    auto num_heads_q = s.num_heads_q;
++    auto head_size_vo = s.head_size_vo;
++
++    CUTLASS_PRAGMA_NO_UNROLL
++    for (; tile_scheduler.is_valid(); ++tile_scheduler) {
++      auto [seq_idx, head_q, idx_b] = tile_scheduler.get_block_coord();
++
++      // Skip prefill batches when is_prefill mask is provided
++      if (p.is_prefill != nullptr && p.is_prefill[idx_b]) continue;
++
++      auto sequence_length_shape = get_sequence_length_shape(s, idx_b);
++      auto [seq_len_qo, seq_len_kv] = sequence_length_shape;
++
++      // when varlen enabled, use largest seq_len_qo to decide work group num
++      if (seq_idx >= seq_len_qo) continue;
++
++      const int k_blocks = cute::ceil_div(seq_len_kv, get<1>(TileShapeQK{}));
++      // Sliding window: skip blocks before the window
++      constexpr bool LocalMask = FMHAKernel_::CollectiveMainloop::LocalMask;
++      const int k_block0 =
++          LocalMask ? cute::max(seq_len_kv - 1 - p.window_size_left, 0) /
++                          get<1>(TileShapeQK{})
++                    : 0;
++      const int windowed_k_blocks = k_blocks - k_block0;
++      // Per-sequence adaptive split count
++      int seq_num_kv_splits = (p.splits_per_seq != nullptr)
++                                  ? p.splits_per_seq[idx_b]
++                                  : num_kv_splits;
++
++      int num_blocks_per_split =
++          cute::ceil_div(windowed_k_blocks, seq_num_kv_splits);
++
++      // is_single_split is a heuristic owned by the FMHA kernel; when the
++      // host provides splits_per_seq, the host has already applied the same
++      // policy (see build_decode_split_plan in flash_attn_interface.py), so
++      // trust it directly. Otherwise (legacy path), mirror the FMHA kernel.
++      int effective_splits;
++      if (p.splits_per_seq != nullptr) {
++        effective_splits = seq_num_kv_splits;
++      } else {
++        constexpr int tile_n = get<1>(typename FMHAKernel_::TileShapeQK{});
++        constexpr int kMinBlocksForSplit = (tile_n <= 64) ? 32 : 128;
++        bool is_single_split =
++            (seq_num_kv_splits > 1) && (windowed_k_blocks < kMinBlocksForSplit);
++        effective_splits = is_single_split ? 1 : seq_num_kv_splits;
++      }
++
++      int offset_o = 0, offset_o_accum = 0;
++      int offset_exp_sums = 0, offset_max_logits = 0;
++
++      if constexpr (is_var_len) {
++        auto qo_cumulative = s.seq_len_qo.cumulative_length;
++
++        offset_o_accum = s.num_heads_q * s.head_size_vo * num_kv_splits *
++                         qo_cumulative[idx_b];
++        offset_exp_sums = s.num_heads_q * num_kv_splits * qo_cumulative[idx_b];
++        offset_max_logits =
++            s.num_heads_q * num_kv_splits * qo_cumulative[idx_b];
++
++        offset_o = s.num_heads_q * s.head_size_vo * qo_cumulative[idx_b];
++      }
++
++      auto shape_O =
++          make_shape(seq_len_qo, head_size_vo, num_heads_q, batch_dim);
++      auto shape_Oaccum = is_var_len ? make_shape(
++                                           seq_len_qo,
++                                           head_size_vo,
++                                           num_heads_q * num_kv_splits,
++                                           batch_dim)
++                                     : make_shape(
++                                           seq_len_qo,
++                                           head_size_vo,
++                                           num_heads_q * num_kv_splits,
++                                           batch_dim);
++
++      auto shape_exp_sums =
++          make_shape(seq_len_qo, num_kv_splits, num_heads_q, batch_dim);
++      auto shape_max_logits =
++          make_shape(seq_len_qo, num_kv_splits, num_heads_q, batch_dim);
++
++      auto dcOaccum = const_cast<ElementO*>(p.Oaccum + offset_o_accum);
++      auto ptrExp_sums = const_cast<ElementLSE*>(p.exp_sums + offset_exp_sums);
++      auto ptrMax_logits =
++          const_cast<ElementLSE*>(p.max_logits + offset_max_logits);
++      auto ptrO = p.O + offset_o;
++
++      // --- The one change from the upstream ReduceSplitK -------------------
++      // Varlen buffers are token-major and packed as
++      //   O          : [total_q_tokens, num_heads_q, head_size_vo]
++      //   Oaccum     : [total_q_tokens, num_heads_q * num_kv_splits,
++      //                 head_size_vo]
++      //   exp_sums   : [total_q_tokens, num_heads_q, num_kv_splits]
++      //   max_logits : same shape as exp_sums
++      // (see the multi-query host code, which allocates them, and
++      // XeFMHAFwdSplitKVMultiQKernel, which writes them through
++      // make_ordered_layout with the same packing).
++      // The offsets above already move to this sequence's first token, so
++      // mode 0 of the stride has to be the *token* stride of the whole buffer
++      // and mode 2 the head stride. make_cute_packed_stride() instead derives
++      // both from this sequence's seq_len_qo, which only coincides with the
++      // buffer layout while seq_len_qo == 1 (plain decode: one query row per
++      // sequence). Spelling the strides out is bit-identical there (mode 0 is
++      // multiplied by seq_idx == 0 and mode 2 evaluates to head_size_vo /
++      // num_kv_splits either way) and is what lets the multi-query path
++      // (seq_len_qo > 1) combine positions > 0. Mode 3 (batch) is never
++      // applied for varlen: batch_dim == 1 and l_coord == 0.
++      const int o_token_stride = num_heads_q * head_size_vo;
++      const int oaccum_token_stride = o_token_stride * num_kv_splits;
++      const int lse_token_stride = num_heads_q * num_kv_splits;
++      auto stride_o =
++          is_var_len ? StrideO{o_token_stride, _1{}, head_size_vo, 0} : p.dO;
++      auto stride_o_accum =
++          is_var_len ? StrideO{oaccum_token_stride, _1{}, head_size_vo, 0}
++                     : p.dOaccum;
++      auto stride_exp_sums =
++          is_var_len ? StrideO{lse_token_stride, _1{}, num_kv_splits, 0}
++                     : p.dExp_sums;
++      auto stride_max_logits =
++          is_var_len ? StrideO{lse_token_stride, _1{}, num_kv_splits, 0}
++                     : p.dMax_logits;
++
++      Tensor Oaccum = make_tensor(
++          make_gmem_ptr(dcOaccum), make_layout(shape_Oaccum, stride_o_accum));
++      Tensor O =
++          make_tensor(make_gmem_ptr(ptrO), make_layout(shape_O, stride_o));
++
++      Tensor exp_sums = make_tensor(
++          make_gmem_ptr(ptrExp_sums),
++          make_layout(shape_exp_sums, stride_exp_sums));
++      Tensor max_logits = make_tensor(
++          make_gmem_ptr(ptrMax_logits),
++          make_layout(shape_max_logits, stride_max_logits));
++
++      int l_coord = is_var_len ? 0 : idx_b;
++
++      // Step 1: reduce max logits across different partitions
++      // store into SLM for later use
++
++      ElementLSE global_max_logits{
++          cutlass::platform::numeric_limits<ElementLSE>::lowest()};
++      ElementLSE global_exp_sums{0};
++      // only first subgroup participates
++      if (thr_id < effective_splits &&
++          thr_id * num_blocks_per_split < windowed_k_blocks) {
++        ElementLSE cur_max_logit = max_logits(seq_idx, thr_id, head_q, l_coord);
++        global_max_logits = sycl::max(global_max_logits, cur_max_logit);
++        shared_storage.max_logits_slm_array[thr_id] = cur_max_logit;
++
++        ElementLSE cur_exp_sum = exp_sums(seq_idx, thr_id, head_q, l_coord);
++        shared_storage.exp_sums_slm_array[thr_id] = cur_exp_sum;
++      }
++
++      // barrier for SLM writes finished
++      sycl::group_barrier(get_work_group<3>());
++
++      // reduce across wg
++      global_max_logits = reduce_over_group(
++          get_work_group<1>(), global_max_logits, sycl::maximum<>());
++
++      // broadcast to all other threads
++      global_max_logits =
++          sycl::group_broadcast(get_work_group<1>(), global_max_logits, 0);
++
++      for (int idx = thr_id; idx < s.head_size_vo;
++           idx += SGPerWG::value * intel::sg_size) {
++        ElementLSE acc = 0;
++        global_exp_sums = 0;
++        for (int i = 0; i < effective_splits; ++i) {
++          if (i * num_blocks_per_split >= windowed_k_blocks) {
++            break;
++          }
++          ElementLSE local_max_logit = shared_storage.max_logits_slm_array[i];
++          ElementLSE local_exp_sum = shared_storage.exp_sums_slm_array[i];
++
++          // Skip splits with no valid data (short sequences treated as
++          // single-split have exp_sums=0 / max_logits=-inf for unused splits).
++          if (local_exp_sum <= ElementLSE(0)) continue;
++
++          ElementLSE rescale =
++              sycl::native::exp2(local_max_logit - global_max_logits);
++
++          // Partial outputs are unnormalized (not divided by exp_sum in the
++          // epilogue), so combine them directly with the rescale factor.
++          ElementLSE o_accum_val = static_cast<ElementLSE>(
++              Oaccum(seq_idx, idx, i * num_heads_q + head_q, l_coord));
++          acc += o_accum_val * rescale;
++
++          // update global exp sum
++          global_exp_sums += local_exp_sum * rescale;
++        }
++
++        ElementLSE inv_global_exp_sums = 1. / global_exp_sums;
++
++        acc *= inv_global_exp_sums;
++        O(seq_idx, idx, head_q, l_coord) = static_cast<ElementO>(acc);
++      }
++    }
++  }
++};
++
++}  // namespace cutlass::fmha::kernel
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq.hpp b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq.hpp
+new file mode 100644
+index 0000000..a56b497
+--- /dev/null
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq.hpp
+@@ -0,0 +1,271 @@
 +#pragma once
 +
 +// Multi-query paged decode ("verify q_len positions of one sequence in one
-+// pass"). Shares the policies, argument struct and launcher of the ordinary
-+// paged decode path; only the FMHA kernel differs. Causal/local/sink masking
++// pass"). Reuses the ordinary paged decode path's policies, argument struct
++// and launcher *as headers only* -- the kernels compile into their own
++// library (libattn_multiq_kernels_xe_2.so) so the prebuilt upstream attention
++// library is never rebuilt -- and swaps in its own FMHA kernel and split-K
++// combine. Causal/local/sink masking
 +// is not part of this path (causality is expressed by the per-position KV
 +// limits), so there are no boolean policy dimensions here.
 +
-+#include "paged_decode.hpp"
-+#include "kernel/paged_decode_multiq_kernel.hpp"
++#include "csrc/xpu/attn/xe_2/paged_decode.hpp"
++#include "csrc/xpu/attn_multiq/xe_2/kernel/paged_decode_multiq_kernel.hpp"
++#include "csrc/xpu/attn_multiq/xe_2/kernel/reduce_split_k_multiq.hpp"
 +
 +using namespace cute;
 +
@@ -1640,7 +1979,9 @@ index 0000000..069fde0
 +        CollectiveEpilogue,
 +        Scheduler>;
 +
-+    using ReduceSplitKernel = cutlass::fmha::kernel::ReduceSplitK<
++    // Private copy of the split-K combine: the upstream one cannot index
++    // query positions > 0 (see reduce_split_k_multiq.hpp).
++    using ReduceSplitKernel = cutlass::fmha::kernel::ReduceSplitKMultiQ<
 +        ProblemShapeType,
 +        cutlass::fmha::kernel::XeReduceSplitKTileScheduler,
 +        FMHAKernel>;
@@ -1749,29 +2090,55 @@ index 0000000..069fde0
 +      " k_type=",
 +      static_cast<int>(cuQKType.k_type));
 +}
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_configure.cmake b/csrc/xpu/attn/xe_2/paged_decode_multiq_configure.cmake
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_configure.cmake b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_configure.cmake
 new file mode 100644
-index 0000000..0afb012
+index 0000000..7e09137
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_configure.cmake
-@@ -0,0 +1,162 @@
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_configure.cmake
+@@ -0,0 +1,210 @@
 +# =============================================================================
 +# Multi-query Paged Decode Kernel Configuration
 +# =============================================================================
-+# Generates one explicit instantiation of the multi-query decode kernel per
-+# (qgroup, headsize, pagesize) policy enabled by the *paged decode* config file
-+# (VLLM_PAGED_DECODE_CONFIG). The multi-query path has no causal/local/sink
-+# dimensions -- causality is expressed through the per-position KV limits -- so
-+# a policy that is enabled for decode yields exactly one multi-query kernel.
++# Generates the explicit instantiations of the multi-query decode kernel: one
++# per (qgroup, headsize, pagesize) policy in the config file, times the V-tile
++# widths narrower than that policy's own ShapeOut. The multi-query path has no
++# causal/local/sink dimensions -- causality is expressed through the
++# per-position KV limits -- so the boolean columns of the config are ignored.
 +#
-+# Requires _paged_decode_parse_config() from paged_decode_configure.cmake
-+# (include that file first).
++# Config file: VLLM_MULTIQ_DECODE_CONFIG, which defaults to
++# VLLM_PAGED_DECODE_CONFIG when that is set and otherwise to the Qwen3.8
++# research set (head 256 only). The format is the paged-decode one, and the
++# parser is reused from paged_decode_configure.cmake -- but nothing here reads
++# or builds the upstream paged-decode kernels, so this works with
++# FA2_KERNELS_ENABLED=OFF.
 +#
 +# Usage: paged_decode_multiq_configure(paged_decode_multiq_kernel_template)
 +#
 +# Output: appends the generated sources to ATTN_KERNEL_SRCS_GEN and writes
-+# paged_decode_multiq_extern_gen.hpp into the build directory.
++# paged_decode_multiq_extern_gen.hpp and
++# paged_decode_multiq_enabled_policies_gen.hpp into the build directory.
 +# =============================================================================
++
++# Resolve our own config *before* including the parser file below: that file
++# defaults VLLM_PAGED_DECODE_CONFIG to the full kernel set, which would
++# otherwise silently become the multi-query set as well.
++if(NOT DEFINED VLLM_MULTIQ_DECODE_CONFIG)
++  if(DEFINED VLLM_PAGED_DECODE_CONFIG)
++    set(VLLM_MULTIQ_DECODE_CONFIG "${VLLM_PAGED_DECODE_CONFIG}")
++  else()
++    set(VLLM_MULTIQ_DECODE_CONFIG
++        "${CMAKE_CURRENT_LIST_DIR}/../../attn/kernel_configs/paged_decode_qwen38.conf"
++    )
++  endif()
++endif()
++
++# The config parser lives with the paged-decode generator; include it only for
++# _paged_decode_parse_config() (defining paged_decode_configure() as a side
++# effect is harmless -- it is never called from here).
++if(NOT COMMAND _paged_decode_parse_config)
++  include(
++    "${CMAKE_CURRENT_LIST_DIR}/../../attn/xe_2/paged_decode_configure.cmake")
++endif()
 +
 +function(paged_decode_multiq_configure FILENAME_SUFFIX)
 +  set(GEN_MULTIQ_SRCS)
@@ -1788,9 +2155,9 @@ index 0000000..0afb012
 +  set(pagesize_list "16" "32" "64" "128")
 +
 +  message(
-+    STATUS "Paged decode multi-query kernel config: ${VLLM_PAGED_DECODE_CONFIG}"
-+  )
-+  _paged_decode_parse_config("${VLLM_PAGED_DECODE_CONFIG}" CONFIG_TUPLES
++    STATUS
++      "Paged decode multi-query kernel config: ${VLLM_MULTIQ_DECODE_CONFIG}")
++  _paged_decode_parse_config("${VLLM_MULTIQ_DECODE_CONFIG}" CONFIG_TUPLES
 +                             CONFIG_IS_FULL)
 +
 +  set(POLICY_TRIPLES)
@@ -1906,26 +2273,74 @@ index 0000000..0afb012
 +    "${CMAKE_CURRENT_LIST_DIR}/paged_decode_multiq_extern.hpp.in"
 +    "${CMAKE_CURRENT_BINARY_DIR}/paged_decode_multiq_extern_gen.hpp" @ONLY)
 +
++  # Compile-time availability traits, generated from this config alone (the
++  # paged-decode traits header belongs to the upstream library's build and may
++  # not exist at all here).
++  set(ENABLED_MULTIQ_POLICY_TRAITS "")
++  set(MULTIQ_TRAIT_POLICIES)
++  foreach(_pair ${MULTIQ_POLICY_PAIRS})
++    string(REPLACE "|" ";" _pair_parts "${_pair}")
++    list(GET _pair_parts 0 _pol)
++    list(APPEND MULTIQ_TRAIT_POLICIES "${_pol}")
++  endforeach()
++  list(REMOVE_DUPLICATES MULTIQ_TRAIT_POLICIES)
++  foreach(_pol ${MULTIQ_TRAIT_POLICIES})
++    set(ENABLED_MULTIQ_POLICY_TRAITS
++        "${ENABLED_MULTIQ_POLICY_TRAITS}template <>\nstruct is_multiq_policy_enabled<${_pol}> : std::true_type {};\n"
++    )
++  endforeach()
++
++  configure_file(
++    "${CMAKE_CURRENT_LIST_DIR}/paged_decode_multiq_enabled_policies.hpp.in"
++    "${CMAKE_CURRENT_BINARY_DIR}/paged_decode_multiq_enabled_policies_gen.hpp"
++    @ONLY)
++
 +  list(REMOVE_DUPLICATES GEN_MULTIQ_SRCS)
 +  list(LENGTH GEN_MULTIQ_SRCS GEN_MULTIQ_SRCS_LENGTH)
 +  message(
 +    STATUS "Generated ${FILENAME_SUFFIX} sources: ${GEN_MULTIQ_SRCS_LENGTH} "
-+           "files (config: ${VLLM_PAGED_DECODE_CONFIG})")
++           "files (config: ${VLLM_MULTIQ_DECODE_CONFIG})")
 +
 +  list(APPEND ATTN_KERNEL_SRCS_GEN ${GEN_MULTIQ_SRCS})
 +  set(ATTN_KERNEL_SRCS_GEN
 +      ${ATTN_KERNEL_SRCS_GEN}
 +      PARENT_SCOPE)
 +endfunction()
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_enabled_policies.hpp.in b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_enabled_policies.hpp.in
 new file mode 100644
-index 0000000..5a96435
+index 0000000..dea4682
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_enabled_policies.hpp.in
+@@ -0,0 +1,20 @@
++#pragma once
++
++// =============================================================================
++// AUTO-GENERATED: Compile-time policy availability traits (multi-query decode)
++// =============================================================================
++// Generated by CMake from paged_decode_multiq_enabled_policies.hpp.in
++// Config: @VLLM_MULTIQ_DECODE_CONFIG@
++//
++// DO NOT EDIT THIS FILE DIRECTLY. Modify the kernel config file, then re-run
++// CMake to regenerate.
++// =============================================================================
++
++#include <type_traits>
++
++// Base trait: all policies disabled by default.
++template <typename Policy>
++struct is_multiq_policy_enabled : std::false_type {};
++
++// Specializations for the policies this build instantiates:
++@ENABLED_MULTIQ_POLICY_TRAITS@
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_extern.hpp b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_extern.hpp
+new file mode 100644
+index 0000000..d921bf8
+--- /dev/null
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_extern.hpp
 @@ -0,0 +1,145 @@
 +#pragma once
 +
-+#include "paged_decode_multiq.hpp"
++#include "csrc/xpu/attn_multiq/xe_2/paged_decode_multiq.hpp"
 +
 +// =============================================================================
 +// Fallback extern template declarations for the multi-query decode kernel
@@ -2068,11 +2483,11 @@ index 0000000..5a96435
 +PAGED_DECODE_MULTIQ_POLICY_LIST(DECLARE_MULTIQ_DISPATCH_EXTERN)
 +
 +#undef DECLARE_MULTIQ_DISPATCH_EXTERN
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp.in b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp.in
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_extern.hpp.in b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_extern.hpp.in
 new file mode 100644
-index 0000000..92519db
+index 0000000..b8b658d
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp.in
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_extern.hpp.in
 @@ -0,0 +1,33 @@
 +#pragma once
 +
@@ -2086,7 +2501,7 @@ index 0000000..92519db
 +// .hpp.in template instead, then re-run CMake.
 +// =============================================================================
 +
-+#include "paged_decode_multiq.hpp"
++#include "csrc/xpu/attn_multiq/xe_2/paged_decode_multiq.hpp"
 +
 +// =============================================================================
 +// Enabled (policy, V-tile) pairs (from config)
@@ -2107,13 +2522,13 @@ index 0000000..92519db
 +PAGED_DECODE_MULTIQ_POLICY_LIST(DECLARE_MULTIQ_DISPATCH_EXTERN)
 +
 +#undef DECLARE_MULTIQ_DISPATCH_EXTERN
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_kernel_template.cpp.in b/csrc/xpu/attn/xe_2/paged_decode_multiq_kernel_template.cpp.in
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_kernel_template.cpp.in b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_kernel_template.cpp.in
 new file mode 100644
-index 0000000..6160144
+index 0000000..a7128fd
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_kernel_template.cpp.in
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_kernel_template.cpp.in
 @@ -0,0 +1,26 @@
-+#include "paged_decode_multiq.hpp"
++#include "csrc/xpu/attn_multiq/xe_2/paged_decode_multiq.hpp"
 +
 +using namespace cute;
 +
@@ -2139,19 +2554,26 @@ index 0000000..6160144
 +      const paged_decode_args_t& args);
 +
 +INSTANTIATE_MULTIQ_KERNEL()
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_utils.hpp b/csrc/xpu/attn/xe_2/paged_decode_multiq_utils.hpp
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_utils.hpp b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_utils.hpp
 new file mode 100644
-index 0000000..1ebe131
+index 0000000..6812f38
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_utils.hpp
-@@ -0,0 +1,153 @@
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_utils.hpp
+@@ -0,0 +1,166 @@
 +#pragma once
 +
-+#include "paged_decode_multiq.hpp"
-+// Pulls in the generated is_decode_policy_enabled<> traits (or the
-+// all-enabled fallback). The multi-query kernel is instantiated for exactly
-+// the policies the decode config enables, so the same trait gates both.
-+#include "paged_decode_utils.hpp"
++#include "csrc/xpu/attn_multiq/xe_2/paged_decode_multiq.hpp"
++
++// Generated trait listing the policies this build instantiates. It is
++// generated from the multi-query config alone, so this path does not depend
++// on the upstream paged-decode kernel library being built at all.
++#if __has_include("paged_decode_multiq_enabled_policies_gen.hpp")
++  #include "paged_decode_multiq_enabled_policies_gen.hpp"
++#else
++// Fallback (e.g. IDE indexing): assume every policy is available.
++template <typename Policy>
++struct is_multiq_policy_enabled : std::true_type {};
++#endif
 +
 +using namespace cute;
 +
@@ -2160,25 +2582,27 @@ index 0000000..1ebe131
 +void multiq_policy_dispatch_func(
 +    sycl::queue& queue,
 +    CutlassQKType& cuQKType,
-+    const paged_decode_args_t& args) {
++    const paged_decode_args_t& args,
++    const int v_tile) {
 +  constexpr int _qgroup = cute::size<0>(typename decode_policy::ShapeOut{});
 +  constexpr int _head_sz = decode_policy::HeadDim::value;
 +  constexpr int _page_sz = cute::size<1>(typename decode_policy::ShapeQK{});
 +
-+  if constexpr (!is_decode_policy_enabled<decode_policy>::value) {
++  if constexpr (!is_multiq_policy_enabled<decode_policy>::value) {
 +    TORCH_CHECK(
 +        false,
 +        "Multi-query paged decode kernel not compiled for this "
 +        "configuration.\n\n"
-+        "Add this line to your paged_decode config file "
-+        "(csrc/xpu/attn/kernel_configs/paged_decode_default.conf):\n\n  ",
++        "Add this line to the multi-query kernel config "
++        "(VLLM_MULTIQ_DECODE_CONFIG, default "
++        "csrc/xpu/attn/kernel_configs/paged_decode_qwen38.conf):\n\n  ",
 +        _qgroup,
 +        ",",
 +        _head_sz,
 +        ",",
 +        _page_sz,
 +        ",false,false,false\n\nThen rebuild:\n"
-+        "  VLLM_PAGED_DECODE_CONFIG=paged_decode_default.conf pip install .\n");
++        "  VLLM_MULTIQ_DECODE_CONFIG=<config> pip install .\n");
 +  } else {
 +    // V-tile selection. Only widths narrower than the policy's own ShapeOut
 +    // are separate kernels; 0 and the policy width are the same kernel. The
@@ -2186,7 +2610,6 @@ index 0000000..1ebe131
 +    // (paged_decode_multiq_configure.cmake emits VTile < default width), or
 +    // this would reference an instantiation that was never emitted.
 +    constexpr int kDefaultV = multiq_default_v<decode_policy>;
-+    const int v_tile = args.multiq_v_tile;
 +
 +    if (v_tile == 0 || v_tile == kDefaultV) {
 +      multiq_policy_dispatch_impl<decode_policy, 0>(queue, cuQKType, args);
@@ -2231,42 +2654,43 @@ index 0000000..1ebe131
 +    const int head_case,
 +    sycl::queue& queue,
 +    CutlassQKType& cuQKType,
-+    const paged_decode_args_t& args) {
++    const paged_decode_args_t& args,
++    const int v_tile) {
 +  switch (head_case) {
 +    case 0:
 +      multiq_policy_dispatch_func<
 +          decode_policy_qpacked_head<QGroup, _64, PageSize>>(
-+          queue, cuQKType, args);
++          queue, cuQKType, args, v_tile);
 +      break;
 +    case 1:
 +      multiq_policy_dispatch_func<
 +          decode_policy_qpacked_head<QGroup, _96, PageSize>>(
-+          queue, cuQKType, args);
++          queue, cuQKType, args, v_tile);
 +      break;
 +    case 2:
 +      multiq_policy_dispatch_func<
 +          decode_policy_qpacked_head<QGroup, _128, PageSize>>(
-+          queue, cuQKType, args);
++          queue, cuQKType, args, v_tile);
 +      break;
 +    case 3:
 +      multiq_policy_dispatch_func<
 +          decode_policy_qpacked_head<QGroup, _192, PageSize>>(
-+          queue, cuQKType, args);
++          queue, cuQKType, args, v_tile);
 +      break;
 +    case 4:
 +      multiq_policy_dispatch_func<
 +          decode_policy_qpacked_head<QGroup, _256, PageSize>>(
-+          queue, cuQKType, args);
++          queue, cuQKType, args, v_tile);
 +      break;
 +    case 5:
 +      multiq_policy_dispatch_func<
 +          decode_policy_qpacked_head<QGroup, _512, PageSize>>(
-+          queue, cuQKType, args);
++          queue, cuQKType, args, v_tile);
 +      break;
 +    case 6:
 +      multiq_policy_dispatch_func<
 +          decode_policy_qpacked_head<QGroup, _576, PageSize>>(
-+          queue, cuQKType, args);
++          queue, cuQKType, args, v_tile);
 +      break;
 +    default:
 +      TORCH_CHECK(false, "Unsupported head size for paged_decode_multiq");
@@ -2279,17 +2703,21 @@ index 0000000..1ebe131
 +    const int head_case,
 +    sycl::queue& queue,
 +    CutlassQKType& cuQKType,
-+    const paged_decode_args_t& args) {
++    const paged_decode_args_t& args,
++    const int v_tile) {
 +  // Identical routing to dispatch_by_page_size() in paged_decode_utils.hpp:
 +  // the kv_tile the mainloop uses has to match the one the reference decode
 +  // call would have used, or the tile count (and therefore the split plan and
 +  // the masking) would differ.
 +  if (page_size == 16) {
-+    multiq_dispatch_by_head_size<QGroup, _16>(head_case, queue, cuQKType, args);
++    multiq_dispatch_by_head_size<QGroup, _16>(
++        head_case, queue, cuQKType, args, v_tile);
 +  } else if (page_size == 32) {
-+    multiq_dispatch_by_head_size<QGroup, _32>(head_case, queue, cuQKType, args);
++    multiq_dispatch_by_head_size<QGroup, _32>(
++        head_case, queue, cuQKType, args, v_tile);
 +  } else if (page_size > 0 && (page_size % 64) == 0) {
-+    multiq_dispatch_by_head_size<QGroup, _64>(head_case, queue, cuQKType, args);
++    multiq_dispatch_by_head_size<QGroup, _64>(
++        head_case, queue, cuQKType, args, v_tile);
 +  } else {
 +    TORCH_CHECK(
 +        false,
@@ -2298,14 +2726,14 @@ index 0000000..1ebe131
 +        " (supported: 16, 32, or any positive multiple of 64)");
 +  }
 +}
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.cpp b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.cpp
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_xe2.cpp b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_xe2.cpp
 new file mode 100644
-index 0000000..6c04d82
+index 0000000..d4d064b
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.cpp
-@@ -0,0 +1,225 @@
-+#include "paged_decode_multiq_xe2.h"
-+#include "paged_decode_multiq_utils.hpp"
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_xe2.cpp
+@@ -0,0 +1,223 @@
++#include "csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_xe2.h"
++#include "csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_utils.hpp"
 +// Use the generated extern header (only declares enabled policies)
 +#if __has_include("paged_decode_multiq_extern_gen.hpp")
 +  #include "paged_decode_multiq_extern_gen.hpp"
@@ -2345,8 +2773,8 @@ index 0000000..6c04d82
 +    const at::Tensor& seqused_k,
 +    int max_seqlen_q,
 +    int max_seqlen_k,
-+    std::optional<const at::Tensor>& k_scale,
-+    std::optional<const at::Tensor>& v_scale,
++    const std::optional<at::Tensor>& k_scale,
++    const std::optional<at::Tensor>& v_scale,
 +    double sm_scale,
 +    int num_kv_splits,
 +    int v_tile) {
@@ -2467,8 +2895,6 @@ index 0000000..6c04d82
 +      int64_t{0},
 +      page_stride_elements};
 +
-+  args.multiq_v_tile = v_tile;
-+
 +  // For non-contiguous paged KV (e.g., cross-layer KV cache), enlarge
 +  // total_seqlen_k to cover the full physical extent for the 2D block load
 +  // surface descriptor.
@@ -2523,18 +2949,21 @@ index 0000000..6c04d82
 +  // dimension, so this is a tile size, not a cap on the GQA ratio.
 +  if (num_q_group_size <= 8) {
 +    multiq_dispatch_by_page_size<_8>(
-+        block_size, head_case, queue, cuQKType, args);
++        block_size, head_case, queue, cuQKType, args, v_tile);
 +  } else {
 +    multiq_dispatch_by_page_size<_16>(
-+        block_size, head_case, queue, cuQKType, args);
++        block_size, head_case, queue, cuQKType, args, v_tile);
 +  }
 +}
-diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.h b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.h
+diff --git a/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_xe2.h b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_xe2.h
 new file mode 100644
-index 0000000..4a0c4b7
+index 0000000..6de16ce
 --- /dev/null
-+++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.h
-@@ -0,0 +1,26 @@
++++ b/csrc/xpu/attn_multiq/xe_2/paged_decode_multiq_xe2.h
+@@ -0,0 +1,29 @@
++#pragma once
++
++#include <sycl/sycl.hpp>
 +#include <torch/all.h>
 +
 +// Multi-query paged decode: verify max_seqlen_q consecutive positions of each
@@ -2555,8 +2984,8 @@ index 0000000..4a0c4b7
 +    const at::Tensor& seqused_k,
 +    int max_seqlen_q,
 +    int max_seqlen_k,
-+    std::optional<const at::Tensor>& k_scale,
-+    std::optional<const at::Tensor>& v_scale,
++    const std::optional<at::Tensor>& k_scale,
++    const std::optional<at::Tensor>& v_scale,
 +    double sm_scale,
 +    int num_kv_splits,
 +    // Per-work-group V/output tile width; 0 = the policy's decode default.
@@ -3279,7 +3708,7 @@ index a05bcfa..3d68e1e 100644
 +  }
 +}
 diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
-index d025b81..7dda1b5 100644
+index d025b81..a7d2221 100644
 --- a/csrc/xpu/ops.h
 +++ b/csrc/xpu/ops.h
 @@ -326,6 +326,45 @@ void gdn_attention(
@@ -3328,8 +3757,52 @@ index d025b81..7dda1b5 100644
  #endif
  
  bool is_bmg_g21(int64_t device_index);
+@@ -402,3 +441,43 @@ void fused_input_norm(
+     torch::Tensor& input,
+     torch::Tensor& weight,
+     torch::Tensor& bias);
++
++// Multi-query paged decode (speculative-decoding verification).
++//
++// Every sequence contributes the same q_len = max_seqlen_q (2..8) consecutive
++// query positions, laid out as q[i * q_len + j] for sequence i and position j,
++// and position j attends to KV positions
++//   [0, seqused_k[i] - (q_len - 1 - j)).
++// The kernel loads each KV tile once for all positions but keeps a separate
++// accumulator, softmax state and column mask per position, so every position's
++// output is bit-identical to the single-position decode call
++//   varlen_fwd(q[i*q_len+j], ..., max_seqlen_q=1, causal=false,
++//              seqused_k=seqused_k[i]-(q_len-1-j))
++// that the verifier-rows overlay issues today, provided the split plan is
++// shared -- which the host precondition and the batch_size=1 split count
++// below guarantee.
++//
++// This op lives in the _xpu_C extension and its kernels in
++// libattn_multiq_kernels_xe_2.so, deliberately separate from the upstream
++// flash-attention extension/library: those ship prebuilt and rebuilding them
++// would change the rounding of the published reference outputs.
++//
++// v_tile selects how many V/output columns one work-group owns (0/absent =
++// the decode policy's own width). Narrower tiles split the columns across
++// grid.x so each work-group keeps only its slice of the q_len accumulators;
++// K is re-read per slice and the result is unchanged.
++at::Tensor paged_decode_multiq(
++    const at::Tensor& q,  // [total_q, num_heads_q, head_size]
++    const at::Tensor& k,  // [num_blocks, block_size, num_heads_kv, head_size]
++    const at::Tensor& v,
++    std::optional<at::Tensor> out_,
++    const at::Tensor& cu_seqlens_q,  // b+1
++    const at::Tensor& seqused_k,     // b
++    const at::Tensor& block_table,   // b x max_num_blocks_per_seq
++    int64_t max_seqlen_q,
++    int64_t max_seqlen_k,
++    const std::optional<at::Tensor>& k_scale,
++    const std::optional<at::Tensor>& v_scale,
++    double softmax_scale,
++    std::optional<int64_t> num_splits,
++    std::optional<int64_t> v_tile);
 diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
-index dc73cdb..a1713cc 100644
+index dc73cdb..b2a18cc 100644
 --- a/csrc/xpu/torch_bindings.cpp
 +++ b/csrc/xpu/torch_bindings.cpp
 @@ -257,6 +257,23 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
@@ -3356,3 +3829,60 @@ index dc73cdb..a1713cc 100644
  #endif
  
    // for empty tensor functions, we don't need dispatch key like torch::kXPU
+@@ -328,6 +345,20 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "fused_input_norm(Tensor! out, Tensor input, Tensor weight, "
+       "Tensor bias) -> ()");
+   xpu_ops.impl("fused_input_norm", torch::kXPU, &fused_input_norm);
++
++#ifdef VLLM_MULTIQ_ENABLED
++  // Speculative-decoding verification: q_len (2..8) consecutive positions of
++  // each sequence in one pass over the paged KV cache, bit-identical to the
++  // equivalent per-position single-query decode calls. Registered here rather
++  // than in the flash-attention extension so that extension and its kernel
++  // library stay exactly as shipped.
++  xpu_ops.def(
++      "paged_decode_multiq(Tensor q, Tensor k, Tensor v, Tensor!? out, "
++      "Tensor cu_seqlens_q, Tensor seqused_k, Tensor block_table, "
++      "int max_seqlen_q, int max_seqlen_k, Tensor? k_scale, Tensor? v_scale, "
++      "float softmax_scale, int? num_splits, int? v_tile) -> Tensor");
++  xpu_ops.impl("paged_decode_multiq", torch::kXPU, &paged_decode_multiq);
++#endif
+ }
+ 
+ REGISTER_EXTENSION(TORCH_EXTENSION_NAME)
+diff --git a/setup.py b/setup.py
+index 5774620..7be4320 100755
+--- a/setup.py
++++ b/setup.py
+@@ -192,6 +192,7 @@ class cmake_build_ext(build_ext):
+             "FA2_KERNELS_ENABLED",
+             "MOE_KERNELS_ENABLED",
+             "GDN_KERNELS_ENABLED",
++            "MULTIQ_KERNELS_ENABLED",
+             "MQA_LOGITS_KERNELS_ENABLED",
+             "XPU_SPECIFIC_KERNELS_ENABLED",
+             "XPUMEM_ALLOCATOR_ENABLED",
+@@ -207,6 +208,13 @@ class cmake_build_ext(build_ext):
+             cmake_args.append(
+                 '-DVLLM_PAGED_DECODE_CONFIG={}'.format(_paged_decode_config))
+ 
++        # Forward the multi-query decode kernel config if set. Defaults (in
++        # cmake) to VLLM_PAGED_DECODE_CONFIG, else to the Qwen3.8 research set.
++        _multiq_config = os.environ.get("VLLM_MULTIQ_DECODE_CONFIG", "")
++        if _multiq_config:
++            cmake_args.append(
++                '-DVLLM_MULTIQ_DECODE_CONFIG={}'.format(_multiq_config))
++
+         # Forward chunk prefill kernel config if set via environment variable.
+         # Example: VLLM_CHUNK_PREFILL_CONFIG=chunk_prefill_llama pip install .
+         _chunk_prefill_config = os.environ.get("VLLM_CHUNK_PREFILL_CONFIG", "")
+@@ -555,6 +563,9 @@ if _is_enabled("BUILD_SYCL_TLA_KERNELS"):
+         if _is_enabled("GDN_KERNELS_ENABLED"):
+             additional_libraries["gdn_attn_kernels_xe_2"] = (
+                 "/csrc/xpu/gdn_attn/xe_2")
++        if _is_enabled("MULTIQ_KERNELS_ENABLED"):
++            additional_libraries["attn_multiq_kernels_xe_2"] = (
++                "/csrc/xpu/attn_multiq/xe_2")
+         if _is_enabled("MQA_LOGITS_KERNELS_ENABLED"):
+             additional_libraries["mqa_logits_kernels_xe_2"] = (
+                 "/csrc/xpu/mqa_logits/xe_2")

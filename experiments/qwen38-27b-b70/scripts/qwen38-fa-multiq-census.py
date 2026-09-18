@@ -4,7 +4,9 @@
 Operator diagnostic only. The verifier-rows overlay (b70_fa_verify_rows.py) makes an
 MTP verify step bit-identical to no-MTP decode by issuing one single-query decode call
 per verified row, which costs one full KV pass per row. The new
-`torch.ops._vllm_fa2_C.paged_decode_multiq` op does the same arithmetic in one KV pass:
+`torch.ops._xpu_C.paged_decode_multiq` op (in the _xpu_C extension, with its kernels in
+libattn_multiq_kernels_xe_2.so, so the prebuilt upstream flash-attention library is
+untouched) does the same arithmetic in one KV pass:
 row j of a q_len window attends to seqused_k - (q_len-1-j) tokens, with the KV tiles
 loaded once and a separate accumulator/mask per row.
 
@@ -18,6 +20,9 @@ for several KV lengths and both contiguous and scattered block tables:
 `--v-tile {64,128,256}` narrows the V/output tile so each work-group keeps only its
 slice of the q_len accumulators (K is re-read once per slice). One run per width gives
 the timing curve; equality must hold for every width.
+
+The reference path is vLLM's flash_attn_varlen_func, i.e. the upstream prebuilt
+attention library -- that is the point of the comparison.
 
 KV lengths that violate the op's precondition -- (seqused_k - 1) % kv_tile >= q_len - 1,
 i.e. all rows must end in the same KV tile -- are expected to be refused by the op; they
@@ -67,6 +72,10 @@ def main():
     import torch
     import vllm  # noqa: F401
     import vllm._xpu_ops  # noqa: F401
+    try:  # registers paged_decode_multiq; vllm._xpu_ops usually loads it already
+        import vllm_xpu_kernels._xpu_C  # noqa: F401
+    except ImportError:
+        pass
     from vllm.v1.attention.backends.fa_utils import (flash_attn_varlen_func,
                                                      get_flash_attn_version)
 
@@ -120,7 +129,7 @@ def main():
     def multiq(query, kv_len, block_table, out=None):
         if out is None:
             out = torch.zeros((q_len, Q_HEADS, HEAD), dtype=torch.float16, device=dev)
-        torch.ops._vllm_fa2_C.paged_decode_multiq(
+        torch.ops._xpu_C.paged_decode_multiq(
             query, key_cache, value_cache, out,
             torch.tensor([0, q_len], dtype=torch.int32, device=dev),
             torch.tensor([kv_len], dtype=torch.int32, device=dev),

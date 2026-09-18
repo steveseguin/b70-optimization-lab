@@ -73,6 +73,13 @@ if [[ "${GDN_KERNELS}" == "ON" ]]; then
     "${INSTALL_PREFIX}/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so"
 fi
 
+# Optional research device libraries linked into _xpu_C (r312: the multi-position verifier attention).
+for extra in libattn_multiq_kernels_xe_2.so; do
+  if [[ -f "${BUILD_DIR}/${extra}" ]]; then
+    install -D -m 0755 "${BUILD_DIR}/${extra}" "${INSTALL_PREFIX}/vllm_xpu_kernels/${extra}"
+  fi
+done
+
 find "${INSTALL_PREFIX}" -maxdepth 3 -type f \
-  \( -name '_xpu_C*.so' -o -name 'libgdn_attn_kernels_xe_2.so' \) \
+  \( -name '_xpu_C*.so' -o -name 'libgdn_attn_kernels_xe_2.so' -o -name 'libattn_multiq_kernels_xe_2.so' \) \
   -printf '%s %p\n'
