@@ -450,23 +450,91 @@ the `JOBS=1` rebuild `r312d-build-bc-20260918` died at build object 2 of 8 when 
 at 03:09:59. Full account in the [host OOM incident](2026-09-18-host-oomd-incident.md). Both must be re-queued, one at
 a time, with the FP8 service down and nothing else running beside them.
 
+## Variant c is bit-exact: the CUTLASS revision was the cause (September 18, 03:25-04:00 UTC)
+
+At 03:24 UTC the user authorized restarts; the user manager came back at 03:25 and session
+`fp8-r312d-session8-20260918` (script `/mnt/fast-ai/bench-results/r312d-session8-20260918.sh`, log
+`r312d-session8-20260918.log`, outputs `/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/`) rebuilt the multiq
+device library **one compiler job at a time with both cards idle** -- variant b 03:25-03:40, variant c 03:40-03:56 --
+and ran the census after each. Both images are the r312c image with only `libattn_multiq_kernels_xe_2.so` replaced:
+`r312d-b` `sha256:283311abb57b7e97574da822ad17cd13ca9b43ebf5db6fd15b1b34de6971a0c4`, `r312d-c`
+`sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a`.
+
+| Variant | Host compiler | Device toolchain | sycl-tla (CUTLASS) | Exact cases | Max abs |
+| --- | --- | --- | --- | --- | --- |
+| r312c | lab DPC++ | lab IGC / ocloc | `cd76379` | 8/22 | 7.63e-6 |
+| a | DPC++ 2026.0.0 | lab IGC / ocloc | `cd76379` | 8/22 | 7.63e-6 |
+| b | DPC++ 2026.0.0 | IGC 2.34.4 / ocloc 26.18.38308.1 | `cd76379` | 8/22 | 7.63e-6 |
+| **c** | DPC++ 2026.0.0 | IGC 2.34.4 / ocloc 26.18.38308.1 | **`87f6850`** | **22/22** | **0.0** |
+
+Variant b changes the device code generator -- the thing that emits the GPU ISA -- and changes **nothing**: the same 14
+cases differ by the same 7.63e-6 as r312c and variant a, at v-tile 64 and at 256
+(`multiq-b-v64.json`, `multiq-b-v256.json`). Variant c adds one thing to b, the sycl-tla checkout
+`87f6850680a580654b9ea2c80dbc01aeb36ad231` that the kernel's own `CMakeLists.txt` pins as `CUTLASS_REVISION`
+(clone at `/mnt/fast-ai/build/sycl-tla-87f6850`), and is **bit-exact on all 22 cases, max abs 0.0, at both v-tile 64
+and 256** (`multiq-c-v64.json`, `multiq-c-v256.json`). The gate is met.
+
+Speed, from the `ms_rows` / `ms_multiq` pair in each case record: at **v-tile 64 the multi-row path beats the
+single-row reference on every one of the 22 cases, by 1.62x to 2.17x** (the widest ratios are in the 12K-32K middle of
+the range). At **v-tile 256 it is mostly a loss, 0.50x to 1.26x** -- ahead only at 2,048-2,058 tokens and about half
+speed at 4,096-4,106. So v-tile 64 is the configuration worth carrying into a server measurement, and the census
+numbers alone say nothing about end-to-end writing speed.
+
+### What this explains
+
+The rounding gap was never the compiler and never the multi-row algorithm: it was the CUTLASS revision the library was
+compiled against. Every lab kernel build since r309 -- r309 tp1 shapes, r310 GDN barriers, r311/r311b GDN checkpoint,
+r312a/b/c -- used `cd763790ad2f74d7294435ecf77682bac0062c3a` (2026-03-18), because that is the revision the clean-clone
+recipe [`build-kernels-0.1.14.1-clean-clone.sh`](../docker/rebase-v0290/build-kernels-0.1.14.1-clean-clone.sh) names,
+while vllm-xpu-kernels 0.1.14.1's `CMakeLists.txt` pins `87f6850` (2026-08-10), 88 commits later. The tile and copy
+templates differ between the two, and that difference is worth 1e-6 in the attention output.
+
+This also retires the mystery behind the September 17 DO-NOT-REPEAT row "never replace the upstream FA library". A
+rebuilt `libattn_kernels_xe_2.so` changed rounding (9/12 strict prompts) not because rebuilding an upstream library is
+inherently unsafe, but because it was rebuilt **against the wrong CUTLASS**. The rule still stands for shipped images
+-- the published references were taken against the upstream binary -- but the cause is now known and fixable.
+
+**Nothing shipped changes.** The GDN kernel in r311b was built against `cd76379` too, but it was gated exact against
+the same-image no-MTP reference, so its published numbers are internally consistent and stay valid. The rule going
+forward: **any future `_xpu_C` or GDN rebuild must use the `CUTLASS_REVISION` from the kernel `CMakeLists.txt`**, not
+whatever the build tree happens to have checked out.
+
+Receipts, all eight census runs with a comparison table:
+[`data/2026-09-18-fa-multiq-census/`](../data/2026-09-18-fa-multiq-census/).
+
+### lc-3 launched on r312d-c
+
+At 03:58 UTC session 8 launched
+[lc-3](../scripts/run-20260918-fp8-lc3-campaign.py) on the exact image (`R312_IMAGE` = the `r312d-c` id,
+`SERVICE_STATE=/mnt/fast-ai/bench-results/fp8-r312-session4c-20260918/service`, outputs
+`/mnt/fast-ai/bench-results/fp8-lc3-20260918/`, log
+`/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/lc3.log`). It runs inline inside the session 8 unit, not as a
+unit of its own, and it is running now. The candidate keeps the name
+`tp1-r312c-multiq` (BASE + MTP5 + checkpoint + multiq overlays, 32,768 at 0.975) and is measured against the R311b 896
+no-MTP references: strict twice, the ladder, the context screen, quality, and the long corpus against REF5. The runner
+restores the two-card service itself at the end, as unit `fp8-service-20260918-lc3` with state
+`/mnt/fast-ai/bench-results/fp8-lc3-20260918/service`, after a port-free poll on 18124.
+
 ## Left open
 
-- **The r312c census failed, so the whole multi-row branch is stalled.** The census against the upstream lone-row path
-  is **not exact** at either v-tile: 8 of 22 cases, max abs 7.6e-6 (section above). The compiler version is ruled out by
-  variant a. The two remaining candidates -- variant b (upstream IGC 2.34.4 / ocloc 26.18) and variant c (b plus the
-  sycl-tla revision `87f6850` the kernel CMake pins, against the `cd76379` everything from r309 on was built with) --
-  **are not built**: both were killed by the September 18 host out-of-memory event
-  ([incident](2026-09-18-host-oomd-incident.md)). Re-queue them one at a time, service down, nothing running beside
-  them. If neither closes the gap, the next question is whether a 7.6e-6 kernel can ship at all, which is a separate
-  decision and not one to take on speed alone.
-- **lc-3 never ran and stays gated on that census.** The same three stages as lc-2 on the r312c image
-  ([runner](../scripts/run-20260918-fp8-lc3-campaign.py), receipts `/mnt/fast-ai/bench-results/fp8-lc3-20260918`):
-  fresh R312 references from a no-MTP arm that must be **12/12** against the R311b reference this time, then the
-  depth-5 candidate with `b70-fa-multiq` -- strict twice, ladder, the long screen, quality and the logprob replay.
-  The number to look for is the writing speed after a long prompt against R311b's 66 tok/s at 16K and 40 at 24K.
+- **The census gate is met: variant c is 22/22 exact.** The 7.6e-6 gap was the sycl-tla (CUTLASS) revision, not the
+  compiler, the code generator or the multi-row algorithm (section above). Nothing left open here except the rule below.
+- **lc-3 is running on the r312d-c image** (launched 03:58 UTC,
+  [runner](../scripts/run-20260918-fp8-lc3-campaign.py), receipts `/mnt/fast-ai/bench-results/fp8-lc3-20260918`,
+  log `/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/lc3.log`): fresh R312 references from a no-MTP arm that must be **12/12** against the R311b reference,
+  then the depth-5 candidate with `b70-fa-multiq` -- strict twice, ladder, the long screen, quality and the logprob
+  replay against REF5. The number to look for is the writing speed after a long prompt against R311b's 66 tok/s at 16K
+  and 40 at 24K. The census says the kernel is 1.6-2.2x faster than the single-row path at v-tile 64 in isolation; that
+  is not a server number. The runner restores the two-card service itself at the end (unit `fp8-service-20260918-lc3`,
+  state `/mnt/fast-ai/bench-results/fp8-lc3-20260918/service`).
 - **Then packaging, only if it is both exact and faster.** A one-pass verifier that is bit-identical but not faster is
-  a closed experiment, not a package revision; the one-card package keeps R311b until lc-3 shows both.
+  a closed experiment, not a package revision; the one-card package keeps R311b until lc-3 shows both. A package
+  revision on r312d-c also has to carry the new toolchain and CUTLASS pin in its recipe, not just the overlay.
+- **Every future kernel build uses the pinned CUTLASS revision.** `87f6850` for vllm-xpu-kernels 0.1.14.1, read from
+  the kernel's own `CMakeLists.txt` (`CUTLASS_REVISION`) rather than from whatever the build tree has checked out. The
+  clean-clone recipe still names `cd76379` and its header now says so. Nothing shipped is affected -- r311b's GDN
+  kernel was built against `cd76379` but gated exact against its own same-image reference -- but the next GDN or
+  `_xpu_C` rebuild must switch, and re-gate if it does.
 - Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
   both times minutes earlier. Until the user decides on a reset, no GPU work.
 - One-card context above 40,960 tokens: the single-checkpoint state (r311b) settled 32K lossless at 0.975 and 40,960

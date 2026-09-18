@@ -1,0 +1,499 @@
+{
+ "schema": "neural.download.qwen38-fa-multiq-census.v1",
+ "classification": "operator-diagnostic-only",
+ "fa_version": 2,
+ "q_len": 6,
+ "kv_tile": 64,
+ "page": 832,
+ "pages_total": 49,
+ "repeats": 20,
+ "num_splits": null,
+ "v_tile": 256,
+ "host_check": true,
+ "cases": [
+  {
+   "layout": "contiguous",
+   "kv_len": 2048,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    false,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.9073486328125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.2657199998793658,
+   "ms_multiq": 0.21028490009484813,
+   "v_tile": 256,
+   "speedup": 1.263619022381131
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 2058,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   "all_equal": false,
+   "max_abs": 7.62939453125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.26023799982795026,
+   "ms_multiq": 0.2259069002320757,
+   "v_tile": 256,
+   "speedup": 1.1519701238014686
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 4096,
+   "precondition_ok": true,
+   "rows_equal": [
+    false,
+    true,
+    false,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 7.62939453125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.3315411500807386,
+   "ms_multiq": 0.5741830998886144,
+   "v_tile": 256,
+   "speedup": 0.577413633638911
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 4106,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    false,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 3.814697265625e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.3201071001967648,
+   "ms_multiq": 0.6135517000075197,
+   "v_tile": 256,
+   "speedup": 0.5217279981342103
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 8192,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.6292441998084541,
+   "ms_multiq": 0.6317232000583317,
+   "v_tile": 256,
+   "speedup": 0.9960758125558019
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 12288,
+   "precondition_ok": true,
+   "rows_equal": [
+    false,
+    true,
+    true,
+    true,
+    false,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.9073486328125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.8810682000330416,
+   "ms_multiq": 0.8649771498312475,
+   "v_tile": 256,
+   "speedup": 1.0186028615957468
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 12298,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.8817321999231353,
+   "ms_multiq": 0.9768618499947479,
+   "v_tile": 256,
+   "speedup": 0.9026170895381737
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 16384,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    false,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.9073486328125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 1.1528972499945667,
+   "ms_multiq": 1.1197735999303404,
+   "v_tile": 256,
+   "speedup": 1.0295806670797443
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 24576,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    false,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.9073486328125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 1.4941748497221852,
+   "ms_multiq": 1.5935230498143937,
+   "v_tile": 256,
+   "speedup": 0.9376549965161909
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 32768,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    false,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.1920928955078125e-07,
+   "multiq_repeat_equal": true,
+   "ms_rows": 1.9648762499855366,
+   "ms_multiq": 2.107131499724346,
+   "v_tile": 256,
+   "speedup": 0.9324886701388028
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 40000,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 2.2202187497896375,
+   "ms_multiq": 2.5834264499280835,
+   "v_tile": 256,
+   "speedup": 0.8594085385521401
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 2048,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.24306550003529992,
+   "ms_multiq": 0.19119434982712846,
+   "v_tile": 256,
+   "speedup": 1.2713006438478522
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 2058,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    false,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 3.814697265625e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.248312999974587,
+   "ms_multiq": 0.21527345015783794,
+   "v_tile": 256,
+   "speedup": 1.153477123131183
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 4096,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    false,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.9073486328125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.31934710023051593,
+   "ms_multiq": 0.5846530999406241,
+   "v_tile": 256,
+   "speedup": 0.5462163807272176
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 4106,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    false,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 7.62939453125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.3195681500073988,
+   "ms_multiq": 0.5975721502181841,
+   "v_tile": 256,
+   "speedup": 0.5347775158041064
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 8192,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    false,
+    true,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.9073486328125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.5794876000436489,
+   "ms_multiq": 0.6348332499328535,
+   "v_tile": 256,
+   "speedup": 0.9128186025305722
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 12288,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.8459755998046603,
+   "ms_multiq": 0.8728256500035059,
+   "v_tile": 256,
+   "speedup": 0.9692377851192415
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 12298,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 0.8732666497962782,
+   "ms_multiq": 0.9792648499569623,
+   "v_tile": 256,
+   "speedup": 0.8917573727216467
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 16384,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 1.0791830496600596,
+   "ms_multiq": 1.1179136501596076,
+   "v_tile": 256,
+   "speedup": 0.9653545687593864
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 24576,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "all_equal": true,
+   "max_abs": 0.0,
+   "multiq_repeat_equal": true,
+   "ms_rows": 1.4693713499582373,
+   "ms_multiq": 1.6082430502137868,
+   "v_tile": 256,
+   "speedup": 0.91365005417739
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 32768,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    false,
+    true,
+    true,
+    true,
+    false
+   ],
+   "all_equal": false,
+   "max_abs": 3.814697265625e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 1.8657875498320209,
+   "ms_multiq": 2.0832394999160897,
+   "v_tile": 256,
+   "speedup": 0.8956183626064946
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 40000,
+   "precondition_ok": true,
+   "rows_equal": [
+    true,
+    true,
+    true,
+    false,
+    true,
+    true
+   ],
+   "all_equal": false,
+   "max_abs": 1.9073486328125e-06,
+   "multiq_repeat_equal": true,
+   "ms_rows": 2.1955411499220645,
+   "ms_multiq": 2.5924909499735804,
+   "v_tile": 256,
+   "speedup": 0.8468847885252748
+  }
+ ],
+ "refusals": [
+  {
+   "layout": "contiguous",
+   "kv_len": 2049,
+   "precondition_ok": false,
+   "refused": true,
+   "error": "paged_decode_multiq: all verified positions must end in the same KV tile: (seqused_k[0] - 1) % 64 = 0 < q_len - 1 = 5. Fall back to per-position decode calls for this step."
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 4100,
+   "precondition_ok": false,
+   "refused": true,
+   "error": "paged_decode_multiq: all verified positions must end in the same KV tile: (seqused_k[0] - 1) % 64 = 3 < q_len - 1 = 5. Fall back to per-position decode calls for this step."
+  },
+  {
+   "layout": "contiguous",
+   "kv_len": 8195,
+   "precondition_ok": false,
+   "refused": true,
+   "error": "paged_decode_multiq: all verified positions must end in the same KV tile: (seqused_k[0] - 1) % 64 = 2 < q_len - 1 = 5. Fall back to per-position decode calls for this step."
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 2049,
+   "precondition_ok": false,
+   "refused": true,
+   "error": "paged_decode_multiq: all verified positions must end in the same KV tile: (seqused_k[0] - 1) % 64 = 0 < q_len - 1 = 5. Fall back to per-position decode calls for this step."
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 4100,
+   "precondition_ok": false,
+   "refused": true,
+   "error": "paged_decode_multiq: all verified positions must end in the same KV tile: (seqused_k[0] - 1) % 64 = 3 < q_len - 1 = 5. Fall back to per-position decode calls for this step."
+  },
+  {
+   "layout": "scattered",
+   "kv_len": 8195,
+   "precondition_ok": false,
+   "refused": true,
+   "error": "paged_decode_multiq: all verified positions must end in the same KV tile: (seqused_k[0] - 1) % 64 = 2 < q_len - 1 = 5. Fall back to per-position decode calls for this step."
+  }
+ ]
+}

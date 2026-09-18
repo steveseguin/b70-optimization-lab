@@ -6,6 +6,11 @@
 # built by scripts/build-vllm-xpu-kernels-xpu-c-only.sh inside the public v0.29.0 image's venv with host oneAPI 2026.1
 # (libsycl.so.9 matches the image's torch 2.13.0+xpu). ~13 min at JOBS=10 on the lab host. AOT bmg-g21-a0; MoE kernels off
 # (as every lab kernel image since R139). Set MIRRORS to local bare mirrors to avoid the WAN (git url.insteadOf).
+# NOTE (2026-09-18): that sycl-tla revision is NOT the one the kernel CMakeLists pins (CUTLASS_REVISION =
+#   87f6850680a580654b9ea2c80dbc01aeb36ad231). Libraries built against cd76379 round attention differently from
+#   the shipped kernels (14/22 census cases, up to 7.63e-6); 87f6850 is bit-exact. This script is left as-is so it
+#   still reproduces the existing kernel-artifacts/; future builds must use 87f6850. See DO-NOT-REPEAT.md and
+#   data/2026-09-18-fa-multiq-census/.
 set -euo pipefail
 lab=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../.." && pwd)
 build_root=${BUILD_ROOT:?set BUILD_ROOT to a new empty directory}

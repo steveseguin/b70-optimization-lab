@@ -53,24 +53,31 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 18 03:30 UTC: recovering from a host out-of-memory event. The service on 18124 is DOWN since
-02:43 UTC; `systemd-oomd` killed the user manager at 03:09 UTC and every queued session with it. At 03:24 UTC the user
-authorized restarts: the user manager is back (03:25 UTC), and unit `fp8-r312d-session8-20260918` is running with the
-cards idle: variant b and c rebuilds of the multiq library one compiler job at a time, their census against the shipped
-kernel, then lc-3 on an exact variant or a plain service restore (unit `fp8-service-20260918-s8`, state
-`/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/service`). MiniMax-H3 stays off (its smoke runner no longer
-sets a cgroup memory ceiling; it must never run beside a build or the service).** A kernel build in a container overlapped with the MiniMax-H3 first-light run (a
+**Two-B70 host, September 18 04:00 UTC: session 8 is done and the census gate is MET -- lc-3 is running on the exact
+image; the service on 18124 is still down and the lc-3 runner restores it at the end.** Session
+`fp8-r312d-session8-20260918` rebuilt the multiq library twice with the cards idle, one compiler job at a time: variant
+b (upstream DPC++ 2026.0.0 + IGC 2.34.4 / ocloc 26.18, 03:25-03:40) is still 8/22 exact at 7.63e-6, the same cases as
+r312c, so the toolchain was never the cause; **variant c (b plus sycl-tla `87f6850`, the revision the kernel
+`CMakeLists.txt` actually pins, 03:40-03:56) is bit-exact, 22/22, max abs 0.0 at both v-tile 64 and 256.** Every lab
+build from r309 on had used the March `cd76379`. Nothing shipped is invalidated, but every future `_xpu_C`/GDN rebuild
+must use the pinned revision. Since 03:58 UTC session 8 itself (still unit `fp8-r312d-session8-20260918`) is running
+lc-3 inline on the `r312d-c` image (`sha256:ea61e698...`; receipts `/mnt/fast-ai/bench-results/fp8-lc3-20260918/`, log
+`/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/lc3.log`): no-MTP references
+that must be 12/12 vs R311b, then the depth-5 `tp1-r312c-multiq` candidate -- strict twice, ladder, context, quality,
+long corpus. When it finishes it restores the two-card service itself as unit `fp8-service-20260918-lc3`, state
+`/mnt/fast-ai/bench-results/fp8-lc3-20260918/service`. MiniMax-H3 stays off (its smoke runner no longer sets a cgroup
+memory ceiling; it must never run beside a build or the service). A kernel build in a container overlapped with the MiniMax-H3 first-light run (a
 27 GB text-encoder load under `MemoryMax=4G`, which thrashed instead of failing fast) on this 15 GiB host;
 `systemd-oomd` killed by memory pressure up through the GNOME session to `user@1000.service` itself, so
 `fp8-r312d-session6-20260918` (before its service restore), the b/c rebuild `r312d-build-bc-20260918`, the armed
 `fp8-r312d-session7-20260918` and the monitors all died. No `xe` fault, both cards free, no container running. The
 02:43 restore had already lost the port race (`[Errno 98]`, `serve.py` binds without `SO_REUSEADDR`). Full account,
 evidence paths and the preconditions before the MiniMax lane runs again:
-[host OOM incident](experiments/qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md). On the user's next login the
-manager respawns; then re-queue one at a time, service down, no MiniMax run beside a build: the service restore first,
-then r312d variants b and c (neither library exists). lc-3 never ran -- the r312c census against the untouched upstream
-single-row kernel is **not** exact (8/22 cases, max 7.6e-6, at both v-tile 64 and 256), and variant a rules out the
-compiler version. Still true from earlier on this boot: the last measured service (unit `fp8-service-20260918-lc2`) was
+[host OOM incident](experiments/qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md). The user authorized restarts at
+03:24 UTC and the user manager came back at 03:25, which is how session 8 ran; the rule that killed the last attempt
+still holds -- one host-RAM-heavy job at a time, never beside a build. Census receipts and the variant comparison:
+[`data/2026-09-18-fa-multiq-census/`](experiments/qwen38-27b-b70/data/2026-09-18-fa-multiq-census/). Still true from
+earlier on this boot: the last measured service (unit `fp8-service-20260918-lc2`) was
 12/12 vs the no-MTP reference at 90.52 tok/s; two-card package = allgather allreduce (90.48 tok/s, LocalMaxxing
 `cmu5qk0kz07zglq01eh1opkhx`); one-card package = R311b single-checkpoint state, 32,768 default at 54.3 tok/s
 (LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`), max-context 40,960 (engine ceiling ~44,800 at 0.983), probes exact to

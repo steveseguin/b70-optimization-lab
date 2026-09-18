@@ -312,5 +312,20 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   `libattn_kernels_xe_2.so`/`_vllm_fa2_C` were rebuilt from source with the lab toolchain (head-256 kernel set) matched
   the R311b outputs on only 9/12 strict prompts. Rounding differs somewhere in the upstream-built binary; every published
   reference would be invalid. New attention ops go into `_xpu_C` with their own device library; the shipped attention
-  library stays the upstream binary.
-
+  library stays the upstream binary. *(Cause found 2026-09-18: wrong sycl-tla revision, see the new row below -- the
+  library was rebuilt against `cd76379` instead of the CMake-pinned `87f6850`. The rule stands for shipped images,
+  because the published references were taken against the upstream binary, but rebuilding is not inherently unsafe.)*
+- **Building any vllm-xpu-kernels library against a sycl-tla revision other than the CMake pin (2026-09-18, r309-r312c):**
+  the lab's clean-clone recipe checks out sycl-tla `cd763790ad2f74d7294435ecf77682bac0062c3a` (2026-03-18) while
+  vllm-xpu-kernels 0.1.14.1's `CMakeLists.txt` pins `CUTLASS_REVISION` `87f6850680a580654b9ea2c80dbc01aeb36ad231`
+  (2026-08-10, 88 commits later). Every library the lab built from r309 on used the March revision, and the multi-row
+  verifier attention kernel it produced differed from the shipped single-row kernel on 14 of 22 census cases by up to
+  7.63e-6 -- at both v-tile 64 and 256, and identically whether the host compiler was the lab's or upstream's DPC++
+  2026.0.0 (variant a) and whether the device toolchain was the lab's or upstream's IGC 2.34.4 / ocloc 26.18 (variant
+  b). Rebuilt against `87f6850` with nothing else changed (variant c), the same source is **bit-exact, 22/22, max abs
+  0.0**. Read `CUTLASS_REVISION` out of the kernel tree's `CMakeLists.txt` and clone that, every time; do not reuse a
+  build tree's existing checkout, and do not conclude anything about a compiler or an algorithm from a rounding
+  difference until the CUTLASS revision has been matched. This is the cause behind the "rebuilding the upstream
+  flash-attention library" row above. Nothing shipped is invalidated (r311b's GDN kernel used `cd76379` but was gated
+  exact against its own same-image reference); the next GDN or `_xpu_C` rebuild must switch revision and re-gate.
+  [census](data/2026-09-18-fa-multiq-census/), [note](notes/2026-09-16-fp8-review-findings.md)
