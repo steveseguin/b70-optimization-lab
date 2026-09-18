@@ -1,0 +1,299 @@
+{
+  "started": "2026-09-18T04:59:51.069857+00:00",
+  "image": "neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r312d-c-multiq",
+  "preflight_health_rc": 0,
+  "tp1-pkg-32k": {
+    "profile": "recommended",
+    "max_model_len": 32768,
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-18T05:02:31.034167+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 54.23620608921908,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "strict_run2": {
+      "rc": 0,
+      "tok_s_1_100": 54.01130251348819,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64",
+        "batch-c64-r2": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "context_long": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-probe1-20260917/tp1-mtp0-40k-context-5lengths/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 30,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {},
+        "24576": {},
+        "30720": {}
+      }
+    },
+    "quality": {
+      "rc": 0,
+      "pass_all": true,
+      "baseline_match_all": true,
+      "baseline_status": "passed"
+    },
+    "history": {
+      "rc": 0,
+      "divergent": [],
+      "logprob_divergent": [],
+      "cached_tokens_all_zero": true
+    },
+    "long_prompt_speed": {
+      "verdict": "measured",
+      "baseline": "/mnt/fast-ai/bench-results/fp8-probe1-20260917/tp1-pkg-max-context/summary.json",
+      "candidate_summary": "/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918/tp1-pkg-32k-long-context/summary.json",
+      "note": "R311b reference is the probe-1 max-context profile (40,960) on the same long corpus; the short prompts are expected to be within noise and 16K+ faster.",
+      "lengths": [
+        "2048",
+        "8192",
+        "16384",
+        "24576",
+        "30720"
+      ],
+      "r312d_c": {
+        "2048": {
+          "decode_tok_s": 59.24,
+          "prefill_tok_s": 2028.6,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 59.24,
+            "code": 85.75,
+            "docs": 44.08
+          }
+        },
+        "8192": {
+          "decode_tok_s": 79.96,
+          "prefill_tok_s": 2021.7,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 36.06,
+            "code": 80.23,
+            "docs": 79.96
+          }
+        },
+        "16384": {
+          "decode_tok_s": 72.36,
+          "prefill_tok_s": 1938.5,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 76.01,
+            "code": 72.36,
+            "docs": 71.61
+          }
+        },
+        "24576": {
+          "decode_tok_s": 45.52,
+          "prefill_tok_s": 1861.7,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 45.52,
+            "code": 69.06,
+            "docs": 45.0
+          }
+        },
+        "30720": {
+          "decode_tok_s": 43.99,
+          "prefill_tok_s": 1807.4,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 43.99,
+            "code": 63.36,
+            "docs": 33.46
+          }
+        }
+      },
+      "r311b": {
+        "2048": {
+          "decode_tok_s": 59.23,
+          "prefill_tok_s": 2025.9,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 59.23,
+            "code": 85.89,
+            "docs": 44.17
+          }
+        },
+        "8192": {
+          "decode_tok_s": 76.91,
+          "prefill_tok_s": 2010.7,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 34.6,
+            "code": 77.07,
+            "docs": 76.91
+          }
+        },
+        "16384": {
+          "decode_tok_s": 65.82,
+          "prefill_tok_s": 1930.3,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 69.1,
+            "code": 65.69,
+            "docs": 65.82
+          }
+        },
+        "24576": {
+          "decode_tok_s": 39.76,
+          "prefill_tok_s": 1853.4,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 39.67,
+            "code": 60.72,
+            "docs": 39.76
+          }
+        },
+        "30720": {
+          "decode_tok_s": 37.5,
+          "prefill_tok_s": 1799.2,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 37.5,
+            "code": 54.55,
+            "docs": 28.67
+          }
+        }
+      },
+      "decode_change_percent": {
+        "2048": 0.0,
+        "8192": 4.0,
+        "16384": 9.9,
+        "24576": 14.5,
+        "30720": 17.3
+      }
+    },
+    "status_rc": 0,
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "tp1-pkg-max-context": {
+    "profile": "max-context",
+    "max_model_len": 40960,
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-18T05:30:07.701205+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 54.32432044471872,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "status_rc": 0,
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "tp1-pkg-no-quantization": {
+    "profile": "no-quantization",
+    "max_model_len": 28672,
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-18T05:43:18.780117+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 52.42051230868789,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "status_rc": 0,
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "service_health_rc": 0,
+  "service": {
+    "status": "ready",
+    "error": null,
+    "unit": "fp8-service-20260918-onecard-r312d",
+    "state_dir": "/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918/service",
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 90.27110365581302,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict"
+    }
+  },
+  "finished": "2026-09-18T05:58:55.632904+00:00"
+}

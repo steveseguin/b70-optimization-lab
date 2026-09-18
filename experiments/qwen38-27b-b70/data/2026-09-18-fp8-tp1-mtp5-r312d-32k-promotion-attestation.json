@@ -1,0 +1,159 @@
+{
+ "schema": "neural.download.promotion-attestation.v1",
+ "created_utc": "2026-09-18T06:05:24Z",
+ "profile_id": "qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32768",
+ "decision": "promote",
+ "promotion_authorized": true,
+ "headline": {
+  "value": 54.223911840596784,
+  "unit": "tok/s",
+  "aggregation": "median of two fresh-server class-balanced medians of prompt-class medians, 99 inter-token intervals after TTFT, fixed realistic suite run once cold",
+  "candidate_values": [
+   54.21161759197449,
+   54.23620608921908
+  ],
+  "matched_oracle_value": 19.430277029877402,
+  "gain_percent": 179.06916487715625,
+  "metric_events": 100,
+  "metric_intervals": 99,
+  "note": "Official Qwen3.8-27B-FP8 on ONE B70 (32 GiB), R312d-c image: host-memory input embedding, MTP depth 5 with the draft-only INT4 shortlist head, the single-checkpoint recurrent state (one GDN state block per request, replay-commit of the accepted prefix) and the one-pass verifier attention (the draft's 2-6 rows computed in a single pass over the cache instead of one pass each), 32,768-token context at 0.975 memory. The first server is the September 18 lc-4 campaign (research launcher); the second is the September 18 acceptance campaign through the package launcher, which also repeated the suite on the same server at 54.011. Both servers are 12/12 identical to the same-image no-MTP server at the 896-token attention block (itself 12/12 identical to the 832-token no-MTP reference); the package server is also 64/64 on the 64-prompt sequential oracle plus two queued passes, exact on the 2K/8K/16K context screen, the 2,048-30,720-token long corpus in three content types, the chat quality suite and the 21-request logprob replay, and stopped cleanly. Outputs are byte-identical to the R311b record this supersedes (cmu5wc2e50804lq01r0br2i5p); the change is speed after long prompts (+9.9% at 16K, +14.5% at 24K, +17.3% at 30K) at the same short-prompt headline."
+ },
+ "performance_evidence": {
+  "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-strict-performance.json",
+  "sha256": "261689dbd4f17893f30de062e5799de9a7fa5771d3ca03ac361d57438864e1fb"
+ },
+ "performance_receipts": {
+  "first_server_performance_path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/tp1-r312c-multiq-strict-performance.json",
+  "first_server_performance_sha256": "43e508ea7db75f244d37f2c7ba749ee4492c6a67823dfdded72438051b5d95ae",
+  "second_server_repeat_performance_path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-run2-strict-performance.json",
+  "second_server_repeat_performance_sha256": "970a478afdaea382ecd48cdd3ff05770c94bcd3fe3d5caf6eaf526e85d48f238",
+  "oracle_performance_path": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt2/tp1-mtp0-b896-strict-performance.json",
+  "oracle_performance_sha256": "1ee5743c99c1c0057a9dd19ee5d452e48dd282cca893942b7e2c9e2339998283"
+ },
+ "identity": {
+  "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+  "runtime_revision": "vLLM XPU v0.29.0 R312d-c image ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
+  "optimization_identity": "qwen38-27b-fp8-tp1-r312d-c-cpu-embed-mtp5-int4-shortlist67k-fa-multiq-verify-rows-gdn-checkpoint-32768-batched2048-mem0975-seqs1-nocache",
+  "launcher": "packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py",
+  "launcher_sha256": "27f589a55f75ef3c998de8ac980ae33c2124cdbf40039c364cd4fb8dc7eb923b",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+  "overlay_sha256": "24abb8b9b3d1a907c46bc1038127a0afb792ed9eb2e531c21aa08451e61159ac",
+  "kernel_patch_sha256": "c1aba831ce91eb7e6380582217316ba01cf865bfa839ed7178d21dad3a1c22f4",
+  "multiq_overlay_sha256": "2ecb9d9214f772eb24ac0e52751484207e2e4fb75b33639e3c1f436c94ad4fdd",
+  "multiq_kernel_patch_sha256": "6e6ecce6e160f9df7a7fb12be2a9da41d00bfa68ba058aedf9e71e606bae6b31"
+ },
+ "gates": {
+  "varied_task_quality_passed": true,
+  "exact_or_target_oracle_passed": true,
+  "deterministic_repeats_passed": true,
+  "fresh_server_repeat_passed": true,
+  "target_model_unchanged": true,
+  "no_quality_loss": true
+ },
+ "quality_evidence": [
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/results.json",
+   "sha256": "0fec7c8fdfa958df4da00e3b5882471585b44e025e434da63dc83a77678fadff",
+   "supports": [
+    "varied_task_quality_passed",
+    "exact_or_target_oracle_passed",
+    "deterministic_repeats_passed",
+    "fresh_server_repeat_passed",
+    "target_model_unchanged",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-strict-vs-reference.json",
+   "sha256": "c036bf59f345159ebb26bdc5b88ee3a1f6ed1bc476d1eea7a67c8943651654f3",
+   "supports": [
+    "exact_or_target_oracle_passed",
+    "fresh_server_repeat_passed",
+    "target_model_unchanged",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-run2-strict-vs-reference.json",
+   "sha256": "e4bbcb362f630e119cc7cd231c00b01350a54b1dfece18775d110ef5350c2db0",
+   "supports": [
+    "deterministic_repeats_passed",
+    "fresh_server_repeat_passed"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-ladder-vs-mtp0.json",
+   "sha256": "69f3239a4049a31c629e19bcf86b48b8355752cff1fb80b6be93f39158cbc782",
+   "supports": [
+    "exact_or_target_oracle_passed",
+    "deterministic_repeats_passed",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-context-summary.json",
+   "sha256": "224a372a1145db3de76ee3a565c27a7f900916689b48d103403531742b2d8032",
+   "supports": [
+    "exact_or_target_oracle_passed",
+    "deterministic_repeats_passed"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-long-context-summary.json",
+   "sha256": "b58a44d8edce9d3610de8665d80921b0be116a4c679cf3013d99b9dfe811ed49",
+   "supports": [
+    "exact_or_target_oracle_passed",
+    "deterministic_repeats_passed",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-quality.json",
+   "sha256": "e1bff17f36f31d4a693a055e18d52ffcf17b3116be5f652c24c94e6d8c858de0",
+   "supports": [
+    "varied_task_quality_passed",
+    "deterministic_repeats_passed",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-history-summary.json",
+   "sha256": "4a5eabdfd2185eb30ac672bba4e14d16eff57d0ebd2d52a9f6bfb52a733a86c8",
+   "supports": [
+    "deterministic_repeats_passed",
+    "target_model_unchanged",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/results.json",
+   "sha256": "cbf549b21df1dfdad790e0b0aeafdedd33cf353ee7abcaf3205c7643930184e5",
+   "supports": [
+    "varied_task_quality_passed",
+    "exact_or_target_oracle_passed",
+    "deterministic_repeats_passed",
+    "fresh_server_repeat_passed",
+    "target_model_unchanged",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/tp1-r312c-multiq-strict-vs-reference.json",
+   "sha256": "7cbcb694963cdd243178fac93eaa7cc48378b88e967da97a0f3118856ddf4f2a",
+   "supports": [
+    "exact_or_target_oracle_passed",
+    "fresh_server_repeat_passed"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-ckpt2/tp1-mtp0-b896-strict-vs-reference.json",
+   "sha256": "c007d80fa8d3856ea399fc3e5f75ec686a2e9e67477cca96d3a8d6b4daa895b5",
+   "supports": [
+    "target_model_unchanged",
+    "no_quality_loss"
+   ]
+  }
+ ],
+ "supersedes_record_id": "cmu5wc2e50804lq01r0br2i5p",
+ "submission_status": "queued, not submitted: the r312d-c image is not pushed to ghcr yet (experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh, run by the repository owner). Submitting is a separate explicit step."
+}

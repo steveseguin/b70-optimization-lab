@@ -576,24 +576,86 @@ computed as decode calls below it and whenever they straddle a 64-key tile. The 
 ([runner](../scripts/run-20260918-fp8-onecard-r312d-campaign.py)) is what tests that composition through the shipped
 launcher.
 
+## Package acceptance on R312d-c (September 18, 05:02-05:58 UTC)
+
+The acceptance campaign
+[`run-20260918-fp8-onecard-r312d-campaign.py`](../scripts/run-20260918-fp8-onecard-r312d-campaign.py) ran all three
+shipped profiles **through the package launcher** on the `r312d-c` image (local tag
+`neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r312d-c-multiq`, `sha256:ea61e698...`, passed in as
+`B70_FP8_TP1_IMAGE`), then restored the two-card service. Receipts
+[data/2026-09-18-fp8-onecard-r312d](../data/2026-09-18-fp8-onecard-r312d/), source
+`/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918/`, runner log
+`/mnt/fast-ai/bench-results/onecard-r312d-runner-20260918.log`. Every comparison is against the same R311b no-MTP
+references lc-4 used (`fp8-ckpt2-20260917`, 896-token attention block, 19.430 tok/s), and the long corpus against
+probe-1's REF5. **Every profile passed every gate it was given.**
+
+| Profile | Context | Strict vs no MTP | Writing speed | Ladder | Context screen | Other |
+| --- | ---: | --- | ---: | --- | --- | --- |
+| `recommended` | 32,768 @ 0.975 | **12/12** twice | **54.236 / 54.011** | 64/64 x3 | 2K/8K/16K + 2,048-30,720 long corpus, exact | quality pass + baseline match, 21-request logprob replay clean, cache zero |
+| `max-context` | 40,960 @ 0.983 | **12/12** | **54.324** | 64/64 x2 | 2K/8K/16K exact | - |
+| `no-quantization` | 28,672 @ 0.975 | **12/12** | **52.421** | 64/64 x2 | 2K/8K/16K exact | - |
+
+All three started, served and stopped cleanly through `serve.py`, each removing its container. Afterwards the two-card
+depth-5 service came back as unit `fp8-service-20260918-onecard-r312d` (state
+`/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918/service`, port 18124) and its own strict run was **12/12 at
+90.271 tok/s** against the comm-2 no-MTP reference. No fault, no coredump, no stop race this time.
+
+**Writing speed after a long prompt, `recommended`, through the shipped launcher** (tokens 1-100, median within each
+content type then across types, 6 requests per point, two repeats). The baseline column the runner compares against is
+probe-1's R311b `max-context` server on the same corpus; probe-2's R311b `recommended` server is shown beside it and
+agrees within 0.2%:
+
+| Input tokens | R311b (32K, probe-2) | R311b (max, probe-1) | R312d-c | Change vs probe-1 |
+| ---: | ---: | ---: | ---: | ---: |
+| 2,048 | 59.24 | 59.23 | 59.24 | **0.0%** |
+| 8,192 | 76.82 | 76.91 | 79.96 | **+4.0%** |
+| 16,384 | 65.71 | 65.82 | 72.36 | **+9.9%** |
+| 24,576 | 39.73 | 39.76 | 45.52 | **+14.5%** |
+| 30,720 | 37.48 | 37.50 | 43.99 | **+17.3%** |
+
+By content type at 30,720 tokens: code 54.55 -> 63.36, documentation 28.67 -> 33.46, prose 37.50 -> 43.99 tok/s.
+Prompt reading is unchanged (2,029 tok/s at 2,048 down to 1,807 at 30,720). Through the shipped launcher the 2,048 row
+comes out level rather than lc-4's -1.4%, so `B70_FA_MULTIQ_MIN_K=4096` costs nothing measurable at short prompts; the
+gains above 16K reproduce lc-4's within half a point. The short AMD-corpus screen shows the same shape on the
+`recommended` profile: decode after an 8K prompt 76.4 vs R311b's 72.9, after 16K 68.8 vs 62.3, prefill within 0.5%.
+
+The composition lc-4 did not cover -- `b70-fa-multiq` and `b70-fa-verify-rows` both loaded, with multiq registering
+verify-rows itself so it is always the outer wrapper -- is what this campaign ran, on every profile, and it is exact.
+
+**What shipped from this.** The manifest's `acceptance_status` is now `passed-on-configured-lab-host`, the three
+profiles carry their measured r312d-c numbers instead of `pending_on_r312d`, the featured metric is the
+shipped-launcher pair (median 54.124 tok/s; the R311b headline was 54.325 on the same suite, a 0.4% run-to-run
+difference with byte-identical outputs), and the long-prompt table comes from this campaign. `registry_pushed` stays
+false. The LocalMaxxing payload that supersedes `cmu5wc2e50804lq01r0br2i5p` is built
+([builder](../scripts/build-fp8-tp1-r312d-localmaxxing.py),
+[attestation](../data/2026-09-18-fp8-tp1-mtp5-r312d-32k-promotion-attestation.json),
+[queue](../data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json)) and **not
+submitted**: it claims two fresh servers, lc-4's research launcher (54.212) and this campaign's package launcher
+(54.236), median 54.224 tok/s.
+
 ## Left open
 
 - **The census gate is met and lc-4 met the server gate: exact and faster.** The 7.6e-6 gap was the sycl-tla (CUTLASS)
   revision, not the compiler, the code generator or the multi-row algorithm; on the server the one-pass verifier is
   exact on every gate and worth +10 to +17% writing speed above 16K (section above). Nothing left open on either.
-- **The one-card package is staged on r312d-c and the acceptance campaign has not run.** `serve.py` pins
-  `sha256:ea61e698...` with `B70_FA_MULTIQ=1` and `B70_FA_MULTIQ_MIN_K=4096`, the overlay and its dist-info ship in
-  `packages/qwen38-27b-fp8-tp1-b70/overlays/`, and the manifest carries the new toolchain and CUTLASS pin in its
-  recipe. What is missing is the run through the shipped launcher on all three profiles:
-  [`run-20260918-fp8-onecard-r312d-campaign.py`](../scripts/run-20260918-fp8-onecard-r312d-campaign.py)
-  (`SERVICE_STATE=<the running service's state dir>`, `CAMPAIGN_OUT=/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918`;
-  it defaults `B70_FP8_TP1_IMAGE` to the local tag because the image is not pushed). Until it passes, the manifest's
-  `acceptance_status` is `staged-pending-acceptance-campaign`, the max-context and no-quantization profiles are marked
-  `pending_on_r312d`, and the published charts stay on the R311b measurement.
+- **The one-card package is accepted on r312d-c.** All three profiles passed every gate through the shipped launcher
+  on September 18 (section above); the manifest says `passed-on-configured-lab-host`, carries the measured per-profile
+  numbers and the acceptance evidence, and the published charts are the r312d-c measurement. Nothing left open here
+  except the registry push below.
 - **The r312d-c image must be pushed to ghcr by the user**
   ([`publish-r312d-image-ghcr.sh`](../docker/rebase-v0290/publish-r312d-image-ghcr.sh), tag
-  `r312d-fp8-tp1-20260918`). The package pins the local image id; on this containerd host that is the same value as
-  the registry digest, as it was for R311b, and the manifest says the digest is verified after the push.
+  `r312d-fp8-tp1-20260918`). The package pins the local image id and the manifest keeps `registry_pushed: false`; on
+  this containerd host that id is the same value as the registry digest, as it was for R311b, and the manifest says the
+  digest is verified after the push. Until then `docker pull` of the pinned digest only works where the image was
+  built.
+- **The LocalMaxxing submission is built and not sent.** The payload that supersedes `cmu5wc2e50804lq01r0br2i5p`
+  (54.325, R311b) is [`localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json`](../data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json)
+  with [attestation](../data/2026-09-18-fp8-tp1-mtp5-r312d-32k-promotion-attestation.json), written by
+  [`build-fp8-tp1-r312d-localmaxxing.py`](../scripts/build-fp8-tp1-r312d-localmaxxing.py) and valid under the
+  submitter's local preflight (`--dry-run`). It claims 54.224 tok/s from two fresh servers on the image. It should go
+  out after the push, because the published `commandSnippet` and `engineVersion` name a digest nobody else can pull
+  yet. `results/localmaxxing-submissions.md` only carries rows for records that exist, so its row is written when the
+  submission is approved, together with the response receipt under `data/localmaxxing-responses/`.
 - **Every future kernel build uses the pinned CUTLASS revision.** `87f6850` for vllm-xpu-kernels 0.1.14.1, read from
   the kernel's own `CMakeLists.txt` (`CUTLASS_REVISION`) rather than from whatever the build tree has checked out. The
   clean-clone recipe still names `cd76379` and its header now says so. Nothing shipped is affected -- r311b's GDN
@@ -610,6 +672,5 @@ launcher.
 - Two-card: the replicated drafter (campaigns 3-4) is exact but never faster; the collective count per step is set by
   the 64 target layers, so the next two-card lever would be fusing the per-layer allreduce pairs (out_proj + MLP down)
   or overlapping them with compute, both deeper changes than an overlay.
-- The R311b image must be pushed to ghcr by the user (`publish-r311b-image-ghcr.sh`); it is still the image every
-  published one-card number was measured on, and the one-card LocalMaxxing payload is held until then. The package
-  itself now pins r312d-c, so both pushes are outstanding.
+- The R311b image was pushed to ghcr on September 17 and its record `cmu5wc2e50804lq01r0br2i5p` was approved; it is
+  the image the superseded one-card numbers were measured on. Only the r312d-c push is outstanding.

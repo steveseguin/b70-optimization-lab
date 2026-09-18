@@ -77,26 +77,30 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 18 04:50 UTC: lc-4 PASSED every gate and is faster -- the one-card package update to the
-r312d-c image is staged in the repository, the acceptance campaign is the next GPU job, and the registry push waits on
-the user.** The depth-5 two-card service is back UP on 18124 (unit `fp8-service-20260918-lc4`, state
-`/mnt/fast-ai/bench-results/fp8-lc4-20260918/service`), 12/12 vs the comm-2 no-MTP reference at 87.23 tok/s. lc-4 is
-lc-3 re-run after two fixes in `a7fd43dcd` (the short screen runs on its baseline's own corpus; the overlay's
-precondition reads `seqused_k[0]`, not `max_seqlen_k`): candidate `tp1-r312c-multiq` on the `r312d-c` image
-(`sha256:ea61e698...`), one card, depth 5, 32,768 at 0.975, receipts
-`/mnt/fast-ai/bench-results/fp8-lc4-20260918/` and [data/2026-09-18-fp8-lc4](experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/).
-Strict 12/12 twice (54.21 / 53.90 tok/s), ladder 64/64 three times, the 2K/8K/16K screen, the 2,048-30,720-token long
-corpus in three content types, chat quality and the 21-request logprob replay all exact against the R311b no-MTP
-references -- and **writing speed after a long prompt is +9.7% at 16K, +14.2% at 24K and +17.0% at 30K** (30,720:
-37.5 to 43.9 tok/s), with 2K 1.4% slower, which is why the package sets `B70_FA_MULTIQ_MIN_K=4096`. lc-3's own final
-service strict `rc=1` was lc-4 stopping that service mid-request three seconds after it started (container exited 0),
-not a fault. **Staged in the repository, not yet measured through the launcher:** `serve.py` pins the r312d-c id with
-`B70_FA_MULTIQ=1`, the overlay ships in the package, the manifest carries the toolchain and CUTLASS pin, and
-`acceptance_status` is `staged-pending-acceptance-campaign`. **Next GPU job:**
-`SERVICE_STATE=/mnt/fast-ai/bench-results/fp8-lc4-20260918/service CAMPAIGN_OUT=/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918 python3 experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py`
-(all three profiles through `serve.py`, then the service back as unit `fp8-service-20260918-onecard-r312d`). **Waiting
-on the user:** `experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh` (tag
-`r312d-fp8-tp1-20260918`); the R311b push is still outstanding too. Earlier on this boot, session
+**Two-B70 host, September 18 06:00 UTC: the one-card FP8 package is ACCEPTED on the r312d-c image -- all three
+profiles passed every gate through the shipped launcher, and the only things left are the registry push and the
+LocalMaxxing submission, both waiting on the user.** The depth-5 two-card service is back UP on 18124 (unit
+`fp8-service-20260918-onecard-r312d`, state `/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918/service`), 12/12 vs
+the comm-2 no-MTP reference at 90.27 tok/s. The acceptance campaign ran 05:02-05:58 UTC through
+`packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py` on the `r312d-c` image (`sha256:ea61e698...`, local tag via
+`B70_FP8_TP1_IMAGE`), receipts `/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918/` and
+[data/2026-09-18-fp8-onecard-r312d](experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/):
+`recommended` (32,768 at 0.975) strict 12/12 twice at **54.236 / 54.011 tok/s** plus ladder 64/64 three times, the
+2K/8K/16K screen, the 2,048-30,720-token long corpus in three content types, chat quality and the 21-request logprob
+replay all exact; `max-context` (40,960) 12/12 at **54.324**; `no-quantization` (28,672) 12/12 at **52.421**; ladder
+and context screen exact on both. **Writing speed after a long prompt is +4.0% at 8K, +9.9% at 16K, +14.5% at 24K and
++17.3% at 30K** (30,720: 37.5 to 44.0 tok/s), with 2K level, so `B70_FA_MULTIQ_MIN_K=4096` costs nothing. Every
+profile stopped cleanly and removed its container; no fault lines. **In the repository:** the manifest's
+`acceptance_status` is `passed-on-configured-lab-host` with the measured per-profile numbers, the featured metric is
+the shipped-launcher pair (median 54.124 tok/s), catalog, README and model pages regenerated, and the findings note
+has the acceptance section. **Waiting on the user, in this order:** (1)
+`experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh` (tag `r312d-fp8-tp1-20260918`;
+`registry_pushed` stays false until then, so the pinned digest only pulls where it was built), then (2) the
+LocalMaxxing submission, built and dry-run valid but **not sent**:
+`python3 scripts/submit_localmaxxing_results.py --payloads experiments/qwen38-27b-b70/data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json --label qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict --server-dry-run`
+first, then without `--server-dry-run`; it claims 54.224 tok/s from two fresh servers and supersedes
+`cmu5wc2e50804lq01r0br2i5p` (54.325, R311b). The submissions ledger row and the response receipt are written after it
+is approved. The R311b push happened on September 17, so only r312d-c is outstanding. Earlier on this boot, session
 `fp8-r312d-session8-20260918` rebuilt the multiq library twice with the cards idle, one compiler job at a time: variant
 b (upstream DPC++ 2026.0.0 + IGC 2.34.4 / ocloc 26.18, 03:25-03:40) is still 8/22 exact at 7.63e-6, the same cases as
 r312c, so the toolchain was never the cause; **variant c (b plus sycl-tla `87f6850`, the revision the kernel
@@ -116,10 +120,10 @@ still holds -- one host-RAM-heavy job at a time, never beside a build. Census re
 [`data/2026-09-18-fa-multiq-census/`](experiments/qwen38-27b-b70/data/2026-09-18-fa-multiq-census/). Still true from
 earlier on this boot: the last measured service (unit `fp8-service-20260918-lc2`) was
 12/12 vs the no-MTP reference at 90.52 tok/s; two-card package = allgather allreduce (90.48 tok/s, LocalMaxxing
-`cmu5qk0kz07zglq01eh1opkhx`); one-card package = R311b single-checkpoint state, 32,768 default at 54.3 tok/s
-(LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`), max-context 40,960 (engine ceiling ~44,800 at 0.983), probes exact to
-36,864 tokens. Closed: replicated drafter (never faster), two-card checkpoint state (speed-neutral). Next one-card
-lever is still the multi-row verifier attention kernel, and there is still no candidate number. Git: the other host's
+`cmu5qk0kz07zglq01eh1opkhx`); the one-card package was R311b single-checkpoint state, 32,768 default at 54.3 tok/s
+(LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`) -- it is now r312d-c, see the acceptance entry above -- max-context 40,960
+(engine ceiling ~44,800 at 0.983), probes exact to 36,864 tokens. Closed: replicated drafter (never faster), two-card
+checkpoint state (speed-neutral), and the multi-row verifier attention kernel, which is the change that shipped. Git: the other host's
 commit `03830fa00` pushed 302 tracked files as zero-length blobs (including `DO-NOT-REPEAT.md`); restored from
 `b0c85ccc5` in `283383ed6` and local work rebased on top -- check `git diff --stat` before rebasing onto anything from
 that host, whose own checkout is probably still zeroed. MiniMax-H3 (a video+audio generator, not an LLM) is halted, not

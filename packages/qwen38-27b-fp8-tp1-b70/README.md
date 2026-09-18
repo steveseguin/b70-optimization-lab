@@ -10,14 +10,18 @@ which is worth 10-17% more writing speed after a long prompt and changes no outp
 
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` | 32,768 tokens | **54.3 tok/s** | 2,031 / 2,019 / 1,935 tok/s |
-| `max-context` (0.983 of GPU memory) | 40,960 tokens | 54.3 tok/s | 2,024 / 2,011 / 1,930 tok/s |
-| `no-quantization` (full-precision draft head) | 28,672 tokens | 52.4 tok/s | 2,014 / 2,008 / 1,927 tok/s |
+| `recommended` | 32,768 tokens | **54.2 tok/s** | 2,030 / 2,020 / 1,938 tok/s |
+| `max-context` (0.983 of GPU memory) | 40,960 tokens | 54.3 tok/s | 2,031 / 2,020 / 1,936 tok/s |
+| `no-quantization` (full-precision draft head) | 28,672 tokens | 52.4 tok/s | 2,015 / 2,012 / 1,930 tok/s |
+
+Every row was measured through this launcher on the pinned image on September 18
+([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html). LocalMaxxing:
-[`cmu5wc2e50804lq01r0br2i5p`](https://www.localmaxxing.com/runs/cmu5wc2e50804lq01r0br2i5p) (54.33 tok/s, approved September 17;
-the 24,576-token recipe's [`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr), 53.43 tok/s, stands as history).
+[`cmu5wc2e50804lq01r0br2i5p`](https://www.localmaxxing.com/runs/cmu5wc2e50804lq01r0br2i5p) (54.33 tok/s, approved September 17
+on the R311b image; the 24,576-token recipe's [`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr),
+53.43 tok/s, stands as history). The R312d-c payload that supersedes it is built and queued, not submitted, until the image is pushed.
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md).
 
 ## What you need
@@ -58,23 +62,24 @@ and the answer.
 - **Faster after a long prompt (September 18, R312d-c image):** checking the draft's guesses used to issue one
   attention call per guessed position, each re-reading the whole cache; the new kernel reads the cache once and
   computes all the rows together ([overlay](overlays/b70_fa_multiq.py)). Every row is still computed with exactly the
-  arithmetic a single token uses, so nothing about the answers changes -- and that was measured, not assumed: on a
-  fresh server the strict suite was 12/12 identical to no MTP twice (54.21 / 53.90 tok/s), the 64-prompt test 64/64
-  three times, the 2K/8K/16K screen exact, the 2,048-30,720-token long corpus exact in all three content types, the
-  chat quality suite and the 21-request replay exact
-  ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/)). Writing speed right after a prompt, against
-  the same package on the R311b image:
+  arithmetic a single token uses, so nothing about the answers changes -- and that was measured, not assumed. Through
+  this launcher on a fresh server the strict suite was 12/12 identical to no MTP twice (54.24 / 54.01 tok/s), the
+  64-prompt test 64/64 three times, the 2K/8K/16K screen exact, the 2,048-30,720-token long corpus exact in all three
+  content types, the chat quality suite and the 21-request replay exact
+  ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/); the earlier research-launcher run
+  of the same image is [here](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/)). Writing speed right after a
+  prompt, against the same package on the R311b image:
 
   | Prompt | 2,048 | 8,192 | 16,384 | 24,576 | 30,720 |
   | --- | ---: | ---: | ---: | ---: | ---: |
-  | R311b | 59.2 | 76.8 | 65.7 | 39.7 | 37.5 |
-  | **R312d-c** | **58.4** | **79.7** | **72.1** | **45.4** | **43.9** |
-  | Change | -1% | +4% | +10% | +14% | +17% |
+  | R311b | 59.2 | 76.9 | 65.8 | 39.8 | 37.5 |
+  | **R312d-c** | **59.2** | **80.0** | **72.4** | **45.5** | **44.0** |
+  | Change | 0% | +4% | +10% | +14% | +17% |
 
   All in tokens/s, median across code, documentation and prose, two repeats each. Short prompts stay on the old
   per-guess path on purpose (`B70_FA_MULTIQ_MIN_K=4096`): below about 4,000 tokens of cache the one-pass kernel
-  measured 1-2% slower. The by-content-type numbers at 30,720 tokens: code 54.5 to 63.2, documentation 28.7 to 33.4,
-  prose 37.5 to 43.9 tok/s.
+  measured 1-2% slower, which is why the 2,048 row is unchanged. The by-content-type numbers at 30,720 tokens: code
+  54.6 to 63.4, documentation 28.7 to 33.5, prose 37.5 to 44.0 tok/s.
 - **Which image, and how it was built.** The pinned runtime is
   `sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a`, published as
   `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918`. **The registry digest is verified after the
@@ -118,9 +123,12 @@ and the answer.
   from a new anonymous download of this repository on the lab host, reusing only
   the verified model files and the Docker layer cache: model verify, image pull,
   start, strict suite 12/12 identical to no-MTP at 53.497 tok/s (13,824-token profile), clean stop.
+- **All three profiles accepted on this image (September 18, 05:02-05:58 UTC).** The
+  [acceptance campaign](../../experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py) started,
+  measured and stopped each profile through this launcher on the pinned image: `recommended` 12/12 identical to no MTP
+  twice (54.24 / 54.01 tok/s) plus the ladder, both context screens, quality and the logprob replay; `max-context`
+  12/12 at 54.32; `no-quantization` 12/12 at 52.42; ladders 64/64 and the 2K/8K/16K screen exact on all three
+  ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
 - Not yet tested: a machine without Intel drivers, Docker or the model already
-  in place, and more than one user at a time. The R312d-c image's own run above was made on a research server; the
-  three profiles are being re-checked through this launcher
-  ([acceptance campaign](../../experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py)), and the
-  speed table above is the only number this image changes -- the profile table at the top is still the R311b
-  measurement, which the strict suite reproduces on R312d-c within run-to-run noise.
+  in place, and more than one user at a time. The image is also not in the registry yet, so the `docker pull` above
+  works only where it was built; it is pushed as `r312d-fp8-tp1-20260918` by the repository owner.
