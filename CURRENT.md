@@ -25,6 +25,12 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 18 04:31 UTC: packet 77 campaign done (1.515 s/clip, 16.5 fps equiv, all exact; load lock proven over 120 prompts), but the encoder shard never installed; server 77 stopped for a controlled reload as 77b (warm on the sharded graph).**
+The runner's plain-graph warm clip placed the whole encoder on xpu:2 before
+the shard gate ran; two encode workers on one card still overlapped. First
+teardown transition on kernel 7.0.0-30 / GuC 70.44.1 with the hard-lockup
+panic armed. [Results](experiments/ltx25-b70/notes/graph-capture-77-results.md).
+
 **Four-B70 host, September 18 04:15 UTC: rebooted on kernel 7.0.0-30 with the packaged GuC 70.44.1 restored and hard-lockup panic armed (pstore erst); packet 77 launched as this boot's single server.**
 Both stability levers changed together on the user's instruction after six
 silent freezes on 09-17, so attribution is deferred; a further freeze now
