@@ -1,0 +1,795 @@
+diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+index 445ff26..952f9e1 100644
+--- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
++++ b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+@@ -279,6 +279,9 @@ struct gated_delta_rule_kernel {
+ // contiguously inside q/k/v/b/a (which are LOCAL buffers of size
+ // `num_spec_decodes * num_spec_tokens`).
+ //
++// Two state protocols share this kernel; the arithmetic per token is the same.
++//
++// Per-slot protocol (stash == nullptr, the upstream behaviour):
+ // - The initial SSM state for sequence n is read from cache slot
+ //   `cache_indices[n, num_accepted_tokens[n] - 1]` (the last accepted token of
+ //   the previous step). When num_accepted_tokens[n] is 0 we fall back to col 0
+@@ -287,6 +290,27 @@ struct gated_delta_rule_kernel {
+ // - After processing every local token t, the new SSM state is written into
+ //   `cache_indices[n, t]`, mirroring the Triton kernel's per-step writeback
+ //   used to support multiple rollback positions on the next iteration.
++//
++// Single-checkpoint protocol (stash != nullptr, r311):
++// - Every column of cache_indices[n, :] is the same block: the request owns one
++//   state slot. The slot holds the state after every token committed up to the
++//   start of the previous step's window (the checkpoint).
++// - `stash` holds, per block, two buffers of `stash_rows` rows; a row is the
++//   {q, k, v, b, a} the delta rule consumed for one window token (the values
++//   exactly as this kernel loaded them). `stash_meta[block] = {parity, len}`:
++//   buffer `parity` holds the previous step's `len` rows.
++// - Replay: the first num_accepted_tokens[n] rows (the accepted prefix of the
++//   previous window) are folded into the checkpoint, the slot is rewritten
++//   (the commit), then the new window is processed off that state. This is
++//   the same sequence of operations the per-slot protocol performs (the slot
++//   it would have loaded was written after the same tokens), so the results
++//   are identical; the new window's states are never written.
++// - The new window's rows go to buffer `parity ^ 1`; the caller flips the
++//   parity and stores the new length after the step (it never changes during
++//   a step, so no work-group reads what another one writes).
++// - Commit mode (num_spec_tokens == 0, cache_indices 1D): replay only, for
++//   requests that leave the speculative path (a decode without drafts or a
++//   continued prefill); `commit_mask[n]` false skips the request.
+ // - `core_attn_out` is the GLOBAL active buffer; we route writes through
+ //   `token_indx`, which maps a local token index back to its global position.
+ // -----------------------------------------------------------------------------
+@@ -319,7 +343,12 @@ struct gated_delta_rule_spec_kernel {
+       const int num_k_heads,
+       const int head_k_dim,
+       const int num_v_heads,
+-      const int head_v_dim)
++      const int head_v_dim,
++      T* stash = nullptr,
++      const int64_t stash_stride_0 = 0,
++      const int stash_rows = 0,
++      const int* stash_meta = nullptr,
++      const bool* commit_mask = nullptr)
+       : core_attn_out(core_attn_out),
+         q(q),
+         k(k),
+@@ -339,7 +368,12 @@ struct gated_delta_rule_spec_kernel {
+         num_k_heads(num_k_heads),
+         head_k_dim(head_k_dim),
+         num_v_heads(num_v_heads),
+-        head_v_dim(head_v_dim) {}
++        head_v_dim(head_v_dim),
++        stash(stash),
++        stash_stride_0(stash_stride_0),
++        stash_rows(stash_rows),
++        stash_meta(stash_meta),
++        commit_mask(commit_mask) {}
+ 
+   static inline sycl::nd_range<3> get_nd_range(
+       const int num_spec_decodes, const int num_v_heads, const int head_v_dim) {
+@@ -361,6 +395,15 @@ struct gated_delta_rule_spec_kernel {
+       return x;
+   }
+ 
++  // Stash row layout (elements of T): q | k | v | b | a.
++  inline int stash_k_off() const { return num_k_heads * head_k_dim; }
++  inline int stash_v_off() const { return 2 * num_k_heads * head_k_dim; }
++  inline int stash_b_off() const {
++    return stash_v_off() + num_v_heads * head_v_dim;
++  }
++  inline int stash_a_off() const { return stash_b_off() + num_v_heads; }
++  inline int stash_row_elems() const { return stash_a_off() + num_v_heads; }
++
+   [[sycl::reqd_sub_group_size(sub_group_size)]] void
+   operator()(sycl::nd_item<3> item) const {
+     int batch_id = item.get_group(0);
+@@ -387,50 +430,115 @@ struct gated_delta_rule_spec_kernel {
+     float k_local[k_bucket_size];
+     float v_local[v_dim_per_sg];
+ 
++    const bool checkpoint = (stash != nullptr);
++    const int k_head_off = (num_v_heads_id / kv_ratio) * head_k_dim +
++        k_bucket_size * sg_local_id;
++    const int v_head_off = num_v_heads_id * head_v_dim + head_v_dim_id;
++    const int state_off = num_v_heads_id * head_k_dim * head_v_dim +
++        k_bucket_size * sg_local_id;
++
+     // -- Load initial state ---------------------------------------------------
+-    // init_col = num_accepted_tokens[batch_id] - 1 (clamped to >= 0).
+-    int init_col = num_accepted_tokens[batch_id] - 1;
+-    if (init_col < 0) init_col = 0;
+-    const int init_state_idx =
+-        cache_indices[batch_id * cache_indices_stride_0 + init_col];
++    int init_state_idx;
++    if (checkpoint) {
++      init_state_idx = cache_indices[batch_id * cache_indices_stride_0];
++    } else {
++      // init_col = num_accepted_tokens[batch_id] - 1 (clamped to >= 0).
++      int init_col = num_accepted_tokens[batch_id] - 1;
++      if (init_col < 0) init_col = 0;
++      init_state_idx =
++          cache_indices[batch_id * cache_indices_stride_0 + init_col];
++    }
+     const StateT* init_state_ptr =
+         ssm_state + static_cast<int64_t>(init_state_idx) * ssm_state_stride_0;
+ #pragma unroll
+     for (int j = 0; j < v_dim_per_sg; ++j) {
+ #pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+-        state_local[j * k_bucket_size + i] =
+-            static_cast<float>(init_state_ptr
+-                                   [num_v_heads_id * head_k_dim * head_v_dim +
+-                                    (k_bucket_size * sg_local_id + i) +
+-                                    (head_v_dim_id + j) * head_k_dim]);
++        state_local[j * k_bucket_size + i] = static_cast<float>(
++            init_state_ptr[state_off + i + (head_v_dim_id + j) * head_k_dim]);
++      }
++    }
++
++    // -- Single-checkpoint protocol: how many stashed rows to replay ----------
++    const T* old_rows = nullptr;
++    T* new_rows = nullptr;
++    int n_replay = 0;
++    int row_elems = 0;
++    if (checkpoint) {
++      row_elems = stash_row_elems();
++      const int* meta = stash_meta + 2 * static_cast<int64_t>(init_state_idx);
++      const int parity = meta[0] & 1;
++      const int len = meta[1];
++      if (len > 0) {
++        n_replay = num_accepted_tokens[batch_id];
++        if (n_replay > len) n_replay = len;
++        if (n_replay < 0) n_replay = 0;
++      }
++      if (commit_mask != nullptr && !commit_mask[batch_id]) {
++        n_replay = 0;
+       }
++      T* block_rows =
++          stash + static_cast<int64_t>(init_state_idx) * stash_stride_0;
++      old_rows = block_rows +
++          static_cast<int64_t>(parity) * stash_rows * row_elems;
++      new_rows = block_rows +
++          static_cast<int64_t>(parity ^ 1) * stash_rows * row_elems;
+     }
++    const bool write_qk = checkpoint && (num_v_heads_id % kv_ratio == 0) &&
++        v_bucket_id == 0 && sg_id == 0;
++    const bool write_v = checkpoint && sg_local_id == 0;
++    const bool write_ba = checkpoint && v_bucket_id == 0 && sg_id == 0 &&
++        sg_local_id == 0;
+ 
+-    // -- Iterate over the num_spec_tokens tokens of this sequence -------------
+-    for (int t_local = 0; t_local < num_spec_tokens; ++t_local) {
++    // -- One loop over the replayed rows, then the window tokens -------------
++    // The arithmetic below is the per-slot kernel's, statement for statement,
++    // and one code instance serves both the replayed rows and the window
++    // tokens, so a replayed token is computed exactly as it was when it was a
++    // window token. Only the loads differ (stash row vs. this step's q/k/v).
++    const int total = n_replay + num_spec_tokens;
++    for (int step_idx = 0; step_idx < total; ++step_idx) {
++      const bool replaying = step_idx < n_replay;
++      const int t_local = step_idx - n_replay;
+       // Local token index inside q/k/v/b/a (which were sized
+       // num_spec_decodes * num_spec_tokens and ordered by
+       // spec_query_start_loc).
+       const int t = batch_id * num_spec_tokens + t_local;
++      const T* row = replaying
++          ? old_rows + static_cast<int64_t>(step_idx) * row_elems
++          : nullptr;
++      T* out_row = (checkpoint && !replaying)
++          ? new_rows + static_cast<int64_t>(t_local) * row_elems
++          : nullptr;
+ 
+-      float b_local = b[t * num_v_heads + num_v_heads_id];
++      const T b_raw = replaying ? row[stash_b_off() + num_v_heads_id]
++                                : b[t * num_v_heads + num_v_heads_id];
++      const T a_raw = replaying ? row[stash_a_off() + num_v_heads_id]
++                                : a[t * num_v_heads + num_v_heads_id];
++      if (write_ba && !replaying) {
++        out_row[stash_b_off() + num_v_heads_id] = b_raw;
++        out_row[stash_a_off() + num_v_heads_id] = a_raw;
++      }
++      float b_local = b_raw;
+       float beta = act_sigmoid(b_local);
+-      float a_local = a[t * num_v_heads + num_v_heads_id] + dt_bias_local;
++      float a_local = a_raw + dt_bias_local;
+       float g = sycl::exp(A_log_local * act_softplus(a_local));
+ 
+       float q_sum = 0.0f;
+       float k_sum = 0.0f;
+ #pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+-        q_local[i] =
+-            q[t * num_k_heads * head_k_dim +
+-              (num_v_heads_id / kv_ratio) * head_k_dim +
+-              (k_bucket_size * sg_local_id + i)];
+-        k_local[i] =
+-            k[t * num_k_heads * head_k_dim +
+-              (num_v_heads_id / kv_ratio) * head_k_dim +
+-              (k_bucket_size * sg_local_id + i)];
++        const T q_raw = replaying
++            ? row[k_head_off + i]
++            : q[t * num_k_heads * head_k_dim + k_head_off + i];
++        const T k_raw = replaying
++            ? row[stash_k_off() + k_head_off + i]
++            : k[t * num_k_heads * head_k_dim + k_head_off + i];
++        if (write_qk && !replaying) {
++          out_row[k_head_off + i] = q_raw;
++          out_row[stash_k_off() + k_head_off + i] = k_raw;
++        }
++        q_local[i] = q_raw;
++        k_local[i] = k_raw;
+         q_sum += q_local[i] * q_local[i];
+         k_sum += k_local[i] * k_local[i];
+       }
+@@ -465,9 +573,13 @@ struct gated_delta_rule_spec_kernel {
+ 
+ #pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+-        v_local[i] =
+-            v[t * num_v_heads * head_v_dim + num_v_heads_id * head_v_dim +
+-              head_v_dim_id + i];
++        const T v_raw = replaying
++            ? row[stash_v_off() + v_head_off + i]
++            : v[t * num_v_heads * head_v_dim + v_head_off + i];
++        if (write_v && !replaying) {
++          out_row[stash_v_off() + v_head_off + i] = v_raw;
++        }
++        v_local[i] = v_raw;
+       }
+       float delta[v_dim_per_sg];
+ #pragma unroll
+@@ -493,6 +605,27 @@ struct gated_delta_rule_spec_kernel {
+         res[i] = sycl::reduce_over_group(sg, res[i], sycl::plus<>());
+       }
+ 
++      if (replaying) {
++        if (step_idx == n_replay - 1) {
++          // The commit: the checkpoint after the accepted prefix.
++          StateT* commit_ptr = ssm_state +
++              static_cast<int64_t>(init_state_idx) * ssm_state_stride_0;
++#pragma unroll
++          for (int j = 0; j < v_dim_per_sg; ++j) {
++#pragma unroll
++            for (int i = 0; i < k_bucket_size; ++i) {
++              const StateT stored =
++                  static_cast<StateT>(state_local[j * k_bucket_size + i]);
++              commit_ptr[state_off + i + (head_v_dim_id + j) * head_k_dim] =
++                  stored;
++              // Continue from the stored value, as a reload would.
++              state_local[j * k_bucket_size + i] = static_cast<float>(stored);
++            }
++          }
++        }
++        continue;
++      }
++
+       // Write O(t) to GLOBAL core_attn_out via token_indx remap.
+       if (sg_local_id == 0) {
+         const int global_t = (token_indx != nullptr) ? token_indx[t] : t;
+@@ -504,6 +637,9 @@ struct gated_delta_rule_spec_kernel {
+         }
+       }
+ 
++      if (checkpoint) {
++        continue;  // the checkpoint slot is only written by the commit above
++      }
+       // Write the new SSM state back to this token's dedicated cache slot,
+       // so that the next forward can pick the right rollback column based on
+       // num_accepted_tokens.
+@@ -547,6 +683,11 @@ struct gated_delta_rule_spec_kernel {
+   const int head_k_dim;
+   const int num_v_heads;
+   const int head_v_dim;
++  T* stash;
++  const int64_t stash_stride_0;
++  const int stash_rows;
++  const int* stash_meta;
++  const bool* commit_mask;
+ };
+ 
+ template <typename T, typename StateT, int k_bucket_size>
+@@ -625,7 +766,12 @@ void kernel_launcher_spec(
+     const int num_k_heads,
+     const int head_k_dim,
+     const int num_v_heads,
+-    const int head_v_dim) {
++    const int head_v_dim,
++    T* stash = nullptr,
++    const int64_t stash_stride_0 = 0,
++    const int stash_rows = 0,
++    const int* stash_meta = nullptr,
++    const bool* commit_mask = nullptr) {
+   using KERNEL = gated_delta_rule_spec_kernel<T, StateT, k_bucket_size>;
+   auto range = KERNEL::get_nd_range(num_spec_decodes, num_v_heads, head_v_dim);
+   assert(head_v_dim % KERNEL::v_dim_per_group == 0);
+@@ -650,7 +796,12 @@ void kernel_launcher_spec(
+         num_k_heads,
+         head_k_dim,
+         num_v_heads,
+-        head_v_dim);
++        head_v_dim,
++        stash,
++        stash_stride_0,
++        stash_rows,
++        stash_meta,
++        commit_mask);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -677,7 +828,11 @@ void gated_delta_rule(
+         num_accepted_tokens,  // [batch_size] or None
+     const int num_prefills,
+     const int num_decodes,
+-    const int num_spec_decodes) {
++    const int num_spec_decodes,
++    const std::optional<torch::Tensor>& stash = std::nullopt,
++    const std::optional<torch::Tensor>& stash_meta = std::nullopt,
++    const int64_t stash_rows = 0,
++    const std::optional<torch::Tensor>& commit_mask = std::nullopt) {
+   TORCH_CHECK(query_start_loc.has_value() && cache_indices.has_value());
+ 
+   // Spec path is selected when num_accepted_tokens is provided. In that case
+@@ -699,11 +854,39 @@ void gated_delta_rule(
+ 
+   int num_spec_tokens = 0;
+   int cache_indices_stride_0 = 0;
++  const bool checkpoint = stash.has_value();
++  int64_t stash_stride_0 = 0;
++  if (checkpoint) {
++    TORCH_CHECK(is_spec, "the single-checkpoint protocol is a spec path");
++    TORCH_CHECK(stash_meta.has_value() && stash_rows > 0);
++    TORCH_CHECK((*stash)[0].is_contiguous() && stash_meta->is_contiguous());
++    TORCH_CHECK(stash->scalar_type() == core_attn_out.scalar_type());
++    TORCH_CHECK(stash_meta->scalar_type() == at::kInt);
++    TORCH_CHECK(stash->dim() == 4 && stash->size(1) == 2 &&
++                stash->size(2) == stash_rows &&
++                stash->size(3) == 2 * num_k_heads * head_k_dim +
++                    num_v_heads * head_v_dim + 2 * num_v_heads,
++                "stash must be [num_blocks, 2, stash_rows, q|k|v|b|a]");
++    TORCH_CHECK(stash_meta->dim() == 2 && stash_meta->size(1) == 2 &&
++                stash_meta->size(0) == stash->size(0));
++    stash_stride_0 = stash->stride(0);
++    if (commit_mask.has_value()) {
++      TORCH_CHECK(commit_mask->scalar_type() == at::kBool &&
++                  commit_mask->is_contiguous() &&
++                  commit_mask->size(0) == num_spec_decodes);
++    }
++  }
+   if (is_spec) {
+-    TORCH_CHECK(cache_indices->dim() == 2);
+     TORCH_CHECK(cache_indices->size(0) == num_spec_decodes);
+-    num_spec_tokens = cache_indices->size(1);
+-    cache_indices_stride_0 = cache_indices->stride(0);
++    if (cache_indices->dim() == 2) {
++      num_spec_tokens = cache_indices->size(1);
++      cache_indices_stride_0 = cache_indices->stride(0);
++    } else {
++      // Commit mode: one block per row, replay only (no window tokens).
++      TORCH_CHECK(checkpoint && cache_indices->dim() == 1);
++      num_spec_tokens = 0;
++      cache_indices_stride_0 = cache_indices->stride(0);
++    }
+     TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
+   }
+ 
+@@ -748,7 +931,16 @@ void gated_delta_rule(
+         num_k_heads,                                                 \
+         head_k_dim,                                                  \
+         num_v_heads,                                                 \
+-        head_v_dim);                                                 \
++        head_v_dim,                                                  \
++        checkpoint ? reinterpret_cast<scalar_t*>(stash->data_ptr())  \
++                   : nullptr,                                        \
++        stash_stride_0,                                              \
++        static_cast<int>(stash_rows),                                \
++        checkpoint ? reinterpret_cast<int*>(stash_meta->data_ptr())  \
++                   : nullptr,                                        \
++        (checkpoint && commit_mask.has_value())                      \
++            ? reinterpret_cast<bool*>(commit_mask->data_ptr())       \
++            : nullptr);                                              \
+   } else {                                                           \
+     kernel_launcher<scalar_t, state_scalar_t, k_bucket_size>(        \
+         queue,                                                       \
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index a05bcfa..3d68e1e 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -754,6 +754,144 @@ void gated_delta_rule_non_spec(
+ #endif
+ }
+ 
++// Single-checkpoint (r311) delta stage for the spec path: as
++// gated_delta_rule_spec, plus the per-block stash of window inputs and its
++// {parity, len} table. Not bound as an op; gdn_attention_ckpt calls it.
++static void gated_delta_rule_spec_ckpt(
++    torch::Tensor& core_attn_out,
++    const torch::Tensor& q,
++    const torch::Tensor& k,
++    const torch::Tensor& v,
++    const torch::Tensor& b,
++    const torch::Tensor& a,
++    const int64_t num_v_heads,
++    const int64_t head_v_dim,
++    const torch::Tensor& A_log,
++    const torch::Tensor& dt_bias,
++    torch::Tensor& ssm_state,
++    const int64_t num_prefills,
++    const int64_t num_decodes,
++    const int64_t num_spec_decodes,
++    const torch::Tensor& spec_query_start_loc,
++    const torch::Tensor& spec_token_indx,
++    const torch::Tensor& spec_state_indices_tensor,
++    const torch::Tensor& num_accepted_tokens,
++    const int64_t num_actual_tokens,
++    const int64_t tp_size,
++    const torch::Tensor& stash,
++    const torch::Tensor& stash_meta,
++    const int64_t stash_rows) {
++  TORCH_CHECK(
++      core_attn_out.is_contiguous(), "core_attn_out must be contiguous");
++  TORCH_CHECK(
++      ssm_state[0].is_contiguous(),
++      "ssm_state of each batch must be contiguous");
++  TORCH_CHECK(A_log.is_contiguous(), "A_log must be contiguous");
++  TORCH_CHECK(dt_bias.is_contiguous(), "dt_bias must be contiguous");
++  TORCH_CHECK(core_attn_out.size(0) >= num_actual_tokens);
++  TORCH_CHECK(core_attn_out.size(1) == num_v_heads / tp_size);
++  TORCH_CHECK(core_attn_out.size(2) == head_v_dim);
++  TORCH_CHECK(num_spec_decodes > 0);
++  TORCH_CHECK(spec_token_indx.size(0) > 0);
++  auto core_attn_out_active = core_attn_out.narrow(0, 0, num_actual_tokens);
++  auto& queue = vllm::xpu::vllmGetQueue();
++  std::optional<torch::Tensor> empty_tensor{std::nullopt};
++  gdn::gated_delta_rule(
++      queue,
++      core_attn_out_active,
++      q,
++      k,
++      v,
++      b,
++      a,
++      A_log,
++      dt_bias,
++      ssm_state,
++      spec_query_start_loc,
++      spec_token_indx,
++      spec_state_indices_tensor,
++      empty_tensor,
++      num_accepted_tokens,
++      num_prefills,
++      num_decodes,
++      num_spec_decodes,
++      stash,
++      stash_meta,
++      stash_rows,
++      empty_tensor);
++}
++
++// Commit pass for requests leaving the speculative path: replays the accepted
++// prefix of their last window from the stash into their (single) state slot.
++// One row per request in non_spec_state_indices_tensor; commit_mask false
++// skips a row (a request whose previous step was not a speculative one).
++static void gated_delta_rule_commit(
++    torch::Tensor& core_attn_out,
++    const int64_t num_k_heads,
++    const int64_t num_v_heads,
++    const int64_t head_k_dim,
++    const int64_t head_v_dim,
++    const torch::Tensor& A_log,
++    const torch::Tensor& dt_bias,
++    torch::Tensor& ssm_state,
++    const torch::Tensor& non_spec_query_start_loc,
++    const torch::Tensor& non_spec_state_indices_tensor,
++    const torch::Tensor& commit_num_accepted,
++    const std::optional<torch::Tensor>& commit_mask,
++    const int64_t tp_size,
++    const torch::Tensor& stash,
++    const torch::Tensor& stash_meta,
++    const int64_t stash_rows) {
++  const int64_t rows = non_spec_state_indices_tensor.size(0);
++  TORCH_CHECK(rows > 0);
++  TORCH_CHECK(non_spec_state_indices_tensor.dim() == 1);
++  TORCH_CHECK(
++      non_spec_state_indices_tensor.is_contiguous() &&
++      non_spec_state_indices_tensor.dtype() == torch::kInt32);
++  TORCH_CHECK(
++      commit_num_accepted.is_contiguous() &&
++      commit_num_accepted.dtype() == torch::kInt32 &&
++      commit_num_accepted.size(0) == rows);
++  auto& queue = vllm::xpu::vllmGetQueue();
++  auto dtype = core_attn_out.dtype();
++  auto device = core_attn_out.device();
++  // Empty window: the kernel derives its shapes from these and never reads
++  // them.
++  torch::Tensor q = torch::empty(
++      {0, num_k_heads / tp_size, head_k_dim},
++      torch::dtype(dtype).device(device).requires_grad(false));
++  torch::Tensor v = torch::empty(
++      {0, num_v_heads / tp_size, head_v_dim},
++      torch::dtype(dtype).device(device).requires_grad(false));
++  torch::Tensor ba = torch::empty(
++      {0, num_v_heads / tp_size},
++      torch::dtype(dtype).device(device).requires_grad(false));
++  std::optional<torch::Tensor> empty_tensor{std::nullopt};
++  gdn::gated_delta_rule(
++      queue,
++      core_attn_out,
++      q,
++      q,
++      v,
++      ba,
++      ba,
++      A_log,
++      dt_bias,
++      ssm_state,
++      non_spec_query_start_loc,
++      empty_tensor,
++      non_spec_state_indices_tensor,
++      empty_tensor,
++      commit_num_accepted,
++      /*num_prefills=*/0,
++      /*num_decodes=*/0,
++      /*num_spec_decodes=*/static_cast<int>(rows),
++      stash,
++      stash_meta,
++      stash_rows,
++      commit_mask);
++}
++
+ // Legacy fused entry point kept for API backward compatibility. It performs
+ // the exact same work as the original gdn_attention by chaining the split ops:
+ // the conv stage (causal_conv1d_spec / causal_conv1d_non_spec) produces the
+@@ -902,3 +1040,174 @@ void gdn_attention(
+         tp_size);
+   }
+ }
++
++// r311: the fused entry point under the single-checkpoint protocol (see
++// gated_delta_rule_spec_kernel). Same work as gdn_attention, plus the commit
++// pass for non-spec rows that carry a stash, and the stash write for the spec
++// rows; the spec rows must all point at one block per request.
++void gdn_attention_ckpt(
++    torch::Tensor& core_attn_out,
++    torch::Tensor& z,
++    const torch::Tensor& projected_states_qkvz,
++    const torch::Tensor& projected_states_ba,
++    const int64_t num_k_heads,
++    const int64_t num_v_heads,
++    const int64_t head_k_dim,
++    const int64_t head_v_dim,
++    torch::Tensor& conv_state,
++    torch::Tensor& ssm_state,
++    const torch::Tensor& conv_weights,
++    const std::optional<torch::Tensor>& conv_bias,
++    const std::string& activation,
++    const torch::Tensor& A_log,
++    const torch::Tensor& dt_bias,
++    const int64_t num_prefills,
++    const int64_t num_decodes,
++    const int64_t num_spec_decodes,
++    const std::optional<torch::Tensor>& has_initial_state,
++    const std::optional<torch::Tensor>& non_spec_query_start_loc,
++    const std::optional<torch::Tensor>& non_spec_token_indx,
++    const std::optional<torch::Tensor>& non_spec_state_indices_tensor,
++    const std::optional<torch::Tensor>& spec_query_start_loc,
++    const std::optional<torch::Tensor>& spec_token_indx,
++    const std::optional<torch::Tensor>& spec_state_indices_tensor,
++    const std::optional<torch::Tensor>& num_accepted_tokens,
++    const int64_t num_actual_tokens,
++    const int64_t tp_size,
++    const bool reorder_input,
++    torch::Tensor& stash,
++    const torch::Tensor& stash_meta,
++    const int64_t stash_rows,
++    const std::optional<torch::Tensor>& commit_num_accepted,
++    const std::optional<torch::Tensor>& commit_mask) {
++  // Determine which paths are active using the same conditions the conv/delta
++  // ops use internally.
++  int non_spec_token = 0;
++  if (num_prefills + num_decodes > 0) {
++    non_spec_token = non_spec_token_indx.has_value()
++                         ? non_spec_token_indx->size(0)
++                         : num_actual_tokens;
++  }
++  int spec_token = 0;
++  if (num_spec_decodes > 0) {
++    spec_token = spec_token_indx->size(0);
++  }
++  const bool spec_active = spec_token > 0;
++  const bool non_spec_active = non_spec_token > 0;
++
++  if (spec_active) {
++    std::vector<torch::Tensor> intermediates = causal_conv1d_spec(
++        z,
++        projected_states_qkvz,
++        projected_states_ba,
++        num_k_heads,
++        num_v_heads,
++        head_k_dim,
++        head_v_dim,
++        conv_state,
++        conv_weights,
++        conv_bias,
++        activation,
++        num_prefills,
++        num_decodes,
++        num_spec_decodes,
++        *spec_query_start_loc,
++        *spec_token_indx,
++        *spec_state_indices_tensor,
++        *num_accepted_tokens,
++        num_actual_tokens,
++        tp_size,
++        reorder_input);
++
++    gated_delta_rule_spec_ckpt(
++        core_attn_out,
++        intermediates[0],
++        intermediates[1],
++        intermediates[2],
++        intermediates[3],
++        intermediates[4],
++        num_v_heads,
++        head_v_dim,
++        A_log,
++        dt_bias,
++        ssm_state,
++        num_prefills,
++        num_decodes,
++        num_spec_decodes,
++        *spec_query_start_loc,
++        *spec_token_indx,
++        *spec_state_indices_tensor,
++        *num_accepted_tokens,
++        num_actual_tokens,
++        tp_size,
++        stash,
++        stash_meta,
++        stash_rows);
++  }
++
++  if (non_spec_active) {
++    if (commit_num_accepted.has_value()) {
++      gated_delta_rule_commit(
++          core_attn_out,
++          num_k_heads,
++          num_v_heads,
++          head_k_dim,
++          head_v_dim,
++          A_log,
++          dt_bias,
++          ssm_state,
++          *non_spec_query_start_loc,
++          *non_spec_state_indices_tensor,
++          *commit_num_accepted,
++          commit_mask,
++          tp_size,
++          stash,
++          stash_meta,
++          stash_rows);
++    }
++    std::vector<torch::Tensor> intermediates = causal_conv1d_non_spec(
++        z,
++        projected_states_qkvz,
++        projected_states_ba,
++        num_k_heads,
++        num_v_heads,
++        head_k_dim,
++        head_v_dim,
++        conv_state,
++        conv_weights,
++        conv_bias,
++        activation,
++        num_prefills,
++        num_decodes,
++        num_spec_decodes,
++        has_initial_state,
++        *non_spec_query_start_loc,
++        non_spec_token_indx,
++        *non_spec_state_indices_tensor,
++        num_actual_tokens,
++        tp_size,
++        reorder_input);
++
++    gated_delta_rule_non_spec(
++        core_attn_out,
++        intermediates[0],
++        intermediates[1],
++        intermediates[2],
++        intermediates[3],
++        intermediates[4],
++        num_v_heads,
++        head_v_dim,
++        A_log,
++        dt_bias,
++        ssm_state,
++        num_prefills,
++        num_decodes,
++        num_spec_decodes,
++        has_initial_state,
++        *non_spec_query_start_loc,
++        non_spec_token_indx,
++        *non_spec_state_indices_tensor,
++        num_actual_tokens,
++        tp_size);
++  }
++}
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index d025b81..7dda1b5 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -326,6 +326,45 @@ void gdn_attention(
+     const int64_t num_actual_tokens,
+     const int64_t tp_size,
+     const bool reorder_input);
++
++// r311: gdn_attention under the single-checkpoint speculative protocol (one
++// state slot per request, window inputs stashed per block, replay-commit of
++// the accepted prefix on the next step).
++void gdn_attention_ckpt(
++    torch::Tensor& core_attn_out,
++    torch::Tensor& z,
++    const torch::Tensor& projected_states_qkvz,
++    const torch::Tensor& projected_states_ba,
++    const int64_t num_k_heads,
++    const int64_t num_v_heads,
++    const int64_t head_k_dim,
++    const int64_t head_v_dim,
++    torch::Tensor& conv_state,
++    torch::Tensor& ssm_state,
++    const torch::Tensor& conv_weights,
++    const std::optional<torch::Tensor>& conv_bias,
++    const std::string& activation,
++    const torch::Tensor& A_log,
++    const torch::Tensor& dt_bias,
++    const int64_t num_prefills,
++    const int64_t num_decodes,
++    const int64_t num_spec_decodes,
++    const std::optional<torch::Tensor>& has_initial_state,
++    const std::optional<torch::Tensor>& non_spec_query_start_loc,
++    const std::optional<torch::Tensor>& non_spec_token_indx,
++    const std::optional<torch::Tensor>& non_spec_state_indices_tensor,
++    const std::optional<torch::Tensor>& spec_query_start_loc,
++    const std::optional<torch::Tensor>& spec_token_indx,
++    const std::optional<torch::Tensor>& spec_state_indices_tensor,
++    const std::optional<torch::Tensor>& num_accepted_tokens,
++    const int64_t num_actual_tokens,
++    const int64_t tp_size,
++    const bool reorder_input,
++    torch::Tensor& stash,
++    const torch::Tensor& stash_meta,
++    const int64_t stash_rows,
++    const std::optional<torch::Tensor>& commit_num_accepted,
++    const std::optional<torch::Tensor>& commit_mask);
+ #endif
+ 
+ bool is_bmg_g21(int64_t device_index);
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index dc73cdb..a1713cc 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -257,6 +257,23 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "num_accepted_tokens, int num_actual_tokens, int "
+       "tp_size, bool reorder_input) -> ()");
+   xpu_ops.impl("gdn_attention", torch::kXPU, &gdn_attention);
++
++  xpu_ops.def(
++      "gdn_attention_ckpt(Tensor! core_attn_out, Tensor! z, Tensor "
++      "projected_states_qkvz, Tensor projected_states_ba,"
++      "int num_k_heads, int num_v_heads, int head_k_dim, int head_v_dim,"
++      "Tensor! conv_state, Tensor! ssm_state, Tensor conv_weights, Tensor? "
++      "conv_bias, str activation, Tensor A_log, Tensor dt_bias,"
++      "int num_prefills, int num_decodes, int num_spec_decodes, Tensor? "
++      "has_initial_state, Tensor? "
++      "non_spec_query_start_loc,  Tensor? non_spec_token_indx,"
++      "Tensor? non_spec_state_indices_tensor, Tensor? spec_query_start_loc, "
++      "Tensor? spec_token_indx, Tensor? spec_state_indices_tensor, Tensor? "
++      "num_accepted_tokens, int num_actual_tokens, int "
++      "tp_size, bool reorder_input, Tensor! stash, Tensor stash_meta, "
++      "int stash_rows, Tensor? commit_num_accepted, Tensor? commit_mask) "
++      "-> ()");
++  xpu_ops.impl("gdn_attention_ckpt", torch::kXPU, &gdn_attention_ckpt);
+ #endif
+ 
+   // for empty tensor functions, we don't need dispatch key like torch::kXPU

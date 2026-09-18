@@ -1,0 +1,39 @@
+{
+  "status": "stopped",
+  "owner_pid": 90627,
+  "container_name": "fp8-tp1-4952130f6c04",
+  "image_id": "sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7",
+  "port": 18215,
+  "started_at": "2026-09-17T23:21:43.943643+00:00",
+  "boot_id": "9f41bfb8-04d2-496d-a13d-ad12c6a76fcb",
+  "container_id": "51e24a939aa74fa32c7e4fcaf41a7ba3a19b074f842b22c7ad8c332ccd1c6c42",
+  "warmup": {
+    "completion_tokens": 64,
+    "seconds": 2.015
+  },
+  "ready_at": "2026-09-17T23:24:13.946664+00:00",
+  "error": null,
+  "stop_confirmed": true,
+  "finished_at": "2026-09-17T23:26:07.497046+00:00",
+  "memory_log": [
+    "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+    "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+    "(EngineCore pid=189) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+    "(EngineCore pid=189) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+    "(EngineCore pid=189) INFO 09-17 23:22:32 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+    "(EngineCore pid=189) INFO 09-17 23:22:45 [default_loader.py:430] Loading weights took 12.20 seconds",
+    "(EngineCore pid=189) b70_cpu_embed: language_model.model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+    "(EngineCore pid=189) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+    "(EngineCore pid=189) INFO 09-17 23:22:50 [default_loader.py:430] Loading weights took 1.93 seconds",
+    "(EngineCore pid=189) b70_cpu_embed: model.embed_tokens ((248320, 5120), torch.float16) moved to host memory",
+    "(EngineCore pid=189) b70_cpu_embed: 2.368 GiB of input embeddings now on host memory",
+    "(EngineCore pid=189) INFO 09-17 23:22:54 [gpu_model_runner.py:5486] Model loading took 25.81 GiB memory and 19.733586 seconds",
+    "(EngineCore pid=189) INFO 09-17 23:23:54 [monitor.py:53] torch.compile took 58.14 s in total",
+    "(EngineCore pid=189) INFO 09-17 23:23:59 [monitor.py:53] torch.compile took 4.66 s in total",
+    "(EngineCore pid=189) INFO 09-17 23:24:02 [gpu_worker.py:625] Available KV cache memory: 3.15 GiB",
+    "(EngineCore pid=189) INFO 09-17 23:24:02 [kv_cache_utils.py:2032] GPU KV cache size: 45,139 tokens, Maximum concurrency for 40,960 tokens per request: 1.10x",
+    "(EngineCore pid=189) WARNING 09-17 23:24:04 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+    "(EngineCore pid=189) INFO 09-17 23:24:04 [gpu_worker.py:860] Free memory on device (29.81/30.3 GiB) on startup. Desired GPU memory utilization is (0.983, 29.78 GiB). Actual usage is 26.34 GiB for consumed memory (weights + non-torch), 0.3 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=3220590744` (3.0 GiB) to fit into requested memory, or `--kv-cache-memory=3252961280` (3.03 GiB) to fully utilize gpu memory. Current kv cache memory in use is 3.15 GiB.",
+    "(EngineCore pid=189) INFO 09-17 23:24:05 [core.py:361] init engine (profile, create kv cache, warmup model) took 71.18 s (compilation: 62.80 s)"
+  ]
+}

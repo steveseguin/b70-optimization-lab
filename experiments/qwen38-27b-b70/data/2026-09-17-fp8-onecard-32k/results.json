@@ -1,0 +1,152 @@
+{
+  "started": "2026-09-17T16:14:55.837245+00:00",
+  "preflight_health_rc": 0,
+  "tp1-pkg-32k": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T16:17:24.693875+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 54.287533214937824,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "strict_run2": {
+      "rc": 0,
+      "tok_s_1_100": 53.90808377301862,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64",
+        "batch-c64-r2": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "quality": {
+      "rc": 0,
+      "pass_all": true,
+      "baseline_match_all": true,
+      "baseline_status": "passed"
+    },
+    "history": {
+      "rc": 0,
+      "divergent": [],
+      "logprob_divergent": [],
+      "cached_tokens_all_zero": true
+    },
+    "status_rc": 0,
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "tp1-pkg-max-context": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T16:38:32.431349+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 54.251366272461624,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "tp1-pkg-no-quantization": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-09-17T16:51:44.389678+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 52.39263161184765,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "service_health_rc": 0,
+  "service": {
+    "status": "ready",
+    "error": null,
+    "unit": "fp8-service-20260917-onecard32k",
+    "state_dir": "/mnt/fast-ai/bench-results/fp8-onecard-32k-b-20260917/service",
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 90.45583494941268,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-review-20260916/tp2-mtp0-strict"
+    }
+  },
+  "finished": "2026-09-17T17:07:23.121834+00:00"
+}
