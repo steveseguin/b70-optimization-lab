@@ -36,11 +36,13 @@ STEPS="${STEPS:-50}"          # ASSUMED -- no default is declared anywhere on th
 SEED="${SEED:-42}"
 PROMPT="${PROMPT:-A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.}"
 
-# Transient-scope bounds. The host has 15 GiB; the loader streams tensor by tensor and should
-# never approach this, so MemoryMax is a tripwire, not a budget.
+# Transient-scope bounds. NO memory ceiling (2026-09-18): the loader mmaps 27-40 GB of safetensors and
+# the page cache it touches is charged to this cgroup; a MemoryHigh/MemoryMax below that working set
+# (the 3G/4G "tripwire" of the first version) made the cgroup reclaim-thrash, which is exactly the
+# memory PRESSURE systemd-oomd kills on: it killed the desktop and then the user manager on the
+# 2026-09-17 23:09 EDT run. Global reclaim handles the page cache fine when nothing else heavy runs.
+# PRECONDITION 3: nothing else memory-heavy on the host (no kernel build container, no FP8 service).
 SCOPE_PROPS=(
-  --property=MemoryHigh=3G
-  --property=MemoryMax=4G
   --property=MemorySwapMax=0
 )
 

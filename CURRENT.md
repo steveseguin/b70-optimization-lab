@@ -53,9 +53,13 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 18 03:20 UTC: HALTED after a host out-of-memory event. The service on 18124 is DOWN since
-02:43 UTC, `systemd-oomd` killed the user manager at 03:09 UTC, and every queued session died with it. Waiting on the
-user; the agent restarts nothing.** A kernel build in a container overlapped with the MiniMax-H3 first-light run (a
+**Two-B70 host, September 18 03:30 UTC: recovering from a host out-of-memory event. The service on 18124 is DOWN since
+02:43 UTC; `systemd-oomd` killed the user manager at 03:09 UTC and every queued session with it. At 03:24 UTC the user
+authorized restarts: the user manager is back (03:25 UTC), and unit `fp8-r312d-session8-20260918` is running with the
+cards idle: variant b and c rebuilds of the multiq library one compiler job at a time, their census against the shipped
+kernel, then lc-3 on an exact variant or a plain service restore (unit `fp8-service-20260918-s8`, state
+`/mnt/fast-ai/bench-results/fp8-r312d-session8-20260918/service`). MiniMax-H3 stays off (its smoke runner no longer
+sets a cgroup memory ceiling; it must never run beside a build or the service).** A kernel build in a container overlapped with the MiniMax-H3 first-light run (a
 27 GB text-encoder load under `MemoryMax=4G`, which thrashed instead of failing fast) on this 15 GiB host;
 `systemd-oomd` killed by memory pressure up through the GNOME session to `user@1000.service` itself, so
 `fp8-r312d-session6-20260918` (before its service restore), the b/c rebuild `r312d-build-bc-20260918`, the armed
