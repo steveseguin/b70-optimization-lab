@@ -35,7 +35,8 @@ CANDIDATE_SRC = 'ltx_na_axis_candidate_v2.py'
 # registers, and the graph is rejected with "Node 'LTXNAAxisDecode' not found".
 NA_REPLACED = ((CANDIDATE, CANDIDATE_SRC),
                ('source/scripts/ltx_na_axis_router.py', 'ltx_na_axis_router_v2.py'),
-               ('source/scripts/na_axis_decode_node.py', 'na_axis_decode_node_v2.py'))
+               ('source/scripts/na_axis_decode_node.py', 'na_axis_decode_node_v2.py'),
+               ('source/scripts/host_embedding_clip.py', 'host_embedding_clip_threadsafe.py'))
 NA_NODE_COPY = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
 VAE_ADAPTER = 'ltx_graph_vae.py'
 VAE_NODE_FILE = 'graph_vae_node.py'
@@ -202,6 +203,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_candidate.py',
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_router.py',
              'provenance/graph-capture/parent/source/scripts/na_axis_decode_node.py',
+             'provenance/graph-capture/parent/source/scripts/host_embedding_clip.py',
              'host-residency-13-parent-manifest.json'}
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'pipe',
@@ -210,7 +212,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-fasttimed', 'pipe-fast', 'pipe-fast-save', 'pipe-batchproof', 'pipe-samp2',
                           'pipe-samp2-tsh')}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
-                'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py')
+                'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
+                'source/scripts/host_embedding_clip.py')
     node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
     for name, digest in parent['files'].items():
         if name in replaced:
