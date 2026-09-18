@@ -216,6 +216,10 @@ allocations per step for free.
 
 1. **Fix `b70-step-profiler`'s rank gate** (`b70_step_profiler.py:27-35`): move the rank check out of `register()`
    into the wrapped `execute_model`, where the TP group exists. One-line-class change, no GPU work to write it.
+   **Done 2026-09-18**: the rank is now resolved on the first `execute_model` call (tensor-parallel group, then
+   the runner's `rank`/`local_rank`, then `$RANK`/`$LOCAL_RANK`) and logged once;
+   `tests/test_b70_step_profiler_rank_gate.py` covers the gate with a stubbed `parallel_state` (no GPU). Traces
+   taken before this date carry both ranks.
 2. **Re-profile two cards with one rank only**, with the shipped allgather overlay on (profile4 predates comm-2 and
    traced the stock ring). That gives the first uncontaminated two-card step budget: device busy, idle gaps, real
    per-collective device and host cost. Until this exists, every "N% of device time" number for two cards is
