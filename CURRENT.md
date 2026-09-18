@@ -1,8 +1,8 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-18 15:30 UTC** (2026-09-18 11:30 EDT); the two-B70 host is in a GPU-fault
-halt, see the top of "Local Host And Active Review". The four-B70 host section below was added
-2026-09-11.
+Last reviewed: **2026-09-18 16:10 UTC** (2026-09-18 12:10 EDT); the two-B70 host is in a GPU-fault
+halt with three decisions waiting for the user -- see the top of "Local Host And Active Review".
+The four-B70 host section below was added 2026-09-11.
 
 ## Authority And Update Rule
 
@@ -27,28 +27,106 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host `steve-TURIND8-2L2T`, September 18 15:06 UTC: GPU FAULT HALT. No GPU work of any kind
-until the user decides; the FP8 service is DOWN and stays down.**
-The MiniMax-H3 first-light run (session 10) got further than any before it -- encoder loaded in
-12.6 s, conditioning in 1.5 s, the pruned denoiser streamed onto both cards in 20.6 s at the
-block-24 split (18.797 / 18.747 GiB) -- and then died three seconds into the first denoise step:
-`xe 0000:03:00.0` (card2 / renderD129 = xpu:0) logged 25 copy-engine (`bcs`) page faults, 9 CAT
-errors, a bcs engine reset, a timed-out job and a device coredump, and the runner raised
-`UR_RESULT_ERROR_DEVICE_LOST`. The moment it died is the moment hidden states first cross from
-xpu:0 to xpu:1. **Nothing was reset, reloaded or rebooted**, the hung python was killed by pid,
-and `card2` still holds an uncleared devcoredump.
-Two things were learned and are now pinned as preconditions. (1) With both cards visible and
-`PYTORCH_ALLOC_CONF` unset, **every GiB placed on a card costs a GiB of host RAM** (8 GiB ->
-+8,125 MiB); with `expandable_segments:True` it costs +54 MiB. That mirroring, not our process,
-is what killed session 9 and what the 4G cgroup cap turned into the 09-17 desktop kill. (2) The
-runner now stages every cross-card tensor move through host RAM (`B70_H3_XFER=host`, the new
-default, bit-exact against `direct`), because the leading -- unproven -- explanation for the
-fault is that `x.to(other_card)` is a peer-to-peer PCIe copy on the blitter, the class this host
-faulted on at 09-16 06:02Z, 09-17 03:10Z and (ccs, via oneCCL peer access) 09-17 07:17Z.
-**User decision needed: health probe then restart, or reboot first.** Either way the first GPU
-work afterwards should be the host-staged smoke run, because it is what tests the hypothesis.
+**Two-B70 host `steve-TURIND8-2L2T`, end of day September 18: the FP8 package shipped, the video lane hit a GPU
+fault, and nothing runs on the cards until you say so. The FP8 service is DOWN. Three decisions are waiting for you;
+they are at the bottom of this entry with the commands.**
+
+**What shipped today.** The one-card FP8 package is finished and public. It is accepted on the `r312d-c` image, all
+three profiles reproduce their references exactly through the launcher a user would actually run, and long prompts now
+write 10-17% faster above 16K. The image is pushed to ghcr and its digest matches what the package already pinned, so
+`docker pull` of the pinned digest works for anyone. The LocalMaxxing record `cmu6ytqyr0827lq01b76whp6d` is approved at
+54.224 tok/s. One piece of housekeeping is upstream, not ours: the same payload got posted twice (you posted it, the
+assistant posted it again seconds later) and both were approved, so `cmu6ytvxr082alq015dpjgiz4` is a duplicate. It is
+recorded as withheld and flagged for withdrawal; only the record owner can withdraw it, there is no delete call.
+Nothing on this lane is waiting on anybody.
+
+**What we learned today, in four lines.**
+1. *Build pins matter more than build tools.* The last remaining 7.6e-6 numeric gap turned out to be which revision of
+   the CUTLASS/sycl-tla library the kernel was compiled against -- not the compiler, not our code. Every future kernel
+   build now reads that revision from the kernel's own build file instead of whatever the source tree happens to have
+   checked out.
+2. *The video lane was quietly eating the host's RAM, and one flag stops it.* With both cards visible, every gigabyte
+   we put on a card was costing a gigabyte of host RAM as well -- 8 GiB on the card, 8 GiB gone from the desktop. That
+   is what killed the run on the 17th and took your desktop session with it. Setting
+   `PYTORCH_ALLOC_CONF=expandable_segments:True` drops that cost to about 50 MiB. It is now mandatory for every
+   two-card run and the smoke script sets it and prints it.
+3. *We were counting the denoise steps wrong.* The step number the code wants is grid points, and every published
+   figure is the other kind, so each needs +1. Settled: 51 for the plain model, 9 with the turbo adapter.
+4. *The 8-step turbo LoRA is on disk and wired in.* It is what makes a short run legitimate rather than a shortcut, so
+   the script now applies it by default and picks the matching step count automatically. All 208 adapter weights map
+   cleanly onto our rebuilt model.
+
+**The fault, and why everything is stopped.** The MiniMax-H3 first-light run got further than any before it -- text
+encoder loaded in 12.6 s, the video model streamed onto both cards in 20.6 s, evenly split -- and then died three
+seconds into the very first denoising step, at the exact moment data first crosses from one card to the other. The
+kernel logged a copy-engine fault on `0000:03:00.0`, an engine reset, a timed-out job and a device coredump, and the
+run came back with "device lost". **New today, and it matters: the OTHER card faulted too.** `0000:e3:00.0` logged the
+same class of copy-engine error four minutes later. Both ends of the card-to-card copy failed, which is the best
+evidence yet that the card-to-card copy itself is the problem -- that is the hypothesis the next run is built to test,
+because the runner now routes every cross-card move through host memory instead (bit-for-bit identical either way).
+Nothing was reset, reloaded or rebooted, and the hung process was killed by pid only.
+
+**The coredump is already dealt with -- so one of the decisions you were expecting has answered itself.** It was
+copied out at 11:08 EDT, 503 KB, and it is in the evidence folder; it names the timed-out job, the kernel and the
+firmware. Nobody then cleared the sysfs node, but the driver expired it on its own at 12:06 EDT
+(`Xe device coredump has been deleted`). So **there is nothing left to clear** -- the evidence is saved and the node is
+gone. Worth remembering for next time: these dumps expire after about an hour, so they have to be copied promptly.
+
+**DECISION 1 -- reboot first, or not?** The coredump question is settled (saved, then expired), so this is purely
+about whether you trust the driver state on two cards that both took a copy-engine fault, on a host that has been up
+since the 17th and has faulted on 09-16, 09-17 (twice) and today.
+* Not rebooting is defensible: the health probe is the gate, and it stops everything if the cards are unwell.
+* Rebooting is the stronger reset. If you reboot, the service comes back with the autolauncher:
+  ```bash
+  nohup scripts/autolaunch-fp8-service.sh &
+  ```
+
+**DECISION 2 -- run the resume script?** It is written, checked and waiting:
+[`experiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh`](experiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh).
+It refuses to start unless the host is genuinely clear, runs the health probe, then the MiniMax control clip and its
+repeat check, then the int8 comparison, then puts the FP8 service back on 18124 and proves it still matches the
+reference 12/12. It stops at the first failure and it never clears, resets, reboots, stops or kills anything. Launch it
+as a background unit, never from a chat session -- the first phase alone is tens of minutes:
+```bash
+# full session: health probe, MiniMax control + repeat, int8 A/B, then the FP8 service back up
+systemd-run --user --unit h3-resume-20260918 --collect \
+    --working-directory=/home/steve/b70-optimization-lab \
+    bash experiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh
+
+# or just get the FP8 service back, nothing else
+systemd-run --user --unit fp8-resume-20260918 --collect \
+    --working-directory=/home/steve/b70-optimization-lab \
+    bash experiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh --only-service
+
+tail -f /mnt/fast-ai/bench-results/resume-20260918/session.log    # watch it
+```
+
+**DECISION 3 -- delete the 62 GB reference copy of the video model?** `/mnt/fast-ai/llm-models/minimax-h3/transformer`
+is the original full-precision model. We do not run it -- it is far too big for these cards, and the two versions we
+actually run are separate, smaller files. **But it is not dead weight: it is the thing our correctness tests compare
+against.** The CPU check that proves our rebuilt model is bit-exact, and the check that proves the int8 version
+decompresses correctly, both read tensors out of it. Delete it and those two tests stop running (they skip cleanly and
+say so, they do not fail) and we lose the ability to re-prove the rebuild if anything changes.
+The trade: `/mnt/fast-ai` has **24 GB free of 916 GB (98% full)**, which is tight enough that a long video run could
+fail on disk. Deleting it buys 62 GB.
+* Recommendation: **keep it until the video lane has produced a good clip and the int8 comparison is done** -- that is
+  exactly when those two tests matter most -- then delete it. If you need the space sooner, delete it and re-download
+  later; it is a public checkpoint.
+```bash
+du -sh /mnt/fast-ai/llm-models/minimax-h3/transformer   # 62G
+df -h /mnt/fast-ai                                      # 24G free
+# only when you have decided:
+rm -rf /mnt/fast-ai/llm-models/minimax-h3/transformer
+```
+
+**Also queued, not run:** the stock-versus-lab check, which answers whether our rebuilt kernels produce exactly the
+same words as the untouched upstream image. It is a runner you can queue in any GPU window:
+[`experiments/qwen38-27b-b70/scripts/run-20260918-fp8-stock-gdn-check.py`](experiments/qwen38-27b-b70/scripts/run-20260918-fp8-stock-gdn-check.py).
+Nothing shipped depends on the answer, but it is the last open question on the FP8 lane.
+
 [Fault note](experiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md),
-[plan](experiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md), evidence
+[plan](experiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md),
+[steps and LoRA](experiments/minimax-h3-b70/notes/2026-09-18-steps-and-lora.md), evidence
 `/mnt/fast-ai/bench-results/gpu-fault-20260918T1506/`.
 
 **Four-B70 host, September 18 04:40 UTC: packet 78 launched as server 78 after two clean reloads on the new kernel/firmware (no freeze, no fault).**

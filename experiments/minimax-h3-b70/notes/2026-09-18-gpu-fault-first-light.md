@@ -187,3 +187,44 @@ experiment that tests the hypothesis, and it is the only thing that can turn the
 
 * `smoke-20260918T150314Z.log` -- the run log, phase timings and the DEVICE_LOST traceback
 * `probe-{both,one}-{unset,expandable}-{fill,copy}.log` -- the eight probe runs
+
+## Addendum, 2026-09-18 16:05 UTC: the other card faulted too, and the dump has expired
+
+Two things found while writing the resume script, both from `journalctl -k`, neither in the timeline above.
+
+**1. `0000:e3:00.0` -- the *other* B70 -- logged the same class of fault, four minutes later.**
+
+```
+Sep 18 11:08:00 kernel: xe 0000:e3:00.0: [drm] Tile0: GT0:
+Sep 18 11:08:00 kernel: xe 0000:e3:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -EINVAL
+Sep 18 11:08:00 kernel: xe 0000:e3:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs, logical_mask: 0x1, guc_id=6
+```
+
+The card map on this host, for the record, because both B70s are PCI id `0xe223` and the numbering is not obvious:
+
+| sysfs | PCI | render node | role in session 10 |
+| --- | --- | --- | --- |
+| `card0` | `0000:e3:00.0` | `renderD128` | xpu:1 (blocks 24..) |
+| `card1` | `0000:a5:00.0` | — | ASPEED BMC display, not a B70 |
+| `card2` | `0000:03:00.0` | `renderD129` | xpu:0 (blocks 0..23), the card that took the coredump |
+
+Three lines only on `e3`: a CAT error on the **same engine class (`bcs`, the copy engine)** and the same
+`Fault response: Unsuccessful -EINVAL`, with no engine reset, no timed-out job and no coredump. It landed at 11:08:00,
+in the window where the hung python was being killed by pid and the coredump was being copied out.
+
+This is the first time a fault on this host has been observed on *both* cards in one event, and it is the strongest
+evidence so far for the peer-to-peer hypothesis: a device-to-device copy has two ends, and both ends logged a
+copy-engine access error. It does not prove it -- a CAT error on `e3` could also be fallout from tearing down a process
+that held allocations on both cards -- but it is exactly the signature the hypothesis predicts, and it says the
+`B70_H3_XFER=host` control is testing the right thing. It also means **the driver state on both cards is suspect**, not
+only on xpu:0, which is the argument for a reboot rather than a plain restart.
+
+**2. The coredump node expired at 12:06:48 EDT**, about an hour after it was created, with nobody clearing it:
+
+```
+Sep 18 12:06:48 kernel: xe 0000:03:00.0: [drm] Xe device coredump has been deleted.
+```
+
+The evidence is safe -- `devcoredump-card2.txt` was copied out at 11:08 and is listed above -- but the *node* is gone,
+so `smoke_h3.sh`'s and the resume script's coredump preconditions now pass on their own. Standing rule for the next
+fault: copy the dump within the hour, because the driver expires it whether or not anyone has read it.
