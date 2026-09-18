@@ -31,10 +31,8 @@ done
 curl -sf http://127.0.0.1:8188/queue >/dev/null || { step server never answered; exit 1; }
 PID=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['pid'])")
 step server pid $PID up
-step 1 warm clip on the pipe graph
-$PY -B $LANE/scripts/run-graph-capture-clip.py g77b-warm --pid $PID --server-run $RUN --out $OUT \
-  --graph $P/graphs/graph-capture-all48-pipe-samp2-tsh.json --mode graph --clip-index 900 || { step warm failed; exit 1; }
-save warm
+step "warm: 3 fixture prompts on the sharded arm (installs the encoder shard before first placement; captures)"
+arm f77b-warm pipe-samp2-tsh 3 10900
 arm f77b-tsh pipe-samp2-tsh 30 11000
 arm f77b-samp2 pipe-samp2 24 12000
 step "endurance: 120 prompts on the sharded two-clip arm, load lock under sustained sampling"
