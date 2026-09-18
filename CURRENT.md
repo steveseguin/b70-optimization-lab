@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 18 01:00 UTC: six silent freezes on 09-17; next boot set to kernel 7.0.0-30; packet 77 waits for it.**
+Freezes hit idle, during server load, and minutes after an xe client
+teardown; no backtrace exists (hardlockup_panic was 0). GuC 70.72.1 (manual,
+installed 09-03) sits in BOTH initrds, so the kernel change alone does not
+revert it; the GuC restore and `kernel.hardlockup_panic=1` (pstore backend
+erst) were handed to the user as sudo lines. Packet 76 never ran: its text
+node failed to import (`ltx_text_shard.py` was not copied); packet 77 ships
+it and the generator now proves every custom node's imports resolve. The
+23:57 UTC freeze zeroed 307 tracked working-tree files and a git pack;
+objects recovered from a bare clone, lane files restored, bulk restore left
+to the user. Runner 77: warm, `pipe-samp2-tsh` 30, `pipe-samp2` 24,
+endurance 120.
+[Idle freeze](experiments/ltx25-b70/notes/2026-09-17-idle-freeze-1555utc.md),
+[firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md).
+
 **Four-B70 host, September 17 14:28 UTC: packet 76 launched (encoder sharded across xpu:2/xpu:3 with two encode workers, load lock in the fast path); firmware review done.**
 Server 74b segfaulted on the fourth prompt of a 120-prompt endurance run:
 both sampler workers' first clips fell through the fast path into
