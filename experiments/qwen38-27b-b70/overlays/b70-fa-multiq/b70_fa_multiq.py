@@ -5,8 +5,11 @@ B70_FA_MULTIQ_MIN_K keys, the rows are computed by `_vllm_fa2_C.paged_decode_mul
 V tiles loaded once, output columns split into B70_FA_MULTIQ_VTILE-wide slices), which the census showed bit-identical
 to the single-query decode calls the verify-rows overlay issues. When the rows do not all end in the same 64-key tile
 (the op's precondition, about 8% of steps), the per-row calls are issued instead, so every row is still computed by
-the decode arithmetic. Prefill chunks, short keys and batches pass through unchanged. No host synchronisation: the
-precondition uses max_seqlen_k, a host integer that equals the single request's key length here.
+the decode arithmetic. Prefill chunks, short keys and batches pass through unchanged. The precondition reads the
+request's key length from seqused_k (one small device-to-host read per call; the op itself reads the same value to
+check its precondition, so the queue is drained anyway). Version 1 used max_seqlen_k, a host integer that is NOT
+always the key length: on 2026-09-18 (lc-3, long-corpus prose-2048 warmup) the op refused a call the host check had
+let through, and the engine died. B70_FA_MULTIQ_DEBUG=1 logs every mismatch between the two.
 """
 import os
 
@@ -30,7 +33,8 @@ def register():
     kv_tile = 64
     original = fa.flash_attn_varlen_func
     single_cu = {}
-    state = {'logged': False, 'multiq': 0, 'rows': 0}
+    state = {'logged': False, 'multiq': 0, 'rows': 0, 'mismatch': 0}
+    debug = os.environ.get('B70_FA_MULTIQ_DEBUG', '0') == '1'
 
     def rows_call(**kw):
         q, out, n = kw['q'], kw['out'], kw['q'].shape[0]
@@ -68,7 +72,13 @@ def register():
                 logger.warning('b70_fa_multiq: verifier attention in one pass (paged_decode_multiq, v_tile %d, max_q %d, key length > %d); '
                                'per-row decode calls when the rows straddle a %d-key tile', v_tile, max_q, min_k, kv_tile)
                 state['logged'] = True
-            if (kw['max_seqlen_k'] - 1) % kv_tile >= n - 1:
+            key_len = int(kw['seqused_k'][0])
+            if key_len != kw['max_seqlen_k']:
+                state['mismatch'] += 1
+                if debug or state['mismatch'] == 1:
+                    logger.warning('b70_fa_multiq: seqused_k[0]=%d differs from max_seqlen_k=%d (n=%d); the precondition uses seqused_k',
+                                   key_len, kw['max_seqlen_k'], n)
+            if (key_len - 1) % kv_tile >= n - 1:
                 state['multiq'] += 1
                 out = multiq_call(**kw)
             else:
@@ -76,7 +86,8 @@ def register():
                 out = rows_call(**kw)
             total = state['multiq'] + state['rows']
             if total % 20000 == 0:
-                logger.warning('b70_fa_multiq: %d one-pass calls, %d per-row fallbacks', state['multiq'], state['rows'])
+                logger.warning('b70_fa_multiq: %d one-pass calls, %d per-row fallbacks, %d max_seqlen_k mismatches',
+                               state['multiq'], state['rows'], state['mismatch'])
             return out
         return original(*args, **kw)
 

@@ -30,7 +30,9 @@ spec = importlib.util.spec_from_file_location('review', ROOT / 'experiments/qwen
 review = importlib.util.module_from_spec(spec); spec.loader.exec_module(review)
 R = review
 R.SERVICE_STATE = Path(os.environ['SERVICE_STATE'])
-R.CORPUS = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-17-long-corpus/corpus.json'
+LONG_CORPUS = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-17-long-corpus/corpus.json'
+AMD_CORPUS = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/corpus.json'  # the ckpt2 context baseline's corpus
+R.CORPUS = LONG_CORPUS
 R312 = os.environ['R312_IMAGE']
 CKPT2_STRICT = Path('/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict')
 COMM2_STRICT = Path('/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict')
@@ -72,7 +74,9 @@ def main():
             R.save_results(); R.fault_check(since)
             r['ladder'] = R.ladder_compare('tp1-r312c-multiq', R.ladder(srv.base, 'tp1-r312c-multiq', 2), ref['ladder'])
             R.save_results(); R.fault_check(since)
+            R.CORPUS = AMD_CORPUS
             r['context'], _ = R.context(srv.base, 'tp1-r312c-multiq', R.TP2_LENGTHS, 32768, 2, ref['context'])
+            R.CORPUS = LONG_CORPUS
             R.save_results(); R.fault_check(since)
             r['context_long'], _ = R.context(srv.base, 'tp1-r312c-multiq-long', LONG, 32768, 2, ref['long'])
             R.save_results(); R.fault_check(since)
@@ -91,7 +95,7 @@ def main():
     if results['service_health_rc'] != 0:
         raise SystemExit(5)
     state_dir = OUT / 'service'
-    unit = 'fp8-service-20260918-lc3'
+    unit = os.environ.get('CAMPAIGN_UNIT', 'fp8-service-20260918-' + OUT.name.replace('fp8-', '').replace('-20260918', ''))
     argv = ['systemd-run', '--user', '--unit', unit, '--working-directory', str(ROOT), '--collect',
             sys.executable, str(PKG_TP2), 'start', '--model-dir', str(R.MODEL), '--state-dir', str(state_dir), '--port', '18124']
     R.wait_port_free(18124)
