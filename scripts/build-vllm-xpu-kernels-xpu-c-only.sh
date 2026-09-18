@@ -58,7 +58,8 @@ cmake -S . -B "${BUILD_DIR}" -G Ninja \
   -DGDN_KERNELS_ENABLED="${GDN_KERNELS}" \
   -DMQA_LOGITS_KERNELS_ENABLED=OFF \
   -DXPU_SPECIFIC_KERNELS_ENABLED=ON \
-  -DXPUMEM_ALLOCATOR_ENABLED=OFF
+  -DXPUMEM_ALLOCATOR_ENABLED=OFF \
+  -DVLLM_MULTIQ_DECODE_CONFIG="${MULTIQ_DECODE_CONFIG:-paged_decode_qwen38.conf}"
 
 cmake --build "${BUILD_DIR}" -j="${JOBS}" --target _xpu_C
 cmake --install "${BUILD_DIR}" --prefix "${INSTALL_PREFIX}" --component _xpu_C
