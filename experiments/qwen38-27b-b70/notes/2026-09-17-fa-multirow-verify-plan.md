@@ -59,3 +59,25 @@ three off-precondition lengths are refused. Speed per layer-call (six rows): 1.8
 one-pass at 32K, 0.31 vs 0.58 at 4K: the one-pass kernel is slower, as the memo's register-pressure risk predicted (six
 accumulators of 256 columns per lane). Next: split the value columns across work-groups (each column's arithmetic
 unchanged), census at V tiles of 64/128/256.
+
+## Status 2026-09-18 01:40 UTC: with the value split it is 2.4x faster and still bit-identical
+
+r312b (commit 031c456: the output tile width selectable per call, `v_tile` in {64, 128, 256}; the tile scheduler already
+splits columns across work-groups, each column's arithmetic unchanged). Census per width, contiguous pages, ms per
+layer-call for six rows ([data](../data/2026-09-17-fa-multiq-census/)):
+
+| Keys | six lone-row calls (today) | one-pass, V 256 | V 128 | **V 64** |
+| ---: | ---: | ---: | ---: | ---: |
+| 4,096 | 0.39 | 0.60 | 0.47 | **0.17** |
+| 8,192 | 0.62 | 0.64 | 1.02 | **0.30** |
+| 16,384 | 1.08 | 1.12 | 1.76 | **0.46** |
+| 24,576 | 1.46 | 1.62 | 2.50 | **0.63** |
+| 32,768 | 1.88 | 2.08 | 3.27 | **0.78** |
+| 40,000 | 2.16 | 2.54 | 3.96 | **0.97** |
+
+All three widths are bit-identical to the lone-row reference at every length and both page layouts (max_abs 0.0,
+repeats identical, off-precondition lengths refused). The 64-column width is the winner (the accumulators no longer
+spill; the quadrupled QK work is cheap next to the cache reads): 2.4x per call at 32K, i.e. about 17 ms of the 89 ms
+step at 32K and 10 ms of 76 ms at 16K. Next: the serving overlay (`b70-fa-multiq`: one call with `v_tile=64` for the
+one-request verify case when all rows end in the same tile, else the per-row calls) and the gates on the R312 image
+against its own no-MTP reference.

@@ -15,6 +15,10 @@ for several KV lengths and both contiguous and scattered block tables:
     seqused_k = L-(q_len-1-r), issued exactly as the overlay issues it, bitwise;
   * wall time of the multi-query call against the q_len single-row calls.
 
+`--v-tile {64,128,256}` narrows the V/output tile so each work-group keeps only its
+slice of the q_len accumulators (K is re-read once per slice). One run per width gives
+the timing curve; equality must hold for every width.
+
 KV lengths that violate the op's precondition -- (seqused_k - 1) % kv_tile >= q_len - 1,
 i.e. all rows must end in the same KV tile -- are expected to be refused by the op; they
 are exercised too so the refusal is part of the census.
@@ -47,6 +51,11 @@ def main():
     ap.add_argument('--repeats', type=int, default=20)
     ap.add_argument('--num-splits', type=int, default=None,
                     help='force a split count on both paths (default: let each path pick)')
+    ap.add_argument('--v-tile', type=int, default=None, choices=[64, 128, 256],
+                    help='V/output columns per work-group for paged_decode_multiq '
+                         '(default: the policy width, i.e. no column split). Narrower '
+                         'tiles split the per-position accumulators across grid.x; the '
+                         'result must stay bit-identical, only the timing changes.')
     ap.add_argument('--skip-host-check', action='store_true',
                     help='set VLLM_XPU_MULTIQ_HOST_CHECK=0 (no host sync in the op; '
                          'the precondition refusals are then not exercised)')
@@ -73,7 +82,8 @@ def main():
                   classification='operator-diagnostic-only', fa_version=fa_version,
                   q_len=q_len, kv_tile=KV_TILE, page=PAGE, pages_total=pages_total,
                   repeats=args.repeats, num_splits=args.num_splits,
-                  host_check=not args.skip_host_check, cases=[], refusals=[])
+                  v_tile=args.v_tile, host_check=not args.skip_host_check,
+                  cases=[], refusals=[])
     args.out.parent.mkdir(parents=True, exist_ok=True)
 
     # Match the served call: key/value are interleaved views of one
@@ -114,7 +124,8 @@ def main():
             query, key_cache, value_cache, out,
             torch.tensor([0, q_len], dtype=torch.int32, device=dev),
             torch.tensor([kv_len], dtype=torch.int32, device=dev),
-            block_table, q_len, kv_len, descale, descale, scale, args.num_splits)
+            block_table, q_len, kv_len, descale, descale, scale, args.num_splits,
+            args.v_tile)
         return out
 
     def timed(fn, repeats):
@@ -152,6 +163,7 @@ def main():
                         ms_rows=timed(lambda: rows(query, kv_len, block_table), args.repeats),
                         ms_multiq=timed(lambda: multiq(query, kv_len, block_table),
                                         args.repeats))
+            case['v_tile'] = args.v_tile
             case['speedup'] = case['ms_rows'] / case['ms_multiq'] if case['ms_multiq'] else None
             report['cases'].append(case)
             write()

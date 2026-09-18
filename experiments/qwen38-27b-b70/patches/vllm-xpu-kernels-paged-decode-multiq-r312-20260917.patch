@@ -1,5 +1,5 @@
 diff --git a/csrc/flash_attn/flash_api.cpp b/csrc/flash_attn/flash_api.cpp
-index 0b2cf1a..2f25115 100644
+index 0b2cf1a..01beb89 100644
 --- a/csrc/flash_attn/flash_api.cpp
 +++ b/csrc/flash_attn/flash_api.cpp
 @@ -5,6 +5,7 @@
@@ -10,7 +10,7 @@ index 0b2cf1a..2f25115 100644
  
  namespace FLASH_NAMESPACE {
  
-@@ -426,6 +427,233 @@ std::vector<at::Tensor> mha_varlen_fwd(
+@@ -426,6 +427,241 @@ std::vector<at::Tensor> mha_varlen_fwd(
      return {out, softmax_lse};
    }
  }
@@ -30,6 +30,12 @@ index 0b2cf1a..2f25115 100644
 +// and the batch_size=1 num_splits computation guarantee.
 +//
 +// This op does not change varlen_fwd's routing in any way; it is opt-in.
++//
++// v_tile selects how many V/output columns one work-group owns (0 = the
++// decode policy's own width). Narrower tiles split the columns across
++// grid.x, so each work-group keeps only its slice of the q_len accumulators;
++// K is re-read (and Q*K + softmax redone) once per slice, and every column's
++// value is unchanged, so the output stays bit-identical.
 +//
 +// Skip the (host-synchronising) precondition check with
 +// VLLM_XPU_MULTIQ_HOST_CHECK=0 when benchmarking a configuration that has
@@ -52,7 +58,8 @@ index 0b2cf1a..2f25115 100644
 +    std::optional<const at::Tensor>& k_scale,
 +    std::optional<const at::Tensor>& v_scale,
 +    float softmax_scale,
-+    std::optional<int> num_splits) {
++    std::optional<int> num_splits,
++    std::optional<int> v_tile) {
 +  auto q_type = q.scalar_type();
 +  auto k_type = k.scalar_type();
 +  TORCH_CHECK(
@@ -237,14 +244,15 @@ index 0b2cf1a..2f25115 100644
 +      k_scale,
 +      v_scale,
 +      softmax_scale,
-+      num_kv_splits);
++      num_kv_splits,
++      v_tile.value_or(0));
 +
 +  return out;
 +}
  }  // namespace FLASH_NAMESPACE
  
  TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
-@@ -445,6 +673,20 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
+@@ -445,6 +681,20 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
        "varlen_fwd",
        torch::kXPU,
        make_pytorch_shim(&FLASH_NAMESPACE::mha_varlen_fwd));
@@ -257,7 +265,7 @@ index 0b2cf1a..2f25115 100644
 +      "paged_decode_multiq(Tensor q, Tensor k, Tensor v, Tensor!? out, "
 +      "Tensor cu_seqlens_q, Tensor seqused_k, Tensor block_table, "
 +      "int max_seqlen_q, int max_seqlen_k, Tensor? k_scale, Tensor? v_scale, "
-+      "float softmax_scale, int? num_splits) -> Tensor");
++      "float softmax_scale, int? num_splits, int? v_tile) -> Tensor");
 +  ops.impl(
 +      "paged_decode_multiq",
 +      torch::kXPU,
@@ -267,7 +275,7 @@ index 0b2cf1a..2f25115 100644
  REGISTER_EXTENSION(TORCH_EXTENSION_NAME)
 \ No newline at end of file
 diff --git a/csrc/xpu/attn/attn_interface.cpp b/csrc/xpu/attn/attn_interface.cpp
-index 30e5776..cdcf27d 100644
+index 30e5776..dd2ed19 100644
 --- a/csrc/xpu/attn/attn_interface.cpp
 +++ b/csrc/xpu/attn/attn_interface.cpp
 @@ -4,6 +4,7 @@
@@ -278,7 +286,7 @@ index 30e5776..cdcf27d 100644
  #endif
  
  void cutlass_chunk_prefill_interface(
-@@ -134,3 +135,50 @@ void cutlass_paged_decode_interface(
+@@ -134,3 +135,52 @@ void cutlass_paged_decode_interface(
      TORCH_CHECK(false, "Only XE2/XE3 cutlass kernel is supported currently.");
    }
  }
@@ -300,7 +308,8 @@ index 30e5776..cdcf27d 100644
 +    std::optional<const at::Tensor>& k_scale,
 +    std::optional<const at::Tensor>& v_scale,
 +    double sm_scale,
-+    int num_kv_splits) {
++    int num_kv_splits,
++    int v_tile) {
 +  if (vllm::xpu::is_xe2_arch() || vllm::xpu::is_xe3_arch()) {
 +#ifdef VLLM_XPU_ENABLE_XE2
 +    // Use XE2 cutlass kernel (also used as WA for XE3/XE3P)
@@ -321,7 +330,8 @@ index 30e5776..cdcf27d 100644
 +        k_scale,
 +        v_scale,
 +        sm_scale,
-+        num_kv_splits);
++        num_kv_splits,
++        v_tile);
 +#else
 +    TORCH_CHECK(false, "XE2 cutlass kernel is not enabled in this build.");
 +#endif
@@ -330,10 +340,10 @@ index 30e5776..cdcf27d 100644
 +  }
 +}
 diff --git a/csrc/xpu/attn/attn_interface.h b/csrc/xpu/attn/attn_interface.h
-index 7e822d3..986b90a 100644
+index 7e822d3..fc56fbd 100644
 --- a/csrc/xpu/attn/attn_interface.h
 +++ b/csrc/xpu/attn/attn_interface.h
-@@ -54,3 +54,27 @@ void cutlass_paged_decode_interface(
+@@ -54,3 +54,29 @@ void cutlass_paged_decode_interface(
      std::optional<const at::Tensor>& is_prefill,
      std::optional<at::Tensor>& splits_per_seq,
      std::optional<at::Tensor>& work_list);
@@ -360,7 +370,9 @@ index 7e822d3..986b90a 100644
 +    std::optional<const at::Tensor>& k_scale,
 +    std::optional<const at::Tensor>& v_scale,
 +    double sm_scale,
-+    int num_kv_splits);
++    int num_kv_splits,
++    // Per-work-group V/output tile width; 0 = the policy's decode default.
++    int v_tile);
 diff --git a/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf b/csrc/xpu/attn/kernel_configs/chunk_prefill_qwen38.conf
 new file mode 100644
 index 0000000..c1d2321
@@ -1448,12 +1460,30 @@ index 0000000..6c27cce
 +};
 +
 +}  // namespace cutlass::fmha::kernel
+diff --git a/csrc/xpu/attn/xe_2/paged_decode.hpp b/csrc/xpu/attn/xe_2/paged_decode.hpp
+index d31702b..9e6e604 100644
+--- a/csrc/xpu/attn/xe_2/paged_decode.hpp
++++ b/csrc/xpu/attn/xe_2/paged_decode.hpp
+@@ -141,6 +141,13 @@ struct paged_decode_args_t {
+   int64_t q_stride_heads = 0;
+   int64_t q_stride_batch = 0;
+   int page_stride_elements = 0;
++  // Multi-query decode only (paged_decode_multiq): number of V/output columns
++  // one work-group owns. The decode tile scheduler derives
++  // grid.x = ceil_div(head_size_vo, this), so a narrower tile splits the
++  // output columns -- and with them the per-position O accumulators -- across
++  // more work-groups. 0 = keep the policy's own ShapeOut width, which is what
++  // the single-position decode path always uses. Ignored by that path.
++  int multiq_v_tile = 0;
+ };
+ 
+ template <class FMHAKernel, class ReductionSplitKernel, bool isVarLen>
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq.hpp b/csrc/xpu/attn/xe_2/paged_decode_multiq.hpp
 new file mode 100644
-index 0000000..1bd30a8
+index 0000000..069fde0
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq.hpp
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,265 @@
 +#pragma once
 +
 +// Multi-query paged decode ("verify q_len positions of one sequence in one
@@ -1466,6 +1496,41 @@ index 0000000..1bd30a8
 +#include "kernel/paged_decode_multiq_kernel.hpp"
 +
 +using namespace cute;
++
++// V/output tile width override.
++//
++// The per-position O accumulators (FragA, one per verified query position)
++// are the register cost of the one-pass design: they hold
++// q_len * q_packed * ShapeOut_V floats. The decode tile scheduler derives
++// grid.x = ceil_div(head_size_vo, ShapeOut_V), so narrowing ShapeOut_V splits
++// the output columns across more work-groups and divides that accumulator
++// footprint by the same factor, at the cost of re-reading K (and redoing
++// Q*K + softmax) once per column slice. Every column's P*V chain, the softmax
++// and the S arithmetic are untouched, so the result stays bit-identical --
++// this is the same mechanism the decode path already uses for head sizes
++// above 256 (see decode_shapeout_v in fmha_utils.hpp).
++//
++// VTile == 0 keeps the policy's own ShapeOut (the decode default).
++template <typename decode_policy, int VTile>
++struct multiq_shapeout {
++  // Rebuild the shape from the packed-Q *value* (size<0> is how the rest of
++  // the decode code reads it) so no reference type can leak in from get<0>.
++  static constexpr int kQPacked =
++      cute::size<0>(typename decode_policy::ShapeOut{});
++  using type = Shape<cute::Int<kQPacked>, cute::Int<VTile>>;
++};
++
++template <typename decode_policy>
++struct multiq_shapeout<decode_policy, 0> {
++  using type = typename decode_policy::ShapeOut;
++};
++
++// The width a policy uses when VTile == 0, i.e. the decode default. The
++// dispatcher and the CMake generator agree that only VTile < this value is
++// instantiated (a wider or equal request routes to VTile == 0).
++template <typename decode_policy>
++inline constexpr int multiq_default_v =
++    cute::size<1>(typename decode_policy::ShapeOut{});
 +
 +template <
 +    typename TileShapeQK,
@@ -1591,8 +1656,9 @@ index 0000000..1bd30a8
 +  }
 +};
 +
-+// Template function for explicit instantiation (one per enabled policy).
-+template <typename decode_policy>
++// Template function for explicit instantiation (one per enabled policy and
++// instantiated V-tile width).
++template <typename decode_policy, int VTile>
 +void multiq_policy_dispatch_impl(
 +    sycl::queue& queue,
 +    CutlassQKType& cuQKType,
@@ -1603,7 +1669,7 @@ index 0000000..1bd30a8
 +      return PagedDecodeMultiQConfig<
 +          typename decode_policy::ShapeQK,
 +          typename decode_policy::ShapePV,
-+          typename decode_policy::ShapeOut,
++          typename multiq_shapeout<decode_policy, VTile>::type,
 +          typename decode_policy::SubgroupLayoutQK,
 +          void,
 +          PipelineStages,
@@ -1615,7 +1681,7 @@ index 0000000..1bd30a8
 +      return PagedDecodeMultiQConfig<
 +          typename decode_policy::ShapeQK,
 +          typename decode_policy::ShapePV,
-+          typename decode_policy::ShapeOut,
++          typename multiq_shapeout<decode_policy, VTile>::type,
 +          typename decode_policy::SubgroupLayoutQK,
 +          void,
 +          PipelineStages,
@@ -1627,7 +1693,7 @@ index 0000000..1bd30a8
 +      return PagedDecodeMultiQConfig<
 +          typename decode_policy::ShapeQK,
 +          typename decode_policy::ShapePV,
-+          typename decode_policy::ShapeOut,
++          typename multiq_shapeout<decode_policy, VTile>::type,
 +          typename decode_policy::SubgroupLayoutQK,
 +          void,
 +          PipelineStages,
@@ -1641,7 +1707,7 @@ index 0000000..1bd30a8
 +      return PagedDecodeMultiQConfig<
 +          typename decode_policy::ShapeQK,
 +          typename decode_policy::ShapePV,
-+          typename decode_policy::ShapeOut,
++          typename multiq_shapeout<decode_policy, VTile>::type,
 +          typename decode_policy::SubgroupLayoutQK,
 +          void,
 +          PipelineStages,
@@ -1653,7 +1719,7 @@ index 0000000..1bd30a8
 +      return PagedDecodeMultiQConfig<
 +          typename decode_policy::ShapeQK,
 +          typename decode_policy::ShapePV,
-+          typename decode_policy::ShapeOut,
++          typename multiq_shapeout<decode_policy, VTile>::type,
 +          typename decode_policy::SubgroupLayoutQK,
 +          void,
 +          PipelineStages,
@@ -1665,7 +1731,7 @@ index 0000000..1bd30a8
 +      return PagedDecodeMultiQConfig<
 +          typename decode_policy::ShapeQK,
 +          typename decode_policy::ShapePV,
-+          typename decode_policy::ShapeOut,
++          typename multiq_shapeout<decode_policy, VTile>::type,
 +          typename decode_policy::SubgroupLayoutQK,
 +          void,
 +          PipelineStages,
@@ -1685,10 +1751,10 @@ index 0000000..1bd30a8
 +}
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_configure.cmake b/csrc/xpu/attn/xe_2/paged_decode_multiq_configure.cmake
 new file mode 100644
-index 0000000..d1df9b9
+index 0000000..0afb012
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_configure.cmake
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,162 @@
 +# =============================================================================
 +# Multi-query Paged Decode Kernel Configuration
 +# =============================================================================
@@ -1709,7 +1775,11 @@ index 0000000..d1df9b9
 +
 +function(paged_decode_multiq_configure FILENAME_SUFFIX)
 +  set(GEN_MULTIQ_SRCS)
-+  set(MULTIQ_POLICIES)
++  set(MULTIQ_POLICY_PAIRS)
++
++  # Selectable V/output tile widths (columns per work-group). Only widths
++  # narrower than a policy's own ShapeOut produce a distinct kernel.
++  set(vtile_list "64" "128" "256")
 +
 +  # Policies that exist as aliases in paged_decode.hpp. head_size 576 is only
 +  # defined for page sizes 64 and 128.
@@ -1777,29 +1847,57 @@ index 0000000..d1df9b9
 +
 +    set(IMPL_POLICY
 +        "decode_policy_q${IMPL_QGROUP}_h${IMPL_HEADSIZE}_p${IMPL_PAGESIZE}")
-+    list(APPEND MULTIQ_POLICIES "${IMPL_POLICY}")
 +
-+    set(FILE_SUFFIX "_q${IMPL_QGROUP}_h${IMPL_HEADSIZE}_p${IMPL_PAGESIZE}")
-+    configure_file(${FILENAME_SUFFIX}.cpp.in
-+                   "${FILENAME_SUFFIX}${FILE_SUFFIX}.cpp")
-+    list(APPEND GEN_MULTIQ_SRCS
-+         "${CMAKE_CURRENT_BINARY_DIR}/${FILENAME_SUFFIX}${FILE_SUFFIX}.cpp")
++    # Width the policy uses when IMPL_VTILE is 0, i.e. decode_shapeout_v() from
++    # fmha_utils.hpp: the head size, capped by kDecodeAccBudget / q_packed and
++    # by 256 above head 256. Only strictly narrower widths are separate kernels;
++    # a request for this width (or 0) routes to the 0 variant.
++    # multiq_policy_dispatch_func() applies the same rule.
++    if(IMPL_HEADSIZE LESS_EQUAL 256)
++      set(DEFAULT_VTILE ${IMPL_HEADSIZE})
++    else()
++      math(EXPR DEFAULT_VTILE "2048 / ${IMPL_QGROUP}")
++      if(DEFAULT_VTILE GREATER 256)
++        set(DEFAULT_VTILE 256)
++      endif()
++    endif()
++
++    set(VTILE_LIST "0")
++    foreach(_v ${vtile_list})
++      if(_v LESS DEFAULT_VTILE)
++        list(APPEND VTILE_LIST "${_v}")
++      endif()
++    endforeach()
++
++    foreach(IMPL_VTILE ${VTILE_LIST})
++      list(APPEND MULTIQ_POLICY_PAIRS "${IMPL_POLICY}|${IMPL_VTILE}")
++
++      set(FILE_SUFFIX
++          "_q${IMPL_QGROUP}_h${IMPL_HEADSIZE}_p${IMPL_PAGESIZE}_v${IMPL_VTILE}")
++      configure_file(${FILENAME_SUFFIX}.cpp.in
++                     "${FILENAME_SUFFIX}${FILE_SUFFIX}.cpp")
++      list(APPEND GEN_MULTIQ_SRCS
++           "${CMAKE_CURRENT_BINARY_DIR}/${FILENAME_SUFFIX}${FILE_SUFFIX}.cpp")
++    endforeach()
 +  endforeach()
 +
-+  list(REMOVE_DUPLICATES MULTIQ_POLICIES)
++  list(REMOVE_DUPLICATES MULTIQ_POLICY_PAIRS)
 +
-+  # X-macro list for the extern header
++  # X-macro list for the extern header: X(policy, vtile)
 +  set(MULTIQ_POLICY_LIST_ENTRIES "")
-+  list(LENGTH MULTIQ_POLICIES _num_policies)
-+  math(EXPR _last_idx "${_num_policies} - 1")
++  list(LENGTH MULTIQ_POLICY_PAIRS _num_pairs)
++  math(EXPR _last_idx "${_num_pairs} - 1")
 +  set(_idx 0)
-+  foreach(_pol ${MULTIQ_POLICIES})
++  foreach(_pair ${MULTIQ_POLICY_PAIRS})
++    string(REPLACE "|" ";" _pair_parts "${_pair}")
++    list(GET _pair_parts 0 _pol)
++    list(GET _pair_parts 1 _vt)
 +    if(_idx EQUAL _last_idx)
 +      set(MULTIQ_POLICY_LIST_ENTRIES
-+          "${MULTIQ_POLICY_LIST_ENTRIES}  X(${_pol})\n")
++          "${MULTIQ_POLICY_LIST_ENTRIES}  X(${_pol}, ${_vt})\n")
 +    else()
 +      set(MULTIQ_POLICY_LIST_ENTRIES
-+          "${MULTIQ_POLICY_LIST_ENTRIES}  X(${_pol}) \\\n")
++          "${MULTIQ_POLICY_LIST_ENTRIES}  X(${_pol}, ${_vt}) \\\n")
 +    endif()
 +    math(EXPR _idx "${_idx} + 1")
 +  endforeach()
@@ -1821,10 +1919,10 @@ index 0000000..d1df9b9
 +endfunction()
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp
 new file mode 100644
-index 0000000..b3a18ac
+index 0000000..5a96435
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,145 @@
 +#pragma once
 +
 +#include "paged_decode_multiq.hpp"
@@ -1833,71 +1931,138 @@ index 0000000..b3a18ac
 +// Fallback extern template declarations for the multi-query decode kernel
 +// =============================================================================
 +// Used only when CMake has not generated paged_decode_multiq_extern_gen.hpp
-+// (e.g. IDE indexing). The generated header lists exactly the policies the
-+// build enables.
++// (e.g. IDE indexing). The generated header lists exactly the (policy,
++// V-tile) pairs the build enables.
 +//
 +// The multi-query kernel has no causal/local/sink dimensions: causality is
-+// expressed through the per-position KV limits, so there is one instantiation
-+// per policy.
++// expressed through the per-position KV limits. The second entry of each pair
++// is the V/output tile width (0 = the policy's own ShapeOut, i.e. the decode
++// default); narrower widths split the output columns across grid.x.
 +
 +#define PAGED_DECODE_MULTIQ_POLICY_LIST(X) \
-+  X(decode_policy_q8_h64_p64)              \
-+  X(decode_policy_q8_h96_p64)              \
-+  X(decode_policy_q8_h128_p64)             \
-+  X(decode_policy_q8_h192_p64)             \
-+  X(decode_policy_q8_h256_p64)             \
-+  X(decode_policy_q8_h512_p64)             \
-+  X(decode_policy_q8_h576_p64)             \
-+  X(decode_policy_q16_h64_p64)             \
-+  X(decode_policy_q16_h96_p64)             \
-+  X(decode_policy_q16_h128_p64)            \
-+  X(decode_policy_q16_h192_p64)            \
-+  X(decode_policy_q16_h256_p64)            \
-+  X(decode_policy_q16_h512_p64)            \
-+  X(decode_policy_q16_h576_p64)            \
-+  X(decode_policy_q8_h64_p128)             \
-+  X(decode_policy_q8_h96_p128)             \
-+  X(decode_policy_q8_h128_p128)            \
-+  X(decode_policy_q8_h192_p128)            \
-+  X(decode_policy_q8_h256_p128)            \
-+  X(decode_policy_q8_h512_p128)            \
-+  X(decode_policy_q8_h576_p128)            \
-+  X(decode_policy_q16_h64_p128)            \
-+  X(decode_policy_q16_h96_p128)            \
-+  X(decode_policy_q16_h128_p128)           \
-+  X(decode_policy_q16_h192_p128)           \
-+  X(decode_policy_q16_h256_p128)           \
-+  X(decode_policy_q16_h512_p128)           \
-+  X(decode_policy_q16_h576_p128)           \
-+  X(decode_policy_q8_h64_p16)              \
-+  X(decode_policy_q8_h96_p16)              \
-+  X(decode_policy_q8_h128_p16)             \
-+  X(decode_policy_q8_h192_p16)             \
-+  X(decode_policy_q8_h256_p16)             \
-+  X(decode_policy_q8_h512_p16)             \
-+  X(decode_policy_q16_h64_p16)             \
-+  X(decode_policy_q16_h96_p16)             \
-+  X(decode_policy_q16_h128_p16)            \
-+  X(decode_policy_q16_h192_p16)            \
-+  X(decode_policy_q16_h256_p16)            \
-+  X(decode_policy_q16_h512_p16)            \
-+  X(decode_policy_q8_h64_p32)              \
-+  X(decode_policy_q8_h96_p32)              \
-+  X(decode_policy_q8_h128_p32)             \
-+  X(decode_policy_q8_h192_p32)             \
-+  X(decode_policy_q8_h256_p32)             \
-+  X(decode_policy_q8_h512_p32)             \
-+  X(decode_policy_q16_h64_p32)             \
-+  X(decode_policy_q16_h96_p32)             \
-+  X(decode_policy_q16_h128_p32)            \
-+  X(decode_policy_q16_h192_p32)            \
-+  X(decode_policy_q16_h256_p32)            \
-+  X(decode_policy_q16_h512_p32)
++  X(decode_policy_q8_h64_p64, 0)           \
++  X(decode_policy_q8_h96_p64, 0)           \
++  X(decode_policy_q8_h96_p64, 64)          \
++  X(decode_policy_q8_h128_p64, 0)          \
++  X(decode_policy_q8_h128_p64, 64)         \
++  X(decode_policy_q8_h192_p64, 0)          \
++  X(decode_policy_q8_h192_p64, 64)         \
++  X(decode_policy_q8_h192_p64, 128)        \
++  X(decode_policy_q8_h256_p64, 0)          \
++  X(decode_policy_q8_h256_p64, 64)         \
++  X(decode_policy_q8_h256_p64, 128)        \
++  X(decode_policy_q8_h512_p64, 0)          \
++  X(decode_policy_q8_h512_p64, 64)         \
++  X(decode_policy_q8_h512_p64, 128)        \
++  X(decode_policy_q8_h576_p64, 0)          \
++  X(decode_policy_q8_h576_p64, 64)         \
++  X(decode_policy_q8_h576_p64, 128)        \
++  X(decode_policy_q16_h64_p64, 0)          \
++  X(decode_policy_q16_h96_p64, 0)          \
++  X(decode_policy_q16_h96_p64, 64)         \
++  X(decode_policy_q16_h128_p64, 0)         \
++  X(decode_policy_q16_h128_p64, 64)        \
++  X(decode_policy_q16_h192_p64, 0)         \
++  X(decode_policy_q16_h192_p64, 64)        \
++  X(decode_policy_q16_h192_p64, 128)       \
++  X(decode_policy_q16_h256_p64, 0)         \
++  X(decode_policy_q16_h256_p64, 64)        \
++  X(decode_policy_q16_h256_p64, 128)       \
++  X(decode_policy_q16_h512_p64, 0)         \
++  X(decode_policy_q16_h512_p64, 64)        \
++  X(decode_policy_q16_h576_p64, 0)         \
++  X(decode_policy_q16_h576_p64, 64)        \
++  X(decode_policy_q8_h64_p128, 0)          \
++  X(decode_policy_q8_h96_p128, 0)          \
++  X(decode_policy_q8_h96_p128, 64)         \
++  X(decode_policy_q8_h128_p128, 0)         \
++  X(decode_policy_q8_h128_p128, 64)        \
++  X(decode_policy_q8_h192_p128, 0)         \
++  X(decode_policy_q8_h192_p128, 64)        \
++  X(decode_policy_q8_h192_p128, 128)       \
++  X(decode_policy_q8_h256_p128, 0)         \
++  X(decode_policy_q8_h256_p128, 64)        \
++  X(decode_policy_q8_h256_p128, 128)       \
++  X(decode_policy_q8_h512_p128, 0)         \
++  X(decode_policy_q8_h512_p128, 64)        \
++  X(decode_policy_q8_h512_p128, 128)       \
++  X(decode_policy_q8_h576_p128, 0)         \
++  X(decode_policy_q8_h576_p128, 64)        \
++  X(decode_policy_q8_h576_p128, 128)       \
++  X(decode_policy_q16_h64_p128, 0)         \
++  X(decode_policy_q16_h96_p128, 0)         \
++  X(decode_policy_q16_h96_p128, 64)        \
++  X(decode_policy_q16_h128_p128, 0)        \
++  X(decode_policy_q16_h128_p128, 64)       \
++  X(decode_policy_q16_h192_p128, 0)        \
++  X(decode_policy_q16_h192_p128, 64)       \
++  X(decode_policy_q16_h192_p128, 128)      \
++  X(decode_policy_q16_h256_p128, 0)        \
++  X(decode_policy_q16_h256_p128, 64)       \
++  X(decode_policy_q16_h256_p128, 128)      \
++  X(decode_policy_q16_h512_p128, 0)        \
++  X(decode_policy_q16_h512_p128, 64)       \
++  X(decode_policy_q16_h576_p128, 0)        \
++  X(decode_policy_q16_h576_p128, 64)       \
++  X(decode_policy_q8_h64_p16, 0)           \
++  X(decode_policy_q8_h96_p16, 0)           \
++  X(decode_policy_q8_h96_p16, 64)          \
++  X(decode_policy_q8_h128_p16, 0)          \
++  X(decode_policy_q8_h128_p16, 64)         \
++  X(decode_policy_q8_h192_p16, 0)          \
++  X(decode_policy_q8_h192_p16, 64)         \
++  X(decode_policy_q8_h192_p16, 128)        \
++  X(decode_policy_q8_h256_p16, 0)          \
++  X(decode_policy_q8_h256_p16, 64)         \
++  X(decode_policy_q8_h256_p16, 128)        \
++  X(decode_policy_q8_h512_p16, 0)          \
++  X(decode_policy_q8_h512_p16, 64)         \
++  X(decode_policy_q8_h512_p16, 128)        \
++  X(decode_policy_q16_h64_p16, 0)          \
++  X(decode_policy_q16_h96_p16, 0)          \
++  X(decode_policy_q16_h96_p16, 64)         \
++  X(decode_policy_q16_h128_p16, 0)         \
++  X(decode_policy_q16_h128_p16, 64)        \
++  X(decode_policy_q16_h192_p16, 0)         \
++  X(decode_policy_q16_h192_p16, 64)        \
++  X(decode_policy_q16_h192_p16, 128)       \
++  X(decode_policy_q16_h256_p16, 0)         \
++  X(decode_policy_q16_h256_p16, 64)        \
++  X(decode_policy_q16_h256_p16, 128)       \
++  X(decode_policy_q16_h512_p16, 0)         \
++  X(decode_policy_q16_h512_p16, 64)        \
++  X(decode_policy_q8_h64_p32, 0)           \
++  X(decode_policy_q8_h96_p32, 0)           \
++  X(decode_policy_q8_h96_p32, 64)          \
++  X(decode_policy_q8_h128_p32, 0)          \
++  X(decode_policy_q8_h128_p32, 64)         \
++  X(decode_policy_q8_h192_p32, 0)          \
++  X(decode_policy_q8_h192_p32, 64)         \
++  X(decode_policy_q8_h192_p32, 128)        \
++  X(decode_policy_q8_h256_p32, 0)          \
++  X(decode_policy_q8_h256_p32, 64)         \
++  X(decode_policy_q8_h256_p32, 128)        \
++  X(decode_policy_q8_h512_p32, 0)          \
++  X(decode_policy_q8_h512_p32, 64)         \
++  X(decode_policy_q8_h512_p32, 128)        \
++  X(decode_policy_q16_h64_p32, 0)          \
++  X(decode_policy_q16_h96_p32, 0)          \
++  X(decode_policy_q16_h96_p32, 64)         \
++  X(decode_policy_q16_h128_p32, 0)         \
++  X(decode_policy_q16_h128_p32, 64)        \
++  X(decode_policy_q16_h192_p32, 0)         \
++  X(decode_policy_q16_h192_p32, 64)        \
++  X(decode_policy_q16_h192_p32, 128)       \
++  X(decode_policy_q16_h256_p32, 0)         \
++  X(decode_policy_q16_h256_p32, 64)        \
++  X(decode_policy_q16_h256_p32, 128)       \
++  X(decode_policy_q16_h512_p32, 0)         \
++  X(decode_policy_q16_h512_p32, 64)
 +
-+#define DECLARE_MULTIQ_DISPATCH_EXTERN(POLICY)              \
-+  extern template void multiq_policy_dispatch_impl<POLICY>( \
-+      sycl::queue & queue,                                  \
-+      CutlassQKType & cuQKType,                             \
++#define DECLARE_MULTIQ_DISPATCH_EXTERN(POLICY, VTILE)              \
++  extern template void multiq_policy_dispatch_impl<POLICY, VTILE>( \
++      sycl::queue & queue,                                         \
++      CutlassQKType & cuQKType,                                    \
 +      const paged_decode_args_t& args);
 +
 +PAGED_DECODE_MULTIQ_POLICY_LIST(DECLARE_MULTIQ_DISPATCH_EXTERN)
@@ -1905,10 +2070,10 @@ index 0000000..b3a18ac
 +#undef DECLARE_MULTIQ_DISPATCH_EXTERN
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp.in b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp.in
 new file mode 100644
-index 0000000..4b6b508
+index 0000000..92519db
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_extern.hpp.in
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,33 @@
 +#pragma once
 +
 +// =============================================================================
@@ -1924,16 +2089,19 @@ index 0000000..4b6b508
 +#include "paged_decode_multiq.hpp"
 +
 +// =============================================================================
-+// Enabled policies (from config; the multi-query kernel has no causal/local/
-+// sink dimensions, so there is one instantiation per policy)
++// Enabled (policy, V-tile) pairs (from config)
 +// =============================================================================
++// The multi-query kernel has no causal/local/sink dimensions. The second
++// entry is the V/output tile width one work-group owns: 0 is the policy's own
++// ShapeOut (the decode default) and narrower widths split the output columns
++// across grid.x, shrinking the per-position accumulators.
 +#define PAGED_DECODE_MULTIQ_POLICY_LIST(X) \
 +@MULTIQ_POLICY_LIST_ENTRIES@
 +
-+#define DECLARE_MULTIQ_DISPATCH_EXTERN(POLICY)              \
-+  extern template void multiq_policy_dispatch_impl<POLICY>( \
-+      sycl::queue & queue,                                  \
-+      CutlassQKType & cuQKType,                             \
++#define DECLARE_MULTIQ_DISPATCH_EXTERN(POLICY, VTILE)              \
++  extern template void multiq_policy_dispatch_impl<POLICY, VTILE>( \
++      sycl::queue & queue,                                         \
++      CutlassQKType & cuQKType,                                    \
 +      const paged_decode_args_t& args);
 +
 +PAGED_DECODE_MULTIQ_POLICY_LIST(DECLARE_MULTIQ_DISPATCH_EXTERN)
@@ -1941,10 +2109,10 @@ index 0000000..4b6b508
 +#undef DECLARE_MULTIQ_DISPATCH_EXTERN
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_kernel_template.cpp.in b/csrc/xpu/attn/xe_2/paged_decode_multiq_kernel_template.cpp.in
 new file mode 100644
-index 0000000..98a95f2
+index 0000000..6160144
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_kernel_template.cpp.in
-@@ -0,0 +1,23 @@
+@@ -0,0 +1,26 @@
 +#include "paged_decode_multiq.hpp"
 +
 +using namespace cute;
@@ -1953,27 +2121,30 @@ index 0000000..98a95f2
 +// CMake Template Variables
 +// =============================================================================
 +// Populated by CMake during configuration to generate one multi-query decode
-+// kernel instantiation per enabled policy. The multi-query path is always
-+// non-causal / non-local / non-sink (causality comes from the per-position KV
-+// limits), so there are no boolean template dimensions here.
++// kernel instantiation per (policy, V-tile) pair. The multi-query path is
++// always non-causal / non-local / non-sink (causality comes from the
++// per-position KV limits), so there are no boolean template dimensions here.
++// IMPL_VTILE is the number of V/output columns one work-group owns; 0 keeps
++// the policy's own ShapeOut (the decode default).
 +
 +// clang-format off
 +#define IMPL_POLICY ${IMPL_POLICY}
++#define IMPL_VTILE ${IMPL_VTILE}
 +// clang-format on
 +
-+#define INSTANTIATE_MULTIQ_KERNEL()                 \
-+  template void multiq_policy_dispatch_impl<IMPL_POLICY>( \
-+      sycl::queue & queue,                          \
-+      CutlassQKType & cuQKType,                     \
++#define INSTANTIATE_MULTIQ_KERNEL()                             \
++  template void multiq_policy_dispatch_impl<IMPL_POLICY, IMPL_VTILE>( \
++      sycl::queue & queue,                                      \
++      CutlassQKType & cuQKType,                                 \
 +      const paged_decode_args_t& args);
 +
 +INSTANTIATE_MULTIQ_KERNEL()
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_utils.hpp b/csrc/xpu/attn/xe_2/paged_decode_multiq_utils.hpp
 new file mode 100644
-index 0000000..5bdc787
+index 0000000..1ebe131
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_utils.hpp
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,153 @@
 +#pragma once
 +
 +#include "paged_decode_multiq.hpp"
@@ -2009,7 +2180,49 @@ index 0000000..5bdc787
 +        ",false,false,false\n\nThen rebuild:\n"
 +        "  VLLM_PAGED_DECODE_CONFIG=paged_decode_default.conf pip install .\n");
 +  } else {
-+    multiq_policy_dispatch_impl<decode_policy>(queue, cuQKType, args);
++    // V-tile selection. Only widths narrower than the policy's own ShapeOut
++    // are separate kernels; 0 and the policy width are the same kernel. The
++    // `if constexpr` guards must match the generator's rule
++    // (paged_decode_multiq_configure.cmake emits VTile < default width), or
++    // this would reference an instantiation that was never emitted.
++    constexpr int kDefaultV = multiq_default_v<decode_policy>;
++    const int v_tile = args.multiq_v_tile;
++
++    if (v_tile == 0 || v_tile == kDefaultV) {
++      multiq_policy_dispatch_impl<decode_policy, 0>(queue, cuQKType, args);
++      return;
++    }
++    if constexpr (64 < kDefaultV) {
++      if (v_tile == 64) {
++        multiq_policy_dispatch_impl<decode_policy, 64>(queue, cuQKType, args);
++        return;
++      }
++    }
++    if constexpr (128 < kDefaultV) {
++      if (v_tile == 128) {
++        multiq_policy_dispatch_impl<decode_policy, 128>(queue, cuQKType, args);
++        return;
++      }
++    }
++    if constexpr (256 < kDefaultV) {
++      if (v_tile == 256) {
++        multiq_policy_dispatch_impl<decode_policy, 256>(queue, cuQKType, args);
++        return;
++      }
++    }
++    TORCH_CHECK(
++        false,
++        "paged_decode_multiq: v_tile=",
++        v_tile,
++        " is not compiled for policy (q_packed=",
++        _qgroup,
++        ", head=",
++        _head_sz,
++        ", page=",
++        _page_sz,
++        "). Compiled widths: 0 (= ",
++        kDefaultV,
++        ", the decode default) and every value of {64, 128, 256} below it.");
 +  }
 +}
 +
@@ -2087,10 +2300,10 @@ index 0000000..5bdc787
 +}
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.cpp b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.cpp
 new file mode 100644
-index 0000000..a18eed1
+index 0000000..6c04d82
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.cpp
-@@ -0,0 +1,207 @@
+@@ -0,0 +1,225 @@
 +#include "paged_decode_multiq_xe2.h"
 +#include "paged_decode_multiq_utils.hpp"
 +// Use the generated extern header (only declares enabled policies)
@@ -2135,7 +2348,8 @@ index 0000000..a18eed1
 +    std::optional<const at::Tensor>& k_scale,
 +    std::optional<const at::Tensor>& v_scale,
 +    double sm_scale,
-+    int num_kv_splits) {
++    int num_kv_splits,
++    int v_tile) {
 +  bool is_fp8_kv = key_cache.scalar_type() == at::ScalarType::Float8_e5m2 ||
 +                   key_cache.scalar_type() == at::ScalarType::Float8_e4m3fn;
 +  if (is_fp8_kv) {
@@ -2183,6 +2397,21 @@ index 0000000..a18eed1
 +      " max_seqlen_q=",
 +      max_seqlen_q,
 +      ")");
++
++  // V/output tile width: 0 keeps the policy's own ShapeOut (what the decode
++  // path uses); a narrower width splits the output columns across grid.x so
++  // each work-group holds only its slice of the per-position accumulators.
++  TORCH_CHECK(
++      v_tile == 0 || v_tile == 64 || v_tile == 128 || v_tile == 256,
++      "paged_decode_multiq: v_tile must be 0 (policy default), 64, 128 or "
++      "256, got ",
++      v_tile);
++  TORCH_CHECK(
++      v_tile == 0 || v_head_size % v_tile == 0,
++      "paged_decode_multiq: v_tile=",
++      v_tile,
++      " must divide head_size_vo=",
++      v_head_size);
 +
 +  int page_stride_elements =
 +      static_cast<int>(get_paged_kv_cache_page_stride_elements(key_cache));
@@ -2237,6 +2466,8 @@ index 0000000..a18eed1
 +      query.stride(1),
 +      int64_t{0},
 +      page_stride_elements};
++
++  args.multiq_v_tile = v_tile;
 +
 +  // For non-contiguous paged KV (e.g., cross-layer KV cache), enlarge
 +  // total_seqlen_k to cover the full physical extent for the 2D block load
@@ -2300,10 +2531,10 @@ index 0000000..a18eed1
 +}
 diff --git a/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.h b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.h
 new file mode 100644
-index 0000000..92c2e45
+index 0000000..4a0c4b7
 --- /dev/null
 +++ b/csrc/xpu/attn/xe_2/paged_decode_multiq_xe2.h
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,26 @@
 +#include <torch/all.h>
 +
 +// Multi-query paged decode: verify max_seqlen_q consecutive positions of each
@@ -2327,7 +2558,9 @@ index 0000000..92c2e45
 +    std::optional<const at::Tensor>& k_scale,
 +    std::optional<const at::Tensor>& v_scale,
 +    double sm_scale,
-+    int num_kv_splits);
++    int num_kv_splits,
++    // Per-work-group V/output tile width; 0 = the policy's decode default.
++    int v_tile);
 diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
 index 445ff26..952f9e1 100644
 --- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
