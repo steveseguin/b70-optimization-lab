@@ -38,6 +38,9 @@ file must have sha256 `ebb89aa1651e681f49461fe539bf2eb6fba0143c2733e5ad9cef438d4
 
 ## Step 2 -- the CPU host-memory profile, under the watchdog (safe now, service up)
 
+**Done, and it is a GO -- but only after the loader was replaced.** The history is below; the
+commands as they stand now are:
+
 ```bash
 /mnt/fast-ai/venvs/minimax-h3-cpu/bin/python profile-encoder-load.py \
     --json /mnt/fast-ai/bench-results/minimax-h3/host-mem/encoder.json
@@ -46,30 +49,82 @@ file must have sha256 `ebb89aa1651e681f49461fe539bf2eb6fba0143c2733e5ad9cef438d4
 ```
 
 Both arm `mem-watchdog.sh` on their own pid at a 2048 MiB floor, in their own process group. Both
-stop at 6 GiB of tensor bytes by default -- enough to see the curve, nowhere near the host limit.
-Optional third run, `--drop-pagecache`, answers whether `B70_H3_DROP_PAGECACHE=1` is worth using in
-the real load.
+default to the `pread` loader (`--loader mmap` re-runs the old path for the A/B) and stop at 6 GiB
+of tensor bytes -- enough to see the curve, nowhere near the host limit.
 
-**Preliminary reading, taken while the FP8 service was up (partial, 1.8 GiB of the encoder, so NOT
-the gate measurement): peak anon+file 3.114 GiB, RssAnon 1.593 GiB, RssFile 1.873 GiB.** The shape
-is what a streaming loader should look like: the peak is one tensor's worth of anon plus the same
-tensor's worth of page cache, and the largest single tensor in the encoder is
-`model.embed_tokens.weight` at 1.556 GB. If the full pass agrees, the loader was never the problem
--- the cgroup ceiling was.
+### Sessions 6 and 7: NO-GO on the mmap loader
+
+`/mnt/fast-ai/bench-results/minimax-h3-s6-20260918/` (plain) and `-s7-` (`--drop-pagecache`), both
+at the 6 GiB budget, `safetensors.safe_open`:
+
+| Run | RssAnon | RssFile | GO/NO-GO (`max(anon+file, VmHWM)`) | Verdict |
+| --- | --- | --- | --- | --- |
+| s6 encoder | 1.661 GiB | 6.291 GiB | **6.634 GiB** | NO-GO |
+| s7 encoder, `--drop-pagecache` | 1.661 GiB | 6.352 GiB | **6.695 GiB** | NO-GO |
+| s6 denoiser | 0.499 GiB | 3.906 GiB | 4.192 GiB | under, but on the same curve |
+| s7 denoiser, `--drop-pagecache` | 0.499 GiB | 3.977 GiB | 4.260 GiB | under, but on the same curve |
+
+RssAnon was never the problem: it peaked at one tensor's worth (the encoder's largest tensor is
+`model.embed_tokens.weight`, 1.556 GB) and came straight back down, which is what a streaming
+loader should do. **RssFile was the problem, and it grew with every byte touched** -- 6.29 GiB at a
+6 GiB budget, i.e. on the full files it would reach 27 GB for the encoder and 40 GB for the
+denoiser. `--drop-pagecache` made it *worse*, not better, and that is the diagnosis: a `safe_open`
+handle keeps the whole file mapped for its lifetime, and `posix_fadvise(DONTNEED)` cannot evict a
+page that is still mapped. Mapped file pages are reclaimable, so this is not an OOM -- it is worse
+for us: the kernel reclaims them through rmap under a streaming read, and sustained reclaim is
+exactly the memory PRESSURE `systemd-oomd` kills the user's whole session on
+([the incident](../../qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md)).
+
+### The fix: `B70_H3_LOADER=pread` (the default since 2026-09-18)
+
+Both load loops in `run_h3_t2v.py` now go through `open_tensor_reader()`. The `pread` reader parses
+the safetensors header once, `os.pread`s each tensor's byte range into a private buffer,
+`torch.frombuffer(...).view(dtype).reshape(shape)` re-labels it, the caller copies it to its card,
+and `release()` then `posix_fadvise(DONTNEED)`s *that range only* -- which works, because nothing
+maps it. Row slices are contiguous byte ranges, so the qkv split now reads a third of `qkv_proj`
+three times instead of the whole tensor three times. `B70_H3_LOADER=mmap` restores the old path.
+`scripts/test_tensor_reader.py` is the guard that the swap changed only where the bytes live:
+`torch.equal`, bitwise, against `safe_open` for every dtype both checkpoints use (BF16/F16/F32/I8/
+U8/BOOL/I64), for leading-row slices, and for real safetensors files on disk.
+
+### Session 8: GO
+
+`/mnt/fast-ai/bench-results/minimax-h3-s8-20260918/`, `--max-bytes 2` (the FP8 service was up and
+holding ~10 GiB, so the budget was cut to 2 GiB; the curve is flat, so the budget does not change
+the peak), same script, same watchdog, both loaders:
+
+| Loop | Loader | RssAnon | RssFile | VmHWM | GO/NO-GO |
+| --- | --- | --- | --- | --- | --- |
+| encoder | **pread** | 1.593 GiB | **0.070 GiB** | 1.663 GiB | **1.663 GiB -- GO** |
+| encoder | mmap | 1.593 GiB | 2.081 GiB | 3.114 GiB | 3.115 GiB |
+| denoiser | **pread** | 0.720 GiB | **0.073 GiB** | 0.791 GiB | **0.792 GiB -- GO** |
+| denoiser | mmap | 0.432 GiB | 2.053 GiB | 2.483 GiB | 2.485 GiB |
+
+Read it in one line: **on the mmap loader RssFile equals the bytes read (2.05-2.08 GiB of a 2 GiB
+budget); on the pread loader it is 0.07 GiB and does not move**, and 0.07 GiB is the interpreter
+and torch's own shared objects, not the checkpoint. The peak is now one tensor's worth of anon and
+nothing else, so it is bounded by the largest tensor in the file and **not** by the file's size --
+the number above is the number for the full 27 GB and 40 GB passes too.
+
+The denoiser's RssAnon goes up (0.432 -> 0.720 GiB) and that is honest: the mmap path could slice
+and `torch.cat` straight out of the mapping, while pread holds a real buffer for the source rows
+*and* the `cat`/`contiguous` copy at the same time. Paying 0.29 GiB of anon to not pay 2 GiB (and
+rising to 40) of mapped page cache is the trade, and the peak is still one tensor's worth.
 
 ### The go/no-go rule
 
-> **GO if the encoder profile's peak RSS + RssFile is under 6 GiB. NO-GO otherwise.**
+> **GO if the encoder profile's peak RSS + RssFile is under 6 GiB, on the `pread` loader.**
+> **NO-GO otherwise.**
 
 The script prints exactly that number as `GO/NO-GO NUMBER` (`max(peak anon+file, VmHWM)`; VmHWM
 catches any transient a sample missed). 6 GiB is the honest budget: the FP8 service is down for the
 run, so the host has roughly 13-14 GiB available, the watchdog floor takes 2 GiB, the XPU runtime
 and the rest of the process take a few, and anything under 6 GiB leaves the margin that the
-2026-09-17 run did not have.
+2026-09-17 run did not have. **Status: GO at 1.663 GiB (encoder) and 0.792 GiB (denoiser).**
 
-**On NO-GO the loader changes before the run does** -- dequantize and copy each Linear to the card
-without ever holding a host-side copy of more than one tensor, and/or turn on
-`B70_H3_DROP_PAGECACHE=1` to keep the mmap page cache down. NO-GO does not mean "try it and watch".
+**On NO-GO the loader changes before the run does.** That is what happened here: sessions 6/7 were
+a NO-GO, the loader was replaced, and session 8 re-measured. NO-GO does not mean "try it and
+watch".
 
 ## Step 3 -- stop the service (user-authorized session script only)
 
@@ -131,9 +186,9 @@ already in use` because `serve.py` binds without `SO_REUSEADDR`.
 
 ## What a pass looks like
 
-* **Step 2:** `GO/NO-GO NUMBER` under 6 GiB on the encoder profile, and the per-tensor curve flat --
-  RssAnon returning to its baseline after each tensor instead of climbing. The denoiser profile
-  lower still (largest tensor 308 MB).
+* **Step 2:** done -- `GO/NO-GO NUMBER` 1.663 GiB on the encoder and 0.792 GiB on the denoiser,
+  `pread` loader, with the per-tensor curve flat: RssAnon returns to its baseline after each tensor
+  instead of climbing, and RssFile never moves off 0.07 GiB. Re-run it if the loader changes again.
 * **Step 4:** the run reaches `write` and exits 0. `receipt.json` exists with per-phase timings,
   per-card peak allocated/reserved for each phase, host peak RSS, and the four hashes. `clip.mp4`
   is 124 frames at 24 fps with audio. The watchdog log ends with `pid ... exited on its own` and a
@@ -149,7 +204,8 @@ and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`).
 
 | Symptom | What it means | What to do |
 | --- | --- | --- |
-| Step 2 prints a GO/NO-GO number >= 6 GiB | the loader really does hold a large host-side footprint | **NO-GO.** Fix the loader (stream per Linear, `B70_H3_DROP_PAGECACHE=1`), re-measure. Do not run on the GPU. |
+| Step 2 prints a GO/NO-GO number >= 6 GiB | the loader really does hold a large host-side footprint | **NO-GO.** Fix the loader, re-measure. Do not run on the GPU. This is not hypothetical: it is what sessions 6/7 printed, and the `pread` loader is the fix that followed. |
+| Step 2's RssFile climbs with the bytes read | something re-introduced a mapping -- check `B70_H3_LOADER` really is `pread` | **NO-GO**, same rule |
 | `smoke_h3.sh` exits 4 with PREFLIGHT FAIL | service, container or another lane is still resident | stop nothing yourself; the run waits for the user's decision |
 | The run dies and `*.watchdog.log` has a `KILL pid=` line | **we ran out of host RAM and our watchdog caught it** -- the desired failure | record the low MemAvailable and the phase it died in; this is a loader result, not a GPU result. Do not retry unchanged. |
 | The run dies with no `KILL` line and no output after `encode.load` | the 2026-09-17 failure mode repeating, i.e. something outside our cgroup | check `oomctl` and `journalctl -k`; stop the lane and write it up before anything else |

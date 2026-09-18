@@ -2,7 +2,7 @@
 """Measure the HOST-memory footprint of `run_h3_t2v.py`'s loaders, on CPU, with a byte budget.
 
     /mnt/fast-ai/venvs/minimax-h3-cpu/bin/python profile-encoder-load.py [--denoiser]
-        [--max-bytes GIB] [--max-tensors N] [--every N] [--no-force-copy]
+        [--loader pread|mmap] [--max-bytes GIB] [--max-tensors N] [--every N] [--no-force-copy]
         [--drop-pagecache] [--json OUT] [--min-avail-mib MIB] [--no-watchdog]
 
 Why
@@ -31,16 +31,31 @@ The two loops of `run_h3_t2v.py`, in their real order, with their real per-tenso
   order with the same row slice, the same SwiGLU half swap, the same `target_dtype()` and the same
   `.contiguous()`.
 
+Which loader
+------------
+`--loader` (default: whatever `B70_H3_LOADER` says, which itself defaults to `pread`) selects the
+same two tensor readers `run_h3_t2v.py` uses, through the same `open_tensor_reader`:
+
+* `pread` -- the header is parsed once and each tensor's byte range is `os.pread`-ed into a private
+  buffer, which is then released with `posix_fadvise(DONTNEED)`.  Nothing is mapped, so RssFile
+  stays flat and the host cost is one tensor at a time.
+* `mmap` -- the old `safetensors.safe_open` path.  Sessions 6 and 7 measured it: RssAnon peaked
+  where a streaming loader should (1.661 GiB encoder / 0.499 GiB denoiser) but RssFile tracked
+  every byte touched -- 6.291 GiB at a 6 GiB budget, 6.352 GiB with `--drop-pagecache`, which is
+  to say the drop did nothing, because `posix_fadvise` cannot evict a page the handle still maps.
+
 Two honest differences from the real load, both of which make this an UPPER bound on host bytes:
 
 1. There is no model skeleton, so the real loader's `if name not in live: continue` cannot be
    evaluated; every checkpoint tensor is processed. A real load can only touch fewer.
-2. The real `.to(device="xpu:N")` allocates on the card and reads every source byte through the
-   mmap. On CPU, `.to(device="cpu")` is a no-op alias that touches nothing, which would measure
-   zero. So each tensor is materialized with `.clone()` (`--force-copy`, the default): one real
-   read of the mmap pages plus one real host allocation of the tensor's bytes -- the closest CPU
-   stand-in for the host side of a host-to-device copy. `--no-force-copy` shows the do-nothing
-   baseline and is only useful to prove that point.
+2. The real `.to(device="xpu:N")` allocates on the card and reads every source byte. On CPU,
+   `.to(device="cpu")` is a no-op alias that touches nothing, which on the *mmap* loader would
+   measure zero -- so on that loader each tensor is materialized with `.clone()` (`--force-copy`,
+   the default): one real read of the mapped pages plus one real host allocation of the tensor's
+   bytes, the closest CPU stand-in for the host side of a host-to-device copy. On the *pread*
+   loader the read buffer already IS a host allocation of exactly those bytes, so no clone is
+   taken: cloning there would double-count a cost the real load does not pay. `--no-force-copy`
+   shows the do-nothing baseline and is only useful to prove that point.
 
 Every tensor is dropped (`del`) immediately after its conversion, which is what the real loader
 does too, so what remains is the loader's *transient* host footprint plus the mmap page cache.
@@ -50,13 +65,18 @@ What it reports
 `VmRSS`, `RssAnon` and `RssFile` from /proc/self/status, sampled every `--every` tensors (default
 25) and at every new high-water mark; `VmHWM` and `ru_maxrss` at the end; the low-water mark of
 `MemAvailable`; and the largest single tensor seen. RssAnon is the loader's own memory. RssFile is
-the mmap page cache -- reclaimable, but reclaiming it is what generates the memory PRESSURE that
-systemd-oomd kills on, so it is reported separately and it is the number the go/no-go rule in
-`notes/2026-09-18-first-light-plan.md` adds to RssAnon.
+the file-backed page cache mapped into this process -- reclaimable, but reclaiming it is what
+generates the memory PRESSURE that systemd-oomd kills on, so it is reported separately and it is
+the number the go/no-go rule in `notes/2026-09-18-first-light-plan.md` adds to RssAnon. On the
+`pread` loader nothing is mapped, so RssFile should stay flat at the interpreter's own shared
+objects (~0.07 GiB) no matter how many bytes are read; if it climbs with the bytes read, something
+has re-introduced a mapping.
 
-`--drop-pagecache` additionally calls `posix_fadvise(POSIX_FADV_DONTNEED)` on the checkpoint every
-`--every` tensors and reports what that does to RssFile: this is the A/B behind the
-`B70_H3_DROP_PAGECACHE=1` option in `run_h3_t2v.py`.
+`--drop-pagecache` additionally calls `posix_fadvise(POSIX_FADV_DONTNEED)` on the whole checkpoint
+every `--every` tensors and reports what that does to RssFile: this is the A/B behind the
+`B70_H3_DROP_PAGECACHE=1` option in `run_h3_t2v.py`. Session 7 is the answer for the mmap loader --
+it does nothing, because a mapped page cannot be evicted. The `pread` loader releases each tensor's
+range as it goes and does not need it.
 
 Budget
 ------
@@ -241,13 +261,12 @@ def drop_pagecache(path: pathlib.Path) -> None:
 def profile_encoder(args, rt, sampler: Sampler) -> dict:
     """Reproduce `run_h3_t2v.py::_build_text_encoder`'s safe_open order, to CPU."""
     import torch
-    from safetensors import safe_open
 
     path = rt.INT8_TEXT_ENCODER
     header = rt.read_header(path)
     quantized = {k[: -len(".comfy_quant")] for k in header if k.endswith(".comfy_quant")}
     print(f"encoder: {path}")
-    print(f"  {len(header)} header entries, {len(quantized)} quantized Linears")
+    print(f"  {len(header)} header entries, {len(quantized)} quantized Linears, loader {args.loader}")
 
     done = 0
     count = 0
@@ -256,19 +275,21 @@ def profile_encoder(args, rt, sampler: Sampler) -> dict:
     def take(key: str, dtype=None):
         """One `get_tensor(...).to(...)` exactly as the loader does it, then drop the tensor."""
         nonlocal done, count, largest
-        src = fh.get_tensor(key)  # zero-copy: a view on the mmap, verified on safetensors 0.8.0
+        src = fh.get_tensor(key)  # a private pread buffer, or a view on the mapping
         nbytes = src.numel() * src.element_size()
         shape = tuple(src.shape)
         dt = str(src.dtype)
         # The real loader's `.to(device="xpu:N"[, dtype=...])`. A dtype change allocates and reads
-        # every source page; a same-dtype `.to("cpu")` is an alias that touches nothing, so that
-        # case is materialized with clone() (see the module docstring).
+        # every source byte; a same-dtype `.to("cpu")` is an alias that touches nothing, so on the
+        # mmap loader that case is materialized with clone() (see the module docstring). On pread
+        # the buffer is already the host allocation, so no clone.
         t = src.to(device="cpu", dtype=dtype) if dtype is not None else src.to(device="cpu")
-        if args.force_copy and shares_storage(t, src):
+        if args.force_copy and fh.backing == "mmap" and shares_storage(t, src):
             t = t.clone()
         out_bytes = t.numel() * t.element_size()
         sampler.peak_only()  # while the converted tensor is still alive
         del t, src
+        fh.release(key)
         done += nbytes
         count += 1
         if nbytes > largest["bytes"]:
@@ -280,7 +301,7 @@ def profile_encoder(args, rt, sampler: Sampler) -> dict:
         return count >= args.max_tensors or done >= args.max_bytes
 
     stop = False
-    with safe_open(str(path), framework="pt") as fh:
+    with rt.open_tensor_reader(path, header, loader=args.loader) as fh:
         # 1. Plain tensors, in header order (the loader's `for key in header`).
         for key in header:
             if key.endswith((".comfy_quant", ".weight_scale")):
@@ -313,44 +334,47 @@ def profile_encoder(args, rt, sampler: Sampler) -> dict:
 def profile_denoiser(args, rt, sampler: Sampler) -> dict:
     """Reproduce `run_h3_t2v.py::load_sharded_transformer`'s stream loop, to CPU."""
     import torch
-    from safetensors import safe_open
 
     path = rt.PRUNED_DENOISER
+    header = rt.read_header(path)
     config = json.loads(rt.TRANSFORMER_CONFIG.read_text())
     remap = rt.build_remap(config["num_layers"], config["num_refiner_layers"])
     print(f"denoiser: {path}")
-    print(f"  {len(remap)} diffusers parameters from the remap, adaln_dtype={args.adaln_dtype}")
+    print(f"  {len(remap)} diffusers parameters from the remap, adaln_dtype={args.adaln_dtype}, "
+          f"loader {args.loader}")
 
     done = 0
     count = 0
     largest = {"name": None, "bytes": 0, "dtype": None, "shape": None}
 
-    with safe_open(str(path), framework="pt") as fh:
+    with rt.open_tensor_reader(path, header, loader=args.loader) as fh:
         table = fh.get_tensor("adaln_t_table").to(device="cpu", dtype=torch.float32)
         done += table.numel() * table.element_size()
         count += 1
         sampler.peak_only()
         del table
+        fh.release("adaln_t_table")
         sampler.sample(count, done)
 
         stop = False
         for name, src in remap.items():
-            raw = fh.get_tensor(src.key)
+            # The real loader asks the reader for the row slice, so the pread path reads only
+            # those rows; the mmap path slices the view, as it always did.
+            raw = fh.get_tensor(src.key, src.row_slice)
             nbytes = raw.numel() * raw.element_size()
             shape = tuple(raw.shape)
             dt = str(raw.dtype)
             t = raw
-            if src.row_slice is not None:
-                t = t[src.row_slice[0] : src.row_slice[1]]
             if src.swap_halves:
                 half = t.shape[0] // 2
                 t = torch.cat((t[half:], t[: half]), dim=0)
             t = t.to(device="cpu", dtype=rt.target_dtype(name, args.adaln_dtype)).contiguous()
-            if args.force_copy and shares_storage(t, raw):
+            if args.force_copy and fh.backing == "mmap" and shares_storage(t, raw):
                 t = t.clone()
             out_bytes = t.numel() * t.element_size()
             sampler.peak_only()  # while the converted tensor is still alive
             del t, raw
+            fh.release(src.key, src.row_slice)
             done += nbytes
             count += 1
             if nbytes > largest["bytes"]:
@@ -407,6 +431,9 @@ def parse_args(argv=None):
     )
     p.add_argument("--denoiser", action="store_true",
                    help="profile the pruned BF16 denoiser split loop instead of the text encoder")
+    p.add_argument("--loader", choices=("pread", "mmap"),
+                   default=os.environ.get("B70_H3_LOADER", "pread").strip().lower(),
+                   help="which run_h3_t2v.py tensor reader to profile (env B70_H3_LOADER)")
     p.add_argument("--max-bytes", type=float, default=6.0, metavar="GIB",
                    help="stop after this many GiB of tensor bytes have been read")
     p.add_argument("--max-tensors", type=int,
@@ -435,8 +462,9 @@ def main(argv=None) -> int:
 
     rt = load_runner()
     label = "denoiser" if args.denoiser else "encoder"
-    print(f"profile: {label} loop, CPU only, budget {gb(args.max_bytes)} / {args.max_tensors} tensors, "
-          f"force_copy={args.force_copy}, drop_pagecache={args.drop_pagecache}")
+    print(f"profile: {label} loop, loader {args.loader}, CPU only, budget {gb(args.max_bytes)} / "
+          f"{args.max_tensors} tensors, force_copy={args.force_copy}, "
+          f"drop_pagecache={args.drop_pagecache}")
     start = proc_status()
     print(f"  at start: VmRSS {gb(start.get('VmRSS', 0))}  MemAvailable {gb(mem_available())}")
 
@@ -448,6 +476,7 @@ def main(argv=None) -> int:
     final = proc_status()
     summary = {
         "loop": result["loop"],
+        "loader": args.loader,
         "file": result["file"],
         "tensors_processed": result["tensors"],
         "tensor_bytes_read": result["bytes"],
@@ -467,11 +496,14 @@ def main(argv=None) -> int:
 
     print()
     print("=" * 92)
-    print(f"{label} loop: {result['tensors']} tensors, {gb(result['bytes'])} of tensor bytes read "
-          f"in {elapsed:.1f} s" + ("  (stopped at the budget)" if result["stopped_early"] else ""))
+    print(f"{label} loop, loader {args.loader}: {result['tensors']} tensors, "
+          f"{gb(result['bytes'])} of tensor bytes read in {elapsed:.1f} s"
+          + ("  (stopped at the budget)" if result["stopped_early"] else ""))
     print(f"  peak VmRSS          {gb(sampler.peak.get('VmRSS', 0))}")
     print(f"  peak RssAnon        {gb(sampler.peak.get('RssAnon', 0))}   (the loader's own memory)")
-    print(f"  peak RssFile        {gb(sampler.peak.get('RssFile', 0))}   (mmap page cache, reclaimable)")
+    print(f"  peak RssFile        {gb(sampler.peak.get('RssFile', 0))}   "
+          + ("(mapped page cache, reclaimable -- and what reclaim pressure oomd kills on)"
+             if args.loader == "mmap" else "(no mapping on the pread loader; expect this flat)"))
     go_no_go = max(sampler.peak_sum_rss_anon_file, final.get("VmHWM", 0))
     print(f"  peak anon+file      {gb(sampler.peak_sum_rss_anon_file)}   (sampled in flight)")
     print(f"  GO/NO-GO NUMBER     {gb(go_no_go)}   = max(peak anon+file, VmHWM)")

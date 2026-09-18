@@ -30,6 +30,12 @@ Hard constraints this script respects
 
 Environment switches
 --------------------
+* `B70_H3_LOADER=pread|mmap` -- how checkpoint tensors are read.  `pread` (the default) parses the
+  safetensors header once, `os.pread`s each tensor's byte range into a private buffer and then
+  `posix_fadvise(DONTNEED)`s that range: the file is never mapped, so RssFile stays flat.  `mmap`
+  is the old `safe_open` path, kept for A/B: it holds the whole file mapped for the handle's
+  lifetime, so RssFile grows with every byte touched (6.35 GiB at a 6 GiB budget in sessions 6/7)
+  and `posix_fadvise` cannot evict a mapped page.
 * `B70_H3_LOG_MEM=1` -- log host VmRSS / RssAnon / RssFile / MemAvailable every 50 tensors during
   both load loops (`B70_H3_LOG_MEM_EVERY` changes the interval).
 * `B70_H3_DROP_PAGECACHE=1` -- posix_fadvise(DONTNEED) the checkpoint being streamed every 50
@@ -85,13 +91,23 @@ _DTYPE_BYTES = {"BOOL": 1, "U8": 1, "I8": 1, "F8_E4M3": 1, "F8_E5M2": 1, "I16": 
                 "F16": 2, "BF16": 2, "I32": 4, "U32": 4, "F32": 4, "I64": 8, "U64": 8, "F64": 8}
 
 
-def read_header(path: pathlib.Path) -> dict:
-    """Return the safetensors header dict (tensor name -> {dtype, shape, data_offsets})."""
+def read_header_and_data_start(path: pathlib.Path) -> tuple[dict, int]:
+    """The safetensors header dict, and the file offset its `data_offsets` are relative to.
+
+    The layout is `<u64 header_len><header json><data>`, so the data starts at `8 + header_len`
+    and every `data_offsets` pair in the header is relative to that.  `PreadTensorReader` turns
+    those two numbers into an absolute file range.
+    """
     with path.open("rb") as fh:
         (header_len,) = struct.unpack("<Q", fh.read(8))
         header = json.loads(fh.read(header_len))
     header.pop("__metadata__", None)
-    return header
+    return header, 8 + header_len
+
+
+def read_header(path: pathlib.Path) -> dict:
+    """Return the safetensors header dict (tensor name -> {dtype, shape, data_offsets})."""
+    return read_header_and_data_start(path)[0]
 
 
 def tensor_bytes(entry: dict) -> int:
@@ -527,6 +543,8 @@ def host_rss_bytes() -> int:
 #                                 (B70_H3_LOG_MEM_EVERY changes the interval)
 #   B70_H3_DROP_PAGECACHE=1       posix_fadvise(DONTNEED) the checkpoint every 50 tensors
 #                                 (B70_H3_DROP_PAGECACHE_EVERY changes the interval)
+#   B70_H3_LOADER=pread|mmap      which tensor reader the load loops use (default pread; see the
+#                                 reader section below for what sessions 6/7 measured)
 #
 # RssAnon is what the loader itself holds; RssFile is the checkpoint's mmap page cache, which is
 # reclaimable but whose reclaim is exactly the memory pressure systemd-oomd kills on.  The
@@ -595,6 +613,189 @@ def drop_file_pagecache(path: pathlib.Path, index: int) -> None:
 
 
 # ---------------------------------------------------------------------------------------------
+# Tensor readers -- `pread` (default) and `mmap`
+#
+# Sessions 6 and 7 (2026-09-18, /mnt/fast-ai/bench-results/minimax-h3-s{6,7}-20260918/) measured
+# the old `safe_open` path and it failed the go/no-go rule of
+# `notes/2026-09-18-first-light-plan.md`: RssAnon peaked where it should (1.661 GiB encoder,
+# 0.499 GiB denoiser -- one tensor's worth) but RssFile tracked every byte touched, 6.291 GiB at a
+# 6 GiB budget, i.e. it would reach the whole 27 GB / 40 GB file. `--drop-pagecache` did not help
+# (6.352 GiB): `safe_open` keeps the file mapped for the handle's lifetime, and
+# `posix_fadvise(DONTNEED)` cannot evict a page that is still mapped. Mapped file pages are
+# reclaimable, but reclaiming them under a streaming read is rmap work, and sustained reclaim is
+# exactly the memory PRESSURE `systemd-oomd` kills the user's session on
+# (../../qwen38-27b-b70/notes/2026-09-18-host-oomd-incident.md).
+#
+# So the default loader does not map the file at all:
+#
+#   1. the safetensors header is parsed once (`read_header_and_data_start`);
+#   2. each tensor's byte range is `os.pread`-ed into a private buffer;
+#   3. `torch.frombuffer(...).view(dtype).reshape(shape)` re-labels that buffer -- no copy, and
+#      bit-for-bit what `safe_open(...).get_tensor(...)` returns (safetensors is little-endian and
+#      row-major, and so is this host; `test_tensor_reader.py` checks it with `torch.equal`);
+#   4. after the caller has copied the tensor to its card, `release()` calls
+#      `posix_fadvise(DONTNEED)` on *that range only*, which now works because nothing maps it.
+#
+# The host cost is therefore one tensor's buffer at a time (plus the converted copy while a dtype
+# changes), and RssFile stays flat. `B70_H3_LOADER=mmap` restores the old path for A/B.
+#
+# A row slice is a contiguous byte range in a row-major tensor, so `get_tensor(key, row_slice)`
+# reads only those rows -- the qkv split reads a third of `qkv_proj` three times instead of the
+# whole tensor three times.
+# ---------------------------------------------------------------------------------------------
+
+LOADER = os.environ.get("B70_H3_LOADER", "pread").strip().lower()
+if LOADER not in ("pread", "mmap"):
+    raise SystemExit(f"B70_H3_LOADER must be 'pread' or 'mmap', not {LOADER!r}")
+
+# safetensors dtype string -> torch dtype attribute name. Resolved lazily against the live torch:
+# this module must import with no torch at all (`--dry-run` is the CPU validation path).
+_DTYPE_TORCH = {"BOOL": "bool", "U8": "uint8", "I8": "int8", "F8_E4M3": "float8_e4m3fn",
+                "F8_E5M2": "float8_e5m2", "I16": "int16", "U16": "uint16", "F16": "float16",
+                "BF16": "bfloat16", "I32": "int32", "U32": "uint32", "F32": "float32",
+                "I64": "int64", "U64": "uint64", "F64": "float64"}
+
+
+def torch_dtype_for(torch, dtype: str):
+    """The torch dtype a safetensors dtype string stores, or a clear error."""
+    name = _DTYPE_TORCH.get(dtype)
+    resolved = getattr(torch, name) if name and hasattr(torch, name) else None
+    if resolved is None:
+        raise TypeError(f"safetensors dtype {dtype!r} has no torch dtype in this build")
+    return resolved
+
+
+class PreadTensorReader:
+    """Read tensors from a safetensors file without ever mapping it.
+
+    Same surface as the `mmap` reader: `get_tensor(key[, row_slice])` returns a CPU tensor with
+    exactly the values `safe_open(...).get_tensor(key)` would give, and `release()` drops that
+    range from the page cache once the caller is done with it.
+    """
+
+    backing = "anon"
+
+    def __init__(self, path: pathlib.Path, header: dict | None = None):
+        if sys.byteorder != "little":
+            raise RuntimeError("safetensors is little-endian; this reader needs a little-endian host")
+        self.path = pathlib.Path(path)
+        parsed, data_start = read_header_and_data_start(self.path)
+        self.header = parsed if header is None else header
+        self._data_start = data_start
+        self.fd = os.open(str(self.path), os.O_RDONLY)
+
+    def __enter__(self) -> "PreadTensorReader":
+        return self
+
+    def __exit__(self, *exc) -> bool:
+        self.close()
+        return False
+
+    def close(self) -> None:
+        if self.fd is not None:
+            os.close(self.fd)
+            self.fd = None
+
+    def keys(self) -> list[str]:
+        return list(self.header)
+
+    def _range(self, key: str, row_slice: tuple[int, int] | None):
+        """(absolute file offset, byte count, shape) of `key`, or of its leading-row slice."""
+        entry = self.header[key]
+        begin, end = entry["data_offsets"]
+        shape = list(entry["shape"])
+        if row_slice is not None:
+            if not shape:
+                raise ValueError(f"{key} is 0-dimensional; it has no rows to slice")
+            rows = shape[0]
+            if rows == 0:
+                raise ValueError(f"{key} has zero rows")
+            row_bytes = (end - begin) // rows
+            lo, hi = row_slice
+            begin, end = begin + lo * row_bytes, begin + hi * row_bytes
+            shape[0] = hi - lo
+        return self._data_start + begin, end - begin, shape
+
+    def get_tensor(self, key: str, row_slice: tuple[int, int] | None = None):
+        import torch
+
+        offset, nbytes, shape = self._range(key, row_slice)
+        dtype = torch_dtype_for(torch, self.header[key]["dtype"])
+        if nbytes == 0:  # torch.frombuffer refuses an empty buffer
+            return torch.empty(shape, dtype=dtype)
+        buf = bytearray(nbytes)
+        view = memoryview(buf)
+        got = 0
+        while got < nbytes:  # pread may return short, on any filesystem
+            n = os.preadv(self.fd, [view[got:]], offset + got)
+            if n == 0:
+                raise EOFError(f"{self.path}: short read for {key} ({got}/{nbytes} bytes)")
+            got += n
+        # frombuffer keeps `buf` alive for the tensor's lifetime and copies nothing; `.view()`
+        # re-labels the same bytes, which is what the mmap path hands out too.
+        return torch.frombuffer(buf, dtype=torch.uint8).view(dtype).reshape(shape)
+
+    def release(self, key: str, row_slice: tuple[int, int] | None = None) -> None:
+        """Drop this tensor's page-cache range. Nothing maps it, so this actually frees it."""
+        offset, nbytes, _ = self._range(key, row_slice)
+        if nbytes <= 0:
+            return
+        try:
+            os.posix_fadvise(self.fd, offset, nbytes, os.POSIX_FADV_DONTNEED)
+        except OSError as exc:  # advisory only; never fail a load over it
+            LOG.debug("posix_fadvise(DONTNEED) on %s[%s] failed: %s", self.path, key, exc)
+
+
+class MmapTensorReader:
+    """The old `safetensors.safe_open` path, kept for A/B (`B70_H3_LOADER=mmap`).
+
+    `release()` is a no-op on purpose: the file stays mapped for the handle's lifetime, so a
+    per-range `posix_fadvise(DONTNEED)` frees nothing (sessions 6/7 measured exactly that). The
+    whole-file `B70_H3_DROP_PAGECACHE=1` drop is the only thing this path has, and it is why
+    RssFile still climbs with it.
+    """
+
+    backing = "mmap"
+
+    def __init__(self, path: pathlib.Path, header: dict | None = None):
+        from safetensors import safe_open
+
+        self.path = pathlib.Path(path)
+        self.header = read_header(self.path) if header is None else header
+        self._fh = safe_open(str(self.path), framework="pt")
+
+    def __enter__(self) -> "MmapTensorReader":
+        return self
+
+    def __exit__(self, *exc) -> bool:
+        self.close()
+        return False
+
+    def close(self) -> None:
+        self._fh = None
+
+    def keys(self) -> list[str]:
+        return list(self.header)
+
+    def get_tensor(self, key: str, row_slice: tuple[int, int] | None = None):
+        t = self._fh.get_tensor(key)
+        return t if row_slice is None else t[row_slice[0] : row_slice[1]]
+
+    def release(self, key: str, row_slice: tuple[int, int] | None = None) -> None:
+        return None
+
+
+def open_tensor_reader(path: pathlib.Path, header: dict | None = None, loader: str | None = None):
+    """Open `path` with the configured loader (`B70_H3_LOADER`, default `pread`)."""
+    chosen = (loader or LOADER).strip().lower()
+    if chosen == "mmap":
+        return MmapTensorReader(path, header)
+    if chosen == "pread":
+        return PreadTensorReader(path, header)
+    raise ValueError(f"unknown loader {chosen!r}; use 'pread' or 'mmap'")
+
+
+# ---------------------------------------------------------------------------------------------
 # Phase 1 -- text encoder
 # ---------------------------------------------------------------------------------------------
 
@@ -659,7 +860,6 @@ def _build_text_encoder(torch, config, device, args):
     """Instantiate Qwen3-VL on meta, then stream the INT8 ConvRot file onto `device`."""
     import torch.nn as nn
     import torch.nn.functional as F
-    from safetensors import safe_open
     from transformers import Qwen3VLForConditionalGeneration
 
     ConvRotLinear = make_convrot_linear(torch, nn, F)
@@ -678,7 +878,7 @@ def _build_text_encoder(torch, config, device, args):
                 f"{CONVROT_ROTATION} is missing. Regenerate it with scripts/recover-convrot-rotation.py "
                 "(CPU-only), or pass --te-rotation none to A/B the unrotated path."
             )
-        with safe_open(str(CONVROT_ROTATION), framework="pt") as fh:
+        with open_tensor_reader(CONVROT_ROTATION) as fh:
             signs = fh.get_tensor("convrot_signs")
         rotation = (signs.to(torch.float32) / math.sqrt(group_size)).to(device=device, dtype=torch.bfloat16)
 
@@ -698,7 +898,8 @@ def _build_text_encoder(torch, config, device, args):
         return key
 
     loaded = 0
-    with safe_open(str(INT8_TEXT_ENCODER), framework="pt") as fh:
+    LOG.info("text encoder loader: %s (B70_H3_LOADER)", LOADER)
+    with open_tensor_reader(INT8_TEXT_ENCODER, header) as fh:
         # 1. Plain tensors.
         for key in header:
             if key.endswith((".comfy_quant", ".weight_scale")):
@@ -710,13 +911,16 @@ def _build_text_encoder(torch, config, device, args):
             if name not in live:
                 LOG.debug("skipping unmatched checkpoint key %s", key)
                 continue
-            # `get_tensor` is a zero-copy view on the mmap (safetensors 0.8.0, verified); `.to()`
-            # allocates on the card and reads the source pages, and the view is dropped on the
-            # next statement.  `del t` hands our reference to the device tensor straight back --
-            # the module owns it now -- so nothing host-side survives this iteration.
+            # `get_tensor` hands back one tensor's worth of host bytes (a private buffer on the
+            # pread loader, a view on the mapping on the mmap one); `.to()` allocates on the card
+            # and reads every source byte.  `del t` hands our reference to the device tensor
+            # straight back -- the module owns it now -- and drops the host buffer with it, so
+            # nothing host-side survives this iteration.  `release` then drops that byte range
+            # from the page cache (a no-op on the mmap loader, which cannot).
             t = fh.get_tensor(key).to(device=device)
             set_submodule_tensor(model, name, t)
             del t
+            fh.release(key)
             loaded += 1
             log_host_mem("encode.load", loaded, len(header))
             drop_file_pagecache(INT8_TEXT_ENCODER, loaded)
@@ -738,6 +942,9 @@ def _build_text_encoder(torch, config, device, args):
             sc = fh.get_tensor(base + ".weight_scale").to(device=device, dtype=torch.float32)
             setattr(parent, leaf, ConvRotLinear(qw, sc, bias, rotation, group_size))
             del qw, sc, bias  # the ConvRotLinear buffers own them now; drop our host-side names
+            for suffix in (".bias", ".weight", ".weight_scale"):
+                if base + suffix in header:
+                    fh.release(base + suffix)
             loaded += 1
             log_host_mem("encode.load", loaded, len(header))
             drop_file_pagecache(INT8_TEXT_ENCODER, loaded)
@@ -785,7 +992,6 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
     import torch
     import torch.nn as nn
     from diffusers import MiniMaxH3Transformer3DModel
-    from safetensors import safe_open
 
     primary = torch.device(f"xpu:{args.cards[0]}")
     secondary = torch.device(f"xpu:{args.cards[1]}")
@@ -814,21 +1020,25 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         return primary
 
     with phase("load.stream", timings):
-        with safe_open(str(PRUNED_DENOISER), framework="pt") as fh:
+        LOG.info("denoiser loader: %s (B70_H3_LOADER)", LOADER)
+        with open_tensor_reader(PRUNED_DENOISER, header) as fh:
             table = fh.get_tensor("adaln_t_table").to(device=primary, dtype=torch.float32)
             model.time_embedder = AdaLNTableEmbedder(table)
+            fh.release("adaln_t_table")
             placed = 0
             for name, src in remap.items():
                 dev = device_for(name)
-                t = fh.get_tensor(src.key)
-                if src.row_slice is not None:
-                    t = t[src.row_slice[0] : src.row_slice[1]]
+                # A row slice is a contiguous byte range, so the pread loader reads only those
+                # rows: the qkv split reads a third of `qkv_proj` three times, not the whole
+                # tensor three times.  The mmap loader slices the view, exactly as before.
+                t = fh.get_tensor(src.key, src.row_slice)
                 if src.swap_halves:
                     half = t.shape[0] // 2
                     t = torch.cat((t[half:], t[:half]), dim=0)
                 t = t.to(device=dev, dtype=target_dtype(name, args.adaln_dtype)).contiguous()
                 set_submodule_tensor(model, name, t)
-                del t  # the module owns the device tensor; drop the host-side name and the view
+                del t  # the module owns the device tensor; drop the host-side name and the buffer
+                fh.release(src.key, src.row_slice)
                 placed += 1
                 if placed % 100 == 0:
                     LOG.info("  placed %d/%d tensors (host peak RSS %s)", placed, len(remap), gib(host_rss_bytes()))
@@ -842,8 +1052,9 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
             config["rope_theta"] ** (torch.arange(0, 2 * freq_dim, 2, dtype=torch.float32) / (2 * freq_dim))
         )
         set_submodule_tensor(model, "rope.inv_freq", inv_freq.to(primary))
-        with safe_open(str(PRUNED_DENOISER), framework="pt") as fh:
+        with open_tensor_reader(PRUNED_DENOISER, header) as fh:
             stored = fh.get_tensor("rope.inv_freq").float()
+            fh.release("rope.inv_freq")
         drift = (stored - inv_freq).abs().max().item()
         LOG.info("rope.inv_freq recomputed; max drift vs checkpoint copy = %.3e", drift)
         if drift > 1e-6:

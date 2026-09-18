@@ -59,7 +59,11 @@ Detailed stand-up plan: [notes/2026-09-17-pipeline-plan.md](notes/2026-09-17-pip
 First-light sequence, go/no-go rule and failure playbook:
 [notes/2026-09-18-first-light-plan.md](notes/2026-09-18-first-light-plan.md).
 Host-memory safety: `scripts/mem-watchdog.sh` (kills our job before systemd-oomd kills the session) and
-`scripts/profile-encoder-load.py` (CPU-only measurement of the loaders' host footprint).
+`scripts/profile-encoder-load.py` (CPU-only measurement of the loaders' host footprint). That measurement was a
+NO-GO on the `safetensors.safe_open` path -- RssFile grew with every byte touched, 6.29 GiB at a 6 GiB budget,
+because a mapped page cannot be dropped with `posix_fadvise` -- so both load loops now use a `pread` reader that
+never maps the file (`B70_H3_LOADER=pread|mmap`, default `pread`; bitwise-checked against `safe_open` by
+`scripts/test_tensor_reader.py`). Re-measured: 1.663 GiB encoder, 0.792 GiB denoiser, RssFile flat at 0.07 GiB.
 
 ## Next steps (not started)
 

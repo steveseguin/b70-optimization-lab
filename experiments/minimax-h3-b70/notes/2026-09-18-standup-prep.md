@@ -13,6 +13,9 @@ files already on disk.
 | `smoke_h3.sh` | `dry` / `one` / `repeat`. `repeat` is the bytewise gate: two runs, same seed, hashes compared. GPU modes run under `systemd-run --user --scope`. |
 | `setup-venv.sh` | builds `/mnt/fast-ai/venvs/minimax-h3`. **Written but not run** -- see "the venv" below. |
 | `recover-convrot-rotation.py` | recovers the ConvRot rotation from the two video-VAE builds. **Run**; output is `data/convrot-hadamard-256.safetensors`. |
+| `mem-watchdog.sh` | kills THIS job on a `MemAvailable` floor, before `systemd-oomd` kills the user's session. Every GPU run and every profile is wrapped in it. |
+| `profile-encoder-load.py` | CPU-only host-memory profile of the two load loops, `--loader pread\|mmap`. This is what turned "the loader holds no state dict" from an argument into a measurement. |
+| `test_tensor_reader.py` | the `pread` reader returns bit-for-bit what `safe_open` returns: every dtype, row slices, real files. CPU, seconds, a few MB. |
 
 ## Three things that were unknown yesterday and are now settled
 
@@ -292,3 +295,64 @@ Every one of these, in order, before the lane is armed again:
    while one is running.
 
 Until 1 and 2 have numbers, this lane does not touch a GPU.
+
+## The loader was the NO-GO, and it is fixed (2026-09-18, sessions 6-8)
+
+Precondition 1 of "before any rerun" above -- *measure* the host-RAM need of `encode.load` -- has a
+number now, and the first answer was no.
+
+**Sessions 6 and 7** (`/mnt/fast-ai/bench-results/minimax-h3-s6-20260918/` and `-s7-`) ran
+`profile-encoder-load.py` at a 6 GiB budget, plain and with `--drop-pagecache`. The loader's own
+memory was never the problem: RssAnon peaked at one tensor's worth -- 1.661 GiB for the encoder
+(its largest tensor, `model.embed_tokens.weight`, is 1.556 GB) and 0.499 GiB for the denoiser --
+and came straight back down after each tensor, exactly as a streaming loader should. What failed
+the gate was **RssFile: 6.291 GiB at a 6 GiB budget, growing with every byte touched**, which on
+the full files means 27 GB for the encoder and 40 GB for the denoiser. Go/no-go numbers 6.634 GiB
+(s6) and 6.695 GiB (s7) against a 6 GiB rule: **NO-GO, twice.**
+
+`--drop-pagecache` made it slightly worse rather than better, and that is the whole diagnosis: a
+`safetensors.safe_open` handle keeps the file mapped for its lifetime, and
+`posix_fadvise(DONTNEED)` cannot evict a page that is still mapped. Those pages are reclaimable, so
+this would not have shown up as an out-of-memory kill -- it would have shown up the way 2026-09-17
+did, as sustained reclaim, which is the memory *pressure* `systemd-oomd` kills the user's session
+on.
+
+**The fix, in `run_h3_t2v.py`:** both load loops now go through `open_tensor_reader()`, and the
+default reader does not map anything. `B70_H3_LOADER=pread` (the default) parses the safetensors
+header once, `os.pread`s each tensor's byte range into a private buffer, re-labels it with
+`torch.frombuffer(...).view(dtype).reshape(shape)`, lets the caller copy it to its card, and then
+`posix_fadvise(DONTNEED)`s that one range -- which frees it, because nothing maps it. Leading-row
+slices are contiguous byte ranges, so the qkv split reads a third of `qkv_proj` three times instead
+of the whole tensor three times. `B70_H3_LOADER=mmap` keeps the old path for A/B, and
+`profile-encoder-load.py --loader {pread,mmap}` profiles either one.
+
+A loader swap is only allowed to change *where the bytes live*, never *what the bytes are*, so
+`scripts/test_tensor_reader.py` checks that with `torch.equal`, bitwise, against `safe_open`: every
+dtype the two checkpoints use (BF16/F16/F32/I8/U8/BOOL/I64), leading-row slices, the SwiGLU half
+swap, and real safetensors files on disk (the ConvRot rotation and a video-VAE shard). It is CPU
+only and touches a few MB.
+
+**Session 8** (`/mnt/fast-ai/bench-results/minimax-h3-s8-20260918/`), `--max-bytes 2` because the
+FP8 service was up and holding ~10 GiB of the 15:
+
+| Loop | Loader | RssAnon | RssFile | VmHWM | GO/NO-GO |
+| --- | --- | --- | --- | --- | --- |
+| encoder | **pread** | 1.593 GiB | **0.070 GiB** | 1.663 GiB | **1.663 GiB -- GO** |
+| encoder | mmap | 1.593 GiB | 2.081 GiB | 3.114 GiB | 3.115 GiB |
+| denoiser | **pread** | 0.720 GiB | **0.073 GiB** | 0.791 GiB | **0.792 GiB -- GO** |
+| denoiser | mmap | 0.432 GiB | 2.053 GiB | 2.483 GiB | 2.485 GiB |
+
+On the mmap loader RssFile equals the bytes read; on the pread loader it is 0.07 GiB and does not
+move, and that 0.07 GiB is the interpreter and torch's shared objects, not the checkpoint. The peak
+is now bounded by the largest tensor in the file rather than by the file's size, so 1.663 GiB is
+also the number for a full 27 GB pass. The denoiser's RssAnon rises 0.432 -> 0.720 GiB, honestly:
+pread holds the source rows *and* the `cat`/`contiguous` copy at once where the mmap path could
+slice out of the mapping. That is 0.29 GiB of anon traded against 2 GiB (heading for 40) of mapped
+page cache.
+
+`./smoke_h3.sh dry` still passes on the new loader: 14/14 remaps exact, 634 diffusers parameters
+from 532 checkpoint tensors, 0 left over.
+
+So precondition 1 is closed and precondition 2 -- "that measured peak must sit well under free host
+RAM" -- is met with room: 1.663 GiB against the ~13-14 GiB the host has with the service down. The
+remaining preconditions (3-6) are unchanged and still gate the GPU run.
