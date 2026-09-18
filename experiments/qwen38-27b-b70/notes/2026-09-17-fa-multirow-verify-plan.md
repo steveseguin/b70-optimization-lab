@@ -47,3 +47,15 @@ bit, the verifier's attention cost at 32K drops from 27.6 ms to about 5 ms per s
 
 Kernel build notes: build with the service stopped (`chunk_gated_delta_rule_xe2.cpp` needs the 14 GB cap); the
 attention kernels are under `csrc/xpu/attn/xe_2` (cutlass/sycl-tla), bound through `csrc/flash_attn/flash_api.cpp`.
+
+## Status 2026-09-18 01:15 UTC: the one-pass op is bit-identical; not yet faster
+
+r312 ([patch](../patches/vllm-xpu-kernels-paged-decode-multiq-r312-20260917.patch), built with the head-256 kernel
+set, image `qwen38-fp8-v0290-r312-fa-multiq`): `paged_decode_multiq` keeps the 8-row head-group tile, loops the six
+positions inside the K loop (K and V tiles loaded once), masks per position by column, and fixes the split-K combine's
+varlen strides. Census ([data](../data/2026-09-17-fa-multiq-census/multiq-census-r312a.json)): every position equals
+the lone-row reference bit for bit at 2,048 to 40,000 keys, contiguous and scattered pages, repeats identical, and the
+three off-precondition lengths are refused. Speed per layer-call (six rows): 1.88 ms for six lone-row calls vs 2.09 ms
+one-pass at 32K, 0.31 vs 0.58 at 4K: the one-pass kernel is slower, as the memo's register-pressure risk predicted (six
+accumulators of 256 columns per lane). Next: split the value columns across work-groups (each column's arithmetic
+unchanged), census at V tiles of 64/128/256.
