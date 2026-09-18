@@ -329,3 +329,9 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   flash-attention library" row above. Nothing shipped is invalidated (r311b's GDN kernel used `cd76379` but was gated
   exact against its own same-image reference); the next GDN or `_xpu_C` rebuild must switch revision and re-gate.
   [census](data/2026-09-18-fa-multiq-census/), [note](notes/2026-09-16-fp8-review-findings.md)
+- **Running an external publish step (registry push, LocalMaxxing submit) in parallel with the user (2026-09-18):**
+  the user ran `submit_localmaxxing_results.py` in their own shell while the agent ran the same command seconds
+  later; both returned 201 APPROVED, so the one-card lane now has an accidental duplicate record
+  (`cmu6ytvxr082alq015dpjgiz4`, withheld in the ledger; the API has no delete call). When the user is visibly
+  running the publish sequence, the agent records results and does not submit; when the agent submits, it says so
+  first and the user does not. [ledger](../../results/localmaxxing-submissions.md)
