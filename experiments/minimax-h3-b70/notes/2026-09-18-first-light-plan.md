@@ -30,12 +30,18 @@ step 4 rather than re-derive it.
 | 6 | Queued behind the FP8 work, not beside it | the session script's `until ! systemctl --user is-active ...` waits |
 | 7 | `PYTORCH_ALLOC_CONF=expandable_segments:True` in the run's environment (**new, session 10**) | `smoke_h3.sh` exports it for every GPU run and prints it in preflight |
 | 8 | No card carries an uncleared device coredump (**new, session 10**) | `smoke_h3.sh preflight` refuses and names the card |
+| 9 | The step count is not a guess (**new, session 11**) | settled: `--steps` = NFE + 1; 51 base, 9 with the turbo LoRA, which is on disk and applied by default. [notes/2026-09-18-steps-and-lora.md](2026-09-18-steps-and-lora.md) |
 
 Preconditions 7 and 8 are not style. Without 7, every GiB placed on a card costs a GiB of host RAM
 with both cards visible, which is what killed session 9; without 8, a run starts on a card whose
 last fault has never been cleared, which is exactly the state this host is in now.
 
-## Step 1 -- regenerate the rotation (CPU, seconds, safe now)
+## Step 1 -- regenerate the rotation, and re-run the CPU gates (seconds, safe now)
+
+`./scripts/smoke_h3.sh dry` now runs five gates, not three: the two `--dry-run --verify-remap`
+passes (which also report the LoRA mapping, 208/208 pairs matched), `test_convrot_linear.py` and
+`test_lora.py`. All pass as of 2026-09-18.
+
 
 ```bash
 cd /home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts
@@ -202,16 +208,32 @@ python3 packages/<the package that started it>/scripts/serve.py stop --state-dir
 ## Step 4 -- one clip, under the watchdog
 
 ```bash
-STEPS=8 OUT_ROOT=/mnt/fast-ai/bench-results/minimax-h3 \
+OUT_ROOT=/mnt/fast-ai/bench-results/minimax-h3 \
     timeout 5400 ./smoke_h3.sh one
 ```
 
-256x448, 124 frames, seed 42, 8 steps. `smoke_h3.sh` now runs `preflight` first (MemAvailable >=
-11 GiB, nothing on 18124, no running container, venv and watchdog present) and refuses with rc 4 if
-any of that fails; then it puts the run in its own process group and wraps it in `mem-watchdog.sh`
-at a 2048 MiB floor. `STEPS=8` is still not a claim about the right step count (50 remains an
-assumption). First light asks two questions only: does this stack run on the cards at all, and does
-it repeat bit for bit.
+256x448, 124 frames, seed 42. **No `STEPS=` override any more, and that is the point.** As of
+2026-09-18 the step count is settled and the script picks it:
+
+* `num_inference_steps` counts **sigma grid points**, terminal zero included, so it drives
+  `steps - 1` transformer evaluations (`MiniMaxH3Scheduler.set_timesteps`,
+  `scheduling_minimax_h3.py:133-136`). Every published MiniMax-H3 step count is the other kind, so
+  each needs +1 here.
+* The **8-step turbo LoRA is now on disk** at
+  `/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors`
+  and `smoke_h3.sh` applies it by default when the file is present, which is the **precondition**
+  that makes a short run legitimate. With it, `STEPS` defaults to **9** (8 NFE, the adapter's
+  distillation point). Set `LORA=` (empty) to run the base model and `STEPS` falls back to **51**
+  (50 NFE, the reference runner's figure).
+* There is no `guidance_scale` at any step count -- the checkpoint is CFG-distilled.
+
+Full citations and the LoRA key mapping: [notes/2026-09-18-steps-and-lora.md](2026-09-18-steps-and-lora.md).
+
+`smoke_h3.sh` still runs `preflight` first (MemAvailable >= 11 GiB, nothing on 18124, no running
+container, venv and watchdog present) and refuses with rc 4 if any of that fails; then it puts the
+run in its own process group and wraps it in `mem-watchdog.sh` at a 2048 MiB floor. First light
+still asks two questions only: does this stack run on the cards at all, and does it repeat bit for
+bit -- the step count being right does not make the pipeline right.
 
 Since session 10 the script also exports `PYTORCH_ALLOC_CONF=expandable_segments:True` and
 `B70_H3_XFER=host` into the run, and refuses to start while any card holds an uncleared device
@@ -225,7 +247,7 @@ record next to the CPU prediction.
 ## Step 5 -- the repeat gate
 
 ```bash
-STEPS=8 OUT_ROOT=/mnt/fast-ai/bench-results/minimax-h3 \
+OUT_ROOT=/mnt/fast-ai/bench-results/minimax-h3 \
     timeout 5400 ./smoke_h3.sh repeat
 ```
 

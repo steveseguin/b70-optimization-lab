@@ -6,7 +6,9 @@
                         decoder layer 50, then the encoder is freed before anything else loads
     Phase 2  load       the chosen denoiser streamed tensor-by-tensor across xpu:0 / xpu:1
     Phase 3  sample     diffusers MiniMaxH3 modular blocks, cfg-free, one forward per step,
-                        video shift 12 / audio shift 3
+                        video shift 12 / audio shift 3.  `--steps` counts SIGMA GRID POINTS
+                        (terminal 0 included), so it drives `steps - 1` transformer evaluations:
+                        51 for the base model's 50 NFE, 9 for the 8-step turbo LoRA.
     Phase 4  decode     video VAE (float16) and audio VAE (float32), one at a time on xpu:0
     Phase 5  write      mp4 + audio via PyAV, and a sidecar JSON receipt
 
@@ -74,6 +76,11 @@ Environment switches
 * `B70_H3_DROP_PAGECACHE=1` -- posix_fadvise(DONTNEED) the checkpoint being streamed every 50
   tensors, to hold the mmap page cache down (`B70_H3_DROP_PAGECACHE_EVERY`). Off by default.
   `scripts/profile-encoder-load.py` measures both, on CPU, before any GPU run.
+* `B70_H3_LORA=PATH[:scale]` -- the default for `--lora`. A ComfyUI-format adapter, e.g. the 8-step
+  turbo LoRA, which is what makes a short `--steps` legitimate. Merged exactly into dense BF16
+  weights at load time; applied as an additive runtime term inside `ConvRotLinear` on the int8
+  path, because a quantized weight cannot absorb a merge. See the LoRA section below and
+  `notes/2026-09-18-steps-and-lora.md`.
 * `B70_H3_XFER=host|direct` -- how a tensor crosses the two-card boundary. `host` (the default
   since the 2026-09-18 GPU fault) stages every cross-card move through host RAM; `direct` keeps
   the old `t.to(other_card)` device-to-device copy. Both are bit-exact; see `cross_card()`.
@@ -173,6 +180,13 @@ def read_header_and_data_start(path: pathlib.Path) -> tuple[dict, int]:
 def read_header(path: pathlib.Path) -> dict:
     """Return the safetensors header dict (tensor name -> {dtype, shape, data_offsets})."""
     return read_header_and_data_start(path)[0]
+
+
+def read_metadata(path: pathlib.Path) -> dict:
+    """The `__metadata__` block `read_header` drops.  Strings only, per the safetensors spec."""
+    with path.open("rb") as fh:
+        (header_len,) = struct.unpack("<Q", fh.read(8))
+        return json.loads(fh.read(header_len)).get("__metadata__") or {}
 
 
 def tensor_bytes(entry: dict) -> int:
@@ -417,6 +431,337 @@ def build_quant_map(num_layers: int, header: dict, quant_meta: dict[str, dict]) 
     if stray:
         raise RuntimeError(f"{len(stray)} quantized Linears have no diffusers destination, e.g. {stray[:5]}")
     return quant
+
+
+# ---------------------------------------------------------------------------------------------
+# LoRA (ComfyUI generic LoRA), e.g. the 8-step turbo adapter
+#
+# The turbo file on this host is `loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors`
+# (1.956 GB, 624 tensors = 208 modules x {alpha, lora_A, lora_B}).  Its `__metadata__` states the
+# contract this code implements, so none of it is guessed:
+#
+#   training_rank    128          lora_A [r, in], lora_B [out, r]
+#   training_alpha   8.0          per-module `<base>.alpha`, F32 scalar
+#   training_scale   0.0625       == alpha / rank, the scale ComfyUI applies at strength 1.0
+#   base_model       "Comfy-Org/MiniMax-H3 minimax_h3_fl2va_bf16.safetensors"
+#   source_format    "Diffusers PEFT LoRA"    target_format "ComfyUI generic LoRA"
+#   qkv_fusion       "block diagonal B; concat A; alpha multiplied by 3"
+#   swi_glu_mapping  "Diffusers [value;gate] -> ComfyUI [gate;value]"
+#
+# The two fusion notes are why this maps onto `SourceSlice` / `QuantSlice` with no special cases:
+#
+# * `qkv_proj` carries ONE pair for the fused Linear -- `lora_A [384, 5376]` (three rank-128 A
+#   blocks concatenated on the rank axis) and `lora_B [21504, 384]` (the three B blocks down the
+#   diagonal).  `alpha` is 24.0 and the rank is 384, so `alpha / rank` is still 0.0625.  Taking
+#   `lora_B`'s rows `[0, 7168)` and keeping the whole `lora_A` reproduces the `to_q` delta exactly,
+#   because the columns of that row block outside `[0, 128)` are zero by construction.  So the
+#   row slice that splits `qkv_proj.weight` into to_q/to_k/to_v splits `lora_B` the same way, and
+#   the rank the runtime path then pays for is 384 rather than 128 -- exact, three times the
+#   low-rank work, and the price of not assuming a structure the file only claims in a string.
+# * `mlp.fc1` is stored `[gate ; value]` like the weight, so the same `swap_halves` that reorders
+#   the weight's rows reorders `lora_B`'s rows.
+#
+# Both transforms act on the OUTPUT axis, which is `lora_B`'s first axis and the axis `lora_A`
+# does not have -- the same argument that makes `row_slice` / `swap_halves` safe for the
+# per-output-row int8 scale.  `lora_A` is therefore always taken whole.
+#
+# Where the delta is applied depends on the destination, and the two are NOT equivalent:
+#
+#   dense BF16 Linear  ->  MERGED at load time, exactly:  W' = W + s * (B @ A), the sum taken in
+#                          float32 (bf16 -> float32 is exact) and rounded once to the destination
+#                          dtype.  Nothing is left to do at runtime and nothing costs extra bytes.
+#   ConvRotLinear      ->  merging is NOT AVAILABLE.  The stored weight is int8 `round(W R / s)`;
+#                          `W + delta` cannot be re-quantized without changing every weight in the
+#                          Linear, so a "merge" here would silently replace the measured int8
+#                          error by a different, larger one.  Instead the adapter stays a separate
+#                          additive term evaluated per call:
+#                              y = dequant(W) x + scale * B (A x)
+#                          which is the LoRA's own definition and is exact up to the same float32
+#                          accumulation the dequant already uses.  It costs the adapter's bytes on
+#                          the card (~2.30 GB for this file across both cards, because the three
+#                          qkv destinations each keep a copy of the shared `lora_A`) and one extra
+#                          rank-r GEMM pair per Linear per step.  See `notes/2026-09-18-steps-and-lora.md`.
+#
+# The LoRA acts on the ORIGINAL weight `W`, not on Comfy's rotated `W R`, so on the ConvRot path
+# the term is computed from the UNROTATED activation.  Getting that backwards is the one silent
+# way to be wrong here, so `ConvRotLinear.forward` keeps `x` before the rotation explicitly.
+# ---------------------------------------------------------------------------------------------
+
+LORA_PREFIX = "diffusion_model."
+DEFAULT_LORA = REPO_COMFY / "loras" / "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
+
+# PEFT names them lora_A/lora_B, kohya and most ComfyUI exporters lora_down/lora_up; both with and
+# without a trailing `.weight`.  Order matters only in that the longest suffix is tried first.
+_LORA_DOWN_SUFFIXES = (".lora_A.weight", ".lora_down.weight", ".lora_A", ".lora_down")
+_LORA_UP_SUFFIXES = (".lora_B.weight", ".lora_up.weight", ".lora_B", ".lora_up")
+
+
+@dataclasses.dataclass(frozen=True)
+class LoraPair:
+    """One `(A, B)` pair as it is stored, before any destination-side slicing."""
+
+    base: str  # checkpoint-side module base, prefix stripped: "blocks.0.attn.qkv_proj"
+    down: str  # tensor name of A, [rank, in_features]
+    up: str  # tensor name of B, [out_features, rank]
+    rank: int
+    in_features: int
+    out_features: int
+    alpha: float | None  # `<base>.alpha` if the file carries one
+
+    @property
+    def strength(self) -> float:
+        """The file's own scale at user strength 1.0: `alpha / rank`, or 1.0 if no alpha."""
+        return 1.0 if self.alpha is None else self.alpha / self.rank
+
+
+@dataclasses.dataclass(frozen=True)
+class LoraSlice:
+    """One LoRA pair aimed at one diffusers destination, sliced exactly like that destination."""
+
+    pair: LoraPair
+    row_slice: tuple[int, int] | None  # rows of `lora_B` == rows of the weight
+    swap_halves: bool  # `lora_B`'s halves, like the weight's
+    scale: float  # user scale * pair.strength -- the full multiplier on `B @ A`
+
+    def nbytes(self, header: dict) -> int:
+        """Bytes this destination keeps resident when the term is applied at runtime."""
+        a = tensor_bytes(header[self.pair.down])
+        b = tensor_bytes(header[self.pair.up])
+        if self.row_slice is not None:
+            b = b * (self.row_slice[1] - self.row_slice[0]) // self.pair.out_features
+        return a + b
+
+
+@dataclasses.dataclass
+class LoraPlan:
+    path: pathlib.Path
+    scale: float
+    header: dict
+    pairs: dict[str, LoraPair]  # every pair in the file, by stripped base
+    dense: dict[str, LoraSlice]  # diffusers PARAMETER name ("....weight") -> merged at load
+    runtime: dict[str, LoraSlice]  # diffusers MODULE path -> additive term inside ConvRotLinear
+    unmatched: list[str]  # pairs no destination claimed
+    shape_errors: list[str]
+
+    @property
+    def matched(self) -> set[str]:
+        return {s.pair.base for s in self.dense.values()} | {s.pair.base for s in self.runtime.values()}
+
+    def runtime_bytes(self) -> int:
+        return sum(s.nbytes(self.header) for s in self.runtime.values())
+
+
+def parse_lora_arg(value: str) -> tuple[pathlib.Path, float]:
+    """`PATH` or `PATH:scale`.  The suffix is a scale only if it parses as a float.
+
+    Splitting on the last colon and requiring a float means a path that itself contains a colon is
+    still usable, and a typo in the scale is a hard error rather than a silently ignored suffix.
+    """
+    head, sep, tail = value.rpartition(":")
+    if sep and head:
+        try:
+            return pathlib.Path(head), float(tail)
+        except ValueError:
+            pass
+    return pathlib.Path(value), 1.0
+
+
+def scan_lora_header(header: dict) -> tuple[dict[str, LoraPair], list[str]]:
+    """Every `(A, B)` pair in a LoRA file, keyed by module base with `diffusion_model.` stripped.
+
+    Returns `(pairs, stray)`, where `stray` names every tensor that is neither half of a pair nor
+    an `alpha` -- so a file with a naming convention this does not understand is visible as such
+    instead of silently contributing nothing.
+    """
+    downs: dict[str, str] = {}
+    ups: dict[str, str] = {}
+    alphas: dict[str, str] = {}
+    stray: list[str] = []
+
+    def strip(name: str, suffixes: tuple[str, ...]) -> str | None:
+        for suffix in suffixes:
+            if name.endswith(suffix):
+                base = name[: -len(suffix)]
+                return base[len(LORA_PREFIX):] if base.startswith(LORA_PREFIX) else base
+        return None
+
+    for name in header:
+        base = strip(name, _LORA_DOWN_SUFFIXES)
+        if base is not None:
+            downs[base] = name
+            continue
+        base = strip(name, _LORA_UP_SUFFIXES)
+        if base is not None:
+            ups[base] = name
+            continue
+        base = strip(name, (".alpha",))
+        if base is not None:
+            alphas[base] = name
+            continue
+        stray.append(name)
+
+    pairs: dict[str, LoraPair] = {}
+    for base in sorted(set(downs) | set(ups)):
+        if base not in downs or base not in ups:
+            stray.append(downs.get(base) or ups[base])
+            continue
+        a_shape = header[downs[base]]["shape"]
+        b_shape = header[ups[base]]["shape"]
+        if len(a_shape) != 2 or len(b_shape) != 2:
+            stray.append(downs[base])
+            continue
+        pairs[base] = LoraPair(
+            base=base,
+            down=downs[base],
+            up=ups[base],
+            rank=a_shape[0],
+            in_features=a_shape[1],
+            out_features=b_shape[0],
+            alpha=None,  # filled by `read_lora_alphas`; the header alone cannot know it
+        )
+    return pairs, sorted(stray)
+
+
+def read_lora_alphas(path: pathlib.Path, pairs: dict[str, LoraPair], header: dict) -> dict[str, LoraPair]:
+    """Fill each pair's `alpha` by preading its scalar.  208 x 4 bytes for the turbo file.
+
+    The same exception the dry run already makes for `.comfy_quant`: a few hundred bytes of the
+    file's own declaration, read with a bare `os.pread`, so the dry run stays torch-free.
+    """
+    _, data_start = read_header_and_data_start(path)
+    fd = os.open(str(path), os.O_RDONLY)
+    try:
+        out: dict[str, LoraPair] = {}
+        for base, pair in pairs.items():
+            alpha = None
+            for name in (f"{LORA_PREFIX}{base}.alpha", f"{base}.alpha"):
+                entry = header.get(name)
+                if entry is None:
+                    continue
+                begin, end = entry["data_offsets"]
+                blob = os.pread(fd, end - begin, data_start + begin)
+                if entry["dtype"] == "F32" and end - begin == 4:
+                    alpha = struct.unpack("<f", blob)[0]
+                elif entry["dtype"] == "F64" and end - begin == 8:
+                    alpha = struct.unpack("<d", blob)[0]
+                else:
+                    raise RuntimeError(f"{name}: alpha is {entry['dtype']} {end - begin}B, not a f32/f64 scalar")
+                break
+            out[base] = dataclasses.replace(pair, alpha=alpha)
+        return out
+    finally:
+        os.close(fd)
+
+
+def build_lora_plan(
+    path: pathlib.Path,
+    scale: float,
+    denoiser_header: dict,
+    remap: dict[str, SourceSlice],
+    quant: dict[str, QuantSlice],
+) -> LoraPlan:
+    """Aim every pair in `path` at the destinations the weight remap already defines.
+
+    A destination is claimed by the pair whose base equals the *checkpoint* module the destination
+    reads its weight from, so the LoRA needs no name table of its own: it inherits the one the
+    weights are already loaded through, including the qkv row slices and the SwiGLU half swap.
+    `remap` supplies the dense destinations (which are merged) and `quant` the ConvRot ones (which
+    get the runtime term); on the pruned path `quant` is empty and everything is merged.
+    """
+    header = read_header(path)
+    pairs, stray = scan_lora_header(header)
+    pairs = read_lora_alphas(path, pairs, header)
+
+    dense: dict[str, LoraSlice] = {}
+    runtime: dict[str, LoraSlice] = {}
+    shape_errors: list[str] = []
+
+    def aim(dest: str, base: str, row_slice, swap_halves: bool, into: dict) -> None:
+        pair = pairs.get(base)
+        if pair is None:
+            return
+        weight = denoiser_header.get(f"{base}.weight")
+        if weight is not None:
+            out_features, in_features = weight["shape"]
+            if (pair.out_features, pair.in_features) != (out_features, in_features):
+                shape_errors.append(
+                    f"{base}: lora is [{pair.out_features}, {pair.rank}] x [{pair.rank}, "
+                    f"{pair.in_features}] but the checkpoint weight is [{out_features}, {in_features}]"
+                )
+                return
+        if row_slice is not None and not (0 <= row_slice[0] < row_slice[1] <= pair.out_features):
+            shape_errors.append(f"{base}: row slice {row_slice} is outside lora_B's {pair.out_features} rows")
+            return
+        if swap_halves and pair.out_features % 2:
+            shape_errors.append(f"{base}: lora_B has an odd {pair.out_features} rows, cannot swap halves")
+            return
+        into[dest] = LoraSlice(pair, row_slice, swap_halves, scale * pair.strength)
+
+    for name, src in remap.items():
+        if not name.endswith(".weight") or not src.key.endswith(".weight"):
+            continue
+        aim(name, src.key[: -len(".weight")], src.row_slice, src.swap_halves, dense)
+    for module, q in quant.items():
+        aim(module, q.key, q.row_slice, q.swap_halves, runtime)
+
+    plan = LoraPlan(
+        path=path,
+        scale=scale,
+        header=header,
+        pairs=pairs,
+        dense=dense,
+        runtime=runtime,
+        unmatched=[],
+        shape_errors=shape_errors,
+    )
+    plan.unmatched = sorted(set(pairs) - plan.matched) + stray
+    return plan
+
+
+def lora_delta(torch, fh, sl: LoraSlice, device=None):
+    """`scale * (B @ A)` for one destination, as float32 on `device`, sliced like the weight.
+
+    `lora_B`'s rows are the output axis, so `row_slice` reads a contiguous byte range and
+    `swap_halves` is the same concatenation the weight gets.  `lora_A` is always whole.  The
+    product is taken in float32: bf16 -> float32 is exact, so the only rounding in the merged
+    weight is the single cast at the end, which is what "merged exactly" means here.
+
+    The product is formed *on the destination card*, not on the host: only the two small factors
+    (at most ~11 MB together for this file) cross the bus, and the `[out, in]` float32 transient
+    -- 616 MB for an `mlp.fc1` -- is paid in card memory, which is the resource this host has and
+    host RAM is the one it does not (notes/2026-09-18-gpu-fault-first-light.md).
+    """
+    b = fh.get_tensor(sl.pair.up, sl.row_slice)
+    if sl.swap_halves:
+        half = b.shape[0] // 2
+        b = torch.cat((b[half:], b[:half]), dim=0)
+    a = fh.get_tensor(sl.pair.down)
+    if device is not None:
+        a, b = a.to(device=device), b.to(device=device)
+    delta = (b.to(torch.float32) @ a.to(torch.float32)) * sl.scale
+    del a, b
+    fh.release(sl.pair.up, sl.row_slice)
+    fh.release(sl.pair.down)
+    return delta
+
+
+def lora_runtime_tensors(torch, fh, sl: LoraSlice, device):
+    """`(A, B)` for the runtime term, on `device`, in the dtype they are stored in.
+
+    Stored dtype (bf16) rather than float32 on purpose: widening here would double the resident
+    cost of the adapter for no gain, because `ConvRotLinear` widens per call exactly as it already
+    does for the int8 weight.  `B` is sliced and swapped like the weight; `A` is whole.
+    """
+    b = fh.get_tensor(sl.pair.up, sl.row_slice)
+    if sl.swap_halves:
+        half = b.shape[0] // 2
+        b = torch.cat((b[half:], b[:half]), dim=0)
+    a = fh.get_tensor(sl.pair.down)
+    a = a.to(device=device).contiguous()
+    b = b.to(device=device).contiguous()
+    fh.release(sl.pair.up, sl.row_slice)
+    fh.release(sl.pair.down)
+    return a, b
 
 
 # Mirrors MiniMaxH3Transformer3DModel._keep_in_fp32_modules
@@ -724,16 +1069,30 @@ def make_convrot_linear(torch, nn, F):
         whose `adaln_proj` *is* bf16 and whose input is cast to bf16 by exactly that call.
         """
 
-        def __init__(self, qweight, scale, bias, rotation, group_size: int, compute_dtype=None, out_dtype=None):
+        def __init__(self, qweight, scale, bias, rotation, group_size: int, compute_dtype=None, out_dtype=None,
+                     lora_a=None, lora_b=None, lora_scale: float = 1.0):
             super().__init__()
             if qweight.shape[1] % group_size:
                 raise ValueError(
                     f"in_features {qweight.shape[1]} is not a multiple of the ConvRot group size {group_size}"
                 )
+            if (lora_a is None) != (lora_b is None):
+                raise ValueError("lora_a and lora_b must be given together")
+            if lora_a is not None:
+                if lora_a.shape[1] != qweight.shape[1] or lora_b.shape[0] != qweight.shape[0]:
+                    raise ValueError(
+                        f"lora [{lora_b.shape[0]}, {lora_b.shape[1]}] x [{lora_a.shape[0]}, {lora_a.shape[1]}] "
+                        f"does not fit the Linear [{qweight.shape[0]}, {qweight.shape[1]}]"
+                    )
+                if lora_a.shape[0] != lora_b.shape[1]:
+                    raise ValueError(f"lora ranks disagree: A {lora_a.shape[0]} vs B {lora_b.shape[1]}")
             self.register_buffer("qweight", qweight, persistent=False)  # int8 [out, in]
             self.register_buffer("scale", scale, persistent=False)  # float32 [out, 1]
             self.register_buffer("bias", bias, persistent=False)
             self.register_buffer("rotation", rotation, persistent=False)  # [G, G] or None
+            self.register_buffer("lora_a", lora_a, persistent=False)  # [rank, in] or None
+            self.register_buffer("lora_b", lora_b, persistent=False)  # [out, rank] or None
+            self.lora_scale = float(lora_scale)
             self.group_size = group_size
             self.compute_dtype = compute_dtype
             self.out_dtype = out_dtype
@@ -745,6 +1104,9 @@ def make_convrot_linear(torch, nn, F):
             out = self.out_dtype or x.dtype
             if compute != x.dtype:
                 x = x.to(compute)
+            # The LoRA is an adapter on the ORIGINAL weight W, not on Comfy's rotated `W R`, so
+            # its term is built from the activation *before* the rotation.  Keep the reference now.
+            x_unrotated = x
             if self.rotation is not None:
                 shape = x.shape
                 x = x.reshape(*shape[:-1], shape[-1] // self.group_size, self.group_size)
@@ -757,7 +1119,18 @@ def make_convrot_linear(torch, nn, F):
             # float32 -- for the bf16/f16 activations the cards actually run, it is the same
             # float32 it always was.
             acc = torch.promote_types(y.dtype, torch.float32)
-            y = (y.to(acc) * self.scale.reshape(1, -1).to(acc)).to(out)
+            y = y.to(acc) * self.scale.reshape(1, -1).to(acc)
+            if self.lora_a is not None:
+                # y += scale * B (A x).  The quantized weight cannot absorb the delta (see the
+                # LoRA section), so the adapter stays additive here.  `A x` is taken in the
+                # compute dtype -- the same GEMM precision the dequantized path itself runs at --
+                # and everything from there on is float32: the rank axis is small, so the second
+                # GEMM and the scale cost almost nothing at full width, and the sum lands in the
+                # same float32 accumulator the dequant scale already produced.  Fixed operand
+                # order, no atomics: bitwise repeatable, exactly like the path it adds to.
+                xa = F.linear(x_unrotated, self.lora_a.to(compute)).to(acc) * self.lora_scale
+                y = y + F.linear(xa, self.lora_b.to(acc))
+            y = y.to(out)
             if self.bias is not None:
                 y = y + self.bias.to(out)
             return y
@@ -1483,6 +1856,26 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
             LOG.warning("--denoiser-rotation none: this is the A/B control and WILL produce garbage "
                         "if the rotation is real")
 
+    lora: LoraPlan | None = None
+    if args.lora:
+        lora_path, lora_scale = parse_lora_arg(args.lora)
+        lora = build_lora_plan(lora_path, lora_scale, header, remap, quant)
+        # Fail closed, the same rule `build_quant_map` applies: an adapter tensor that lands
+        # nowhere is a mapping bug, and the only symptom would be a subtly wrong clip.
+        if lora.shape_errors:
+            raise RuntimeError(f"{lora_path.name}: {len(lora.shape_errors)} shape mismatches, "
+                               f"e.g. {lora.shape_errors[:3]}")
+        if lora.unmatched:
+            raise RuntimeError(
+                f"{lora_path.name}: {len(lora.unmatched)} LoRA keys have no destination in the "
+                f"{variant} denoiser, e.g. {lora.unmatched[:5]}"
+            )
+        LOG.info(
+            "lora %s scale %.4f: %d pairs -> %d merged + %d runtime destinations%s",
+            lora_path.name, lora_scale, len(lora.pairs), len(lora.dense), len(lora.runtime),
+            f", {gib(lora.runtime_bytes())} resident" if lora.runtime else "",
+        )
+
     def device_for(name: str):
         if name.startswith("transformer_blocks."):
             return primary if int(name.split(".")[1]) < plan.split_index else secondary
@@ -1490,12 +1883,16 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
 
     with phase("load.stream", timings):
         LOG.info("denoiser loader: %s (B70_H3_LOADER), checkpoint %s", LOADER, path.name)
-        with open_tensor_reader(path, header) as fh:
+        lora_reader = (
+            open_tensor_reader(lora.path, lora.header) if lora is not None else contextlib.nullcontext()
+        )
+        with open_tensor_reader(path, header) as fh, lora_reader as lfh:
             if not quantized:
                 table = fh.get_tensor("adaln_t_table").to(device=primary, dtype=torch.float32)
                 model.time_embedder = AdaLNTableEmbedder(table)
                 fh.release("adaln_t_table")
             placed = 0
+            merged = 0  # dense destinations the LoRA was folded into
             for name, src in remap.items():
                 dev = device_for(name)
                 # A row slice is a contiguous byte range, so the pread loader reads only those
@@ -1505,7 +1902,17 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                 if src.swap_halves:
                     half = t.shape[0] // 2
                     t = torch.cat((t[half:], t[:half]), dim=0)
-                t = t.to(device=dev, dtype=target_dtype(name, args.adaln_dtype, variant)).contiguous()
+                dtype = target_dtype(name, args.adaln_dtype, variant)
+                sl = lora.dense.get(name) if lora is not None else None
+                if sl is None:
+                    t = t.to(device=dev, dtype=dtype).contiguous()
+                else:
+                    # Merge exactly: widen W to float32 (bf16 -> float32 loses nothing), add the
+                    # float32 delta, and round ONCE, into the dtype the weight would have had.
+                    # The no-LoRA branch above is left byte-for-byte as it was.
+                    t = t.to(device=dev, dtype=torch.float32)
+                    t = (t + lora_delta(torch, lfh, sl, dev)).to(dtype).contiguous()
+                    merged += 1
                 set_submodule_tensor(model, name, t)
                 del t  # the module owns the device tensor; drop the host-side name and the buffer
                 fh.release(src.key, src.row_slice)
@@ -1522,6 +1929,7 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
             # The only differences are that the destination Linears here are *sliced* out of
             # Comfy's fused tensors, and that two group sizes are in play.
             total = len(remap) + len(quant)
+            runtime_lora = 0  # ConvRotLinears carrying an additive LoRA term
             for module, q in quant.items():
                 dev = device_for(module)
                 parent_path, _, leaf = module.rpartition(".")
@@ -1541,6 +1949,10 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                 # `adaln_proj.linear` is the one Linear diffusers probes with
                 # `get_parameter_dtype` before calling; pin it to the unpruned checkpoint's bf16.
                 is_adaln = module.endswith("adaln_proj.linear")
+                # The int8 weight cannot absorb a LoRA (re-quantizing would move every weight), so
+                # the adapter rides along as an additive low-rank term evaluated per call.
+                sl = lora.runtime.get(module) if lora is not None else None
+                lora_a, lora_b = lora_runtime_tensors(torch, lfh, sl, dev) if sl is not None else (None, None)
                 setattr(
                     parent,
                     leaf,
@@ -1552,9 +1964,14 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                         q.group_size,
                         compute_dtype=torch.bfloat16 if is_adaln else None,
                         out_dtype=adaln_out_dtype if is_adaln else None,
+                        lora_a=lora_a,
+                        lora_b=lora_b,
+                        lora_scale=sl.scale if sl is not None else 1.0,
                     ),
                 )
-                del qw, sc, bias  # the ConvRotLinear buffers own them now
+                if sl is not None:
+                    runtime_lora += 1
+                del qw, sc, bias, lora_a, lora_b  # the ConvRotLinear buffers own them now
                 for suffix in (".weight", ".weight_scale"):
                     fh.release(q.key + suffix, q.row_slice)
                 if q.has_bias:
@@ -1586,6 +2003,18 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
     if stragglers:
         raise RuntimeError(f"denoiser is not fully resident on the cards: {stragglers[:10]}")
 
+    if lora is not None:
+        if merged != len(lora.dense) or runtime_lora != len(lora.runtime):
+            raise RuntimeError(
+                f"lora application is incomplete: merged {merged}/{len(lora.dense)} dense, "
+                f"attached {runtime_lora}/{len(lora.runtime)} runtime"
+            )
+        LOG.info(
+            "lora applied: %d weights merged exactly (float32, one rounding), %d ConvRotLinears "
+            "carry the additive term (%s resident) -- the two are NOT the same arithmetic",
+            merged, runtime_lora, gib(lora.runtime_bytes()),
+        )
+
     _install_boundary_hooks(torch, model, plan.split_index, primary, secondary)
     LOG.info("cross-card transfer route: %s (B70_H3_XFER)", XFER)
     if quantized:
@@ -1603,7 +2032,7 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         gib(plan.card1_bytes),
         secondary,
     )
-    return model, primary, secondary
+    return model, primary, secondary, lora
 
 
 def _install_boundary_hooks(torch, model, split_index: int, primary, secondary) -> None:
@@ -1772,6 +2201,23 @@ def file_digest(path: pathlib.Path, limit: int | None = None) -> str:
 # ---------------------------------------------------------------------------------------------
 
 
+# num_inference_steps is the number of SIGMA GRID POINTS, terminal 0 included, so it drives
+# `steps - 1` transformer evaluations (NFE) -- `MiniMaxH3Scheduler.set_timesteps`,
+# scheduling_minimax_h3.py L133-136, verified against the source on this host.  Upstream always
+# quotes NFE, so every published number needs the +1 here (which is exactly what lightx2v's own
+# runner does: `scheduler_grid_points = args.inference_steps + 1`).
+#
+#   base model      50 NFE  -> 51   (lightx2v/ModelTC reference runner, DIFFUSERS_SETUP_AND_INFERENCE.md)
+#                   20 NFE  -> 21   (official ComfyUI template, turbo_mode off)
+#   8-step turbo    8 NFE   ->  9   (ModelTC spec table "FL2VA Turbo 8-step v1.0", ComfyUI
+#                                    template `turbo_steps` = 8; 4 NFE also supported)
+#
+# There is no guidance_scale / true_cfg_scale at any step count: the released checkpoints are
+# CFG-distilled and every step is a single forward pass.  See notes/2026-09-18-steps-and-lora.md
+# for the full citation list.
+DEFAULT_STEPS = 51
+TURBO_STEPS = 9
+
 DEFAULT_PROMPT = (
     "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, "
     "a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, "
@@ -1804,10 +2250,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--steps",
         type=int,
-        default=50,
-        help="num_inference_steps. THE REAL DEFAULT IS UNKNOWN: no file on this host and no diffusers "
-        "block declares one (the H3 blocks mark it required with no default). 50 here is the generic "
-        "diffusers template value, i.e. a guess -- resolve it in the first GPU session.",
+        default=DEFAULT_STEPS,
+        help=f"num_inference_steps -- SIGMA GRID POINTS, terminal 0 included, so this drives "
+        f"steps - 1 transformer evaluations (MiniMaxH3Scheduler.set_timesteps docstring, "
+        f"scheduling_minimax_h3.py L133-136). The default {DEFAULT_STEPS} is the reference runner's "
+        f"50 NFE + 1. With the 8-step turbo LoRA pass --steps {TURBO_STEPS} (8 NFE); 21 (20 NFE) is "
+        "the official ComfyUI template's base setting. There is no guidance_scale: the checkpoint "
+        "is CFG-distilled and every step is one forward pass. See notes/2026-09-18-steps-and-lora.md.",
     )
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--video-shift", type=float, default=None, help="override the video scheduler shift (default 12.0)")
@@ -1821,6 +2270,17 @@ def build_parser() -> argparse.ArgumentParser:
         "exact; `int8` is the full INT8 ConvRot file, whose AdaLN branch is exact in form but "
         "whose 250 block Linears are int8. Default stays `pruned` until the pruned control has "
         "rendered a clip.",
+    )
+    p.add_argument(
+        "--lora",
+        default=os.environ.get("B70_H3_LORA") or None,
+        metavar="PATH[:SCALE]",
+        help="a ComfyUI-format LoRA to apply to the denoiser (env B70_H3_LORA). SCALE is the user "
+        "strength, default 1.0, and multiplies the file's own alpha/rank. On dense BF16 weights "
+        "the adapter is MERGED at load time (W + s*B@A in float32, rounded once); on "
+        "`--denoiser int8` the quantized Linears cannot absorb it, so there it stays an additive "
+        f"low-rank term inside ConvRotLinear. The 8-step turbo adapter is {DEFAULT_LORA.name}; "
+        f"it is the precondition for --steps {TURBO_STEPS} (= 8 NFE).",
     )
     p.add_argument("--cards", type=int, nargs=2, default=[0, 1], help="the two XPU indices for the denoiser")
     p.add_argument("--encoder-card", type=int, default=0, help="card the text encoder runs on, alone")
@@ -2034,6 +2494,11 @@ def dry_run(args) -> int:
               f"-> {gib(32 * 2**30 - worst)} free")
     print()
 
+    if args.lora:
+        rc = dry_run_lora(args, config, header, quant_meta)
+        if rc:
+            return rc
+
     te_header = read_header(INT8_TEXT_ENCODER)
     quantized = {k for k in te_header if k.endswith(".comfy_quant")}
     te_bytes = sum(tensor_bytes(e) for k, e in te_header.items() if not k.endswith(".comfy_quant"))
@@ -2070,9 +2535,14 @@ def dry_run(args) -> int:
     print(f"  video rows            : {rows_video}")
     print(f"  audio rows            : {audio_rows} ({audio_cfg['sampling_rate']} Hz stereo)")
     print(f"  packed sequence       : {rows_video + audio_rows} + text rows")
-    print(f"  steps                 : {args.steps}  <-- ASSUMED, the real default is unknown")
+    print(f"  steps                 : {args.steps} sigma grid points -> {args.steps - 1} transformer "
+          f"evaluations (NFE){'' if args.lora else '   [base model: 50 NFE reference / 20 NFE ComfyUI template]'}")
+    if args.lora:
+        print(f"                          the 8-step turbo LoRA wants 8 NFE, i.e. --steps {TURBO_STEPS}"
+              f"{'  OK' if args.steps == TURBO_STEPS else '  <-- MISMATCH'}")
     print(f"  schedulers            : video shift {json.loads((SCHEDULER_DIR / 'scheduler_config.json').read_text())['shift']}, "
-          f"audio shift {json.loads((AUDIO_SCHEDULER_DIR / 'scheduler_config.json').read_text())['shift']}, cfg-free")
+          f"audio shift {json.loads((AUDIO_SCHEDULER_DIR / 'scheduler_config.json').read_text())['shift']}, cfg-free "
+          f"(rectified-flow Euler, eta 0; no guidance_scale exists)")
     print()
 
     if args.verify_remap:
@@ -2082,6 +2552,65 @@ def dry_run(args) -> int:
 
     print("dry run complete: no GPU touched, no service touched, nothing downloaded.")
     return 0
+
+
+def dry_run_lora(args, config: dict, header: dict, quant_meta: dict[str, dict]) -> int:
+    """The LoRA half of the dry run: how many pairs matched, where they land, what did not match.
+
+    Headers plus the 4-byte `alpha` scalars.  No torch, no tensor data, nothing placed.
+    """
+    lora_path, scale = parse_lora_arg(args.lora)
+    variant = args.denoiser
+    print(f"lora: {lora_path}")
+    if not lora_path.exists():
+        print(f"  FAIL: {lora_path} does not exist")
+        return 1
+    size = lora_path.stat().st_size
+    remap = build_remap(config["num_layers"], config["num_refiner_layers"], variant)
+    quant = build_quant_map(config["num_layers"], header, quant_meta) if variant == "int8" else {}
+    plan = build_lora_plan(lora_path, scale, header, remap, quant)
+
+    meta = read_metadata(lora_path)
+    print(f"  file                  : {size / 1e9:.3f} GB, {len(plan.header)} tensors, "
+          f"{len(plan.pairs)} (A, B) pairs")
+    if meta:
+        for key in ("training_rank", "training_alpha", "training_scale", "base_model",
+                    "source_format", "target_format", "qkv_fusion", "swi_glu_mapping"):
+            if key in meta:
+                print(f"    {key:20s}: {meta[key]}")
+    ranks = sorted({(p.rank, p.alpha, round(p.strength, 6)) for p in plan.pairs.values()})
+    for rank, alpha, strength in ranks:
+        n = sum(1 for p in plan.pairs.values() if p.rank == rank)
+        print(f"  rank {rank:<4d}            : {n:4d} pairs, alpha {alpha}, alpha/rank {strength:.6f}, "
+              f"x user scale {scale} = {strength * scale:.6f}")
+    print(f"  matched pairs         : {len(plan.matched)}/{len(plan.pairs)}")
+    print(f"  merged destinations   : {len(plan.dense)}  (dense BF16 weights; W + s*B@A in float32, "
+          f"rounded once -- exact)")
+    print(f"  runtime destinations  : {len(plan.runtime)}  (ConvRotLinear; additive term, "
+          f"NOT a merge -- the int8 weight cannot absorb it)")
+    if plan.runtime:
+        print(f"  runtime resident      : {plan.runtime_bytes() / 1e9:.3f} GB  {gib(plan.runtime_bytes())}  "
+              f"<-- on top of the split plan above")
+    if plan.dense:
+        widest = max(
+            ((s.row_slice[1] - s.row_slice[0]) if s.row_slice else s.pair.out_features)
+            * s.pair.in_features * 4
+            for s in plan.dense.values()
+        )
+        print(f"  merge transient peak  : {widest / 1e6:8.1f} MB on the destination card "
+              f"(one float32 [out, in] delta at a time)")
+    if plan.shape_errors:
+        print(f"  FAIL: {len(plan.shape_errors)} shape mismatches")
+        for e in plan.shape_errors[:5]:
+            print(f"    {e}")
+    if plan.unmatched:
+        print(f"  FAIL: {len(plan.unmatched)} unmatched LoRA keys")
+        for k in plan.unmatched[:10]:
+            print(f"    {k}")
+    if not plan.shape_errors and not plan.unmatched:
+        print("  unmatched keys        : 0  (every pair in the file has a destination)")
+    print()
+    return 1 if (plan.shape_errors or plan.unmatched) else 0
 
 
 VERIFY_ROWS = 256  # output rows sampled per quantized Linear; keeps every read a few MB
@@ -2268,7 +2797,29 @@ def main(argv: list[str] | None = None) -> int:
         torch.xpu.reset_peak_memory_stats(dev)
 
     # ---- phase 2: the denoiser ---------------------------------------------------------------
-    transformer, primary, secondary = load_sharded_transformer(args, plan, config, timings)
+    transformer, primary, secondary, lora_plan = load_sharded_transformer(args, plan, config, timings)
+    # Captured now, because the receipt is written long after the denoiser has been freed.
+    lora_receipt = None
+    if lora_plan is not None:
+        lora_receipt = {
+            "path": str(lora_plan.path),
+            "sha256": file_digest(lora_plan.path),
+            "bytes": lora_plan.path.stat().st_size,
+            "user_scale": lora_plan.scale,
+            "effective_scales": sorted({round(s.scale, 9) for s in
+                                        list(lora_plan.dense.values()) + list(lora_plan.runtime.values())}),
+            "metadata": read_metadata(lora_plan.path),
+            "pairs": len(lora_plan.pairs),
+            "pairs_matched": len(lora_plan.matched),
+            "merged_destinations": len(lora_plan.dense),
+            "runtime_destinations": len(lora_plan.runtime),
+            "runtime_resident_bytes": lora_plan.runtime_bytes(),
+            "application": (
+                "dense weights merged exactly (W + s*B@A in float32, one rounding); "
+                "ConvRotLinear destinations carry an additive runtime term instead, because an "
+                "int8 weight cannot absorb a merge"
+            ),
+        }
     # `--encoder-card` may differ from `--cards[0]`, in which case this is a card crossing
     prompt_embeds = cross_card(torch, prompt_embeds, primary)
 
@@ -2356,7 +2907,13 @@ def main(argv: list[str] | None = None) -> int:
         "prompt_tokens": len(token_ids) if token_ids is not None else int(prompt_embeds.shape[1]),
         "seed": args.seed,
         "num_inference_steps": args.steps,
-        "num_inference_steps_note": "ASSUMED; no default is declared anywhere on this host",
+        "num_function_evaluations": args.steps - 1,
+        "num_inference_steps_note": (
+            "sigma grid points, terminal 0 included; NFE = steps - 1 "
+            "(MiniMaxH3Scheduler.set_timesteps). Base reference is 50 NFE (steps 51); the 8-step "
+            f"turbo LoRA is 8 NFE (steps {TURBO_STEPS}). CFG-distilled: no guidance_scale exists. "
+            "See notes/2026-09-18-steps-and-lora.md"
+        ),
         "resolved": {
             "video_latents_shape": list(latents.shape),
             "audio_latents_shape": list(audio_latents.shape),
@@ -2381,6 +2938,7 @@ def main(argv: list[str] | None = None) -> int:
             "denoiser_variant": args.denoiser,
             "denoiser_rotation": args.denoiser_rotation if args.denoiser == "int8" else None,
             "denoiser_header_sha256": file_digest(denoiser, limit=1 << 20),
+            "lora": lora_receipt,
             "text_encoder": str(INT8_TEXT_ENCODER) if args.prompt_embeds is None else str(args.prompt_embeds),
             "convrot_rotation_sha256": file_digest(CONVROT_ROTATION) if CONVROT_ROTATION.exists() else None,
             "vae": str(VAE_DIR),

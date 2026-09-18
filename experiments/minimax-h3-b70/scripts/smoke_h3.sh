@@ -79,7 +79,29 @@ OUT_ROOT="${OUT_ROOT:-/mnt/fast-ai/bench-results/minimax-h3}"
 HEIGHT="${HEIGHT:-256}"
 WIDTH="${WIDTH:-448}"
 FRAMES="${FRAMES:-124}"
-STEPS="${STEPS:-50}"          # ASSUMED -- no default is declared anywhere on this host.
+
+# The 8-step turbo LoRA, and the step count that goes with it.
+#
+# `--steps` is the number of SIGMA GRID POINTS, terminal 0 included, so it drives `steps - 1`
+# transformer evaluations (MiniMaxH3Scheduler.set_timesteps, scheduling_minimax_h3.py L133-136).
+# Upstream always quotes NFE, so every published number gets +1 here:
+#
+#   base model, no LoRA   50 NFE -> STEPS=51   (the lightx2v/ModelTC reference runner)
+#                         20 NFE -> STEPS=21   (the official ComfyUI template, turbo off)
+#   8-step turbo LoRA      8 NFE -> STEPS=9    (ModelTC "FL2VA Turbo 8-step v1.0"; 4 NFE also works)
+#
+# A short step count is only legitimate WITH the turbo adapter, so the two defaults move together:
+# the LoRA defaults to the turbo file when it is on disk, and STEPS follows it. Set LORA= (empty)
+# to run the base model, and STEPS then defaults to 51. There is no cfg to set at any step count --
+# the checkpoint is CFG-distilled and every step is one forward pass.
+# See ../notes/2026-09-18-steps-and-lora.md.
+TURBO_LORA="/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
+if [ -z "${LORA+x}" ]; then
+  if [ -f "${TURBO_LORA}" ]; then LORA="${TURBO_LORA}"; else LORA=""; fi
+fi
+if [ -n "${LORA}" ]; then STEPS="${STEPS:-9}"; else STEPS="${STEPS:-51}"; fi
+LORA_ARGS=()
+if [ -n "${LORA}" ]; then LORA_ARGS=(--lora "${LORA}"); fi
 SEED="${SEED:-42}"
 PROMPT="${PROMPT:-A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.}"
 
@@ -170,6 +192,7 @@ run_gpu() {   # run_gpu <run-name> [extra args...]
         --prompt "${PROMPT}" \
         --height "${HEIGHT}" --width "${WIDTH}" \
         --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
+        "${LORA_ARGS[@]}" \
         --out-dir "${OUT_ROOT}" --run-name "${name}" \
         --save-tensors \
         "$@" \
@@ -229,11 +252,15 @@ case "${mode}" in
     for d in pruned int8; do
       echo "################ dry run: --denoiser ${d} ################"
       "${CPU_VENV}/bin/python" "${RUNNER}" --dry-run --verify-remap --denoiser "${d}" \
-        --height "${HEIGHT}" --width "${WIDTH}" --frames "${FRAMES}" --steps "${STEPS}" || rc=1
+        --height "${HEIGHT}" --width "${WIDTH}" --frames "${FRAMES}" --steps "${STEPS}" \
+        "${LORA_ARGS[@]}" || rc=1
       echo
     done
     echo "################ INT8 ConvRot dequant unit test ################"
     "${CPU_VENV}/bin/python" "${HERE}/test_convrot_linear.py" || rc=1
+    echo
+    echo "################ LoRA merge / runtime-term unit test ################"
+    "${CPU_VENV}/bin/python" "${HERE}/test_lora.py" || rc=1
     exit "${rc}"
     ;;
 

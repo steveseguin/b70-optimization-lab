@@ -111,7 +111,7 @@ requested clip (at the 256x448 smoke canvas):
   frames  : 124 (17n+5), 5.167 s at 24 fps
   latent  : 37 frames, 16 x 28
   rows    : 4144 video + 414 audio + text
-  steps   : 50  <-- ASSUMED
+  steps   : 50  <-- ASSUMED (superseded 2026-09-18: 51 base / 9 with the turbo LoRA, see below)
 ```
 
 At the default 768x1344 canvas the same clip is **37296 video rows**, so the packed sequence is
@@ -122,7 +122,7 @@ At the default 768x1344 canvas the same clip is **37296 video rows**, so the pac
 | Assumption | Why | How the GPU session settles it |
 | --- | --- | --- |
 | **Encoder = INT8 ConvRot Qwen3-VL**, dequantized to BF16 per Linear, rotation applied to the activation | it is the only encoder on disk (the BF16 one, 67 GB, was never downloaded) and it fits alone on one card at 25.3 GiB | run once; compare against `--te-rotation none`. If the embedding is wrong the clip is obviously wrong. |
-| **`num_inference_steps = 50`** | **no default exists anywhere.** The H3 blocks mark it required with no default; no file on this host declares one; the official scripts do not expose it. 50 is the generic diffusers template value, i.e. a guess. That Comfy ships 4-step and 8-step turbo LoRAs implies the base is many-step. | read `pipe.doc` / the blocks' resolved docstring once diffusers is installed, or sweep 20/30/50 and look at the frames |
+| ~~**`num_inference_steps = 50`**~~ **SETTLED 2026-09-18: 51 base, 9 with the turbo LoRA** | The assumption was right that no default exists *on this host*, and wrong about what the number means. `num_inference_steps` counts **sigma grid points, terminal zero included**, so it drives `steps - 1` transformer evaluations (`scheduling_minimax_h3.py:133-136`) -- `--steps 50` was 49 NFE. Upstream quotes NFE: 50 for the base reference runner, 20 in the official ComfyUI template, 8 for the turbo adapter. | settled by reading; no sweep needed. [notes/2026-09-18-steps-and-lora.md](2026-09-18-steps-and-lora.md) |
 | **Canvas defaults to 768 short edge -> 768x1344** | `resolve_canvas_size(16, 9, 32, 768, 1032192)` with no keyframe, per `modular_pipeline.py` L40-96 | nothing to settle; but **start the smoke at 256x448**, which is ~1/9 of the rows |
 | **Modulation cast to bf16** after the float32 rank-8 projection | the unpruned checkpoint's `adaln_proj` is bf16, so this matches the full model's arithmetic; keeping float32 would promote the whole 37k-row packed sequence to float32 | `--adaln-out-dtype fp32` is the A/B |
 | **VAEs from the original repo**, video in float16, audio in float32 | the Comfy `*_vae_fp16` / `*_vae_fp32` files use upstream naming and the audio one is weight-norm-**fused** (`conv.weight`) where diffusers wants the re-parameterised `weight_g`/`weight_v` -- a second unverified remap for no benefit | nothing; revisit only if VAE load time matters |
@@ -240,17 +240,19 @@ the venv is no longer a script.
 r312c census is exact and lc-3 runs), re-checks the venv imports and refuses to continue if they fail, stops the FP8
 service gracefully, and then runs:
 
-1. `STEPS=8 ./smoke_h3.sh one` -- one clip at the smoke canvas, **256x448, 124 frames**, seed 42, 90-minute timeout;
-2. only if that returns 0, `STEPS=8 ./smoke_h3.sh repeat` -- two runs at the same seed with their receipt hashes
+1. `./smoke_h3.sh one` -- one clip at the smoke canvas, **256x448, 124 frames**, seed 42, 90-minute timeout;
+2. only if that returns 0, `./smoke_h3.sh repeat` -- two runs at the same seed with their receipt hashes
    compared, which is the bytewise gate;
 
 then waits for port 18124 to be free and restores the service as unit `fp8-service-20260918-h3`
 (state `/mnt/fast-ai/bench-results/minimax-h3/service-restore`). Evidence lands in
 `/mnt/fast-ai/bench-results/minimax-h3/`.
 
-`STEPS=8` is deliberate and is **not** a claim about the right step count (50 remains an assumption, see the table
-above). First light asks two questions only: does this stack run on the cards at all, and does it repeat bit for bit.
-Eight steps answers both at about a sixth of the wall clock; the step sweep comes after the repeat gate has a verdict.
+The `STEPS=8` override those lines used to carry is gone, and so is the caveat that went with it. The 8-step turbo
+LoRA is now on disk and `smoke_h3.sh` applies it by default, so the script's own default is **9 grid points = 8
+transformer evaluations**, which is the adapter's distillation point rather than an arbitrary shortcut. `LORA=` (empty)
+falls back to **51** (50 NFE, the base reference). First light still asks two questions only: does this stack run on the
+cards at all, and does it repeat bit for bit.
 
 ## First light 2 (02:05 UTC): killed the host session
 
@@ -490,8 +492,14 @@ module.
 
 ### Still open
 
-* **`--steps` is still a guess.** Nothing about the int8 build changes that; the turbo LoRA in the
-  audit's recommendation 2 is still undownloaded.
+* ~~**`--steps` is still a guess.**~~ **Closed 2026-09-18.** The step count is settled (51 base / 9
+  with the adapter, and the number means grid points, not model passes), and the 8-step turbo LoRA
+  from the audit's recommendation 2 **has downloaded** (1.956 GB, complete) and is wired into
+  `--lora PATH[:scale]`: 208/208 pairs matched on both denoisers, merged exactly into the dense BF16
+  weights and applied as an additive runtime term inside `ConvRotLinear` on the int8 path, because a
+  quantized weight cannot absorb a merge. [notes/2026-09-18-steps-and-lora.md](2026-09-18-steps-and-lora.md).
+  What is *not* closed: nobody has rendered a clip with it, and the adapter was distilled at 544p
+  while the smoke canvas is 256x448.
 * **Which denoiser is actually better** is still undecided and cannot be decided on CPU. Both paths
   now load, which is what makes the question answerable at all: same canvas, same seed, same
   conditioning via `--prompt-embeds`, one difference. That A/B is step 7 of the first-light plan, and

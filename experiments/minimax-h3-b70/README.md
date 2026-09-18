@@ -8,6 +8,15 @@ in the text-encoder load and took the user's desktop session with it (a 4 GiB cg
 beside a kernel build, on a 15 GiB host). The lane is gated on a CPU host-memory measurement and now runs under
 `scripts/mem-watchdog.sh`: [first-light plan](notes/2026-09-18-first-light-plan.md).
 
+**2026-09-18, the step count is no longer a guess.** `num_inference_steps` in this scheduler counts
+*sigma grid points* with the terminal zero included, so it drives `steps - 1` transformer
+evaluations (`MiniMaxH3Scheduler.set_timesteps`, `scheduling_minimax_h3.py:133-136`) -- and every
+step count published upstream is the other kind of count. `--steps` therefore defaults to **51**
+(the reference runner's 50 NFE + 1), and the **8-step turbo LoRA** is on disk and wired into
+`--lora PATH[:scale]`, which makes **9** (8 NFE) legitimate. There is no `guidance_scale` to set at
+any step count: the checkpoint is CFG-distilled and every step is one forward pass. Full citation
+list and the LoRA key mapping: [notes/2026-09-18-steps-and-lora.md](notes/2026-09-18-steps-and-lora.md).
+
 ## What the model is
 
 [MiniMaxAI/MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) is not a language model. It is a video-with-audio
@@ -93,7 +102,28 @@ CPU gates that must pass before any GPU run (`./scripts/smoke_h3.sh dry` runs al
 639 diffusers parameters produced or explicitly substituted, 0 left over either way -- plus
 `scripts/test_convrot_linear.py`, which pins the INT8 ConvRot dequant arithmetic on CPU (a float64 synthetic case,
 bitwise determinism, the weight/scale row pairing that the qkv split and the SwiGLU half swap depend on, and a real
-64-row slice of the 34 GB checkpoint read through the pread reader).
+64-row slice of the 34 GB checkpoint read through the pread reader), plus `scripts/test_lora.py`, which pins the LoRA
+merge and the ConvRot runtime term against float64 references and re-checks the real turbo file's mapping.
+
+### The 8-step turbo LoRA (`--lora`)
+
+`loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors` (1.956 GB, 208 pairs, rank 128 /
+384-for-fused-qkv, alpha/rank = 0.0625 everywhere). Its keys are *Comfy checkpoint module names*, so
+it reuses the weight remap the loader already has -- the qkv row split and the SwiGLU half swap both
+act on `lora_B`'s output axis exactly as they act on the weight's rows, and `lora_A` is taken whole.
+Dry run on both denoisers: **208/208 pairs matched, 0 unmatched**, giving 312 destinations on
+`pruned` and 12 + 300 on `int8`.
+
+The two paths are *not* the same arithmetic, and the difference is deliberate:
+
+| Destination | How the adapter is applied | Cost |
+| --- | --- | --- |
+| dense BF16 weight | **merged at load**, `W + s*(B@A)` in float32, rounded once into the destination dtype -- exact | 0 resident; a 616 MB float32 transient on the card, one weight at a time |
+| `ConvRotLinear` (int8) | **additive runtime term**, `y = dequant(W) x + s*B(A x)` -- the int8 weight cannot absorb a merge without re-quantizing, which would replace the measured rounding-floor error with a larger one | 2.294 GB resident across both cards, one rank-`r` GEMM pair per Linear per step |
+
+The adapter adapts `W`, not Comfy's rotated `W R`, so on the ConvRot path the term is built from the
+**unrotated** activation; `test_lora.py` section 4 pins that against the wrong variant. The LoRA
+path, scale, sha256 and the merged/runtime split are recorded in `receipt.json`.
 
 Host-memory safety: `scripts/mem-watchdog.sh` (kills our job before systemd-oomd kills the session) and
 `scripts/profile-encoder-load.py` (CPU-only measurement of the loaders' host footprint). That measurement was a
@@ -104,8 +134,9 @@ never maps the file (`B70_H3_LOADER=pread|mmap`, default `pread`; bitwise-checke
 
 ## Next steps (not started)
 
-1. Read the official `scripts/` and `model_index.json` for the pipeline (schedulers, sampling steps, guidance; H3 is
-   distilled and CFG-free).
+1. ~~Read the official `scripts/` and `model_index.json` for the pipeline (schedulers, sampling steps, guidance; H3 is
+   distilled and CFG-free).~~ **Done 2026-09-18** -- shift 12 / 3, rectified-flow Euler (eta 0), no guidance parameter
+   exists, `--steps` 51 base / 9 with the turbo LoRA. See [notes/2026-09-18-steps-and-lora.md](notes/2026-09-18-steps-and-lora.md).
 2. Stand up the PyTorch XPU pipeline from the LTX lane's pattern: text encoder pass, denoiser split over two cards,
    VAE decode; first with the BF16 denoiser offloaded (slow, correctness reference), then INT8 ConvRot.
 3. Measure: a fixed prompt set, exact repeat determinism, time per clip, and INT8 vs BF16 reference frames.
