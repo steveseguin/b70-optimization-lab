@@ -25,6 +25,16 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 18 04:40 UTC: packet 78 launched as server 78 after two clean reloads on the new kernel/firmware (no freeze, no fault).**
+Server 77b's sharded warm failed on the second clip: the host-embedding
+CLIP's observation protocol (observe, encode, consume) is single-threaded
+and two encode workers interleaved (`Previous embedding observations were
+not consumed`). Packet 78 makes that bookkeeping per thread (numerics
+untouched; CPU test), keeps the encoder shard and two-clip sampler, and
+the checker allowlists the replaced parent file. Runner 78: 3-prompt warm
+on the sharded arm, `pipe-samp2-tsh` 30, `pipe-samp2` 24, endurance 120.
+Log `campaign-78.log`.
+
 **Four-B70 host, September 18 04:31 UTC: packet 77 campaign done (1.515 s/clip, 16.5 fps equiv, all exact; load lock proven over 120 prompts), but the encoder shard never installed; server 77 stopped for a controlled reload as 77b (warm on the sharded graph).**
 The runner's plain-graph warm clip placed the whole encoder on xpu:2 before
 the shard gate ran; two encode workers on one card still overlapped. First
