@@ -304,4 +304,9 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   (all parts 86.7; embedding+fc+head 89.3; embedding+fc 89.7; head 90.2) but never above the 90.3-90.6 control. The
   drafter's five collectives per pass are cheap; replicating any part costs more compute or larger lookups. Do not
   retry with other part selections; the remaining two-card cost is the target layers' allreduce pairs.
+- **Rebuilding the upstream flash-attention library (2026-09-17, r312a/b):** a no-MTP server on an image whose
+  `libattn_kernels_xe_2.so`/`_vllm_fa2_C` were rebuilt from source with the lab toolchain (head-256 kernel set) matched
+  the R311b outputs on only 9/12 strict prompts. Rounding differs somewhere in the upstream-built binary; every published
+  reference would be invalid. New attention ops go into `_xpu_C` with their own device library; the shipped attention
+  library stays the upstream binary.
 
