@@ -25,6 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 18 04:15 UTC: rebooted on kernel 7.0.0-30 with the packaged GuC 70.44.1 restored and hard-lockup panic armed (pstore erst); packet 77 launched as this boot's single server.**
+Both stability levers changed together on the user's instruction after six
+silent freezes on 09-17, so attribution is deferred; a further freeze now
+leaves a pstore backtrace (`scripts/collect-pstore.sh`). Packet 77 = encoder
+sharded across xpu:2/xpu:3 with two encode workers + two-clip sampler with
+the load lock; runner 77: warm, `pipe-samp2-tsh` 30, `pipe-samp2` 24,
+endurance 120. Log `campaign-77.log`.
+
 **Four-B70 host, September 18 01:00 UTC: six silent freezes on 09-17; next boot set to kernel 7.0.0-30; packet 77 waits for it.**
 Freezes hit idle, during server load, and minutes after an xe client
 teardown; no backtrace exists (hardlockup_panic was 0). GuC 70.72.1 (manual,
