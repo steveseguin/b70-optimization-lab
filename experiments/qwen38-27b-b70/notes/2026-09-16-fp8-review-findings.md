@@ -625,37 +625,42 @@ verify-rows itself so it is always the outer wrapper -- is what this campaign ra
 **What shipped from this.** The manifest's `acceptance_status` is now `passed-on-configured-lab-host`, the three
 profiles carry their measured r312d-c numbers instead of `pending_on_r312d`, the featured metric is the
 shipped-launcher pair (median 54.124 tok/s; the R311b headline was 54.325 on the same suite, a 0.4% run-to-run
-difference with byte-identical outputs), and the long-prompt table comes from this campaign. `registry_pushed` stays
-false. The LocalMaxxing payload that supersedes `cmu5wc2e50804lq01r0br2i5p` is built
-([builder](../scripts/build-fp8-tp1-r312d-localmaxxing.py),
+difference with byte-identical outputs), and the long-prompt table comes from this campaign. The image was pushed to
+ghcr on September 18 and the registry digest came back equal to the pinned local id, so `registry_pushed` is now true
+and the digest note is a verified statement rather than a promise. The LocalMaxxing payload that supersedes
+`cmu5wc2e50804lq01r0br2i5p` ([builder](../scripts/build-fp8-tp1-r312d-localmaxxing.py),
 [attestation](../data/2026-09-18-fp8-tp1-mtp5-r312d-32k-promotion-attestation.json),
-[queue](../data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json)) and **not
-submitted**: it claims two fresh servers, lc-4's research launcher (54.212) and this campaign's package launcher
-(54.236), median 54.224 tok/s.
+[queue](../data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json)) was submitted
+after the push and approved as `cmu6ytqyr0827lq01b76whp6d`: two fresh servers, lc-4's research launcher (54.212) and
+this campaign's package launcher (54.236), median 54.224 tok/s. The queue file is kept exactly as posted, so its
+`engineFlags.submissionStatus` still reads "not submitted"; the response receipts are the current record.
 
 ## Left open
 
 - **The census gate is met and lc-4 met the server gate: exact and faster.** The 7.6e-6 gap was the sycl-tla (CUTLASS)
   revision, not the compiler, the code generator or the multi-row algorithm; on the server the one-pass verifier is
   exact on every gate and worth +10 to +17% writing speed above 16K (section above). Nothing left open on either.
-- **The one-card package is accepted on r312d-c.** All three profiles passed every gate through the shipped launcher
-  on September 18 (section above); the manifest says `passed-on-configured-lab-host`, carries the measured per-profile
-  numbers and the acceptance evidence, and the published charts are the r312d-c measurement. Nothing left open here
-  except the registry push below.
-- **The r312d-c image must be pushed to ghcr by the user**
-  ([`publish-r312d-image-ghcr.sh`](../docker/rebase-v0290/publish-r312d-image-ghcr.sh), tag
-  `r312d-fp8-tp1-20260918`). The package pins the local image id and the manifest keeps `registry_pushed: false`; on
-  this containerd host that id is the same value as the registry digest, as it was for R311b, and the manifest says the
-  digest is verified after the push. Until then `docker pull` of the pinned digest only works where the image was
-  built.
-- **The LocalMaxxing submission is built and not sent.** The payload that supersedes `cmu5wc2e50804lq01r0br2i5p`
-  (54.325, R311b) is [`localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json`](../data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json)
-  with [attestation](../data/2026-09-18-fp8-tp1-mtp5-r312d-32k-promotion-attestation.json), written by
-  [`build-fp8-tp1-r312d-localmaxxing.py`](../scripts/build-fp8-tp1-r312d-localmaxxing.py) and valid under the
-  submitter's local preflight (`--dry-run`). It claims 54.224 tok/s from two fresh servers on the image. It should go
-  out after the push, because the published `commandSnippet` and `engineVersion` name a digest nobody else can pull
-  yet. `results/localmaxxing-submissions.md` only carries rows for records that exist, so its row is written when the
-  submission is approved, together with the response receipt under `data/localmaxxing-responses/`.
+- **The one-card FP8 lane is closed.** All three profiles passed every gate through the shipped launcher on
+  September 18 (section above); the manifest says `passed-on-configured-lab-host`, carries the measured per-profile
+  numbers and the acceptance evidence, and the published charts are the r312d-c measurement. The image is pushed and
+  the record is approved (both below). Nothing on this lane is waiting on anyone.
+- **The r312d-c image is public.** The user ran
+  [`publish-r312d-image-ghcr.sh`](../docker/rebase-v0290/publish-r312d-image-ghcr.sh) on September 18 (tag
+  `r312d-fp8-tp1-20260918`) and the registry digest came back as
+  `sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a` -- the same value as the local image id the
+  package already pinned, as predicted and as it was for R311b. The manifest now says `registry_pushed: true` and its
+  digest note is a verified statement. `docker pull` of the pinned digest works anywhere.
+- **The LocalMaxxing record is approved, and there is one duplicate to withdraw.** The payload that supersedes
+  `cmu5wc2e50804lq01r0br2i5p` (54.325, R311b) went out after the push and was approved as
+  **`cmu6ytqyr0827lq01b76whp6d`** at 54.224 tok/s (median of two fresh servers). The same payload was then posted a
+  second time by mistake -- the user submitted it and the assistant submitted it again seconds later, before the first
+  receipt was seen -- and that POST was also approved, as `cmu6ytvxr082alq015dpjgiz4`. It is a duplicate of identical
+  content, not a second measurement. Following [`docs/localmaxxing.md`](../../../docs/localmaxxing.md), which says a
+  duplicate is recorded as withheld rather than omitted, both records are in
+  [`results/localmaxxing-submissions.md`](../../../results/localmaxxing-submissions.md): the canonical row and a
+  withheld row flagged for withdrawal. Neither `scripts/submit_localmaxxing_results.py` nor the public API has a delete
+  or withdraw call, so the duplicate can only be withdrawn or ignored upstream by the record owner. Receipts for both
+  are under [`../data/localmaxxing-responses/`](../data/localmaxxing-responses/).
 - **Every future kernel build uses the pinned CUTLASS revision.** `87f6850` for vllm-xpu-kernels 0.1.14.1, read from
   the kernel's own `CMakeLists.txt` (`CUTLASS_REVISION`) rather than from whatever the build tree has checked out. The
   clean-clone recipe still names `cd76379` and its header now says so. Nothing shipped is affected -- r311b's GDN
@@ -673,4 +678,7 @@ submitted**: it claims two fresh servers, lc-4's research launcher (54.212) and 
   the 64 target layers, so the next two-card lever would be fusing the per-layer allreduce pairs (out_proj + MLP down)
   or overlapping them with compute, both deeper changes than an overlay.
 - The R311b image was pushed to ghcr on September 17 and its record `cmu5wc2e50804lq01r0br2i5p` was approved; it is
-  the image the superseded one-card numbers were measured on. Only the r312d-c push is outstanding.
+  the image the superseded one-card numbers were measured on. Both pushes are now done.
+- **What is actually left in this repository, after this lane closed:** the MiniMax-H3 host-RAM measurement, and on
+  two/four cards the exchange-fusion idea above (fusing the per-layer allreduce pairs or overlapping them with
+  compute) and the four-card replay. Nothing on the one-card FP8 lane.

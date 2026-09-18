@@ -10,10 +10,10 @@ two R311b probes already in the repository (data/2026-09-17-fp8-probe1/tp1-pkg-m
 baseline the acceptance runner itself compared against, and data/2026-09-17-fp8-probe2/tp1-pkg-32k-context-summary.json,
 the same profile on R311b; the two agree within 0.2%).
 
-The image is pinned by its LOCAL id: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918 has not
-been pushed yet (publish-r312d-image-ghcr.sh, run by the user), so registry_pushed stays false. On this containerd host
-the registry digest is the same value as the local image id, as it was for R311b; the manifest says so and the digest
-is re-checked after the push.
+The image was pushed to ghcr on September 18, 2026 (publish-r312d-image-ghcr.sh, run by the user) as
+ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918. The registry digest it came back with is the
+same value as the local image id this manifest had already pinned, as it was for R311b on this containerd host, so
+registry_pushed is true and the digest is verified rather than pending.
 
 Idempotent: re-running on an already-R312d manifest keeps the R311b previous_context block.
 """
@@ -32,9 +32,9 @@ R312D = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4a
 R311B = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7'
 R310 = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
 REGISTRY_TAG = 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918'
-DIGEST_NOTE = ('Pinned by the local image id; the image is not pushed yet (publish-r312d-image-ghcr.sh, run by the user). '
-               'On this containerd host the registry digest equals the local image id, as it did for R311b, and it is '
-               're-verified against this value after the push.')
+DIGEST_NOTE = ('Verified after the push on 2026-09-18: the image was published to ghcr by the user '
+               '(publish-r312d-image-ghcr.sh) and the registry digest came back equal to the local image id pinned '
+               'here, as it did for R311b on this containerd host.')
 LENGTHS = ('2048', '8192', '16384', '24576', '30720')
 PROFILES = {'recommended': ('tp1-pkg-32k', 32768, 0.975), 'max-context': ('tp1-pkg-max-context', 40960, 0.983),
             'no-quantization': ('tp1-pkg-no-quantization', 28672, 0.975)}
@@ -101,8 +101,9 @@ def main():
         f'(R311b kernel + overlay) keeps one GDN state block per request instead of six, raising the KV budget from '
         f'26,178 to 40,140 tokens at the same memory setting. The one-pass verifier attention (R312d-c) leaves every '
         f'output unchanged and raises writing speed after a long prompt by {change_max["16384"]:.0f}% at 16K, '
-        f'{change_max["24576"]:.0f}% at 24K and {change_max["30720"]:.0f}% at 30K. The image is not pushed to the '
-        f'registry yet. Clean-host install and multiple users are untested.')
+        f'{change_max["24576"]:.0f}% at 24K and {change_max["30720"]:.0f}% at 30K. The image is published to ghcr as '
+        f'r312d-fp8-tp1-20260918 and its registry digest matches the pinned value. Clean-host install and multiple '
+        f'users are untested.')
     lib['featured_metric'] = {
         'value': statistics.median(pair), 'unit': 'tok/s',
         'label': 'Writing speed · MTP depth 5 · one card',
@@ -115,7 +116,7 @@ def main():
         'evidence': ACC + 'tp1-pkg-32k-strict-performance.json'}
     package['runtime'] = {
         'kind': 'container', 'image': R312D,
-        'image_digest_status': DIGEST_NOTE, 'registry_tag': REGISTRY_TAG, 'registry_pushed': False,
+        'image_digest_status': DIGEST_NOTE, 'registry_tag': REGISTRY_TAG, 'registry_pushed': True,
         'image_build': 'experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r312d-multiq',
         'base': 'R312d-c = R311b with _xpu_C and the GDN device library rebuilt for the r312 one-pass verifier attention op '
                 'paged_decode_multiq (Dockerfile.r312c-multiq), then its libattn_multiq_kernels_xe_2.so rebuilt with DPC++ '
@@ -145,7 +146,7 @@ def main():
             'image': setup['image'], 'strict_pair_decode_tokens_s': setup['strict_pair_decode_tokens_s'],
             'profiles': setup['profiles'],
             'evidence': 'experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md'}
-    setup.update(image=R312D, registry_tag=REGISTRY_TAG, image_digest_status=DIGEST_NOTE, registry_pushed=False,
+    setup.update(image=R312D, registry_tag=REGISTRY_TAG, image_digest_status=DIGEST_NOTE, registry_pushed=True,
                  one_pass_verifier_attention=True, previous_image_r311b=R311B,
                  acceptance_status='passed-on-configured-lab-host',
                  acceptance_campaign='experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py',

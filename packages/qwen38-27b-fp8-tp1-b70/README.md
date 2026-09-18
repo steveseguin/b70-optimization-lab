@@ -19,9 +19,13 @@ Every row was measured through this launcher on the pinned image on September 18
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html). LocalMaxxing:
-[`cmu5wc2e50804lq01r0br2i5p`](https://www.localmaxxing.com/runs/cmu5wc2e50804lq01r0br2i5p) (54.33 tok/s, approved September 17
-on the R311b image; the 24,576-token recipe's [`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr),
-53.43 tok/s, stands as history). The R312d-c payload that supersedes it is built and queued, not submitted, until the image is pushed.
+[`cmu6ytqyr0827lq01b76whp6d`](https://www.localmaxxing.com/runs/cmu6ytqyr0827lq01b76whp6d) (54.22 tok/s, approved
+September 18 on this image; it supersedes the R311b record
+[`cmu5wc2e50804lq01r0br2i5p`](https://www.localmaxxing.com/runs/cmu5wc2e50804lq01r0br2i5p), 54.33 tok/s, and the
+24,576-token recipe's [`cmu53h4l407o3lq01od0vwjrr`](https://www.localmaxxing.com/runs/cmu53h4l407o3lq01od0vwjrr),
+53.43 tok/s, both of which stand as history). The same payload was posted a second time by mistake and approved as
+`cmu6ytvxr082alq015dpjgiz4`; that record is an accidental duplicate, not a second measurement, and is withheld in
+[`results/localmaxxing-submissions.md`](../../results/localmaxxing-submissions.md) pending withdrawal.
 How it was built and tested: [recipe](../../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md).
 
 ## What you need
@@ -82,10 +86,11 @@ and the answer.
   54.6 to 63.4, documentation 28.7 to 33.5, prose 37.5 to 44.0 tok/s.
 - **Which image, and how it was built.** The pinned runtime is
   `sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a`, published as
-  `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918`. **The registry digest is verified after the
-  push** (`experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh`, run by the repository owner);
-  on the lab host, which uses Docker's containerd store, the registry digest is the same value as the local image id,
-  as it was for R311b. The source-build route is four steps on top of the public R310 image:
+  `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918`. **The image was pushed on September 18 and
+  the registry digest was checked against the pinned one: they match**
+  (`experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh`, run by the repository owner); on the
+  lab host, which uses Docker's containerd store, the registry digest is the same value as the local image id, as it
+  was for R311b. The source-build route is four steps on top of the public R310 image:
   R310 -> **r311** (`Dockerfile.r311-gdn-checkpoint`, the single-checkpoint GDN op) -> **r312c**
   (`Dockerfile.r312c-multiq` with `build-kernels-0.1.14.1-r312c-multiq.sh`, which adds `paged_decode_multiq` to
   `_xpu_C` and leaves the upstream flash-attention library untouched) -> **r312d-c**
@@ -130,5 +135,5 @@ and the answer.
   12/12 at 54.32; `no-quantization` 12/12 at 52.42; ladders 64/64 and the 2K/8K/16K screen exact on all three
   ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
 - Not yet tested: a machine without Intel drivers, Docker or the model already
-  in place, and more than one user at a time. The image is also not in the registry yet, so the `docker pull` above
-  works only where it was built; it is pushed as `r312d-fp8-tp1-20260918` by the repository owner.
+  in place, and more than one user at a time. The image itself is public: it was pushed on September 18 as
+  `r312d-fp8-tp1-20260918`, so the `docker pull` above works anywhere.

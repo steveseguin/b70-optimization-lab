@@ -77,9 +77,18 @@ the lockups; recommendation is to boot 7.0.0-30 first, then restore
 [Firmware review](experiments/ltx25-b70/notes/2026-09-17-firmware-and-kernel-review.md),
 [crash](experiments/ltx25-b70/notes/graph-capture-74b-endurance-crash.md).
 
-**Two-B70 host, September 18 06:00 UTC: the one-card FP8 package is ACCEPTED on the r312d-c image -- all three
-profiles passed every gate through the shipped launcher, and the only things left are the registry push and the
-LocalMaxxing submission, both waiting on the user.** The depth-5 two-card service is back UP on 18124 (unit
+**Two-B70 host, September 18 06:12 UTC: the one-card FP8 lane is CLOSED for the night -- the package is accepted on
+the r312d-c image, the image is pushed to ghcr, and the LocalMaxxing record `cmu6ytqyr0827lq01b76whp6d` is approved at
+54.224 tok/s.** The push happened at ~06:05 UTC and the registry digest came back as `sha256:ea61e698...`, the same
+value the package already pinned, so the manifest is `registry_pushed: true` with a verified digest note. One thing to
+clean up upstream: the queue payload was submitted twice by mistake -- the user posted it, then the assistant posted the
+identical file seconds later -- and both POSTs returned 201 APPROVED, so `cmu6ytvxr082alq015dpjgiz4` exists as a
+duplicate of the canonical record. It is recorded as withheld and flagged for withdrawal in
+`results/localmaxxing-submissions.md` (the submitter script and the public API have no delete call, so it can only be
+withdrawn or ignored by the record owner); receipts for both are in
+`experiments/qwen38-27b-b70/data/localmaxxing-responses/`. Nothing on this lane waits on anyone now; what remains in the
+workspace is the MiniMax-H3 host-RAM measurement and the two-card exchange fusion / four-card replay listed below. The
+depth-5 two-card service is back UP on 18124 (unit
 `fp8-service-20260918-onecard-r312d`, state `/mnt/fast-ai/bench-results/fp8-onecard-r312d-20260918/service`), 12/12 vs
 the comm-2 no-MTP reference at 90.27 tok/s. The acceptance campaign ran 05:02-05:58 UTC through
 `packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py` on the `r312d-c` image (`sha256:ea61e698...`, local tag via
@@ -92,15 +101,12 @@ and context screen exact on both. **Writing speed after a long prompt is +4.0% a
 +17.3% at 30K** (30,720: 37.5 to 44.0 tok/s), with 2K level, so `B70_FA_MULTIQ_MIN_K=4096` costs nothing. Every
 profile stopped cleanly and removed its container; no fault lines. **In the repository:** the manifest's
 `acceptance_status` is `passed-on-configured-lab-host` with the measured per-profile numbers, the featured metric is
-the shipped-launcher pair (median 54.124 tok/s), catalog, README and model pages regenerated, and the findings note
-has the acceptance section. **Waiting on the user, in this order:** (1)
-`experiments/qwen38-27b-b70/docker/rebase-v0290/publish-r312d-image-ghcr.sh` (tag `r312d-fp8-tp1-20260918`;
-`registry_pushed` stays false until then, so the pinned digest only pulls where it was built), then (2) the
-LocalMaxxing submission, built and dry-run valid but **not sent**:
-`python3 scripts/submit_localmaxxing_results.py --payloads experiments/qwen38-27b-b70/data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json --label qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict --server-dry-run`
-first, then without `--server-dry-run`; it claims 54.224 tok/s from two fresh servers and supersedes
-`cmu5wc2e50804lq01r0br2i5p` (54.325, R311b). The submissions ledger row and the response receipt are written after it
-is approved. The R311b push happened on September 17, so only r312d-c is outstanding. Earlier on this boot, session
+the shipped-launcher pair (median 54.124 tok/s), `registry_pushed` is true with the verified digest note, catalog,
+README and model pages regenerated, and the findings note has the acceptance section. **Both waiting-on-user steps are
+done:** `publish-r312d-image-ghcr.sh` ran (tag `r312d-fp8-tp1-20260918`, digest verified equal to the pinned local id),
+and the submission went out and was approved as `cmu6ytqyr0827lq01b76whp6d` (54.224 tok/s from two fresh servers,
+supersedes `cmu5wc2e50804lq01r0br2i5p`, 54.325, R311b) -- plus the duplicate `cmu6ytvxr082alq015dpjgiz4` noted above.
+The ledger rows and both response receipts are written. R311b was pushed on September 17. Earlier on this boot, session
 `fp8-r312d-session8-20260918` rebuilt the multiq library twice with the cards idle, one compiler job at a time: variant
 b (upstream DPC++ 2026.0.0 + IGC 2.34.4 / ocloc 26.18, 03:25-03:40) is still 8/22 exact at 7.63e-6, the same cases as
 r312c, so the toolchain was never the cause; **variant c (b plus sycl-tla `87f6850`, the revision the kernel
@@ -121,7 +127,8 @@ still holds -- one host-RAM-heavy job at a time, never beside a build. Census re
 earlier on this boot: the last measured service (unit `fp8-service-20260918-lc2`) was
 12/12 vs the no-MTP reference at 90.52 tok/s; two-card package = allgather allreduce (90.48 tok/s, LocalMaxxing
 `cmu5qk0kz07zglq01eh1opkhx`); the one-card package was R311b single-checkpoint state, 32,768 default at 54.3 tok/s
-(LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`) -- it is now r312d-c, see the acceptance entry above -- max-context 40,960
+(LocalMaxxing `cmu5wc2e50804lq01r0br2i5p`) -- it is now r312d-c with record `cmu6ytqyr0827lq01b76whp6d`, see the
+acceptance entry above -- max-context 40,960
 (engine ceiling ~44,800 at 0.983), probes exact to 36,864 tokens. Closed: replicated drafter (never faster), two-card
 checkpoint state (speed-neutral), and the multi-row verifier attention kernel, which is the change that shipped. Git: the other host's
 commit `03830fa00` pushed 302 tracked files as zero-length blobs (including `DO-NOT-REPEAT.md`); restored from

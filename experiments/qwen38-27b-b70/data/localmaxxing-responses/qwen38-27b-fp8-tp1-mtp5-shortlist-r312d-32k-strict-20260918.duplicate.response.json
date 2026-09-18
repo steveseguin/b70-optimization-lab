@@ -1,0 +1,16 @@
+{
+ "label": "qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict",
+ "http_status": 201,
+ "response": {
+  "id": "cmu6ytvxr082alq015dpjgiz4",
+  "status": "APPROVED"
+ },
+ "submitted_utc": "2026-09-18T06:06Z",
+ "submitted_utc_note": "Minute precision. Posted seconds after cmu6ytqyr0827lq01b76whp6d, inside the same 06:05-06:12 UTC window; the exact second was not captured.",
+ "payload": "experiments/qwen38-27b-b70/data/localmaxxing-qwen38-27b-fp8-tp1-mtp5-shortlist-r312d-32k-strict-20260918.queue.json",
+ "attestation": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-tp1-mtp5-r312d-32k-promotion-attestation.json",
+ "image_pushed": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
+ "duplicate_of_record_id": "cmu6ytqyr0827lq01b76whp6d",
+ "disposition": "ACCIDENTAL DUPLICATE, flagged for withdrawal. The repository owner posted this payload, and the assistant posted the identical payload again seconds later before seeing the first receipt; both POSTs returned 201 APPROVED. Under docs/localmaxxing.md a duplicate is recorded as withheld/flagged rather than hidden, so this receipt is kept and the ledger carries a withheld row. scripts/submit_localmaxxing_results.py has no delete or withdraw call and the public API exposes none, so this record cannot be removed from here; it must be withdrawn or ignored upstream by the record owner. It is not a separate measurement: it is the same queue payload, the same two fresh servers and the same 54.224 tok/s as cmu6ytqyr0827lq01b76whp6d.",
+ "payload_note": "The queue file is kept byte-for-byte as it was posted, so its engineFlags.submissionStatus still reads 'queued, not submitted' -- that string was written before the image was pushed and is superseded by these receipts."
+}

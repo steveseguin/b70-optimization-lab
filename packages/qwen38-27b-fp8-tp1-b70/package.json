@@ -36,7 +36,7 @@
    "32K context"
   ],
   "published_at": "2026-09-15",
-  "benchmark_status": "Accepted through the shipped launcher on the R312d-c image (September 18, 05:02-05:58 UTC). Strict 12-prompt suite on a fresh 32,768-token server, twice: 54.24 / 54.01 tok/s, 12/12 identical to no MTP each time; 64-prompt sequential oracle plus two queued passes 64/64; the 2K/8K/16K screen, the 2,048-30,720-token long corpus in three content types, a chat quality suite and a 21-request logprob replay all exact against the same R311b no-MTP references. The other two profiles passed the same strict, ladder and context gates on this image: max-context (40,960) 54.32 tok/s, no-quantization (28,672) 52.42 tok/s. The single-checkpoint recurrent state (R311b kernel + overlay) keeps one GDN state block per request instead of six, raising the KV budget from 26,178 to 40,140 tokens at the same memory setting. The one-pass verifier attention (R312d-c) leaves every output unchanged and raises writing speed after a long prompt by 10% at 16K, 14% at 24K and 17% at 30K. The image is not pushed to the registry yet. Clean-host install and multiple users are untested.",
+  "benchmark_status": "Accepted through the shipped launcher on the R312d-c image (September 18, 05:02-05:58 UTC). Strict 12-prompt suite on a fresh 32,768-token server, twice: 54.24 / 54.01 tok/s, 12/12 identical to no MTP each time; 64-prompt sequential oracle plus two queued passes 64/64; the 2K/8K/16K screen, the 2,048-30,720-token long corpus in three content types, a chat quality suite and a 21-request logprob replay all exact against the same R311b no-MTP references. The other two profiles passed the same strict, ladder and context gates on this image: max-context (40,960) 54.32 tok/s, no-quantization (28,672) 52.42 tok/s. The single-checkpoint recurrent state (R311b kernel + overlay) keeps one GDN state block per request instead of six, raising the KV budget from 26,178 to 40,140 tokens at the same memory setting. The one-pass verifier attention (R312d-c) leaves every output unchanged and raises writing speed after a long prompt by 10% at 16K, 14% at 24K and 17% at 30K. The image is published to ghcr as r312d-fp8-tp1-20260918 and its registry digest matches the pinned value. Clean-host install and multiple users are untested.",
   "featured_metric": {
    "value": 54.123754301353635,
    "unit": "tok/s",
@@ -73,9 +73,9 @@
  "runtime": {
   "kind": "container",
   "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:ea61e69834d02b4abfe435eaaf56b2eda7b7b7c5ac78fffa3740779d8f27353a",
-  "image_digest_status": "Pinned by the local image id; the image is not pushed yet (publish-r312d-image-ghcr.sh, run by the user). On this containerd host the registry digest equals the local image id, as it did for R311b, and it is re-verified against this value after the push.",
+  "image_digest_status": "Verified after the push on 2026-09-18: the image was published to ghcr by the user (publish-r312d-image-ghcr.sh) and the registry digest came back equal to the local image id pinned here, as it did for R311b on this containerd host.",
   "registry_tag": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918",
-  "registry_pushed": false,
+  "registry_pushed": true,
   "image_build": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r312d-multiq",
   "base": "R312d-c = R311b with _xpu_C and the GDN device library rebuilt for the r312 one-pass verifier attention op paged_decode_multiq (Dockerfile.r312c-multiq), then its libattn_multiq_kernels_xe_2.so rebuilt with DPC++ 2026.0.0 / IGC 2.34.4 / ocloc 26.18 against the sycl-tla revision 87f6850 that vllm-xpu-kernels 0.1.14.1 pins as CUTLASS_REVISION (Dockerfile.r312d-multiq). The upstream flash-attention library is the untouched upstream binary. Census against it: 22/22 bit-exact, max abs 0.0, at v-tile 64 and 256.",
   "toolchain_rule": "Every _xpu_C or GDN rebuild must use the CUTLASS_REVISION the kernel CMakeLists.txt pins (87f6850 for vllm-xpu-kernels 0.1.14.1). Building against the clean-clone recipe's cd76379 changed the attention output by 7.6e-6 and failed the census (2026-09-18).",
@@ -574,7 +574,7 @@
    "r311b": 40140
   },
   "registry_tag": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r312d-fp8-tp1-20260918",
-  "image_digest_status": "Pinned by the local image id; the image is not pushed yet (publish-r312d-image-ghcr.sh, run by the user). On this containerd host the registry digest equals the local image id, as it did for R311b, and it is re-verified against this value after the push.",
+  "image_digest_status": "Verified after the push on 2026-09-18: the image was published to ghcr by the user (publish-r312d-image-ghcr.sh) and the registry digest came back equal to the local image id pinned here, as it did for R311b on this containerd host.",
   "one_pass_verifier_attention": true,
   "previous_image_r311b": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7baa32bd3a4623e93ace18b369e366951fb4b618b17927450bbd9cce15cc4dc7",
   "acceptance_campaign": "experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py",
@@ -621,7 +621,7 @@
     "r311b_max_context": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-probe1/tp1-pkg-max-context-summary.json"
    }
   },
-  "registry_pushed": false,
+  "registry_pushed": true,
   "acceptance_evidence": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/results.json",
   "acceptance_window_utc": "2026-09-18T05:02Z/2026-09-18T05:58Z",
   "research_server_strict_pair_decode_tokens_s": [
