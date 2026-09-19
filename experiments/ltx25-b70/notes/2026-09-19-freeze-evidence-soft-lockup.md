@@ -150,3 +150,37 @@ not exist on this AMD platform, but `turbostat --show SMI` (or
 `/sys/devices/system/cpu/cpu0/msr` MSR 0x34, `rdmsr 0x34`) on the next
 boot would count SMIs directly and settle whether they cluster at the
 launch step; that read is passive and safe.
+
+## Addendum, 2026-09-19 22:50 UTC: a single corrupted byte in host memory on the fresh boot
+
+Server 83b (boot 534bf39d, launched 22:35:50, three and a half minutes
+after the reset) failed its first prompt inside ComfyUI's Gemma tokenizer
+construction: `'utf-8' codec can't decode byte 0xda in position 25610902`
+of the 32,169,626-byte `tokenizer_json` U8 tensor embedded in
+`text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors`. Checked
+immediately afterwards from the same process-independent view:
+
+- the byte at that position is `0x2c` (a comma inside `"n"\n      ],`)
+  both through the page cache and through an O_DIRECT read;
+- the whole tensor decodes as UTF-8;
+- the 26,263,858,182-byte file hashes to
+  `ef7243612fdae7a75cb4d5cee9433e81380675fb6c213bd98ae74a9cd16561d1`,
+  exactly the value in `model-verification.json`.
+
+So the file is intact on disk and in cache; the server's copy of one byte
+was wrong (`0x2c` -> `0xda`, five bits) somewhere between the mmap'd page
+and the Python `bytes` object. This platform exposes no memory-controller
+EDAC instance (`/sys/devices/system/edac/mc` is empty), so ECC events, if
+the DIMMs are ECC at all, are not reported. A silent single-byte host
+memory error, on a boot only minutes old, alongside eleven untraceable
+freezes and a 6 s whole-platform stall, points at the platform hardware
+(DRAM, VRM/PSU, or CPU) rather than at any of the software layers that
+have been swapped. The one "finite, fully wrong clip per run" of servers
+79b-82b is also consistent with a rare corrupted value on the host side of
+an encode, so packet 83's per-thread pools may or may not be the fix;
+83b's result will say.
+
+User decisions this raises (all need downtime, none will be taken here):
+a memory test (memtest86+ over at least one full pass), the BIOS
+idle-current setting, PSU rating and 12 V rail check, and reseating or
+swapping DIMMs if the test flags any.

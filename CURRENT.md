@@ -2096,3 +2096,5 @@ boots), so the idle-state hypothesis is still untested; the user holds the
 **Four-B70 host, September 19 22:40 UTC: eleventh freeze at 22:20 UTC, 28 s into packet 83's sharded arm (fill phase). First trace: a 6.035 s clocksource readout gap at the last journal line, a whole-platform stall (SMI/power class), no pstore, no SEL. Packet 83's warm arm was exact with four graph pools (2 devices x 2 threads). Relaunching packet 83 as server 83b (runner 83b, bases 110900-115200).**
 [Evidence](experiments/ltx25-b70/notes/2026-09-19-freeze-evidence-soft-lockup.md).
 
+**Four-B70 host, September 19 22:50 UTC: server 83b's first prompt failed on one corrupted byte of the tokenizer in host memory (file on disk verified exact against the model receipt); server not latched, campaign retried on it as f83br2-* (bases 120900-125200). Hardware evidence is now: eleven silent freezes, a 6 s platform stall, and a silent host memory error minutes after boot; memtest and the BIOS/PSU items are the user's calls.**
+
