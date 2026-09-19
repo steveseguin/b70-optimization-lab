@@ -3225,6 +3225,10 @@ def main(argv: list[str] | None = None) -> int:
     plan = plan_split(header, config, args.adaln_dtype, args.split_index, args.denoiser, quant_meta)
     devices = [torch.device(f"xpu:{i}") for i in args.cards]
     torch.xpu.init()  # the allocator stats calls below raise "Invalid device argument" before lazy init
+    # Inference only: without this every module call keeps its activations for a backward pass that never comes.
+    # 2026-09-19: the video VAE decode grew from 9.7 GiB of weights to 31.4 GiB and ran the card out of memory
+    # at 256x448x124 (ViT decoder attention matrices retained layer after layer). No arithmetic changes.
+    torch.set_grad_enabled(False)
     for dev in devices:
         torch.xpu.reset_peak_memory_stats(dev)
 
