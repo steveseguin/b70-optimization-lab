@@ -626,7 +626,7 @@ class GraphBlockRoute:
             img = block(img, **kwargs)
         return img
 
-    def _capture(self, routed, slot, key, entries):
+    def _capture(self, routed, slot, key, entries, attempt=0):
         """Record one graph for this shape and prove it matches eager bits."""
         self._validate()
         options = routed['transformer_options']
@@ -689,8 +689,25 @@ class GraphBlockRoute:
         restore()
         graph.replay()
         torch.xpu.synchronize(self.device)
-        require(not torch.equal(out_vx.view(torch.int16), perturbed.view(torch.int16)),
-                f'Block {self.index} captured an inert graph; replay ignored its input')
+        if torch.equal(out_vx.view(torch.int16), perturbed.view(torch.int16)):
+            # Server 80 (2026-09-19) hit this once on a third signature of block 0
+            # after 96 good captures. Record what the graph did, drain every device,
+            # and capture ONCE more; a second inert result is refused for good.
+            diag = {'block': self.index, 'thread': threading.current_thread().name,
+                    'signatures_on_thread': len(entries), 'attempt': attempt,
+                    'replay_equals_eager': bool(torch.equal(out_vx.view(torch.int16), eager_vx.view(torch.int16))),
+                    'perturbed_equals_eager': bool(torch.equal(perturbed.view(torch.int16), eager_vx.view(torch.int16))),
+                    'static_expanded': any(getattr(t, '_graph_fill_target', None) is not None for t in slot.flat)}
+            self.report.capture_failures.append(diag)
+            try:
+                graph.reset()
+            except BaseException:  # noqa: BLE001
+                pass
+            for i in range(torch.xpu.device_count()):
+                torch.xpu.synchronize(i)
+            require(attempt == 0, f'Block {self.index} captured an inert graph twice; replay ignored its input: {diag}')
+            restore()
+            return self._capture(routed, slot, key, entries, attempt=1)
 
         # Bitwise proof against the eager reference.
         require(torch.equal(out_vx.view(torch.int16), eager_vx.view(torch.int16)) and
@@ -837,6 +854,7 @@ class Report:
         self.devices = []
         self.replays = 0
         self.copies = 0
+        self.capture_failures = []
         self.first_options = None
         self.option_key_sets = []
         self.chains = []
@@ -856,7 +874,7 @@ class Report:
     def summary(self):
         return {'chain': self.chain, 'chains': self.chains,
                 'forward_threads': (self.registry.threads() if self.registry else []),
-                'captured_graphs': len(self.captures), 'replays': self.replays,
+                'captured_graphs': len(self.captures), 'replays': self.replays, 'capture_failures': list(self.capture_failures),
                 'static_buffer_copies': self.copies,
                 'copies_per_replay': round(self.copies / self.replays, 3) if self.replays else None,
                 'blocks_captured': sorted({c['block_index'] for c in self.captures}),
