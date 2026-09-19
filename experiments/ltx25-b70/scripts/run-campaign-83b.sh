@@ -4,7 +4,7 @@
 # freezes silently and zeroes unflushed files. No retries.
 set -u
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-graph-capture-83b
+P=$R/prepared-encoder-graph-capture-83
 RUN=$R/encoder-server-graph-capture-83b
 LANE=/home/steve/llm-optimizations/experiments/ltx25-b70
 REPO=/home/steve/llm-optimizations
