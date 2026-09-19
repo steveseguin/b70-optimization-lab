@@ -1,0 +1,341 @@
+2026-09-19T18:47:23-04:00 service ready; stopping
+Graceful stop requested for the saved container only. No restart is scheduled.
+2026-09-19T18:47:43-04:00 health rc=0
+2026-09-19T18:47:43-04:00 minimax pruned 576x320
+preflight: MemAvailable 13712 MiB (need >= 11264), some avg10 0.00
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run smoke-20260919T224743Z ===============================================================
+2026-09-19T18:47:43-04:00 mem-watchdog[37571] watching pid=37570 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 18:47:45,252 INFO    run smoke-20260919T224743Z -> /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-576x320/smoke-20260919T224743Z
+2026-09-19 18:47:47,378 INFO    [phase] encode.tokenize: start
+2026-09-19 18:47:47,538 INFO    prompt tokenizes to 46 rows
+2026-09-19 18:47:47,538 INFO    [phase] encode.tokenize: done in 0.16 s
+2026-09-19 18:47:47,540 INFO    [vram] before encode.load         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.578 GiB of 31.891 GiB
+2026-09-19 18:47:47,540 INFO    [phase] encode.load: start
+2026-09-19 18:47:47,933 INFO    text encoder prefixes: language='model.language_model.' visual='model.visual.'
+2026-09-19 18:47:47,933 INFO    text encoder loader: pread (B70_H3_LOADER)
+2026-09-19 18:48:00,368 INFO    neutralizing model.language_model.norm (the conditioning is the unnormalized hidden state)
+2026-09-19 18:48:00,368 INFO    text encoder: placed 902 tensors (350 quantized Linears) on xpu:0
+2026-09-19 18:48:00,372 WARNING text encoder has 4 tensors still on meta, e.g. ['model.visual.rotary_pos_emb.inv_freq', 'model.visual.rotary_pos_emb.original_inv_freq', 'model.language_model.rotary_emb.inv_freq', 'model.language_model.rotary_emb.original_inv_freq']
+2026-09-19 18:48:00,372 INFO    [phase] encode.load: done in 12.83 s
+2026-09-19 18:48:00,372 INFO    [phase] encode.forward: start
+2026-09-19 18:48:01,065 INFO    [phase] encode.forward: done in 0.69 s
+2026-09-19 18:48:01,065 INFO    [vram] after encode.forward       xpu:0  allocated 25.278 GiB  reserved 25.551 GiB  free 5.769 GiB of 31.891 GiB
+2026-09-19 18:48:01,625 INFO    [vram] after encoder release      xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.316 GiB of 31.891 GiB
+2026-09-19 18:48:01,657 INFO    prompt embeds (1, 46, 5120), encoder freed
+2026-09-19 18:48:01,995 INFO    [phase] load.skeleton: start
+2026-09-19 18:48:02,022 INFO    [phase] load.skeleton: done in 0.03 s
+2026-09-19 18:48:02,026 INFO    lora minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors scale 1.0000: 208 pairs -> 312 merged + 0 runtime destinations
+2026-09-19 18:48:02,026 INFO    [phase] load.stream: start
+2026-09-19 18:48:02,026 INFO    denoiser loader: pread (B70_H3_LOADER), checkpoint minimax_h3_fl2va_pruned_bf16.safetensors
+2026-09-19 18:48:06,675 INFO      placed 100/634 tensors (host peak RSS 2.974 GiB)
+2026-09-19 18:48:11,966 INFO      placed 200/634 tensors (host peak RSS 2.974 GiB)
+2026-09-19 18:48:17,691 INFO      placed 300/634 tensors (host peak RSS 2.975 GiB)
+2026-09-19 18:48:23,039 INFO      placed 400/634 tensors (host peak RSS 3.077 GiB)
+2026-09-19 18:48:28,352 INFO      placed 500/634 tensors (host peak RSS 3.078 GiB)
+2026-09-19 18:48:34,019 INFO      placed 600/634 tensors (host peak RSS 3.078 GiB)
+2026-09-19 18:48:36,165 INFO    rope.inv_freq recomputed; max drift vs checkpoint copy = 0.000e+00
+2026-09-19 18:48:36,320 INFO    [phase] load.stream: done in 34.29 s
+2026-09-19 18:48:36,321 INFO    [vram] after load.stream          xpu:0  allocated 18.798 GiB  reserved 18.801 GiB  free 12.519 GiB of 31.891 GiB
+2026-09-19 18:48:36,321 INFO    [vram] after load.stream          xpu:1  allocated 18.747 GiB  reserved 18.762 GiB  free 12.849 GiB of 31.891 GiB
+2026-09-19 18:48:36,323 INFO    lora applied: 312 weights merged exactly (float32, one rounding), 0 ConvRotLinears carry the additive term (0.000 GiB resident) -- the two are NOT the same arithmetic
+2026-09-19 18:48:36,323 INFO    cross-card transfer route: host (B70_H3_XFER)
+2026-09-19 18:48:36,323 INFO    denoiser (pruned) split at block 24: 18.797 GiB on xpu:0, 18.747 GiB on xpu:1
+2026-09-19 18:48:37,619 INFO    [phase] sample.build_pipeline: start
+2026-09-19 18:48:37,620 INFO    [phase] sample.build_pipeline: done in 0.00 s
+2026-09-19 18:48:37,620 INFO    [vram] before sample              xpu:0  allocated 18.798 GiB  reserved 18.801 GiB  free 12.519 GiB of 31.891 GiB
+2026-09-19 18:48:37,621 INFO    [vram] before sample              xpu:1  allocated 18.747 GiB  reserved 18.762 GiB  free 12.849 GiB of 31.891 GiB
+2026-09-19 18:48:37,621 INFO    [phase] sample: start
+  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:04<00:28,  4.12s/it] 25%|██▌       | 2/8 [00:07<00:22,  3.80s/it] 38%|███▊      | 3/8 [00:11<00:18,  3.70s/it] 50%|█████     | 4/8 [00:14<00:14,  3.65s/it] 62%|██████▎   | 5/8 [00:18<00:10,  3.62s/it] 75%|███████▌  | 6/8 [00:21<00:07,  3.61s/it] 88%|████████▊ | 7/8 [00:25<00:03,  3.60s/it]100%|██████████| 8/8 [00:29<00:00,  3.59s/it]100%|██████████| 8/8 [00:29<00:00,  3.64s/it]
+2026-09-19 18:49:06,797 INFO    [phase] sample: done in 29.18 s
+2026-09-19 18:49:06,797 INFO    [vram] after sample               xpu:0  allocated 18.877 GiB  reserved 20.252 GiB  free 10.888 GiB of 31.891 GiB
+2026-09-19 18:49:06,797 INFO    [vram] after sample               xpu:1  allocated 18.823 GiB  reserved 20.090 GiB  free 11.438 GiB of 31.891 GiB
+2026-09-19 18:49:07,117 INFO    denoiser released: 636 parameters/buffers dropped on xpu:0, xpu:1
+2026-09-19 18:49:07,121 INFO    [vram] after denoiser release     xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:49:07,121 INFO    [vram] after denoiser release     xpu:1  allocated 0.000 GiB  reserved 0.000 GiB  free 31.528 GiB of 31.891 GiB
+2026-09-19 18:49:07,121 INFO    decode card: xpu:1 (free xpu:0 31.136 GiB, xpu:1 31.528 GiB)
+2026-09-19 18:49:07,121 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 45.72it/s]
+2026-09-19 18:49:10,323 INFO    [phase] decode.load_vae: done in 3.20 s
+2026-09-19 18:49:10,323 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 18:49:10,327 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.815 GiB of 31.891 GiB
+2026-09-19 18:49:10,327 INFO    [phase] decode.video: start
+2026-09-19 18:49:42,220 INFO    [phase] decode.video: done in 31.89 s
+2026-09-19 18:49:42,220 INFO    [vram] after decode.video         xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:49:42,220 INFO    [vram] after decode.video         xpu:1  allocated 9.958 GiB  reserved 10.730 GiB  free 20.537 GiB of 31.891 GiB
+2026-09-19 18:49:42,413 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:49:42,413 INFO    [vram] after video vae release    xpu:1  allocated 0.258 GiB  reserved 0.275 GiB  free 30.992 GiB of 31.891 GiB
+2026-09-19 18:49:42,413 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 18:49:42,812 INFO    [phase] decode.load_audio_vae: done in 0.40 s
+2026-09-19 18:49:42,813 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 0.822 GiB  reserved 0.824 GiB  free 30.443 GiB of 31.891 GiB
+2026-09-19 18:49:42,813 INFO    [phase] decode.audio: start
+2026-09-19 18:49:45,736 INFO    [phase] decode.audio: done in 2.92 s
+2026-09-19 18:49:45,737 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:49:45,737 INFO    [vram] after decode.audio         xpu:1  allocated 1.064 GiB  reserved 1.230 GiB  free 29.933 GiB of 31.891 GiB
+2026-09-19 18:49:45,953 INFO    [phase] write: start
+2026-09-19 18:49:46,662 INFO    [phase] write: done in 0.71 s
+2026-09-19 18:49:46,812 INFO    video sha256 0fb778df4e4051f10caf9b305647eb8c8f36a6f8730dc7c3adc7709d3dfd1ae0
+2026-09-19 18:49:46,813 INFO    audio sha256 605f1b28979f6b60558a1c971e2c158a0803b9e895478783afa449c5c9db6c91
+2026-09-19 18:49:46,813 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-576x320/smoke-20260919T224743Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-576x320/smoke-20260919T224743Z/receipt.json
+2026-09-19T18:49:47-04:00 mem-watchdog[37571] pid 37570 exited on its own; 246 polls, low MemAvailable 10336 MiB, peak some avg10 1
+2026-09-19T18:49:47-04:00 minimax pruned 576x320 rc=0
+2026-09-19T18:49:48-04:00 minimax pruned 960x544
+preflight: MemAvailable 13774 MiB (need >= 11264), some avg10 0.03
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run smoke-20260919T224948Z ===============================================================
+2026-09-19T18:49:48-04:00 mem-watchdog[38785] watching pid=38784 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 18:49:49,353 INFO    run smoke-20260919T224948Z -> /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z
+2026-09-19 18:49:51,344 INFO    [phase] encode.tokenize: start
+2026-09-19 18:49:51,503 INFO    prompt tokenizes to 46 rows
+2026-09-19 18:49:51,503 INFO    [phase] encode.tokenize: done in 0.16 s
+2026-09-19 18:49:51,505 INFO    [vram] before encode.load         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.578 GiB of 31.891 GiB
+2026-09-19 18:49:51,505 INFO    [phase] encode.load: start
+2026-09-19 18:49:51,876 INFO    text encoder prefixes: language='model.language_model.' visual='model.visual.'
+2026-09-19 18:49:51,876 INFO    text encoder loader: pread (B70_H3_LOADER)
+2026-09-19 18:50:04,300 INFO    neutralizing model.language_model.norm (the conditioning is the unnormalized hidden state)
+2026-09-19 18:50:04,300 INFO    text encoder: placed 902 tensors (350 quantized Linears) on xpu:0
+2026-09-19 18:50:04,303 WARNING text encoder has 4 tensors still on meta, e.g. ['model.visual.rotary_pos_emb.inv_freq', 'model.visual.rotary_pos_emb.original_inv_freq', 'model.language_model.rotary_emb.inv_freq', 'model.language_model.rotary_emb.original_inv_freq']
+2026-09-19 18:50:04,303 INFO    [phase] encode.load: done in 12.80 s
+2026-09-19 18:50:04,303 INFO    [phase] encode.forward: start
+2026-09-19 18:50:04,968 INFO    [phase] encode.forward: done in 0.66 s
+2026-09-19 18:50:04,968 INFO    [vram] after encode.forward       xpu:0  allocated 25.278 GiB  reserved 25.551 GiB  free 5.769 GiB of 31.891 GiB
+2026-09-19 18:50:05,522 INFO    [vram] after encoder release      xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.316 GiB of 31.891 GiB
+2026-09-19 18:50:05,545 INFO    prompt embeds (1, 46, 5120), encoder freed
+2026-09-19 18:50:05,893 INFO    [phase] load.skeleton: start
+2026-09-19 18:50:05,920 INFO    [phase] load.skeleton: done in 0.03 s
+2026-09-19 18:50:05,923 INFO    lora minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors scale 1.0000: 208 pairs -> 312 merged + 0 runtime destinations
+2026-09-19 18:50:05,923 INFO    [phase] load.stream: start
+2026-09-19 18:50:05,923 INFO    denoiser loader: pread (B70_H3_LOADER), checkpoint minimax_h3_fl2va_pruned_bf16.safetensors
+2026-09-19 18:50:10,400 INFO      placed 100/634 tensors (host peak RSS 2.973 GiB)
+2026-09-19 18:50:15,501 INFO      placed 200/634 tensors (host peak RSS 2.973 GiB)
+2026-09-19 18:50:20,989 INFO      placed 300/634 tensors (host peak RSS 2.973 GiB)
+2026-09-19 18:50:26,181 INFO      placed 400/634 tensors (host peak RSS 3.077 GiB)
+2026-09-19 18:50:31,290 INFO      placed 500/634 tensors (host peak RSS 3.077 GiB)
+2026-09-19 18:50:36,770 INFO      placed 600/634 tensors (host peak RSS 3.077 GiB)
+2026-09-19 18:50:38,857 INFO    rope.inv_freq recomputed; max drift vs checkpoint copy = 0.000e+00
+2026-09-19 18:50:39,003 INFO    [phase] load.stream: done in 33.08 s
+2026-09-19 18:50:39,003 INFO    [vram] after load.stream          xpu:0  allocated 18.798 GiB  reserved 18.801 GiB  free 12.519 GiB of 31.891 GiB
+2026-09-19 18:50:39,003 INFO    [vram] after load.stream          xpu:1  allocated 18.747 GiB  reserved 18.762 GiB  free 12.849 GiB of 31.891 GiB
+2026-09-19 18:50:39,005 INFO    lora applied: 312 weights merged exactly (float32, one rounding), 0 ConvRotLinears carry the additive term (0.000 GiB resident) -- the two are NOT the same arithmetic
+2026-09-19 18:50:39,005 INFO    cross-card transfer route: host (B70_H3_XFER)
+2026-09-19 18:50:39,006 INFO    denoiser (pruned) split at block 24: 18.797 GiB on xpu:0, 18.747 GiB on xpu:1
+2026-09-19 18:50:40,305 INFO    [phase] sample.build_pipeline: start
+2026-09-19 18:50:40,306 INFO    [phase] sample.build_pipeline: done in 0.00 s
+2026-09-19 18:50:40,306 INFO    [vram] before sample              xpu:0  allocated 18.798 GiB  reserved 18.801 GiB  free 12.519 GiB of 31.891 GiB
+2026-09-19 18:50:40,306 INFO    [vram] before sample              xpu:1  allocated 18.747 GiB  reserved 18.762 GiB  free 12.849 GiB of 31.891 GiB
+2026-09-19 18:50:40,306 INFO    [phase] sample: start
+  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:14<01:38, 14.07s/it] 25%|██▌       | 2/8 [00:27<01:22, 13.77s/it] 38%|███▊      | 3/8 [00:41<01:08, 13.67s/it] 50%|█████     | 4/8 [00:54<00:54, 13.63s/it] 62%|██████▎   | 5/8 [01:08<00:40, 13.61s/it] 75%|███████▌  | 6/8 [01:21<00:27, 13.60s/it] 88%|████████▊ | 7/8 [01:35<00:13, 13.60s/it]100%|██████████| 8/8 [01:49<00:00, 13.59s/it]100%|██████████| 8/8 [01:49<00:00, 13.63s/it]
+2026-09-19 18:52:29,408 INFO    [phase] sample: done in 109.10 s
+2026-09-19 18:52:29,408 INFO    [vram] after sample               xpu:0  allocated 19.012 GiB  reserved 22.734 GiB  free 8.406 GiB of 31.891 GiB
+2026-09-19 18:52:29,408 INFO    [vram] after sample               xpu:1  allocated 18.955 GiB  reserved 22.395 GiB  free 9.133 GiB of 31.891 GiB
+2026-09-19 18:52:29,731 INFO    denoiser released: 636 parameters/buffers dropped on xpu:0, xpu:1
+2026-09-19 18:52:29,734 INFO    [vram] after denoiser release     xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:52:29,735 INFO    [vram] after denoiser release     xpu:1  allocated 0.000 GiB  reserved 0.000 GiB  free 31.528 GiB of 31.891 GiB
+2026-09-19 18:52:29,735 INFO    decode card: xpu:1 (free xpu:0 31.136 GiB, xpu:1 31.528 GiB)
+2026-09-19 18:52:29,735 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 53.83it/s]
+2026-09-19 18:52:32,819 INFO    [phase] decode.load_vae: done in 3.08 s
+2026-09-19 18:52:32,819 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 18:52:32,820 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.815 GiB of 31.891 GiB
+2026-09-19 18:52:32,820 INFO    [phase] decode.video: start
+2026-09-19 18:53:52,785 INFO    [phase] decode.video: done in 79.96 s
+2026-09-19 18:53:52,785 INFO    [vram] after decode.video         xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:53:52,785 INFO    [vram] after decode.video         xpu:1  allocated 10.431 GiB  reserved 12.078 GiB  free 19.156 GiB of 31.891 GiB
+2026-09-19 18:53:52,994 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:53:52,994 INFO    [vram] after video vae release    xpu:1  allocated 0.730 GiB  reserved 0.744 GiB  free 30.490 GiB of 31.891 GiB
+2026-09-19 18:53:52,994 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 18:53:53,401 INFO    [phase] decode.load_audio_vae: done in 0.41 s
+2026-09-19 18:53:53,401 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 1.294 GiB  reserved 1.312 GiB  free 29.922 GiB of 31.891 GiB
+2026-09-19 18:53:53,401 INFO    [phase] decode.audio: start
+2026-09-19 18:53:56,336 INFO    [phase] decode.audio: done in 2.93 s
+2026-09-19 18:53:56,337 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.136 GiB of 31.891 GiB
+2026-09-19 18:53:56,337 INFO    [vram] after decode.audio         xpu:1  allocated 1.537 GiB  reserved 1.699 GiB  free 29.431 GiB of 31.891 GiB
+2026-09-19 18:53:56,803 INFO    [phase] write: start
+2026-09-19 18:53:58,364 INFO    [phase] write: done in 1.56 s
+2026-09-19 18:53:58,773 INFO    video sha256 ac730503b4380001566532ca6e03fb9752250f44488b0dee7c9baff244a35280
+2026-09-19 18:53:58,774 INFO    audio sha256 73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d
+2026-09-19 18:53:58,774 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/receipt.json
+2026-09-19T18:54:00-04:00 mem-watchdog[38785] pid 38784 exited on its own; 501 polls, low MemAvailable 9755 MiB, peak some avg10 1
+2026-09-19T18:54:00-04:00 minimax pruned 960x544 rc=0
+2026-09-19T18:54:00-04:00 minimax int8 960x544
+preflight: MemAvailable 13899 MiB (need >= 11264), some avg10 0.36
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run smoke-20260919T225400Z ===============================================================
+2026-09-19T18:54:00-04:00 mem-watchdog[41098] watching pid=41097 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 18:54:01,860 INFO    run smoke-20260919T225400Z -> /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/int8-960x544/smoke-20260919T225400Z
+2026-09-19 18:54:04,084 INFO    [phase] encode.tokenize: start
+2026-09-19 18:54:04,241 INFO    prompt tokenizes to 46 rows
+2026-09-19 18:54:04,241 INFO    [phase] encode.tokenize: done in 0.16 s
+2026-09-19 18:54:04,244 INFO    [vram] before encode.load         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.578 GiB of 31.891 GiB
+2026-09-19 18:54:04,244 INFO    [phase] encode.load: start
+2026-09-19 18:54:04,624 INFO    text encoder prefixes: language='model.language_model.' visual='model.visual.'
+2026-09-19 18:54:04,625 INFO    text encoder loader: pread (B70_H3_LOADER)
+2026-09-19 18:54:17,012 INFO    neutralizing model.language_model.norm (the conditioning is the unnormalized hidden state)
+2026-09-19 18:54:17,012 INFO    text encoder: placed 902 tensors (350 quantized Linears) on xpu:0
+2026-09-19 18:54:17,016 WARNING text encoder has 4 tensors still on meta, e.g. ['model.visual.rotary_pos_emb.inv_freq', 'model.visual.rotary_pos_emb.original_inv_freq', 'model.language_model.rotary_emb.inv_freq', 'model.language_model.rotary_emb.original_inv_freq']
+2026-09-19 18:54:17,016 INFO    [phase] encode.load: done in 12.77 s
+2026-09-19 18:54:17,016 INFO    [phase] encode.forward: start
+2026-09-19 18:54:17,714 INFO    [phase] encode.forward: done in 0.70 s
+2026-09-19 18:54:17,714 INFO    [vram] after encode.forward       xpu:0  allocated 25.278 GiB  reserved 25.551 GiB  free 5.769 GiB of 31.891 GiB
+2026-09-19 18:54:18,276 INFO    [vram] after encoder release      xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.316 GiB of 31.891 GiB
+2026-09-19 18:54:18,308 INFO    prompt embeds (1, 46, 5120), encoder freed
+2026-09-19 18:54:18,645 INFO    [phase] load.skeleton: start
+2026-09-19 18:54:18,669 INFO    [phase] load.skeleton: done in 0.02 s
+2026-09-19 18:54:18,671 INFO    int8 denoiser: 350 quantized Linears, ConvRot group sizes [64, 256]
+2026-09-19 18:54:18,782 INFO    lora minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors scale 1.0000: 208 pairs -> 12 merged + 300 runtime destinations, 2.136 GiB resident
+2026-09-19 18:54:18,782 INFO    [phase] load.stream: start
+2026-09-19 18:54:18,782 INFO    denoiser loader: pread (B70_H3_LOADER), checkpoint minimax_h3_fl2va_int8_convrot.safetensors
+2026-09-19 18:54:18,873 INFO      placed 100/238 tensors (host peak RSS 2.267 GiB)
+2026-09-19 18:54:18,880 INFO      placed 200/238 tensors (host peak RSS 2.267 GiB)
+2026-09-19 18:54:23,178 INFO      placed 300/588 tensors (host peak RSS 2.982 GiB)
+2026-09-19 18:54:28,214 INFO      placed 400/588 tensors (host peak RSS 2.982 GiB)
+2026-09-19 18:54:33,285 INFO      placed 500/588 tensors (host peak RSS 2.982 GiB)
+2026-09-19 18:54:37,709 INFO    rope.inv_freq recomputed; max drift vs checkpoint copy = 0.000e+00
+2026-09-19 18:54:37,861 INFO    [phase] load.stream: done in 19.08 s
+2026-09-19 18:54:37,862 INFO    [vram] after load.stream          xpu:0  allocated 17.077 GiB  reserved 17.092 GiB  free 14.228 GiB of 31.891 GiB
+2026-09-19 18:54:37,862 INFO    [vram] after load.stream          xpu:1  allocated 16.761 GiB  reserved 16.779 GiB  free 14.899 GiB of 31.891 GiB
+2026-09-19 18:54:37,865 INFO    lora applied: 12 weights merged exactly (float32, one rounding), 300 ConvRotLinears carry the additive term (2.136 GiB resident) -- the two are NOT the same arithmetic
+2026-09-19 18:54:37,865 INFO    cross-card transfer route: host (B70_H3_XFER)
+2026-09-19 18:54:37,865 INFO    int8 denoiser: 350 ConvRotLinears placed, transient dequant peak 0.484 GiB (leave it free)
+2026-09-19 18:54:37,865 INFO    denoiser (int8) split at block 24: 16.051 GiB on xpu:0, 15.650 GiB on xpu:1
+2026-09-19 18:54:39,156 INFO    [phase] sample.build_pipeline: start
+2026-09-19 18:54:39,158 INFO    [phase] sample.build_pipeline: done in 0.00 s
+2026-09-19 18:54:39,158 INFO    [vram] before sample              xpu:0  allocated 17.077 GiB  reserved 17.092 GiB  free 14.228 GiB of 31.891 GiB
+2026-09-19 18:54:39,158 INFO    [vram] before sample              xpu:1  allocated 16.761 GiB  reserved 16.779 GiB  free 14.899 GiB of 31.891 GiB
+2026-09-19 18:54:39,158 INFO    [phase] sample: start
+  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:19<02:17, 19.60s/it] 25%|██▌       | 2/8 [00:38<01:55, 19.25s/it] 38%|███▊      | 3/8 [00:57<01:35, 19.14s/it] 50%|█████     | 4/8 [01:16<01:16, 19.10s/it] 62%|██████▎   | 5/8 [01:35<00:57, 19.08s/it] 75%|███████▌  | 6/8 [01:54<00:38, 19.07s/it] 88%|████████▊ | 7/8 [02:13<00:19, 19.06s/it]100%|██████████| 8/8 [02:32<00:00, 19.06s/it]100%|██████████| 8/8 [02:32<00:00, 19.11s/it]
+2026-09-19 18:57:12,031 INFO    [phase] sample: done in 152.87 s
+2026-09-19 18:57:12,032 INFO    [vram] after sample               xpu:0  allocated 17.291 GiB  reserved 26.688 GiB  free 4.465 GiB of 31.891 GiB
+2026-09-19 18:57:12,032 INFO    [vram] after sample               xpu:1  allocated 16.969 GiB  reserved 26.137 GiB  free 5.388 GiB of 31.891 GiB
+2026-09-19 18:57:12,367 INFO    denoiser released: 1939 parameters/buffers dropped on xpu:0, xpu:1
+2026-09-19 18:57:12,369 INFO    [vram] after denoiser release     xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.149 GiB of 31.891 GiB
+2026-09-19 18:57:12,369 INFO    [vram] after denoiser release     xpu:1  allocated 0.000 GiB  reserved 0.000 GiB  free 31.525 GiB of 31.891 GiB
+2026-09-19 18:57:12,369 INFO    decode card: xpu:1 (free xpu:0 31.149 GiB, xpu:1 31.525 GiB)
+2026-09-19 18:57:12,369 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 52.51it/s]
+2026-09-19 18:57:15,435 INFO    [phase] decode.load_vae: done in 3.07 s
+2026-09-19 18:57:15,436 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 18:57:15,437 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.812 GiB of 31.891 GiB
+2026-09-19 18:57:15,437 INFO    [phase] decode.video: start
+2026-09-19 18:58:35,453 INFO    [phase] decode.video: done in 80.02 s
+2026-09-19 18:58:35,453 INFO    [vram] after decode.video         xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.149 GiB of 31.891 GiB
+2026-09-19 18:58:35,453 INFO    [vram] after decode.video         xpu:1  allocated 10.431 GiB  reserved 12.078 GiB  free 19.154 GiB of 31.891 GiB
+2026-09-19 18:58:35,646 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.149 GiB of 31.891 GiB
+2026-09-19 18:58:35,647 INFO    [vram] after video vae release    xpu:1  allocated 0.730 GiB  reserved 0.744 GiB  free 30.488 GiB of 31.891 GiB
+2026-09-19 18:58:35,647 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 18:58:36,130 INFO    [phase] decode.load_audio_vae: done in 0.48 s
+2026-09-19 18:58:36,130 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 1.294 GiB  reserved 1.312 GiB  free 29.920 GiB of 31.891 GiB
+2026-09-19 18:58:36,130 INFO    [phase] decode.audio: start
+2026-09-19 18:58:39,111 INFO    [phase] decode.audio: done in 2.98 s
+2026-09-19 18:58:39,112 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.004 GiB  free 31.149 GiB of 31.891 GiB
+2026-09-19 18:58:39,112 INFO    [vram] after decode.audio         xpu:1  allocated 1.537 GiB  reserved 1.699 GiB  free 29.425 GiB of 31.891 GiB
+2026-09-19 18:58:39,478 INFO    [phase] write: start
+2026-09-19 18:58:41,004 INFO    [phase] write: done in 1.53 s
+2026-09-19 18:58:41,410 INFO    video sha256 a88884eee4ce3120e38fc76f9fa503b34554b2e800f00a11e175e04877ac439d
+2026-09-19 18:58:41,410 INFO    audio sha256 0189a96ab694a49ec06a26ec5cac3e509b52e102d9c1bab4e6a0d088e72c2e31
+2026-09-19 18:58:41,410 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/int8-960x544/smoke-20260919T225400Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/int8-960x544/smoke-20260919T225400Z/receipt.json
+2026-09-19T18:58:42-04:00 mem-watchdog[41098] pid 41097 exited on its own; 561 polls, low MemAvailable 9090 MiB, peak some avg10 1
+2026-09-19T18:58:42-04:00 minimax int8 960x544 rc=0
+2026-09-19T18:59:02-04:00 service restart with container no-swap + sampler (validation start 2)
+
+[2026-09-19T22:59:02Z] ===== PHASE 0  preconditions (checks only -- this phase changes nothing) =====
+[2026-09-19T22:59:02Z] session root /mnt/fast-ai/bench-results/resume-20260919f; only_service=1; git d2dbd737f
+[2026-09-19T22:59:03Z] no containers running
+[2026-09-19T22:59:03Z] MemAvailable 13890 MiB (need >= 11264)
+[2026-09-19T22:59:03Z] /mnt/fast-ai free 511347 MiB (need >= 8192)
+[2026-09-19T22:59:03Z] phase 0 OK
+
+[2026-09-19T22:59:03Z] ===== PHASE 1  XPU + XCCL health probe on both cards =====
+[2026-09-19T22:59:03Z] running /home/steve/b70-optimization-lab/scripts/check-qwen36-xpu-xccl-health.sh
+[xpu-health] physical_devices=0,1
+[xpu-health] single-device smoke level_zero:0
+device_count 2
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 2
+selected_device 1
+ok 2097152.0
+[xpu-health] xccl_devices=0,1 nproc=2
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+rank 0 init okrank 1 init ok
+
+2026:09:19-18:59:10:44442 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:19-18:59:10:44442 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:09:19-18:59:10:44442 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:10:44443 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:11:44442:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 1 barrier okrank 0 barrier ok
+
+rank 1 allreduce ok 2.0
+rank 0 allreduce ok 2.0
+[2026-09-19T22:59:12Z] health probe rc=0
+
+[2026-09-19T22:59:12Z] ===== PHASE 2/3  SKIPPED (--only-service) =====
+
+[2026-09-19T22:59:12Z] ===== PHASE 4  restore the two-card FP8 service on 18124, then the strict suite =====
+[2026-09-19T22:59:12Z] second health probe before the service takes both cards
+[xpu-health] physical_devices=0,1
+[xpu-health] single-device smoke level_zero:0
+device_count 2
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 2
+selected_device 1
+ok 2097152.0
+[xpu-health] xccl_devices=0,1 nproc=2
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+rank 1 init ok
+rank 0 init ok
+2026:09:19-18:59:18:45173 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:19-18:59:18:45173 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:09:19-18:59:18:45173 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:18:45174 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:19:45173:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 0 barrier ok
+rank 1 barrier ok
+rank 0 allreduce ok 2.0
+rank 1 allreduce ok 2.0
+[2026-09-19T22:59:20Z] service health probe rc=0
+[2026-09-19T22:59:20Z] waiting for 18124 to be completely free (ss -tan, up to 300 s)
+[2026-09-19T22:59:20Z] 18124 free
+[2026-09-19T22:59:20Z] starting: systemd-run --user --unit fp8-service-20260918-resume --working-directory /home/steve/b70-optimization-lab --collect python3 /home/steve/b70-optimization-lab/packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /mnt/fast-ai/llm-models/qwen3.8-27b-fp8 --state-dir /mnt/fast-ai/bench-results/resume-20260919f/service --port 18124
+Running as unit: fp8-service-20260918-resume.service; invocation ID: 50450fb669e341e4b94fdce824ac56c7
+[2026-09-19T22:59:20Z] waiting for the service to report ready (up to 2400 s)
+[2026-09-19T23:02:00Z] service status=ready
+[2026-09-19T23:02:00Z] service ready on http://127.0.0.1:18124/v1  (unit fp8-service-20260918-resume, state /mnt/fast-ai/bench-results/resume-20260919f/service)
+[2026-09-19T23:02:00Z] strict suite against the comm-2 no-MTP reference /mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict
+class_balanced_median_tok_s=89.791205779564
+workload_cache_zero_canary_gate=pass
+target_and_repeat_parity=not_evaluated_by_single_attempt
+PASS workload/cache/canaries: /mnt/fast-ai/bench-results/resume-20260919f/service-strict
+THIS ATTEMPT ALONE IS NOT QUALIFIED: preserve two fresh MTP1 and two matched-image MTP0 attempts with every comparison 12/12 exact
+[2026-09-19T23:03:24Z] strict suite rc=0
+[2026-09-19T23:03:24Z] STRICT PARITY: 12/12 vs the comm-2 no-MTP reference, at 89.79 tok/s
+
+[2026-09-19T23:03:24Z] ===== PHASE DONE =====
+[2026-09-19T23:03:24Z] health probe: clean on both cards
+[2026-09-19T23:03:24Z] FP8 two-card service: UP on 18124, unit fp8-service-20260918-resume, state /mnt/fast-ai/bench-results/resume-20260919f/service, strict 12/12 at 89.79 tok/s
+[2026-09-19T23:03:24Z] everything is under /mnt/fast-ai/bench-results/resume-20260919f
+[2026-09-19T23:03:24Z] remember to update CURRENT.md with the outcome
+2026-09-19T19:03:25-04:00 service rc=0; fault lines 0
+2026-09-19T19:03:25-04:00 batch3 done

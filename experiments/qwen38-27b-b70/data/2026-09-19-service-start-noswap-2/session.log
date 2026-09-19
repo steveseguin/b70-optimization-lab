@@ -1,0 +1,88 @@
+
+[2026-09-19T22:59:02Z] ===== PHASE 0  preconditions (checks only -- this phase changes nothing) =====
+[2026-09-19T22:59:02Z] session root /mnt/fast-ai/bench-results/resume-20260919f; only_service=1; git d2dbd737f
+[2026-09-19T22:59:03Z] no containers running
+[2026-09-19T22:59:03Z] MemAvailable 13890 MiB (need >= 11264)
+[2026-09-19T22:59:03Z] /mnt/fast-ai free 511347 MiB (need >= 8192)
+[2026-09-19T22:59:03Z] phase 0 OK
+
+[2026-09-19T22:59:03Z] ===== PHASE 1  XPU + XCCL health probe on both cards =====
+[2026-09-19T22:59:03Z] running /home/steve/b70-optimization-lab/scripts/check-qwen36-xpu-xccl-health.sh
+[xpu-health] physical_devices=0,1
+[xpu-health] single-device smoke level_zero:0
+device_count 2
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 2
+selected_device 1
+ok 2097152.0
+[xpu-health] xccl_devices=0,1 nproc=2
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+rank 0 init okrank 1 init ok
+
+2026:09:19-18:59:10:44442 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:19-18:59:10:44442 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:09:19-18:59:10:44442 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:10:44443 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:11:44442:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 1 barrier okrank 0 barrier ok
+
+rank 1 allreduce ok 2.0
+rank 0 allreduce ok 2.0
+[2026-09-19T22:59:12Z] health probe rc=0
+
+[2026-09-19T22:59:12Z] ===== PHASE 2/3  SKIPPED (--only-service) =====
+
+[2026-09-19T22:59:12Z] ===== PHASE 4  restore the two-card FP8 service on 18124, then the strict suite =====
+[2026-09-19T22:59:12Z] second health probe before the service takes both cards
+[xpu-health] physical_devices=0,1
+[xpu-health] single-device smoke level_zero:0
+device_count 2
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 2
+selected_device 1
+ok 2097152.0
+[xpu-health] xccl_devices=0,1 nproc=2
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+rank 1 init ok
+rank 0 init ok
+2026:09:19-18:59:18:45173 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:19-18:59:18:45173 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:09:19-18:59:18:45173 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:18:45174 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-18:59:19:45173:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 0 barrier ok
+rank 1 barrier ok
+rank 0 allreduce ok 2.0
+rank 1 allreduce ok 2.0
+[2026-09-19T22:59:20Z] service health probe rc=0
+[2026-09-19T22:59:20Z] waiting for 18124 to be completely free (ss -tan, up to 300 s)
+[2026-09-19T22:59:20Z] 18124 free
+[2026-09-19T22:59:20Z] starting: systemd-run --user --unit fp8-service-20260918-resume --working-directory /home/steve/b70-optimization-lab --collect python3 /home/steve/b70-optimization-lab/packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /mnt/fast-ai/llm-models/qwen3.8-27b-fp8 --state-dir /mnt/fast-ai/bench-results/resume-20260919f/service --port 18124
+Running as unit: fp8-service-20260918-resume.service; invocation ID: 50450fb669e341e4b94fdce824ac56c7
+[2026-09-19T22:59:20Z] waiting for the service to report ready (up to 2400 s)
+[2026-09-19T23:02:00Z] service status=ready
+[2026-09-19T23:02:00Z] service ready on http://127.0.0.1:18124/v1  (unit fp8-service-20260918-resume, state /mnt/fast-ai/bench-results/resume-20260919f/service)
+[2026-09-19T23:02:00Z] strict suite against the comm-2 no-MTP reference /mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict
+class_balanced_median_tok_s=89.791205779564
+workload_cache_zero_canary_gate=pass
+target_and_repeat_parity=not_evaluated_by_single_attempt
+PASS workload/cache/canaries: /mnt/fast-ai/bench-results/resume-20260919f/service-strict
+THIS ATTEMPT ALONE IS NOT QUALIFIED: preserve two fresh MTP1 and two matched-image MTP0 attempts with every comparison 12/12 exact
+[2026-09-19T23:03:24Z] strict suite rc=0
+[2026-09-19T23:03:24Z] STRICT PARITY: 12/12 vs the comm-2 no-MTP reference, at 89.79 tok/s
+
+[2026-09-19T23:03:24Z] ===== PHASE DONE =====
+[2026-09-19T23:03:24Z] health probe: clean on both cards
+[2026-09-19T23:03:24Z] FP8 two-card service: UP on 18124, unit fp8-service-20260918-resume, state /mnt/fast-ai/bench-results/resume-20260919f/service, strict 12/12 at 89.79 tok/s
+[2026-09-19T23:03:24Z] everything is under /mnt/fast-ai/bench-results/resume-20260919f
+[2026-09-19T23:03:24Z] remember to update CURRENT.md with the outcome

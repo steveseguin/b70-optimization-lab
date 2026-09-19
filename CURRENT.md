@@ -1,9 +1,110 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-19 22:28 UTC** (2026-09-19 18:28 EDT).
+Last reviewed: **2026-09-19 23:03 UTC** (2026-09-19 19:03 EDT).
 The four-B70 host section below was added 2026-09-11.
 
-## The video model made a video, and the FP8 service is back up with the swapping fixed
+## The video model now works at full size, and the service is back up
+
+**This evening's second window, 18:46 to 19:03, did two things and both worked.** Nothing is on the
+cards now except the FP8 service, which is up and answering.
+
+### The video model runs at the size it was designed for
+
+**MiniMax-H3 made a 960 by 544 clip -- the picture size the model was actually trained at -- and it
+did it on both versions of the model.** An hour earlier it could only do 448 by 256, barely a fifth
+of the area, and there was a real worry that the full size would not fit in the two cards at all. It
+fits, with room left over: the tighter card still had 8.4 GB free.
+
+**It takes about four minutes to make five seconds of video.** Four minutes four seconds, to be
+exact, of which:
+
+* **1 minute 49 seconds** is the actual generating,
+* **1 minute 20 seconds** is turning the result back into pixels,
+* **46 seconds** is loading the model files,
+* and the rest -- reading the prompt, the sound, writing the file -- is about 9 seconds all together.
+
+The smaller INT8 version of the model also made the same clip, in 4 minutes 34 seconds. Both clips
+show a convincing rainy night street: neon reflected in wet road, someone with an umbrella walking
+away. The INT8 one has more detail in the scene. **That is two frames of one prompt and it is not a
+verdict on which version is better** -- we still need a proper set of prompts for that.
+
+The clips are too big for Git and are here:
+
+* `/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/clip.mp4`
+  (the main version, 3.1 MB)
+* `/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/int8-960x544/smoke-20260919T225400Z/clip.mp4`
+  (the INT8 version, 4.9 MB)
+* `/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-576x320/smoke-20260919T224743Z/clip.mp4`
+  (the middle size we stepped through on the way, 0.8 MB)
+
+**Knowing where the four minutes go changes what is worth fixing.** Three things stand out, and none
+of them has been tried yet:
+
+1. **46 seconds of every run is loading the same model files again**, and none of that work depends
+   on the prompt or the picture size. Running this as a service that stays loaded instead of a
+   script that starts fresh would save those 46 seconds on every clip after the first. It should
+   also give byte-for-byte identical output, so it is easy to prove correct.
+2. **The pixel-conversion step runs on one card while the other sits completely idle**, and it is now
+   a third of the run and the fastest-growing part. Splitting it across both cards should be exact,
+   because it is the same work just divided.
+3. **The generating step is now 42 % attention maths** at this size, up from 15 % at the small size,
+   and that part grows with the square of the picture size. Anything larger than this will be
+   dominated by it.
+
+Nothing stressed the machine: free memory never dropped below 8.9 GB, the safety watchdog never
+fired, and neither card logged a single fault all evening.
+
+Details, the five-run table, the timing breakdown and the five speed ideas written up properly:
+[canvas ladder](experiments/minimax-h3-b70/notes/2026-09-19-first-light.md#canvas-ladder-2246-2259-utc);
+receipts in
+[`data/2026-09-19-canvas-ladder/`](experiments/minimax-h3-b70/data/2026-09-19-canvas-ladder/).
+
+### The service is back up, and the no-swap fix passed test 2 of 3
+
+**The FP8 service is UP on both cards**, unit `fp8-service-20260918-resume`, state directory
+`/mnt/fast-ai/bench-results/resume-20260919f/service`, port 18124 -- **twelve out of twelve test
+prompts exactly right, at 89.79 tokens a second, no faults.**
+
+This was the second of three chances to check the swapping fix, and again it was a start that was
+going to happen anyway rather than one made for the test. **It matched the first one closely enough
+to be convincing.** The container swapped nothing at all again; the machine as a whole swapped 288
+MB against 293 MB last time (and 4,514 MB before the fix); no out-of-memory kills.
+
+**The important repeat: how much memory the service really holds came back at 8.94 GB against 8.95
+GB last time** -- a difference of under a tenth of a percent. That was the number that changed the
+safety margin yesterday, and two independent readings agreeing that closely means the roughly 3 GB
+of room to spare is a real figure, not a one-off.
+
+Two things moved slightly and neither is a problem: the service took 10 seconds longer to be ready,
+all of it inside a code-compilation step, while the model load itself was identical to the hundredth
+of a second; and the speed reading was 89.79 against 89.9 tokens a second, a tenth of a percent, with
+the answers still all twelve exactly right.
+
+**Next: one more clean start, then we edit `serve.py`**, regenerate the published evidence packets
+and re-run acceptance. Until that edit lands the setting still does not stick -- it applies to one
+container, and every restart makes a new one with swapping allowed again, so the little helper has to
+be run beside every single start.
+
+Write-up and the three-way table:
+[container memory cap and swap](experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md#validation-start-2-of-3-2026-09-19-1859-edt--2259-utc);
+receipts in
+[`data/2026-09-19-service-start-noswap-2/`](experiments/qwen38-27b-b70/data/2026-09-19-service-start-noswap-2/).
+
+### What is next, in order
+
+1. **One more clean service start**, then the `serve.py` edit for the swap setting -- but measure the
+   one-card setup's real memory use on a live server first, because that one has less room to spare.
+2. **Make the video pipeline a service instead of a script.** Biggest guaranteed saving, 46 seconds a
+   clip, and it should not change a single pixel.
+3. **Use the idle card for the pixel-conversion step.**
+4. **Run the slow 51-step schedule once** at full size, to find out whether the 8-step shortcut we
+   have been using costs anything in quality. It will take about 13 minutes for one clip.
+5. **Build a small set of prompts** so the two versions of the video model can be compared properly.
+
+## Earlier this evening: the video model made its first video, and the swapping fix passed test 1
+
+**This section describes the 18:16-18:28 EDT window. The canvas ladder above is the later window and
+supersedes it on picture size and timings; this is where first light and the repeat gate happened.**
 
 **Both things in this evening's twelve-minute window worked.** Nothing is running on the cards now
 except the FP8 service, which is up and answering.
@@ -36,10 +137,11 @@ fault that forced every card-to-card copy to go through main memory, and finally
 been hiding behind all of them: the code was quietly saving everything it computed in case someone
 wanted to train the model, which filled a 32 GB card with 21 GB of junk during the decode.
 
-**What is next for it:** step the picture size up toward the size the model was actually trained at
-(544 by 960), one size at a time, reading the memory numbers at each stop; compare the fast 8-step
-shortcut against the full 51-step schedule the model was trained for; and put together a handful of
-prompts so the two versions of the model can be compared properly instead of by looking at one frame.
+**What was next for it:** step the picture size up toward the size the model was actually trained at
+(544 by 960), one size at a time, reading the memory numbers at each stop -- **done in the 18:46
+window above, and it worked**; compare the fast 8-step shortcut against the full 51-step schedule the
+model was trained for; and put together a handful of prompts so the two versions of the model can be
+compared properly instead of by looking at one frame. The last two are still open.
 
 Details, numbers and the five blockers:
 [first light](experiments/minimax-h3-b70/notes/2026-09-19-first-light.md); receipts in

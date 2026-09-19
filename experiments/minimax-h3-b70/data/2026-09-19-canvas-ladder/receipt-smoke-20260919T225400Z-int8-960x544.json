@@ -1,0 +1,244 @@
+{
+  "run_name": "smoke-20260919T225400Z",
+  "utc": "2026-09-19T22:58:41Z",
+  "host": "steve-TURIND8-2L2T",
+  "argv": [
+    "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/run_h3_t2v.py",
+    "--prompt",
+    "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "--height",
+    "544",
+    "--width",
+    "960",
+    "--frames",
+    "124",
+    "--steps",
+    "9",
+    "--seed",
+    "42",
+    "--lora",
+    "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+    "--out-dir",
+    "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/int8-960x544",
+    "--run-name",
+    "smoke-20260919T225400Z",
+    "--save-tensors"
+  ],
+  "settings": {
+    "adaln_dtype": "fp32",
+    "adaln_out_dtype": "bf16",
+    "audio_shift": null,
+    "cards": [
+      0,
+      1
+    ],
+    "crf": 16,
+    "denoiser": "int8",
+    "denoiser_rotation": "hadamard",
+    "deterministic": false,
+    "dry_run": false,
+    "encoder_card": 0,
+    "frames": 124,
+    "height": 544,
+    "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+    "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/int8-960x544",
+    "plan_memory": false,
+    "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "prompt_embeds": null,
+    "run_name": "smoke-20260919T225400Z",
+    "save_tensors": true,
+    "seed": 42,
+    "split_index": null,
+    "steps": 9,
+    "te_rotation": "hadamard256",
+    "vae_card": null,
+    "vae_tiling": "auto",
+    "verbose": false,
+    "verify_remap": false,
+    "video_shift": null,
+    "width": 960
+  },
+  "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+  "prompt_tokens": 46,
+  "seed": 42,
+  "num_inference_steps": 9,
+  "num_function_evaluations": 8,
+  "num_inference_steps_note": "sigma grid points, terminal 0 included; NFE = steps - 1 (MiniMaxH3Scheduler.set_timesteps). Base reference is 50 NFE (steps 51); the 8-step turbo LoRA is 8 NFE (steps 9). CFG-distilled: no guidance_scale exists. See notes/2026-09-18-steps-and-lora.md",
+  "resolved": {
+    "video_latents_shape": [
+      1,
+      24,
+      37,
+      34,
+      60
+    ],
+    "audio_latents_shape": [
+      2,
+      32,
+      207
+    ],
+    "video_shape": [
+      1,
+      3,
+      124,
+      544,
+      960
+    ],
+    "audio_shape": [
+      1,
+      2,
+      165600
+    ],
+    "sampling_rate": 32000,
+    "fps": 24
+  },
+  "split_plan": {
+    "variant": "int8",
+    "split_index": 24,
+    "num_layers": 50,
+    "non_block_bytes": 1723385408,
+    "quant_bytes": 32314419200,
+    "rotation_bytes_per_card": 139264,
+    "dequant_peak_bytes": 520224768,
+    "card0_bytes": 17234835008,
+    "card1_bytes": 16804209664,
+    "card0_gib": 16.051,
+    "card1_gib": 15.65,
+    "imbalance_bytes": 430625344,
+    "adaln_table_bytes": 0
+  },
+  "timings_seconds": {
+    "encode.tokenize": 0.157,
+    "encode.load": 12.772,
+    "encode.forward": 0.698,
+    "load.skeleton": 0.024,
+    "load.stream": 19.079,
+    "sample.build_pipeline": 0.001,
+    "sample": 152.873,
+    "decode.load_vae": 3.067,
+    "decode.video": 80.016,
+    "decode.load_audio_vae": 0.483,
+    "decode.audio": 2.981,
+    "write": 1.526
+  },
+  "seconds_per_second_of_video": 52.97,
+  "peak_memory": {
+    "encode": {
+      "xpu:0": {
+        "allocated_bytes": 471040,
+        "max_allocated_bytes": 27410579456,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 27434942464
+      },
+      "xpu:1": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      }
+    },
+    "sample": {
+      "xpu:0": {
+        "allocated_bytes": 18566485504,
+        "max_allocated_bytes": 26483368448,
+        "reserved_bytes": 28655484928,
+        "max_reserved_bytes": 28655484928
+      },
+      "xpu:1": {
+        "allocated_bytes": 18219836928,
+        "max_allocated_bytes": 25920058880,
+        "reserved_bytes": 28064088064,
+        "max_reserved_bytes": 28064088064
+      }
+    },
+    "decode_video": {
+      "xpu:0": {
+        "allocated_bytes": 471040,
+        "max_allocated_bytes": 471040,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 4194304
+      },
+      "xpu:1": {
+        "allocated_bytes": 11199819264,
+        "max_allocated_bytes": 12754005504,
+        "reserved_bytes": 12968787968,
+        "max_reserved_bytes": 12968787968
+      }
+    },
+    "decode": {
+      "xpu:0": {
+        "allocated_bytes": 471040,
+        "max_allocated_bytes": 471040,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 4194304
+      },
+      "xpu:1": {
+        "allocated_bytes": 1650443264,
+        "max_allocated_bytes": 12754005504,
+        "reserved_bytes": 1824522240,
+        "max_reserved_bytes": 12968787968
+      }
+    }
+  },
+  "decode_placement": {
+    "card": "xpu:1",
+    "requested": null,
+    "video_vae_tiling": "on",
+    "one_vae_at_a_time": true
+  },
+  "host_peak_rss_bytes": 12858920960,
+  "hashes": {
+    "video_tensor_sha256": "a88884eee4ce3120e38fc76f9fa503b34554b2e800f00a11e175e04877ac439d",
+    "audio_tensor_sha256": "0189a96ab694a49ec06a26ec5cac3e509b52e102d9c1bab4e6a0d088e72c2e31",
+    "video_latents_sha256": "0c2c2a5f611a072c9a34eac00b8a6e13ef567f508c329cc8eee5cbf09de7e180",
+    "audio_latents_sha256": "357faf19e1ed24665dfd72c75ad00a1df03ed181f4be19827ff2be234987c96a"
+  },
+  "inputs": {
+    "denoiser": "/mnt/fast-ai/llm-models/minimax-h3-comfy/diffusion_models/minimax_h3_fl2va_int8_convrot.safetensors",
+    "denoiser_variant": "int8",
+    "denoiser_rotation": "hadamard",
+    "denoiser_header_sha256": "a3fe7dcdaac8937bebae53a3d5845e8f34f951f7fcc1550dad34beef00f8ac87",
+    "lora": {
+      "path": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "sha256": "2339acdf19bfe123f46b971ea35d367a84adb85de43627e1eceafa5a5b2b111e",
+      "bytes": 1956193000,
+      "user_scale": 1.0,
+      "effective_scales": [
+        0.0625
+      ],
+      "metadata": {
+        "training_rank": "128",
+        "format": "pt",
+        "target_format": "ComfyUI generic LoRA",
+        "training_alpha": "8.0",
+        "base_model": "Comfy-Org/MiniMax-H3 minimax_h3_fl2va_bf16.safetensors",
+        "source_format": "Diffusers PEFT LoRA",
+        "training_scale": "0.0625",
+        "qkv_fusion": "block diagonal B; concat A; alpha multiplied by 3",
+        "swi_glu_mapping": "Diffusers [value;gate] -> ComfyUI [gate;value]"
+      },
+      "pairs": 208,
+      "pairs_matched": 208,
+      "merged_destinations": 12,
+      "runtime_destinations": 300,
+      "runtime_resident_bytes": 2293760000,
+      "application": "dense weights merged exactly (W + s*B@A in float32, one rounding); ConvRotLinear destinations carry an additive runtime term instead, because an int8 weight cannot absorb a merge"
+    },
+    "text_encoder": "/mnt/fast-ai/llm-models/minimax-h3-comfy/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+    "convrot_rotation_sha256": "ebb89aa1651e681f49461fe539bf2eb6fba0143c2733e5ad9cef438d48fb28d2",
+    "vae": "/mnt/fast-ai/llm-models/minimax-h3/vae",
+    "audio_vae": "/mnt/fast-ai/llm-models/minimax-h3/audio_vae"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "torch": "2.14.0+xpu",
+    "diffusers": "0.41.0.dev0",
+    "transformers": "5.17.0"
+  },
+  "environment": {
+    "PYTORCH_ALLOC_CONF": "expandable_segments:True"
+  },
+  "deterministic": false,
+  "loader": "pread",
+  "cross_card_transfer": "host"
+}

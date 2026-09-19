@@ -307,6 +307,17 @@ conservative and the real number is small), or the canvas walk stops below 544x9
 is chunked. The `[vram]` lines from the 320x576 step will say which, and that is the cheap way to
 find out.
 
+> **ANSWERED 2026-09-19 22:46-22:59 UTC: it is the first branch, and the ~80 GiB bound is moot.**
+> The canvas ladder ran 320x576 (7,138 rows) and then 544x960 (19,348 rows) on the pruned denoiser
+> and 544x960 on the INT8 one, all rc 0. At the trained canvas the pruned run holds **19.012 /
+> 18.955 GiB allocated after `sample` with 8.406 / 9.133 GiB free** -- 0.21 GiB more live than at
+> 4,622 rows, across a 4.2x rise in sequence length. The memory-efficient SDPA kernel is dispatched
+> at the full length, not only at the short one, so **attention does not have to be chunked** and the
+> canvas walk is not blocked. The decode prediction also held in shape: `decode.video` peaked at
+> 10.431 GiB at 544x960 against the 11.34 GiB budgeted. What *did* show up is time, not memory --
+> `decode.video` is 79.96 s at this canvas and attention is 42 % of the 109.10 s `sample`.
+> [Canvas ladder](2026-09-19-first-light.md#canvas-ladder-2246-2259-utc).
+
 ### Step 4b, 2026-09-19 14:41: the release works, and the decode OOMed for a second, different reason
 
 The batched window (`/mnt/fast-ai/bench-results/batch-session-20260919.sh`, `RESUME_ROOT
@@ -453,9 +464,18 @@ MiB floor (lowest MemAvailable 10.2 GiB). Numbers: [first light](2026-09-19-firs
   or coredump line on the boot.
 
 Then, and only then, the follow-ups: the canvas walk (320x576, 544x960, 768x1344), the step sweep,
-and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`). **All still open as of
-2026-09-19**; the order they are now worth running in is in
-[first light](2026-09-19-first-light.md#next-steps).
+and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`).
+
+* **The canvas walk: done to 544x960, 2026-09-19 18:46-18:59 EDT.** 320x576 and 544x960 pruned plus
+  544x960 INT8, all rc 0, zero fault lines; the attention bound above is answered and the trained
+  canvas is reached. 768x1344 is untried and is now an *attention-time* question rather than a
+  memory one -- at 19,348 rows attention is already 42 % of `sample`, and it grows with the square.
+  [Canvas ladder](2026-09-19-first-light.md#canvas-ladder-2246-2259-utc).
+* The step sweep and the two arithmetic A/Bs are **still open as of 2026-09-19**.
+
+The order everything is now worth running in is in
+[speed levers](2026-09-19-first-light.md#speed-levers-none-tried-yet) and
+[next steps](2026-09-19-first-light.md#next-steps).
 
 ## Step 7 -- the second first-light candidate: `--denoiser int8`
 

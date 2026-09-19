@@ -6,6 +6,15 @@ between). Driver script `/mnt/fast-ai/bench-results/batch2-session-20260919.sh`,
 `batch2-session-20260919.log`, session root `/mnt/fast-ai/bench-results/resume-20260919d`
 (`session.log` there, runs under `minimax/`). **Zero `xe` fault lines all evening.**
 
+> **Update, batch window 3, 18:46-18:59 EDT (22:46-22:59 UTC): the trained 960x544 canvas renders, on
+> both denoisers.** Three more runs walked the ladder 576x320 -> 960x544 pruned -> 960x544 INT8, all
+> rc 0, still zero fault lines. The plan's ~80 GiB materialized-attention bound never applied. With
+> the real canvas measured, the time breakdown changes what is worth optimizing: sampling is 45 % of
+> a run, the **video decode is 34 % and runs on one card while the other idles**, and **46 s of every
+> run is model loading that does not depend on the prompt**. See
+> [Canvas ladder](#canvas-ladder-2246-2259-utc) and
+> [Speed levers, none tried yet](#speed-levers-none-tried-yet).
+
 ## In plain words
 
 **The video model generated a video.** Four runs in eleven minutes: one clip from the pruned BF16
@@ -230,20 +239,256 @@ Each directory also holds `receipt.json` and `tensors.safetensors`. The receipts
 and the comparison report are copied into the repo at
 [`../data/2026-09-19-first-light/`](../data/2026-09-19-first-light/).
 
+## Canvas ladder (22:46-22:59 UTC)
+
+Batch window 3, **18:46-19:03 EDT (22:46-23:03 UTC)**, same boot as the two windows above, driver
+`/mnt/fast-ai/bench-results/batch3-session-20260919.sh`, log `batch3-session-20260919.log`, outputs
+under `/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/`. Three more runs: **576x320 pruned,
+960x544 pruned, 960x544 INT8**. All rc 0, **zero `xe` fault lines**, the watchdog never fired.
+Everything else was held fixed at the first-light settings -- turbo LoRA, 9 grid points (8 NFE), 124
+frames, seed 42, `pread` loader, host-staged cross-card transfers, VAE tiling on.
+
+**The headline: the trained canvas runs, on both denoisers, with room to spare.** 960x544 is the
+resolution this checkpoint was trained for, and the plan's reason for doubting it -- a materialized
+attention matrix at 19,348 packed rows would need ~80 GiB per card -- **does not happen**. The
+pruned run peaked with 8.4 GiB still free on the tighter card. The plan's ~80 GiB bound is moot: the
+XPU dispatches a memory-efficient SDPA kernel at the full length, not only at the short one.
+
+### The five runs
+
+Packed rows are the denoiser's sequence length: `37` latent frames x the `(H/2) x (W/2)` patch grid,
+plus the same 478 audio and conditioning rows that the plan's 4,622 and 19,348 figures include.
+
+| Run | Denoiser | Canvas | Packed rows | `sample` | s/step | `decode.video` | end to end | wall / s of video | `clip.mp4` |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `smoke-20260919T221709Z` | pruned | 448x256 | 4,622 | 17.68 s | 2.21 | 11.12 s | 83.2 s | 16.11 s | 857,159 B |
+| `smoke-20260919T222143Z` | INT8 | 448x256 | 4,622 | 30.80 s | 3.85 | 11.42 s | 82.2 s | 15.90 s | 1,041,665 B |
+| `smoke-20260919T224743Z` | pruned | 576x320 | 7,138 | **29.18 s** | 3.64 | **31.89 s** | 116.3 s | 22.51 s | 763,710 B |
+| `smoke-20260919T224948Z` | pruned | **960x544** | 19,348 | **109.10 s** | 13.63 | **79.96 s** | **243.8 s** | 47.18 s | 3,106,978 B |
+| `smoke-20260919T225400Z` | INT8 | **960x544** | 19,348 | **152.87 s** | 19.11 | 80.02 s | 273.7 s | 52.97 s | 4,891,803 B |
+
+The first two rows are the 22:16-22:28 window, repeated here so the ladder reads in one table. Every
+clip is 124 frames, 5.167 s at 24 fps, with 32 kHz stereo audio of 5.175 s. "End to end" is the sum
+of the receipt's `timings_seconds`, which is the runner's own time and excludes process start-up.
+
+### Card memory after `sample`
+
+Read off the `[vram] after sample` lines; the card holds 31.891 GiB usable.
+
+| Run | allocated xpu:0 / xpu:1 | reserved xpu:0 / xpu:1 | free xpu:0 / xpu:1 |
+| --- | ---: | ---: | ---: |
+| 448x256 pruned | 18.849 / 18.796 | 19.744 / 19.643 | 11.398 / 11.885 |
+| 448x256 INT8 | 17.128 / 16.810 | 19.168 / 18.793 | 11.987 / 12.732 |
+| 576x320 pruned | 18.877 / 18.823 | 20.252 / 20.090 | 10.888 / 11.438 |
+| **960x544 pruned** | **19.012 / 18.955** | **22.734 / 22.395** | **8.406 / 9.133** |
+| **960x544 INT8** | **17.291 / 16.969** | **26.688 / 26.137** | **4.465 / 5.388** |
+
+Resident shard is 18.798 / 18.747 GiB (pruned) and 17.077 / 16.761 (INT8), unchanged by canvas, so
+the *allocated* column moves only 0.21 GiB from the smallest canvas to the largest: at 4.2x the
+sequence length, live activations grow by a fifth of a gigabyte. That is the memory-efficient
+attention kernel, stated as a number.
+
+The column that does move is **reserved**. The pruned path reserves 3.7 GiB above what it holds at
+960x544; the INT8 path reserves **9.4 GiB** above what it holds, leaving only **4.5 GiB free** on
+xpu:0. That is the allocator caching the large short-lived bf16 tensors the INT8 path creates and
+frees on every step -- one dequantized weight and one rotated activation block at a time. It is
+cache, not need, but it is the ceiling any INT8 speed lever has to work under, and it is the reason
+the INT8 row is the first one that would run out of card if the canvas went further.
+
+### How `sample` scales: linear work plus a quadratic term, and the fit is good
+
+Three pruned points at 4,622 / 7,138 / 19,348 rows give 17.68 / 29.18 / 109.10 s. Sequence length
+went up **4.19x** and `sample` went up **6.17x** -- super-linear, but nowhere near the 17.5x that a
+purely quadratic cost would give. Fitting `t = a*n + b*n^2` through the **two end points only**:
+
+* `a` = **3.256 ms per 1,000 rows** (3.256e-3 s/row) -- the per-row work: every Linear, the
+  modulation, the norms.
+* `b` = **1.232e-7 s/row^2** -- the attention term.
+
+That fit predicts the untouched middle point at **29.52 s against 29.18 s measured, +1.2 %**. Two
+parameters from two points landing within about one percent on a third is the model being right, not
+a coincidence, and it lets the split be read off:
+
+| Rows | Per-row part | Attention part | Attention share |
+| ---: | ---: | ---: | ---: |
+| 4,622 | 15.0 s | 2.6 s | 15 % |
+| 7,138 | 23.2 s | 6.3 s | 21 % |
+| **19,348** | **63.0 s** | **46.1 s** | **42 %** |
+
+So at the trained canvas **attention is already 42 % of the denoising time**, and it is the part that
+grows with the square. Anything above 960x544 is attention-dominated, and a chunked or
+flash-style attention becomes the lever that matters there -- whereas at 448x256, where all the
+earlier work was done, attention was a sixth of the cost and invisible.
+
+### How `decode.video` scales: with the tile count, not with pixels
+
+Decode is the fastest-growing phase in the ladder: **11.12 -> 31.89 -> 79.96 s**, a 7.2x rise for
+4.55x the pixels. It is not proportional to pixels -- from 448x256 to 576x320 the pixels rise 1.61x
+and the decode rises **2.87x**, which is the wrong shape for a per-pixel cost.
+
+It does track the **number of VAE tiles**. Tiling is on in all five runs at 256x256 tiles with 64x64
+minimum overlap (i.e. a 192-wide stride), which gives roughly 2, 6 and 15 tiles at the three
+canvases -- ratios of 3.0 and 2.5 against measured 2.87 and 2.51. **This is a hypothesis with two
+checkable ratios behind it, not a measurement:** the runner does not print the tile count, so the
+first thing any decode work should do is print it. If it holds, the decode is paying overlap: every
+tile re-decodes a 64-pixel border that a neighbour also decodes, and at small canvases the overlap is
+a large fraction of each tile.
+
+Either way the decode is now the **second-biggest phase and the fastest-growing one**, and it runs
+**on one card in float32 while the other card sits at 0.000 GiB allocated**. That is the largest
+single piece of idle hardware in the pipeline.
+
+### Where the time goes at 960x544
+
+The pruned run, `smoke-20260919T224948Z`, 243.78 s total, straight from the receipt's
+`timings_seconds`:
+
+| Group | Phases | Seconds | Share |
+| --- | --- | ---: | ---: |
+| **load** | `encode.load` 12.798 + `load.stream` 33.080 + `load.skeleton` 0.027 | **45.91** | 18.8 % |
+| **sample** | `sample` 109.101 + `sample.build_pipeline` 0.001 | **109.10** | **44.8 %** |
+| **decode (video)** | `decode.load_vae` 3.084 + `decode.video` 79.964 | **83.05** | **34.1 %** |
+| **decode (audio)** | `decode.load_audio_vae` 0.407 + `decode.audio` 2.934 | 3.34 | 1.4 % |
+| **encode (compute)** | `encode.tokenize` 0.159 + `encode.forward` 0.665 | 0.82 | 0.3 % |
+| **write** | mux to mp4, crf 16 | 1.56 | 0.6 % |
+| **total** | | **243.78** | 100 % |
+
+Three sentences of reading. **Denoising is under half the run.** **Loading models is 46 seconds --
+19 % -- and it is repeated in full for every single clip**, although nothing about it depends on the
+prompt or the canvas. **The video decode is a third of the run on one card.** Actual generation work
+that could not be avoided -- encode forward plus sample -- is 110 s of the 244.
+
+### The INT8 path at the trained canvas
+
+Same three-line difference as before: `B70_H3_DENOISER=int8`, LoRA applied at runtime as the additive
+low-rank term, 300 runtime destinations at 2.136 GiB resident. `sample` **152.87 s against 109.10 s,
++40 %** (the gap at 448x256 was +74 %), and `decode.video` is identical at 80.02 s, as it must be --
+the decode never sees the denoiser.
+
+The overhead is **not** a constant per-step dequantization cost. In absolute terms it grew from
++13.12 s at 4,622 rows to **+43.77 s** at 19,348, which a fixed per-weight cost cannot do. Splitting
+it the same way as above: about **3.5 s fixed** plus about **2.08 ms per 1,000 rows** -- so at the
+trained canvas roughly **40 of the 44 extra seconds are row-proportional**, and only ~3.5 s is the
+per-step weight widening.
+
+That is exactly what `ConvRotLinear.forward` does (`run_h3_t2v.py:1107`): the weight dequant
+(`qweight.to(compute)`) is one cost per call regardless of length, but the **rotation is applied to
+the activations** -- `x.reshape(...) @ rotation` over every row -- and the runtime LoRA term is two
+more per-row GEMMs at rank 128. Both scale with the sequence. **Caveat: this is a two-point fit with
+no INT8 run at 576x320**, so the split is a prediction; an INT8 576x320 run is the one-run way to
+test it, and it should be run before any INT8 speed work is scoped.
+
+### What the clips look like
+
+Frame 62 of **both** 960x544 clips is a convincing rainy night street: neon reflected in wet asphalt,
+an umbrella figure walking away from camera. The INT8 clip shows more scene detail and a more
+prominent subject. **Two frames of one prompt is not a verdict**, and the same caution as the
+448x256 A/B applies -- the sampler decorrelates under any weight change, so these are two different
+draws of the same scene, not two approximations of one answer. The INT8 file is also larger
+(4,891,803 B against 3,106,978 B at crf 16), which usually means more high-frequency content; that
+is a fact about the encoder's bitrate, not about quality.
+
+### Host side
+
+Nothing came close to trouble. Preflight MemAvailable 13,712 / 13,774 / 13,899 MiB; the watchdog's
+lowest reading across the three runs was **9,090 MiB** (the INT8 960x544 run), peak memory pressure
+`some avg10` **1**, and all three watchdogs end with `pid ... exited on its own`. Host peak RSS from
+the receipts: 12.05 / 12.47 / 12.86 GB. Zero `xe` fault lines in the window.
+
+Receipts, the batch log and the clip paths:
+[`../data/2026-09-19-canvas-ladder/`](../data/2026-09-19-canvas-ladder/).
+
+## Speed levers, none tried yet
+
+Five, in the order the time breakdown above justifies. **None of these has been attempted**, no
+number below is measured, and every one of them has to clear the same gate: either it is exact by
+construction and the bytewise repeat check proves it (same seed, same everything, all four hashes
+match), or it changes the arithmetic and has to be run as an A/B through `compare-h3-runs.py` with
+its per-frame table beside the two clips. The repeat gate is what makes both readings possible.
+
+**1. Decode the video on both cards, or on the idle one.** *What:* the video VAE runs on one card in
+float32 while the other holds 0.000 GiB; split the tile loop, or the temporal chunks, across both --
+or, cheaper to write, overlap the decode with nothing at all and simply move it to whichever card is
+free. The obvious split is by tile or by temporal chunk, because tiling already decodes independent
+pieces and stitches them. *Exactness:* a tile-parallel decode computes **the same tiles**, just on
+two devices, so it should be **bitwise identical** and the repeat check is the whole proof -- if the
+hashes match the 960x544 run above, it is exact. A temporal split is only exact if the chunk
+boundaries and overlaps are unchanged, which has to be checked rather than assumed. *Expected gain:*
+up to ~40 s of the 80 s decode at 960x544, i.e. **~16 % of end-to-end** -- less in practice, because
+the stitch and the second card's VAE copy are not free, and the VAE would have to be resident on
+both cards (2 x 9.700 GiB, which fits when the denoiser is already released).
+
+**2. Decode in bf16/fp16 instead of float32.** *What:* the video VAE loads at 9.700 GiB of float32
+weights and decodes in float32. Halving it would roughly halve the memory and should speed up the
+compute-bound tiles. *The catch:* the VAE class declares `_keep_in_fp32_modules` for **everything**,
+which is upstream saying this decoder is known to be unstable in half precision. *Gating:* this is a
+**quality risk, not an exactness question** -- it will change every pixel, so it can only be an A/B:
+same seed, same latents, `compare-h3-runs.py` per-frame max/mean absolute difference, plus frames
+looked at for the specific failure modes half-precision VAEs show (banding in dark gradients, colour
+drift, blown highlights). This clip is a *night* scene with dark gradients, which is the worst case
+and therefore the right test. *Expected gain:* up to ~40 s of the 80 s decode and ~4.85 GiB of card;
+realistically less, and **plausibly zero if the output is not acceptable**. Rank it after lever 1,
+which costs no quality at all.
+
+**3. Cache dequantized INT8 weights per block, or fuse dequant with the rotation.** *What:* the INT8
+path widens each quantized weight to bf16 inside every `F.linear`, on every one of the 8 steps.
+Caching the dequantized block would pay that once. *The memory budget rules out caching everything:*
+the INT8 run has only **4.5 / 5.4 GiB free** at 960x544 against 32.3 GB of quantized weights, so this
+is **partial caching at best** -- one block's worth at a time, or the handful of largest Linears --
+and it has to be measured against a reserved figure that is already 26.7 GiB. *And the ceiling is
+low:* by the split in the section above, only about **3.5 s of the 43.8 s** of INT8 overhead is the
+per-step widening; the rest is row-proportional activation rotation and the runtime LoRA. So the
+honest framing is that caching buys a few seconds, and the fusion is the bigger prize: **fuse the
+dequant with the rotation, and fold the runtime LoRA term into the cached bf16 weight once** instead
+of running two extra per-row GEMMs at rank 128 on every call. That last one attacks the
+row-proportional part. *Exactness:* caching a dequantized weight is exact -- same bytes, computed
+once instead of eight times -- and the repeat check proves it. Folding the LoRA into the weight is
+**not** exact: it changes where the rounding happens (currently the adapter is accumulated in
+float32 after the int8 GEMM), so it needs an A/B. *Expected gain:* a few seconds from caching; the
+LoRA fold is unquantified and needs the 576x320 INT8 point first to size it.
+
+**4. Keep the text encoder result and both models resident across clips -- a server, not a script.**
+*What:* every run today pays **~46 s of loading**, 19 % of a 960x544 clip and 55 % of a 448x256 one,
+to put a 27 GB text encoder on a card, read it once, throw it away, then stream 40 GB of denoiser
+across two cards. None of that depends on the prompt. A long-lived process that holds the denoiser
+resident and caches prompt embeddings (`--prompt-embeds` already exists as a path) turns the second
+and every later clip into sample + decode only. *Exactness:* **exact by construction, and the
+cheapest claim to prove in the whole list** -- the same weights in the same places produce the same
+arithmetic, so a clip rendered from a warm server must hash identically to the same clip rendered
+cold. Run the current 960x544 run, then the same seed through the server, and compare all four
+hashes. *Expected gain:* **~46 s off every clip after the first**, i.e. 243.8 s -> ~198 s at
+960x544 (-19 %) and 83.2 s -> ~37 s at 448x256 (-55 %). It is the largest guaranteed win here and
+the only one that costs no accuracy. The cost is engineering, not arithmetic: a process that holds
+~19 GiB on each card permanently, which conflicts with the FP8 service using the same cards, so it
+needs the same queueing discipline the batch windows already use.
+
+**5. The 51-step base schedule -- measure the quality before spending the time.** *What:* everything
+in this note is 8 NFE with the turbo LoRA. The schedule the checkpoint was trained for is 50 NFE, and
+by the fit above that is **~6.3x the sample time: roughly 680 s of denoising at 960x544**, turning a
+4-minute clip into about 13 minutes. *Gating:* this is not a speed lever at all, it is the **quality
+reference the other levers are judged against**, and it is only worth its cost if the turbo adapter
+is actually leaving quality on the table. So: run it once at 960x544, same seed and prompt,
+`compare-h3-runs.py` against the turbo clip, and look at the frames. *Expected gain:* **negative on
+speed by construction.** If the two look equivalent, the turbo path is vindicated and this is never
+run again; if the base is clearly better, every timing in this note is understating the real cost of
+a good clip by 6x, and that changes which levers are worth building.
+
+The ordering that falls out: **4 first** (largest, exact, no quality question), **1 second** (large,
+probably exact), **5 third** (it decides what "good" means), then **2** and **3**, which are both
+quality-risked and capped.
+
 ## Next steps
 
 In the order they are worth running.
 
-1. **Walk the canvas toward the trained 544x960, with a 320x576 step first, and read the `[vram]`
-   lines.** This is the question the `sample` measurement above half-answered. The memory plan warns
-   that at 544x960x124 the packed sequence goes from 4,622 rows to 19,348 and a *materialized*
-   attention matrix there would be ~80 GiB per card -- far over. Today's run says nothing is
-   materialized at 4,622 rows (1.30 GiB of activations against a 4.78 GiB materialized-matrix
-   budget), which is encouraging and is not the same as an answer at 4x the length; kernel selection
-   can change with shape. Run 320x576 first, read `[vram] before sample` / `after sample`, and let
-   that number decide whether 544x960 is attempted or whether attention has to be chunked first. The
-   decode is not the worry at any of these sizes: tiling holds the tile fixed and the plan puts
-   544x960 at 11.34 GiB.
+1. ~~**Walk the canvas toward the trained 544x960, with a 320x576 step first, and read the `[vram]`
+   lines.**~~ **DONE, 22:46-22:59 UTC -- and it passed.** 576x320 and then 960x544 both ran, on both
+   denoisers at the top of the ladder; the plan's ~80 GiB materialized-attention bound never applied,
+   live activations grew 0.21 GiB over a 4.2x rise in sequence length, and the trained canvas
+   finished with 8.4 GiB free on the tighter card. See
+   [Canvas ladder](#canvas-ladder-2246-2259-utc) above, and the
+   [speed levers](#speed-levers-none-tried-yet) the time breakdown there produced -- which supersede
+   the priority order of the items below.
 2. **The 51-step base schedule against the 9-step turbo LoRA.** Everything measured so far is 8 NFE
    with the turbo adapter. The base reference is 50 NFE (`--steps 51`, `LORA=` empty), which is
    ~6.3x the sample time -- roughly 110 s of denoising at this canvas -- and it is the schedule the

@@ -1,6 +1,26 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
-Status (2026-09-19): **FIRST LIGHT. The pipeline renders a clip on two cards, and it repeats bit for
+Status (2026-09-19, batch window 3): **THE TRAINED CANVAS RUNS.** At 18:46-18:59 EDT the lane walked
+the canvas ladder 576x320 -> **960x544** -- the resolution the checkpoint was trained for -- on both
+denoisers, rc 0 everywhere, zero `xe` fault lines. The pruned run at 960x544 took **243.8 s** end to
+end for a 5.17 s clip (`sample` **109.10 s** for 8 NFE, `decode.video` **79.96 s**) and finished with
+**8.4 GiB free** on the tighter card; the INT8 run took 273.7 s (`sample` 152.87 s, +40 %) with
+4.5 GiB free. The memory plan's "~80 GiB per card if attention is materialized at 19,348 packed rows"
+bound **never applied**: live activations grew 0.21 GiB across a 4.2x rise in sequence length.
+`sample` fits `t = 3.256e-3*n + 1.232e-7*n^2` to within 1.2 % across the ladder, which puts
+**attention at 42 % of denoising at the trained canvas** (15 % at 448x256). The time breakdown there
+is what now sets the agenda: sampling 45 %, **video decode 34 % on one card while the other idles**,
+and **46 s of every run is model loading that does not depend on the prompt**. Five speed levers are
+written up, none tried:
+[canvas ladder and levers](notes/2026-09-19-first-light.md#canvas-ladder-2246-2259-utc); receipts in
+[`data/2026-09-19-canvas-ladder/`](data/2026-09-19-canvas-ladder/).
+
+Next: a server instead of a script (the ~46 s load is paid per clip and is exact to remove), the
+video decode on both cards or the idle one, then the 51-step base schedule as the quality reference,
+and a small prompt set before either denoiser is called the lane's default.
+
+Earlier status (2026-09-19, batch window 2), for the record: **FIRST LIGHT. The pipeline renders a
+clip on two cards, and it repeats bit for
 bit.** On 2026-09-19 18:16-18:28 EDT the pruned BF16 denoiser, split across both B70s at block 24,
 produced a 448x256, 124-frame, 5.17 s clip with 32 kHz stereo audio in **83 s of wall time** (`sample`
 **17.68 s** for 8 NFE), and two further runs at the same seed matched all four hashes --
@@ -13,9 +33,8 @@ get here, the memory table and the INT8-vs-pruned numbers:
 [first light](notes/2026-09-19-first-light.md); receipts in
 [`data/2026-09-19-first-light/`](data/2026-09-19-first-light/).
 
-Next: the canvas walk toward the trained 544x960 with a 320x576 step first (read the `[vram]` lines),
-the 51-step base schedule against the 9-step turbo LoRA, and a small prompt set before either
-denoiser is called the lane's default.
+(That window's "next" -- the canvas walk toward the trained 544x960 with a 320x576 step first -- is
+the window-3 work above, and it passed.)
 
 Earlier status (2026-09-18), for the record: **all weights on disk, both denoisers loadable, no clip
 generated yet.** The

@@ -45,6 +45,17 @@ worse: with nothing able to leave for swap, the container's true working memory 
 measured. The room to spare under the 12 GB ceiling is therefore about 3 GB, not about 5. See
 [Validation start 1](#validation-start-1-of-3-2026-09-19-1823-edt--2223-utc).
 
+**Update, 19:03 EDT: validation start 2 of 3 is done and it matched start 1.** Again no swapping at
+all inside the container, 288 MB swapped host-wide against 293 MB last time, no out-of-memory kills,
+service ready, 12 of 12 exact at 89.79 tokens a second, no fault lines. The number that matters --
+how much memory the container actually needs -- came back **within 0.08 % of start 1** (8.94 GB
+against 8.95 GB), so the roughly 3 GB of room to spare is a stable figure and not a single reading.
+Two things moved slightly and neither is a regression: the service took 10 seconds longer to be
+ready, all of it inside a code-compilation stage while the weight load was identical to the
+hundredth of a second, and the speed test read 89.79 against 89.9 tokens a second, which is a tenth
+of a percent. **One more start, then `serve.py` is edited.** See
+[Validation start 2](#validation-start-2-of-3-2026-09-19-1859-edt--2259-utc).
+
 ---
 
 ## What was run
@@ -366,6 +377,87 @@ Receipts: [`../data/2026-09-19-service-start-noswap-1/`](../data/2026-09-19-serv
 -- `noswap-helper.log`, `cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`. Raw root
 `/mnt/fast-ai/bench-results/resume-20260919e/`.
 
+## Validation start 2 of 3 (2026-09-19 18:59 EDT / 22:59 UTC)
+
+The second of the three, and again a start that was going to happen anyway: batch window 3
+(`/mnt/fast-ai/bench-results/batch3-session-20260919.sh`, `RESUME_ROOT
+/mnt/fast-ai/bench-results/resume-20260919f`) ran the [MiniMax-H3 canvas
+ladder](../../minimax-h3-b70/notes/2026-09-19-first-light.md#canvas-ladder-2246-2259-utc) first and
+then put the two-card service back. **Nothing was restarted for this measurement.** Same boot as the
+17:20 start and as start 1, so all three rows below are the same machine in the same state.
+
+The helper caught the new container `neural-fp8-42a89cfc17924bbd8d59d68dfb3f0cd4`
+(`43c88dbb33e9d382a3923a292fbc5801bde2c271f211c24e18d4a1b81d5ed20f`) **18 s** into the start at
+`memory.current` **119,361,536 bytes (119 MB)** -- well under the 6 GiB refusal threshold, though
+19x the 6 MB of start 1, which is the honest reminder that the window is a race and the margin is
+what makes it safe. `docker update --memory 12g --memory-swap 12g` took `memory.swap.max` from 4 GiB
+to **0** in the same second.
+
+### Start 2 beside start 1 and the swapping baseline
+
+| | 17:20, swap allowed | 18:23, start 1 | **18:59, start 2** |
+| --- | ---: | ---: | ---: |
+| Container `pswpout` | 1,033,915 pages = 3.94 GiB | 0 | **0** |
+| `memory.swap.peak` | 4 GiB (= the cap) | 0 | **0** |
+| Host-wide swap-out during the start | 4,514 MiB | 293 MiB | **288 MiB** |
+| Host-wide swap-in during the start | (not summed) | 299 MiB | 281 MiB |
+| `memory.events max` | 2,005 | 12,646 | **12,964** |
+| `memory.events oom` / `oom_kill` | 0 / 0 | 0 / 0 | **0 / 0** |
+| `memory.peak` | 12 GiB (= `memory.max`) | 12.0 GiB | 12.0 GiB |
+| `anon` | 7,422,877,696 B = 6.91 GiB | 9,608,658,944 B = 8.95 GiB | **9,600,892,928 B = 8.94 GiB** |
+| `file` | 3.88 GB | 2.70 GB | 2.74 GB |
+| `pgscan_direct` | 2.17 M pages | 5.70 M pages | **5.79 M pages** |
+| Minimum host MemAvailable | 4.87 GiB | 3.0 GiB | **3.0 GiB** |
+| Peak PSI memory `some avg10` | 3.9 | 4.0 | 3.5 |
+| `Loading weights took` (TP0, first shard set) | 8.53 s | 8.44 s | **8.44 s** |
+| `Model loading took` | 11.99 s | 11.34 s | 11.22 s |
+| `init engine` (profile + KV + warmup) | 73.69 s | 72.94 s | 75.16 s (compile 66.41 s) |
+| Service ready | 21:22:45Z | 22:26:22Z, 150 s after the command | 23:02:00Z, **160 s** after the command |
+| Strict suite vs the comm-2 no-MTP reference | 12/12, 90.24 tok/s | 12/12, 89.9 tok/s | **12/12, 89.79 tok/s** |
+| `xe` fault lines | 0 | 0 | **0** |
+
+Every success criterion is met again: container `pswpout` **0**, `memory.events max` non-zero at
+**12,964**, `oom_kill` **0**, ready, strict **12/12**, no fault lines. The sampler took 509 samples
+over 263 s.
+
+**The point of a second start is reproducibility, and it reproduced.** The figure that mattered most
+from start 1 -- the corrected working-set size -- came back at `anon` **9,600,892,928 bytes**, which
+is **7.8 MB (0.08 %)** away from start 1's 9,608,658,944. A workload whose anonymous footprint lands
+within a tenth of a percent across two independent starts is a workload whose **~3 GiB of headroom
+under the 12 GiB cap is a real, stable number**, not one reading. `pgscan_direct` (5.79 M against
+5.70 M) and `memory.events max` (12,964 against 12,646) repeated within 2 %, so the reclaim behaviour
+is stable too.
+
+**Host-wide swap-out was 288 MiB**, essentially identical to start 1's 293 MiB and still a 15x drop
+from the swapping baseline's 4,514 MiB. As before it is roughly matched by 281 MiB swapped back
+**in**, i.e. idle pages moving around rather than a burst; the largest single 0.5 s sample was 69
+MiB. Minimum MemAvailable was again **3.0 GiB**.
+
+**The two figures that moved are both noise, and both are worth naming rather than hiding.** Ready
+came **10 s later** (160 s against 150), entirely inside `init engine`, which was 2.2 s longer with
+66.41 s of it in torch.compile -- the weight load itself was **identical to the hundredth of a
+second** at 8.44 s, so this is compile-time variance, not the no-swap change costing I/O. And the
+strict suite came in at **89.79 tok/s against 89.9** -- 0.1 %, well inside run-to-run spread, with
+the comparison itself still **12/12 exact**. Neither is a regression; both are recorded so the third
+start has something to be compared against.
+
+### What is left after start 2
+
+1. **One more validation start**, same conditions, same helper, same criteria, and again one that was
+   going to happen anyway. Two clean starts are better than one, and they are still not three.
+2. **The setting is still per-container.** This start needed the helper exactly as much as start 1
+   did, and the next container will come back at `--memory-swap 16g`.
+   `scripts/apply-container-noswap.sh` stays armed beside every start until the launchers are edited.
+3. **Then edit both launchers** (`--memory-swap 12g` in the tp2 and tp1 `docker_argv`), regenerate the
+   pinned evidence packets by the repo's process, run `guides.yml` locally in full, and re-run
+   acceptance -- with the **one-card `anon` measurement done first**, because the tp1 edit depends on
+   it and the corrected two-card base leaves that profile an estimated 3.2-3.7 GiB of headroom.
+4. **Keep the sampler running** afterwards, so the next fault, if it comes, has a swap trace beside it.
+
+Receipts: [`../data/2026-09-19-service-start-noswap-2/`](../data/2026-09-19-service-start-noswap-2/)
+-- `noswap-helper.log`, `cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`. Raw root
+`/mnt/fast-ai/bench-results/resume-20260919f/`.
+
 ## Risks
 
 **1. Cgroup OOM kill.** With `memory.swap.max=0`, a cgroup whose *anonymous* memory alone exceeds
@@ -434,6 +526,10 @@ criteria and a large regression is a reason to stop and reconsider the 12 GiB ce
 validation start 1: `noswap-helper.log` (the `docker update`, with the cgroup before and after),
 `cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`. Raw root
 `/mnt/fast-ai/bench-results/resume-20260919e/`.
+
+[`../data/2026-09-19-service-start-noswap-2/`](../data/2026-09-19-service-start-noswap-2/) --
+validation start 2, the same four files. Raw root
+`/mnt/fast-ai/bench-results/resume-20260919f/`.
 
 Related: [fifth GPU fault](2026-09-19-gpu-fault-service-start.md) (the fault history and the swap
 hypothesis this revises), [host oomd incident](2026-09-18-host-oomd-incident.md) (the same mistake
