@@ -48,3 +48,26 @@ Set "Power Supply Idle Control" to "Typical Current Idle" in BIOS 2.4a
 (Advanced > CPU/NB > Global C-state Control area). If the freezes stop
 with only the runtime C2 disable, the BIOS change makes it permanent and
 lets C2 be re-enabled.
+
+## Addendum, 2026-09-19 20:50 UTC: ninth freeze, no lockup report
+
+Boot 380b3506 (kernel -31, GuC 70.44.1, softlockup_panic=1 and
+all-CPU backtraces armed) froze at 18:04 UTC: the campaign log's last line
+is `f79-tsh: arm pipe-samp2-tsh, 30 prompts` at 18:04:02 and the journal's
+last line is 18:03:55 (a USB reset). No soft/hard lockup line, no pstore
+record. A stuck idle core would have produced the 09-18 style report; this
+was a whole-platform stop at the instant two encode workers first ran the
+sharded encoder across xpu:2/xpu:3 beside the two-clip sampler, the
+highest-load transition the host sees. Two freezes now coincide with
+server start or the first sharded prompts (04:40 on 09-18, 18:04 today),
+one with an idle boot (09-18 09:19, soft lockup), others with idle or
+teardown.
+
+Reading: two mechanisms or one that both a load step and an idle core can
+trigger. Power delivery fits both (a PSU/VRM transient under a load ramp;
+the AMD idle-current interaction at idle). Silent stops without any CPU
+report are characteristic of PSU/platform resets that never complete.
+Recommend, in order: (1) BIOS Power Supply Idle Control = Typical Current
+Idle; (2) confirm the PSU rating against four B70s (about 190 W each) plus
+the 280 W CPU and check the 12 V rails under load; (3) disable C2 at
+runtime as a cheap test of the idle half.
