@@ -326,7 +326,7 @@ Two things are true at once:
   with the length (prose: 34.6 tok/s after 8K, 69.1 after 16K; docs: 44.2 after 2K, 76.9 after 8K), because the draft
   acceptance depends on how predictable the continuation is. Only the code class declines smoothly with length
   (85.9, 77.1, 65.7, 60.7, 54.5, 38.4 tok/s from 2K to 36K), and that is the context cost.
-- **The context cost is the verifier's attention.** The [verifier-rows overlay](../../packages/qwen38-27b-fp8-tp1-b70/overlays/b70_fa_verify_rows.py)
+- **The context cost is the verifier's attention.** The [verifier-rows overlay](../../../packages/qwen38-27b-fp8-tp1-b70/overlays/b70_fa_verify_rows.py)
   keeps depth-5 verification bit-identical to decode by issuing one single-query attention call per draft row above
   1,536 keys: six calls per attention layer, 106 per step, each rereading the whole cache (at 32K, 16 layers x 6 rows
   x 128 MB = 12 GB per step, 24 ms at 500 GB/s). It grows linearly: +6.4 ms per 8K of context on a 76 ms step, i.e.
@@ -722,7 +722,20 @@ in; the runner halted with `rc=3` and restored nothing. See
   that ended in the 09-19 fault, 4.6 GiB in the five seconds before the 09-15 one), which
   [`scripts/measure-swap-during-start.sh`](../../../scripts/measure-swap-during-start.sh) is written to confirm or
   kill beside the next start. Not proven; a defect on that card fits the same rows. See
-  [the incident note](2026-09-19-gpu-fault-service-start.md). Until the user decides, no GPU work.
+  [the incident note](2026-09-19-gpu-fault-service-start.md).
+  **Measured on September 19 at 17:20 EDT, and the swap source is now known.** The user rebooted with
+  `vm.swappiness` 60 -> 1 and the service started first on the fresh boot: clean (ready 17:22:45, strict 12/12 at
+  90.24 tok/s, zero `xe` lines) **and it still swapped 4.41 GiB**, 4.2 GiB of it in one nine-second burst during the
+  weight load. The live cgroup of the running container says why: the launchers' `--memory 12g --memory-swap 16g`
+  gives the container `memory.max=12G` with `memory.swap.max=4G`, the 29 GB of safetensors stream through *its* page
+  cache, and it ended the start with `memory.peak` = `memory.max` exactly, `memory.swap.peak` = `memory.swap.max`
+  exactly, `memory.events max` 2,005 (`oom_kill` 0) and 3.94 GiB of the host's 4.41 GiB of swap-out charged to it.
+  Host `vm.swappiness` is not the lever. **Still open:** whether any of this causes the faults -- that start swapped
+  4.4 GiB and did not fault -- and the fix (`--memory-swap` equal to `--memory`) is written but unapplied, pending
+  three validation starts with [`scripts/apply-container-noswap.sh`](../../../scripts/apply-container-noswap.sh)
+  before either `serve.py` is edited. See the
+  [container memory cap finding](2026-09-19-container-memory-cap-swap.md). GPU work stays halted until the user
+  opens a window; the two-card service itself is up and is not to be restarted for this.
 - One-card context above 40,960 tokens: the single-checkpoint state (r311b) settled 32K lossless at 0.975 and 40,960
   at 0.983 (KV budget 45,139 tokens). The engine refuses 46,080 at depth 5 and 0.983 (3.20 GiB needed, 3.09 free; its
   estimate of the ceiling is 44,800), so 40,960 is the shipped maximum and about 44K the hard one; beyond that the
@@ -734,6 +747,12 @@ in; the runner halted with `rc=3` and restored nothing. See
   or overlapping them with compute, both deeper changes than an overlay.
 - The R311b image was pushed to ghcr on September 17 and its record `cmu5wc2e50804lq01r0br2i5p` was approved; it is
   the image the superseded one-card numbers were measured on. Both pushes are now done.
-- **What is actually left in this repository, after this lane closed:** the MiniMax-H3 host-RAM measurement, and on
-  two/four cards the exchange-fusion idea above (fusing the per-layer allreduce pairs or overlapping them with
-  compute) and the four-card replay. Nothing on the one-card FP8 lane.
+- **The container no-swap change is written and unvalidated.** `--memory-swap` equal to `--memory` in both launchers,
+  validated first on three real service starts through
+  [`scripts/apply-container-noswap.sh`](../../../scripts/apply-container-noswap.sh), then the `serve.py` edit, the
+  packet regeneration, `guides.yml` and acceptance. The one-card profiles need their own `memory.stat anon` read
+  first (they carry 2.368 GiB of host-resident embedding table from `B70_CPU_EMBED=1`).
+  [Finding](2026-09-19-container-memory-cap-swap.md).
+- **What is actually left in this repository, after this lane closed:** the MiniMax-H3 host-RAM measurement, the
+  container no-swap validation above, and on two/four cards the exchange-fusion idea above (fusing the per-layer
+  allreduce pairs or overlapping them with compute) and the four-card replay. Nothing on the one-card FP8 lane.

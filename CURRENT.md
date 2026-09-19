@@ -1,12 +1,51 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-19 19:20 UTC** (2026-09-19 15:20 EDT).
+Last reviewed: **2026-09-19 21:35 UTC** (2026-09-19 17:35 EDT).
 The four-B70 host section below was added 2026-09-11.
 
-## STOP: fifth GPU fault on the two-B70 host, and a decision waiting
+## The FP8 service is back UP, and we found what was doing the swapping
 
-**One of the two cards faulted again this afternoon, and nothing runs on the cards until you say so.
-The Qwen FP8 service is DOWN.** It was stopped on purpose at 14:40 to free the cards for a batch of
+**The service has been up since 21:22 UTC (17:22 EDT), on both cards, answering all twelve test
+prompts exactly right at 90.24 tokens a second, with no fault lines from either card on this boot.**
+You rebooted at 17:17, the one-shot unit started the service first thing on the fresh boot at 17:20,
+and the recorder ran beside it. Nothing has touched the cards since.
+
+**The finding, in three sentences.** Even with the swapping setting turned almost all the way off,
+the machine still pushed 4.4 GB out to swap while the model was loading -- 4.2 GB of it in one
+20-second burst. That is not the host's doing: our own launcher starts the server in a box limited to
+12 GB of memory with 4 GB of swap, and reading the 29 GB model file fills that box about two thousand
+times over, so the kernel keeps shoving the server's live working memory out to swap to make room for
+more of the file. It is the same mistake as the 4 GB memory cap that helped kill your desktop session
+on the 17th -- a limit set below what the job actually touches -- and it is the best explanation we
+have for why the card's copy engine keeps breaking during model loads, though that part is still
+**not proven** (this load swapped 4.4 GB and did not break anything).
+
+**What happens next.** The fix is one word in each of the two launcher files: give the container no
+swap at all, so that when it fills up the kernel throws away file cache it can re-read from disk
+instead of pushing out memory the card may be reading. Those launcher files are frozen by published
+evidence packets, so we do not edit them first. Instead, the next **three** times the service has to
+start for its own reasons -- not a restart made to test this -- a small helper applies the setting to
+the fresh container about a minute before the model load begins, with the recorder beside it. If all
+three come back with no swapping, no out-of-memory kills, and twelve-out-of-twelve exact answers,
+we change the launchers, regenerate the packets and re-run acceptance. **Nothing is being restarted
+for this**, and no GPU work is queued.
+
+The write-up, the second-by-second numbers and the risk list:
+[container memory cap and swap during a service start](experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md);
+receipts in [`data/2026-09-19-service-start-swap/`](experiments/qwen38-27b-b70/data/2026-09-19-service-start-swap/).
+
+**The video model (MiniMax-H3) retry is still pending its own window.** Its denoising pass is proven
+clean now, and the fix for the memory error in its decode step is committed but has never been run.
+It needs the cards to itself, so it waits for a window you open for it -- and by the ordering rule
+that window comes *after* a two-card service start, not before one.
+
+## Earlier on 2026-09-19: fifth GPU fault on the two-B70 host (resolved by the reboot above)
+
+**This section describes the state before the 17:17 reboot. The service is UP again; read it as
+history, not as the current state.**
+
+**One of the two cards faulted this afternoon, and nothing ran on the cards until the user decided.
+The Qwen FP8 service was DOWN.** It was stopped on purpose at 14:40 to free the cards for a batch of
 work, and when the batch tried to put it back at 15:03 the card broke 70 seconds into loading the
 model. That is the fifth time this card has done this. Nothing was reset, cleared, killed or
 rebooted, and the card is holding a crash dump that only a reboot or your say-so will clear.
@@ -36,17 +75,16 @@ tokens a second. So the cards work; they just do not survive this one particular
 * Whether starting the service first on a fresh boot would actually avoid it. It is a pattern in
   five events, not a rule.
 
-**What I need from you.** A reboot, and then a choice about how to spend it:
+**What was asked for, and what you chose.** A reboot, and a choice about how to spend it:
 
-1. Reboot, and **start the FP8 service first, before anything else touches the cards**. This is the
-   cheapest thing that matches the pattern.
-2. While that start runs, let me record what the memory system is doing second by second
-   (`scripts/measure-swap-during-start.sh`, read-only, touches nothing). Without this the next
-   clean start proves nothing and the next fault teaches nothing.
-3. Optionally, turn the memory-swapping setting down (`vm.swappiness` from 60 to 1). One line,
-   reversible, and it is the only lever this 15 GB machine has.
+1. Reboot, and **start the FP8 service first, before anything else touches the cards**. *Chosen --
+   done at 17:17/17:20, and it came up clean.*
+2. Record what the memory system is doing second by second while that start runs
+   (`scripts/measure-swap-during-start.sh`, read-only, touches nothing). *Chosen -- and it is the
+   measurement that produced the finding at the top of this file.*
+3. Turn the memory-swapping setting down (`vm.swappiness` from 60 to 1). *Chosen -- and it turned out
+   to be the wrong lever: the swapping was the container's own memory cap, not the host's setting.*
 
-Everything else -- the video model's next run, any further Qwen work -- waits behind that.
 Details, the full history of all seven faults and what would settle the question:
 [incident note](experiments/qwen38-27b-b70/notes/2026-09-19-gpu-fault-service-start.md).
 
@@ -61,7 +99,7 @@ against a reference produced by the same image.
 
 **And:** the video model's decode step ran out of card memory a second time, for a new reason -- the
 script was keeping every intermediate result as if it were going to train the model. One line fixed
-it (commit `feeecf5c1`). It has not been re-run; it is waiting behind the reboot decision too.
+it (commit `feeecf5c1`). It has still not been re-run; it is waiting for a window of its own.
 
 The paragraphs below are older. Verify the FP8 service state before acting on any of them.
 

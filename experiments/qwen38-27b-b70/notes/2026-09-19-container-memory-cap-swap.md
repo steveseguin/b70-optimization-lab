@@ -1,0 +1,296 @@
+# The swapping during a service start comes from the container's own memory cap, not from the host (2026-09-19)
+
+Date: 2026-09-19. Host `steve-TURIND8-2L2T` (two B70s, 15.2 GiB RAM, 36 GiB swap). Times are EDT with
+UTC in brackets. This note explains a measurement taken beside the 17:20 EDT two-card service start
+that followed the user's reboot, and it revises the swap paragraph of the
+[fifth GPU fault note](2026-09-19-gpu-fault-service-start.md).
+
+## In plain words
+
+We turned the machine's swapping setting almost all the way off (`vm.swappiness` 60 to 1), rebooted,
+and started the two-card service first thing on the fresh boot with a recorder running beside it. The
+start was perfect: ready in 2 minutes 40 seconds, all twelve test prompts exactly right, 90.24 tokens
+a second, and not one fault line from either card.
+
+**But the machine still swapped 4.4 GB out during the weight load, and 4.2 GB of that went out in a
+single 20-second burst.** That should not happen with swapping turned down and 7 GB of memory still
+free. The reason, read straight off the running container's own counters: **the swapping is not the
+host's decision at all. It is the container's.** Our launcher starts the server with `--memory 12g
+--memory-swap 16g`, which tells the kernel "this container may use 12 GB of memory and 4 GB of swap".
+Reading a 29 GB file of model weights fills the container's page cache, the container hits its own
+12 GB ceiling about two thousand times, and every time it does the kernel pushes some of the
+container's real working memory out to swap to make room for more file cache. The host's
+`vm.swappiness` setting has no say in it; a cgroup at its limit swaps regardless.
+
+**This is the same mistake as the MiniMax runner's 4 GB `MemoryMax` cap that helped kill the user's
+desktop session on September 17** -- a memory cap set below what the job actually touches, which turns
+into reclaim thrash instead of a tripwire.
+
+It is also the best explanation we have for the copy-engine faults that keep striking during weight
+loads: the pages the card's copy engine is reading from host memory can be swapped out from under it
+mid-copy. **That is not proven.** This start swapped 4.4 GB and did not fault.
+
+The fix is one word in each launcher -- make the container's swap allowance equal to its memory
+allowance, so that at the ceiling the kernel throws away clean file cache (which it can re-read from
+disk) instead of swapping out live working memory. Before changing the launchers, which are pinned by
+published evidence packets, we validate it on the next three service starts that were going to happen
+anyway, with a helper that applies the setting to the running container.
+
+---
+
+## What was run
+
+| Time (EDT) | [UTC] | Event |
+| --- | --- | --- |
+| 17:17 | 21:17 | Reboot, with `vm.swappiness` 60 -> 1 persisted in `/etc/sysctl.d/90-b70-swappiness.conf`. |
+| 17:18:47 | 21:18:47 | One-shot user unit starts on the fresh boot. Host `pswpin`/`pswpout` both 0. Nothing else has touched the cards. |
+| 17:19:48 | 21:19:48 | `scripts/measure-swap-during-start.sh` starts (sampler `t=0`, 0.5 s interval), then `experiments/minimax-h3-b70/scripts/resume-after-fault-20260918.sh --only-service`. Health probe clean on both cards. |
+| 17:20:05 | 21:20:05 | Container `neural-fp8-c866dbbf52f04eae85d6b76c367ac3a0` created (`t=17`). |
+| 17:21:07-17:21:16 | 21:21:07-21:21:16 | **The swap burst**: 4.2 GiB out in nine seconds, at container age 62-71 s. Host `Cached` rises 2.9 -> 11.4 GiB in the same window. |
+| 17:22:45 | 21:22:45 | Service ready (`t=177`, 160 s after container creation). |
+| 17:22:45-17:24:10 | 21:22:45-21:24:10 | Strict suite: **12/12 against the comm-2 no-MTP reference at 90.24 tok/s**. |
+| 17:24:10 | 21:24:10 | Session ends. **Zero `xe` fault lines this boot.** |
+
+Raw receipts: `/mnt/fast-ai/bench-results/resume-20260919c/`, copied into
+[`../data/2026-09-19-service-start-swap/`](../data/2026-09-19-service-start-swap/).
+
+## The numbers, in 20-second buckets
+
+From [`swap-during-start.csv`](../data/2026-09-19-service-start-swap/swap-during-start.csv) (508
+samples at 0.5 s over 262 s). `t=0` is 17:19:48 EDT / 21:19:48Z; the container appears at `t=17`;
+ready at `t=177`. "Out" and "in" are `pswpout_d`/`pswpin_d` summed over the bucket (host-wide
+`/proc/vmstat`); MemAvailable and Cached are the last sample in the bucket; PSI is the maximum
+`some avg10` in the bucket.
+
+| Window (s) | Swapped out | Swapped in | Major faults | MemAvailable (end) | Cached (end) | PSI some avg10 (max) | Phase |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0-20 | 0 MiB | 0 MiB | 9,999 | 12.96 GiB | 2.80 GiB | 0.00 | health probes; container created at t=17 |
+| 20-40 | 0 MiB | 0 MiB | 2,697 | 12.08 GiB | 3.37 GiB | 0.00 | container start, image and Python import |
+| 40-60 | 0 MiB | 0 MiB | 1,334 | 11.64 GiB | 3.52 GiB | 0.00 | engine init |
+| 60-80 | 10 MiB | 0 MiB | 8,454 | 7.25 GiB | 7.13 GiB | 0.72 | **weight load begins** (safetensors reads start ~t=76) |
+| **80-100** | **4,484 MiB** | 1,011 MiB | 137,102 | 9.14 GiB | 8.97 GiB | **3.85** | **the burst**: cgroup at its ceiling |
+| 100-120 | 0 MiB | 21 MiB | 4,348 | 8.80 GiB | 8.70 GiB | 1.36 | target weights resident |
+| 120-140 | 3 MiB | 52 MiB | 10,275 | 8.63 GiB | 8.59 GiB | 0.18 | drafter load |
+| 140-160 | 17 MiB | 164 MiB | 26,543 | 6.67 GiB | 6.56 GiB | 0.02 | compile / warmup |
+| 160-180 | 0 MiB | **1,120 MiB** | 134,288 | 4.89 GiB | 4.79 GiB | 0.00 | swap-in as the server touches its own pages again; **ready at t=177** |
+| 180-200 | 0 MiB | 9 MiB | 2,077 | 4.89 GiB | 4.71 GiB | 0.00 | strict suite |
+| 200-220 | 0 MiB | 5 MiB | 1,140 | 4.89 GiB | 4.71 GiB | 0.00 | strict suite |
+| 220-240 | 0 MiB | 3 MiB | 660 | 4.89 GiB | 4.71 GiB | 0.00 | strict suite |
+| 240-260 | 0 MiB | 11 MiB | 2,922 | 4.90 GiB | 4.77 GiB | 0.00 | strict suite |
+| 260-280 | 0 MiB | 1 MiB | 261 | 4.89 GiB | 4.78 GiB | 0.00 | end of window |
+| **Total** | **4,514 MiB (4.41 GiB)** | **2,397 MiB (2.34 GiB)** | 341,972 | -- | -- | -- | |
+
+Inside the burst, at 0.5 s resolution: first swap-out at `t=79.0`, peak **1,178 MiB in one 0.5 s
+sample** at `t=82.0`, essentially over by `t=88.0`. Host `Cached` peaks at **11.39 GiB at t=82** having
+been 3.5 GiB at `t=76`. Minimum MemAvailable over the whole window is **4.87 GiB at t=180** -- after
+the burst, not during it. Swap used peaked at 4.63 GiB host-wide (`SwapFree` 36.00 -> 31.37 GiB).
+
+Three things in that table matter:
+
+1. **The swap-out is not driven by memory scarcity.** MemAvailable was 7.0-7.3 GiB when the burst
+   started and *rose* to 11.5 GiB while it ran. A host under 15 GiB with 7 GiB available and
+   `vm.swappiness=1` has no reason to evict 4.2 GiB of anonymous memory.
+2. **It tracks the page cache, not free memory.** `Cached` climbs from 3.5 to 11.4 GiB in exactly the
+   seconds the swap-out happens. Something is making room for file pages by evicting anonymous ones.
+3. **2.3 GiB comes straight back in** over the next 100 seconds, including 1.1 GiB in the 20 seconds
+   before ready. The pages were still live; they were evicted early and faulted back.
+
+## The container's own counters say who did it
+
+Read live and read-only from the running service (nothing was started, stopped or updated):
+`docker inspect` plus `cat` of `/sys/fs/cgroup/system.slice/docker-<id>.scope/*`. Full capture:
+[`cgroup-counters.txt`](../data/2026-09-19-service-start-swap/cgroup-counters.txt).
+
+| Counter | Value | Reading |
+| --- | --- | --- |
+| `HostConfig.Memory` | 12,884,901,888 (12 GiB) | the launcher's `--memory 12g` |
+| `HostConfig.MemorySwap` | 17,179,869,184 (16 GiB) | the launcher's `--memory-swap 16g` |
+| `memory.max` | 12,884,901,888 | 12 GiB, as configured |
+| `memory.swap.max` | 4,294,967,296 | **4 GiB** = `memory-swap` minus `memory`; this is the swap allowance |
+| `memory.peak` | 12,884,901,888 | **exactly `memory.max`** -- the cgroup ran flat against its ceiling |
+| `memory.swap.peak` | 4,294,967,296 | **exactly `memory.swap.max`** -- it used its entire swap allowance |
+| `memory.events` `max` | **2,005** | the cgroup hit `memory.max` and reclaimed two thousand times |
+| `memory.events` `oom` / `oom_kill` | **0 / 0** | it never actually ran out; reclaim always found something |
+| `memory.stat` `pswpout` | **1,033,915 pages = 3.94 GiB** | **89 % of the host's entire 4.41 GiB** came from this container |
+| `memory.stat` `pswpin` | 547,978 pages = 2.09 GiB | 89 % of the host's 2.34 GiB swap-in, likewise |
+| `memory.stat` `pgscan_direct` | 2,173,237 pages | direct reclaim *inside the cgroup* -- allocation stalls, which is what PSI 3.9 was |
+| `memory.stat` `anon` | 7,422,877,696 (6.91 GiB) | the server's real working set |
+| `memory.stat` `file` | ~4 GiB (3.6-4.3 GiB, drifts) | leftover weight-file page cache, all clean |
+
+The arithmetic closes: anon 6.9 GiB + file ~4 GiB + slab 0.1 GiB ~= 11-12 GiB, pinned against a 12 GiB
+ceiling, with a 4 GiB swap allowance that was used to the last byte.
+
+## The mechanism
+
+1. The two-card launcher runs the server with `--memory 12g --memory-swap 16g`
+   ([`serve.py:222`](../../../packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py)). Docker's
+   `--memory-swap` is *memory plus swap*, so this is "12 GiB of RAM and 4 GiB of swap". In cgroup v2
+   that becomes `memory.max=12G`, `memory.swap.max=4G`.
+2. The model is ~29 GB of safetensors on `/mnt/fast-ai`, bind-mounted into the container and read with
+   `mmap`. Every page read is charged to **the container's** memory cgroup as file cache.
+3. Within seconds the container's anon (6.9 GiB of loaded tensors, workers, runtime) plus the growing
+   file cache exceeds 12 GiB. The cgroup enters reclaim -- 2,005 `max` events, 2.17 M pages of *direct*
+   reclaim.
+4. Cgroup reclaim will evict clean file pages **or** swap anonymous pages, and it balances the two
+   using `memory.swap.max` and the swappiness that applies to the cgroup. With a 4 GiB swap allowance
+   available it swaps, and it keeps swapping until the allowance is exhausted -- which the counters
+   show it did, to the byte.
+5. `vm.swappiness=1` does not stop this. It biases global reclaim; a cgroup at `memory.max` with
+   swap headroom reclaims within itself regardless. **This is why the reboot at `swappiness=1` still
+   produced a 4.2 GiB burst.**
+6. The swapped-out pages are the server's own anonymous memory -- including, during a load, the host
+   staging buffers that the card's copy engine reads through userptr mappings. That is the link to the
+   faults.
+
+### Why this is the same mistake as the MiniMax cap
+
+The [September 17 oomd incident](2026-09-18-host-oomd-incident.md) set
+`--property=MemoryMax=4G` on a runner whose real working set was ~25 GiB, as a "tripwire". A cgroup
+far below its working set does not trip; it thrashes in reclaim, and sustained reclaim pressure is
+exactly what `systemd-oomd` kills on. Here the cap is 12 GiB against a working set of 6.9 GiB anon
+plus an unbounded streaming read, and the result is the same class of behaviour: continuous reclaim
+at the ceiling, with swap as the release valve. In both cases the number was chosen without measuring
+what the job touches.
+
+## What is proven and what is not
+
+**Proven by this measurement:**
+
+* The two-card service start swaps 4.4 GiB out, 89 % of it from inside the container, and it does so
+  at `vm.swappiness=1` with 7+ GiB MemAvailable.
+* The cause is the container's own `--memory 12g --memory-swap 16g`: `memory.peak` equals
+  `memory.max`, `memory.swap.peak` equals `memory.swap.max`, and `memory.events max` is 2,005 with
+  zero OOM kills.
+* Host `vm.swappiness` does not control it. Turning it from 60 to 1 did not stop the burst.
+* Both launchers hardcode the same pair of flags
+  ([tp2 `serve.py:222`](../../../packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py),
+  [tp1 `serve.py:221`](../../../packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py)), so every profile on
+  this host has it.
+
+**Not proven:**
+
+* **That this causes the copy-engine faults.** This start swapped 4.4 GiB during the weight load and
+  did not fault. The swap burst is necessary for the hypothesis, not sufficient for it; nothing here
+  shows a swapped page and a faulting copy engine touching the same address. A defect on
+  `0000:03:00.0` still fits every row of the fault history.
+* **That removing the swap allowance removes the faults.** It removes the swapping of *anonymous*
+  pages at the ceiling. Clean file pages will still be dropped and re-read, and page migration
+  (compaction, THP) is a separate mechanism this change does not touch.
+* **That 12 GiB is the right ceiling.** We have not measured what the load would use uncapped; the
+  container may simply be being asked to do a 29 GB streaming read in a 12 GiB box.
+
+**What this does establish for certain:** the swap activity during starts was being read as a host
+property for four fault notes running. It is a container configuration we wrote ourselves.
+
+## The fix
+
+Set the container's swap allowance to zero by making `--memory-swap` equal `--memory`:
+
+```
+'--memory', '12g', '--memory-swap', '12g',
+```
+
+Docker semantics: `--memory-swap` equal to `--memory` means **no swap is available to the container**;
+in cgroup v2 it sets `memory.swap.max=0`. At the ceiling, cgroup reclaim then has only one option --
+drop clean file pages, which are the weight file's page cache and are re-readable from disk at NVMe
+speed. Nothing the server is actively using goes to disk.
+
+Headroom: anon is 6.91 GiB against a 12 GiB cap, so **about 5 GiB of slack** before the cgroup would
+have to choose between OOM and nothing. The file cache is fully reclaimable (`file_dirty 0` --
+everything is read-only mmap of the model and of read-only bind mounts), so there is always something
+to reclaim.
+
+Expected cost: the weight load may be slower, because pages dropped early are re-read instead of the
+load proceeding at the cost of swapping something else out. This start took 160 s from container
+creation to ready with the swapping; that is the number to beat or accept.
+
+## Validation plan (before any `serve.py` edit)
+
+`serve.py` is byte-pinned by the published evidence packets -- editing it broke site CI the last time
+(see the "evidence pins" memory and the guides workflow). So the change is validated on the running
+container first, and only then written into the launchers.
+
+1. **At the next service start that was going to happen anyway** -- not a start made for this test; the
+   service is up and must not be restarted for a measurement -- run
+   [`scripts/apply-container-noswap.sh --name-prefix neural-fp8`](../../../scripts/apply-container-noswap.sh)
+   in the background just before the start, with
+   [`scripts/measure-swap-during-start.sh`](../../../scripts/measure-swap-during-start.sh) beside it.
+   The helper waits for a *new* container with that name prefix and immediately runs
+   `docker update --memory 12g --memory-swap 12g <name>`. There is a wide window: the container appears
+   ~0 s into the start and the weight-file reads do not begin until ~55-60 s later (`t=17` and `t=76`
+   in this run). The helper refuses, non-zero, if the container it finds is already above 6 GiB of
+   `memory.current`, which means the load has begun and the measurement would be worthless.
+2. **Success criteria per start:** container `memory.stat pswpout` ~0 (a few hundred pages of
+   pre-update activity is fine); `memory.events max` still non-zero (the ceiling is still being hit --
+   that is expected and is the point: it now reclaims file cache); `memory.events oom_kill` **0**;
+   service reaches ready; strict suite **12/12**; no `xe` fault lines.
+3. **Repeat over at least three starts.** One clean start proves nothing -- 2026-09-19 14:20 was a
+   clean start in the exact order that faulted an hour later.
+4. **Then edit both launchers** (`--memory-swap 12g` in the tp2 and tp1 `docker_argv`), regenerate the
+   pinned packets by the repo's process, run `guides.yml` locally in full, and re-run acceptance for
+   the affected packages.
+5. **Keep the sampler in the loop afterwards.** The fault question is not closed by this change; every
+   start should still be recorded so the next fault, if it comes, has a swap trace beside it.
+
+## Risks
+
+**1. Cgroup OOM kill.** With `memory.swap.max=0`, a cgroup whose *anonymous* memory alone exceeds
+`memory.max` has nothing left to reclaim and the kernel OOM-kills inside the container. Today's margin
+is comfortable -- anon 6.91 GiB against 12 GiB -- but the margin is the whole safety story, so:
+
+* Check `memory.events` `oom_kill` after every validation start; it must stay **0**. `max` going up is
+  fine and expected.
+* A profile that raises resident host memory (longer context does not, but a host-resident tensor
+  does) must be re-measured before it inherits the change.
+* If a start ever OOM-kills, the reversal is `docker update --memory-swap 16g <name>` on a running
+  container, or reverting the one word in `serve.py`. The failure mode is a dead server at load time,
+  not a corrupted one -- unlike the MiniMax cap, it cannot reach outside the container, because the
+  kill happens inside the cgroup rather than through host pressure and `systemd-oomd`.
+
+**2. The one-card profiles carry more anonymous memory.** The tp1 launcher uses the *same*
+`--memory 12g --memory-swap 16g`
+([`serve.py:221`](../../../packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py)) and its
+`BASE_ENV` sets `B70_CPU_EMBED=1`, which moves the input embedding table permanently into **host**
+memory: the overlay logs `b70_cpu_embed: 2.368 GiB of input embeddings now on host memory`
+(`/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/*/state.json`). That 2.368 GiB is anon, it is read on
+every decode step, and it can never be reclaimed to a file.
+
+Estimate for a one-card container, from the two-card figure of 6.91 GiB anon across two workers plus
+the API server and EngineCore: dropping one worker saves roughly 2.5-3 GiB, adding the host embedding
+table costs 2.368 GiB, so **one-card anon should land around 6.5-7.5 GiB** -- about the same as
+two-card, with **4.5-5.5 GiB of headroom** under a 12 GiB cap. That is an estimate from arithmetic,
+not a measurement, and the one-card profiles must have `memory.stat anon` read on a live container
+before they inherit `--memory-swap 12g`.
+
+Supporting evidence that the one-card profiles hit the same ceiling today, from the September 17
+campaigns' own `memory-guard.jsonl` (host `SwapFree` delta across a start):
+
+| Run | Swap used during the start |
+| --- | --- |
+| `fp8-ckpt1-20260917/tp1-ckpt-mtp5` | 2.61 GiB |
+| `fp8-ckpt1b-20260917/tp1-ckpt-mtp5` | 2.68 GiB |
+| `fp8-ckpt2-20260917/tp1-ckpt-mtp5` | 2.68 GiB |
+| `fp8-ckpt2-20260917/tp1-stock-b896` | 2.69 GiB |
+| `fp8-ckpt2-20260917/tp1-mtp0-b896` | 2.16 GiB |
+| `fp8-ckpt3-20260917/tp1-ckpt-32k` | 2.70 GiB |
+
+Every one-card start on that boot swapped 2.2-2.7 GiB -- less than the two-card 4.4 GiB, same
+mechanism, same 12 GiB cap. The `no-quantization` profile additionally builds an FP16 draft head copy
+(`B70_DRAFT_FP16_SHORTLIST`); whether that copy is host-resident has not been checked and must be
+before that profile inherits the change.
+
+**3. A slower load.** Re-reading dropped file pages costs NVMe bandwidth. `/mnt/fast-ai` is fast and
+the read is sequential, so this is expected to be small, but ready-time is part of the validation
+criteria and a large regression is a reason to stop and reconsider the 12 GiB ceiling instead.
+
+## Receipts
+
+[`../data/2026-09-19-service-start-swap/`](../data/2026-09-19-service-start-swap/) --
+`swap-during-start.csv` (the sampler), `cgroup-counters.txt` (the live read-only cgroup capture),
+`session.log` and `postboot.log` (the start and its strict suite), `swap-sampler.log`. Raw root
+`/mnt/fast-ai/bench-results/resume-20260919c/`.
+
+Related: [fifth GPU fault](2026-09-19-gpu-fault-service-start.md) (the fault history and the swap
+hypothesis this revises), [host oomd incident](2026-09-18-host-oomd-incident.md) (the same mistake
+with a 4 GiB cap), [2026-09-15 restore fault](2026-09-15-fp8-restore-gpu-fault.md) (the first recorded
+swap burst before a fault), and the `2026-09-19` rows in [DO-NOT-REPEAT.md](../DO-NOT-REPEAT.md).

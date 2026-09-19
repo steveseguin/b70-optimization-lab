@@ -1,0 +1,132 @@
+# Container cgroup counters for the two-card FP8 service, read live and read-only.
+# Read at: 2026-09-19T17:28:02-04:00 (2026-09-19T21:28:02+00:00), service up since 2026-09-19T21:20:05Z.
+# Container: neural-fp8-c866dbbf52f04eae85d6b76c367ac3a0 (77d403499ee704a17ad343b1479f0905da27f8b8e89f3133ef88a6bd6d4f3388)
+# cgroup:    /sys/fs/cgroup/system.slice/docker-77d403499ee704a17ad343b1479f0905da27f8b8e89f3133ef88a6bd6d4f3388.scope
+# Nothing was started, stopped, updated or written; these are cat(1) reads of sysfs plus docker inspect.
+
+== docker inspect (HostConfig) ==
+Memory       12884901888
+MemorySwap   17179869184
+MemorySwappiness <nil>
+OomKillDisable   <nil>
+ShmSize      8589934592
+Created      2026-09-19T21:20:05.74998475Z
+StartedAt    2026-09-19T21:20:05.832227567Z
+
+== limits ==
+memory.max           12884901888
+memory.swap.max      4294967296
+memory.high          max
+memory.low           0
+
+== usage ==
+memory.current       11587637248
+memory.peak          12884901888
+memory.swap.current  2176671744
+memory.swap.peak     4294967296
+
+== memory.events ==
+low 0
+high 0
+max 2005
+oom 0
+oom_kill 0
+oom_group_kill 0
+sock_throttled 0
+
+== memory.events.local ==
+low 0
+high 0
+max 2005
+oom 0
+oom_kill 0
+oom_group_kill 0
+sock_throttled 0
+
+== memory.stat ==
+anon 7422877696
+file 3877793792
+kernel 152166400
+kernel_stack 4407296
+pagetables 38969344
+sec_pagetables 0
+percpu 7560
+sock 0
+vmalloc 12288
+shmem 159744
+zswap 0
+zswapped 0
+file_mapped 338567168
+file_dirty 0
+file_writeback 0
+swapcached 134791168
+anon_thp 0
+file_thp 33554432
+shmem_thp 0
+inactive_anon 272863232
+active_anon 7284965376
+inactive_file 306544640
+active_file 3571089408
+unevictable 0
+slab_reclaimable 93354344
+slab_unreclaimable 15371200
+slab 108725544
+workingset_refault_anon 549195
+workingset_refault_file 114160
+workingset_activate_anon 120
+workingset_activate_file 3803
+workingset_restore_anon 0
+workingset_restore_file 23
+workingset_nodereclaim 0
+pgdemote_kswapd 0
+pgdemote_direct 0
+pgdemote_khugepaged 0
+pgdemote_proactive 0
+pgpromote_success 0
+pgscan 9149939
+pgsteal 8242182
+pswpin 547978
+pswpout 1033915
+pgscan_kswapd 6976702
+pgscan_direct 2173237
+pgscan_khugepaged 0
+pgscan_proactive 0
+pgsteal_kswapd 6300146
+pgsteal_direct 1942036
+pgsteal_khugepaged 0
+pgsteal_proactive 0
+pgfault 15849751
+pgmajfault 287751
+pgrefill 1062100
+pgactivate 91481
+pgdeactivate 0
+pglazyfree 0
+pglazyfreed 0
+swpin_zero 1217
+swpout_zero 15018
+zswpin 0
+zswpout 0
+zswpwb 0
+thp_fault_alloc 0
+thp_collapse_alloc 0
+thp_swpout 0
+thp_swpout_fallback 0
+numa_pages_migrated 0
+numa_pte_updates 0
+numa_hint_faults 0
+
+== host /proc/vmstat swap counters (whole host, this boot) ==
+pswpin 616527
+pswpout 1155529
+pgmajfault 351319
+
+== host /proc/meminfo (selected) ==
+MemTotal:       15943924 kB
+MemAvailable:    5103392 kB
+Cached:          4847268 kB
+SwapTotal:      37748728 kB
+SwapFree:       34947148 kB
+Dirty:               720 kB
+
+== vm.swappiness ==
+1

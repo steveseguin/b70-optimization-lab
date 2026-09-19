@@ -88,6 +88,21 @@ Read the table two ways and both readings matter:
   Every one of them faulted during the weight-load phase, on the copy engine, within 70-111 s of
   the start. The two-card service itself runs for hours without faulting once it is up.
 
+**Read it a third way: weight-load phase + container at `memory.max`.** Every row above with no P2P in
+it happened in the same phase of the same activity -- a model weight load inside a container the
+launcher caps at `--memory 12g --memory-swap 16g`. That cap was measured on the 2026-09-19 17:20 EDT
+clean start: the cgroup's `memory.peak` equalled `memory.max` exactly, its `memory.swap.peak` equalled
+its 4 GiB `memory.swap.max` exactly, `memory.events max` was 2,005, and **3.94 GiB of the host's
+4.41 GiB of swap-out during that start came from inside the container** -- at `vm.swappiness=1`, with
+7+ GiB MemAvailable. So the swap activity in the rows above is not a host-pressure property at all; it
+is a container configuration this repo wrote, and it fires in exactly the phase every no-P2P fault
+fires in. That makes the "host staging pages the copy engine reads get swapped out mid-copy" mechanism
+concrete and testable rather than atmospheric. It is still **not proven**: that start swapped 4.4 GiB
+and did **not** fault. See the
+[container memory cap finding](2026-09-19-container-memory-cap-swap.md), which supersedes the swap
+paragraph below as the explanation of *why* the host swaps during a start, and carries the fix
+(`--memory-swap` equal to `--memory`) and its validation plan.
+
 ## The swap hypothesis
 
 **Not proven. Stated so it can be killed.**
@@ -146,6 +161,15 @@ same measurement: it predicts faults independent of swap activity.
 
 Mitigations 1-3 are guesses ranked by cost, not a fix. Only 4 turns the next start into evidence.
 
+**Update, 2026-09-19 17:20 EDT.** The user approved 1 and 3, rebooted at 17:17 and the service started
+first on the fresh boot with mitigation 4 running beside it. The start was clean -- ready 17:22:45,
+strict 12/12 at 90.24 tok/s, zero `xe` fault lines -- **and it still swapped 4.41 GiB**, 4.2 GiB of it
+in one burst during the weight load. Mitigation 1 did not work, and the measurement shows why: the
+swapping is the *container's* 12 GiB memory cap with a 4 GiB swap allowance, not the host's
+`vm.swappiness`. The real mitigation is to take the container's swap allowance away
+(`--memory-swap` equal to `--memory`), which is not yet applied. Full analysis, numbers and validation
+plan: [container memory cap and swap during a service start](2026-09-19-container-memory-cap-swap.md).
+
 ## Evidence
 
 `/mnt/fast-ai/bench-results/gpu-fault-20260919T1904/`:
@@ -162,6 +186,11 @@ it, and its `FAULT-HALT.json`), `/mnt/fast-ai/bench-results/resume-20260919b/` (
 retry), `/mnt/fast-ai/bench-results/batch-session-20260919.log` (the whole window). Earlier
 faults: `gpu-fault-20260916T0602/`, `gpu-fault-20260917T0310/`, `gpu-fault-20260917T0717/`,
 `gpu-fault-20260918T1506/` under the same root.
+
+The clean start that followed the user's reboot, with the swap sampler and the live cgroup read beside
+it: [`../data/2026-09-19-service-start-swap/`](../data/2026-09-19-service-start-swap/) (raw root
+`/mnt/fast-ai/bench-results/resume-20260919c/`), analysed in the
+[container memory cap finding](2026-09-19-container-memory-cap-swap.md).
 
 Prior notes: [2026-09-15 restore fault](2026-09-15-fp8-restore-gpu-fault.md),
 [MiniMax first-light fault](../../minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md),
