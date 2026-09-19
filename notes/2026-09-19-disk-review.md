@@ -1,7 +1,8 @@
 # Disk review, two-B70 host (2026-09-19 EDT)
 
-Both disks are nearly full. Nothing was deleted for this review; every number below is from `du`, `docker`,
-and `df` as of 2026-09-19 morning. The cleanup script `scripts/disk-cleanup-20260919.sh` (dry-run by default)
+Both disks are nearly full. Nothing was deleted *for this review*; every number below is from `du`, `docker`,
+and `df` as of 2026-09-19 morning. The cleanup itself ran later the same day, on the user's direction --
+see [Executed, 2026-09-19 afternoon](#executed-2026-09-19-afternoon) at the end for what actually happened. The cleanup script `scripts/disk-cleanup-20260919.sh` (dry-run by default)
 implements the tiers below; the user picks which tiers to run.
 
 | Disk | Size | Used | Free |
@@ -95,3 +96,107 @@ Two things the dry run settled that the estimates above had guessed at:
 Recommended order: tiers 0-2 today (213 GiB on `/mnt/fast-ai`, 5.4 GiB plus the container prune on `/`), tier 3 next (the root disk's
 real problem), tier 4 and 5 as the user decides. After tiers 0-3 the MiniMax lane has room for a second denoiser
 comparison and the FP8 lane for its next image without either disk pinching.
+
+---
+
+## Executed, 2026-09-19 afternoon
+
+The user's direction: keep only the **Qwen3.8-27B FP8** and **MiniMax-H3** lanes on the fast disk, move the other
+models to external drives, delete the caches, build trees and research images, and leave swap alone. All of that
+ran between 13:04 and 13:25 EDT. Nothing on the GPUs was touched; the FP8 service was already down.
+
+### Timeline
+
+| Time (EDT) | Step | `/mnt/fast-ai` free after |
+| --- | --- | ---: |
+| 13:04 | `scripts/disk-cleanup-20260919.sh --tier 0,1,2,3 --yes` | 122 GB (24 GB before) |
+| 13:05 | the same 518 vetted tier-0/1 paths re-deleted **with `sudo`** (see below) | 252 GB |
+| 13:06-13:15 | 17 model directories moved to the external SSD (`move-cold-storage-20260919`) | 396 GB |
+| 13:15-13:20 | 902 campaign directories archived, user-level (`archive-bench-results-20260919`) | 412 GB |
+| 13:20-13:21 | `/mnt/fast-ai/src` (14 GB of llama.cpp worktree sources) moved (`move-src-20260919`) | 426 GB |
+| 13:22-13:25 | the remaining 348 campaign directories archived **as root** (`archive-bench-sudo-20260919`) | 503 GB |
+
+Logs, all under `/mnt/fast-ai/bench-results/`: `disk-cleanup-20260919.log` (+ the 226 MB stdout capture
+`disk-cleanup-20260919-run.log`), `move-to-cold-storage-20260919.log`, `archive-bench-results-20260919.log`,
+`archive-bench-results-sudo-20260919.log`, `move-src-20260919.log`. The four movers are now in the repo as
+[`scripts/disk-archive-20260919/`](../scripts/disk-archive-20260919/), parameterized for reuse.
+
+### The lesson: user-level `rm` over container-written state
+
+The cleanup script printed **"Freed 97.94 GiB on `/mnt/fast-ai`, 128.89 GiB on `/`"** and that was wrong for
+`/mnt/fast-ai`. Tier 1 and part of tier 0 had silently failed. The torch-compile caches under
+`bench-results/*/…/cache` and the `.incomplete` shards under
+`llm-models/minimax-h3/.cache/huggingface/download/` were written by the serving container, so they are owned by
+**root**. A user-level `rm -rf` over them emits one `Permission denied` per file -- **744,805 lines** in the run
+capture -- and still exits 0. The script logged `WARNING -- still exists after removal` 521 times (1 in tier 0,
+494 in tier 1, 26 in tier 2) and then reported the tier totals as if nothing had gone wrong; the `df` delta it
+also printed was real, but read next to the tier totals it looked like the tiers had done their job.
+
+Re-running the same 518 vetted paths through `sudo rm -rf` freed a further **106 GB** (146 -> 252 GB free). The
+same thing then bit the campaign archive: the first, user-level pass could not even *read* 348 of the 1,250
+directories, which is why there is a second, root pass at all.
+
+The script is fixed. Every removal now goes through `remove_path()`, which removes as the user, retries as root
+via `sudo -S -p '' rm -rf -- <path> < /home/steve/SUDO_PASSWORD.txt` when the path is not owned by the caller or
+survives the first attempt, and **counts what still exists afterwards**. The summary now prints removed-vs-planned
+per tier, lists every path that survived, states that the `df` delta is the only measurement that counts, and
+exits 5 on a partial run. The password file is never printed, logged, or put on a command line. Recorded as a
+[do-not-repeat row](../experiments/qwen38-27b-b70/DO-NOT-REPEAT.md).
+
+### Verify, then remove
+
+None of the movers deleted a source on the strength of an exit code. Each directory was copied with
+`rsync -a --no-inc-recursive`, then re-checked with `rsync -a -n -i | grep -c '^>f'`; only a count of zero -- no
+file left to transfer, so every size and mtime matched -- authorized the `rm`. **0 mismatches across all 17 model
+directories and all 1,250 campaign directories.**
+
+### What moved where
+
+Cold storage is `/media/steve/extended-ssd/model-cold-storage/b70-host-20260919/`, one directory per host per
+session, with the source disk in the path so same-named directories cannot collide:
+
+| Destination | Contents |
+| --- | --- |
+| `llm-models-fast-ai/` | 12 dirs from `/mnt/fast-ai/llm-models`: nemotron-3.5-lightning-30b, qwen3.6-35b-a3b-int4, qwen3.6-27b-int4-autoround, qwen3.6-27b-q8_0-gguf, qwen3.6-27b-dflash-q8_0-gguf, qwen36-27b-dflash-q8, qwen35-9b-q8-gguf, ornith-1.5-9b-q8, lfm2.5-2.6b-q8, qwen35-0.8b-q8-tp-probe, qwen3.8-27b-gguf, qwen3.8-27b-unsloth-gguf |
+| `llm-models-root/` | 5 dirs from `/home/steve/llm-models`: gemma4-26b-a4b-it-q8-gguf, qwen35-9b-fp8-dynamic, qwen35-9b-w4a16, qwen35-4b-fp8-dynamic, qwen35-4b-w4a16 |
+| `bench-results-pre-20260914/` | 1,250 campaign dirs (902 user pass + 348 root pass, the root pass alone 78 GB), original names kept |
+| `src-llama-cpp-worktrees/` | the 26 llama.cpp worktrees from `/mnt/fast-ai/src`, sources only |
+
+**How the 1,250 were chosen.** `comm -23` of two sorted lists: directories in `bench-results` whose mtime is
+older than 2026-09-14, minus every `bench-results/<name>` path grepped out of `experiments/*/scripts`,
+`packages/*/scripts` and `scripts/`. The subtraction protected 10 older directories that runners still name --
+`gemma4-26b-a4b-q8`, `qwen35-4b-w4a16-20260913-rt2`, `qwen35-9b-w4a16-20260913-rt2`, the `qwen38-fp8`
+r147 / r156f / r165 sets, `r304-real-content-depth-20260913b`, `rebase-v0290-rb1`, the INT4 r304 rebase and the
+r307 qualification -- and `gpu-fault*` / `host-oom*` incident evidence was excluded by name on top of that.
+`/mnt/fast-ai/bench-results` now holds only the 2026-09-14-and-later campaigns, those 10, and the evidence folders.
+
+Two things did **not** happen: the NFS share `/mnt/lab-models` (10.0.0.65) was unreachable, so nothing was staged
+there; and the 3 TB green HDD is the user's personal media, not lab storage. Swap was untouched, as asked.
+
+### Final state
+
+| Disk | Size | Free before | Free after |
+| --- | ---: | ---: | ---: |
+| `/mnt/fast-ai` (nvme0n1p1) | 916 GB | 24 GB (98 % used) | **503 GB (43 % used)** |
+| `/` (nvme1n1p2) | 457 GB | 15 GB (97 % used) | **208 GB (53 % used)** |
+| `/media/steve/extended-ssd` (cold storage) | 1.9 TB | -- | 679 GB free (62 % used) |
+
+42 docker images remain: the five package pins (R276, R304, R310, R311b, R312d-c), the pristine base, the r312c
+parent, the r312d builders and the oneAPI-2026.0 image they came from, plus the images the Gemma and other lanes
+still serve. Tier 4 (models) and tier 5 (swap) of the cleanup script were not used; the model moves above were
+done by the movers instead, which relocate rather than delete, and `minimax-h3/transformer` -- the 62 GB BF16
+reference behind the exactness checks -- is still on the fast disk, which the FP8 and MiniMax lanes now share
+with 503 GB to spare.
+
+### "Do we actually need to keep all those docker images?"
+
+No -- and the 42 that remain are already more than the floor. Every image that qualified a shipped lane is on
+`ghcr.io` and every package README pins it **by digest**, so a `docker pull` of that digest on any other host
+gets byte-for-byte the image the acceptance evidence was taken against; the local copy is a cache, not the
+record. The research images are throwaway by design: each one has its Dockerfile, its build script and its
+kernel patch checked into `experiments/*/docker/` and `patches/`, so the repo is the durable record of *how* an
+image was made and the registry is the durable home for anything that was published, while the 250-odd `rNNN`
+tags were only ever the local by-product of building them. What the local store genuinely needs is the images
+the packages currently pin (so the service starts without a pull), the builders you would use to make the next
+one, and whatever another lane is actively serving -- everything else can be re-pulled or rebuilt, and deleting
+it costs a rebuild, never a result.

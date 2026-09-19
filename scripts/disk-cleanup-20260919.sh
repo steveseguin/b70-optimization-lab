@@ -19,6 +19,15 @@
 #   * it refuses to run at all when the host is short on memory or a GPU fault coredump is present;
 #   * tiers 4 and 5 never delete on their own (tier 4 needs an explicit --model, tier 5 only prints).
 #
+# Root-owned state (added 2026-09-19 after the first apply run):
+#   torch-compile caches and state dirs under bench-results are written by the serving container, so they
+#   belong to root. A user-level `rm -rf` over them prints one "Permission denied" per file -- 744,805 of
+#   them on the 13:04 run -- without failing, so tier 1 and part of tier 0 removed nothing while the summary
+#   still reported the space as freed. Every removal now goes through remove_path(): it removes as the user,
+#   retries as root via `sudo -S -p '' ... < $SUDO_PW_FILE` when the path survives or is not owned by the
+#   caller, and counts what still exists afterwards. The end-of-run summary reports those failures and the
+#   df delta, and never claims a tier freed space it did not. The password file is never printed or logged.
+#
 set -uo pipefail
 
 LOG_FILE=/mnt/fast-ai/bench-results/disk-cleanup-20260919.log
@@ -27,6 +36,7 @@ ROOT_MOUNT=/
 BUILDS_CUTOFF=2026-09-10          # /home/steve/builds/* older than this is a tier 2 candidate
 CACHE_MIN_AGE_DAYS=2              # a bench-results cache younger than this is kept (tier 1)
 INCOMPLETE_MIN_MB=100             # only *.incomplete files above this are tier 0 candidates
+SUDO_PW_FILE=/home/steve/SUDO_PASSWORD.txt   # lab convention; read on stdin by sudo -S, never printed
 VLLM_CACHE_KEEP_RECENT=2          # see the note in tier 1 about the per-state compile cache
 
 # Tier 3 keep list, by image id (resolved to full ids at run time). Five package pins, the pristine base,
@@ -129,6 +139,7 @@ preflight() {
     coredumps="$(ls -d /sys/class/drm/card*/device/devcoredump/data 2>/dev/null)"
     if [ -n "$coredumps" ]; then
         echo "REFUSING: a GPU fault halt marker is present -- a device coredump is waiting to be collected:" >&2
+        # shellcheck disable=SC2086  # one coredump path per line: word splitting is the point
         printf '  %s\n' $coredumps >&2
         echo "Collect and record it first (AGENTS.md fault-halt rule); do not clean up over an open fault." >&2
         exit 3
@@ -167,9 +178,10 @@ survey_containers() {
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/disk-cleanup-20260919.XXXXXX")"
 trap 'rm -rf "$WORKDIR"' EXIT
 PLAN="$WORKDIR/plan"                 # tier<TAB>disk<TAB>bytes<TAB>path
+FAILURES="$WORKDIR/failures"         # tier<TAB>bytes<TAB>path, for every removal that did not take
 IMAGE_PLAN="$WORKDIR/image-plan"     # tier<TAB>family<TAB>repo:tag<TAB>id
 DOCKER_IMAGES="$WORKDIR/docker-images"   # the `docker images` dump; must NOT be the plan file
-: > "$PLAN"; : > "$IMAGE_PLAN"
+: > "$PLAN"; : > "$IMAGE_PLAN"; : > "$FAILURES"; : > "$WORKDIR/apply-totals"
 
 ALLOWED_PREFIXES=()
 
@@ -236,6 +248,7 @@ tier0_docker_prune() {
     local exited created
     if [ -n "$FOREIGN_RUNNING" ]; then
         log "TIER 0: REFUSED -- a container that is not the FP8 service is running:"
+        # shellcheck disable=SC2086  # one container per line: word splitting is the point
         log "$(printf '  %s\n' $FOREIGN_RUNNING)"
         log "TIER 0: skipping both prunes. Nothing was touched."
         return 1
@@ -531,7 +544,11 @@ tier4() {
         fi
         bytes="$(du -sb -- "$target" 2>/dev/null | cut -f1)"
         log "TIER 4: deleting $target ($(human "${bytes:-0}"))"
-        rm -rf --one-file-system -- "$target"
+        if remove_path "$target"; then
+            log "TIER 4: removed $target"
+        else
+            log "TIER 4: FAILED -- $target still exists after a user-level and a root removal."
+        fi
         log "TIER 4: done; df -h:"
         df -h "$FAST_MOUNT" "$ROOT_MOUNT" | while IFS= read -r line; do log "    $line"; done
     fi
@@ -585,18 +602,59 @@ report_paths() {
     printf '%s\t%s\t%s\n' "$tier" "$fast" "$root" >> "$WORKDIR/tier-totals"
 }
 
+# sudo_rm <path> -- root removal using the lab's password file on stdin. The password is never echoed,
+# never logged, and never appears on a command line.
+sudo_rm() {
+    local p="$1"
+    if [ ! -r "$SUDO_PW_FILE" ]; then
+        log "      no readable sudo password file at $SUDO_PW_FILE -- cannot retry as root"
+        return 1
+    fi
+    # shellcheck disable=SC2024  # the redirect feeds sudo's OWN stdin, which is where -S reads the password
+    sudo -S -p '' rm -rf --one-file-system -- "$p" < "$SUDO_PW_FILE" 2>/dev/null
+    [ -e "$p" ] && return 1
+    return 0
+}
+
+# remove_path <path> -- remove as the user; fall back to root when the tree is container-written.
+# Returns 0 only when the path is actually gone. A path that survives is a FAILURE, never freed space.
+remove_path() {
+    local p="$1" owner me
+    me="$(id -un)"
+    owner="$(stat -c %U -- "$p" 2>/dev/null || true)"
+    if [ -n "$owner" ] && [ "$owner" != "$me" ]; then
+        log "      owned by $owner, not $me (container-written) -- removing as root"
+        sudo_rm "$p"
+        return
+    fi
+    rm -rf --one-file-system -- "$p" 2>/dev/null
+    if [ -e "$p" ]; then
+        log "      user-level rm left $p behind (root-owned files inside) -- retrying as root"
+        sudo_rm "$p"
+        return
+    fi
+    return 0
+}
+
 apply_paths() {
-    local tier="$1" bytes path n=0
+    local tier="$1" bytes path n=0 failed=0 freed=0
     while IFS=$'\t' read -r _ _ bytes path; do
         [ -n "$path" ] || continue
-        n=$((n + 1))
         log "TIER $tier: rm -rf $path ($(human "$bytes"))"
-        rm -rf --one-file-system -- "$path"
-        if [ -e "$path" ]; then
-            log "TIER $tier: WARNING -- $path still exists after removal"
+        if remove_path "$path"; then
+            n=$((n + 1)); freed=$((freed + bytes))
+        else
+            failed=$((failed + 1))
+            log "TIER $tier: FAILED -- $path still exists after a user-level and a root removal; its $(human "$bytes") was NOT freed"
+            printf '%s\t%s\t%s\n' "$tier" "$bytes" "$path" >> "$WORKDIR/failures"
         fi
     done < <(awk -F'\t' -v t="$tier" '$1 == t' "$PLAN")
-    log "TIER $tier: removed $n path(s)."
+    if [ "$failed" -eq 0 ]; then
+        log "TIER $tier: removed $n path(s), $(human "$freed")."
+    else
+        log "TIER $tier: removed $n path(s), $(human "$freed"); $failed path(s) FAILED and are still on disk."
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$tier" "$n" "$failed" "$freed" >> "$WORKDIR/apply-totals"
 }
 
 # ---------------------------------------------------------------------------- main
@@ -688,10 +746,36 @@ echo "==========================================================================
 if [ "$APPLY" -eq 1 ]; then
     log "df -h AFTER:"
     df -h "$FAST_MOUNT" "$ROOT_MOUNT" | while IFS= read -r l; do log "    $l"; done
-    log "Freed on $FAST_MOUNT: $(human $(( $(avail_bytes "$FAST_MOUNT") - FAST_AVAIL_BEFORE )) )"
-    log "Freed on $ROOT_MOUNT: $(human $(( $(avail_bytes "$ROOT_MOUNT") - ROOT_AVAIL_BEFORE )) )"
+
+    # Honest per-tier accounting: what the tier PLANNED to free, what actually went, and what survived.
+    # A removal that failed (root-owned container state, a busy path) is reported as a failure here; it is
+    # never rolled into the freed figure, and a tier with failures is not called complete.
+    TOTAL_FAILED=0
+    if [ -s "$WORKDIR/apply-totals" ]; then
+        log "Removal results by tier:"
+        while IFS=$'\t' read -r t n f freed; do
+            planned="$(awk -F'\t' -v t="$t" '$1 == t {s += $3} END {print s+0}' "$PLAN")"
+            if [ "$f" -eq 0 ]; then
+                log "   tier $t: $n path(s) removed, $(human "$freed") of $(human "$planned") planned"
+            else
+                log "   tier $t: $n path(s) removed, $(human "$freed") of $(human "$planned") planned -- $f path(s) FAILED"
+            fi
+            TOTAL_FAILED=$((TOTAL_FAILED + f))
+        done < "$WORKDIR/apply-totals"
+    fi
+    if [ "$TOTAL_FAILED" -gt 0 ]; then
+        FAILED_BYTES="$(awk -F'\t' '{s += $2} END {print s+0}' "$FAILURES")"
+        log "WARNING: $TOTAL_FAILED path(s) could not be removed even as root; $(human "$FAILED_BYTES") was NOT freed."
+        log "         Do not read the tier totals above as reclaimed space -- the df delta below is the truth."
+        log "         Paths that survived:"
+        awk -F'\t' '{printf "           tier %s  %s\n", $1, $3}' "$FAILURES" | while IFS= read -r l; do log "$l"; done
+    fi
+
+    log "Freed on $FAST_MOUNT (df delta, the only measurement that counts): $(human $(( $(avail_bytes "$FAST_MOUNT") - FAST_AVAIL_BEFORE )) )"
+    log "Freed on $ROOT_MOUNT (df delta, the only measurement that counts): $(human $(( $(avail_bytes "$ROOT_MOUNT") - ROOT_AVAIL_BEFORE )) )"
     printf '%s ===== disk-cleanup-20260919 end =====\n' "$(ts)" >> "$LOG_FILE"
     echo "Log: $LOG_FILE"
+    [ "$TOTAL_FAILED" -gt 0 ] && EXIT_CODE=5
 else
     echo " DRY RUN SUMMARY -- tiers ${SELECTED[*]}"
     while IFS=$'\t' read -r t f r; do
@@ -711,3 +795,5 @@ else
     echo "   Nothing was removed. Re-run with --yes to act on these tiers."
 fi
 echo "=============================================================================="
+# Exit 5 when at least one planned removal survived, so a caller (or a systemd unit) sees the partial run.
+exit "${EXIT_CODE:-0}"

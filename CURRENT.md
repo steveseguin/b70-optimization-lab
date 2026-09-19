@@ -31,6 +31,12 @@ actions are historical, span multiple hosts, and are not current instructions.
 fault, and nothing runs on the cards until you say so. The FP8 service is DOWN. Three decisions are waiting for you;
 they are at the bottom of this entry with the commands.**
 
+**Disks cleaned 2026-09-19 (13:04-13:25 EDT).** `/mnt/fast-ai` went from 24 GB to **503 GB free** (43 % used) and
+`/` from 15 GB to **208 GB free**; only the Qwen3.8-27B FP8 and MiniMax-H3 lanes are left on the fast disk, and the
+17 other model dirs, 1,250 pre-2026-09-14 campaign dirs and the llama.cpp worktree sources are in cold storage at
+`/media/steve/extended-ssd/model-cold-storage/b70-host-20260919/` (verified copies; swap untouched). Details and the
+root-ownership lesson: [notes/2026-09-19-disk-review.md](notes/2026-09-19-disk-review.md).
+
 **What shipped today.** The one-card FP8 package is finished and public. It is accepted on the `r312d-c` image, all
 three profiles reproduce their references exactly through the launcher a user would actually run, and long prompts now
 write 10-17% faster above 16K. The image is pushed to ghcr and its digest matches what the package already pinned, so
