@@ -36,6 +36,15 @@ disk) instead of swapping out live working memory. Before changing the launchers
 published evidence packets, we validate it on the next three service starts that were going to happen
 anyway, with a helper that applies the setting to the running container.
 
+**Update, 18:23 EDT the same evening: validation start 1 of 3 is done and it worked.** The container
+swapped **nothing at all** (0 pages, against 3.94 GiB), the host swapped 293 MiB instead of 4,514 MiB,
+the service came up ready with 12/12 exact at 89.9 tokens a second, no out-of-memory kills, no fault
+lines -- and the weight load was very slightly *faster*, not slower. One thing did change for the
+worse: with nothing able to leave for swap, the container's true working memory turns out to be
+**8.95 GB, not the 6.91 GB we read last time**, because 2-3 GB of it had been sitting in swap when we
+measured. The room to spare under the 12 GB ceiling is therefore about 3 GB, not about 5. See
+[Validation start 1](#validation-start-1-of-3-2026-09-19-1823-edt--2223-utc).
+
 ---
 
 ## What was run
@@ -200,6 +209,11 @@ have to choose between OOM and nothing. The file cache is fully reclaimable (`fi
 everything is read-only mmap of the model and of read-only bind mounts), so there is always something
 to reclaim.
 
+> **Corrected 2026-09-19 18:27 by validation start 1: the real figure is anon 8.95 GiB and ~3 GiB of
+> slack.** The 6.91 GiB reading was taken while 2-3 GiB of the container's anonymous memory was
+> sitting in swap and therefore not counted. See
+> [Validation start 1](#validation-start-1-of-3-2026-09-19-1823-edt--2223-utc).
+
 Expected cost: the weight load may be slower, because pages dropped early are re-read instead of the
 load proceeding at the cost of swapping something else out. This start took 160 s from container
 creation to ready with the swapping; that is the number to beat or accept.
@@ -232,11 +246,132 @@ container first, and only then written into the launchers.
 5. **Keep the sampler in the loop afterwards.** The fault question is not closed by this change; every
    start should still be recorded so the next fault, if it comes, has a swap trace beside it.
 
+## Validation start 1 of 3 (2026-09-19 18:23 EDT / 22:23 UTC)
+
+The first of the three. A batched window (`/mnt/fast-ai/bench-results/batch2-session-20260919.sh`,
+`RESUME_ROOT /mnt/fast-ai/bench-results/resume-20260919e`) ran a MiniMax-H3 block first and then put
+the two-card service back, which is exactly the "start that was going to happen anyway" the plan
+asked for: **no restart was made for this measurement.** Same boot as the 17:20 start, so the two
+rows below are the same machine in the same state with one setting changed.
+
+The helper caught the container in the window it was designed for:
+`neural-fp8-1390b553d19e450d8110ac7f631f57d6` found **17 s** into the start at `memory.current`
+**6,209,536 bytes (6 MB)** -- far under the 6 GiB refusal threshold -- and
+`docker update --memory 12g --memory-swap 12g` took `memory.swap.max` from 4 GiB to **0** in the same
+second (`noswap-helper.log`).
+
+### Side by side: the 17:20 start (swap allowed) against the 18:23 start (no swap)
+
+| | 17:20 EDT, `memory.swap.max` 4 GiB | 18:23 EDT, `memory.swap.max` **0** |
+| --- | ---: | ---: |
+| Container `pswpout` | 1,033,915 pages = **3.94 GiB** | **0** |
+| `memory.swap.peak` | 4 GiB (= `memory.swap.max`, exactly) | **0** |
+| Host-wide swap-out during the start | **4,514 MiB** | **293 MiB** |
+| Host-wide swap-in during the start | (not summed) | 299 MiB |
+| `memory.events max` | 2,005 | **12,646** |
+| `memory.events oom` / `oom_kill` | 0 / 0 | **0 / 0** |
+| `memory.peak` | 12 GiB (= `memory.max`) | 12.0 GiB (= `memory.max`) |
+| `anon` | 7,422,877,696 B = 6.91 GiB | **9,608,658,944 B = 8.95 GiB** |
+| `file` | 3.88 GB | 2.70 GB |
+| `pgscan_direct` | 2.17 M pages | **5.70 M pages** |
+| Minimum host MemAvailable | 4.87 GiB | **3.0 GiB** |
+| Peak PSI memory `some avg10` | 3.9 | 4.0 |
+| `Loading weights took` (TP0, first shard set) | 8.53 s | **8.44 s** |
+| `Model loading took` | 11.99 s | 11.34 s |
+| `init engine` (profile + KV + warmup) | 73.69 s | 72.94 s |
+| Service ready | 21:22:45Z | 22:26:22Z (150 s after the start command) |
+| Strict suite vs the comm-2 no-MTP reference | 12/12, 90.24 tok/s | **12/12, 89.9 tok/s** |
+| `xe` fault lines | 0 | **0** |
+
+Every success criterion in the plan is met: container `pswpout` **0** (not "a few hundred pages" --
+actually zero), `memory.events max` still non-zero and in fact **6.3x higher** at 12,646, `oom_kill`
+**0**, ready, strict **12/12**, no fault lines. The sampler took 489 samples over 252 s
+(`swap-during-start.csv`).
+
+**The mechanism behaved exactly as predicted.** `memory.events max` going *up* 6.3x and
+`pgscan_direct` going up 2.6x is the point, not a problem: the cgroup still hits its ceiling
+constantly while reading a 29 GB file, and with no swap to fall back on it must reclaim clean file
+pages every time. The cost of that -- re-reading dropped pages from NVMe -- did not show up:
+**the weight load was 0.09 s faster, not slower**, and ready came 10 s sooner than the 160 s of the
+swapping start. `/mnt/fast-ai` is fast enough that this trade is free.
+
+**And it is not just the container that stopped swapping.** Host-wide swap-out during the start fell
+from 4,514 MiB to 293 MiB -- a 15x drop -- which is more than the container's own 3.94 GiB share.
+Removing the container's reclaim pressure also stopped the host reclaiming elsewhere on its behalf.
+The 293 MiB that remains is roughly matched by 299 MiB swapped back **in**, i.e. ordinary
+pre-existing idle pages moving around, not a burst.
+
+### The headroom figure was wrong, and the corrected number is ~3 GiB
+
+The plan's "about 5 GiB of slack" came from reading `anon` **6.91 GiB** off the swapping start. That
+reading was low, and for a reason that is obvious once the swap is gone: **2-3 GiB of the container's
+anonymous memory was sitting in swap at the moment it was read**, so it was not counted in `anon`.
+With `memory.swap.max=0` nothing can leave, and the honest figure is:
+
+> **`anon` 9,608,658,944 bytes = 8.95 GiB against a 12 GiB cap. Headroom is ~3 GiB, not ~5 GiB.**
+
+This does not change the verdict on the fix -- 3 GiB of slack on a workload whose anonymous
+footprint is stable after load is still comfortable, `file_dirty` is still 0, and `oom_kill` stayed
+0 through a start that scanned 5.7 M pages directly. It does change the **margin of safety**, and
+every downstream estimate built on 6.91 GiB has to be redone. The remaining `file` of 2.70 GB is the
+buffer that absorbs the next spike, and it is fully reclaimable.
+
+### Consequence for the one-card profiles: the estimate is now tighter, and it must be measured
+
+The tp1 launcher carries the same `--memory 12g --memory-swap 16g`
+([`packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py:221`](../../../packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py))
+and its `BASE_ENV` sets `B70_CPU_EMBED=1`, which moves **2.368 GiB** of input-embedding table
+permanently into host memory. That is anon, it is read on every decode step, and it can never be
+reclaimed to a file.
+
+Redoing the arithmetic on the corrected base:
+
+| | Old estimate (from anon 6.91 GiB) | Corrected (from anon **8.95 GiB**) |
+| --- | ---: | ---: |
+| Two-card anon, measured | 6.91 GiB | **8.95 GiB** |
+| Drop one worker | -2.5 to -3 GiB | -2.5 to -3 GiB |
+| Add the host embedding table | +2.368 GiB | +2.368 GiB |
+| **One-card anon, estimated** | 6.5-7.5 GiB | **8.3-8.8 GiB** |
+| **Headroom under the 12 GiB cap** | 4.5-5.5 GiB | **3.2-3.7 GiB** |
+
+**This remains an estimate from arithmetic, and it is now close enough to the cap that arithmetic is
+not good enough.** The one-card profiles must have `memory.stat anon` read off a live container --
+after the weight load and after at least one decode, so the embedding table is resident and touched
+-- **before** they inherit `--memory-swap 12g`. The `no-quantization` profile additionally builds an
+FP16 draft-head copy (`B70_DRAFT_FP16_SHORTLIST`) whose residency has never been checked, so it needs
+its own reading on top. A one-card container that OOM-kills at load is a dead server, and the whole
+safety story for this change is the margin.
+
+The supporting evidence that the one-card profiles hit the same ceiling (2.2-2.7 GiB swapped per
+start on 2026-09-17) is unchanged and is in the Risks section below.
+
+### What is left
+
+1. **Two more validation starts**, same conditions, same helper, same criteria -- and they must be
+   starts that were going to happen anyway, not restarts made to test this. Start 1 is on the books;
+   one clean start still proves nothing on its own (2026-09-19 14:20 was a clean start in exactly the
+   order that faulted an hour later).
+2. **The setting is per-container and does not survive a restart.** `docker update` changed this
+   container only; every new container comes back at `--memory-swap 16g` from `serve.py`. Until the
+   launchers are edited, `scripts/apply-container-noswap.sh` must be armed beside **every** start, and
+   a start that forgets it is a start that swaps.
+3. **Then edit both launchers** (`--memory-swap 12g` in the tp2 and tp1 `docker_argv`), regenerate the
+   pinned evidence packets by the repo's process, run `guides.yml` locally in full, and re-run
+   acceptance for the affected packages -- with the one-card `anon` measurement from the section
+   above done first, because the tp1 edit depends on it.
+4. **Keep the sampler running** after the launcher edit, so the next fault, if it comes, has a swap
+   trace beside it.
+
+Receipts: [`../data/2026-09-19-service-start-noswap-1/`](../data/2026-09-19-service-start-noswap-1/)
+-- `noswap-helper.log`, `cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`. Raw root
+`/mnt/fast-ai/bench-results/resume-20260919e/`.
+
 ## Risks
 
 **1. Cgroup OOM kill.** With `memory.swap.max=0`, a cgroup whose *anonymous* memory alone exceeds
 `memory.max` has nothing left to reclaim and the kernel OOM-kills inside the container. Today's margin
-is comfortable -- anon 6.91 GiB against 12 GiB -- but the margin is the whole safety story, so:
+is comfortable -- anon 6.91 GiB against 12 GiB (**corrected by validation start 1 to 8.95 GiB against
+12 GiB, i.e. ~3 GiB rather than ~5**) -- but the margin is the whole safety story, so:
 
 * Check `memory.events` `oom_kill` after every validation start; it must stay **0**. `max` going up is
   fine and expected.
@@ -261,6 +396,11 @@ table costs 2.368 GiB, so **one-card anon should land around 6.5-7.5 GiB** -- ab
 two-card, with **4.5-5.5 GiB of headroom** under a 12 GiB cap. That is an estimate from arithmetic,
 not a measurement, and the one-card profiles must have `memory.stat anon` read on a live container
 before they inherit `--memory-swap 12g`.
+
+> **Superseded by validation start 1.** On the corrected two-card base of 8.95 GiB anon, the one-card
+> estimate becomes **8.3-8.8 GiB with 3.2-3.7 GiB of headroom** -- tight enough that the live
+> measurement is now a requirement rather than a formality. See
+> [Validation start 1](#validation-start-1-of-3-2026-09-19-1823-edt--2223-utc).
 
 Supporting evidence that the one-card profiles hit the same ceiling today, from the September 17
 campaigns' own `memory-guard.jsonl` (host `SwapFree` delta across a start):
@@ -289,6 +429,11 @@ criteria and a large regression is a reason to stop and reconsider the 12 GiB ce
 `swap-during-start.csv` (the sampler), `cgroup-counters.txt` (the live read-only cgroup capture),
 `session.log` and `postboot.log` (the start and its strict suite), `swap-sampler.log`. Raw root
 `/mnt/fast-ai/bench-results/resume-20260919c/`.
+
+[`../data/2026-09-19-service-start-noswap-1/`](../data/2026-09-19-service-start-noswap-1/) --
+validation start 1: `noswap-helper.log` (the `docker update`, with the cgroup before and after),
+`cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`. Raw root
+`/mnt/fast-ai/bench-results/resume-20260919e/`.
 
 Related: [fifth GPU fault](2026-09-19-gpu-fault-service-start.md) (the fault history and the swap
 hypothesis this revises), [host oomd incident](2026-09-18-host-oomd-incident.md) (the same mistake

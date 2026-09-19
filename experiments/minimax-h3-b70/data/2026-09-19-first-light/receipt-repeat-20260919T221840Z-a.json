@@ -1,0 +1,244 @@
+{
+  "run_name": "repeat-20260919T221840Z-a",
+  "utc": "2026-09-19T22:20:09Z",
+  "host": "steve-TURIND8-2L2T",
+  "argv": [
+    "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/run_h3_t2v.py",
+    "--prompt",
+    "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "--height",
+    "256",
+    "--width",
+    "448",
+    "--frames",
+    "124",
+    "--steps",
+    "9",
+    "--seed",
+    "42",
+    "--lora",
+    "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+    "--out-dir",
+    "/mnt/fast-ai/bench-results/resume-20260919d/minimax",
+    "--run-name",
+    "repeat-20260919T221840Z-a",
+    "--save-tensors"
+  ],
+  "settings": {
+    "adaln_dtype": "fp32",
+    "adaln_out_dtype": "bf16",
+    "audio_shift": null,
+    "cards": [
+      0,
+      1
+    ],
+    "crf": 16,
+    "denoiser": "pruned",
+    "denoiser_rotation": "hadamard",
+    "deterministic": false,
+    "dry_run": false,
+    "encoder_card": 0,
+    "frames": 124,
+    "height": 256,
+    "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+    "out_dir": "/mnt/fast-ai/bench-results/resume-20260919d/minimax",
+    "plan_memory": false,
+    "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "prompt_embeds": null,
+    "run_name": "repeat-20260919T221840Z-a",
+    "save_tensors": true,
+    "seed": 42,
+    "split_index": null,
+    "steps": 9,
+    "te_rotation": "hadamard256",
+    "vae_card": null,
+    "vae_tiling": "auto",
+    "verbose": false,
+    "verify_remap": false,
+    "video_shift": null,
+    "width": 448
+  },
+  "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+  "prompt_tokens": 46,
+  "seed": 42,
+  "num_inference_steps": 9,
+  "num_function_evaluations": 8,
+  "num_inference_steps_note": "sigma grid points, terminal 0 included; NFE = steps - 1 (MiniMaxH3Scheduler.set_timesteps). Base reference is 50 NFE (steps 51); the 8-step turbo LoRA is 8 NFE (steps 9). CFG-distilled: no guidance_scale exists. See notes/2026-09-18-steps-and-lora.md",
+  "resolved": {
+    "video_latents_shape": [
+      1,
+      24,
+      37,
+      16,
+      28
+    ],
+    "audio_latents_shape": [
+      2,
+      32,
+      207
+    ],
+    "video_shape": [
+      1,
+      3,
+      124,
+      256,
+      448
+    ],
+    "audio_shape": [
+      1,
+      2,
+      165600
+    ],
+    "sampling_rate": 32000,
+    "fps": 24
+  },
+  "split_plan": {
+    "variant": "pruned",
+    "split_index": 24,
+    "num_layers": 50,
+    "non_block_bytes": 1602501728,
+    "quant_bytes": 0,
+    "rotation_bytes_per_card": 0,
+    "dequant_peak_bytes": 0,
+    "card0_bytes": 20183518304,
+    "card1_bytes": 20129434624,
+    "card0_gib": 18.797,
+    "card1_gib": 18.747,
+    "imbalance_bytes": 54083680,
+    "adaln_table_bytes": 32800
+  },
+  "timings_seconds": {
+    "encode.tokenize": 0.157,
+    "encode.load": 12.855,
+    "encode.forward": 0.66,
+    "load.skeleton": 0.027,
+    "load.stream": 33.821,
+    "sample.build_pipeline": 0.001,
+    "sample": 17.716,
+    "decode.load_vae": 3.044,
+    "decode.video": 10.788,
+    "decode.load_audio_vae": 0.401,
+    "decode.audio": 2.918,
+    "write": 0.606
+  },
+  "seconds_per_second_of_video": 16.063,
+  "peak_memory": {
+    "encode": {
+      "xpu:0": {
+        "allocated_bytes": 471040,
+        "max_allocated_bytes": 27410579456,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 27434942464
+      },
+      "xpu:1": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      }
+    },
+    "sample": {
+      "xpu:0": {
+        "allocated_bytes": 20238726144,
+        "max_allocated_bytes": 21579985920,
+        "reserved_bytes": 21200109568,
+        "max_reserved_bytes": 21613248512
+      },
+      "xpu:1": {
+        "allocated_bytes": 20182523392,
+        "max_allocated_bytes": 21521946624,
+        "reserved_bytes": 21091057664,
+        "max_reserved_bytes": 21550333952
+      }
+    },
+    "decode_video": {
+      "xpu:0": {
+        "allocated_bytes": 471040,
+        "max_allocated_bytes": 471040,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 4194304
+      },
+      "xpu:1": {
+        "allocated_bytes": 10587726848,
+        "max_allocated_bytes": 11188816896,
+        "reserved_bytes": 11228151808,
+        "max_reserved_bytes": 11228151808
+      }
+    },
+    "decode": {
+      "xpu:0": {
+        "allocated_bytes": 471040,
+        "max_allocated_bytes": 471040,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 4194304
+      },
+      "xpu:1": {
+        "allocated_bytes": 1038350848,
+        "max_allocated_bytes": 11188816896,
+        "reserved_bytes": 1216348160,
+        "max_reserved_bytes": 11228151808
+      }
+    }
+  },
+  "decode_placement": {
+    "card": "xpu:1",
+    "requested": null,
+    "video_vae_tiling": "on",
+    "one_vae_at_a_time": true
+  },
+  "host_peak_rss_bytes": 12829237248,
+  "hashes": {
+    "video_tensor_sha256": "a476d723b12bfbae68dd069d6ebf7c99df3d09a2deefd5bbc2b710a76d73ef13",
+    "audio_tensor_sha256": "9a66aa977ae881068129679f55213846cd13ebd2f95ae0b8730432d5691ff847",
+    "video_latents_sha256": "a40845e80b76a9087c9dced3c7fd0a4d3833cdc0f58ad5dd63b5c43379f82405",
+    "audio_latents_sha256": "22b5c54994bbe94d9a92b049ce7a1348df5a8d9a07e0638338e7d6163a6765bd"
+  },
+  "inputs": {
+    "denoiser": "/mnt/fast-ai/llm-models/minimax-h3-comfy/diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors",
+    "denoiser_variant": "pruned",
+    "denoiser_rotation": null,
+    "denoiser_header_sha256": "59916d0f1ea260e0d9e0ce7a3cb2ceb4d59ecbb08a9f2e466de009cbc6fe26c0",
+    "lora": {
+      "path": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "sha256": "2339acdf19bfe123f46b971ea35d367a84adb85de43627e1eceafa5a5b2b111e",
+      "bytes": 1956193000,
+      "user_scale": 1.0,
+      "effective_scales": [
+        0.0625
+      ],
+      "metadata": {
+        "training_rank": "128",
+        "format": "pt",
+        "target_format": "ComfyUI generic LoRA",
+        "training_alpha": "8.0",
+        "base_model": "Comfy-Org/MiniMax-H3 minimax_h3_fl2va_bf16.safetensors",
+        "source_format": "Diffusers PEFT LoRA",
+        "training_scale": "0.0625",
+        "qkv_fusion": "block diagonal B; concat A; alpha multiplied by 3",
+        "swi_glu_mapping": "Diffusers [value;gate] -> ComfyUI [gate;value]"
+      },
+      "pairs": 208,
+      "pairs_matched": 208,
+      "merged_destinations": 312,
+      "runtime_destinations": 0,
+      "runtime_resident_bytes": 0,
+      "application": "dense weights merged exactly (W + s*B@A in float32, one rounding); ConvRotLinear destinations carry an additive runtime term instead, because an int8 weight cannot absorb a merge"
+    },
+    "text_encoder": "/mnt/fast-ai/llm-models/minimax-h3-comfy/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+    "convrot_rotation_sha256": "ebb89aa1651e681f49461fe539bf2eb6fba0143c2733e5ad9cef438d48fb28d2",
+    "vae": "/mnt/fast-ai/llm-models/minimax-h3/vae",
+    "audio_vae": "/mnt/fast-ai/llm-models/minimax-h3/audio_vae"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "torch": "2.14.0+xpu",
+    "diffusers": "0.41.0.dev0",
+    "transformers": "5.17.0"
+  },
+  "environment": {
+    "PYTORCH_ALLOC_CONF": "expandable_segments:True"
+  },
+  "deterministic": false,
+  "loader": "pread",
+  "cross_card_transfer": "host"
+}

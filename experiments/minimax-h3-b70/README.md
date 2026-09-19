@@ -1,6 +1,24 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
-Status (2026-09-18): **all weights on disk, both denoisers loadable, no clip generated yet.** The
+Status (2026-09-19): **FIRST LIGHT. The pipeline renders a clip on two cards, and it repeats bit for
+bit.** On 2026-09-19 18:16-18:28 EDT the pruned BF16 denoiser, split across both B70s at block 24,
+produced a 448x256, 124-frame, 5.17 s clip with 32 kHz stereo audio in **83 s of wall time** (`sample`
+**17.68 s** for 8 NFE), and two further runs at the same seed matched all four hashes --
+`REPEAT GATE: bytewise-equal`, without `--deterministic`. The INT8 ConvRot path rendered the same
+prompt in the same window at **30.80 s of sampling** (1.74x slower: no fused int8 GEMM on XPU, so
+every weight is widened to bf16 on every step). Measured card peaks came in at or under the
+`--plan-memory` budget everywhere, and `sample` came in **3.6 GiB under**, which says the XPU is not
+materializing the attention matrix. Zero `xe` fault lines. Full account, the five blockers it took to
+get here, the memory table and the INT8-vs-pruned numbers:
+[first light](notes/2026-09-19-first-light.md); receipts in
+[`data/2026-09-19-first-light/`](data/2026-09-19-first-light/).
+
+Next: the canvas walk toward the trained 544x960 with a 320x576 step first (read the `[vram]` lines),
+the 51-step base schedule against the 9-step turbo LoRA, and a small prompt set before either
+denoiser is called the lane's default.
+
+Earlier status (2026-09-18), for the record: **all weights on disk, both denoisers loadable, no clip
+generated yet.** The
 full INT8 ConvRot denoiser finished downloading (34.04 GB, 1035 tensors, header data-end == EOF), so
 `scripts/run_h3_t2v.py` now has two denoiser load paths -- `--denoiser {pruned,int8}`, env
 `B70_H3_DENOISER`, default still `pruned`. Both pass the CPU dry run with exact coverage. First light on 2026-09-18 03:05 UTC died

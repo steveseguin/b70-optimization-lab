@@ -581,3 +581,30 @@ Three lessons worth carrying, one per run: measure residency with a printed line
 arithmetic after an error (that is what made this diagnosis one run instead of three); a release
 that works and a phase that fits are two different claims; and on an inference-only script,
 `torch.set_grad_enabled(False)` belongs at the top of `main()` before anything else is written.
+
+## Update 2026-09-19 18:16-18:28 EDT: first light, and the stand-up is over
+
+**The pipeline this note describes rendered a clip, and the clip repeats bit for bit.** Four runs in
+the batch window (`RESUME_ROOT /mnt/fast-ai/bench-results/resume-20260919d`), all rc 0, zero `xe`
+fault lines:
+
+* `smoke-20260919T221709Z` -- **first light**. Pruned BF16 denoiser split at block 24, 448x256, 124
+  frames, 8 NFE, seed 42, turbo LoRA merged. `sample` **17.68 s**, `decode.video` 11.12 s, 83.2 s end
+  to end, 857,159-byte mp4: h264 448x256, 124 frames, 5.167 s at 24 fps, plus AAC 32 kHz stereo.
+  Frame 62 is the prompt's rain-slicked neon street with the umbrella figure.
+* `repeat-...-a` and `-b` -- **`REPEAT GATE: bytewise-equal`**, all four hashes matching, *without*
+  `--deterministic`. Three identical 857,159-byte files.
+* `smoke-20260919T222143Z` -- the INT8 ConvRot candidate. `sample` **30.80 s** (1.74x), `load.stream`
+  18.95 s (faster), same scene with a different composition.
+
+Three of this note's open questions are answered by those runs. The **decode budget** was right
+(10.42 GiB measured against ~10.8 predicted), so the `no_grad` diagnosis above is confirmed by a
+number rather than by reasoning. The **stack repeats** on its own, which was the second of the two
+questions first light was ever asked. And `sample` came in **3.6 GiB under plan** -- 1.30 GiB of
+activations where the budget allowed ~4.9 for a materialized attention matrix -- so the XPU is
+dispatching a memory-efficient SDPA kernel at this sequence length, and the plan's 544x960 warning is
+softer than it looked. Not settled at 4x the rows; the 320x576 step still decides that.
+
+Full write-up, the five blockers in order, the memory table against `--plan-memory`, the INT8-vs-pruned
+numbers and what to run next: [first light](2026-09-19-first-light.md). Receipts:
+[`../data/2026-09-19-first-light/`](../data/2026-09-19-first-light/).

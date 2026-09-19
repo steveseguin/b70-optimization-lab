@@ -8,8 +8,19 @@ The difference from attempt 2 is not the pipeline. The pipeline was never shown 
 never got past `encode.load`. The difference is that **the host-RAM question is now answered before
 the GPU is touched, and every step has something that kills our job instead of the user's session.**
 
-**STATUS 2026-09-19 18:19 UTC: the fault is cleared and the denoise passes; the plan is now
-blocked at the DECODE, on memory, not on the cards.** After a reboot, the host-staged control run
+**STATUS 2026-09-19 22:28 UTC: DONE. Steps 1, 2, 4, 5, 6 and 7 all passed in the 18:16-18:28 EDT
+batch window.** One clip (`smoke-20260919T221709Z`, rc 0, 857,159 B mp4, 124 frames at 24 fps with
+audio), the repeat gate **bytewise-equal** on all four hashes across two further runs, the INT8
+candidate rendered as well, health clean and the service back up on 18124 with strict 12/12 at 89.9
+tok/s. Zero `xe` fault lines. The decode blocker below is closed: `decode.video` peaked at **10.42
+GiB** against the "~10.8 expected" hypothesis in "The fix, and the peaks to expect now", which can now
+be read as **measured**. `sample` came in 3.6 GiB *under* plan -- activations 1.30 GiB against a
+budget of ~4.9 that assumed a materialized attention matrix -- which bears directly on the 544x960
+warning below. The results, the memory table and what to run next:
+[first light](2026-09-19-first-light.md).
+
+The earlier status, for the record -- **2026-09-19 18:19 UTC: the fault is cleared and the denoise
+passes; the plan is now blocked at the DECODE, on memory, not on the cards.** After a reboot, the host-staged control run
 (`B70_H3_XFER=host`, block-24 split, 256x448x124, 8 NFE) denoised all eight steps in **17.70 s with
 no GPU fault** -- where the 2026-09-18 direct-transfer run had faulted the copy engine 2.8 s into
 that same phase. That is the experiment the P2P hypothesis was waiting on and it passed, so the
@@ -278,6 +289,16 @@ the split plan; activations an upper bound -- the formula and its uncertainty ar
 The decode peak drops from 31.21 GiB (observed, OOM) to **~10.8 GiB expected** -- 20.4 GiB of
 headroom, and the phase is no longer close to the edge.
 
+> **MEASURED 2026-09-19 18:18 EDT, and the table holds.** `encode` 25.53 (predicted 25.52),
+> `decode.video` **10.42** on the chosen card (predicted 10.77), resident shard 18.80 / 18.75 after
+> `load.stream`. The one row that missed, and missed *low*, is `sample`: **20.10 / 20.04** against a
+> predicted 23.72 / 23.67, i.e. **1.30 GiB of activations rather than ~4.9**. The 4.78 GiB
+> materialized bf16 attention matrix in that budget did not happen, so the XPU is dispatching a
+> memory-efficient SDPA kernel at 4,622 packed rows. That is the "either / or" in the 544x960
+> paragraph below resolving toward "the bound is wildly conservative" -- at *this* sequence length.
+> It is not an answer at 19,348 rows; run the 320x576 step and read the `[vram]` lines, as planned.
+> [First light](2026-09-19-first-light.md).
+
 **At 544x960x124 the warning moves to `sample`, not the decode:** the decode only goes to 11.34 GiB
 because tiling holds the tile size fixed, but the denoiser's packed sequence goes from 4,622 rows to
 19,348, and a materialized attention matrix at that length is ~80 GiB per card -- far over. Either
@@ -411,21 +432,42 @@ already in use` because `serve.py` binds without `SO_REUSEADDR`.
 
 ## What a pass looks like
 
+**All of it happened on 2026-09-19 18:16-18:28 EDT.** Step 4 reached `write` and exited 0 with a
+receipt and a 124-frame mp4; step 5 printed `REPEAT GATE: bytewise-equal`; step 6's health probe was
+clean and the service came back ready on 18124 with strict 12/12 at 89.9 tok/s; step 7's INT8
+candidate ran too. No `oomctl` kills, no `xe` fault line, and the watchdog never went near its 2048
+MiB floor (lowest MemAvailable 10.2 GiB). Numbers: [first light](2026-09-19-first-light.md).
+
 * **Step 2:** done -- `GO/NO-GO NUMBER` 1.663 GiB on the encoder and 0.792 GiB on the denoiser,
   `pread` loader, with the per-tensor curve flat: RssAnon returns to its baseline after each tensor
   instead of climbing, and RssFile never moves off 0.07 GiB. Re-run it if the loader changes again.
-* **Step 4:** the run reaches `write` and exits 0. `receipt.json` exists with per-phase timings,
+* **Step 4: done 2026-09-19 18:18 EDT** (`smoke-20260919T221709Z`) -- the run reaches `write` and exits 0. `receipt.json` exists with per-phase timings,
   per-card peak allocated/reserved for each phase, host peak RSS, and the four hashes. `clip.mp4`
   is 124 frames at 24 fps with audio. The watchdog log ends with `pid ... exited on its own` and a
   low-MemAvailable line that never went near the 2048 MiB floor.
-* **Step 5:** all four hashes MATCH, and `compare_receipts` prints `REPEAT GATE: bytewise-equal`.
-* **Step 6:** health check clean, the service comes back `ready` on 18124, `oomctl` shows no kills,
-  and `journalctl -k` has no `xe` fault, CAT error, engine reset or coredump line in the window.
+* **Step 5: done 2026-09-19 18:21 EDT** -- all four hashes MATCH across `repeat-20260919T221840Z-a`
+  and `-b`, and `compare_receipts` printed `REPEAT GATE: bytewise-equal`. Reached without
+  `--deterministic`.
+* **Step 6: done 2026-09-19 18:27 EDT** -- health check clean, the service came back `ready` on
+  18124 (strict 12/12 at 89.9 tok/s), no `oomctl` kills, and no `xe` fault, CAT error, engine reset
+  or coredump line on the boot.
 
 Then, and only then, the follow-ups: the canvas walk (320x576, 544x960, 768x1344), the step sweep,
-and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`).
+and the two arithmetic A/Bs (`--adaln-out-dtype fp32`, `--te-rotation none`). **All still open as of
+2026-09-19**; the order they are now worth running in is in
+[first light](2026-09-19-first-light.md#next-steps).
 
 ## Step 7 -- the second first-light candidate: `--denoiser int8`
+
+**Done 2026-09-19 18:23 EDT** (`smoke-20260919T222143Z`, rc 0). It ran in the correct order, after
+the pruned control had passed step 5. No `AdaLNTableEmbedder` traceback, so the variant plumbing is
+right; residency 16.05 / 15.65 GiB exactly as planned and peaking at 18.88 / 18.52, i.e. no sign of
+the float32-widening failure mode (which would have shown as ~2x). `sample` **30.80 s** against the
+pruned path's 17.68 -- 1.74x, the cost of widening every quantized weight to bf16 on every step --
+and `load.stream` 18.95 s against 33.60. It did **not** render structured noise: same scene, different
+composition. The A/B numbers and the (deliberately non-verdict) qualitative note are in
+[first light](2026-09-19-first-light.md#the-int8-vs-pruned-ab). The
+`--denoiser-rotation none` control is still unrun.
 
 Added 2026-09-18, after the full INT8 ConvRot denoiser finished downloading (34.04 GB, 1035 tensors,
 header data end == EOF). `run_h3_t2v.py` now has a second load path for it: `--denoiser {pruned,int8}`,

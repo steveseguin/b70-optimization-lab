@@ -1,0 +1,25 @@
+[2026-09-19T18:23:35-04:00] waiting up to 600s for a NEW container named neural-fp8* (poll 0.5s)
+[2026-09-19T18:23:35-04:00] ignoring containers that already exist: none
+[2026-09-19T18:23:52-04:00] found new container neural-fp8-1390b553d19e450d8110ac7f631f57d6 (c46dd8a5dba879fd468f9837a030012a09b4300c0b3cd8c84b99f714c186325c) after 17s
+[2026-09-19T18:23:52-04:00] cgroup /sys/fs/cgroup/system.slice/docker-c46dd8a5dba879fd468f9837a030012a09b4300c0b3cd8c84b99f714c186325c.scope
+[2026-09-19T18:23:52-04:00] memory.current at discovery = 6209536 bytes (limit 6442450944)
+[2026-09-19T18:23:52-04:00] BEFORE: HostConfig Memory/MemorySwap = 12884901888 / 17179869184
+[2026-09-19T18:23:52-04:00] BEFORE: memory.max = 12884901888
+[2026-09-19T18:23:52-04:00] BEFORE: memory.swap.max = 4294967296
+[2026-09-19T18:23:52-04:00] BEFORE: memory.current = 4276224
+[2026-09-19T18:23:52-04:00] BEFORE: memory.swap.current = 0
+[2026-09-19T18:23:52-04:00] BEFORE: memory.peak = 7258112
+[2026-09-19T18:23:52-04:00] BEFORE: memory.swap.peak = 0
+[2026-09-19T18:23:52-04:00] BEFORE: memory.events = low 0 high 0 max 0 oom 0 oom_kill 0 oom_group_kill 0 sock_throttled 0 
+[2026-09-19T18:23:52-04:00] applying: docker update --memory 12g --memory-swap 12g neural-fp8-1390b553d19e450d8110ac7f631f57d6
+neural-fp8-1390b553d19e450d8110ac7f631f57d6
+[2026-09-19T18:23:52-04:00] AFTER: HostConfig Memory/MemorySwap = 12884901888 / 12884901888
+[2026-09-19T18:23:52-04:00] AFTER: memory.max = 12884901888
+[2026-09-19T18:23:52-04:00] AFTER: memory.swap.max = 0
+[2026-09-19T18:23:52-04:00] AFTER: memory.current = 16683008
+[2026-09-19T18:23:52-04:00] AFTER: memory.swap.current = 0
+[2026-09-19T18:23:52-04:00] AFTER: memory.peak = 16945152
+[2026-09-19T18:23:52-04:00] AFTER: memory.swap.peak = 0
+[2026-09-19T18:23:52-04:00] AFTER: memory.events = low 0 high 0 max 0 oom 0 oom_kill 0 oom_group_kill 0 sock_throttled 0 
+[2026-09-19T18:23:52-04:00] OK: neural-fp8-1390b553d19e450d8110ac7f631f57d6 now has memory.max=12884901888 and memory.swap.max=0 -- it cannot swap.
+[2026-09-19T18:23:52-04:00] After the start, check: container pswpout ~0, memory.events max > 0, memory.events oom_kill = 0.

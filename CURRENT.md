@@ -1,14 +1,102 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-19 21:35 UTC** (2026-09-19 17:35 EDT).
+Last reviewed: **2026-09-19 22:28 UTC** (2026-09-19 18:28 EDT).
 The four-B70 host section below was added 2026-09-11.
 
-## The FP8 service is back UP, and we found what was doing the swapping
+## The video model made a video, and the FP8 service is back up with the swapping fixed
 
-**The service has been up since 21:22 UTC (17:22 EDT), on both cards, answering all twelve test
+**Both things in this evening's twelve-minute window worked.** Nothing is running on the cards now
+except the FP8 service, which is up and answering.
+
+### The video model finally produced a clip
+
+**MiniMax-H3 rendered its first video: 5.2 seconds, 448 by 256, 124 frames, with sound.** It took 83
+seconds of machine time to make those 5 seconds. The picture is what the prompt asked for -- a
+rain-slicked city street at night, neon signs reflecting in puddles, a figure with an umbrella
+walking away from camera.
+
+**And it does the same thing twice.** We ran it two more times with the same settings and got files
+that are identical down to the last byte. That matters more than the clip does: from here on, if two
+runs differ, the difference came from the thing we changed, not from the machine being moody. It is
+the gate this lane has been trying to reach since the 17th.
+
+We also ran the alternative, smaller version of the model (the INT8 one) on the same prompt. It works
+too, gives a different-looking take on the same scene, and is **1.7 times slower at the actual
+generating step** (31 seconds against 18) because its compressed weights have to be unpacked on every
+one of the eight steps. Which one looks better is not something one frame of one prompt can answer,
+and we are not claiming it does.
+
+Nothing about the run was stressful for the machine: free memory never dropped below 10 GB, the
+safety watchdog never fired, and neither card logged a single fault all evening.
+
+**What it took to get here, in one line:** five separate things had to be fixed, in order -- a
+start-up call made too early, a memory cap that killed the desktop session instead of protecting it,
+a setting without which every gigabyte put on a card also ate a gigabyte of main memory, a card
+fault that forced every card-to-card copy to go through main memory, and finally the one that had
+been hiding behind all of them: the code was quietly saving everything it computed in case someone
+wanted to train the model, which filled a 32 GB card with 21 GB of junk during the decode.
+
+**What is next for it:** step the picture size up toward the size the model was actually trained at
+(544 by 960), one size at a time, reading the memory numbers at each stop; compare the fast 8-step
+shortcut against the full 51-step schedule the model was trained for; and put together a handful of
+prompts so the two versions of the model can be compared properly instead of by looking at one frame.
+
+Details, numbers and the five blockers:
+[first light](experiments/minimax-h3-b70/notes/2026-09-19-first-light.md); receipts in
+[`data/2026-09-19-first-light/`](experiments/minimax-h3-b70/data/2026-09-19-first-light/). The clips
+themselves are too big for Git and live in `/mnt/fast-ai/bench-results/resume-20260919d/minimax/`.
+
+### The service is up, and the no-swap fix passed its first of three tests
+
+**The FP8 service came back up right afterwards, on both cards, twelve out of twelve test prompts
+exactly right, at 89.9 tokens a second, with no faults.**
+
+This was the first chance to try the fix for the swapping problem found earlier today, and it was a
+start that was going to happen anyway rather than a restart made to test something. A small helper
+caught the new container about a minute before the model load began and told it "no swap at all".
+
+**It worked.** The container swapped **nothing** -- zero, against 3.9 GB last time -- and the machine
+as a whole swapped 293 MB instead of 4,514 MB. No out-of-memory kills. And the load was very slightly
+*faster*, not slower, which was the one cost we had been prepared to accept.
+
+**One number came out worse, and it is worth knowing.** With nothing able to escape to swap, we can
+finally see how much memory the service really holds: **9 GB, not the 7 GB we measured last time**,
+because 2 to 3 GB of it had been hiding in swap when we looked. So the room to spare under the 12 GB
+ceiling is about 3 GB, not about 5. Still comfortable for the two-card setup, which is stable after
+it finishes loading. Not comfortable enough to guess at for the **one-card** setup, which carries an
+extra 2.4 GB in main memory by design -- that one now has to be measured on a live server before it
+gets the same change.
+
+**Important, until the launcher files are edited: this setting does not stick.** It applies to one
+container, and every restart makes a new container that comes back with swap allowed again. The
+helper has to be run beside **every** service start until we change `serve.py` -- which needs two
+more clean starts first, then regenerated evidence packets and a re-run of acceptance.
+
+Write-up and the side-by-side table:
+[container memory cap and swap](experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md#validation-start-1-of-3-2026-09-19-1823-edt--2223-utc);
+receipts in
+[`data/2026-09-19-service-start-noswap-1/`](experiments/qwen38-27b-b70/data/2026-09-19-service-start-noswap-1/).
+
+### Do not repeat
+
+A new row went into the
+[do-not-repeat index](experiments/qwen38-27b-b70/DO-NOT-REPEAT.md): **running inference code without
+turning gradient tracking off.** The video model's decode step filled a 32 GB card and crashed on a
+396 MB request, having grown 21.7 GB *during* the decode from 9.7 GB of weights, because nothing in
+the script said "we are not training". It looks exactly like running out of room and is not. One
+line at the top of the program fixed it and changed no arithmetic. The tell is memory growing
+*during* a step rather than at its start.
+
+## Earlier on 2026-09-19: the FP8 service came back UP, and we found what was doing the swapping
+
+**This section describes the 17:20 EDT start. The service was stopped and restarted once more at
+18:23 for the batch window above, so read this as the measurement that produced the finding, not as
+the current service.**
+
+**The service came up at 21:22 UTC (17:22 EDT), on both cards, answering all twelve test
 prompts exactly right at 90.24 tokens a second, with no fault lines from either card on this boot.**
 You rebooted at 17:17, the one-shot unit started the service first thing on the fresh boot at 17:20,
-and the recorder ran beside it. Nothing has touched the cards since.
+and the recorder ran beside it.
 
 **The finding, in three sentences.** Even with the swapping setting turned almost all the way off,
 the machine still pushed 4.4 GB out to swap while the model was loading -- 4.2 GB of it in one
@@ -34,10 +122,8 @@ The write-up, the second-by-second numbers and the risk list:
 [container memory cap and swap during a service start](experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md);
 receipts in [`data/2026-09-19-service-start-swap/`](experiments/qwen38-27b-b70/data/2026-09-19-service-start-swap/).
 
-**The video model (MiniMax-H3) retry is still pending its own window.** Its denoising pass is proven
-clean now, and the fix for the memory error in its decode step is committed but has never been run.
-It needs the cards to itself, so it waits for a window you open for it -- and by the ordering rule
-that window comes *after* a two-card service start, not before one.
+**The video model (MiniMax-H3) retry was still pending its own window when this was written.** That
+window came at 18:16 the same evening and the retry worked -- see the top of this file.
 
 ## Earlier on 2026-09-19: fifth GPU fault on the two-B70 host (resolved by the reboot above)
 
