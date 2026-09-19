@@ -1,9 +1,92 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-19 23:03 UTC** (2026-09-19 19:03 EDT).
+Last reviewed: **2026-09-19 23:55 UTC** (2026-09-19 19:55 EDT).
 The four-B70 host section below was added 2026-09-11.
 
-## The video model now works at full size, and the service is back up
+## A video clip now takes three minutes instead of four — and there is one question for you
+
+**Your call, when you have a moment: should the faster picture-conversion setting become the
+default?** Everything below is the evidence for that one decision. Nothing has been switched on; the
+software still does it the old, slow way until you say otherwise.
+
+**What we found.** The step that turns the model's output back into actual pixels used to take 80
+seconds of every 4-minute clip. There is a setting -- one the people who made this model wrote into
+their own documentation, and which their code turns on automatically on Nvidia cards but not on ours
+-- that does the same work in **16 seconds. Five times faster.** A whole clip goes from **4 minutes 4
+seconds to about 3 minutes**.
+
+**The catch, stated honestly: the picture is not identical.** It is very slightly different, and the
+sound and everything before the picture step are untouched, bit for bit. How different:
+
+* **Almost every pixel changes** -- 99.8 % of them, in all 124 frames.
+* **By an amount smaller than a picture file can even store.** Picture brightness is recorded in 256
+  steps. The average change is **three hundredths of one of those steps**. You could not store it if
+  you wanted to.
+* **The worst single pixel** in the whole clip -- one out of 66 million -- changes by **7.5 steps out
+  of 256**, about 3 % of the brightness range. One pixel, on one frame.
+* The video file we actually save is a compressed format that throws away more than this by itself.
+
+**Why it still matters.** Our rule in this lab is that a change is either provably identical -- we
+compare fingerprints of the output and they match exactly -- or it is a judgement call. This one is a
+judgement call, permanently: the fingerprint will never match the old one again. It is reliable and
+repeatable (we ran it twice and got byte-for-byte the same result both times), so it is a *different*
+answer, not an *unpredictable* one.
+
+**The recommendation: switch it on, and keep a flag to turn it off** for any run that has to
+reproduce an old result exactly. But this is a quality question about your video, so it is yours to
+decide, not ours.
+
+**The other thing we tried did not work, and that is worth knowing.** The obvious fix was to split
+the picture step across both cards instead of one -- twice the hardware, and exactly the same answer,
+so no judgement call at all. **We built it, and it is provably exact: it reproduced the original
+clip's fingerprint perfectly.** We also proved first that both cards compute identical results down
+to the last bit, which was the real risk and which this lab has been bitten by before.
+
+**And it saved one second out of eighty.** The work was divided evenly between the cards and the
+clock did not move, because of a limitation in Python itself: the two halves took turns instead of
+running side by side. Fixing it properly means running each card in its own separate program, which
+is real work. We are not doing it now -- the fast setting above already finishes the job in 16
+seconds, so there is nothing left to win. But the lesson is filed, because **the next big speed idea
+we had planned -- keeping both cards busy during the slow generating step -- would hit exactly this
+same wall.** That moves "one program per card" from "not worth it" onto the critical path for the
+biggest remaining improvement, whenever we get to it.
+
+**What is now the slowest part.** With the picture step at 16 seconds, the three-minute clip is
+**61 % generating, 27 % loading model files from disk, 9 % pictures**. The loading is 46 seconds of
+reading the same files every single time, and it does not depend on the prompt at all -- running this
+as a service that stays loaded instead of a script that starts fresh would remove it from every clip
+after the first, with no quality question attached. That is now the best guaranteed improvement left.
+
+Nothing stressed the machine: six runs in ten minutes of card time, free memory never dropped below
+10,232 MiB (just under 10 GiB), the safety watchdog never fired, and neither card logged a single fault.
+
+The numbers, the fidelity table and the re-ordered list of what to try next:
+[decode experiments](experiments/minimax-h3-b70/notes/2026-09-19-first-light.md#decode-experiments-2339-2345-utc)
+and the [full analysis](experiments/minimax-h3-b70/notes/2026-09-19-speed-plan.md#results-window-4-2026-09-19-1939-1949-edt);
+receipts in
+[`data/2026-09-19-decode-experiments/`](experiments/minimax-h3-b70/data/2026-09-19-decode-experiments/).
+
+### The service is up, and the swapping fix passed all three checks
+
+**The FP8 service is UP on both cards**, unit `fp8-service-20260918-resume`, state directory
+`/mnt/fast-ai/bench-results/resume-20260919g/service`, port 18124 -- **twelve out of twelve test
+prompts exactly right, at 89.84 tokens a second, no faults.** It was stopped for the video work above
+and restarted straight after, which is the start that became the third check.
+
+**Three for three: the swapping fix works.** The container swapped nothing at all again -- zero
+pages, for the third time running -- and there were no out-of-memory kills. The machine as a whole
+swapped 275 MB, against 288 and 293 MB on the two earlier checks and 4,514 MB before the fix. How
+much memory the service really holds came back at 8.94 GB, a third reading within a tenth of a
+percent of the other two. The container did press against its memory ceiling and hand pages back
+16,117 times over the run -- **which is the fix working as intended**: that pressure is exactly what
+used to go to swap instead, and this time none of it did and nothing was killed.
+
+**That closes the measurement.** The remaining work is the code change that makes the setting stick
+by itself, in `serve.py` -- **another agent is preparing that right now**, along with regenerating the
+published evidence and re-running acceptance. Until it lands, the fix still has to be applied by hand
+beside every single start, because it applies to one container and every restart makes a new one.
+
+## Earlier today: the video model reached full size, and the service came back up
 
 **This evening's second window, 18:46 to 19:03, did two things and both worked.** Nothing is on the
 cards now except the FP8 service, which is up and answering.

@@ -1,0 +1,212 @@
+{
+  "utc": "2026-09-19T23:40:08Z",
+  "host": "steve-TURIND8-2L2T",
+  "argv": [
+    "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/run_h3_t2v.py",
+    "--prompt",
+    "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "--height",
+    "256",
+    "--width",
+    "448",
+    "--frames",
+    "124",
+    "--steps",
+    "9",
+    "--seed",
+    "42",
+    "--lora",
+    "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+    "--out-dir",
+    "/mnt/fast-ai/bench-results/minimax-h3-decode-20260919",
+    "--run-name",
+    "e1-probe-20260919T233947Z",
+    "--save-tensors",
+    "--probe-tile-identity",
+    "3",
+    "--latents-from",
+    "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors",
+    "--vae-autocast",
+    "off"
+  ],
+  "latents_from": "/mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors",
+  "latents_shape": [
+    1,
+    24,
+    37,
+    34,
+    60
+  ],
+  "latents_sha256": "e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd",
+  "cards": [
+    "xpu:0",
+    "xpu:1"
+  ],
+  "tiles_probed": 3,
+  "video_vae_tiling": "on",
+  "vae_autocast": "off",
+  "plan": {
+    "pad_tokens": 0,
+    "num_chunks": 7,
+    "tokens_chunk_size": 5,
+    "token_overlap": 2,
+    "frame_overlap": 5,
+    "frame_pre_padding": 3,
+    "y_indices": [
+      0,
+      144,
+      288
+    ],
+    "y_lengths": [
+      256,
+      256,
+      256
+    ],
+    "y_overlaps": [
+      112,
+      112
+    ],
+    "x_indices": [
+      0,
+      176,
+      352,
+      528,
+      704
+    ],
+    "x_lengths": [
+      256,
+      256,
+      256,
+      256,
+      256
+    ],
+    "x_overlaps": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "tiles_per_chunk": 15,
+    "tiles_total": 105
+  },
+  "diffusers_vae_source": {
+    "path": "/mnt/fast-ai/build/diffusers-src/src/diffusers/models/autoencoders/autoencoder_kl_minimax_h3.py",
+    "sha256": "4c3c9745ee27d16ff343c4998244bad41cd8f4213f0029cf7ce11ebb6d72ca1b",
+    "expected": "4c3c9745ee27d16ff343c4998244bad41cd8f4213f0029cf7ce11ebb6d72ca1b",
+    "matches": true
+  },
+  "tiles": [
+    {
+      "pass": 0,
+      "tile": 0,
+      "row": 0,
+      "column": 0,
+      "sha256": {
+        "xpu:0": "f3e1beb8cb06a89de62aaa94916dd3c427da7d697733e19c962b6a365d62a673",
+        "xpu:1": "f3e1beb8cb06a89de62aaa94916dd3c427da7d697733e19c962b6a365d62a673"
+      },
+      "cards_agree": true
+    },
+    {
+      "pass": 0,
+      "tile": 1,
+      "row": 0,
+      "column": 1,
+      "sha256": {
+        "xpu:0": "cad642bf670b23d6c9156464dfa4528145e3563aed6aae7c068b133e4a5817a6",
+        "xpu:1": "cad642bf670b23d6c9156464dfa4528145e3563aed6aae7c068b133e4a5817a6"
+      },
+      "cards_agree": true
+    },
+    {
+      "pass": 0,
+      "tile": 2,
+      "row": 0,
+      "column": 2,
+      "sha256": {
+        "xpu:0": "972cade0c651579a88b5ab95e6f2d36e1ee13e6c34fd97b681df041ea37d16d6",
+        "xpu:1": "972cade0c651579a88b5ab95e6f2d36e1ee13e6c34fd97b681df041ea37d16d6"
+      },
+      "cards_agree": true
+    },
+    {
+      "pass": 1,
+      "tile": 0,
+      "row": 0,
+      "column": 0,
+      "sha256": {
+        "xpu:0": "f3e1beb8cb06a89de62aaa94916dd3c427da7d697733e19c962b6a365d62a673",
+        "xpu:1": "f3e1beb8cb06a89de62aaa94916dd3c427da7d697733e19c962b6a365d62a673"
+      },
+      "cards_agree": true
+    },
+    {
+      "pass": 1,
+      "tile": 1,
+      "row": 0,
+      "column": 1,
+      "sha256": {
+        "xpu:0": "cad642bf670b23d6c9156464dfa4528145e3563aed6aae7c068b133e4a5817a6",
+        "xpu:1": "cad642bf670b23d6c9156464dfa4528145e3563aed6aae7c068b133e4a5817a6"
+      },
+      "cards_agree": true
+    },
+    {
+      "pass": 1,
+      "tile": 2,
+      "row": 0,
+      "column": 2,
+      "sha256": {
+        "xpu:0": "972cade0c651579a88b5ab95e6f2d36e1ee13e6c34fd97b681df041ea37d16d6",
+        "xpu:1": "972cade0c651579a88b5ab95e6f2d36e1ee13e6c34fd97b681df041ea37d16d6"
+      },
+      "cards_agree": true
+    }
+  ],
+  "gates": {
+    "identity_across_cards": true,
+    "repeatable_per_card": true,
+    "peak_memory": {
+      "xpu:0": {
+        "allocated_bytes": 10422725120,
+        "max_allocated_bytes": 10976808448,
+        "reserved_bytes": 11018436608,
+        "max_reserved_bytes": 11018436608
+      },
+      "xpu:1": {
+        "allocated_bytes": 10422724096,
+        "max_allocated_bytes": 10976807424,
+        "reserved_bytes": 11018436608,
+        "max_reserved_bytes": 11018436608
+      }
+    },
+    "vram": {
+      "xpu:0": {
+        "allocated_bytes": 10422725120,
+        "reserved_bytes": 11018436608,
+        "free_bytes": 22541021184,
+        "total_bytes": 34242297856
+      },
+      "xpu:1": {
+        "allocated_bytes": 10422724096,
+        "reserved_bytes": 11018436608,
+        "free_bytes": 22653276160,
+        "total_bytes": 34242297856
+      }
+    },
+    "host_peak_rss_bytes": 10038767616
+  },
+  "timings_seconds": {
+    "probe.load_latents": 0.008,
+    "decode.load_vae": 3.031,
+    "decode.replicate_vae": 2.851,
+    "probe.pass0": 5.188,
+    "probe.pass1": 4.498
+  },
+  "versions": {
+    "python": "3.12.3",
+    "torch": "2.14.0+xpu",
+    "diffusers": "0.41.0.dev0"
+  },
+  "cross_card_transfer": "host"
+}

@@ -1,0 +1,474 @@
+2026-09-19T19:39:27-04:00 service ready; stopping
+Graceful stop requested for the saved container only. No restart is scheduled.
+2026-09-19T19:39:47-04:00 health rc=0
+2026-09-19T19:39:47-04:00 minimax decode experiments
+source run   /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z
+latents      /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors
+output       /mnt/fast-ai/bench-results/minimax-h3-decode-20260919
+source hashes:
+  video_tensor_sha256      ac730503b4380001566532ca6e03fb9752250f44488b0dee7c9baff244a35280
+  audio_tensor_sha256      73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d
+  video_latents_sha256     e71774eb412865039e3e6983197f6d75ca1e31ce3830c179d37d0e6500a5e8dd
+  audio_latents_sha256     a81fb24708d5ea601cfd41fab14276c547c6cdcd9e68b771b1727a0c250acc90
+  decode.video 79.96 s   total 243.8 s
+
+=== step 0  the reimplemented tile loop vs upstream (CPU, no cards) ===================================================================
+1. the diffusers source this reimplementation was written against
+  PASS  diffusers VAE source hash matches DIFFUSERS_VAE_SOURCE_SHA256  4c3c9745ee27d16ff343c4998244bad41cd8f4213f0029cf7ce11ebb6d72ca1b at /mnt/fast-ai/build/diffusers-src/src/diffusers/models/autoencoders/autoencoder_kl_minimax_h3.py
+
+2-4. the tile loop, against upstream's own _decode
+two cards: latent (1, 24, 12, 12, 16), 2 chunks x 20 tiles over 2 card(s), split [20, 20]
+  PASS  two cards: tile grid and blend extents match _split_tiles  rows [0, 32, 80, 128] overlaps [32, 16, 16], cols [0, 48, 96, 144, 192] overlaps [16, 16, 16, 16]
+  PASS  two cards: one decoder call per upstream call  40 vs 40
+  PASS  two cards: tile inputs identical in order (shape, strides, offset, bytes)
+  PASS  two cards: jobs enumerated in the original row-major (chunk, row, col) order
+  PASS  two cards: decoded shape  (1, 3, 39, 192, 256)
+  PASS  two cards: decoded clip is bitwise equal to _decode  max|d| 0.000e+00
+
+one card : latent (1, 24, 12, 12, 16), 2 chunks x 20 tiles over 1 card(s), split [40]
+  PASS  one card : tile grid and blend extents match _split_tiles  rows [0, 32, 80, 128] overlaps [32, 16, 16], cols [0, 48, 96, 144, 192] overlaps [16, 16, 16, 16]
+  PASS  one card : one decoder call per upstream call  40 vs 40
+  PASS  one card : tile inputs identical in order (shape, strides, offset, bytes)
+  PASS  one card : jobs enumerated in the original row-major (chunk, row, col) order
+  PASS  one card : decoded shape  (1, 3, 39, 192, 256)
+  PASS  one card : decoded clip is bitwise equal to _decode  max|d| 0.000e+00
+
+padded   : latent (1, 24, 10, 12, 16), 2 chunks x 20 tiles over 2 card(s), split [20, 20]
+  PASS  padded   : tile grid and blend extents match _split_tiles  rows [0, 32, 80, 128] overlaps [32, 16, 16], cols [0, 48, 96, 144, 192] overlaps [16, 16, 16, 16]
+  PASS  padded   : one decoder call per upstream call  40 vs 40
+  PASS  padded   : tile inputs identical in order (shape, strides, offset, bytes)
+  PASS  padded   : jobs enumerated in the original row-major (chunk, row, col) order
+  PASS  padded   : decoded shape  (1, 3, 34, 192, 256)
+  PASS  padded   : decoded clip is bitwise equal to _decode  max|d| 0.000e+00
+
+all checks passed
+
+=== step 1  E1 tile identity probe (3 tiles, both cards, twice) ===================================================================
+latents: /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors
+preflight: MemAvailable 13538 MiB (need >= 11264), some avg10 0.00
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run e1-probe-20260919T233947Z ===============================================================
+2026-09-19T19:39:48-04:00 mem-watchdog[60791] watching pid=60790 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 19:39:50,240 INFO    [phase] probe.load_latents: start
+2026-09-19 19:39:50,248 INFO    [phase] probe.load_latents: done in 0.01 s
+2026-09-19 19:39:52,998 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 42.38it/s]
+2026-09-19 19:39:56,029 INFO    [phase] decode.load_vae: done in 3.03 s
+2026-09-19 19:39:56,029 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 19:39:56,032 INFO    [vram] after decode.load_vae      xpu:0  allocated 9.700 GiB  reserved 9.713 GiB  free 21.863 GiB of 31.891 GiB
+2026-09-19 19:39:56,034 INFO    [phase] decode.replicate_vae: start
+2026-09-19 19:39:58,886 INFO    [phase] decode.replicate_vae: done in 2.85 s
+2026-09-19 19:39:58,888 INFO    video vae replicated onto xpu:1: 704 tensors, 9.700 GiB, tensor by tensor through cross_card()
+2026-09-19 19:39:58,888 INFO    [vram] after decode.replicate_vae xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.967 GiB of 31.891 GiB
+2026-09-19 19:39:58,888 INFO    [vram] probe: both replicas up    xpu:0  allocated 9.700 GiB  reserved 9.713 GiB  free 21.863 GiB of 31.891 GiB
+2026-09-19 19:39:58,888 INFO    [vram] probe: both replicas up    xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.967 GiB of 31.891 GiB
+2026-09-19 19:39:58,956 INFO    [phase] probe.pass0: start
+2026-09-19 19:40:04,145 INFO    [phase] probe.pass0: done in 5.19 s
+2026-09-19 19:40:04,145 INFO    [phase] probe.pass1: start
+2026-09-19 19:40:08,643 INFO    [phase] probe.pass1: done in 4.50 s
+2026-09-19 19:40:08,644 INFO    [vram] probe: after tiles         xpu:0  allocated 9.707 GiB  reserved 10.262 GiB  free 20.993 GiB of 31.891 GiB
+2026-09-19 19:40:08,644 INFO    [vram] probe: after tiles         xpu:1  allocated 9.707 GiB  reserved 10.262 GiB  free 21.098 GiB of 31.891 GiB
+2026-09-19 19:40:08,648 INFO    [vram] probe: final               xpu:0  allocated 9.707 GiB  reserved 10.262 GiB  free 20.993 GiB of 31.891 GiB
+2026-09-19 19:40:08,648 INFO    [vram] probe: final               xpu:1  allocated 9.707 GiB  reserved 10.262 GiB  free 21.098 GiB of 31.891 GiB
+2026-09-19 19:40:08,649 INFO    [probe] pass 0 tile 0 (row 0 col 0): SAME  f3e1beb8cb06a89d / f3e1beb8cb06a89d
+2026-09-19 19:40:08,649 INFO    [probe] pass 0 tile 1 (row 0 col 1): SAME  cad642bf670b23d6 / cad642bf670b23d6
+2026-09-19 19:40:08,649 INFO    [probe] pass 0 tile 2 (row 0 col 2): SAME  972cade0c651579a / 972cade0c651579a
+2026-09-19 19:40:08,649 INFO    [probe] pass 1 tile 0 (row 0 col 0): SAME  f3e1beb8cb06a89d / f3e1beb8cb06a89d
+2026-09-19 19:40:08,649 INFO    [probe] pass 1 tile 1 (row 0 col 1): SAME  cad642bf670b23d6 / cad642bf670b23d6
+2026-09-19 19:40:08,649 INFO    [probe] pass 1 tile 2 (row 0 col 2): SAME  972cade0c651579a / 972cade0c651579a
+2026-09-19 19:40:08,649 INFO    [probe] identity across cards: PASS
+2026-09-19 19:40:08,649 INFO    [probe] repeatable per card:   PASS
+2026-09-19 19:40:08,649 INFO    [probe] host peak RSS 9.349 GiB
+2026-09-19 19:40:08,649 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/e1-probe-20260919T233947Z/probe.json
+2026-09-19T19:40:09-04:00 mem-watchdog[60791] pid 60790 exited on its own; 42 polls, low MemAvailable 12255 MiB, peak some avg10 0
+
+E1 gates:
+  1 identity across cards : PASS
+  2 repeatable per card   : PASS
+  3 memory xpu:0          : allocated 9.707 GiB (gate: <= 12.5 GiB with both replicas up)
+  3 memory xpu:1          : allocated 9.707 GiB (gate: <= 12.5 GiB with both replicas up)
+  4 host VmHWM            : 9.349 GiB (gate: <= ~13.0 GiB, i.e. no more than +0.5 over the 12.467 of a normal run)
+
+=== step 2  control: --decode-only --vae-decode single --vae-autocast off ===================================================================
+latents: /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors
+preflight: MemAvailable 13784 MiB (need >= 11264), some avg10 0.10
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run control-single-off-20260919T233947Z ===============================================================
+2026-09-19T19:40:10-04:00 mem-watchdog[61053] watching pid=61052 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 19:40:11,066 INFO    run control-single-off-20260919T233947Z -> /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/control-single-off-20260919T233947Z
+2026-09-19 19:40:11,218 INFO    [phase] decode_only.load_latents: start
+2026-09-19 19:40:11,219 INFO    [phase] decode_only.load_latents: done in 0.00 s
+2026-09-19 19:40:11,219 INFO    decode-only: pruned latents (1, 24, 37, 34, 60) from /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors (the canvas comes from the latents, so --height/--width/--frames are ignored)
+2026-09-19 19:40:11,220 INFO    decode card: xpu:1 (free xpu:0 31.578 GiB, xpu:1 31.849 GiB)
+2026-09-19 19:40:13,796 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 103.15it/s]
+2026-09-19 19:40:14,990 INFO    [phase] decode.load_vae: done in 1.19 s
+2026-09-19 19:40:14,990 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 19:40:14,991 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.967 GiB of 31.891 GiB
+2026-09-19 19:40:14,991 INFO    [phase] decode.video: start
+2026-09-19 19:41:34,299 INFO    [phase] decode.video: done in 79.31 s
+2026-09-19 19:41:34,300 INFO    [vram] after decode.video         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:41:34,300 INFO    [vram] after decode.video         xpu:1  allocated 10.431 GiB  reserved 12.078 GiB  free 19.224 GiB of 31.891 GiB
+2026-09-19 19:41:34,492 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:41:34,492 INFO    [vram] after video vae release    xpu:1  allocated 0.730 GiB  reserved 0.744 GiB  free 30.558 GiB of 31.891 GiB
+2026-09-19 19:41:34,492 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 19:41:34,892 INFO    [phase] decode.load_audio_vae: done in 0.40 s
+2026-09-19 19:41:34,892 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 1.294 GiB  reserved 1.312 GiB  free 29.989 GiB of 31.891 GiB
+2026-09-19 19:41:34,892 INFO    [phase] decode.audio: start
+2026-09-19 19:41:37,919 INFO    [phase] decode.audio: done in 3.03 s
+2026-09-19 19:41:37,920 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:41:37,920 INFO    [vram] after decode.audio         xpu:1  allocated 1.537 GiB  reserved 1.699 GiB  free 29.499 GiB of 31.891 GiB
+2026-09-19 19:41:38,325 INFO    [phase] write: start
+2026-09-19 19:41:39,868 INFO    [phase] write: done in 1.54 s
+2026-09-19 19:41:40,269 INFO    video sha256 ac730503b4380001566532ca6e03fb9752250f44488b0dee7c9baff244a35280
+2026-09-19 19:41:40,269 INFO    audio sha256 73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d
+2026-09-19 19:41:40,269 INFO    [decode-only] video_tensor_sha256    MATCH  source ac730503b4380001
+2026-09-19 19:41:40,269 INFO    [decode-only] audio_tensor_sha256    MATCH  source 73c26c2a08d47251
+2026-09-19 19:41:40,269 INFO    [decode-only] vs smoke-20260919T224948Z: bytewise-equal (--vae-decode single, --vae-autocast off)
+2026-09-19 19:41:40,269 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/control-single-off-20260919T233947Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/control-single-off-20260919T233947Z/receipt.json
+2026-09-19T19:41:41-04:00 mem-watchdog[61053] pid 61052 exited on its own; 182 polls, low MemAvailable 10232 MiB, peak some avg10 0
+
+control decode.video 79.31 s
+  MATCH    video_tensor_sha256
+  MATCH    audio_tensor_sha256
+  MATCH    video_latents_sha256
+  MATCH    audio_latents_sha256
+
+=== step 3  lever 2: --vae-decode two-card (gate: identical hashes) ===================================================================
+latents: /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors
+preflight: MemAvailable 13756 MiB (need >= 11264), some avg10 0.18
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run two-card-off-20260919T233947Z ===============================================================
+2026-09-19T19:41:41-04:00 mem-watchdog[62011] watching pid=62010 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 19:41:42,598 INFO    run two-card-off-20260919T233947Z -> /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/two-card-off-20260919T233947Z
+2026-09-19 19:41:42,762 INFO    [phase] decode_only.load_latents: start
+2026-09-19 19:41:42,765 INFO    [phase] decode_only.load_latents: done in 0.00 s
+2026-09-19 19:41:42,765 INFO    decode-only: pruned latents (1, 24, 37, 34, 60) from /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors (the canvas comes from the latents, so --height/--width/--frames are ignored)
+2026-09-19 19:41:42,766 INFO    decode card: xpu:1 (free xpu:0 31.578 GiB, xpu:1 31.849 GiB)
+2026-09-19 19:41:45,362 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 41.96it/s]
+2026-09-19 19:41:47,848 INFO    [phase] decode.load_vae: done in 2.49 s
+2026-09-19 19:41:47,848 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 19:41:47,849 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.967 GiB of 31.891 GiB
+2026-09-19 19:41:47,851 INFO    [phase] decode.replicate_vae: start
+2026-09-19 19:41:50,427 INFO    [phase] decode.replicate_vae: done in 2.58 s
+2026-09-19 19:41:50,430 INFO    video vae replicated onto xpu:0: 704 tensors, 9.700 GiB, tensor by tensor through cross_card()
+2026-09-19 19:41:50,430 INFO    [vram] after decode.replicate_vae xpu:0  allocated 9.700 GiB  reserved 9.713 GiB  free 21.863 GiB of 31.891 GiB
+2026-09-19 19:41:50,430 INFO    [phase] decode.video: start
+2026-09-19 19:43:08,613 INFO    two-card decode: 105 tiles over xpu:1, xpu:0 (53/52), blended on xpu:1
+2026-09-19 19:43:08,704 INFO    [phase] decode.video: done in 78.27 s
+2026-09-19 19:43:08,705 INFO    [vram] after decode.video         xpu:0  allocated 9.700 GiB  reserved 10.262 GiB  free 20.993 GiB of 31.891 GiB
+2026-09-19 19:43:08,705 INFO    [vram] after decode.video         xpu:1  allocated 10.431 GiB  reserved 12.391 GiB  free 18.938 GiB of 31.891 GiB
+2026-09-19 19:43:08,941 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.255 GiB of 31.891 GiB
+2026-09-19 19:43:08,942 INFO    [vram] after video vae release    xpu:1  allocated 0.730 GiB  reserved 0.764 GiB  free 30.565 GiB of 31.891 GiB
+2026-09-19 19:43:08,942 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 19:43:09,241 INFO    [phase] decode.load_audio_vae: done in 0.30 s
+2026-09-19 19:43:09,241 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 1.294 GiB  reserved 1.312 GiB  free 30.016 GiB of 31.891 GiB
+2026-09-19 19:43:09,242 INFO    [phase] decode.audio: start
+2026-09-19 19:43:12,277 INFO    [phase] decode.audio: done in 3.04 s
+2026-09-19 19:43:12,278 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.255 GiB of 31.891 GiB
+2026-09-19 19:43:12,278 INFO    [vram] after decode.audio         xpu:1  allocated 1.537 GiB  reserved 1.699 GiB  free 29.526 GiB of 31.891 GiB
+2026-09-19 19:43:12,631 INFO    [phase] write: start
+2026-09-19 19:43:14,193 INFO    [phase] write: done in 1.56 s
+2026-09-19 19:43:14,598 INFO    video sha256 ac730503b4380001566532ca6e03fb9752250f44488b0dee7c9baff244a35280
+2026-09-19 19:43:14,599 INFO    audio sha256 73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d
+2026-09-19 19:43:14,599 INFO    [decode-only] video_tensor_sha256    MATCH  source ac730503b4380001
+2026-09-19 19:43:14,599 INFO    [decode-only] audio_tensor_sha256    MATCH  source 73c26c2a08d47251
+2026-09-19 19:43:14,599 INFO    [decode-only] vs smoke-20260919T224948Z: bytewise-equal (--vae-decode two-card, --vae-autocast off)
+2026-09-19 19:43:14,599 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/two-card-off-20260919T233947Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/two-card-off-20260919T233947Z/receipt.json
+2026-09-19T19:43:15-04:00 mem-watchdog[62011] pid 62010 exited on its own; 187 polls, low MemAvailable 10655 MiB, peak some avg10 0
+
+two-card decode.video 78.27 s vs control 79.31 s  (1.01x)
+  tiles 105 split [53, 52] over ['xpu:1', 'xpu:0'], blended on xpu:1
+  MATCH    video_tensor_sha256
+  MATCH    audio_tensor_sha256
+  MATCH    video_latents_sha256
+  MATCH    audio_latents_sha256
+GATE: bit-identical -- lever 2 stands
+
+=== step 4  E2: fp16 autocast, run A ===================================================================
+latents: /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors
+preflight: MemAvailable 13540 MiB (need >= 11264), some avg10 0.59
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run fp16-a-20260919T233947Z ===============================================================
+2026-09-19T19:43:15-04:00 mem-watchdog[62952] watching pid=62951 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 19:43:16,647 INFO    run fp16-a-20260919T233947Z -> /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-a-20260919T233947Z
+2026-09-19 19:43:16,771 INFO    [phase] decode_only.load_latents: start
+2026-09-19 19:43:16,773 INFO    [phase] decode_only.load_latents: done in 0.00 s
+2026-09-19 19:43:16,773 INFO    decode-only: pruned latents (1, 24, 37, 34, 60) from /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors (the canvas comes from the latents, so --height/--width/--frames are ignored)
+2026-09-19 19:43:16,774 INFO    decode card: xpu:1 (free xpu:0 31.578 GiB, xpu:1 31.849 GiB)
+2026-09-19 19:43:19,480 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 102.99it/s]
+2026-09-19 19:43:21,467 INFO    [phase] decode.load_vae: done in 1.99 s
+2026-09-19 19:43:21,467 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 19:43:21,468 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.967 GiB of 31.891 GiB
+2026-09-19 19:43:21,468 INFO    [phase] decode.video: start
+2026-09-19 19:43:37,398 INFO    [phase] decode.video: done in 15.93 s
+2026-09-19 19:43:37,399 INFO    [vram] after decode.video         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:43:37,399 INFO    [vram] after decode.video         xpu:1  allocated 10.431 GiB  reserved 15.811 GiB  free 15.515 GiB of 31.891 GiB
+2026-09-19 19:43:37,592 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:43:37,593 INFO    [vram] after video vae release    xpu:1  allocated 0.730 GiB  reserved 0.764 GiB  free 30.562 GiB of 31.891 GiB
+2026-09-19 19:43:37,593 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 19:43:37,984 INFO    [phase] decode.load_audio_vae: done in 0.39 s
+2026-09-19 19:43:37,984 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 1.294 GiB  reserved 1.312 GiB  free 30.013 GiB of 31.891 GiB
+2026-09-19 19:43:37,984 INFO    [phase] decode.audio: start
+2026-09-19 19:43:40,991 INFO    [phase] decode.audio: done in 3.01 s
+2026-09-19 19:43:40,992 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:43:40,992 INFO    [vram] after decode.audio         xpu:1  allocated 1.537 GiB  reserved 1.699 GiB  free 29.518 GiB of 31.891 GiB
+2026-09-19 19:43:41,329 INFO    [phase] write: start
+2026-09-19 19:43:42,810 INFO    [phase] write: done in 1.48 s
+2026-09-19 19:43:43,216 INFO    video sha256 cb8148518de106e87c2cb145197bfa552539436eeb03f53191d0c5502e95b2fc
+2026-09-19 19:43:43,216 INFO    audio sha256 73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d
+2026-09-19 19:43:43,216 INFO    [decode-only] video_tensor_sha256    DIFFERS  source ac730503b4380001
+2026-09-19 19:43:43,216 INFO    [decode-only] audio_tensor_sha256    MATCH  source 73c26c2a08d47251
+2026-09-19 19:43:43,216 INFO    [decode-only] vs smoke-20260919T224948Z: NOT bytewise-equal (--vae-decode single, --vae-autocast fp16)
+2026-09-19 19:43:43,216 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-a-20260919T233947Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-a-20260919T233947Z/receipt.json
+2026-09-19T19:43:44-04:00 mem-watchdog[62952] pid 62951 exited on its own; 57 polls, low MemAvailable 10454 MiB, peak some avg10 0
+
+=== step 5  E2: fp16 autocast, run B (the repeat gate) ===================================================================
+latents: /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors
+preflight: MemAvailable 13658 MiB (need >= 11264), some avg10 0.03
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run fp16-b-20260919T233947Z ===============================================================
+2026-09-19T19:43:44-04:00 mem-watchdog[63433] watching pid=63432 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 19:43:45,446 INFO    run fp16-b-20260919T233947Z -> /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-b-20260919T233947Z
+2026-09-19 19:43:45,625 INFO    [phase] decode_only.load_latents: start
+2026-09-19 19:43:45,627 INFO    [phase] decode_only.load_latents: done in 0.00 s
+2026-09-19 19:43:45,628 INFO    decode-only: pruned latents (1, 24, 37, 34, 60) from /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors (the canvas comes from the latents, so --height/--width/--frames are ignored)
+2026-09-19 19:43:45,628 INFO    decode card: xpu:1 (free xpu:0 31.578 GiB, xpu:1 31.849 GiB)
+2026-09-19 19:43:48,265 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 41.57it/s]
+2026-09-19 19:43:50,884 INFO    [phase] decode.load_vae: done in 2.62 s
+2026-09-19 19:43:50,884 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 19:43:50,885 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.967 GiB of 31.891 GiB
+2026-09-19 19:43:50,885 INFO    [phase] decode.video: start
+2026-09-19 19:44:06,224 INFO    [phase] decode.video: done in 15.34 s
+2026-09-19 19:44:06,224 INFO    [vram] after decode.video         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:44:06,224 INFO    [vram] after decode.video         xpu:1  allocated 10.431 GiB  reserved 15.811 GiB  free 15.515 GiB of 31.891 GiB
+2026-09-19 19:44:06,421 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:44:06,421 INFO    [vram] after video vae release    xpu:1  allocated 0.730 GiB  reserved 0.764 GiB  free 30.562 GiB of 31.891 GiB
+2026-09-19 19:44:06,421 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 19:44:06,645 INFO    [phase] decode.load_audio_vae: done in 0.22 s
+2026-09-19 19:44:06,645 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 1.294 GiB  reserved 1.312 GiB  free 30.013 GiB of 31.891 GiB
+2026-09-19 19:44:06,645 INFO    [phase] decode.audio: start
+2026-09-19 19:44:09,641 INFO    [phase] decode.audio: done in 3.00 s
+2026-09-19 19:44:09,642 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.576 GiB of 31.891 GiB
+2026-09-19 19:44:09,642 INFO    [vram] after decode.audio         xpu:1  allocated 1.537 GiB  reserved 1.699 GiB  free 29.518 GiB of 31.891 GiB
+2026-09-19 19:44:10,035 INFO    [phase] write: start
+2026-09-19 19:44:11,576 INFO    [phase] write: done in 1.54 s
+2026-09-19 19:44:11,985 INFO    video sha256 cb8148518de106e87c2cb145197bfa552539436eeb03f53191d0c5502e95b2fc
+2026-09-19 19:44:11,985 INFO    audio sha256 73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d
+2026-09-19 19:44:11,985 INFO    [decode-only] video_tensor_sha256    DIFFERS  source ac730503b4380001
+2026-09-19 19:44:11,985 INFO    [decode-only] audio_tensor_sha256    MATCH  source 73c26c2a08d47251
+2026-09-19 19:44:11,985 INFO    [decode-only] vs smoke-20260919T224948Z: NOT bytewise-equal (--vae-decode single, --vae-autocast fp16)
+2026-09-19 19:44:11,985 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-b-20260919T233947Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-b-20260919T233947Z/receipt.json
+2026-09-19T19:44:13-04:00 mem-watchdog[63433] pid 63432 exited on its own; 57 polls, low MemAvailable 10323 MiB, peak some avg10 0
+
+fp16 A decode.video 15.93 s, B 15.34 s
+  MATCH    video_tensor_sha256
+  MATCH    audio_tensor_sha256
+  MATCH    video_latents_sha256
+  MATCH    audio_latents_sha256
+REPEAT GATE: the two fp16 runs are bytewise equal
+
+=== step 5b  E2 fidelity: fp16 vs the fp32 control (numbers only) ===================================================================
+run A  /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/control-single-off-20260919T233947Z   denoiser=pruned  seed=42  steps=9
+run B  /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-a-20260919T233947Z   denoiser=pruned  seed=42  steps=9
+
+  DIFFERS  video_tensor_sha256  ac730503b4380001... / cb8148518de106e8...
+  MATCH    audio_tensor_sha256  73c26c2a08d47251... / 73c26c2a08d47251...
+  MATCH    video_latents_sha256  e71774eb41286503... / e71774eb41286503...
+  MATCH    audio_latents_sha256  a81fb24708d5ea60... / a81fb24708d5ea60...
+
+run A decode: --vae-decode single --vae-autocast off  decode.video 79.3 s
+    MATCH    video_tensor_sha256 vs smoke-20260919T224948Z  ac730503b4380001...
+    MATCH    audio_tensor_sha256 vs smoke-20260919T224948Z  73c26c2a08d47251...
+    MATCH    video_latents_sha256 vs smoke-20260919T224948Z  e71774eb41286503...
+    MATCH    audio_latents_sha256 vs smoke-20260919T224948Z  a81fb24708d5ea60...
+run B decode: --vae-decode single --vae-autocast fp16  decode.video 15.9 s
+    DIFFERS  video_tensor_sha256 vs smoke-20260919T224948Z  ac730503b4380001...
+    MATCH    audio_tensor_sha256 vs smoke-20260919T224948Z  73c26c2a08d47251...
+    MATCH    video_latents_sha256 vs smoke-20260919T224948Z  e71774eb41286503...
+    MATCH    audio_latents_sha256 vs smoke-20260919T224948Z  a81fb24708d5ea60...
+
+  video          differs          max|d|=0.0295003  mean|d|=0.000115222  differing=99.8323%
+  audio          identical        max|d|=0  mean|d|=0  differing=0.0000%
+  latents        identical        max|d|=0  mean|d|=0  differing=0.0000%
+  audio_latents  identical        max|d|=0  mean|d|=0  differing=0.0000%
+
+worst frame: 120 (max|d| 0.0295003)
+PER-FRAME VERDICT: 124/124 frames differ
+wrote /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/fp16-a-20260919T233947Z/vs-control.json
+(a nonzero exit above only means the frames differ, which is the expected outcome of an A/B.
+ Whether that difference is acceptable is the user's call, not this script's.)
+
+=== step 6  both levers: --vae-decode two-card --vae-autocast fp16 (timing) ===================================================================
+latents: /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors
+preflight: MemAvailable 13603 MiB (need >= 11264), some avg10 0.98
+preflight: no containers running
+preflight: PYTORCH_ALLOC_CONF=expandable_segments:True  B70_H3_XFER=host
+preflight: OK
+=== GPU run two-card-fp16-20260919T233947Z ===============================================================
+2026-09-19T19:44:16-04:00 mem-watchdog[63907] watching pid=63906 min_avail=2048 MiB (hard floor 1024 MiB), pressure some avg10 > 40, 3 consecutive bad polls at 0.5s
+2026-09-19 19:44:17,854 INFO    run two-card-fp16-20260919T233947Z -> /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/two-card-fp16-20260919T233947Z
+2026-09-19 19:44:18,200 INFO    [phase] decode_only.load_latents: start
+2026-09-19 19:44:18,203 INFO    [phase] decode_only.load_latents: done in 0.00 s
+2026-09-19 19:44:18,203 INFO    decode-only: pruned latents (1, 24, 37, 34, 60) from /mnt/fast-ai/bench-results/minimax-h3-canvas-20260919/pruned-960x544/smoke-20260919T224948Z/tensors.safetensors (the canvas comes from the latents, so --height/--width/--frames are ignored)
+2026-09-19 19:44:18,203 INFO    decode card: xpu:1 (free xpu:0 31.578 GiB, xpu:1 31.849 GiB)
+2026-09-19 19:44:20,916 INFO    [phase] decode.load_vae: start
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 43.70it/s]
+2026-09-19 19:44:23,962 INFO    [phase] decode.load_vae: done in 3.05 s
+2026-09-19 19:44:23,962 INFO    video vae tiling: on (--vae-tiling auto; tiles 256x256, min overlap 64x64) -- deterministic, but it changes the pixels, so both sides of an A/B must match
+2026-09-19 19:44:23,973 INFO    [vram] after decode.load_vae      xpu:1  allocated 9.700 GiB  reserved 9.713 GiB  free 21.967 GiB of 31.891 GiB
+2026-09-19 19:44:23,975 INFO    [phase] decode.replicate_vae: start
+2026-09-19 19:44:26,827 INFO    [phase] decode.replicate_vae: done in 2.85 s
+2026-09-19 19:44:26,829 INFO    video vae replicated onto xpu:0: 704 tensors, 9.700 GiB, tensor by tensor through cross_card()
+2026-09-19 19:44:26,829 INFO    [vram] after decode.replicate_vae xpu:0  allocated 9.700 GiB  reserved 9.713 GiB  free 21.863 GiB of 31.891 GiB
+2026-09-19 19:44:26,829 INFO    [phase] decode.video: start
+2026-09-19 19:44:43,552 INFO    two-card decode: 105 tiles over xpu:1, xpu:0 (53/52), blended on xpu:1
+2026-09-19 19:44:43,643 INFO    [phase] decode.video: done in 16.81 s
+2026-09-19 19:44:43,644 INFO    [vram] after decode.video         xpu:0  allocated 9.700 GiB  reserved 9.891 GiB  free 21.388 GiB of 31.891 GiB
+2026-09-19 19:44:43,644 INFO    [vram] after decode.video         xpu:1  allocated 10.431 GiB  reserved 15.361 GiB  free 15.990 GiB of 31.891 GiB
+2026-09-19 19:44:43,904 INFO    [vram] after video vae release    xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.278 GiB of 31.891 GiB
+2026-09-19 19:44:43,904 INFO    [vram] after video vae release    xpu:1  allocated 0.730 GiB  reserved 0.764 GiB  free 30.588 GiB of 31.891 GiB
+2026-09-19 19:44:43,904 INFO    [phase] decode.load_audio_vae: start
+/mnt/fast-ai/venvs/minimax-h3/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-09-19 19:44:44,317 INFO    [phase] decode.load_audio_vae: done in 0.41 s
+2026-09-19 19:44:44,317 INFO    [vram] after decode.load_audio_vae xpu:1  allocated 1.294 GiB  reserved 1.312 GiB  free 30.039 GiB of 31.891 GiB
+2026-09-19 19:44:44,317 INFO    [phase] decode.audio: start
+2026-09-19 19:44:47,346 INFO    [phase] decode.audio: done in 3.03 s
+2026-09-19 19:44:47,347 INFO    [vram] after decode.audio         xpu:0  allocated 0.000 GiB  reserved 0.000 GiB  free 31.278 GiB of 31.891 GiB
+2026-09-19 19:44:47,347 INFO    [vram] after decode.audio         xpu:1  allocated 1.537 GiB  reserved 1.699 GiB  free 29.545 GiB of 31.891 GiB
+2026-09-19 19:44:47,928 INFO    [phase] write: start
+2026-09-19 19:44:49,503 INFO    [phase] write: done in 1.58 s
+2026-09-19 19:44:49,912 INFO    video sha256 cb8148518de106e87c2cb145197bfa552539436eeb03f53191d0c5502e95b2fc
+2026-09-19 19:44:49,912 INFO    audio sha256 73c26c2a08d4725193f81f36ef6255437f2dbc3f48dc044275e7d17633beea5d
+2026-09-19 19:44:49,912 INFO    [decode-only] video_tensor_sha256    DIFFERS  source ac730503b4380001
+2026-09-19 19:44:49,912 INFO    [decode-only] audio_tensor_sha256    MATCH  source 73c26c2a08d47251
+2026-09-19 19:44:49,912 INFO    [decode-only] vs smoke-20260919T224948Z: NOT bytewise-equal (--vae-decode two-card, --vae-autocast fp16)
+2026-09-19 19:44:49,912 INFO    wrote /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/two-card-fp16-20260919T233947Z/clip.mp4 and /mnt/fast-ai/bench-results/minimax-h3-decode-20260919/two-card-fp16-20260919T233947Z/receipt.json
+2026-09-19T19:44:51-04:00 mem-watchdog[63907] pid 63906 exited on its own; 68 polls, low MemAvailable 10332 MiB, peak some avg10 2
+
+=== summary ===================================================================
+run                                 decode.video   vs source video hash
+source (single card, fp32)                79.96s          (the control)
+control-single-off-2 [single/off]         79.31s              identical   1.01x
+two-card-off-2026091 [two-card/off]        78.27s              identical   1.02x
+fp16-a-20260919T2339 [single/fp16]        15.93s                differs   5.02x
+fp16-b-20260919T2339 [single/fp16]        15.34s                differs   5.21x
+two-card-fp16-202609 [two-card/fp16]        16.81s                differs   4.76x
+
+E1: identity PASS, repeat PASS, host VmHWM 9.349 GiB
+
+receipts under /mnt/fast-ai/bench-results/minimax-h3-decode-20260919
+2026-09-19T19:44:51-04:00 decode experiments rc=0
+2026-09-19T19:45:11-04:00 service restart with container no-swap + sampler (validation start 3)
+
+[2026-09-19T23:45:11Z] ===== PHASE 0  preconditions (checks only -- this phase changes nothing) =====
+[2026-09-19T23:45:11Z] session root /mnt/fast-ai/bench-results/resume-20260919g; only_service=1; git b68ecf0c1
+[2026-09-19T23:45:11Z] no containers running
+[2026-09-19T23:45:11Z] MemAvailable 14036 MiB (need >= 11264)
+[2026-09-19T23:45:11Z] /mnt/fast-ai free 507466 MiB (need >= 8192)
+[2026-09-19T23:45:11Z] phase 0 OK
+
+[2026-09-19T23:45:11Z] ===== PHASE 1  XPU + XCCL health probe on both cards =====
+[2026-09-19T23:45:11Z] running /home/steve/b70-optimization-lab/scripts/check-qwen36-xpu-xccl-health.sh
+[xpu-health] physical_devices=0,1
+[xpu-health] single-device smoke level_zero:0
+device_count 2
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 2
+selected_device 1
+ok 2097152.0
+[xpu-health] xccl_devices=0,1 nproc=2
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+rank 1 init okrank 0 init ok
+
+2026:09:19-19:45:18:65080 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:19-19:45:18:65080 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:09:19-19:45:18:65080 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-19:45:18:65081 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-19:45:19:65080:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 1 barrier ok
+rank 0 barrier ok
+rank 1 allreduce ok 2.0rank 0 allreduce ok 2.0
+
+[2026-09-19T23:45:20Z] health probe rc=0
+
+[2026-09-19T23:45:20Z] ===== PHASE 2/3  SKIPPED (--only-service) =====
+
+[2026-09-19T23:45:20Z] ===== PHASE 4  restore the two-card FP8 service on 18124, then the strict suite =====
+[2026-09-19T23:45:20Z] second health probe before the service takes both cards
+[xpu-health] physical_devices=0,1
+[xpu-health] single-device smoke level_zero:0
+device_count 2
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 2
+selected_device 1
+ok 2097152.0
+[xpu-health] xccl_devices=0,1 nproc=2
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+rank 1 init ok
+rank 0 init ok
+2026:09:19-19:45:26:65823 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:19-19:45:26:65823 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:09:19-19:45:26:65823 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-19:45:26:65824 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:19-19:45:27:65823:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 0 barrier ok
+rank 1 barrier ok
+rank 0 allreduce ok 2.0
+rank 1 allreduce ok 2.0
+[2026-09-19T23:45:28Z] service health probe rc=0
+[2026-09-19T23:45:28Z] waiting for 18124 to be completely free (ss -tan, up to 300 s)
+[2026-09-19T23:45:28Z] 18124 free
+[2026-09-19T23:45:28Z] starting: systemd-run --user --unit fp8-service-20260918-resume --working-directory /home/steve/b70-optimization-lab --collect python3 /home/steve/b70-optimization-lab/packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /mnt/fast-ai/llm-models/qwen3.8-27b-fp8 --state-dir /mnt/fast-ai/bench-results/resume-20260919g/service --port 18124
+Running as unit: fp8-service-20260918-resume.service; invocation ID: 358c579f1974497987f767971bf746b6
+[2026-09-19T23:45:28Z] waiting for the service to report ready (up to 2400 s)
+[2026-09-19T23:47:58Z] service status=ready
+[2026-09-19T23:47:58Z] service ready on http://127.0.0.1:18124/v1  (unit fp8-service-20260918-resume, state /mnt/fast-ai/bench-results/resume-20260919g/service)
+[2026-09-19T23:47:58Z] strict suite against the comm-2 no-MTP reference /mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict
+class_balanced_median_tok_s=89.842013400190
+workload_cache_zero_canary_gate=pass
+target_and_repeat_parity=not_evaluated_by_single_attempt
+PASS workload/cache/canaries: /mnt/fast-ai/bench-results/resume-20260919g/service-strict
+THIS ATTEMPT ALONE IS NOT QUALIFIED: preserve two fresh MTP1 and two matched-image MTP0 attempts with every comparison 12/12 exact
+[2026-09-19T23:49:22Z] strict suite rc=0
+[2026-09-19T23:49:22Z] STRICT PARITY: 12/12 vs the comm-2 no-MTP reference, at 89.84 tok/s
+
+[2026-09-19T23:49:22Z] ===== PHASE DONE =====
+[2026-09-19T23:49:22Z] health probe: clean on both cards
+[2026-09-19T23:49:22Z] FP8 two-card service: UP on 18124, unit fp8-service-20260918-resume, state /mnt/fast-ai/bench-results/resume-20260919g/service, strict 12/12 at 89.84 tok/s
+[2026-09-19T23:49:22Z] everything is under /mnt/fast-ai/bench-results/resume-20260919g
+[2026-09-19T23:49:22Z] remember to update CURRENT.md with the outcome
+2026-09-19T19:49:22-04:00 service rc=0; fault lines 0
+2026-09-19T19:49:23-04:00 batch3 done

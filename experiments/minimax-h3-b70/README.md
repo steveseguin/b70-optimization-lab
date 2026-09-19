@@ -1,6 +1,29 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
-Status (2026-09-19, batch window 3): **THE TRAINED CANVAS RUNS.** At 18:46-18:59 EDT the lane walked
+Status (2026-09-19, batch window 4): **DECODE IS 5x FASTER, AND THE EXACT WAY OF MAKING IT FASTER IS
+WORTH NOTHING.** At 19:39-19:49 EDT six GPU runs, all `--decode-only` on the same 960x544 latents
+(`smoke-20260919T224948Z`), settled both video-decode levers. rc 0 everywhere, zero `xe` fault lines,
+ten minutes of card time. **E1 passed on every gate**: three tiles, both cards, twice — every hash
+equal across cards and across passes, 9.707 GiB allocated per card with both VAE replicas up, host
+peak RSS **9.349 GiB**, below a normal run's. The **two-card tiled decode then reproduced all four
+source hashes bytewise — and ran in 78.27 s against the one-card control's 79.31 s, 1.01x.** The 105
+tiles were split 53/52 and the wall clock did not move: the two Python worker threads never
+overlapped, almost certainly the GIL held across each blocking XPU op, and the fix is one *process*
+per card, not one thread. Parked, because **fp16 autocast decode — the checkpoint's own documented
+recipe, which upstream enables only on CUDA — is 15.93 / 15.34 s, 5.0-5.2x**, and repeats bytewise
+between runs. It is **not** bit-identical: audio and both latent sets are identical, video differs on
+124/124 frames, `mean|d|` 0.000115 = **0.029 of one 8-bit level** on the runner's [0, 1] range,
+`max|d|` 0.0295 = **7.5 levels of 255** for the single worst pixel of 66.4 M. It also costs *more*
+card memory, 15.050 GiB peak against float32's 11.878. **It is off by default; making it the default
+with `off` kept as a flag is recommended and is the user's decision, not yet made.** With it, a
+960x544 clip is **~179.7 s instead of 243.8 — three minutes instead of four** (34.8 s of wall per
+second of video, against 47.2), which makes **model loading 27 %** of the run and **sampling 61 %**:
+batch mode / resident models is now the biggest exact lever left, and the idle-card stagger will hit
+the same threading wall the two-card decode just hit.
+[Results, window 4](notes/2026-09-19-speed-plan.md#results-window-4-2026-09-19-1939-1949-edt);
+receipts in [`data/2026-09-19-decode-experiments/`](data/2026-09-19-decode-experiments/).
+
+Earlier status (2026-09-19, batch window 3), for the record: **THE TRAINED CANVAS RUNS.** At 18:46-18:59 EDT the lane walked
 the canvas ladder 576x320 -> **960x544** -- the resolution the checkpoint was trained for -- on both
 denoisers, rc 0 everywhere, zero `xe` fault lines. The pruned run at 960x544 took **243.8 s** end to
 end for a 5.17 s clip (`sample` **109.10 s** for 8 NFE, `decode.video` **79.96 s**) and finished with

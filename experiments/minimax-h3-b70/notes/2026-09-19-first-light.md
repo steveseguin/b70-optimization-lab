@@ -400,6 +400,11 @@ Receipts, the batch log and the clip paths:
 
 ## Speed levers, none tried yet
 
+> **Two of these have now been tried.** Batch window 4 (23:39-23:45 UTC) ran the video-decode levers
+> on the cards: see [Decode experiments](#decode-experiments-2339-2345-utc) below for what they
+> actually cost. Lever 1 here (decode on both cards) is exact and gains nothing; the fp16 decode that
+> is not in this list at all is the one that pays. The list below is left as written.
+
 Five, in the order the time breakdown above justifies. **None of these has been attempted**, no
 number below is measured, and every one of them has to clear the same gate: either it is exact by
 construction and the bytewise repeat check proves it (same seed, same everything, all four hashes
@@ -476,6 +481,77 @@ a good clip by 6x, and that changes which levers are worth building.
 The ordering that falls out: **4 first** (largest, exact, no quality question), **1 second** (large,
 probably exact), **5 third** (it decides what "good" means), then **2** and **3**, which are both
 quality-risked and capped.
+
+## Decode experiments (23:39-23:45 UTC)
+
+**The pixel-conversion step is five times faster, and the way we expected to make it faster turned
+out to be worth nothing.** Six GPU runs in ten minutes of card time, all rc 0, no `xe` fault lines,
+watchdog never fired. The FP8 service was stopped for the window and restarted after it.
+
+Every run decoded **the same latents** — the 960x544 pruned clip from the canvas ladder,
+`smoke-20260919T224948Z` — through the new `--decode-only` path, so nothing but the decode itself
+varies. The first run proves that shortcut honest: decoding the saved latents on one card in float32
+reproduced **all four hashes of the original run**, so a decode-only run is a faithful stand-in for
+the decode half of a full clip.
+
+| run | decode | `decode.video` | vs the source clip |
+|-----|--------|---------------:|--------------------|
+| control | one card, float32 | **79.31 s** | **identical, all four hashes** |
+| lever: two cards | two cards, float32 | **78.27 s** | **identical, all four hashes** |
+| lever: fp16 | one card, fp16 autocast | **15.93 s** / **15.34 s** (two runs) | video differs; audio and both latents identical |
+| both | two cards, fp16 | 16.81 s | video differs |
+
+**The two-card decode is exactly right and exactly as slow.** The gate it had to clear first —
+do the two B70s compute the same tile to the same bits? — **passed**: three tiles, both cards, twice,
+every hash equal, with both 9.7 GiB copies of the decoder resident (9.707 GiB allocated per card) and
+host memory *lower* than a normal run at 9.349 GiB. Then the full two-card decode reproduced the
+source clip bytewise. And it took 78.27 s against 79.31 s: **1.01x.** The 105 tiles were split 53/52
+across the cards and the wall clock did not move, which means the two worker threads never ran at the
+same time. The likely cause is Python's global interpreter lock being held across each blocking GPU
+operation, so two threads driving two cards just take turns; the fix would be one *process* per card,
+not one thread. It is parked rather than built, because fp16 already finishes the same work in 16 s.
+The reasoning, the evidence and what a process-per-card build would cost are in the
+[speed plan](2026-09-19-speed-plan.md#results-window-4-2026-09-19-1939-1949-edt).
+
+**The fp16 decode is 5.0-5.2x and it is not bit-identical.** It is the checkpoint's own documented
+decode recipe — float16 autocast over float32 weights — which upstream enables only on NVIDIA cards.
+It repeats exactly (the two fp16 runs are bytewise equal to each other, so this is a different
+arithmetic, not a random one), and against the float32 control:
+
+* the **audio and both sets of latents are identical**, bit for bit; only the video changes;
+* **124 of 124 frames differ** and 99.83 % of pixel values differ;
+* the **average** difference is 0.000115 on a 0-to-1 scale. One step of an 8-bit pixel value is
+  1/255 = 0.0039, so that is **0.029 of one 8-bit level** — about a thirtieth of the smallest change
+  an 8-bit image can record;
+* the **worst single pixel** in the whole clip (66.4 million of them, frame 120) differs by 0.0295,
+  which is **7.5 levels of 255**, about 3 % of full scale.
+
+So: essentially every pixel moves, and it moves by far less than the file format can store. The mp4
+is lossy h264 at crf 16, whose own rounding is larger than this everywhere but that one worst pixel.
+What it is not is *provably* the same: the receipt hash differs from the source run and always will,
+which is the whole point of having the hash.
+
+One thing went the wrong way: fp16 uses **more** card memory, not less — 15.050 GiB peak against
+11.878 GiB for float32, because autocast holds float32 masters alongside the float16 copies it makes.
+It still leaves ~16.8 GiB free on a 31.9 GiB card, so nothing breaks, but the prediction that it
+would *save* memory was wrong.
+
+**What a clip costs now.** Putting the measured fp16 decode into the 960x544 run and changing nothing
+else: **243.8 s becomes ~179.7 s — four minutes becomes three**, a 26 % cut, or 34.8 s of wall per
+second of video against 47.2. The run's shape changes with it: decode drops from 33 % to 9 %,
+**model loading rises from 20 % to 27 %** (45.9 s of reading files that depends on neither prompt nor
+canvas), and **sampling rises from 45 % to 61 %**. That re-orders the lever list above: the resident /
+batch-mode idea is now the biggest *exact* lever left, and the idle-card stagger is the biggest
+absolute one — and it will hit the same threading wall the two-card decode just hit, so
+process-per-card is on its critical path too.
+
+**Status: fp16 is not the default.** `--vae-autocast` stays `off`. The recommendation put to the user
+is to make fp16 the default and keep `off` as a flag for any run that must reproduce an existing
+hash. That decision is the user's and has not been made.
+
+Receipts, the probe JSON, the fidelity comparison and the batch log:
+[`../data/2026-09-19-decode-experiments/`](../data/2026-09-19-decode-experiments/). Full analysis and
+the re-ranked levers: [speed plan](2026-09-19-speed-plan.md#results-window-4-2026-09-19-1939-1949-edt).
 
 ## Next steps
 
