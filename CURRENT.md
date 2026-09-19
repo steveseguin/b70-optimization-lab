@@ -88,6 +88,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 19 20:57 UTC: ninth freeze (18:04, no lockup report); server 79b proved the sharded encoder bit-exact, then a preview-MP4 muxer error latched the pipeline; packet 80 launches with a guarded save.**
+The 18:04 freeze hit the instant the sharded arm started, with no CPU
+lockup report and no pstore record despite the armed detectors (a
+whole-platform stop; BMC rails and VRM temperatures normal, SEL empty).
+Server 79b (relaunch): shard on xpu:2/xpu:3, oracle exact on boat and
+marble, decoder placement clean, then `avcodec_send_frame()` EINVAL on the
+bird clip's audio; stopped 20:52 UTC. Packet 80 records the failure and
+continues; the oracle judges. [Findings](experiments/ltx25-b70/notes/graph-capture-79-results.md).
+
 **Four-B70 host, September 19 18:00 UTC: freeze diagnosis revised to a Zen C6 idle-state lockup (evidence note); server 78b stopped after the VAE gate latched; packet 79 launches 18:02 UTC.**
 Host: the 09-18 09:19 boot ran nothing and died with `soft lockup - CPU#9
 stuck for 157s` in `smp_call_function_many_cond` (a core never answered an
