@@ -125,9 +125,11 @@ MIN_DISK_MIB="${MIN_DISK_MIB:-8192}"
 MIN_HOST_AVAIL_MIB="${MIN_HOST_AVAIL_MIB:-11264}"
 
 ONLY_SERVICE=0
+NO_SERVICE=0     # --no-service: stop after phase 3; the caller restores the service (batched GPU sessions)
 for arg in "$@"; do
   case "${arg}" in
     --only-service) ONLY_SERVICE=1 ;;
+    --no-service) NO_SERVICE=1 ;;
     -h|--help) sed -n '2,95p' "${BASH_SOURCE[0]}"; exit 0 ;;
     *) echo "unknown argument: ${arg}" >&2; echo "usage: $0 [--only-service]" >&2; exit 2 ;;
   esac
@@ -341,6 +343,11 @@ else
 fi
 
 #-----------------------------------------------------------------------------------------------
+if [ "${NO_SERVICE}" -eq 1 ]; then
+  say "--no-service: phases 0-3 done; the caller restores the FP8 service"
+  exit 0
+fi
+
 phase "4  restore the two-card FP8 service on 18124, then the strict suite"
 
 say "second health probe before the service takes both cards"
