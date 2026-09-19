@@ -10,7 +10,8 @@ next lever is the encoder two prompts deep across two cards. History: the
 [September 16 audit](notes/2026-09-16-audit-of-sep15-16-claims.md), then
 packets [58](notes/graph-capture-58-results.md), [64](notes/graph-capture-64-results.md),
 [65](notes/graph-capture-65-results.md), [72](notes/graph-capture-72-results.md)
-and [74](notes/graph-capture-74-results.md).
+[74](notes/graph-capture-74-results.md) and [82](notes/graph-capture-82-results.md)
+(sharded encoder: exact but for one race clip, no gain, the sampler now paces).
 
 Direction: [north star, milestones and next work](PLAN.md).
 The actual goal is one second of new video in under one second at 24 fps,
