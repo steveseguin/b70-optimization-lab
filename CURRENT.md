@@ -88,6 +88,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 19 21:08 UTC: server 80 stopped after an inert-capture refusal on its second sharded clip; packet 81 launches with capture diagnostics and one bounded retry.**
+Server 80 (guarded preview save) emitted one exact clip, then block 0's
+capture proof reported an inert graph on a new argument signature after
+96 good captures on both sampler threads, and the pipeline latched. No
+code path explains a genuinely empty capture; packet 81 records thread,
+signature count and replay-versus-eager equality in the receipt, drains
+every device and captures once more before refusing. Sharded encoder
+remains bit-exact where measured (boat, marble on 79b).
+
 **Four-B70 host, September 19 20:57 UTC: ninth freeze (18:04, no lockup report); server 79b proved the sharded encoder bit-exact, then a preview-MP4 muxer error latched the pipeline; packet 80 launches with a guarded save.**
 The 18:04 freeze hit the instant the sharded arm started, with no CPU
 lockup report and no pstore record despite the armed detectors (a
