@@ -340,6 +340,96 @@ Gates:
 E1 and E2 are independent and compose: if both pass, decode is ~20-25 s instead of 80 s and the
 clip ~185 s instead of 244 s, before anything else is rebuilt.
 
+## 6. What was built (2026-09-19, later the same day)
+
+Levers 1, 2 and 6 and both experiments are now code, all of them OFF by default so the
+bytewise-gated path of the canvas runs is unchanged. Nothing below has been run on a card: the FP8
+service holds both B70s, so everything here was validated on CPU. The GPU session is written out,
+step by step and gate by gate, in `scripts/decode-experiments-session.sh`; it assumes the service is
+already stopped and never touches it.
+
+### The flags
+
+| flag | default | what it does |
+|------|---------|--------------|
+| `--vae-decode {single,two-card}` (env `B70_H3_VAE_DECODE`) | `single` | lever 2. `single` is the old `vae.decode` call, untouched |
+| `--vae-autocast {off,fp16,bf16}` | `off` | lever 1 / E2. Upstream's `decoders.py` autocast with `enabled=True` |
+| `--decode-only --latents-from PATH` | off | decode a previous run's saved latents: ~1.5 min instead of ~4 |
+| `--probe-tile-identity N --latents-from PATH` | off | E1. Writes `probe.json`, exits nonzero on a failed gate |
+| `--int8-share-rotation` / `--no-int8-share-rotation` | **ON** | lever 6, on because the CPU test proves it exact |
+
+`smoke_h3.sh` gains two modes with the same preflight and the same watchdog as every other GPU
+mode: `probe-tiles` and `decode-only` (env `LATENTS_FROM`, `VAE_DECODE`, `VAE_AUTOCAST`,
+`PROBE_TILES`, `RUN_NAME`).
+
+### How lever 2 avoids editing the diffusers checkout
+
+`decode_video_two_card()` (run_h3_t2v.py) reimplements the *loops* of `_decode` and `_decode_clip`
+and calls the VAE's own methods for everything that does arithmetic: **`vae._split_tiles`**,
+**`vae.post_quant_conv`**, **`vae.decoder`**, **`vae._stitch_tiles`** and **`vae._blend`**. Copy B
+is built by `replicate_video_vae()`, which walks copy A's parameters and buffers (including the
+non-persistent `rope.inv_freq`) through `cross_card()` into a meta-device skeleton -- no second
+`from_pretrained`, so host VmHWM sees one tensor at a time.
+
+Three details the §1.3 sketch did not have, all of which matter:
+
+1. **The whole latent is staged to card B once (~7 MB) and sliced there**, rather than sliced on A
+   and shipped. A shipped slice arrives *contiguous* while the single-card path hands its
+   `post_quant_conv` a *strided view*, and a conv may pick a different kernel for the two. Staging
+   the latent gives both cards a view with identical shape, strides and storage offset.
+2. **The flattened 105-way split holds every decoded tile until its chunk is stitched** -- 2.3 GiB
+   on the blending card at 960x544, on top of 9.7 GiB of weights. Tiles are dropped chunk by chunk
+   as they are blended.
+3. **The diffusers source is hashed at start-up.** `DIFFUSERS_VAE_SOURCE_SHA256` =
+   `4c3c9745ee27d16ff343c4998244bad41cd8f4213f0029cf7ce11ebb6d72ca1b`. If upstream's file changes,
+   the two-card path refuses to run and says so; the hash is in the receipt of every run that used
+   it, and in `probe.json`.
+
+### How each gate is evaluated
+
+* **E1 (`smoke_h3.sh probe-tiles`)** writes `probe.json` with per-tile sha256 per card per pass.
+  `gates.identity_across_cards` is gate 1, `gates.repeatable_per_card` is gate 2, `gates.vram` is
+  gate 3 (<= 12.5 GiB allocated per card with both replicas up) and `gates.host_peak_rss_bytes` is
+  gate 4 (no more than ~0.5 GiB above the 12.467 GiB of a normal run). The run exits nonzero if 1
+  or 2 fails, and the session script stops there: a mismatch means lever 2 cannot be *called*
+  bit-identical, whatever it measures.
+* **Lever 2** is gated on exact equality with the single-card decode of the *same latents*. A
+  `--decode-only` receipt carries `decode_only.source_hashes`, the runner logs MATCH/DIFFERS per
+  hash at the end of the run, and `compare-h3-runs.py` prints the same comparison for either side
+  of a pair. The control step (`single` + `off`) must reproduce the source run first; if it does
+  not, `--decode-only` itself is wrong and no later number means anything.
+* **E2 (`--vae-autocast fp16`)** is gated on its own repeat first -- two fp16 runs, four hashes,
+  bytewise equal or the lever is dead -- then on `timings_seconds["decode.video"]`, then on
+  `compare-h3-runs.py` against the fp32 control for per-frame max/mean absolute difference and the
+  differing fraction. Those are numbers to report, not a verdict to reach.
+* **Lever 6** is gated on CPU, in `test_convrot_linear.py` section 6: the shared and unshared paths
+  are compared bitwise on a synthetic q/k/v block, and the cache statistics confirm that q/k/v hit
+  (2 hits, 2 misses across four Linears) while an equal-but-distinct activation misses. It passes,
+  which is why the flag defaults ON. The receipt records the flag and the hit/miss counts.
+
+### The CPU tests
+
+`scripts/test_vae_tile_loop.py` (new, wired into `smoke_h3.sh dry`) extracts `_split_tiles`,
+`_blend`, `_stitch_tiles`, `_decode_clip` and `_decode` from the *installed diffusers source file*
+with `ast`, binds them to a stub autoencoder with the real geometry, and compares upstream's
+`_decode` against `decode_video_two_card` on the same latents. It checks the tile grid and the
+blend extents, the per-tile decoder inputs one for one in order (shape, strides, storage offset and
+bytes), and the decoded clip. All three cases -- two cards, one card, and a latent length that
+forces `pad_tokens > 0` -- come out **bitwise equal**, so the reimplementation is the loop upstream
+runs, on CPU. What CPU cannot answer is whether the two *cards* agree: that is E1, and only E1.
+
+### What is not exact, and what is not built
+
+* **fp16 autocast is not bit-identical and never will be.** It is a deliberate documented deviation
+  (the checkpoint's own recipe, which upstream enables only on CUDA), and it stays off by default.
+* **The two-card decode is *intended* to be exact and is unproven on hardware.** Everything under
+  this lane's control is identical by construction -- same weights, same tile inputs down to the
+  strides, same blend order on the same card -- but whether the two B70s pick the same GEMM kernel
+  is a measurement, and it is E1.
+* **Levers 3, 4, 5 and 7 are not built.** Overlapping copy B's build with card A's first tiles
+  (lever 3) is a thread-ordering change to `decode_video_two_card` once E1 has passed; batch mode
+  and the staggered pipeline are untouched.
+
 ## What this memo does not claim
 
 No profile was taken: every FLOP and byte count above is arithmetic from shapes, and the only

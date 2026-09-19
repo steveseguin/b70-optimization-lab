@@ -107,6 +107,20 @@ def main():
     report['receipt_hashes'] = {k: {'a': a['hashes'].get(k), 'b': b['hashes'].get(k),
                                     'match': a['hashes'].get(k) == b['hashes'].get(k)} for k in HASH_KEYS}
     report['timings'] = {'a': a.get('timings_seconds'), 'b': b.get('timings_seconds')}
+    # A `--decode-only` run carries the hashes of the run whose latents it decoded, so a two-card
+    # or autocast decode can be checked against the ORIGINAL single-card clip even when the run it
+    # is being compared with here is a different one.
+    report['decode'] = {}
+    for name, run in (('a', a), ('b', b)):
+        placement = run.get('decode_placement') or {}
+        row = {'vae_decode': placement.get('vae_decode'), 'vae_autocast': placement.get('vae_autocast'),
+               'card': placement.get('card'), 'decode_video_seconds': (run.get('timings_seconds') or {}).get('decode.video')}
+        only = run.get('decode_only')
+        if only and only.get('source_hashes'):
+            row['decode_only_source'] = only.get('source_run_name') or only.get('source_dir')
+            row['vs_source'] = {k: {'match': run['hashes'].get(k) == only['source_hashes'].get(k),
+                                    'source': only['source_hashes'].get(k)} for k in HASH_KEYS}
+        report['decode'][name] = row
 
     print(f"run A  {args.run_a}   denoiser={report['settings']['a']['denoiser']}  seed={report['settings']['a']['seed']}"
           f"  steps={report['settings']['a']['steps']}")
@@ -117,6 +131,16 @@ def main():
     print()
     for key, row in report['receipt_hashes'].items():
         print(f"  {'MATCH   ' if row['match'] else 'DIFFERS '} {key}  {str(row['a'])[:16]}... / {str(row['b'])[:16]}...")
+    print()
+    for name in ('a', 'b'):
+        row = report['decode'][name]
+        secs = row['decode_video_seconds']
+        print(f"run {name.upper()} decode: --vae-decode {row['vae_decode']} --vae-autocast {row['vae_autocast']}"
+              f"  decode.video {secs if secs is None else f'{secs:.1f} s'}")
+        if 'vs_source' in row:
+            for key, cell in row['vs_source'].items():
+                print(f"    {'MATCH   ' if cell['match'] else 'DIFFERS '} {key} vs {row['decode_only_source']}"
+                      f"  {str(cell['source'])[:16]}...")
     print()
 
     ta, tb = args.run_a / 'tensors.safetensors', args.run_b / 'tensors.safetensors'

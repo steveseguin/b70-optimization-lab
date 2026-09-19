@@ -86,6 +86,12 @@ Environment switches
   weights at load time; applied as an additive runtime term inside `ConvRotLinear` on the int8
   path, because a quantized weight cannot absorb a merge. See the LoRA section below and
   `notes/2026-09-18-steps-and-lora.md`.
+* `B70_H3_VAE_DECODE=single|two-card` -- the default for `--vae-decode`. `single` is the
+  bytewise-gated path (`vae.decode` on one card). `two-card` replicates the video VAE onto the
+  second card through `cross_card()` and splits the 105 per-tile decoder calls between the two,
+  blending in the original order on the original card: intended to be bit-identical, gated by
+  experiment E1 and by reproducing the single-card `video_tensor_sha256`. See
+  `decode_video_two_card()` and notes/2026-09-19-speed-plan.md.
 * `B70_H3_XFER=host|direct` -- how a tensor crosses the two-card boundary. `host` (the default
   since the 2026-09-18 GPU fault) stages every cross-card move through host RAM; `direct` keeps
   the old `t.to(other_card)` device-to-device copy. Both are bit-exact; see `cross_card()`.
@@ -107,6 +113,7 @@ import pathlib
 import platform
 import struct
 import sys
+import threading
 import time
 
 # ---------------------------------------------------------------------------------------------
@@ -1060,6 +1067,55 @@ def make_pruned_adaln_modules(torch, nn):
 # ---------------------------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------------------------
+# Sharing one activation rotation across the q/k/v ConvRotLinears of a block (lever 6)
+#
+# `to_q`, `to_k` and `to_v` are three separate `ConvRotLinear`s fed the SAME activation tensor with
+# the SAME rotation and the same group size (`build_quant_map`: all three come from Comfy's fused
+# `blocks.N.attn.qkv_proj`), so the rotation `x @ R` is computed three times over.  Computing it
+# once and handing the other two the same tensor is bit-identical BY CONSTRUCTION -- not "to within
+# rounding": it is literally the same tensor object, produced by the same op on the same operands.
+#
+# The cache is therefore keyed on OBJECT IDENTITY, never on value: a hit requires `x is x_cached`
+# and `rotation is rotation_cached` (plus the group size and the compute dtype).  It holds strong
+# references to both, so no id can be recycled underneath it, and it has exactly ONE slot, so the
+# next miss drops the previous activation and its rotated copy -- at most one extra live tensor,
+# and the rotated copy is one the unshared path would have allocated anyway.  A cast (`compute !=
+# x.dtype`) makes a fresh tensor per call, so it simply misses and the unshared arithmetic runs.
+#
+# The slot is thread-local, so two threads can never hand each other a tensor from another card.
+# `clear_rotation_cache()` is called at phase boundaries so the slot cannot pin a card allocation
+# past the phase that made it.  `test_convrot_linear.py` section 6 proves the bitwise equality and
+# checks that the hits actually happen.
+# ---------------------------------------------------------------------------------------------
+
+_ROTATION_CACHE = threading.local()
+ROTATION_CACHE_STATS = {"hits": 0, "misses": 0}
+
+
+def clear_rotation_cache() -> None:
+    """Drop the shared-rotation slot (and with it its references to a card tensor)."""
+    _ROTATION_CACHE.slot = None
+
+
+def rotation_cache_stats() -> dict:
+    return dict(ROTATION_CACHE_STATS)
+
+
+def _rotation_cache_get(x, rotation, group_size, compute):
+    slot = getattr(_ROTATION_CACHE, "slot", None)
+    if (slot is not None and slot[0] is x and slot[1] is rotation
+            and slot[2] == group_size and slot[3] == compute):
+        ROTATION_CACHE_STATS["hits"] += 1
+        return slot[4]
+    ROTATION_CACHE_STATS["misses"] += 1
+    return None
+
+
+def _rotation_cache_put(x, rotation, group_size, compute, rotated) -> None:
+    _ROTATION_CACHE.slot = (x, rotation, group_size, compute, rotated)
+
+
 def make_convrot_linear(torch, nn, F):
     class ConvRotLinear(nn.Module):
         """`compute_dtype` / `out_dtype` default to `None`, i.e. "follow the activation".
@@ -1075,7 +1131,7 @@ def make_convrot_linear(torch, nn, F):
         """
 
         def __init__(self, qweight, scale, bias, rotation, group_size: int, compute_dtype=None, out_dtype=None,
-                     lora_a=None, lora_b=None, lora_scale: float = 1.0):
+                     lora_a=None, lora_b=None, lora_scale: float = 1.0, share_rotation: bool = False):
             super().__init__()
             if qweight.shape[1] % group_size:
                 raise ValueError(
@@ -1099,6 +1155,9 @@ def make_convrot_linear(torch, nn, F):
             self.register_buffer("lora_b", lora_b, persistent=False)  # [out, rank] or None
             self.lora_scale = float(lora_scale)
             self.group_size = group_size
+            # Lever 6: reuse the q/k/v rotation of this block's attention input. Identity-keyed,
+            # so it is the same tensor or it is not a hit; see the cache section above.
+            self.share_rotation = bool(share_rotation)
             self.compute_dtype = compute_dtype
             self.out_dtype = out_dtype
             self.in_features = qweight.shape[1]
@@ -1113,10 +1172,18 @@ def make_convrot_linear(torch, nn, F):
             # its term is built from the activation *before* the rotation.  Keep the reference now.
             x_unrotated = x
             if self.rotation is not None:
-                shape = x.shape
-                x = x.reshape(*shape[:-1], shape[-1] // self.group_size, self.group_size)
-                x = x @ self.rotation.to(compute)
-                x = x.reshape(shape)
+                cached = (_rotation_cache_get(x, self.rotation, self.group_size, compute)
+                          if self.share_rotation else None)
+                if cached is not None:
+                    x = cached
+                else:
+                    shape = x.shape
+                    rotated = x.reshape(*shape[:-1], shape[-1] // self.group_size, self.group_size)
+                    rotated = rotated @ self.rotation.to(compute)
+                    rotated = rotated.reshape(shape)
+                    if self.share_rotation:
+                        _rotation_cache_put(x, self.rotation, self.group_size, compute, rotated)
+                    x = rotated
             y = F.linear(x, self.qweight.to(compute))
             # The scale is applied after the accumulation, at no less than float32: that is both
             # cheaper and more accurate than scaling the weight first.  `promote_types` rather
@@ -1922,6 +1989,9 @@ def release_denoiser(torch, transformer, pipe, devices) -> None:
         transformer._b70_hook_handles = []
         transformer._b70_boundary_cache = None
         dropped = strip_module_tensors(transformer)
+    # The shared-rotation slot (lever 6) holds a reference to the last rotated activation; drop it
+    # here so it cannot pin a card allocation across the release.
+    clear_rotation_cache()
     _free(torch, devices)
     LOG.info("denoiser released: %d parameters/buffers dropped on %s",
              dropped, ", ".join(str(d) for d in devices))
@@ -2116,6 +2186,7 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                         lora_a=lora_a,
                         lora_b=lora_b,
                         lora_scale=sl.scale if sl is not None else 1.0,
+                        share_rotation=bool(getattr(args, "int8_share_rotation", False)),
                     ),
                 )
                 if sl is not None:
@@ -2363,6 +2434,484 @@ def load_audio_vae(args, timings: dict, device):
 
 
 # ---------------------------------------------------------------------------------------------
+# Phase 4b -- the two-card tiled video decode (lever 2 of notes/2026-09-19-speed-plan.md)
+#
+# `decode.video` is 80.0 s of the 244 s clip and it is exactly `tiles x per-tile cost`: 7 temporal
+# chunks x 15 spatial tiles = 105 independent decoder calls at 960x544, each reading only its own
+# latent slice and the weights.  Nothing flows from tile to tile -- `_decode_clip` decodes every
+# tile before any blending -- so the tiles can be split across two cards and the result is the same
+# bytes, provided three things hold:
+#
+#   1. copy B's weights are copy A's bytes (they are: `replicate_video_vae` copies tensor by tensor
+#      through `cross_card()`, and a copy does not change values);
+#   2. each card sees the SAME tile input, down to the strides -- so the whole latent is staged to
+#      card B once and sliced there with the identical expressions, rather than slicing on A and
+#      shipping a tile (a shipped slice arrives contiguous, and a conv on a contiguous input may
+#      pick a different kernel than the same conv on a strided view);
+#   3. the blend runs in the ORIGINAL order with the ORIGINAL arithmetic on the ORIGINAL card --
+#      which it does, because the gather is positional and the stitch is the VAE's own
+#      `_stitch_tiles` on card A.
+#
+# What this does NOT do is edit the diffusers checkout.  The chunk loop of `_decode` and the tile
+# loop of `_decode_clip` are reimplemented here, and every piece of arithmetic they perform is the
+# VAE's own method, called on the VAE object:
+#
+#     vae._split_tiles(...)        the tile grid (indices, lengths, overlaps)
+#     vae.post_quant_conv(tile)    per tile, as `_decode_clip` calls it
+#     vae.decoder(...)             per tile, as `_decode_clip` calls it
+#     vae._stitch_tiles(...)       the spatial blend, per chunk, on the blending card
+#     vae._blend(...)              the temporal cross-fade between chunks
+#
+# Everything else here is slicing and bookkeeping copied from `_decode` / `_decode_clip`.  Because
+# that copy is only as good as the source it was copied from, `check_vae_source()` refuses to run
+# the two-card path unless the diffusers file still hashes to what this was written against.
+# ---------------------------------------------------------------------------------------------
+
+# `/mnt/fast-ai/build/diffusers-src` is the editable checkout this venv imports diffusers from
+# (site-packages/__editable__.diffusers-0.41.0.dev0.pth -> .../src).  The path is only a fallback:
+# at run time the file is located through the class itself.
+DIFFUSERS_VAE_SOURCE = pathlib.Path(
+    "/mnt/fast-ai/build/diffusers-src/src/diffusers/models/autoencoders/autoencoder_kl_minimax_h3.py"
+)
+# sha256 of that file as of 2026-09-19, the version `decode_video_two_card` was written against and
+# the version `test_vae_tile_loop.py` checks the reimplementation against.  If upstream changes the
+# tile geometry, the chunk arithmetic or the blend, this hash changes and the two-card path stops
+# rather than silently decoding something else.
+DIFFUSERS_VAE_SOURCE_SHA256 = "4c3c9745ee27d16ff343c4998244bad41cd8f4213f0029cf7ce11ebb6d72ca1b"
+
+
+def diffusers_vae_source_path(cls=None) -> pathlib.Path:
+    """Where `AutoencoderKLMiniMaxH3` is defined on this host."""
+    if cls is not None:
+        import inspect
+
+        src = inspect.getsourcefile(cls)
+        if src:
+            return pathlib.Path(src)
+    return DIFFUSERS_VAE_SOURCE
+
+
+def check_vae_source(cls=None, *, require: bool = True) -> dict:
+    """Hash the diffusers VAE source and (by default) refuse to continue if it has moved.
+
+    The two-card decode reimplements `_decode`'s chunk loop and `_decode_clip`'s tile loop.  That
+    is only safe while the original still looks the way it did when the copy was made, so this is a
+    start-up assertion and a receipt field, not a comment.
+    """
+    path = diffusers_vae_source_path(cls)
+    digest = file_digest(path) if path.exists() else None
+    row = {"path": str(path), "sha256": digest, "expected": DIFFUSERS_VAE_SOURCE_SHA256,
+           "matches": digest == DIFFUSERS_VAE_SOURCE_SHA256}
+    if require and not row["matches"]:
+        raise SystemExit(
+            f"the diffusers VAE source at {path} hashes {digest}, not the "
+            f"{DIFFUSERS_VAE_SOURCE_SHA256} this two-card decode was written against.\n"
+            "  The tile loop here is a reimplementation of `_decode` / `_decode_clip`; if upstream "
+            "changed them it must be re-read before this path runs again.\n"
+            "  Re-read the file, re-check the loop, then update DIFFUSERS_VAE_SOURCE_SHA256 -- or "
+            "run with --vae-decode single, which calls `vae.decode` and is unaffected."
+        )
+    return row
+
+
+def _device_ctx(torch, device):
+    """`torch.xpu.device(dev)` on a card, a no-op anywhere else (so the CPU tests run this code)."""
+    device = torch.device(device)
+    if device.type == "xpu":
+        return torch.xpu.device(device)
+    return contextlib.nullcontext()
+
+
+def vae_autocast_context(torch, mode: str, device):
+    """Upstream's decode autocast (`modular_pipelines/minimax_h3/decoders.py` L187), switchable.
+
+    Upstream writes `torch.autocast(device_type=device.type, dtype=torch.float16,
+    enabled=device.type == "cuda")` -- the recipe the VAE docstring names ("float16 autocast over
+    float32 weights", autoencoder_kl_minimax_h3.py L529-530) but enabled only on CUDA, so an XPU
+    decode runs the whole float32 ViT.  `--vae-autocast fp16` is that same call with
+    `enabled=True`.  It is NOT bit-identical and must never be the default: it is experiment E2,
+    gated on a repeat and measured against the fp32 control with `compare-h3-runs.py`.
+    """
+    if mode == "off":
+        return contextlib.nullcontext()
+    dtype = {"fp16": torch.float16, "bf16": torch.bfloat16}[mode]
+    return torch.autocast(device_type=torch.device(device).type, dtype=dtype, enabled=True)
+
+
+def replicate_video_vae(torch, vae, target, timings: dict, phase_name: str = "decode.replicate_vae"):
+    """Build a second video VAE on `target` from `vae`'s own tensors, one tensor at a time.
+
+    NOT a second `from_pretrained`: that maps the 9.7 GB checkpoint again on a 15 GiB host whose
+    VmHWM is already 12.467 GiB.  This walks copy A's parameters and buffers (including the
+    non-persistent `rope.inv_freq`) and stages each one through `cross_card()`, so the host holds
+    one tensor at a time and copy B's weights are copy A's bytes by construction.
+
+    The skeleton is built on the meta device from copy A's own config, so no second allocation of
+    the weights ever exists on the host.
+    """
+    from diffusers import AutoencoderKLMiniMaxH3
+
+    target = torch.device(target)
+    tensors = list(vae.named_parameters()) + list(vae.named_buffers())
+    need = sum(t.numel() * t.element_size() for _, t in tensors if t is not None)
+    free = device_free_bytes(torch, target)
+    if free and free < int(need * 1.05):
+        raise SystemExit(
+            f"two-card decode needs {gib(need)} of weights on {target}, which reports {gib(free)} "
+            "free. Run with --vae-decode single."
+        )
+    with phase(phase_name, timings):
+        with torch.device("meta"):
+            copy = AutoencoderKLMiniMaxH3.from_config(vae.config)
+        copy.eval()
+        moved = 0
+        for name, tensor in tensors:
+            if tensor is None:
+                continue
+            set_submodule_tensor(copy, name, cross_card(torch, tensor.detach(), target))
+            moved += 1
+        for attr in ("use_tiling", "use_slicing", "tile_sample_min_height", "tile_sample_min_width",
+                     "tile_sample_min_overlap_height", "tile_sample_min_overlap_width"):
+            setattr(copy, attr, getattr(vae, attr))
+    left = [n for n, t in list(copy.named_parameters()) + list(copy.named_buffers())
+            if t is not None and t.is_meta]
+    if left:
+        raise SystemExit(f"replicated VAE still has {len(left)} meta tensors, e.g. {left[:4]}")
+    LOG.info("video vae replicated onto %s: %d tensors, %s, tensor by tensor through cross_card()",
+             target, moved, gib(need))
+    log_vram(torch, [target], "after decode.replicate_vae")
+    return copy
+
+
+def vae_decode_plan(vae, z) -> dict:
+    """The chunk and tile plan `_decode` / `_decode_clip` would use for this latent.
+
+    Pure arithmetic and one call to the VAE's own `_split_tiles`; no tensor is touched.
+    """
+    ratio = vae.spatial_compression_ratio
+    tokens_chunk_size = vae.tokens_chunk_size
+    token_drop = int(vae.config.token_drop)
+    num_tokens = z.shape[2] + token_drop
+    pad_tokens = (-num_tokens) % tokens_chunk_size
+    num_chunks = (num_tokens + pad_tokens) // tokens_chunk_size - int(token_drop > 0)
+    height = z.shape[-2] * ratio
+    width = z.shape[-1] * ratio
+    y_indices, y_lengths, y_overlaps = vae._split_tiles(
+        height, vae.tile_sample_min_height, vae.tile_sample_min_overlap_height
+    )
+    x_indices, x_lengths, x_overlaps = vae._split_tiles(
+        width, vae.tile_sample_min_width, vae.tile_sample_min_overlap_width
+    )
+    return {
+        "pad_tokens": pad_tokens,
+        "num_chunks": num_chunks,
+        "tokens_chunk_size": tokens_chunk_size,
+        "token_overlap": vae.token_overlap,
+        "frame_overlap": vae.frame_overlap,
+        "frame_pre_padding": vae.frame_pre_padding,
+        "y_indices": list(y_indices), "y_lengths": list(y_lengths), "y_overlaps": list(y_overlaps),
+        "x_indices": list(x_indices), "x_lengths": list(x_lengths), "x_overlaps": list(x_overlaps),
+        "tiles_per_chunk": len(y_indices) * len(x_indices),
+        "tiles_total": num_chunks * len(y_indices) * len(x_indices),
+    }
+
+
+def decode_video_two_card(torch, vaes, z, *, autocast="off", tile_hook=None):
+    """`vae.decode(z, return_dict=False)[0]`, with the per-tile decoder calls split over two cards.
+
+    `vaes` is `[(device_a, vae_a), (device_b, vae_b), ...]`; `device_a` is the BLENDING card and
+    `z` must already be on it.  Returns `(decoded, plan)`.
+
+    Order of operations, mirroring `_decode` and `_decode_clip` (see the section header for the
+    list of VAE methods called):
+
+      1. the latents are cast exactly as `decode()` casts them, the temporal padding of `_decode`
+         is applied, and the whole padded latent is staged onto every other card once (~7 MB), so
+         every card slices the identical view with the identical strides;
+      2. the (chunk, row, column) tiles are enumerated in the ORIGINAL row-major order, flattened
+         across chunks, and job `k` goes to card `k % n` -- 53/52 of 105 at 960x544, against 8/7 of
+         15 if the split stayed inside a chunk;
+      3. one thread per card runs its own jobs inside `torch.xpu.device(dev)` and `torch.no_grad()`
+         (grad mode is thread-local, and a decoder that keeps activations is the 2026-09-19 OOM),
+         and brings each finished tile back to the blending card with `cross_card()` -- host
+         staged, no P2P, per the 2026-09-18 copy-engine fault;
+      4. the tiles are gathered POSITIONALLY, never by completion order, and each chunk is stitched
+         by the VAE's own `_stitch_tiles` on the blending card;
+      5. the temporal cross-fade, the concatenation and the pad-frame trim are `_decode`'s, in its
+         order, on the blending card.
+
+    Memory: the flattened split holds every decoded tile until its chunk is stitched -- 105 x 22 MB
+    = 2.3 GiB at 960x544 on the blending card, on top of 9.7 GiB of weights.  Tiles are dropped as
+    soon as their chunk is stitched.
+    """
+    if not vaes:
+        raise ValueError("decode_video_two_card needs at least one (device, vae) pair")
+    blend_device = torch.device(vaes[0][0])
+    vae_a = vaes[0][1]
+    if not getattr(vae_a, "use_tiling", False):
+        raise SystemExit(
+            "--vae-decode two-card needs the VAE's spatial tiling (it is what makes the decode "
+            "splittable). --vae-tiling off changes the pixels anyway; use --vae-decode single."
+        )
+
+    try:
+        from diffusers.models.modeling_utils import get_parameter_dtype
+
+        want_dtype = get_parameter_dtype(vae_a.decoder)
+    except Exception:  # pragma: no cover - depends on the diffusers version
+        want_dtype = next(vae_a.decoder.parameters()).dtype
+    z = z.to(want_dtype)  # `decode()` L887
+
+    ratio = vae_a.spatial_compression_ratio
+    temporal_ratio = vae_a.temporal_compression_ratio
+    tokens_chunk_size = vae_a.tokens_chunk_size
+    token_drop = int(vae_a.config.token_drop)
+    chunk_num_frames = tokens_chunk_size * temporal_ratio
+    plan = vae_decode_plan(vae_a, z)
+    pad_tokens, num_chunks = plan["pad_tokens"], plan["num_chunks"]
+    if pad_tokens > 0:  # `_decode` L809-810
+        z = torch.cat([z, z[:, :, -1:].repeat(1, 1, pad_tokens, 1, 1)], dim=2)
+
+    # One staged copy of the whole latent per card: every card then slices the same expressions and
+    # hands its decoder a view with the same shape AND the same strides as the single-card path.
+    z_by_card = [z] + [cross_card(torch, z, dev) for dev, _ in vaes[1:]]
+
+    y_indices, y_lengths = plan["y_indices"], plan["y_lengths"]
+    x_indices, x_lengths = plan["x_indices"], plan["x_lengths"]
+    jobs = [(c, i, j) for c in range(num_chunks) for i in range(len(y_indices)) for j in range(len(x_indices))]
+    results: list = [None] * len(jobs)
+    errors: list = []
+    per_card = [0] * len(vaes)
+
+    def slice_tile(zc, i, j):
+        i_pos, i_len = y_indices[i], y_lengths[i]
+        j_pos, j_len = x_indices[j], x_lengths[j]
+        return zc[..., i_pos // ratio : i_pos // ratio + i_len // ratio,   # `_decode_clip` L755-759
+                  j_pos // ratio : j_pos // ratio + j_len // ratio]
+
+    def worker(w: int) -> None:
+        dev, vae = vaes[w]
+        zw = z_by_card[w]
+        try:
+            with _device_ctx(torch, dev), torch.no_grad(), vae_autocast_context(torch, autocast, dev):
+                for k in range(w, len(jobs), len(vaes)):
+                    c, i, j = jobs[k]
+                    start = c * tokens_chunk_size  # `_decode` L815-816
+                    zc = zw[:, :, start : start + tokens_chunk_size + vae_a.token_overlap]
+                    tile = slice_tile(zc, i, j)
+                    out = vae.decoder(vae.post_quant_conv(tile))  # `_decode_clip` L760
+                    if tile_hook is not None:  # the CPU test's window onto the dispatch
+                        tile_hook(w, k, c, i, j, tile, out)
+                    results[k] = cross_card(torch, out, blend_device)
+                    per_card[w] += 1
+                    del out, tile, zc
+        except BaseException as exc:  # noqa: BLE001 - re-raised on the calling thread
+            errors.append((w, exc))
+
+    threads = [threading.Thread(target=worker, args=(w,), name=f"h3-vae-card{w}", daemon=True)
+               for w in range(len(vaes))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    if errors:
+        w, exc = errors[0]
+        raise RuntimeError(f"the tile worker on {vaes[w][0]} failed: {exc}") from exc
+    if any(r is None for r in results):
+        raise RuntimeError("a tile came back empty; refusing to blend a partial decode")
+
+    tiles_per_chunk = len(y_indices) * len(x_indices)
+    decoded_chunks = []
+    overlap = None
+    # Upstream wraps the WHOLE of `decode` in the autocast, blending included, so the blend runs
+    # inside it here too.  It makes no difference in practice -- `_stitch_tiles` and `_blend` are
+    # multiplies, adds and concatenations, none of which autocast touches -- but "no difference in
+    # practice" is not a reason to run a different program.
+    with vae_autocast_context(torch, autocast, blend_device):
+        for c in range(num_chunks):  # `_decode` L812-828, with `_decode_clip`'s stitch inlined
+            base = c * tiles_per_chunk
+            rows = [[results[base + i * len(x_indices) + j] for j in range(len(x_indices))]
+                    for i in range(len(y_indices))]
+            clip = vae_a._stitch_tiles(rows, plan["y_overlaps"], plan["x_overlaps"])  # `_decode_clip` L763
+            for k in range(base, base + tiles_per_chunk):
+                results[k] = None  # the tiles are the 2.3 GiB; drop them as soon as they are blended
+            del rows
+            for j in range(int(token_drop > 0) + 1):
+                frame_start = j * chunk_num_frames
+                chunk = clip[:, :, frame_start : frame_start + chunk_num_frames]
+                chunk = chunk[:, :, vae_a.frame_pre_padding :]
+                if j == 0:
+                    if overlap is not None:
+                        chunk = vae_a._blend(overlap, chunk, vae_a.frame_overlap, dim=-3)
+                    decoded_chunks.append(chunk)
+                else:
+                    overlap = chunk
+            del clip
+        if overlap is not None:
+            decoded_chunks.append(overlap)
+
+        dec = torch.cat(decoded_chunks, dim=2)
+        if pad_tokens > 0:  # `_decode` L832-841
+            intra_tail = vae_a.config.clip_length % temporal_ratio
+            num_tokens_before_pad = z.shape[2] - pad_tokens
+            pad_frames = sum(
+                intra_tail if intra_tail and (num_tokens_before_pad + k) % tokens_chunk_size == 0 else temporal_ratio
+                for k in range(pad_tokens)
+            )
+            dec = dec[:, :, :-pad_frames]
+
+    plan = dict(plan)
+    plan.update({
+        "mode": "two-card",
+        "cards": [str(torch.device(dev)) for dev, _ in vaes],
+        "blend_card": str(blend_device),
+        "tiles_per_card": per_card,
+        "dispatch": "job k -> card k % n over the flattened (chunk, row, column) order",
+        "autocast": autocast,
+    })
+    LOG.info("two-card decode: %d tiles over %s (%s), blended on %s",
+             len(jobs), ", ".join(plan["cards"]), "/".join(str(n) for n in per_card), blend_device)
+    return dec, plan
+
+
+# ---------------------------------------------------------------------------------------------
+# Experiment E1 -- the cross-card tile identity probe
+# ---------------------------------------------------------------------------------------------
+
+
+def probe_tile_identity(args, timings: dict) -> int:
+    """Decode the first N tiles on BOTH cards, twice, and hash every one.
+
+    This is the gate of `notes/2026-09-19-speed-plan.md` E1: it decides whether the two-card decode
+    can be called bit-identical at all, before any clip is rendered through it.  It loads no
+    denoiser and samples nothing -- the latents come from a previous run's `tensors.safetensors`
+    (`--latents-from`), so it costs a VAE load per card and N x 2 x 2 tile decodes.
+
+    Four gates, all reported in `probe.json`:
+      1. identity   -- tile hash equal ACROSS cards, every tile
+      2. repeat     -- each card's own tile hash equal across two consecutive passes
+      3. memory     -- `[vram]` per card with both replicas up
+      4. host       -- VmHWM, which is what proves the cross-card build beats a second
+                       `from_pretrained`
+    """
+    import torch
+    from safetensors.torch import load_file
+
+    if args.latents_from is None:
+        raise SystemExit("--probe-tile-identity needs --latents-from PATH (a run's tensors.safetensors)")
+    source = check_vae_source()
+    devices = [torch.device(f"xpu:{i}") for i in args.cards]
+    torch.xpu.init()
+    torch.set_grad_enabled(False)
+    for dev in devices:
+        torch.xpu.reset_peak_memory_stats(dev)
+
+    with phase("probe.load_latents", timings):
+        payload = load_file(str(args.latents_from))
+        latents = payload["latents"].detach().to("cpu", copy=True)
+    del payload
+
+    vae_a, tiling = load_video_vae(args, timings, devices[0])
+    source = check_vae_source(type(vae_a))
+    vae_b = replicate_video_vae(torch, vae_a, devices[1], timings)
+    log_vram(torch, devices, "probe: both replicas up")
+
+    latents_mean = torch.tensor(vae_a.config.latents_mean, device=devices[0]).view(1, -1, 1, 1, 1)
+    latents_std = torch.tensor(vae_a.config.latents_std, device=devices[0]).view(1, -1, 1, 1, 1)
+    z = (latents.to(devices[0]) * latents_std + latents_mean).to(vae_a.dtype)
+    try:
+        from diffusers.models.modeling_utils import get_parameter_dtype
+
+        z = z.to(get_parameter_dtype(vae_a.decoder))
+    except Exception:  # pragma: no cover
+        z = z.to(next(vae_a.decoder.parameters()).dtype)
+
+    plan = vae_decode_plan(vae_a, z)
+    n_tiles = min(int(args.probe_tile_identity), plan["tiles_per_chunk"])
+    ratio = vae_a.spatial_compression_ratio
+    z_by_card = [z, cross_card(torch, z, devices[1])]
+    # Chunk 0 only: `_decode`'s first clip, sliced exactly as `_decode` slices it.
+    chunk0 = [zc[:, :, 0 : plan["tokens_chunk_size"] + plan["token_overlap"]] for zc in z_by_card]
+
+    rows: list[dict] = []
+    for pass_index in range(2):
+        with phase(f"probe.pass{pass_index}", timings):
+            for k in range(n_tiles):
+                i, j = divmod(k, len(plan["x_indices"]))
+                digests = []
+                for card, (dev, vae) in enumerate(((devices[0], vae_a), (devices[1], vae_b))):
+                    i_pos, i_len = plan["y_indices"][i], plan["y_lengths"][i]
+                    j_pos, j_len = plan["x_indices"][j], plan["x_lengths"][j]
+                    tile = chunk0[card][..., i_pos // ratio : i_pos // ratio + i_len // ratio,
+                                        j_pos // ratio : j_pos // ratio + j_len // ratio]
+                    with _device_ctx(torch, dev), torch.no_grad(), \
+                            vae_autocast_context(torch, args.vae_autocast, dev):
+                        out = vae.decoder(vae.post_quant_conv(tile))
+                    digests.append(sha256_tensor(out.float()))
+                    del out, tile
+                rows.append({"pass": pass_index, "tile": k, "row": i, "column": j,
+                             "sha256": {str(devices[0]): digests[0], str(devices[1]): digests[1]},
+                             "cards_agree": digests[0] == digests[1]})
+    log_vram(torch, devices, "probe: after tiles")
+
+    by_tile: dict[int, dict[int, dict]] = {}
+    for row in rows:
+        by_tile.setdefault(row["tile"], {})[row["pass"]] = row
+    repeatable = bool(by_tile) and all(
+        len(passes) == 2
+        and all(passes[0]["sha256"][str(dev)] == passes[1]["sha256"][str(dev)] for dev in devices)
+        for passes in by_tile.values()
+    )
+    identical = all(row["cards_agree"] for row in rows)
+
+    report = {
+        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "host": platform.node(),
+        "argv": sys.argv,
+        "latents_from": str(args.latents_from),
+        "latents_shape": list(latents.shape),
+        "latents_sha256": sha256_tensor(latents),
+        "cards": [str(d) for d in devices],
+        "tiles_probed": n_tiles,
+        "video_vae_tiling": tiling,
+        "vae_autocast": args.vae_autocast,
+        "plan": plan,
+        "diffusers_vae_source": source,
+        "tiles": rows,
+        "gates": {
+            "identity_across_cards": identical,
+            "repeatable_per_card": repeatable,
+            "peak_memory": card_memory(torch, devices),
+            "vram": log_vram(torch, devices, "probe: final"),
+            "host_peak_rss_bytes": host_rss_bytes(),
+        },
+        "timings_seconds": timings,
+        "versions": {"python": platform.python_version(), "torch": torch.__version__,
+                     "diffusers": __import__("diffusers").__version__},
+        "cross_card_transfer": XFER,
+    }
+    run_name = args.run_name or time.strftime("probe-%Y%m%dT%H%M%SZ", time.gmtime())
+    out_dir = args.out_dir / run_name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "probe.json").write_text(json.dumps(report, indent=2) + "\n")
+
+    for row in rows:
+        LOG.info("[probe] pass %d tile %d (row %d col %d): %s  %s / %s", row["pass"], row["tile"],
+                 row["row"], row["column"], "SAME" if row["cards_agree"] else "DIFFERS",
+                 row["sha256"][str(devices[0])][:16], row["sha256"][str(devices[1])][:16])
+    LOG.info("[probe] identity across cards: %s", "PASS" if identical else "FAIL")
+    LOG.info("[probe] repeatable per card:   %s", "PASS" if repeatable else "FAIL")
+    LOG.info("[probe] host peak RSS %s", gib(report["gates"]["host_peak_rss_bytes"]))
+    LOG.info("wrote %s", out_dir / "probe.json")
+
+    strip_module_tensors(vae_b)
+    strip_module_tensors(vae_a)
+    del vae_a, vae_b
+    _free(torch, devices)
+    return 0 if (identical and repeatable) else 1
+
+
+# ---------------------------------------------------------------------------------------------
 # Phase 5 -- mp4 + receipt
 # ---------------------------------------------------------------------------------------------
 
@@ -2534,6 +3083,62 @@ def build_parser() -> argparse.ArgumentParser:
         "safe fallback. Tiling is deterministic either way (fixed tile layout, fixed blend, fixed "
         "order), so the repeat gate holds; but both sides of a comparison must use the same "
         "setting, and the receipt records which was used.",
+    )
+    p.add_argument(
+        "--vae-decode",
+        choices=["single", "two-card"],
+        default=(os.environ.get("B70_H3_VAE_DECODE") or "single").strip().lower(),
+        help="how the video VAE decodes (env B70_H3_VAE_DECODE). `single` (the default) calls "
+        "`vae.decode` on one card and is the bytewise-gated path, unchanged. `two-card` replicates "
+        "the VAE onto the second card through cross_card() and splits the 105 tile decodes between "
+        "them, blending in the original order on the original card -- intended to be BIT-IDENTICAL "
+        "(experiment E1 in notes/2026-09-19-speed-plan.md is its gate; the finished decode is gated "
+        "on reproducing the single-card video_tensor_sha256 exactly).",
+    )
+    p.add_argument(
+        "--vae-autocast",
+        choices=["off", "fp16", "bf16"],
+        default="off",
+        help="wrap the video decode in torch.autocast over the float32 VAE weights, exactly as "
+        "upstream's decoders.py does on CUDA (and only on CUDA). `off` is the default and the only "
+        "bit-identical setting. This is experiment E2: it is NOT exact, it must pass a repeat gate "
+        "of its own, and the difference against the fp32 control is a compare-h3-runs.py number, "
+        "not a claim.",
+    )
+    p.add_argument(
+        "--decode-only",
+        action="store_true",
+        help="skip phases 1-3 and decode the latents saved by a previous run (--latents-from). "
+        "About 1.5 min instead of 4, which is what makes the decode experiments cheap. The receipt "
+        "records the source run's hashes, so the four hashes of a two-card or autocast decode can "
+        "be checked against the original single-card ones.",
+    )
+    p.add_argument(
+        "--latents-from",
+        type=pathlib.Path,
+        default=None,
+        help="a previous run's tensors.safetensors (keys `latents` and `audio_latents`), for "
+        "--decode-only and --probe-tile-identity.",
+    )
+    p.add_argument(
+        "--probe-tile-identity",
+        type=int,
+        default=None,
+        metavar="N",
+        help="experiment E1, and nothing else: decode the first N tiles of chunk 0 on BOTH cards, "
+        "twice, hash every decoded tile and write probe.json. Needs --latents-from. Loads no "
+        "denoiser and renders no clip; exits nonzero if the tiles differ across cards or across "
+        "the two passes.",
+    )
+    p.add_argument(
+        "--int8-share-rotation",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="int8 denoiser only: compute the ConvRot activation rotation ONCE per (activation, "
+        "rotation, group size) instead of once per Linear, so a block's to_q/to_k/to_v share the "
+        "one `x @ R`. Bit-identical by construction -- the cache is keyed on object identity, so a "
+        "hit hands back literally the same tensor (test_convrot_linear.py section 6 proves it "
+        "bitwise). On by default for that reason; --no-int8-share-rotation is the A/B control.",
     )
     p.add_argument("--split-index", type=int, default=None, help="force the block split instead of balancing bytes")
     p.add_argument(
@@ -3197,6 +3802,14 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)-7s %(message)s",
     )
 
+    if (args.decode_only or args.probe_tile_identity is not None) and args.latents_from is None:
+        LOG.error("--decode-only and --probe-tile-identity both need --latents-from PATH "
+                  "(a previous run's tensors.safetensors, written by --save-tensors)")
+        return 2
+    if args.latents_from is not None and not args.latents_from.exists():
+        LOG.error("--latents-from %s does not exist", args.latents_from)
+        return 2
+
     if args.dry_run:
         return dry_run(args)
 
@@ -3211,6 +3824,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if args.deterministic:
         torch.use_deterministic_algorithms(True, warn_only=False)
+
+    # Experiment E1 exits here: no denoiser, no clip, just tiles and hashes.
+    if args.probe_tile_identity is not None:
+        if len(args.cards) < 2:
+            LOG.error("--probe-tile-identity compares two cards; pass --cards A B")
+            return 2
+        return probe_tile_identity(args, {})
 
     run_name = args.run_name or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     out_dir = args.out_dir / run_name
@@ -3232,6 +3852,65 @@ def main(argv: list[str] | None = None) -> int:
     for dev in devices:
         torch.xpu.reset_peak_memory_stats(dev)
 
+    # ---- phases 1-3, or the saved latents of a previous run -----------------------------------
+    token_ids: list[int] | None = None
+    prompt_embeds = None
+    source_run: dict | None = None
+    if args.decode_only:
+        # `--decode-only` exists so a decode experiment costs a decode: ~1.5 min instead of ~4.
+        # The latents are the ones the source run saved with --save-tensors, so the only thing
+        # that changed between the two runs is the decode itself -- which is what makes
+        # "reproduces the source run's video_tensor_sha256" a meaningful gate.
+        from safetensors.torch import load_file
+
+        with phase("decode_only.load_latents", timings):
+            payload = load_file(str(args.latents_from))
+            latents = payload["latents"].detach().to("cpu", copy=True)
+            audio_latents = payload["audio_latents"].detach().to("cpu", copy=True)
+            del payload
+        source_receipt = args.latents_from.parent / "receipt.json"
+        source_run = {
+            "latents_from": str(args.latents_from),
+            "source_dir": str(args.latents_from.parent),
+            "source_receipt": str(source_receipt) if source_receipt.exists() else None,
+            "source_hashes": None,
+            "source_timings_seconds": None,
+            "source_settings": None,
+        }
+        if source_receipt.exists():
+            src = json.loads(source_receipt.read_text())
+            source_run["source_run_name"] = src.get("run_name")
+            source_run["source_hashes"] = src.get("hashes")
+            source_run["source_timings_seconds"] = src.get("timings_seconds")
+            source_run["source_settings"] = {
+                k: src.get("settings", {}).get(k)
+                for k in ("denoiser", "lora", "seed", "steps", "height", "width", "frames",
+                          "vae_tiling", "vae_decode", "vae_autocast")
+            }
+        LOG.info("decode-only: %s latents %s from %s (the canvas comes from the latents, so "
+                 "--height/--width/--frames are ignored)", args.denoiser, tuple(latents.shape),
+                 args.latents_from)
+        encoder_peak = sample_peak = card_memory(torch, devices)
+        lora_receipt = None
+    else:
+        latents, audio_latents, prompt_embeds, token_ids, lora_receipt, encoder_peak, sample_peak = (
+            _sample_clip(torch, args, plan, config, devices, timings)
+        )
+
+    # ---- phase 4: decode ---------------------------------------------------------------------
+    return _decode_and_write(torch, args, timings, devices, latents, audio_latents, run_name, out_dir,
+                             plan, denoiser, lora_receipt, encoder_peak, sample_peak,
+                             prompt_embeds, token_ids, source_run)
+
+
+def _sample_clip(torch, args, plan, config, devices, timings):
+    """Phases 1-3: conditioning, the sharded denoiser, sampling, and the denoiser's release.
+
+    Returns `(latents, audio_latents, prompt_embeds, token_ids, lora_receipt, encoder_peak,
+    sample_peak)`; both latent tensors are on the HOST, because the next thing that happens is the
+    denoiser teardown.  Unchanged from the version that produced the 2026-09-19 canvas receipts --
+    it moved into a function only so `--decode-only` can skip it.
+    """
     # ---- phase 1: prompt conditioning --------------------------------------------------------
     token_ids: list[int] | None = None
     if args.prompt_embeds is not None:
@@ -3317,7 +3996,13 @@ def main(argv: list[str] | None = None) -> int:
     log_vram(torch, devices, "after denoiser release")
     for dev in devices:
         torch.xpu.reset_peak_memory_stats(dev)
+    return latents, audio_latents, prompt_embeds, token_ids, lora_receipt, encoder_peak, sample_peak
 
+
+def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run_name, out_dir,
+                      plan, denoiser, lora_receipt, encoder_peak, sample_peak,
+                      prompt_embeds, token_ids, source_run) -> int:
+    """Phases 4-5: the two VAEs, the mp4, and the receipt."""
     # ---- phase 4: decode ---------------------------------------------------------------------
     # One VAE on the card at a time, on whichever card the release left emptiest.  The video VAE is
     # 9.700 GiB of float32 weights (see `load_video_vae`) and its ViT decoder's attention is the
@@ -3325,19 +4010,46 @@ def main(argv: list[str] | None = None) -> int:
     decode_device = pick_decode_card(torch, args, devices)
     # `--vae-card` may name a card outside `--cards`; every release below has to reach it too.
     all_devices = devices if decode_device in devices else devices + [decode_device]
+    two_card = args.vae_decode == "two-card"
+    vae_source = None
+    if two_card:
+        # Fail before the 9.7 GiB load if the reimplemented tile loop no longer matches upstream.
+        vae_source = check_vae_source()
     vae, vae_tiling = load_video_vae(args, timings, decode_device)
+    vae_b = None
+    decode_plan = {"mode": "single", "cards": [str(decode_device)], "autocast": args.vae_autocast}
+    if two_card:
+        vae_source = check_vae_source(type(vae))
+        second = next((d for d in devices if d != decode_device), None)
+        if second is None:
+            raise SystemExit("--vae-decode two-card needs two distinct cards; pass --cards A B")
+        vae_b = replicate_video_vae(torch, vae, second, timings)
+        if second not in all_devices:
+            all_devices = all_devices + [second]
     with phase("decode.video", timings):
         latents_mean = torch.tensor(vae.config.latents_mean, device=decode_device).view(1, -1, 1, 1, 1)
         latents_std = torch.tensor(vae.config.latents_std, device=decode_device).view(1, -1, 1, 1, 1)
         latents = latents.to(decode_device)
-        video = vae.decode((latents * latents_std + latents_mean).to(vae.dtype), return_dict=False)[0]
+        z = (latents * latents_std + latents_mean).to(vae.dtype)
+        if two_card:
+            video, decode_plan = decode_video_two_card(
+                torch, [(decode_device, vae), (second, vae_b)], z, autocast=args.vae_autocast
+            )
+        else:
+            # The single path stays exactly what it was: one `vae.decode` call on one card, with
+            # the autocast wrapper upstream applies on CUDA and `--vae-autocast off` disables.
+            with vae_autocast_context(torch, args.vae_autocast, decode_device):
+                video = vae.decode(z, return_dict=False)[0]
+        del z
         pixel_mean = torch.tensor((0.485, 0.456, 0.406), device=decode_device).view(1, -1, 1, 1, 1)
         pixel_std = torch.tensor((0.229, 0.224, 0.225), device=decode_device).view(1, -1, 1, 1, 1)
         video = (video.float() * pixel_std + pixel_mean).clamp(0, 1)
     video_peak = card_memory(torch, all_devices)
     log_vram(torch, all_devices, "after decode.video")
     strip_module_tensors(vae)
-    del vae
+    if vae_b is not None:
+        strip_module_tensors(vae_b)
+    del vae, vae_b
     _free(torch, all_devices)
     log_vram(torch, all_devices, "after video vae release")
 
@@ -3379,8 +4091,9 @@ def main(argv: list[str] | None = None) -> int:
         "settings": {
             k: (str(v) if isinstance(v, pathlib.Path) else v) for k, v in sorted(vars(args).items())
         },
-        "prompt": args.prompt if args.prompt_embeds is None else None,
-        "prompt_tokens": len(token_ids) if token_ids is not None else int(prompt_embeds.shape[1]),
+        "prompt": args.prompt if (args.prompt_embeds is None and not args.decode_only) else None,
+        "prompt_tokens": (len(token_ids) if token_ids is not None
+                          else (int(prompt_embeds.shape[1]) if prompt_embeds is not None else None)),
         "seed": args.seed,
         "num_inference_steps": args.steps,
         "num_function_evaluations": args.steps - 1,
@@ -3412,7 +4125,19 @@ def main(argv: list[str] | None = None) -> int:
             "requested": args.vae_card,
             "video_vae_tiling": vae_tiling,
             "one_vae_at_a_time": True,
+            "vae_decode": args.vae_decode,
+            "vae_autocast": args.vae_autocast,
+            "vae_autocast_note": (
+                "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with "
+                "enabled=True on XPU: an arithmetic change, gated by its own repeat and measured "
+                "with compare-h3-runs.py"
+            ),
+            "video_decode_plan": decode_plan,
+            "diffusers_vae_source": vae_source,
         },
+        "decode_only": source_run,
+        "int8_share_rotation": bool(args.int8_share_rotation) if args.denoiser == "int8" else None,
+        "int8_rotation_cache": rotation_cache_stats() if args.denoiser == "int8" else None,
         "host_peak_rss_bytes": host_rss_bytes(),
         "hashes": {
             "video_tensor_sha256": sha256_tensor(video_cpu),
@@ -3426,7 +4151,8 @@ def main(argv: list[str] | None = None) -> int:
             "denoiser_rotation": args.denoiser_rotation if args.denoiser == "int8" else None,
             "denoiser_header_sha256": file_digest(denoiser, limit=1 << 20),
             "lora": lora_receipt,
-            "text_encoder": str(INT8_TEXT_ENCODER) if args.prompt_embeds is None else str(args.prompt_embeds),
+            "text_encoder": (None if args.decode_only else
+                             (str(INT8_TEXT_ENCODER) if args.prompt_embeds is None else str(args.prompt_embeds))),
             "convrot_rotation_sha256": file_digest(CONVROT_ROTATION) if CONVROT_ROTATION.exists() else None,
             "vae": str(VAE_DIR),
             "audio_vae": str(AUDIO_VAE_DIR),
@@ -3445,6 +4171,19 @@ def main(argv: list[str] | None = None) -> int:
     (out_dir / "receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
     LOG.info("video sha256 %s", receipt["hashes"]["video_tensor_sha256"])
     LOG.info("audio sha256 %s", receipt["hashes"]["audio_tensor_sha256"])
+    # A decode-only run is a decode experiment: say at once whether it reproduced the run it
+    # decoded the latents of.  `off` + `single` must match exactly; anything else is the A/B.
+    if source_run and source_run.get("source_hashes"):
+        agree = True
+        for key in ("video_tensor_sha256", "audio_tensor_sha256"):
+            same = receipt["hashes"][key] == source_run["source_hashes"].get(key)
+            agree &= same
+            LOG.info("[decode-only] %-22s %s  source %s", key, "MATCH" if same else "DIFFERS",
+                     str(source_run["source_hashes"].get(key))[:16])
+        LOG.info("[decode-only] vs %s: %s (--vae-decode %s, --vae-autocast %s)",
+                 source_run.get("source_run_name") or source_run["source_dir"],
+                 "bytewise-equal" if agree else "NOT bytewise-equal",
+                 args.vae_decode, args.vae_autocast)
     LOG.info("wrote %s and %s", mp4, out_dir / "receipt.json")
     return 0
 

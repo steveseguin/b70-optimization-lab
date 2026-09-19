@@ -287,11 +287,80 @@ def test_real_file(runner) -> None:
                 fh.release(base + suffix, (0, REAL_ROWS))
 
 
+# ---------------------------------------------------------------------------------------------
+# 6. Sharing the q/k/v activation rotation (lever 6 of notes/2026-09-19-speed-plan.md).
+#
+# `to_q`, `to_k` and `to_v` are three ConvRotLinears fed the SAME activation with the SAME
+# rotation, so `x @ R` is computed three times.  `--int8-share-rotation` computes it once and hands
+# the other two the identical tensor.  The claim is not "close enough": it is that the shared path
+# and the unshared path produce the SAME BYTES, because a hit returns the very tensor the first
+# call produced.  That claim is what decides whether the flag may default to ON, so it is tested
+# on a synthetic attention block rather than argued.
+# ---------------------------------------------------------------------------------------------
+
+
+def test_share_rotation(runner) -> None:
+    print("\nshared q/k/v activation rotation (--int8-share-rotation):")
+    ConvRotLinear = runner.make_convrot_linear(torch, nn, F)
+    torch.manual_seed(20260919)
+    group, dim, inner, rows = 4, 16, 12, 6
+    rotation = (A4 / math.sqrt(group)).double()
+    x = torch.randn(rows, dim, dtype=torch.float64)
+
+    def block(share: bool):
+        """A synthetic attention input: q/k/v off one activation, then out_proj off another."""
+        torch.manual_seed(4242)
+        parts = []
+        for _ in range(3):  # to_q, to_k, to_v -- three Linears, one activation, one rotation
+            w = torch.randn(inner, dim, dtype=torch.float64)
+            qw, sc = quantize(w, rotation, group)
+            parts.append(ConvRotLinear(qw, sc.double(), None, rotation, group, share_rotation=share))
+        w_out = torch.randn(dim, inner, dtype=torch.float64)
+        qw, sc = quantize(w_out, rotation, group)
+        out_proj = ConvRotLinear(qw, sc.double(), None, rotation, group, share_rotation=share)
+        runner.clear_rotation_cache()
+        before = runner.rotation_cache_stats()
+        q, k, v = (p(x) for p in parts)
+        y = out_proj((q + k + v) / 3.0)
+        after = runner.rotation_cache_stats()
+        return y, {key: after[key] - before[key] for key in after}
+
+    unshared, stats_off = block(False)
+    shared, stats_on = block(True)
+    check(torch.equal(unshared, shared), "shared and unshared paths are bitwise identical",
+          f"sha {sha(shared)[:16]}")
+    check(sha(block(True)[0]) == sha(shared), "the shared path is bitwise repeatable")
+    # Four Linears: q misses, k and v hit, out_proj (a different activation) misses.
+    check(stats_on["hits"] == 2 and stats_on["misses"] == 2,
+          "q/k/v share one rotation; a different activation does not",
+          f"hits {stats_on['hits']}, misses {stats_on['misses']}")
+    check(stats_off["hits"] == 0 and stats_off["misses"] == 0,
+          "the cache is not consulted at all with the flag off", str(stats_off))
+
+    # The cache is keyed on identity, so an equal-but-distinct activation must MISS: it is what
+    # stops a stale rotation from ever reaching a Linear whose input merely looks the same.
+    runner.clear_rotation_cache()
+    torch.manual_seed(99)
+    w = torch.randn(inner, dim, dtype=torch.float64)
+    qw, sc = quantize(w, rotation, group)
+    one = ConvRotLinear(qw, sc.double(), None, rotation, group, share_rotation=True)
+    before = runner.rotation_cache_stats()
+    y1 = one(x)
+    y2 = one(x.clone())  # same values, different object
+    after = runner.rotation_cache_stats()
+    check(after["hits"] - before["hits"] == 0, "an equal-but-distinct activation misses (identity keyed)")
+    check(torch.equal(y1, y2), "and still gives the same answer")
+    runner.clear_rotation_cache()
+    check(getattr(runner._ROTATION_CACHE, "slot", None) is None,
+          "clear_rotation_cache() drops the slot (and its reference to a card tensor)")
+
+
 def main() -> int:
     runner = load_runner()
     test_synthetic(runner)
     test_rotation(runner)
     test_real_file(runner)
+    test_share_rotation(runner)
     print()
     if FAILURES:
         print(f"FAILED: {len(FAILURES)} check(s)")

@@ -5,6 +5,14 @@
 #                            Safe to run any time, touches no GPU and no service.
 #   ./smoke_h3.sh repeat     the real gate: two GPU runs at the same seed, hashes compared.
 #   ./smoke_h3.sh one        a single GPU run (for iterating before the gate).
+#   ./smoke_h3.sh probe-tiles    experiment E1: decode the first PROBE_TILES tiles on BOTH cards,
+#                            twice, and hash them. Needs LATENTS_FROM=<run>/tensors.safetensors.
+#                            No denoiser, no clip: a few minutes, and it is the gate that decides
+#                            whether the two-card decode may be called bit-identical.
+#   ./smoke_h3.sh decode-only    decode a previous run's saved latents (LATENTS_FROM), skipping
+#                            encode/load/sample -- ~1.5 min instead of ~4. VAE_DECODE=single|
+#                            two-card and VAE_AUTOCAST=off|fp16|bf16 select the decode under test;
+#                            with single + off the four hashes MUST reproduce the source run's.
 #
 # GPU work runs under `systemd-run --user --scope`, per the lab rule: a clip is tens of minutes
 # and the interactive harness kills long jobs, while a transient scope survives the shell and
@@ -103,6 +111,19 @@ if [ -n "${LORA}" ]; then STEPS="${STEPS:-9}"; else STEPS="${STEPS:-51}"; fi
 LORA_ARGS=()
 if [ -n "${LORA}" ]; then LORA_ARGS=(--lora "${LORA}"); fi
 SEED="${SEED:-42}"
+
+# The decode experiments of ../notes/2026-09-19-speed-plan.md (levers 1 and 2).
+#   LATENTS_FROM   a previous run's tensors.safetensors (written by --save-tensors). Its receipt.json
+#                  next to it carries the hashes a decode-only run is checked against.
+#   VAE_DECODE     single (default, the bytewise-gated path) | two-card
+#   VAE_AUTOCAST   off (default, the only exact setting) | fp16 | bf16
+#   PROBE_TILES    how many tiles the E1 probe decodes on each card (default 3)
+#   RUN_NAME       name the output directory instead of timestamping it (probe-tiles / decode-only),
+#                  which is what lets decode-experiments-session.sh find each run's receipt.
+LATENTS_FROM="${LATENTS_FROM:-}"
+VAE_DECODE="${VAE_DECODE:-single}"
+VAE_AUTOCAST="${VAE_AUTOCAST:-off}"
+PROBE_TILES="${PROBE_TILES:-3}"
 PROMPT="${PROMPT:-A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.}"
 
 # Transient-scope bounds. NO memory ceiling (2026-09-18): the loader mmaps 27-40 GB of safetensors and
@@ -217,6 +238,18 @@ run_gpu() {   # run_gpu <run-name> [extra args...]
   return "${rc}"
 }
 
+require_latents() {
+  if [ -z "${LATENTS_FROM}" ]; then
+    echo "set LATENTS_FROM=<run-dir>/tensors.safetensors (a run made with --save-tensors)" >&2
+    exit 2
+  fi
+  if [ ! -f "${LATENTS_FROM}" ]; then
+    echo "LATENTS_FROM=${LATENTS_FROM} does not exist" >&2
+    exit 2
+  fi
+  echo "latents: ${LATENTS_FROM}"
+}
+
 compare_receipts() {   # compare_receipts <name-a> <name-b>
   local a="${OUT_ROOT}/$1/receipt.json" b="${OUT_ROOT}/$2/receipt.json"
   "${CPU_VENV}/bin/python" - "$a" "$b" <<'PY'
@@ -278,6 +311,12 @@ case "${mode}" in
     echo
     echo "################ pread tensor-reader unit test ################"
     "${CPU_VENV}/bin/python" "${HERE}/test_tensor_reader.py" || rc=1
+    echo
+    # The two-card decode reimplements the VAE's chunk and tile loops in the runner. This runs the
+    # reimplementation against upstream's own methods (lifted out of the diffusers source with
+    # `ast`) on a stub autoencoder, and fails if the diffusers file has moved under it.
+    echo "################ two-card VAE tile-loop unit test ################"
+    "${CPU_VENV}/bin/python" "${HERE}/test_vae_tile_loop.py" || rc=1
     exit "${rc}"
     ;;
 
@@ -285,6 +324,31 @@ case "${mode}" in
     mkdir -p "${OUT_ROOT}"
     preflight
     run_gpu "smoke-$(date -u +%Y%m%dT%H%M%SZ)"
+    ;;
+
+  probe-tiles)
+    # Experiment E1. Same preflight and the same watchdog as every other GPU mode: it loads the
+    # 9.7 GiB video VAE on BOTH cards, which is the memory question the probe is measuring.
+    require_latents
+    mkdir -p "${OUT_ROOT}"
+    preflight
+    run_gpu "${RUN_NAME:-probe-tiles-$(date -u +%Y%m%dT%H%M%SZ)}" \
+      --probe-tile-identity "${PROBE_TILES}" \
+      --latents-from "${LATENTS_FROM}" \
+      --vae-autocast "${VAE_AUTOCAST}"
+    ;;
+
+  decode-only)
+    # Decode a previous run's latents. `--height/--width/--frames` are ignored (the canvas comes
+    # from the latents); the run name records what is under test so the directory is self-describing.
+    require_latents
+    mkdir -p "${OUT_ROOT}"
+    preflight
+    run_gpu "${RUN_NAME:-decode-${VAE_DECODE}-${VAE_AUTOCAST}-$(date -u +%Y%m%dT%H%M%SZ)}" \
+      --decode-only \
+      --latents-from "${LATENTS_FROM}" \
+      --vae-decode "${VAE_DECODE}" \
+      --vae-autocast "${VAE_AUTOCAST}"
     ;;
 
   repeat)
@@ -299,7 +363,8 @@ case "${mode}" in
     ;;
 
   *)
-    echo "usage: $0 {dry|one|repeat}" >&2
+    echo "usage: $0 {dry|one|repeat|probe-tiles|decode-only}" >&2
+    echo "  probe-tiles / decode-only need LATENTS_FROM=<run-dir>/tensors.safetensors" >&2
     exit 2
     ;;
 esac
