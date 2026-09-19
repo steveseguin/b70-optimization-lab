@@ -151,7 +151,7 @@ not exist on this AMD platform, but `turbostat --show SMI` (or
 boot would count SMIs directly and settle whether they cluster at the
 launch step; that read is passive and safe.
 
-## Addendum, 2026-09-19 22:50 UTC: a single corrupted byte in host memory on the fresh boot
+## Addendum, 2026-09-19 22:39 UTC: a single corrupted byte in host memory on the fresh boot
 
 Server 83b (boot 534bf39d, launched 22:35:50, three and a half minutes
 after the reset) failed its first prompt inside ComfyUI's Gemma tokenizer
