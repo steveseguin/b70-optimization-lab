@@ -25,7 +25,6 @@ LTXPipelineSaveRecord, an output node that records but does not encode.
 import os
 import hashlib
 import json
-import os
 from pathlib import Path
 import re
 import time
@@ -62,8 +61,40 @@ def decode_clip(vae, audio_vae, video_latent, audio_latent, save_prefix=None):
     audio = LTXVAudioVAEDecode.execute(samples=audio_latent, audio_vae=audio_vae).result[0]
     saved = ''
     if save_prefix:
-        saved = save_preview(images, audio, save_prefix)
+        saved = save_preview_guarded(images, audio, save_prefix)
     return images, audio, video_latent, audio_latent, saved
+
+
+SAVE_FAILURES = []
+
+
+def save_preview_guarded(images, audio, prefix):
+    """The MP4 is a lossy preview; the raw tensors and their oracle are the product.
+    A muxer/encoder failure therefore records diagnostics (and the waveform, for
+    offline replay) instead of failing the clip, and returns a 'save-failed:' marker."""
+    try:
+        return save_preview(images, audio, prefix)
+    except Exception as error:  # noqa: BLE001  (diagnostic capture, then continue)
+        import folder_paths
+        waveform = audio.get('waveform') if isinstance(audio, dict) else None
+        row = {'prefix': prefix, 'error': repr(error)[:400],
+               'images_shape': list(images.shape) if hasattr(images, 'shape') else None,
+               'sample_rate': audio.get('sample_rate') if isinstance(audio, dict) else None}
+        if waveform is not None:
+            w = waveform.detach().float().cpu()
+            row.update({'waveform_shape': list(w.shape), 'waveform_dtype': str(waveform.dtype),
+                        'waveform_device': str(waveform.device), 'nan': int(torch.isnan(w).sum()),
+                        'inf': int(torch.isinf(w).sum()), 'min': float(w.min()) if w.numel() else None,
+                        'max': float(w.max()) if w.numel() else None})
+            try:
+                folder = folder_paths.get_output_directory()
+                dump = os.path.join(folder, prefix.replace('/', '_') + '_audio_debug.pt')
+                torch.save({'waveform': w, 'sample_rate': row['sample_rate']}, dump)
+                row['dump'] = dump
+            except Exception as dump_error:  # noqa: BLE001
+                row['dump_error'] = repr(dump_error)[:200]
+        SAVE_FAILURES.append(row)
+        return 'save-failed:' + type(error).__name__
 
 
 def save_preview(images, audio, prefix):
@@ -171,6 +202,7 @@ class LTXPipelineDecode:
                            video_latent, audio_latent, 'fill')
                 detail['saved_file'] = out[4]
                 report['detail'] = detail
+            report['save_failures'] = [dict(row) for row in SAVE_FAILURES]
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
