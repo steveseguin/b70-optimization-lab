@@ -48,6 +48,17 @@ from ltx_graph_capture import (CAPTURE_LOCK, MAX_SIGNATURES_PER_BLOCK, WARMUP_IT
 # written into its own external static buffer (`output = x`, asserted at
 # capture), so nothing a graph must keep lives in the pool, and the layers
 # capture and replay in the same order.
+#
+# ...per worker thread. The pool is keyed by (device, thread): two encode
+# workers (packets 76-82) replay their own 48 graphs concurrently on their own
+# streams, and graphs captured into one pool alias each other's transients (the
+# allocator hands graph j the blocks graph i freed during capture, sound only
+# when replays keep capture order on one stream). Shared across threads, a
+# replay on thread A could overwrite a transient thread B's replay was still
+# reading: servers 79b-82b produced one finite, fully different clip per run
+# during the fill phase, where the two threads dispatch back to back, while
+# the same fixture replayed exactly once the threads were paced by the sampler.
+# Cost: one extra pool at about a layer's peak per device per thread.
 _POOLS = {}
 # ...and ONE capture stream per device, reused by all 48 captures.
 #
@@ -61,10 +72,18 @@ _POOLS = {}
 _STREAMS = {}
 
 
+def _pool_key(device):
+    return (device, threading.get_ident())
+
+
 def _capture_stream(device):
-    stream = _STREAMS.get(device)
+    # One capture stream per (device, thread), so blocks freed by layer i's
+    # capture are handed to layer i+1's on the same thread and never to the
+    # other worker's captures.
+    key = _pool_key(device)
+    stream = _STREAMS.get(key)
     if stream is None:
-        stream = _STREAMS[device] = torch.xpu.Stream(device=device)
+        stream = _STREAMS[key] = torch.xpu.Stream(device=device)
     return stream
 GEMMA_SOURCE_SHA256 = 'a0bec322e45e94e5c938c2b8bde0112d23805166a533612077915d594d18dbbc'
 LAYER_CLASS = 'TransformerBlockGemma4'
@@ -203,9 +222,9 @@ class GraphedLayer:
 
         graph = torch.xpu.XPUGraph()
         with torch.xpu.device(self.device):
-            pool = _POOLS.get(self.device)
+            pool = _POOLS.get(_pool_key(self.device))
             if pool is None:
-                pool = _POOLS[self.device] = torch.xpu.graph_pool_handle()
+                pool = _POOLS[_pool_key(self.device)] = torch.xpu.graph_pool_handle()
             capture_stream = _capture_stream(self.device)
         try:
             # The encoder lives on xpu:2 while the sampler's current device is
