@@ -112,3 +112,41 @@ is what stalled, the printk itself hangs and pstore never gets the record.
 Booting with `drm_kms_helper.fbdev_emulation=0` (or a serial console) would
 take the GPU out of the panic path and is worth a user decision alongside
 the BIOS idle-current setting.
+
+## Addendum, 2026-09-19 22:40 UTC: eleventh freeze, the first with a trace
+
+Boot f594b3dc (kernel -31, GuC 70.44.1, sysctls armed, C2 still enabled)
+ran server 82b (22:03-22:12 UTC, stopped cleanly) and server 83
+(launched 22:17:15). Runner 83's warm arm was exact; the 30-prompt sharded
+arm started 22:19:55 and the campaign log ends at `done f83-tsh-02 (bird)
+at +27.677 s` (22:20:23): the fill phase, the moment both encode workers
+dispatch back to back and the two-clip sampler ramps. The server log ends
+22:20:27 mid-progress-bar; six receipts are zero bytes. The journal's last
+line, 22:20:22 UTC:
+
+```
+clocksource: Long readout interval, skipping watchdog check: cs_nsec: 6035009078 wd_nsec: 6035005845
+```
+
+A 6.035 s gap between two clocksource watchdog reads means the CPU running
+that timer did not execute for six seconds and the platform's HPET agreed,
+i.e. every core stalled together (a per-core stall would have tripped the
+NMI/soft-lockup detectors, which stayed silent). That is the signature of
+a System Management Interrupt or a firmware/power-management stop, not of
+a kernel bug on one core. The host then never resumed. No pstore record,
+no BMC SEL entry. Reset at 22:32:18 UTC (boot 534bf39d, kernel -31, GuC
+70.44.1, C2 enabled).
+
+Tally: eleven freezes; four at server start or the first sharded prompts
+(09-18 04:40, 09-19 18:04, 21:20, 22:20), and the last two on this boot
+sequence both within a minute of the sharded encoder's first concurrent
+encodes. The load-ramp half now dominates. An SMI-class whole-platform
+stall under a power transient is consistent with everything seen: silent,
+untraceable by CPU watchdogs, reaching pstore only if it ever returns.
+Recommended, unchanged in order: BIOS Power Supply Idle Control = Typical
+Current Idle; check the PSU rating and 12 V rails; the runtime C2 disable
+(cheap, still not applied). Added: `dmesg | grep -i smi`-style counters do
+not exist on this AMD platform, but `turbostat --show SMI` (or
+`/sys/devices/system/cpu/cpu0/msr` MSR 0x34, `rdmsr 0x34`) on the next
+boot would count SMIs directly and settle whether they cluster at the
+launch step; that read is passive and safe.
