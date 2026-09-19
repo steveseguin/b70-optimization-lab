@@ -27,6 +27,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 19 18:00 UTC: freeze diagnosis revised to a Zen C6 idle-state lockup (evidence note); server 78b stopped after the VAE gate latched; packet 79 launches 18:02 UTC.**
+Host: the 09-18 09:19 boot ran nothing and died with `soft lockup - CPU#9
+stuck for 157s` in `smp_call_function_many_cond` (a core never answered an
+IPI); freezes span both kernels, both GuC blobs, load and idle. The user
+holds the C2-disable lines and the BIOS idle-control setting; lockup
+sysctls now dump all CPUs and panic into pstore. Lane: on server 78b the
+encoder shard installed for the first time (24 layers, 10.4 GB on xpu:3,
+per-thread bookkeeping held), but the VAE gate's strict single-device check
+refused the first sharded-arm prompt and latched. Packet 79 keeps strict
+placement only for capture, records the decoder's per-device histogram and
+ComfyUI's loaded-model table, and reruns the campaign.
+[Evidence](experiments/ltx25-b70/notes/2026-09-19-freeze-evidence-soft-lockup.md).
+
 **Two-B70 host `steve-TURIND8-2L2T`, end of day September 18: the FP8 package shipped, the video lane hit a GPU
 fault, and nothing runs on the cards until you say so. The FP8 service is DOWN. Three decisions are waiting for you;
 they are at the bottom of this entry with the commands.**
