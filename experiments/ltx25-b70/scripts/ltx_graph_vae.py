@@ -225,7 +225,21 @@ class Report:
                 'captures': self.captures}
 
 
-def decoder_of(vae):
+def placement_of(decoder):
+    """Per-device tensor counts of the decoder's parameters and buffers, with a few names."""
+    rows = {}
+    for name, t in list(decoder.named_parameters()) + list(decoder.named_buffers()):
+        row = rows.setdefault(str(t.device), {'count': 0, 'examples': []})
+        row['count'] += 1
+        if len(row['examples']) < 4:
+            row['examples'].append(name)
+    return rows
+
+
+def decoder_of(vae, strict_placement=True):
+    """The native decoder. `strict_placement` (needed for graph capture and its
+    proofs) requires every parameter and buffer on one device; the original and
+    restored modes only observe placement (the native decode handles its own)."""
     decoder = vae.first_stage_model.decoder
     require(type(decoder).__name__ == 'NADiffusionDecoder',
             'Expected the native neighbourhood-attention diffusion decoder')
@@ -234,7 +248,10 @@ def decoder_of(vae):
     require(int(decoder.default_inference_timesteps.shape[0]) == 1,
             'Capture assumes the single-step decoder configuration')
     state = tuple(decoder.parameters()) + tuple(decoder.buffers())
-    require(state and len({t.device for t in state}) == 1, 'Decoder state spans devices')
+    require(bool(state), 'Decoder has no state')
+    if strict_placement:
+        require(len({t.device for t in state}) == 1,
+                'Decoder state spans devices: ' + repr(placement_of(decoder)))
     for module in decoder.modules():
         require(not (module._forward_hooks or module._forward_pre_hooks or module._backward_hooks),
                 'VAE graph capture does not support additional module hooks')

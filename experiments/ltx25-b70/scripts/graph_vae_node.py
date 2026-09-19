@@ -80,12 +80,13 @@ class LTXVAEGraphGate:
                 not torch.is_deterministic_algorithms_warn_only_enabled(), 'Strict determinism required')
         require(_original_vae is None or vae is _original_vae, 'Resident VAE generation changed')
         _original_vae = vae
-        decoder = adapter.decoder_of(vae)
+        decoder = adapter.decoder_of(vae, strict_placement=mode not in ('original', 'restored'))
 
         report = {'schema': 'ltx.vae-graph-request.v1', **identity, 'run_name': run_name,
                   'mode': mode, 'extension_sha256s': hashes,
                   'decoder_class': type(decoder).__name__,
                   'decoder_device': str(next(decoder.parameters()).device),
+                  'decoder_placement': adapter.placement_of(decoder),
                   'captured_methods': list(adapter.METHODS),
                   'capture_proof': 'each captured graph must replay bit-identically to a fresh eager call '
                                    'of the same decoder method on the same inputs, and must be proven '
@@ -111,7 +112,7 @@ class LTXVAEGraphGate:
                 # shadowed the decoder is already in that state, so this is a
                 # no-op rather than an error; the receipt records which it was.
                 if _installed is None:
-                    adapter.decoder_of(vae)
+                    adapter.decoder_of(vae, strict_placement=False)
                     report['restored_blocks'] = []
                     report['was_shadowed'] = False
                 else:

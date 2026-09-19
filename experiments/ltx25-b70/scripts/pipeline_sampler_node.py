@@ -263,6 +263,14 @@ class LTXPipelineSampler:
             report['memory'] = {f'xpu:{i}': {'allocated_bytes': int(torch.xpu.memory_allocated(i)),
                                            'reserved_bytes': int(torch.xpu.memory_reserved(i))}
                                 for i in range(torch.xpu.device_count())}
+            try:
+                import comfy.model_management as _mm
+                report['loaded_models'] = [
+                    {'model': type(getattr(lm.model, 'model', lm.model)).__name__, 'device': str(lm.device),
+                     'loaded_bytes': int(lm.model.loaded_size()), 'currently_used': bool(lm.currently_used)}
+                    for lm in list(_mm.current_loaded_models)]
+            except Exception as error:  # noqa: BLE001  (diagnostic only)
+                report['loaded_models'] = 'unavailable: ' + repr(error)
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
