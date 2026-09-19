@@ -88,6 +88,12 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 19 21:19 UTC: the sharded encoder's failures on servers 79b-81 traced to one race (worker encodes ran eager parts on the default stream, unordered against thread-stream replays: one all-NaN clip per run); packet 82 launches with the fix.**
+Boat and marble clips from the sharded encoder are byte-identical to their
+references; the failing clip varied by prompt and thread. Packet 82 runs the
+whole worker encode on the thread's per-device streams. Server 81 stopped
+21:14 UTC (pipeline latched on the NaN clip). [Findings](experiments/ltx25-b70/notes/graph-capture-81-results.md).
+
 **Four-B70 host, September 19 21:08 UTC: server 80 stopped after an inert-capture refusal on its second sharded clip; packet 81 launches with capture diagnostics and one bounded retry.**
 Server 80 (guarded preview save) emitted one exact clip, then block 0's
 capture proof reported an inert graph on a new argument signature after

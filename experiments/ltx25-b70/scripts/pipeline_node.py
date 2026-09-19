@@ -58,7 +58,23 @@ def native_encode(clip, text, consume_observations=False):
         except Exception:  # noqa: BLE001  (encoder not shadowed: nothing to reset)
             pass
     try:
-        encoded = nodes.CLIPTextEncode().encode(clip, text)
+        if worker:
+            # Everything the encode issues on a worker thread must sit on that
+            # thread's streams: the eager parts (embedding lookup, norms, the
+            # projection, the parent loop's clones) as well as the graph replays
+            # and staged cross-card copies. With the eager parts on the default
+            # stream nothing ordered them against the thread-stream replays, and
+            # a replay could read a half-written input: servers 79b-81 produced
+            # one all-NaN clip per run, on varying prompts and threads, while the
+            # first encode on each thread (captured under a full synchronize)
+            # stayed bit-exact.
+            import contextlib
+            with contextlib.ExitStack() as stack:
+                for i in range(torch.xpu.device_count()):
+                    stack.enter_context(torch.xpu.stream(capture.thread_stream(torch.device('xpu', i))))
+                encoded = nodes.CLIPTextEncode().encode(clip, text)
+        else:
+            encoded = nodes.CLIPTextEncode().encode(clip, text)
     finally:
         if worker:
             for i in range(torch.xpu.device_count()):
