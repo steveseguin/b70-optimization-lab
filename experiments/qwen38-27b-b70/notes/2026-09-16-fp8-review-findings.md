@@ -635,9 +635,57 @@ after the push and approved as `cmu6ytqyr0827lq01b76whp6d`: two fresh servers, l
 this campaign's package launcher (54.236), median 54.224 tok/s. The queue file is kept exactly as posted, so its
 `engineFlags.submissionStatus` still reads "not submitted"; the response receipts are the current record.
 
+## Stock-vs-lab GDN check (September 19, 14:42-15:02 EDT): not comparable, and the runner said otherwise
+
+The check queued under "Left open" ran in the September 19 batched window
+([`run-20260918-fp8-stock-gdn-check.py`](../scripts/run-20260918-fp8-stock-gdn-check.py), receipts
+[`../data/2026-09-19-fp8-stock-gdn/`](../data/2026-09-19-fp8-stock-gdn/), raw root
+`/mnt/fast-ai/bench-results/fp8-stock-gdn-20260919/`). Two research servers in turn on one card, same
+configuration -- no MTP, 32,768 at 0.983, batched 2048, `--cpu-embed`, no lab overlay that needs a lab-built kernel.
+Both came ready and both ran the strict suite against the R311b-896 no-MTP reference:
+
+| Arm | Image | vs R311b-896 no-MTP | Decode (tokens 1-100) |
+| --- | --- | --- | --- |
+| `stock` | pristine `vllm/vllm-openai-xpu` `sha256:96db42e2…` | **0/12** | 12.219 tok/s |
+| `r312dc` | lab `sha256:ea61e698…` (the shipped one-card image) | **12/12** | 19.236 tok/s |
+
+Prompt-by-prompt the two arms differ on all 12 prompts, with first divergence as early as token 7.
+
+**The verdict is `NOT COMPARABLE: different GEMM kernels`, and this check cannot isolate the GDN question.**
+0/12 is far beyond the near-tie flips a ULP-level rounding difference produces, and the lab arm is **57 % faster**
+on the same prompts and the same card. No rounding difference inside one kernel moves decode speed by half. The two
+arms therefore ran different FP8 GEMM kernels end to end: the lab images carry the oneDNN W8A16 fixed-K patches
+(r137a / r137b / r221) and the r309 shapes, and the pristine image carries none of them. Comparing their tokens
+compares two implementations, not two roundings of one.
+
+**The runner's printed conclusion was wrong and has been corrected.** `campaign.log` and the log line at the end of
+the run said *"the `_xpu_C` rebuild moved the no-MTP outputs; candidate fix is an r313 rebuild against the pinned
+CUTLASS revision"*. That is not supported by this data -- nothing here attributes the difference to `_xpu_C` rather
+than to the GEMM kernels -- and **no r313 rebuild follows from it**. The runner now computes the arms' speed gap and
+reports `NOT COMPARABLE: different GEMM kernels` whenever every prompt differs and the gap exceeds 20 %, printing
+what a real isolation would need instead of a fix recommendation. The receipts are kept verbatim with a
+[correction note](../data/2026-09-19-fp8-stock-gdn/CORRECTION.md) beside them.
+
+**Nothing shipped is affected.** The lab's lossless definition is a same-image comparison -- candidate against a
+reference produced by the same binary -- and every gate in the one-card package is that. The stock image is not a
+reference for anything the lab ships, and it is also slower by 57 %.
+
+**What would actually isolate the GDN question,** recorded as open and **low priority**: an image built with the
+stock oneDNN and only `_xpu_C` swapped, so the GEMM path is held fixed and the GDN kernel is the single variable;
+or an operator-level census of the GDN kernel's outputs against the stock build, the way
+[the FA multirow census](../data/2026-09-18-fa-multiq-census/) was done. Neither is worth a GPU window today.
+
+The campaign's next step, the two-card service restore at 15:02:36, hit the fifth GPU fault on `0000:03:00.0` 70 s
+in; the runner halted with `rc=3` and restored nothing. See
+[the incident note](2026-09-19-gpu-fault-service-start.md).
+
 ## Left open
 
-- **Stock-vs-lab GDN rounding (queued for the next GPU window, after the user's reset decision):** every lab image since r309 rebuilt `_xpu_C` (including the stock GDN kernel) against sycl-tla `cd76379`, so the one-card package's no-MTP outputs may differ from the pristine `vllm/vllm-openai-xpu` image's at the ULP level, exactly as the attention library did. Nothing shipped is invalidated (gates are same-image), but measure it: strict suite no-MTP on the pristine base image vs R312d-c no-MTP, 12 prompts. If they differ, an r313 rebuild of `_xpu_C` with the pinned revision (variant-c toolchain) is the candidate, followed by the full acceptance again.
+- **Stock-vs-lab GDN rounding: measured, and the measurement did not answer it (September 19).** The check ran; the
+  pristine image and the lab image are not comparable (0/12 with a 57 % speed gap = different GEMM kernels, section
+  above), so the ULP question about the `_xpu_C` / GDN rebuild is **still open and now low priority**. It needs an
+  image with the stock oneDNN and only `_xpu_C` swapped, or an operator-level census of the GDN kernel against the
+  stock build. Nothing shipped is waiting on it: every shipped gate is same-image.
 - **The census gate is met and lc-4 met the server gate: exact and faster.** The 7.6e-6 gap was the sycl-tla (CUTLASS)
   revision, not the compiler, the code generator or the multi-row algorithm; on the server the one-pass verifier is
   exact on every gate and worth +10 to +17% writing speed above 16K (section above). Nothing left open on either.
@@ -667,8 +715,14 @@ this campaign's package launcher (54.236), median 54.224 tok/s. The queue file i
   clean-clone recipe still names `cd76379` and its header now says so. Nothing shipped is affected -- r311b's GDN
   kernel was built against `cd76379` but gated exact against its own same-image reference -- but the next GDN or
   `_xpu_C` rebuild must switch, and re-gate if it does.
-- Why `0000:03:00.0` faults on a two-card start after hours of one-card work (twice today); the health probe passed
-  both times minutes earlier. Until the user decides on a reset, no GPU work.
+- Why `0000:03:00.0` faults on a two-card start after one-card work earlier on the same boot -- **three times now**
+  (09-16 06:02Z, 09-17 03:10Z, 09-19 19:03Z), plus the 09-15 restore on the other card; the health probe passed
+  minutes earlier every time, and the fault is always on the copy engine during the weight load. The current lead is
+  host swap invalidating the userptr mappings the copy engine reads from (15.1 GiB swapped out in the 49-minute boot
+  that ended in the 09-19 fault, 4.6 GiB in the five seconds before the 09-15 one), which
+  [`scripts/measure-swap-during-start.sh`](../../../scripts/measure-swap-during-start.sh) is written to confirm or
+  kill beside the next start. Not proven; a defect on that card fits the same rows. See
+  [the incident note](2026-09-19-gpu-fault-service-start.md). Until the user decides, no GPU work.
 - One-card context above 40,960 tokens: the single-checkpoint state (r311b) settled 32K lossless at 0.975 and 40,960
   at 0.983 (KV budget 45,139 tokens). The engine refuses 46,080 at depth 5 and 0.983 (3.20 GiB needed, 3.09 free; its
   estimate of the ceiling is 44,800), so 40,960 is the shipped maximum and about 44K the hard one; beyond that the

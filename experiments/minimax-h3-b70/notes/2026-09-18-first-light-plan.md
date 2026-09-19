@@ -286,6 +286,50 @@ conservative and the real number is small), or the canvas walk stops below 544x9
 is chunked. The `[vram]` lines from the 320x576 step will say which, and that is the cheap way to
 find out.
 
+### Step 4b, 2026-09-19 14:41: the release works, and the decode OOMed for a second, different reason
+
+The batched window (`/mnt/fast-ai/bench-results/batch-session-20260919.sh`, `RESUME_ROOT
+/mnt/fast-ai/bench-results/resume-20260919b`, log
+`resume-20260919b/minimax/smoke-20260919T184055Z.log`) re-ran the same clip with the release fix
+in. Same canvas, same seed, same 8 NFE, host-staged transfers.
+
+**Half of the fix is proven by measurement.** The `[vram]` lines the fix added did exactly the job
+they were added for:
+
+| `[vram]` line | xpu:0 | xpu:1 |
+| --- | --- | --- |
+| after `encode.forward` | 25.278 GiB | - |
+| after encoder release | **0.000 GiB** | - |
+| after `load.stream` | 18.798 GiB | 18.747 GiB |
+| after `sample` (8 steps, clean again) | 18.849 GiB | 18.796 GiB |
+| after denoiser release (636 params/buffers dropped) | **0.000 GiB** | **0.000 GiB** |
+| after `decode.load_vae` on the chosen card | - | 9.700 GiB |
+
+So: the denoiser release returns both cards to zero, the VAE loads at the predicted 9.700 GiB on
+the emptier card, and the phase enters the decode with 21.8 GiB free. The 18.797 GiB of retained
+shard from step 4a is gone.
+
+**And the decode still OOMed**, on the same 396 MiB attention allocation, with 31.42 GiB allocated
+on `xpu:1`. It grew ~21.7 GiB *during* the decode, from 9.700 GiB of weights.
+
+**Root cause: the runner never disabled gradient tracking.** Nothing in `run_h3_t2v.py` ran under
+`no_grad` or `inference_mode`, so every module call in the ViT decoder kept its activations alive
+for a backward pass that never comes -- layer after layer, through the tile loop, until the card
+was full. Fixed in commit `feeecf5c1`: `torch.set_grad_enabled(False)` at the start of `main()`,
+before any module runs. It changes no arithmetic; it only stops the autograd graph being built.
+
+**Not yet re-run.** The next run is the one that finds out whether the decode reaches an mp4, and
+it waits on the user's reboot decision after the [fifth GPU
+fault](../../qwen38-27b-b70/notes/2026-09-19-gpu-fault-service-start.md) -- which was a two-card
+FP8 service start later in the same window and had nothing to do with this lane. `smoke_h3.sh`
+also still refuses while `card2` holds an uncleared device coredump.
+
+**What this does to the numbers in the table above.** The `decode.video` row's "~1.07 transients"
+and the "~10.8 GiB expected" peak were computed for a decode that does not retain activations --
+that is, for the no-grad case. They were never a prediction about the run that OOMed, and they are
+**still untested**: no measured decode peak exists yet. Treat them as the hypothesis the next run
+checks, and read the answer off the `[vram] after decode.video` line rather than re-deriving it.
+
 ## Step 3 -- stop the service (user-authorized session script only)
 
 Not interactively, and not by me. The live service today is unit

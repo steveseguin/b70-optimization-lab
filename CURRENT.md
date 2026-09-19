@@ -1,11 +1,69 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-19 19:05 UTC** (2026-09-19 15:05 EDT). The two-B70 host is out of the GPU-fault
-halt: the host-staged control run denoised fault-free at 14:18 EDT and the fault's open decisions are answered by
-that result. The video lane now stops on a decode memory bug, fixed in this commit and not yet re-run; verify the
-FP8 service state before acting on the older paragraphs below (the resume script stops at its first failure, so it
-did not reach the step that restores the service). See the top of "Local Host And Active Review".
+Last reviewed: **2026-09-19 19:20 UTC** (2026-09-19 15:20 EDT).
 The four-B70 host section below was added 2026-09-11.
+
+## STOP: fifth GPU fault on the two-B70 host, and a decision waiting
+
+**One of the two cards faulted again this afternoon, and nothing runs on the cards until you say so.
+The Qwen FP8 service is DOWN.** It was stopped on purpose at 14:40 to free the cards for a batch of
+work, and when the batch tried to put it back at 15:03 the card broke 70 seconds into loading the
+model. That is the fifth time this card has done this. Nothing was reset, cleared, killed or
+rebooted, and the card is holding a crash dump that only a reboot or your say-so will clear.
+
+**What went right today, before the fault.** The video model (MiniMax-H3) ran its whole denoising
+pass twice with no fault, which is the thing that broke yesterday -- routing every card-to-card copy
+through main memory really is the fix, and it is now proven rather than assumed. And at 14:20 the
+FP8 service came up on both cards and answered all twelve test prompts exactly right at 90.36
+tokens a second. So the cards work; they just do not survive this one particular moment.
+
+**What is proven:**
+
+* The fault is real and always the same: the same card (the one at address `03:00.0`), the same
+  copy engine inside it, always while a model is being loaded onto both cards, never once the
+  service is up and running. The evidence is saved at
+  `/mnt/fast-ai/bench-results/gpu-fault-20260919T1904/`.
+* It is not the card-to-card copying we blamed yesterday. That was not happening this time.
+* Three of the five faults of this kind follow the same order of events: one-card work earlier in
+  the day, then a two-card service start on the same boot.
+
+**What is not proven:**
+
+* **Why.** The best guess is that the computer was busy moving memory out to swap while the card
+  was reading from it -- 15 GB moved to swap in this 49-minute session -- and the card asks for a
+  page that has just been taken away. That is a guess with two supporting observations, not a
+  finding, and a simply faulty card fits the evidence just as well.
+* Whether starting the service first on a fresh boot would actually avoid it. It is a pattern in
+  five events, not a rule.
+
+**What I need from you.** A reboot, and then a choice about how to spend it:
+
+1. Reboot, and **start the FP8 service first, before anything else touches the cards**. This is the
+   cheapest thing that matches the pattern.
+2. While that start runs, let me record what the memory system is doing second by second
+   (`scripts/measure-swap-during-start.sh`, read-only, touches nothing). Without this the next
+   clean start proves nothing and the next fault teaches nothing.
+3. Optionally, turn the memory-swapping setting down (`vm.swappiness` from 60 to 1). One line,
+   reversible, and it is the only lever this 15 GB machine has.
+
+Everything else -- the video model's next run, any further Qwen work -- waits behind that.
+Details, the full history of all seven faults and what would settle the question:
+[incident note](experiments/qwen38-27b-b70/notes/2026-09-19-gpu-fault-service-start.md).
+
+**Also today:** the stock-versus-lab FP8 comparison ran and came back **unusable, not informative**.
+The plain-vanilla upstream image disagreed with our image on all twelve prompts *and* ran 57%
+slower, which means the two were not running the same maths kernels at all -- so the comparison
+cannot say anything about the small rounding question it was built to answer. The runner had
+printed a recommendation off that result; that recommendation was wrong and has been removed.
+Nothing we have shipped is affected, because every one of our quality checks compares a candidate
+against a reference produced by the same image.
+[Write-up](experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).
+
+**And:** the video model's decode step ran out of card memory a second time, for a new reason -- the
+script was keeping every intermediate result as if it were going to train the model. One line fixed
+it (commit `feeecf5c1`). It has not been re-run; it is waiting behind the reboot decision too.
+
+The paragraphs below are older. Verify the FP8 service state before acting on any of them.
 
 ## Authority And Update Rule
 
@@ -74,6 +132,13 @@ broke yesterday is fixed and proven fixed, and what broke today is our own bookk
   (544x960) may hit a *denoising* memory wall rather than a decode one; the new memory lines from the 320x576 step
   will say. Details: [fault note addendum](experiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md),
   [first-light plan, step 4a](experiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md).
+* **Updated 14:41 EDT (second run).** The tear-down fix works and the log proves it: both cards read 0 GB after the
+  denoising model is released, and the decoder loads at exactly the predicted 9.7 GB. The decode still ran out of
+  memory, for a *different* reason -- the script was holding on to every intermediate result as if it were about to
+  train the model, so 9.7 GB of weights grew to 31.4 GB during the decode. One line fixed it (commit `feeecf5c1`).
+  Not re-run; waiting behind the reboot decision. The "should peak around 10.8 GB" figure above was always the
+  figure for a run that does not do that, so it is still an expectation and not a measurement.
+  [Step 4b](experiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md).
 
 **What shipped today.** The one-card FP8 package is finished and public. It is accepted on the `r312d-c` image, all
 three profiles reproduce their references exactly through the launcher a user would actually run, and long prompts now

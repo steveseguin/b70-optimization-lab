@@ -547,3 +547,37 @@ substitute, and the `[vram]` lines are what will replace it with measurements.
 
 The expected peaks after the fix, and the reason 544x960 is now a *sampling* question rather than a
 decode one, are in [the first-light plan](2026-09-18-first-light-plan.md), section "Step 4a".
+
+## Update 2026-09-19, second run: the release works, and the real decode bug was autograd
+
+Two runs happened on 2026-09-19, and together they moved the lane by one honest step.
+
+**14:18-14:19 EDT (`resume-after-fault-20260918.sh`, phase 2).** Health probe clean, host-staged
+transfers, pruned denoiser: eight denoise steps in **17.70 s with no GPU fault** -- the exact step
+that faulted the copy engine on 09-18 -- then an XPU out-of-memory error in `decode.video`. That is
+the control run the P2P rule was waiting on, and it passed. The service went back up right after it
+(strict 12/12 at 90.36 tok/s), so both cards were healthy under a full two-card load that morning.
+
+**14:41 EDT (batched window, `RESUME_ROOT /mnt/fast-ai/bench-results/resume-20260919b`).** Same
+clip with the release fix in. The `[vram]` lines settle the first question: **the denoiser release
+works.** 0.000 GiB allocated on *both* cards after `release_denoiser()`, 0.000 GiB after the
+encoder release, and the video VAE then loads at exactly the predicted 9.700 GiB on the emptier
+card with 21.8 GiB free. The 18.797 GiB of retained shard that caused the 14:18 OOM is gone.
+
+**The decode OOMed anyway, on the same 396 MiB attention allocation, at 31.42 GiB allocated.** It
+grew ~21.7 GiB during the decode from 9.700 GiB of weights, which is not a residency problem at
+all. **Root cause: nothing in the runner ran under `no_grad`**, so the ViT decoder kept every
+layer's activations for a backward pass that never comes. Fixed in `feeecf5c1`
+(`torch.set_grad_enabled(False)` at the start of `main()`); no arithmetic changes.
+
+**Not re-run yet.** The next run waits on the user's reboot decision after the
+[fifth GPU fault](../../qwen38-27b-b70/notes/2026-09-19-gpu-fault-service-start.md) -- a two-card
+FP8 service start later in the same window, no MiniMax involvement -- and `smoke_h3.sh` refuses
+anyway while `card2` holds an uncleared device coredump. The `~1.07 GiB` decode-transient estimate
+and the `~10.8 GiB` expected peak in the plan were always the no-grad figures, so they are still
+**untested**: the `[vram] after decode.video` line of the next run is what confirms or breaks them.
+
+Three lessons worth carrying, one per run: measure residency with a printed line rather than
+arithmetic after an error (that is what made this diagnosis one run instead of three); a release
+that works and a phase that fits are two different claims; and on an inference-only script,
+`torch.set_grad_enabled(False)` belongs at the top of `main()` before anything else is written.

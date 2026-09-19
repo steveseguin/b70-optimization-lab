@@ -13,9 +13,15 @@ every gate in the one-card package is same-image, candidate against reference on
 been measured. This runner measures it.
 
   If the two agree 12/12: the `_xpu_C` rebuild is output-neutral and nothing follows.
-  If they differ: the candidate fix is an r313 rebuild of `_xpu_C` against the pinned revision
-  (`87f6850` for vllm-xpu-kernels 0.1.14.1, read from the kernel's own CMakeLists CUTLASS_REVISION,
-  variant-c toolchain), followed by the full acceptance again.
+  If they differ on SOME prompts, at comparable speed: that is a rounding-level difference, and the candidate fix
+  is an r313 rebuild of `_xpu_C` against the pinned revision (`87f6850` for vllm-xpu-kernels 0.1.14.1, read from
+  the kernel's own CMakeLists CUTLASS_REVISION, variant-c toolchain), followed by the full acceptance again.
+  If they differ on EVERY prompt AND the two arms' speeds differ by more than 20 %: the arms are not the same
+  kernel stack at all, and the comparison answers nothing about GDN rounding. The verdict is then
+  `NOT COMPARABLE: different GEMM kernels`, NOT an r313 recommendation. This is what happened on 2026-09-19:
+  0/12 with the lab arm 57 % faster (19.24 vs 12.22 tok/s), because the lab images carry the oneDNN W8A16
+  fixed-K patches (r137a/r137b/r221) and the r309 shapes and the stock image does not, so the two ran different
+  FP8 GEMM kernels end to end. See notes/2026-09-16-fp8-review-findings.md.
 
 Shape of the run (modelled on run-20260918-fp8-lc3-campaign.py)
 --------------------------------------------------------------
@@ -98,6 +104,10 @@ def arm_args(image):
 
 
 ARMS = [('stock', 18220, STOCK), ('r312dc', 18221, R312DC)]
+
+# Above this relative decode-speed gap between the two arms (faster/slower - 1), an all-prompts-differ result is
+# read as "different kernels", not as rounding: no ULP-level difference in one kernel moves tok/s by a fifth.
+SPEED_GAP_LIMIT = 0.20
 
 
 def inspect(image):
@@ -189,13 +199,32 @@ def compare_arms(results):
         return {'verdict': 'not measured', 'reason': 'compare-strict-attempt-outputs.py produced no output'}
     c = json.loads(out.read_text())['comparison']
     exact, total = c['exact_prompts'], c['total_prompts']
+    stock_tok_s = results['stock'].get('strict', {}).get('tok_s_1_100')
+    r312dc_tok_s = results['r312dc'].get('strict', {}).get('tok_s_1_100')
+
+    # Speed gap as "the faster arm is N% faster than the slower one". A ULP-level rounding difference cannot move
+    # decode speed; a gap this wide means the two arms ran different kernels, and then the token comparison is a
+    # comparison of two different implementations, not a rounding measurement.
+    speed_gap = None
+    if stock_tok_s and r312dc_tok_s and min(stock_tok_s, r312dc_tok_s) > 0:
+        speed_gap = max(stock_tok_s, r312dc_tok_s) / min(stock_tok_s, r312dc_tok_s) - 1.0
+
+    if exact == total:
+        verdict = 'identical'
+    elif total and exact == 0 and speed_gap is not None and speed_gap > SPEED_GAP_LIMIT:
+        verdict = 'NOT COMPARABLE: different GEMM kernels'
+    else:
+        verdict = 'DIFFERS'
+
     return {
-        'verdict': 'identical' if exact == total else 'DIFFERS',
+        'verdict': verdict,
         'exact': f'{exact}/{total}',
         'complete_token_arrays_exact': c.get('complete_token_arrays_exact'),
         'divergent_prompts': c.get('divergent_prompts', [])[:12],
-        'stock_tok_s': results['stock'].get('strict', {}).get('tok_s_1_100'),
-        'r312dc_tok_s': results['r312dc'].get('strict', {}).get('tok_s_1_100'),
+        'stock_tok_s': stock_tok_s,
+        'r312dc_tok_s': r312dc_tok_s,
+        'speed_gap': speed_gap,
+        'speed_gap_limit': SPEED_GAP_LIMIT,
         'comparison_file': str(out),
     }
 
@@ -287,9 +316,21 @@ def main():
 
     results['verdict'] = compare_arms(results)
     (OUT / 'verdict.json').write_text(json.dumps(results['verdict'], indent=2) + '\n')
-    R.log(f"VERDICT: {results['verdict']['verdict']} ({results['verdict'].get('exact')})")
-    if results['verdict']['verdict'] == 'DIFFERS':
-        R.log('the _xpu_C rebuild moved the no-MTP outputs; candidate fix is an r313 rebuild against the pinned '
+    verdict = results['verdict']
+    R.log(f"VERDICT: {verdict['verdict']} ({verdict.get('exact')})")
+    if verdict['verdict'].startswith('NOT COMPARABLE'):
+        gap = verdict.get('speed_gap')
+        R.log(f'every prompt differs and the faster arm is {gap:.0%} faster' if gap is not None else
+              'every prompt differs and the arms run at very different speeds')
+        R.log('this is NOT a rounding result and NOT an r313 recommendation: a ULP-level GDN difference cannot move '
+              'decode speed, so the two arms ran different FP8 GEMM kernels end to end (the lab images carry the '
+              'oneDNN W8A16 fixed-K patches r137a/r137b/r221 and the r309 shapes; the stock image does not). The '
+              'GDN question needs a different experiment: an image with the stock oneDNN and only _xpu_C swapped, '
+              'or an operator-level census of the GDN kernel against the stock build. The lab lossless definition '
+              '(same-image no-MTP reference) is unaffected by this result.')
+    elif verdict['verdict'] == 'DIFFERS':
+        R.log('the two arms ran at comparable speed and some prompts differ, which is the rounding-level case: '
+              'the _xpu_C rebuild moved the no-MTP outputs; candidate fix is an r313 rebuild against the pinned '
               'CUTLASS revision 87f6850 (variant-c toolchain), then the full acceptance again')
     R.save_results()
 

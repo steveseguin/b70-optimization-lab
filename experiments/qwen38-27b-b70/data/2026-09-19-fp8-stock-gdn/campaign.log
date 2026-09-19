@@ -1,0 +1,20 @@
+[review 09-19 14:42:11] stock-vs-lab GDN check start; git 8de1c6ad1; stock sha256:96db42e248d4 lab sha256:ea61e69834d0
+[review 09-19 14:42:25] two-card service status: stopped
+[review 09-19 14:42:25] GPUs free
+[review 09-19 14:42:33] preflight-health: rc=0
+[review 09-19 14:45:03] stock: ready 
+[review 09-19 14:54:16] stock-strict: rc=0
+[review 09-19 14:54:16] stock-strict-compare: rc=0
+[review 09-19 14:54:16] stock: strict vs R311b-896-no-MTP 0/12 at 12.218875437394853 tok/s
+[review 09-19 14:54:24] stock: final stopped stop_confirmed=True
+[review 09-19 14:56:34] r312dc: ready 
+[review 09-19 15:02:17] r312dc-strict: rc=0
+[review 09-19 15:02:17] r312dc-strict-compare: rc=0
+[review 09-19 15:02:17] r312dc: strict vs R311b-896-no-MTP 12/12 at 19.23648490981138 tok/s
+[review 09-19 15:02:27] r312dc: final stopped stop_confirmed=True
+[review 09-19 15:02:27] stock-vs-r312dc: rc=0
+[review 09-19 15:02:27] VERDICT: DIFFERS (0/12)
+[review 09-19 15:02:27] the _xpu_C rebuild moved the no-MTP outputs; candidate fix is an r313 rebuild against the pinned CUTLASS revision 87f6850 (variant-c toolchain), then the full acceptance again
+[review 09-19 15:02:36] service-health: rc=0
+[review 09-19 15:04:26] service: failed New GPU fault detected. Halting this server; evidence retained in kernel.log.
+[review 09-19 15:04:26] GPU FAULT detected (58 journal lines); campaign halted, no restore
