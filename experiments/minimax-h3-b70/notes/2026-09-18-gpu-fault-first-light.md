@@ -96,7 +96,18 @@ xe 0000:03:00.0: [drm] Xe device coredump has been created
 | 2026-09-17 07:17 | both | ccs | `CCL_SYCL_*_SIMPLE_THRESHOLD=0`, i.e. oneCCL's non-simple SYCL kernels, which use peer memory access over PCIe | `/mnt/fast-ai/bench-results/gpu-fault-20260917T0717/`, qwen38 `DO-NOT-REPEAT.md` 2026-09-17 row |
 | 2026-09-18 15:06 | `03:00.0` | bcs | this run, first denoise step | `/mnt/fast-ai/bench-results/gpu-fault-20260918T1506/` |
 
-## Hypothesis (stated, not proven)
+## Hypothesis (SUPPORTED as of 2026-09-19 -- the control run passed)
+
+> **Result, 2026-09-19 14:18-14:19 EDT.** The host-staged control ran the same split, the same
+> canvas and the same steps on a freshly rebooted host and **denoised fault-free**: eight steps in
+> 17.70 s, zero `xe` fault lines in the kernel log. Yesterday's direct-transfer run faulted the
+> copy engine 2.8 s into that phase. That is the falsification test named at the bottom of this
+> section, and it did not falsify: the host route is now a finding, not a guess. The status of the
+> row in `../../qwen38-27b-b70/DO-NOT-REPEAT.md` is **supported: host-staged control passed the
+> same split on 2026-09-19**. See the addendum at the end of this note for the run, and for the
+> `decode.video` OOM that stopped it a phase later.
+
+The original statement, kept verbatim:
 
 > The runner's cross-card hand-off at the block-24 split -- `x.to(secondary)` from a tensor
 > resident on xpu:0 -- is a **peer-to-peer PCIe copy issued on the blitter**, and peer access over
@@ -228,3 +239,72 @@ Sep 18 12:06:48 kernel: xe 0000:03:00.0: [drm] Xe device coredump has been delet
 The evidence is safe -- `devcoredump-card2.txt` was copied out at 11:08 and is listed above -- but the *node* is gone,
 so `smoke_h3.sh`'s and the resume script's coredump preconditions now pass on their own. Standing rule for the next
 fault: copy the dump within the hour, because the driver expires it whether or not anyone has read it.
+
+---
+
+## Addendum, 2026-09-19: the host-staged control passed the same split
+
+Run `/mnt/fast-ai/bench-results/resume-20260918/minimax/smoke-20260919T181832Z.log`, launched by
+`scripts/resume-after-fault-20260918.sh` phase 2 after a reboot, on a clean kernel log with zero
+`xe` fault lines. Environment: `B70_H3_LOADER=pread`, `B70_H3_XFER=host`,
+`PYTORCH_ALLOC_CONF=expandable_segments:True`, turbo LoRA merged, `--steps 9` (8 NFE),
+256x448x124, same byte-balanced block-24 split as session 10.
+
+| Phase | Session 10 (direct) | 2026-09-19 (host-staged) |
+| --- | --- | --- |
+| `encode.load` | 12.6 s | 12.5 s |
+| `encode.forward` | 1.5 s | 0.7 s |
+| `load.stream` | 20.6 s | 33.1 s |
+| `sample` | **faulted 2.8 s in**, bcs page faults on `0000:03:00.0`, `UR_RESULT_ERROR_DEVICE_LOST` | **8/8 steps, 17.70 s, no fault** |
+| `decode.load_vae` | never reached | 3.45 s |
+| `decode.video` | never reached | **`torch.OutOfMemoryError` after 0.78 s** |
+
+**What this settles.** The cross-card hand-off at the block-24 split is the same hand-off in both
+runs; the only difference is the route. Direct device-to-device faulted the source card's copy
+engine at the instant of the first crossing; host-staged ran all eight steps through the same
+crossings and never touched the blitter. The P2P row in the qwen38 `DO-NOT-REPEAT.md` moves from
+HYPOTHESIS to **supported**. It is still not a proof of the *mechanism* -- the two earlier bcs
+faults on this card involved no P2P at all, so a card or driver defect remains live as a second
+cause -- but the operational rule is now evidence-backed: **stage cross-card copies through host
+RAM on this host.**
+
+**What it did not settle: the decode.** The run died a phase later, in `decode.video`:
+
+```
+torch.OutOfMemoryError: XPU out of memory. Tried to allocate 396.00 MiB. GPU 0 has a total
+capacity of 31.89 GiB of which 234.48 MiB is free. Of the allocated memory 31.21 GiB is allocated
+by PyTorch, and 64.25 MiB is reserved by PyTorch but unallocated.
+```
+
+Host memory was never the problem (13.5 GiB available throughout). The 31.21 GiB on xpu:0 adds up,
+to within the noise, out of four things:
+
+| What | GiB | How it is known |
+| --- | --- | --- |
+| denoiser shard, blocks 0..23 + non-block weights, LoRA merged | 18.797 | the split plan, printed by the run itself |
+| video VAE weights, **float32** | 9.700 | `vae/*.safetensors` headers; `_keep_in_fp32_modules` pins `encoder`, `decoder`, `quant_conv`, `post_quant_conv` -- every module it has -- so `torch_dtype=float16` narrows nothing |
+| audio VAE weights, float32 | 0.564 | `audio_vae/diffusion_pytorch_model.safetensors` header |
+| decode transients (ViT decoder attention, streams, output) | ~2.1 | `heads * S^2 * 4 = 396 MiB` is exactly the allocation that failed, in `_native_attention` |
+| **total** | **31.16** | vs 31.21 GiB reported |
+
+So the denoiser was **still resident** when the VAEs loaded: phase 3 ended with
+`del transformer, pipe` and a `_free()`, neither instrumented, and the card never got the 18.8 GiB
+back. Two contributing defects in that release, both now fixed:
+
+* `_free()` called `empty_cache()` **before** `synchronize()`, and both with no device argument --
+  i.e. it emptied the current card's cache while the other card's queues were still draining.
+* nothing dropped the pipeline's own reference to the transformer, the boundary-hook transfer
+  cache (which holds the *last* forward's crossed tensors -- `reset` clears it at the start of a
+  forward, not at the end), or the weights themselves.
+
+The fix in `run_h3_t2v.py` is `release_denoiser()` + `strip_module_tensors()`: clear the hook
+cache, remove the hooks, unhook the components from the pipeline, null every parameter and buffer
+on both shards, then synchronize / collect / `empty_cache` per card -- and a `[vram]` line per card
+at every phase boundary, always on, so this never has to be reconstructed by arithmetic again. The
+two VAEs now load one at a time (video, decode, release, audio) on whichever card the release left
+emptiest. Expected peaks are in
+[2026-09-18-first-light-plan.md](2026-09-18-first-light-plan.md); `smoke_h3.sh dry` prints them.
+
+**The cards are not implicated in this one.** An OOM is an allocator refusing a request, not a
+fault: no `xe` lines, no coredump, no engine reset, no device lost. The halt rule does not apply
+and nothing needs clearing.

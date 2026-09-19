@@ -1,7 +1,10 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-18 16:10 UTC** (2026-09-18 12:10 EDT); the two-B70 host is in a GPU-fault
-halt with three decisions waiting for the user -- see the top of "Local Host And Active Review".
+Last reviewed: **2026-09-19 19:05 UTC** (2026-09-19 15:05 EDT). The two-B70 host is out of the GPU-fault
+halt: the host-staged control run denoised fault-free at 14:18 EDT and the fault's open decisions are answered by
+that result. The video lane now stops on a decode memory bug, fixed in this commit and not yet re-run; verify the
+FP8 service state before acting on the older paragraphs below (the resume script stops at its first failure, so it
+did not reach the step that restores the service). See the top of "Local Host And Active Review".
 The four-B70 host section below was added 2026-09-11.
 
 ## Authority And Update Rule
@@ -50,6 +53,28 @@ they are at the bottom of this entry with the commands.**
 `/media/steve/extended-ssd/model-cold-storage/b70-host-20260919/` (verified copies; swap untouched). Details and the
 root-ownership lesson: [notes/2026-09-19-disk-review.md](notes/2026-09-19-disk-review.md).
 
+**MiniMax-H3, 2026-09-19 14:18-14:19 EDT: the video model ran its denoising all the way through, on both cards, with
+no GPU fault. It then ran out of card memory while turning the result into pixels.** In plain terms: the thing that
+broke yesterday is fixed and proven fixed, and what broke today is our own bookkeeping, not the hardware.
+
+* **The card-to-card copy really was the problem.** Yesterday's run died three seconds into denoising, the instant
+  data first crossed between the two cards. Today's run did the same work with every crossing routed through host
+  memory instead, and it finished all eight steps in 17.7 seconds with a clean kernel log. Same split, same clip, same
+  settings -- one difference. That was the experiment the lane was waiting on, and the standing rule ("never copy
+  directly card to card on this host") is now backed by a control run rather than a guess.
+* **Then it ran out of memory in the decode step.** The big denoising model -- 18.8 GB of it -- was still sitting on
+  card 0 when the two decoders loaded on top of it, and the decoders are 10.3 GB, not the 5 GB we had assumed
+  (the library keeps them at full precision no matter what precision you ask for). 31.2 GB on a 31.9 GB card, and it
+  stopped. **This is not a card fault**: no fault lines, no coredump, nothing to clear, no halt.
+* **Fixed today, on CPU only.** The runner now tears the denoising model off both cards explicitly before the decode,
+  loads the two decoders one at a time on whichever card has more room, and prints a memory line for every card at
+  every stage so this is visible in the log instead of being worked out afterwards from an error message. The decode
+  should now peak around 10.8 GB instead of 31.2 GB. `smoke_h3.sh dry` prints the expected numbers per stage.
+* **What is still open:** nobody has seen a finished clip yet. The next run should reach the mp4. The bigger canvas
+  (544x960) may hit a *denoising* memory wall rather than a decode one; the new memory lines from the 320x576 step
+  will say. Details: [fault note addendum](experiments/minimax-h3-b70/notes/2026-09-18-gpu-fault-first-light.md),
+  [first-light plan, step 4a](experiments/minimax-h3-b70/notes/2026-09-18-first-light-plan.md).
+
 **What shipped today.** The one-card FP8 package is finished and public. It is accepted on the `r312d-c` image, all
 three profiles reproduce their references exactly through the launcher a user would actually run, and long prompts now
 write 10-17% faster above 16K. The image is pushed to ghcr and its digest matches what the package already pinned, so
@@ -75,7 +100,7 @@ Nothing on this lane is waiting on anybody.
    the script now applies it by default and picks the matching step count automatically. All 208 adapter weights map
    cleanly onto our rebuilt model.
 
-**The fault, and why everything is stopped.** The MiniMax-H3 first-light run got further than any before it -- text
+**The fault, and why everything was stopped (2026-09-18 -- superseded by the 2026-09-19 entry above; the cards are cleared and the denoise now passes).** The MiniMax-H3 first-light run got further than any before it -- text
 encoder loaded in 12.6 s, the video model streamed onto both cards in 20.6 s, evenly split -- and then died three
 seconds into the very first denoising step, at the exact moment data first crosses from one card to the other. The
 kernel logged a copy-engine fault on `0000:03:00.0`, an engine reset, a timed-out job and a device coredump, and the

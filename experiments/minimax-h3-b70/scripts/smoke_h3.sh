@@ -256,11 +256,28 @@ case "${mode}" in
         "${LORA_ARGS[@]}" || rc=1
       echo
     done
+    # The per-phase VRAM budget, for the smoke canvas and for the next canvas up. A dry run cannot
+    # measure VRAM -- this is arithmetic over the split plan and the VAE headers, with a stated
+    # bound for the decode activations (run_h3_t2v.py::plan_memory). It exists because the
+    # 2026-09-19 control run denoised fault-free and then OOMed in `decode.video` with the denoiser
+    # still resident: 18.797 + 9.700 + 0.564 + ~2 GiB on one 31.89 GiB card.
+    echo "################ per-phase VRAM plan ################"
+    for canvas in "${HEIGHT}x${WIDTH}" "544x960"; do
+      h="${canvas%x*}"; w="${canvas#*x}"
+      echo "---- ${h}x${w}x${FRAMES} ----"
+      "${CPU_VENV}/bin/python" "${RUNNER}" --dry-run --plan-memory --denoiser "${B70_H3_DENOISER}" \
+        --height "${h}" --width "${w}" --frames "${FRAMES}" --steps "${STEPS}" \
+        "${LORA_ARGS[@]}" 2>/dev/null | sed -n '/^memory plan/,/^$/p' || rc=1
+    done
+    echo
     echo "################ INT8 ConvRot dequant unit test ################"
     "${CPU_VENV}/bin/python" "${HERE}/test_convrot_linear.py" || rc=1
     echo
     echo "################ LoRA merge / runtime-term unit test ################"
     "${CPU_VENV}/bin/python" "${HERE}/test_lora.py" || rc=1
+    echo
+    echo "################ pread tensor-reader unit test ################"
+    "${CPU_VENV}/bin/python" "${HERE}/test_tensor_reader.py" || rc=1
     exit "${rc}"
     ;;
 

@@ -8,13 +8,20 @@ The difference from attempt 2 is not the pipeline. The pipeline was never shown 
 never got past `encode.load`. The difference is that **the host-RAM question is now answered before
 the GPU is touched, and every step has something that kills our job instead of the user's session.**
 
-**STATUS 2026-09-18 15:06 UTC: this plan is HALTED at step 4 by a GPU fault.** Session 10 ran
-steps 1-4 and the run died three seconds into sampling with a copy-engine fault on `0000:03:00.0`
-(xpu:0); the host, the loader and the two-card load all behaved. The full write-up is
-[the fault note](2026-09-18-gpu-fault-first-light.md). No GPU work happens on this host until the
-user chooses between a health probe and a reboot; the FP8 service is down until then. What
-follows is updated with what sessions 9 and 10 established, so the next session can resume from
-step 4 rather than re-derive it.
+**STATUS 2026-09-19 18:19 UTC: the fault is cleared and the denoise passes; the plan is now
+blocked at the DECODE, on memory, not on the cards.** After a reboot, the host-staged control run
+(`B70_H3_XFER=host`, block-24 split, 256x448x124, 8 NFE) denoised all eight steps in **17.70 s with
+no GPU fault** -- where the 2026-09-18 direct-transfer run had faulted the copy engine 2.8 s into
+that same phase. That is the experiment the P2P hypothesis was waiting on and it passed, so the
+qwen38 `DO-NOT-REPEAT.md` row is now **supported**, not a hypothesis. The run then died in
+`decode.video` with `torch.OutOfMemoryError` (31.21 GiB live on a 31.89 GiB card) because the
+denoiser shard was still resident when the float32 VAEs loaded. That is an allocator refusal, not
+a fault: no `xe` lines, no coredump, cards not implicated, halt rule not triggered. See
+[the fault note's 2026-09-19 addendum](2026-09-18-gpu-fault-first-light.md) and "Step 4a" below.
+
+The earlier status, for the record: session 10 (2026-09-18 15:06 UTC) ran steps 1-4 and died three
+seconds into sampling with a copy-engine fault on `0000:03:00.0` (xpu:0); the host, the loader and
+the two-card load all behaved.
 
 ---
 
@@ -190,6 +197,94 @@ bit-exact. `smoke_h3.sh` pins `host` for every GPU run.
 **The next GPU session's first job is the host-staged smoke run** -- it is the experiment that
 tests the hypothesis. It cannot run until the user picks health-probe-then-restart or reboot; see
 [the fault note](2026-09-18-gpu-fault-first-light.md).
+
+### Step 4a, 2026-09-19: the denoise passed, the decode ran out of card
+
+The host-staged run happened at 14:18-14:19 EDT after a reboot, on a clean kernel log, via
+`scripts/resume-after-fault-20260918.sh` phase 2. Log:
+`/mnt/fast-ai/bench-results/resume-20260918/minimax/smoke-20260919T181832Z.log`.
+
+| Phase | Result |
+| --- | --- |
+| `encode.load` | 12.5 s, 902 tensors on xpu:0 |
+| `encode.forward` | 0.7 s, embeds (1, 46, 5120), encoder freed |
+| `load.stream` | 33.1 s, 634 tensors, 312 LoRA destinations merged, split at block 24 |
+| `sample` | **8/8 steps, 17.70 s, NO GPU FAULT** |
+| `decode.load_vae` | 3.45 s |
+| `decode.video` | **`torch.OutOfMemoryError` 0.78 s in**: 396.00 MiB refused, 31.21 GiB live on a 31.89 GiB card |
+
+Host memory was fine throughout (13.5 GiB available). The 31.21 GiB is accounted for:
+
+| What was on xpu:0 | GiB |
+| --- | --- |
+| denoiser shard (blocks 0..23 + non-block weights, LoRA merged) -- **should have been gone** | 18.797 |
+| video VAE weights, float32 | 9.700 |
+| audio VAE weights, float32 | 0.564 |
+| decode transients (the ViT decoder's attention is `heads * S^2 * 4` = the 396 MiB that failed) | ~2.1 |
+| total | 31.16 |
+
+Two surprises in that table, and both are now in the code as comments:
+
+1. **The video VAE is not float16 on the card.** `AutoencoderKLMiniMaxH3` declares
+   `_keep_in_fp32_modules = ["encoder", "decoder", "quant_conv", "post_quant_conv"]` -- every
+   module it has -- so `from_pretrained(torch_dtype=torch.float16)` narrows nothing. It is
+   **9.700 GiB**, not the 4.85 GiB the dtype argument suggests. 0.672 GiB of that is the VAE's
+   *encoder*, dead weight on a `t2va` run, and it is left in place deliberately: dropping it would
+   make the model no longer the checkpoint, and it is not what the decode was short of.
+2. **`del transformer; _free()` did not return the shard.** The old `_free()` called
+   `empty_cache()` *before* `synchronize()`, and both with no device argument, so it emptied one
+   card's cache while the other's queues were still draining; and nothing dropped the pipeline's
+   reference to the transformer or the boundary-hook transfer cache (which still holds the *last*
+   forward's crossed tensors -- the hook clears it at the start of a forward, not at the end).
+
+### The fix, and the peaks to expect now
+
+`run_h3_t2v.py`:
+
+* `release_denoiser()` runs between `sample` and `decode.load_vae`: latents to the host first (they
+  are 1.6 MB), then clear the hook cache, remove the hooks, unhook the pipeline's components, null
+  every parameter and buffer on **both** shards (`strip_module_tensors`), then synchronize /
+  `gc.collect()` / `empty_cache` **per card**.
+* `_free(torch, devices)` synchronizes first and empties each card's cache with that card current.
+* A `[vram]` line per card at every phase boundary, always on (two allocator counters and one
+  driver query -- no synchronize, no allocation). The OOM above had to be reconstructed by
+  arithmetic because no such line existed; it will not have to be again.
+* The two VAEs load **one at a time** -- video, decode, release, then audio -- on whichever card
+  the release left emptiest (`--vae-card` overrides).
+* `--vae-tiling {auto,on,off}`, default `auto` = the checkpoint's own setting, which is **on**.
+  Unlike most diffusers autoencoders this one ships with tiling enabled and the released frames are
+  the blended-tile ones, so `off` changes the pixels and is an A/B control, not a fallback. Tiling
+  is deterministic (fixed tile layout, fixed blend, fixed order), so the repeat-hash gate holds
+  either way -- but the pruned-vs-int8 A/B must use the same setting on both sides, and the receipt
+  records which was used. `enable_slicing` is left alone: it splits the batch, and every decode
+  here is batch 1.
+* The LoRA merge's float32 transients (widened weight + delta, ~0.6 GiB each) are named and deleted
+  per tensor, and `load.stream` ends with one `empty_cache` per card.
+* `--plan-memory` prints the budget below without touching a GPU; `smoke_h3.sh dry` runs it for the
+  smoke canvas and for 544x960x124.
+
+**Expected peak per phase, per card, at 256x448x124** (resident weights exact from the headers and
+the split plan; activations an upper bound -- the formula and its uncertainty are in
+`plan_memory()`'s docstring). The card holds 31.89 GiB usable.
+
+| Phase | xpu:0 | xpu:1 | What dominates |
+| --- | --- | --- | --- |
+| `encode` | 25.52 | - | 25.277 GiB INT8 encoder + its largest dequant transient; freed before the denoiser loads |
+| `load.stream` | 19.95 | 19.89 | the shard plus one float32 merge transient pair at a time |
+| `sample` | 23.72 | 23.67 | 18.8 shard + ~4.9 of activations, of which 4.78 is the materialized bf16 attention matrix |
+| `decode.video` | 10.77 | 0 | 9.700 float32 video VAE + ~1.07 transients (tiling caps this: it barely grows with the canvas) |
+| `decode.audio` | 0.72 | 0 | 0.564 audio VAE + the decoded clip; the video VAE is already released |
+
+The decode peak drops from 31.21 GiB (observed, OOM) to **~10.8 GiB expected** -- 20.4 GiB of
+headroom, and the phase is no longer close to the edge.
+
+**At 544x960x124 the warning moves to `sample`, not the decode:** the decode only goes to 11.34 GiB
+because tiling holds the tile size fixed, but the denoiser's packed sequence goes from 4,622 rows to
+19,348, and a materialized attention matrix at that length is ~80 GiB per card -- far over. Either
+the XPU dispatches a memory-efficient SDPA kernel there (in which case the bound is wildly
+conservative and the real number is small), or the canvas walk stops below 544x960 until attention
+is chunked. The `[vram]` lines from the 320x576 step will say which, and that is the cheap way to
+find out.
 
 ## Step 3 -- stop the service (user-authorized session script only)
 

@@ -505,3 +505,45 @@ module.
   conditioning via `--prompt-embeds`, one difference. That A/B is step 7 of the first-light plan, and
   it runs *after* the pruned control passes.
 * **Nothing here has touched a card.** The host is still in the GPU-fault halt from session 10.
+
+---
+
+## Update 2026-09-19: the pipeline denoises, and the decode is the open problem
+
+The halt line above is stale and the record should say so. After the reboot, the host-staged
+control run (14:18-14:19 EDT, `B70_H3_XFER=host`, 256x448x124, turbo LoRA, 8 NFE) **denoised all
+eight steps in 17.70 s with no GPU fault** and stopped one phase later in `decode.video` with an
+XPU out-of-memory error. Two results, one sentence each:
+
+1. **The P2P hypothesis is supported.** Same split, same crossings, same canvas as the run that
+   faulted the copy engine on 2026-09-18 -- the only difference is that every cross-card move went
+   through host RAM. The qwen38 `DO-NOT-REPEAT.md` row moves from HYPOTHESIS to **supported**; the
+   rule (stage cross-card copies through host RAM on this host) is unchanged and now has its
+   control. The *mechanism* is still not proven: the two earlier bcs faults on `03:00.0` had no P2P
+   in them at all.
+2. **The decode ran out of card, and the cards are not at fault.** 31.21 GiB live on a 31.89 GiB
+   card = 18.797 GiB of denoiser shard that should have been released + 9.700 GiB of video VAE +
+   0.564 GiB of audio VAE + ~2.1 GiB of decode transients. An allocator refusal, not a fault: no
+   `xe` lines, no coredump, no engine reset. Nothing needs clearing and the halt rule does not
+   apply.
+
+Two facts worth carrying into any future lane on this host, because both were wrong in our heads:
+
+* **`torch_dtype=torch.float16` does not narrow the MiniMax-H3 video VAE.** It declares
+  `_keep_in_fp32_modules = ["encoder", "decoder", "quant_conv", "post_quant_conv"]`, which is every
+  module it has. 9.700 GiB on the card, not 4.85. Check `_keep_in_fp32_modules` before budgeting
+  any diffusers model by its dtype argument.
+* **`del model; gc.collect(); empty_cache()` is not a release, and it is certainly not a release on
+  two cards.** The old helper emptied the cache *before* synchronizing and spoke for the current
+  device only. The runner now strips every parameter and buffer explicitly, per card, and prints a
+  `[vram]` line at every phase boundary so residency is a measurement in the log rather than
+  arithmetic done after an OOM.
+
+The scripts table at the top of this note gains one entry in spirit: `run_h3_t2v.py --plan-memory`
+(and `smoke_h3.sh dry`, which runs it for the smoke canvas and for 544x960x124) prints the
+per-phase, per-card VRAM budget from the headers and the split plan, with the activation formula
+and its uncertainty stated in the output. A dry run cannot measure VRAM; this is the honest
+substitute, and the `[vram]` lines are what will replace it with measurements.
+
+The expected peaks after the fix, and the reason 544x960 is now a *sampling* question rather than a
+decode one, are in [the first-light plan](2026-09-18-first-light-plan.md), section "Step 4a".

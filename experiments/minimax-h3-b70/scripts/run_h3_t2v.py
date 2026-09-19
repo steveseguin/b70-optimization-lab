@@ -9,12 +9,17 @@
                         video shift 12 / audio shift 3.  `--steps` counts SIGMA GRID POINTS
                         (terminal 0 included), so it drives `steps - 1` transformer evaluations:
                         51 for the base model's 50 NFE, 9 for the 8-step turbo LoRA.
-    Phase 4  decode     video VAE (float16) and audio VAE (float32), one at a time on xpu:0
+    Phase 4  decode     video VAE then audio VAE, one at a time, on whichever card the denoiser
+                        release left emptiest (or `--vae-card`).  Both are FLOAT32 on the card --
+                        `AutoencoderKLMiniMaxH3._keep_in_fp32_modules` pins every module it has,
+                        so `torch_dtype=float16` narrows nothing: 9.700 + 0.564 GiB, not half that.
     Phase 5  write      mp4 + audio via PyAV, and a sidecar JSON receipt
 
 Only one large component is resident at a time; each phase frees its component before the next
-loads.  Host RAM never holds a full state dict: every tensor is mmap-sliced out of the checkpoint
-and copied straight to its card.
+loads, explicitly (`release_denoiser`, `strip_module_tensors`) rather than by hoping a `del` is
+enough, and every phase boundary prints a `[vram]` line per card so the log says what was resident
+instead of leaving it to be reconstructed after an OOM (2026-09-19).  Host RAM never holds a full
+state dict: every tensor is mmap-sliced out of the checkpoint and copied straight to its card.
 
 This is the `t2va` workflow driven against the `transformer/` (FL2VA) partition -- which is the
 partition the pruned Comfy checkpoint is, and which serves both the text-only and the
@@ -1241,6 +1246,50 @@ def card_memory(torch, devices: list) -> dict:
     return out
 
 
+def device_total_bytes(torch, dev) -> int:
+    """Total memory of one card, or 0 if this torch build will not say."""
+    try:
+        return int(torch.xpu.get_device_properties(dev).total_memory)
+    except Exception:  # pragma: no cover - depends on the driver/runtime build
+        return 0
+
+
+def device_free_bytes(torch, dev) -> int:
+    """Free memory on one card: the driver's number if it has one, else total - reserved.
+
+    `mem_get_info` is the honest figure -- it counts what *other* processes and the driver hold as
+    well -- but it is not in every torch build, so the fallback is this process's own accounting.
+    """
+    try:
+        return int(torch.xpu.mem_get_info(dev)[0])
+    except Exception:
+        total = device_total_bytes(torch, dev)
+        return max(total - int(torch.xpu.memory_reserved(dev)), 0) if total else 0
+
+
+def log_vram(torch, devices, tag: str) -> dict:
+    """One `[vram]` line per card at a phase boundary.  Always on, and cheap.
+
+    Two allocator counters and one driver query per card, no synchronize, no allocation -- the
+    2026-09-19 decode OOM happened with no per-phase memory line anywhere in the log, so what was
+    resident at `decode.video` had to be reconstructed from arithmetic afterwards.  It does not
+    have to be reconstructed again.
+    """
+    out = {}
+    for dev in devices:
+        alloc = int(torch.xpu.memory_allocated(dev))
+        reserved = int(torch.xpu.memory_reserved(dev))
+        total = device_total_bytes(torch, dev)
+        free = device_free_bytes(torch, dev)
+        out[str(dev)] = {"allocated_bytes": alloc, "reserved_bytes": reserved, "free_bytes": free,
+                         "total_bytes": total}
+        LOG.info(
+            "[vram] %-26s %s  allocated %s  reserved %s  free %s of %s",
+            tag, dev, gib(alloc), gib(reserved), gib(free), gib(total),
+        )
+    return out
+
+
 def host_rss_bytes() -> int:
     with open("/proc/self/status") as fh:
         for line in fh:
@@ -1620,6 +1669,8 @@ def encode_prompt(args, timings: dict) -> "tuple":
         token_ids = tokenizer(args.prompt, add_special_tokens=False)["input_ids"]
         LOG.info("prompt tokenizes to %d rows", len(token_ids))
 
+    log_vram(torch, [device], "before encode.load")
+
     with phase("encode.load", timings):
         config = AutoConfig.from_pretrained(str(TEXT_ENCODER_DIR))
         # MiniMax-H3 conditions on `hidden_states[50]` of the *64-layer* Qwen3-VL, i.e. the
@@ -1648,8 +1699,15 @@ def encode_prompt(args, timings: dict) -> "tuple":
             out = model.model(**kwargs)
         embeds = out.last_hidden_state.to(device=device, dtype=torch.bfloat16).clone()
 
+    log_vram(torch, [device], "after encode.forward")
+    # 25.28 GiB of INT8 encoder has to be off this card before the 18.8 GiB denoiser shard lands on
+    # it.  `.clone()` above is what makes that possible -- `embeds` owns its own storage and is not
+    # a view into the encoder's last hidden state -- and the strip makes the release independent of
+    # who else still holds `model` (transformers caches, a traceback frame, an attention backend).
+    strip_module_tensors(model)
     del model, out
-    _free(torch)
+    _free(torch, [device])
+    log_vram(torch, [device], "after encoder release")
     tags = torch.full((len(token_ids),), 1, dtype=torch.long)  # MINIMAX_H3_TEXT_TAG == 1
     return embeds, tags, token_ids
 
@@ -1780,13 +1838,93 @@ def _build_text_encoder(torch, config, device, args):
     return model
 
 
-def _free(torch) -> None:
-    """Drop Python references, then hand the cached blocks back to the driver."""
+def _free(torch, devices=None) -> None:
+    """Drain the queues, drop Python references, then hand the cached blocks back to the driver.
+
+    The order is deliberate and it is not the order this function used to have (`gc.collect()`,
+    `empty_cache()`, `synchronize()`).  A block whose last kernel is still in flight cannot be
+    returned to the allocator, so an `empty_cache()` issued before the queues drain reclaims less
+    than it appears to; and `synchronize()` / `empty_cache()` with no device argument speak for the
+    *current* device only, which on a two-card split is at best half the job.  So: synchronize
+    every card, collect, then empty each card's cache with that card current.
+
+    `devices=None` keeps the old single-current-device behaviour for callers that have no list.
+    """
     import gc
 
+    devs = list(devices) if devices is not None else [None]
+    for dev in devs:
+        torch.xpu.synchronize() if dev is None else torch.xpu.synchronize(dev)
     gc.collect()
-    torch.xpu.empty_cache()
-    torch.xpu.synchronize()
+    for dev in devs:
+        if dev is None:
+            torch.xpu.empty_cache()
+        else:
+            with torch.xpu.device(dev):
+                torch.xpu.empty_cache()
+
+
+def strip_module_tensors(model) -> int:
+    """Null every parameter and buffer of `model`, in place.  Returns how many were dropped.
+
+    `del model` is only as good as the weakest reference to it: a diffusers component spec, a
+    closure in a forward hook, a traceback frame, an interpreter-level cache.  Nulling the
+    `_parameters` / `_buffers` dicts drops the *device storage* no matter who still holds the
+    module object -- what survives is an empty skeleton, not 18.8 GiB of weights.  Everything this
+    loader places is a Parameter or a registered buffer (`set_submodule_tensor`, `ConvRotLinear`,
+    `AdaLNTableEmbedder`), so this reaches all of it.
+    """
+    dropped = 0
+    for module in model.modules():
+        for store in (module._parameters, module._buffers):
+            for key, value in list(store.items()):
+                if value is not None:
+                    store[key] = None
+                    dropped += 1
+    return dropped
+
+
+def release_denoiser(torch, transformer, pipe, devices) -> None:
+    """Give both cards the denoiser's memory back, and prove it in the log.
+
+    Called between `sample` and `decode.load_vae`.  On 2026-09-19 the decode OOMed with 31.21 GiB
+    live on xpu:0 -- 18.797 GiB of denoiser shard that the plain `del transformer, pipe` before it
+    had not returned, plus 10.264 GiB of VAE weights and ~2 GiB of decode transients.  This does
+    the release explicitly instead of hoping refcounting gets there:
+
+      1. clear the boundary-hook transfer cache (it still holds the *last* forward's crossed
+         tensors: it is reset at the start of a forward, not at the end);
+      2. remove the hooks, so their closures stop referencing that cache;
+      3. unhook the components from the pipeline object;
+      4. null every parameter and buffer on both shards;
+      5. synchronize / collect / empty_cache, per card.
+
+    The caller still `del`s its own names afterwards; this makes that `del` cosmetic rather than
+    load-bearing.
+    """
+    if pipe is not None:
+        for name in ("transformer", "scheduler", "audio_scheduler"):
+            if getattr(pipe, name, None) is not None:
+                try:
+                    setattr(pipe, name, None)
+                except Exception as exc:  # pragma: no cover - diffusers may guard the attribute
+                    LOG.debug("could not unset pipeline.%s: %s", name, exc)
+    dropped = 0
+    if transformer is not None:
+        cache = getattr(transformer, "_b70_boundary_cache", None)
+        if isinstance(cache, dict):
+            cache.clear()
+        for handle in getattr(transformer, "_b70_hook_handles", ()) or ():
+            try:
+                handle.remove()
+            except Exception:  # pragma: no cover
+                pass
+        transformer._b70_hook_handles = []
+        transformer._b70_boundary_cache = None
+        dropped = strip_module_tensors(transformer)
+    _free(torch, devices)
+    LOG.info("denoiser released: %d parameters/buffers dropped on %s",
+             dropped, ", ".join(str(d) for d in devices))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1910,8 +2048,19 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
                     # Merge exactly: widen W to float32 (bf16 -> float32 loses nothing), add the
                     # float32 delta, and round ONCE, into the dtype the weight would have had.
                     # The no-LoRA branch above is left byte-for-byte as it was.
-                    t = t.to(device=dev, dtype=torch.float32)
-                    t = (t + lora_delta(torch, lfh, sl, dev)).to(dtype).contiguous()
+                    #
+                    # Two float32 [out, in] transients exist here at once -- the widened weight and
+                    # the delta, 616 MB each for an `mlp.fc1` -- plus the float32 sum.  Each one is
+                    # named and deleted rather than left to a rebinding, so the allocator gets the
+                    # blocks back at the end of *this* iteration and not whenever CPython happens
+                    # to drop the last temporary.  The arithmetic is unchanged: same widen, same
+                    # add, same single rounding.
+                    w32 = t.to(device=dev, dtype=torch.float32)
+                    delta = lora_delta(torch, lfh, sl, dev)
+                    summed = w32 + delta
+                    del w32, delta
+                    t = summed.to(dtype).contiguous()
+                    del summed
                     merged += 1
                 set_submodule_tensor(model, name, t)
                 del t  # the module owns the device tensor; drop the host-side name and the buffer
@@ -1996,6 +2145,11 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         LOG.info("rope.inv_freq recomputed; max drift vs checkpoint copy = %.3e", drift)
         if drift > 1e-6:
             raise RuntimeError(f"recomputed rope.inv_freq disagrees with the checkpoint by {drift:.3e}")
+        # The merge loop above churned float32 [out, in] transients through the allocator on both
+        # cards.  They are freed, but the blocks they sized are still cached and badly shaped for
+        # what sampling allocates next; hand them back once, here, where it costs nothing.
+        _free(torch, [primary, secondary])
+    log_vram(torch, [primary, secondary], "after load.stream")
 
     # Residency gate: the LTX lane's ON_PRE_RUN check, run once here.
     stragglers = [n for n, p in model.named_parameters() if p.device.type != "xpu"]
@@ -2045,6 +2199,11 @@ def _install_boundary_hooks(torch, model, split_index: int, primary, secondary) 
 
     Every crossing here goes through `cross_card()`, i.e. through host RAM unless
     `B70_H3_XFER=direct`: these are the transfers the 2026-09-18 copy-engine fault happened on.
+
+    The cache and the hook handles are parked on the model (`_b70_boundary_cache`,
+    `_b70_hook_handles`) so `release_denoiser()` can clear and remove them: `reset` empties the
+    cache at the *start* of a forward, so after the last one it still holds that forward's crossed
+    tensors on both cards.
     """
     cache: dict = {}
 
@@ -2067,7 +2226,7 @@ def _install_boundary_hooks(torch, model, split_index: int, primary, secondary) 
     def reset(_module, _args):
         cache.clear()
 
-    model.register_forward_pre_hook(reset)
+    handles = [model.register_forward_pre_hook(reset)]
 
     def pre_hook(_module, args):
         return tuple(move(a) for a in args)
@@ -2078,8 +2237,10 @@ def _install_boundary_hooks(torch, model, split_index: int, primary, secondary) 
 
     blocks = model.transformer_blocks
     for block in list(blocks)[split_index:]:
-        block.register_forward_pre_hook(pre_hook)
-    blocks[len(blocks) - 1].register_forward_hook(post_hook)
+        handles.append(block.register_forward_pre_hook(pre_hook))
+    handles.append(blocks[len(blocks) - 1].register_forward_hook(post_hook))
+    model._b70_boundary_cache = cache
+    model._b70_hook_handles = handles
 
 
 # ---------------------------------------------------------------------------------------------
@@ -2092,9 +2253,11 @@ def build_pipeline(args, transformer, timings: dict):
 
     The full `MiniMaxH3Blocks` chain also owns the text encoder, the VAE *encoder* and the two
     decode blocks.  None of them belongs here: the prompt is already encoded and freed, `t2va` has
-    no visual conditioning, and the decode has to happen *after* the denoiser is freed, or the
-    cards hold 37 GiB of denoiser and 5 GiB of VAE at once.  So the pipeline stops at the latents
-    and this script decodes by hand, mirroring `decoders.py` step for step.
+    no visual conditioning, and the decode has to happen *after* the denoiser is freed, or one card
+    holds 18.8 GiB of denoiser shard and 10.3 GiB of float32 VAE at once -- which is exactly the
+    2026-09-19 OOM, and why the release between the two phases is now explicit and logged.  So the
+    pipeline stops at the latents and this script decodes by hand, mirroring `decoders.py` step for
+    step.
 
     `MiniMaxH3CoreDenoiseStep` (modular_blocks_minimax_h3.py L234-290) is itself the sequence
     no_keyframe_anchors -> prepare_layout -> prepare_latents -> set_timesteps -> denoise ->
@@ -2114,20 +2277,89 @@ def build_pipeline(args, transformer, timings: dict):
     return pipe
 
 
-def load_vaes(args, timings: dict):
-    """Load the two VAEs onto one card.  Called only after the denoiser has been freed."""
-    import torch
-    from diffusers import AutoencoderKLMiniMaxH3, AutoencoderKLMiniMaxH3Audio
+def pick_decode_card(torch, args, devices):
+    """Which card decodes: `--vae-card` if given, else whichever has the most free memory.
 
-    device = torch.device(f"xpu:{args.cards[0]}")
+    Called *after* the denoiser has been released, so the free-memory reading is the one that
+    matters.  With a balanced split the two cards come back within tens of MB of each other and
+    either is fine; the point of the rule is that an unbalanced release (one shard returned, the
+    other not) sends the VAE to the card that can hold it instead of the card it started on.
+    """
+    if args.vae_card is not None:
+        return torch.device(f"xpu:{args.vae_card}")
+    free = {dev: device_free_bytes(torch, dev) for dev in devices}
+    best = max(free, key=lambda d: free[d])
+    LOG.info("decode card: %s (free %s)", best, ", ".join(f"{d} {gib(b)}" for d, b in free.items()))
+    return best
+
+
+def _apply_vae_tiling(args, vae) -> str:
+    """Honour `--vae-tiling`, and say in the log what the VAE is actually doing.
+
+    Unlike most autoencoders in diffusers, `AutoencoderKLMiniMaxH3` ships with **tiling on**
+    (`__init__`: `self.use_tiling = True`, and the class docstring: "MiniMax-H3 was released with
+    tiling enabled ... the released frames are the blended-tile ones, so disabling tiling changes
+    the output").  So `auto` -- the default -- keeps the checkpoint's own setting, which is on, and
+    `off` is the A/B control, not the safe choice.
+
+    Tiling does not cost determinism: the tile layout is a pure function of the canvas
+    (`_split_tiles`), the blend weights are a pure function of the overlap, and the tiles are
+    decoded in a fixed order, so the repeat-hash gate holds either way.  What it *does* change is
+    the numbers, so an A/B (pruned vs int8, canvas vs canvas) must use the same setting on both
+    sides.  The setting is written into the receipt for exactly that reason.
+
+    `enable_slicing` exists too and is left alone: it splits the *batch*, and every decode here is
+    batch 1, so it would be inert.
+    """
+    want = args.vae_tiling
+    if want == "on":
+        vae.enable_tiling()
+    elif want == "off":
+        vae.disable_tiling()
+    state = "on" if getattr(vae, "use_tiling", False) else "off"
+    LOG.info(
+        "video vae tiling: %s (--vae-tiling %s; tiles %dx%d, min overlap %dx%d) -- deterministic, "
+        "but it changes the pixels, so both sides of an A/B must match",
+        state, want, getattr(vae, "tile_sample_min_height", 0), getattr(vae, "tile_sample_min_width", 0),
+        getattr(vae, "tile_sample_min_overlap_height", 0), getattr(vae, "tile_sample_min_overlap_width", 0),
+    )
+    return state
+
+
+def load_video_vae(args, timings: dict, device):
+    """Load the video VAE alone.  Called only after the denoiser has been released.
+
+    `torch_dtype=torch.float16` does **not** halve this one.  `AutoencoderKLMiniMaxH3` declares
+    `_keep_in_fp32_modules = ["encoder", "decoder", "quant_conv", "post_quant_conv"]` -- that is
+    every weight-bearing module it has -- so the weights land float32 whatever dtype is asked for:
+    9.700 GiB, not the 4.85 GiB the dtype suggests.  The argument is kept because it is still what
+    picks the compute path (`decode` casts the latents to `get_parameter_dtype(self.decoder)`), and
+    because dropping it would change the arithmetic rather than the footprint.
+
+    The encoder half of those weights (0.672 GiB) is dead on a `t2va` run -- nothing encodes -- but
+    it is loaded and left in place: dropping it would make the model no longer the checkpoint, and
+    0.672 GiB is not what the decode was short of.  `--plan-memory` reports it separately.
+    """
+    import torch
+    from diffusers import AutoencoderKLMiniMaxH3
+
     with phase("decode.load_vae", timings):
-        # The original repo ships both VAEs as float32 diffusers checkpoints.  The video VAE runs
-        # in float16 (the decode block's own autocast intent, decoders.py L187-188); the audio VAE
-        # stays float32, which is what its 0.6 GB costs.
         vae = AutoencoderKLMiniMaxH3.from_pretrained(str(VAE_DIR), torch_dtype=torch.float16).to(device).eval()
+    tiling = _apply_vae_tiling(args, vae)
+    log_vram(torch, [device], "after decode.load_vae")
+    return vae, tiling
+
+
+def load_audio_vae(args, timings: dict, device):
+    """Load the audio VAE, after the video VAE has been freed.  0.564 GiB, float32 as shipped."""
+    import torch
+    from diffusers import AutoencoderKLMiniMaxH3Audio
+
+    with phase("decode.load_audio_vae", timings):
         audio_vae = AutoencoderKLMiniMaxH3Audio.from_pretrained(str(AUDIO_VAE_DIR), torch_dtype=torch.float32)
         audio_vae = audio_vae.to(device).eval()
-    return vae, audio_vae, device
+    log_vram(torch, [device], "after decode.load_audio_vae")
+    return audio_vae
 
 
 # ---------------------------------------------------------------------------------------------
@@ -2284,6 +2516,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--cards", type=int, nargs=2, default=[0, 1], help="the two XPU indices for the denoiser")
     p.add_argument("--encoder-card", type=int, default=0, help="card the text encoder runs on, alone")
+    p.add_argument(
+        "--vae-card",
+        type=int,
+        default=None,
+        help="card the two VAEs decode on. Default: whichever of --cards has the most free memory "
+        "once the denoiser has been released (the release is explicit and logged; see the [vram] "
+        "lines). The two VAEs are loaded one at a time, video then audio.",
+    )
+    p.add_argument(
+        "--vae-tiling",
+        choices=["auto", "on", "off"],
+        default="auto",
+        help="spatial tiling in the video VAE. `auto` (the default) keeps the checkpoint's own "
+        "setting, which is ON -- AutoencoderKLMiniMaxH3 ships with tiling enabled and the released "
+        "frames are the blended-tile ones, so `off` CHANGES THE PIXELS and is an A/B control, not a "
+        "safe fallback. Tiling is deterministic either way (fixed tile layout, fixed blend, fixed "
+        "order), so the repeat gate holds; but both sides of a comparison must use the same "
+        "setting, and the receipt records which was used.",
+    )
     p.add_argument("--split-index", type=int, default=None, help="force the block split instead of balancing bytes")
     p.add_argument(
         "--adaln-dtype",
@@ -2322,6 +2573,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--save-tensors", action="store_true", help="also write the raw decoded tensors as safetensors")
     p.add_argument("--deterministic", action="store_true", help="torch.use_deterministic_algorithms(True), fail closed")
     p.add_argument("--dry-run", action="store_true", help="CPU only: configs + headers, print the split plan, exit")
+    p.add_argument(
+        "--plan-memory",
+        action="store_true",
+        help="dry-run extra: the per-phase, per-card VRAM budget for the requested canvas -- "
+        "resident weights from the split plan and the VAE headers, plus a stated upper bound for "
+        "the decode activations. A dry run cannot measure VRAM; this is arithmetic, and the "
+        "formula and its uncertainty are printed with it.",
+    )
     p.add_argument("--verify-remap", action="store_true", help="dry-run extra: check the key remap against the full BF16 checkpoint")
     p.add_argument("-v", "--verbose", action="store_true")
     return p
@@ -2545,6 +2804,9 @@ def dry_run(args) -> int:
           f"(rectified-flow Euler, eta 0; no guidance_scale exists)")
     print()
 
+    if args.plan_memory:
+        print_plan_memory(args, config, plan, header)
+
     if args.verify_remap:
         rc = verify_remap_against_full(config, variant)
         if rc:
@@ -2614,6 +2876,195 @@ def dry_run_lora(args, config: dict, header: dict, quant_meta: dict[str, dict]) 
 
 
 VERIFY_ROWS = 256  # output rows sampled per quantized Linear; keeps every read a few MB
+
+
+def vae_weight_bytes(directory: pathlib.Path) -> dict[str, int]:
+    """Resident bytes per top-level module of a VAE, from its safetensors headers.
+
+    Headers only, sharded or not.  The numbers are the *stored* widths, which for both MiniMax-H3
+    VAEs is float32 -- and float32 is also what lands on the card: `AutoencoderKLMiniMaxH3` pins
+    `encoder`, `decoder`, `quant_conv` and `post_quant_conv` in `_keep_in_fp32_modules`, i.e. every
+    module it has, so `torch_dtype=torch.float16` does not narrow a single weight.  That is the
+    difference between a 4.85 GiB guess and the 9.70 GiB the card actually gives up.
+    """
+    shards = sorted(directory.glob("*.safetensors"))
+    out: dict[str, int] = {}
+    for shard in shards:
+        for key, entry in read_header(shard).items():
+            out[key.split(".")[0]] = out.get(key.split(".")[0], 0) + tensor_bytes(entry)
+    return out
+
+
+def _tile_spans(length: int, tile: int, min_overlap: int, ratio: int) -> list[int]:
+    """`AutoencoderKLMiniMaxH3._split_tiles`, in pixels, reimplemented for the dry run.
+
+    Same arithmetic as the model (autoencoder_kl_minimax_h3.py `_split_tiles`): the smallest tile
+    count whose union covers `length` with every overlap at least `min_overlap`, slack distributed
+    in whole `ratio` steps.  Only the tile *sizes* matter here, and every tile is `tile` wide, so
+    this returns one entry per tile.
+    """
+    if tile >= length:
+        return [length]
+    num_tiles = math.ceil(length / tile)
+    while tile * num_tiles - min_overlap * (num_tiles - 1) - length < 0:
+        num_tiles += 1
+    return [tile] * num_tiles
+
+
+def plan_memory(args, config: dict, plan: SplitPlan, header: dict) -> dict:
+    """Per-phase, per-card VRAM arithmetic for the requested canvas.  No torch, no device.
+
+    THE FORMULA, and what each term is worth trusting.
+
+    Resident weights are exact.  They come from the safetensors headers and the dtype policy the
+    loader actually applies: `plan_split` for the denoiser shards, `vae_weight_bytes` for the two
+    VAEs (float32, pinned -- see that function), the text-encoder header for phase 1.  These are
+    the numbers the 2026-09-19 log confirms: the split plan said 18.797 GiB on xpu:0 and the run
+    printed 18.797 GiB.
+
+    Activations are an UPPER BOUND, not a measurement, and the dominant term is one line of the
+    diffusers decoder:
+
+        attention = 2 * heads * S^2 * 4 bytes            S = tokens in one decode tile
+        streams   = 10 * S * dim * 4 bytes               q,k,v, attn out, residual, norm, ffn
+        output    = 3 * frames * H * W * 4 bytes         the assembled clip, float32
+        latents   = 24 * latent_frames * H/16 * W/16 * 4
+
+    The `2 *` in the attention term is the scores matrix plus the softmax result: the 2026-09-19
+    traceback died inside `_native_attention` -> `torch.nn.functional.scaled_dot_product_attention`
+    asking for 396.00 MiB, which is exactly `heads * S^2 * 4` at the smoke canvas, so the math
+    backend really does materialize it.  UNCERTAINTY: if the XPU backend ever dispatches a
+    flash/memory-efficient kernel instead, that whole term collapses to a few MB and this bound is
+    far too generous.  The `10 *` streams coefficient is a count of the live `[S, dim]` tensors in
+    `MiniMaxH3VideoTransformerBlock.forward`, read off the source, not measured; call it +-50 %.
+    Fragmentation, the caching allocator's held blocks and `expandable_segments:True` add a few
+    per cent on top of all of it, and `reserved` always runs ahead of `allocated`.
+
+    The denoise activations are the weakest line here: the packed sequence is known exactly but
+    what diffusers keeps live across a block is not read off the source the way the VAE's is.  The
+    bound below uses the same shape of formula at the denoiser's own widths, and the run's `[vram]`
+    lines will replace it with a measurement on the next pass.
+    """
+    vae_cfg = json.loads((VAE_DIR / "config.json").read_text())
+    audio_cfg = json.loads((AUDIO_VAE_DIR / "config.json").read_text())
+
+    spatial = math.prod(vae_cfg["spatial_downsample_factors"])
+    temporal = math.prod(vae_cfg["temporal_downsample_factors"])
+    clip_len, token_drop = vae_cfg["clip_length"], vae_cfg["token_drop"]
+    frames = args.frames
+    while frames % clip_len != 5:
+        frames += 1
+    latent_frames = (frames - 5) // clip_len * 5 + 2
+    height, width = args.height, args.width
+    if height is None or width is None:
+        height, width = 768, 1344
+    lat_h, lat_w = height // spatial, width // spatial
+
+    # --- phase 4 activations, from the decoder's own geometry ---------------------------------
+    dim = vae_cfg["decoder_num_attention_heads"] * vae_cfg["decoder_attention_head_dim"]
+    heads = vae_cfg["decoder_num_attention_heads"]
+    tokens_chunk = math.ceil(clip_len / temporal)
+    token_overlap = (-token_drop) % tokens_chunk
+    tile_h = max(_tile_spans(height, 256, 64, spatial))
+    tile_w = max(_tile_spans(width, 256, 64, spatial))
+    seq = (tokens_chunk + token_overlap) * (tile_h // spatial) * (tile_w // spatial)
+    seq += vae_cfg["decoder_num_register_tokens"] + 1
+    attn_bytes = 2 * heads * seq * seq * 4
+    stream_bytes = 10 * seq * dim * 4
+    out_bytes = 3 * frames * height * width * 4
+    latent_bytes = vae_cfg["latent_channels"] * latent_frames * lat_h * lat_w * 4
+    decode_act = attn_bytes + stream_bytes + out_bytes + latent_bytes
+
+    video_vae = vae_weight_bytes(VAE_DIR)
+    audio_vae = vae_weight_bytes(AUDIO_VAE_DIR)
+
+    # --- phase 3 activations, same shape of formula at the denoiser's widths -------------------
+    patch = config["patch_size"]
+    video_rows = (latent_frames // patch[0]) * (lat_h // patch[1]) * (lat_w // patch[2])
+    audio_rows = int(round(frames / 24 * 40)) * 2
+    text_rows = 64  # nominal; the smoke prompt is 46 rows and a long one is a few hundred
+    rows = video_rows + audio_rows + text_rows
+    d_heads = config["num_attention_heads"]
+    d_dim = config["num_attention_heads"] * config["attention_head_dim"]
+    sample_attn = 2 * d_heads * rows * rows * 2  # bf16 scores + probs, math backend
+    sample_stream = 10 * rows * HIDDEN_SIZE * 2
+    sample_act = sample_attn + sample_stream
+
+    # --- phase 1 ------------------------------------------------------------------------------
+    te_header = read_header(INT8_TEXT_ENCODER)
+    te_bytes = sum(tensor_bytes(e) for k, e in te_header.items() if not k.endswith(".comfy_quant"))
+    te_dequant = max((tensor_bytes(e) * 2 for e in te_header.values() if e["dtype"] == "I8"), default=0)
+
+    cards = [int(c) for c in args.cards]
+    enc_card, dec_card = int(args.encoder_card), (cards[0] if args.vae_card is None else int(args.vae_card))
+    phases = []
+
+    def row(name: str, per_card: dict[int, int], note: str) -> None:
+        phases.append({"phase": name, "per_card": per_card, "note": note})
+
+    row("encode", {enc_card: te_bytes + te_dequant},
+        f"{gib(te_bytes)} INT8 encoder + {gib(te_dequant)} largest dequant transient; freed before load.stream")
+    # The merge widens one destination weight to float32 and builds a float32 delta beside it, so
+    # the transient is twice the widest destination.  Both are deleted per tensor (`load.stream`).
+    remap = build_remap(config["num_layers"], config["num_refiner_layers"], args.denoiser)
+    widest_fp32 = max(
+        src.nbytes(header) // _DTYPE_BYTES[header[src.key]["dtype"]] * 4 for src in remap.values()
+    )
+    merge_transient = 2 * widest_fp32 if args.lora else 0
+    row("load.stream",
+        {cards[0]: plan.card0_bytes + merge_transient, cards[1]: plan.card1_bytes + merge_transient},
+        f"includes {gib(merge_transient)} of float32 LoRA merge transients (widened weight + delta, "
+        "one destination at a time) -- deleted per tensor, cache emptied at the end of the phase"
+        if args.lora else "no LoRA: nothing is widened, no merge transient")
+    row("sample", {cards[0]: plan.card0_bytes + sample_act, cards[1]: plan.card1_bytes + sample_act},
+        f"{gib(sample_act)} of activations at {rows} packed rows, of which {gib(sample_attn)} is "
+        f"the bf16 attention matrix ({d_heads} heads x {rows}^2 x 2, materialized): that term is "
+        "QUADRATIC in the canvas and vanishes if the XPU dispatches a memory-efficient SDPA kernel")
+    row("decode.video", {dec_card: sum(video_vae.values()) + decode_act},
+        f"{gib(sum(video_vae.values()))} float32 video VAE + {gib(decode_act)} activations "
+        f"(tile {tile_h}x{tile_w}, {seq} tokens, {gib(attn_bytes)} attention) -- tiling caps this, "
+        "so it barely grows with the canvas")
+    row("decode.audio", {dec_card: sum(audio_vae.values()) + out_bytes},
+        f"{gib(sum(audio_vae.values()))} float32 audio VAE, video VAE already released; the "
+        f"{gib(out_bytes)} decoded clip is still resident")
+
+    return {
+        "canvas": {"height": height, "width": width, "frames": frames, "latent_frames": latent_frames,
+                   "latent_hw": [lat_h, lat_w], "packed_rows": rows},
+        "video_vae_bytes": video_vae,
+        "audio_vae_bytes": audio_vae,
+        "decode": {"tile": [tile_h, tile_w], "tokens": seq, "attention_bytes": attn_bytes,
+                   "stream_bytes": stream_bytes, "output_bytes": out_bytes, "latent_bytes": latent_bytes},
+        "sample": {"rows": rows, "attention_bytes": sample_attn, "stream_bytes": sample_stream},
+        "phases": phases,
+        "cards": cards,
+    }
+
+
+# The OOM message of 2026-09-19 reports the card as "a total capacity of 31.89 GiB": 32 GiB of
+# board memory less what the driver keeps.  That, not 32, is the number a budget has to fit under.
+USABLE_CARD_BYTES = int(31.89 * 2**30)
+
+
+def print_plan_memory(args, config: dict, plan: SplitPlan, header: dict) -> None:
+    report = plan_memory(args, config, plan, header)
+    c = report["canvas"]
+    print(f"memory plan -- {c['height']}x{c['width']}x{c['frames']} "
+          f"(latent {c['latent_frames']}x{c['latent_hw'][0]}x{c['latent_hw'][1]}, "
+          f"{c['packed_rows']} packed rows), per card, against {gib(USABLE_CARD_BYTES)} usable:")
+    for entry in report["phases"]:
+        line = "  ".join(
+            f"card {card} {gib(b)}{'  OVER' if b > USABLE_CARD_BYTES else ''}"
+            for card, b in sorted(entry["per_card"].items())
+        )
+        print(f"  {entry['phase']:14s} {line}")
+        print(f"                 {entry['note']}")
+    v = report["video_vae_bytes"]
+    print(f"  video vae weights: decoder {gib(v.get('decoder', 0))} + encoder {gib(v.get('encoder', 0))} "
+          f"(float32 -- _keep_in_fp32_modules pins every module; --vae-tiling {args.vae_tiling})")
+    print("  activations are an UPPER BOUND from the formula in plan_memory()'s docstring, not a "
+          "measurement; the run's [vram] lines are the measurement.")
+    print()
 
 
 def verify_remap_against_full(config: dict, variant: str = "pruned") -> int:
@@ -2843,42 +3294,63 @@ def main(argv: list[str] | None = None) -> int:
     if args.width is not None:
         call_kwargs["width"] = args.width
 
+    log_vram(torch, devices, "before sample")
     with phase("sample", timings):
         # `output=[...]` returns a dict of those intermediates (ModularPipeline.__call__ docstring).
         result = pipe(**call_kwargs, output=["latents", "audio_latents"])
     sample_peak = card_memory(torch, devices)
+    log_vram(torch, devices, "after sample")
 
-    latents = result["latents"].detach()
-    audio_latents = result["audio_latents"].detach()
+    # The latents are the only thing worth keeping out of phase 3 and they are tiny -- 1.6 MB of
+    # video latents at 256x448x124, 0.1 MB of audio -- so they go to the host while the denoiser is
+    # torn down, and come back to whichever card ends up decoding.  Holding them on a card would
+    # pin one allocator block through the release for no reason.
+    latents = result["latents"].detach().to("cpu", copy=True)
+    audio_latents = result["audio_latents"].detach().to("cpu", copy=True)
     del result
+    release_denoiser(torch, transformer, pipe, devices)
     del transformer, pipe
-    _free(torch)
+    log_vram(torch, devices, "after denoiser release")
     for dev in devices:
         torch.xpu.reset_peak_memory_stats(dev)
 
     # ---- phase 4: decode ---------------------------------------------------------------------
-    vae, audio_vae, decode_device = load_vaes(args, timings)
+    # One VAE on the card at a time, on whichever card the release left emptiest.  The video VAE is
+    # 9.700 GiB of float32 weights (see `load_video_vae`) and its ViT decoder's attention is the
+    # single largest transient in the run, so the audio VAE's 0.564 GiB waits until it is gone.
+    decode_device = pick_decode_card(torch, args, devices)
+    # `--vae-card` may name a card outside `--cards`; every release below has to reach it too.
+    all_devices = devices if decode_device in devices else devices + [decode_device]
+    vae, vae_tiling = load_video_vae(args, timings, decode_device)
     with phase("decode.video", timings):
         latents_mean = torch.tensor(vae.config.latents_mean, device=decode_device).view(1, -1, 1, 1, 1)
         latents_std = torch.tensor(vae.config.latents_std, device=decode_device).view(1, -1, 1, 1, 1)
-        latents = cross_card(torch, latents, decode_device)
+        latents = latents.to(decode_device)
         video = vae.decode((latents * latents_std + latents_mean).to(vae.dtype), return_dict=False)[0]
         pixel_mean = torch.tensor((0.485, 0.456, 0.406), device=decode_device).view(1, -1, 1, 1, 1)
         pixel_std = torch.tensor((0.229, 0.224, 0.225), device=decode_device).view(1, -1, 1, 1, 1)
         video = (video.float() * pixel_std + pixel_mean).clamp(0, 1)
+    video_peak = card_memory(torch, all_devices)
+    log_vram(torch, all_devices, "after decode.video")
+    strip_module_tensors(vae)
     del vae
-    _free(torch)
+    _free(torch, all_devices)
+    log_vram(torch, all_devices, "after video vae release")
+
+    audio_vae = load_audio_vae(args, timings, decode_device)
     with phase("decode.audio", timings):
         a_mean = torch.tensor(audio_vae.config.latents_mean, device=decode_device).view(1, -1, 1)
         a_std = torch.tensor(audio_vae.config.latents_std, device=decode_device).view(1, -1, 1)
-        audio_latents = cross_card(torch, audio_latents, decode_device)
+        audio_latents = audio_latents.to(decode_device)
         audio = audio_vae.decode((audio_latents * a_std + a_mean).float(), return_dict=False)[0]
         # decode returns (2, 1, N); decoders.py L248 permutes it to (1, 2, N).
         audio = audio.float().permute(1, 0, 2).contiguous()
         sampling_rate = int(audio_vae.config.sampling_rate)
-    decode_peak = card_memory(torch, devices)
+    decode_peak = card_memory(torch, all_devices)
+    log_vram(torch, all_devices, "after decode.audio")
+    strip_module_tensors(audio_vae)
     del audio_vae
-    _free(torch)
+    _free(torch, all_devices)
 
     # ---- phase 5: write ----------------------------------------------------------------------
     video_cpu = video.detach().float().cpu().contiguous()  # (1, 3, T, H, W) in [0, 1]
@@ -2925,7 +3397,18 @@ def main(argv: list[str] | None = None) -> int:
         "split_plan": plan.as_dict(),
         "timings_seconds": timings,
         "seconds_per_second_of_video": round(sum(timings.values()) / (video_cpu.shape[2] / 24.0), 3),
-        "peak_memory": {"encode": encoder_peak, "sample": sample_peak, "decode": decode_peak},
+        "peak_memory": {
+            "encode": encoder_peak,
+            "sample": sample_peak,
+            "decode_video": video_peak,
+            "decode": decode_peak,
+        },
+        "decode_placement": {
+            "card": str(decode_device),
+            "requested": args.vae_card,
+            "video_vae_tiling": vae_tiling,
+            "one_vae_at_a_time": True,
+        },
         "host_peak_rss_bytes": host_rss_bytes(),
         "hashes": {
             "video_tensor_sha256": sha256_tensor(video_cpu),
