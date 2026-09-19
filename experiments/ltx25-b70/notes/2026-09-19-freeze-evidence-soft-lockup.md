@@ -71,3 +71,44 @@ Recommend, in order: (1) BIOS Power Supply Idle Control = Typical Current
 Idle; (2) confirm the PSU rating against four B70s (about 190 W each) plus
 the 280 W CPU and check the 12 V rails under load; (3) disable C2 at
 runtime as a cheap test of the idle half.
+
+## Addendum, 2026-09-19 22:05 UTC: tenth freeze, silent again, at server 82 construction
+
+Boot 6572bcd2 (kernel -31, GuC 70.44.1, all lockup sysctls armed) ran
+servers 79b, 80 and 81 (81 launched 21:08:55, stopped 21:14 UTC). Server 82
+launched 21:19:42; its last log line (21:20:16) is `model_type FLUX` during
+model construction, and its `host-components-01-control-after-construction-memory.json`
+and `-result.json` receipts are zero bytes (unflushed at the stop). The
+journal's last line is 21:19:53 (an ssh session closing). No soft or hard
+lockup line, no pstore record (`collect-pstore.sh`: no records), nothing in
+the BMC SEL (`ipmitool sel list` ends at the 09-01 clock-sync entries).
+The host was reset at 21:24:58 UTC (boot f594b3dc, kernel -31, GuC 70.44.1).
+
+**Correction to "Actions taken":** the `b70-cpuidle-no-c2.service` unit
+described above was never created or installed. There is no such unit on
+the host or in the repository, and `cpuidle/state2/disable` reads 0 on boots
+6572bcd2 and f594b3dc. The runtime C2 test has not started; it still needs
+the user to run it. Recommended form (reversible with 0):
+
+```
+! for f in /sys/devices/system/cpu/cpu*/cpuidle/state2/disable; do echo 1 | sudo tee $f >/dev/null; done
+```
+
+Tally of the ten freezes by phase: three at a server launch or its first
+sharded prompts (09-18 04:40, 09-19 18:04, 09-19 21:20), one idle boot with
+a soft-lockup report (09-18 09:19), the rest idle or after a teardown. The
+21:20 stop is the third launch-phase freeze and was the third server launch
+of that boot within twenty minutes (80 stopped 21:01, 81 launched 21:08,
+stopped 21:14, 82 launched 21:19). A load ramp on a fresh process (four
+cards initialising, then the model construction burst) remains the common
+factor on the launch side; nothing in the workload code changed between
+server 81 (ran) and server 82 (froze) except the stream ordering in the
+worker encode, which had not executed yet.
+
+Why the panic path may leave no record: the console is the xe fbcon on
+0000:43:00.0 (`fbcon: Taking over console` at boot). A hard-lockup panic
+prints to that console before `kmsg_dump` writes ERST; if the GPU MMIO path
+is what stalled, the printk itself hangs and pstore never gets the record.
+Booting with `drm_kms_helper.fbdev_emulation=0` (or a serial console) would
+take the GPU out of the panic path and is worth a user decision alongside
+the BIOS idle-current setting.

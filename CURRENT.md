@@ -1999,3 +1999,9 @@ Do not place new model downloads on NVMe based on an old free-space report.
 Verify current capacity, mount identity and lane ownership first. Follow
 [AGENTS.md](AGENTS.md) for main-only Git, secrets, runtime isolation,
 quality gates and exact publication requirements.
+**Four-B70 host, September 19 22:05 UTC: tenth silent freeze at 21:20 UTC during server 82's model construction (no lockup line, no pstore, no BMC event); host reset 21:25; packet 82 relaunched as server 82b with runner 82b (bases 90900-95200).**
+The runtime C2 disable recorded on 09-19 18:00 was never actually
+installed (no unit exists; `cpuidle/state2/disable` is 0 on the last two
+boots), so the idle-state hypothesis is still untested; the user holds the
+`! sudo` line and the BIOS setting. [Evidence and correction](experiments/ltx25-b70/notes/2026-09-19-freeze-evidence-soft-lockup.md).
+
