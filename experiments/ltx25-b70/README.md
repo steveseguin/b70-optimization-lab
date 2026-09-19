@@ -9,7 +9,7 @@ encoder's ceiling (one 1.59 s fp32 encode per clip on one card), so the
 next lever is the encoder two prompts deep across two cards. History: the
 [September 16 audit](notes/2026-09-16-audit-of-sep15-16-claims.md), then
 packets [58](notes/graph-capture-58-results.md), [64](notes/graph-capture-64-results.md),
-[65](notes/graph-capture-65-results.md), [72](notes/graph-capture-72-results.md)
+[65](notes/graph-capture-65-results.md), [72](notes/graph-capture-72-results.md),
 [74](notes/graph-capture-74-results.md) and [82](notes/graph-capture-82-results.md)
 (sharded encoder: exact but for one race clip, no gain, the sampler now paces).
 
