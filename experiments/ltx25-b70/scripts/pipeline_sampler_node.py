@@ -56,18 +56,26 @@ _ACTIVE_LOCK = __import__('threading').Lock()
 _PINNED = {}
 _NOISE_LOCK = __import__('threading').Lock()
 _PHASE_MARKS = {}
+_LATENT_FPS = {}
 
 
 class _SerialisedNoise:
     """A Noise whose generate_noise cannot interleave with another thread's."""
 
-    def __init__(self, inner):
+    def __init__(self, inner, sink=None):
         self.inner = inner
+        self.sink = sink
         self.seed = getattr(inner, 'seed', 0)
 
     def generate_noise(self, input_latent):
         with _NOISE_LOCK:
-            return self.inner.generate_noise(input_latent)
+            out = self.inner.generate_noise(input_latent)
+            # The seed attribute is bookkeeping; the tensor is what the clip is
+            # actually sampled from. Fingerprint it inside the lock so a wrong
+            # clip can tell 'right seed, wrong noise' from 'right noise'.
+            if self.sink is not None:
+                self.sink.append(pipeline.cond_fingerprint(out))
+            return out
 
 
 def pin_current_patcher(base_model):
@@ -131,7 +139,8 @@ def sample_clip_original(noise_a, guider_a, sampler_a, sigmas_a,
                          noise_b, guider_b, sampler_b, sigmas_b,
                          video_latent, audio_latent, upscale_model, vae):
     """The sealed chain on the prompt thread, default streams, no staging."""
-    return _sample_chain(_node('LTXVConcatAVLatent'), _node('LTXVSeparateAVLatent'),
+    return _sample_chain(None, None,
+                         _node('LTXVConcatAVLatent'), _node('LTXVSeparateAVLatent'),
                          _node('LTXVLatentUpsampler'), _node('SamplerCustomAdvanced'),
                          noise_a, guider_a, sampler_a, sigmas_a,
                          noise_b, guider_b, sampler_b, sigmas_b,
@@ -154,11 +163,13 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
     # and the input latents. The encode stage fingerprinted the conditioning
     # at its handoff; if this clip later fails the oracle, the pair of
     # fingerprints says whether the conditioning mutated in flight or the
-    # sampler itself left the expected path.
+    noise_fps = []
     pipeline.record_fingerprint(('sample-inputs', clip_index), {
         'guider_a_conds': pipeline.cond_fingerprint(getattr(guider_a, 'original_conds', None)),
         'guider_b_conds': pipeline.cond_fingerprint(getattr(guider_b, 'original_conds', None)),
         'noise_seeds': [getattr(noise_a, 'seed', None), getattr(noise_b, 'seed', None)],
+        'sigmas_a': pipeline.cond_fingerprint(sigmas_a),
+        'sigmas_b': pipeline.cond_fingerprint(sigmas_b),
         'video_latent': pipeline.cond_fingerprint(video_latent),
         'audio_latent': pipeline.cond_fingerprint(audio_latent),
     })
@@ -171,8 +182,8 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
             torch.xpu.set_stream(streams[1])
             return _sample_chain(clip_index, streams,
                                  concat, separate, upsampler, sampler_node,
-                                 _SerialisedNoise(noise_a), guider_a, sampler_a, sigmas_a,
-                                 _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
+                                 _SerialisedNoise(noise_a, noise_fps), guider_a, sampler_a, sigmas_a,
+                                 _SerialisedNoise(noise_b, noise_fps), guider_b, sampler_b, sigmas_b,
                                  video_latent, audio_latent, upscale_model, vae)
     finally:
         for st in streams:
@@ -186,6 +197,11 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
                     'cpu_s': round(t1 - t0, 4),
                     'xpu0_ms': round(ev0[0].elapsed_time(ev1[0]), 2),
                     'xpu1_ms': round(ev0[1].elapsed_time(ev1[1]), 2)}
+            if noise_fps:
+                phases['noise_tensor_fps'] = list(noise_fps)
+            latents = _LATENT_FPS.pop(clip_index, None)
+            if latents:
+                phases['latent_fps'] = latents
             pipeline.record_fingerprint(('phases', clip_index), phases)
 
 def _sample_chain(clip_index, streams,
@@ -193,14 +209,21 @@ def _sample_chain(clip_index, streams,
                   noise_a, guider_a, sampler_a, sigmas_a,
                   noise_b, guider_b, sampler_b, sigmas_b,
                   video_latent, audio_latent, upscale_model, vae):
-    # GPU-timeline phase marks: a timing event on each of this worker's two
-    # streams at every chain boundary, plus a CPU timestamp. Events never
-    # block submission, so the overlap is undisturbed; the elapsed times are
-    # read in sample_clip's finally block, after the streams drain.
+    # GPU-timeline phase marks (only in the pipelined path, where streams is
+    # set): a timing event on each of this worker's two streams at every chain
+    # boundary, plus a CPU timestamp. Events never block submission, so the
+    # overlap is undisturbed; the elapsed times are read in sample_clip's
+    # finally block, after the streams drain. Between the same boundaries the
+    # av latents are fingerprinted, so a wrong final clip localises to the
+    # stage where its values left the expected stream.
     import time
     marks = []
+    latent_fps = {}
 
     def mark(name):
+        if streams is None:
+            marks.append((name, time.perf_counter(), None))
+            return
         events = []
         for st in streams:
             ev = torch.xpu.Event(enable_timing=True)
@@ -208,24 +231,34 @@ def _sample_chain(clip_index, streams,
             events.append(ev)
         marks.append((name, time.perf_counter(), events))
 
+    def fp(name, value):
+        if clip_index is not None:
+            latent_fps[name] = pipeline.cond_fingerprint(value)
+
     mark('start')
     av = concat.execute(video_latent=video_latent, audio_latent=audio_latent).result[0]
     mark('concat_a')
     stage_a = sampler_node.execute(noise=noise_a, guider=guider_a, sampler=sampler_a,
                                    sigmas=sigmas_a, latent_image=av).result[0]
+    fp('stage_a_av', stage_a)
     mark('sample_a')
     video_a, audio_a = separate.execute(av_latent=stage_a).result[:2]
     mark('separate_a')
     upscaled = upsampler.execute(samples=video_a, upscale_model=upscale_model, vae=vae).result[0]
+    fp('upscaled', upscaled)
     mark('upsample')
     av2 = concat.execute(video_latent=upscaled, audio_latent=audio_a).result[0]
     mark('concat_b')
     stage_b = sampler_node.execute(noise=noise_b, guider=guider_b, sampler=sampler_b,
                                    sigmas=sigmas_b, latent_image=av2).result[0]
+    fp('stage_b_av', stage_b)
     mark('sample_b')
     video_b, audio_b = separate.execute(av_latent=stage_b).result[:2]
     mark('separate_b')
-    _PHASE_MARKS[clip_index] = marks
+    if latent_fps:
+        _LATENT_FPS[clip_index] = latent_fps
+    if streams is not None:
+        _PHASE_MARKS[clip_index] = marks
     return video_b, audio_b
 
 
