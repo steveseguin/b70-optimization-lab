@@ -32,7 +32,10 @@ from ltx_layer_shard import (CACHE_KEY, KEY, LTXLayerShardedPatcher, _BlockRoute
                              _forward_transfers, _verify_placement)
 
 AV_SOURCE_SHA256 = '6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d'
-SHARD_SOURCE_SHA256 = '0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b'
+# Packet 84: re-audited after the 23/25 split rebalance. The shard change is
+# the DECLARED_SPLIT_INDEX constant and its docstring only; _dest routing
+# arithmetic, _BlockRoute and the transfer helpers are byte-identical.
+SHARD_SOURCE_SHA256 = '025eb527133653d53d26c976e1b11a2b3107b9f59610ede1a490247c37689bc6'
 WARMUP_ITERATIONS = 3
 # Two shapes per block (the 128x128 and 256x256 sampler stages) are expected.
 # Anything more means the signature is tracking something that is not a real
