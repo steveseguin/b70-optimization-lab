@@ -184,3 +184,54 @@ User decisions this raises (all need downtime, none will be taken here):
 a memory test (memtest86+ over at least one full pass), the BIOS
 idle-current setting, PSU rating and 12 V rail check, and reseating or
 swapping DIMMs if the test flags any.
+
+## Addendum, 2026-09-20 00:35 UTC: the twelfth freeze, caught in the act
+
+Boot 534bf39d froze at about 22:50 UTC on 2026-09-19, two minutes after
+server 83c's sharded arm finished 30 of 30 prompts bit-exact. For the first
+time the stall was visible **inside a running measurement**: two of the
+arm's steady intervals were 18.237 s and 10.678 s, between clips that were
+themselves byte-identical to their references, and the kernel's only line in
+that window is a clocksource long-readout gap of 4.276 s at 22:49:16 UTC,
+which falls inside the 18.2 s interval. The run then recovered and produced
+twelve more exact clips before the host died. Full numbers in
+[the packet 83 results](graph-capture-83-results.md).
+
+That settles the shape of the fault: these are whole-platform stalls, the
+platform timer agreeing with the CPU that nothing executed. Most of them
+resume; one does not, and that one is a freeze. It is not a stuck core (the
+lockup detectors stay silent and pstore stays empty), not the xe driver (no
+device messages, and clips on either side of a stall are exact), and not the
+workload (a stall also hit an idle boot on 09-18).
+
+The freeze also zeroed 34 git objects in `llm-optimizations`, including the
+commit object `HEAD` pointed at. Recovery was clean because the runner pushes
+after every arm: quarantine the empty objects under
+`.git/quarantine-zero-objects-20260920/`, `git fetch origin`, and every
+object came back from the remote. `git fsck` is clean and no receipt was
+lost. Keep the push-per-arm discipline.
+
+## Addendum, 2026-09-20 00:32 UTC: a second memory corruption, different byte, different boot
+
+Server 83d, launched 00:31:26 UTC on the fresh boot da8627aa, failed its
+first prompt exactly as 83b had:
+`'utf-8' codec can't decode byte 0xb5 in position 7941018` of the
+`tokenizer_json` tensor. Position 7,941,018 holds `0x5d` on disk; 83b's
+failure was at position 25,610,902, which holds `0x2c`. Both positions read
+correctly afterwards through the page cache and through O_DIRECT, the whole
+32 MB tensor decodes, and the 26 GB file still hashes to its receipt value.
+
+So the file is intact and the page cache is intact: the byte was damaged on
+the way into the process's buffer. `0x5d` to `0xb5` differs in four bits and
+`0x2c` to `0xda` in six, which is not the single-bit flip a DRAM soft error
+usually produces; it reads more like a corrupted burst on a cache line or an
+interconnect path. No EDAC memory-controller instance exists on this board,
+so nothing is reporting whether the DIMMs are ECC or whether they are
+correcting anything.
+
+Two independent corruptions in under two hours of light use, on two boots.
+**A memtest86+ pass now outranks every software item in this lane**, and no
+measurement from this host should be promoted until it passes. The harness
+does catch corruption today, because every clip is compared sha256 against a
+stored reference, but that is luck about where the bad byte lands, not a
+guarantee.

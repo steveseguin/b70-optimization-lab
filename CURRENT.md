@@ -2285,3 +2285,10 @@ boots), so the idle-state hypothesis is still untested; the user holds the
 
 **Four-B70 host, September 19 22:41 UTC: server 83b stopped. Reason: the memory-error prompt left the host-components node latched (`Component transition failed; halt new requests`, host_embedding_resident_node.py `_failure`), so the retry runner's first prompt was refused; no prompt can run on this server. Packet 83 relaunches as server 83c at 22:47 UTC (runner 83c, bases 130900-135200).**
 
+**Four-B70 host, September 20 00:35 UTC: packet 83 fixed the sharded encoder's wrong clip (server 83c ran 30/30 prompts byte-exact, bird included, four graph pools) at 1.685 s/clip steady, no gain over packet 74's 1.607 because the two-clip sampler paces; the encoder is closed as a lever. The host is now the blocker: the twelfth freeze (22:50 UTC) was preceded by two whole-platform stalls of 18.2 s and 10.7 s inside the running arm, matching a 4.276 s clocksource readout gap in the journal, and a second single-byte memory corruption (position 7,941,018, 0x5d read as 0xb5) killed server 83d on the next boot after the first killed 83b. Both files verify exact on disk and in page cache. Memtest86+ before any further promotion.**
+[Packet 83 results](experiments/ltx25-b70/notes/graph-capture-83-results.md),
+[freeze and corruption evidence](experiments/ltx25-b70/notes/2026-09-19-freeze-evidence-soft-lockup.md).
+The freeze zeroed 34 git objects including HEAD's commit; all recovered from
+origin (quarantine at .git/quarantine-zero-objects-20260920), fsck clean, no
+receipt lost, because the runner pushes after every arm.
+

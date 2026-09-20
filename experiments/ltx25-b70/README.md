@@ -4,14 +4,28 @@ Status: **1.607 s per distinct clip, bytewise exact on ten fixtures, September 1
 (packet 74: two clips in flight across the two shard cards, on top of the
 graph-captured pipeline with the resident fast path and save-behind). That
 is 1.54 s of wall per second of video, about 15.6 fps equivalent; the goal
-is 1.00 s (24 fps) and it is not met. The stream now sits on the text
-encoder's ceiling (one 1.59 s fp32 encode per clip on one card), so the
-next lever is the encoder two prompts deep across two cards. History: the
-[September 16 audit](notes/2026-09-16-audit-of-sep15-16-claims.md), then
+is 1.00 s (24 fps) and it is not met.
+
+The encoder is closed as a lever. Sharding it across two cards
+([82](notes/graph-capture-82-results.md), [83](notes/graph-capture-83-results.md))
+is bit-exact -- packet 83 ran 30 of 30 prompts byte-identical once the graph
+memory pools were keyed per worker thread -- but it does not move the number,
+because the two-clip sampler now paces the stream at about 1.6 s per clip.
+Everything below that has to come from the sampler: more clips in flight, or a
+transformer split that uses the headroom on the encoder cards.
+
+**The four-B70 host is corrupting data and must be tested before any further
+measurement is promoted**: twelve silent freezes, multi-second whole-platform
+stalls observed mid-run, and two single-byte memory corruptions during model
+load on two different boots. See
+[the packet 83 results](notes/graph-capture-83-results.md) and
+[the freeze evidence](notes/2026-09-19-freeze-evidence-soft-lockup.md).
+
+History: the [September 16 audit](notes/2026-09-16-audit-of-sep15-16-claims.md), then
 packets [58](notes/graph-capture-58-results.md), [64](notes/graph-capture-64-results.md),
 [65](notes/graph-capture-65-results.md), [72](notes/graph-capture-72-results.md),
-[74](notes/graph-capture-74-results.md) and [82](notes/graph-capture-82-results.md)
-(sharded encoder: exact but for one race clip, no gain, the sampler now paces).
+[74](notes/graph-capture-74-results.md), [82](notes/graph-capture-82-results.md)
+and [83](notes/graph-capture-83-results.md).
 
 Direction: [north star, milestones and next work](PLAN.md).
 The actual goal is one second of new video in under one second at 24 fps,
