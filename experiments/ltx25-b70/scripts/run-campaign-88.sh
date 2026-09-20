@@ -33,6 +33,10 @@ done
 curl -sf http://127.0.0.1:8188/queue >/dev/null || { step server never answered; exit 1; }
 PID=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['pid'])")
 step server pid $PID up
+# Rest after construction: today's segfault hit 14 s into warm, right after
+# construction's own component loads. Give the machine a quiet minute.
+step "rest 60 s after construction"
+sleep 60
 arm f88-warm pipe-samp2-tsh 3 200988
 # Settle gap: all three campaign freezes hit at the warm->endure load
 # step-change; give thermals, power delivery and the I/O queue a minute
