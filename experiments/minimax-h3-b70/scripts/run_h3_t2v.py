@@ -1714,8 +1714,13 @@ def open_tensor_reader(path: pathlib.Path, header: dict | None = None, loader: s
 # ---------------------------------------------------------------------------------------------
 
 
-def encode_prompt(args, timings: dict) -> "tuple":
-    """Run the Qwen3-VL-32B INT8 ConvRot conditioner on one card, return (embeds, token_tags).
+def encode_prompts(args, prompts: "list[str]", timings: dict) -> "list[tuple]":
+    """Run the Qwen3-VL-32B INT8 ConvRot conditioner on one card, once, for N prompts.
+
+    Returns a list of `(embeds, token_tags, token_ids)`, one per prompt.  The encoder load
+    (~13 s) is paid once for the whole batch -- that is most of lever 4's saving on the encode
+    side -- and each prompt's forward is the identical call a single-prompt run would make, so
+    the embeddings are bit-identical to the single-clip path.
 
     MiniMax-H3 conditions on the *unnormalized* hidden state after decoder layer 50 -- not the
     final one (diffusers `MiniMaxH3ModularPipeline.text_encoder_layer`, and the Comfy repackage's
@@ -1733,8 +1738,9 @@ def encode_prompt(args, timings: dict) -> "tuple":
 
     with phase("encode.tokenize", timings):
         tokenizer = AutoTokenizer.from_pretrained(str(TOKENIZER_DIR))
-        token_ids = tokenizer(args.prompt, add_special_tokens=False)["input_ids"]
-        LOG.info("prompt tokenizes to %d rows", len(token_ids))
+        all_token_ids = [tokenizer(prompt, add_special_tokens=False)["input_ids"] for prompt in prompts]
+        LOG.info("%d prompt(s) tokenize to %s rows", len(prompts),
+                 [len(ids) for ids in all_token_ids])
 
     log_vram(torch, [device], "before encode.load")
 
@@ -1752,19 +1758,26 @@ def encode_prompt(args, timings: dict) -> "tuple":
         config.text_config.num_hidden_layers = 50
         model = _build_text_encoder(torch, config, device, args)
 
-    with phase("encode.forward", timings):
-        input_ids = torch.tensor([token_ids], dtype=torch.long, device=device)
-        attention_mask = torch.ones_like(input_ids)
-        # `mm_token_type_ids` is Qwen-internal (0 text / 1 image / 2 video) and drives the
-        # per-modality rotary layout; a `t2va` presentation is all text, so it is all zeros.
-        # (diffusers builds it with `processor.create_mm_token_type_ids`, encoders.py L72.)
-        kwargs = dict(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
-        try:
-            out = model.model(**kwargs, mm_token_type_ids=torch.zeros_like(input_ids))
-        except TypeError:
-            LOG.warning("this transformers build does not take `mm_token_type_ids`; retrying without it")
-            out = model.model(**kwargs)
-        embeds = out.last_hidden_state.to(device=device, dtype=torch.bfloat16).clone()
+    results = []
+    for i, token_ids in enumerate(all_token_ids):
+        # The single-clip phase name is kept verbatim so receipts stay comparable across modes.
+        phase_name = "encode.forward" if len(all_token_ids) == 1 else f"encode.forward.{i}"
+        with phase(phase_name, timings):
+            input_ids = torch.tensor([token_ids], dtype=torch.long, device=device)
+            attention_mask = torch.ones_like(input_ids)
+            # `mm_token_type_ids` is Qwen-internal (0 text / 1 image / 2 video) and drives the
+            # per-modality rotary layout; a `t2va` presentation is all text, so it is all zeros.
+            # (diffusers builds it with `processor.create_mm_token_type_ids`, encoders.py L72.)
+            kwargs = dict(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+            try:
+                out = model.model(**kwargs, mm_token_type_ids=torch.zeros_like(input_ids))
+            except TypeError:
+                LOG.warning("this transformers build does not take `mm_token_type_ids`; retrying without it")
+                out = model.model(**kwargs)
+            embeds = out.last_hidden_state.to(device=device, dtype=torch.bfloat16).clone()
+            del out
+        tags = torch.full((len(token_ids),), 1, dtype=torch.long)  # MINIMAX_H3_TEXT_TAG == 1
+        results.append((embeds, tags, token_ids))
 
     log_vram(torch, [device], "after encode.forward")
     # 25.28 GiB of INT8 encoder has to be off this card before the 18.8 GiB denoiser shard lands on
@@ -1772,11 +1785,15 @@ def encode_prompt(args, timings: dict) -> "tuple":
     # a view into the encoder's last hidden state -- and the strip makes the release independent of
     # who else still holds `model` (transformers caches, a traceback frame, an attention backend).
     strip_module_tensors(model)
-    del model, out
+    del model
     _free(torch, [device])
     log_vram(torch, [device], "after encoder release")
-    tags = torch.full((len(token_ids),), 1, dtype=torch.long)  # MINIMAX_H3_TEXT_TAG == 1
-    return embeds, tags, token_ids
+    return results
+
+
+def encode_prompt(args, timings: dict) -> "tuple":
+    """Single-prompt wrapper around `encode_prompts` -- the load/forward arithmetic is identical."""
+    return encode_prompts(args, [args.prompt], timings)[0]
 
 
 def _build_text_encoder(torch, config, device, args):
@@ -3019,6 +3036,18 @@ def build_parser() -> argparse.ArgumentParser:
         "optionally `text_token_tags`). Skips phase 1 entirely -- use this if the INT8 encoder "
         "path is not trusted yet, or to hold the conditioning fixed across denoiser experiments.",
     )
+    p.add_argument(
+        "--prompts-file",
+        type=pathlib.Path,
+        default=None,
+        help="batch mode (lever 4, notes/2026-09-19-speed-plan.md §3): a JSON list of prompts, or "
+        "a text file with one prompt per non-empty line. One process loads the encoder, denoiser "
+        "and VAEs ONCE and runs every prompt through them, saving the ~49 s of per-run loads on "
+        "every clip after the first. Bit-identical by construction: no arithmetic changes, each "
+        "clip gets its own torch.Generator seeded with --seed exactly as a single run would. "
+        "Each clip is written to its own clip-NN subdirectory with its own receipt, and each "
+        "decoded clip is written and freed before the next is decoded (host RAM is 15 GiB).",
+    )
     p.add_argument("--height", type=int, default=None, help="multiple of 32; default = MiniMax-H3's own canvas")
     p.add_argument("--width", type=int, default=None, help="multiple of 32; default = MiniMax-H3's own canvas")
     p.add_argument(
@@ -3892,6 +3921,14 @@ def main(argv: list[str] | None = None) -> int:
                  args.latents_from)
         encoder_peak = sample_peak = card_memory(torch, devices)
         lora_receipt = None
+    elif args.prompts_file is not None:
+        prompts = _read_prompts_file(args.prompts_file)
+        LOG.info("batch mode: %d prompts from %s", len(prompts), args.prompts_file)
+        clips, lora_receipt, encoder_peak, sample_peaks = _sample_clips(
+            torch, args, plan, config, devices, timings, prompts
+        )
+        return _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_dir,
+                                       plan, denoiser, lora_receipt, encoder_peak, sample_peaks)
     else:
         latents, audio_latents, prompt_embeds, token_ids, lora_receipt, encoder_peak, sample_peak = (
             _sample_clip(torch, args, plan, config, devices, timings)
@@ -3903,17 +3940,62 @@ def main(argv: list[str] | None = None) -> int:
                              prompt_embeds, token_ids, source_run)
 
 
-def _sample_clip(torch, args, plan, config, devices, timings):
-    """Phases 1-3: conditioning, the sharded denoiser, sampling, and the denoiser's release.
+def _read_prompts_file(path: pathlib.Path) -> "list[str]":
+    """JSON list of strings, or one prompt per non-empty line (# comments skipped)."""
+    text = path.read_text()
+    if path.suffix == ".json":
+        prompts = json.loads(text)
+        if not isinstance(prompts, list) or not all(isinstance(p, str) for p in prompts):
+            raise SystemExit(f"--prompts-file {path}: JSON must be a list of strings")
+    else:
+        prompts = [ln.strip() for ln in text.splitlines()
+                   if ln.strip() and not ln.strip().startswith("#")]
+    if not prompts:
+        raise SystemExit(f"--prompts-file {path}: no prompts found")
+    return prompts
 
-    Returns `(latents, audio_latents, prompt_embeds, token_ids, lora_receipt, encoder_peak,
-    sample_peak)`; both latent tensors are on the HOST, because the next thing that happens is the
-    denoiser teardown.  Unchanged from the version that produced the 2026-09-19 canvas receipts --
-    it moved into a function only so `--decode-only` can skip it.
+
+def _lora_receipt_of(lora_plan) -> dict:
+    """Captured at load time, because the receipt is written long after the denoiser is freed."""
+    return {
+        "path": str(lora_plan.path),
+        "sha256": file_digest(lora_plan.path),
+        "bytes": lora_plan.path.stat().st_size,
+        "user_scale": lora_plan.scale,
+        "effective_scales": sorted({round(s.scale, 9) for s in
+                                    list(lora_plan.dense.values()) + list(lora_plan.runtime.values())}),
+        "metadata": read_metadata(lora_plan.path),
+        "pairs": len(lora_plan.pairs),
+        "pairs_matched": len(lora_plan.matched),
+        "merged_destinations": len(lora_plan.dense),
+        "runtime_destinations": len(lora_plan.runtime),
+        "runtime_resident_bytes": lora_plan.runtime_bytes(),
+        "application": (
+            "dense weights merged exactly (W + s*B@A in float32, one rounding); "
+            "ConvRotLinear destinations carry an additive runtime term instead, because an "
+            "int8 weight cannot absorb a merge"
+        ),
+    }
+
+
+def _sample_clips(torch, args, plan, config, devices, timings, prompts: "list[str]"):
+    """Phases 1-3 for N prompts: conditioning, the sharded denoiser, sampling, release.
+
+    Returns `(clips, lora_receipt, encoder_peak, sample_peaks)` where `clips` is a list of
+    `{"prompt", "token_ids", "latents", "audio_latents"}` with both latent tensors on the HOST,
+    because the next thing that happens is the denoiser teardown.
+
+    Batch mode (lever 4, notes/2026-09-19-speed-plan.md §3): the encoder, the denoiser and the
+    pipeline are built ONCE for all N prompts; only the per-clip forward passes repeat.  The
+    arithmetic each clip sees is exactly the single-clip path's -- same modules, same per-clip
+    `torch.Generator` seeding -- so clip i of a batch must hash identically to a standalone run
+    of the same prompt, seed and settings.  The repeat gate checks that.
     """
     # ---- phase 1: prompt conditioning --------------------------------------------------------
-    token_ids: list[int] | None = None
     if args.prompt_embeds is not None:
+        if len(prompts) != 1:
+            raise SystemExit("--prompt-embeds holds one prompt's conditioning; it cannot be "
+                             "combined with --prompts-file")
         from safetensors.torch import load_file
 
         with phase("encode.load_precomputed", timings):
@@ -3923,39 +4005,17 @@ def _sample_clip(torch, args, plan, config, devices, timings):
                 "text_token_tags", torch.full((prompt_embeds.shape[1],), 1, dtype=torch.long)
             )
         LOG.info("using precomputed prompt embeds %s from %s", tuple(prompt_embeds.shape), args.prompt_embeds)
+        encoded = [(prompt_embeds, text_token_tags, None)]
     else:
-        prompt_embeds, text_token_tags, token_ids = encode_prompt(args, timings)
-        LOG.info("prompt embeds %s, encoder freed", tuple(prompt_embeds.shape))
+        encoded = encode_prompts(args, prompts, timings)
+        LOG.info("%d prompt(s) encoded, encoder freed", len(encoded))
     encoder_peak = card_memory(torch, devices)
     for dev in devices:
         torch.xpu.reset_peak_memory_stats(dev)
 
-    # ---- phase 2: the denoiser ---------------------------------------------------------------
+    # ---- phase 2: the denoiser (loaded once for the whole batch) ------------------------------
     transformer, primary, secondary, lora_plan = load_sharded_transformer(args, plan, config, timings)
-    # Captured now, because the receipt is written long after the denoiser has been freed.
-    lora_receipt = None
-    if lora_plan is not None:
-        lora_receipt = {
-            "path": str(lora_plan.path),
-            "sha256": file_digest(lora_plan.path),
-            "bytes": lora_plan.path.stat().st_size,
-            "user_scale": lora_plan.scale,
-            "effective_scales": sorted({round(s.scale, 9) for s in
-                                        list(lora_plan.dense.values()) + list(lora_plan.runtime.values())}),
-            "metadata": read_metadata(lora_plan.path),
-            "pairs": len(lora_plan.pairs),
-            "pairs_matched": len(lora_plan.matched),
-            "merged_destinations": len(lora_plan.dense),
-            "runtime_destinations": len(lora_plan.runtime),
-            "runtime_resident_bytes": lora_plan.runtime_bytes(),
-            "application": (
-                "dense weights merged exactly (W + s*B@A in float32, one rounding); "
-                "ConvRotLinear destinations carry an additive runtime term instead, because an "
-                "int8 weight cannot absorb a merge"
-            ),
-        }
-    # `--encoder-card` may differ from `--cards[0]`, in which case this is a card crossing
-    prompt_embeds = cross_card(torch, prompt_embeds, primary)
+    lora_receipt = _lora_receipt_of(lora_plan) if lora_plan is not None else None
 
     # ---- phase 3: sampling -------------------------------------------------------------------
     pipe = build_pipeline(args, transformer, timings)
@@ -3964,49 +4024,71 @@ def _sample_clip(torch, args, plan, config, devices, timings):
     if args.audio_shift is not None:
         pipe.audio_scheduler.set_shift(args.audio_shift)
 
-    generator = torch.Generator(device="cpu").manual_seed(args.seed)
-    call_kwargs = dict(
-        prompt_embeds=prompt_embeds,
-        text_token_tags=text_token_tags,
-        num_frames=args.frames,
-        num_inference_steps=args.steps,
-        generator=generator,
-    )
-    if args.height is not None:
-        call_kwargs["height"] = args.height
-    if args.width is not None:
-        call_kwargs["width"] = args.width
+    clips = []
+    sample_peaks = []
+    for i, (prompt_embeds, text_token_tags, token_ids) in enumerate(encoded):
+        # `--encoder-card` may differ from `--cards[0]`, in which case this is a card crossing
+        prompt_embeds = cross_card(torch, prompt_embeds, primary)
+        generator = torch.Generator(device="cpu").manual_seed(args.seed)
+        call_kwargs = dict(
+            prompt_embeds=prompt_embeds,
+            text_token_tags=text_token_tags,
+            num_frames=args.frames,
+            num_inference_steps=args.steps,
+            generator=generator,
+        )
+        if args.height is not None:
+            call_kwargs["height"] = args.height
+        if args.width is not None:
+            call_kwargs["width"] = args.width
 
-    log_vram(torch, devices, "before sample")
-    with phase("sample", timings):
-        # `output=[...]` returns a dict of those intermediates (ModularPipeline.__call__ docstring).
-        result = pipe(**call_kwargs, output=["latents", "audio_latents"])
-    sample_peak = card_memory(torch, devices)
-    log_vram(torch, devices, "after sample")
+        # The single-clip phase name is kept verbatim so receipts stay comparable across modes.
+        sample_phase = "sample" if len(encoded) == 1 else f"sample.{i}"
+        log_vram(torch, devices, "before sample" if i == 0 else f"before sample.{i}")
+        with phase(sample_phase, timings):
+            # `output=[...]` returns a dict of those intermediates (ModularPipeline.__call__ docstring).
+            result = pipe(**call_kwargs, output=["latents", "audio_latents"])
+        sample_peaks.append(card_memory(torch, devices))
+        log_vram(torch, devices, "after sample" if i == 0 else f"after sample.{i}")
 
-    # The latents are the only thing worth keeping out of phase 3 and they are tiny -- 1.6 MB of
-    # video latents at 256x448x124, 0.1 MB of audio -- so they go to the host while the denoiser is
-    # torn down, and come back to whichever card ends up decoding.  Holding them on a card would
-    # pin one allocator block through the release for no reason.
-    latents = result["latents"].detach().to("cpu", copy=True)
-    audio_latents = result["audio_latents"].detach().to("cpu", copy=True)
-    del result
+        # The latents are the only thing worth keeping out of phase 3 and they are tiny -- 7.3 MB
+        # of video latents at 960x544x124, 0.05 MB of audio -- so they go to the host while the
+        # denoiser stays resident for the next clip.
+        clips.append({
+            "prompt": prompts[i] if args.prompt_embeds is None else None,
+            "token_ids": token_ids,
+            "latents": result["latents"].detach().to("cpu", copy=True),
+            "audio_latents": result["audio_latents"].detach().to("cpu", copy=True),
+        })
+        del result, prompt_embeds, text_token_tags
+
     release_denoiser(torch, transformer, pipe, devices)
     del transformer, pipe
     log_vram(torch, devices, "after denoiser release")
     for dev in devices:
         torch.xpu.reset_peak_memory_stats(dev)
-    return latents, audio_latents, prompt_embeds, token_ids, lora_receipt, encoder_peak, sample_peak
+    return clips, lora_receipt, encoder_peak, sample_peaks
 
 
-def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run_name, out_dir,
-                      plan, denoiser, lora_receipt, encoder_peak, sample_peak,
-                      prompt_embeds, token_ids, source_run) -> int:
-    """Phases 4-5: the two VAEs, the mp4, and the receipt."""
-    # ---- phase 4: decode ---------------------------------------------------------------------
-    # One VAE on the card at a time, on whichever card the release left emptiest.  The video VAE is
-    # 9.700 GiB of float32 weights (see `load_video_vae`) and its ViT decoder's attention is the
-    # single largest transient in the run, so the audio VAE's 0.564 GiB waits until it is gone.
+def _sample_clip(torch, args, plan, config, devices, timings):
+    """Single-clip wrapper around `_sample_clips`, keeping the historical return shape."""
+    clips, lora_receipt, encoder_peak, sample_peaks = _sample_clips(
+        torch, args, plan, config, devices, timings, [args.prompt]
+    )
+    clip = clips[0]
+    return (clip["latents"], clip["audio_latents"], None, clip["token_ids"],
+            lora_receipt, encoder_peak, sample_peaks[0])
+
+
+def _load_video_decoders(torch, args, timings, devices):
+    """Load the video VAE (and its two-card replica if asked), once per process.
+
+    Returns `(decode_device, all_devices, vae, vae_tiling, vae_b, second, decode_plan,
+    vae_source)`.  The video VAE is 9.700 GiB of float32 weights (see `load_video_vae`) and its
+    ViT decoder's attention is the single largest transient in the run, which is why the audio
+    VAE historically waited until it was gone; batch mode co-resides the two (0.73 GiB against a
+    ~10.5 GiB decode peak on a 31.9 GiB card) so neither is reloaded per clip.
+    """
     decode_device = pick_decode_card(torch, args, devices)
     # `--vae-card` may name a card outside `--cards`; every release below has to reach it too.
     all_devices = devices if decode_device in devices else devices + [decode_device]
@@ -4017,6 +4099,7 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
         vae_source = check_vae_source()
     vae, vae_tiling = load_video_vae(args, timings, decode_device)
     vae_b = None
+    second = None
     decode_plan = {"mode": "single", "cards": [str(decode_device)], "autocast": args.vae_autocast}
     if two_card:
         vae_source = check_vae_source(type(vae))
@@ -4026,12 +4109,23 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
         vae_b = replicate_video_vae(torch, vae, second, timings)
         if second not in all_devices:
             all_devices = all_devices + [second]
-    with phase("decode.video", timings):
+    return decode_device, all_devices, vae, vae_tiling, vae_b, second, decode_plan, vae_source
+
+
+def _decode_video_one(torch, args, timings, vae, vae_b, second, decode_device, latents,
+                      phase_name="decode.video"):
+    """One clip's latents -> pixels on the decode card; the arithmetic is the single-run path's.
+
+    Returns `(video, latents_on_card, decode_plan)`; `decode_plan` is the two-card execution
+    record when that path ran, else None.
+    """
+    decode_plan = None
+    with phase(phase_name, timings):
         latents_mean = torch.tensor(vae.config.latents_mean, device=decode_device).view(1, -1, 1, 1, 1)
         latents_std = torch.tensor(vae.config.latents_std, device=decode_device).view(1, -1, 1, 1, 1)
         latents = latents.to(decode_device)
         z = (latents * latents_std + latents_mean).to(vae.dtype)
-        if two_card:
+        if vae_b is not None:
             video, decode_plan = decode_video_two_card(
                 torch, [(decode_device, vae), (second, vae_b)], z, autocast=args.vae_autocast
             )
@@ -4044,17 +4138,13 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
         pixel_mean = torch.tensor((0.485, 0.456, 0.406), device=decode_device).view(1, -1, 1, 1, 1)
         pixel_std = torch.tensor((0.229, 0.224, 0.225), device=decode_device).view(1, -1, 1, 1, 1)
         video = (video.float() * pixel_std + pixel_mean).clamp(0, 1)
-    video_peak = card_memory(torch, all_devices)
-    log_vram(torch, all_devices, "after decode.video")
-    strip_module_tensors(vae)
-    if vae_b is not None:
-        strip_module_tensors(vae_b)
-    del vae, vae_b
-    _free(torch, all_devices)
-    log_vram(torch, all_devices, "after video vae release")
+    return video, latents, decode_plan
 
-    audio_vae = load_audio_vae(args, timings, decode_device)
-    with phase("decode.audio", timings):
+
+def _decode_audio_one(torch, timings, audio_vae, decode_device, audio_latents,
+                      phase_name="decode.audio"):
+    """One clip's audio latents -> waveform; returns `(audio, sampling_rate)`."""
+    with phase(phase_name, timings):
         a_mean = torch.tensor(audio_vae.config.latents_mean, device=decode_device).view(1, -1, 1)
         a_std = torch.tensor(audio_vae.config.latents_std, device=decode_device).view(1, -1, 1)
         audio_latents = audio_latents.to(decode_device)
@@ -4062,28 +4152,15 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
         # decode returns (2, 1, N); decoders.py L248 permutes it to (1, 2, N).
         audio = audio.float().permute(1, 0, 2).contiguous()
         sampling_rate = int(audio_vae.config.sampling_rate)
-    decode_peak = card_memory(torch, all_devices)
-    log_vram(torch, all_devices, "after decode.audio")
-    strip_module_tensors(audio_vae)
-    del audio_vae
-    _free(torch, all_devices)
+    return audio, audio_latents, sampling_rate
 
-    # ---- phase 5: write ----------------------------------------------------------------------
-    video_cpu = video.detach().float().cpu().contiguous()  # (1, 3, T, H, W) in [0, 1]
-    audio_cpu = audio.detach().float().cpu().contiguous()  # (1, 2, N)
-    with phase("write", timings):
-        frames_u8 = (video_cpu[0].permute(1, 2, 3, 0) * 255.0).round().clamp(0, 255).to(torch.uint8).numpy()
-        mp4 = out_dir / "clip.mp4"
-        write_mp4(mp4, frames_u8, audio_cpu[0].numpy(), fps=24, sample_rate=sampling_rate, crf=args.crf)
-        if args.save_tensors:
-            from safetensors.torch import save_file
 
-            save_file(
-                {"video": video_cpu, "audio": audio_cpu, "latents": latents.cpu(), "audio_latents": audio_latents.cpu()},
-                str(out_dir / "tensors.safetensors"),
-            )
-
-    receipt = {
+def _build_receipt(torch, args, timings, run_name, clip_dir, plan, denoiser, lora_receipt,
+                   encoder_peak, sample_peak, video_peak, decode_peak, decode_device, vae_tiling,
+                   decode_plan, vae_source, source_run, prompt, prompt_tokens, video_cpu,
+                   audio_cpu, sampling_rate, latents, audio_latents, batch_info) -> dict:
+    """The per-clip receipt; identical fields to the historical single-run receipt, plus `batch`."""
+    return {
         "run_name": run_name,
         "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "host": platform.node(),
@@ -4091,9 +4168,8 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
         "settings": {
             k: (str(v) if isinstance(v, pathlib.Path) else v) for k, v in sorted(vars(args).items())
         },
-        "prompt": args.prompt if (args.prompt_embeds is None and not args.decode_only) else None,
-        "prompt_tokens": (len(token_ids) if token_ids is not None
-                          else (int(prompt_embeds.shape[1]) if prompt_embeds is not None else None)),
+        "prompt": prompt if (args.prompt_embeds is None and not args.decode_only) else None,
+        "prompt_tokens": prompt_tokens,
         "seed": args.seed,
         "num_inference_steps": args.steps,
         "num_function_evaluations": args.steps - 1,
@@ -4103,6 +4179,7 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
             f"turbo LoRA is 8 NFE (steps {TURBO_STEPS}). CFG-distilled: no guidance_scale exists. "
             "See notes/2026-09-18-steps-and-lora.md"
         ),
+        "batch": batch_info,
         "resolved": {
             "video_latents_shape": list(latents.shape),
             "audio_latents_shape": list(audio_latents.shape),
@@ -4124,7 +4201,7 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
             "card": str(decode_device),
             "requested": args.vae_card,
             "video_vae_tiling": vae_tiling,
-            "one_vae_at_a_time": True,
+            "one_vae_at_a_time": batch_info is None,
             "vae_decode": args.vae_decode,
             "vae_autocast": args.vae_autocast,
             "vae_autocast_note": (
@@ -4168,7 +4245,37 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
         "loader": LOADER,
         "cross_card_transfer": XFER,
     }
-    (out_dir / "receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
+
+
+def _write_clip_and_receipt(torch, args, timings, video, audio, sampling_rate, latents,
+                            audio_latents, run_name, clip_dir, plan, denoiser, lora_receipt,
+                            encoder_peak, sample_peak, video_peak, decode_peak, decode_device,
+                            vae_tiling, decode_plan, vae_source, source_run, prompt,
+                            prompt_tokens, batch_info, receipt_timings) -> None:
+    """Phase 5 for one clip: mp4 + optional tensors + receipt, into `clip_dir`."""
+    video_cpu = video.detach().float().cpu().contiguous()  # (1, 3, T, H, W) in [0, 1]
+    audio_cpu = audio.detach().float().cpu().contiguous()  # (1, 2, N)
+    clip_dir.mkdir(parents=True, exist_ok=True)
+    write_phase = "write" if batch_info is None else f"write.{batch_info['index']}"
+    with phase(write_phase, timings):
+        frames_u8 = (video_cpu[0].permute(1, 2, 3, 0) * 255.0).round().clamp(0, 255).to(torch.uint8).numpy()
+        mp4 = clip_dir / "clip.mp4"
+        write_mp4(mp4, frames_u8, audio_cpu[0].numpy(), fps=24, sample_rate=sampling_rate, crf=args.crf)
+        if args.save_tensors:
+            from safetensors.torch import save_file
+
+            save_file(
+                {"video": video_cpu, "audio": audio_cpu, "latents": latents.cpu(), "audio_latents": audio_latents.cpu()},
+                str(clip_dir / "tensors.safetensors"),
+            )
+
+    receipt = _build_receipt(
+        torch, args, receipt_timings, run_name, clip_dir, plan, denoiser, lora_receipt,
+        encoder_peak, sample_peak, video_peak, decode_peak, decode_device, vae_tiling,
+        decode_plan, vae_source, source_run, prompt, prompt_tokens, video_cpu, audio_cpu,
+        sampling_rate, latents, audio_latents, batch_info,
+    )
+    (clip_dir / "receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
     LOG.info("video sha256 %s", receipt["hashes"]["video_tensor_sha256"])
     LOG.info("audio sha256 %s", receipt["hashes"]["audio_tensor_sha256"])
     # A decode-only run is a decode experiment: say at once whether it reproduced the run it
@@ -4184,7 +4291,103 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
                  source_run.get("source_run_name") or source_run["source_dir"],
                  "bytewise-equal" if agree else "NOT bytewise-equal",
                  args.vae_decode, args.vae_autocast)
-    LOG.info("wrote %s and %s", mp4, out_dir / "receipt.json")
+    LOG.info("wrote %s and %s", mp4, clip_dir / "receipt.json")
+
+
+def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run_name, out_dir,
+                      plan, denoiser, lora_receipt, encoder_peak, sample_peak,
+                      prompt_embeds, token_ids, source_run) -> int:
+    """Phases 4-5 for a single clip: the two VAEs (one at a time, as historically), mp4, receipt."""
+    (decode_device, all_devices, vae, vae_tiling, vae_b, second,
+     decode_plan, vae_source) = _load_video_decoders(torch, args, timings, devices)
+    video, latents, ran_plan = _decode_video_one(torch, args, timings, vae, vae_b, second, decode_device, latents)
+    if ran_plan is not None:
+        decode_plan = ran_plan
+    video_peak = card_memory(torch, all_devices)
+    log_vram(torch, all_devices, "after decode.video")
+    strip_module_tensors(vae)
+    if vae_b is not None:
+        strip_module_tensors(vae_b)
+    del vae, vae_b
+    _free(torch, all_devices)
+    log_vram(torch, all_devices, "after video vae release")
+
+    audio_vae = load_audio_vae(args, timings, decode_device)
+    audio, audio_latents, sampling_rate = _decode_audio_one(
+        torch, timings, audio_vae, decode_device, audio_latents
+    )
+    decode_peak = card_memory(torch, all_devices)
+    log_vram(torch, all_devices, "after decode.audio")
+    strip_module_tensors(audio_vae)
+    del audio_vae
+    _free(torch, all_devices)
+
+    _write_clip_and_receipt(
+        torch, args, timings, video, audio, sampling_rate, latents, audio_latents, run_name,
+        out_dir, plan, denoiser, lora_receipt, encoder_peak, sample_peak, video_peak, decode_peak,
+        decode_device, vae_tiling, decode_plan, vae_source, source_run,
+        args.prompt,
+        (len(token_ids) if token_ids is not None
+         else (int(prompt_embeds.shape[1]) if prompt_embeds is not None else None)),
+        None, timings,
+    )
+    return 0
+
+
+def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_dir,
+                            plan, denoiser, lora_receipt, encoder_peak, sample_peaks) -> int:
+    """Phases 4-5 for a batch: decoders loaded ONCE, each clip decoded, written and freed in turn.
+
+    Host RAM is the binding constraint (15 GiB): one decoded 960x544 clip is ~777 MB on the host,
+    so each clip's video/audio are moved to the host, written, and dropped before the next clip is
+    decoded -- nothing accumulates.  The decode arithmetic each clip sees is the single-run
+    path's, so clip i must hash identically to a standalone run of the same prompt/seed/settings.
+    """
+    (decode_device, all_devices, vae, vae_tiling, vae_b, second,
+     decode_plan, vae_source) = _load_video_decoders(torch, args, timings, devices)
+    audio_vae = load_audio_vae(args, timings, decode_device)
+    LOG.info("batch decode: video + audio VAEs co-resident on %s (%d clips)", decode_device, len(clips))
+
+    shared = {k: v for k, v in timings.items()}  # loads and encodes so far are the shared costs
+    for i, clip in enumerate(clips):
+        before = set(timings)
+        video, latents, ran_plan = _decode_video_one(
+            torch, args, timings, vae, vae_b, second, decode_device, clip["latents"],
+            phase_name=f"decode.video.{i}",
+        )
+        clip_decode_plan = ran_plan if ran_plan is not None else decode_plan
+        video_peak = card_memory(torch, all_devices)
+        log_vram(torch, all_devices, f"after decode.video.{i}")
+        audio, audio_latents, sampling_rate = _decode_audio_one(
+            torch, timings, audio_vae, decode_device, clip["audio_latents"],
+            phase_name=f"decode.audio.{i}",
+        )
+        decode_peak = card_memory(torch, all_devices)
+        log_vram(torch, all_devices, f"after decode.audio.{i}")
+
+        token_ids = clip["token_ids"]
+        _write_clip_and_receipt(
+            torch, args, timings, video, audio, sampling_rate, latents, audio_latents, run_name,
+            out_dir / f"clip-{i:02d}", plan, denoiser, lora_receipt, encoder_peak,
+            sample_peaks[i], video_peak, decode_peak, decode_device, vae_tiling, clip_decode_plan,
+            vae_source, None, clip["prompt"],
+            (len(token_ids) if token_ids is not None else None),
+            {"index": i, "count": len(clips),
+             "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic "
+                     "is the single-run path's, and the repeat gate checks the hashes match it"},
+            {**shared, **{k: v for k, v in timings.items() if k not in before}},
+        )
+        # Never accumulate host-side clips: 777 MB each at 960x544.
+        del video, audio, latents, audio_latents
+        clip["latents"] = clip["audio_latents"] = None
+
+    strip_module_tensors(vae)
+    if vae_b is not None:
+        strip_module_tensors(vae_b)
+    strip_module_tensors(audio_vae)
+    del vae, vae_b, audio_vae
+    _free(torch, all_devices)
+    log_vram(torch, all_devices, "after decoder release")
     return 0
 
 

@@ -199,6 +199,10 @@ some avg10 $(awk '/^some/ {sub("avg10=","",$2); print $2; exit}' /proc/pressure/
 run_gpu() {   # run_gpu <run-name> [extra args...]
   local name="$1"; shift
   local rc=0 job wd
+  local prompt_args=(--prompt "${PROMPT}")
+  if [ -n "${PROMPTS_FILE:-}" ]; then
+    prompt_args=(--prompts-file "${PROMPTS_FILE}")
+  fi
   echo "=== GPU run ${name} ==============================================================="
 
   # The job goes to the background so it becomes its own process group (set -m), which is what
@@ -210,7 +214,7 @@ run_gpu() {   # run_gpu <run-name> [extra args...]
       env PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF}" B70_H3_XFER="${B70_H3_XFER}" \
           B70_H3_DENOISER="${B70_H3_DENOISER}" \
       "${GPU_VENV}/bin/python" "${RUNNER}" \
-        --prompt "${PROMPT}" \
+        "${prompt_args[@]}" \
         --height "${HEIGHT}" --width "${WIDTH}" \
         --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
         "${LORA_ARGS[@]}" \
@@ -351,6 +355,33 @@ case "${mode}" in
       --vae-autocast "${VAE_AUTOCAST}"
     ;;
 
+  batch)
+    # Lever 4 gate: one batch run over PROMPTS_FILE, then every prompt that also has a
+    # standalone reference receipt (BATCH_REF_<i>=<run-dir>) is compared bytewise against it.
+    # The first prompt SHOULD be the default prompt so it can be gated against a `repeat` run.
+    if [ -z "${PROMPTS_FILE:-}" ]; then
+      echo "batch needs PROMPTS_FILE=<path> (one prompt per line, or a JSON list)" >&2
+      exit 2
+    fi
+    mkdir -p "${OUT_ROOT}"
+    preflight
+    name="batch-$(date -u +%Y%m%dT%H%M%SZ)"
+    run_gpu "${name}"
+    rc=0
+    i=0
+    while true; do
+      ref_var="BATCH_REF_${i}"
+      ref="${!ref_var:-}"
+      [ -z "${ref}" ] && break
+      echo
+      echo "=== batch clip-${i} vs standalone ${ref} ================================================"
+      compare_receipts "${name}/clip-$(printf %02d "${i}")" "${ref}" || rc=1
+      i=$((i + 1))
+    done
+    [ "${i}" -gt 0 ] || echo "batch: no BATCH_REF_<i> references set; run only, no bytewise gate"
+    [ "${rc}" -eq 0 ] || exit 1
+    ;;
+
   repeat)
     mkdir -p "${OUT_ROOT}"
     preflight
@@ -363,7 +394,7 @@ case "${mode}" in
     ;;
 
   *)
-    echo "usage: $0 {dry|one|repeat|probe-tiles|decode-only}" >&2
+    echo "usage: $0 {dry|one|repeat|batch|probe-tiles|decode-only}" >&2
     echo "  probe-tiles / decode-only need LATENTS_FROM=<run-dir>/tensors.safetensors" >&2
     exit 2
     ;;
