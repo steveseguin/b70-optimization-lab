@@ -1,0 +1,22 @@
+
+--- stderr ---
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/profile-clip.py", line 112, in <module>
+    asyncio.run(main())
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/profile-clip.py", line 57, in main
+    submission = await call('/prompt', {'prompt': graph, 'client_id': client_id})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/profile-clip.py", line 49, in call
+    response.raise_for_status()
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/aiohttp/client_reqrep.py", line 655, in raise_for_status
+    raise ClientResponseError(
+aiohttp.client_exceptions.ClientResponseError: 400, message='Bad Request', url='http://127.0.0.1:8188/prompt'

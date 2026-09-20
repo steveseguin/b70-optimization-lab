@@ -55,6 +55,7 @@ _ACTIVE = [0]
 _ACTIVE_LOCK = __import__('threading').Lock()
 _PINNED = {}
 _NOISE_LOCK = __import__('threading').Lock()
+_PHASE_MARKS = {}
 
 
 class _SerialisedNoise:
@@ -168,7 +169,8 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
     try:
         with _Active(), torch.xpu.stream(streams[0]):
             torch.xpu.set_stream(streams[1])
-            return _sample_chain(concat, separate, upsampler, sampler_node,
+            return _sample_chain(clip_index, streams,
+                                 concat, separate, upsampler, sampler_node,
                                  _SerialisedNoise(noise_a), guider_a, sampler_a, sigmas_a,
                                  _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
                                  video_latent, audio_latent, upscale_model, vae)
@@ -176,21 +178,54 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
         for st in streams:
             st.synchronize()
         capture.set_pipelined(False)
+        marks = _PHASE_MARKS.pop(clip_index, None)
+        if marks is not None:
+            phases = {}
+            for (name, t0, ev0), (next_name, t1, ev1) in zip(marks, marks[1:]):
+                phases[name + '->' + next_name] = {
+                    'cpu_s': round(t1 - t0, 4),
+                    'xpu0_ms': round(ev0[0].elapsed_time(ev1[0]), 2),
+                    'xpu1_ms': round(ev0[1].elapsed_time(ev1[1]), 2)}
+            pipeline.record_fingerprint(('phases', clip_index), phases)
 
-
-def _sample_chain(concat, separate, upsampler, sampler_node,
+def _sample_chain(clip_index, streams,
+                  concat, separate, upsampler, sampler_node,
                   noise_a, guider_a, sampler_a, sigmas_a,
                   noise_b, guider_b, sampler_b, sigmas_b,
                   video_latent, audio_latent, upscale_model, vae):
+    # GPU-timeline phase marks: a timing event on each of this worker's two
+    # streams at every chain boundary, plus a CPU timestamp. Events never
+    # block submission, so the overlap is undisturbed; the elapsed times are
+    # read in sample_clip's finally block, after the streams drain.
+    import time
+    marks = []
+
+    def mark(name):
+        events = []
+        for st in streams:
+            ev = torch.xpu.Event(enable_timing=True)
+            ev.record(st)
+            events.append(ev)
+        marks.append((name, time.perf_counter(), events))
+
+    mark('start')
     av = concat.execute(video_latent=video_latent, audio_latent=audio_latent).result[0]
+    mark('concat_a')
     stage_a = sampler_node.execute(noise=noise_a, guider=guider_a, sampler=sampler_a,
                                    sigmas=sigmas_a, latent_image=av).result[0]
+    mark('sample_a')
     video_a, audio_a = separate.execute(av_latent=stage_a).result[:2]
+    mark('separate_a')
     upscaled = upsampler.execute(samples=video_a, upscale_model=upscale_model, vae=vae).result[0]
+    mark('upsample')
     av2 = concat.execute(video_latent=upscaled, audio_latent=audio_a).result[0]
+    mark('concat_b')
     stage_b = sampler_node.execute(noise=noise_b, guider=guider_b, sampler=sampler_b,
                                    sigmas=sigmas_b, latent_image=av2).result[0]
+    mark('sample_b')
     video_b, audio_b = separate.execute(av_latent=stage_b).result[:2]
+    mark('separate_b')
+    _PHASE_MARKS[clip_index] = marks
     return video_b, audio_b
 
 
@@ -277,6 +312,7 @@ class LTXPipelineSampler:
                 if out is not None:
                     detail['emitted_sample_inputs'] = pipeline.fingerprint(('sample-inputs', emitted))
                     detail['emitted_conditioning_fingerprint'] = pipeline.fingerprint(('encode', emitted))
+                    detail['emitted_phases'] = pipeline.fingerprint(('phases', emitted))
                 if out is None:
                     # Fill: nothing to emit yet. Placeholder latents of the
                     # input shapes; the decode stage treats index -1 as a fill.
