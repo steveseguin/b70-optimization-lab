@@ -16,6 +16,7 @@ import torch
 
 import ltx_graph_capture as adapter
 from encoder_diagnostics import _context
+from ltx_layer_shard import DECLARED_SPLIT_INDEX
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 SELECTIONS = {'all48': tuple(range(48)), 'single24': (24,), 'boundary4': (0, 20, 21, 47)}
@@ -93,7 +94,8 @@ class LTXGraphCaptureGate:
                 'Original resident model generation changed')
         _original_model = model
         adapter.validate_patcher(model)
-        require(model.ltx_layer_shard_report['split_index'] == 21, 'Expected the native 21/27 split')
+        require(model.ltx_layer_shard_report['split_index'] == DECLARED_SPLIT_INDEX,
+                'Expected the packet-declared split')
 
         report = {'schema': 'ltx.graph-capture-request.v1', **identity, 'run_name': run_name,
                   'mode': mode, 'selection': selection, 'chain': chain, 'extension_sha256s': hashes,

@@ -38,6 +38,20 @@ NA_REPLACED = ((CANDIDATE, CANDIDATE_SRC),
                ('source/scripts/na_axis_decode_node.py', 'na_axis_decode_node_v2.py'),
                ('source/scripts/host_embedding_clip.py', 'host_embedding_clip_threadsafe.py'))
 NA_NODE_COPY = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
+# Packet 84: the 23/25 transformer split rebalance touches inherited packet13
+# files for the first time since the graph-capture lineage began. Each is
+# replaced by its lane version (packet13 content plus the split change), with
+# the packet13 original preserved under provenance/. The declared split lives
+# in ltx_layer_shard.DECLARED_SPLIT_INDEX; the two call sites pass it and the
+# three requires check it.
+DECLARED_SPLIT = 23
+SPLIT_REPLACED = (
+    ('source/scripts/resident_node.py', 'source/custom_nodes/ltx_speed_lab/__init__.py'),
+    ('source/scripts/host_embedding_resident_node.py', 'source/custom_nodes/ltx_host_embedding_lab/__init__.py'),
+    ('source/scripts/block_compile_node.py', 'source/custom_nodes/ltx_block_compile_lab/__init__.py'),
+    ('source/scripts/multiblock_compile_node.py', 'source/custom_nodes/ltx_multiblock_compile_lab/__init__.py'),
+    ('source/scripts/ltx_layer_shard.py', None),
+)
 VAE_ADAPTER = 'ltx_graph_vae.py'
 VAE_NODE_FILE = 'graph_vae_node.py'
 VAE_NODE_DIR = 'ltx_graph_vae_lab'
@@ -126,6 +140,12 @@ BASE_GRAPH = 'graphs/host-embedding-control.json'
 NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     """Packet14 gate: inherit packet13 wholesale, permit only the graph-capture additions.
 
+    Packet 84 widens the gate once: the 23/25 transformer split rebalance
+    replaces five inherited packet13 files (the shard module, the two shard
+    call sites and the three split asserts, plus their custom-node copies),
+    each with its packet13 original preserved under provenance/ and named in
+    `replaced`. All other packet13 files must still reappear byte-identically.
+
     Packet13's manifest digest is pinned here and packet13 pinned packet12's, which
     was verified against the complete encoder/compiler/RMS/activation/multiblock/
     adjacent-state/onepass/na-axis/host-embedding ancestry. Requiring every packet13
@@ -204,6 +224,16 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'provenance/graph-capture/parent/source/scripts/ltx_na_axis_router.py',
              'provenance/graph-capture/parent/source/scripts/na_axis_decode_node.py',
              'provenance/graph-capture/parent/source/scripts/host_embedding_clip.py',
+             # Packet 84: packet13 originals of the split-touched files.
+             'provenance/graph-capture/parent/source/scripts/resident_node.py',
+             'provenance/graph-capture/parent/source/custom_nodes/ltx_speed_lab/__init__.py',
+             'provenance/graph-capture/parent/source/scripts/host_embedding_resident_node.py',
+             'provenance/graph-capture/parent/source/custom_nodes/ltx_host_embedding_lab/__init__.py',
+             'provenance/graph-capture/parent/source/scripts/block_compile_node.py',
+             'provenance/graph-capture/parent/source/custom_nodes/ltx_block_compile_lab/__init__.py',
+             'provenance/graph-capture/parent/source/scripts/multiblock_compile_node.py',
+             'provenance/graph-capture/parent/source/custom_nodes/ltx_multiblock_compile_lab/__init__.py',
+             'provenance/graph-capture/parent/source/scripts/ltx_layer_shard.py',
              'host-residency-13-parent-manifest.json'}
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'pipe',
@@ -213,7 +243,21 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-samp2-tsh')}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
-                'source/scripts/host_embedding_clip.py')
+                'source/scripts/host_embedding_clip.py',
+                # Packet 84: the 23/25 split rebalance. Each replaced file ships
+                # its packet13 original under provenance/ (checked above the
+                # same way as the NA replacements) and is reviewed in the lane
+                # notes; the split changes no arithmetic, only which card owns
+                # blocks 21 and 22, and the oracles gate exactness.
+                'source/scripts/resident_node.py',
+                'source/custom_nodes/ltx_speed_lab/__init__.py',
+                'source/scripts/host_embedding_resident_node.py',
+                'source/custom_nodes/ltx_host_embedding_lab/__init__.py',
+                'source/scripts/block_compile_node.py',
+                'source/custom_nodes/ltx_block_compile_lab/__init__.py',
+                'source/scripts/multiblock_compile_node.py',
+                'source/custom_nodes/ltx_multiblock_compile_lab/__init__.py',
+                'source/scripts/ltx_layer_shard.py')
     node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
     for name, digest in parent['files'].items():
         if name in replaced:
@@ -643,6 +687,21 @@ def main():
                 require(text.count(const + " = '" + want + "'") == 1,
                         'Stale ' + const + ' pin in ' + packet_path)
     shutil.copyfile(staging / 'source/scripts/na_axis_decode_node.py', staging / NA_NODE_COPY)
+    # Packet 84: replace the split-touched inherited files with their lane
+    # versions, preserving each packet13 original under provenance/ at its
+    # full relative path, exactly as the launcher gate expects.
+    for packet_path, node_copy in SPLIT_REPLACED:
+        for preserved in (packet_path,) + ((node_copy,) if node_copy is not None else ()):
+            original = staging / PROV / preserved
+            original.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(parent / preserved, original)
+        fixed = LANE / 'scripts' / Path(packet_path).name
+        require(fixed.is_file(), 'Missing prepared split source: ' + packet_path)
+        ast.parse(fixed.read_text())
+        shutil.copyfile(fixed, staging / packet_path)
+        if node_copy is not None:
+            shutil.copyfile(fixed, staging / node_copy)
+
     shutil.copyfile(parent / 'manifest.json', staging / PARENT_MANIFEST_FILE)
     (staging / CHECKER).write_text(checker_new)
 
@@ -836,6 +895,8 @@ def main():
               f'source/custom_nodes/{PHASE_NODE_DIR}/__init__.py',
               'source/scripts/' + FAST_NODE_FILE,
               f'source/custom_nodes/{FAST_NODE_DIR}/__init__.py'}
+    added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
+              for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
     for name, digest in parent_manifest['files'].items():
         if name == CHECKER:
@@ -846,6 +907,9 @@ def main():
                 require(files[PROV + 'source/scripts/' + Path(name).name] == digest,
                         'NA provenance copy differs: ' + name)
             require(files[name] != digest, 'NA source is unchanged: ' + name)
+        elif name in {pp for pp, _ in SPLIT_REPLACED} or name in {nc for _, nc in SPLIT_REPLACED if nc}:
+            require(files[PROV + name] == digest, 'Split provenance copy differs: ' + name)
+            require(files[name] != digest, 'Split source is unchanged: ' + name)
         else:
             require(files[name] == digest, 'Inherited file drifted: ' + name)
     for src_name, dir_name in ((NODE, NODE_DIR), (VAE_NODE_FILE, VAE_NODE_DIR),
@@ -856,6 +920,10 @@ def main():
                                (FAST_NODE_FILE, FAST_NODE_DIR)):
         require(files[f'source/custom_nodes/{dir_name}/__init__.py'] == files['source/scripts/' + src_name],
                 'Custom-node copy differs from helper: ' + dir_name)
+    for packet_path, node_copy in SPLIT_REPLACED:
+        if node_copy is not None:
+            require(files[node_copy] == files[packet_path],
+                    'Split custom-node copy differs from helper: ' + packet_path)
 
     extensions = dict(parent_manifest['extension_sha256s'])
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
@@ -864,6 +932,8 @@ def main():
                      FAST_NODE_FILE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
+        extensions[Path(packet_path).name] = files[packet_path]
+    for packet_path, _ in SPLIT_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
     manifest = {
         'schema': 'ltx.graph-capture-runtime-packet.v1',
@@ -917,9 +987,13 @@ def main():
                          'shard routing are unchanged',
             'capture_proof': 'every captured graph must replay bit-identically to a fresh eager execution '
                              'of the same block on the same inputs, and must be proven non-inert',
-            'warmup_iterations': 3, 'split_index': 21,
+            'warmup_iterations': 3, 'split_index': DECLARED_SPLIT,
             'numerical_source_changed': False, 'graphs_changed': False,
             'native_gpu_qualified': False, 'full_clip_qualified': False, 'speed_qualified': False,
+            'split_change': 'packet 84: 21/27 -> 23/25 time-balanced split for the two-clip sampler; '
+                            'block ownership moves, no arithmetic changes; packet13 originals of the '
+                            'five touched files preserved under provenance/graph-capture/parent/',
+            'split_replaced': [pp for pp, _ in SPLIT_REPLACED],
         },
         'limitations': [
             'Prepared offline only: no native import, endpoint call, device discovery or application action.',

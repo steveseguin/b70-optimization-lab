@@ -24,6 +24,7 @@ Earlier versions (packets 45-56) submitted the CURRENT prompt's text for the
 next clip index and never checked it. That was correct only while every prompt
 was identical, which is exactly what the harness of the time did.
 """
+import hashlib
 import threading
 import time
 import traceback
@@ -41,6 +42,56 @@ STAGES = ('encode', 'decode', 'sample')
 # identity, so each gets its own static buffers and captured graphs.
 STAGE_WORKERS = {'encode': 1, 'decode': 1, 'sample': 2}
 MAX_PENDING = 4
+# Cross-stage input fingerprints, recorded so a wrong clip can be attributed to
+# a stage from receipts alone (the f82b/f83e bird clip was byte-identically
+# wrong across two servers; no receipt could say whether its conditioning or
+# its noise left the expected path). Keyed by clip index, bounded: an
+# endurance stream keeps only the most recent entries.
+_FINGERPRINTS = {}
+
+
+def record_fingerprint(index, value):
+    with _LOCK:
+        _FINGERPRINTS[index] = value
+        while len(_FINGERPRINTS) > 512:
+            _FINGERPRINTS.pop(next(iter(_FINGERPRINTS)))
+
+
+def fingerprint(index):
+    with _LOCK:
+        return _FINGERPRINTS.get(index)
+
+def cond_fingerprint(value):
+    """Strided-value fingerprint of a conditioning/latent structure.
+
+    Not a proof of equality: a cheap tripwire, compared across stages from
+    receipts, that catches a wholesale substitution of values between the
+    encode handoff and the sampler (the f82b/f83e failure mode, where one
+    clip per run left the stream fully wrong and no receipt could say which
+    stage sent it there). A few thousand sampled values per tensor; costs
+    milliseconds.
+    """
+    digest = hashlib.sha256()
+
+    def walk(item):
+        if isinstance(item, torch.Tensor):
+            digest.update(str((tuple(item.shape), str(item.dtype), str(item.device))).encode())
+            flat = item.detach().reshape(-1)
+            count = flat.numel()
+            if count:
+                stride = max(1, count // 4096)
+                digest.update(flat[::stride].float().cpu().numpy().tobytes())
+        elif isinstance(item, dict):
+            for key in sorted(item, key=repr):
+                digest.update(repr(key).encode())
+                walk(item[key])
+        elif isinstance(item, (list, tuple)):
+            for element in item:
+                walk(element)
+
+    walk(value)
+    return digest.hexdigest()
+
 
 _LOCK = threading.Lock()
 _STAGES = {}          # stage -> {'jobs': {index: _Job}, 'queue': [], 'worker': Thread}

@@ -13,6 +13,7 @@ import torch
 from torch._dynamo.utils import counters
 import ltx_multiblock_compile as adapter
 from encoder_diagnostics import _context
+from ltx_layer_shard import DECLARED_SPLIT_INDEX
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 ACTIVATIONS_SHA256 = '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a'
@@ -350,7 +351,8 @@ class LTXCompileBlocksGate:
                     dynamo_limits == {'recompile_limit': 8, 'accumulated_recompile_limit': 256},
                     'Actual Dynamo limits differ from the preregistered unchanged8/256 settings')
             adapter._routes(model)
-            require(model.ltx_layer_shard_report['split_index'] == 21, 'Expected native21/27 split')
+            require(model.ltx_layer_shard_report['split_index'] == DECLARED_SPLIT_INDEX,
+                    'Expected the packet-declared split')
             for state in _states.values():
                 require(state['original'] is model and all(not g.failed and
                         (g.directory is None or g.calls == 11) for g in state['gates'].values()),

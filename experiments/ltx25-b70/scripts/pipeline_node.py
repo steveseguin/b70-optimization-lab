@@ -137,6 +137,8 @@ def _queued_text(index):
     return found
 
 
+
+
 class LTXPipelineTextEncode:
     @classmethod
     def INPUT_TYPES(cls):
@@ -214,6 +216,13 @@ class LTXPipelineTextEncode:
                     tag=tag, lookahead=lookahead)
                 detail['placement_observations'] = 'consumed by the pipeline worker'
                 detail['text_sha256'] = tag
+                # What the sampler will actually consume, fingerprinted at the
+                # handoff; pipeline_sampler_node fingerprints the same objects
+                # again inside the sample worker, and a mismatch between the two
+                # means the conditioning mutated in flight.
+                detail['conditioning_fingerprint'] = pipeline.cond_fingerprint(conditioning)
+                pipeline.record_fingerprint(('encode', clip_index),
+                                            detail['conditioning_fingerprint'])
                 detail['lookahead'] = {'source': 'server prompt queue', 'lookups': lookups}
                 report['detail'] = detail
             report['passed'] = True

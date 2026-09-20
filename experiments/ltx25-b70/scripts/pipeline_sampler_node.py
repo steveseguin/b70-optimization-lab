@@ -137,7 +137,7 @@ def sample_clip_original(noise_a, guider_a, sampler_a, sigmas_a,
                          video_latent, audio_latent, upscale_model, vae)
 
 
-def sample_clip(noise_a, guider_a, sampler_a, sigmas_a,
+def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
                 noise_b, guider_b, sampler_b, sigmas_b,
                 video_latent, audio_latent, upscale_model, vae):
     """Exactly the sealed chain 377 -> 344 -> 367 -> 348 -> 340 -> 368 -> 369."""
@@ -148,6 +148,19 @@ def sample_clip(noise_a, guider_a, sampler_a, sigmas_a,
 
     import ltx_graph_capture as capture
     capture.set_pipelined(True)
+    # Fingerprint what this clip is about to be sampled FROM, on this worker
+    # thread at execution time: the guider conditionings, the two noise seeds
+    # and the input latents. The encode stage fingerprinted the conditioning
+    # at its handoff; if this clip later fails the oracle, the pair of
+    # fingerprints says whether the conditioning mutated in flight or the
+    # sampler itself left the expected path.
+    pipeline.record_fingerprint(('sample-inputs', clip_index), {
+        'guider_a_conds': pipeline.cond_fingerprint(getattr(guider_a, 'original_conds', None)),
+        'guider_b_conds': pipeline.cond_fingerprint(getattr(guider_b, 'original_conds', None)),
+        'noise_seeds': [getattr(noise_a, 'seed', None), getattr(noise_b, 'seed', None)],
+        'video_latent': pipeline.cond_fingerprint(video_latent),
+        'audio_latent': pipeline.cond_fingerprint(audio_latent),
+    })
     # This thread owns one clip: everything it issues goes to its own streams
     # on both shard cards (probe 5: the overlap needs per-clip streams and
     # staged cross-card moves; shared default streams fence the clips).
@@ -252,9 +265,18 @@ class LTXPipelineSampler:
                 emitted = clip_index
             else:
                 out, detail = pipeline.run_behind(
-                    'sample', clip_index, depth, lambda: sample_clip(**chain))
+                    'sample', clip_index, depth, lambda: sample_clip(clip_index, **chain))
+                # The worker fingerprints the clip's actual sample inputs at
+                # execution time; tie the emitted clip's pair to this receipt,
+                # together with the conditioning fingerprint the encode stage
+                # recorded for it, so a wrong clip attributes itself to a stage.
+                detail['submitted_noise_seeds'] = [
+                    getattr(chain['noise_a'], 'seed', None), getattr(chain['noise_b'], 'seed', None)]
                 report['detail'] = detail
                 emitted = detail['emitted_index']
+                if out is not None:
+                    detail['emitted_sample_inputs'] = pipeline.fingerprint(('sample-inputs', emitted))
+                    detail['emitted_conditioning_fingerprint'] = pipeline.fingerprint(('encode', emitted))
                 if out is None:
                     # Fill: nothing to emit yet. Placeholder latents of the
                     # input shapes; the decode stage treats index -1 as a fill.

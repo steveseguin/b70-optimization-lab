@@ -14,8 +14,9 @@ import torch
 from torch._dynamo.utils import counters
 import ltx_block_compile as adapter
 from encoder_diagnostics import _context
+from ltx_layer_shard import DECLARED_SPLIT_INDEX
 
-ADAPTER_SHA256 = '79ba260785e16d7e646bfe79b0816e99a8fab6db557a60408c35bd7675121577'
+ADAPTER_SHA256 = 'c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e'
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 _state = None
 _failed = False
@@ -235,7 +236,8 @@ class LTXCompileOneBlockGate:
                   'compiler_options': dict(adapter.OPTIONS), 'passed': False, 'failures': []}
         try:
             adapter._routes(model)
-            require(model.ltx_layer_shard_report['split_index'] == 21, 'Expected measured 21/27 split')
+            require(model.ltx_layer_shard_report['split_index'] == DECLARED_SPLIT_INDEX,
+                    'Expected the packet-declared split')
             if _state is not None:
                 require(_state['original'] is model, 'Resident model generation changed')
                 require(not _state['gate'].failed, 'Compiler gate already failed')

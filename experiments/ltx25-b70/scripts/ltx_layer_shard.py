@@ -16,6 +16,12 @@ from comfy.ldm.lightricks.av_model import CompressedTimestep, LTXAVModel
 
 KEY = "ltx_layer_shard"
 CACHE_KEY = "_ltx_layer_shard_forward_transfers"
+# Packet-declared transformer split (blocks 0..N-1 on the primary card, N..47
+# on the secondary). 21/27 is the byte-balanced native split; packet 84 moves
+# to 23/25, the time-balanced split for the two-clip sampler (xpu:0 carries
+# the pre-glue glue work, so it should carry fewer blocks). Every node that
+# hard-required 21 now requires this declared value instead.
+DECLARED_SPLIT_INDEX = 23
 
 
 def _tensors(module):
