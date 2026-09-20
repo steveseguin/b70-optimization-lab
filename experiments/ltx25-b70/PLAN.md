@@ -96,18 +96,35 @@ save-behind, and two clips in flight across the shard cards (per-clip
 streams, pinned-host staged activations, capture/replay lock). Batching two
 clips in one forward is closed by proof (not bit-exact even for identical
 rows). The stream is now text-encoder-bound (1.59 s fp32 encode per clip on
-one card, ceiling 15.7 fps). In order:
+one card, ceiling 15.7 fps).
 
-1. Encoder two prompts deep across xpu:2 and xpu:3 (layer shard plus two
-   encode workers), expected ~0.8 s per clip of encode throughput; the
-   stream would then be sampler-bound near 1.2 s per clip.
-2. Transformer split rebalance toward 24/24 if graph-pool memory allows,
-   and the small exact remainders (glue capture, oracle behind, adaLN).
+## Update, September 20, 2026: the encoder is closed as a lever
+
+Item 1 below is done and it did not pay.
+[Packet 83](notes/graph-capture-83-results.md) sharded the encoder across
+xpu:2 and xpu:3 with two encode workers and is bit-exact: server 83c ran 30
+of 30 prompts byte-identical once the graph memory pools and capture streams
+were keyed per worker thread rather than per device. Steady rate 1.685 s per
+clip (p95 1.988, 14.8 fps equivalent) against packet 74's 1.607 control.
+Encode now costs about 1.63 s per clip with two in flight, and so does the
+two-clip sampler, so the shard moved the bottleneck without moving the
+number. Remaining levers, in order:
+
+1. More clips in flight on the sampler (three deep), or a transformer split
+   that uses the headroom the shard left on xpu:2 and xpu:3 (23.2 and
+   17.9 GB reserved of 32). This is the only path to the 1.09 s ceiling.
+2. The small exact remainders (glue capture, oracle behind, adaLN).
 3. Block kernel work on the launch-bound audio stream.
 
-Host: freezes are traced to two causes, runtime suspend of two B70s (fixed:
-udev bind-time rule) and a kernel lock stall after xe process teardown
-(open); one server per boot, never stopped.
+**Host, and it outranks all three.** The four-B70 machine has a hardware
+fault: twelve silent freezes, whole-platform stalls of 18.2 s and 10.7 s
+observed inside a running measurement (matching a clocksource long-readout
+gap in the journal), and two single-byte memory corruptions during model
+load on two different boots, with the file verified exact on disk and in
+page cache both times. A memtest86+ pass comes before promoting any further
+measurement from this host; the BIOS idle-current setting, the PSU and 12 V
+rails, and the runtime cpuidle state2 disable follow it. Evidence in
+[the freeze note](notes/2026-09-19-freeze-evidence-soft-lockup.md).
 
 ## Next optimization questions, in order
 
