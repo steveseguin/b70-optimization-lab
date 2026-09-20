@@ -69,6 +69,17 @@ needs the helper armed beside it. See
 costs in pinned evidence and what GPU work is still owed,
 [the no-swap launcher change](2026-09-19-noswap-launcher-change.md).
 
+**Update, 20:14 EDT: the first start made by the edited launcher itself confirms all of it.** The
+two-card acceptance session ran on `serve.py`'s own `--memory-swap 12g` with no helper armed beside
+it, and the container again swapped **nothing at all**, with **no out-of-memory kills** and a working
+set of **8.99 GB** -- a fourth reading inside 0.6 % of the three taken through the helper, leaving
+**3.01 GB to spare** under the 12 GB ceiling. Twelve of twelve prompts exact, no fault lines. One
+number did move: the *host* swapped 1,106 MB during the session against 275-293 MB on the three
+validation starts. None of it came from the container, and all of it happened before the server was
+ready, while a 29 GB model verify and a source download were competing for page cache in the same
+window. See [Confirmation from the launcher's own
+bytes](#confirmation-from-the-launchers-own-bytes-2026-09-19-2008-2014-edt).
+
 ---
 
 ## What was run
@@ -533,6 +544,73 @@ owed is in [the no-swap launcher change](2026-09-19-noswap-launcher-change.md).
 Receipts: [`../data/2026-09-19-service-start-noswap-3/`](../data/2026-09-19-service-start-noswap-3/)
 -- `noswap-helper.log`, `cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`, with a
 `README.md` reading each one. Raw root `/mnt/fast-ai/bench-results/resume-20260919g/`.
+
+## Confirmation from the launcher's own bytes (2026-09-19 20:08-20:14 EDT)
+
+The three validation starts all reached `memory.swap.max=0` through
+`scripts/apply-container-noswap.sh`, racing a `docker update` into a window 17-18 s wide. The
+two-card acceptance session at 20:08 EDT is the first start where the setting came from `serve.py`
+itself, on commit `fc48856e6`, with **no helper armed beside it at all**. That is the start that
+proves the edit, rather than the mechanism the edit was modelled on.
+
+`cgroup_memory()` read the container's counters just before the graceful stop, the way
+`run-fp8-tp2-acceptance-session.py` was taught to:
+
+| | 17:20, swap allowed | start 1 | start 2 | start 3 | **20:08, launcher** |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| How `memory.swap.max` got to 0 | -- (4 GiB) | helper | helper | helper | **`serve.py`** |
+| `memory.swap.max` / `memory.swap.peak` | 4 GiB / 4 GiB | 0 / 0 | 0 / 0 | 0 / 0 | **0 / 0** |
+| Container `pswpout` / `pswpin` | 3.94 GiB / 2.09 GiB | 0 / 0 | 0 / 0 | 0 / 0 | **0 / 0** |
+| `memory.events` `oom` / `oom_kill` | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | **0 / 0** |
+| `memory.events` `max` | 2,005 | 12,646 | 12,964 | 16,117 | **11,198** |
+| `memory.peak` | 12 GiB (= `max`) | 12.0 GiB | 12.0 GiB | 12.0 GiB | **12 GiB (= `max`)** |
+| `anon` | 6.91 GiB | 8.95 GiB | 8.94 GiB | 8.94 GiB | **8.99 GiB** (9,654,628,352 B) |
+| Headroom under the cap | -- | ~3.0 GiB | ~3.0 GiB | ~3.0 GiB | **3.01 GiB** (3,230,273,536 B) |
+| `file` / `file_dirty` | 3.88 GB / 0 | 2.70 GB / 0 | 2.74 GB / 0 | 2.88 GB / 0 | **2.42 GiB / 0** |
+| `pgscan_direct` | 2.17 M pages | 5.70 M | 5.79 M | 6.82 M | **4.84 M pages** |
+| Host-wide swap-out over the window | 4,514 MiB | 293 MiB | 288 MiB | 275 MiB | **1,106 MiB** |
+| Strict suite | 12/12, 90.24 tok/s | 12/12, 89.9 | 12/12, 89.79 | 12/12, 89.84 | **12/12, 89.87 tok/s** |
+| `xe` fault lines | 0 | 0 | 0 | 0 | **0** |
+
+**Every success criterion is met a fourth time, and this time by the shipped code.** Container
+`pswpout` 0, `memory.events max` non-zero, `oom_kill` 0, ready, strict 12/12, no fault lines. Four
+independent readings of the working set -- 8.95 / 8.94 / 8.94 / **8.99 GiB** -- span 0.6 %, and the
+~3 GiB of headroom the whole change rests on is confirmed on a container nobody reconfigured after
+the fact. `memory.events max` of 11,198 is the lowest of the four no-swap starts and `pgscan_direct`
+the lowest too, which fits: this container ran 6 minutes rather than a resume's couple of minutes,
+but the host had already read most of the model through the verify step, so there was less to fault
+in.
+
+**The host swapped 1,106 MiB, and that is the one number to keep an eye on.** It is four times the
+275-293 MiB of the three validation starts, and the obvious question is whether removing the
+container's swap allowance has merely pushed the reclaim onto the host. The sampler says not:
+
+* **The container's own `pswpout` is 0.** Not one of those pages was the server's.
+* **All 66 samples with swap-out fall between 20:09:41 and 20:12:39** -- the codeload download, the
+  29 GB model verify and the weight load. The server was ready at 20:12:39 and the host swapped
+  **nothing at all** through the strict suite, the six practical requests and the stop.
+* Peak **630 MiB in a single 0.5 s sample at 20:11:10**, 196 MiB in the next; over by 20:11:16.
+* Peak `Cached` **10.48 GiB**, minimum `MemAvailable` **3.01 GiB**, peak PSI memory `some avg10`
+  **4.04** -- the same shape as the validation starts, at a larger scale.
+
+The difference against starts 1-3 is what else was in the window. Those were quiet resumes that put
+an already-verified service back. This session downloaded the repository anonymously from codeload
+and ran a full hash verify over 29 GB of safetensors *before* the container started, so the host page
+cache was already large when the weight load added to it, and the kernel evicted other resident
+anonymous pages to make room. That is ordinary host reclaim under a large sequential read, not the
+mechanism this note is about -- the mechanism is a cgroup at `memory.max` with a swap allowance, and
+this container had none and used none. **It is recorded rather than dismissed** because the fault
+hypothesis is about pages the card's copy engine reads through userptr mappings, and those pages are
+the container's: they did not move. The next session should be sampled the same way, and a host
+swap-out burst that lands *during* serving rather than during the load would be a new finding.
+
+Receipts:
+[`../data/2026-09-19-fp8-tp2-acceptance-noswap-attempt/`](../data/2026-09-19-fp8-tp2-acceptance-noswap-attempt/)
+-- `cgroup-memory.json`, `swap-tp2-acceptance.csv`, `health-result.json`, `strict-comparison.json`
+and the session receipts, with a `README.md` reading each one. Raw root
+`/mnt/fast-ai/bench-results/fp8-tp2-acceptance-noswap-20260919/`. **That session was an acceptance
+attempt and it did not produce a packet** -- for why, and for what is still owed, see
+[the no-swap launcher change](2026-09-19-noswap-launcher-change.md).
 
 ## Risks
 

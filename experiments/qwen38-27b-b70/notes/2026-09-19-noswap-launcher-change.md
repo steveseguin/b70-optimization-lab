@@ -31,6 +31,22 @@ and correct, and the two-card headroom has been measured three times. The one th
 is the one-card measurement, because the one-card profiles carry about 2.4 GB more host-resident
 memory than the two-card one and their headroom is still arithmetic rather than a reading.
 
+**Update, 20:14 EDT: the two-card acceptance run was tried and the packet still cannot be frozen.**
+The run itself went perfectly -- twelve of twelve prompts exactly right, all six practical requests
+right with identical repeats, a clean stop, clean health probes either side, and the container once
+again swapped nothing at all with no out-of-memory kills. But the run compared itself against the
+wrong yardstick. There are two reference servers on this machine and the command we wrote down left
+out the one-line setting that picks the right one, so the run measured itself against a September 16
+server that predates a setting the current recipe uses. Every direct comparison of the two containers
+matches -- same image, same command line, same settings -- but the comparison the run recorded for
+itself does not, and that is a gate. **The honest remedy is one more run with the setting in place;
+nothing was worked around.** No packet was written, nothing was repointed, the three pending
+declarations stay exactly where they were, and no published number moved. What the run *does* leave
+behind is worth having: the first memory receipt from a container the shipped launcher itself started
+with no swap, confirming for the fourth time that the working set is about 9 GB with about 3 GB to
+spare and no out-of-memory kills. See
+[GPU run 1, attempt 1](#gpu-run-1-attempt-1-2026-09-19-2008-2014-edt----the-session-was-clean-and-the-packet-still-cannot-be-frozen).
+
 ## The change
 
 Both launchers, in `docker_argv`, with a comment block at the call site citing the finding note:
@@ -176,7 +192,9 @@ packet's own gates are untouched, and nothing about the recorded result changed.
 
 With no swap allowance the entire safety story is anonymous memory against the 12 GiB ceiling. A
 cgroup with nothing left to reclaim OOM-kills inside the container and the server is dead at load.
-Two cards have been measured three times at 8.94-8.95 GiB anon with `oom_kill` 0. **One card has
+Two cards have now been measured four times at 8.94-8.99 GiB anon with `oom_kill` 0 -- three through
+the helper and, since the 20:08 acceptance attempt, once from the shipped launcher's own bytes, with
+`anon_headroom_bytes` **3,230,273,536 (3.01 GiB)**. **One card has
 not**: `B70_CPU_EMBED=1` puts 2.368 GiB of embeddings permanently in host memory and the
 `no-quantization` profile builds an FP16 draft-head copy that has never been weighed, so the estimate
 is 8.3-8.8 GiB anon and 3.2-3.7 GiB of headroom -- arithmetic, close enough to the cap that
@@ -196,9 +214,10 @@ So the acceptance runners now leave a receipt instead of an argument:
   unchanged, which is what the `additive` proof checks.
 
 Read `memory.events max` going **up** as the mechanism working, not as a problem: 2,005 with a swap
-allowance, 12,646 / 12,964 / **16,117** without one. The cgroup still hits its ceiling constantly
-while streaming a 29 GB file; it now reclaims clean file cache every time instead of spending swap.
-`oom_kill` is the number that must stay 0.
+allowance, 12,646 / 12,964 / **16,117** without one, and 11,198 on the acceptance attempt (lower
+because the model had just been hash-verified, so there was less to fault back in). The cgroup still
+hits its ceiling constantly while streaming a 29 GB file; it now reclaims clean file cache every time
+instead of spending swap. `oom_kill` is the number that must stay 0, and it has, four times.
 
 ## The helper is superseded
 
@@ -216,22 +235,41 @@ Every step of `.github/workflows/guides.yml` in order, plus
 unmodified tree, so the green is a comparison and not a hope. `collect-fp8-tp2-acceptance-evidence.py`
 passes and prints the three `ACCEPTANCE PENDING` lines.
 
+Run in full again after the 2026-09-19 acceptance attempt was written up: **still all green, and
+still printing all three `ACCEPTANCE PENDING` lines**, which is the correct state -- that attempt
+retired nothing. Note that the guides step runs the collector in `verify` mode, which reads the
+qualified container out of the packet's own `evidence.tar.gz` rather than from `QUALIFIED_CONTAINER`,
+so the environment variable that the attempt needed matters only when *collecting* a packet, never in
+CI.
+
 ## What is still owed, on a GPU
 
 In the order they should be done. None of them is urgent and none should be a restart made for its
 own sake -- rules 1 and 2 of the lane still apply, and the service is up and correct.
 
 **GPU run 1 -- two-card acceptance on the new launcher.** Retires two of the three drift entries and
-re-freezes the packet CI gates.
+re-freezes the packet CI gates. **Attempted once, 2026-09-19 20:08-20:14 EDT. The session was clean
+and the packet still could not be frozen** -- see the section below for why and for the one-line fix.
 
 ```
+QUALIFIED_CONTAINER=/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp5/container-final.json \
 python3 experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py \
     --commit <the pushed commit of this change> \
     --out /mnt/fast-ai/bench-results/fp8-tp2-acceptance-noswap-<date>
+QUALIFIED_CONTAINER=/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp5/container-final.json \
 python3 experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py \
     --raw /mnt/fast-ai/bench-results/fp8-tp2-acceptance-noswap-<date> \
     --out experiments/qwen38-27b-b70/data/<date>-fp8-two-card-noswap
 ```
+
+**`QUALIFIED_CONTAINER` is not optional and the command above was missing it.** Both the session
+runner and the collector default it to the September 16 review campaign's depth-5 server, which
+predates the allgather overlay and therefore does not carry `B70_ALLGATHER_ALLREDUCE=1`. The current
+recipe does. The qualified receipt for the current recipe is the comm-2 allgather server, which is
+what the September 17 packet was frozen against (`reference_inspect` inside its `evidence.tar.gz`
+reads `/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp5/container-final.json`). It must be
+set on **both** commands: on the session, because the session writes `runtime-comparison.json` and a
+gate reads it; on the collector, because the collector copies the receipt into the packet.
 
 Then repoint `DEFAULT` in the collector at the new packet and delete `source-drift.json` from the old
 one (the old packet keeps its own frozen truth; it is simply no longer the current recipe).
@@ -241,10 +279,114 @@ probes. It needs the commit to be **pushed** first -- the session downloads the 
 codeload at that sha. Refreshes: the two-card acceptance packet, and with it the `launcher_sha256`
 the two-card LocalMaxxing attestation and queue payload should then be rebuilt from
 (`build-fp8-tp2-allgather-localmaxxing.py`, CPU-only, run *after* this).
-**Also check:** `runtime-comparison.json` now records `host_memory_plus_swap_bytes` as
-`[12884901888, 17179869184]` against the September 16 qualified container. That pair is **recorded,
-not gated** -- the `runtime_matches_qualified_depth5` gate compares image, arguments and environment,
-none of which changed -- so it is expected and not a failure.
+**Also check:** `runtime-comparison.json` will record `host_memory_plus_swap_bytes` as
+`[12884901888, 17179869184]`, because the right-hand number is the **qualified reference container's**
+`HostConfig.MemorySwap`, frozen when that server ran on 2026-09-17 with the old `--memory-swap 16g`
+launcher. It can never become `12884901888` and a run that produced `[12884901888, 12884901888]`
+would mean the reference had been re-measured, which is not something that happens. That pair is
+**recorded, not gated** -- the `runtime_matches_qualified_depth5` gate compares image, arguments and
+environment, none of which the no-swap edit changed -- so the mismatch is expected and is not a
+failure.
+
+### GPU run 1, attempt 1 (2026-09-19 20:08-20:14 EDT) -- the session was clean and the packet still cannot be frozen
+
+Run as prescribed against commit `fc48856e6`, out
+`/mnt/fast-ai/bench-results/fp8-tp2-acceptance-noswap-20260919`, rc 0, with
+`scripts/measure-swap-during-start.sh` beside it. Receipts copied into
+[`../data/2026-09-19-fp8-tp2-acceptance-noswap-attempt/`](../data/2026-09-19-fp8-tp2-acceptance-noswap-attempt/),
+which reads each one.
+
+**Eleven of the twelve gates pass. One does not, and it has nothing to do with the launcher edit.**
+
+| Gate | |
+| --- | --- |
+| `strict_12_no_mtp_reference_outputs_exact` | **pass** -- 12/12 complete token arrays exact |
+| `strict_natural_quality_gate` | pass |
+| `strict_cache_zero` | pass |
+| `strict_canaries` | pass |
+| `practical_six_pass` | **pass** -- six requests, three tasks x two repeats |
+| `practical_cache_zero` | pass |
+| `practical_token_repeat_exact` | pass -- both repeats identical in text and token ids |
+| `runtime_matches_qualified_depth5` | **FAIL** |
+| `owned_clean_stop` | pass |
+| `public_source_bytes` | pass -- anonymous download of `fc48856e6023bbc603a05111febb980e90bf6ddc`, archive `7d10f9f0ed5b12bf6fbba40d89dc2764516765fb596e46a2ff4263dca9e51683` |
+| `post_stop_absent` | pass |
+| `pre_post_health` | pass -- preflight and postflight rc 0, `gpu_faults: []` |
+
+Strict decode **89.867 tok/s** against the same-image no-MTP reference's 33.035, a 2.720x speedup.
+Practical HTTP TTFT 124-150 ms across the six. Ready 151 s after the start command (00:10:08.65Z ->
+00:12:39.58Z); `Loading weights took 9.06 seconds` for the first shard set. Every stage rc 0.
+
+The failing gate is a single sub-condition. Taking it apart against the *correct* reference, the
+comm-2 allgather container:
+
+* `actual['Image'] == qualified['Image'] == EXPECTED_IMAGE` -- **true**
+* the vLLM command line, with the model alias normalised -- **identical**
+* `sorted(Config.Env)` on both containers -- **identical**, including `B70_ALLGATHER_ALLREDUCE=1`
+* `num_speculative_tokens == 5` -- **true**
+* `not runtime['environment_differences']` -- **false**
+
+Only the last one fails, and it fails on a file the *session* wrote, not on anything the collector
+can recompute: the session runner compared its container against its own default reference, the
+September 16 depth-5 server, and recorded
+`environment_differences: {"B70_ALLGATHER_ALLREDUCE": ["1", null]}`. The server under test is right;
+the yardstick it was measured against is the wrong one. Setting `QUALIFIED_CONTAINER` on the
+collector alone does not help -- it fixes `reference/qualified/container-inspect.json`, and the three
+direct comparisons above then pass, but the gate also reads the session's own
+`runtime-comparison.json`, which is already written.
+
+**So the only honest remedy is another session, with `QUALIFIED_CONTAINER` set on the session
+command.** Editing the raw session's `runtime-comparison.json` would be forging a receipt, and
+re-freezing the packet from a summary with a failed gate is what the collector's
+`assert summary['passed']` exists to prevent. Nothing was worked around:
+
+* **No packet was written.** `experiments/qwen38-27b-b70/data/2026-09-19-fp8-two-card-noswap` does
+  not exist; the collector raised on `assert summary['passed']` and refused.
+* **`DEFAULT` still points at `2026-09-17-fp8-two-card-allgather`.**
+* **All three `source-drift.json` entries stay.** CI keeps printing the three `ACCEPTANCE PENDING`
+  lines, which is the true state: acceptance on the new launcher is still pending.
+* **No package number, attestation or queue payload was regenerated.** Both
+  `publish-fp8-tp2-allgather-package.py` and `build-fp8-tp2-allgather-localmaxxing.py` assert
+  `summary['passed']` on the packet they are given, so neither can run, and neither should.
+
+For the record, had the packet frozen, the headline would have moved **down**: the featured metric is
+the median of the comm-2 fresh server (90.370) and the acceptance replay, so 90.476 tok/s would have
+become **90.118** (90.370 / 89.867). The two-card LocalMaxxing value moves the same way. **That is a
+0.4 % drop, not an improvement, so no new submission is proposed and the existing approved record
+`cmu5qk0kz07zglq01eh1opkhx` remains the public record** -- as it would whatever the next session
+measures, unless that session beats 90.476.
+
+**What the session did establish, and it is the part worth keeping.** This was the first no-swap
+container started by the shipped launcher's own bytes, with no `apply-container-noswap.sh` armed
+beside it, and its `cgroup-memory.json` is the receipt the runner was taught to leave:
+
+| | 17:20 baseline (swap allowed) | starts 1-3 (helper) | **this session (launcher)** |
+| --- | ---: | ---: | ---: |
+| `memory.swap.max` / `swap.peak` | 4 GiB / 4 GiB | 0 / 0 | **0 / 0** |
+| container `pswpout` / `pswpin` | 3.94 GiB / 2.09 GiB | 0 / 0 | **0 / 0** |
+| `memory.events` `oom_kill` | 0 | 0 / 0 / 0 | **0** |
+| `memory.events` `max` | 2,005 | 12,646 / 12,964 / 16,117 | **11,198** |
+| `memory.peak` | 12 GiB (= `max`) | 12 GiB | **12 GiB (= `max`)** |
+| `anon` | 6.91 GiB | 8.95 / 8.94 / 8.94 GiB | **8.99 GiB (9,654,628,352 B)** |
+| `anon_headroom_bytes` | -- | ~3 GiB | **3.01 GiB (3,230,273,536 B)** |
+| `file` / `file_dirty` | 3.88 GB / 0 | 2.70-2.88 GB / 0 | **2.42 GiB / 0** |
+| `pgscan_direct` | 2.17 M pages | 5.70 / 5.79 / 6.82 M | **4.84 M pages** |
+| host swap-out over the window | 4,514 MiB | 293 / 288 / 275 MiB | **1,106 MiB** |
+
+Four independent readings of the two-card working set now land at 8.95 / 8.94 / 8.94 / **8.99 GiB**,
+the fourth taken without the helper in the picture at all. `oom_kill` is 0 for the fourth time and
+the ~3 GiB of headroom is confirmed as a property of the workload.
+
+**The one number that moved is host swap-out: 1,106 MiB, against 275-293 MiB on the three validation
+starts.** It is not the container -- its `pswpout` is 0 -- and it is not the serving phase: every one
+of the 66 samples with swap-out falls between 20:09:41 and 20:12:39, with a 630 MiB peak in a single
+0.5 s sample at 20:11:10, and the host swapped nothing once the server was ready. The difference
+against the validation starts is what else was running in the window: those followed a quiet resume,
+this session did an anonymous codeload download and a full 29 GB model verify before the start, so
+host page cache (peak `Cached` 10.48 GiB, minimum `MemAvailable` 3.01 GiB, peak PSI 4.04) pushed other
+resident pages out. Worth watching on the next session rather than treated as a regression: the pages
+the card's copy engine reads are the container's, and the container swapped nothing. No `xe` fault
+lines either side.
 
 **GPU run 2 -- one-card acceptance on the new launcher. The one that matters.** This is the run that
 turns the 8.3-8.8 GiB estimate into a reading, for all three profiles including the unweighed FP16
