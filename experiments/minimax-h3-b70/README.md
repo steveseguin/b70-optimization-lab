@@ -1,13 +1,14 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
-Status (2026-09-20, lossless goal track): **DUET + TWO-PROC DECODE: 1.87x THROUGHPUT, EVERY BIT
+Status (2026-09-20, lossless goal track): **DUET + TWO-PROC DECODE: 1.88x THROUGHPUT, EVERY BIT
 EXACT.** Work opened the 24-fps realtime goal (notes/2026-09-20-realtime-goal.md): baseline
 960x544 50 NFE = 800.8 s per 5.17 s clip (0.155 fps); the shipped stack -- batch mode
 (`--prompts-file`), the **duet** (`scripts/h3_duet.py`: the block-24 split as one PROCESS per
 card, clips staggered, mid-state over /dev/shm) and the **two-process VAE decode**
-(`scripts/h3_vae_duet.py`, `--vae-decode two-proc`) -- runs 4 clips in 1717 s = **429 s/clip,
-0.289 fps**, with every clip's four hashes bytewise equal to the standalone lossless receipts.
-The GIL kills threads on this torch/XPU build (the window-4 threaded decode measured 1.01x);
+(`scripts/h3_vae_duet.py`, `--vae-decode two-proc`), and the compute-balanced 25/25 block split
+(now the duet default) -- runs 2 clips in 853 s = **426.5 s/clip, 0.290 fps** (4-clip steady
+state 429 s/clip), with every clip's four hashes bytewise equal to the standalone lossless
+receipts. The GIL kills threads on this torch/XPU build (the window-4 threaded decode measured 1.01x);
 processes were the fix, twice. Run it:
 `LORA= HEIGHT=544 WIDTH=960 VAE_DECODE=two-proc PROMPTS_FILE=<prompts> ./scripts/smoke_h3.sh duet`.
 Publication draft: notes/2026-09-20-publication-draft.md. The 24 fps goal stands 66x beyond the

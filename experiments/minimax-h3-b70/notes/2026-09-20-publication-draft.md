@@ -1,9 +1,9 @@
 # MiniMax-H3 two-B70: lossless speed work, 2026-09-20 — publication draft
 
-**Headline:** 1.82x throughput on lossless, deterministic 960x544 (the trained canvas) video
-generation on two Intel Arc Pro B70s — 800.8 s to 440.5 s per 5.17 s clip (124 frames + 32 kHz
+**Headline:** 1.88x throughput on lossless, deterministic 960x544 (the trained canvas) video
+generation on two Intel Arc Pro B70s — 800.8 s to 426.5 s per 5.17 s clip (124 frames + 32 kHz
 stereo audio), with every output bit-identical to the reference path. Effective generation rate
-0.155 -> 0.282 fps. Goal track: 24 fps realtime.
+0.155 -> 0.290 fps, sustained at batch depth (4 clips: 429 s/clip). Goal track: 24 fps realtime.
 
 ## What changed (all exact, all gated bytewise)
 
@@ -16,14 +16,24 @@ stereo audio), with every output bit-identical to the reference path. Effective 
    1.01x (the GIL serializes this torch/XPU build's blocking ops) — processes were the fix.
 3. **Two-process VAE decode** (`h3_vae_duet.py`, `--vae-decode two-proc`): same pattern applied
    to the 105-tile video decode. 39.9 s vs 79.96 s per clip at 960x544 fp32 (2.0x).
+4. **Compute-balanced split** (`SPLIT_INDEX=25`, now the duet default): the byte-balanced 24/26
+   split left one card with 26 blocks plus both heads while every block costs identical FLOPs.
+   25/25: sample phase 692.6 s/clip (was 720.7), -3.9%. A pure device-assignment change —
+   bit-exact by construction, gate-confirmed anyway (`duet-20260920T061643Z`).
+
+Measured dead ends (evidence in the ledger): flash/mem-efficient SDPA is unsupported for bf16
+on this torch/XPU build (no faster exact attention kernel exists); overlapping decode with
+sampling exceeds card VRAM in every variant (22.9+9.7 > 31.9 GiB); threaded multi-card decode is
+GIL-serialized (1.01x).
 
 ## Gates
 
 - Baseline: `repeat-20260920T023257Z-a/b` — 960x544, 50 NFE base schedule, fp32 decode,
   REPEAT GATE bytewise-equal, 800.8 s/clip.
-- Combined run: `duet-20260920T052148Z` — clip-00 matches the baseline receipt bytewise (all
-  four hashes). Small-canvas gates: `batch-20260920T051559Z`, `duet-20260920T042216Z` vs
-  `repeat-20260920T021446Z-a`.
+- Combined run: `duet-20260920T052148Z` (1.82x) and `duet-20260920T061643Z` (split-25, 1.88x) —
+  clip-00 matches the baseline receipt bytewise (all four hashes). Steady state:
+  `duet-20260920T054351Z` (4 clips, 429 s/clip). Small-canvas gates: `batch-20260920T051559Z`,
+  `duet-20260920T042216Z` vs `repeat-20260920T021446Z-a`.
 - Determinism: no `--deterministic` flag needed; repeats matched bytewise without it.
 
 ## Not in this packet (parked, user-gated, measured)
