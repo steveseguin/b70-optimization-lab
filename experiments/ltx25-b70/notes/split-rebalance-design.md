@@ -53,3 +53,64 @@ receipt first; decide the split from that number, not from a guess.
 3. If headroom >= 4 GB: `split_index=23` via the resident node's shard call,
    relax the two `== 21` requires to the packet-declared value, and run the
    ten-fixture oracle (the split changes no arithmetic; exactness expected).
+
+## Update, 2026-09-20: the gate is met, and there is a third literal
+
+Plan step 2 asked for per-card memory in the sampler receipt before choosing
+a split. Packets 82 and 83 ship it. From server 83c's
+`pipeline-sampler-f83c-tsh-20.json`, during a two-clip stream on the sharded
+arm (card total 32.66 GB):
+
+| Card | Allocated | Reserved | Free of reserved |
+| --- | --- | --- | --- |
+| xpu:0 | 22.34 GB | 28.38 GB | 5.86 GB |
+| xpu:1 | 21.02 GB | 28.09 GB | 6.15 GB |
+| xpu:2 | 17.74 GB | 23.19 GB | 11.06 GB |
+| xpu:3 | 14.95 GB | 17.87 GB | 16.37 GB |
+
+xpu:0 has 5.86 GB free against the 4 GB the plan asked for, and 23/25 moves
+1.55 GB onto it, so **step 3's condition is met**. Note the allocator is
+holding 6.0 GB of reserved-but-unallocated blocks on xpu:0, so the added
+weights may well land inside existing segments without growing reserved at
+all.
+
+Plan step 1 is also done, and it changes the value of this lever rather than
+unlocking it: the encoder shard is exact but bought nothing
+([packet 83](graph-capture-83-results.md)), because the two-clip sampler now
+paces the stream at about 1.6 s per clip. So the 23/25 rebalance is no longer
+invisible behind the encoder; it is worth its ~0.04 s per clip, about 2.4% of
+the current 1.685 s.
+
+### Literal archaeology, corrected
+
+This note said two nodes hard-require 21. The live packet source has
+**three**, and the third would have been a serial run-time stop:
+
+| File (packet `source/scripts/`) | Line | Text |
+| --- | --- | --- |
+| `graph_capture_node.py` | 96 | `require(... == 21, 'Expected the native 21/27 split')` |
+| `block_compile_node.py` | 238 | `require(... == 21, 'Expected measured 21/27 split')` |
+| `multiblock_compile_node.py` | 353 | same shape, missed by the original survey |
+
+Two call sites choose the split, both passing `split_index=None`, which makes
+`ltx_layer_shard.install` compute 21 by byte balance:
+`resident_node.py:104` and `host_embedding_resident_node.py:178`. The lane
+generator `prepare-multiblock-runtime.py` also carries `'split_index': 21` at
+lines 96 and 207 in a packet identity block; that is a different lineage but
+must be checked before any packet is regenerated from it.
+
+### Packet 84, ready to build
+
+1. Pass the packet-declared split to both `apply_layer_shard` call sites
+   instead of `None`, and relax all three `== 21` requires to that declared
+   value rather than deleting them.
+2. Declare `split_index: 23` in the packet identity.
+3. Run warm plus the thirty-prompt sharded arm against the ten fixture
+   oracles. The split changes no arithmetic, so exactness is expected; a
+   mismatch would mean the hand-off or a capture signature moved.
+4. Read the sampler receipt's memory section again and compare xpu:0
+   reserved against the 28.38 GB baseline above.
+
+Do not build this until the host passes a memory test. Two single-byte
+corruptions during model load on 2026-09-19/20 mean a 2.4% result from this
+machine cannot currently be told apart from noise with confidence.
