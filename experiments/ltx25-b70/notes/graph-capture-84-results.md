@@ -69,12 +69,21 @@ fingerprint differs from the encode-side one, the conditioning mutated in
 flight; if they match and the noise seeds are the expected ones, the sampler
 left the expected path.
 
-## 4. Endurance watch (the deterministic wrong bird clip)
+## 4. Endurance: 120/120 exact; the wrong bird clip did not reproduce
 
-The f82b/f83e wrong bird clip was byte-identical across two servers and
-sits at the fill boundary (emitted_index == index_base + 2). Packet 84's
-120-prompt endurance arm runs the same fixture sequence with the fingerprints
-armed. Result will be appended here.
+f84-endure: 120 prompts, 117 distinct clips, **`all_exact: true`**, steady mean
+1.6505 s/clip (15.15 fps effective; the 30-prompt arm read 1.6311). Every bird
+clip in the sequence matched its reference byte for byte, including prompt 05's
+clip at the fill boundary — the slot that produced the finite-but-wrong clip on
+servers 82b and 83e.
+
+The bug is therefore still unexplained and now cleanly bounded: same packet,
+same boot, same fixture sequence — 83c clean, 83e wrong, 84 clean. What varies
+between those servers is allocation history at load. The fingerprint
+instrumentation shipped in this packet is the standing trap: on the next
+occurrence, `emitted_conditioning_fingerprint` vs `conditioning_fingerprint`
+and `emitted_sample_inputs` will attribute the divergence to the encode
+handoff, the noise/latent inputs, or the sampler path itself.
 
 ## 5. What the user needs to decide (updated)
 
