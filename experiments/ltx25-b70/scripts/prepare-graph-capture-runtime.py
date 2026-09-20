@@ -129,7 +129,11 @@ ARMS = (
     ('pipe-fast-save', 'graph',  'original', 'original',   'original', '1',  'graph',    'pipeline-save', 'original', 'original', 'original', 'original', 'fast'),
     ('pipe-batchproof', 'graph', 'original', 'original',   'original', '1',  'graph',    'pipeline', 'batchproof', 'original', 'original', 'original', 'fast'),
     ('pipe-samp2',   'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
-    ('pipe-samp2-tsh', 'graph',  'original', 'original',   'original', '1',  'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),)
+    ('pipe-samp2-tsh', 'graph',  'original', 'original',   'original', '1',  'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
+    # Packet 85: the fusion gate's designed 'fused' mode on the two-clip sharded
+    # arm. The gate proves every fused group bit-for-bit at install; the arm's
+    # oracle gate is the same fixture set as pipe-samp2-tsh.
+    ('pipe-fuse2-tsh', 'graph',  'original', 'original',   'fused',    '1',  'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),)
 VAE_NODE = '423'
 
 
@@ -240,7 +244,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-ccfg', 'graph-fused', 'graph-vae', 'restored', 'pipe-samp',
                           'pipe-uptime', 'pipe-up', 'pipe-up-save', 'pipe-upphase', 'pipe-fwdtimed',
                           'pipe-fasttimed', 'pipe-fast', 'pipe-fast-save', 'pipe-batchproof', 'pipe-samp2',
-                          'pipe-samp2-tsh')}
+                          'pipe-samp2-tsh', 'pipe-fuse2-tsh')}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
                 'source/scripts/host_embedding_clip.py',
@@ -404,7 +408,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['pipe-fast-save', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline-save', 'original', 'original', 'original', 'original', 'fast'],
                      ['pipe-batchproof', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'batchproof', 'original', 'original', 'original', 'fast'],
                      ['pipe-samp2', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
-                     ['pipe-samp2-tsh', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast']]
+                     ['pipe-samp2-tsh', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-fuse2-tsh', 'graph', 'original', 'original', 'fused', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
     expected_graphs = []
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,
