@@ -34,5 +34,10 @@ curl -sf http://127.0.0.1:8188/queue >/dev/null || { step server never answered;
 PID=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['pid'])")
 step server pid $PID up
 arm f88-warm pipe-samp2-tsh 3 200988
+# Settle gap: all three campaign freezes hit at the warm->endure load
+# step-change; give thermals, power delivery and the I/O queue a minute
+# between arms. The arms are measured independently, so this costs no signal.
+step "settle 60 s between arms"
+sleep 60
 arm f88-endure pipe-samp2-tsh 120 201088
 step campaign complete
