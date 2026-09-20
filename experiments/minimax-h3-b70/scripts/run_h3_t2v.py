@@ -2019,14 +2019,22 @@ def release_denoiser(torch, transformer, pipe, devices) -> None:
 # ---------------------------------------------------------------------------------------------
 
 
-def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict):
+def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict, duet_rank=None):
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
     from diffusers import MiniMaxH3Transformer3DModel
 
-    primary = torch.device(f"xpu:{args.cards[0]}")
-    secondary = torch.device(f"xpu:{args.cards[1]}")
+    if duet_rank is not None:
+        # Duet mode (h3_duet.py, lever 5): this process sees exactly ONE card (the launcher set
+        # ZE_AFFINITY_MASK), and loads only its half of the split.  Rank 0 takes the embeddings,
+        # the timestep branch and blocks [0, split_index); rank 1 takes blocks [split_index, N)
+        # and the output heads.  The boundary hooks are NOT installed -- the crossing between the
+        # halves is the duet protocol's, through host shared memory, once per forward per clip.
+        primary = secondary = torch.device("xpu:0")
+    else:
+        primary = torch.device(f"xpu:{args.cards[0]}")
+        secondary = torch.device(f"xpu:{args.cards[1]}")
     variant = args.denoiser
     quantized = variant == "int8"
     path = denoiser_path(variant)
@@ -2098,13 +2106,26 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         LOG.info(
             "lora %s scale %.4f: %d pairs -> %d merged + %d runtime destinations%s",
             lora_path.name, lora_scale, len(lora.pairs), len(lora.dense), len(lora.runtime),
+
             f", {gib(lora.runtime_bytes())} resident" if lora.runtime else "",
         )
+    def duet_owner(name: str) -> int:
+        # Which duet rank computes with this tensor.  Non-block tensors are rank 0's except the
+        # output heads (norm_out and both projections), which run after the last block: rank 1.
+        if name.startswith("transformer_blocks."):
+            return 0 if int(name.split(".")[1]) < plan.split_index else 1
+        if name.startswith(("norm_out", "proj_out", "audio_proj_out")):
+            return 1
+        return 0
 
     def device_for(name: str):
         if name.startswith("transformer_blocks."):
             return primary if int(name.split(".")[1]) < plan.split_index else secondary
         return primary
+
+    def wanted(name: str) -> bool:
+        return duet_rank is None or duet_owner(name) == duet_rank
+
 
     with phase("load.stream", timings):
         LOG.info("denoiser loader: %s (B70_H3_LOADER), checkpoint %s", LOADER, path.name)
@@ -2112,13 +2133,15 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
             open_tensor_reader(lora.path, lora.header) if lora is not None else contextlib.nullcontext()
         )
         with open_tensor_reader(path, header) as fh, lora_reader as lfh:
-            if not quantized:
+            if not quantized and wanted("time_embedder"):
                 table = fh.get_tensor("adaln_t_table").to(device=primary, dtype=torch.float32)
                 model.time_embedder = AdaLNTableEmbedder(table)
                 fh.release("adaln_t_table")
             placed = 0
             merged = 0  # dense destinations the LoRA was folded into
             for name, src in remap.items():
+                if not wanted(name):
+                    continue
                 dev = device_for(name)
                 # A row slice is a contiguous byte range, so the pread loader reads only those
                 # rows: the qkv split reads a third of `qkv_proj` three times, not the whole
@@ -2167,6 +2190,8 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
             total = len(remap) + len(quant)
             runtime_lora = 0  # ConvRotLinears carrying an additive LoRA term
             for module, q in quant.items():
+                if not wanted(module):
+                    continue
                 dev = device_for(module)
                 parent_path, _, leaf = module.rpartition(".")
                 parent = model.get_submodule(parent_path)
@@ -2225,7 +2250,8 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         inv_freq = 1.0 / (
             config["rope_theta"] ** (torch.arange(0, 2 * freq_dim, 2, dtype=torch.float32) / (2 * freq_dim))
         )
-        set_submodule_tensor(model, "rope.inv_freq", inv_freq.to(primary))
+        if duet_rank in (None, 0):
+            set_submodule_tensor(model, "rope.inv_freq", inv_freq.to(primary))
         with open_tensor_reader(path, header) as fh:
             stored = fh.get_tensor("rope.inv_freq").float()
             fh.release("rope.inv_freq")
@@ -2239,9 +2265,12 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
         _free(torch, [primary, secondary])
     log_vram(torch, [primary, secondary], "after load.stream")
 
-    # Residency gate: the LTX lane's ON_PRE_RUN check, run once here.
-    stragglers = [n for n, p in model.named_parameters() if p.device.type != "xpu"]
-    stragglers += [n for n, b in model.named_buffers() if b.device.type != "xpu"]
+    # Residency gate: the LTX lane's ON_PRE_RUN check, run once here.  In duet mode the other
+    # rank's tensors are intentionally left on `meta` -- they are this process's no-op halves.
+    stragglers = [n for n, p in model.named_parameters()
+                  if wanted(n) and p.device.type != "xpu"]
+    stragglers += [n for n, b in model.named_buffers()
+                   if wanted(n) and n != "rope.inv_freq" and b.device.type != "xpu"]
     if stragglers:
         raise RuntimeError(f"denoiser is not fully resident on the cards: {stragglers[:10]}")
 
@@ -2257,7 +2286,8 @@ def load_sharded_transformer(args, plan: SplitPlan, config: dict, timings: dict)
             merged, runtime_lora, gib(lora.runtime_bytes()),
         )
 
-    _install_boundary_hooks(torch, model, plan.split_index, primary, secondary)
+    if duet_rank is None:
+        _install_boundary_hooks(torch, model, plan.split_index, primary, secondary)
     LOG.info("cross-card transfer route: %s (B70_H3_XFER)", XFER)
     if quantized:
         LOG.info(

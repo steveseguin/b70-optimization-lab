@@ -382,6 +382,49 @@ case "${mode}" in
     [ "${rc}" -eq 0 ] || exit 1
     ;;
 
+  duet)
+    # Lever 5 gate: one duet run (two processes, one card each, clips staggered through the
+    # block-24 split) over PROMPTS_FILE, then BATCH_REF_<i> bytewise comparisons exactly as
+    # `batch`.  The first prompt SHOULD be the default prompt, gated against a `repeat` run.
+    if [ -z "${PROMPTS_FILE:-}" ]; then
+      echo "duet needs PROMPTS_FILE=<path> (at least 2 prompts)" >&2
+      exit 2
+    fi
+    mkdir -p "${OUT_ROOT}"
+    preflight
+    name="duet-$(date -u +%Y%m%dT%H%M%SZ)"
+    rc=0
+    (
+      systemd-run --user --scope --quiet --collect --unit="h3-${name}-$$" "${SCOPE_PROPS[@]}" \
+        env PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF}" B70_H3_XFER="${B70_H3_XFER}" \
+            B70_H3_DENOISER=pruned \
+        "${GPU_VENV}/bin/python" "${HERE}/h3_duet.py" \
+          --prompts-file "${PROMPTS_FILE}" \
+          --height "${HEIGHT}" --width "${WIDTH}" \
+          --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
+          --out-dir "${OUT_ROOT}" --run-name "${name}" \
+          2>&1 | tee "${OUT_ROOT}/${name}.log"
+    ) &
+    job=$!
+    "${WATCHDOG}" "${job}" "${WATCHDOG_MIN_AVAIL_MIB}" "${OUT_ROOT}/${name}.watchdog.log" &
+    wd=$!
+    wait "${job}" || rc=$?
+    wait "${wd}" 2>/dev/null || true
+    [ "${rc}" -eq 0 ] || { echo "duet run exited ${rc}" >&2; exit "${rc}"; }
+    i=0
+    while true; do
+      ref_var="BATCH_REF_${i}"
+      ref="${!ref_var:-}"
+      [ -z "${ref}" ] && break
+      echo
+      echo "=== duet clip-${i} vs standalone ${ref} ================================================"
+      compare_receipts "${name}/clip-$(printf %02d "${i}")" "${ref}" || rc=1
+      i=$((i + 1))
+    done
+    [ "${i}" -gt 0 ] || echo "duet: no BATCH_REF_<i> references set; run only, no bytewise gate"
+    [ "${rc}" -eq 0 ] || exit 1
+    ;;
+
   repeat)
     mkdir -p "${OUT_ROOT}"
     preflight
@@ -394,7 +437,7 @@ case "${mode}" in
     ;;
 
   *)
-    echo "usage: $0 {dry|one|repeat|batch|probe-tiles|decode-only}" >&2
+    echo "usage: $0 {dry|one|repeat|batch|duet|probe-tiles|decode-only}" >&2
     echo "  probe-tiles / decode-only need LATENTS_FROM=<run-dir>/tensors.safetensors" >&2
     exit 2
     ;;
