@@ -56,6 +56,19 @@ hundredth of a second, and the speed test read 89.79 against 89.9 tokens a secon
 of a percent. **One more start, then `serve.py` is edited.** See
 [Validation start 2](#validation-start-2-of-3-2026-09-19-1859-edt--2259-utc).
 
+**Update, 19:45 EDT: validation start 3 of 3 is done, three of three passed, and both launchers have
+been edited.** The container again swapped nothing at all, the host swapped 275 MB against 293 and
+288, there were no out-of-memory kills, the service came up ready, 12 of 12 exact at 89.84 tokens a
+second, and no fault lines. The working-set figure came back a third time within a hundredth of a
+percent of the other two -- 8.94 GB -- so the roughly 3 GB of room to spare under the 12 GB ceiling
+is settled, not a reading. The weight load was the fastest of all four starts at 8.21 seconds, which
+puts to rest the worry that dropping file cache instead of swapping would cost I/O. `serve.py` in
+both the two-card and the one-card package now ships `--memory-swap 12g`, so a normal start no longer
+needs the helper armed beside it. See
+[Validation start 3](#validation-start-3-of-3-2026-09-19-1945-edt--2345-utc) and, for what the edit
+costs in pinned evidence and what GPU work is still owed,
+[the no-swap launcher change](2026-09-19-noswap-launcher-change.md).
+
 ---
 
 ## What was run
@@ -458,6 +471,69 @@ Receipts: [`../data/2026-09-19-service-start-noswap-2/`](../data/2026-09-19-serv
 -- `noswap-helper.log`, `cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`. Raw root
 `/mnt/fast-ai/bench-results/resume-20260919f/`.
 
+## Validation start 3 of 3 (2026-09-19 19:45 EDT / 23:45 UTC)
+
+The last of the three, and again a start that was going to happen anyway: the `--only-service` resume
+(`RESUME_ROOT /mnt/fast-ai/bench-results/resume-20260919g`, git `b68ecf0c1`) putting the two-card
+service back on 18124. **Nothing was restarted for this measurement.** Same boot as the 17:20
+baseline and as starts 1 and 2, so all four columns below are the same machine in the same state.
+
+The helper caught `neural-fp8-277ee9175b5c4b32a97a9a35a1d4241f`
+(`11d63815396009fa3ecfc62857705323509f263595188abda1e684b8d9bf8c5b`) **17 s** into the start at
+`memory.current` **20,516,864 bytes (20 MB)** -- between start 1's 6 MB and start 2's 119 MB, all
+three far under the 6 GiB refusal threshold -- and `docker update --memory 12g --memory-swap 12g`
+took `memory.swap.max` from 4 GiB to **0** in the same second (`noswap-helper.log`).
+
+### All four starts side by side
+
+| | 17:20, swap allowed | 18:23, start 1 | 18:59, start 2 | **19:45, start 3** |
+| --- | ---: | ---: | ---: | ---: |
+| Container `pswpout` | 1,033,915 pages = 3.94 GiB | 0 | 0 | **0** |
+| `memory.swap.peak` | 4 GiB (= the cap) | 0 | 0 | **0** |
+| Host-wide swap-out during the start | 4,514 MiB | 293 MiB | 288 MiB | **275 MiB** |
+| Host-wide swap-in during the start | (not summed) | 299 MiB | 281 MiB | 257 MiB |
+| `memory.events max` | 2,005 | 12,646 | 12,964 | **16,117** |
+| `memory.events oom` / `oom_kill` | 0 / 0 | 0 / 0 | 0 / 0 | **0 / 0** |
+| `memory.peak` | 12 GiB (= `memory.max`) | 12.0 GiB | 12.0 GiB | 12.0 GiB |
+| `anon` | 7,422,877,696 B = 6.91 GiB | 9,608,658,944 B = 8.95 GiB | 9,600,892,928 B = 8.94 GiB | **9,602,744,320 B = 8.94 GiB** |
+| `file` | 3.88 GB | 2.70 GB | 2.74 GB | 2.88 GB |
+| `pgscan_direct` | 2.17 M pages | 5.70 M pages | 5.79 M pages | **6.82 M pages** |
+| Minimum host MemAvailable | 4.87 GiB | 3.0 GiB | 3.0 GiB | **3.07 GiB** |
+| Peak PSI memory `some avg10` | 3.9 | 4.0 | 3.5 | **2.73** |
+| `Loading weights took` (TP0, first shard set) | 8.53 s | 8.44 s | 8.44 s | **8.21 s** |
+| `Model loading took` | 11.99 s | 11.34 s | 11.22 s | 10.94 s |
+| `init engine` (profile + KV + warmup) | 73.69 s | 72.94 s | 75.16 s | 73.18 s (compile 64.41 s) |
+| Service ready | 21:22:45Z | 22:26:22Z, 150 s after the command | 23:02:00Z, 160 s | 23:47:58Z, **150 s** |
+| Strict suite vs the comm-2 no-MTP reference | 12/12, 90.24 tok/s | 12/12, 89.9 tok/s | 12/12, 89.79 tok/s | **12/12, 89.84 tok/s** |
+| `xe` fault lines | 0 | 0 | 0 | **0** |
+
+Every success criterion is met for the third time: container `pswpout` **0**, `memory.events max`
+non-zero at **16,117**, `oom_kill` **0**, ready, strict **12/12**, no fault lines. The sampler took
+489 samples over 251 s.
+
+**Three independent readings of the working set land inside a tenth of a percent of each other**:
+9,608,658,944 / 9,600,892,928 / 9,602,744,320 bytes, a spread of 7.8 MB on 8.94 GiB. The headroom
+figure this change rests on -- **about 3 GiB under the 12 GiB cap** -- is therefore a property of the
+workload, not of a run. `memory.events max` rose again (16,117 against 12,964 and 12,646) and
+`pgscan_direct` with it (6.82 M pages), which remains the mechanism working rather than a fault: with
+no swap to fall back on, every touch of the ceiling has to reclaim clean file cache.
+
+**And the feared cost never appeared.** The worry was that re-reading dropped pages from NVMe would
+slow the weight load. Across the four starts the load went 8.53 -> 8.44 -> 8.44 -> **8.21 s**: the
+three no-swap starts are all *faster* than the swapping baseline, and start 3 is the fastest of the
+four. Ready came 150 s after the command, matching start 1 and 10 s quicker than start 2 (that
+difference was compile-time variance both times). Peak memory pressure was also the mildest of the
+four at PSI 2.73, against 3.9 on the swapping start.
+
+**With three of three passed, both launchers were edited**: `--memory-swap 12g` in the two-card and
+the one-card `docker_argv`, with the reasoning and the note reference in a comment at the call site.
+What that costs in pinned evidence, what was regenerated without a GPU, and what GPU runs are still
+owed is in [the no-swap launcher change](2026-09-19-noswap-launcher-change.md).
+
+Receipts: [`../data/2026-09-19-service-start-noswap-3/`](../data/2026-09-19-service-start-noswap-3/)
+-- `noswap-helper.log`, `cgroup-after-start.txt`, `swap-during-start.csv`, `session.log`, with a
+`README.md` reading each one. Raw root `/mnt/fast-ai/bench-results/resume-20260919g/`.
+
 ## Risks
 
 **1. Cgroup OOM kill.** With `memory.swap.max=0`, a cgroup whose *anonymous* memory alone exceeds
@@ -531,7 +607,12 @@ validation start 1: `noswap-helper.log` (the `docker update`, with the cgroup be
 validation start 2, the same four files. Raw root
 `/mnt/fast-ai/bench-results/resume-20260919f/`.
 
-Related: [fifth GPU fault](2026-09-19-gpu-fault-service-start.md) (the fault history and the swap
+[`../data/2026-09-19-service-start-noswap-3/`](../data/2026-09-19-service-start-noswap-3/) --
+validation start 3, the same four files plus a `README.md`. Raw root
+`/mnt/fast-ai/bench-results/resume-20260919g/`.
+
+Related: [the no-swap launcher change](2026-09-19-noswap-launcher-change.md) (what the edit costs in
+pinned evidence and the GPU acceptance runs it leaves owed), [fifth GPU fault](2026-09-19-gpu-fault-service-start.md) (the fault history and the swap
 hypothesis this revises), [host oomd incident](2026-09-18-host-oomd-incident.md) (the same mistake
 with a 4 GiB cap), [2026-09-15 restore fault](2026-09-15-fp8-restore-gpu-fault.md) (the first recorded
 swap burst before a fault), and the `2026-09-19` rows in [DO-NOT-REPEAT.md](../DO-NOT-REPEAT.md).

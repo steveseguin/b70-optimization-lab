@@ -217,8 +217,27 @@ def docker_argv(profile, model, state, port, name, gpu):
     else:
         # The draft-copy hook runs when VLLM_XPU_DRAFT_LM_HEAD_INT4=1; the overlay builds an FP16 copy, no INT4.
         env['B70_DRAFT_FP16_SHORTLIST'] = SHORTLIST
+    # `--memory-swap` equals `--memory`, which in Docker means the container gets NO swap at all
+    # (`--memory-swap` is memory PLUS swap; equal values put cgroup v2 `memory.swap.max` at 0). It
+    # was '16g' -- a 4 GiB allowance -- until 2026-09-19. Why it changed: the 29 GB of safetensors
+    # stream through this container's own page cache, so the cgroup runs flat against `memory.max`
+    # and reclaims 2,000-16,000 times per start. With a swap allowance it spends that allowance to
+    # the byte, pushing its own *anonymous* pages out during the weight load -- and those include
+    # the host staging buffers the card's copy engine reads through userptr mappings, which is the
+    # leading explanation for the `bcs` copy-engine faults that strike at weight load. With no
+    # allowance the same reclaim has only one option left: drop clean file pages, which are the
+    # weight file's cache and are re-readable from NVMe. Validated over three two-card service
+    # starts (container `pswpout` 0, `oom_kill` 0, 12/12 exact, no fault lines, weight load no
+    # slower): experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md
+    #
+    # One card carries more anonymous memory than two: `B70_CPU_EMBED=1` puts 2.368 GiB of input
+    # embeddings permanently in host memory, and the `no-quantization` profile additionally builds
+    # an FP16 draft-head copy. Against the measured two-card `anon` of 8.95 GiB that puts one card
+    # at an estimated 8.3-8.8 GiB under the same 12 GiB cap -- roughly 3.2-3.7 GiB of headroom, and
+    # an estimate, not a measurement. The acceptance runner now reads `memory.events` per profile
+    # (`oom_kill` must be 0) so the next one-card acceptance run turns that estimate into a receipt.
     argv = ['docker', 'run', '--name', name, '--restart', 'no', '--device', '/dev/dri', '--group-add', 'render', '--ipc', 'host',
-            '--shm-size', '8g', '--memory', '12g', '--memory-swap', '16g', '--ulimit', 'core=0',
+            '--shm-size', '8g', '--memory', '12g', '--memory-swap', '12g', '--ulimit', 'core=0',
             '--security-opt', 'label=disable', '-p', f'127.0.0.1:{port}:8000', '--workdir', '/',
             '--mount', f'type=bind,source={model},target=/model,readonly',
             '--mount', f'type=bind,source={state / "cache"},target=/root/.cache/vllm',

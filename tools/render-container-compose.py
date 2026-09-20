@@ -91,8 +91,14 @@ def main() -> int:
     lines.append(f"  image: {image}")
     lines.append("  ulimits:")
     lines.append("    core: 0")
-    lines.append("  mem_limit: 12g")
-    lines.append("  memswap_limit: 20g")
+    # Docker compose's `memswap_limit` is memory PLUS swap, like `docker run --memory-swap`. Equal to `mem_limit` it
+    # means the container gets no swap at all, which is what the FP8 launchers ship since 2026-09-19: at the ceiling
+    # the cgroup must then drop clean, re-readable weight-file cache instead of swapping the server's own pages out
+    # from under the card's copy engine (experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md).
+    # The default stays as it was so packets whose launchers were not part of that validation are unchanged; a packet
+    # opts in by setting MEMSWAP_LIMIT in its render-compose.sh, which is where its launcher's own value belongs.
+    lines.append(f"  mem_limit: {os.environ.get('MEM_LIMIT', '12g')}")
+    lines.append(f"  memswap_limit: {os.environ.get('MEMSWAP_LIMIT', '20g')}")
     lines.append("  devices:")
     lines.append('    - "/dev/dri:/dev/dri"')
     lines.append("  group_add:")

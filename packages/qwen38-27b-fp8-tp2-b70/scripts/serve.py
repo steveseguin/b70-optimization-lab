@@ -217,9 +217,21 @@ def docker_argv(profile, model, state, port, name):
     env = dict(BASE_ENV)
     if settings['shortlist']:
         env['VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST'] = SHORTLIST
+    # `--memory-swap` equals `--memory`, which in Docker means the container gets NO swap at all
+    # (`--memory-swap` is memory PLUS swap; equal values put cgroup v2 `memory.swap.max` at 0). It
+    # was '16g' -- a 4 GiB allowance -- until 2026-09-19. Why it changed: the 29 GB of safetensors
+    # stream through this container's own page cache, so the cgroup runs flat against `memory.max`
+    # and reclaims 2,000-16,000 times per start. With a swap allowance it spends that allowance to
+    # the byte, pushing 3.94 GiB of its own *anonymous* pages out during the weight load -- and
+    # those include the host staging buffers the card's copy engine reads through userptr mappings,
+    # which is the leading explanation for the `bcs` copy-engine faults that strike at weight load.
+    # With no allowance the same reclaim has only one option left: drop clean file pages, which are
+    # the weight file's cache and are re-readable from NVMe. Validated over three service starts
+    # (container `pswpout` 0, `oom_kill` 0, 12/12 exact, no fault lines, weight load no slower):
+    # experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md
     argv = ['docker', 'run', '--name', name, '--restart', 'no', '--network', 'bridge', '--device', '/dev/dri',
             '--group-add', 'render', '--ipc', 'host', '--cap-add', 'SYS_PTRACE', '--shm-size', '8g',
-            '--memory', '12g', '--memory-swap', '16g', '--ulimit', 'core=0', '--security-opt', 'label=disable',
+            '--memory', '12g', '--memory-swap', '12g', '--ulimit', 'core=0', '--security-opt', 'label=disable',
             '-p', f'127.0.0.1:{port}:8000', '--workdir', '/',
             '--mount', f'type=bind,source={model},target=/model,readonly',
             '--mount', f'type=bind,source={state / "cache"},target=/root/.cache/vllm',

@@ -1,0 +1,52 @@
+{
+  "schema": "neural.download.fp8-tp2-acceptance-source-drift.v1",
+  "packet": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather",
+  "note": "Source files that have moved in the working tree since this packet was frozen on 2026-09-17. Every gate in summary.json was measured on the frozen bytes carried inside evidence.tar.gz, not on these. An entry here is a declaration that the change is deliberate and confined, plus an offline proof of that confinement (tools/../collect-fp8-tp2-acceptance-evidence.py check_sources). It is not a substitute for acceptance: an entry is retired only by a fresh acceptance session that produces a new packet.",
+  "entries": [
+    {
+      "path": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
+      "frozen_sha256": "9f509e977819ff4d484d687ce1f177f433267e54dfc865ae226663adecf6fc9c",
+      "current_sha256": "9668a6baea99833d852ece012d202b75f19806e90a652f6ab2eb3e6c359f9baa",
+      "declared": "2026-09-19",
+      "acceptance": "pending",
+      "change": "--memory-swap 16g -> 12g (equal to --memory, so the container gets no swap at all)",
+      "reason": "The 29 GB of safetensors stream through the container's own page cache, so the cgroup runs flat against memory.max and reclaims 2,000-16,000 times per start. With a 4 GiB swap allowance it spent the allowance to the byte, pushing 3.94 GiB of its own anonymous pages -- including the host staging buffers the card's copy engine reads -- out during the weight load; that is the leading explanation for the bcs copy-engine faults at weight load. With no allowance the same reclaim drops clean, re-readable file pages instead. Validated on three service starts (container pswpout 0, oom_kill 0, 12/12 exact, no fault lines, weight load no slower): experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md",
+      "proof": {
+        "kind": "docker_argv",
+        "profiles": ["recommended", "depth-1"],
+        "differences": [
+          {"flag": "--memory-swap", "frozen": "16g", "current": "12g"}
+        ]
+      },
+      "retire_by": "python3 experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py (fresh depth-5 server on the new launcher), then collect-fp8-tp2-acceptance-evidence.py --raw <session> --out experiments/qwen38-27b-b70/data/2026-09-2x-fp8-two-card-noswap, and repoint DEFAULT at the new packet"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "frozen_sha256": "b541a437ffb1744e12150d94134b21874667957019591ee65699d8f1c06b7edc",
+      "current_sha256": "583144e5cf9b827e2dd98c1f91f7d4283704bd8404beab42ed8af61f8ccc1c4c",
+      "declared": "2026-09-19",
+      "acceptance": "pending",
+      "change": "verify() gained the declared-drift path (check_sources and its proofs); derive(), which computes every gate, is byte-unchanged",
+      "reason": "The launcher entry above could not be declared without somewhere to declare it. Only verify() changed: the frozen bytes in evidence.tar.gz still recompute every gate through the identical derive(), which is what the proof below checks.",
+      "proof": {
+        "kind": "unchanged_definitions",
+        "definitions": ["derive", "EXPECTED_IMAGE", "CONFIGURATION", "SOURCE_PATHS", "DOWNLOADED_MUST_MATCH"]
+      },
+      "retire_by": "the same fresh acceptance session; the new packet freezes this file at its current bytes"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py",
+      "frozen_sha256": "8cc99231ea97673c9652c790891e2201013036cb9c3d7eb7242a7e5d9f912c78",
+      "current_sha256": "6166d09fbf9923ede457f7202f2c1ad34865f6417acde522aeea0383e490052a",
+      "declared": "2026-09-19",
+      "acceptance": "pending",
+      "change": "added cgroup_memory() and one line in main() that dumps cgroup-memory.json just before the stop; no gate, no request and no server argument changed",
+      "reason": "With `--memory-swap` now equal to `--memory` the container has no swap allowance, so the safety margin is anonymous memory against the 12 GiB ceiling and nothing else. The next acceptance session has to leave a receipt of that margin (memory.events oom_kill, memory.peak, anon) rather than an argument that it ought to be fine. The proof below checks the change is pure insertion, so everything the frozen packet was measured under is still executed unaltered.",
+      "proof": {
+        "kind": "additive",
+        "additive": ["main"]
+      },
+      "retire_by": "the same fresh acceptance session; the new packet freezes this file at its current bytes"
+    }
+  ]
+}

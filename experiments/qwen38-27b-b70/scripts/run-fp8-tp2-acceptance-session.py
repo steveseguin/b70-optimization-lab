@@ -68,6 +68,45 @@ def host_snapshot():
             'uptime_s': float(Path('/proc/uptime').read_text().split()[0])}
 
 
+def cgroup_memory(container):
+    """The container's own memory counters, read from cgroup v2 while the server is still up.
+
+    Since 2026-09-19 the launcher runs `--memory 12g --memory-swap 12g`, so the container has no swap allowance and
+    cgroup reclaim can only drop clean file pages. That is safe exactly as long as *anonymous* memory stays under
+    the ceiling: a cgroup with nothing left to reclaim OOM-kills inside itself. `oom_kill` must be 0, while
+    `events.max` going up is expected and is the point of the change. Recorded, not gated -- the acceptance gates
+    are unchanged. See experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md.
+    """
+    candidates = [Path('/sys/fs/cgroup/system.slice') / f'docker-{container}.scope', Path('/sys/fs/cgroup/docker') / container]
+    candidates += sorted(Path('/sys/fs/cgroup').glob(f'**/docker-{container}.scope'))
+    base = next((p for p in candidates if (p / 'memory.events').exists()), None)
+    if base is None:
+        return {'read': False, 'reason': f'no cgroup v2 directory for container {container[:12]}'}
+
+    def pairs(name):
+        try:
+            return {k: int(v) for k, v in (line.split(' ', 1) for line in (base / name).read_text().splitlines() if ' ' in line)}
+        except (OSError, ValueError):
+            return {}
+
+    def value(name):
+        try:
+            text = (base / name).read_text().strip()
+        except OSError:
+            return None
+        return int(text) if text.isdigit() else text
+
+    events, stat = pairs('memory.events'), pairs('memory.stat')
+    anon, ceiling = stat.get('anon'), value('memory.max')
+    return {'read': True, 'cgroup': str(base), 'events': events, 'oom_kill': events.get('oom_kill'),
+            'max_events': events.get('max'), 'memory_max': ceiling, 'memory_peak': value('memory.peak'),
+            'swap_max': value('memory.swap.max'), 'swap_peak': value('memory.swap.peak'),
+            'anon': anon, 'file': stat.get('file'), 'file_dirty': stat.get('file_dirty'),
+            'pswpout': stat.get('pswpout'), 'pswpin': stat.get('pswpin'), 'pgscan_direct': stat.get('pgscan_direct'),
+            'anon_headroom_bytes': (ceiling - anon) if isinstance(ceiling, int) and isinstance(anon, int) else None,
+            'no_swap_configured': value('memory.swap.max') == 0, 'oom_kill_free': events.get('oom_kill') == 0}
+
+
 def listening(port):
     with socket.socket() as probe:
         try:
@@ -179,6 +218,7 @@ def main():
     status('status-after-requests')
 
     # 6. one graceful stop through the package command
+    dump(out / 'cgroup-memory.json', cgroup_memory(state.get('container_id') or ''))
     rcs['stop'] = sh([sys.executable, serve, 'stop', '--state-dir', session], out / 'stop.stdout', cwd=source_dir, timeout=120)
     try:
         helper.wait(timeout=180)

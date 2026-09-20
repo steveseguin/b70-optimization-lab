@@ -14,6 +14,26 @@ spec = importlib.util.spec_from_file_location('fp8_serve', SOURCE)
 serve = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(serve)
 
+TP1_SOURCE = Path(__file__).resolve().parents[1] / 'packages/qwen38-27b-fp8-tp1-b70/scripts/serve.py'
+tp1_spec = importlib.util.spec_from_file_location('fp8_serve_tp1', TP1_SOURCE)
+tp1 = importlib.util.module_from_spec(tp1_spec)
+tp1_spec.loader.exec_module(tp1)
+
+
+class OneCardLaunchTests(unittest.TestCase):
+    def test_no_swap_allowance_on_every_profile(self):
+        """The one-card profiles carry the most anonymous memory, so they are where a swap allowance hurt most.
+
+        B70_CPU_EMBED keeps 2.368 GiB of embeddings in host memory and `no-quantization` adds an FP16 draft-head
+        copy, all of it unreclaimable. `--memory-swap` equal to `--memory` means cgroup v2 memory.swap.max=0, so
+        reclaim drops clean weight-file cache rather than the server's own pages.
+        """
+        for profile in tp1.PROFILES:
+            with self.subTest(profile=profile):
+                argv = tp1.docker_argv(profile, Path('/model'), Path('/state'), 18130, 'owned', 0)
+                self.assertEqual(argv[argv.index('--memory-swap') + 1], argv[argv.index('--memory') + 1])
+                self.assertEqual(argv[argv.index('--memory') + 1], '12g')
+
 
 class ServingTests(unittest.TestCase):
     def record(self):
@@ -43,6 +63,11 @@ class ServingTests(unittest.TestCase):
                             ('--max-num-batched-tokens', '4096'), ('--gpu-memory-utilization', '0.95')):
             self.assertEqual(argv[argv.index(flag) + 1], value)
         self.assertIn('"num_speculative_tokens": 5', argv[argv.index('--speculative-config') + 1])
+        # No swap allowance for the container: docker's --memory-swap is memory PLUS swap, so equal values mean
+        # cgroup v2 memory.swap.max=0. It was 16g until 2026-09-19, and at 12 GiB against a 29 GB streaming read
+        # the cgroup spent the whole 4 GiB allowance on its OWN anonymous pages during every weight load.
+        self.assertEqual(argv[argv.index('--memory-swap') + 1], argv[argv.index('--memory') + 1])
+        self.assertEqual(argv[argv.index('--memory') + 1], '12g')
         depth1 = serve.docker_argv('depth-1', Path('/model'), Path('/state'), 18124, 'owned')
         self.assertIn('"num_speculative_tokens": 1', depth1[depth1.index('--speculative-config') + 1])
         self.assertNotIn('VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST', dict(a.split('=', 1) for a in depth1 if '=' in a and a.startswith('VLLM')))

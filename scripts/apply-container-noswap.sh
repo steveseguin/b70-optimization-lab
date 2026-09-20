@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 # Take the swap allowance away from a service container as soon as it appears, before its weight load.
 #
+# SUPERSEDED (2026-09-19): the three validation starts this script was written for all passed, and both FP8
+# launchers now ship `--memory 12g --memory-swap 12g` themselves, so a normally started service already comes up
+# with memory.swap.max=0 and this script has nothing left to fix. It does NOT need to be armed beside a start any
+# more. It is kept, not deleted, because it is still the way to (a) apply or check the setting on a container that
+# was started from an older launcher or from a pinned published packet -- the evidence packets carry the previous
+# `--memory-swap 16g` bytes until the next acceptance run re-freezes them -- and (b) do the same experiment again
+# with a different cap, by passing --memory. Running it beside a current start is harmless: it finds the container
+# already at memory.swap.max=0 and the `docker update` is a no-op.
+#
 # Why this exists
 # ---------------
-# Both FP8 launchers run the server with `--memory 12g --memory-swap 16g`, which in cgroup v2 is
+# Both FP8 launchers ran the server with `--memory 12g --memory-swap 16g` until 2026-09-19, which in cgroup v2 is
 # memory.max=12G plus memory.swap.max=4G. The 29 GB of safetensors stream through the CONTAINER's page cache, the
 # cgroup hits its own 12 GiB ceiling about two thousand times, and cgroup reclaim swaps the container's anonymous
 # pages out to its 4 GiB allowance -- whatever the host's vm.swappiness is. Measured on 2026-09-19 at
@@ -16,8 +25,9 @@
 # gets memory.swap.max=0, and at the ceiling the kernel must drop clean file pages (the weight file's cache,
 # re-readable from disk) instead of swapping live anonymous pages the GPU copy engine may be reading.
 #
-# This script validates that change on a RUNNING container, before either `serve.py` is edited -- those files are
-# byte-pinned by published evidence packets, so the edit is the last step, not the first.
+# This script validated that change on a RUNNING container, before either `serve.py` was edited -- those files are
+# byte-pinned by published evidence packets, so the edit was the last step, not the first. Three starts passed
+# (container pswpout 0, oom_kill 0, 12/12 exact, no fault lines, weight load no slower) and the edit is now in.
 #
 # What it does
 # ------------

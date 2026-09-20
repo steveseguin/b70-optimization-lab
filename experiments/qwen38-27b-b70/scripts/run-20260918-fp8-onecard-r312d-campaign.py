@@ -58,6 +58,54 @@ PROFILES = (('tp1-pkg-32k', 'recommended', 18130, 32768),
             ('tp1-pkg-no-quantization', 'no-quantization', 18132, 28672))
 
 
+def cgroup_memory(state_dir):
+    """The container's own memory counters, read from cgroup v2 while the server is still up.
+
+    Since 2026-09-19 both launchers run `--memory 12g --memory-swap 12g`, so the container has no swap allowance at
+    all and cgroup reclaim can only drop clean file pages. That is safe exactly as long as *anonymous* memory stays
+    under the ceiling: a cgroup with nothing left to reclaim OOM-kills inside itself and the server is dead at load.
+    One card carries more anon than two -- B70_CPU_EMBED puts 2.368 GiB of embeddings in host memory and
+    `no-quantization` builds an FP16 draft-head copy -- and the note's 8.3-8.8 GiB is arithmetic, not a measurement.
+    So every profile records its own numbers: `oom_kill` must be 0, while `events.max` going up is expected and is
+    the point of the change. See experiments/qwen38-27b-b70/notes/2026-09-19-container-memory-cap-swap.md.
+    """
+    state = state_dir / 'state.json'
+    if not state.exists():
+        return {'read': False, 'reason': 'no state receipt'}
+    container = (json.loads(state.read_text()).get('container_id') or '')
+    if not container:
+        return {'read': False, 'reason': 'no container id in the state receipt'}
+    candidates = [Path('/sys/fs/cgroup/system.slice') / f'docker-{container}.scope', Path('/sys/fs/cgroup/docker') / container]
+    candidates += sorted(Path('/sys/fs/cgroup').glob(f'**/docker-{container}.scope'))
+    base = next((p for p in candidates if (p / 'memory.events').exists()), None)
+    if base is None:
+        return {'read': False, 'reason': f'no cgroup v2 directory for container {container[:12]}', 'container_id': container}
+
+    def pairs(name):
+        try:
+            return {k: int(v) for k, v in (line.split(' ', 1) for line in (base / name).read_text().splitlines() if ' ' in line)}
+        except (OSError, ValueError):
+            return {}
+
+    def value(name):
+        try:
+            text = (base / name).read_text().strip()
+        except OSError:
+            return None
+        return int(text) if text.isdigit() else text
+
+    events, stat = pairs('memory.events'), pairs('memory.stat')
+    anon, ceiling = stat.get('anon'), value('memory.max')
+    return {'read': True, 'container_id': container, 'cgroup': str(base), 'events': events,
+            'oom_kill': events.get('oom_kill'), 'oom': events.get('oom'), 'max_events': events.get('max'),
+            'memory_max': ceiling, 'memory_peak': value('memory.peak'), 'memory_current': value('memory.current'),
+            'swap_max': value('memory.swap.max'), 'swap_peak': value('memory.swap.peak'),
+            'anon': anon, 'file': stat.get('file'), 'file_dirty': stat.get('file_dirty'),
+            'pswpout': stat.get('pswpout'), 'pswpin': stat.get('pswpin'), 'pgscan_direct': stat.get('pgscan_direct'),
+            'anon_headroom_bytes': (ceiling - anon) if isinstance(ceiling, int) and isinstance(anon, int) else None,
+            'no_swap_configured': value('memory.swap.max') == 0, 'passed': events.get('oom_kill') == 0}
+
+
 def decode_and_prefill(path):
     """Per-length medians from a bench-prefill-followup summary, plus the per-content-type writing speeds."""
     by = json.loads(Path(path).read_text())['by_length']
@@ -140,6 +188,12 @@ def main():
                   f"context {r['context'].get('passed')}, long {r.get('context_long', {}).get('passed')}, "
                   f"quality {r.get('quality', {}).get('pass_all')}/{r.get('quality', {}).get('baseline_match_all')}, "
                   f"history {r.get('history', {}).get('divergent')}/{r.get('history', {}).get('logprob_divergent')}")
+        # Read before the stop: the counters die with the container. Every profile gets its own reading, because
+        # `no-quantization` carries the extra FP16 draft-head copy that has never been weighed.
+        r['cgroup_memory'] = cgroup_memory(pkg.out)
+        R.log(f"{name}: cgroup anon {r['cgroup_memory'].get('anon')} B, headroom {r['cgroup_memory'].get('anon_headroom_bytes')} B, "
+              f"max events {r['cgroup_memory'].get('max_events')}, oom_kill {r['cgroup_memory'].get('oom_kill')}, "
+              f"swap.max {r['cgroup_memory'].get('swap_max')}, pswpout {r['cgroup_memory'].get('pswpout')}")
         r['stop'] = pkg.stop()
         R.save_results(); R.fault_check(since); R.wait_gpus_free()
 
