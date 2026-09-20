@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""MiniMax-H3 video-VAE decode, one process per card (the lever-2 redo that threads failed).
+
+The threaded two-card decode measured 1.01x in batch window 4 (2026-09-19): the GIL is held
+across this torch/XPU build's blocking ops, so the two worker threads never overlapped.  The
+H3 duet (h3_duet.py, same day) proved the fix: separate processes, one card each, tensors
+through /dev/shm.  This script applies exactly that pattern to the tiled VAE decode.
+
+Same job split, same blend order, same arithmetic as `decode_video_two_card` -- job k to card
+k % n, tiles gathered POSITIONALLY, `_stitch_tiles`/`_blend`/trim on the blending card with
+the driver's own VAE copy -- so the output must reproduce the single-card decode BYTewise;
+that is the gate (compare against the source run's video_tensor_sha256).
+
+Usage:
+  h3_vae_duet.py --latents-from <run>/tensors.safetensors [--cards 0 1] [--autocast off]
+                 [--work-dir /dev/shm/...]
+Prints the decoded video tensor's sha256 and, if the source run's receipt is next to the
+latents, whether it matches.
+"""
+
+import json
+import logging
+import os
+import pathlib
+import subprocess
+import sys
+import time
+
+HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+
+import run_h3_t2v as R
+
+LOG = logging.getLogger("h3-vae-duet")
+POLL_S = 0.002
+
+
+def _send(tensors: dict, box: pathlib.Path, stem: str) -> None:
+    from safetensors.torch import save_file
+
+    tmp = box / f".{stem}.tmp"
+    save_file({k: v.cpu().contiguous() for k, v in tensors.items()}, str(tmp))
+    os.replace(tmp, box / f"{stem}.st")
+    (box / f"{stem}.ready.tmp").write_text("1")
+    os.replace(box / f"{stem}.ready.tmp", box / f"{stem}.ready")
+
+
+def _await_file(path: pathlib.Path, stop: pathlib.Path) -> None:
+    while not path.exists():
+        if stop.exists():
+            raise SystemExit(f"vae-duet: stop while waiting for {path.name}")
+        time.sleep(POLL_S)
+
+
+def _args_for_worker(vae_tiling: str):
+    class A:  # the slice of run_h3_t2v args that load_video_vae reads
+        pass
+
+    a = A()
+    a.vae_tiling = vae_tiling
+    return a
+
+
+def _worker(rank: int, work: pathlib.Path, vae_tiling: str) -> int:
+    import torch
+
+    dev = torch.device("xpu:0")  # ZE_AFFINITY_MASK pins this process to its card
+    timings: dict[str, float] = {}
+    vae, _ = R.load_video_vae(_args_for_worker(vae_tiling), timings, dev)
+    LOG.info("[rank %d] VAE resident: %s", rank, {k: round(v, 2) for k, v in timings.items()})
+    (work / f"worker-{rank}.ready").write_text("1")
+    stop = work / "stop"
+
+    _await_file(work / "z.ready", stop)
+    from safetensors.torch import load_file
+
+    z = load_file(str(work / "z.st"))["z"].to(dev)
+    jobs = json.loads((work / f"jobs-{rank}.json").read_text())
+    meta = json.loads((work / "plan.json").read_text())
+    tokens_chunk_size = meta["tokens_chunk_size"]
+    token_overlap = meta["token_overlap"]
+    y_indices = meta["y_indices"]
+    y_lengths = meta["y_lengths"]
+    x_indices = meta["x_indices"]
+    x_lengths = meta["x_lengths"]
+    ratio = meta["spatial_ratio"]
+
+    with torch.no_grad():
+        torch.set_grad_enabled(False)
+        for k, c, i, j in jobs:
+            start = c * tokens_chunk_size  # `_decode` L815-816
+            zc = z[:, :, start : start + tokens_chunk_size + token_overlap]
+            i_pos, i_len = y_indices[i], y_lengths[i]
+            j_pos, j_len = x_indices[j], x_lengths[j]
+            tile = zc[..., i_pos // ratio : i_pos // ratio + i_len // ratio,
+                      j_pos // ratio : j_pos // ratio + j_len // ratio]  # `_decode_clip` L755-759
+            out = vae.decoder(vae.post_quant_conv(tile))  # `_decode_clip` L760
+            _send({"tile": out}, work / "tiles", f"tile_{k:05d}")
+            del out, tile, zc
+            LOG.info("[rank %d] tile %d done", rank, k)
+    (work / f"worker-{rank}.done").write_text("1")
+    return 0
+
+
+def main(argv=None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(message)s")
+    import argparse
+
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--latents-from", type=pathlib.Path, required=True)
+    p.add_argument("--cards", type=int, nargs=2, default=[0, 1])
+    p.add_argument("--autocast", default="off", choices=["off", "fp16", "bf16"],
+                   help="off is the only lossless-goal-track setting")
+    p.add_argument("--vae-tiling", default="auto", choices=["auto", "on", "off"])
+    p.add_argument("--work-dir", type=pathlib.Path, default=None)
+    args = p.parse_args(argv)
+
+    if os.environ.get("B70_VAE_DUET_RANK") is not None:
+        return _worker(int(os.environ["B70_VAE_DUET_RANK"]),
+                       pathlib.Path(os.environ["B70_VAE_DUET_DIR"]), args.vae_tiling)
+
+    import torch
+
+    torch.set_grad_enabled(False)
+    work = args.work_dir or pathlib.Path("/dev/shm") / f"h3vaeduet-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}"
+    (work / "tiles").mkdir(parents=True, exist_ok=True)
+    LOG.info("work dir %s", work)
+
+    from safetensors.torch import load_file
+
+    payload = load_file(str(args.latents_from))
+    latents = payload["latents"].detach().to("cpu", copy=True)
+    del payload
+
+    # Blend card: the driver's own VAE copy on card A.  9.7 GiB beside each worker's 9.7 GiB
+    # replica leaves the cards with 12+ GiB free each -- the tiles are 22 MB apiece.
+    timings: dict[str, float] = {}
+    blend_device = torch.device(f"xpu:{args.cards[0]}")
+    vae, _ = R.load_video_vae(_args_for_worker(args.vae_tiling), timings, blend_device)
+
+    # Mirror `decode_video_two_card` exactly: cast, pad, plan, split.
+    from diffusers.models.modeling_utils import get_parameter_dtype
+
+    want_dtype = get_parameter_dtype(vae.decoder)
+    latents_mean = torch.tensor(vae.config.latents_mean).view(1, -1, 1, 1, 1)
+    latents_std = torch.tensor(vae.config.latents_std).view(1, -1, 1, 1, 1)
+    z = (latents * latents_std + latents_mean).to(want_dtype)  # `_decode`'s input scaling
+    del latents
+    plan = R.vae_decode_plan(vae, z)
+    pad_tokens, num_chunks = plan["pad_tokens"], plan["num_chunks"]
+    if pad_tokens > 0:  # `_decode` L809-810
+        z = torch.cat([z, z[:, :, -1:].repeat(1, 1, pad_tokens, 1, 1)], dim=2)
+
+    _send({"z": z}, work, "z")
+    (work / "plan.json").write_text(json.dumps({
+        "tokens_chunk_size": vae.tokens_chunk_size,
+        "token_overlap": int(vae.token_overlap),
+        "y_indices": plan["y_indices"], "y_lengths": plan["y_lengths"],
+        "x_indices": plan["x_indices"], "x_lengths": plan["x_lengths"],
+        "spatial_ratio": vae.spatial_compression_ratio,
+    }))
+
+    y_indices, x_indices = plan["y_indices"], plan["x_indices"]
+    jobs = [(c, i, j) for c in range(num_chunks) for i in range(len(y_indices)) for j in range(len(x_indices))]
+    for rank in range(2):
+        mine = [[k, c, i, j] for k, (c, i, j) in enumerate(jobs) if k % 2 == rank]
+        (work / f"jobs-{rank}.json").write_text(json.dumps(mine))
+
+    workers = []
+    for rank, card in enumerate(args.cards):
+        env = dict(os.environ)
+        env["ZE_AFFINITY_MASK"] = str(card)
+        env["B70_VAE_DUET_RANK"] = str(rank)
+        env["B70_VAE_DUET_DIR"] = str(work)
+        env.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+        log = open(work / f"worker-{rank}.log", "w")
+        workers.append(subprocess.Popen(
+            [sys.executable, str(pathlib.Path(__file__).resolve()),
+             "--latents-from", str(args.latents_from), "--vae-tiling", args.vae_tiling],
+            env=env, stdout=log, stderr=subprocess.STDOUT,
+        ))
+    stop = work / "stop"
+    try:
+        for rank in (0, 1):
+            _await_file(work / f"worker-{rank}.ready", stop)
+
+        # Collect tiles POSITIONALLY (never completion order) and blend exactly as
+        # `decode_video_two_card` does: stitch per chunk, drop the chunk's tiles, temporal
+        # cross-fade, concat, trim.
+        t0 = time.time()
+        tiles_per_chunk = len(y_indices) * len(x_indices)
+        decoded_chunks = []
+        overlap = None
+        with R.vae_autocast_context(torch, args.autocast, blend_device):
+            for c in range(num_chunks):  # `_decode` L812-828
+                base = c * tiles_per_chunk
+                rows = []
+                for i in range(len(y_indices)):
+                    row = []
+                    for j in range(len(x_indices)):
+                        k = base + i * len(x_indices) + j
+                        _await_file(work / "tiles" / f"tile_{k:05d}.ready", stop)
+                        tile = load_file(str(work / "tiles" / f"tile_{k:05d}.st"))["tile"].to(blend_device)
+                        (work / "tiles" / f"tile_{k:05d}.ready").unlink()
+                        (work / "tiles" / f"tile_{k:05d}.st").unlink()
+                        row.append(tile)
+                    rows.append(row)
+                clip = vae._stitch_tiles(rows, plan["y_overlaps"], plan["x_overlaps"])  # L763
+                del rows
+                chunk_num_frames = vae.tokens_chunk_size * vae.temporal_compression_ratio
+                for j in range(int(vae.config.token_drop > 0) + 1):
+                    frame_start = j * chunk_num_frames
+                    chunk = clip[:, :, frame_start : frame_start + chunk_num_frames]
+                    chunk = chunk[:, :, vae.frame_pre_padding :]
+                    if j == 0:
+                        if overlap is not None:
+                            chunk = vae._blend(overlap, chunk, vae.frame_overlap, dim=-3)
+                        decoded_chunks.append(chunk)
+                    else:
+                        overlap = chunk
+                del clip
+            if overlap is not None:
+                decoded_chunks.append(overlap)
+            dec = torch.cat(decoded_chunks, dim=2)
+            if pad_tokens > 0:  # `_decode` L832-841
+                intra_tail = vae.config.clip_length % vae.temporal_compression_ratio
+                num_tokens_before_pad = z.shape[2] - pad_tokens
+                pad_frames = sum(
+                    intra_tail if intra_tail and (num_tokens_before_pad + k) % vae.tokens_chunk_size == 0
+                    else vae.temporal_compression_ratio
+                    for k in range(pad_tokens)
+                )
+                dec = dec[:, :, :-pad_frames]
+        LOG.info("two-process decode+blend in %.1f s", time.time() - t0)
+
+        pixel_mean = torch.tensor((0.485, 0.456, 0.406), device=blend_device).view(1, -1, 1, 1, 1)
+        pixel_std = torch.tensor((0.229, 0.224, 0.225), device=blend_device).view(1, -1, 1, 1, 1)
+        video = (dec.float() * pixel_std + pixel_mean).clamp(0, 1)
+        video_cpu = video.detach().float().cpu().contiguous()
+        digest = R.sha256_tensor(video_cpu)
+        LOG.info("video tensor sha256 %s", digest)
+
+        source_receipt = args.latents_from.parent / "receipt.json"
+        if source_receipt.exists():
+            src = json.loads(source_receipt.read_text())
+            want = src.get("hashes", {}).get("video_tensor_sha256")
+            LOG.info("source %s: %s", src.get("run_name"),
+                     "MATCH (bytewise-equal)" if want == digest else f"DIFFERS ({want})")
+            return 0 if want == digest else 1
+        return 0
+    finally:
+        stop.write_text("1")
+        for w in workers:
+            try:
+                w.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                w.kill()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
