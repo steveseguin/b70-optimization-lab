@@ -51,6 +51,10 @@ SPLIT_REPLACED = (
     ('source/scripts/block_compile_node.py', 'source/custom_nodes/ltx_block_compile_lab/__init__.py'),
     ('source/scripts/multiblock_compile_node.py', 'source/custom_nodes/ltx_multiblock_compile_lab/__init__.py'),
     ('source/scripts/ltx_layer_shard.py', None),
+    # Packet 89: the audio path's adaLN fused like the video path's (bitwise
+    # equal, verified at the audio shape in notes/lossless-floor-and-audio-adaln.md);
+    # five sites lose three kernel launches each inside every block replay.
+    ('source/comfy/ldm/lightricks/av_model.py', None),
 )
 VAE_ADAPTER = 'ltx_graph_vae.py'
 VAE_NODE_FILE = 'graph_vae_node.py'
