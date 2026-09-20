@@ -4434,11 +4434,52 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
         (decode_device, all_devices, vae, vae_tiling, vae_b, second,
          decode_plan, vae_source) = _load_video_decoders(torch, args, timings, devices)
         LOG.info("batch decode: video + audio VAEs co-resident on %s (%d clips)", decode_device, len(clips))
-    audio_vae = load_audio_vae(args, timings, decode_device)
+    # Audio decode overlap: one persistent worker on the OTHER card (2.25 GiB VAE fits beside
+    # either card's video-decode load).  The ~3 s/clip audio phase hides inside the ~40 s
+    # two-proc video decode.  Same VAE, same dtype, same call as _decode_audio_one -- only the
+    # card changes, and the batch gate proves that changes nothing.  AUDIO_OVERLAP=0 opts out.
+    audio_worker = None
+    audio_work = None
+    if two_proc and len(devices) > 1 and os.environ.get("AUDIO_OVERLAP", "1") != "0":
+        import subprocess
+
+        decode_idx = decode_device.index if decode_device.index is not None else 0
+        audio_idx = next(
+            (d.index if d.index is not None else 0)
+            for d in devices
+            if (d.index if d.index is not None else 0) != decode_idx
+        )
+        audio_work = pathlib.Path("/dev/shm") / f"h3audioproc-{os.getpid()}"
+        audio_work.mkdir(parents=True, exist_ok=True)
+        env = dict(os.environ)
+        env["ZE_AFFINITY_MASK"] = str(audio_idx)
+        env.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+        alog = open(audio_work / "worker.log", "w")
+        audio_worker = subprocess.Popen(
+            [sys.executable,
+             str(pathlib.Path(__file__).resolve().parent / "h3_audio_proc.py"),
+             "--card", "0",  # ZE_AFFINITY_MASK renumbers the visible card to xpu:0
+             "--work-dir", str(audio_work),
+             "--vae-tiling", args.vae_tiling],
+            env=env, stdout=alog, stderr=subprocess.STDOUT,
+        )
+        deadline = time.time() + 120
+        while not (audio_work / "worker.ready").exists():
+            if audio_worker.poll() is not None or time.time() > deadline:
+                raise RuntimeError(f"audio worker failed to start; see {audio_work}/worker.log")
+            time.sleep(0.05)
+        LOG.info("batch decode: audio worker on xpu:%d overlaps the video decode", audio_idx)
+    audio_vae = None if audio_worker is not None else load_audio_vae(args, timings, decode_device)
 
     shared = {k: v for k, v in timings.items()}  # loads and encodes so far are the shared costs
     for i, clip in enumerate(clips):
         before = set(timings)
+        if audio_worker is not None:
+            from safetensors.torch import save_file as _save_st
+
+            _save_st({"audio_latents": clip["audio_latents"].detach().to("cpu", copy=True).contiguous()},
+                     str(audio_work / f"job-{i}.st"))
+            (audio_work / f"job-{i}.ready").write_text("1")
         if two_proc:
             video, latents = _decode_video_two_proc(
                 torch, args, timings, decode_device, clip["latents"], i
@@ -4452,10 +4493,27 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
         clip_decode_plan = ran_plan if ran_plan is not None else decode_plan
         video_peak = card_memory(torch, all_devices)
         log_vram(torch, all_devices, f"after decode.video.{i}")
-        audio, audio_latents, sampling_rate = _decode_audio_one(
-            torch, timings, audio_vae, decode_device, clip["audio_latents"],
-            phase_name=f"decode.audio.{i}",
-        )
+        if audio_worker is not None:
+            from safetensors.torch import load_file as _load_st
+
+            with phase(f"decode.audio.{i}", timings):  # mostly done already; this is the wait
+                out_ready = audio_work / f"job-{i}-out.ready"
+                deadline = time.time() + 300
+                while not out_ready.exists():
+                    if audio_worker.poll() is not None or time.time() > deadline:
+                        raise RuntimeError(
+                            f"audio worker died on clip {i}; see {audio_work}/worker.log")
+                    time.sleep(0.005)
+            audio = _load_st(str(audio_work / f"job-{i}-out.st"))["audio"].to(decode_device)
+            sampling_rate = json.loads((audio_work / f"job-{i}-out.json").read_text())["sampling_rate"]
+            audio_latents = clip["audio_latents"]
+            for stale in audio_work.glob(f"job-{i}-out.*"):
+                stale.unlink()
+        else:
+            audio, audio_latents, sampling_rate = _decode_audio_one(
+                torch, timings, audio_vae, decode_device, clip["audio_latents"],
+                phase_name=f"decode.audio.{i}",
+            )
         decode_peak = card_memory(torch, all_devices)
         log_vram(torch, all_devices, f"after decode.audio.{i}")
 
@@ -4474,12 +4532,18 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
         # Never accumulate host-side clips: 777 MB each at 960x544.
         del video, audio, latents, audio_latents
         clip["latents"] = clip["audio_latents"] = None
-
+    if audio_worker is not None:
+        (audio_work / "stop").write_text("1")
+        try:
+            audio_worker.wait(timeout=30)
+        except Exception:
+            audio_worker.kill()
     if vae is not None:
         strip_module_tensors(vae)
     if vae_b is not None:
         strip_module_tensors(vae_b)
-    strip_module_tensors(audio_vae)
+    if audio_vae is not None:
+        strip_module_tensors(audio_vae)
     del vae, vae_b, audio_vae
     _free(torch, all_devices)
     log_vram(torch, all_devices, "after decoder release")
