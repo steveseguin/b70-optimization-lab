@@ -332,13 +332,14 @@ def main(argv=None) -> int:
     proxy = DuetTransformerProxy(torch, config, duet_dir)
 
     clips: list[dict | None] = [None] * len(prompts)
+    build_lock = threading.Lock()  # diffusers' lazy importer is not thread-safe; builds are 0 s
     errors: list = []
 
     def run_clip(i: int, prompt_embeds, text_token_tags, token_ids) -> None:
         try:
             generator = torch.Generator(device="cpu").manual_seed(args.seed)
-            # Own pipeline per clip: fresh schedulers, fresh step counters, same wire.
-            pipe = R.build_pipeline(args, proxy, timings)
+            with build_lock:
+                pipe = R.build_pipeline(args, proxy, timings)
             if args.video_shift is not None:
                 pipe.scheduler.set_shift(args.video_shift)
             if args.audio_shift is not None:
