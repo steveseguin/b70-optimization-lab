@@ -394,6 +394,7 @@ case "${mode}" in
     mkdir -p "${OUT_ROOT}"
     preflight
     name="duet-$(date -u +%Y%m%dT%H%M%SZ)"
+    SPLIT_INDEX="${SPLIT_INDEX:-25}"  # equal-FLOP blocks: compute balance beats byte balance (426.5 vs 440.5 s/clip, exact)
     rc=0
     (
       systemd-run --user --scope --quiet --collect --unit="h3-${name}-$$" "${SCOPE_PROPS[@]}" \
@@ -404,6 +405,7 @@ case "${mode}" in
           --height "${HEIGHT}" --width "${WIDTH}" \
           --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
           --vae-decode "${VAE_DECODE}" --vae-autocast "${VAE_AUTOCAST}" \
+          ${SPLIT_INDEX:+--split-index "${SPLIT_INDEX}"} \
           --out-dir "${OUT_ROOT}" --run-name "${name}" \
           2>&1 | tee "${OUT_ROOT}/${name}.log"
     ) &
