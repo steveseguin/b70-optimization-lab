@@ -1,5 +1,19 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
+Status (2026-09-20, lossless goal track): **DUET + TWO-PROC DECODE: 1.87x THROUGHPUT, EVERY BIT
+EXACT.** Work opened the 24-fps realtime goal (notes/2026-09-20-realtime-goal.md): baseline
+960x544 50 NFE = 800.8 s per 5.17 s clip (0.155 fps); the shipped stack -- batch mode
+(`--prompts-file`), the **duet** (`scripts/h3_duet.py`: the block-24 split as one PROCESS per
+card, clips staggered, mid-state over /dev/shm) and the **two-process VAE decode**
+(`scripts/h3_vae_duet.py`, `--vae-decode two-proc`) -- runs 4 clips in 1717 s = **429 s/clip,
+0.289 fps**, with every clip's four hashes bytewise equal to the standalone lossless receipts.
+The GIL kills threads on this torch/XPU build (the window-4 threaded decode measured 1.01x);
+processes were the fix, twice. Run it:
+`LORA= HEIGHT=544 WIDTH=960 VAE_DECODE=two-proc PROMPTS_FILE=<prompts> ./scripts/smoke_h3.sh duet`.
+Publication draft: notes/2026-09-20-publication-draft.md. The 24 fps goal stands 66x beyond the
+exact arithmetic floor of this hardware; remaining exact levers are small, and the large
+multipliers (turbo LoRA, fp16 decode) stay parked as user-gated quality decisions.
+
 Status (2026-09-19, batch window 4): **DECODE IS 5x FASTER, AND THE EXACT WAY OF MAKING IT FASTER IS
 WORTH NOTHING.** At 19:39-19:49 EDT six GPU runs, all `--decode-only` on the same 960x544 latents
 (`smoke-20260919T224948Z`), settled both video-decode levers. rc 0 everywhere, zero `xe` fault lines,
