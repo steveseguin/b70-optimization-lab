@@ -218,6 +218,7 @@ run_gpu() {   # run_gpu <run-name> [extra args...]
         --height "${HEIGHT}" --width "${WIDTH}" \
         --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
         "${LORA_ARGS[@]}" \
+        --vae-decode "${VAE_DECODE}" --vae-autocast "${VAE_AUTOCAST}" \
         --out-dir "${OUT_ROOT}" --run-name "${name}" \
         --save-tensors \
         "$@" \
@@ -402,6 +403,7 @@ case "${mode}" in
           --prompts-file "${PROMPTS_FILE}" \
           --height "${HEIGHT}" --width "${WIDTH}" \
           --frames "${FRAMES}" --steps "${STEPS}" --seed "${SEED}" \
+          --vae-decode "${VAE_DECODE}" --vae-autocast "${VAE_AUTOCAST}" \
           --out-dir "${OUT_ROOT}" --run-name "${name}" \
           2>&1 | tee "${OUT_ROOT}/${name}.log"
     ) &

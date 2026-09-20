@@ -112,6 +112,7 @@ import os
 import pathlib
 import platform
 import struct
+import shutil
 import sys
 import threading
 import time
@@ -3145,14 +3146,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--vae-decode",
-        choices=["single", "two-card"],
+        choices=["single", "two-card", "two-proc"],
         default=(os.environ.get("B70_H3_VAE_DECODE") or "single").strip().lower(),
         help="how the video VAE decodes (env B70_H3_VAE_DECODE). `single` (the default) calls "
         "`vae.decode` on one card and is the bytewise-gated path, unchanged. `two-card` replicates "
         "the VAE onto the second card through cross_card() and splits the 105 tile decodes between "
         "them, blending in the original order on the original card -- intended to be BIT-IDENTICAL "
         "(experiment E1 in notes/2026-09-19-speed-plan.md is its gate; the finished decode is gated "
-        "on reproducing the single-card video_tensor_sha256 exactly).",
+        "on reproducing the single-card video_tensor_sha256 exactly). `two-proc` (batch mode only) "
+        "runs scripts/h3_vae_duet.py as a subprocess -- one process per card, tiles through "
+        "/dev/shm; measured 2.0x on decode.video at 960x544 fp32, bytewise-equal to `single` "
+        "(ledger 2026-09-20). The threaded `two-card` is kept as the record of why threads lose.",
     )
     p.add_argument(
         "--vae-autocast",
@@ -4364,6 +4368,44 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
     return 0
 
 
+
+def _decode_video_two_proc(torch, args, timings, decode_device, latents, clip_index: int):
+    """One clip's video decode in h3_vae_duet.py: one process per card, tiles through /dev/shm.
+
+    Returns `(video_on_decode_card, latents)` exactly as `_decode_video_one` does, so the batch
+    loop and the receipt see no difference.  The pixels are gated bytewise against the
+    single-card decode (ledger 2026-09-20: 39.9 s vs 79.96 s at 960x544 fp32, sha256 MATCH).
+    """
+    import subprocess
+    from safetensors.torch import load_file, save_file
+
+    work = pathlib.Path("/dev/shm") / f"h3vaeduct-batch-{os.getpid()}-{clip_index}"
+    work.mkdir(parents=True, exist_ok=True)
+    phase_name = f"decode.video.{clip_index}"
+    with phase(phase_name, timings):
+        save_file({"latents": latents.cpu().contiguous()}, str(work / "in.st"))
+        cmd = [
+            sys.executable, str(pathlib.Path(__file__).resolve().parent / "h3_vae_duet.py"),
+            "--latents-from", str(work / "in.st"),
+            "--autocast", args.vae_autocast,
+            "--vae-tiling", args.vae_tiling,
+            "--video-out", str(work / "out.st"),
+            "--work-dir", work / "wire",
+        ]
+        env = dict(os.environ)
+        env.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+        proc = subprocess.run(cmd, env=env, capture_output=True, text=True)
+        if proc.returncode != 0:
+            LOG.error("h3_vae_duet exited %d:\n%s", proc.returncode, proc.stdout[-3000:])
+            raise RuntimeError(f"two-proc decode failed for clip {clip_index} (rc={proc.returncode})")
+        video = load_file(str(work / "out.st"))["video"].to(decode_device)
+        for stale in work.glob("**/*"):
+            if stale.is_file():
+                stale.unlink()
+        shutil.rmtree(work, ignore_errors=True)
+    return video, latents
+
+
 def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_dir,
                             plan, denoiser, lora_receipt, encoder_peak, sample_peaks) -> int:
     """Phases 4-5 for a batch: decoders loaded ONCE, each clip decoded, written and freed in turn.
@@ -4373,18 +4415,40 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
     decoded -- nothing accumulates.  The decode arithmetic each clip sees is the single-run
     path's, so clip i must hash identically to a standalone run of the same prompt/seed/settings.
     """
-    (decode_device, all_devices, vae, vae_tiling, vae_b, second,
-     decode_plan, vae_source) = _load_video_decoders(torch, args, timings, devices)
+    two_proc = args.vae_decode == "two-proc"
+    if two_proc:
+        # The video decode runs OUT of process: h3_vae_duet.py puts one process on each card
+        # (the GIL makes threads useless here -- ledger 2026-09-20).  This process loads no
+        # video VAE at all; it still needs a card for the audio VAE and the write.
+        decode_device = pick_decode_card(torch, args, devices)
+        all_devices = devices if decode_device in devices else devices + [decode_device]
+        vae = vae_b = second = None
+        vae_tiling = "on"
+        decode_plan = {"mode": "two-proc", "script": "h3_vae_duet.py",
+                       "cards": [str(d) for d in devices], "autocast": args.vae_autocast,
+                       "gate": "2.0x at 960x544 fp32, bytewise-equal to single (2026-09-20)"}
+        vae_source = None
+        LOG.info("batch decode: video decode out of process (two-proc), audio VAE resident (%d clips)",
+                 len(clips))
+    else:
+        (decode_device, all_devices, vae, vae_tiling, vae_b, second,
+         decode_plan, vae_source) = _load_video_decoders(torch, args, timings, devices)
+        LOG.info("batch decode: video + audio VAEs co-resident on %s (%d clips)", decode_device, len(clips))
     audio_vae = load_audio_vae(args, timings, decode_device)
-    LOG.info("batch decode: video + audio VAEs co-resident on %s (%d clips)", decode_device, len(clips))
 
     shared = {k: v for k, v in timings.items()}  # loads and encodes so far are the shared costs
     for i, clip in enumerate(clips):
         before = set(timings)
-        video, latents, ran_plan = _decode_video_one(
-            torch, args, timings, vae, vae_b, second, decode_device, clip["latents"],
-            phase_name=f"decode.video.{i}",
-        )
+        if two_proc:
+            video, latents = _decode_video_two_proc(
+                torch, args, timings, decode_device, clip["latents"], i
+            )
+            ran_plan = None
+        else:
+            video, latents, ran_plan = _decode_video_one(
+                torch, args, timings, vae, vae_b, second, decode_device, clip["latents"],
+                phase_name=f"decode.video.{i}",
+            )
         clip_decode_plan = ran_plan if ran_plan is not None else decode_plan
         video_peak = card_memory(torch, all_devices)
         log_vram(torch, all_devices, f"after decode.video.{i}")
@@ -4411,7 +4475,8 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
         del video, audio, latents, audio_latents
         clip["latents"] = clip["audio_latents"] = None
 
-    strip_module_tensors(vae)
+    if vae is not None:
+        strip_module_tensors(vae)
     if vae_b is not None:
         strip_module_tensors(vae_b)
     strip_module_tensors(audio_vae)

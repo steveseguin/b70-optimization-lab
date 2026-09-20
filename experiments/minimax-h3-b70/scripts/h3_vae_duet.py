@@ -113,6 +113,9 @@ def main(argv=None) -> int:
                    help="off is the only lossless-goal-track setting")
     p.add_argument("--vae-tiling", default="auto", choices=["auto", "on", "off"])
     p.add_argument("--work-dir", type=pathlib.Path, default=None)
+    p.add_argument("--video-out", type=pathlib.Path, default=None,
+                   help="write the decoded video tensor (fp32, [1,3,T,H,W] in [0,1]) here as "
+                   "safetensors, for the caller to pick up -- the batch integration path")
     args = p.parse_args(argv)
 
     if os.environ.get("B70_VAE_DUET_RANK") is not None:
@@ -237,6 +240,10 @@ def main(argv=None) -> int:
         pixel_std = torch.tensor((0.229, 0.224, 0.225), device=blend_device).view(1, -1, 1, 1, 1)
         video = (dec.float() * pixel_std + pixel_mean).clamp(0, 1)
         video_cpu = video.detach().float().cpu().contiguous()
+        if args.video_out is not None:
+            from safetensors.torch import save_file
+
+            save_file({"video": video_cpu}, str(args.video_out))
         digest = R.sha256_tensor(video_cpu)
         LOG.info("video tensor sha256 %s", digest)
 
