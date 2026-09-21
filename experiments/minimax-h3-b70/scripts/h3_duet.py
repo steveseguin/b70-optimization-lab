@@ -259,6 +259,7 @@ def main(argv=None) -> int:
         plan = R.plan_split(header, config, args.adaln_dtype, args.split_index, args.denoiser, None)
         return _worker(args, plan, config, rank, duet_dir)
 
+    R.require_wrapper()  # smoke_h3.sh only: watchdog + MemorySwapMax=0 are the freeze defense
     # ---- driver ------------------------------------------------------------------------------
     if args.prompts_file is None:
         LOG.error("duet mode runs a batch: pass --prompts-file with at least 2 prompts")

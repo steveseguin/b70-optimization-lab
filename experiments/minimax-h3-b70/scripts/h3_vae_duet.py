@@ -314,6 +314,7 @@ def main(argv=None) -> int:
     if os.environ.get("B70_VAE_DUET_RANK") is not None:
         return _worker(int(os.environ["B70_VAE_DUET_RANK"]),
                        pathlib.Path(os.environ["B70_VAE_DUET_DIR"]), args.vae_tiling)
+    R.require_wrapper()  # smoke_h3.sh only: the unwrapped standalone run froze the host (09-20/21)
 
     import torch
 

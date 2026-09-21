@@ -70,6 +70,7 @@ WATCHDOG_MIN_AVAIL_MIB="${WATCHDOG_MIN_AVAIL_MIB:-2048}"
 # Proven on 2026-09-18; see the header. Overridable for a deliberate A/B, but not by accident.
 export PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF:-expandable_segments:True}"
 export B70_H3_XFER="${B70_H3_XFER:-host}"
+export B70_H3_WRAPPER=1  # lets run_h3_t2v/h3_duet/h3_vae_duet/h3_audio_proc know the watchdog is on duty
 
 # Which denoiser: `pruned` (BF16 weights, rank-8 AdaLN fit) or `int8` (full INT8 ConvRot,
 # unpruned AdaLN). `pruned` stays the default until it has rendered a clip; the int8 build is
@@ -212,7 +213,7 @@ run_gpu() {   # run_gpu <run-name> [extra args...]
       --unit="h3-${name}-$$" \
       "${SCOPE_PROPS[@]}" \
       env PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF}" B70_H3_XFER="${B70_H3_XFER}" \
-          B70_H3_DENOISER="${B70_H3_DENOISER}" \
+          B70_H3_DENOISER="${B70_H3_DENOISER}" B70_H3_WRAPPER=1 \
       "${GPU_VENV}/bin/python" "${RUNNER}" \
         "${prompt_args[@]}" \
         --height "${HEIGHT}" --width "${WIDTH}" \
@@ -399,6 +400,7 @@ case "${mode}" in
     (
       systemd-run --user --scope --quiet --collect --unit="h3-${name}-$$" "${SCOPE_PROPS[@]}" \
         env PYTORCH_ALLOC_CONF="${PYTORCH_ALLOC_CONF}" B70_H3_XFER="${B70_H3_XFER}" \
+            B70_H3_WRAPPER=1 \
             B70_H3_DENOISER=pruned \
         "${GPU_VENV}/bin/python" "${HERE}/h3_duet.py" \
           --prompts-file "${PROMPTS_FILE}" \

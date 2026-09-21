@@ -41,6 +41,7 @@ def main(argv=None) -> int:
     p.add_argument("--work-dir", type=pathlib.Path, required=True)
     p.add_argument("--vae-tiling", default="auto", choices=["auto", "on", "off"])
     args = p.parse_args(argv)
+    R.require_wrapper()  # GPU work goes through smoke_h3.sh's watchdog (09-20/21 freeze)
 
     import torch
     from safetensors.torch import load_file, save_file

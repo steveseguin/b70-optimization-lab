@@ -3858,6 +3858,22 @@ def verify_remap_against_full(config: dict, variant: str = "pruned") -> int:
 # ---------------------------------------------------------------------------------------------
 
 
+def require_wrapper() -> None:
+    """Refuse GPU work launched outside smoke_h3.sh.
+
+    2026-09-20/21 incident: a standalone h3_vae_duet.py run with no mem-watchdog spiked host
+    RAM (3x 9.7 GiB fp32 VAE loads in lockstep on a 15 GiB host) and froze the desktop; the
+    watchdog-wrapped repeat was killed cleanly with the machine up.  The wrapper (systemd scope
+    MemorySwapMax=0 + mem-watchdog floor) is what makes a bad run a dead job instead of a dead
+    host.  smoke_h3.sh exports B70_H3_WRAPPER=1; B70_H3_NO_WRAPPER=1 is the explicit opt-out.
+    """
+    if os.environ.get("B70_H3_WRAPPER") != "1" and os.environ.get("B70_H3_NO_WRAPPER") != "1":
+        print("refusing GPU work outside smoke_h3.sh (host-freeze incident 2026-09-20/21); "
+              "run via scripts/smoke_h3.sh, or set B70_H3_NO_WRAPPER=1 to override",
+              file=sys.stderr)
+        raise SystemExit(2)
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     logging.basicConfig(
@@ -3877,6 +3893,7 @@ def main(argv: list[str] | None = None) -> int:
         return dry_run(args)
 
     # ---- everything below this line touches the GPU -----------------------------------------
+    require_wrapper()
     import torch
 
     if not torch.xpu.is_available():
