@@ -50,18 +50,23 @@ def write_json(path, value):
         stream.write('\n')
 
 
-def decode_clip(vae, audio_vae, video_latent, audio_latent, save_prefix=None):
+def decode_clip(vae, audio_vae, video_latent, audio_latent, save_prefix=None, _timing=None):
     """Exactly what VAEDecode and LTXVAudioVAEDecode do, then optionally the MP4 write."""
     import nodes
     from comfy_extras.nodes_lt_audio import LTXVAudioVAEDecode
+    t0 = time.monotonic()
     decoded = nodes.VAEDecode().decode(vae, video_latent)
     require(isinstance(decoded, tuple) and len(decoded) == 1,
             'VAEDecode no longer returns a single image batch')
     images = decoded[0]
     audio = LTXVAudioVAEDecode.execute(samples=audio_latent, audio_vae=audio_vae).result[0]
+    t1 = time.monotonic()
     saved = ''
     if save_prefix:
         saved = save_preview_guarded(images, audio, save_prefix)
+    if _timing is not None:
+        _timing['vae_s'] = round(t1 - t0, 4)
+        _timing['save_s'] = round(time.monotonic() - t1, 4)
     return images, audio, video_latent, audio_latent, saved
 
 
@@ -194,13 +199,16 @@ class LTXPipelineDecode:
                 # the index this prompt is really carrying is clamped at zero.
                 # Those first few prompts re-emit an early clip; every clip is
                 # still decoded exactly once, and emitted_index records which.
+                timing = {}
                 out, detail = pipeline.run_behind(
                     'decode', max(0, clip_index - upstream_depth), depth,
-                    lambda: decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix))
+                    lambda: decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix,
+                                        _timing=timing))
                 if out is None:
                     out = (torch.zeros(1, 8, 8, 3), {'waveform': torch.zeros(1, 2, 8), 'sample_rate': 48000},
                            video_latent, audio_latent, 'fill')
                 detail['saved_file'] = out[4]
+                detail['decode_split'] = timing or 'not executed (fill or upstream re-emit)'
                 report['detail'] = detail
             report['save_failures'] = [dict(row) for row in SAVE_FAILURES]
             report['passed'] = True
