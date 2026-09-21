@@ -13,7 +13,7 @@ from ltx_layer_shard import (LTXLayerShardedPatcher, _BlockRoute, _Shard,
                              _forward_transfers, _verify_placement, KEY)
 from comfy.patcher_extension import CallbacksMP, WrappersMP
 
-AV_SOURCE_SHA256 = '6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d'
+AV_SOURCE_SHA256 = 'e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213'
 LIFECYCLE_KEY = 'ltx_multiblock_compile_lifecycle'
 ACTIVATION_BACKEND_SHA256 = '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a'
 OPTIONS = {'compile_threads': 1, 'emulate_precision_casts': True,
@@ -79,25 +79,38 @@ class CompiledBlockRoute:
                 '_global_forward_hooks', '_global_forward_pre_hooks',
                 '_global_backward_hooks', '_global_backward_pre_hooks')):
             raise RuntimeError('Global module hooks are unsupported')
+        state_seen = False
+        # modules() already deduplicates shared module objects. Inspect each
+        # module's direct state here instead of recursively walking it twice
+        # more through parameters()/buffers(). Aliased tensors may be checked
+        # again; no tensor equality, copying, or cross-call cache is involved.
         for module in self.block.modules():
             if any(getattr(module, name, {}) for name in (
                     '_forward_hooks', '_forward_pre_hooks', '_backward_hooks', '_backward_pre_hooks')):
                 raise RuntimeError('Block acquired unsupported module hooks')
-        state = tuple(self.block.parameters()) + tuple(self.block.buffers())
-        if not state or any(t.dtype != torch.bfloat16 for t in state):
+            for registrations in (module._parameters, module._buffers):
+                for tensor in registrations.values():
+                    if tensor is None:
+                        continue
+                    state_seen = True
+                    if tensor.dtype != torch.bfloat16:
+                        raise RuntimeError('Compiled block state is no longer native BF16')
+                    if check_device and tensor.device != self._route_identity[0]:
+                        raise RuntimeError('Compiled block state is on the wrong route device')
+        if not state_seen:
             raise RuntimeError('Compiled block state is no longer native BF16')
-        if check_device and any(t.device != self._route_identity[0] for t in state):
-            raise RuntimeError('Compiled block state is on the wrong route device')
 
     def _validate_execution(self):
         if self._binding is not None:
             if type(self._lifecycle) is not _CompilePreRun:
                 raise RuntimeError('Bound compiler callback has no lifecycle gate')
             self._lifecycle.validate_current_execution(self)
+            return True
+        return False
 
     def _call_native(self, args):
-        self._validate_execution()
-        self._validate(check_device=True)
+        if not self._validate_execution():
+            self._validate(check_device=True)
         def require_device(value):
             if isinstance(value, torch.Tensor) and value.device != self._route_identity[0]:
                 raise RuntimeError('Routed numerical input is on the wrong device')
@@ -129,8 +142,8 @@ class CompiledBlockRoute:
 
     def __call__(self, args, extra):
         # The original route owns transfers, device context and last-block return.
-        self._validate_execution()
-        self._validate(check_device=False)
+        if not self._validate_execution():
+            self._validate(check_device=False)
         return self.original_route(args, {**extra, 'original_block': self._call_native})
 
 

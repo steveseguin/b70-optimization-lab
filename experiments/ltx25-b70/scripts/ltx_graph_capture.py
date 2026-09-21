@@ -31,7 +31,7 @@ from comfy.patcher_extension import CallbacksMP, WrappersMP
 from ltx_layer_shard import (CACHE_KEY, KEY, LTXLayerShardedPatcher, _BlockRoute, _move,
                              _forward_transfers, _verify_placement)
 
-AV_SOURCE_SHA256 = '6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d'
+AV_SOURCE_SHA256 = 'e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213'
 # Packet 84: re-audited after the 23/25 split rebalance. The shard change is
 # the DECLARED_SPLIT_INDEX constant and its docstring only; _dest routing
 # arithmetic, _BlockRoute and the transfer helpers are byte-identical.

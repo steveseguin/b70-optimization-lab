@@ -19,7 +19,7 @@ PATCH = LANE / 'patches/multiblock-onepass-state-04'
 PINS = {
     PATCH / 'original.py': '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584',
     PATCH / 'candidate.py': 'ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b',
-    SOURCE / 'comfy/ldm/lightricks/av_model.py': '6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d',
+    SOURCE / 'comfy/ldm/lightricks/av_model.py': 'e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213',
     SOURCE / 'comfy/ldm/lightricks/model.py': 'f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718',
     LANE / 'scripts/ltx_layer_shard.py': '0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b',
 }

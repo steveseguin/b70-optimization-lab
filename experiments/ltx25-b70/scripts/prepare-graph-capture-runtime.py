@@ -55,6 +55,12 @@ SPLIT_REPLACED = (
     # equal, verified at the audio shape in notes/lossless-floor-and-audio-adaln.md);
     # five sites lose three kernel launches each inside every block replay.
     ('source/comfy/ldm/lightricks/av_model.py', None),
+    # Packet 89 also repins the av_model source sha in the three audit
+    # tripwires (the audio adaLN fusion re-audit is recorded in the lane
+    # notes: fused kernel already present at four video sites in the same
+    # captured region; no boundary, signature or control-flow change).
+    ('source/scripts/ltx_block_compile.py', None),
+    ('source/scripts/ltx_multiblock_compile.py', None),
 )
 VAE_ADAPTER = 'ltx_graph_vae.py'
 VAE_NODE_FILE = 'graph_vae_node.py'
@@ -242,7 +248,11 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'provenance/graph-capture/parent/source/scripts/multiblock_compile_node.py',
              'provenance/graph-capture/parent/source/custom_nodes/ltx_multiblock_compile_lab/__init__.py',
              'provenance/graph-capture/parent/source/scripts/ltx_layer_shard.py',
+             # Packet 89: originals of the fusion target and the two repinned
+             # compiler adapters.
              'provenance/graph-capture/parent/source/comfy/ldm/lightricks/av_model.py',
+             'provenance/graph-capture/parent/source/scripts/ltx_block_compile.py',
+             'provenance/graph-capture/parent/source/scripts/ltx_multiblock_compile.py',
              'host-residency-13-parent-manifest.json'}
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'pipe',
@@ -267,10 +277,14 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                 'source/scripts/multiblock_compile_node.py',
                 'source/custom_nodes/ltx_multiblock_compile_lab/__init__.py',
                 'source/scripts/ltx_layer_shard.py',
-                # Packet 89: the audio adaLN fusion. Bitwise-equal kernel swap
+                # Packet 89: the audio adaLN fusion (bitwise-equal kernel swap
                 # verified in notes/lossless-floor-and-audio-adaln.md; the
-                # campaign oracle gates exactness end to end.
-                'source/comfy/ldm/lightricks/av_model.py')
+                # campaign oracle gates exactness end to end) and the two
+                # compiler adapters whose AV_SOURCE_SHA256 tripwire repins
+                # for the same re-audit.
+                'source/comfy/ldm/lightricks/av_model.py',
+                'source/scripts/ltx_block_compile.py',
+                'source/scripts/ltx_multiblock_compile.py')
     node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
     for name, digest in parent['files'].items():
         if name in replaced:
