@@ -180,7 +180,11 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             'Uninventoried packet files; inspect before use')
     require(set(manifest['extension_sha256s']) == set(EXTENSIONS), 'Extension set changed')
     for name, digest in manifest['extension_sha256s'].items():
-        require(manifest['files']['source/scripts/' + name] == digest, 'Extension hash disagrees')
+        # Extensions usually live in source/scripts/, but packet 89 adds the
+        # av_model.py model file, which lives at its inherited comfy path.
+        hits = [p for p, d in manifest['files'].items()
+                if p.split('/')[-1] == name and d == digest and 'provenance/' not in p]
+        require(len(hits) == 1, 'Extension hash disagrees: ' + name)
     for node, helper in NODES.items():
         require(manifest['files'][f'source/custom_nodes/{node}/__init__.py'] ==
                 manifest['extension_sha256s'][helper], 'Custom node copy differs from helper')
@@ -238,6 +242,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
              'provenance/graph-capture/parent/source/scripts/multiblock_compile_node.py',
              'provenance/graph-capture/parent/source/custom_nodes/ltx_multiblock_compile_lab/__init__.py',
              'provenance/graph-capture/parent/source/scripts/ltx_layer_shard.py',
+             'provenance/graph-capture/parent/source/comfy/ldm/lightricks/av_model.py',
              'host-residency-13-parent-manifest.json'}
     added |= {'graphs/graph-capture-all48-' + arm + '.json'
               for arm in ('control', 'graph', 'graph-c48', 'text', 'graph-text', 'pipe',
@@ -261,7 +266,11 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                 'source/custom_nodes/ltx_block_compile_lab/__init__.py',
                 'source/scripts/multiblock_compile_node.py',
                 'source/custom_nodes/ltx_multiblock_compile_lab/__init__.py',
-                'source/scripts/ltx_layer_shard.py')
+                'source/scripts/ltx_layer_shard.py',
+                # Packet 89: the audio adaLN fusion. Bitwise-equal kernel swap
+                # verified in notes/lossless-floor-and-audio-adaln.md; the
+                # campaign oracle gates exactness end to end.
+                'source/comfy/ldm/lightricks/av_model.py')
     node_copy = 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'
     for name, digest in parent['files'].items():
         if name in replaced:
@@ -621,7 +630,8 @@ def build_checker(text):
                                        "              'pipeline_sampler_node.py',\n"
                                        "              'ltx_graph_upsampler.py', 'graph_upsampler_node.py',\n"
                                        "              'phase_timed_upsampler_node.py',\n"
-                                       "              'resident_fastpath_node.py')", 1)
+                                       "              'resident_fastpath_node.py',\n"
+                                       "              'av_model.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
