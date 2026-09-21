@@ -50,26 +50,28 @@ With busy-vs-wall per card per phase, the loss attributes to exactly one of:
    blocking the issuing thread). Weakened by arithmetic: ~2 boundaries x
    steps x 2 stages of ms-scale D2H waits sums to tens of ms, not 0.7 s.
    Fix if measured: `stream.wait_event` variant, keep the host issuing.
-2. **In-phase card contention (leading hypothesis).** Both clips start
-   their chains together; each chain alternates xpu:0 (blocks 0-22) then
-   xpu:1 (blocks 23-47). In phase, both clips compete for xpu:0 while
-   xpu:1 idles, then both move to xpu:1 while xpu:0 idles. Predicted wall
-   ~1.3 x chain = ~3.25 s - exactly the observed 3.26 s. Also explains
-   packet 84's null result: rebalancing the 21/27 split to 23/25 cannot
-   help while both clips contend for the same card at the same time.
-   Fix: force the stagger - a per-card gate that makes a clip entering
-   its xpu:0 segment wait until the other clip has left xpu:0 (unavoidable
-   serialization of same-card segments, but it locks in the
-   clip-A-on-xpu:1 / clip-B-on-xpu:0 steady state from the two-clip
-   design note, lines 48-51).
+2. **In-phase card contention.** Both clips start chains together; each
+   alternates xpu:0 (blocks 0-22) then xpu:1 (blocks 23-47). In phase they
+   compete for the same card while the other idles. **Update after a
+   segment-level simulation (f87 segment sizes, FCFS per card): strict
+   per-card serialization walls at 3.39-3.85 s/pair - WORSE than the
+   observed 3.26.** The xe co-run of contended streams is already beating
+   forced serialization (~82% busy-card efficiency). A stagger/serialization
+   gate is REFUTED as the fix; co-running must be made more efficient, or
+   the dependency stalls filled with a third clip in flight.
 3. **Serial non-block segments** (upsample, separate, noise, refills run
    alone on one card while the other idles) -> fix: prefetch/overlap the
    next clip's stage_a head against the current clip's tail.
 
-Perfect-packing bound from the block split: per pair, xpu:0 demand ~2.24 s,
-xpu:1 ~2.66 s -> wall >= ~2.7 s/pair = **~1.33 s/clip (~18.8 fps)**. The
-residual xpu:1 heaviness (25 blocks + heavier stage-B share) only matters
-after the stagger exists; re-testing the split then is one preparer flag.
+Simulation-derived bounds: strict-FCFS 3.39 s/pair (best interleave) to
+3.85 (naive); observed 3.26 implies real co-run gains. Perfect packing
+bound from card demand (xpu:0 2.38, xpu:1 2.66 s/pair) is ~2.7 s/pair =
+~1.33 s/clip (~18.8 fps) - reachable via a third clip in flight or
+co-run efficiency, NOT via serialization. The busy-window measurement
+decides which. Third-clip caveat: every sampler thread owns its static
+buffers and graphs on BOTH cards, and xpu:0 is at 30.0 of 32.6 GiB
+reserved with two threads - a third likely needs the split rebalance
+(blocks off xpu:0) or a smaller per-thread buffer footprint first.
 
 ## What packet 90 is NOT
 
