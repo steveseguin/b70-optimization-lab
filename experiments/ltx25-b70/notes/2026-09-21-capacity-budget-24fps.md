@@ -5,8 +5,14 @@
 | Stage | Worker(s) | Card(s) | Demand (s/clip) | Evidence |
 | --- | --- | --- | --- | --- |
 | sample | 2 | xpu:0 + xpu:1 | 2.52 card-s; interval 1.63 | emitted_phases, campaign wall |
-| encode | **1** | xpu:2 + xpu:3 | **1.70 (3.40/pair)** | f84 receipts (graph-capture-84 note); f87 median 3.15/pair |
+| encode | **1** | xpu:2 + xpu:3 | **1.70 (3.40/pair), contention-inflated** | f84 receipts (graph-capture-84 note); f87 median 3.15/pair |
 | decode (incl. MP4 save) | **1** | xpu:3 | **1.60 median job** | pipeline-decode receipts, n=81 |
+
+The 1.70 figure is measured WHILE decode co-runs on xpu:3 (the 84 note
+attributes the f83c->f84 encode swing to device contention); the shard
+design's isolated estimate is ~0.85 s/clip. xpu:3 is the overloaded card:
+it carries the decode AND half the encode. Packet 91's decode replica
+relieves the encode cap at the same time.
 
 24 fps = every stage ≤ **1.042 s/clip** sustained. All THREE stages sit at
 1.6-1.7 today - the pipeline is deliberately balanced, and every stage is
