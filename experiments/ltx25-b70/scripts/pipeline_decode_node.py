@@ -189,13 +189,32 @@ class LTXPipelineDecode:
                 report['detail'] = {'emitted_index': -1, 'fill': True, 'upstream_fill': True}
             else:
                 latents = (video_latent, audio_latent)
+                decode_index = max(0, clip_index - upstream_depth)
+                # Packet 90: the latents submitted here must be byte-identical
+                # to what the sampler's worker-side sentry recorded for this
+                # clip. This is the last checkpoint before the clip leaves the
+                # sampler's outputs for the decode stage (the f89 NaN bird's
+                # passthrough latents were NaN at the capture node, which reads
+                # this stage's inputs).
+                sentry = pipeline.fingerprint(('sample-output', decode_index))
+                require(sentry is not None and sentry['video_finite'] and sentry['audio_finite'],
+                        'Decode input sentry missing or nonfinite for clip %d: %s' % (decode_index, sentry))
+                for key, lat in (('video', video_latent), ('audio', audio_latent)):
+                    tensor = lat['samples']
+                    require(bool(torch.isfinite(tensor).all().item()),
+                            'Nonfinite %s latents at decode submit for clip %d' % (key, decode_index))
+                    sha = hashlib.sha256(tensor.detach().to('cpu', copy=True)
+                                         .view(torch.uint8).numpy().tobytes()).hexdigest()
+                    require(sha == sentry[key + '_sha256'],
+                            'Decode-submit %s latents for clip %d differ from the sampler sentry: %s vs %s'
+                            % (key, decode_index, sha[:12], sentry[key + '_sha256'][:12]))
                 save_prefix = (run_name + '/preview') if mode == 'pipeline-save' else None
                 # During the upstream stage's own fill it emits its own clip, so
                 # the index this prompt is really carrying is clamped at zero.
                 # Those first few prompts re-emit an early clip; every clip is
                 # still decoded exactly once, and emitted_index records which.
                 out, detail = pipeline.run_behind(
-                    'decode', max(0, clip_index - upstream_depth), depth,
+                    'decode', decode_index, depth,
                     lambda: decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix))
                 if out is None:
                     out = (torch.zeros(1, 8, 8, 3), {'waveform': torch.zeros(1, 2, 8), 'sample_rate': 48000},

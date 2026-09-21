@@ -169,11 +169,11 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
     try:
         with _Active(), torch.xpu.stream(streams[0]):
             torch.xpu.set_stream(streams[1])
-            return _sample_chain(clip_index, streams,
-                                 concat, separate, upsampler, sampler_node,
-                                 _SerialisedNoise(noise_a), guider_a, sampler_a, sigmas_a,
-                                 _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
-                                 video_latent, audio_latent, upscale_model, vae)
+            result = _sample_chain(clip_index, streams,
+                                   concat, separate, upsampler, sampler_node,
+                                   _SerialisedNoise(noise_a), guider_a, sampler_a, sigmas_a,
+                                   _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
+                                   video_latent, audio_latent, upscale_model, vae)
     finally:
         for st in streams:
             st.synchronize()
@@ -187,6 +187,22 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
                     'xpu0_ms': round(ev0[0].elapsed_time(ev1[0]), 2),
                     'xpu1_ms': round(ev0[1].elapsed_time(ev1[1]), 2)}
             pipeline.record_fingerprint(('phases', clip_index), phases)
+    # Packet 90 sentry: scan and hash the finished latents on the worker, after
+    # this clip's streams have drained. The collect side of run_behind reads
+    # the same tensors and compares; equal sha256s at both ends exonerate the
+    # handoff, a byte change in transit convicts it, and a NaN here convicts
+    # the graph itself (the f80/f81/f82b/f88/f89 wrong-clip class).
+    video_b, audio_b = result
+    v_s, a_s = video_b['samples'], audio_b['samples']
+    sentry = {'video_finite': bool(torch.isfinite(v_s).all().item()),
+              'audio_finite': bool(torch.isfinite(a_s).all().item()),
+              'video_ptr': int(v_s.data_ptr()), 'audio_ptr': int(a_s.data_ptr())}
+    for key, tensor in (('video', v_s), ('audio', a_s)):
+        sentry[key + '_sha256'] = (hashlib.sha256(tensor.detach().to('cpu', copy=True)
+                                                  .view(torch.uint8).numpy().tobytes()).hexdigest()
+                                   if sentry[key + '_finite'] else None)
+    pipeline.record_fingerprint(('sample-output', clip_index), sentry)
+    return result
 
 def _sample_chain(clip_index, streams,
                   concat, separate, upsampler, sampler_node,
@@ -313,6 +329,28 @@ class LTXPipelineSampler:
                     detail['emitted_sample_inputs'] = pipeline.fingerprint(('sample-inputs', emitted))
                     detail['emitted_conditioning_fingerprint'] = pipeline.fingerprint(('encode', emitted))
                     detail['emitted_phases'] = pipeline.fingerprint(('phases', emitted))
+                    # Packet 90: compare the emitted clip's bytes against the
+                    # worker-side sentry recorded when its streams drained. A
+                    # change between the two reads is in-transit corruption
+                    # (pool alias, in-place overwrite); equal bytes move any
+                    # later oracle failure downstream of this node.
+                    sentry = pipeline.fingerprint(('sample-output', emitted))
+                    detail['emitted_sample_output'] = sentry
+                    require(sentry is not None, 'Sample-output sentry missing for clip %d' % emitted)
+                    require(sentry['video_finite'] and sentry['audio_finite'],
+                            'Sample worker produced nonfinite latents for clip %d: %s' % (emitted, sentry))
+                    v_s, a_s = out[0]['samples'], out[1]['samples']
+                    require(bool(torch.isfinite(v_s).all().item()) and
+                            bool(torch.isfinite(a_s).all().item()),
+                            'Nonfinite latents at sampler collect for clip %d (worker-side was finite)' % emitted)
+                    v_sha = hashlib.sha256(v_s.detach().to('cpu', copy=True)
+                                           .view(torch.uint8).numpy().tobytes()).hexdigest()
+                    a_sha = hashlib.sha256(a_s.detach().to('cpu', copy=True)
+                                           .view(torch.uint8).numpy().tobytes()).hexdigest()
+                    require(v_sha == sentry['video_sha256'] and a_sha == sentry['audio_sha256'],
+                            'Sampler handoff corrupted clip %d: worker %s/%s vs collect %s/%s'
+                            % (emitted, sentry['video_sha256'][:12], sentry['audio_sha256'][:12],
+                               v_sha[:12], a_sha[:12]))
                 if out is None:
                     # Fill: nothing to emit yet. Placeholder latents of the
                     # input shapes; the decode stage treats index -1 as a fill.
