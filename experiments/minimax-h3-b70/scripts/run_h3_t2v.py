@@ -4446,9 +4446,7 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
         all_devices = devices if decode_device in devices else devices + [decode_device]
         vae = vae_b = second = None
         vae_tiling = "on"
-        decode_plan = {"mode": "two-proc", "script": "h3_vae_duet.py",
-                       "cards": [str(d) for d in devices], "autocast": args.vae_autocast,
-                       "gate": "2.0x at 960x544 fp32, bytewise-equal to single (2026-09-20)"}
+        decode_plan = None  # built after the serve/audio spawns so it records what actually ran
         vae_source = None
         LOG.info("batch decode: video decode out of process (two-proc), audio VAE resident (%d clips)",
                  len(clips))
@@ -4517,6 +4515,12 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
             time.sleep(0.05)
         LOG.info("batch decode: audio worker on xpu:%d overlaps the video decode", audio_idx)
     audio_vae = None if audio_worker is not None else load_audio_vae(args, timings, decode_device)
+    if two_proc:
+        decode_plan = {"mode": "two-proc", "script": "h3_vae_duet.py",
+                       "cards": [str(d) for d in devices], "autocast": args.vae_autocast,
+                       "serve": video_server is not None,
+                       "audio_overlap": audio_worker is not None,
+                       "gate": "2.0x at 960x544 fp32, bytewise-equal to single (2026-09-20)"}
 
     shared = {k: v for k, v in timings.items()}  # loads and encodes so far are the shared costs
     for i, clip in enumerate(clips):
