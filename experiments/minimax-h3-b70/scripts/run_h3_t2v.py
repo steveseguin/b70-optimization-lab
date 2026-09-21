@@ -4369,19 +4369,41 @@ def _decode_and_write(torch, args, timings, devices, latents, audio_latents, run
 
 
 
-def _decode_video_two_proc(torch, args, timings, decode_device, latents, clip_index: int):
+def _decode_video_two_proc(torch, args, timings, decode_device, latents, clip_index: int,
+                           server: dict | None = None):
     """One clip's video decode in h3_vae_duet.py: one process per card, tiles through /dev/shm.
 
     Returns `(video_on_decode_card, latents)` exactly as `_decode_video_one` does, so the batch
     loop and the receipt see no difference.  The pixels are gated bytewise against the
     single-card decode (ledger 2026-09-20: 39.9 s vs 79.96 s at 960x544 fp32, sha256 MATCH).
+
+    With `server` (a running `h3_vae_duet.py --serve`), the workers and both VAE copies stay
+    resident across the batch and only latents/pixels cross the wire -- the ~15 s spawn+load
+    is paid once, not per clip.
     """
     import subprocess
     from safetensors.torch import load_file, save_file
 
+    phase_name = f"decode.video.{clip_index}"
+    if server is not None:
+        work = server["work"]
+        with phase(phase_name, timings):
+            save_file({"latents": latents.cpu().contiguous()}, str(work / f"j{clip_index}-in.st"))
+            (work / f"j{clip_index}-in.ready").write_text("1")
+            out_ready = work / f"j{clip_index}-out.ready"
+            deadline = time.time() + 900
+            while not out_ready.exists():
+                if server["proc"].poll() is not None or time.time() > deadline:
+                    raise RuntimeError(
+                        f"vae serve died on clip {clip_index}; see {work}/worker-*.log")
+                time.sleep(0.01)
+            video = load_file(str(work / f"j{clip_index}-out.st"))["video"].to(decode_device)
+            for stale in work.glob(f"j{clip_index}-out.*"):
+                stale.unlink()
+        return video, latents
+
     work = pathlib.Path("/dev/shm") / f"h3vaeduct-batch-{os.getpid()}-{clip_index}"
     work.mkdir(parents=True, exist_ok=True)
-    phase_name = f"decode.video.{clip_index}"
     with phase(phase_name, timings):
         save_file({"latents": latents.cpu().contiguous()}, str(work / "in.st"))
         cmd = [
@@ -4440,6 +4462,31 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
     # card changes, and the batch gate proves that changes nothing.  AUDIO_OVERLAP=0 opts out.
     audio_worker = None
     audio_work = None
+    # Persistent two-proc decode server: the per-clip single-shot mode pays ~15 s of process
+    # spawn + 2x9.7 GiB VAE replica load PER CLIP (decode.video measured 55.7 s vs the 39.9 s
+    # standalone).  With --serve the workers stay resident and only latents/pixels cross.
+    # VAE_SERVE=0 falls back to the per-clip subprocess path.
+    video_server = None
+    if two_proc and len(clips) > 1 and os.environ.get("VAE_SERVE", "1") != "0":
+        import subprocess
+
+        swork = pathlib.Path("/dev/shm") / f"h3vaeserve-{os.getpid()}"
+        swork.mkdir(parents=True, exist_ok=True)
+        env = dict(os.environ)
+        env.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+        slog = open(swork / "serve.log", "w")
+        video_server = {
+            "proc": subprocess.Popen(
+                [sys.executable,
+                 str(pathlib.Path(__file__).resolve().parent / "h3_vae_duet.py"),
+                 "--serve", "--work-dir", str(swork),
+                 "--cards"] + [str(d.index if d.index is not None else 0) for d in devices[:2]] + [
+                 "--autocast", args.vae_autocast, "--vae-tiling", args.vae_tiling],
+                env=env, stdout=slog, stderr=subprocess.STDOUT,
+            ),
+            "work": swork,
+        }
+        LOG.info("batch decode: persistent two-proc video server at %s", swork)
     if two_proc and len(devices) > 1 and os.environ.get("AUDIO_OVERLAP", "1") != "0":
         import subprocess
 
@@ -4479,10 +4526,9 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
 
             _save_st({"audio_latents": clip["audio_latents"].detach().to("cpu", copy=True).contiguous()},
                      str(audio_work / f"job-{i}.st"))
-            (audio_work / f"job-{i}.ready").write_text("1")
         if two_proc:
             video, latents = _decode_video_two_proc(
-                torch, args, timings, decode_device, clip["latents"], i
+                torch, args, timings, decode_device, clip["latents"], i, server=video_server
             )
             ran_plan = None
         else:
@@ -4532,6 +4578,12 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
         # Never accumulate host-side clips: 777 MB each at 960x544.
         del video, audio, latents, audio_latents
         clip["latents"] = clip["audio_latents"] = None
+    if video_server is not None:
+        (video_server["work"] / "stop").write_text("1")
+        try:
+            video_server["proc"].wait(timeout=60)
+        except Exception:
+            video_server["proc"].kill()
     if audio_worker is not None:
         (audio_work / "stop").write_text("1")
         try:
