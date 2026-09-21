@@ -397,6 +397,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September 21 05:30 UTC: boot f64b14c5 is burned for GPU work (xe engine fault 00:24:38 EDT during a probe teardown; the sealed launcher refuses launches) - the lane waits on a reboot. Speed stands at 15.3 fps effective; the 24 fps capacity budget says every stage must move.**
+The two warm-900 crashes were one heap-corruption signature at
+`PyBytes_FromObject` during the encoder load, twice - not a code regression;
+memtest remains the standing ask. Analysis while gated: the sampler's packing
+loss is ~0.7 s/pair (in-phase card contention; a simulation REFUTED the
+stagger-gate fix - co-run already beats strict serialization); encode
+(1.70 s/clip, contention-inflated), decode (1.60), sampler (1.63) are each
+over the 1.042 s/clip budget. Queue: packet 89 (adaLN fusion, built+gated,
+one command after reboot) -> 90 (busy-window attribution, branch ready) ->
+91 (decode capacity: VAE-replica probe + MP4-save offload) -> 92 (second
+encode worker). [Budget](experiments/ltx25-b70/notes/2026-09-21-capacity-budget-24fps.md);
+[packet 90 design](experiments/ltx25-b70/notes/packet-90-packing-loss-design.md);
+[lever order](experiments/ltx25-b70/notes/2026-09-21-timing-evaluation-and-lever-order.md);
+[forensics](experiments/ltx25-b70/notes/2026-09-21-load-crash-forensics-and-probes.md).
+
 **Four-B70 host, September 19 21:19 UTC: the sharded encoder's failures on servers 79b-81 traced to one race (worker encodes ran eager parts on the default stream, unordered against thread-stream replays: one all-NaN clip per run); packet 82 launches with the fix.**
 Boat and marble clips from the sharded encoder are byte-identical to their
 references; the failing clip varied by prompt and thread. Packet 82 runs the
