@@ -38,14 +38,29 @@ per replay (sub-ms), one dict add. No numerics change; no exactness risk.
 With busy-vs-wall per card per phase, the loss attributes to exactly one of:
 
 1. **Host-side boundary stalls** (`staged_move`'s `event.synchronize()`
-   blocking the issuing thread) -> fix: `stream.wait_event` variant, keep
-   the host issuing. Validate on the probe harness first.
-2. **Phase misalignment** (both clips want the same card in the same
-   windows) -> fix: stagger the pair submission by half a chain, or move
-   stage_b of clip 2 to start against stage_a of clip 1 deliberately.
+   blocking the issuing thread). Weakened by arithmetic: ~2 boundaries x
+   steps x 2 stages of ms-scale D2H waits sums to tens of ms, not 0.7 s.
+   Fix if measured: `stream.wait_event` variant, keep the host issuing.
+2. **In-phase card contention (leading hypothesis).** Both clips start
+   their chains together; each chain alternates xpu:0 (blocks 0-22) then
+   xpu:1 (blocks 23-47). In phase, both clips compete for xpu:0 while
+   xpu:1 idles, then both move to xpu:1 while xpu:0 idles. Predicted wall
+   ~1.3 x chain = ~3.25 s - exactly the observed 3.26 s. Also explains
+   packet 84's null result: rebalancing the 21/27 split to 23/25 cannot
+   help while both clips contend for the same card at the same time.
+   Fix: force the stagger - a per-card gate that makes a clip entering
+   its xpu:0 segment wait until the other clip has left xpu:0 (unavoidable
+   serialization of same-card segments, but it locks in the
+   clip-A-on-xpu:1 / clip-B-on-xpu:0 steady state from the two-clip
+   design note, lines 48-51).
 3. **Serial non-block segments** (upsample, separate, noise, refills run
    alone on one card while the other idles) -> fix: prefetch/overlap the
    next clip's stage_a head against the current clip's tail.
+
+Perfect-packing bound from the block split: per pair, xpu:0 demand ~2.24 s,
+xpu:1 ~2.66 s -> wall >= ~2.7 s/pair = **~1.33 s/clip (~18.8 fps)**. The
+residual xpu:1 heaviness (25 blocks + heavier stage-B share) only matters
+after the stagger exists; re-testing the split then is one preparer flag.
 
 ## What packet 90 is NOT
 
