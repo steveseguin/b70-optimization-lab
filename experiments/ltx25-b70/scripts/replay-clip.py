@@ -12,6 +12,13 @@ when the server is idle except for this one prompt.
       [--bad-output <validation dir of the failing clip>] \
       [--index-base N --index I] [--out <dir>]
 
+--index selects the clip index (fixture slot = index % 10, so e.g. bird is
+any index == 2 mod 10). Clip content is text+seed only; the index is pure
+pipeline bookkeeping. A server keeps un-collected pipeline jobs forever, so
+EACH replay on one server needs an index never submitted to it before --
+pick the next free slot in the same fixture class (e.g. 112, then 122).
+A collision latches the server ('sample job already exists'), after which
+every later prompt fails closed and the server must be relaunched.
 Exit 0 and prints a verdict:
   MATCHES_REFERENCE   replay is bitwise the fixture reference: the wrongness
                       needs campaign concurrency (race/timing/pool alias)
@@ -93,14 +100,15 @@ assert not queue['queue_running'] and not queue['queue_pending'], 'server busy; 
 assert json.loads((ROOT / 'model-verification.json').read_text())['status'] == 'passed'
 
 # The pipelined sampler emits nothing for its first two prompts (fill), and a
-# prompt's saved clip is the one submitted two prompts EARLIER. To reproduce
-# the failing clip the replay therefore submits the target plus two fillers
-# from the campaign's own fixture cycle; the target's clip is captured under
-# the second filler's run name.
+# prompt's saved clip is the one DECODED one prompt earlier (decode depth 1
+# behind the sampler's depth 2). To capture the target's full bundle the
+# replay therefore submits the target plus THREE fillers from the campaign's
+# own fixture cycle; the target's clip is captured under the third filler's
+# run name.
 target_fx = fixtures[a.fixture]
 assert ORDER[a.index % len(ORDER)] == a.fixture, \
     f'fixture cycle mismatch: index {a.index} maps to {ORDER[a.index % len(ORDER)]}, not {a.fixture}'
-submissions = [(a.name, a.index), (a.name + '-f1', a.index + 1), (a.name + '-f2', a.index + 2)]
+submissions = [(a.name, a.index)] + [(a.name + f'-f{i}', a.index + i) for i in (1, 2, 3)]
 last_id = None
 for name, idx in submissions:
     g, fx = build(name, idx)
@@ -151,10 +159,10 @@ def compare(ref_name, cand_name, tag):
 
 
 time.sleep(2)  # let the validation writer finish flushing
-emitted_name = a.name + '-f2'
+emitted_name = a.name + '-f3'
 # Guard: the emitted clip must be the target's, not a fill or a filler clip.
-sampler_receipt = json.loads((server_run / ('pipeline-sampler-' + emitted_name + '.json')).read_text())
-emitted_index = sampler_receipt.get('detail', {}).get('emitted_index')
+decode_receipt = json.loads((server_run / ('pipeline-decode-' + emitted_name + '.json')).read_text())
+emitted_index = decode_receipt.get('detail', {}).get('emitted_index')
 assert emitted_index == a.index_base + a.index, \
     f'expected emitted clip {a.index_base + a.index} under {emitted_name}, got {emitted_index}'
 vs_ref = compare(target_fx['reference'], emitted_name, 'vs-reference')
