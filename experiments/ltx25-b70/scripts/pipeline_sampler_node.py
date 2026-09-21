@@ -322,6 +322,11 @@ class LTXPipelineSampler:
                                            'reserved_bytes': int(torch.xpu.memory_reserved(i))}
                                 for i in range(torch.xpu.device_count())}
             try:
+                import ltx_graph_capture as _capture
+                report['route_busy_ms'] = _capture.busy_window_report()
+            except Exception as error:  # noqa: BLE001  (diagnostic only)
+                report['route_busy_ms'] = 'unavailable: ' + repr(error)
+            try:
                 import comfy.model_management as _mm
                 report['loaded_models'] = [
                     {'model': type(getattr(lm.model, 'model', lm.model)).__name__, 'device': str(lm.device),

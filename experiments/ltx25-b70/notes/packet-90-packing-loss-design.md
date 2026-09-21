@@ -27,13 +27,22 @@ cannot say whether a card was busy or waiting inside the phase. Attribution
 needs per-replay busy time.
 
 ## The measurement (packet 90, rides the next server after 89)
+Implemented on branch `packet-90` (rides the next server build after 89):
 
-In `GraphBlockRoute._call_native` (ltx_graph_capture.py:796): bracket every
-graph replay with a pair of events on the thread stream, accumulate
-`busy_ms` per `(card, route)` into a module-level counter. The sampler node
-already snapshots module state into its receipt (`report['memory']` etc.) -
-add `report['route_busy_ms']` alongside. Host-side cost: two event records
-per replay (sub-ms), one dict add. No numerics change; no exactness risk.
+- `ltx_graph_capture.py`: the hot replay in `GraphBlockRoute._call_native`
+  is bracketed by an event pair on the issuing thread's stream; windows
+  drain per receipt via `busy_window_report()` into per-`(device, route)`
+  `{count, ms}` aggregates. Windows not yet complete at report time (the
+  other clip still in flight) carry over in a pending list, never dropped.
+  Capped ring (8192) bounds memory. Two event records per replay, sub-ms.
+- `pipeline_sampler_node.py`: receipts gain `route_busy_ms` next to the
+  existing `memory` snapshot (diagnostic-only guard, same as
+  `loaded_models`).
+- `analyze-phases.py` aggregates `route_busy_ms` across a run's receipts:
+  per-card busy vs job wall, top routes by busy time.
+
+No numerics change; no exactness risk. The CPU graph-adapter tests
+(test-ltx-graph-capture-stdlib.py) pass on the branch.
 
 With busy-vs-wall per card per phase, the loss attributes to exactly one of:
 

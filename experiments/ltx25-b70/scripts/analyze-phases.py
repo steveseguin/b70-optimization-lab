@@ -15,6 +15,43 @@ import sys
 from pathlib import Path
 
 
+def busy_report(files):
+    """Aggregate route_busy_ms across receipts: per-card busy vs job wall."""
+    per_key = {}
+    job_total = 0.0
+    n = 0
+    for f in files:
+        try:
+            d = json.loads(Path(f).read_text())
+        except Exception:
+            continue
+        busy = d.get('route_busy_ms')
+        if not isinstance(busy, dict):
+            continue
+        n += 1
+        job = d.get('detail', {}).get('stage_seconds') or 0.0
+        job_total += job
+        for key, agg in busy.items():
+            acc = per_key.setdefault(key, {'count': 0, 'ms': 0.0})
+            acc['count'] += agg.get('count', 0)
+            acc['ms'] += agg.get('ms', 0.0)
+    if not n:
+        return
+    per_card = {}
+    for key, agg in per_key.items():
+        card = key.split('/')[0]
+        per_card[card] = per_card.get(card, 0.0) + agg['ms']
+    print(f'route_busy_ms: {n} receipts, total job wall {job_total:.1f}s')
+    for card in sorted(per_card):
+        busy = per_card[card] / 1000.0
+        print(f'  {card}: busy {busy:8.1f}s over receipts ({busy / n:6.3f}s per receipt avg)')
+    top = sorted(per_key.items(), key=lambda kv: -kv[1]['ms'])[:6]
+    for key, agg in top:
+        print(f'  {key:<18} {agg["count"]:>6} windows  {agg["ms"] / 1000.0:8.1f}s')
+    print()
+
+
+
 def main():
     run = Path(sys.argv[1])
     prefix = sys.argv[2]
@@ -77,6 +114,8 @@ def main():
     print(f'phase shares of the {j:.3f}s job: stage_a {a / j:.1%}, stage_b {b / j:.1%}, '
           f'upsample {u / j:.1%}, unaccounted {max(0.0, j - a - b - u) / j:.1%}')
     print(f'stage_a:stage_b ratio {a / b:.2f} (same 48-block shard; difference is steps x tokens)')
+    print()
+    busy_report(files)
     if '--csv' in sys.argv:
         print()
         print('receipt,emitted,job_s,stage_a,upsample,stage_b')

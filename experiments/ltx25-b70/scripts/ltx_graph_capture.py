@@ -563,6 +563,47 @@ def staged_move(value, device, tag):
     return out
 
 
+# --- per-replay busy windows (packet 90) -------------------------------------
+# The emitted_phases receipts place wall time by phase name but cannot say
+# whether a card was busy inside a phase (event elapsed_time includes idle
+# gaps). Bracketing every graph replay with its own event pair gives
+# per-route wall-on-card windows; summing them per device and comparing with
+# the pair wall attributes the packing loss. Windows whose events have not
+# completed at report time (the other clip still in flight) carry over to the
+# next report instead of being dropped. No numerics change: two event records
+# per replay on the issuing thread's own stream.
+
+_BUSY_LOCK = threading.Lock()
+_BUSY_WINDOWS = []
+_BUSY_PENDING = []
+_BUSY_MAX = 8192
+
+
+def _busy_record(device, index, ev0, ev1):
+    with _BUSY_LOCK:
+        if len(_BUSY_WINDOWS) < _BUSY_MAX:
+            _BUSY_WINDOWS.append((str(device), index, ev0, ev1))
+
+
+def busy_window_report():
+    """Drain completed windows into {(device, route): {count, ms}}; keep strays."""
+    with _BUSY_LOCK:
+        windows, _BUSY_WINDOWS = _BUSY_WINDOWS, []
+        pending = list(_BUSY_PENDING)
+        _BUSY_PENDING.clear()
+    out = {}
+    for dev, idx, ev0, ev1 in windows + pending:
+        try:
+            ms = ev0.elapsed_time(ev1)
+        except Exception:
+            with _BUSY_LOCK:
+                _BUSY_PENDING.append((dev, idx, ev0, ev1))
+            continue
+        agg = out.setdefault(f'{dev}/route{idx}', {'count': 0, 'ms': 0.0})
+        agg['count'] += 1
+        agg['ms'] += round(ms, 3)
+    return out
+
 class GraphBlockRoute:
     """Replaces only the block callable; the original route is still in charge."""
 
@@ -767,7 +808,11 @@ class GraphBlockRoute:
             try:
                 slot = group.slot_for(key, routed, options)
                 self.report.copies += group.fill(slot, routed, options)
+                _ev0, _ev1 = torch.xpu.Event(), torch.xpu.Event()
+                _ev0.record()
                 entry.graph.replay()
+                _ev1.record()
+                _busy_record(self.device, self.index, _ev0, _ev1)
             finally:
                 CAPTURE_LOCK.release_shared()
         entry.replays += 1
