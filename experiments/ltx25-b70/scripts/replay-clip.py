@@ -63,71 +63,108 @@ def call(path, payload=None, retries=30):
             time.sleep(10)
 
 
-fixtures = {f['id']: f for f in json.loads(Path(a.fixtures).read_text())['fixtures']}
-fx = fixtures[a.fixture]
-fx.setdefault('reference', 'stability-01-r01-' + fx['id'])
+fixture_list = json.loads(Path(a.fixtures).read_text())['fixtures']
+ORDER = [f['id'] for f in fixture_list]
+fixtures = {f['id']: f for f in fixture_list}
+for f in fixture_list:
+    f.setdefault('reference', 'stability-01-r01-' + f['id'])
 
-g = json.loads(Path(a.graph).read_text())
-for node in g.values():
-    if 'run_name' in node.get('inputs', {}):
-        node['inputs']['run_name'] = a.name
-    if 'clip_index' in node.get('inputs', {}) and not isinstance(node['inputs']['clip_index'], list):
-        node['inputs']['clip_index'] = a.index_base + a.index
-g['364']['inputs']['text'] = fx['prompt']
-g['339']['inputs']['noise_seed'] = fx['seed']
-g['338']['inputs']['noise_seed'] = fx['seed']
-if '75' in g:
-    g['75']['inputs']['filename_prefix'] = a.name + '/preview'
+
+def build(name, idx):
+    """The runner's graph patch, verbatim: per-fixture text and constant seed,
+    clip_index from the campaign's index base."""
+    fx = fixtures[ORDER[idx % len(ORDER)]]
+    g = json.loads(Path(a.graph).read_text())
+    for node in g.values():
+        if 'run_name' in node.get('inputs', {}):
+            node['inputs']['run_name'] = name
+        if 'clip_index' in node.get('inputs', {}) and not isinstance(node['inputs']['clip_index'], list):
+            node['inputs']['clip_index'] = a.index_base + idx
+    g['364']['inputs']['text'] = fx['prompt']
+    g['339']['inputs']['noise_seed'] = fx['seed']
+    g['338']['inputs']['noise_seed'] = fx['seed']
+    if '75' in g:
+        g['75']['inputs']['filename_prefix'] = name + '/preview'
+    return g, fx
+
 
 queue = call('/queue')
 assert not queue['queue_running'] and not queue['queue_pending'], 'server busy; replay needs a quiesced server'
 assert json.loads((ROOT / 'model-verification.json').read_text())['status'] == 'passed'
 
-req = ROOT / 'requests' / a.name
-req.mkdir(parents=True, exist_ok=False)
-(req / 'prompt.json').write_text(json.dumps(g, indent=2) + '\n')
-r = call('/prompt', {'prompt': g, 'client_id': 'replay-' + a.name})
-assert not r.get('node_errors'), r
-(req / 'submission.json').write_text(json.dumps(r, indent=2) + '\n')
-print('submitted %s (fixture %s, seed %d)' % (a.name, fx['id'], fx['seed']), flush=True)
+# The pipelined sampler emits nothing for its first two prompts (fill), and a
+# prompt's saved clip is the one submitted two prompts EARLIER. To reproduce
+# the failing clip the replay therefore submits the target plus two fillers
+# from the campaign's own fixture cycle; the target's clip is captured under
+# the second filler's run name.
+target_fx = fixtures[a.fixture]
+assert ORDER[a.index % len(ORDER)] == a.fixture, \
+    f'fixture cycle mismatch: index {a.index} maps to {ORDER[a.index % len(ORDER)]}, not {a.fixture}'
+submissions = [(a.name, a.index), (a.name + '-f1', a.index + 1), (a.name + '-f2', a.index + 2)]
+last_id = None
+for name, idx in submissions:
+    g, fx = build(name, idx)
+    req = ROOT / 'requests' / name
+    req.mkdir(parents=True, exist_ok=False)
+    (req / 'prompt.json').write_text(json.dumps(g, indent=2) + '\n')
+    r = call('/prompt', {'prompt': g, 'client_id': 'replay-' + name})
+    assert not r.get('node_errors'), r
+    (req / 'submission.json').write_text(json.dumps(r, indent=2) + '\n')
+    print('submitted %s (fixture %s, seed %d, clip %d)' % (name, fx['id'], fx['seed'], a.index_base + idx), flush=True)
+    last_id = r['prompt_id']
 
 deadline = time.time() + a.timeout
 while time.time() < deadline:
-    h = call('/history/' + r['prompt_id'])
-    entry = h.get(r['prompt_id'])
+    h = call('/history/' + last_id)
+    entry = h.get(last_id)
     if entry:
         status = entry.get('status', {})
         for m in status.get('messages', []):
             if m[0] == 'execution_error':
-                (req / 'history.json').write_text(json.dumps(entry, indent=2) + '\n')
+                (ROOT / 'requests' / submissions[-1][0] / 'history.json').write_text(json.dumps(entry, indent=2) + '\n')
                 raise SystemExit('EXECUTION ERROR: ' + str(m[1])[:400])
         if status.get('completed'):
-            (req / 'history.json').write_text(json.dumps(entry, indent=2) + '\n')
+            (ROOT / 'requests' / submissions[-1][0] / 'history.json').write_text(json.dumps(entry, indent=2) + '\n')
             break
     time.sleep(0.5)
 else:
     raise SystemExit('TIMED OUT')
 
 
+def summary_sha(name):
+    s = json.loads((ROOT / 'output/validation' / name / 'summary.json').read_text())
+    return {k: {'sha256': v['sha256'], 'finite': v['finite']} for k, v in s['tensors'].items()}
+
+
 def compare(ref_name, cand_name, tag):
-    parity_path = out / (a.name + '-' + tag + '.json')
-    cp = subprocess.run([PY, '-B', str(LANE / 'scripts/compare-clip.py'), ref_name, cand_name,
-                         '--output', str(parity_path)], capture_output=True, text=True, timeout=300)
-    if not parity_path.exists():
-        return {'status': 'comparator-failed', 'stderr': cp.stderr[-400:]}
-    p = json.loads(parity_path.read_text())
-    exact = p.get('status') == 'passed' and all(v.get('bitwise_equal') is True for v in p.get('comparisons', {}).values())
-    return {'status': p.get('status'), 'bitwise_equal': exact}
+    """Summary-level sha256 comparison (the r01 references carry no tensors)."""
+    try:
+        ref, cand = summary_sha(ref_name), summary_sha(cand_name)
+    except Exception as error:
+        return {'status': 'compare-failed: ' + repr(error), 'bitwise_equal': False}
+    per = {k: {'bitwise_equal': ref[k]['sha256'] == cand[k]['sha256'],
+               'candidate_finite': cand[k]['finite']} for k in ref}
+    exact = all(v['bitwise_equal'] for v in per.values())
+    result = {'status': 'passed', 'bitwise_equal': exact, 'comparisons': per}
+    (out / (a.name + '-' + tag + '.json')).write_text(json.dumps(result, indent=2) + '\n')
+    return result
 
 
 time.sleep(2)  # let the validation writer finish flushing
-vs_ref = compare(fx['reference'], a.name, 'vs-reference')
-verdict = {'name': a.name, 'fixture': fx['id'], 'vs_reference': vs_ref}
+emitted_name = a.name + '-f2'
+# Guard: the emitted clip must be the target's, not a fill or a filler clip.
+sampler_receipt = json.loads((server_run / ('pipeline-sampler-' + emitted_name + '.json')).read_text())
+emitted_index = sampler_receipt.get('detail', {}).get('emitted_index')
+assert emitted_index == a.index_base + a.index, \
+    f'expected emitted clip {a.index_base + a.index} under {emitted_name}, got {emitted_index}'
+vs_ref = compare(target_fx['reference'], emitted_name, 'vs-reference')
+verdict = {'name': a.name, 'fixture': target_fx['id'], 'emitted_clip': emitted_index,
+           'captured_under': emitted_name, 'vs_reference': vs_ref}
 if vs_ref['bitwise_equal']:
     verdict['verdict'] = 'MATCHES_REFERENCE'
 else:
     if a.bad_output:
-        vs_bad = compare(a.bad_output, a.name, 'vs-bad')
+        vs_bad = compare(a.bad_output, emitted_name, 'vs-bad')
         verdict['vs_bad'] = vs_bad
         verdict['verdict'] = 'MATCHES_BAD' if vs_bad['bitwise_equal'] else 'MATCHES_NEITHER'
     else:
