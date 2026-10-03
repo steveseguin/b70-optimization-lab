@@ -15,6 +15,30 @@ import sys
 from pathlib import Path
 
 
+def decode_report(run, prefix):
+    """Aggregate decode_split (vae vs MP4-save seconds) from decode receipts."""
+    vae, save, jobs = [], [], []
+    for f in sorted(glob.glob(str(run / f'pipeline-decode-{prefix}*.json'))):
+        try:
+            d = json.loads(Path(f).read_text())
+        except Exception:
+            continue
+        det = d.get('detail', {})
+        split = det.get('decode_split')
+        job = det.get('stage_seconds')
+        if isinstance(split, dict):
+            vae.append(split.get('vae_s', 0.0))
+            save.append(split.get('save_s', 0.0))
+        if job:
+            jobs.append(job)
+    if not vae:
+        return
+    print(f'decode split: {len(vae)} receipts - '
+          f'vae mean {statistics.mean(vae):.3f}s (median {statistics.median(vae):.3f}), '
+          f'save mean {statistics.mean(save):.3f}s (median {statistics.median(save):.3f}), '
+          f'save share {sum(save) / max(1e-9, sum(vae) + sum(save)):.1%} of in-job time')
+
+
 def busy_report(files):
     """Aggregate route_busy_ms across receipts: per-card busy vs job wall."""
     per_key = {}
@@ -116,6 +140,7 @@ def main():
     print(f'stage_a:stage_b ratio {a / b:.2f} (same 48-block shard; difference is steps x tokens)')
     print()
     busy_report(files)
+    decode_report(run, prefix)
     if '--csv' in sys.argv:
         print()
         print('receipt,emitted,job_s,stage_a,upsample,stage_b')
