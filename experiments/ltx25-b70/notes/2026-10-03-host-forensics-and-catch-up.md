@@ -119,3 +119,48 @@ Zero MCE, zero AER (cannot be seen), zero nvme errors, zero GuC CT messages.
 Off-box kernel log (netconsole to the two-B70 host; the receiver has to be
 started by the user), a 12 V/temperature logger during GPU load, and a
 runtime `kernel.hardlockup_panic=0` so a lockup can be survived and logged.
+
+## Addendum, 2026-10-03 15:50 EDT: the memory fault is real, localised, and crashed the host with the GPUs idle
+
+Evidence copies: `/home/steve/b70-host-diagnostics/` (not in Git).
+
+1. `sudo memtester 13G 1` x 8 (104 GB locked, started 14:51 EDT): two of
+   eight workers failed within 13 minutes, 1,192 mismatches, all in the Block
+   Sequential and later phases, all in byte 6 of the 64-bit word, the wrong
+   copy holding the previous pattern's value (a write that did not land).
+   Physical pages (from `/proc/<pid>/pagemap`): 0x1b7ff52000-0x1b7ff59fff and
+   0x1c3fe2a000..0x1c3ff50000. Stopped by hand after the verdict.
+2. `physmap_memtest.py` (locks 104 GiB, reads its own pagemap, hammers the
+   last N MiB of every 1 GiB block plus an equal control set from the middle
+   of each block). Run 1 (4 MiB tails, 3 rounds): 128 mismatches, all in the
+   tail of GiB block 112, zero in the control set and in 105 other blocks.
+   Run 2 (8 MiB tails): 226,271 mismatches in five rounds (about 45,000 per
+   round, flat), zero control, **all in eleven 32 KiB chunks**: block 109 at
+   offsets 0x3fa78000, 0x3faa8000, 0x3fb18000, 0x3fbc8000, 0x3fe30000,
+   0x3fee0000 and block 112 at 0x3fa60000, 0x3fab0000, 0x3fb00000,
+   0x3fbd0000, 0x3fe28000. Byte 6 only, in every cacheline of each chunk (no
+   channel-interleave pattern at any granularity from 64 B to 64 KiB).
+   The chunks may continue below the 8 MiB window; that was not tested.
+3. **The host reset itself during run 2** at about 15:38 EDT with no GPU
+   process running. The next boot (6ddb73fa, 15:40) logs
+   `Previous system reset reason [0x00800800]: internal CPU shutdown event
+   occurred`. The journal of boot 37491ca5 ends on a routine cron line.
+
+Reading: one byte lane failing in fixed row-sized chunks is one DRAM chip on
+one module with weak rows, not timing margin and not the CPU. Which slot is
+not established (no EDAC, no address decode); DIMMF1 holds the module with
+the odd part number. The crash shows the fault can take the host down
+without any GPU activity, so at least part of the September freeze history
+is this, and the "one wrong clip per ~100" result may be too (the two-clip
+sampler stages activations through pinned host memory).
+
+Mitigation available without hardware work: take memory blocks 53-57
+(physical 0x1a80000000-0x1cffffffff, 10 GiB) offline through
+`/sys/devices/system/memory/memoryN/state`, then re-test the rest. The
+permission system blocked the agent from doing this; it is with the user.
+Until the memory is fenced or the module replaced: no GPU campaign, no
+kernel or package install (a corrupted write of a kernel image is a real
+risk), and nothing measured on this host is to be promoted.
+
+Packet 90c (busy-window timers + sentries, Codex-reviewed, gated, not
+launched) is ready: `notes/2026-10-03-packet-90b-build.md`.
