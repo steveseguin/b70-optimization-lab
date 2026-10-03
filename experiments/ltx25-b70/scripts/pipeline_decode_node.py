@@ -50,6 +50,18 @@ def write_json(path, value):
         stream.write('\n')
 
 
+def done_marker(stage, index, extra=None):
+    """Packet 90c: worker-side completion marker, written after the job's GPU
+    work has finished, so a campaign can prove the pipeline is idle before a
+    stop. File evidence only; never raises."""
+    try:
+        run = Path(os.environ['LTX_ENCODER_RUN_DIR'])
+        write_json(run / ('pipeline-done-%s-%d.json' % (stage, index)),
+                   {'stage': stage, 'index': index, 'finished_unix': time.time(), **(extra or {})})
+    except Exception:  # noqa: BLE001  (evidence only)
+        pass
+
+
 def decode_clip(vae, audio_vae, video_latent, audio_latent, save_prefix=None, _timing=None):
     """Exactly what VAEDecode and LTXVAudioVAEDecode do, then optionally the MP4 write."""
     import nodes
@@ -65,8 +77,11 @@ def decode_clip(vae, audio_vae, video_latent, audio_latent, save_prefix=None, _t
     if save_prefix:
         saved = save_preview_guarded(images, audio, save_prefix)
     if _timing is not None:
-        _timing['vae_s'] = round(t1 - t0, 4)
-        _timing['save_s'] = round(time.monotonic() - t1, 4)
+        try:  # timing only; must never fail the clip
+            _timing['vae_s'] = round(t1 - t0, 4)
+            _timing['save_s'] = round(time.monotonic() - t1, 4)
+        except Exception:  # noqa: BLE001
+            pass
     return images, audio, video_latent, audio_latent, saved
 
 
@@ -227,7 +242,11 @@ class LTXPipelineDecode:
                     timing = {}
                     result = decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix,
                                          _timing=timing)
-                    pipeline.record_fingerprint(('decode-split', decode_index), timing)
+                    try:  # timing/evidence only; must never fail the clip
+                        pipeline.record_fingerprint(('decode-split', decode_index), timing)
+                    except Exception:  # noqa: BLE001
+                        pass
+                    done_marker('decode', decode_index)
                     return result
 
                 out, detail = pipeline.run_behind('decode', decode_index, depth, decode_job)
@@ -235,9 +254,12 @@ class LTXPipelineDecode:
                     out = (torch.zeros(1, 8, 8, 3), {'waveform': torch.zeros(1, 2, 8), 'sample_rate': 48000},
                            video_latent, audio_latent, 'fill')
                 detail['saved_file'] = out[4]
-                split = (pipeline.fingerprint(('decode-split', detail['emitted_index']))
-                         if detail.get('emitted_index', -1) >= 0 else None)
-                detail['decode_split'] = split if split else 'not recorded (fill)'
+                try:  # timing only; must never fail the clip
+                    split = (pipeline.fingerprint(('decode-split', detail['emitted_index']))
+                             if detail.get('emitted_index', -1) >= 0 else None)
+                    detail['decode_split'] = split if split else 'not recorded (fill)'
+                except Exception as error:  # noqa: BLE001
+                    detail['decode_split'] = 'unavailable: ' + repr(error)[:200]
                 report['detail'] = detail
             report['save_failures'] = [dict(row) for row in SAVE_FAILURES]
             report['passed'] = True

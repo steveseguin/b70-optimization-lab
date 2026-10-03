@@ -51,6 +51,18 @@ def write_json(path, value):
         stream.write('\n')
 
 
+def done_marker(stage, index, extra=None):
+    """Packet 90c: worker-side completion marker, written after the job's GPU
+    work has finished, so a campaign can prove the pipeline is idle before a
+    stop. File evidence only; never raises."""
+    try:
+        run = Path(os.environ['LTX_ENCODER_RUN_DIR'])
+        write_json(run / ('pipeline-done-%s-%d.json' % (stage, index)),
+                   {'stage': stage, 'index': index, 'finished_unix': time.time(), **(extra or {})})
+    except Exception:  # noqa: BLE001  (evidence only)
+        pass
+
+
 _ACTIVE = [0]
 _ACTIVE_LOCK = __import__('threading').Lock()
 _PINNED = {}
@@ -202,6 +214,7 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
                                                   .view(torch.uint8).numpy().tobytes()).hexdigest()
                                    if sentry[key + '_finite'] else None)
     pipeline.record_fingerprint(('sample-output', clip_index), sentry)
+    done_marker('sample', clip_index, {'finite': sentry['video_finite'] and sentry['audio_finite']})
     return result
 
 def _sample_chain(clip_index, streams,

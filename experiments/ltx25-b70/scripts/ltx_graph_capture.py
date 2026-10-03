@@ -17,6 +17,7 @@ This module allocates no model state and moves no weights.
 """
 import copy
 import hashlib
+import os
 import threading
 import time
 import types as _types
@@ -563,30 +564,44 @@ def staged_move(value, device, tag):
     return out
 
 
-# --- per-replay busy windows (packet 90/90b) ---------------------------------
+# --- per-replay busy windows (packet 90/90b/90c) -----------------------------
 # The emitted_phases receipts place wall time by phase name but cannot say
 # whether a card was busy inside a phase (event elapsed_time includes idle
 # gaps). Bracketing every graph replay with its own event pair gives
 # per-route wall-on-card windows. The two sampler threads co-run on the same
-# card, so a plain SUM of window lengths double-counts their overlap; each
-# window is therefore also placed on its device's timeline relative to one
-# anchor event per device, and the report gives the UNION (time the card had
-# any replay in flight) and the overlap. Windows whose events have not
-# completed at report time (the other clip still in flight) carry over to
-# the next report instead of being dropped. No numerics change: event
-# records only, on the issuing thread's own stream, plus one anchor record
-# per device.
+# card, so each window is also placed on its card's clock (relative to one
+# anchor event per card) and every drain emits the card's merged busy
+# segments on that clock; the analyzer merges segments ACROSS drains, so a
+# window carried into a later drain cannot double-count overlap.
+#
+# Instrumentation never fails a clip: any exception from event creation,
+# recording or reading disables the timers for the rest of the process,
+# keeps the error text once for the receipt, and the replay is issued
+# exactly as without instrumentation (event records are markers only; the
+# replay itself is never skipped, repeated or reordered).
+# LTX_BUSY_WINDOWS=0 in the server environment turns the timers off
+# entirely (control arm on the same packet); sentries are unaffected.
 
 _BUSY_LOCK = threading.Lock()
 _BUSY_WINDOWS = []
 _BUSY_PENDING = []
 _BUSY_MAX = 8192
+_BUSY_SEG_MAX = 2048
 _BUSY_DROPPED = [0]
 _BUSY_ANCHORS = {}
+_BUSY_ON = [os.environ.get('LTX_BUSY_WINDOWS', '1') != '0']
+_BUSY_STATE = [None if _BUSY_ON[0] else 'disabled by LTX_BUSY_WINDOWS=0']
+
+
+def _busy_disable(error):
+    with _BUSY_LOCK:
+        if _BUSY_ON[0]:
+            _BUSY_ON[0] = False
+            _BUSY_STATE[0] = 'disabled after error: ' + repr(error)[:300]
 
 
 def _busy_anchor(device, make_event):
-    """Record one timeline anchor per device, before that device's first window."""
+    """Record one clock anchor per card, before that card's first window."""
     key = str(device)
     with _BUSY_LOCK:
         if key in _BUSY_ANCHORS:
@@ -604,30 +619,69 @@ def _busy_record(device, index, ev0, ev1):
             _BUSY_DROPPED[0] += 1
 
 
-def _union_ms(intervals):
-    total, end = 0.0, None
+def busy_begin(device):
+    """Before a replay: (ev0, ev1) or None. Never raises."""
+    if not _BUSY_ON[0]:
+        return None
+    try:
+        _busy_anchor(device, lambda: torch.xpu.Event(enable_timing=True))
+        ev0 = torch.xpu.Event(enable_timing=True)
+        ev1 = torch.xpu.Event(enable_timing=True)
+        ev0.record()
+        return ev0, ev1
+    except Exception as error:  # noqa: BLE001  (instrumentation must not fail a clip)
+        _busy_disable(error)
+        return None
+
+
+def busy_end(token, device, index):
+    """After a replay. Never raises."""
+    if token is None:
+        return
+    try:
+        token[1].record()
+        _busy_record(device, index, token[0], token[1])
+    except Exception as error:  # noqa: BLE001
+        _busy_disable(error)
+
+
+def merge_segments(intervals):
+    """Sorted, merged [start, end] list."""
+    out = []
     for s, e in sorted(intervals):
-        if end is None or s > end:
-            total += e - s
-            end = e
-        elif e > end:
-            total += e - end
-            end = e
-    return total
+        if out and s <= out[-1][1]:
+            if e > out[-1][1]:
+                out[-1][1] = e
+        else:
+            out.append([s, e])
+    return out
+
+
+def _bound_segments(segs, cap):
+    """Coalesce the smallest gaps until at most `cap` segments remain."""
+    gap = 0.0
+    threshold = 0.01
+    while len(segs) > cap:
+        merged = [list(segs[0])]
+        for s, e in segs[1:]:
+            if s - merged[-1][1] <= threshold:
+                merged[-1][1] = max(merged[-1][1], e)
+            else:
+                merged.append([s, e])
+        segs, gap = merged, threshold
+        threshold *= 2
+    return segs, gap
 
 
 def busy_window_report():
     """Drain completed windows.
 
-    Returns {'<device>/route<i>': {count, ms}} (ms = sum of window lengths)
-    plus '_devices': {'<device>': {windows, sum_ms, union_ms, span_ms}} when
-    the windows could be placed on the device timeline (union_ms = card time
-    with at least one replay in flight; sum_ms - union_ms = co-run overlap;
-    span_ms = first window start to last window end in this drain), and
-    '_meta' counters when anything was carried, dropped or unreadable.
-
-    Never blocks on the GPU: a window whose end event has not completed yet
-    is carried to the next report via query(), not waited for.
+    Returns {'<device>/route<i>': {count, ms}} (ms = summed window length),
+    '_devices': {'<device>': {windows, sum_ms, segments, coalesced_gap_ms}}
+    where segments are the merged busy intervals of this drain in ms on the
+    card's anchor clock, and '_meta' when anything was carried, dropped,
+    unreadable, unplaced or the timers are disabled. Never blocks on the GPU
+    (query() before elapsed_time); never raises.
     """
     global _BUSY_WINDOWS
     with _BUSY_LOCK:
@@ -636,6 +690,7 @@ def busy_window_report():
         _BUSY_PENDING.clear()
         dropped, _BUSY_DROPPED[0] = _BUSY_DROPPED[0], 0
         anchors = dict(_BUSY_ANCHORS)
+        state = _BUSY_STATE[0]
     out = {}
     carry = []
     errors = 0
@@ -653,9 +708,8 @@ def busy_window_report():
         agg = out.setdefault(f'{dev}/route{idx}', {'count': 0, 'ms': 0.0})
         agg['count'] += 1
         agg['ms'] += round(ms, 3)
-        anchor = anchors.get(dev)
         try:
-            start = anchor.elapsed_time(ev0)
+            start = anchors[dev].elapsed_time(ev0)
             placed.setdefault(dev, []).append((start, start + ms))
         except Exception:  # noqa: BLE001  (no anchor or cross-stream timing refused)
             unplaced += 1
@@ -664,13 +718,18 @@ def busy_window_report():
         _BUSY_PENDING.extend(carry[:room])
         dropped += max(0, len(carry) - room)
     if placed:
-        out['_devices'] = {dev: {'windows': len(iv), 'sum_ms': round(sum(e - s for s, e in iv), 3),
-                                 'union_ms': round(_union_ms(iv), 3),
-                                 'span_ms': round(max(e for _, e in iv) - min(s for s, _ in iv), 3)}
-                           for dev, iv in placed.items()}
-    if carry or dropped or errors or unplaced:
+        devices = {}
+        for dev, iv in placed.items():
+            segs, gap = _bound_segments(merge_segments(iv), _BUSY_SEG_MAX)
+            devices[dev] = {'windows': len(iv), 'sum_ms': round(sum(e - s for s, e in iv), 3),
+                            'segments': [[round(s, 3), round(e, 3)] for s, e in segs],
+                            'coalesced_gap_ms': gap}
+        out['_devices'] = devices
+    if carry or dropped or errors or unplaced or state:
         out['_meta'] = {'carried': len(carry), 'dropped': dropped, 'errors': errors,
                         'unplaced': unplaced}
+        if state:
+            out['_meta']['disabled'] = state
     return out
 
 
@@ -878,13 +937,9 @@ class GraphBlockRoute:
             try:
                 slot = group.slot_for(key, routed, options)
                 self.report.copies += group.fill(slot, routed, options)
-                _busy_anchor(self.device, lambda: torch.xpu.Event(enable_timing=True))
-                _ev0 = torch.xpu.Event(enable_timing=True)
-                _ev1 = torch.xpu.Event(enable_timing=True)
-                _ev0.record()
+                _busy = busy_begin(self.device)
                 entry.graph.replay()
-                _ev1.record()
-                _busy_record(self.device, self.index, _ev0, _ev1)
+                busy_end(_busy, self.device, self.index)
             finally:
                 CAPTURE_LOCK.release_shared()
         entry.replays += 1
