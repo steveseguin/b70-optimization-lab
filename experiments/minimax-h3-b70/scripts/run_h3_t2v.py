@@ -4540,13 +4540,15 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
                        "gate": "2.0x at 960x544 fp32, bytewise-equal to single (2026-09-20)"}
 
     shared = {k: v for k, v in timings.items()}  # loads and encodes so far are the shared costs
-    for i, clip in enumerate(clips):
+    try:
+     for i, clip in enumerate(clips):
         before = set(timings)
         if audio_worker is not None:
             from safetensors.torch import save_file as _save_st
 
             _save_st({"audio_latents": clip["audio_latents"].detach().to("cpu", copy=True).contiguous()},
                      str(audio_work / f"job-{i}.st"))
+            (audio_work / f"job-{i}.ready").write_text("1")
         if two_proc:
             video, latents = _decode_video_two_proc(
                 torch, args, timings, decode_device, clip["latents"], i, server=video_server
@@ -4599,7 +4601,8 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
         # Never accumulate host-side clips: 777 MB each at 960x544.
         del video, audio, latents, audio_latents
         clip["latents"] = clip["audio_latents"] = None
-    if video_server is not None:
+    finally:
+     if video_server is not None:
         (video_server["work"] / "stop").write_text("1")
         try:
             video_server["proc"].wait(timeout=60)
