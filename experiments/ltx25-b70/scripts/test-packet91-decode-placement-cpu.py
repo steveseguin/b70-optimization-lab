@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CPU-only tests for packet 91's decode placement. No XPU, no ComfyUI server.
+"""CPU-only tests for packet 91/91b's decode placement. No XPU, no ComfyUI server.
 
 1. Two decode workers: out-of-order completion still emits in clip order,
    and the two jobs really overlap.
@@ -223,6 +223,7 @@ def placement_case():
             super().__init__()
             self.lin = torch.nn.Linear(4, 4)
             self.register_buffer('steps', torch.tensor([1.0]))
+            self.register_buffer('timesteps', torch.tensor([0.5, 0.25]), persistent=False)
             self.window = torch.hann_window(8)          # plain tensor attribute
             self.dev = torch.device('cpu')
             self.empty = torch.empty(0)
@@ -247,6 +248,15 @@ def placement_case():
         raise AssertionError('an inexact copy was admitted')
     except RuntimeError as error:
         assert 'not exact' in str(error)
+    assert 'timesteps' not in src.state_dict(), 'test needs a non-persistent buffer'
+    only_np = lambda t, d: t.detach().clone().mul_(2) if t.shape == (2,) else t.detach().clone()
+    try:
+        placement.clone_module(src, 'cpu', 'cpu', stage=only_np)
+        raise AssertionError('a wrong non-persistent buffer was admitted')
+    except RuntimeError as error:
+        assert 'buffer:timesteps' in str(error), error
+    count, _nbytes = placement.verified_tensors(clone)
+    assert count == len(list(src.parameters())) + 2 + 2, count   # 2 params, 2 buffers, window + empty
     try:
         placement.clone_module(src, 'cpu', 'cpu', stage=lambda t, d: t.detach())
         raise AssertionError('a storage-sharing copy was admitted')
@@ -354,6 +364,275 @@ def node_path_case():
 
 
 case('node path: replica mode alternates cards, emits in order, saves and markers', node_path_case)
+
+# --- 8. capture lock: a capture excludes replica work and vice versa ----------------
+def load_capture_lock():
+    text = (HERE / 'ltx_graph_capture.py').read_text()
+    start, end = text.index('class CaptureReplayLock:'), text.index('CAPTURE_LOCK = CaptureReplayLock()')
+    ns = {'threading': threading}
+    exec(compile(text[start:end], 'ltx_graph_capture.py[lock]', 'exec'), ns)
+    return ns['CaptureReplayLock']()
+
+
+def capture_lock_case():
+    node = import_decode_node()
+    import ltx_decode_replica as placement
+    lock = load_capture_lock()
+    events = []
+    saved = (node._capture_lock, placement.decode_clip_replica, node._busy_begin, node._busy_end)
+    node._capture_lock = lambda: lock
+    node._busy_begin = lambda *a, **k: (None, None)
+    node._busy_end = lambda *a, **k: None
+
+    def fake_decode(*args):
+        assert lock.readers >= 1 and not lock.writer, 'replica decode ran without the shared capture lock'
+        events.append('decode-start')
+        time.sleep(0.3)
+        events.append('decode-end')
+        return torch.zeros(1), {'waveform': torch.zeros(1)}
+    placement.decode_clip_replica = fake_decode
+    node._PROBE.update(passed=True, sources=(id(None), id(None)))
+    node._REPLICAS.update({'video': types.SimpleNamespace(stream=None, device='xpu:1'),
+                           'audio': types.SimpleNamespace(stream=None, device='xpu:1')})
+    try:
+        # (a) a held capture (exclusive) blocks a replica decode
+        lock.acquire_exclusive()
+        t = threading.Thread(target=lambda: node.decode_replica(None, None, {}, {}))
+        t.start()
+        time.sleep(0.3)
+        assert events == [], 'replica decode started during a capture'
+        events.append('capture-end')
+        lock.release_exclusive()
+        t.join(5)
+        assert events == ['capture-end', 'decode-start', 'decode-end'], events
+        # (b) a running replica decode blocks a capture
+        events.clear()
+        t = threading.Thread(target=lambda: node.decode_replica(None, None, {}, {}))
+        t.start()
+        time.sleep(0.1)
+        lock.acquire_exclusive()
+        events.append('capture-start')
+        lock.release_exclusive()
+        t.join(5)
+        assert events == ['decode-start', 'decode-end', 'capture-start'], events
+        # (c) a capture blocks the construction copy too
+        events.clear()
+        lock.acquire_exclusive()
+        src = types.SimpleNamespace(first_stage_model=torch.nn.Linear(2, 2), device='cpu')
+        saved_clone, saved_dev = placement.clone_module, dict(placement.ALLOWED_DEVICES)
+        placement.clone_module = lambda *a, **k: (events.append('copy') or (torch.nn.Linear(2, 2), []))
+        placement.ALLOWED_DEVICES['replica'] = 'meta'
+        placement_check = placement.check_placement
+        placement.check_placement = lambda m, slot: True
+        t = threading.Thread(target=lambda: placement.build_replica(src, 'meta', threading.Lock(), lock,
+                                                                     make_stream=lambda d: None))
+        t.start()
+        time.sleep(0.3)
+        assert events == [], 'replica construction copied during a capture'
+        lock.release_exclusive()
+        t.join(5)
+        assert events == ['copy'], events
+        placement.clone_module, placement.check_placement = saved_clone, placement_check
+        placement.ALLOWED_DEVICES.clear()
+        placement.ALLOWED_DEVICES.update(saved_dev)
+    finally:
+        node._capture_lock, placement.decode_clip_replica, node._busy_begin, node._busy_end = saved
+        node._PROBE.update(passed=False, outcome='not run')
+        node._PROBE.pop('sources', None)
+        node._REPLICAS.clear()
+
+
+case('capture lock: capture blocks replica decode/copy, replica decode blocks capture', capture_lock_case)
+
+
+# --- 9. probe releases replicas on every non-pass verdict ---------------------------
+class FakeXpu:
+    def __init__(self):
+        self.reserved = 10 << 30
+        self.emptied = []
+
+    def memory_reserved(self, index):
+        return self.reserved
+
+    def mem_get_info(self, index):
+        return (32 << 30) - self.reserved, 32 << 30
+
+    def device(self, device):
+        import contextlib
+        return contextlib.nullcontext()
+
+    def empty_cache(self):
+        self.emptied.append(True)
+        self.reserved -= 2 << 30
+
+
+def probe_release_case():
+    node = import_decode_node()
+    import ltx_decode_replica as placement
+    lock = load_capture_lock()
+    fx = FakeXpu()
+    mm = types.ModuleType('comfy.model_management')
+    ns = {'_LOAD_LOCK': threading.Lock()}
+    exec('def fast_load_models_gpu(*a, **k):\n    return None', ns)
+    mm.load_models_gpu = ns['fast_load_models_gpu']
+    comfy_pkg = sys.modules.get('comfy') or types.ModuleType('comfy')
+    saved_mods = {k: sys.modules.get(k) for k in ('comfy', 'comfy.model_management')}
+    sys.modules['comfy'], sys.modules['comfy.model_management'] = comfy_pkg, mm
+    real_release = placement.release_replicas
+    patched = {
+        (node, '_capture_lock'): lambda: lock, (node, '_xpu_memory'): lambda i: {'allocated': 0, 'reserved': 0},
+        (node, '_new_stream'): lambda d: None, (node, '_load_probe_fixtures'): lambda packet: ['fx'],
+        (node, 'decode_native'): lambda *a: (torch.zeros(1), {'waveform': torch.zeros(1)}, {}),
+        (placement, 'build_replica'): lambda src, dev, ll, cl, make_stream=None:
+            types.SimpleNamespace(module=None, report={'bytes': 1}),
+        (placement, 'check_placement'): lambda m, slot: True,
+        (placement, 'free_bytes'): lambda device, xpu=None: (20 << 30, 'fake'),
+        (placement, 'release_replicas'): lambda r, d, cl, xpu=None: real_release(r, d, cl, xpu=fx),
+    }
+    saved = {k: getattr(*k) for k in patched}
+    for (obj, name), value in patched.items():
+        setattr(obj, name, value)
+    with tempfile.TemporaryDirectory() as tmp:
+        run = Path(tmp)
+        identity = {'model_verification_sha256': node.MODEL_SHA256, 'server_identity_sha256': 'x' * 64}
+        os.environ['LTX_ENCODER_IDENTITY_SHA256'] = 'x' * 64
+        shas = {n: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
+                for n, m in (('ltx_decode_replica.py', placement), ('pipeline_decode_node.py', node))}
+        (run / 'server-identity.json').write_text(json.dumps({'extension_sha256s': shas,
+                                                               'source_packet_path': tmp}))
+        node._context = lambda: (run, identity)
+        torch.use_deterministic_algorithms(True)
+        try:
+            verdicts = [('mismatch', lambda *a: (False, [{'passed': False}]), 'replica-not-exact', False),
+                        ('raises', lambda *a: (_ for _ in ()).throw(RuntimeError('decode exploded')), 'error', False),
+                        ('pass', lambda *a: (True, [{'passed': True}]), 'replica-exact', True)]
+            for name, rows_fn, outcome, resident in verdicts:
+                placement_rows = placement.probe_rows
+                placement.probe_rows = rows_fn
+                node.LTXDecodeReplicaProbe().apply('vae', 'audio_vae', 'probe-' + name)
+                placement.probe_rows = placement_rows
+                r = json.loads((run / ('decode-probe-probe-%s.json' % name)).read_text())
+                assert r['outcome'] == outcome, r
+                if resident:
+                    assert r['replicas_resident'] == ['audio', 'video'] and node._PROBE['passed'], r
+                    assert 'released' not in r
+                else:
+                    assert r['replicas_resident'] == [] and not node._PROBE['passed'], r
+                    assert r['released']['released'] == ['audio', 'video'], r
+                    assert r['released']['reserved_freed_bytes'] == 2 << 30, r['released']
+                    assert not node._REPLICAS
+            # post-probe low memory is also a non-pass verdict
+            node._REPLICAS.clear()
+            node._PROBE.update(passed=False)
+            placement.free_bytes = lambda device, xpu=None: (6 << 30, 'fake') if not node._PROBE.get('rows_done') \
+                else (0, 'fake')
+            placement_rows = placement.probe_rows
+
+            def rows_then_low(*a):
+                node._PROBE['rows_done'] = True
+                return True, [{'passed': True}]
+            placement.probe_rows = rows_then_low
+            node.LTXDecodeReplicaProbe().apply('vae', 'audio_vae', 'probe-lowmem')
+            placement.probe_rows = placement_rows
+            r = json.loads((run / 'decode-probe-probe-lowmem.json').read_text())
+            assert r['outcome'] == 'insufficient-memory' and r['replicas_resident'] == [] and 'released' in r, r
+        finally:
+            for (obj, name), value in saved.items():
+                setattr(obj, name, value)
+            for k, v in saved_mods.items():
+                if v is None:
+                    sys.modules.pop(k, None)
+                else:
+                    sys.modules[k] = v
+            node._PROBE.clear()
+            node._PROBE.update(passed=False, outcome='not run', receipt=None)
+            node._REPLICAS.clear()
+            os.environ.pop('LTX_ENCODER_IDENTITY_SHA256', None)
+
+
+case('probe: replicas released (memory recorded) on mismatch/error/low memory; kept only on pass',
+     probe_release_case)
+
+
+# --- 10. save record and placement-change refusal ------------------------------------
+def save_record_case():
+    node = import_decode_node()
+    with tempfile.TemporaryDirectory() as tmp:
+        run = Path(tmp)
+        node._context = lambda: (run, {})
+        out = node.LTXPipelineSaveRecord().apply('queued:f91b-rep-07/preview', 'f91b-rep-08')
+        assert out == {'ui': {'text': ['preview queued to the writer: f91b-rep-07/preview']}}, out
+        r = json.loads((run / 'pipeline-save-f91b-rep-08.json').read_text())
+        assert r['status'] == 'queued-to-writer' and r['saved_file'] is None, r
+        out = node.LTXPipelineSaveRecord().apply('f91b-rep-07/preview_00001_.mp4', 'f91b-rep-09')
+        assert out['ui']['images'][0]['filename'] == 'preview_00001_.mp4'
+
+
+case('save record: a queued preview is reported as status text, never as a file path', save_record_case)
+
+
+def placement_change_case():
+    node = import_decode_node()
+    import ltx_pipeline as p
+    import ltx_decode_replica as placement
+    conflicts = node.placement_change_conflicts
+    assert conflicts(None, 'pipeline-replica', 100, [99]) == []
+    assert conflicts('pipeline-save', 'pipeline-save', 100, [99]) == []
+    assert conflicts('pipeline-replica', 'pipeline-save', 100, [98, 99]) == [98, 99]
+    assert conflicts('pipeline-save', 'pipeline-replica', 208689, [208216, 208587]) == [], 'fresh base must pass'
+    p.clear()
+    with tempfile.TemporaryDirectory() as tmp:
+        run = Path(tmp)
+        os.environ['LTX_ENCODER_RUN_DIR'] = tmp
+        os.environ['LTX_ENCODER_IDENTITY_SHA256'] = 'x' * 64
+        identity = {'model_verification_sha256': node.MODEL_SHA256, 'server_identity_sha256': 'x' * 64}
+        shas = {n: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
+                for n, m in (('ltx_pipeline.py', p), ('ltx_decode_replica.py', placement),
+                             ('pipeline_decode_node.py', node))}
+        (run / 'server-identity.json').write_text(json.dumps({'extension_sha256s': shas}))
+        node._context = lambda: (run, identity)
+        saved = (node.decode_native, node.decode_replica, placement.check_placement, node._WRITER.save_fn)
+        slow = lambda *a: (time.sleep(1.0), (torch.zeros(1, 2, 2, 3), {'waveform': torch.zeros(1, 2, 4),
+                                                                      'sample_rate': 48000}, {'wait_s': 0, 'vae_s': 1}))[1]
+        node.decode_native = node.decode_replica = slow
+        placement.check_placement = lambda m, s_: True
+        node._WRITER.save_fn = lambda *a: 'x.mp4'
+        node._PROBE.update(passed=True, sources=(id(None), id(None)))
+        node._REPLICAS.update({'video': types.SimpleNamespace(module=None), 'audio': types.SimpleNamespace(module=None)})
+        node._LAST_PLACEMENT['mode'] = None
+        try:
+            def prompt(idx, mode, name):
+                v = {'samples': torch.full((1, 4), float(idx))}
+                a = {'samples': torch.full((1, 2), float(idx))}
+                p.record_fingerprint(('sample-output', idx), {
+                    'video_finite': True, 'audio_finite': True,
+                    'video_sha256': hashlib.sha256(v['samples'].view(torch.uint8).numpy().tobytes()).hexdigest(),
+                    'audio_sha256': hashlib.sha256(a['samples'].view(torch.uint8).numpy().tobytes()).hexdigest()})
+                return node.LTXPipelineDecode().apply(None, None, v, a, mode, idx, 2 if mode == 'pipeline-replica' else 1, name)
+            prompt(902000, 'pipeline-replica', 'pc-0')
+            prompt(902001, 'pipeline-replica', 'pc-1')
+            try:
+                prompt(902002, 'pipeline-save', 'pc-2')
+                raise AssertionError('placement change with pending same-stream jobs was admitted')
+            except node.PlacementChangeRefused as error:
+                assert 'pending' in str(error)
+            r = json.loads((run / 'pipeline-decode-pc-2.json').read_text())
+            assert r['passed'] is False and 'placement change' in r['refused'], r
+            assert node._failed is False and 902002 not in p.pending('decode')
+            prompt(902100, 'pipeline-save', 'pc-3')      # fresh base: admitted
+        finally:
+            node.decode_native, node.decode_replica, placement.check_placement, node._WRITER.save_fn = saved
+            node._PROBE.update(passed=False, outcome='not run')
+            node._PROBE.pop('sources', None)
+            node._REPLICAS.clear()
+            node._LAST_PLACEMENT['mode'] = None
+            os.environ.pop('LTX_ENCODER_RUN_DIR', None)
+            os.environ.pop('LTX_ENCODER_IDENTITY_SHA256', None)
+            time.sleep(1.2)
+            p.clear()
+
+
+case('placement change refused while same-stream decode jobs pend; fresh base admitted', placement_change_case)
 
 for name, ok, err in results:
     print(f'{"ok " if ok else "BAD"} {name}{"" if ok else "  " + err}')

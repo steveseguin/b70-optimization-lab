@@ -26,11 +26,28 @@ Nothing here is trusted on faith: the replica placements are refused until
 both cards in this server process and every image and waveform is
 byte-identical across the two cards and to the stored references.
 
+Lock order (packet 91b). Every eager replica operation on xpu:1 -- the
+construction copy, the probe's replica decodes and every pipelined replica
+decode -- holds ``ltx_graph_capture.CAPTURE_LOCK`` in SHARED mode, the mode
+the sampler's graph replays use, so a graph capture (exclusive) never
+overlaps replica kernels or allocations and vice versa. Acquisition order is
+always outer to inner:
+
+    decode node _REPLICA_LOCK  ->  CAPTURE_LOCK (shared)  ->  Replica.lock
+    resident fast-path _LOAD_LOCK  ->  CAPTURE_LOCK (shared)   (construction)
+
+No code path holds CAPTURE_LOCK (either mode) while taking _REPLICA_LOCK,
+Replica.lock or _LOAD_LOCK (graph captures and replays only synchronise,
+fill static buffers and record/replay), so no cycle exists. The decode
+thread never captures, so it never requests the exclusive mode while
+holding the shared one.
+
 Placement is an explicit allowlist (``ALLOWED_DEVICES``); a replica whose
 tensors are not all on its slot's device is refused. The VAE graph gate is
 not involved: every packet-91 arm runs it in ``original`` mode, and no
 replica decode is graph-captured.
 """
+import contextlib
 import copy
 import hashlib
 import threading
@@ -54,6 +71,18 @@ MIN_FREE_AFTER_PROBE = 1 * 2**30
 def require(value, message):
     if not value:
         raise RuntimeError(message)
+
+
+@contextlib.contextmanager
+def shared(capture_lock):
+    """Hold the capture/replay lock in the replay (shared) mode."""
+    require(capture_lock is not None and hasattr(capture_lock, 'acquire_shared'),
+            'Replica work needs the graph capture/replay lock')
+    capture_lock.acquire_shared()
+    try:
+        yield
+    finally:
+        capture_lock.release_shared()
 
 
 def slot_for(mode, index):
@@ -149,23 +178,35 @@ def clone_module(src, source_device, device, stage=None):
                 if isinstance(value, torch.device) and value == source_device:
                     setattr(sub, name, torch.device(device))
                     rewritten.append(type(sub).__name__ + '.' + name)
+        # Every parameter, every buffer (persistent AND non-persistent:
+        # state_dict() would skip e.g. the NA decoder's
+        # default_inference_timesteps) and every plain tensor attribute.
         mismatched = []
-        src_state, rep_state = src.state_dict(), module.state_dict()
-        require(list(src_state) == list(rep_state), 'Replica state-dict keys differ')
-        for key in src_state:
-            if (src_state[key].numel() and src_state[key].data_ptr() == rep_state[key].data_ptr()) or \
-                    not _equal_on_host(src_state[key], rep_state[key]):
-                mismatched.append(key)
+        pairs = []
+        for kind, a_items, b_items in (('param', list(src.named_parameters()), list(module.named_parameters())),
+                                       ('buffer', list(src.named_buffers()), list(module.named_buffers()))):
+            require([n for n, _ in a_items] == [n for n, _ in b_items], 'Replica %s names differ' % kind)
+            pairs += [(kind + ':' + n, a, b) for (n, a), (_m, b) in zip(a_items, b_items)]
         src_attrs, rep_attrs = _plain_tensor_attrs(src), _plain_tensor_attrs(module)
         require(len(src_attrs) == len(rep_attrs), 'Replica tensor attributes differ')
         for (_o1, n1, a), (_o2, n2, b) in zip(src_attrs, rep_attrs):
-            if n1 != n2 or (a.numel() and a.data_ptr() == b.data_ptr()) or not _equal_on_host(a, b):
-                mismatched.append('attr:' + n1)
+            require(n1 == n2, 'Replica tensor attribute names differ')
+            pairs.append(('attr:' + n1, a, b))
+        for name, a, b in pairs:
+            if (a.numel() and a.data_ptr() == b.data_ptr()) or not _equal_on_host(a, b):
+                mismatched.append(name)
     require(not mismatched, 'Replica copy is not exact or shares storage: %s' % mismatched[:4])
     return module, rewritten
 
 
-def build_replica(vae, device, load_lock, make_stream=None):
+def verified_tensors(module):
+    """Count and bytes of what clone_module verifies (params, all buffers, tensor attrs)."""
+    tensors = [t for _, t in module.named_parameters()] + [t for _, t in module.named_buffers()] + \
+        [t for _o, _n, t in _plain_tensor_attrs(module)]
+    return len(tensors), int(sum(t.numel() * t.element_size() for t in tensors))
+
+
+def build_replica(vae, device, load_lock, capture_lock, make_stream=None):
     """Exact copy of `vae.first_stage_model` on `device`, outside ComfyUI's model management."""
     src = vae.first_stage_model
     source_device = torch.device(str(vae.device))
@@ -174,15 +215,17 @@ def build_replica(vae, device, load_lock, make_stream=None):
     require(slot == ['replica'], 'Replica device is not the admitted replica card')
     require(not placement_offenders(src, source_device),
             'Resident VAE is not wholly on its device; refusing to copy a moving model')
-    # Under ComfyUI's load lock, so model management cannot move the source mid-copy.
-    with load_lock:
+    # Under ComfyUI's load lock, so model management cannot move the source
+    # mid-copy, and the capture lock (shared), so no graph capture is recording
+    # while the copies allocate on xpu:1. Order: _LOAD_LOCK -> CAPTURE_LOCK.
+    with load_lock, shared(capture_lock):
         module, rewritten = clone_module(src, source_device, device)
     check_placement(module, 'replica')
     stream = (make_stream or (lambda d: torch.xpu.Stream(device=d)))(device)
-    state = module.state_dict()
+    count, nbytes = verified_tensors(module)
     report = {'class': type(src).__name__, 'device': str(device),
-              'tensors': len(state) + len(_plain_tensor_attrs(module)),
-              'bytes': int(sum(t.numel() * t.element_size() for t in state.values())),
+              'tensors_byte_verified': count, 'bytes': nbytes,
+              'verified': 'parameters, all buffers (persistent and non-persistent), plain tensor attributes',
               'device_attrs_rewritten': rewritten}
     return Replica(module, device, stream, report)
 
@@ -220,7 +263,10 @@ def vae_decode_on(replica, vae, samples_in):
 
 
 def decode_clip_replica(video_replica, audio_replica, vae, audio_vae, video_latent, audio_latent):
-    """What VAEDecode and LTXVAudioVAEDecode return, decoded on the replica card."""
+    """What VAEDecode and LTXVAudioVAEDecode return, decoded on the replica card.
+
+    The caller must hold CAPTURE_LOCK in shared mode around this call (see
+    the lock order in the module docstring)."""
     latent = video_latent['samples']
     if latent.is_nested:
         latent = latent.unbind()[0]
@@ -235,15 +281,38 @@ def decode_clip_replica(video_replica, audio_replica, vae, audio_vae, video_late
     return images, audio
 
 
-def free_bytes(device):
+def free_bytes(device, xpu=None):
     """Device free memory: driver view when available, else total - torch reserved."""
+    xpu = xpu or torch.xpu
     index = torch.device(device).index
     try:
-        free, _total = torch.xpu.mem_get_info(index)
+        free, _total = xpu.mem_get_info(index)
         return int(free), 'mem_get_info'
     except Exception:  # noqa: BLE001
-        total = torch.xpu.get_device_properties(index).total_memory
-        return int(total - torch.xpu.memory_reserved(index)), 'total-minus-reserved'
+        total = xpu.get_device_properties(index).total_memory
+        return int(total - xpu.memory_reserved(index)), 'total-minus-reserved'
+
+
+def release_replicas(replicas, device, capture_lock, xpu=None):
+    """Drop every replica reference and return the freed device memory.
+
+    Called on any non-passing probe verdict so the control arm keeps today's
+    headroom on xpu:1. empty_cache runs on xpu:1 only (torch.xpu.empty_cache
+    acts on the current device) and under CAPTURE_LOCK (shared), so it never
+    overlaps a graph capture; it releases only unused blocks of the default
+    allocator pool, never a captured graph's private pool."""
+    import gc
+    xpu = xpu or torch.xpu
+    index = torch.device(device).index
+    before = {'reserved': int(xpu.memory_reserved(index)), 'free': free_bytes(device, xpu)}
+    names = sorted(replicas)
+    replicas.clear()
+    gc.collect()
+    with shared(capture_lock), xpu.device(device):
+        xpu.empty_cache()
+    after = {'reserved': int(xpu.memory_reserved(index)), 'free': free_bytes(device, xpu)}
+    return {'released': names, 'before': before, 'after': after,
+            'reserved_freed_bytes': before['reserved'] - after['reserved']}
 
 
 def probe_rows(fixtures, load_tensors, native_decode, replica_decode):

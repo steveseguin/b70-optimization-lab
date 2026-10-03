@@ -23,6 +23,7 @@ embedded prompt metadata). The prompt emits its path through
 LTXPipelineSaveRecord, an output node that records but does not encode.
 """
 import os
+import contextlib
 import hashlib
 import json
 from pathlib import Path
@@ -217,23 +218,64 @@ class ReplicaNotQualified(RuntimeError):
     Raised before any job is submitted, so it does not latch the pipeline."""
 
 
-def _busy_begin(device):
+class PlacementChangeRefused(RuntimeError):
+    """A placement change while the same index stream still has decode jobs
+    pending (they would be collected under the new depth, or stranded).
+    Raised before any job is submitted, so it does not latch the pipeline."""
+
+
+# Refusals that are raised before any decode job is submitted: they fail the
+# request with a receipt but leave the decode node and the pipeline usable.
+NON_LATCHING = (ReplicaNotQualified, PlacementChangeRefused)
+_LAST_PLACEMENT = {'mode': None}
+# A pending decode job this close below the new request's index belongs to the
+# same stream; fresh index bases (>= 100 apart in every campaign) are outside it.
+STREAM_WINDOW = 2 * pipeline.MAX_PENDING
+
+
+def placement_change_conflicts(previous_mode, mode, decode_index, pending):
+    """Pending decode indices that a mode change at `decode_index` would strand."""
+    if previous_mode is None or previous_mode == mode:
+        return []
+    return [i for i in pending if decode_index - STREAM_WINDOW <= i < decode_index]
+
+
+def _capture_lock():
+    """The process-wide graph capture/replay lock the sampler uses."""
+    import ltx_graph_capture
+    return ltx_graph_capture.CAPTURE_LOCK
+
+
+def _busy_begin(device, stream=None):
+    """Decode-job busy window start on `device` (on `stream` if given). Never raises."""
     try:
         import ltx_graph_capture as capture
-        with torch.xpu.device(device):
+        if not capture._BUSY_ON[0]:
+            return None, None
+        with torch.xpu.device(device), (torch.xpu.stream(stream) if stream is not None
+                                        else contextlib.nullcontext()):
             return capture, capture.busy_begin(device)
     except Exception:  # noqa: BLE001  (instrumentation must not fail a clip)
         return None, None
 
 
-def _busy_end(capture, token, device):
+def _busy_end(capture, token, device, stream=None):
     if capture is None or token is None:
         return
     try:
-        with torch.xpu.device(device):
+        with torch.xpu.device(device), (torch.xpu.stream(stream) if stream is not None
+                                        else contextlib.nullcontext()):
             capture.busy_end(token, device, 'decode')
     except Exception:  # noqa: BLE001
         pass
+
+
+def _xpu_memory(index):
+    return {'allocated': int(torch.xpu.memory_allocated(index)), 'reserved': int(torch.xpu.memory_reserved(index))}
+
+
+def _new_stream(device):
+    return torch.xpu.Stream(device=device)
 
 
 def decode_native(vae, audio_vae, video_latent, audio_latent):
@@ -255,14 +297,14 @@ def decode_replica(vae, audio_vae, video_latent, audio_latent):
     require(_PROBE.get('sources') == (id(vae), id(audio_vae)),
             'Replica decode for VAEs other than the ones the probe qualified')
     video, audio_rep = _REPLICAS['video'], _REPLICAS['audio']
+    capture_lock = _capture_lock()
     t0 = time.monotonic()
-    with _REPLICA_LOCK:
+    # Lock order: _REPLICA_LOCK -> CAPTURE_LOCK (shared) -> Replica.lock.
+    with _REPLICA_LOCK, placement.shared(capture_lock):
         t1 = time.monotonic()
-        with torch.xpu.device(video.device), torch.xpu.stream(video.stream):
-            cap, token = _busy_begin(placement.REPLICA_DEVICE)
+        cap, token = _busy_begin(placement.REPLICA_DEVICE, video.stream)
         images, audio = placement.decode_clip_replica(video, audio_rep, vae, audio_vae, video_latent, audio_latent)
-        with torch.xpu.device(video.device), torch.xpu.stream(video.stream):
-            _busy_end(cap, token, placement.REPLICA_DEVICE)
+        _busy_end(cap, token, placement.REPLICA_DEVICE, video.stream)
         t2 = time.monotonic()
     return images, audio, {'wait_s': round(t1 - t0, 4), 'vae_s': round(t2 - t1, 4)}
 
@@ -294,7 +336,7 @@ class LTXPipelineDecode:
         try:
             return self._apply(vae, audio_vae, video_latent, audio_latent,
                                mode, clip_index, depth, run_name, upstream_depth)
-        except ReplicaNotQualified:
+        except NON_LATCHING:
             raise
         except BaseException:
             _failed = True
@@ -410,7 +452,15 @@ class LTXPipelineDecode:
                     done_marker('decode', decode_index, {'slot': slot})
                     return images, audio, latents[0], latents[1], saved
 
+                conflicts = placement_change_conflicts(_LAST_PLACEMENT['mode'], mode, decode_index,
+                                                       pipeline.pending('decode'))
+                if conflicts:
+                    report['refused'] = ('placement change %s -> %s while decode jobs %s of this stream are '
+                                         'pending; start the new placement on a fresh index base'
+                                         % (_LAST_PLACEMENT['mode'], mode, conflicts))
+                    raise PlacementChangeRefused(report['refused'])
                 out, detail = pipeline.run_behind('decode', decode_index, depth, decode_job)
+                _LAST_PLACEMENT['mode'] = mode
                 if out is None:
                     out = (torch.zeros(1, 8, 8, 3), {'waveform': torch.zeros(1, 2, 8), 'sample_rate': 48000},
                            video_latent, audio_latent, 'fill')
@@ -453,6 +503,16 @@ class LTXPipelineSaveRecord:
         if saved_file == 'fill':
             return {'ui': {'text': ['pipeline fill: nothing emitted']}}
         run, _identity = _context()
+        if saved_file.startswith('queued:'):
+            # Packet 91: the preview is written later by the writer thread; the
+            # real path is in that save's done marker and in a later decode
+            # receipt's preview_writer.saves. Not a file yet, so ComfyUI gets
+            # text, never a path that may not exist.
+            write_json(run / ('pipeline-save-' + run_name + '.json'),
+                       {'schema': 'ltx.pipeline-save-record.v2', 'run_name': run_name,
+                        'status': 'queued-to-writer', 'prefix': saved_file[len('queued:'):],
+                        'saved_file': None})
+            return {'ui': {'text': ['preview queued to the writer: ' + saved_file[len('queued:'):]]}}
         write_json(run / ('pipeline-save-' + run_name + '.json'),
                    {'schema': 'ltx.pipeline-save-record.v1', 'run_name': run_name, 'saved_file': saved_file})
         subfolder, file = os.path.split(saved_file)
@@ -523,29 +583,29 @@ class LTXDecodeReplicaProbe:
                   'replica_device': placement.REPLICA_DEVICE, 'passed': False, 'outcome': 'error'}
         started = time.monotonic()
         _PROBE.update(passed=False, outcome='running')
+        capture_lock = None
         try:
             fixtures = _load_probe_fixtures(Path(server['source_packet_path']))
+            capture_lock = _capture_lock()
             import comfy.model_management as mm
             load_lock = getattr(mm.load_models_gpu, '__globals__', {}).get('_LOAD_LOCK')
             require(load_lock is not None, 'The resident fast path (and its load lock) is not installed')
-            report['memory_before'] = {'xpu:1': {'allocated': int(torch.xpu.memory_allocated(1)),
-                                                 'reserved': int(torch.xpu.memory_reserved(1))},
+            report['memory_before'] = {'xpu:1': _xpu_memory(1),
                                        'xpu:1_free': placement.free_bytes(placement.REPLICA_DEVICE)}
             if not _REPLICAS:
-                stream = torch.xpu.Stream(device=placement.REPLICA_DEVICE)
-                built = {}
+                stream = _new_stream(placement.REPLICA_DEVICE)
+                # Registered as soon as each copy exists, so any non-pass
+                # verdict below (including an exception half-way) releases it.
+                _PROBE['sources'] = (id(vae), id(audio_vae))
                 for key, source in (('video', vae), ('audio', audio_vae)):
-                    built[key] = placement.build_replica(source, placement.REPLICA_DEVICE, load_lock,
-                                                         make_stream=lambda _d: stream)
-                report['replicas'] = {k: r.report for k, r in built.items()}
+                    _REPLICAS[key] = placement.build_replica(source, placement.REPLICA_DEVICE, load_lock,
+                                                             capture_lock, make_stream=lambda _d: stream)
+                report['replicas'] = {k: r.report for k, r in _REPLICAS.items()}
                 free, how = placement.free_bytes(placement.REPLICA_DEVICE)
                 report['xpu:1_free_after_build'] = [free, how]
                 if free < placement.MIN_FREE_AFTER_BUILD:
                     report['outcome'] = 'insufficient-memory'
-                    del built
                     return {'ui': {'text': [report['outcome']]}}
-                _REPLICAS.update(built)
-                _PROBE['sources'] = (id(vae), id(audio_vae))
             require(_PROBE.get('sources') == (id(vae), id(audio_vae)),
                     'Probe VAEs differ from the ones the replicas were built from')
             replicas_ok = all(placement.check_placement(r.module, 'replica') for r in _REPLICAS.values())
@@ -556,15 +616,15 @@ class LTXDecodeReplicaProbe:
 
             def replica(v, a):
                 video, audio_rep = _REPLICAS['video'], _REPLICAS['audio']
-                with _REPLICA_LOCK:
+                # Lock order: _REPLICA_LOCK -> CAPTURE_LOCK (shared) -> Replica.lock.
+                with _REPLICA_LOCK, placement.shared(capture_lock):
                     return placement.decode_clip_replica(video, audio_rep, vae, audio_vae, v, a)
 
             passed, rows = placement.probe_rows(fixtures, _load_fixture_tensors, native, replica)
             report['rows'] = rows
             free, how = placement.free_bytes(placement.REPLICA_DEVICE)
             report['xpu:1_free_after_probe'] = [free, how]
-            report['memory_after'] = {'xpu:1': {'allocated': int(torch.xpu.memory_allocated(1)),
-                                                'reserved': int(torch.xpu.memory_reserved(1))}}
+            report['memory_after'] = {'xpu:1': _xpu_memory(1)}
             if not passed:
                 report['outcome'] = 'replica-not-exact'
             elif free < placement.MIN_FREE_AFTER_PROBE:
@@ -577,6 +637,17 @@ class LTXDecodeReplicaProbe:
             report['outcome'] = 'error'
             report['error'] = ''.join(traceback.format_exception(type(error), error, error.__traceback__))[-4000:]
         finally:
+            if not report['passed'] and _REPLICAS:
+                # Only a passed probe may leave replicas resident on xpu:1.
+                try:
+                    with _REPLICA_LOCK:
+                        report['released'] = placement.release_replicas(
+                            _REPLICAS, placement.REPLICA_DEVICE, capture_lock or _capture_lock())
+                except Exception as error:  # noqa: BLE001
+                    _REPLICAS.clear()
+                    report['release_error'] = repr(error)[:400]
+                _PROBE.pop('sources', None)
+            report['replicas_resident'] = sorted(_REPLICAS)
             _PROBE.update(passed=bool(report['passed']), outcome=report['outcome'])
             report['seconds'] = round(time.monotonic() - started, 3)
             report['written_unix'] = time.time()
