@@ -23,20 +23,22 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 import subprocess
+import sys
 import urllib.parse
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TEXT_SUFFIXES = {".md", ".sh", ".py", ".json", ".txt", ".yml", ".yaml", ".toml", ".cfg", ".env"}
-PATH_RE = re.compile(r"(?<![\w/.-])((?:repro|experiments|scripts|tools|packages|data|models|results|docs|families|audits)/[A-Za-z0-9_@+./-]+)")
+PATH_RE = re.compile(r"(?<![\w/.$-])((?:repro|experiments|scripts|tools|packages|data|models|results|docs|families|audits)/[A-Za-z0-9_@+./=*{}$\[\]-]+)")
 MD_LINK_RE = re.compile(r"\]\((\.{1,2}/[A-Za-z0-9_@+./-]+)\)")
 HOST_RE = re.compile(r"(?<![\w-])(/home/[A-Za-z0-9_-]+|/mnt/[A-Za-z0-9_-]+|/opt/[A-Za-z0-9_.-]+|~/\.[A-Za-z0-9_-]+|/root/[A-Za-z0-9_.-]+)(/[^\s\"'`)>;|,]*)?")
 IMAGE_RE = re.compile(r"(neural-download/[A-Za-z0-9._-]+:[A-Za-z0-9._-]+)")
 RELEASE_RE = re.compile(r"https://github\.com/steveseguin/b70-optimization-lab/releases/download/([A-Za-z0-9._-]+)/([A-Za-z0-9._+%-]+)")
 HOST_REQUIREMENTS = ("/opt/intel/oneapi",)
-CONTAINER_PATHS = ("/opt/venv", "/opt/intel/oneapi", "/root/.cache", "/root/.config", "/model", "/opt/uv", "/opt/localmaxx")
+CONTAINER_PATHS = ("/opt/venv", "/opt/intel/oneapi", "/root/.cache", "/root/.config", "/model", "/opt/uv", "/opt/localmaxx", "/opt/vllm-src")
 STRIP_TRAIL = ".,;:)]}>'\"`*"
 
 
@@ -56,17 +58,104 @@ def clean(token: str) -> str:
     return token
 
 
-def release_assets(tag: str, cache: dict[str, set[str]]) -> set[str]:
+def release_assets(tag: str, cache: dict[str, set[str] | None]) -> set[str] | None:
+    """None means unavailable, not an authoritative empty release."""
     if tag not in cache:
         try:
             out = subprocess.run(["gh", "release", "view", tag, "--json", "assets", "--jq", ".assets[].name"], check=True, capture_output=True, text=True).stdout
             cache[tag] = set(out.split())
-        except Exception:
-            cache[tag] = set()
+        except (OSError, subprocess.CalledProcessError) as exc:
+            reason = f"gh exited {exc.returncode}" if isinstance(exc, subprocess.CalledProcessError) else "gh could not be executed"
+            print(f"warning: release assets unavailable for {tag}: {reason}; asset existence was not checked", file=sys.stderr)
+            cache[tag] = None
     return cache[tag]
 
 
-def scan_package(pkg: dict, tracked: set[str], rel_cache: dict) -> dict:
+def repo_paths(line: str) -> list[str]:
+    # Do not turn a template/glob/range into a nonexistent literal prefix.
+    return [clean(m) for m in PATH_RE.findall(line)
+            if not re.search(r"[${*\[]|\.\.", m)]
+
+
+def docker_instructions(text: str) -> list[tuple[int, str, str]]:
+    """Logical instructions, including continuations and RUN heredocs."""
+    rows = []
+    pending = ""
+    start = 1
+    heredoc = None
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if heredoc:
+            if line.strip() == heredoc:
+                heredoc = None
+            continue
+        if not pending:
+            start = lineno
+        pending += line.rstrip().removesuffix("\\") + " "
+        if line.rstrip().endswith("\\"):
+            continue
+        match = re.match(r"\s*([A-Z]+)\s+(.*)", pending, re.S | re.I)
+        if match:
+            op, body = match.groups()
+            rows.append((start, op.upper(), body.strip()))
+            marker = re.search(r"<<-?\s*['\"]?([\w]+)", body)
+            if marker:
+                heredoc = marker[1]
+        elif pending.lstrip().startswith("#"):
+            rows.append((start, "COMMENT", pending.strip()))
+        pending = ""
+    return rows
+
+
+def copy_paths(body: str) -> list[str]:
+    if re.search(r"--from(?:=|\s)", body):
+        return []  # Sources are in another image/stage.
+    body = re.sub(r"--[\w-]+(?:=\S+)?\s*", "", body).strip()
+    try:
+        values = json.loads(body) if body.startswith("[") else shlex.split(body)
+        return values if isinstance(values, list) and all(isinstance(v, str) for v in values) else []
+    except (ValueError, json.JSONDecodeError):
+        return []
+
+
+def container_entrypoints(tracked: set[str]) -> set[str]:
+    """Identify repo scripts copied to a Docker CMD/ENTRYPOINT destination."""
+    scripts = set()
+    for rel in sorted(tracked):
+        if "Dockerfile" not in Path(rel).name:
+            continue
+        try:
+            rows = docker_instructions((ROOT / rel).read_text(errors="replace"))
+        except OSError:
+            continue
+        entrypoints = " ".join(body for _, op, body in rows if op in ("CMD", "ENTRYPOINT"))
+        for _, op, body in rows:
+            if op != "COPY":
+                continue
+            paths = copy_paths(body)
+            for source in paths[:-1]:
+                destination = paths[-1]
+                if destination.endswith("/"):
+                    destination += Path(source).name
+                if destination not in re.findall(r"/[\w./-]+", entrypoints):
+                    continue
+                for candidate in (Path(source), Path(rel).parent / source):
+                    if str(candidate) in tracked:
+                        scripts.add(str(candidate))
+    return scripts
+
+
+def host_path_is_container(line: str, start: int) -> bool:
+    """Docker env/workdir/target values are inside the image; mount sources aren't."""
+    before = line[:start]
+    return bool(re.search(r"(?:--env(?:=|\s+)|-e\s+)[\"']?[A-Za-z_][\w]*=$|"
+                          r"--workdir(?:=|\s+)[\"']?$|(?:target|destination|dst)=$|"
+                          r"(?:-v\s+|--volume(?:=|\s+))[\"']?[^\s]+:$", before))
+
+
+def scan_package(pkg: dict, tracked: set[str], rel_cache: dict, container_scripts: set[str] | None = None,
+                 offline: bool = False) -> dict:
+    container_scripts = container_scripts or set()
+    unavailable_tags = set()
     seeds: list[str] = [pkg["guide"]]
     pkg_readme = Path(pkg["manifest"]).parent / "README.md"
     if (ROOT / pkg_readme).exists():
@@ -74,7 +163,7 @@ def scan_package(pkg: dict, tracked: set[str], rel_cache: dict) -> dict:
     lane_dirs = {str(Path(pkg["guide"]).parent)}
     seeds += pkg.get("dependencies", [])
     for cmd in (pkg.get("commands") or {}).values():
-        seeds += [m for m in PATH_RE.findall(cmd)]
+        seeds += repo_paths(cmd)
     queue = [s for s in dict.fromkeys(seeds)]
     seen: set[str] = set()
     findings = defaultdict(list)
@@ -103,8 +192,17 @@ def scan_package(pkg: dict, tracked: set[str], rel_cache: dict) -> dict:
             text = path.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        for lineno, line in enumerate(text.splitlines(), 1):
-            for m in PATH_RE.findall(line):
+        is_dockerfile = "Dockerfile" in path.name
+        rows = docker_instructions(text) if is_dockerfile else [(n, "", line) for n, line in enumerate(text.splitlines(), 1)]
+        for lineno, op, line in rows:
+            # Only COPY/ADD sources refer to the host build context. Other
+            # instructions, destinations and stage-copy sources live in images.
+            path_line = line
+            if is_dockerfile:
+                path_line = " ".join(copy_paths(line)[:-1]) if op in ("COPY", "ADD") else (line if op == "COMMENT" else "")
+            elif rel in container_scripts:
+                path_line = ""
+            for m in repo_paths(path_line):
                 m = clean(m)
                 if not m or m.endswith("/"):
                     continue
@@ -142,14 +240,17 @@ def scan_package(pkg: dict, tracked: set[str], rel_cache: dict) -> dict:
                     ):
                         queue.append(r)
             if kind == "recipe" and (rel.endswith((".sh", ".py")) or "Dockerfile" in rel):
-                for base, tail in HOST_RE.findall(line):
+                for match in HOST_RE.finditer(path_line):
+                    base, tail = match.groups()
                     full = base + (tail or "")
-                    if "/path/to" in full or full.startswith(CONTAINER_PATHS) or full.startswith("/root/.cache/vllm"):
+                    if host_path_is_container(path_line, match.start()):
+                        continue
+                    if "/path/to" in full or any(full == p or full.startswith(p + "/") for p in CONTAINER_PATHS):
                         continue
                     if full.startswith(HOST_REQUIREMENTS):
                         findings["host_requirement"].append({"path": full, "referenced_by": f"{rel}:{lineno}"})
                         continue
-                    before = line.split(base)[0]
+                    before = path_line[:match.start()]
                     overridable = (":-" in before[-60:]) or bool(re.search(r"[A-Z_]*DEFAULT[A-Z_]*\s*=", before)) or bool(re.search(r"(default|DEFAULT)\s*[=:(]", before))
                     key = "host_path_overridable_default" if overridable else "host_path_hardcoded"
                     findings[key].append({"path": full, "referenced_by": f"{rel}:{lineno}", "line": line.strip()[:160]})
@@ -161,7 +262,10 @@ def scan_package(pkg: dict, tracked: set[str], rel_cache: dict) -> dict:
                         images_built.add(img)
                 for tag, asset in RELEASE_RE.findall(line):
                     asset = urllib.parse.unquote(asset)
-                    if asset not in release_assets(tag, rel_cache):
+                    assets = None if offline else release_assets(tag, rel_cache)
+                    if assets is None:
+                        unavailable_tags.add(tag)
+                    elif asset not in assets:
                         findings["missing_release_asset"].append({"tag": tag, "asset": asset, "referenced_by": f"{rel}:{lineno}"})
     # builders anywhere in the repo count: image tags are global, not per lane
     for bp in list(ROOT.glob("repro/**/build-*.sh")) + list(ROOT.glob("repro/**/Dockerfile*")) + list(ROOT.glob("scripts/build-*.sh")):
@@ -178,7 +282,9 @@ def scan_package(pkg: dict, tracked: set[str], rel_cache: dict) -> dict:
     for k, v in findings.items():
         uniq = {json.dumps(x, sort_keys=True): x for x in v}
         findings[k] = list(uniq.values())
-    return {"id": pkg["id"], "status": pkg.get("status"), "files_crawled": len(seen), "findings": dict(findings)}
+    return {"id": pkg["id"], "status": pkg.get("status"), "files_crawled": len(seen), "findings": dict(findings),
+            "release_assets_unavailable": bool(unavailable_tags),
+            "warnings": [f"Release assets unavailable for {tag}; existence not checked" for tag in sorted(unavailable_tags)]}
 
 
 def main() -> int:
@@ -186,15 +292,19 @@ def main() -> int:
     ap.add_argument("--package", action="append")
     ap.add_argument("--out", type=Path)
     ap.add_argument("--markdown", type=Path)
+    ap.add_argument("--offline", action="store_true", help="skip network release checks and explicitly mark them unavailable")
     a = ap.parse_args()
     catalog = json.loads((ROOT / "packages/catalog.json").read_text())
     tracked = tracked_files()
+    container_scripts = container_entrypoints(tracked)
     rel_cache: dict = {}
+    if a.offline:
+        print("warning: offline scan; release assets unavailable and not checked", file=sys.stderr)
     reports = []
     for pkg in catalog["packages"]:
         if a.package and pkg["id"] not in a.package:
             continue
-        reports.append(scan_package(pkg, tracked, rel_cache))
+        reports.append(scan_package(pkg, tracked, rel_cache, container_scripts, a.offline))
     # Guides that have no model package (lab-replay, research-status, capsules)
     # are scanned too, as informational lanes: their findings are reported but
     # never fail the scan, because they do not promise portability.
@@ -212,7 +322,7 @@ def main() -> int:
             "dependencies": list(guide.get("dependency_links") or []),
             "status": f"informational:{guide.get('classification')}",
         }
-        report = scan_package(lane, tracked, rel_cache)
+        report = scan_package(lane, tracked, rel_cache, container_scripts, a.offline)
         report["informational"] = True
         reports.append(report)
     blocking = ("missing_path", "untracked_path", "host_path_hardcoded", "missing_release_asset", "image_without_reachable_builder")
@@ -225,9 +335,12 @@ def main() -> int:
         if not r.get("informational"):
             fail |= bad
         verdict = "GAPS" if bad else "clean"
+        if r["release_assets_unavailable"]:
+            verdict += " (release assets unverified)"
         if r.get("informational") and bad:
             verdict = "gaps (informational; no portability promise)"
         lines.append(f"## {r['id']} ({r['status']}, {r['files_crawled']} files) — {verdict}")
+        lines.extend(f"- WARNING: {warning}" for warning in r["warnings"])
         for k in blocking + ("host_path_overridable_default", "host_requirement", "evidence_missing_path", "evidence_untracked_path"):
             if counts.get(k):
                 lines.append(f"- **{k}**: {counts[k]}")
@@ -237,7 +350,7 @@ def main() -> int:
                     lines.append(f"  - … {counts[k]-8} more")
         lines.append("")
     if a.out:
-        a.out.write_text(json.dumps(reports, indent=2) + "\n")
+        a.out.write_text(json.dumps(reports, indent=2, ensure_ascii=False) + "\n")
     md = "\n".join(lines) + "\n"
     if a.markdown:
         a.markdown.write_text(md)
