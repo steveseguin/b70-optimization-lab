@@ -1,5 +1,16 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
+Status (2026-10-03): **the persistent decode server passed its exact gate, and the fast picture
+decode is now the default where it is repeatable.** The server (`h3_vae_duet.py --serve`) keeps both
+decode workers loaded across a batch: 41.1 s per clip instead of 55.7 s, all four hashes bytewise
+equal to the standalone receipts (two bugs found and fixed by the gate run). By the user's decision
+the clip-making modes of `smoke_h3.sh` (`one`, `batch`, `duet`) now default to the fp16 picture
+decode when `VAE_DECODE=single` (15.3 s instead of 80 s on one card, repeatable, not bit-identical
+to fp32; latents and audio untouched); `EXACT=1` restores fp32, and every gate still runs fp32.
+On the two-process decode fp16 is faster again (9.0 s) but two identical runs gave different
+pictures, so it stays opt-in there. Details: the 2026-10-03 rows of
+notes/2026-09-20-realtime-goal.md; receipts in data/2026-10-03-gates/.
+
 Status (2026-09-20, lossless goal track): **DUET + TWO-PROC DECODE: 1.88x THROUGHPUT, EVERY BIT
 EXACT.** Work opened the 24-fps realtime goal (notes/2026-09-20-realtime-goal.md): baseline
 960x544 50 NFE = 800.8 s per 5.17 s clip (0.155 fps); the shipped stack -- batch mode

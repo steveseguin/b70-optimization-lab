@@ -1,0 +1,283 @@
+{
+  "run_name": "fp16-single-b",
+  "utc": "2026-10-03T23:43:35Z",
+  "host": "steve-TURIND8-2L2T",
+  "argv": [
+    "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/run_h3_t2v.py",
+    "--prompt",
+    "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "--height",
+    "256",
+    "--width",
+    "448",
+    "--frames",
+    "124",
+    "--steps",
+    "9",
+    "--seed",
+    "42",
+    "--lora",
+    "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+    "--vae-decode",
+    "single",
+    "--vae-autocast",
+    "fp16",
+    "--out-dir",
+    "/mnt/fast-ai/bench-results/minimax-h3-fp16-repeat-20261003",
+    "--run-name",
+    "fp16-single-b",
+    "--save-tensors",
+    "--decode-only",
+    "--latents-from",
+    "/mnt/fast-ai/bench-results/minimax-h3/repeat-20260920T023257Z-a/tensors.safetensors",
+    "--vae-decode",
+    "single",
+    "--vae-autocast",
+    "fp16"
+  ],
+  "settings": {
+    "adaln_dtype": "fp32",
+    "adaln_out_dtype": "bf16",
+    "audio_shift": null,
+    "cards": [
+      0,
+      1
+    ],
+    "crf": 16,
+    "decode_only": true,
+    "denoiser": "pruned",
+    "denoiser_rotation": "hadamard",
+    "deterministic": false,
+    "dry_run": false,
+    "encoder_card": 0,
+    "frames": 124,
+    "height": 256,
+    "int8_share_rotation": true,
+    "latents_from": "/mnt/fast-ai/bench-results/minimax-h3/repeat-20260920T023257Z-a/tensors.safetensors",
+    "lora": "/mnt/fast-ai/llm-models/minimax-h3-comfy/loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+    "out_dir": "/mnt/fast-ai/bench-results/minimax-h3-fp16-repeat-20261003",
+    "plan_memory": false,
+    "probe_tile_identity": null,
+    "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "prompt_embeds": null,
+    "prompts_file": null,
+    "run_name": "fp16-single-b",
+    "save_tensors": true,
+    "seed": 42,
+    "split_index": null,
+    "steps": 9,
+    "te_rotation": "hadamard256",
+    "vae_autocast": "fp16",
+    "vae_card": null,
+    "vae_decode": "single",
+    "vae_tiling": "auto",
+    "verbose": false,
+    "verify_remap": false,
+    "video_shift": null,
+    "width": 448
+  },
+  "prompt": null,
+  "prompt_tokens": null,
+  "seed": 42,
+  "num_inference_steps": 9,
+  "num_function_evaluations": 8,
+  "num_inference_steps_note": "sigma grid points, terminal 0 included; NFE = steps - 1 (MiniMaxH3Scheduler.set_timesteps). Base reference is 50 NFE (steps 51); the 8-step turbo LoRA is 8 NFE (steps 9). CFG-distilled: no guidance_scale exists. See notes/2026-09-18-steps-and-lora.md",
+  "batch": null,
+  "resolved": {
+    "video_latents_shape": [
+      1,
+      24,
+      37,
+      34,
+      60
+    ],
+    "audio_latents_shape": [
+      2,
+      32,
+      207
+    ],
+    "video_shape": [
+      1,
+      3,
+      124,
+      544,
+      960
+    ],
+    "audio_shape": [
+      1,
+      2,
+      165600
+    ],
+    "sampling_rate": 32000,
+    "fps": 24
+  },
+  "split_plan": {
+    "variant": "pruned",
+    "split_index": 24,
+    "num_layers": 50,
+    "non_block_bytes": 1602501728,
+    "quant_bytes": 0,
+    "rotation_bytes_per_card": 0,
+    "dequant_peak_bytes": 0,
+    "card0_bytes": 20183518304,
+    "card1_bytes": 20129434624,
+    "card0_gib": 18.797,
+    "card1_gib": 18.747,
+    "imbalance_bytes": 54083680,
+    "adaln_table_bytes": 32800
+  },
+  "timings_seconds": {
+    "decode_only.load_latents": 0.002,
+    "decode.load_vae": 2.294,
+    "decode.video": 15.32,
+    "decode.load_audio_vae": 0.247,
+    "decode.audio": 3.018,
+    "write": 1.524
+  },
+  "seconds_per_second_of_video": 4.336,
+  "peak_memory": {
+    "encode": {
+      "xpu:0": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      },
+      "xpu:1": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      }
+    },
+    "sample": {
+      "xpu:0": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      },
+      "xpu:1": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      }
+    },
+    "decode_video": {
+      "xpu:0": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      },
+      "xpu:1": {
+        "allocated_bytes": 11199817216,
+        "max_allocated_bytes": 16160050176,
+        "reserved_bytes": 16976445440,
+        "max_reserved_bytes": 16976445440
+      }
+    },
+    "decode": {
+      "xpu:0": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      },
+      "xpu:1": {
+        "allocated_bytes": 1650440192,
+        "max_allocated_bytes": 16160050176,
+        "reserved_bytes": 1824522240,
+        "max_reserved_bytes": 16976445440
+      }
+    }
+  },
+  "decode_placement": {
+    "card": "xpu:1",
+    "requested": null,
+    "video_vae_tiling": "on",
+    "one_vae_at_a_time": true,
+    "vae_decode": "single",
+    "vae_autocast": "fp16",
+    "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its own repeat and measured with compare-h3-runs.py",
+    "video_decode_plan": {
+      "mode": "single",
+      "cards": [
+        "xpu:1"
+      ],
+      "autocast": "fp16"
+    },
+    "diffusers_vae_source": null
+  },
+  "decode_only": {
+    "latents_from": "/mnt/fast-ai/bench-results/minimax-h3/repeat-20260920T023257Z-a/tensors.safetensors",
+    "source_dir": "/mnt/fast-ai/bench-results/minimax-h3/repeat-20260920T023257Z-a",
+    "source_receipt": "/mnt/fast-ai/bench-results/minimax-h3/repeat-20260920T023257Z-a/receipt.json",
+    "source_hashes": {
+      "video_tensor_sha256": "0c2ea7aec7b6a38a81b09539947d94c9e05c512e73675a380e4a71f8bd624444",
+      "audio_tensor_sha256": "cc05c40ff568f96f7fee5c62e08d01058da6fd7ada5e1188cf72f0991d58dac1",
+      "video_latents_sha256": "5eeac672ae981777354916aacb86df7f30b35dd687d2e7ade394acd5bcf0b71a",
+      "audio_latents_sha256": "becd2674e044e3475bcd5e770ef058d2df995da2de3766b8dfbb26d547ad7384"
+    },
+    "source_timings_seconds": {
+      "encode.tokenize": 0.152,
+      "encode.load": 12.655,
+      "encode.forward": 0.664,
+      "load.skeleton": 0.027,
+      "load.stream": 20.17,
+      "sample.build_pipeline": 0.001,
+      "sample": 680.72,
+      "decode.load_vae": 1.78,
+      "decode.video": 79.942,
+      "decode.load_audio_vae": 0.295,
+      "decode.audio": 2.927,
+      "write": 1.513
+    },
+    "source_settings": {
+      "denoiser": "pruned",
+      "lora": null,
+      "seed": 42,
+      "steps": 51,
+      "height": 544,
+      "width": 960,
+      "frames": 124,
+      "vae_tiling": "auto",
+      "vae_decode": "single",
+      "vae_autocast": "off"
+    },
+    "source_run_name": "repeat-20260920T023257Z-a"
+  },
+  "int8_share_rotation": null,
+  "int8_rotation_cache": null,
+  "host_peak_rss_bytes": 10750332928,
+  "hashes": {
+    "video_tensor_sha256": "153937b40825dc3de095b1f94874b93ecbdd30cc099fff308408c936200597e2",
+    "audio_tensor_sha256": "cc05c40ff568f96f7fee5c62e08d01058da6fd7ada5e1188cf72f0991d58dac1",
+    "video_latents_sha256": "5eeac672ae981777354916aacb86df7f30b35dd687d2e7ade394acd5bcf0b71a",
+    "audio_latents_sha256": "becd2674e044e3475bcd5e770ef058d2df995da2de3766b8dfbb26d547ad7384"
+  },
+  "inputs": {
+    "denoiser": "/mnt/fast-ai/llm-models/minimax-h3-comfy/diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors",
+    "denoiser_variant": "pruned",
+    "denoiser_rotation": null,
+    "denoiser_header_sha256": "59916d0f1ea260e0d9e0ce7a3cb2ceb4d59ecbb08a9f2e466de009cbc6fe26c0",
+    "lora": null,
+    "text_encoder": null,
+    "convrot_rotation_sha256": "ebb89aa1651e681f49461fe539bf2eb6fba0143c2733e5ad9cef438d48fb28d2",
+    "vae": "/mnt/fast-ai/llm-models/minimax-h3/vae",
+    "audio_vae": "/mnt/fast-ai/llm-models/minimax-h3/audio_vae"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "torch": "2.14.0+xpu",
+    "diffusers": "0.41.0.dev0",
+    "transformers": "5.17.0"
+  },
+  "environment": {
+    "PYTORCH_ALLOC_CONF": "expandable_segments:True"
+  },
+  "deterministic": false,
+  "loader": "pread",
+  "cross_card_transfer": "host"
+}

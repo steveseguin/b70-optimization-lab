@@ -83,8 +83,15 @@ def _worker(rank: int, work: pathlib.Path, vae_tiling: str) -> int:
     x_lengths = meta["x_lengths"]
     ratio = meta["spatial_ratio"]
 
+    # The picture-decode precision is the driver's `--autocast`, handed down in the environment.
+    # Until 2026-10-03 the workers ignored it: `--vae-autocast fp16` on the two-proc path ran the
+    # fp32 decode and only the blend sat inside the autocast context, so the receipt said fp16
+    # while the pixels (and the 41 s) were fp32's. `off` is a nullcontext: the exact path is untouched.
+    autocast = os.environ.get("B70_VAE_DUET_AUTOCAST", "off")
+    LOG.info("[rank %d] tile decode autocast: %s", rank, autocast)
+
     def decode_z(z, tiles_dir: pathlib.Path) -> None:
-        with torch.no_grad():
+        with torch.no_grad(), R.vae_autocast_context(torch, autocast, dev):
             torch.set_grad_enabled(False)
             for k, c, i, j in jobs:
                 start = c * tokens_chunk_size  # `_decode` L815-816
@@ -110,8 +117,9 @@ def _worker(rank: int, work: pathlib.Path, vae_tiling: str) -> int:
             z = load_file(str(work / f"j{idx}-z.st"))["z"].to(dev)
             decode_z(z, work / f"tiles-j{idx}")
             del z
-            (work / f"j{idx}-z.st").unlink()
-            z_ready.unlink()
+            # The job's z file is SHARED by both workers: neither may delete it. (2026-10-03 gate:
+            # rank 1 unlinked it first, rank 0 died on FileNotFoundError after job 0 and job 1 hung
+            # for the full 900 s timeout.) The server removes it once both ranks report done.
             (work / f"j{idx}-rank{rank}.done").write_text("1")
             idx += 1
         return 0
@@ -153,7 +161,8 @@ def _write_plan_and_jobs(work: pathlib.Path, vae, plan) -> None:
         (work / f"jobs-{rank}.json").write_text(json.dumps(mine))
 
 
-def _spawn_workers(work: pathlib.Path, cards, vae_tiling: str, serve: bool, latents_from):
+def _spawn_workers(work: pathlib.Path, cards, vae_tiling: str, serve: bool, latents_from,
+                   autocast: str = "off"):
     workers = []
     for rank, card in enumerate(cards):
         env = dict(os.environ)
@@ -162,6 +171,7 @@ def _spawn_workers(work: pathlib.Path, cards, vae_tiling: str, serve: bool, late
         env["B70_VAE_DUET_DIR"] = str(work)
         if serve:
             env["B70_VAE_DUET_SERVE"] = "1"
+        env["B70_VAE_DUET_AUTOCAST"] = autocast
         env.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
         log = open(work / f"worker-{rank}.log", "w")
         argv = [sys.executable, str(pathlib.Path(__file__).resolve()),
@@ -258,7 +268,7 @@ def _serve(args, torch, work: pathlib.Path) -> int:
                 plan = this_plan
                 _write_plan_and_jobs(work, vae, plan)
                 workers = _spawn_workers(work, args.cards, args.vae_tiling, serve=True,
-                                         latents_from=None)
+                                         latents_from=None, autocast=args.autocast)
                 for rank in (0, 1):
                     _await_file(work / f"worker-{rank}.ready", stop)
                 LOG.info("serve: workers resident, plan fixed (%d tiles/job)",
@@ -275,6 +285,10 @@ def _serve(args, torch, work: pathlib.Path) -> int:
             video_cpu = _collect_blend(torch, load_file, vae, plan, z, tiles_dir, stop,
                                        args.autocast, blend_device)
             del z
+            for rank in (0, 1):  # both workers have finished reading the shared z before it goes
+                _await_file(work / f"j{idx}-rank{rank}.done", stop)
+            for name in (f"j{idx}-z.st", f"j{idx}-z.ready", f"j{idx}-rank0.done", f"j{idx}-rank1.done"):
+                (work / name).unlink(missing_ok=True)
             save_file({"video": video_cpu}, str(work / f"j{idx}-out.st") + ".tmp")
             os.replace(str(work / f"j{idx}-out.st") + ".tmp", work / f"j{idx}-out.st")
             (work / f"j{idx}-out.ready").write_text("1")
@@ -346,7 +360,7 @@ def main(argv=None) -> int:
     _write_plan_and_jobs(work, vae, plan)
 
     workers = _spawn_workers(work, args.cards, args.vae_tiling, serve=False,
-                             latents_from=args.latents_from)
+                             latents_from=args.latents_from, autocast=args.autocast)
     stop = work / "stop"
     try:
         for rank in (0, 1):

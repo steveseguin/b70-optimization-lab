@@ -1,0 +1,47 @@
+[2026-10-03T23:17:14Z] gate session start; kernel 7.0.0-31-generic; MemAvailable 14093 MiB; fault lines this boot 0
+[2026-10-03T23:17:14Z] ---- gateA: env EXACT=1 BATCH_REF_0=duet-20260920T074116Z/clip-00 ./smoke_h3.sh duet
+[2026-10-03T23:21:33Z] gateA: rc=0 run=duet-20261003T231714Z
+preflight: VAE_AUTOCAST=off (exact fp32 decode)
+  MATCH    video_tensor_sha256  3737bdc71491efb6... / 3737bdc71491efb6...
+  MATCH    audio_tensor_sha256  2d4cc5164b183b4e... / 2d4cc5164b183b4e...
+  MATCH    video_latents_sha256  b1d5af6748e38b87... / b1d5af6748e38b87...
+  MATCH    audio_latents_sha256  0755439d7c0299fd... / 0755439d7c0299fd...
+REPEAT GATE: bytewise-equal
+  clip-00: steps=9 total=311.3s {'sample.build_pipeline': 0.0, 'sample.0': 110.4, 'sample.1': 117.3, 'decode.video.0': 52.4, 'decode.audio.0': 0.0} decode_placement={"card": "xpu:1", "requested": null, "video_vae_tiling": "on", "one_vae_at_a_time": false, "vae_decode": "two-proc", "vae_autocast": "off", "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its ow
+  clip-01: steps=9 total=300.1s {'sample.build_pipeline': 0.0, 'sample.0': 110.4, 'sample.1': 117.3, 'decode.video.1': 41.1, 'decode.audio.1': 0.0} decode_placement={"card": "xpu:1", "requested": null, "video_vae_tiling": "on", "one_vae_at_a_time": false, "vae_decode": "two-proc", "vae_autocast": "off", "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its ow
+[2026-10-03T23:21:33Z] GATE A PASS: persistent decode server + audio overlap is bytewise-exact vs duet-20260920T074116Z/clip-00 (run duet-20261003T231714Z)
+[2026-10-03T23:21:33Z] ---- gateB1: env  ./smoke_h3.sh duet
+[2026-10-03T23:25:50Z] gateB1: rc=0 run=duet-20261003T232133Z
+preflight: VAE_AUTOCAST=fp16 (fast decode, not bit-identical to fp32; EXACT=1 restores it)
+  clip-00: steps=9 total=310.8s {'sample.build_pipeline': 0.0, 'sample.0': 111.0, 'sample.1': 117.8, 'decode.video.0': 51.1, 'decode.audio.0': 0.0} decode_placement={"card": "xpu:1", "requested": null, "video_vae_tiling": "on", "one_vae_at_a_time": false, "vae_decode": "two-proc", "vae_autocast": "fp16", "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its o
+  clip-01: steps=9 total=300.8s {'sample.build_pipeline': 0.0, 'sample.0': 111.0, 'sample.1': 117.8, 'decode.video.1': 41.1, 'decode.audio.1': 0.0} decode_placement={"card": "xpu:1", "requested": null, "video_vae_tiling": "on", "one_vae_at_a_time": false, "vae_decode": "two-proc", "vae_autocast": "fp16", "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its o
+[2026-10-03T23:25:50Z] ---- gateB2: env  ./smoke_h3.sh duet
+[2026-10-03T23:30:08Z] gateB2: rc=0 run=duet-20261003T232550Z
+preflight: VAE_AUTOCAST=fp16 (fast decode, not bit-identical to fp32; EXACT=1 restores it)
+  clip-00: steps=9 total=311.1s {'sample.build_pipeline': 0.0, 'sample.1': 110.9, 'sample.0': 117.9, 'decode.video.0': 51.3, 'decode.audio.0': 0.0} decode_placement={"card": "xpu:1", "requested": null, "video_vae_tiling": "on", "one_vae_at_a_time": false, "vae_decode": "two-proc", "vae_autocast": "fp16", "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its o
+  clip-01: steps=9 total=301.0s {'sample.build_pipeline': 0.0, 'sample.1': 110.9, 'sample.0': 117.9, 'decode.video.1': 41.2, 'decode.audio.1': 0.0} decode_placement={"card": "xpu:1", "requested": null, "video_vae_tiling": "on", "one_vae_at_a_time": false, "vae_decode": "two-proc", "vae_autocast": "fp16", "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its o
+{
+  "repeat": {
+    "clip-00": {
+      "video_tensor_sha256": true,
+      "audio_tensor_sha256": true,
+      "video_latents_sha256": true,
+      "audio_latents_sha256": true
+    },
+    "clip-01": {
+      "video_tensor_sha256": true,
+      "audio_tensor_sha256": true,
+      "video_latents_sha256": true,
+      "audio_latents_sha256": true
+    }
+  },
+  "vs_fp32_turbo_reference": {
+    "video_tensor_sha256": true,
+    "audio_tensor_sha256": true,
+    "video_latents_sha256": true,
+    "audio_latents_sha256": true
+  },
+  "pass": true
+}
+GATE B PASS: fp16 default is repeatable; latents and audio are untouched (only the picture tensor differs from fp32)
+[2026-10-03T23:30:08Z] ALL GATES PASS. runs: A=duet-20261003T231714Z B1=duet-20261003T232133Z B2=duet-20261003T232550Z; session /mnt/fast-ai/bench-results/minimax-h3-gates-20261003

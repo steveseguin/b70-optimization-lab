@@ -4608,7 +4608,9 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
             video_server["proc"].wait(timeout=60)
         except Exception:
             video_server["proc"].kill()
-    if audio_worker is not None:
+     # Same for the audio worker: on 2026-10-03 a failed clip left it resident on card 0 with
+     # the audio VAE loaded, which would have failed the next run's preflight-free VRAM.
+     if audio_worker is not None:
         (audio_work / "stop").write_text("1")
         try:
             audio_worker.wait(timeout=30)

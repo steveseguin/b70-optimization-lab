@@ -64,9 +64,22 @@ PY
 
 say "gate session start; kernel $(uname -r); MemAvailable $(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo) MiB; fault lines this boot ${F0}"
 
-run_duet gateA LORA= EXACT=1 BATCH_REF_0="${REF_EXACT}" || die "gate A failed (see ${SESSION}/gateA.out)"
-RUN_A="${RUN_NAME}"; timings "${RUN_A}"
-say "GATE A PASS: persistent decode server + audio overlap is bytewise-exact vs ${REF_EXACT} (run ${RUN_A})"
+# GATE_A=base (default): 50 NFE against the base-model baseline, ~25 min. GATE_A=turbo: the same exact fp32
+# decode path with the turbo LoRA against the fp32 turbo reference, ~5 min. The first session ran `base`:
+# clip-00 matched 4/4 (duet-20261003T224727Z) and then a worker crashed on a shared-file cleanup race, so
+# the rerun after the fix used `turbo` to exercise the multi-job path without another 25 minutes.
+if [ "${GATE_A:-base}" = "skip" ]; then
+  say "gate A skipped (GATE_A=skip): it passed earlier in this session family; see the run-2 log"
+  RUN_A="(skipped)"; REF_A="-"
+elif [ "${GATE_A:-base}" = "turbo" ]; then
+  run_duet gateA EXACT=1 BATCH_REF_0="${REF_TURBO}/clip-00" || die "gate A failed (see ${SESSION}/gateA.out)"
+  REF_A="${REF_TURBO}/clip-00"
+else
+  run_duet gateA LORA= EXACT=1 BATCH_REF_0="${REF_EXACT}" || die "gate A failed (see ${SESSION}/gateA.out)"
+  REF_A="${REF_EXACT}"
+fi
+[ "${GATE_A:-base}" = "skip" ] || { RUN_A="${RUN_NAME}"; timings "${RUN_A}"; }
+[ "${GATE_A:-base}" = "skip" ] || say "GATE A PASS: persistent decode server + audio overlap is bytewise-exact vs ${REF_A} (run ${RUN_A})"
 
 run_duet gateB1 || die "gate B run 1 failed (see ${SESSION}/gateB1.out)"
 RUN_B1="${RUN_NAME}"; timings "${RUN_B1}"
@@ -87,7 +100,10 @@ for clip in ("clip-00", "clip-01"):
 r, a = H(ref, "clip-00"), H(b1, "clip-00")
 res["vs_fp32_turbo_reference"] = {k: a[k] == r[k] for k in keys}
 untouched = all(res["vs_fp32_turbo_reference"][k] for k in keys[1:])
-res["pass"] = bool(ok and untouched)
+# The picture tensor MUST differ from fp32: on the first run it matched, which exposed that the
+# two-proc tile workers ignored --autocast and the "fp16" run was an fp32 decode.
+res["fp16_in_effect"] = not res["vs_fp32_turbo_reference"][keys[0]]
+res["pass"] = bool(ok and untouched and res["fp16_in_effect"])
 json.dump(res, open(out, "w"), indent=2)
 print(json.dumps(res, indent=2))
 print("GATE B", "PASS: fp16 default is repeatable; latents and audio are untouched (only the picture tensor differs from fp32)" if res["pass"] else "FAIL")

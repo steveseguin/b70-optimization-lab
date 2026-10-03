@@ -118,10 +118,11 @@ SEED="${SEED:-42}"
 #                  next to it carries the hashes a decode-only run is checked against.
 #   VAE_DECODE     single (default, the bytewise-gated path) | two-card
 #   VAE_AUTOCAST   off (the only exact setting) | fp16 | bf16.  DEFAULT SINCE 2026-10-03 (user decision):
-#                  `fp16` for the clip-making modes (one, batch, duet) -- the 5x faster picture decode,
-#                  repeatable but NOT bit-identical to fp32 (mean 0.03/255, worst pixel 7.5/255; latents and
-#                  audio are untouched) -- and `off` for everything that is an exactness gate: repeat,
-#                  decode-only, probe-tiles, and any batch/duet run given a BATCH_REF_<i> bytewise reference.
+#                  `fp16` for the clip-making modes (one, batch, duet) when VAE_DECODE=single -- the 5x faster
+#                  picture decode, repeatable but NOT bit-identical to fp32 (mean 0.03/255, worst pixel
+#                  7.5/255; latents and audio are untouched) -- and `off` for everything that is an
+#                  exactness gate (repeat, decode-only, probe-tiles, any batch/duet run given a BATCH_REF_<i>
+#                  bytewise reference) and for VAE_DECODE=two-proc, where fp16 is NOT repeatable run to run.
 #   EXACT          EXACT=1 forces VAE_AUTOCAST=off everywhere (the lossless goal track; old receipts reproduce).
 #                  An explicit VAE_AUTOCAST=... always wins over both.
 #   PROBE_TILES    how many tiles the E1 probe decodes on each card (default 3)
@@ -132,7 +133,14 @@ VAE_DECODE="${VAE_DECODE:-single}"
 if [ -z "${VAE_AUTOCAST:-}" ]; then
   case "${1:-dry}" in
     one|batch|duet)
-      if [ "${EXACT:-0}" = "1" ] || [ -n "${BATCH_REF_0:-}" ]; then VAE_AUTOCAST=off; else VAE_AUTOCAST=fp16; fi ;;
+      # fp16 is the default only where it passed its repeat gate: the single-card decode (15.3 s at 960x544,
+      # two runs bytewise-equal, 2026-10-03). On the two-process decode it is faster still (9.0 s vs 41.1 s)
+      # but two identical runs gave DIFFERENT pictures (gate B, 2026-10-03), so there it stays opt-in.
+      if [ "${EXACT:-0}" = "1" ] || [ -n "${BATCH_REF_0:-}" ] || [ "${VAE_DECODE}" != "single" ]; then
+        VAE_AUTOCAST=off
+      else
+        VAE_AUTOCAST=fp16
+      fi ;;
     *) VAE_AUTOCAST=off ;;
   esac
 fi
@@ -207,6 +215,9 @@ some avg10 $(awk '/^some/ {sub("avg10=","",$2); print $2; exit}' /proc/pressure/
   fi
   echo "preflight: PYTORCH_ALLOC_CONF=${PYTORCH_ALLOC_CONF}  B70_H3_XFER=${B70_H3_XFER}"
   echo "preflight: VAE_AUTOCAST=${VAE_AUTOCAST} ($([ "${VAE_AUTOCAST}" = off ] && echo "exact fp32 decode" || echo "fast decode, not bit-identical to fp32; EXACT=1 restores it"))"
+  if [ "${VAE_AUTOCAST}" != off ] && [ "${VAE_DECODE}" != single ]; then
+    echo "preflight: WARNING ${VAE_AUTOCAST} on VAE_DECODE=${VAE_DECODE} is not repeatable: two identical runs gave different pictures (2026-10-03)"
+  fi
   echo "preflight: OK"
 }
 
