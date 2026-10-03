@@ -91,3 +91,37 @@ but nothing independent has cross-checked it yet.
 Placement at the time (from the sampler receipt): xpu:0 LTXAV 22.7 GB +
 upsampler 1.0 GB; xpu:1 transformer shard 19.3 GB; xpu:2 text encoder
 15.3 GB; xpu:3 text shard 10.9 GB + video VAE 1.47 GB + audio VAE 0.36 GB.
+
+## Control arm (timers off), 20:42-20:53 UTC
+
+Server `encoder-server-busy-90c-ctl`, same packet, `LTX_BUSY_WINDOWS=0`
+(sentries and done markers on), launched five minutes after the timed
+server's stop; runner `run-campaign-90c.sh control`, warm 3 @207389, endure
+120 @207489; receipts in `data/busy-90c-ctl/`.
+
+| Measure | Timed arm | Control arm |
+| --- | ---: | ---: |
+| Distinct clips exact | 117/117 | 117/117 |
+| Interval median | 1.776 s | **1.581 s** |
+| Interval mean | 1.880 s | 1.663 s |
+| Interval p95 | 2.898 s | 2.483 s |
+| Intervals over 2.5 s | 11 | 6 |
+| Sampler job median | 2.780 s | 2.556 s |
+| Stage A / stage B median | 1.760 / 0.918 s | 1.631 / 0.822 s |
+| Decode job median | 1.778 s | 1.590 s |
+| VAE decode + audio / MP4 save | 1.630 / 0.145 s | 1.445 / 0.136 s |
+
+- The control matches f90 (median 1.597, mean 1.684), so fencing 10 GiB of
+  host memory cost nothing and **the busy-window timers cost about 0.2 s per
+  clip (12 %)**. They stay a diagnostic, off by default in any speed arm.
+  Occupancy was therefore measured in a perturbed run; the same GPU work in
+  the control's shorter wall would be roughly 48 % and 53 %, still about
+  half idle.
+- Decode paces the control too: decode job median 1.590 s against a stream
+  median of 1.581 s.
+- Second clean launch, run and proven-quiescence stop on this boot; no `xe`
+  fault, no lockup.
+- 234 of 234 clips exact across the two servers. The wrong-clip rate before
+  was about one per 100-120 clips, and packet 90 also ran 101 clean with the
+  bad memory in use, so this does not yet show that the wrong-clip bug was
+  the memory fault.
