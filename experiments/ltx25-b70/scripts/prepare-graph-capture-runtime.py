@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-gil-92a'
+OUTPUT = ROOT / 'prepared-encoder-decodeproc-92b'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -87,7 +87,7 @@ PSAMP_NODE_FILE = 'pipeline_sampler_node.py'
 # Packet 91: decode placement (control / replica on xpu:1 / moved) and the
 # cross-card decode probe that must pass before a replica placement runs.
 REPLICA_ADAPTER = 'ltx_decode_replica.py'
-SAVE_MODES = ('pipeline-save', 'pipeline-replica', 'pipeline-moved')
+SAVE_MODES = ('pipeline-save', 'pipeline-replica', 'pipeline-moved', 'pipeline-child')
 PROBE_GRAPH = 'graphs/decode-replica-probe.json'
 PROBE_FIXTURES = 'probe/decode-replica-fixtures.json'
 PROBE_FIXTURES_SRC = LANE / 'data' / 'decode-replica-probe-fixtures.json'
@@ -97,6 +97,12 @@ PROBE_NODE = '440'
 GIL_PROBE = 'ltx_gil_probe.py'
 KNOB_GRAPH = 'graphs/scheduler-knob.json'
 KNOB_NODE = '450'
+# Packet 92b: decode in a child process (own runtime, own VAEs on xpu:3).
+CHILD_MODULE = 'ltx_decode_child.py'
+CHILD_PROBE_GRAPH = 'graphs/decode-child-probe.json'
+CHILD_STOP_GRAPH = 'graphs/decode-child-stop.json'
+CHILD_PROBE_NODE = '460'
+CHILD_STOP_NODE = '461'
 PSAMP_NODE_DIR = 'ltx_pipeline_sampler_lab'
 SAMPLER_NODE = '428'
 UPS_ADAPTER = 'ltx_graph_upsampler.py'
@@ -155,7 +161,9 @@ ARMS = (
     ('pipe-samp2-tsh', 'graph',  'original', 'original',   'original', '1',  'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
     # Packet 91: the same arm with decode on two cards (replica) or on xpu:1 only (moved).
     ('pipe-samp2-tsh-rep', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline', 'original', 'original', 'fast'),
-    ('pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast'),)
+    ('pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast'),
+    # Packet 92b: the same arm with decode in a child process on xpu:3.
+    ('pipe-samp2-tsh-child', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-child', 'original', 'pipeline', 'original', 'original', 'fast'),)
 VAE_NODE = '423'
 
 
@@ -275,12 +283,16 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-ccfg', 'graph-fused', 'graph-vae', 'restored', 'pipe-samp',
                           'pipe-uptime', 'pipe-up', 'pipe-up-save', 'pipe-upphase', 'pipe-fwdtimed',
                           'pipe-fasttimed', 'pipe-fast', 'pipe-fast-save', 'pipe-batchproof', 'pipe-samp2',
-                          'pipe-samp2-tsh', 'pipe-samp2-tsh-rep', 'pipe-samp2-tsh-mov')}
+                          'pipe-samp2-tsh', 'pipe-samp2-tsh-rep', 'pipe-samp2-tsh-mov',
+                          'pipe-samp2-tsh-child')}
     # Packet 91: the replica-placement module, the probe graph and its pinned fixtures.
     added |= {'source/scripts/ltx_decode_replica.py', 'graphs/decode-replica-probe.json',
               'probe/decode-replica-fixtures.json'}
     # Packet 92a: the lock-wait/CPU probe module and the switch-interval knob graph.
     added |= {'source/scripts/ltx_gil_probe.py', 'graphs/scheduler-knob.json'}
+    # Packet 92b: the decode-child module and its probe/stop graphs.
+    added |= {'source/scripts/ltx_decode_child.py', 'graphs/decode-child-probe.json',
+              'graphs/decode-child-stop.json'}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
                 'source/scripts/host_embedding_clip.py',
@@ -454,7 +466,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['pipe-samp2', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh-rep', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline', 'original', 'original', 'fast'],
-                     ['pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast']]
+                     ['pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-child', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-child', 'original', 'pipeline', 'original', 'original', 'fast']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
     expected_graphs = []
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,
@@ -463,7 +476,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
         expected_graphs.append(name)
         graph = json.loads(safe_path(packet, name).read_text())
         # Undo the gate rewiring before comparing, innermost edge first.
-        if pipe_mode in ('pipeline-save', 'pipeline-replica', 'pipeline-moved'):
+        if pipe_mode in ('pipeline-save', 'pipeline-replica', 'pipeline-moved', 'pipeline-child'):
             require('370' not in graph and '75' not in graph, 'Save-behind arm still carries the video assembly')
             require(graph.pop('430') == {'class_type': 'LTXPipelineSaveRecord', 'inputs': {
                     'saved_file': ['426', 4], 'run_name': 'assign-unique-request-name'}},
@@ -629,6 +642,16 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             manifest['gil_probe']['knob_graph'] == 'graphs/scheduler-knob.json' and
             manifest['gil_probe']['default_switch_interval_s'] == 0.005,
             'GIL probe contract changed')
+    for name, node, cls in (('graphs/decode-child-probe.json', '460', 'LTXDecodeChildProbe'),
+                            ('graphs/decode-child-stop.json', '461', 'LTXDecodeChildStop')):
+        graph = json.loads(safe_path(packet, name).read_text())
+        require(graph == {node: {'class_type': cls, 'inputs': {'run_name': 'assign-unique-request-name'}}},
+                'Decode child graph changed: ' + name)
+    child = manifest['decode_child']
+    require(child['module_sha256'] == manifest['extension_sha256s']['ltx_decode_child.py'] and
+            child['device'] == 'xpu:3' and child['probe_graph'] == 'graphs/decode-child-probe.json' and
+            child['stop_graph'] == 'graphs/decode-child-stop.json' and
+            child['enable_env'] == 'LTX_DECODE_CHILD=1', 'Decode child contract changed')
     require(capture['selection'] == 'all48' and capture['block_indices'] == list(range(48)) and
             capture['modes'] == ['original', 'graph', 'restored'] and
             capture['numerical_source_changed'] is False and capture['graphs_changed'] is False and
@@ -694,7 +717,8 @@ def build_checker(text):
                                        "              'ltx_graph_upsampler.py', 'graph_upsampler_node.py',\n"
                                        "              'phase_timed_upsampler_node.py',\n"
                                        "              'resident_fastpath_node.py',\n"
-                                       "              'av_model.py', 'ltx_decode_replica.py', 'ltx_gil_probe.py')", 1)
+                                       "              'av_model.py', 'ltx_decode_replica.py', 'ltx_gil_probe.py',\n"
+                                       "              'ltx_decode_child.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -791,7 +815,7 @@ def main():
                                (PSAMP_NODE_FILE, PSAMP_NODE_DIR),
                                (UPS_ADAPTER, None), (UPS_NODE_FILE, UPS_NODE_DIR),
                                (PHASE_NODE_FILE, PHASE_NODE_DIR), (FAST_NODE_FILE, FAST_NODE_DIR),
-                               (REPLICA_ADAPTER, None), (GIL_PROBE, None)):
+                               (REPLICA_ADAPTER, None), (GIL_PROBE, None), (CHILD_MODULE, None)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -959,6 +983,12 @@ def main():
             'switch_interval_ms': 5.0, 'run_name': 'assign-unique-request-name'}}},
             handle, indent=2, sort_keys=True)
         handle.write('\n')
+    for graph_path, node, cls in ((CHILD_PROBE_GRAPH, CHILD_PROBE_NODE, 'LTXDecodeChildProbe'),
+                                  (CHILD_STOP_GRAPH, CHILD_STOP_NODE, 'LTXDecodeChildStop')):
+        with (staging / graph_path).open('x') as handle:
+            json.dump({node: {'class_type': cls, 'inputs': {'run_name': 'assign-unique-request-name'}}},
+                      handle, indent=2, sort_keys=True)
+            handle.write('\n')
     (staging / 'probe').mkdir(exist_ok=False)
     shutil.copyfile(PROBE_FIXTURES_SRC, staging / PROBE_FIXTURES)
 
@@ -998,7 +1028,8 @@ def main():
               'source/scripts/' + FAST_NODE_FILE,
               f'source/custom_nodes/{FAST_NODE_DIR}/__init__.py',
               'source/scripts/' + REPLICA_ADAPTER, PROBE_GRAPH, PROBE_FIXTURES,
-              'source/scripts/' + GIL_PROBE, KNOB_GRAPH}
+              'source/scripts/' + GIL_PROBE, KNOB_GRAPH,
+              'source/scripts/' + CHILD_MODULE, CHILD_PROBE_GRAPH, CHILD_STOP_GRAPH}
     added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
               for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
@@ -1033,7 +1064,7 @@ def main():
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
                      TEXT_ADAPTER, TEXT_SHARD, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
                      CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE, PHASE_NODE_FILE,
-                     FAST_NODE_FILE, REPLICA_ADAPTER, GIL_PROBE):
+                     FAST_NODE_FILE, REPLICA_ADAPTER, GIL_PROBE, CHILD_MODULE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -1067,6 +1098,13 @@ def main():
                             '0.5 ms sleep-overshoot lock-wait histogram (ltx-gil-probe thread)',
                             'LTXSchedulerKnob: sys.setswitchinterval only when the pipeline is idle'],
             'touches': 'no tensor, stream, device, RNG state or GPU work order'},
+        'decode_child': {
+            'module_sha256': extensions[CHILD_MODULE], 'device': 'xpu:3',
+            'probe_graph': CHILD_PROBE_GRAPH, 'stop_graph': CHILD_STOP_GRAPH,
+            'enable_env': 'LTX_DECODE_CHILD=1',
+            'mode': 'pipeline-child (arm pipe-samp2-tsh-child): every clip decoded by the child',
+            'transport': 'socketpair Connection; JSON header + raw bytes per tensor, sha256 both ends',
+            'child_requires': 'a passed LTXDecodeChildProbe in the same server process'},
         'graph_capture': {
             'parent_packet': PARENT_NAME, 'parent_manifest_sha256': PARENT_SHA,
             'adapter_sha256': extensions[ADAPTER], 'node_sha256': extensions[NODE],
