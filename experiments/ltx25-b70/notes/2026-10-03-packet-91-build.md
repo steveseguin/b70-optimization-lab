@@ -1,6 +1,26 @@
-# Packet 91: decode capacity on the idle sampler card (2026-10-03)
+# Packets 91 / 91b: decode capacity on the idle sampler card (2026-10-03)
 
 Built offline. **Not launched.** R = `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
+
+**Launch 91b, not 91.** `prepared-encoder-decode-91` (manifest `d566fc1b...`)
+stays in place and must not be launched; `run-campaign-91.sh` refuses to start.
+A review found these defects in it, all fixed in 91b:
+
+1. **Replica work ran outside `CAPTURE_LOCK`.** Replica kernels and
+   allocations on xpu:1 (construction copy, probe decodes, pipelined
+   decodes) could overlap a sampler graph capture on xpu:1, which by
+   contract must be exclusive.
+2. **A failed probe left the replicas resident on xpu:1.** The control arm
+   would then have run with less headroom than today.
+3. **The copy check missed non-persistent buffers.** It compared
+   `state_dict()`, which skips them (e.g. the NA decoder's
+   `default_inference_timesteps`), so "every buffer verified" was false.
+4. **A queued preview was handed to ComfyUI as a filename.** The token
+   `queued:<run>/preview` went to ComfyUI as if it were a saved file.
+5. **Placement changes were unguarded.** A replica -> control switch in the
+   same index stream could strand a pending clip.
+6. **The runner required the timers ON.** This is a speed comparison and the
+   timers cost ~12 % per clip, so 91b requires them OFF.
 
 ## Why
 
@@ -53,7 +73,10 @@ before that, with one worker, as in 90c.
   audio VAE modules is copied to xpu:1 through host memory, with no peer path.
 - `torch.device` attributes that name xpu:3 are repointed to xpu:1.
 - The copy is verified byte-for-byte, and no storage is shared with the
-  source.
+  source. Verification covers parameters, all buffers (persistent and
+  non-persistent; 91 compared `state_dict()` and missed the non-persistent
+  ones) and plain tensor attributes. Receipts report
+  `tensors_byte_verified` with that wording.
 - Construction runs under the resident fast path's load lock, so ComfyUI
   cannot move the source VAE while it is being copied.
 
@@ -80,6 +103,35 @@ is admitted. The allowlist is checked at build time and on every replica
 request. The VAE graph gate is not loosened: it stays in `original` mode in
 every packet-91 arm.
 
+### Lock order (91b)
+
+Every eager replica operation on xpu:1 holds `ltx_graph_capture.CAPTURE_LOCK`
+in **shared** mode, the mode the sampler's graph replays use. This covers the
+construction copy, the probe's replica decodes, every pipelined replica decode
+and the post-failure release. A graph capture (exclusive) therefore never
+overlaps them, and they never overlap a capture.
+
+Locks are always acquired outer to inner:
+
+```
+decode node _REPLICA_LOCK -> CAPTURE_LOCK (shared) -> Replica.lock      (decode, probe, release)
+resident fast-path _LOAD_LOCK -> CAPTURE_LOCK (shared)                   (replica construction)
+decode node _NATIVE_LOCK -> _LOAD_LOCK (inside ComfyUI VAE.decode)       (native, unchanged)
+```
+
+Why this cannot deadlock:
+
+- No code path holds `CAPTURE_LOCK` in either mode while taking
+  `_REPLICA_LOCK`, `Replica.lock` or `_LOAD_LOCK`. Graph captures and replays
+  only synchronise, fill static buffers and record/replay; I checked the
+  sampler blocks and the text-encoder layers.
+- The decode threads never capture, so they never ask for the exclusive mode
+  while holding the shared one.
+
+The native xpu:3 decode is unchanged from 90c and does not take
+`CAPTURE_LOCK`. A CPU test shows that a held capture blocks a replica decode
+and the construction copy, and that a running replica decode blocks a capture.
+
 ### Cross-card probe (`LTXDecodeReplicaProbe`, graph `graphs/decode-replica-probe.json`)
 
 Inputs: the ten fixtures' certified latents. These come from the first exact
@@ -93,6 +145,18 @@ The probe decodes each fixture on xpu:3 and on xpu:1. It passes only if:
 - every image and waveform matches the stored reference sha256;
 - xpu:1 keeps at least 5 GiB free after the replica is built and at least
   1 GiB free after the probe's decodes.
+
+**Release on failure (91b).** Each replica is registered as soon as it exists.
+On any non-pass verdict, the replicas are released:
+
+- Non-pass verdicts are: mismatch, low memory after the build or after the
+  probe, and any exception, including one half-way through construction.
+- Release drops all references, runs gc, then calls `torch.xpu.empty_cache()`
+  on xpu:1 only, under the shared capture lock. That frees unused
+  default-pool blocks only; captured graphs' private pools are untouched.
+- The receipt records reserved and free memory before and after (`released`)
+  and which replicas remain resident (`replicas_resident`). Only a passed
+  probe leaves the replicas resident.
 
 Until a probe passes, the replica modes are refused. The refusal writes a
 receipt, submits nothing and latches nothing. Replica decodes also require the
@@ -111,6 +175,20 @@ pinned captures match their references.
   raised.
 - Each save records its own time and queue wait, and writes a `save` done
   marker.
+
+**Save record (91b).** A queued preview is recorded as
+`status: queued-to-writer` with `saved_file: null` (save record v2) and is
+shown to ComfyUI as text, never as a path. The real path appears in that
+save's `pipeline-done-save-<index>.json` marker and in a later decode
+receipt's `preview_writer.saves`.
+
+### Placement-change guard (91b)
+
+A request whose placement mode differs from the previous one is refused when
+the same index stream still has pending decode jobs. "Same stream" means
+pending indices within 8 below the new index. The refusal writes a receipt,
+submits nothing and latches nothing. Fresh index bases, at least 100 apart in
+every campaign, are always admitted.
 
 ### Kept from earlier packets
 
@@ -142,16 +220,18 @@ shard's activations.
 **Worst case.** About 1.2 GiB stays free on xpu:1. The probe's thresholds turn
 any shortfall into `insufficient-memory` instead of driver paging.
 
-## Packet
+## Packet (91b)
 
-- `R/prepared-encoder-decode-91`, **manifest sha256
-  `d566fc1b5fa80b75dcb259d63e8aaabbffa2911cf84fb6817254a645d1673147`**.
+- `R/prepared-encoder-decode-91b`, **manifest sha256
+  `c9ed69b73c641817983565dada5fc487bb38a9727fd623d064a721e014d0564e`**.
+- Compared with 91: same inventory. Only `ltx_decode_replica.py`,
+  `pipeline_decode_node.py` and its node copy differ.
 - Compared with 90c:
   - Added: the replica module, two arm graphs, the probe graph and the probe
     fixture list.
   - Changed: `ltx_pipeline.py`, `pipeline_decode_node.py` and its node copy,
     and the launcher checker.
-  - Unchanged: every other file, including the control arm's graph.
+  - Unchanged: everything else, including the control arm's graph.
 - No stale pins. Custom-node imports resolve.
 
 Gate (`--check-only`), with server_args elided:
@@ -160,61 +240,70 @@ Gate (`--check-only`), with server_args elided:
 gate rc=0
 {
   "status": "inactive-startup-check-passed",
-  "run_dir": ".../encoder-server-decode-91",
-  "packet_manifest_sha256": "d566fc1b5fa80b75dcb259d63e8aaabbffa2911cf84fb6817254a645d1673147",
+  "run_dir": ".../encoder-server-decode-91b",
+  "packet_manifest_sha256": "c9ed69b73c641817983565dada5fc487bb38a9727fd623d064a721e014d0564e",
   "limits": "No device discovery, locks, process changes or GPU work; exclusive preflight occurs only at launch"
 }
 ```
 
-## Launch
+## Launch (91b, busy timers OFF)
+
+This is a speed comparison. The busy-window timers cost about 12 % per clip
+(90c timed vs control), so the server is launched with `LTX_BUSY_WINDOWS=0`.
+The runner refuses to start otherwise. As a result, no occupancy or
+decode-route windows are recorded in this run.
 
 ```
-P=/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-decode-91
-nohup /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 d566fc1b5fa80b75dcb259d63e8aaabbffa2911cf84fb6817254a645d1673147 --run-name encoder-server-decode-91 > /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-decode-91.log 2>&1 &
-nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-91.sh > /mnt/fast-ai/bench-results/ltx25-baseline-20260913/campaign-91.log 2>&1 &
+P=/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-decode-91b
+nohup env LTX_BUSY_WINDOWS=0 /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 c9ed69b73c641817983565dada5fc487bb38a9727fd623d064a721e014d0564e --run-name encoder-server-decode-91b > /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-decode-91b.log 2>&1 &
+nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-91b.sh > /mnt/fast-ai/bench-results/ltx25-baseline-20260913/campaign-91b.log 2>&1 &
 ```
 
-`run-campaign-91.sh` uses one server with the timers on:
+`run-campaign-91b.sh` uses one server. The index bases 91 reserved
+(208089/208189/208289) are burned; 91b uses new ones:
 
-1. Warm: 3 prompts @208089.
-2. Probe.
-3. Control: 30 prompts @208189.
-4. Replica: 120 prompts @208289, only if the probe passed.
+| Step | Prompts | Index base | Client bound | Clips verified |
+| --- | --- | --- | --- | --- |
+| Warm (`pipe-samp2-tsh`) | 3 | 208489 | 900 s | 0 (all fills) |
+| Probe | - | - | 1500 s | 10 fixtures, each decoded on both cards, byte-compared |
+| Control (`pipe-samp2-tsh`) | 30 | 208589 | 1800 s | 27 (2 sampler fills + 1 decode fill) |
+| Replica (`pipe-samp2-tsh-rep`), only if the probe passed | 120 | 208689 | 3600 s | 116 (2 sampler fills + 2 decode fills) |
 
-The runner syncs after each arm and every 10 replica prompts. It stops the
-server only on proven quiescence: the queue must be empty and every sample,
-decode and save job must have its done marker. Exit codes are listed in the
-script.
-
-The timers cost about 12 % in the 90c control comparison. Compare the arms of
-this run with each other, not with the timers-off f90c control.
+- **Tail clips.** The last `depth` clips of each arm are decoded but never
+  emitted. This is inherited benchmark behaviour and is not drained.
+- **Client bounds.** Every client call runs under `timeout`, which bounds the
+  fixtures client's internal GET retries. A timed-out client exits 124, which
+  counts as an arm error and leaves the server up.
+  `run-throughput-fixtures.py` itself is unchanged.
+- **Sync.** After each arm and after every 10 completed replica prompts.
+- **Stop.** Only on proven quiescence: a successful, empty queue response and
+  a done marker for every submitted sample, decode and save job. Otherwise
+  the server stays up and the runner exits non-zero. Exit codes are listed in
+  the script.
 
 ## What each arm proves, and expected outcomes
 
-- **Probe.** It shows whether decode on xpu:1 is byte-identical to xpu:3 and
-  to the references, and whether it fits in memory. If it fails, the packet's
-  answer is "replica not exact" (or "no room"). The runner skips the replica
-  arm and still runs the control.
-- **Control (30).** This is the interval baseline on this server, with the
-  preview save moved off the decode worker. Expect a median of roughly
-  1.6-1.8 s with timers on, paced by decode on xpu:3.
-- **Replica (120).** Exactness comes from the run's own oracle: 116 distinct
-  clips are expected, since decode depth 2 makes prompts 0-3 fills (the
-  control's 30 prompts give 27).
-  - If xpu:1 decode costs about what xpu:3 decode does and does not slow the
-    sampler much, the pace should fall toward the sampler's ~1.39 s per clip.
-  - xpu:1 is a single-CCS card that is 55 % idle, so decode competes with
-    sampler replays there. Watch xpu:1 occupancy, the sampler job time and
-    the `vae decode replica` / `vae decode native` rows.
+- **Probe.** It shows whether xpu:1 decode is byte-identical to xpu:3 and to
+  the references, and whether it fits in memory. On any other verdict, the
+  replicas are released before the control arm runs (see `released` in the
+  receipt), the replica arm is skipped, and the control still runs.
+- **Control (30).** The interval baseline on this server, with timers off and
+  the preview save off the decode worker. Expect a median near f90c control's
+  1.58 s, paced by decode on xpu:3.
+- **Replica (120).** Exactness comes from the run's own oracle over 116
+  clips. If xpu:1 decode costs about what xpu:3 decode does and does not slow
+  the sampler much, the pace should fall toward the sampler's ~1.39 s per
+  clip. xpu:1 is single-CCS, so decode competes with sampler replays there;
+  watch the sampler job time and the per-slot decode rows.
 - **Reading the results:**
 
   ```
-  analyze-phases.py R/encoder-server-decode-91 f91-rep
-  analyze-phases.py R/encoder-server-decode-91 f91-ctl
+  analyze-phases.py R/encoder-server-decode-91b f91b-rep
+  analyze-phases.py R/encoder-server-decode-91b f91b-ctl
   ```
 
-  Look at per-slot decode time, lock wait, writer save time, the `decode`
-  route windows, and per-card occupancy.
+  Look at the per-slot decode time, lock wait, writer save time and queue
+  wait. Occupancy is absent because the timers are off.
 
 ## Unverified offline
 
@@ -230,5 +319,11 @@ this run with each other, not with the timers-off f90c control.
 - Real-runtime behaviour of the second decode worker under GIL contention.
 - Whether `torch.xpu.mem_get_info` exists in this torch build. If not, the
   code falls back to total minus reserved, which ignores driver overhead.
+- How much the shared `CAPTURE_LOCK` costs. A replica decode holds it for
+  about a second, and sampler captures happen only at warm-up or for new
+  signatures. A capture waits for a running replica decode, and a replica
+  decode waits for a running capture.
+- Whether `empty_cache` on release returns the replica memory in practice.
+  The receipt records it.
 - The negative-tamper tests were not run, because they write scratch packets
   into R.
