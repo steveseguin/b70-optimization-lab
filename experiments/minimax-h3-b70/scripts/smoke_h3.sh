@@ -117,13 +117,25 @@ SEED="${SEED:-42}"
 #   LATENTS_FROM   a previous run's tensors.safetensors (written by --save-tensors). Its receipt.json
 #                  next to it carries the hashes a decode-only run is checked against.
 #   VAE_DECODE     single (default, the bytewise-gated path) | two-card
-#   VAE_AUTOCAST   off (default, the only exact setting) | fp16 | bf16
+#   VAE_AUTOCAST   off (the only exact setting) | fp16 | bf16.  DEFAULT SINCE 2026-10-03 (user decision):
+#                  `fp16` for the clip-making modes (one, batch, duet) -- the 5x faster picture decode,
+#                  repeatable but NOT bit-identical to fp32 (mean 0.03/255, worst pixel 7.5/255; latents and
+#                  audio are untouched) -- and `off` for everything that is an exactness gate: repeat,
+#                  decode-only, probe-tiles, and any batch/duet run given a BATCH_REF_<i> bytewise reference.
+#   EXACT          EXACT=1 forces VAE_AUTOCAST=off everywhere (the lossless goal track; old receipts reproduce).
+#                  An explicit VAE_AUTOCAST=... always wins over both.
 #   PROBE_TILES    how many tiles the E1 probe decodes on each card (default 3)
 #   RUN_NAME       name the output directory instead of timestamping it (probe-tiles / decode-only),
 #                  which is what lets decode-experiments-session.sh find each run's receipt.
 LATENTS_FROM="${LATENTS_FROM:-}"
 VAE_DECODE="${VAE_DECODE:-single}"
-VAE_AUTOCAST="${VAE_AUTOCAST:-off}"
+if [ -z "${VAE_AUTOCAST:-}" ]; then
+  case "${1:-dry}" in
+    one|batch|duet)
+      if [ "${EXACT:-0}" = "1" ] || [ -n "${BATCH_REF_0:-}" ]; then VAE_AUTOCAST=off; else VAE_AUTOCAST=fp16; fi ;;
+    *) VAE_AUTOCAST=off ;;
+  esac
+fi
 PROBE_TILES="${PROBE_TILES:-3}"
 PROMPT="${PROMPT:-A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.}"
 
@@ -194,6 +206,7 @@ some avg10 $(awk '/^some/ {sub("avg10=","",$2); print $2; exit}' /proc/pressure/
     exit 4
   fi
   echo "preflight: PYTORCH_ALLOC_CONF=${PYTORCH_ALLOC_CONF}  B70_H3_XFER=${B70_H3_XFER}"
+  echo "preflight: VAE_AUTOCAST=${VAE_AUTOCAST} ($([ "${VAE_AUTOCAST}" = off ] && echo "exact fp32 decode" || echo "fast decode, not bit-identical to fp32; EXACT=1 restores it"))"
   echo "preflight: OK"
 }
 

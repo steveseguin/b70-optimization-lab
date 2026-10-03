@@ -258,6 +258,7 @@ fault_check "phase 1"
 h3_env=(
   B70_H3_LOADER=pread
   B70_H3_XFER=host
+  EXACT=1   # 2026-10-03: smoke_h3.sh clip modes now default to the fp16 decode; this session's A/B is an fp32 one
   PYTORCH_ALLOC_CONF=expandable_segments:True
   OUT_ROOT="${H3_OUT}"
   LORA="${TURBO_LORA}"
