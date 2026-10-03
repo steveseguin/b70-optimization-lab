@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-decode-91b'
+OUTPUT = ROOT / 'prepared-encoder-gil-92a'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -92,6 +92,11 @@ PROBE_GRAPH = 'graphs/decode-replica-probe.json'
 PROBE_FIXTURES = 'probe/decode-replica-fixtures.json'
 PROBE_FIXTURES_SRC = LANE / 'data' / 'decode-replica-probe-fixtures.json'
 PROBE_NODE = '440'
+# Packet 92a: interpreter-contention diagnostic (per-thread CPU, lock-wait
+# probe, switch-interval knob between arms).
+GIL_PROBE = 'ltx_gil_probe.py'
+KNOB_GRAPH = 'graphs/scheduler-knob.json'
+KNOB_NODE = '450'
 PSAMP_NODE_DIR = 'ltx_pipeline_sampler_lab'
 SAMPLER_NODE = '428'
 UPS_ADAPTER = 'ltx_graph_upsampler.py'
@@ -274,6 +279,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     # Packet 91: the replica-placement module, the probe graph and its pinned fixtures.
     added |= {'source/scripts/ltx_decode_replica.py', 'graphs/decode-replica-probe.json',
               'probe/decode-replica-fixtures.json'}
+    # Packet 92a: the lock-wait/CPU probe module and the switch-interval knob graph.
+    added |= {'source/scripts/ltx_gil_probe.py', 'graphs/scheduler-knob.json'}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
                 'source/scripts/host_embedding_clip.py',
@@ -614,6 +621,14 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     require(len(fixtures) == 10 and len({f['fixture'] for f in fixtures}) == 10 and
             all(f['source'].startswith(str(ROOT) + '/output/validation/') for f in fixtures),
             'Decode probe fixture list changed')
+    knob = json.loads(safe_path(packet, 'graphs/scheduler-knob.json').read_text())
+    require(knob == {'450': {'class_type': 'LTXSchedulerKnob', 'inputs': {
+                'switch_interval_ms': 5.0, 'run_name': 'assign-unique-request-name'}}},
+            'Scheduler knob graph changed')
+    require(manifest['gil_probe']['module_sha256'] == manifest['extension_sha256s']['ltx_gil_probe.py'] and
+            manifest['gil_probe']['knob_graph'] == 'graphs/scheduler-knob.json' and
+            manifest['gil_probe']['default_switch_interval_s'] == 0.005,
+            'GIL probe contract changed')
     require(capture['selection'] == 'all48' and capture['block_indices'] == list(range(48)) and
             capture['modes'] == ['original', 'graph', 'restored'] and
             capture['numerical_source_changed'] is False and capture['graphs_changed'] is False and
@@ -679,7 +694,7 @@ def build_checker(text):
                                        "              'ltx_graph_upsampler.py', 'graph_upsampler_node.py',\n"
                                        "              'phase_timed_upsampler_node.py',\n"
                                        "              'resident_fastpath_node.py',\n"
-                                       "              'av_model.py', 'ltx_decode_replica.py')", 1)
+                                       "              'av_model.py', 'ltx_decode_replica.py', 'ltx_gil_probe.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -776,7 +791,7 @@ def main():
                                (PSAMP_NODE_FILE, PSAMP_NODE_DIR),
                                (UPS_ADAPTER, None), (UPS_NODE_FILE, UPS_NODE_DIR),
                                (PHASE_NODE_FILE, PHASE_NODE_DIR), (FAST_NODE_FILE, FAST_NODE_DIR),
-                               (REPLICA_ADAPTER, None)):
+                               (REPLICA_ADAPTER, None), (GIL_PROBE, None)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -939,6 +954,11 @@ def main():
     for row in probe_rows:
         require(row['source'].startswith(str(ROOT) + '/output/validation/') and
                 sha(Path(row['source'])) == row['source_sha256'], 'Probe source changed: ' + row['source'])
+    with (staging / KNOB_GRAPH).open('x') as handle:
+        json.dump({KNOB_NODE: {'class_type': 'LTXSchedulerKnob', 'inputs': {
+            'switch_interval_ms': 5.0, 'run_name': 'assign-unique-request-name'}}},
+            handle, indent=2, sort_keys=True)
+        handle.write('\n')
     (staging / 'probe').mkdir(exist_ok=False)
     shutil.copyfile(PROBE_FIXTURES_SRC, staging / PROBE_FIXTURES)
 
@@ -977,7 +997,8 @@ def main():
               f'source/custom_nodes/{PHASE_NODE_DIR}/__init__.py',
               'source/scripts/' + FAST_NODE_FILE,
               f'source/custom_nodes/{FAST_NODE_DIR}/__init__.py',
-              'source/scripts/' + REPLICA_ADAPTER, PROBE_GRAPH, PROBE_FIXTURES}
+              'source/scripts/' + REPLICA_ADAPTER, PROBE_GRAPH, PROBE_FIXTURES,
+              'source/scripts/' + GIL_PROBE, KNOB_GRAPH}
     added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
               for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
@@ -1012,7 +1033,7 @@ def main():
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
                      TEXT_ADAPTER, TEXT_SHARD, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
                      CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE, PHASE_NODE_FILE,
-                     FAST_NODE_FILE, REPLICA_ADAPTER):
+                     FAST_NODE_FILE, REPLICA_ADAPTER, GIL_PROBE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -1038,6 +1059,14 @@ def main():
                       'pipeline-replica': 'even clips xpu:3 native, odd clips xpu:1 replica, depth 2',
                       'pipeline-moved': 'every clip on the xpu:1 replica'},
             'replica_requires': 'a passed LTXDecodeReplicaProbe in the same server process'},
+        'gil_probe': {
+            'module_sha256': extensions[GIL_PROBE], 'knob_graph': KNOB_GRAPH,
+            'default_switch_interval_s': 0.005,
+            'instruments': ['per-job thread_time in ltx_pipeline workers and node _apply',
+                            '/proc/self/task per-thread CPU snapshot in receipts',
+                            '0.5 ms sleep-overshoot lock-wait histogram (ltx-gil-probe thread)',
+                            'LTXSchedulerKnob: sys.setswitchinterval only when the pipeline is idle'],
+            'touches': 'no tensor, stream, device, RNG state or GPU work order'},
         'graph_capture': {
             'parent_packet': PARENT_NAME, 'parent_manifest_sha256': PARENT_SHA,
             'adapter_sha256': extensions[ADAPTER], 'node_sha256': extensions[NODE],
