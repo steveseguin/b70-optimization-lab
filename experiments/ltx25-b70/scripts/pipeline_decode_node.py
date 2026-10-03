@@ -26,16 +26,22 @@ import os
 import hashlib
 import json
 from pathlib import Path
+import queue
 import re
+import threading
 import time
 
 import torch
 
 import ltx_pipeline as pipeline
+import ltx_decode_replica as placement
 from encoder_diagnostics import _context
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-DECODE_MODES = pipeline.MODES + ('pipeline-save',)
+DECODE_MODES = pipeline.MODES + ('pipeline-save', 'pipeline-replica', 'pipeline-moved')
+# Modes whose prompts also write the diagnostic MP4 preview (packet 91: on the
+# single preview-writer thread, not on the decode worker).
+SAVE_MODES = ('pipeline-save', 'pipeline-replica', 'pipeline-moved')
 _failed = False
 
 
@@ -133,6 +139,134 @@ def save_preview(images, audio, prefix):
     return os.path.join(subfolder, file)
 
 
+class PreviewWriter:
+    """Packet 91: the MP4 preview leaves the decode worker.
+
+    One writer thread, a bounded FIFO. `submit` blocks while the queue is full
+    (back-pressure, never a dropped preview) and returns the seconds it
+    waited. The writer receives private CPU copies, so it can never alias the
+    tensors the prompt emits to the oracle capture. Each save keeps the
+    guarded-save behaviour (failures are recorded, never raised), records its
+    own save time, and leaves a `save` done marker for the quiescence check.
+    """
+
+    def __init__(self, save_fn, maxsize=4, marker=None):
+        self.save_fn = save_fn
+        self.marker = marker
+        self.queue = queue.Queue(maxsize=maxsize)
+        self.records = []
+        self.lock = threading.Lock()
+        self.thread = None
+        self.completed = 0
+
+    def _ensure(self):
+        with self.lock:
+            if self.thread is None or not self.thread.is_alive():
+                self.thread = threading.Thread(target=self._loop, daemon=True, name='ltx-preview-writer')
+                self.thread.start()
+
+    def submit(self, index, images, audio, prefix):
+        self._ensure()
+        item = (index, images.detach().to('cpu', copy=True),
+                {**audio, 'waveform': audio['waveform'].detach().to('cpu', copy=True)},
+                prefix, time.monotonic())
+        started = time.monotonic()
+        self.queue.put(item)
+        return round(time.monotonic() - started, 4)
+
+    def _loop(self):
+        while True:
+            index, images, audio, prefix, queued_at = self.queue.get()
+            started = time.monotonic()
+            try:
+                # Same autograd context the decode worker saved under (ComfyUI
+                # runs nodes and pipeline workers inside inference_mode).
+                with torch.inference_mode():
+                    saved = self.save_fn(images, audio, prefix)
+            except BaseException as error:  # noqa: BLE001  (diagnostic only)
+                saved = 'save-failed:' + type(error).__name__
+            row = {'index': index, 'prefix': prefix, 'saved': saved,
+                   'queued_s': round(started - queued_at, 4),
+                   'save_s': round(time.monotonic() - started, 4)}
+            with self.lock:
+                self.records.append(row)
+                self.completed += 1
+            if self.marker is not None:
+                self.marker('save', index, {'saved': saved, 'save_s': row['save_s']})
+            self.queue.task_done()
+
+    def drain(self):
+        with self.lock:
+            rows, self.records = self.records, []
+            completed = self.completed
+        return {'saves': rows, 'completed_total': completed, 'pending': self.queue.unfinished_tasks,
+                'maxsize': self.queue.maxsize}
+
+
+_WRITER = PreviewWriter(lambda images, audio, prefix: save_preview_guarded(images, audio, prefix),
+                        maxsize=4, marker=done_marker)
+# Packet 91 placement state, per server process.
+_NATIVE_LOCK = threading.Lock()     # one decode at a time on xpu:3 (the control's one worker)
+_REPLICA_LOCK = threading.Lock()    # one decode at a time on the xpu:1 replica
+_REPLICAS = {}                      # 'video' / 'audio' -> placement.Replica
+_PROBE = {'passed': False, 'outcome': 'not run', 'receipt': None}
+
+
+class ReplicaNotQualified(RuntimeError):
+    """A replica placement was requested before the cross-card probe passed.
+    Raised before any job is submitted, so it does not latch the pipeline."""
+
+
+def _busy_begin(device):
+    try:
+        import ltx_graph_capture as capture
+        with torch.xpu.device(device):
+            return capture, capture.busy_begin(device)
+    except Exception:  # noqa: BLE001  (instrumentation must not fail a clip)
+        return None, None
+
+
+def _busy_end(capture, token, device):
+    if capture is None or token is None:
+        return
+    try:
+        with torch.xpu.device(device):
+            capture.busy_end(token, device, 'decode')
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def decode_native(vae, audio_vae, video_latent, audio_latent):
+    """Control placement: the resident VAEs on xpu:3, native ComfyUI decode."""
+    t0 = time.monotonic()
+    with _NATIVE_LOCK:
+        t1 = time.monotonic()
+        cap, token = _busy_begin(placement.NATIVE_DEVICE)
+        images, audio = decode_clip(vae, audio_vae, video_latent, audio_latent)[:2]
+        _busy_end(cap, token, placement.NATIVE_DEVICE)
+        t2 = time.monotonic()
+    return images, audio, {'wait_s': round(t1 - t0, 4), 'vae_s': round(t2 - t1, 4)}
+
+
+def decode_replica(vae, audio_vae, video_latent, audio_latent):
+    """Replica placement: the probe-qualified VAE copies on xpu:1."""
+    require(_PROBE['passed'] and 'video' in _REPLICAS and 'audio' in _REPLICAS,
+            'Replica decode without a passed cross-card probe')
+    require(_PROBE.get('sources') == (id(vae), id(audio_vae)),
+            'Replica decode for VAEs other than the ones the probe qualified')
+    video, audio_rep = _REPLICAS['video'], _REPLICAS['audio']
+    t0 = time.monotonic()
+    with _REPLICA_LOCK:
+        t1 = time.monotonic()
+        with torch.xpu.device(video.device), torch.xpu.stream(video.stream):
+            cap, token = _busy_begin(placement.REPLICA_DEVICE)
+        images, audio = placement.decode_clip_replica(video, audio_rep, vae, audio_vae, video_latent, audio_latent)
+        with torch.xpu.device(video.device), torch.xpu.stream(video.stream):
+            _busy_end(cap, token, placement.REPLICA_DEVICE)
+        t2 = time.monotonic()
+    return images, audio, {'wait_s': round(t1 - t0, 4), 'vae_s': round(t2 - t1, 4)}
+
+
 class LTXPipelineDecode:
     @classmethod
     def INPUT_TYPES(cls):
@@ -160,6 +294,8 @@ class LTXPipelineDecode:
         try:
             return self._apply(vae, audio_vae, video_latent, audio_latent,
                                mode, clip_index, depth, run_name, upstream_depth)
+        except ReplicaNotQualified:
+            raise
         except BaseException:
             _failed = True
             pipeline.clear()
@@ -178,6 +314,7 @@ class LTXPipelineDecode:
         server = json.loads((run / 'server-identity.json').read_text())
         hashes = {}
         for path, name in ((Path(pipeline.__file__), 'ltx_pipeline.py'),
+                           (Path(placement.__file__), 'ltx_decode_replica.py'),
                            (Path(__file__), 'pipeline_decode_node.py')):
             actual = hashlib.sha256(path.read_bytes()).hexdigest()
             require(server['extension_sha256s'][name] == actual, 'Sealed extension changed: ' + name)
@@ -196,6 +333,17 @@ class LTXPipelineDecode:
                   'passed': False}
         started = time.monotonic()
         try:
+            if mode in placement.REPLICA_MODES and not _PROBE['passed']:
+                report['refused'] = ('replica placement requires a passed cross-card decode probe on this '
+                                     'server (probe outcome: %s)' % _PROBE['outcome'])
+                raise ReplicaNotQualified(report['refused'])
+            if mode in placement.REPLICA_MODES:
+                for key in ('video', 'audio'):
+                    placement.check_placement(_REPLICAS[key].module, 'replica')
+            if mode == 'pipeline-replica':
+                pipeline.set_stage_workers('decode', 2)
+            report['placement'] = list(placement.PLACEMENTS.get(mode, ('native',)))
+            report['stage_workers'] = pipeline.STAGE_WORKERS.get('decode')
             if mode == 'original':
                 out = decode_clip(vae, audio_vae, video_latent, audio_latent)
                 report['detail'] = {'emitted_index': max(0, clip_index - upstream_depth),
@@ -228,7 +376,7 @@ class LTXPipelineDecode:
                     require(sha == sentry[key + '_sha256'],
                             'Decode-submit %s latents for clip %d differ from the sampler sentry: %s vs %s'
                             % (key, decode_index, sha[:12], sentry[key + '_sha256'][:12]))
-                save_prefix = (run_name + '/preview') if mode == 'pipeline-save' else None
+                save_prefix = (run_name + '/preview') if mode in SAVE_MODES else None
                 # During the upstream stage's own fill it emits its own clip, so
                 # the index this prompt is really carrying is clamped at zero.
                 # Those first few prompts re-emit an early clip; every clip is
@@ -238,16 +386,29 @@ class LTXPipelineDecode:
                 # finishes; the receipt reports the split of the clip it
                 # EMITS (decode_index - depth), whose job collect() has already
                 # waited on. Timing only: the decode itself is unchanged.
+                # Packet 91: the job decodes on the placement slot its clip
+                # index selects (deterministic, recorded), then hands the
+                # preview to the writer thread. The split records lock wait,
+                # decode and enqueue time; the save time is the writer's.
                 def decode_job(decode_index=decode_index):
-                    timing = {}
-                    result = decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix,
-                                         _timing=timing)
+                    slot = placement.slot_for(mode, decode_index)
+                    if slot == 'native':
+                        images, audio, timing = decode_native(vae, audio_vae, *latents)
+                    else:
+                        images, audio, timing = decode_replica(vae, audio_vae, *latents)
+                    saved = ''
+                    enqueue_s = 0.0
+                    if save_prefix:
+                        saved = 'queued:' + save_prefix
+                        enqueue_s = _WRITER.submit(decode_index, images, audio, save_prefix)
                     try:  # timing/evidence only; must never fail the clip
-                        pipeline.record_fingerprint(('decode-split', decode_index), timing)
+                        pipeline.record_fingerprint(('decode-split', decode_index), {
+                            'slot': slot, 'device': placement.ALLOWED_DEVICES[slot],
+                            'wait_s': timing['wait_s'], 'vae_s': timing['vae_s'], 'enqueue_s': enqueue_s})
                     except Exception:  # noqa: BLE001
                         pass
-                    done_marker('decode', decode_index)
-                    return result
+                    done_marker('decode', decode_index, {'slot': slot})
+                    return images, audio, latents[0], latents[1], saved
 
                 out, detail = pipeline.run_behind('decode', decode_index, depth, decode_job)
                 if out is None:
@@ -262,6 +423,10 @@ class LTXPipelineDecode:
                     detail['decode_split'] = 'unavailable: ' + repr(error)[:200]
                 report['detail'] = detail
             report['save_failures'] = [dict(row) for row in SAVE_FAILURES]
+            try:  # diagnostic only
+                report['preview_writer'] = _WRITER.drain()
+            except Exception as error:  # noqa: BLE001
+                report['preview_writer'] = 'unavailable: ' + repr(error)[:200]
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
@@ -294,4 +459,132 @@ class LTXPipelineSaveRecord:
         return {'ui': {'images': [{'filename': file, 'subfolder': subfolder, 'type': 'output'}]}}
 
 
-NODE_CLASS_MAPPINGS = {'LTXPipelineDecode': LTXPipelineDecode, 'LTXPipelineSaveRecord': LTXPipelineSaveRecord}
+PROBE_FIXTURES = 'probe/decode-replica-fixtures.json'
+
+
+def _load_probe_fixtures(packet):
+    """The packet's pinned fixture list (its sha256 must match the packet manifest)."""
+    manifest = json.loads((packet / 'manifest.json').read_text())
+    path = packet / PROBE_FIXTURES
+    require(hashlib.sha256(path.read_bytes()).hexdigest() == manifest['files'][PROBE_FIXTURES],
+            'Probe fixture list differs from the packet manifest')
+    fixtures = json.loads(path.read_text())['fixtures']
+    require(len(fixtures) == 10 and len({f['fixture'] for f in fixtures}) == 10,
+            'Probe needs the ten distinct fixtures')
+    return fixtures
+
+
+def _load_fixture_tensors(row):
+    from safetensors.torch import load_file
+    digest = hashlib.sha256()
+    with open(row['source'], 'rb') as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b''):
+            digest.update(chunk)
+    require(digest.hexdigest() == row['source_sha256'], 'Probe source tensors changed: ' + row['source'])
+    return load_file(row['source'], device='cpu')
+
+
+class LTXDecodeReplicaProbe:
+    """Packet 91 gate for the replica placements: build the xpu:1 VAE replicas
+    and decode the ten fixtures' certified latents on xpu:3 (native) and on
+    xpu:1 (replica). Passes only if every image and waveform is byte-identical
+    across the cards and to the stored references, and xpu:1 keeps enough free
+    memory. Until a probe passes in this server process, the replica modes are
+    refused. 'replica-not-exact' is a valid, recorded outcome, not an error."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'vae': ('VAE',), 'audio_vae': ('VAE',),
+                             'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, vae, audio_vae, run_name):
+        require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
+                'Unsafe request name')
+        run, identity = _context()
+        require(identity['model_verification_sha256'] == MODEL_SHA256 and
+                identity['server_identity_sha256'] == os.environ.get('LTX_ENCODER_IDENTITY_SHA256'),
+                'Model/startup identity changed')
+        server = json.loads((run / 'server-identity.json').read_text())
+        hashes = {}
+        for path, name in ((Path(placement.__file__), 'ltx_decode_replica.py'),
+                           (Path(__file__), 'pipeline_decode_node.py')):
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+            require(server['extension_sha256s'][name] == actual, 'Sealed extension changed: ' + name)
+            hashes[name] = actual
+        require(torch.are_deterministic_algorithms_enabled() and
+                not torch.is_deterministic_algorithms_warn_only_enabled(), 'Strict determinism required')
+        report = {'schema': 'ltx.decode-replica-probe.v1', **identity, 'run_name': run_name,
+                  'extension_sha256s': hashes, 'native_device': placement.NATIVE_DEVICE,
+                  'replica_device': placement.REPLICA_DEVICE, 'passed': False, 'outcome': 'error'}
+        started = time.monotonic()
+        _PROBE.update(passed=False, outcome='running')
+        try:
+            fixtures = _load_probe_fixtures(Path(server['source_packet_path']))
+            import comfy.model_management as mm
+            load_lock = getattr(mm.load_models_gpu, '__globals__', {}).get('_LOAD_LOCK')
+            require(load_lock is not None, 'The resident fast path (and its load lock) is not installed')
+            report['memory_before'] = {'xpu:1': {'allocated': int(torch.xpu.memory_allocated(1)),
+                                                 'reserved': int(torch.xpu.memory_reserved(1))},
+                                       'xpu:1_free': placement.free_bytes(placement.REPLICA_DEVICE)}
+            if not _REPLICAS:
+                stream = torch.xpu.Stream(device=placement.REPLICA_DEVICE)
+                built = {}
+                for key, source in (('video', vae), ('audio', audio_vae)):
+                    built[key] = placement.build_replica(source, placement.REPLICA_DEVICE, load_lock,
+                                                         make_stream=lambda _d: stream)
+                report['replicas'] = {k: r.report for k, r in built.items()}
+                free, how = placement.free_bytes(placement.REPLICA_DEVICE)
+                report['xpu:1_free_after_build'] = [free, how]
+                if free < placement.MIN_FREE_AFTER_BUILD:
+                    report['outcome'] = 'insufficient-memory'
+                    del built
+                    return {'ui': {'text': [report['outcome']]}}
+                _REPLICAS.update(built)
+                _PROBE['sources'] = (id(vae), id(audio_vae))
+            require(_PROBE.get('sources') == (id(vae), id(audio_vae)),
+                    'Probe VAEs differ from the ones the replicas were built from')
+            replicas_ok = all(placement.check_placement(r.module, 'replica') for r in _REPLICAS.values())
+            report['placement_checked'] = replicas_ok
+
+            def native(v, a):
+                return decode_native(vae, audio_vae, v, a)[:2]
+
+            def replica(v, a):
+                video, audio_rep = _REPLICAS['video'], _REPLICAS['audio']
+                with _REPLICA_LOCK:
+                    return placement.decode_clip_replica(video, audio_rep, vae, audio_vae, v, a)
+
+            passed, rows = placement.probe_rows(fixtures, _load_fixture_tensors, native, replica)
+            report['rows'] = rows
+            free, how = placement.free_bytes(placement.REPLICA_DEVICE)
+            report['xpu:1_free_after_probe'] = [free, how]
+            report['memory_after'] = {'xpu:1': {'allocated': int(torch.xpu.memory_allocated(1)),
+                                                'reserved': int(torch.xpu.memory_reserved(1))}}
+            if not passed:
+                report['outcome'] = 'replica-not-exact'
+            elif free < placement.MIN_FREE_AFTER_PROBE:
+                report['outcome'] = 'insufficient-memory'
+            else:
+                report['outcome'] = 'replica-exact'
+                report['passed'] = True
+        except Exception as error:  # noqa: BLE001  (the receipt carries it; replica stays refused)
+            import traceback
+            report['outcome'] = 'error'
+            report['error'] = ''.join(traceback.format_exception(type(error), error, error.__traceback__))[-4000:]
+        finally:
+            _PROBE.update(passed=bool(report['passed']), outcome=report['outcome'])
+            report['seconds'] = round(time.monotonic() - started, 3)
+            report['written_unix'] = time.time()
+            receipt = run / ('decode-probe-' + run_name + '.json')
+            _PROBE['receipt'] = str(receipt)
+            write_json(receipt, report)
+        return {'ui': {'text': [report['outcome']]}}
+
+
+NODE_CLASS_MAPPINGS = {'LTXPipelineDecode': LTXPipelineDecode, 'LTXPipelineSaveRecord': LTXPipelineSaveRecord,
+                       'LTXDecodeReplicaProbe': LTXDecodeReplicaProbe}

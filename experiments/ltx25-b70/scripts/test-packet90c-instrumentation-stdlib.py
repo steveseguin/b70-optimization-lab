@@ -222,7 +222,7 @@ def marker_cases():
             ns['done_marker']('decode', 1)                 # no run dir: swallowed
     src = (HERE / 'pipeline_sampler_node.py').read_text()
     assert "done_marker('sample', clip_index" in src
-    assert "done_marker('decode', decode_index)" in (HERE / 'pipeline_decode_node.py').read_text()
+    assert "done_marker('decode', decode_index" in (HERE / 'pipeline_decode_node.py').read_text()
 
 
 case('done markers: written, never raise', marker_cases)

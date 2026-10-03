@@ -225,6 +225,23 @@ def decode_report(run, prefix, base, skip):
         print()
         return
     vae = [s['vae_s'] for s in have]
+    if any('slot' in s for s in have):
+        # Packet 91+: the job decodes on a placement slot and hands the
+        # preview to the writer thread; save time comes from the writer.
+        for slot in sorted({s.get('slot') for s in have}):
+            rows = [s for s in have if s.get('slot') == slot]
+            print(f'{"  vae decode " + str(slot):<26} {summary(s["vae_s"] for s in rows)}')
+            print(f'{"  lock wait " + str(slot):<26} {summary(s.get("wait_s") for s in rows)}')
+        print(f'{"  enqueue to writer":<26} {summary(s.get("enqueue_s") for s in have)}')
+        saves = [row for _, d in receipts if isinstance(d.get('preview_writer'), dict)
+                 for row in d['preview_writer'].get('saves', [])
+                 if base is None or row.get('index', -1) - base >= skip]
+        print(f'{"  mp4 save (writer)":<26} {summary(r.get("save_s") for r in saves)}')
+        print(f'{"  writer queue wait":<26} {summary(r.get("queued_s") for r in saves)}')
+        failed = [r for r in saves if str(r.get('saved', '')).startswith('save-failed')]
+        print(f'decode split: {len(have)} receipts; {len(saves)} writer saves, {len(failed)} failed')
+        print()
+        return
     save = [s.get('save_s', 0.0) for s in have]
     rest = [d['detail']['stage_seconds'] - s['vae_s'] - s.get('save_s', 0.0)
             for (_, d), s in zip(steady, splits) if isinstance(s, dict) and 'vae_s' in s

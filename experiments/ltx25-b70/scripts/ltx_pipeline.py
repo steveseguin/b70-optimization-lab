@@ -98,6 +98,17 @@ _STAGES = {}          # stage -> {'jobs': {index: _Job}, 'queue': [], 'worker': 
 _QUEUE_EVENT = threading.Condition(_LOCK)
 
 
+def set_stage_workers(stage, count):
+    """Raise a stage's worker count (packet 91: a second decode worker for the
+    xpu:1 replica). Only increases are admitted: a running worker is never
+    retired, so a lower count could not be honoured."""
+    with _QUEUE_EVENT:
+        require(stage in STAGES, 'Unknown pipeline stage: ' + repr(stage))
+        require(isinstance(count, int) and STAGE_WORKERS.get(stage, 1) <= count <= MAX_PENDING,
+                'Stage workers may only increase, up to MAX_PENDING')
+        STAGE_WORKERS[stage] = count
+
+
 def _state(stage):
     require(stage in STAGES, 'Unknown pipeline stage: ' + repr(stage))
     return _STAGES.setdefault(stage, {'jobs': {}, 'queue': [], 'workers': []})
