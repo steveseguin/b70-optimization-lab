@@ -577,32 +577,53 @@ _BUSY_LOCK = threading.Lock()
 _BUSY_WINDOWS = []
 _BUSY_PENDING = []
 _BUSY_MAX = 8192
+_BUSY_DROPPED = [0]
 
 
 def _busy_record(device, index, ev0, ev1):
     with _BUSY_LOCK:
         if len(_BUSY_WINDOWS) < _BUSY_MAX:
             _BUSY_WINDOWS.append((str(device), index, ev0, ev1))
+        else:
+            _BUSY_DROPPED[0] += 1
 
 
 def busy_window_report():
-    """Drain completed windows into {(device, route): {count, ms}}; keep strays."""
+    """Drain completed windows into {'<device>/route<i>': {count, ms}}.
+
+    Never blocks on the GPU: a window whose end event has not completed yet
+    (the other clip still in flight) is carried to the next report via
+    query(), not waited for. Reads event timestamps only.
+    """
+    global _BUSY_WINDOWS
     with _BUSY_LOCK:
         windows, _BUSY_WINDOWS = _BUSY_WINDOWS, []
         pending = list(_BUSY_PENDING)
         _BUSY_PENDING.clear()
+        dropped, _BUSY_DROPPED[0] = _BUSY_DROPPED[0], 0
     out = {}
-    for dev, idx, ev0, ev1 in windows + pending:
+    carry = []
+    errors = 0
+    for dev, idx, ev0, ev1 in pending + windows:
         try:
+            if not ev1.query():
+                carry.append((dev, idx, ev0, ev1))
+                continue
             ms = ev0.elapsed_time(ev1)
-        except Exception:
-            with _BUSY_LOCK:
-                _BUSY_PENDING.append((dev, idx, ev0, ev1))
+        except Exception:  # noqa: BLE001  (diagnostic only; count, never raise)
+            errors += 1
             continue
         agg = out.setdefault(f'{dev}/route{idx}', {'count': 0, 'ms': 0.0})
         agg['count'] += 1
         agg['ms'] += round(ms, 3)
+    with _BUSY_LOCK:
+        room = max(0, _BUSY_MAX - len(_BUSY_PENDING))
+        _BUSY_PENDING.extend(carry[:room])
+        dropped += max(0, len(carry) - room)
+    if carry or dropped or errors:
+        out['_meta'] = {'carried': len(carry), 'dropped': dropped, 'errors': errors}
     return out
+
 
 class GraphBlockRoute:
     """Replaces only the block callable; the original route is still in charge."""
@@ -808,7 +829,8 @@ class GraphBlockRoute:
             try:
                 slot = group.slot_for(key, routed, options)
                 self.report.copies += group.fill(slot, routed, options)
-                _ev0, _ev1 = torch.xpu.Event(), torch.xpu.Event()
+                _ev0 = torch.xpu.Event(enable_timing=True)
+                _ev1 = torch.xpu.Event(enable_timing=True)
                 _ev0.record()
                 entry.graph.replay()
                 _ev1.record()

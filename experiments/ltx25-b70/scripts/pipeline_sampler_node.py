@@ -375,6 +375,7 @@ class LTXPipelineSampler:
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
+            report['written_unix'] = time.time()  # packet 90b: occupancy wall for analyze-phases
             write_json(run / ('pipeline-sampler-' + run_name + '.json'), report)
         return (out[0], out[1], emitted)
 

@@ -218,21 +218,32 @@ class LTXPipelineDecode:
                 # the index this prompt is really carrying is clamped at zero.
                 # Those first few prompts re-emit an early clip; every clip is
                 # still decoded exactly once, and emitted_index records which.
-                timing = {}
-                out, detail = pipeline.run_behind(
-                    'decode', decode_index, depth,
-                    lambda: decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix,
-                                        _timing=timing))
+                # Packet 90b: the vae/save split is timed inside THIS clip's
+                # job and recorded under this clip's decode index when the job
+                # finishes; the receipt reports the split of the clip it
+                # EMITS (decode_index - depth), whose job collect() has already
+                # waited on. Timing only: the decode itself is unchanged.
+                def decode_job(decode_index=decode_index):
+                    timing = {}
+                    result = decode_clip(vae, audio_vae, *latents, save_prefix=save_prefix,
+                                         _timing=timing)
+                    pipeline.record_fingerprint(('decode-split', decode_index), timing)
+                    return result
+
+                out, detail = pipeline.run_behind('decode', decode_index, depth, decode_job)
                 if out is None:
                     out = (torch.zeros(1, 8, 8, 3), {'waveform': torch.zeros(1, 2, 8), 'sample_rate': 48000},
                            video_latent, audio_latent, 'fill')
                 detail['saved_file'] = out[4]
-                detail['decode_split'] = timing or 'not executed (fill or upstream re-emit)'
+                split = (pipeline.fingerprint(('decode-split', detail['emitted_index']))
+                         if detail.get('emitted_index', -1) >= 0 else None)
+                detail['decode_split'] = split if split else 'not recorded (fill)'
                 report['detail'] = detail
             report['save_failures'] = [dict(row) for row in SAVE_FAILURES]
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
+            report['written_unix'] = time.time()  # packet 90b: occupancy wall for analyze-phases
             write_json(run / ('pipeline-decode-' + run_name + '.json'), report)
         return out
 
