@@ -8,10 +8,12 @@ the MP4 preview save.
 - emitted_phases: event elapsed_time between chain marks on a stream is a
   WALL delta (idle gaps included), so the first table attributes wall time
   by phase, not occupancy.
-- route_busy_ms (packet 90b+): the sum of per-replay event windows per card,
-  drained at each sampler receipt. Occupancy = busy / wall over the steady
-  receipts, the wall taken from the receipts' own write times
-  (`written_unix` when present, else file mtime).
+- route_busy_ms (packet 90c): per-replay event windows per card, emitted at
+  each sampler receipt as merged busy segments on the card's own anchor
+  clock. Segments from all steady receipts are merged before measuring;
+  occupancy = union / (first start .. last end) on that clock. Receipts
+  whose timing is unavailable (disabled, errors, unplaced) are counted and
+  printed next to every occupancy figure.
 - decode_split (packet 90b+): vae_s / save_s inside the decode job.
 
 Receipts lacking the newer fields (f90 and earlier) are still analysed; the
@@ -21,7 +23,8 @@ Steady state is relative to the run's index base: clip `emitted - base` for
 the base the runner passed (--index-base), recovered from the receipts as
 `clip_index - <prompt number>` unless --base is given. The first --skip
 emitted clips (default 2: the clips sampled while the pipeline filled) are
-excluded from steady statistics.
+excluded from steady statistics. If no row is steady the script says so and
+exits 2; it never falls back to the excluded rows.
 
 Usage: analyze-phases.py <run-dir> <receipt-prefix> [--skip N] [--base B] [--csv]
   e.g. analyze-phases.py R/encoder-server-sentry-90 f90-endure
@@ -30,7 +33,6 @@ import argparse
 import collections
 import glob
 import json
-import os
 import re
 import statistics
 import sys
@@ -62,11 +64,6 @@ def index_base(receipts):
     bases = collections.Counter(d['clip_index'] - n for n, _, d in receipts
                                 if isinstance(d.get('clip_index'), int))
     return bases.most_common(1)[0][0] if bases else None
-
-
-def written_at(path, receipt):
-    t = receipt.get('written_unix')
-    return float(t) if isinstance(t, (int, float)) else os.stat(path).st_mtime
 
 
 def summary(vals):
@@ -107,74 +104,107 @@ def phase_report(rows, steady):
     print()
 
 
-def busy_report(steady_receipts):
-    """Per-card busy from route_busy_ms over steady receipts, against their wall.
+def merge_segments(intervals):
+    out = []
+    for st, en in sorted(intervals):
+        if out and st <= out[-1][1]:
+            out[-1][1] = max(out[-1][1], en)
+        else:
+            out.append([st, en])
+    return out
 
-    sum = total length of replay windows (the two sampler threads' windows
-    overlap when they co-run on one card, so sum can exceed the wall);
-    union = card time with at least one replay in flight (needs the 90b
-    '_devices' entry); overlap = sum - union.
+
+def card_occupancy(receipts):
+    """Per card from the 90c '_devices' segments of the given receipts.
+
+    Segments from ALL drains are merged on the card's anchor clock before
+    measuring, so a window carried into a later drain never double-counts.
+    The denominator is the same clock: first segment start to last segment
+    end. Returns {card: {union_s, span_s, sum_s, gap_ms}}.
     """
-    have = [(p, d) for p, d in steady_receipts if isinstance(d.get('route_busy_ms'), dict)]
-    bad = [d.get('route_busy_ms') for _, d in steady_receipts
-           if isinstance(d.get('route_busy_ms'), str)]
-    if not have:
-        msg = 'absent from these receipts (pre-90b packet)'
-        if bad:
-            msg = f'unavailable in {len(bad)} receipts, e.g. {bad[0][:120]}'
-        print(f'route_busy_ms: {msg}')
+    segs = collections.defaultdict(list)
+    sums = collections.defaultdict(float)
+    gaps = collections.defaultdict(float)
+    for d in receipts:
+        for card, v in d['route_busy_ms'].get('_devices', {}).items():
+            segs[card].extend((float(a), float(b)) for a, b in v.get('segments', []))
+            sums[card] += v.get('sum_ms', 0.0)
+            gaps[card] = max(gaps[card], v.get('coalesced_gap_ms', 0.0))
+    out = {}
+    for card, iv in segs.items():
+        if not iv:
+            continue
+        merged = merge_segments(iv)
+        out[card] = {'union_s': sum(b - a for a, b in merged) / 1000.0,
+                     'span_s': (merged[-1][1] - merged[0][0]) / 1000.0,
+                     'sum_s': sums[card] / 1000.0, 'gap_ms': gaps[card]}
+    return out
+
+
+def timing_available(d):
+    busy = d.get('route_busy_ms')
+    if not isinstance(busy, dict):
+        return False
+    meta = busy.get('_meta', {})
+    return not meta.get('disabled') and not meta.get('errors') and not meta.get('unplaced') \
+        and '_devices' in busy
+
+
+def busy_report(steady_receipts):
+    """Per-card occupancy of the two-clip sampler from route_busy_ms.
+
+    occupancy = union / span on the card's own clock (time with at least one
+    replay in flight over first-start..last-end of the steady windows);
+    overlap = (summed window time - union) / summed: the share of window time
+    in which both sampler threads had a replay on the card.
+    """
+    n = len(steady_receipts)
+    with_field = [d for _, d in steady_receipts if 'route_busy_ms' in d]
+    if not with_field:
+        print('route_busy_ms: absent from these receipts (pre-90b packet)')
         print()
         return
-    times = sorted(written_at(p, d) for p, d in have)
-    tot = collections.defaultdict(lambda: collections.defaultdict(float))  # card -> sum/union
-    rcpt = collections.defaultdict(lambda: collections.defaultdict(list))
+    usable = [d for d in with_field if isinstance(d['route_busy_ms'], dict)]
+    unavailable = [d for d in with_field if not timing_available(d)]
+    reasons = collections.Counter()
+    for d in unavailable:
+        busy = d['route_busy_ms']
+        if not isinstance(busy, dict):
+            reasons[str(busy)[:80]] += 1
+        else:
+            meta = busy.get('_meta', {})
+            reasons[meta.get('disabled') or
+                    ('errors' if meta.get('errors') else 'unplaced' if meta.get('unplaced') else 'no segments')] += 1
+    tag = f'[timing unavailable in {len(unavailable)}/{n} steady receipts]'
     per_key = collections.defaultdict(lambda: [0, 0.0])
     meta = collections.Counter()
-    # Windows drained at receipt k completed between receipt k-1 and k, so
-    # the first steady receipt opens the wall interval and its own windows
-    # (which precede that interval) are excluded from the occupancy totals.
-    first = min(range(len(have)), key=lambda i: written_at(*have[i]))
-    for i, (p, d) in enumerate(have):
-        busy = d['route_busy_ms']
-        sums = collections.defaultdict(float)
-        for key, agg in busy.items():
-            if key.startswith('_'):
-                continue
-            sums[key.split('/')[0]] += agg.get('ms', 0.0) / 1000.0
-            per_key[key][0] += agg.get('count', 0)
-            per_key[key][1] += agg.get('ms', 0.0)
-        meta.update({k: v for k, v in busy.get('_meta', {}).items() if isinstance(v, int)})
-        unions = {card: v.get('union_ms', 0.0) / 1000.0 for card, v in busy.get('_devices', {}).items()}
-        for card in set(sums) | set(unions):
-            rcpt[card]['sum'].append(sums.get(card, 0.0))
-            if card in unions:
-                rcpt[card]['union'].append(unions[card])
-            if i != first:
-                tot[card]['sum'] += sums.get(card, 0.0)
-                tot[card]['union'] += unions.get(card, 0.0)
-    wall = times[-1] - times[0]
-    per = wall / max(1, len(have) - 1)
-    print(f'route_busy_ms: {len(have)} steady receipts, wall {wall:.1f}s between first and last '
-          f'receipt write ({len(have) - 1} intervals, {per:.3f}s per receipt)')
-    print(f'  {"card":<8} {"sum/rcpt":>9} {"occ(sum)":>9} {"union/rcpt":>11} {"occupancy":>10} {"co-run overlap":>15}')
-    for card in sorted(rcpt):
-        r = rcpt[card]
-        occ_sum = tot[card]['sum'] / wall if wall > 0 else float('nan')
-        if r['union']:
-            occ = tot[card]['union'] / wall if wall > 0 else float('nan')
-            overlap = tot[card]['sum'] - tot[card]['union']
-            print(f'  {card:<8} {statistics.median(r["sum"]):9.3f} {occ_sum:9.1%} '
-                  f'{statistics.median(r["union"]):11.3f} {occ:10.1%} {overlap / max(1e-9, tot[card]["sum"]):15.1%}')
-        else:
-            print(f'  {card:<8} {statistics.median(r["sum"]):9.3f} {occ_sum:9.1%} {"n/a":>11} {"n/a":>10} {"n/a":>15}')
-    print('  (per-receipt columns are medians; occupancy = union / wall = card time with any replay in')
-    print('   flight; occ(sum) double-counts co-running windows and can exceed 100%)')
+    for d in usable:
+        for key, agg in d['route_busy_ms'].items():
+            if not key.startswith('_'):
+                per_key[key][0] += agg.get('count', 0)
+                per_key[key][1] += agg.get('ms', 0.0)
+        meta.update({k: v for k, v in d['route_busy_ms'].get('_meta', {}).items() if isinstance(v, int)})
+    occ = card_occupancy(usable)
+    print(f'route_busy_ms: {n} steady receipts {tag}')
+    if reasons:
+        print(f'  unavailable because: {dict(reasons)}')
+    if not occ:
+        print(f'  no placed busy segments: occupancy n/a {tag}')
+    else:
+        print(f'  {"card":<8} {"union s":>9} {"span s":>9} {"occupancy":>10} {"summed s":>9} {"co-run overlap":>15}')
+        for card in sorted(occ):
+            o = occ[card]
+            print(f'  {card:<8} {o["union_s"]:9.1f} {o["span_s"]:9.1f} '
+                  f'{o["union_s"] / max(1e-9, o["span_s"]):10.1%} {o["sum_s"]:9.1f} '
+                  f'{(o["sum_s"] - o["union_s"]) / max(1e-9, o["sum_s"]):15.1%}  {tag}'
+                  + (f'  (gaps <= {o["gap_ms"]} ms coalesced)' if o['gap_ms'] else ''))
     if meta:
-        print(f'  window bookkeeping: {dict(meta)} (carried = in flight at a drain, counted later; '
-              f'dropped/errors/unplaced > 0 make busy or union an undercount)')
-    print('  top routes by summed window time:')
-    for key, (count, ms) in sorted(per_key.items(), key=lambda kv: -kv[1][1])[:8]:
-        print(f'    {key:<18} {count:>7} windows  {ms / 1000.0:8.1f}s  {ms / max(1, count):7.3f} ms/window')
+        print(f'  window bookkeeping: {dict(meta)} (carried = in flight at a drain, reported later; '
+              f'dropped/errors/unplaced > 0 make the figures an undercount)')
+    if per_key:
+        print('  top routes by summed window time:')
+        for key, (count, ms) in sorted(per_key.items(), key=lambda kv: -kv[1][1])[:8]:
+            print(f'    {key:<18} {count:>7} windows  {ms / 1000.0:8.1f}s  {ms / max(1, count):7.3f} ms/window')
     print()
 
 
@@ -242,8 +272,11 @@ def main():
         return 1
     steady = [r for r in rows if r['rel'] is not None and r['rel'] >= args.skip]
     if not steady:
-        print(f'no receipts past the first {args.skip} emitted clips; using all {len(rows)}')
-        steady = rows
+        print(f'NO STEADY ROWS: {len(rows)} receipts with phases, none with emitted - base >= {args.skip}; '
+              f'no steady phase or occupancy statistics (excluded rows are never reported as steady)')
+        print()
+        decode_report(args.run, args.prefix, base, args.skip)
+        return 2
     phase_report(rows, steady)
     busy_report([(r['path'], r['receipt']) for r in steady])
     decode_report(args.run, args.prefix, base, args.skip)
