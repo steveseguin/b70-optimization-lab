@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-busy-90c'
+OUTPUT = ROOT / 'prepared-encoder-decode-91'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -84,6 +84,14 @@ CCFG_NODE_FILE = 'concurrent_cfg_node.py'
 CCFG_NODE_DIR = 'ltx_concurrent_cfg_lab'
 CCFG_NODE = '427'
 PSAMP_NODE_FILE = 'pipeline_sampler_node.py'
+# Packet 91: decode placement (control / replica on xpu:1 / moved) and the
+# cross-card decode probe that must pass before a replica placement runs.
+REPLICA_ADAPTER = 'ltx_decode_replica.py'
+SAVE_MODES = ('pipeline-save', 'pipeline-replica', 'pipeline-moved')
+PROBE_GRAPH = 'graphs/decode-replica-probe.json'
+PROBE_FIXTURES = 'probe/decode-replica-fixtures.json'
+PROBE_FIXTURES_SRC = LANE / 'data' / 'decode-replica-probe-fixtures.json'
+PROBE_NODE = '440'
 PSAMP_NODE_DIR = 'ltx_pipeline_sampler_lab'
 SAMPLER_NODE = '428'
 UPS_ADAPTER = 'ltx_graph_upsampler.py'
@@ -139,7 +147,10 @@ ARMS = (
     ('pipe-fast-save', 'graph',  'original', 'original',   'original', '1',  'graph',    'pipeline-save', 'original', 'original', 'original', 'original', 'fast'),
     ('pipe-batchproof', 'graph', 'original', 'original',   'original', '1',  'graph',    'pipeline', 'batchproof', 'original', 'original', 'original', 'fast'),
     ('pipe-samp2',   'graph',    'original', 'original',   'original', '1',  'graph',    'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
-    ('pipe-samp2-tsh', 'graph',  'original', 'original',   'original', '1',  'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),)
+    ('pipe-samp2-tsh', 'graph',  'original', 'original',   'original', '1',  'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
+    # Packet 91: the same arm with decode on two cards (replica) or on xpu:1 only (moved).
+    ('pipe-samp2-tsh-rep', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast'),)
 VAE_NODE = '423'
 
 
@@ -259,7 +270,10 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-ccfg', 'graph-fused', 'graph-vae', 'restored', 'pipe-samp',
                           'pipe-uptime', 'pipe-up', 'pipe-up-save', 'pipe-upphase', 'pipe-fwdtimed',
                           'pipe-fasttimed', 'pipe-fast', 'pipe-fast-save', 'pipe-batchproof', 'pipe-samp2',
-                          'pipe-samp2-tsh')}
+                          'pipe-samp2-tsh', 'pipe-samp2-tsh-rep', 'pipe-samp2-tsh-mov')}
+    # Packet 91: the replica-placement module, the probe graph and its pinned fixtures.
+    added |= {'source/scripts/ltx_decode_replica.py', 'graphs/decode-replica-probe.json',
+              'probe/decode-replica-fixtures.json'}
     replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
                 'source/scripts/host_embedding_clip.py',
@@ -431,7 +445,9 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['pipe-fast-save', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline-save', 'original', 'original', 'original', 'original', 'fast'],
                      ['pipe-batchproof', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline', 'batchproof', 'original', 'original', 'original', 'fast'],
                      ['pipe-samp2', 'graph', 'original', 'original', 'original', '1', 'graph', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
-                     ['pipe-samp2-tsh', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast']]
+                     ['pipe-samp2-tsh', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
     expected_graphs = []
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,
@@ -440,7 +456,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
         expected_graphs.append(name)
         graph = json.loads(safe_path(packet, name).read_text())
         # Undo the gate rewiring before comparing, innermost edge first.
-        if pipe_mode == 'pipeline-save':
+        if pipe_mode in ('pipeline-save', 'pipeline-replica', 'pipeline-moved'):
             require('370' not in graph and '75' not in graph, 'Save-behind arm still carries the video assembly')
             require(graph.pop('430') == {'class_type': 'LTXPipelineSaveRecord', 'inputs': {
                     'saved_file': ['426', 4], 'run_name': 'assign-unique-request-name'}},
@@ -514,7 +530,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             require(graph.pop('426') == {'class_type': 'LTXPipelineDecode', 'inputs': {
                     'vae': ['423', 0], 'audio_vae': ['420', 3],
                     'video_latent': ['369', 0], 'audio_latent': ['369', 1],
-                    'mode': pipe_mode, 'clip_index': 0, 'depth': 1, 'upstream_depth': 0,
+                    'mode': pipe_mode, 'clip_index': 0,
+                    'depth': 2 if pipe_mode == 'pipeline-replica' else 1, 'upstream_depth': 0,
                     'run_name': 'assign-unique-request-name'}}, 'Pipelined decode node changed')
             require(graph['370']['inputs']['images'] == ['426', 0] and
                     graph['370']['inputs']['audio'] == ['426', 1] and
@@ -580,6 +597,23 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                         'inputs': {'samples': ['369', 0], 'vae': ['420', 2]}}
         require(graph == control, 'Graph-capture graph changed the original quality recipe')
     require(capture['graphs'] == expected_graphs, 'Graph-capture graph inventory changed')
+    # Packet 91: the probe graph is the resident loader plus the probe node, nothing else.
+    probe = json.loads(safe_path(packet, 'graphs/decode-replica-probe.json').read_text())
+    require(probe == {'420': control['420'],
+                      '440': {'class_type': 'LTXDecodeReplicaProbe', 'inputs': {
+                          'vae': ['420', 2], 'audio_vae': ['420', 3],
+                          'run_name': 'assign-unique-request-name'}}},
+            'Decode replica probe graph changed')
+    placement = manifest['decode_placement']
+    require(placement['probe_graph'] == 'graphs/decode-replica-probe.json' and
+            placement['probe_fixtures'] == 'probe/decode-replica-fixtures.json' and
+            placement['replica_module_sha256'] == manifest['extension_sha256s']['ltx_decode_replica.py'] and
+            placement['native_device'] == 'xpu:3' and placement['replica_device'] == 'xpu:1',
+            'Decode placement contract changed')
+    fixtures = json.loads(safe_path(packet, 'probe/decode-replica-fixtures.json').read_text())['fixtures']
+    require(len(fixtures) == 10 and len({f['fixture'] for f in fixtures}) == 10 and
+            all(f['source'].startswith(str(ROOT) + '/output/validation/') for f in fixtures),
+            'Decode probe fixture list changed')
     require(capture['selection'] == 'all48' and capture['block_indices'] == list(range(48)) and
             capture['modes'] == ['original', 'graph', 'restored'] and
             capture['numerical_source_changed'] is False and capture['graphs_changed'] is False and
@@ -645,7 +679,7 @@ def build_checker(text):
                                        "              'ltx_graph_upsampler.py', 'graph_upsampler_node.py',\n"
                                        "              'phase_timed_upsampler_node.py',\n"
                                        "              'resident_fastpath_node.py',\n"
-                                       "              'av_model.py')", 1)
+                                       "              'av_model.py', 'ltx_decode_replica.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -741,7 +775,8 @@ def main():
                                (PDEC_NODE_FILE, PDEC_NODE_DIR), (CCFG_NODE_FILE, CCFG_NODE_DIR),
                                (PSAMP_NODE_FILE, PSAMP_NODE_DIR),
                                (UPS_ADAPTER, None), (UPS_NODE_FILE, UPS_NODE_DIR),
-                               (PHASE_NODE_FILE, PHASE_NODE_DIR), (FAST_NODE_FILE, FAST_NODE_DIR)):
+                               (PHASE_NODE_FILE, PHASE_NODE_DIR), (FAST_NODE_FILE, FAST_NODE_DIR),
+                               (REPLICA_ADAPTER, None)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -827,7 +862,9 @@ def main():
             graph[DECODE_NODE] = {'class_type': 'LTXPipelineDecode', 'inputs': {
                 'vae': [VAE_NODE, 0], 'audio_vae': ['420', 3],
                 'video_latent': ['369', 0], 'audio_latent': ['369', 1],
-                'mode': pipe_mode, 'clip_index': 0, 'depth': 1, 'upstream_depth': 0,
+                'mode': pipe_mode, 'clip_index': 0,
+                # Two decode jobs in flight for the two-card replica placement.
+                'depth': 2 if pipe_mode == 'pipeline-replica' else 1, 'upstream_depth': 0,
                 'run_name': 'assign-unique-request-name'}}
             graph['370']['inputs']['images'] = [DECODE_NODE, 0]
             graph['370']['inputs']['audio'] = [DECODE_NODE, 1]
@@ -836,7 +873,7 @@ def main():
             graph['414']['inputs']['video_latent'] = [DECODE_NODE, 2]
             graph['414']['inputs']['audio_latent'] = [DECODE_NODE, 3]
             del graph['374'], graph['358']
-            if pipe_mode == 'pipeline-save':
+            if pipe_mode in SAVE_MODES:
                 # The decode worker writes the preview itself; the prompt only
                 # records the path. The video assembly and SaveVideo nodes go.
                 graph[SAVE_NODE] = {'class_type': 'LTXPipelineSaveRecord', 'inputs': {
@@ -888,6 +925,23 @@ def main():
             json.dump(graph, handle, indent=2, sort_keys=True)
             handle.write('\n')
 
+    probe_graph = {'420': copy.deepcopy(control['420']),
+                   PROBE_NODE: {'class_type': 'LTXDecodeReplicaProbe', 'inputs': {
+                       'vae': ['420', 2], 'audio_vae': ['420', 3],
+                       'run_name': 'assign-unique-request-name'}}}
+    with (staging / PROBE_GRAPH).open('x') as handle:
+        json.dump(probe_graph, handle, indent=2, sort_keys=True)
+        handle.write('\n')
+    require(PROBE_FIXTURES_SRC.is_file(), 'Missing probe fixture list: ' + str(PROBE_FIXTURES_SRC))
+    probe_rows = json.loads(PROBE_FIXTURES_SRC.read_text())['fixtures']
+    require(len(probe_rows) == 10 and len({r['fixture'] for r in probe_rows}) == 10,
+            'Probe fixture list must name the ten fixtures')
+    for row in probe_rows:
+        require(row['source'].startswith(str(ROOT) + '/output/validation/') and
+                sha(Path(row['source'])) == row['source_sha256'], 'Probe source changed: ' + row['source'])
+    (staging / 'probe').mkdir(exist_ok=False)
+    shutil.copyfile(PROBE_FIXTURES_SRC, staging / PROBE_FIXTURES)
+
     files = {}
     for p in sorted(staging.rglob('*')):
         require(not p.is_symlink(), 'Unexpected symlink while inventorying')
@@ -922,7 +976,8 @@ def main():
               'source/scripts/' + PHASE_NODE_FILE,
               f'source/custom_nodes/{PHASE_NODE_DIR}/__init__.py',
               'source/scripts/' + FAST_NODE_FILE,
-              f'source/custom_nodes/{FAST_NODE_DIR}/__init__.py'}
+              f'source/custom_nodes/{FAST_NODE_DIR}/__init__.py',
+              'source/scripts/' + REPLICA_ADAPTER, PROBE_GRAPH, PROBE_FIXTURES}
     added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
               for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
@@ -957,7 +1012,7 @@ def main():
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
                      TEXT_ADAPTER, TEXT_SHARD, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
                      CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE, PHASE_NODE_FILE,
-                     FAST_NODE_FILE):
+                     FAST_NODE_FILE, REPLICA_ADAPTER):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -975,6 +1030,14 @@ def main():
                           'serve-encoder.py': files['launch/serve-encoder.py']},
         'preparer_sha256': sha(Path(__file__)),
         'host_residency': parent_manifest['host_residency'],
+        'decode_placement': {
+            'probe_graph': PROBE_GRAPH, 'probe_fixtures': PROBE_FIXTURES,
+            'replica_module_sha256': extensions[REPLICA_ADAPTER],
+            'native_device': 'xpu:3', 'replica_device': 'xpu:1',
+            'modes': {'pipeline-save': 'control: native decode on xpu:3, one worker',
+                      'pipeline-replica': 'even clips xpu:3 native, odd clips xpu:1 replica, depth 2',
+                      'pipeline-moved': 'every clip on the xpu:1 replica'},
+            'replica_requires': 'a passed LTXDecodeReplicaProbe in the same server process'},
         'graph_capture': {
             'parent_packet': PARENT_NAME, 'parent_manifest_sha256': PARENT_SHA,
             'adapter_sha256': extensions[ADAPTER], 'node_sha256': extensions[NODE],
