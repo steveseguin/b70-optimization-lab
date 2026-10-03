@@ -67,7 +67,7 @@ arm() { # name graph-arm count index-base [watch]
   $PY -B $LANE/scripts/run-throughput-fixtures.py $1 --graph $P/graphs/graph-capture-all48-$2.json \
     --arm $2 --server-run $RUN --count $3 --index-base $4 --out $OUT
   ARM_RC=$?
-  if [ -n "$wpid" ]; then touch "$SYNC_FLAG"; wait $wpid; rm -f "$SYNC_FLAG"; fi
+  if [ -n "$wpid" ]; then touch "$SYNC_FLAG" || kill $wpid; wait $wpid; rm -f "$SYNC_FLAG"; fi
   sync
   step "$1 finished rc=$ARM_RC; synced"
   if [ $ARM_RC -ne 0 ]; then save "$1 (rc=$ARM_RC)"; else save "$1"; fi
@@ -140,10 +140,10 @@ stop_when_proven() {
 step "mode $MODE: waiting for server health"
 for i in $(seq 1 360); do
   [ -f $R/FAULT.json ] && { step FAULT latched; exit 4; }
-  curl -sf http://127.0.0.1:8188/queue >/dev/null 2>&1 && break
+  curl -sf -m 10 http://127.0.0.1:8188/queue >/dev/null 2>&1 && break
   sleep 5
 done
-curl -sf http://127.0.0.1:8188/queue >/dev/null || { step server never answered; exit 8; }
+curl -sf -m 10 http://127.0.0.1:8188/queue >/dev/null || { step server never answered; exit 8; }
 [ -f $RUN/server-identity.json ] || { step "no $RUN/server-identity.json: the server on 8188 is not $RUN_NAME; refusing"; exit 8; }
 PID=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['pid'])")
 TICKS=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['proc_start_ticks'])")
