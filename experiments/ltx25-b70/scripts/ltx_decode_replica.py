@@ -58,7 +58,9 @@ NATIVE_DEVICE = 'xpu:3'
 REPLICA_DEVICE = 'xpu:1'
 ALLOWED_DEVICES = {'native': NATIVE_DEVICE, 'replica': REPLICA_DEVICE}
 PLACEMENTS = {'pipeline': ('native',), 'pipeline-save': ('native',),
-              'pipeline-replica': ('native', 'replica'), 'pipeline-moved': ('replica',)}
+              'pipeline-replica': ('native', 'replica'), 'pipeline-moved': ('replica',),
+              # Packet 92b: decode in a child process with its own VAEs on xpu:3.
+              'pipeline-child': ('child',)}
 REPLICA_MODES = ('pipeline-replica', 'pipeline-moved')
 # Free device memory required on xpu:1 after the replica weights are placed
 # (decode working set on xpu:3 in f90c was at most ~4.8 GiB reserved beyond

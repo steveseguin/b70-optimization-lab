@@ -145,7 +145,10 @@ def _worker_loop(stage):
                 _QUEUE_EVENT.wait()
             job = st['queue'].pop(0)
         job.started = time.monotonic()
-        cpu0 = time.thread_time()   # packet 92a: CPU seconds of this job on this thread
+        try:   # packet 92a: CPU seconds of this job on this thread (diagnostic only)
+            cpu0 = time.thread_time()
+        except Exception:  # noqa: BLE001
+            cpu0 = None
         try:
             # ComfyUI executes nodes inside torch.inference_mode(), and that is
             # THREAD-LOCAL. Without it here the encode runs in a different
@@ -157,9 +160,13 @@ def _worker_loop(stage):
         except BaseException as exc:                     # noqa: BLE001
             job.error = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
         finally:
-            job.finished = time.monotonic()
-            job.cpu = time.thread_time() - cpu0
-            job.done.set()
+            try:   # a clock error must never strand a job: done is set regardless
+                job.finished = time.monotonic()
+                job.cpu = None if cpu0 is None else time.thread_time() - cpu0
+            except Exception:  # noqa: BLE001
+                job.cpu = None
+            finally:
+                job.done.set()
 
 
 def _ensure_worker(stage):

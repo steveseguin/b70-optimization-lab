@@ -179,7 +179,8 @@ def node_case():
         identity = {'model_verification_sha256': node.MODEL_SHA256, 'server_identity_sha256': 'x' * 64}
         shas = {n: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
                 for n, m in (('ltx_pipeline.py', p), ('ltx_decode_replica.py', placement),
-                             ('ltx_gil_probe.py', gil), ('pipeline_decode_node.py', node))}
+                             ('ltx_gil_probe.py', gil), ('ltx_decode_child.py', sys.modules['ltx_decode_child']),
+                             ('pipeline_decode_node.py', node))}
         (run / 'server-identity.json').write_text(json.dumps({'extension_sha256s': shas}))
         node._context = lambda: (run, identity)
         torch.use_deterministic_algorithms(True)
@@ -230,7 +231,8 @@ def receipt_case():
         identity = {'model_verification_sha256': node.MODEL_SHA256, 'server_identity_sha256': 'x' * 64}
         shas = {n: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
                 for n, m in (('ltx_pipeline.py', p), ('ltx_decode_replica.py', placement),
-                             ('ltx_gil_probe.py', gil), ('pipeline_decode_node.py', node))}
+                             ('ltx_gil_probe.py', gil), ('ltx_decode_child.py', sys.modules['ltx_decode_child']),
+                             ('pipeline_decode_node.py', node))}
         (run / 'server-identity.json').write_text(json.dumps({'extension_sha256s': shas}))
         node._context = lambda: (run, identity)
         saved = (node.decode_native, node._WRITER.save_fn)

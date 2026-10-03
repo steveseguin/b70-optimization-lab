@@ -36,16 +36,17 @@ import torch
 
 import ltx_pipeline as pipeline
 import ltx_gil_probe as gil
+import ltx_decode_child as child_proc
 import ltx_decode_replica as placement
 from encoder_diagnostics import _context
 
 gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-DECODE_MODES = pipeline.MODES + ('pipeline-save', 'pipeline-replica', 'pipeline-moved')
+DECODE_MODES = pipeline.MODES + ('pipeline-save', 'pipeline-replica', 'pipeline-moved', 'pipeline-child')
 # Modes whose prompts also write the diagnostic MP4 preview (packet 91: on the
 # single preview-writer thread, not on the decode worker).
-SAVE_MODES = ('pipeline-save', 'pipeline-replica', 'pipeline-moved')
+SAVE_MODES = ('pipeline-save', 'pipeline-replica', 'pipeline-moved', 'pipeline-child')
 _failed = False
 
 
@@ -229,7 +230,59 @@ class PlacementChangeRefused(RuntimeError):
 
 # Refusals that are raised before any decode job is submitted: they fail the
 # request with a receipt but leave the decode node and the pipeline usable.
-NON_LATCHING = (ReplicaNotQualified, PlacementChangeRefused)
+class ChildNotQualified(RuntimeError):
+    """The child-process placement was requested before its probe passed on
+    this server. Raised before any job is submitted; does not latch."""
+
+
+NON_LATCHING = (ReplicaNotQualified, PlacementChangeRefused, ChildNotQualified)
+_CHILD_LOCK = threading.Lock()      # one request in flight to the decode child
+_CHILD_PROBE = {'passed': False, 'outcome': 'not run', 'receipt': None}
+VAE_FILES = ('ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors')
+
+
+def _free3():
+    """Front-end view of xpu:3 free memory (device-wide)."""
+    try:
+        return int(torch.xpu.mem_get_info(child_proc.CHILD_PHYSICAL_DEVICE)[0])
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def start_decode_child():
+    """Packet 92b: spawn the decode child at custom-node import, after the
+    launcher's preflight and before ComfyUI serves, when LTX_DECODE_CHILD=1.
+    Records the outcome in decode-child-startup.json; never raises."""
+    if os.environ.get('LTX_DECODE_CHILD') != '1' or not os.environ.get('LTX_ENCODER_RUN_DIR'):
+        return None
+    record = {'schema': 'ltx.decode-child-startup.v1', 'requested_unix': time.time()}
+    try:
+        run = Path(os.environ['LTX_ENCODER_RUN_DIR'])
+        server = json.loads((run / 'server-identity.json').read_text())
+        import folder_paths
+        config = {'source_dir': str(Path(server['source_packet_path']) / 'source'),
+                  'server_argv': json.loads((run / 'server-args.json').read_text()),
+                  'expected_uuid': str(torch.xpu.get_device_properties(child_proc.CHILD_PHYSICAL_DEVICE).uuid),
+                  'vae_paths': [folder_paths.get_full_path_or_raise('vae', name) for name in VAE_FILES],
+                  'ze_affinity_mask': str(child_proc.CHILD_PHYSICAL_DEVICE), 'torch_threads': 16}
+        record['config'] = config
+        record['xpu3_free_before'] = _free3()
+        record['state'] = child_proc.ensure_started(config)
+        record['xpu3_free_after'] = _free3()
+    except Exception as error:  # noqa: BLE001
+        record['error'] = repr(error)[:2000]
+    try:
+        path = Path(os.environ['LTX_ENCODER_RUN_DIR']) / 'decode-child-startup.json'
+        if not path.exists():
+            write_json(path, record)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        import atexit
+        atexit.register(lambda: child_proc.alive() and child_proc.stop(timeout=30.0))
+    except Exception:  # noqa: BLE001
+        pass
+    return record
 _LAST_PLACEMENT = {'mode': None}
 # A pending decode job this close below the new request's index belongs to the
 # same stream; fresh index bases (>= 100 apart in every campaign) are outside it.
@@ -291,6 +344,33 @@ def decode_native(vae, audio_vae, video_latent, audio_latent):
         _busy_end(cap, token, placement.NATIVE_DEVICE)
         t2 = time.monotonic()
     return images, audio, {'wait_s': round(t1 - t0, 4), 'vae_s': round(t2 - t1, 4)}
+
+
+def decode_child(vae, audio_vae, video_latent, audio_latent, index):
+    """Child placement: the decode child's own VAEs on xpu:3, bytes over a pipe.
+
+    The round trip holds CAPTURE_LOCK in shared mode (the 91b discipline,
+    extended across processes): no front-end graph capture -- including the
+    text-encoder shard's on xpu:3 -- can start while the child is decoding,
+    and the child never starts while a capture is recording. Lock order:
+    _CHILD_LOCK -> CAPTURE_LOCK (shared)."""
+    require(_CHILD_PROBE['passed'], 'Child decode without a passed child probe')
+    capture_lock = _capture_lock()
+    t0 = time.monotonic()
+    with _CHILD_LOCK, placement.shared(capture_lock):
+        t1 = time.monotonic()
+        reply, out = child_proc.request('decode', {'index': index},
+                                        {'video': video_latent['samples'], 'audio': audio_latent['samples']})
+        t2 = time.monotonic()
+    require(reply.get('index') == index, 'Decode child answered for clip %s, not %s' % (reply.get('index'), index))
+    images = out['images'].to(vae.output_device)
+    waveform = out['waveform'].to(audio_latent['samples'].device)
+    cpu = reply.get('cpu') if isinstance(reply.get('cpu'), dict) else {}
+    timing = {'wait_s': round(t1 - t0, 4), 'vae_s': reply.get('decode_s'), 'roundtrip_s': round(t2 - t1, 4),
+              'child_job_cpu_s': reply.get('job_cpu_s'), 'child_process_cpu_s': cpu.get('process_cpu_s'),
+              'child_wall_unix': cpu.get('wall_unix'),
+              'child_free_bytes': (reply.get('memory') or {}).get('free')}
+    return images, {'waveform': waveform, 'sample_rate': reply['sample_rate']}, timing
 
 
 def decode_replica(vae, audio_vae, video_latent, audio_latent):
@@ -362,6 +442,7 @@ class LTXPipelineDecode:
         for path, name in ((Path(pipeline.__file__), 'ltx_pipeline.py'),
                            (Path(placement.__file__), 'ltx_decode_replica.py'),
                            (Path(gil.__file__), 'ltx_gil_probe.py'),
+                           (Path(child_proc.__file__), 'ltx_decode_child.py'),
                            (Path(__file__), 'pipeline_decode_node.py')):
             actual = hashlib.sha256(path.read_bytes()).hexdigest()
             require(server['extension_sha256s'][name] == actual, 'Sealed extension changed: ' + name)
@@ -382,6 +463,11 @@ class LTXPipelineDecode:
         gil.mark_lane_thread('prompt')
         apply_cpu0 = time.thread_time()   # packet 92a
         try:
+            if mode == 'pipeline-child' and not (_CHILD_PROBE['passed'] and child_proc.alive()):
+                report['refused'] = ('child placement requires a passed decode-child probe and a running '
+                                     'child on this server (probe outcome: %s; child: %s)'
+                                     % (_CHILD_PROBE['outcome'], child_proc.state().get('error')))
+                raise ChildNotQualified(report['refused'])
             if mode in placement.REPLICA_MODES and not _PROBE['passed']:
                 report['refused'] = ('replica placement requires a passed cross-card decode probe on this '
                                      'server (probe outcome: %s)' % _PROBE['outcome'])
@@ -443,6 +529,8 @@ class LTXPipelineDecode:
                     slot = placement.slot_for(mode, decode_index)
                     if slot == 'native':
                         images, audio, timing = decode_native(vae, audio_vae, *latents)
+                    elif slot == 'child':
+                        images, audio, timing = decode_child(vae, audio_vae, *latents, decode_index)
                     else:
                         images, audio, timing = decode_replica(vae, audio_vae, *latents)
                     saved = ''
@@ -452,8 +540,9 @@ class LTXPipelineDecode:
                         enqueue_s = _WRITER.submit(decode_index, images, audio, save_prefix)
                     try:  # timing/evidence only; must never fail the clip
                         pipeline.record_fingerprint(('decode-split', decode_index), {
-                            'slot': slot, 'device': placement.ALLOWED_DEVICES[slot],
-                            'wait_s': timing['wait_s'], 'vae_s': timing['vae_s'], 'enqueue_s': enqueue_s})
+                            **timing, 'slot': slot,
+                            'device': placement.ALLOWED_DEVICES.get(slot, 'xpu:3 (decode child process)'),
+                            'enqueue_s': enqueue_s})
                     except Exception:  # noqa: BLE001
                         pass
                     done_marker('decode', decode_index, {'slot': slot})
@@ -711,5 +800,156 @@ class LTXSchedulerKnob:
                                                                 'applied' if applied else 'REFUSED')]}}
 
 
+def _child_node_context(run_name, extra_files=()):
+    require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
+            'Unsafe request name')
+    run, identity = _context()
+    require(identity['model_verification_sha256'] == MODEL_SHA256 and
+            identity['server_identity_sha256'] == os.environ.get('LTX_ENCODER_IDENTITY_SHA256'),
+            'Model/startup identity changed')
+    server = json.loads((run / 'server-identity.json').read_text())
+    hashes = {}
+    for path, name in ((Path(child_proc.__file__), 'ltx_decode_child.py'),
+                       (Path(__file__), 'pipeline_decode_node.py')):
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        require(server['extension_sha256s'][name] == actual, 'Sealed extension changed: ' + name)
+        hashes[name] = actual
+    return run, identity, server, hashes
+
+
+class LTXDecodeChildProbe:
+    """Packet 92b gate for the child placement: the decode child decodes the
+    ten fixtures' certified latents and every image and waveform must equal the
+    stored references byte-for-byte, with enough device-wide free memory on
+    xpu:3 after the child's load and after the decodes. On any other verdict
+    the child is stopped cooperatively (its memory goes with its process) and
+    the child arm stays refused. 'child-not-exact' is a valid outcome."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, run_name):
+        run, identity, server, hashes = _child_node_context(run_name)
+        report = {'schema': 'ltx.decode-child-probe.v1', **identity, 'run_name': run_name,
+                  'extension_sha256s': hashes, 'passed': False, 'outcome': 'error',
+                  'thresholds': {'min_free_after_load': child_proc.MIN_FREE_AFTER_LOAD,
+                                 'min_free_after_probe': child_proc.MIN_FREE_AFTER_PROBE}}
+        started = time.monotonic()
+        _CHILD_PROBE.update(passed=False, outcome='running')
+        try:
+            report['child_state'] = child_proc.state()
+            if not child_proc.alive():
+                report['outcome'] = 'child-unavailable'
+                return {'ui': {'text': [report['outcome']]}}
+            ready = child_proc.state().get('ready') or {}
+            free_load = (ready.get('memory') or {}).get('free')
+            report['xpu3_free_after_child_load'] = free_load
+            if free_load is None or free_load < child_proc.MIN_FREE_AFTER_LOAD:
+                report['outcome'] = 'insufficient-memory'
+                return {'ui': {'text': [report['outcome']]}}
+            fixtures = _load_probe_fixtures(Path(server['source_packet_path']))
+            capture_lock = _capture_lock()
+            rows = []
+            for fx in fixtures:
+                tensors = _load_fixture_tensors(fx)
+                row = {'fixture': fx['fixture'], 'source': fx['source'],
+                       'inputs_certified': all(placement.tensor_sha256(tensors[k]) == fx['expected'][k]
+                                               for k in ('video_latent', 'audio_latent'))}
+                if row['inputs_certified']:
+                    with _CHILD_LOCK, placement.shared(capture_lock):
+                        reply, out = child_proc.request('decode', {'index': -1},
+                                                        {'video': tensors['video_latent'],
+                                                         'audio': tensors['audio_latent']})
+                    row['images_sha256'] = placement.tensor_sha256(out['images'])
+                    row['waveform_sha256'] = placement.tensor_sha256(out['waveform'])
+                    row['decode_s'] = reply.get('decode_s')
+                    row['passed'] = (row['images_sha256'] == fx['expected']['images'] and
+                                     row['waveform_sha256'] == fx['expected']['waveform'])
+                else:
+                    row['passed'] = False
+                rows.append(row)
+            report['rows'] = rows
+            with _CHILD_LOCK:
+                stats, _ = child_proc.request('stats')
+            free_probe = (stats.get('memory') or {}).get('free')
+            report['xpu3_free_after_probe'] = free_probe
+            report['child_memory_after_probe'] = stats.get('memory')
+            if not (rows and all(r['passed'] for r in rows)):
+                report['outcome'] = 'child-not-exact'
+            elif free_probe is None or free_probe < child_proc.MIN_FREE_AFTER_PROBE:
+                report['outcome'] = 'insufficient-memory'
+            else:
+                report['outcome'] = 'child-exact'
+                report['passed'] = True
+        except Exception as error:  # noqa: BLE001  (the receipt carries it; the child arm stays refused)
+            import traceback
+            report['outcome'] = 'error'
+            report['error'] = ''.join(traceback.format_exception(type(error), error, error.__traceback__))[-4000:]
+        finally:
+            if not report['passed'] and child_proc.state().get('pid') is not None \
+                    and not child_proc.state().get('stopped'):
+                before = _free3()
+                with _CHILD_LOCK:
+                    report['child_stop'] = child_proc.stop()
+                report['xpu3_free_before_stop'], report['xpu3_free_after_stop'] = before, _free3()
+            _CHILD_PROBE.update(passed=bool(report['passed']), outcome=report['outcome'])
+            report['seconds'] = round(time.monotonic() - started, 3)
+            report['written_unix'] = time.time()
+            write_json(run / ('decode-child-probe-' + run_name + '.json'), report)
+        return {'ui': {'text': [report['outcome']]}}
+
+
+class LTXDecodeChildStop:
+    """Packet 92b: cooperative stop of the decode child, for the runner's
+    proven-quiescence stop (child first, then the server). Waits up to 60 s
+    for the pipeline to go idle, then asks the child to exit and waits for the
+    process; never kills. The receipt says whether the child exited."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, run_name):
+        run, identity, _server, hashes = _child_node_context(run_name)
+        report = {'schema': 'ltx.decode-child-stop.v1', **identity, 'run_name': run_name,
+                  'extension_sha256s': hashes, 'exited': False}
+        try:
+            waited = 0.0
+            while pipeline.busy() and waited < 60.0:
+                time.sleep(0.5)
+                waited += 0.5
+            report['pipeline_busy_after_wait'] = pipeline.busy()
+            if report['pipeline_busy_after_wait']:
+                report['reason'] = 'pipeline still busy; child left running'
+            else:
+                before = _free3()
+                with _CHILD_LOCK:
+                    report['stop'] = child_proc.stop()
+                report['exited'] = bool(report['stop'].get('exited'))
+                report['returncode'] = report['stop'].get('returncode')
+                report['xpu3_free_before'], report['xpu3_free_after'] = before, _free3()
+            report['child_state'] = child_proc.state()
+        except Exception as error:  # noqa: BLE001
+            report['error'] = repr(error)[:400]
+        report['written_unix'] = time.time()
+        write_json(run / ('decode-child-stop-' + run_name + '.json'), report)
+        return {'ui': {'text': ['decode child exited' if report['exited'] else 'decode child NOT stopped']}}
+
+
+start_decode_child()
+
+
 NODE_CLASS_MAPPINGS = {'LTXPipelineDecode': LTXPipelineDecode, 'LTXPipelineSaveRecord': LTXPipelineSaveRecord,
-                       'LTXDecodeReplicaProbe': LTXDecodeReplicaProbe, 'LTXSchedulerKnob': LTXSchedulerKnob}
+                       'LTXDecodeReplicaProbe': LTXDecodeReplicaProbe, 'LTXSchedulerKnob': LTXSchedulerKnob,
+                       'LTXDecodeChildProbe': LTXDecodeChildProbe, 'LTXDecodeChildStop': LTXDecodeChildStop}

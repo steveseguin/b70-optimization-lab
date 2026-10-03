@@ -148,6 +148,7 @@ def refusal_case():
         shas = {n: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
                 for n, m in (('ltx_pipeline.py', p), ('ltx_decode_replica.py', placement),
                              ('ltx_gil_probe.py', sys.modules['ltx_gil_probe']),
+                             ('ltx_decode_child.py', sys.modules['ltx_decode_child']),
                              ('pipeline_decode_node.py', node))}
         (run / 'server-identity.json').write_text(json.dumps({'extension_sha256s': shas}))
         node._context = lambda: (run, identity)
@@ -305,6 +306,7 @@ def node_path_case():
         shas = {n: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
                 for n, m in (('ltx_pipeline.py', p), ('ltx_decode_replica.py', placement),
                              ('ltx_gil_probe.py', sys.modules['ltx_gil_probe']),
+                             ('ltx_decode_child.py', sys.modules['ltx_decode_child']),
                              ('pipeline_decode_node.py', node))}
         (run / 'server-identity.json').write_text(json.dumps({'extension_sha256s': shas}))
         node._context = lambda: (run, identity)
@@ -591,6 +593,7 @@ def placement_change_case():
         shas = {n: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
                 for n, m in (('ltx_pipeline.py', p), ('ltx_decode_replica.py', placement),
                              ('ltx_gil_probe.py', sys.modules['ltx_gil_probe']),
+                             ('ltx_decode_child.py', sys.modules['ltx_decode_child']),
                              ('pipeline_decode_node.py', node))}
         (run / 'server-identity.json').write_text(json.dumps({'extension_sha256s': shas}))
         node._context = lambda: (run, identity)

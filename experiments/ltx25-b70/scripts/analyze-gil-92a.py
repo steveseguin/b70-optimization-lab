@@ -121,10 +121,15 @@ def arm_stats(run, data, prefix):
         'lane_cpu': None if rates is None else rates[0], 'max_thread': None if rates is None else rates[1],
         'max_thread_name': None if rates is None else rates[2], 'probe_cpu': None if rates is None else rates[3],
         'cpu_wall_s': None if rates is None else rates[4],
-        'lag_median_ms': None if counts is None else percentile_us(counts, 0.5) / 1000.0,
-        'lag_p95_ms': None if counts is None else percentile_us(counts, 0.95) / 1000.0,
+        'lag_median_ms': to_ms(percentile_us(counts, 0.5)) if counts else None,
+        'lag_p95_ms': to_ms(percentile_us(counts, 0.95)) if counts else None,
         'lag_samples': 0 if counts is None else sum(counts),
     }
+
+
+def to_ms(us):
+    """Microseconds to milliseconds, None-safe (an empty histogram has no percentile)."""
+    return None if us is None else us / 1000.0
 
 
 def fmt(v, spec='.3f'):
@@ -135,9 +140,12 @@ def verdict(arms, idle_ms):
     by = {a['arm']: a for a in arms}
     defaults = [by.get('s05a'), by.get('s05b')]
     lines = []
-    if any(a is None or a['lane_cpu'] is None or a['lag_median_ms'] is None for a in defaults) \
-            or by.get('s01') is None or by.get('s20') is None:
-        return 'INDETERMINATE (missing arms or instruments)', lines
+    needed = defaults + [by.get('s01'), by.get('s20')]
+    if any(a is None or a.get('receipts', 1) == 0 or a['lane_cpu'] is None or a['lag_median_ms'] is None
+           or a['max_thread'] is None for a in needed):
+        missing = [n for n, a in zip(('s05a', 's05b', 's01', 's20'), needed)
+                   if a is None or a.get('receipts', 1) == 0 or a['lane_cpu'] is None]
+        return 'INDETERMINATE (missing arms or instruments: %s)' % ', '.join(missing), lines
     ref = {k: med([a[k] for a in defaults]) for k in ('sampler_job', 'decode_job')}
     shifts = {}
     for k in ('sampler_job', 'decode_job'):
@@ -180,9 +188,9 @@ def main():
     if idle_file.is_file():
         lag = json.loads(idle_file.read_text()).get('gil', {}).get('lag', {})
         if lag.get('counts'):
-            idle = percentile_us(lag['counts'], 0.5) / 1000.0
+            idle = to_ms(percentile_us(lag['counts'], 0.5))
             print(f'idle baseline: {sum(lag["counts"])} probe samples, lock-wait median {fmt(idle)} ms, '
-                  f'p95 {fmt(percentile_us(lag["counts"], 0.95) / 1000.0)} ms')
+                  f'p95 {fmt(to_ms(percentile_us(lag["counts"], 0.95)))} ms')
     else:
         print('idle baseline: receipt missing')
     arms = []
