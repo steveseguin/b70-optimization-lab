@@ -1,151 +1,238 @@
 #!/usr/bin/env python3
-"""Aggregate emitted_phases + stage_seconds from pipeline-sampler receipts.
+"""Aggregate emitted_phases, route busy windows and the decode split from a run.
 
-Answers the packet-90 question: where does the pair wall go, and how much of
-the interleave loss sits in which phase. Event elapsed_time on a stream is a
-wall delta between marks (idle gaps included), so phases attribute wall time,
-not occupancy - the script reports them as such.
+Answers the packet-90 questions: where does the pair wall go, how busy is
+each card inside it, and how the decode job splits between VAE decode and
+the MP4 preview save.
 
-Usage: analyze-phases.py <run-dir> <receipt-glob-prefix> [--csv]
+- emitted_phases: event elapsed_time between chain marks on a stream is a
+  WALL delta (idle gaps included), so the first table attributes wall time
+  by phase, not occupancy.
+- route_busy_ms (packet 90b+): the sum of per-replay event windows per card,
+  drained at each sampler receipt. Occupancy = busy / wall over the steady
+  receipts, the wall taken from the receipts' own write times
+  (`written_unix` when present, else file mtime).
+- decode_split (packet 90b+): vae_s / save_s inside the decode job.
+
+Receipts lacking the newer fields (f90 and earlier) are still analysed; the
+sections they cannot feed are reported as absent.
+
+Steady state is relative to the run's index base: clip `emitted - base` for
+the base the runner passed (--index-base), recovered from the receipts as
+`clip_index - <prompt number>` unless --base is given. The first --skip
+emitted clips (default 2: the clips sampled while the pipeline filled) are
+excluded from steady statistics.
+
+Usage: analyze-phases.py <run-dir> <receipt-prefix> [--skip N] [--base B] [--csv]
+  e.g. analyze-phases.py R/encoder-server-sentry-90 f90-endure
 """
+import argparse
+import collections
 import glob
 import json
+import os
+import re
 import statistics
 import sys
 from pathlib import Path
 
+PHASE_ORDER = ('start->concat_a', 'concat_a->sample_a', 'sample_a->separate_a',
+               'separate_a->upsample', 'upsample->concat_b', 'concat_b->sample_b',
+               'sample_b->separate_b')
 
-def decode_report(run, prefix):
-    """Aggregate decode_split (vae vs MP4-save seconds) from decode receipts."""
-    vae, save, jobs = [], [], []
-    for f in sorted(glob.glob(str(run / f'pipeline-decode-{prefix}*.json'))):
+
+def load(run, kind, prefix):
+    """[(prompt_number, path, receipt)] for complete receipts of one prefix."""
+    out = []
+    pat = re.compile(re.escape(f'{kind}-{prefix}-') + r'(\d+)\.json$')
+    for f in glob.glob(str(run / f'{kind}-{prefix}-*.json')):
+        m = pat.search(f)
+        if not m:
+            continue
         try:
             d = json.loads(Path(f).read_text())
-        except Exception:
+        except Exception:  # noqa: BLE001  (0-byte / truncated files after a freeze)
             continue
-        det = d.get('detail', {})
-        split = det.get('decode_split')
-        job = det.get('stage_seconds')
-        if isinstance(split, dict):
-            vae.append(split.get('vae_s', 0.0))
-            save.append(split.get('save_s', 0.0))
-        if job:
-            jobs.append(job)
-    if not vae:
-        return
-    print(f'decode split: {len(vae)} receipts - '
-          f'vae mean {statistics.mean(vae):.3f}s (median {statistics.median(vae):.3f}), '
-          f'save mean {statistics.mean(save):.3f}s (median {statistics.median(save):.3f}), '
-          f'save share {sum(save) / max(1e-9, sum(vae) + sum(save)):.1%} of in-job time')
+        out.append((int(m.group(1)), f, d))
+    out.sort(key=lambda t: t[0])
+    return out
 
 
-def busy_report(files):
-    """Aggregate route_busy_ms across receipts: per-card busy vs job wall."""
-    per_key = {}
-    job_total = 0.0
-    n = 0
-    for f in files:
-        try:
-            d = json.loads(Path(f).read_text())
-        except Exception:
-            continue
-        busy = d.get('route_busy_ms')
-        if not isinstance(busy, dict):
-            continue
-        n += 1
-        job = d.get('detail', {}).get('stage_seconds') or 0.0
-        job_total += job
-        for key, agg in busy.items():
-            acc = per_key.setdefault(key, {'count': 0, 'ms': 0.0})
-            acc['count'] += agg.get('count', 0)
-            acc['ms'] += agg.get('ms', 0.0)
-    if not n:
-        return
-    per_card = {}
-    for key, agg in per_key.items():
-        card = key.split('/')[0]
-        per_card[card] = per_card.get(card, 0.0) + agg['ms']
-    print(f'route_busy_ms: {n} receipts, total job wall {job_total:.1f}s')
-    for card in sorted(per_card):
-        busy = per_card[card] / 1000.0
-        print(f'  {card}: busy {busy:8.1f}s over receipts ({busy / n:6.3f}s per receipt avg)')
-    top = sorted(per_key.items(), key=lambda kv: -kv[1]['ms'])[:6]
-    for key, agg in top:
-        print(f'  {key:<18} {agg["count"]:>6} windows  {agg["ms"] / 1000.0:8.1f}s')
-    print()
+def index_base(receipts):
+    bases = collections.Counter(d['clip_index'] - n for n, _, d in receipts
+                                if isinstance(d.get('clip_index'), int))
+    return bases.most_common(1)[0][0] if bases else None
 
 
+def written_at(path, receipt):
+    t = receipt.get('written_unix')
+    return float(t) if isinstance(t, (int, float)) else os.stat(path).st_mtime
 
-def main():
-    run = Path(sys.argv[1])
-    prefix = sys.argv[2]
-    files = sorted(glob.glob(str(run / f'pipeline-sampler-{prefix}*.json')))
-    rows = []
-    for f in files:
-        try:
-            d = json.loads(Path(f).read_text())
-        except Exception:
-            continue
-        det = d.get('detail', {})
-        ph = det.get('emitted_phases')
-        if not ph or not det.get('primed', True):
-            continue
-        stage_a = ph.get('concat_a->sample_a', {}).get('cpu_s')
-        stage_b = ph.get('concat_b->sample_b', {}).get('cpu_s')
-        upsample = ph.get('separate_a->upsample', {}).get('cpu_s')
-        if stage_a is None or stage_b is None:
-            continue
-        rows.append({
-            'receipt': Path(f).stem.replace('pipeline-sampler-', ''),
-            'emitted': det.get('emitted_index'),
-            'job_s': det.get('stage_seconds'),
-            'stage_a': stage_a,
-            'upsample': upsample,
-            'stage_b': stage_b,
-            'a_xpu0_ms': ph['concat_a->sample_a'].get('xpu0_ms'),
-            'a_xpu1_ms': ph['concat_a->sample_a'].get('xpu1_ms'),
-            'b_xpu0_ms': ph['concat_b->sample_b'].get('xpu0_ms'),
-            'b_xpu1_ms': ph['concat_b->sample_b'].get('xpu1_ms'),
-        })
-    if not rows:
-        print('no receipts with phases')
-        return 1
-    # Skip the first two emissions (pipeline fill) for steady-state stats.
-    steady = [r for r in rows if (r['emitted'] or 0) >= 2] or rows
 
-    def stats(key, rs=steady):
-        vals = [r[key] for r in rs if r[key] is not None]
-        if not vals:
-            return 'n/a'
-        vals.sort()
-        p95 = vals[min(len(vals) - 1, int(len(vals) * 0.95))]
-        return f'{statistics.mean(vals):8.4f}  {statistics.median(vals):8.4f}  {p95:8.4f}  {min(vals):8.4f}  {max(vals):8.4f}'
+def summary(vals):
+    vals = sorted(v for v in vals if v is not None)
+    if not vals:
+        return f'{"n/a":>8}'
+    p95 = vals[min(len(vals) - 1, int(len(vals) * 0.95))]
+    return (f'{statistics.mean(vals):8.4f}  {statistics.median(vals):8.4f}  {p95:8.4f}  '
+            f'{vals[0]:8.4f}  {vals[-1]:8.4f}  n={len(vals)}')
 
-    print(f'receipts with phases: {len(rows)} (steady {len(steady)})')
-    print(f'{"metric":<14} {"mean":>8}  {"median":>8}  {"p95":>8}  {"min":>8}  {"max":>8}')
-    for key in ('job_s', 'stage_a', 'upsample', 'stage_b'):
-        print(f'{key:<14} {stats(key)}')
+
+HEADER = f'{"":<26} {"mean":>8}  {"median":>8}  {"p95":>8}  {"min":>8}  {"max":>8}'
+
+
+def phase_report(rows, steady):
+    print(f'sampler receipts with phases: {len(rows)} (steady {len(steady)})')
+    print('wall between marks (seconds; event deltas include idle gaps):')
+    print(HEADER)
+    print(f'{"job_s":<26} {summary(r["job_s"] for r in steady)}')
+    for name in PHASE_ORDER:
+        for col, scale in (('cpu_s', 1.0), ('xpu0_ms', 1e-3), ('xpu1_ms', 1e-3)):
+            vals = [r['phases'].get(name, {}).get(col) for r in steady]
+            vals = [v * scale for v in vals if v is not None]
+            if vals:
+                label = f'{name} {col.replace("_ms", "").replace("_s", "")}'
+                print(f'{label:<26} {summary(vals)}')
     chain = [r['stage_a'] + (r['upsample'] or 0) + r['stage_b'] for r in steady]
-    print(f'{"chain_total":<14} {statistics.mean(chain):8.4f}  {statistics.median(chain):8.4f}')
-    print()
-    # Derived overlap picture: per-pair wall is not in these receipts (it is
-    # the campaign's inter-emission interval); what IS here is the per-job
-    # time. Report the phase shares so the loss can be placed by name.
+    print(f'{"chain_total cpu":<26} {summary(chain)}')
     a = statistics.mean(r['stage_a'] for r in steady)
     b = statistics.mean(r['stage_b'] for r in steady)
     u = statistics.mean(r['upsample'] or 0 for r in steady)
-    j = statistics.mean(r['job_s'] for r in steady if r['job_s'])
-    print(f'phase shares of the {j:.3f}s job: stage_a {a / j:.1%}, stage_b {b / j:.1%}, '
-          f'upsample {u / j:.1%}, unaccounted {max(0.0, j - a - b - u) / j:.1%}')
+    jobs = [r['job_s'] for r in steady if r['job_s']]
+    if jobs:
+        j = statistics.mean(jobs)
+        print(f'phase shares of the {j:.3f}s job: stage_a {a / j:.1%}, stage_b {b / j:.1%}, '
+              f'upsample {u / j:.1%}, unaccounted {max(0.0, j - a - b - u) / j:.1%}')
     print(f'stage_a:stage_b ratio {a / b:.2f} (same 48-block shard; difference is steps x tokens)')
     print()
-    busy_report(files)
-    decode_report(run, prefix)
-    if '--csv' in sys.argv:
+
+
+def busy_report(steady_receipts):
+    """Per-card busy from route_busy_ms over steady receipts, against their wall."""
+    have = [(p, d) for p, d in steady_receipts if isinstance(d.get('route_busy_ms'), dict)]
+    bad = [d.get('route_busy_ms') for _, d in steady_receipts
+           if isinstance(d.get('route_busy_ms'), str)]
+    if not have:
+        msg = 'absent from these receipts (pre-90b packet)'
+        if bad:
+            msg = f'unavailable in {len(bad)} receipts, e.g. {bad[0][:120]}'
+        print(f'route_busy_ms: {msg}')
         print()
-        print('receipt,emitted,job_s,stage_a,upsample,stage_b')
+        return
+    times = sorted(written_at(p, d) for p, d in have)
+    per_card = collections.defaultdict(float)
+    per_card_rcpt = collections.defaultdict(list)
+    per_key = collections.defaultdict(lambda: [0, 0.0])
+    meta = collections.Counter()
+    # Windows drained at receipt k completed between receipt k-1 and k, so
+    # the first steady receipt opens the wall interval and its own windows
+    # (which precede that interval) are excluded from the occupancy sum.
+    first = min(range(len(have)), key=lambda i: written_at(*have[i]))
+    for i, (p, d) in enumerate(have):
+        cards = collections.defaultdict(float)
+        for key, agg in d['route_busy_ms'].items():
+            if key.startswith('_'):
+                meta.update({k: v for k, v in agg.items() if isinstance(v, int)})
+                continue
+            card = key.split('/')[0]
+            cards[card] += agg.get('ms', 0.0)
+            per_key[key][0] += agg.get('count', 0)
+            per_key[key][1] += agg.get('ms', 0.0)
+        for card, ms in cards.items():
+            per_card_rcpt[card].append(ms / 1000.0)
+            if i != first:
+                per_card[card] += ms / 1000.0
+    wall = times[-1] - times[0]
+    print(f'route_busy_ms: {len(have)} steady receipts, wall {wall:.1f}s between first and last '
+          f'receipt write ({len(have) - 1} intervals, {wall / max(1, len(have) - 1):.3f}s per receipt)')
+    print(f'  {"card":<8} {"busy/receipt mean":>18} {"median":>8} {"occupancy":>10}')
+    for card in sorted(per_card_rcpt):
+        vals = per_card_rcpt[card]
+        occ = per_card[card] / wall if wall > 0 else float('nan')
+        print(f'  {card:<8} {statistics.mean(vals):18.3f} {statistics.median(vals):8.3f} {occ:10.1%}')
+    if meta:
+        print(f'  window bookkeeping: {dict(meta)} (carried = still in flight at a drain; '
+              f'dropped/errors > 0 means occupancy is an undercount)')
+    print('  top routes by busy time:')
+    for key, (count, ms) in sorted(per_key.items(), key=lambda kv: -kv[1][1])[:8]:
+        print(f'    {key:<18} {count:>7} windows  {ms / 1000.0:8.1f}s  {ms / max(1, count):7.3f} ms/window')
+    print()
+
+
+def decode_report(run, prefix, base, skip):
+    receipts = load(run, 'pipeline-decode', prefix)
+    steady = [(f, d) for _, f, d in receipts
+              if isinstance(d.get('detail', {}).get('emitted_index'), int)
+              and d['detail']['emitted_index'] >= 0
+              and (base is None or d['detail']['emitted_index'] - base >= skip)]
+    jobs = [d['detail'].get('stage_seconds') for _, d in steady]
+    print(f'decode receipts: {len(receipts)} (steady emitted {len(steady)})')
+    print(HEADER)
+    print(f'{"decode job_s":<26} {summary(jobs)}')
+    splits = [d['detail'].get('decode_split') for _, d in steady]
+    have = [s for s in splits if isinstance(s, dict) and 'vae_s' in s]
+    if not have:
+        print('decode_split: absent from these receipts (pre-90b packet)')
+        print()
+        return
+    vae = [s['vae_s'] for s in have]
+    save = [s.get('save_s', 0.0) for s in have]
+    rest = [d['detail']['stage_seconds'] - s['vae_s'] - s.get('save_s', 0.0)
+            for (_, d), s in zip(steady, splits) if isinstance(s, dict) and 'vae_s' in s
+            and d['detail'].get('stage_seconds')]
+    print(f'{"  vae decode (+audio)":<26} {summary(vae)}')
+    print(f'{"  mp4 preview save":<26} {summary(save)}')
+    print(f'{"  job - vae - save":<26} {summary(rest)}')
+    print(f'decode split: {len(have)} receipts, save share '
+          f'{sum(save) / max(1e-9, sum(vae) + sum(save)):.1%} of timed in-job time')
+    print()
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('run', type=Path)
+    ap.add_argument('prefix')
+    ap.add_argument('--skip', type=int, default=2)
+    ap.add_argument('--base', type=int, default=None)
+    ap.add_argument('--csv', action='store_true')
+    args = ap.parse_args()
+
+    receipts = load(args.run, 'pipeline-sampler', args.prefix)
+    base = args.base if args.base is not None else index_base(receipts)
+    print(f'run {args.run} prefix {args.prefix}: {len(receipts)} readable sampler receipts, '
+          f'index base {base}, steady = emitted - base >= {args.skip}')
+    rows = []
+    for n, f, d in receipts:
+        det = d.get('detail', {})
+        ph = det.get('emitted_phases')
+        if not isinstance(ph, dict) or not det.get('primed', True):
+            continue
+        stage_a = ph.get('concat_a->sample_a', {}).get('cpu_s')
+        stage_b = ph.get('concat_b->sample_b', {}).get('cpu_s')
+        if stage_a is None or stage_b is None:
+            continue
+        emitted = det.get('emitted_index')
+        rows.append({'n': n, 'path': f, 'receipt': d, 'phases': ph,
+                     'name': Path(f).stem.replace('pipeline-sampler-', ''),
+                     'emitted': emitted,
+                     'rel': (emitted - base) if isinstance(emitted, int) and base is not None else None,
+                     'job_s': det.get('stage_seconds'), 'stage_a': stage_a,
+                     'upsample': ph.get('separate_a->upsample', {}).get('cpu_s'), 'stage_b': stage_b})
+    if not rows:
+        print('no receipts with phases')
+        return 1
+    steady = [r for r in rows if r['rel'] is not None and r['rel'] >= args.skip]
+    if not steady:
+        print(f'no receipts past the first {args.skip} emitted clips; using all {len(rows)}')
+        steady = rows
+    phase_report(rows, steady)
+    busy_report([(r['path'], r['receipt']) for r in steady])
+    decode_report(args.run, args.prefix, base, args.skip)
+    if args.csv:
+        print('receipt,emitted,rel,job_s,stage_a,upsample,stage_b')
         for r in rows:
-            print(f"{r['receipt']},{r['emitted']},{r['job_s']},{r['stage_a']},{r['upsample']},{r['stage_b']}")
+            print(f"{r['name']},{r['emitted']},{r['rel']},{r['job_s']},{r['stage_a']},"
+                  f"{r['upsample']},{r['stage_b']}")
     return 0
 
 
