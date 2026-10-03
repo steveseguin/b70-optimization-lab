@@ -48,6 +48,9 @@ class FakeEvent:
     def __init__(self, t=None, done=True, broken=False):
         self.t, self.done, self.broken = t, done, broken
 
+    def record(self):
+        pass
+
     def query(self):
         if self.broken:
             raise RuntimeError('event not created with enable_timing')
@@ -60,26 +63,42 @@ class FakeEvent:
 def busy_cases():
     ns = load_busy()
     rec, report = ns['_busy_record'], ns['busy_window_report']
+    # No anchor yet: windows still aggregate, but cannot be placed.
     rec('xpu:0', 3, FakeEvent(0.0), FakeEvent(0.010))
-    rec('xpu:0', 3, FakeEvent(1.0), FakeEvent(1.005))
+    out = report()
+    assert out['xpu:0/route3'] == {'count': 1, 'ms': 10.0} and '_devices' not in out, out
+    assert out['_meta']['unplaced'] == 1, out
+    ns['_busy_anchor']('xpu:0', lambda: FakeEvent(0.0))
+    ns['_busy_anchor']('xpu:1', lambda: FakeEvent(0.0))
+    first_anchor = ns['_BUSY_ANCHORS']['xpu:0']
+    ns['_busy_anchor']('xpu:0', lambda: FakeEvent(99.0))
+    assert ns['_BUSY_ANCHORS']['xpu:0'] is first_anchor, 'anchor must be recorded once per device'
+    # Two threads co-running on xpu:0: [1.000,1.010] and [1.005,1.015] -> sum 20, union 15.
+    rec('xpu:0', 3, FakeEvent(1.000), FakeEvent(1.010))
+    rec('xpu:0', 30, FakeEvent(1.005), FakeEvent(1.015))
     rec('xpu:1', 40, FakeEvent(0.0), FakeEvent(0.020))
     late_end = FakeEvent(2.0, done=False)
     rec('xpu:1', 41, FakeEvent(1.990), late_end)
     out = report()
-    assert out['xpu:0/route3'] == {'count': 2, 'ms': 15.0}, out
-    assert out['xpu:1/route40'] == {'count': 1, 'ms': 20.0}, out
+    assert out['xpu:0/route3'] == {'count': 1, 'ms': 10.0}, out
+    assert out['xpu:0/route30'] == {'count': 1, 'ms': 10.0}, out
+    d0 = out['_devices']['xpu:0']
+    assert d0['windows'] == 2 and abs(d0['sum_ms'] - 20.0) < 1e-6 and abs(d0['union_ms'] - 15.0) < 1e-6 \
+        and abs(d0['span_ms'] - 15.0) < 1e-6, d0
     assert 'xpu:1/route41' not in out and out['_meta']['carried'] == 1, out
     late_end.done = True
     out = report()
-    assert out == {'xpu:1/route41': {'count': 1, 'ms': 10.0}}, out
+    assert out['xpu:1/route41'] == {'count': 1, 'ms': 10.0}, out
+    assert abs(out['_devices']['xpu:1']['union_ms'] - 10.0) < 1e-6 and '_meta' not in out, out
     assert report() == {}, 'drained report must be empty'
     rec('xpu:0', 1, FakeEvent(broken=True), FakeEvent(broken=True))
     out = report()
-    assert out == {'_meta': {'carried': 0, 'dropped': 0, 'errors': 1}}, out
+    assert out == {'_meta': {'carried': 0, 'dropped': 0, 'errors': 1, 'unplaced': 0}}, out
     for _ in range(ns['_BUSY_MAX'] + 5):
         rec('xpu:0', 2, FakeEvent(0.0), FakeEvent(0.001))
     out = report()
     assert out['xpu:0/route2']['count'] == ns['_BUSY_MAX'] and out['_meta']['dropped'] == 5, out['_meta']
+    assert ns['_union_ms']([(0, 2), (1, 3), (5, 6), (5.5, 5.7)]) == 4
 
 
 case('busy windows: aggregate, carry, drain, errors, cap', busy_cases)
@@ -137,7 +156,9 @@ def analyzer_cases():
                     'separate_a->upsample': {'cpu_s': 0.03},
                     'concat_b->sample_b': {'cpu_s': 0.85, 'xpu0_ms': 850.0, 'xpu1_ms': 860.0}}
                 rcpt['route_busy_ms'] = {'xpu:0/route0': {'count': 100, 'ms': 1200.0},
-                                         'xpu:1/route47': {'count': 100, 'ms': 900.0}}
+                                         'xpu:1/route47': {'count': 100, 'ms': 900.0},
+                                         '_devices': {'xpu:0': {'union_ms': 1050.0},
+                                                      'xpu:1': {'union_ms': 900.0}}}
             (run / f'pipeline-sampler-t90-endure-{n:02d}.json').write_text(json.dumps(rcpt))
             ddet = {'emitted_index': emitted, 'stage_seconds': 1.6}
             if emitted >= 0:
@@ -154,7 +175,8 @@ def analyzer_cases():
         assert 'with phases: 9 (steady 7)' in out, out
         # 7 steady receipts 1.5 s apart -> 9.0 s wall; 6 counted intervals
         assert 'wall 9.0s' in out, out
-        assert ' 80.0%' in out and ' 60.0%' in out, out          # 6*1.2/9, 6*0.9/9
+        assert ' 80.0%' in out and ' 60.0%' in out, out          # sum: 6*1.2/9, 6*0.9/9
+        assert ' 70.0%' in out and ' 12.5%' in out, out          # union 6*1.05/9; overlap 0.15/1.2
         assert 'save share 20.0%' in out, out
         assert 'decode receipts: 12 (steady emitted 7)' in out, out
 

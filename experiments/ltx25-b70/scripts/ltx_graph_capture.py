@@ -563,21 +563,37 @@ def staged_move(value, device, tag):
     return out
 
 
-# --- per-replay busy windows (packet 90) -------------------------------------
+# --- per-replay busy windows (packet 90/90b) ---------------------------------
 # The emitted_phases receipts place wall time by phase name but cannot say
 # whether a card was busy inside a phase (event elapsed_time includes idle
 # gaps). Bracketing every graph replay with its own event pair gives
-# per-route wall-on-card windows; summing them per device and comparing with
-# the pair wall attributes the packing loss. Windows whose events have not
-# completed at report time (the other clip still in flight) carry over to the
-# next report instead of being dropped. No numerics change: two event records
-# per replay on the issuing thread's own stream.
+# per-route wall-on-card windows. The two sampler threads co-run on the same
+# card, so a plain SUM of window lengths double-counts their overlap; each
+# window is therefore also placed on its device's timeline relative to one
+# anchor event per device, and the report gives the UNION (time the card had
+# any replay in flight) and the overlap. Windows whose events have not
+# completed at report time (the other clip still in flight) carry over to
+# the next report instead of being dropped. No numerics change: event
+# records only, on the issuing thread's own stream, plus one anchor record
+# per device.
 
 _BUSY_LOCK = threading.Lock()
 _BUSY_WINDOWS = []
 _BUSY_PENDING = []
 _BUSY_MAX = 8192
 _BUSY_DROPPED = [0]
+_BUSY_ANCHORS = {}
+
+
+def _busy_anchor(device, make_event):
+    """Record one timeline anchor per device, before that device's first window."""
+    key = str(device)
+    with _BUSY_LOCK:
+        if key in _BUSY_ANCHORS:
+            return
+        ev = make_event()
+        ev.record()
+        _BUSY_ANCHORS[key] = ev
 
 
 def _busy_record(device, index, ev0, ev1):
@@ -588,12 +604,30 @@ def _busy_record(device, index, ev0, ev1):
             _BUSY_DROPPED[0] += 1
 
 
+def _union_ms(intervals):
+    total, end = 0.0, None
+    for s, e in sorted(intervals):
+        if end is None or s > end:
+            total += e - s
+            end = e
+        elif e > end:
+            total += e - end
+            end = e
+    return total
+
+
 def busy_window_report():
-    """Drain completed windows into {'<device>/route<i>': {count, ms}}.
+    """Drain completed windows.
+
+    Returns {'<device>/route<i>': {count, ms}} (ms = sum of window lengths)
+    plus '_devices': {'<device>': {windows, sum_ms, union_ms, span_ms}} when
+    the windows could be placed on the device timeline (union_ms = card time
+    with at least one replay in flight; sum_ms - union_ms = co-run overlap;
+    span_ms = first window start to last window end in this drain), and
+    '_meta' counters when anything was carried, dropped or unreadable.
 
     Never blocks on the GPU: a window whose end event has not completed yet
-    (the other clip still in flight) is carried to the next report via
-    query(), not waited for. Reads event timestamps only.
+    is carried to the next report via query(), not waited for.
     """
     global _BUSY_WINDOWS
     with _BUSY_LOCK:
@@ -601,9 +635,12 @@ def busy_window_report():
         pending = list(_BUSY_PENDING)
         _BUSY_PENDING.clear()
         dropped, _BUSY_DROPPED[0] = _BUSY_DROPPED[0], 0
+        anchors = dict(_BUSY_ANCHORS)
     out = {}
     carry = []
     errors = 0
+    placed = {}
+    unplaced = 0
     for dev, idx, ev0, ev1 in pending + windows:
         try:
             if not ev1.query():
@@ -616,12 +653,24 @@ def busy_window_report():
         agg = out.setdefault(f'{dev}/route{idx}', {'count': 0, 'ms': 0.0})
         agg['count'] += 1
         agg['ms'] += round(ms, 3)
+        anchor = anchors.get(dev)
+        try:
+            start = anchor.elapsed_time(ev0)
+            placed.setdefault(dev, []).append((start, start + ms))
+        except Exception:  # noqa: BLE001  (no anchor or cross-stream timing refused)
+            unplaced += 1
     with _BUSY_LOCK:
         room = max(0, _BUSY_MAX - len(_BUSY_PENDING))
         _BUSY_PENDING.extend(carry[:room])
         dropped += max(0, len(carry) - room)
-    if carry or dropped or errors:
-        out['_meta'] = {'carried': len(carry), 'dropped': dropped, 'errors': errors}
+    if placed:
+        out['_devices'] = {dev: {'windows': len(iv), 'sum_ms': round(sum(e - s for s, e in iv), 3),
+                                 'union_ms': round(_union_ms(iv), 3),
+                                 'span_ms': round(max(e for _, e in iv) - min(s for s, _ in iv), 3)}
+                           for dev, iv in placed.items()}
+    if carry or dropped or errors or unplaced:
+        out['_meta'] = {'carried': len(carry), 'dropped': dropped, 'errors': errors,
+                        'unplaced': unplaced}
     return out
 
 
@@ -829,6 +878,7 @@ class GraphBlockRoute:
             try:
                 slot = group.slot_for(key, routed, options)
                 self.report.copies += group.fill(slot, routed, options)
+                _busy_anchor(self.device, lambda: torch.xpu.Event(enable_timing=True))
                 _ev0 = torch.xpu.Event(enable_timing=True)
                 _ev1 = torch.xpu.Event(enable_timing=True)
                 _ev0.record()

@@ -108,7 +108,13 @@ def phase_report(rows, steady):
 
 
 def busy_report(steady_receipts):
-    """Per-card busy from route_busy_ms over steady receipts, against their wall."""
+    """Per-card busy from route_busy_ms over steady receipts, against their wall.
+
+    sum = total length of replay windows (the two sampler threads' windows
+    overlap when they co-run on one card, so sum can exceed the wall);
+    union = card time with at least one replay in flight (needs the 90b
+    '_devices' entry); overlap = sum - union.
+    """
     have = [(p, d) for p, d in steady_receipts if isinstance(d.get('route_busy_ms'), dict)]
     bad = [d.get('route_busy_ms') for _, d in steady_receipts
            if isinstance(d.get('route_busy_ms'), str)]
@@ -120,40 +126,53 @@ def busy_report(steady_receipts):
         print()
         return
     times = sorted(written_at(p, d) for p, d in have)
-    per_card = collections.defaultdict(float)
-    per_card_rcpt = collections.defaultdict(list)
+    tot = collections.defaultdict(lambda: collections.defaultdict(float))  # card -> sum/union
+    rcpt = collections.defaultdict(lambda: collections.defaultdict(list))
     per_key = collections.defaultdict(lambda: [0, 0.0])
     meta = collections.Counter()
     # Windows drained at receipt k completed between receipt k-1 and k, so
     # the first steady receipt opens the wall interval and its own windows
-    # (which precede that interval) are excluded from the occupancy sum.
+    # (which precede that interval) are excluded from the occupancy totals.
     first = min(range(len(have)), key=lambda i: written_at(*have[i]))
     for i, (p, d) in enumerate(have):
-        cards = collections.defaultdict(float)
-        for key, agg in d['route_busy_ms'].items():
+        busy = d['route_busy_ms']
+        sums = collections.defaultdict(float)
+        for key, agg in busy.items():
             if key.startswith('_'):
-                meta.update({k: v for k, v in agg.items() if isinstance(v, int)})
                 continue
-            card = key.split('/')[0]
-            cards[card] += agg.get('ms', 0.0)
+            sums[key.split('/')[0]] += agg.get('ms', 0.0) / 1000.0
             per_key[key][0] += agg.get('count', 0)
             per_key[key][1] += agg.get('ms', 0.0)
-        for card, ms in cards.items():
-            per_card_rcpt[card].append(ms / 1000.0)
+        meta.update({k: v for k, v in busy.get('_meta', {}).items() if isinstance(v, int)})
+        unions = {card: v.get('union_ms', 0.0) / 1000.0 for card, v in busy.get('_devices', {}).items()}
+        for card in set(sums) | set(unions):
+            rcpt[card]['sum'].append(sums.get(card, 0.0))
+            if card in unions:
+                rcpt[card]['union'].append(unions[card])
             if i != first:
-                per_card[card] += ms / 1000.0
+                tot[card]['sum'] += sums.get(card, 0.0)
+                tot[card]['union'] += unions.get(card, 0.0)
     wall = times[-1] - times[0]
+    per = wall / max(1, len(have) - 1)
     print(f'route_busy_ms: {len(have)} steady receipts, wall {wall:.1f}s between first and last '
-          f'receipt write ({len(have) - 1} intervals, {wall / max(1, len(have) - 1):.3f}s per receipt)')
-    print(f'  {"card":<8} {"busy/receipt mean":>18} {"median":>8} {"occupancy":>10}')
-    for card in sorted(per_card_rcpt):
-        vals = per_card_rcpt[card]
-        occ = per_card[card] / wall if wall > 0 else float('nan')
-        print(f'  {card:<8} {statistics.mean(vals):18.3f} {statistics.median(vals):8.3f} {occ:10.1%}')
+          f'receipt write ({len(have) - 1} intervals, {per:.3f}s per receipt)')
+    print(f'  {"card":<8} {"sum/rcpt":>9} {"occ(sum)":>9} {"union/rcpt":>11} {"occupancy":>10} {"co-run overlap":>15}')
+    for card in sorted(rcpt):
+        r = rcpt[card]
+        occ_sum = tot[card]['sum'] / wall if wall > 0 else float('nan')
+        if r['union']:
+            occ = tot[card]['union'] / wall if wall > 0 else float('nan')
+            overlap = tot[card]['sum'] - tot[card]['union']
+            print(f'  {card:<8} {statistics.median(r["sum"]):9.3f} {occ_sum:9.1%} '
+                  f'{statistics.median(r["union"]):11.3f} {occ:10.1%} {overlap / max(1e-9, tot[card]["sum"]):15.1%}')
+        else:
+            print(f'  {card:<8} {statistics.median(r["sum"]):9.3f} {occ_sum:9.1%} {"n/a":>11} {"n/a":>10} {"n/a":>15}')
+    print('  (per-receipt columns are medians; occupancy = union / wall = card time with any replay in')
+    print('   flight; occ(sum) double-counts co-running windows and can exceed 100%)')
     if meta:
-        print(f'  window bookkeeping: {dict(meta)} (carried = still in flight at a drain; '
-              f'dropped/errors > 0 means occupancy is an undercount)')
-    print('  top routes by busy time:')
+        print(f'  window bookkeeping: {dict(meta)} (carried = in flight at a drain, counted later; '
+              f'dropped/errors/unplaced > 0 make busy or union an undercount)')
+    print('  top routes by summed window time:')
     for key, (count, ms) in sorted(per_key.items(), key=lambda kv: -kv[1][1])[:8]:
         print(f'    {key:<18} {count:>7} windows  {ms / 1000.0:8.1f}s  {ms / max(1, count):7.3f} ms/window')
     print()
