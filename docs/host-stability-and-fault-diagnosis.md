@@ -363,6 +363,7 @@ sudo ipmitool sensor | grep -Ei '12V|5VCC|3.3VCC|Temp'                      # ra
 
 ## Evidence
 
+- [Raw memory-test logs and summaries](../data/2026-10-03-host-memory-fault/README.md)
 - [Host forensic review, 2026-10-03](../experiments/ltx25-b70/notes/2026-10-03-host-forensics-and-catch-up.md)
 - [Freeze evidence, 2026-09-19](../experiments/ltx25-b70/notes/2026-09-19-freeze-evidence-soft-lockup.md) (its "driver excluded" and "storage first" conclusions are corrected above)
 - [Userspace memory test that passed, 2026-09-20](../experiments/ltx25-b70/notes/2026-09-20-memtester-result.md)
