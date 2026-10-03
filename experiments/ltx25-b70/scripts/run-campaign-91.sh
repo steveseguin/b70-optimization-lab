@@ -31,6 +31,11 @@
 #
 # Launch the server first (see the 91 note). Do not edit while running.
 set -u
+# SUPERSEDED 2026-10-03 by run-campaign-91b.sh / prepared-encoder-decode-91b
+# (review: replica work outside CAPTURE_LOCK, replicas kept after a failed
+# probe, non-persistent buffers unverified, queued preview passed as a path,
+# unguarded placement change). Packet 91 was never launched.
+echo "run-campaign-91.sh is superseded by run-campaign-91b.sh; refusing" >&2; exit 8
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
 P=$R/prepared-encoder-decode-91
 MANIFEST=d566fc1b5fa80b75dcb259d63e8aaabbffa2911cf84fb6817254a645d1673147
