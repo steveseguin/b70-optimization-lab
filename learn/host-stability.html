@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Host stability: freezes, bad memory, and how to tell faults apart — neural.download</title>
+<meta name="description" content="How a four-card Intel Arc Pro B70 workstation that froze 34 times turned out to have four separate faults: non-ECC memory with a bad chip, one GPU that stops answering, a CPU idle-state bug, and a debugging setting that hid the evidence. Symptoms, counts, and the commands that separated them.">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/learn/host-stability.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/learn/host-stability.html">
+<meta property="og:title" content="Host stability: freezes, bad memory, and how to tell faults apart — neural.download">
+<meta property="og:description" content="How a four-card Intel Arc Pro B70 workstation that froze 34 times turned out to have four separate faults: non-ECC memory with a bad chip, one GPU that stops answering, a CPU idle-state bug, and a debugging setting that hid the evidence. Symptoms, counts, and the commands that separated them.">
+<meta property="og:image" content="https://neural.download/og-image.png">
+<meta property="og:image:secure_url" content="https://neural.download/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="neural.download — Run AI at home. We make it faster.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/learn/host-stability.html">
+<meta name="twitter:title" content="Host stability: freezes, bad memory, and how to tell faults apart — neural.download">
+<meta name="twitter:description" content="How a four-card Intel Arc Pro B70 workstation that froze 34 times turned out to have four separate faults: non-ECC memory with a bad chip, one GPU that stops answering, a CPU idle-state bug, and a debugging setting that hid the evidence. Symptoms, counts, and the commands that separated them.">
+<meta name="twitter:image" content="https://neural.download/og-image.png">
+<meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Host stability: freezes, bad memory, and how to tell faults apart","description":"How a four-card Intel Arc Pro B70 workstation that froze 34 times turned out to have four separate faults: non-ECC memory with a bad chip, one GPU that stops answering, a CPU idle-state bug, and a debugging setting that hid the evidence. Symptoms, counts, and the commands that separated them.","url":"https://neural.download/learn/host-stability.html","dateModified":"2026-10-03","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["Intel Arc Pro B70","vLLM XPU graph","PCIe","GPU firmware","local LLM inference"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"Host stability","item":"https://neural.download/learn/host-stability.html"}]}
+</script>
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../models/">Models</a>
+    <a href="../learn.html" aria-current="page">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 10b</p>
+  <p class="eyebrow">Hardware setup</p>
+  <h1>Host stability</h1>
+  <p>Our four-card B70 machine froze again and again for three weeks. It looked like one problem. It was four, and the biggest one was plain faulty memory that nothing on the machine could report. This guide shows what each fault looked like, how many times it happened, and the checks that told them apart, so you can run the same checks on your own box.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>34 of 38 boots ended badly</strong> between September 13 and October 3, 2026. <span class="badge lab">Lab-measured</span></li>
+      <li><strong>The main memory was faulty, and it has no error correction</strong>, so no error was ever logged. A memory test over 104 GB failed in 13 minutes. An earlier test over 64 GB had passed.</li>
+      <li>A targeted test found the bad spots: <strong>eleven small regions</strong>, about <strong>45,000 wrong values per minute</strong>. The machine reset itself during that test with every GPU idle.</li>
+      <li>We <strong>switched the bad memory off in software</strong> (10 GB of 125), tested the rest twice, and got <strong>zero errors</strong>.</li>
+      <li>Separately: <strong>one GPU sometimes stops answering</strong>, a <strong>CPU idle-state bug</strong> caused idle freezes, and a <strong>debugging setting</strong> turned stalls the machine survived into silent halts.</li>
+      <li>One popular theory, "the disk dies first", was <strong>wrong</strong>. It was the system log's five-minute save interval.</li>
+    </ul>
+  </div>
+
+  <h2>What we saw, and what it really was</h2>
+  <p>Every row is a symptom from our own four-B70 host, how often it happened, and the cause we could show. <span class="badge lab">Lab-measured</span></p>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Symptom</th><th class="num">How often</th><th>Cause</th></tr></thead>
+    <tbody>
+      <tr><td>Machine frozen solid, reset by hand</td><td class="num">25 boots</td><td>A mix of all four faults below</td></tr>
+      <tr><td>Machine reset itself</td><td class="num">4 boots</td><td>Faulty memory (once during a memory-only test)</td></tr>
+      <tr><td>One byte wrong after loading a 26 GB file that was correct on disk</td><td class="num">2</td><td>Faulty memory</td></tr>
+      <tr><td>Program crash at the exact same instruction</td><td class="num">2</td><td>Faulty memory (inferred)</td></tr>
+      <tr><td>One wrong result in about a hundred, neighbours perfect, never repeats</td><td class="num">5 runs</td><td>Probably faulty memory; not yet shown</td></tr>
+      <tr><td><code>hard LOCKUP</code> in the GPU driver's interrupt handler</td><td class="num">3</td><td>One specific GPU stops answering</td></tr>
+      <tr><td><code>soft lockup</code>, a CPU waiting forever for another CPU</td><td class="num">2 boots</td><td>CPU deep idle state</td></tr>
+      <tr><td>GPU engine faults when a program exits</td><td class="num">5 boots</td><td>Driver or card; did not lead straight to freezes</td></tr>
+      <tr><td>Log stops minutes before the freeze; recent files empty</td><td class="num">every freeze</td><td>Normal caching, not a fault</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn">
+    <span class="tag">Silence is not health</span>
+    <p>Across all of this the machine logged zero hardware errors. On a board without error-correcting memory there is nothing to report a memory fault, and on this board the firmware keeps PCIe errors to itself. "No errors logged" told us nothing.</p>
+  </div>
+
+  <h2>Fault 1: bad memory with no error correction</h2>
+  <p>The board holds four ordinary 32 GB memory modules without error correction (ECC). That is a property of the modules, not a setting. It is a different thing from the <a href="b70-ecc-and-vram.html">B70's own VRAM ECC</a>, which you can switch on and off.</p>
+
+  <h3>Check what you have</h3>
+  <pre class="command"><code>sudo dmidecode -t 16 | grep 'Error Correction'    # None = no ECC
+ls /sys/devices/system/edac/mc                    # empty = nothing can report memory errors</code></pre>
+
+  <h3>Test nearly all of it</h3>
+  <pre class="command"><code>sudo apt-get install memtester
+for i in 1 2 3 4 5 6 7 8; do sudo memtester 13G 1 &gt; worker-$i.log 2&gt;&amp;1 &amp; done</code></pre>
+  <p>Size the workers to cover everything except 15 to 20 GB. Run it with the GPUs idle. Coverage mattered: our fault sits in the top quarter of memory, and a smaller test never touched it.</p>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Test</th><th class="num">Memory covered</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>September 20, four workers</td><td class="num">64 GB</td><td>Pass</td></tr>
+      <tr><td class="best">October 3, eight workers, locked</td><td class="num">104 GB</td><td><strong>1,192 errors in 13 minutes</strong>, in two of eight workers</td></tr>
+      <tr><td>Targeted test, last 4 MB of each 1 GB block</td><td class="num">106 blocks</td><td>128 errors, all in one block; control set 0</td></tr>
+      <tr><td>Targeted test, last 8 MB, five rounds</td><td class="num">106 blocks</td><td>226,271 errors in eleven 32 KB regions; control set 0; machine reset itself</td></tr>
+      <tr><td class="best">After switching off 10 GB, every page, two rounds</td><td class="num">99 GB</td><td><strong>0 errors</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Every error was in the same byte of each 8-byte value, and the bad byte held the <em>previous</em> value: a write that did not land. One byte position only points to one memory chip on one module. It was intermittent, which is why short tests passed.</p>
+
+  <h3>Switch off the bad part without rebooting</h3>
+  <p>Linux can take blocks of memory out of use while running. Our tool logs each error by physical address; divide the address by the block size to get the block number.</p>
+  <pre class="command"><code>sudo python3 tools/physmap_memtest.py --gib 104 --tail-mib 8 --rounds 12 --out run.jsonl
+cat /sys/devices/system/memory/block_size_bytes          # ours: 2 GB blocks
+for n in 53 54 55 56 57; do echo offline | sudo tee /sys/devices/system/memory/memory$n/state; done
+sudo python3 tools/physmap_memtest.py --gib 99 --rounds 2 --all --out after.jsonl</code></pre>
+
+  <div class="callout key">
+    <span class="tag">This is a workaround</span>
+    <p>The blocks come back after every reboot, so the command has to be run again each time. The real fix is replacing the module. Until bad memory is switched off or replaced, do not install system updates and do not trust any measurement from the machine.</p>
+  </div>
+
+  <h2>Fault 2: one GPU stops answering</h2>
+  <p>Three times the kernel reported a processor stuck inside the Intel GPU driver, reading a message from a card that did not reply. It was the same processor each time, and that processor handles one specific card. The machine recovered from the first two after 16 and 72 seconds. We do not yet know whether the card, its slot, its power cable or the driver is at fault. Swapping the card to another slot is the test.</p>
+  <pre class="command"><code>journalctl -k -b -1 | grep -A12 'hard LOCKUP'            # look for xe_guc_irq_handler
+i=$(ls /sys/bus/pci/devices/0000:43:00.0/msi_irqs | head -1)
+cat /proc/irq/$i/effective_affinity_list                 # which CPU serves this card</code></pre>
+
+  <h2>Fault 3: the CPU's deep idle state</h2>
+  <p>Two boots died with one processor waiting forever for another, one of them minutes after startup with nothing running. This is a known problem with deep idle on some AMD processors. Turning off the deepest idle state ended it: the next idle boot ran 5.6 days. The BIOS setting <strong>Power Supply Idle Control = Typical Current Idle</strong> is the cleaner fix.</p>
+
+  <h2>Fault 4: a setting that hid the evidence</h2>
+  <p>We had told the kernel to stop on any lockup so we could read the trace. Nothing was set up to save that trace, so the machine just stopped. A stall it had survived twice became a permanent silent freeze. Only use panic-on-lockup when something will catch the panic.</p>
+
+  <h2>The false lead: "the disk dies first"</h2>
+  <p>The system log stopped up to five minutes before each freeze while work carried on, and files written just before the freeze came back empty. Both are normal. The log is saved to disk every five minutes, and file data about 30 seconds late. A freeze loses whatever was not yet saved. The disk was healthy. To keep a machine's last words, send kernel messages to another computer, or follow the kernel log into a file and sync after every line.</p>
+
+  <h2>Decision table</h2>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Symptom</th><th>Likely cause</th><th>What to check</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Freezes or self-resets, even with GPUs idle</td><td>Faulty memory</td><td>ECC type; locked memory test over nearly all RAM</td><td>Switch off the bad blocks, then replace the module</td></tr>
+      <tr><td>One byte wrong in a big copy; same-instruction crashes; one bad result among perfect ones</td><td>Faulty memory</td><td>Same test</td><td>Same</td></tr>
+      <tr><td><code>hard LOCKUP</code> with <code>xe_guc_irq_handler</code> in the trace</td><td>A GPU not answering</td><td>Which card that CPU serves</td><td>Move the card; check its power; try a newer kernel and GPU firmware</td></tr>
+      <tr><td>Freezes when idle; <code>soft lockup</code> in <code>smp_call_function</code></td><td>CPU deep idle</td><td>Idle states in <code>/sys/devices/system/cpu/cpu0/cpuidle</code></td><td>Disable the deepest state, or set the BIOS idle option</td></tr>
+      <tr><td>Freeze leaves no trace at all</td><td>Panic with nowhere to write</td><td><code>sysctl kernel.hardlockup_panic kernel.panic</code></td><td>Turn panic-on-lockup off, or set up a network console</td></tr>
+      <tr><td>Log ends minutes early; new files empty</td><td>Normal caching</td><td>Nothing</td><td>Sync important results as they are written</td></tr>
+      <tr><td>Newer kernel number, same GPU faults</td><td>The update had no GPU changes</td><td>The kernel changelog</td><td>Pick a kernel for its driver fixes, not its number</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn">
+    <span class="tag">What we have not shown</span>
+    <p>One machine only. We do not yet know which memory slot is bad, whether the wrong-result symptom is the memory fault, whether the GPU lockups follow the card or the slot, or how the 12 V supply behaves with four cards loaded.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/host-stability-and-fault-diagnosis.md"><b>Full write-up</b><span>Every command, count, address and open question</span></a>
+      <a href="host-tuning.html"><b>Host tuning</b><span>Why the same recipe runs faster on one host than another</span></a>
+      <a href="b70-ecc-and-vram.html"><b>B70 ECC &amp; VRAM</b><span>The card's own error correction, and what it costs</span></a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/tools/physmap_memtest.py"><b>Memory test tool</b><span>Finds bad memory by physical address</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>

@@ -10,6 +10,10 @@ the additional VRAM may let a model, a larger KV cache, or more concurrent
 requests remain fully on the GPU. It is not a documented memory-bandwidth
 overclock, and it removes memory error correction.
 
+This page is about the card's own VRAM. Error correction for the computer's
+main memory is a separate matter: see
+[Host stability and fault diagnosis](host-stability-and-fault-diagnosis.md).
+
 This is a hardware setting, not a model optimization. Stop GPU workloads before
 changing it, and verify the state after reboot.
 

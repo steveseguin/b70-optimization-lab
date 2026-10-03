@@ -34,6 +34,7 @@ at your own risk.
 | See or prepare the next model downloads | [Model intake queue](model-intake/README.md) |
 | Follow the Docker and Windows packaging path | [Distribution and packaging roadmap](docs/model-distribution-and-packaging-roadmap.md) |
 | Plan PCIe slots, risers, or external GPUs | [PCIe topology and local-LLM inference](docs/pcie-topology-and-llm-inference.md) |
+| Diagnose freezes, resets, or silent data corruption | [Host stability and fault diagnosis](docs/host-stability-and-fault-diagnosis.md) |
 | Compare expected model performance | [Performance scoreboard](results/scoreboard.md) |
 | Contribute a result, patch, or correction | [Contribution guide](CONTRIBUTING.md) and [verification policy](docs/contribution-verification.md) |
 | Review or validate incoming work | [Manager playbook](MANAGER.md) |

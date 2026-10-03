@@ -81,6 +81,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
 - [PCIe Topology And Local-LLM Inference](pcie-topology-and-llm-inference.md): what Gen3, narrow slots, Thunderbolt, and multi-GPU fabrics can change; measured B70 examples and topology checks.
+- [Host Stability And Fault Diagnosis](host-stability-and-fault-diagnosis.md): how a four-B70 host's freezes split into faulty non-ECC memory, one unresponsive GPU, an idle-state bug and a debugging setting; counts, commands and the runtime memory fence.
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.
 - [LocalMaxxing Submissions](localmaxxing.md): credential location, submit helper, and secret-handling rules.
 - [Local Operations](local-ops.md): sudo-password location, driver/runtime ops guidance, and Claude/OpenCode-to-Codex delegation.
