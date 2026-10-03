@@ -35,8 +35,11 @@ import time
 import torch
 
 import ltx_pipeline as pipeline
+import ltx_gil_probe as gil
 import ltx_decode_replica as placement
 from encoder_diagnostics import _context
+
+gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 DECODE_MODES = pipeline.MODES + ('pipeline-save', 'pipeline-replica', 'pipeline-moved')
@@ -340,6 +343,7 @@ class LTXPipelineDecode:
             raise
         except BaseException:
             _failed = True
+            gil.restore_default('latched failure: pipeline-decode-')
             pipeline.clear()
             raise
 
@@ -357,6 +361,7 @@ class LTXPipelineDecode:
         hashes = {}
         for path, name in ((Path(pipeline.__file__), 'ltx_pipeline.py'),
                            (Path(placement.__file__), 'ltx_decode_replica.py'),
+                           (Path(gil.__file__), 'ltx_gil_probe.py'),
                            (Path(__file__), 'pipeline_decode_node.py')):
             actual = hashlib.sha256(path.read_bytes()).hexdigest()
             require(server['extension_sha256s'][name] == actual, 'Sealed extension changed: ' + name)
@@ -374,6 +379,8 @@ class LTXPipelineDecode:
                            'runs changes, so it overlaps the next clip sampling on other cards.',
                   'passed': False}
         started = time.monotonic()
+        gil.mark_lane_thread('prompt')
+        apply_cpu0 = time.thread_time()   # packet 92a
         try:
             if mode in placement.REPLICA_MODES and not _PROBE['passed']:
                 report['refused'] = ('replica placement requires a passed cross-card decode probe on this '
@@ -481,6 +488,11 @@ class LTXPipelineDecode:
         finally:
             report['seconds'] = time.monotonic() - started
             report['written_unix'] = time.time()  # packet 90b: occupancy wall for analyze-phases
+            try:  # packet 92a: diagnostic only, never fails the clip
+                report['apply_cpu_seconds'] = round(time.thread_time() - apply_cpu0, 4)
+                report['gil'] = gil.report(drain=False)
+            except Exception as error:  # noqa: BLE001
+                report['gil'] = 'unavailable: ' + repr(error)[:200]
             write_json(run / ('pipeline-decode-' + run_name + '.json'), report)
         return out
 
@@ -657,5 +669,47 @@ class LTXDecodeReplicaProbe:
         return {'ui': {'text': [report['outcome']]}}
 
 
+class LTXSchedulerKnob:
+    """Packet 92a: set the interpreter switch interval between arms.
+
+    Applies sys.setswitchinterval only when no pipeline job is queued or
+    running (waits up to 60 s, then refuses with a receipt). Also drains the
+    lock-wait histogram and snapshots per-thread CPU time, so a knob request
+    after an idle wait is the idle baseline. Never raises after the identity
+    checks; touches no tensor, stream or device."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'switch_interval_ms': ('FLOAT', {'default': 5.0, 'min': 0.1, 'max': 100.0,
+                                                              'step': 0.1}),
+                             'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, switch_interval_ms, run_name):
+        require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
+                'Unsafe request name')
+        run, identity = _context()
+        require(identity['model_verification_sha256'] == MODEL_SHA256 and
+                identity['server_identity_sha256'] == os.environ.get('LTX_ENCODER_IDENTITY_SHA256'),
+                'Model/startup identity changed')
+        report = {'schema': 'ltx.scheduler-knob.v1', **identity, 'run_name': run_name,
+                  'requested_ms': switch_interval_ms}
+        try:
+            report['knob'] = gil.set_switch_interval(float(switch_interval_ms) / 1000.0, pipeline.busy)
+            report['gil'] = gil.report(drain=True)
+            report['probe_started'] = gil.start_probe()
+        except Exception as error:  # noqa: BLE001  (diagnostic only)
+            report['error'] = repr(error)[:300]
+        report['written_unix'] = time.time()
+        write_json(run / ('scheduler-knob-' + run_name + '.json'), report)
+        applied = bool(report.get('knob', {}).get('applied'))
+        return {'ui': {'text': ['switch interval %s ms: %s' % (switch_interval_ms,
+                                                                'applied' if applied else 'REFUSED')]}}
+
+
 NODE_CLASS_MAPPINGS = {'LTXPipelineDecode': LTXPipelineDecode, 'LTXPipelineSaveRecord': LTXPipelineSaveRecord,
-                       'LTXDecodeReplicaProbe': LTXDecodeReplicaProbe}
+                       'LTXDecodeReplicaProbe': LTXDecodeReplicaProbe, 'LTXSchedulerKnob': LTXSchedulerKnob}

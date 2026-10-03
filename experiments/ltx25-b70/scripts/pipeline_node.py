@@ -26,7 +26,10 @@ import time
 import torch
 
 import ltx_pipeline as pipeline
+import ltx_gil_probe as gil
 from encoder_diagnostics import _context
+
+gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 _failed = False
@@ -161,6 +164,7 @@ class LTXPipelineTextEncode:
         except BaseException:
             # Sticky: preserve the process and the evidence, never retry.
             _failed = True
+            gil.restore_default('latched failure: pipeline-')
             pipeline.clear()
             raise
 
@@ -193,6 +197,8 @@ class LTXPipelineTextEncode:
                            'changes, so it overlaps the sampler on other cards.',
                   'passed': False}
         started = time.monotonic()
+        gil.mark_lane_thread('prompt')
+        apply_cpu0 = time.thread_time()   # packet 92a
         try:
             if mode == 'original':
                 conditioning = native_encode(clip, text)
@@ -228,6 +234,11 @@ class LTXPipelineTextEncode:
             report['passed'] = True
         finally:
             report['seconds'] = time.monotonic() - started
+            try:  # packet 92a: diagnostic only, never fails the clip
+                report['apply_cpu_seconds'] = round(time.thread_time() - apply_cpu0, 4)
+                report['gil'] = gil.report(drain=False)
+            except Exception as error:  # noqa: BLE001
+                report['gil'] = 'unavailable: ' + repr(error)[:200]
             write_json(run / ('pipeline-' + run_name + '.json'), report)
         return (conditioning,)
 

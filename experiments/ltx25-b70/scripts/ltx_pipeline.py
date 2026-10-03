@@ -120,7 +120,7 @@ def require(value, message):
 
 
 class _Job:
-    __slots__ = ('index', 'fn', 'tag', 'done', 'value', 'error', 'started', 'finished')
+    __slots__ = ('index', 'fn', 'tag', 'done', 'value', 'error', 'started', 'finished', 'cpu')
 
     def __init__(self, index, fn, tag=None):
         self.index = index
@@ -133,6 +133,7 @@ class _Job:
         self.error = None
         self.started = None
         self.finished = None
+        self.cpu = None
 
 
 def _worker_loop(stage):
@@ -144,6 +145,7 @@ def _worker_loop(stage):
                 _QUEUE_EVENT.wait()
             job = st['queue'].pop(0)
         job.started = time.monotonic()
+        cpu0 = time.thread_time()   # packet 92a: CPU seconds of this job on this thread
         try:
             # ComfyUI executes nodes inside torch.inference_mode(), and that is
             # THREAD-LOCAL. Without it here the encode runs in a different
@@ -156,6 +158,7 @@ def _worker_loop(stage):
             job.error = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
         finally:
             job.finished = time.monotonic()
+            job.cpu = time.thread_time() - cpu0
             job.done.set()
 
 
@@ -199,6 +202,7 @@ def collect(stage, index, tag=None):
     require(job.error is None, f'{stage.capitalize()}-ahead for clip {index} failed:\n{job.error}')
     detail = {'queued_ahead': job.started is not None,
               'stage_seconds': round((job.finished or 0) - (job.started or 0), 4),
+              'cpu_seconds': None if job.cpu is None else round(job.cpu, 4),
               'tag': job.tag}
     if tag is not None and job.tag != tag:
         detail.update({'speculation_miss': True, 'discarded_tag': job.tag})
@@ -216,6 +220,13 @@ def peek(stage, index):
     require(job.error is None, f'{stage.capitalize()} for clip {index} failed:\n{job.error}')
     return job.value, {'queued_ahead': job.started is not None,
                        'stage_seconds': round((job.finished or 0) - (job.started or 0), 4)}
+
+
+def busy():
+    """Packet 92a: jobs queued or running in any stage (finished, uncollected
+    tail jobs do not count)."""
+    with _LOCK:
+        return sum(1 for st in _STAGES.values() for job in st['jobs'].values() if not job.done.is_set())
 
 
 def pending(stage):

@@ -34,7 +34,10 @@ import time
 import torch
 
 import ltx_pipeline as pipeline
+import ltx_gil_probe as gil
 from encoder_diagnostics import _context
+
+gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 _failed = False
@@ -284,6 +287,7 @@ class LTXPipelineSampler:
             return self._apply(**kwargs)
         except BaseException:
             _failed = True
+            gil.restore_default('latched failure: pipeline-sampler-')
             pipeline.clear()
             raise
 
@@ -315,6 +319,8 @@ class LTXPipelineSampler:
                            'cannot interleave between clips.',
                   'passed': False}
         started = time.monotonic()
+        gil.mark_lane_thread('prompt')
+        apply_cpu0 = time.thread_time()   # packet 92a
         try:
             if mode != 'original':
                 patcher = getattr(chain['guider_a'], 'model_patcher', None)
@@ -389,6 +395,11 @@ class LTXPipelineSampler:
         finally:
             report['seconds'] = time.monotonic() - started
             report['written_unix'] = time.time()  # packet 90b: occupancy wall for analyze-phases
+            try:  # packet 92a: diagnostic only, never fails the clip
+                report['apply_cpu_seconds'] = round(time.thread_time() - apply_cpu0, 4)
+                report['gil'] = gil.report(drain=True)
+            except Exception as error:  # noqa: BLE001
+                report['gil'] = 'unavailable: ' + repr(error)[:200]
             write_json(run / ('pipeline-sampler-' + run_name + '.json'), report)
         return (out[0], out[1], emitted)
 
