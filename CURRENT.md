@@ -397,7 +397,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September 21 05:30 UTC: boot f64b14c5 is burned for GPU work (xe engine fault 00:24:38 EDT during a probe teardown; the sealed launcher refuses launches) - the lane waits on a reboot. Speed stands at 15.3 fps effective; the 24 fps capacity budget says every stage must move.**
+**Four-B70 host, October 3: lane resumed after a 12-day gap; no server is running; boot 37491ca5 (kernel 7.0.0-34, GuC 70.44.1) is clean.**
+The 09-21 entry below is superseded: a reboot followed it, packets 89 and 90
+ran, and the host froze during packet 90's endure arm at 03:29 EDT on 09-21.
+Packet 90 salvage: 101 clips exact through all three sentries, no wrong clip,
+median 1.60 s/clip; the busy-window timers never ran (they are on the
+unmerged `origin/packet-90` branch). Host review: memory is non-ECC; three
+hard lockups sit in the xe GuC interrupt handler of card 0000:43:00.0;
+`hardlockup_panic=1` with `panic=0` turns such a lockup into a silent halt;
+the "storage-first" freeze pattern is journald's five-minute sync, not an
+NVMe stall; kernel 7.0.0-38 (teardown-deadlock and bind fixes) is the apt
+candidate and -34 has no xe change. Speed stands at 15.3 fps effective.
+[Salvage](experiments/ltx25-b70/notes/2026-10-03-packet90-salvage.md);
+[host review](experiments/ltx25-b70/notes/2026-10-03-host-forensics-and-catch-up.md).
+
+**Four-B70 host, September 21 05:30 UTC (superseded by the entry above): boot f64b14c5 is burned for GPU work (xe engine fault 00:24:38 EDT during a probe teardown; the sealed launcher refuses launches) - the lane waits on a reboot. Speed stands at 15.3 fps effective; the 24 fps capacity budget says every stage must move.**
 The two warm-900 crashes were one heap-corruption signature at
 `PyBytes_FromObject` during the encoder load, twice - not a code regression;
 memtest remains the standing ask. Analysis while gated: the sampler's packing
