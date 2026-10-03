@@ -1,0 +1,21 @@
+    42.94%  [k] entry_SYSCALL_64                                                                                                                                          
+            |          
+            |--29.68%--0x745402233016
+            |          0x745402237aca
+            |          0x7454022382c3
+            |          ur::level_zero::urEventWait(unsigned int, ur_event_handle_t_* const*)
+            |          
+             --8.05%--0x7454022d7375
+                       0x7454022ddbe4
+                       0x7454021d0c69
+                       ur_command_list_manager::appendUSMMemcpy(bool, void*, void const*, unsigned long, wait_list_view&, ur_event_handle_t_*)
+                       |          
+                        --5.92%--0
+                                  ur::level_zero::urAdapterRelease(ur_adapter_handle_t_*)
+     5.28%  [k] entry_SYSRETQ_unsafe_stack                                                                                                                                
+            |          
+             --3.26%--0x745402233016
+                       0x745402237aca
+                       0x7454022382c3
+                       ur::level_zero::urEventWait(unsigned int, ur_event_handle_t_* const*)
+     3.20%  [.] _PyEval_EvalFrameDefault                                                                                                                                  
