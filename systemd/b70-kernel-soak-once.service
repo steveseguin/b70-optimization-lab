@@ -1,0 +1,10 @@
+[Unit]
+Description=One-shot two-card FP8 start/stop soak after a kernel change (removes its own flag file)
+ConditionPathExists=%h/.b70-kernel-soak-once
+
+[Service]
+Type=simple
+ExecStart=/home/steve/b70-optimization-lab/scripts/postboot-kernel-soak.sh
+
+[Install]
+WantedBy=default.target
