@@ -19,6 +19,9 @@ cards are empty and no server is running. The evidence is saved.
 - The same script then tests a prepared speed-up for many users: the output-layer fix now exchanges results
   between the cards once a step, not once per four users. Same arithmetic; expected about 10 % at 64 users. It was
   written and CPU-tested while the cards were off limits and has not run on them yet.
+- **Why it failed (reviewed the same day):** a timing bug in Intel's driver stack, the open upstream report
+  `intel/compute-runtime#948`. All four of our start-up faults since September are the same event at the same
+  160 KiB of GPU address space, on both cards, on two kernels, with swap on and off. Not a bad card, not memory.
 - [Incident note](experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
 
 ## 2026-10-04, overnight: many users at once, lossless on short and long prompts, up to 488 tokens a second together

@@ -51,6 +51,46 @@ in the start and same kernel lines as the September start-up faults. Those were 
 
 One in 59. Before the fix it was five in about four days. So the fix helps a great deal and is not a cure.
 
+## Review, later the same day: why it failed
+
+**Short answer: a bug in Intel's GPU driver stack, hit by timing while a model loads. Not our settings, not a bad
+card, not memory.** It is the open upstream report `intel/compute-runtime#948`; other owners of two and four B70s
+see the same family and Intel has no fix yet.
+
+**The new evidence.** Every start-up fault we have saved is the same event, down to the address:
+
+| Fault | Card | Kernel | Container swap | Pages the copy engine could not read |
+|---|---|---|---|---|
+| 2026-09-16 | 03:00.0 | 7.0.0-31 | allowed | `0x800400200000` to `0x800400228000`, first `...213000` |
+| 2026-09-17 03:10Z | 03:00.0 | 7.0.0-31 | allowed | the same range, first `...213000` |
+| 2026-09-19 | 03:00.0 | 7.0.0-31 | allowed | the same range, first `...213000` |
+| 2026-10-04 | e3:00.0 | 7.0.0-38 | off | the same range, first `...213000` |
+
+Same 160 KiB of GPU address space, the same pages in nearly the same order, always a read by the copy engine, always
+while the model loads, always `IPEHR 0x13000203` in the dump. Two cards, two kernels, swap on and off, four
+different processes. Random memory pressure would hit different buffers each time. This is one specific small buffer
+that the runtime asks the copy engine to read at a moment when it is not mapped: a race inside the driver stack
+(the `xe` kernel driver and the Level Zero runtime, version 26.27.39122.11 in our image).
+
+**What that changes.**
+
+- Container swap was never the cause. It made the timing worse, which is why turning it off cut the rate from five
+  in four days to one in 59 starts.
+- The card is not suspect. The same fault has now been on both cards.
+- The first fault on this boot (October 3, 22:39) is a different, harmless class: its address ends `...56aa4c7000`,
+  the same address three other reporters see after killing a busy job. So this boot had one real fault, not two.
+- The saved kernel logs were hiding the address: the fault record is one multi-line message and our line filters
+  kept only its first, empty line. Read it with `journalctl -k -o json` or `-o cat`.
+
+**What we still do not know:** which buffer lives at `0x800400200000`. The runtime in the image has the logging
+switches to say (`NEOReadDebugKeys=1` with `LogAllocationType`, `PrintBOBindingResult`); one logged start on a
+healthy boot names it. That would turn our upstream report from "it faults sometimes" into "this buffer, this
+address, four times", and may show a way to avoid the race from our side.
+
+**What others report that may help:** three independent B70 owners in the upstream thread see far fewer faults on
+kernel 6.17 than on 7.0. Their faults are under load, ours are at load time, so it may not carry over, and at one
+fault in 59 starts a fair comparison needs well over a hundred starts.
+
 ## What was done
 
 - Evidence saved to `/mnt/fast-ai/bench-results/gpu-fault-20261004T1025/`: the device dump (505 KB, copied before
@@ -62,8 +102,8 @@ One in 59. Before the fix it was five in about four days. So the fix helps a gre
 
 ## Next
 
-1. The owner reboots the machine.
-2. Run the script above in its own unit. It answers the open question: is the shipped speculation still lossless
-   with 4 and 8 users when the three fixes are on.
-3. If a start faults again at load on a fresh boot, that is a rate worth acting on: the next step would be a
-   bounded retry rule for start-up faults (stop, health check, one fresh start), not more diagnosis.
+1. The owner reboots the machine (or says the health check is enough: this boot had one real fault).
+2. One logged start to name the buffer at `0x800400200000`, about three minutes, then post the finding upstream.
+3. Run the after-reboot script: the speculation test, then the one-exchange speed-up.
+4. Treat a load-time fault as recoverable from now on: stop the server, health check, one fresh start. It happens
+   before any request, so no measurement is ever affected.
