@@ -9,13 +9,13 @@ of 30, and the profile stage is skipped unless the host has room for it.
 
 Preregistration: notes/2026-10-03-fp8-comm5-prereg.md. Background: notes/2026-09-18-two-card-exchange-fusion-memo.md.
 
-Stages (one stop of the running service, one start at the end; no retry of any server):
+Stages (no resident server is assumed and none is started at the end unless COMM5_RESTORE=1; no retry of any server):
   tp2-ag-ctl       the shipped recipe on the research launcher, strict twice: this session's control pair
   tp2-pbuf-a       candidate, overlay b70-allgather-pbuf (B70_ALLGATHER_PBUF=1): strict twice, ladder, context, quality,
                    all against the comm-2 no-MTP references the shipped recipe was gated on
   tp2-pbuf-b       a second fresh candidate server, strict twice (two-server rule)
   tp2-ag-profile   LAST and optional: the shipped recipe with the step profiler on rank 0, 8 steps. Not a speed run.
-  service          health, then the two-card package service on 18124, strict vs the comm-2 no-MTP reference
+  service          only with COMM5_RESTORE=1: the two-card package server on 18124. By default the cards are left empty.
 
 The fault latch (kernel GPU fault lines) halts the campaign and skips the restore; then the user decides.
 """
@@ -36,7 +36,10 @@ ROOT = Path('/home/steve/b70-optimization-lab')
 spec = importlib.util.spec_from_file_location('review', ROOT / 'experiments/qwen38-27b-b70/scripts/run-20260916-fp8-review-campaign.py')
 review = importlib.util.module_from_spec(spec); spec.loader.exec_module(review)
 R = review
-R.SERVICE_STATE = Path(os.environ['SERVICE_STATE'])
+# No resident server is assumed (2026-10-03: the owner does not host a server while optimization is under way).
+# SERVICE_STATE is only for stopping one that happens to be up; COMM5_RESTORE=1 puts a server back afterwards.
+R.SERVICE_STATE = Path(os.environ.get('SERVICE_STATE', '/nonexistent/no-resident-service'))
+RESTORE = os.environ.get('COMM5_RESTORE', '0') == '1'
 COMM2 = Path('/mnt/fast-ai/bench-results/fp8-comm2-20260917')
 REF = {'strict': COMM2 / 'tp2-ag-mtp0-strict', 'ladder': COMM2 / 'tp2-ag-mtp0-ladder.json',
        'context': COMM2 / 'tp2-ag-mtp0-context/summary.json', 'quality': COMM2 / 'tp2-ag-mtp0-quality.json'}
@@ -193,31 +196,35 @@ def main():
         r['stop'] = srv.stop()
     R.save_results(); R.fault_check(SINCE); R.wait_gpus_free()
 
-    # Stage 6: the service back, unchanged.
-    results['service_health_rc'] = R.health('service-health')
-    R.save_results()
-    if results['service_health_rc'] != 0:
-        raise SystemExit(5)
-    state_dir = OUT / 'service'
-    unit = os.environ.get('CAMPAIGN_UNIT', 'fp8-service-comm5b')
-    argv = ['systemd-run', '--user', '--unit', unit, '--working-directory', str(ROOT), '--collect',
-            sys.executable, str(PKG_TP2), 'start', '--model-dir', str(R.MODEL), '--state-dir', str(state_dir), '--port', '18124']
-    R.wait_port_free(18124)
-    (OUT / 'service.command.json').write_text(json.dumps({'argv': argv, 'started': R.now()}) + '\n')
-    subprocess.run(argv, check=True)
-    deadline = time.monotonic() + 2400
-    state = {}
-    while time.monotonic() < deadline:
-        if (state_dir / 'state.json').exists():
-            state = json.loads((state_dir / 'state.json').read_text())
-            if state.get('status') in ('ready', 'failed', 'stopped'):
-                break
-        time.sleep(10)
-    results['service'] = {'status': state.get('status'), 'error': state.get('error'), 'unit': unit, 'state_dir': str(state_dir)}
-    R.log(f'service: {state.get("status")} {state.get("error") or ""}')
-    if state.get('status') == 'ready':
-        results['service']['strict'] = R.strict('http://127.0.0.1:18124', 'service', REF['strict'])
-    R.save_results(); R.fault_check(SINCE)
+    # Stage 6 (off by default): put a two-card package server back. Only with COMM5_RESTORE=1.
+    if not RESTORE:
+        results['service'] = {'status': 'not restored', 'reason': 'COMM5_RESTORE is not 1; the cards are left empty'}
+        R.log('service: not restored (cards left empty)')
+    else:
+        results['service_health_rc'] = R.health('service-health')
+        R.save_results()
+        if results['service_health_rc'] != 0:
+            raise SystemExit(5)
+        state_dir = OUT / 'service'
+        unit = os.environ.get('CAMPAIGN_UNIT', 'fp8-service-comm5b')
+        argv = ['systemd-run', '--user', '--unit', unit, '--working-directory', str(ROOT), '--collect',
+                sys.executable, str(PKG_TP2), 'start', '--model-dir', str(R.MODEL), '--state-dir', str(state_dir), '--port', '18124']
+        R.wait_port_free(18124)
+        (OUT / 'service.command.json').write_text(json.dumps({'argv': argv, 'started': R.now()}) + '\n')
+        subprocess.run(argv, check=True)
+        deadline = time.monotonic() + 2400
+        state = {}
+        while time.monotonic() < deadline:
+            if (state_dir / 'state.json').exists():
+                state = json.loads((state_dir / 'state.json').read_text())
+                if state.get('status') in ('ready', 'failed', 'stopped'):
+                    break
+            time.sleep(10)
+        results['service'] = {'status': state.get('status'), 'error': state.get('error'), 'unit': unit, 'state_dir': str(state_dir)}
+        R.log(f'service: {state.get("status")} {state.get("error") or ""}')
+        if state.get('status') == 'ready':
+            results['service']['strict'] = R.strict('http://127.0.0.1:18124', 'service', REF['strict'])
+        R.save_results(); R.fault_check(SINCE)
     results['finished'] = R.now()
     R.save_results()
     R.log('=== comm-5b campaign complete ===')
