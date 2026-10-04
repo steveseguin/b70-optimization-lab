@@ -327,6 +327,8 @@ def main():
         elif os.environ.get('MU_PURE') == '1':
             # the pure-step scheduling overlay: 16 users, long prompts, then the short ladder against the frozen reference
             pure = ['--overlay', 'b70-exclusive-prefill', '--extra-env', 'B70_EXCLUSIVE_PREFILL=1']
+            if os.environ.get('MU_PREFILL_BATCH'):  # several short new prompts per prompt-only step (research)
+                pure += ['--extra-env', f"B70_EXCLUSIVE_PREFILL_BATCH={os.environ['MU_PREFILL_BATCH']}"]
             name = 'tp2-pure-mtp0-s16'
             if os.environ.get('MU_HEAD_ROWS'):
                 # second fix, from the kernel census: the LM head is the one kernel whose rounding depends on row count
@@ -342,6 +344,8 @@ def main():
                 name = name.replace('tp2-pure', 'tp2-pure-faseq')
             seqs = os.environ.get('MU_SEQS', '16')
             name = name.replace('-s16', f'-s{seqs}')
+            if os.environ.get('MU_PREFILL_BATCH'):
+                name = name.replace('tp2-', f"tp2-pb{os.environ['MU_PREFILL_BATCH']}-", 1)
             spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
             if spec:
                 name = name.replace('-mtp0-', '-mtp5-')

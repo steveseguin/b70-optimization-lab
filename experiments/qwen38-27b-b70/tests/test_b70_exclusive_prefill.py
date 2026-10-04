@@ -77,5 +77,17 @@ class PolicyTest(unittest.TestCase):
         self.assertEqual(seen['eligible'], ['d1', 'd2'])
 
 
+class AdmitCountTest(unittest.TestCase):
+    def test_admit_count(self):
+        f = excl.admit_count
+        self.assertEqual(f([31, 31, 31, 31], 4096, 1), 1)
+        self.assertEqual(f([31, 31, 31, 31], 4096, 8), 4)
+        self.assertEqual(f([31] * 20, 4096, 8), 8)
+        self.assertEqual(f([3000, 2000, 31], 4096, 8), 1)        # the second would overflow the step
+        self.assertEqual(f([5000, 31], 4096, 8), 1)              # a long first prompt goes alone, in its usual chunks
+        self.assertEqual(f([31, None, 31], 4096, 8), 1)          # a request that is not a fresh prompt stops the run
+        self.assertEqual(f([], 4096, 8), 1)
+
+
 if __name__ == '__main__':
     unittest.main()

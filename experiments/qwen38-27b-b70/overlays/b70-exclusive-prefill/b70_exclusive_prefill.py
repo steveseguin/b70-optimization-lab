@@ -14,6 +14,11 @@ It changes no arithmetic. It only decides who shares a step, using two hooks the
 allow one admission), both restored after the call.
 
 Cost: decode users wait while a prompt chunk is read (about a second per 4,096 tokens on two cards).
+
+B70_EXCLUSIVE_PREFILL_BATCH=N (default 1, research): a prompt-only step may take up to N NEW requests together when each
+prompt fits whole and they fit the step's budget together. Each still gets the single chunk it would have alone, but
+the prompt kernels then see several sequences in one call, so this is only lossless if those kernels are
+batch-invariant across sequences. Not established; see notes/2026-10-04-fp8-multiuser-prereg.md.
 """
 import os
 
@@ -29,9 +34,23 @@ def _choose(prefilling, decoding, has_waiting, can_admit, last):
     return 'P' if want_p else None
 
 
+def admit_count(prompt_lengths, budget, batch):
+    """How many of the leading waiting requests may share one prompt-only step: at most `batch`, each must be a fresh
+    prompt that fits whole (so its single chunk is the one it would have alone), and together they must fit the
+    step's token budget. Always at least one (a long first prompt is read alone, in its usual chunks)."""
+    count, used = 0, 0
+    for length in prompt_lengths:
+        if count >= batch or length is None or length <= 0 or used + length > budget:
+            break
+        count += 1
+        used += length
+    return max(count, 1)
+
+
 def register():
     if os.environ.get('B70_EXCLUSIVE_PREFILL', '').strip() != '1':
         return
+    batch = max(1, int(os.environ.get('B70_EXCLUSIVE_PREFILL_BATCH', '1') or '1'))
     from vllm.logger import init_logger
     from vllm.v1.core.sched import scheduler as module
 
@@ -59,8 +78,17 @@ def register():
             hide = [r for r in running if r is not prefilling[0]]
             allow = len(running)              # nobody new this step
         elif kind == 'P':
-            hide = running                    # one new request, alone
-            allow = len(running) + 1
+            hide = running                    # new requests only: one, or several short prompts that each fit whole
+            fresh = 1
+            if batch > 1:
+                try:
+                    lengths = [getattr(r, 'num_prompt_tokens', None) if getattr(r, 'num_computed_tokens', 0) == 0 else None
+                               for r in list(self.skipped_waiting) + list(self.waiting)]
+                    fresh = admit_count(lengths, self.max_num_scheduled_tokens, min(batch, limit - len(running)))
+                except Exception:      # an unfamiliar queue type: fall back to one at a time
+                    fresh = 1
+            stats['admitted_together'] = max(stats.get('admitted_together', 1), fresh)
+            allow = len(running) + fresh
         else:
             hide = prefilling
             allow = len(running)
@@ -75,8 +103,10 @@ def register():
             stats[kind] += 1
             total = stats['P'] + stats['D']
             if total in (1, 1000, 20000):
-                logger.warning('b70_exclusive_prefill: %d prompt-only and %d decode-only steps so far', stats['P'], stats['D'])
+                logger.warning('b70_exclusive_prefill: %d prompt-only and %d decode-only steps so far; most prompts in one '
+                               'step %d', stats['P'], stats['D'], stats.get('admitted_together', 1))
 
     cls.schedule = schedule
     cls._b70_exclusive_prefill = True
-    logger.warning('b70_exclusive_prefill: installed on Scheduler (pure prompt-only and decode-only steps)')
+    logger.warning('b70_exclusive_prefill: installed on Scheduler (pure prompt-only and decode-only steps; up to %d short '
+                   'prompts per prompt-only step)', batch)

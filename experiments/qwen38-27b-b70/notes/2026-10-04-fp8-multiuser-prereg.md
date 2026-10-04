@@ -307,3 +307,20 @@ steps and per-sequence attention, default output layer. All exact against solo a
 
 Data: `data/2026-10-04-fp8-multiuser/two-overlays-s{16,32,64}/` and `ceiling-s64/`.
 
+
+## Addendum, 18:15 EDT: several short prompts per prompt-only step
+
+**Why.** In the two-overlay mode every new request gets a step to itself for its prompt. With 64 users and
+128-token answers that is one prompt-only step for every two decode steps a request needs, an estimated 10 to 17 %
+of the time on short prompts.
+
+**Change.** `B70_EXCLUSIVE_PREFILL_BATCH=N`: a prompt-only step may take up to N new requests together when each
+prompt fits whole and they fit the step's budget together. Each still has the single chunk it would have alone.
+The prompt kernels then see several sequences in one call.
+
+**Test.** `MU_MODE=longsweep MU_PURE=1 MU_FA_PER_SEQ=1 MU_PREFILL_BATCH=8 MU_SEQS=64`, long suite and short ladder.
+
+**Rule.** This is a screen, not a result. The body GEMMs are row-invariant (census), but the attention and
+recurrent prompt kernels have no census across sequences on this image. If any answer differs from solo, the
+option is closed. If all are equal and the gain is 5 % or more, the prompt kernels get a census across sequences
+before anything is claimed; under 5 %, it is dropped.
