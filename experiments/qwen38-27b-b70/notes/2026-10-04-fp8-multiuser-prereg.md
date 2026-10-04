@@ -44,3 +44,16 @@ Without speculation, exact at 2, 4 and 8 users, with totals well above the singl
 above the single-user speculative 90 tok/s at eight users. With speculation, not exact at 2 users (as on one card in
 September). If the no-speculation totals are large, the follow-up question is whether speculation can be made exact
 under load; that is a separate campaign.
+
+## Addendum, 01:30 EDT: the first pass was only a screen; the gate is rerun with 64 answers per level
+
+The first run (`/mnt/fast-ai/bench-results/fp8-multiuser-20261004`) sent only as many requests as there were users,
+so "exact" there means 2 of 2, 4 of 4 and 8 of 8 answers. That is a look, not a gate. What it showed, both passes:
+without speculation 65 / 125 / 234 tok/s together at 2 / 4 / 8 users; with depth-5 speculation 229 tok/s together
+at 4 users; every answer in that small sample equal to its solo answer.
+
+The gate run (`MU_MODE=gate`) sends all 64 prompts at once to a server that runs N of them together, twice, and
+compares every answer both with the same server's one-at-a-time answers and with the frozen single-user
+no-speculation reference (`fp8-comm2-20260917/tp2-ag-mtp0-ladder.json`). Servers: no speculation at 8; depth-5
+speculation at 2, 4 and 8. The rule above is unchanged: a level is lossless only if all 64 answers are identical in
+both passes.

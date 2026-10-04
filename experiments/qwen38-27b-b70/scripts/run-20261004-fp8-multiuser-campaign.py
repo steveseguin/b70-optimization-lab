@@ -50,11 +50,35 @@ def oracle(base, name, levels):
     return {'classification': data.get('classification'), 'levels': rows}
 
 
+REF_LADDER = Path('/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-ladder.json')  # frozen single-user no-MTP answers
+
+
+def saturated(base, name):
+    """All 64 prompts sent at once to a server that runs N of them together: every answer against (a) the same
+    server's one-at-a-time answers and (b) the frozen single-user no-speculation reference. Two passes."""
+    ladder = R.ladder(base, name, 2)
+    if not ladder:
+        return {'error': 'no ladder output'}
+    data = json.loads(Path(ladder).read_text())
+    out = {'vs_reference': R.ladder_compare(name, ladder, REF_LADDER),
+           'passes': [{'repeat': b['repeat'], 'answers': b['request_count'],
+                       'exact_vs_own_solo': f"{b['oracle_exact_count']}/{b['oracle_exact_total']}",
+                       'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2), 'cache_zero': b['cached_tokens_all_zero']}
+                      for b in data['batches']]}
+    for row in out['passes']:
+        R.log(f"{name}: pass {row['repeat']}: {row['exact_vs_own_solo']} equal to solo, {row['aggregate_tok_s']} tok/s together")
+    R.log(f"{name}: vs the frozen single-user reference: {out['vs_reference'].get('verdict')} {out['vs_reference'].get('sections')}")
+    return out
+
+
 def stage(results, since, name, port, args, levels):
     srv = R.Research(name, port, args)
     r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
     if srv.ready:
-        r['concurrency'] = oracle(srv.base, name, levels)
+        if levels == 'saturated':
+            r['saturated'] = saturated(srv.base, name)
+        else:
+            r['concurrency'] = oracle(srv.base, name, levels)
     r['stop'] = srv.stop()
     R.save_results(); R.fault_check(since); R.wait_gpus_free()
 
@@ -70,8 +94,15 @@ def main():
     if results['preflight_health_rc'] != 0:
         raise SystemExit(4)
     R.fault_check(since)
-    stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
-    stage(results, since, 'tp2-mtp5-s4', 18197, TP2 + MTP5 + SHIPPED + ['--seqs', '4'], '2,4')
+    if os.environ.get('MU_MODE', 'screen') == 'screen':
+        # first look (2026-10-04 01:22): only N requests per level, too few to call anything exact
+        stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
+        stage(results, since, 'tp2-mtp5-s4', 18197, TP2 + MTP5 + SHIPPED + ['--seqs', '4'], '2,4')
+    else:
+        # the gate: 64 prompts per pass against a server running N at a time
+        stage(results, since, 'tp2-mtp0-s8-sat', 18196, TP2 + SHIPPED + ['--seqs', '8'], 'saturated')
+        for n, port in ((2, 18197), (4, 18198), (8, 18199)):
+            stage(results, since, f'tp2-mtp5-s{n}-sat', port, TP2 + MTP5 + SHIPPED + ['--seqs', str(n)], 'saturated')
     if os.environ.get('MU_TP1') == '1':
         stage(results, since, 'tp1-mtp0-s8', 18198, ['--tp', '1', '--gpu', '0', '--mem', '0.965', '--max-model-len', '20480',
                                                    '--batched', '4096', '--cpu-embed', '--fa-verify-rows', '--seqs', '8'], '2,4,8')
