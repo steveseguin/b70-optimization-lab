@@ -43,6 +43,14 @@ workload dressed up as a benchmark. A change that alters the output is
 recorded as lossy and left for the owner to judge; it is never adopted
 quietly.
 
+**KV cache stays at full 16-bit precision** (BF16, or FP16 where the runtime
+uses that) by default (owner, 2026-10-03). An FP8 or otherwise compressed KV
+cache is cheating, so it is not a default and never a headline. Use one only
+when a 16-bit cache is not available for that model, or when the owner says
+so explicitly. This rule is not meant to break things: if something
+specifically should not be BF16, raise it with the owner instead of working
+around it.
+
 ### 3. Keep the machine safe (2026-09-13, clarified 2026-09-14 and 2026-10-03)
 
 - **Power settings are off limits.** Do not change ASPM, PCIe power
@@ -63,14 +71,16 @@ quietly.
 - **A controlled reload inside authorized work does not need an approval
   pause** (2026-09-14). Explain it in plain words, distinguish it from
   restarting the computer, and continue optimizing afterwards.
-- **A GPU fault halts GPU work.** On the first `Fault response`, CAT error,
-  engine reset, timed-out job or coredump line: stop new launches, preserve
-  the evidence, and do not retry in a loop. Later device work on that boot
-  waits until health is re-established as `docs/local-ops.md` describes (one
-  bounded health probe and a clean new journal window). A fault does not by
-  itself mandate a reboot, and there is no one-experiment-per-boot rule. If
-  health cannot be re-established, or a second fault follows on the same boot,
-  stop and bring it to the owner.
+- **One fault does not end the session** (owner, 2026-10-03). On the first
+  `Fault response`, CAT error, engine reset, timed-out job or coredump line:
+  stop new launches, save the evidence, and do not retry in a loop. Then try
+  to recover without a reboot: run one bounded health probe
+  (`docs/local-ops.md`; on the two-card host
+  `scripts/check-qwen36-xpu-xccl-health.sh`). If it passes and the kernel log
+  stays clean, carry on with the work and note the fault in `CURRENT.md`. Do
+  not ask first. If the probe fails, or a second fault follows on the same
+  boot, stop and tell the owner that a reboot is needed. There is no
+  one-experiment-per-boot rule.
 - **Stop GPU jobs gracefully.** Hard-killing a busy GPU process (a cgroup
   kill, `docker rm -f`, a watchdog's group kill) logs fault lines by itself on
   this driver. It is the last resort, and it is handled as a fault under the
@@ -85,15 +95,18 @@ quietly.
 - Historical recipes are preserved as evidence, not as current operating
   instructions.
 
-### 4. Keep working, and report in plain words
+### 4. Keep working, and report in plain words (2026-10-03)
 
-- When a batch of work is finished, take the next lever from the active lane's
-  notes instead of wrapping up. Stop only for something that is the owner's to
-  decide (a reboot after a fault, publishing, a quality judgement), say exactly
-  what is needed in one line, and have the follow-up ready.
-- Write `CURRENT.md` entries and reports to the owner in everyday words, with
-  the outcome or the decision first. Details, commands and experiment IDs go in
-  lane notes.
+- **Reports to the owner are plain, everyday words: simple and direct.** Say
+  what happened, then what you recommend doing next. Details, commands and
+  experiment IDs go in lane notes, and `CURRENT.md` is written the same way.
+- **Stay on the goal; do not rabbit-hole.** Before starting a lever, ask what
+  it can be worth. A change that can only move a result by a percent or two
+  is closed quickly or skipped, not turned into a campaign. Say plainly when
+  a lane is finished.
+- When a batch of work is done, take the next worthwhile lever instead of
+  wrapping up. Stop only for something that is the owner's to decide (a
+  reboot, publishing, a quality judgement), and say exactly what is needed.
 
 ## First Read
 
@@ -467,8 +480,6 @@ Owner decisions that bind one lane:
   native MTP, official FP8 target weights, the qualified target arithmetic and
   KV settings, and lossless output gates. Investigate other transferable ideas
   without reopening the DFlash startup candidate.
-- **Qwen 27B FP8 (2026-09-17):** no FP8 KV cache in this lane, ever. The owner
-  counts it as cheating; context is gained without compressing the KV.
 - **MiniMax-H3 (2026-09-19/20):** the goal track is deterministic and lossless,
   bit-identical to the base schedule at a fixed seed. Turbo LoRA, fp16 decode
   and anything else that changes a bit are measured, recorded and left to the
