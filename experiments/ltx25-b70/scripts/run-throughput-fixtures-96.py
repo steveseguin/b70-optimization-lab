@@ -64,6 +64,10 @@ def expected_clip_count(count, sampler_depth, decode_depth):
     return max(0, count - sampler_depth - decode_depth)
 
 
+class SequenceError(Exception):
+    """An emission-sequence fault found before the per-row checks (fails the arm with exit 12)."""
+
+
 def provenance_map(sampler_receipts):
     """{absolute clip index: emitted_batch_job} from every sampler receipt of the arm,
     keyed by the clip that receipt's prompt released (detail.emitted_index)."""
@@ -73,7 +77,7 @@ def provenance_map(sampler_receipts):
         e = det.get('emitted_index')
         if isinstance(e, int) and e >= 0 and isinstance(det.get('emitted_batch_job'), dict):
             if e in out:
-                raise AssertionError('two sampler receipts released clip %d' % e)
+                raise SequenceError('two sampler receipts released clip %d' % e)
             out[e] = det['emitted_batch_job']
     return out
 
@@ -244,8 +248,17 @@ def main(argv=None):
         print('TIMED OUT: %d/%d' % (done, len(prompts)))
         raise SystemExit(1)
 
-    pmap = provenance_map([json.loads((server_run / ('pipeline-sampler-' + p['name'] + '.json')).read_text())
-                           for p in prompts if (server_run / ('pipeline-sampler-' + p['name'] + '.json')).is_file()])
+    try:
+        pmap = provenance_map([json.loads((server_run / ('pipeline-sampler-' + p['name'] + '.json')).read_text())
+                               for p in prompts if (server_run / ('pipeline-sampler-' + p['name'] + '.json')).is_file()])
+    except SequenceError as exc:
+        # Third review: a clip released by two sampler receipts must fail the arm as a recorded sequence fault.
+        fault = {'schema': 'ltx.throughput-fixtures-96.v1', 'prefix': a.prefix, 'arm': a.arm, 'index_base': a.index_base,
+                 'server_run': str(server_run), 'count': a.count, 'emission_sequence_ok': False,
+                 'emission_problems': [str(exc)], 'all_exact': False, 'rows': []}
+        (out / (a.prefix + '-throughput.json')).write_text(json.dumps(fault, indent=2) + '\n')
+        print('EMISSION SEQUENCE WRONG: %s' % exc, flush=True)
+        return 12
     seen = set()
     rows = []
     for p in prompts:

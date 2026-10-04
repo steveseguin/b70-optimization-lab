@@ -43,7 +43,7 @@ measured x (batch / calibration batch) x 1.25 + 0.25 GiB. Without a matching rec
 private-pool bound is used. Every receipt records its basis. Reads files only (calibrate
 writes its one output file).
 """
-import glob
+import math, glob
 import json
 import os
 import sys
@@ -60,6 +60,11 @@ LAYOUTS = {'two-way': {'xpu:0': 23, 'xpu:1': 25, 'xpu:2': 0, 'xpu:3': 0},
 PRE_DECODE = {'xpu:1': 1.8, 'xpu:3': 1.9}
 MEASURED_FACTOR = 1.25
 MEASURED_PAD_GIB = 0.25
+CARDS = ('xpu:0', 'xpu:1', 'xpu:2', 'xpu:3')
+
+
+def _finite(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
 # Free GiB per card at the freeze with zero sampler workers, from measured receipts:
 # two-way: 95b w2 freeze (2.65, 4.78, 11.84, 14.55) + 2 x the 94f per-worker cost (2.76, 3.00, 0, 0);
 # shard4-a: 95b w3 freeze (5.31, 9.45, 2.88, 9.98) + 3 x the 95b worker-2 cost (2.18, 2.10, 0.98, 0.53);
@@ -123,10 +128,15 @@ def find_calibration(root, manifest, layout, batch):
             why.append('layout')
         if rec.get('shared_pool') != 1:
             why.append('pool off')
-        if not isinstance(rec.get('batch'), int) or rec['batch'] > batch:
+        if isinstance(rec.get('batch'), int) and rec['batch'] > batch:
             why.append('batch above %d' % batch)
-        if not isinstance(rec.get('per_card_gib'), dict):
-            why.append('no per-card figures')
+        pc = rec.get('per_card_gib')
+        if not isinstance(pc, dict) or any(not _finite(pc.get(c)) or pc.get(c) < 0 for c in CARDS):
+            why.append('per-card figures missing, partial or not finite')
+        if not isinstance(rec.get('batch'), int) or isinstance(rec.get('batch'), bool) or rec.get('batch', 0) < 1:
+            why.append('batch not a positive integer')
+        if not rec.get('source_identity_sha256') or rec.get('source_identity_match') is not True:
+            why.append('source receipts not shown to be from one server run')
         if why:
             reasons.append('%s: %s' % (path, ', '.join(why)))
             continue
@@ -140,14 +150,14 @@ def find_calibration(root, manifest, layout, batch):
 
 def calibrated_cost(layout, batch, rec):
     scale = batch / rec['batch']
-    return {c: (rec['per_card_gib'].get(c, 0.0) * scale * MEASURED_FACTOR + MEASURED_PAD_GIB) if blocks else 0.0
+    return {c: (rec['per_card_gib'][c] * scale * MEASURED_FACTOR + MEASURED_PAD_GIB) if blocks else 0.0
             for c, blocks in LAYOUTS[layout].items()}
 
 
 def calibrate(before_free, after_free, layout, batch, worker, manifest):
     cost = measured_cost(before_free, after_free)
     if cost is None:
-        raise SystemExit('calibrate: both receipts need free_bytes for every card')
+        raise SystemExit('calibrate: both receipts need finite free_bytes for all four cards')
     return {'schema': CALIBRATION_SCHEMA, 'packet_manifest_sha256': manifest, 'layout': layout, 'batch': batch,
             'shared_pool': 1, 'worker': worker, 'per_card_gib': {c: round(v, 4) for c, v in cost.items()},
             'written_unix': time.time(),
@@ -155,13 +165,15 @@ def calibrate(before_free, after_free, layout, batch, worker, manifest):
 
 
 def measured_cost(prev_free, now_free):
-    """Per-card GiB the previous worker's capture took (free before - free after), or None."""
-    if not prev_free or not now_free:
+    """Per-card GiB the previous worker's capture took (free before - free after), or None.
+    None unless BOTH readings carry a finite, non-negative byte count for every one of the four cards:
+    a partial reading must never turn into a zero charge."""
+    if not isinstance(prev_free, dict) or not isinstance(now_free, dict):
         return None
     out = {}
-    for card in now_free:
+    for card in CARDS:
         a, b = prev_free.get(card), now_free.get(card)
-        if a is None or b is None:
+        if not _finite(a) or not _finite(b) or a < 0 or b < 0:
             return None
         out[card] = max(0.0, (a - b) / GIB)
     return out
@@ -181,7 +193,7 @@ def worker_estimate(layout, batch, pool=0, prev_free=None, now_free=None, calibr
                                                                            MEASURED_FACTOR, MEASURED_PAD_GIB),
                     bound, None)
         return bound, 'private-pool bound', bound, measured
-    est = {c: (measured.get(c, 0.0) * MEASURED_FACTOR + MEASURED_PAD_GIB) if LAYOUTS[layout].get(c) else 0.0
+    est = {c: (measured[c] * MEASURED_FACTOR + MEASURED_PAD_GIB) if LAYOUTS[layout].get(c) else 0.0
            for c in bound}
     return est, 'previous worker measured x %.2f + %.2f GiB' % (MEASURED_FACTOR, MEASURED_PAD_GIB), bound, measured
 
@@ -221,10 +233,18 @@ def main(argv):
         if not out or not manifest:
             print('calibrate needs --manifest and --out')
             return 2
-        before = json.load(open(pos[1])).get('free_bytes') or {}
-        after = json.load(open(pos[2])).get('free_bytes') or {}
+        rb, ra = json.load(open(pos[1])), json.load(open(pos[2]))
+        ids = (rb.get('server_identity_sha256'), ra.get('server_identity_sha256'))
+        if not ids[0] or ids[0] != ids[1]:
+            print('calibrate: the two receipts are not from one server run (server_identity_sha256 %r vs %r)' % ids)
+            return 2
+        if not (_finite(rb.get('time')) and _finite(ra.get('time')) and rb['time'] < ra['time']):
+            print('calibrate: the "before" receipt is not older than the "after" receipt')
+            return 2
+        before = rb.get('free_bytes') or {}
+        after = ra.get('free_bytes') or {}
         rec = calibrate(before, after, pos[3], int(pos[4]), int(pos[5]), manifest)
-        rec.update({'before': pos[1], 'after': pos[2]})
+        rec.update({'before': pos[1], 'after': pos[2], 'source_identity_sha256': ids[0], 'source_identity_match': True})
         Path(out).write_text(json.dumps(rec, indent=2) + '\n')
         print(json.dumps(rec))
         return 0

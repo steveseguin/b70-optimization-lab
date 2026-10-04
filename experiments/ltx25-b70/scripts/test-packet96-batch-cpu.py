@@ -1166,6 +1166,14 @@ def calibration_case():
     after = {'xpu:0': int(6.5 * G), 'xpu:1': int(8.4 * G), 'xpu:2': int(11 * G), 'xpu:3': int(14 * G)}
     rec = hr.calibrate(before, after, 'two-way', 1, 1, M)
     assert rec['per_card_gib'] == {'xpu:0': 0.5, 'xpu:1': 0.6, 'xpu:2': 0.0, 'xpu:3': 0.0} and rec['shared_pool'] == 1
+    # third review: the identity fields are added by main(); a receipt without them is refused (below)
+    bare = dict(rec)
+    rec = dict(rec, source_identity_sha256='e' * 64, source_identity_match=True)
+    # a partial or non-finite reading is never a measurement (no silent zero charge)
+    assert hr.measured_cost({k: v for k, v in before.items() if k != 'xpu:1'}, after) is None
+    assert hr.measured_cost(before, dict(after, **{'xpu:0': float('nan')})) is None
+    assert hr.measured_cost(before, {'xpu:0': after['xpu:0']}) is None
+    assert hr.worker_estimate('two-way', 2, 1, before, {'xpu:0': after['xpu:0']}, None)[1] == 'private-pool bound'
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
 
@@ -1181,8 +1189,16 @@ def calibration_case():
         put('two-way-w2-b1', shared_pool=0)                                           # pool-off dir: not searched
         put('two-way-w3-b1-p1', shared_pool=0)                                        # pool flag off
         put('two-way-w2-b4-p1', batch=4)                                              # larger batch than 2
+        put('two-way-w5-b1-p1', per_card_gib={'xpu:0': 0.5, 'xpu:1': 0.6})                   # partial figures
+        put('two-way-w6-b1-p1', per_card_gib=dict(rec['per_card_gib'], **{'xpu:1': float('inf')}))  # not finite
+        put('two-way-w7-b1-p1', batch=0)                                              # batch not positive
+        (root / 'two-way-w8-b1-p1').mkdir()
+        (root / 'two-way-w8-b1-p1' / 'pool-calibration.json').write_text(json.dumps(bare))  # no source identity
         found = hr.find_calibration(str(root), M, 'two-way', 2)
-        assert found[0] is None and len(found[1]) == 3, found       # all refused (other layout dir not searched)
+        assert found[0] is None and len(found[1]) == 7, found       # all refused (other layout dir not searched)
+        assert sum('partial or not finite' in r for r in found[1]) == 2 and \
+            sum('not shown to be from one server run' in r for r in found[1]) == 1 and \
+            sum('not a positive integer' in r for r in found[1]) == 1, found
         good = put('two-way-w4-b1-p1', written_unix=100.0)
         newer = put('two-way-w4-b2-p1', batch=2, written_unix=50.0,
                     per_card_gib={'xpu:0': 1.0, 'xpu:1': 1.1, 'xpu:2': 0.0, 'xpu:3': 0.0})
@@ -1224,10 +1240,25 @@ def calibration_case():
                      '--calibration-root', str(root)])
         assert json.loads(buf.getvalue())['basis'] == 'private-pool bound'           # manifest mismatch: bound
         outp = root / 'cal-out.json'
+        rb, ra = root / 'room-before.json', root / 'room-after.json'
+        rb.write_text(json.dumps({'free_bytes': before, 'server_identity_sha256': 'f' * 64, 'time': 10.0}))
+        ra.write_text(json.dumps({'free_bytes': after, 'server_identity_sha256': 'f' * 64, 'time': 20.0}))
         with contextlib.redirect_stdout(io.StringIO()):
-            assert hr.main(['x', 'calibrate', str(recp), str(recp), 'two-way', '1', '1', '--manifest', M,
+            assert hr.main(['x', 'calibrate', str(rb), str(ra), 'two-way', '1', '1', '--manifest', M,
                             '--out', str(outp)]) == 0
-        assert json.loads(outp.read_text())['schema'] == 'ltx.pool-calibration-96.v1'
+        made = json.loads(outp.read_text())
+        assert made['schema'] == 'ltx.pool-calibration-96.v1' and made['source_identity_match'] is True and \
+            made['source_identity_sha256'] == 'f' * 64 and made['per_card_gib']['xpu:1'] == 0.6
+        other = root / 'room-other.json'
+        other.write_text(json.dumps({'free_bytes': after, 'server_identity_sha256': '0' * 64, 'time': 20.0}))
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert hr.main(['x', 'calibrate', str(rb), str(other), 'two-way', '1', '1', '--manifest', M,
+                            '--out', str(root / 'no.json')]) == 2          # two different server runs
+            assert hr.main(['x', 'calibrate', str(ra), str(rb), 'two-way', '1', '1', '--manifest', M,
+                            '--out', str(root / 'no.json')]) == 2          # before is newer than after
+            assert hr.main(['x', 'calibrate', str(recp), str(recp), 'two-way', '1', '1', '--manifest', M,
+                            '--out', str(root / 'no.json')]) == 2          # no identity at all
+        assert not (root / 'no.json').exists()
     sh = (HERE / 'run-campaign-96.sh').read_text()
     assert '--out $OUT/pool-calibration.json' in sh and 'calibrate $OUT/sampler-capture-coverage-f96-$TAG-room$LASTW.json' in sh
     assert sh.count('--manifest $MANIFEST') >= 3
