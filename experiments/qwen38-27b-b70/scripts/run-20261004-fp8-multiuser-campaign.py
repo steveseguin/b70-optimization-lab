@@ -187,7 +187,10 @@ def main():
                 name = name.replace('tp2-pure', 'tp2-pure-faseq')
             seqs = os.environ.get('MU_SEQS', '16')
             name = name.replace('-s16', f'-s{seqs}')
-            srv = R.Research(name, 18196, TP2 + SHIPPED + pure + ['--seqs', seqs])
+            spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
+            if spec:
+                name = name.replace('-mtp0-', '-mtp5-')
+            srv = R.Research(name, 18196, TP2 + spec + SHIPPED + pure + ['--seqs', seqs])
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
                 out = OUT / f'{name}-long-concurrency.json'

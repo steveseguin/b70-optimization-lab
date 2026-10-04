@@ -159,3 +159,19 @@ Pure steps plus the head fed four rows at a time: long prompts still 63/64 in bo
 decode call exceeds 229 tokens (the longest length proven invariant), issue one call per sequence with that
 sequence's own length. Same server, same suites, same rule. If this is still not 64/64 on long prompts, the lane
 stops here and the remaining difference goes to a per-layer trace on the one known request, not to a fourth guess.
+
+## Addendum, 06:30 EDT: three overlays pass through 64 users; next question, speculation under load
+
+Results: with the three overlays, speculation off, long and short suites are 64/64 in both passes at 16 users (two
+fresh servers, 325 tok/s together), 32 users (428) and 64 users (488), all exact against the frozen reference.
+
+**Next, written down first:** the shipped depth-5 speculation with the same three overlays, at 4 users, then 8.
+The attention overlay was extended so that a verify step for several requests is split per sequence and each
+sequence then goes through the verify-rows overlay exactly as a lone user's does (CPU tests updated). The
+speculative GDN kernel has no working census on this image (the September script's kernel signature is out of date),
+so this is a direct endpoint test, one arm.
+
+**Rule:** speculation under load counts as lossless only if long prompts and the short ladder are both 64/64 in
+both passes and the short ladder equals the frozen no-speculation reference. If it is exact, the number to beat is
+the speculation-off total at the same user count. If it is not, speculation stays single-user only and the lane
+closes here: no further arms without first rebuilding the speculative-kernel census for this image.

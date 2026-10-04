@@ -61,11 +61,26 @@ class PerSeqTest(unittest.TestCase):
         fa.flash_attn_varlen_func(**kwargs([6524]))
         self.assertEqual([c['B'] for c in calls], [1])
 
-    def test_multi_query_calls_pass_through(self):
+    def test_single_sequence_multi_query_passes_through(self):
         fa, calls = install()
-        kw = kwargs([6524], queries_per_seq=6)                                       # an MTP verify step or a prefill chunk
+        kw = kwargs([6524], queries_per_seq=6)                                       # one request's verify step, or a prefill chunk
         fa.flash_attn_varlen_func(**kw)
         self.assertEqual([c['B'] for c in calls], [6])
+
+    def test_multi_request_verify_step_is_split_per_sequence(self):
+        fa, calls = install()
+        kw = kwargs([6524, 1645, 3000], queries_per_seq=6)
+        out = fa.flash_attn_varlen_func(**kw)
+        self.assertTrue(torch.equal(out, kw['q'] * 2))
+        self.assertEqual([c['B'] for c in calls], [6, 6, 6])
+        self.assertEqual([c['max_k'] for c in calls], [6524, 1645, 3000])
+        self.assertEqual([c['cu'] for c in calls], [[0, 6]] * 3)
+        self.assertEqual([c['table'] for c in calls], [[[0, 1, 2, 3]], [[4, 5, 6, 7]], [[8, 9, 10, 11]]])
+
+    def test_large_multi_sequence_prefill_is_left_alone(self):
+        fa, calls = install()
+        fa.flash_attn_varlen_func(**kwargs([6524, 3000], queries_per_seq=64))        # more rows than a verify step
+        self.assertEqual([c['B'] for c in calls], [128])
 
 
 if __name__ == '__main__':
