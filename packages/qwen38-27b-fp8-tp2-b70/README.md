@@ -76,7 +76,12 @@ launcher above owns the tested start, status and stop path.
   exact on every gate ([comm-2 receipts](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/),
   [September 17 acceptance packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/)). The launcher
   as shipped today (no container swap, `--memory-swap 12g`) was re-accepted on October 3 on kernel 7.0.0-38: twelve of
-  twelve gates, strict 12/12 at 90.01 tok/s ([current packet](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-two-card-noswap/)). The oneCCL settings
+  twelve gates, strict 12/12 at 90.01 tok/s ([packet](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-two-card-noswap/)).
+  Since October 4 the package also ships `overlays/b70_chunked_upload.py`, which sends the 1.27 GB embedding and
+  output-layer weights to the cards in 128 MiB pieces while the model loads. That avoids the driver path behind the
+  model-load GPU fault ([what it is](../../experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md)); the
+  bytes that arrive are the same. Re-accepted with it on October 4: twelve of twelve gates, strict 12/12 at 90.32 tok/s
+  ([current packet](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-two-card-chunked-upload/)). `B70_CHUNKED_UPLOAD=0` turns it off. The oneCCL settings
   are unchanged.
 - **Tested (ring allreduce, September 16-17):** two fresh depth-5 servers, 88.32 and 88.49 tok/s. The first (review campaign) was 12/12 identical to
   no-MTP on the strict suite, 64/64 on the sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and

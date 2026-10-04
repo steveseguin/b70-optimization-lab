@@ -23,6 +23,8 @@ NEW_DEPENDENCIES = [
     'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
     'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
     'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
+    'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',
+    'experiments/qwen38-27b-b70/overlays/b70-chunked-upload/b70_chunked_upload.py',
     'packages/qwen38-27b-fp8-tp2-b70/compose.yaml',
     'experiments/qwen38-27b-b70/scripts/run-20260917-fp8-comm2-campaign.py',
     'experiments/qwen38-27b-b70/overlays/b70-allgather-allreduce/b70_allgather_allreduce.py',
@@ -108,7 +110,8 @@ def main():
         'experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-tp1-shapes-r309-20260915.patch',
         'experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch',
         'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
-        'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py']}
+        'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
+        'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py']}
     package['commands'] = {
         'preflight': f'docker pull {R310}',
         'launch': 'python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/fp8-session',
