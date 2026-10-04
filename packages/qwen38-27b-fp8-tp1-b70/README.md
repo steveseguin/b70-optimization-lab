@@ -10,12 +10,14 @@ which is worth 10-17% more writing speed after a long prompt and changes no outp
 
 | Profile | Context | Writing speed | Prompt reading (2K / 8K / 16K input) |
 | --- | ---: | ---: | --- |
-| `recommended` | 32,768 tokens | **54.2 tok/s** | 2,030 / 2,020 / 1,938 tok/s |
-| `max-context` (0.983 of GPU memory) | 40,960 tokens | 54.3 tok/s | 2,031 / 2,020 / 1,936 tok/s |
-| `no-quantization` (full-precision draft head) | 28,672 tokens | 52.4 tok/s | 2,015 / 2,012 / 1,930 tok/s |
+| `recommended` | 32,768 tokens | **54.0 tok/s** | 2,031 / 2,023 / 1,939 tok/s |
+| `max-context` (0.983 of GPU memory) | 40,960 tokens | 54.0 tok/s | 2,028 / 2,018 / 1,936 tok/s |
+| `no-quantization` (full-precision draft head) | 28,672 tokens | 52.2 tok/s | 2,019 / 2,014 / 1,932 tok/s |
 
-Every row was measured through this launcher on the pinned image on September 18
-([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
+Every row was measured through this launcher on the pinned image on October 3-4, after the launcher stopped giving
+the container a swap allowance ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/); the
+first acceptance on this image, September 18, is within 0.7 % on every row:
+[receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
 
 Graphs and every measured point are on the
 [details page](https://neural.download/models/qwen38-27b-fp8-vllm-tp1-b70.html). LocalMaxxing:
@@ -134,6 +136,11 @@ and the answer.
   twice (54.24 / 54.01 tok/s) plus the ladder, both context screens, quality and the logprob replay; `max-context`
   12/12 at 54.32; `no-quantization` 12/12 at 52.42; ladders 64/64 and the 2K/8K/16K screen exact on all three
   ([receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
+- **Accepted again on the current launcher (October 4, 01:08-02:06 UTC, kernel 7.0.0-38).** The launcher now starts the
+  container with no swap allowance (`--memory-swap 12g`). The same campaign, all three profiles: `recommended` 12/12
+  twice (54.06 / 54.03 tok/s), `max-context` 12/12 at 53.98, `no-quantization` 12/12 at 52.20, every other gate exact,
+  no out-of-memory kill, 6.9-7.7 GiB of working memory against the 12 GiB limit
+  ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/)).
 - Not yet tested: a machine without Intel drivers, Docker or the model already
   in place, and more than one user at a time. The image itself is public: it was pushed on September 18 as
   `r312d-fp8-tp1-20260918`, so the `docker pull` above works anywhere.

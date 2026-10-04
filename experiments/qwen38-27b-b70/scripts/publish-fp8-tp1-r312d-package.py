@@ -23,7 +23,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE = ROOT / 'packages/qwen38-27b-fp8-tp1-b70/package.json'
-ACC = 'experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/'
+# The acceptance receipts the manifest is derived from. Default: the 2026-10-03 replay of all three profiles on the
+# no-swap launcher (--memory-swap 12g) and kernel 7.0.0-38; FP8_TP1_ACC selects another campaign's receipts
+# (the first R312d-c acceptance is data/2026-09-18-fp8-onecard-r312d/).
+import os
+ACC = os.environ.get('FP8_TP1_ACC', 'experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/')
+
+
+def _acceptance_window():
+    """The campaign's own start/finish stamps, so the manifest never states a window the receipts do not carry."""
+    import datetime as _dt
+    r = json.loads((Path(__file__).resolve().parents[3] / ACC / 'results.json').read_text())
+    a, b = (_dt.datetime.fromisoformat(r[k]) for k in ('started', 'finished'))
+    utc = f'{a:%Y-%m-%dT%H:%MZ}/{b:%Y-%m-%dT%H:%MZ}'
+    text = f'{a:%B} {a.day}, {a.year}, {a:%H:%M}-{b:%H:%M} UTC'
+    if b.date() != a.date():
+        text = f'{a:%B} {a.day}, {a.year}, {a:%H:%M} to {b:%B} {b.day}, {b:%H:%M} UTC'
+    return utc, text
 LC4 = 'experiments/qwen38-27b-b70/data/2026-09-18-fp8-lc4/'
 PROBE1 = 'experiments/qwen38-27b-b70/data/2026-09-17-fp8-probe1/'
 PROBE2 = 'experiments/qwen38-27b-b70/data/2026-09-17-fp8-probe2/'
@@ -90,7 +106,8 @@ def main():
     lib['public_summary'] = lib['summary']
     lib['tags'] = list(dict.fromkeys(lib['tags']))
     lib['benchmark_status'] = (
-        f'Accepted through the shipped launcher on the R312d-c image (September 18, 05:02-05:58 UTC). Strict 12-prompt '
+        f'Accepted through the shipped launcher on the R312d-c image ({_acceptance_window()[1]}; the launcher gives the '
+        f'container no swap). Strict 12-prompt '
         f'suite on a fresh 32,768-token server, twice: {pair[0]:.2f} / {pair[1]:.2f} tok/s, 12/12 identical to no MTP '
         f'each time; 64-prompt sequential oracle plus two queued passes 64/64; the 2K/8K/16K screen, the '
         f'2,048-30,720-token long corpus in three content types, a chat quality suite and a 21-request logprob replay '
@@ -151,7 +168,7 @@ def main():
                  acceptance_status='passed-on-configured-lab-host',
                  acceptance_campaign='experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py',
                  acceptance_evidence=ACC + 'results.json',
-                 acceptance_window_utc='2026-09-18T05:02Z/2026-09-18T05:58Z',
+                 acceptance_window_utc=_acceptance_window()[0],
                  strict_pair_decode_tokens_s=pair,
                  research_server_strict_pair_decode_tokens_s=research_pair,
                  research_server_evidence=LC4 + 'results.json')

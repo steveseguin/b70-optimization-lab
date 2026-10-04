@@ -5266,7 +5266,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head and a single-checkpoint recurrent state, 32,768 tokens of context, 54.1 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 40,960 tokens at 54.3 tok/s, and a no-quantization profile (52.4 tok/s, 28,672 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one. Since September 18 the image also computes the draft verifier's attention rows in one pass, which leaves short prompts as they were and writes 9-17% faster after prompts above 16,384 tokens.",
+        "summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head and a single-checkpoint recurrent state, 32,768 tokens of context, 54.0 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 40,960 tokens at 54.0 tok/s, and a no-quantization profile (52.2 tok/s, 28,672 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one. Since September 18 the image also computes the draft verifier's attention rows in one pass, which leaves short prompts as they were and writes 9-17% faster after prompts above 16,384 tokens.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -5292,15 +5292,15 @@
           "32K context"
         ],
         "published_at": "2026-09-15",
-        "benchmark_status": "Accepted through the shipped launcher on the R312d-c image (September 18, 05:02-05:58 UTC). Strict 12-prompt suite on a fresh 32,768-token server, twice: 54.24 / 54.01 tok/s, 12/12 identical to no MTP each time; 64-prompt sequential oracle plus two queued passes 64/64; the 2K/8K/16K screen, the 2,048-30,720-token long corpus in three content types, a chat quality suite and a 21-request logprob replay all exact against the same R311b no-MTP references. The other two profiles passed the same strict, ladder and context gates on this image: max-context (40,960) 54.32 tok/s, no-quantization (28,672) 52.42 tok/s. The single-checkpoint recurrent state (R311b kernel + overlay) keeps one GDN state block per request instead of six, raising the KV budget from 26,178 to 40,140 tokens at the same memory setting. The one-pass verifier attention (R312d-c) leaves every output unchanged and raises writing speed after a long prompt by 10% at 16K, 14% at 24K and 17% at 30K. The image is published to ghcr as r312d-fp8-tp1-20260918 and its registry digest matches the pinned value. Clean-host install and multiple users are untested.",
+        "benchmark_status": "Accepted through the shipped launcher on the R312d-c image (October 4, 2026, 01:08-02:06 UTC; the launcher gives the container no swap). Strict 12-prompt suite on a fresh 32,768-token server, twice: 54.06 / 54.03 tok/s, 12/12 identical to no MTP each time; 64-prompt sequential oracle plus two queued passes 64/64; the 2K/8K/16K screen, the 2,048-30,720-token long corpus in three content types, a chat quality suite and a 21-request logprob replay all exact against the same R311b no-MTP references. The other two profiles passed the same strict, ladder and context gates on this image: max-context (40,960) 53.98 tok/s, no-quantization (28,672) 52.20 tok/s. The single-checkpoint recurrent state (R311b kernel + overlay) keeps one GDN state block per request instead of six, raising the KV budget from 26,178 to 40,140 tokens at the same memory setting. The one-pass verifier attention (R312d-c) leaves every output unchanged and raises writing speed after a long prompt by 10% at 16K, 14% at 24K and 17% at 30K. The image is published to ghcr as r312d-fp8-tp1-20260918 and its registry digest matches the pinned value. Clean-host install and multiple users are untested.",
         "featured_metric": {
-          "value": 54.123754301353635,
+          "value": 54.046728353631565,
           "unit": "tok/s",
           "label": "Writing speed · MTP depth 5 · one card",
-          "scope": "Median of two strict runs on a fresh R312d-c package-launcher server (54.236 / 54.011) at a 32,768-token context (2,048-token prefill chunk, single-checkpoint recurrent state, one-pass verifier attention) on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding on both runs, 64/64 on the sequential oracle. The research launcher measured 54.212 / 53.896 on its own fresh server of the same image.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-strict-performance.json"
+          "scope": "Median of two strict runs on a fresh R312d-c package-launcher server (54.062 / 54.031) at a 32,768-token context (2,048-token prefill chunk, single-checkpoint recurrent state, one-pass verifier attention) on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding on both runs, 64/64 on the sequential oracle. The research launcher measured 54.212 / 53.896 on its own fresh server of the same image.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-strict-performance.json"
         },
-        "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head and a single-checkpoint recurrent state, 32,768 tokens of context, 54.1 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 40,960 tokens at 54.3 tok/s, and a no-quantization profile (52.4 tok/s, 28,672 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one. Since September 18 the image also computes the draft verifier's attention rows in one pass, which leaves short prompts as they were and writes 9-17% faster after prompts above 16,384 tokens."
+        "public_summary": "Official Qwen FP8 weights on one Intel Arc Pro B70. Recommended: MTP depth 5 with a draft-only INT4 shortlist head and a single-checkpoint recurrent state, 32,768 tokens of context, 54.0 tok/s writing speed; outputs identical to no MTP. A max-context profile reaches 40,960 tokens at 54.0 tok/s, and a no-quantization profile (52.2 tok/s, 28,672 tokens) drafts with an FP16 copy of the output layer instead of an INT4 one. Since September 18 the image also computes the draft verifier's attention rows in one pass, which leaves short prompts as they were and writes 9-17% faster after prompts above 16,384 tokens."
       },
       "contributors": [
         {
@@ -5499,7 +5499,32 @@
         "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-no-quantization-context-summary.json",
         "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-no-quantization-launch.json",
         "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-no-quantization-state.json",
-        "experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py"
+        "experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/results.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/campaign.log",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-strict-vs-reference.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-run2-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-run2-strict-vs-reference.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-ladder-vs-mtp0.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-context-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-long-context-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-quality.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-history-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-launch.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-state.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-max-context-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-max-context-strict-vs-reference.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-max-context-ladder-vs-mtp0.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-max-context-context-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-max-context-launch.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-max-context-state.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-no-quantization-strict-performance.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-no-quantization-strict-vs-reference.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-no-quantization-ladder-vs-mtp0.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-no-quantization-context-summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-no-quantization-launch.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-no-quantization-state.json"
       ],
       "performance_profiles": [
         {
@@ -5737,8 +5762,8 @@
         "clean_host_tested": false,
         "evidence": "experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md",
         "strict_pair_decode_tokens_s": [
-          54.23620608921908,
-          54.01130251348819
+          54.06219432449043,
+          54.0312623827727
         ],
         "previous_context": {
           "max_model_len": 32768,
@@ -5795,10 +5820,10 @@
             "max_num_batched_tokens": 2048,
             "gates_exact": true,
             "gates_exact_on_image": "r312d-c",
-            "evidence": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-strict-performance.json",
+            "evidence": "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-strict-performance.json",
             "strict_pair_decode_tokens_s": [
-              54.23620608921908,
-              54.01130251348819
+              54.06219432449043,
+              54.0312623827727
             ],
             "research_server_strict_pair_decode_tokens_s": [
               54.21161759197449,
@@ -5811,8 +5836,8 @@
             "max_num_batched_tokens": 2048,
             "gates_exact": true,
             "gates_exact_on_image": "r312d-c",
-            "evidence": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-max-context-strict-performance.json",
-            "strict_decode_tokens_s": 54.32432044471872
+            "evidence": "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-max-context-strict-performance.json",
+            "strict_decode_tokens_s": 53.9779432354846
           },
           "no-quantization": {
             "max_model_len": 28672,
@@ -5820,8 +5845,8 @@
             "max_num_batched_tokens": 2048,
             "gates_exact": true,
             "gates_exact_on_image": "r312d-c",
-            "evidence": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-no-quantization-strict-performance.json",
-            "strict_decode_tokens_s": 52.42051230868789,
+            "evidence": "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-no-quantization-strict-performance.json",
+            "strict_decode_tokens_s": 52.202808830923196,
             "draft": "fp16-shortlist"
           }
         },
@@ -5852,35 +5877,35 @@
             "30720": 37.5
           },
           "r312d_c_recommended_32768": {
-            "2048": 59.24,
-            "8192": 79.96,
-            "16384": 72.36,
+            "2048": 59.23,
+            "8192": 79.91,
+            "16384": 72.1,
             "24576": 45.52,
-            "30720": 43.99
+            "30720": 43.91
           },
           "change_percent_vs_r311b_recommended": {
-            "2048": 0.0,
-            "8192": 4.1,
-            "16384": 10.1,
+            "2048": -0.0,
+            "8192": 4.0,
+            "16384": 9.7,
             "24576": 14.6,
-            "30720": 17.4
+            "30720": 17.2
           },
           "change_percent_vs_r311b_max_context": {
             "2048": 0.0,
-            "8192": 4.0,
-            "16384": 9.9,
+            "8192": 3.9,
+            "16384": 9.5,
             "24576": 14.5,
-            "30720": 17.3
+            "30720": 17.1
           },
           "evidence": {
-            "r312d_c": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/tp1-pkg-32k-long-context-summary.json",
+            "r312d_c": "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/tp1-pkg-32k-long-context-summary.json",
             "r311b_recommended": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-probe2/tp1-pkg-32k-context-summary.json",
             "r311b_max_context": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-probe1/tp1-pkg-max-context-summary.json"
           }
         },
         "registry_pushed": true,
-        "acceptance_evidence": "experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/results.json",
-        "acceptance_window_utc": "2026-09-18T05:02Z/2026-09-18T05:58Z",
+        "acceptance_evidence": "experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/results.json",
+        "acceptance_window_utc": "2026-10-04T01:08Z/2026-10-04T02:06Z",
         "research_server_strict_pair_decode_tokens_s": [
           54.21161759197449,
           53.89646669862766

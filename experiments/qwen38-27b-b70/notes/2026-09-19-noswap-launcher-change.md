@@ -437,7 +437,19 @@ LocalMaxxing record `cmu5qk0kz07zglq01eh1opkhx` (90.476) stays the public record
 submission is made, as reasoned above. The attestation and queue payload of that record are
 deliberately left on the September 17 packet they describe.
 
-GPU run 2 (the one-card profiles) is still owed.
+### GPU run 2 (2026-10-03 21:08-22:06 EDT) -- passed; nothing is owed any more
+
+Same evening, same boot, straight after run 1. `recommended`, `max-context` and `no-quantization` all
+12/12 against the no-MTP reference with every other gate exact (54.06 / 54.03, 53.98 and 52.20 tok/s,
+within 0.7 % of September 18); the two-card service came back at 90.24 tok/s, 12/12. **The reading this
+run was owed:** anonymous memory 7.70 / 7.01 / 6.85 GiB against the 12 GiB limit, `oom_kill` 0 and
+swap peak 0 on all three, so the one-card profiles have *more* room than the two-card one (8.99 GiB),
+not less as the estimate feared. Zero GPU fault lines across three one-card servers followed by a
+two-card start. Receipts and the memory table:
+[`../data/2026-10-03-fp8-onecard-noswap/`](../data/2026-10-03-fp8-onecard-noswap/). The one-card
+package manifest, catalog and pages are regenerated from these receipts
+(`publish-fp8-tp1-r312d-package.py`, which now reads its receipts directory from `FP8_TP1_ACC`). The
+approved one-card LocalMaxxing record `cmu6ytqyr0827lq01b76whp6d` (54.224) is left as it is.
 
 ## Related
 

@@ -75,8 +75,14 @@ September 19 no-swap fix: the launcher had changed and nobody had re-run the ful
   retired. The published headline moves from 90.5 to **90.2** (it is the median of two fresh
   servers and the new one was a little slower, well inside normal run-to-run spread). The approved
   LocalMaxxing record is left as it is; no new submission was made.
-- **One-card package: running** as this is written (three profiles, about an hour, then it puts the
-  two-card service back). Results: `/mnt/fast-ai/bench-results/fp8-onecard-noswap-20261003/`.
+- **One-card package: done too.** All three profiles passed every check (54.0, 54.0 and 52.2 tokens a
+  second, within 0.7 % of September), and the memory reading this run was owed came back with room to
+  spare: 6.9 to 7.7 GB used of the 12 GB limit, nothing killed, nothing swapped. Three one-card servers
+  followed by a two-card start is the exact sequence that faulted three times in September; tonight it
+  logged **no faults**. [Receipts](experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/README.md).
+- **The chat service is up** on port 18124 (unit `fp8-service-20261003-after-onecard`, state
+  `/mnt/fast-ai/bench-results/fp8-onecard-noswap-20261003/service`), twelve of twelve exact at 90.2
+  tokens a second, on kernel 7.0.0-38.
 - **The stability finding is published** in the [host stability guide](docs/host-stability-and-fault-diagnosis.md)
   and its site page: the two-card host's GPU faults came from the container swapping at its own
   memory limit, and one launcher argument ended them.
