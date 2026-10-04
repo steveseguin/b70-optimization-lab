@@ -34,6 +34,10 @@ R.SERVICE_STATE = Path('/nonexistent/no-resident-service')
 SHIPPED = ['--overlay', 'b70-allgather-allreduce', '--extra-env', 'B70_ALLGATHER_ALLREDUCE=1']
 TP2 = ['--tp', '2', '--mem', '0.95', '--max-model-len', str(R.TP2_MML), '--batched', '4096', '--fa-verify-rows']
 MTP5 = ['--mtp', '5', '--draft-int4', '--shortlist', R.SHORTLIST]
+# Runtime (compute-runtime) debug keys are read only with NEOReadDebugKeys=1. The fix raises the size up to which a
+# host-to-card copy is a CPU copy from 4 MiB to the largest value the key takes, so weight uploads use no copy-engine job.
+NEO_KEYS = ['--extra-env', 'NEOReadDebugKeys=1']
+LOADCOPY_FIX = NEO_KEYS + ['--extra-env', 'ExperimentalH2DCpuCopyThreshold=2147483647']
 
 
 def oracle(base, name, levels):
@@ -187,19 +191,33 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE') == 'namebuffer':
-        # One diagnostic start, no measurement: the runtime logs every allocation and bind, so the log can say what
-        # lives at the GPU address every model-load fault hits (0x800400200000). Shipped two-card server, then stop.
+    if os.environ.get('MU_MODE') == 'loadcopy':
+        # The model-load fault is the copy engine reading a temporary mapping of host memory (every host-to-card copy
+        # above 4 MiB gets one, at GPU address 0x800400200000). The runtime has a switch that makes those copies plain
+        # CPU copies into the card's memory, so that mapping is never created. Three starts of the shipped two-card
+        # server: the runtime's own allocation log without the switch, the same log with it, then the switch alone
+        # with the strict gate. notes/2026-10-04-gpu-fault-mtp-start.md has the reading and the rule.
         debug = []
-        for key in ('NEOReadDebugKeys', 'LogAllocationType', 'LogAllocationStdout', 'PrintBOBindingResult', 'PrintBOCreateDestroyResult'):
+        for key in ('LogAllocationType', 'LogAllocationStdout', 'PrintBOBindingResult', 'PrintBOCreateDestroyResult'):
             debug += ['--extra-env', f'{key}=1']
-        srv, name, since = start_server('tp2-namebuffer', 18196, TP2 + MTP5 + SHIPPED + debug, since)
-        results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
-        results[name]['stop'] = srv.stop()
-        hits = [line for line in (OUT / name / 'server.log').read_text(errors='replace').splitlines() if re.search(r'8004002[0-3][0-9a-f]{4}', line, re.I)]
-        (OUT / 'buffer-at-fault-address.txt').write_text('\n'.join(hits[:400]) + '\n')
-        R.log(f'{name}: {len(hits)} log lines mention the fault address range (buffer-at-fault-address.txt)')
-        R.save_results(); R.fault_check(since); R.wait_gpus_free()
+        for label, extra, gate in (('control-log', NEO_KEYS + debug, False), ('fix-log', LOADCOPY_FIX + debug, False),
+                                   ('fix', LOADCOPY_FIX, True)):
+            srv, name, since = start_server(f'tp2-loadcopy-{label}', 18196, TP2 + MTP5 + SHIPPED + extra, since)
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if gate and srv.ready:
+                r['strict'] = R.strict(srv.base, name, R.TP2_CONTROL_STRICT)
+                R.log(f"{name}: strict {r['strict'].get('exact')} exact, {r['strict'].get('tok_s_1_100')} tok/s")
+            r['stop'] = srv.stop()
+            text = (OUT / name / 'server.log').read_text(errors='replace') if (OUT / name / 'server.log').exists() else ''
+            lines = text.splitlines()
+            at_address = [line for line in lines if re.search(r'8004002[0-9a-f]{5}', line, re.I)]
+            host_ptr = [line for line in lines if re.search(r'external.?host.?ptr', line, re.I)]
+            r['load_seconds'] = [float(x) for x in re.findall(r'Loading weights took ([0-9.]+) seconds', text)]
+            r['log_lines'], r['lines_at_fault_address'], r['host_pointer_lines'] = len(lines), len(at_address), len(host_ptr)
+            (OUT / f'{name}-fault-address-lines.txt').write_text('\n'.join((at_address + host_ptr)[:600]) + '\n')
+            R.log(f"{name}: {r['server']['status']}; load {r['load_seconds']} s; {len(at_address)} log lines at the fault "
+                  f"address, {len(host_ptr)} host-pointer lines, {len(lines)} lines in all")
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
     elif os.environ.get('MU_MODE', 'screen') == 'screen':
         # first look (2026-10-04 01:22): only N requests per level, too few to call anything exact
         stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
@@ -253,6 +271,8 @@ def main():
             spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
             if spec:
                 name = name.replace('-mtp0-', '-mtp5-')
+            if os.environ.get('MU_LOADCOPY_FIX') == '1':  # only after the loadcopy test has passed on this image
+                pure += LOADCOPY_FIX
             srv, name, since = start_server(name, 18196, TP2 + spec + SHIPPED + pure + ['--seqs', seqs], since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:

@@ -82,10 +82,43 @@ that the runtime asks the copy engine to read at a moment when it is not mapped:
 - The saved kernel logs were hiding the address: the fault record is one multi-line message and our line filters
   kept only its first, empty line. Read it with `journalctl -k -o json` or `-o cat`.
 
-**What we still do not know:** which buffer lives at `0x800400200000`. The runtime in the image has the logging
-switches to say (`NEOReadDebugKeys=1` with `LogAllocationType`, `PrintBOBindingResult`); one logged start on a
-healthy boot names it. That would turn our upstream report from "it faults sometimes" into "this buffer, this
-address, four times", and may show a way to avoid the race from our side.
+**What that buffer is (from the driver sources, read the same day).** The runtime in our image is
+compute-runtime 26.27.39122.11 and the kernel driver is `xe` from Linux 7.0; both sources were read at those versions.
+
+- The kernel answers `-EINVAL` to a GPU page fault in exactly two cases: the address space is not in fault mode, or
+  **no mapping exists at the faulting address** (`xe_pagefault_service`). The runtime creates its address space in
+  fault mode on this card, so it is the second case: the copy engine read an address where nothing was mapped.
+- `0x800400200000` is the first slot for large objects in the runtime's "standard" address pool (pool base
+  `0x800400000000` plus 2 MiB; objects over 4 MiB are placed from the bottom). Three kinds of object go in that
+  pool. The one that is over 4 MiB, short-lived and read by the copy engine is the **temporary mapping of host
+  memory made for a host-to-card copy** (`allocateGraphicsMemoryForNonSvmHostPtr`). Each one is released after its
+  copy and the next one gets the same address, which is why every incident shows the same address.
+- A host-to-card copy of 4 MiB or less is already done on the CPU, straight into the card's memory, with no mapping
+  and no copy-engine job (`preferCopyThroughLockedPtr`, threshold 4 MiB). Only larger copies take the faulting
+  path. Loading a model is thousands of large copies in a row, which is why the fault only ever shows up there.
+
+So the event is: during a weight upload, the copy engine reads the temporary mapping of the host buffer and the
+mapping is not there. Which side drops it early (the runtime releasing it before the copy has finished, or the
+kernel) is not proven by reading; the runtime's release logic for these mappings is shared between its command
+queues and is the likelier place. Memory pressure slows the copy engine's reads of host pages, which widens the
+window; that is how container swap made it frequent.
+
+**The fix to test.** The runtime has a switch for the 4 MiB limit: `ExperimentalH2DCpuCopyThreshold` (read when
+`NEOReadDebugKeys=1`; both strings are in our image's library). Set to its largest value (2 GiB minus one byte) it
+makes every weight upload a CPU copy. No temporary mapping is created and no copy-engine job reads host memory, so
+the operation that faults does not happen at all. It copies the same bytes, so answers cannot change. The largest
+single upload in this model is 1.27 GB per card, under the limit. Both cards expose their full 32 GB memory window,
+which this path needs.
+
+**Test, written before it runs (`MU_MODE=loadcopy`, step 0 of the after-reboot script).** Three starts of the
+shipped two-card server: (1) the runtime's allocation log without the switch, (2) the same log with it, (3) the
+switch alone with the strict gate.
+
+**Rule.** The switch is adopted for research starts if the log shows host-memory mappings at `0x8004002...` without
+it and none with it, the strict gate is 12 of 12 exact at the usual speed (within 1 % of 90 tok/s), and the weight
+load is not more than twice as slow. If the log lines cannot be read that way, the claim is limited to "exact and
+no slower"; the mechanism is then not shown. Putting it in the two package launchers is a separate step: their
+bytes are pinned by the acceptance packets, so it needs a new acceptance.
 
 **What others report that may help:** three independent B70 owners in the upstream thread see far fewer faults on
 kernel 6.17 than on 7.0. Their faults are under load, ours are at load time, so it may not carry over, and at one
@@ -107,14 +140,15 @@ fault in 59 starts a fair comparison needs well over a hundred starts.
   already says for a first fault: stop the server, wait a minute, run the health probe, and make one fresh start.
   Anything else still halts: a fault while serving, a different address, a failed probe, or any earlier fault on the
   same boot.
-- **A start that names the buffer.** `MU_MODE=namebuffer` starts the shipped two-card server once with the runtime's
-  allocation logging on and saves every log line that mentions the fault address range. It is step 0 of the
-  after-reboot script.
+- **The fix test.** `MU_MODE=loadcopy`, described above. It replaced the plain "name the buffer" start, since the
+  sources already name it.
 
 ## Next
 
 1. The owner reboots the machine (or says the health check is enough: this boot had one real fault).
-2. Run `scripts/run-20261004-fp8-mtp-under-load.sh`: the naming start, the speculation test, the one-exchange
-   speed-up.
-3. Post the finding upstream (`intel/compute-runtime#948`), with the buffer's name if step 2 found it. Needs the
-   owner's go-ahead since it is a public post.
+2. Run `scripts/run-20261004-fp8-mtp-under-load.sh`: the fix test first, then the speculation test and the
+   one-exchange speed-up (with the switch on if it passed).
+3. Post the finding upstream (`intel/compute-runtime#948`): the address, what lives there, and whether the switch
+   avoids it. Needs the owner's go-ahead since it is a public post.
+4. If the switch passes: new acceptance for the two package launchers with it, and try it on the MiniMax video
+   lane, whose model loads go through the same path.
