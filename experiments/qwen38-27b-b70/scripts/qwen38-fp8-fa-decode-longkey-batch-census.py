@@ -70,7 +70,23 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--seed", type=int, default=20261004)
+    ap.add_argument("--boundary", action="store_true",
+                    help="instead of the three standard cases, sweep key lengths between the measured-invariant short "
+                         "range and the long range, 64 sequences per case, to find where batch invariance ends")
     a = ap.parse_args()
+    if a.boundary:
+        report = {"schema": "qwen38-fp8-fa-decode-longkey-batch-census.v1", "torch": torch.__version__,
+                  "device": torch.xpu.get_device_name(0), "cases": {}}
+        cases = [("spread_86_to_229", [86 + (143 * i) // 63 for i in range(64)])]
+        cases += [(f"all_{n}", [n] * 64) for n in (96, 128, 160, 192, 224, 229, 230, 240, 256, 320, 384, 512, 640, 768, 832, 833, 1024, 1280, 1645)]
+        for label, lens in cases:
+            for splits in (0, 1):
+                r = census(a.seed, lens, splits)
+                report["cases"][f"{label}/num_splits_{splits}"] = r
+                print(label, "num_splits", splits, "batch-invariant:", r["all_batch_invariant"],
+                      [(x["B"], len(x["sequences_differing_from_single"])) for x in r["rows"]], flush=True)
+        a.out.write_text(json.dumps(report, indent=1) + "\n")
+        return
     short = [40 + 3 * i for i in range(16)]
     mixed = [1645, 2434, 3300, 3981, 5770, 6524, 8104, 6412, 1700, 2500, 3400, 4100, 5900, 6600, 8200, 6500]
     same = [6524] * 16
