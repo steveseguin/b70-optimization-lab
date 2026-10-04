@@ -1,9 +1,9 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-04 10:50 UTC** (2026-10-04 06:50 EDT), two-B70 host.
+Last reviewed: **2026-10-04 10:40 UTC** (2026-10-04 06:40 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
-## 2026-10-04 06:50 EDT: GPU work is stopped until the two-card host is rebooted
+## 2026-10-04 06:40 EDT: GPU work is stopped until the two-card host is rebooted
 
 **A card faulted at 06:25 while a research server was loading the model. It was the second fault since the last
 reboot, so by the owner's rule nothing more runs on the cards until a reboot.** Nothing was reset or retried. The
@@ -16,6 +16,9 @@ cards are empty and no server is running. The evidence is saved.
 - **After the reboot:** `systemd-run --user --unit fp8-mtp-under-load --collect bash
   experiments/qwen38-27b-b70/scripts/run-20261004-fp8-mtp-under-load.sh`. It checks the boot is clean first and
   leaves no server running.
+- The same script then tests a prepared speed-up for many users: the output-layer fix now exchanges results
+  between the cards once a step, not once per four users. Same arithmetic; expected about 10 % at 64 users. It was
+  written and CPU-tested while the cards were off limits and has not run on them yet.
 - [Incident note](experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
 
 ## 2026-10-04, overnight: many users at once, lossless on short and long prompts, up to 488 tokens a second together

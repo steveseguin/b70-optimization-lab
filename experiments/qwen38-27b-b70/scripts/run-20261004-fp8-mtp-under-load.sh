@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Speculation under load: shipped depth-5 MTP plus the three exactness overlays,
-# 4 users, then 8 if 4 is exact on long prompts. Preregistered in
-# notes/2026-10-04-fp8-multiuser-prereg.md (06:30 EDT addendum).
+# Two preregistered tests (notes/2026-10-04-fp8-multiuser-prereg.md, 06:30 and 06:40 EDT addenda):
+#  1. Speculation under load: shipped depth-5 MTP plus the three exactness overlays,
+#     4 users, then 8 if 4 is exact on long prompts.
+#  2. One logits exchange per step (B70_LM_HEAD_CHUNK_AT=head), speculation off, 64 users then 16.
 #
 # The first attempt faulted at weight load (notes/2026-10-04-gpu-fault-mtp-start.md),
 # the second fault on that boot, so this refuses to run on that boot or on any
@@ -26,5 +27,14 @@ for n in 4 8; do
     python3 experiments/qwen38-27b-b70/scripts/run-20261004-fp8-multiuser-campaign.py || break
   [ -f "$O/FAULT-HALT.json" ] && break
   # stop after the first width that is not exact on long prompts
+  grep -q 'LONG prompts, pass 1: 64/64' "$O/campaign.log" && grep -q 'LONG prompts, pass 2: 64/64' "$O/campaign.log" || break
+done
+[ -f "$O/FAULT-HALT.json" ] && exit 4
+for n in 64 16; do
+  O=/mnt/fast-ai/bench-results/fp8-multiuser-headlocal-s$n-$STAMP
+  [ -e "$O" ] && O=$O-$(date +%H%M)
+  MU_MODE=longsweep MU_PURE=1 MU_HEAD_ROWS=4 MU_HEAD_AT=head MU_FA_PER_SEQ=1 MU_SEQS=$n CAMPAIGN_OUT=$O \
+    python3 experiments/qwen38-27b-b70/scripts/run-20261004-fp8-multiuser-campaign.py || break
+  [ -f "$O/FAULT-HALT.json" ] && break
   grep -q 'LONG prompts, pass 1: 64/64' "$O/campaign.log" && grep -q 'LONG prompts, pass 2: 64/64' "$O/campaign.log" || break
 done

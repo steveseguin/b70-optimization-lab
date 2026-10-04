@@ -176,9 +176,31 @@ both passes and the short ladder equals the frozen no-speculation reference. If 
 the speculation-off total at the same user count. If it is not, speculation stays single-user only and the lane
 closes here: no further arms without first rebuilding the speculative-kernel census for this image.
 
-## Addendum, 06:40 EDT: the speculation-under-load test did not run
+## Addendum, 06:30 EDT: the speculation-under-load test did not run
 
 The 4-user server faulted card `0000:e3:00.0` at weight load (06:25:28 EDT), before any request. It was the second
 fault on the boot, so GPU work stopped. Nothing was measured; the question is still open and the rule above is
 unchanged. [Incident note](2026-10-04-gpu-fault-mtp-start.md). After a reboot, run
 `experiments/qwen38-27b-b70/scripts/run-20261004-fp8-mtp-under-load.sh`.
+
+## Addendum, 06:40 EDT (written with the cards off limits): one logits exchange per step
+
+**Observation, from the image's source.** `compute_logits` is the per-rank output-layer product followed by one
+card-to-card all-gather of the logits. The output-layer overlay chunks `compute_logits`, so at 64 users it pays
+sixteen exchanges a step where a plain server pays one. The census timed the product itself at 1.1 ms per call per
+rank; the measured cost of chunking at sixteen users was 6.5 ms a step for three extra calls, about 2.2 ms each. So
+roughly half the cost of being exact here looks like the exchange, not the product.
+
+**Change.** `B70_LM_HEAD_CHUNK_AT=head` moves the chunking inside, to the per-rank product
+(`LogitsProcessor._apply_head`), only while `compute_logits` is running. The head sees exactly the same calls of at
+most four rows; the chunks are joined on the rank; the logits cross the cards once. No arithmetic changes, and the
+gather copies bytes. CPU tests pass in the image.
+
+**Test, one arm per width, after the speculation test:** speculation off, three overlays, `MU_HEAD_AT=head`, at 64
+users and then 16 (`MU_MODE=longsweep MU_PURE=1 MU_HEAD_ROWS=4 MU_HEAD_AT=head MU_FA_PER_SEQ=1 MU_SEQS=64`).
+
+**Rule.** It must be 64/64 on long prompts and the short ladder in both passes and equal to the frozen reference,
+like the mode it replaces. If it is, the number to beat is 488 tok/s together at 64 users and 325 at sixteen;
+expected about 540 and 345. A gain under 2 % at 64 users means the exchange was not the cost and the mode is
+dropped. If it is not exact, it is dropped without a second arm: the mode it replaces stays.
+

@@ -10,6 +10,12 @@ What this does: `model.compute_logits(hidden)` is called from the model runner i
 one row per request being sampled. This wraps it so the head sees at most N rows per call and concatenates the
 results. With N <= 4 every call is in the single-user class, so each row's logits are the ones it would get alone.
 No arithmetic is changed. Cost: the head is read once per chunk (about 1.1 ms per extra chunk per rank).
+
+B70_LM_HEAD_CHUNK_AT=head (not yet measured on the cards): `compute_logits` is the per-rank projection followed by one
+card-to-card all-gather of the logits, so chunking it pays one exchange per chunk. In this mode the chunking moves
+inside, to `LogitsProcessor._apply_head`, and only while a wrapped `compute_logits` call is running: the per-rank
+head sees exactly the same calls of at most N rows, the chunks are concatenated on the rank, and the logits cross
+the cards once per step. The gather copies bytes, so the logits are the same ones.
 """
 import os
 
@@ -23,6 +29,28 @@ def chunked(inner, rows, cat):
         if any(part is None for part in parts):
             return inner(hidden_states, *args, **kwargs)
         return cat(parts, dim=0)
+    return compute_logits
+
+
+def chunked_head(inner, rows, cat, active):
+    """Wrap `_apply_head(self, lm_head, hidden_states, embedding_bias)`; chunk rows only while active() is true."""
+    def _apply_head(self, lm_head, hidden_states, embedding_bias=None):
+        count = hidden_states.shape[0]
+        if not active() or hidden_states.dim() != 2 or count <= rows:
+            return inner(self, lm_head, hidden_states, embedding_bias)
+        return cat([inner(self, lm_head, hidden_states[start:start + rows], embedding_bias)
+                    for start in range(0, count, rows)], dim=0)
+    return _apply_head
+
+
+def flagged(inner, depth):
+    """Run `compute_logits` once with the chunk flag raised; `depth` is a one-item list used as a counter."""
+    def compute_logits(hidden_states, *args, **kwargs):
+        depth[0] += 1
+        try:
+            return inner(hidden_states, *args, **kwargs)
+        finally:
+            depth[0] -= 1
     return compute_logits
 
 
@@ -45,10 +73,20 @@ def register():
         result = original(self, *args, **kwargs)
         model = self.model
         if not getattr(model, '_b70_lm_head_chunked', False):
-            model.compute_logits = chunked(model.compute_logits, rows, torch.cat)
+            if at_head:
+                model.compute_logits = flagged(model.compute_logits, depth)
+                logger.warning('b70_lm_head_chunk: the per-rank LM head sees at most %d rows per call; one gather per step', rows)
+            else:
+                model.compute_logits = chunked(model.compute_logits, rows, torch.cat)
+                logger.warning('b70_lm_head_chunk: compute_logits now feeds the LM head at most %d rows per call', rows)
             model._b70_lm_head_chunked = True
-            logger.warning('b70_lm_head_chunk: compute_logits now feeds the LM head at most %d rows per call', rows)
         return result
+
+    at_head = os.environ.get('B70_LM_HEAD_CHUNK_AT', '').strip() == 'head'
+    if at_head:
+        from vllm.model_executor.layers.logits_processor import LogitsProcessor
+        depth = [0]
+        LogitsProcessor._apply_head = chunked_head(LogitsProcessor._apply_head, rows, torch.cat, lambda: depth[0] > 0)
 
     cls.load_model = load_model
     cls._b70_lm_head_chunk = True
