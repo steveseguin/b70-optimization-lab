@@ -70,6 +70,14 @@ value about 33):
 - **Picture quality.** Rounding-level differences give a different "take" after 11 steps, as the text window
   did. The packet 96 summary reports each clip's closeness to today's references.
 
+## The latent upsampler (added 20:58 UTC)
+
+`scripts/probe-upsampler-row-independence.py`, one card, the real x2 upsampler weights in bf16, seeded random
+stage-1 latents: at batch 2, 3 and 4 a clip's row is bit-identical whatever its neighbours and slot. At batch
+2 it is also bit-identical to the clip upsampled alone; at batch 3 and 4 it differs from that by rounding
+(largest difference 0.03 against a typical size of 0.78). Result: `data/batch-row-independence/upsampler-row-independence-01.json`.
+So the upsampler does not stand in the way of batch 2 or 4.
+
 ## Correction to packet 72
 
 [Packet 72](graph-capture-72-results.md) said the batch-2 difference was "by amounts that are not rounding"
