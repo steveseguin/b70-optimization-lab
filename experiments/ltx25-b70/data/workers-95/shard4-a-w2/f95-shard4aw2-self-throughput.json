@@ -1,0 +1,108 @@
+{
+  "schema": "ltx.throughput-fixtures.v1",
+  "prefix": "f95-shard4aw2-self",
+  "arm": "pipe-samp2-tsh-rep-wlean",
+  "index_base": 252200,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-workers-95/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-workers-95-shard4-a-w2",
+  "count": 6,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 2,
+  "fills_excluded": [
+    "f95-shard4aw2-self-00",
+    "f95-shard4aw2-self-01",
+    "f95-shard4aw2-self-02",
+    "f95-shard4aw2-self-03"
+  ],
+  "all_exact": true,
+  "intervals_between_distinct_clips_s": [
+    0.199
+  ],
+  "steady_mean_s": 0.199,
+  "steady_p95_s": 0.199,
+  "steady_min_s": 0.199,
+  "steady_max_s": 0.199,
+  "seconds_of_wall_per_second_of_video": 0.19104,
+  "effective_fps": 125.62814070351759,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that re-emit an already-emitted clip during pipeline fill",
+  "rows": [
+    {
+      "prompt": "f95-shard4aw2-self-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791140087.434,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95-shard4aw2-self-01",
+      "index": 1,
+      "prompt_fixture": "marble",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791140088.334,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95-shard4aw2-self-02",
+      "index": 2,
+      "prompt_fixture": "bird",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791140090.886,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95-shard4aw2-self-03",
+      "index": 3,
+      "prompt_fixture": "pendulum",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791140091.063,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95-shard4aw2-self-04",
+      "index": 4,
+      "prompt_fixture": "rain",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "reference": "stability-01-w93c-boat",
+      "fill": false,
+      "t_done": 1791140093.739,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f95-shard4aw2-self-05",
+      "index": 5,
+      "prompt_fixture": "paper",
+      "emitted_index": 1,
+      "emitted_fixture": "marble",
+      "reference": "stability-01-w93c-marble",
+      "fill": false,
+      "t_done": 1791140093.938,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    }
+  ]
+}
