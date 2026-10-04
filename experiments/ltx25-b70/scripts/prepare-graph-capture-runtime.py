@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-window-93b'
+OUTPUT = ROOT / 'prepared-encoder-window-93c'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -1190,6 +1190,7 @@ def main():
             'module_sha256': extensions[WINDOW_MODULE], 'label': WINDOW_LABEL, 'default': 'off',
             'text_mode': 'pipeline-window', 'text_mode_overrides': TEXT_MODE_OVERRIDES,
             'buckets': list(_window.BUCKETS), 'policy': _window.POLICY, 'rel_bound': _window.REL_BOUND,
+            'max_bf16_steps': _window.MAX_BF16_STEPS, 'max_diff_fraction': _window.MAX_DIFF_FRACTION,
             'rel_definition': _window.REL_DEFINITION,
             'probe_graph': WINDOW_PROBE_GRAPH, 'probe_prompts': WINDOW_PROMPTS,
             'implementation': 'the window runs through the unchanged per-layer graph stand-ins; each bucket '
@@ -1279,7 +1280,7 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
-        'Packet 93b window arms change output at rounding level; owner approved 2026-10-04 on two '
+        'Packet 93c window arms change output at rounding level; owner approved 2026-10-04 on two '
         'conditions (negligible finished-clip difference; new references, byte-identical thereafter).\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),

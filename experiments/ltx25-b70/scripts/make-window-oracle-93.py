@@ -17,7 +17,7 @@ Refuses (exit 10, nothing stored) unless ALL of these hold:
    summary), and all four tensors are compared pass 1 vs pass 2 for layout and
    bytes.
 Only then is pass 1 copied as a NEW reference set (output/validation and
-requests 'stability-01-w93b-<fixture>'; existing references never touched)
+requests 'stability-01-w93c-<fixture>'; existing references never touched)
 and data/stability-01-window-prereg.json written.
 
 window-oracle-vs-1024-oracle.json (the owner's first condition, recorded, no
@@ -42,7 +42,7 @@ from pathlib import Path
 
 LANE = Path(__file__).resolve().parents[1]
 NAMES = ('images', 'video_latent', 'audio_latent', 'waveform')
-NEW_PREFIX = 'stability-01-w93b-'
+NEW_PREFIX = 'stability-01-w93c-'
 LABEL = ('changes output at rounding level; owner approved 2026-10-04 on two conditions '
          '(negligible finished-clip difference; new references, byte-identical thereafter)')
 
@@ -213,7 +213,7 @@ def main(argv=None):
     a.out.mkdir(parents=True, exist_ok=True)
     report_path = a.out / 'window-oracle-vs-1024-oracle.json'
     assert not report_path.exists(), 'refuse to overwrite ' + str(report_path)
-    report = {'schema': 'ltx.window-oracle-93b.v1', 'label': LABEL, 'accepted': False,
+    report = {'schema': 'ltx.window-oracle-93c.v1', 'label': LABEL, 'accepted': False,
               'pass1': a.pass1, 'pass2': a.pass2}
     try:
         p1, p2 = load_pass(a.pass1), load_pass(a.pass2)
@@ -239,8 +239,8 @@ def main(argv=None):
             for p in src.rglob('*'):
                 if p.is_file():
                     assert sha_file(p) == sha_file(dst / p.relative_to(src)), 'copy differs: ' + str(p)
-    prereg = {'campaign': 'stability-01-window-93b', 'label': LABEL,
-              'source': 'packet 93b oracle pass 1 (%s), byte-identical to pass 2 (%s)' % (a.pass1, a.pass2),
+    prereg = {'campaign': 'stability-01-window-93c', 'label': LABEL,
+              'source': 'packet 93c oracle pass 1 (%s), byte-identical to pass 2 (%s)' % (a.pass1, a.pass2),
               'fixtures': [{'id': f['id'], 'prompt': f['prompt'], 'seed': f['seed'],
                             'reference': NEW_PREFIX + f['id'], 'oracle_pass1_prompt': p1['rows'][f['id']]['prompt'],
                             'window': report['window_buckets']['pass1'][f['id']]} for f in fixtures]}

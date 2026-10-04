@@ -80,7 +80,9 @@ except Exception as error:  # noqa: BLE001
 rows = report.get('rows', [])
 print(json.dumps({'outcome': report.get('outcome'), 'passed': report.get('passed'), 'label': report.get('label'),
                   'admitted': report.get('admitted'), 'prompts': len(rows),
-                  'max_rel': max((x.get('rel') or 0.0) for x in rows) if rows else None,
+                  'max_mean_rel': max((x.get('mean_rel') or 0.0) for x in rows) if rows else None,
+                  'max_bf16_steps': max((x.get('max_abs_in_bf16_steps') or 0.0) for x in rows) if rows else None,
+                  'max_differing_fraction': max((x.get('differing_fraction') or 0.0) for x in rows) if rows else None,
                   'reasons': report.get('reasons'), 'seconds_by_bucket': report.get('seconds_by_bucket'),
                   'memory_after_probe': report.get('memory_after_probe'), 'seconds': report.get('seconds')},
                  indent=2))

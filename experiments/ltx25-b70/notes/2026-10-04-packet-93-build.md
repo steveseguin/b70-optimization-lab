@@ -1,9 +1,65 @@
-# Packets 93 / 93b: lean conditioning and the short-window text encoder (build, 2026-10-04)
+# Packets 93 / 93b / 93c: lean conditioning and the short-window text encoder (build, 2026-10-04)
 
 Built offline. **Not launched.** R = `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
 No GPU was used to build or test either packet.
 
-**Launch 93b, not 93.** `prepared-encoder-window-93` (manifest `997b2913...`)
+**Launch 93c.** `prepared-encoder-window-93c`, manifest
+`b02b844ed5e15d40113e3d3d2fbd5e2e41c20d656be54a2f4b6423eb581ffdc8`, run name
+`encoder-server-window-93c`, runner `scripts/run-campaign-93c.sh`. 93 and 93b
+stay in place; their runners refuse.
+
+### 93b result, and why 93c
+
+93b ran once (`data/window-93b/`): control 36/36 exact, lean 36/36 exact, the
+context sentry identical on 10/10 fixtures, no fault, clean stop. The window
+probe was deterministic on both workers, captured all 384 graphs with memory
+to spare, and encoded in 0.343 s at W = 64 against 1.70 s at 1024, but it
+refused with `window-not-close`. The bound was wrong for this tensor, not the
+window: the compared conditioning is the output of the bf16 projection
+(`lt.py` casts the hidden-state stack to bfloat16 before
+`text_embedding_projection` and returns the bf16 result as fp32), so every
+value is a bf16 number. Checked in the receipt: every fixture's max_abs is
+0.125 or 0.25, exactly one bf16 step at magnitudes 16-32 and 32-64, against
+max |full| of 40.5-51.25 (step 0.25 there), with mean_abs about 1e-4. One
+step is 0.4-0.8 % of such an element, so max|d| / max|full| <= 1e-3 could
+never pass and said nothing about a bug.
+
+**93c changes only that definition.** Per prompt, ALL of:
+(a) mean |window - full| / mean |full| <= 1e-3;
+(b) max |window - full| <= 2 bf16 steps at the largest magnitude in the full
+tensor, step = 2^(floor(log2 max|full|) - 7);
+(c) the share of elements that differ at all <= 5 %;
+(d) no non-finite value in either tensor.
+All four numbers and the count of differing elements are in the receipt;
+the old max/max figure stays there as `rel_max_over_max`, for information
+only. Anything outside these still fails the probe as a bug. New references
+are named `stability-01-w93c-*`; arms, order, oracle strictness and the
+finished-clip table are unchanged. Index bases 218800 / 219000 / 219200 /
+219400 / 219600 / 219800.
+
+Gate (`--check-only`, 2026-10-04 04:33 UTC, no `R/FAULT.json`): passes with and
+without `--health-receipt data/health/four-card-health-20261004T0413Z.json`
+(receipt sha 98acad3f..., end 04:13:30 UTC). CPU tests: window/lean 14/14
+(judge cases: a one-step flip on 0.1 % of elements passes; three steps, a 10 %
+differing share or a NaN fails), health 6/6, runner tools 4/4, packets
+90c-92b and custom-node imports pass.
+
+Launch (93c; the receipt must be under 6 hours old and the journal clean since
+its end):
+
+```
+R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
+P=$R/prepared-encoder-window-93c
+nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 b02b844ed5e15d40113e3d3d2fbd5e2e41c20d656be54a2f4b6423eb581ffdc8 --run-name encoder-server-window-93c --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/health/four-card-health-20261004T0413Z.json > $R/encoder-server-window-93c.log 2>&1 &
+nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-93c.sh > $R/campaign-93c.log 2>&1 &
+```
+
+The sections below describe 93/93b; everything there holds for 93c except
+the closeness definition, names, index bases and manifest above.
+
+### 93b over 93
+
+`prepared-encoder-window-93` (manifest `997b2913...`)
 stays in place, unlaunched and superseded; `run-campaign-93.sh` refuses to
 start. A review found these defects in 93, all fixed in 93b:
 
@@ -139,7 +195,8 @@ lengths of `scripts/probe-encoder-suffix-window.py`):
 3. two windowed passes. Passes only if, per prompt, all four results (two
    workers x two passes) are byte-identical, and the relative difference
    (max |window - 1024| / max |1024| over the [1, N, 6144] conditioning) is at
-   most 1e-3. Encode time per bucket and worker is recorded.
+   most 1e-3 (93/93b; replaced in 93c by the four-part bf16-aware test at the
+   top of this note). Encode time per bucket and worker is recorded.
 
 Outcomes: `window-qualified`, `window-not-deterministic`, `window-not-close`,
 `window-capture-proof-failed`, `insufficient-memory`, `error`. Anything but the

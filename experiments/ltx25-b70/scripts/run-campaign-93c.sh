@@ -1,5 +1,6 @@
 #!/bin/bash
-# Packet 93b (prepared-encoder-window-93b; supersedes 93): lean conditioning (exact by
+# Packet 93c (prepared-encoder-window-93c; supersedes 93 and 93b; 93c changes only the window
+# probe's closeness definition for the bf16-rounded conditioning): lean conditioning (exact by
 # construction) and the suffix-window text encoder (changes output at rounding level; owner
 # approved 2026-10-04 on two conditions: negligible finished-clip difference; new references,
 # byte-identical thereafter), on ONE server. Build note: notes/2026-10-04-packet-93-build.md.
@@ -7,23 +8,23 @@
 # The operator launches the server first (exact command in the note), with
 #   env --default-signal=INT LTX_BUSY_WINDOWS=0 ... serve-encoder.py ... --health-receipt <receipt>
 # then starts this runner:
-#   bash run-campaign-93b.sh
+#   bash run-campaign-93c.sh
 #
 # Order on the one server (every client call under `timeout`; waits are on pids and files,
 # never on log wording):
-#   1. warm 3 (pipe-samp2-tsh)                                         index base 217400
+#   1. warm 3 (pipe-samp2-tsh)                                         index base 218800
 #   2. cross-card decode probe (replica placement must be exact)
-#   3. control 40 (pipe-samp2-tsh-rep), existing references            217600
-#   4. lean 40 (pipe-samp2-tsh-rep-lean), existing references          217800
+#   3. control 40 (pipe-samp2-tsh-rep), existing references            219000
+#   4. lean 40 (pipe-samp2-tsh-rep-lean), existing references          219200
 #      (exact by construction; the context-hash sentry compares 3 and 4)
 #   5. text-window qualification probe (determinism on both encode workers and a repeat,
 #      capture proof per bucket, closeness to the 1024 encode within 1e-3)
 #   6. two window oracle passes, 13 prompts each (pipe-samp2-tsh-win: the control placement,
-#      three fill prompts, so all ten fixtures are emitted)             218000, 218200
+#      three fill prompts, so all ten fixtures are emitted)             219400, 219600
 #      -> make-window-oracle-93.py: pass 1 == pass 2 on all four tensors per fixture, else
 #         the windowed identity is rejected; accepted -> new references stability-01-w93-*
-#   7. windowed+lean 120 (pipe-samp2-tsh-rep-wlean) against the NEW references   218400
-#   8. summary -> data/window-93b/summary.json (context-sentry GATE and the finished-clip
+#   7. windowed+lean 120 (pipe-samp2-tsh-rep-wlean) against the NEW references   219800
+#   8. summary -> data/window-93c/summary.json (context-sentry GATE and the finished-clip
 #      comparison table, window vs 1024, printed); graceful stop on proven quiescence.
 #   An interrupted runner (INT/TERM/EXIT) attempts the same proven-quiescence stop once
 #   (never a kill) and says plainly if the server is still up.
@@ -38,32 +39,28 @@
 # Codes 5/6/7 mean the server could NOT be stopped safely and is still up.
 # Do not edit while running.
 set -u
-# SUPERSEDED (2026-10-04) by packet 93c / run-campaign-93c.sh after its one run: the window probe's
-# closeness bound (max|d|/max|full| <= 1e-3) cannot pass on the bf16-rounded conditioning. Never rerun.
-echo "run-campaign-93b.sh is superseded by run-campaign-93c.sh; refusing"
-exit 8
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-window-93b
-MANIFEST=655eac5725d9429a28cb0b4e87340a0c2a556d477aa0bbf5bf7b735c9db4db55
+P=$R/prepared-encoder-window-93c
+MANIFEST=b02b844ed5e15d40113e3d3d2fbd5e2e41c20d656be54a2f4b6423eb581ffdc8
 LANE=/home/steve/llm-optimizations/experiments/ltx25-b70
 REPO=/home/steve/llm-optimizations
 PY=/home/steve/.venvs/ltx25-baseline/bin/python
-RUN_NAME=encoder-server-window-93b
+RUN_NAME=encoder-server-window-93c
 RUN=$R/$RUN_NAME
-OUT=$LANE/data/window-93b
+OUT=$LANE/data/window-93c
 WINDOW_PREREG=$LANE/data/stability-01-window-prereg.json
-WARM_BASE=217400;  WARM_N=3
-CTL_BASE=217600;   CTL_N=40
-LEAN_BASE=217800;  LEAN_N=40
-OR1_BASE=218000;   OR_N=13
-OR2_BASE=218200
-WLEAN_BASE=218400; WLEAN_N=120
+WARM_BASE=218800;  WARM_N=3
+CTL_BASE=219000;   CTL_N=40
+LEAN_BASE=219200;  LEAN_N=40
+OR1_BASE=219400;   OR_N=13
+OR2_BASE=219600
+WLEAN_BASE=219800; WLEAN_N=120
 mkdir -p "$OUT"
 step() { echo "=== $(date -u +%FT%TZ) $*"; }
 save() {
   local paths="${OUT#$REPO/}"
   [ -f "$WINDOW_PREREG" ] && paths="$paths ${WINDOW_PREREG#$REPO/}"
-  ( cd $REPO && git add $paths && git commit -q -m "LTX packet 93b: $1 receipts
+  ( cd $REPO && git add $paths && git commit -q -m "LTX packet 93c: $1 receipts
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" ) >/dev/null 2>&1 && step "committed $1" || step "commit of $1 failed (continuing)"
 }
@@ -151,9 +148,9 @@ stop_when_proven() {
 SUMMARY_RC=0
 summarize() { # the context-sentry gate: a failure fails the campaign (exit 14)
   timeout 300 $PY -B $LANE/scripts/summarize-campaign-93.py --run $RUN --out $OUT \
-    --arm f93b-ctl:control --arm f93b-lean:lean --arm f93b-or1:window-oracle-pass-1 \
-    --arm f93b-or2:window-oracle-pass-2 --arm f93b-wlean:window+lean \
-    --pair f93b-ctl:f93b-lean --pair f93b-or1:f93b-wlean
+    --arm f93c-ctl:control --arm f93c-lean:lean --arm f93c-or1:window-oracle-pass-1 \
+    --arm f93c-or2:window-oracle-pass-2 --arm f93c-wlean:window+lean \
+    --pair f93c-ctl:f93c-lean --pair f93c-or1:f93c-wlean
   SUMMARY_RC=$?
   [ $SUMMARY_RC -eq 0 ] || step "SUMMARY / CONTEXT-SENTRY GATE FAILED (rc=$SUMMARY_RC)"
 }
@@ -213,10 +210,10 @@ curl -sf -m 10 http://127.0.0.1:8188/queue >/dev/null || { step server never ans
 PID=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['pid'])")
 TICKS=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['proc_start_ticks'])")
 [ "$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['source_packet_manifest_sha256'])")" = "$MANIFEST" ] \
-  || { step "server is not the packet 93b build; refusing"; exit 8; }
+  || { step "server is not the packet 93c build; refusing"; exit 8; }
 pid_is_server $PID $TICKS || { step "server pid $PID does not match $RUN_NAME identity; refusing"; exit 8; }
 BW=$(tr '\0' '\n' < /proc/$PID/environ 2>/dev/null | sed -n 's/^LTX_BUSY_WINDOWS=//p')
-[ "$BW" = 0 ] || { step "packet 93b is a speed comparison: launch the server with LTX_BUSY_WINDOWS=0 (found '$BW'); refusing"; exit 8; }
+[ "$BW" = 0 ] || { step "packet 93c is a speed comparison: launch the server with LTX_BUSY_WINDOWS=0 (found '$BW'); refusing"; exit 8; }
 SIGINT_IGN=$($PY -c "print(int(open('/proc/$PID/status').read().split('SigIgn:')[1].split()[0], 16) >> 1 & 1)")
 [ "$SIGINT_IGN" = 0 ] || { step "the server ignores SIGINT (launch it with env --default-signal=INT); refusing"; exit 8; }
 HEALTH=$($PY -c "import json;print('yes' if 'health_admission' in json.load(open('$RUN/server-identity.json')) else 'no')")
@@ -228,15 +225,15 @@ step "rest 60 s after construction"
 sleep 60
 
 # ---- 1. warm, 2. decode probe ---------------------------------------------------------------------
-arm f93b-warm pipe-samp2-tsh $WARM_N $WARM_BASE 900 -
+arm f93c-warm pipe-samp2-tsh $WARM_N $WARM_BASE 900 -
 [ $ARM_RC -eq 0 ] || { step "warm failed rc=$ARM_RC"; finish $ARM_RC; }
 step "settle 30 s before the decode probe"
 sleep 30
 queue_empty || { step "queue not provably empty before the decode probe"; finish 5; }
 step "cross-card decode probe"
-timeout 1500 $PY -B $LANE/scripts/run-decode-probe.py f93b-dprobe --graph $P/graphs/decode-replica-probe.json --server-run $RUN
+timeout 1500 $PY -B $LANE/scripts/run-decode-probe.py f93c-dprobe --graph $P/graphs/decode-replica-probe.json --server-run $RUN
 DPROBE_RC=$?
-cp $RUN/decode-probe-f93b-dprobe.json $OUT/ 2>/dev/null
+cp $RUN/decode-probe-f93c-dprobe.json $OUT/ 2>/dev/null
 sync
 save "decode probe (rc=$DPROBE_RC)"
 [ $DPROBE_RC -eq 0 ] || { step "decode probe did not pass (rc=$DPROBE_RC): every arm uses the replica placement; skipping all"; finish 9; }
@@ -244,12 +241,12 @@ step "settle 30 s"
 sleep 30
 
 # ---- 3. control, 4. lean --------------------------------------------------------------------------
-arm f93b-ctl pipe-samp2-tsh-rep $CTL_N $CTL_BASE 1800 -
+arm f93c-ctl pipe-samp2-tsh-rep $CTL_N $CTL_BASE 1800 -
 CTL_RC=$ARM_RC
 [ $CTL_RC -eq 0 ] || [ $CTL_RC -eq 3 ] || { step "control ended rc=$CTL_RC"; finish $CTL_RC; }
 step "settle 60 s between arms"
 sleep 60
-arm f93b-lean pipe-samp2-tsh-rep-lean $LEAN_N $LEAN_BASE 1800 -
+arm f93c-lean pipe-samp2-tsh-rep-lean $LEAN_N $LEAN_BASE 1800 -
 LEAN_RC=$ARM_RC
 [ $LEAN_RC -eq 0 ] || [ $LEAN_RC -eq 3 ] || { step "lean ended rc=$LEAN_RC"; finish $LEAN_RC; }
 EXACT_RC=0
@@ -260,9 +257,9 @@ step "settle 30 s before the text-window probe"
 sleep 30
 queue_empty || { step "queue not provably empty before the window probe"; finish 5; }
 step "text-window qualification probe (window changes output at rounding level; owner approved 2026-10-04 on two conditions)"
-timeout 1800 $PY -B $LANE/scripts/run-text-window-probe.py f93b-wprobe --graph $P/graphs/text-window-probe.json --server-run $RUN
+timeout 1800 $PY -B $LANE/scripts/run-text-window-probe.py f93c-wprobe --graph $P/graphs/text-window-probe.json --server-run $RUN
 WPROBE_RC=$?
-cp $RUN/text-window-probe-f93b-wprobe.json $OUT/ 2>/dev/null
+cp $RUN/text-window-probe-f93c-wprobe.json $OUT/ 2>/dev/null
 sync
 save "text-window probe (rc=$WPROBE_RC)"
 if [ $WPROBE_RC -ne 0 ]; then
@@ -274,14 +271,14 @@ fi
 # ---- 6. two window oracle passes (compared with the 1024 references only for the record: rc 3 expected)
 step "settle 30 s"
 sleep 30
-arm f93b-or1 pipe-samp2-tsh-win $OR_N $OR1_BASE 1200 -
+arm f93c-or1 pipe-samp2-tsh-win $OR_N $OR1_BASE 1200 -
 [ $ARM_RC -eq 0 ] || [ $ARM_RC -eq 3 ] || { step "oracle pass 1 ended rc=$ARM_RC"; finish $ARM_RC; }
 step "settle 30 s"
 sleep 30
-arm f93b-or2 pipe-samp2-tsh-win $OR_N $OR2_BASE 1200 -
+arm f93c-or2 pipe-samp2-tsh-win $OR_N $OR2_BASE 1200 -
 [ $ARM_RC -eq 0 ] || [ $ARM_RC -eq 3 ] || { step "oracle pass 2 ended rc=$ARM_RC"; finish $ARM_RC; }
 step "window oracle: pass 1 vs pass 2, new references, distance to the 1024 oracle"
-timeout 900 $PY -B $LANE/scripts/make-window-oracle-93.py $OUT/f93b-or1-throughput.json $OUT/f93b-or2-throughput.json \
+timeout 900 $PY -B $LANE/scripts/make-window-oracle-93.py $OUT/f93c-or1-throughput.json $OUT/f93c-or2-throughput.json \
   --out $OUT --run $RUN --manifest $MANIFEST
 ORACLE_RC=$?
 sync
@@ -295,7 +292,7 @@ fi
 # ---- 7. windowed + lean against the NEW references -------------------------------------------------
 step "settle 60 s"
 sleep 60
-arm f93b-wlean pipe-samp2-tsh-rep-wlean $WLEAN_N $WLEAN_BASE 3600 watch "$WINDOW_PREREG"
+arm f93c-wlean pipe-samp2-tsh-rep-wlean $WLEAN_N $WLEAN_BASE 3600 watch "$WINDOW_PREREG"
 WLEAN_RC=$ARM_RC
 [ $WLEAN_RC -eq 0 ] || [ $WLEAN_RC -eq 3 ] || { step "windowed+lean ended rc=$WLEAN_RC"; finish $WLEAN_RC; }
 [ $EXACT_RC -ne 0 ] && finish $EXACT_RC

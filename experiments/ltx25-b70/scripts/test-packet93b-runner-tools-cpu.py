@@ -154,10 +154,10 @@ def oracle_accept_case():
         rc, rep, prereg = run_oracle(tmp, root, run, out, cert, p1, p2)
         assert rc == 0 and rep['accepted'] is True, rep.get('status')
         assert rep['window_buckets']['pass1'] == {fx: 64 for fx in FIXTURES}
-        assert all((root / 'output/validation' / ('stability-01-w93b-' + fx) / 'tensors.safetensors').is_file()
+        assert all((root / 'output/validation' / (ORACLE.NEW_PREFIX + fx) / 'tensors.safetensors').is_file()
                    for fx in FIXTURES)
         refs = json.loads(prereg.read_text())['fixtures']
-        assert [r['reference'] for r in refs] == ['stability-01-w93b-' + fx for fx in FIXTURES]
+        assert [r['reference'] for r in refs] == [ORACLE.NEW_PREFIX + fx for fx in FIXTURES]
         row = rep['finished_clip_comparison'][0]['comparison']
         for k in ('psnr_db', 'max_abs_255', 'mean_abs_255', 'fraction_pixels_over_1_255'):
             assert isinstance(row['images'][k], float), k
@@ -196,7 +196,7 @@ def oracle_refusal_case():
             rc, rep, prereg = run_oracle(tmp, root, run, out, cert, p1, p2)
             assert rc == 10 and rep['accepted'] is False, (label, rep.get('status'))
             assert expect[label] in rep['status'], (label, rep['status'])
-            assert not prereg.exists() and not list((root / 'output/validation').glob('stability-01-w93b-*')), label
+            assert not prereg.exists() and not list((root / 'output/validation').glob(ORACLE.NEW_PREFIX + '*')), label
 
 
 case('oracle: identical pass, differing tensor, bad file, non-window, other server/manifest refused',

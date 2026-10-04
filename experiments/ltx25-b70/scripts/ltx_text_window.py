@@ -39,6 +39,7 @@ Nothing here runs unless a 'pipeline-window' request is admitted, and that
 needs a passed probe on this server (`qualified()`).
 """
 import gc
+import math
 import hashlib
 import threading
 import time
@@ -50,9 +51,19 @@ LABEL = ('changes output at rounding level; owner approved 2026-10-04 on two con
 POLICY = ('W = the smallest admitted bucket in (64, 128, 256, 512, 1024) holding the real token count '
           '(BOS included); W = 1024 is the certified full-length encode, called unchanged; position ids '
           '1024-W..1023; sliding layers captured with window W')
-REL_BOUND = 1e-3
-REL_DEFINITION = ('max |window - full| / max |full| over the conditioning tensor [1, N, 6144] '
-                  '(normwise; an elementwise ratio is undefined where the full value is ~0)')
+REL_BOUND = 1e-3            # (a) mean relative difference bound
+MAX_BF16_STEPS = 2          # (b) max abs difference, in bf16 steps at the largest magnitude
+MAX_DIFF_FRACTION = 0.05    # (c) share of elements that differ at all
+REL_DEFINITION = (
+    'Packet 93c closeness, per prompt, ALL of: (a) mean|window-full| / mean|full| <= 1e-3; '
+    '(b) max|window-full| <= 2 bf16 steps at the largest magnitude in the full tensor, '
+    'step = 2**(floor(log2(max|full|)) - 7); (c) fraction of elements that differ at all <= 5 %; '
+    '(d) no non-finite value in either tensor. Why: the conditioning [1, N, 6144] is the output of the '
+    'bf16 projection (lt.py casts the hidden-state stack to bfloat16 before it), so every value is a '
+    'bf16 number and a rounding-level fp32 difference upstream flips a few elements by exactly one bf16 '
+    'step, which is 0.4-0.8 % of that element. The 93/93b bound max|d|/max|full| <= 1e-3 can never pass '
+    'on such a tensor and says nothing about a bug; it is kept in the receipt as rel_max_over_max for '
+    'information only.')
 SLIDING_LAYERS = 40          # gemma4 12B: sliding_attention = [1024]*5 + [False], 48 layers
 MIN_FREE_GIB = 3.0           # per encoder card before capturing a bucket
 MIN_FREE_AFTER_GIB = 2.0     # per encoder card after the probe
@@ -141,12 +152,12 @@ def window_row(row, w):
     return list(row[-w:])
 
 
-def judge_probe(determinism, capture, closeness, memory_ok=True, bound=REL_BOUND):
+def judge_probe(determinism, capture, closeness, memory_ok=True):
     """Verdict of the qualification probe.
 
     determinism: {prompt: [sha w0 pass1, w0 pass2, w1 pass1, w1 pass2]}
     capture: {(worker, bucket): {'captured': int, 'error': str|None}}
-    closeness: {prompt: {'rel': float, 'max_abs': float}}
+    closeness: {prompt: relative_difference(...) row} judged by closeness_failures (93c)
     """
     reasons = []
     if not memory_ok:
@@ -164,9 +175,8 @@ def judge_probe(determinism, capture, closeness, memory_ok=True, bound=REL_BOUND
     if reasons:
         return False, 'window-not-deterministic', reasons
     for prompt, row in sorted(closeness.items()):
-        rel = row.get('rel')
-        if rel is None or not (rel <= bound):
-            reasons.append('relative difference %r > %g for %s' % (rel, bound, prompt))
+        for why in closeness_failures(row):
+            reasons.append('%s: %s' % (prompt, why))
     if reasons:
         return False, 'window-not-close', reasons
     if not determinism:
@@ -188,16 +198,48 @@ def judge_oracle_passes(pass1, pass2):
     return not bad, bad
 
 
+def bf16_step(magnitude):
+    """Spacing of bf16 numbers at `magnitude` (8 significand bits)."""
+    return 2.0 ** (math.floor(math.log2(magnitude)) - 7) if magnitude > 0 else 0.0
+
+
 def relative_difference(window, full):
     import torch
     require(window.shape == full.shape and window.dtype == full.dtype, 'Window and full shapes differ')
+    finite = bool(torch.isfinite(window).all()) and bool(torch.isfinite(full).all())
     diff = (window.double() - full.double()).abs()
     peak = float(full.double().abs().max())
     max_abs = float(diff.max())
-    return {'max_abs': max_abs, 'mean_abs': float(diff.mean()), 'max_abs_full': peak,
-            'rel': (max_abs / peak) if peak > 0 else (0.0 if max_abs == 0 else float('inf')),
+    mean_full = float(full.double().abs().mean())
+    differing = int((window != full).sum()) + int((torch.isnan(window) != torch.isnan(full)).sum())
+    step = bf16_step(peak) if finite else float('nan')
+    return {'finite': finite, 'max_abs': max_abs, 'mean_abs': float(diff.mean()), 'max_abs_full': peak,
+            'mean_abs_full': mean_full,
+            'mean_rel': (float(diff.mean()) / mean_full) if mean_full > 0 else (0.0 if max_abs == 0 else float('inf')),
+            'bf16_step_at_max': step, 'max_abs_in_bf16_steps': (max_abs / step) if step and step == step else
+            (0.0 if max_abs == 0 else float('inf')),
+            'differing_elements': differing, 'elements': int(full.numel()),
+            'differing_fraction': differing / max(1, int(full.numel())),
+            'rel_max_over_max': (max_abs / peak) if peak > 0 else (0.0 if max_abs == 0 else float('inf')),
             'bitwise_equal': bool(torch.equal(window.view(torch.int32), full.view(torch.int32)))
             if window.dtype == torch.float32 else bool(torch.equal(window, full))}
+
+
+def closeness_failures(row):
+    """Reasons a closeness row fails the 93c definition (empty = close)."""
+    bad = []
+    if row.get('finite') is not True:
+        bad.append('non-finite value')
+    mr = row.get('mean_rel')
+    if mr is None or not (mr <= REL_BOUND):
+        bad.append('mean relative difference %r > %g' % (mr, REL_BOUND))
+    st = row.get('max_abs_in_bf16_steps')
+    if st is None or not (st <= MAX_BF16_STEPS):
+        bad.append('max difference %r bf16 steps > %d' % (st, MAX_BF16_STEPS))
+    fr = row.get('differing_fraction')
+    if fr is None or not (fr <= MAX_DIFF_FRACTION):
+        bad.append('differing fraction %r > %g' % (fr, MAX_DIFF_FRACTION))
+    return bad
 
 
 # --- state --------------------------------------------------------------------
@@ -451,7 +493,8 @@ def run_probe(clip, prompts, native_encode, pipeline):
         _STATE['qualified'] = False
         _STATE['admitted'] = ()
     report = {'schema': 'ltx.text-window-probe.v1', 'label': LABEL, 'policy': POLICY,
-              'rel_bound': REL_BOUND, 'rel_definition': REL_DEFINITION, 'buckets': list(BUCKETS),
+              'rel_bound': REL_BOUND, 'max_bf16_steps': MAX_BF16_STEPS, 'max_diff_fraction': MAX_DIFF_FRACTION,
+              'rel_definition': REL_DEFINITION, 'buckets': list(BUCKETS),
               'passed': False, 'outcome': 'error'}
     started = time.monotonic()
     try:

@@ -159,7 +159,8 @@ case('stack wrapper: positions only on the windowed thread, passthrough otherwis
 def judge_case():
     det = {'p%d' % i: ['a%d' % i] * 4 for i in range(5)}
     cap = {('w0', 64): {'captured': 48, 'error': None}, ('w1', 64): {'captured': 48, 'error': None}}
-    close = {'p%d' % i: {'rel': 1e-5} for i in range(5)}
+    ok_row = {'finite': True, 'mean_rel': 1e-5, 'max_abs_in_bf16_steps': 1.0, 'differing_fraction': 0.001}
+    close = {'p%d' % i: dict(ok_row) for i in range(5)}
     assert window.judge_probe(det, cap, close) == (True, 'window-qualified', [])
     bad = dict(det); bad['p3'] = ['a3', 'a3', 'a3', 'zz']
     assert window.judge_probe(bad, cap, close)[1] == 'window-not-deterministic'
@@ -169,12 +170,14 @@ def judge_case():
     assert window.judge_probe(det, c2, close)[1] == 'window-capture-proof-failed'
     c3 = dict(cap); c3[('w0', 64)] = {'captured': 47, 'error': None}
     assert window.judge_probe(det, c3, close)[1] == 'window-capture-proof-failed'
-    cl = dict(close); cl['p2'] = {'rel': 1.0001e-3}
-    assert window.judge_probe(det, cap, cl)[1] == 'window-not-close'
-    cl['p2'] = {'rel': 1e-3}
-    assert window.judge_probe(det, cap, cl)[0] is True          # bound inclusive
-    cl['p2'] = {'rel': float('nan')}
-    assert window.judge_probe(det, cap, cl)[1] == 'window-not-close'
+    for change, verdict in ((dict(mean_rel=1.0001e-3), 'window-not-close'), (dict(mean_rel=1e-3), 'window-qualified'),
+                            (dict(max_abs_in_bf16_steps=2.0), 'window-qualified'),
+                            (dict(max_abs_in_bf16_steps=3.0), 'window-not-close'),
+                            (dict(differing_fraction=0.05), 'window-qualified'),
+                            (dict(differing_fraction=0.10), 'window-not-close'),
+                            (dict(finite=False), 'window-not-close'), (dict(mean_rel=float('nan')), 'window-not-close')):
+        cl = dict(close); cl['p2'] = dict(ok_row, **change)
+        assert window.judge_probe(det, cap, cl)[1] == verdict, (change, window.judge_probe(det, cap, cl))
     assert window.judge_probe(det, cap, close, memory_ok=False)[1] == 'insufficient-memory'
     names = ('images', 'video_latent', 'audio_latent', 'waveform')
     p1 = {'f%d' % i: {k: '%s%d' % (k, i) for k in names} for i in range(10)}
@@ -186,8 +189,30 @@ def judge_case():
     assert window.judge_oracle_passes(p1, p3)[0] is False
     a = torch.tensor([[1.0, -2.0, 4.0]]); b = a.clone(); b[0, 2] = 4.002
     r = window.relative_difference(a, b)
-    assert abs(r['rel'] - 0.002 / 4.002) < 1e-7 and r['bitwise_equal'] is False
+    assert abs(r['rel_max_over_max'] - 0.002 / 4.002) < 1e-7 and r['bitwise_equal'] is False
     assert window.relative_difference(a, a.clone())['bitwise_equal'] is True
+    # 93c on a bf16-rounded tensor like the real conditioning (|values| up to ~48)
+    g = torch.Generator().manual_seed(93)
+    full = (torch.randn(1, 56, 6144, generator=g) * 6).clamp(-47.9, 47.9).to(torch.bfloat16).float()
+    full[0, 0, 0] = 47.75                                         # max magnitude in [32, 64): step 0.25
+    assert window.bf16_step(47.75) == 0.25 and window.bf16_step(44.5) == 0.25 and window.bf16_step(20.0) == 0.125
+
+    def flipped(frac, steps):
+        w = full.clone().view(-1)
+        idx = torch.randperm(w.numel(), generator=g)[:max(1, int(frac * w.numel()))]
+        bits = w[idx].to(torch.bfloat16).view(torch.int16)
+        w[idx] = (bits + steps).view(torch.bfloat16).float()      # +steps bf16 ulps at each element
+        return w.view_as(full)
+
+    one = window.relative_difference(flipped(0.001, 1), full)
+    assert window.closeness_failures(one) == [] and 0 < one['differing_fraction'] <= 0.0011, one
+    assert one['max_abs_in_bf16_steps'] <= 1.0 and one['rel_max_over_max'] > 0                # old bound blind spot
+    three = flipped(0.001, 1); three.view(-1)[0] = full.view(-1)[0] - 0.75   # 3 steps at the max magnitude
+    assert any('bf16 steps' in x for x in window.closeness_failures(window.relative_difference(three, full)))
+    many = window.relative_difference(flipped(0.10, 1), full)
+    assert any('differing fraction' in x for x in window.closeness_failures(many)), many['differing_fraction']
+    nan = full.clone(); nan.view(-1)[5] = float('nan')
+    assert any('non-finite' in x for x in window.closeness_failures(window.relative_difference(nan, full)))
 
 
 case('qualification: determinism / capture proof / closeness / oracle-pass verdicts', judge_case)
@@ -239,7 +264,8 @@ class FakeClip:
             (self.capture_sliding if new else self.pass_sliding).append((rows, sliding))
         base = torch.arange(n * 6, dtype=torch.float32).reshape(1, n, 6) + float(sum(t for t, _ in row))
         if rows != 1024:
-            base = base + 1e-6 * rows          # 'rounding' differs from the 1024 encode
+            base = base.clone()                # 'rounding': one element one small step off the 1024 encode
+            base.view(-1)[0] += 0.0625
         if self.noisy_thread is not None and threading.current_thread().name == self.noisy_thread:
             base = base + 0.01 * next(self.noise)
         return [[base, {}]]
@@ -288,7 +314,7 @@ def probe_pass_case():
     rows = {r['prompt']: r for r in report['rows']}
     assert rows['synthetic-600w']['window'] == 1024 and rows['synthetic-600w']['bitwise_equal'] is True
     assert rows['fixture-a']['window'] == 64 and rows['fixture-a']['bitwise_equal'] is False
-    assert all(r['rel'] <= 1e-3 for r in report['rows'])
+    assert all(window.closeness_failures(r) == [] for r in report['rows'])
     assert report['label'] == window.LABEL and not freed
     assert p.pending('encode') == []
     # 93b: a timed encode whose graphs are missing is refused BEFORE anything runs
