@@ -1,0 +1,534 @@
+{
+  "schema": "ltx.throughput-fixtures-96.v1",
+  "prefix": "f96-twowayw1b4p1-ref",
+  "arm": "pipe-samp2-tsh-rep-wlean-b4-ref",
+  "index_base": 302200,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-batch-96/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean-b4-ref.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-batch-96-two-way-w1-b4-p1",
+  "count": 17,
+  "order": "ref",
+  "fixture_order": [
+    "boat",
+    "marble",
+    "bird",
+    "pendulum",
+    "rain",
+    "paper",
+    "candle",
+    "pour",
+    "fabric",
+    "wheel",
+    "boat",
+    "marble",
+    "bird",
+    "pendulum",
+    "rain",
+    "paper",
+    "candle"
+  ],
+  "batch": 4,
+  "references_from": null,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 12,
+  "sampler_depth": 3,
+  "decode_depth": 2,
+  "expected_clips": 12,
+  "emission_sequence_ok": true,
+  "emission_problems": [],
+  "fills_excluded": [
+    "f96-twowayw1b4p1-ref-00",
+    "f96-twowayw1b4p1-ref-01",
+    "f96-twowayw1b4p1-ref-02",
+    "f96-twowayw1b4p1-ref-03",
+    "f96-twowayw1b4p1-ref-04"
+  ],
+  "all_exact": null,
+  "intervals_between_distinct_clips_s": [
+    0.142,
+    4.566,
+    0.51,
+    1.083,
+    0.141,
+    4.54,
+    0.131,
+    1.056,
+    0.145,
+    4.527,
+    0.515
+  ],
+  "steady_mean_s": 1.7213999999999998,
+  "steady_p95_s": 4.566,
+  "steady_min_s": 0.131,
+  "steady_max_s": 4.566,
+  "seconds_of_wall_per_second_of_video": 1.6525439999999998,
+  "effective_fps": 14.523062623446034,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that emit nothing (pipeline fill); a re-emitted clip fails the arm",
+  "rows": [
+    {
+      "prompt": "f96-twowayw1b4p1-ref-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157566.26,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-01",
+      "index": 1,
+      "prompt_fixture": "marble",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157566.926,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-02",
+      "index": 2,
+      "prompt_fixture": "bird",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157566.987,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-03",
+      "index": 3,
+      "prompt_fixture": "pendulum",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157571.995,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 3
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-04",
+      "index": 4,
+      "prompt_fixture": "rain",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157572.097,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 4
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-05",
+      "index": 5,
+      "prompt_fixture": "paper",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157573.218,
+      "batch": {
+        "job": 302200,
+        "slot": 0,
+        "rows": [
+          302200,
+          302201,
+          302202,
+          302203
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "bird",
+          "marble",
+          "pendulum"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-06",
+      "index": 6,
+      "prompt_fixture": "candle",
+      "emitted_index": 1,
+      "emitted_fixture": "marble",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157573.36,
+      "batch": {
+        "job": 302200,
+        "slot": 1,
+        "rows": [
+          302200,
+          302201,
+          302202,
+          302203
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "bird",
+          "boat",
+          "pendulum"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-07",
+      "index": 7,
+      "prompt_fixture": "pour",
+      "emitted_index": 2,
+      "emitted_fixture": "bird",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157577.926,
+      "batch": {
+        "job": 302200,
+        "slot": 2,
+        "rows": [
+          302200,
+          302201,
+          302202,
+          302203
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "marble",
+          "pendulum"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-08",
+      "index": 8,
+      "prompt_fixture": "fabric",
+      "emitted_index": 3,
+      "emitted_fixture": "pendulum",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157578.436,
+      "batch": {
+        "job": 302200,
+        "slot": 3,
+        "rows": [
+          302200,
+          302201,
+          302202,
+          302203
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "bird",
+          "boat",
+          "marble"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-09",
+      "index": 9,
+      "prompt_fixture": "wheel",
+      "emitted_index": 4,
+      "emitted_fixture": "rain",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157579.519,
+      "batch": {
+        "job": 302204,
+        "slot": 0,
+        "rows": [
+          302204,
+          302205,
+          302206,
+          302207
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "candle",
+          "paper",
+          "pour"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-10",
+      "index": 10,
+      "prompt_fixture": "boat",
+      "emitted_index": 5,
+      "emitted_fixture": "paper",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157579.66,
+      "batch": {
+        "job": 302204,
+        "slot": 1,
+        "rows": [
+          302204,
+          302205,
+          302206,
+          302207
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "candle",
+          "pour",
+          "rain"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-11",
+      "index": 11,
+      "prompt_fixture": "marble",
+      "emitted_index": 6,
+      "emitted_fixture": "candle",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157584.2,
+      "batch": {
+        "job": 302204,
+        "slot": 2,
+        "rows": [
+          302204,
+          302205,
+          302206,
+          302207
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "paper",
+          "pour",
+          "rain"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-12",
+      "index": 12,
+      "prompt_fixture": "bird",
+      "emitted_index": 7,
+      "emitted_fixture": "pour",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157584.331,
+      "batch": {
+        "job": 302204,
+        "slot": 3,
+        "rows": [
+          302204,
+          302205,
+          302206,
+          302207
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "candle",
+          "paper",
+          "rain"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-13",
+      "index": 13,
+      "prompt_fixture": "pendulum",
+      "emitted_index": 8,
+      "emitted_fixture": "fabric",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157585.387,
+      "batch": {
+        "job": 302208,
+        "slot": 0,
+        "rows": [
+          302208,
+          302209,
+          302210,
+          302211
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "marble",
+          "wheel"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-14",
+      "index": 14,
+      "prompt_fixture": "rain",
+      "emitted_index": 9,
+      "emitted_fixture": "wheel",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157585.532,
+      "batch": {
+        "job": 302208,
+        "slot": 1,
+        "rows": [
+          302208,
+          302209,
+          302210,
+          302211
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "fabric",
+          "marble"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-15",
+      "index": 15,
+      "prompt_fixture": "paper",
+      "emitted_index": 10,
+      "emitted_fixture": "boat",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157590.059,
+      "batch": {
+        "job": 302208,
+        "slot": 2,
+        "rows": [
+          302208,
+          302209,
+          302210,
+          302211
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "fabric",
+          "marble",
+          "wheel"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-ref-16",
+      "index": 16,
+      "prompt_fixture": "candle",
+      "emitted_index": 11,
+      "emitted_fixture": "marble",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157590.574,
+      "batch": {
+        "job": 302208,
+        "slot": 3,
+        "rows": [
+          302208,
+          302209,
+          302210,
+          302211
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "fabric",
+          "wheel"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    }
+  ]
+}
