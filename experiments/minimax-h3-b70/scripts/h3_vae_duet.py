@@ -45,10 +45,25 @@ def _send(tensors: dict, box: pathlib.Path, stem: str) -> None:
     os.replace(box / f"{stem}.ready.tmp", box / f"{stem}.ready")
 
 
+# Worker processes the parent is waiting on. Filled by `_spawn_workers`; empty inside a worker.
+_WATCHED: list = []
+
+
 def _await_file(path: pathlib.Path, stop: pathlib.Path) -> None:
+    """Wait for a marker file. Fails within a quarter of a second if a watched worker has died, instead of
+    leaving the caller to its own timeout: on 2026-10-03 a crashed worker cost the full 900 s."""
+    last_check = 0.0
     while not path.exists():
         if stop.exists():
             raise SystemExit(f"vae-duet: stop while waiting for {path.name}")
+        now = time.time()
+        if _WATCHED and now - last_check > 0.25:
+            last_check = now
+            for rank, proc in enumerate(_WATCHED):
+                code = proc.poll()
+                if code not in (None, 0):
+                    raise RuntimeError(f"vae-duet: worker rank {rank} exited with code {code} while waiting for "
+                                       f"{path.name}; see worker-{rank}.log beside it")
         time.sleep(POLL_S)
 
 
@@ -179,6 +194,7 @@ def _spawn_workers(work: pathlib.Path, cards, vae_tiling: str, serve: bool, late
         if latents_from is not None:  # argparse compat only; workers never read it
             argv += ["--latents-from", str(latents_from)]
         workers.append(subprocess.Popen(argv, env=env, stdout=log, stderr=subprocess.STDOUT))
+    _WATCHED[:] = workers
     return workers
 
 

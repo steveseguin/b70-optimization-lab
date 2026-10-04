@@ -5,8 +5,10 @@ Status (2026-10-03): **lossless only; the persistent decode server passed its ex
 of 55.7 s, all four hashes bytewise equal to the standalone receipts (two bugs found and fixed by the
 gate run). The owner's direction is lossless only, so the exact fp32 picture decode is the default in
 every mode again; fp16 decode stays measured and off (single card 15.3 s and repeatable, two-process
-9.0 s and not repeatable). Details: the 2026-10-03 rows of notes/2026-09-20-realtime-goal.md; receipts
-in data/2026-10-03-gates/.
+9.0 s and not repeatable). **The clip file itself is now byte-repeatable**: the same seed and prompt give
+the same `clip.mp4`, not only the same tensors (the encoder's macroblock-tree rate control and the muxer's
+timestamp were the two sources of difference), and each receipt records the file's digest. Details: the
+2026-10-03 rows of notes/2026-09-20-realtime-goal.md; receipts in data/2026-10-03-gates/.
 
 Status (2026-09-20, lossless goal track): **DUET + TWO-PROC DECODE: 1.88x THROUGHPUT, EVERY BIT
 EXACT.** Work opened the 24-fps realtime goal (notes/2026-09-20-realtime-goal.md): baseline

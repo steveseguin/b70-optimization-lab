@@ -2970,18 +2970,24 @@ def write_mp4(path: pathlib.Path, frames, audio, fps: int, sample_rate: int, crf
     `frames` is `(T, H, W, 3)` uint8, `audio` is `(2, num_samples)` float32 in [-1, 1].
     The mp4 is the human-facing artifact; the exactness gate is the SHA-256 in the sidecar, taken
     on the *pre-encode* tensors, because H.264 and AAC are both lossy.
+
+    The file itself is byte-for-byte repeatable since 2026-10-03: the same tensors always give the
+    same mp4. Two things made it differ before. x264's macroblock-tree rate control gave a different
+    video stream on every run of this build, even on one thread (`mbtree=0` fixes it; about 5 % larger
+    file at the same crf, same speed). And the mp4 muxer stamped a creation time (`fflags=+bitexact`
+    stops that). Measured by encoding one clip's frames repeatedly on the CPU.
     """
     from fractions import Fraction
 
     import av
     import numpy as np
 
-    container = av.open(str(path), mode="w")
+    container = av.open(str(path), mode="w", options={"fflags": "+bitexact"})
     height, width = frames.shape[1], frames.shape[2]
     video_stream = container.add_stream("libx264", rate=fps)
     video_stream.width, video_stream.height = width, height
     video_stream.pix_fmt = "yuv420p"
-    video_stream.options = {"crf": str(crf)}
+    video_stream.options = {"crf": str(crf), "x264-params": "mbtree=0"}
     audio_stream = container.add_stream("aac", rate=sample_rate)
     audio_stream.layout = "stereo"
 
@@ -4326,6 +4332,11 @@ def _write_clip_and_receipt(torch, args, timings, video, audio, sampling_rate, l
         decode_plan, vae_source, source_run, prompt, prompt_tokens, video_cpu, audio_cpu,
         sampling_rate, latents, audio_latents, batch_info,
     )
+    # The clip file is byte-repeatable since 2026-10-03 (see write_mp4), so its digest is recorded too. It sits
+    # beside the four tensor hashes, not among them: the gates compare tensors, and receipts from before this
+    # date have no such field.
+    receipt["clip_mp4_sha256"] = file_digest(mp4)
+    receipt["clip_mp4_encoder"] = {"codec": "libx264", "crf": args.crf, "x264_params": "mbtree=0", "muxer_flags": "+bitexact"}
     (clip_dir / "receipt.json").write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
     LOG.info("video sha256 %s", receipt["hashes"]["video_tensor_sha256"])
     LOG.info("audio sha256 %s", receipt["hashes"]["audio_tensor_sha256"])
@@ -4616,6 +4627,19 @@ def _decode_and_write_batch(torch, args, timings, devices, clips, run_name, out_
             audio_worker.wait(timeout=30)
         except Exception:
             audio_worker.kill()
+     # /dev/shm is host RAM. A run used to leave its work folders there (after the 2026-10-03 failed
+     # run: 1.1 GiB), which on a 15 GiB host is the next run's memory. Keep the logs, drop the rest.
+     for work_dir in ((video_server or {}).get("work"), audio_work):
+        if work_dir is None or not pathlib.Path(work_dir).exists():
+            continue
+        keep = pathlib.Path(out_dir) / "decode-logs" / pathlib.Path(work_dir).name
+        try:
+            keep.mkdir(parents=True, exist_ok=True)
+            for log_file in pathlib.Path(work_dir).glob("*.log"):
+                shutil.copy2(log_file, keep / log_file.name)
+        except OSError as exc:
+            LOG.warning("could not save decode logs from %s: %s", work_dir, exc)
+        shutil.rmtree(work_dir, ignore_errors=True)
     if vae is not None:
         strip_module_tensors(vae)
     if vae_b is not None:

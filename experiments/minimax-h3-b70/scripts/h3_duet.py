@@ -381,7 +381,14 @@ def main(argv=None) -> int:
         w.wait(timeout=60)
     if errors:
         LOG.error("duet failed: %s", errors)
+        import shutil
+        shutil.rmtree(duet_dir, ignore_errors=True)  # host RAM; the worker logs are in the run folder
         return 1
+
+    # The sampling wire lives in /dev/shm, which is host RAM: drop it before the decoders load (the worker logs
+    # were already copied into the run folder).
+    import shutil
+    shutil.rmtree(duet_dir, ignore_errors=True)
 
     # Phase 4-5: the stock batch decode and per-clip receipts (decoders loaded once).
     sample_peak = R.card_memory(torch, devices)
