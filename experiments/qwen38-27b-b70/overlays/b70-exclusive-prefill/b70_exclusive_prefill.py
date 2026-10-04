@@ -15,10 +15,9 @@ allow one admission), both restored after the call.
 
 Cost: decode users wait while a prompt chunk is read (about a second per 4,096 tokens on two cards).
 
-B70_EXCLUSIVE_PREFILL_BATCH=N (default 1, research): a prompt-only step may take up to N NEW requests together when each
-prompt fits whole and they fit the step's budget together. Each still gets the single chunk it would have alone, but
-the prompt kernels then see several sequences in one call, so this is only lossless if those kernels are
-batch-invariant across sequences. Not established; see notes/2026-10-04-fp8-multiuser-prereg.md.
+B70_EXCLUSIVE_PREFILL_BATCH=N (default 1): a prompt-only step may take up to N NEW requests together, but only inside
+the range the censuses of 2026-10-04 prove bit-identical to reading each prompt alone: every prompt at least 17 tokens
+and at most 512 tokens in the step (data/2026-10-04-kernel-census/). Longer or shorter prompts are read alone.
 """
 import os
 
@@ -34,13 +33,17 @@ def _choose(prefilling, decoding, has_waiting, can_admit, last):
     return 'P' if want_p else None
 
 
-def admit_count(prompt_lengths, budget, batch):
-    """How many of the leading waiting requests may share one prompt-only step: at most `batch`, each must be a fresh
-    prompt that fits whole (so its single chunk is the one it would have alone), and together they must fit the
-    step's token budget. Always at least one (a long first prompt is read alone, in its usual chunks)."""
+def admit_count(prompt_lengths, budget, batch, min_len=17, max_total=512):
+    """How many of the leading waiting requests may share one prompt-only step.
+
+    Several may share only inside the range the 2026-10-04 censuses prove bit-identical to reading each prompt alone:
+    every prompt at least `min_len` tokens (below 17 the recurrent layers' BA projection takes another code path when
+    the step holds more rows) and the step at most `max_total` tokens in all (the row range of the GEMM and
+    normalisation censuses). Anything else is read alone, in its usual chunks. Always at least one."""
+    lengths = list(prompt_lengths)
     count, used = 0, 0
-    for length in prompt_lengths:
-        if count >= batch or length is None or length <= 0 or used + length > budget:
+    for length in lengths:
+        if count >= batch or length is None or length < min_len or used + length > min(budget, max_total):
             break
         count += 1
         used += length
@@ -51,6 +54,8 @@ def register():
     if os.environ.get('B70_EXCLUSIVE_PREFILL', '').strip() != '1':
         return
     batch = max(1, int(os.environ.get('B70_EXCLUSIVE_PREFILL_BATCH', '1') or '1'))
+    min_len = int(os.environ.get('B70_EXCLUSIVE_PREFILL_BATCH_MIN_LEN', '17'))
+    max_total = int(os.environ.get('B70_EXCLUSIVE_PREFILL_BATCH_TOKENS', '512'))
     from vllm.logger import init_logger
     from vllm.v1.core.sched import scheduler as module
 
@@ -84,7 +89,8 @@ def register():
                 try:
                     lengths = [getattr(r, 'num_prompt_tokens', None) if getattr(r, 'num_computed_tokens', 0) == 0 else None
                                for r in list(self.skipped_waiting) + list(self.waiting)]
-                    fresh = admit_count(lengths, self.max_num_scheduled_tokens, min(batch, limit - len(running)))
+                    fresh = admit_count(lengths, self.max_num_scheduled_tokens, min(batch, limit - len(running)),
+                                        min_len, max_total)
                 except Exception:      # an unfamiliar queue type: fall back to one at a time
                     fresh = 1
             stats['admitted_together'] = max(stats.get('admitted_together', 1), fresh)

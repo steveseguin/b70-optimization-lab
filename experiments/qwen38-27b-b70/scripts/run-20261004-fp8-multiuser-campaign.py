@@ -148,6 +148,8 @@ def start_server(name, port, args, since):
     """Start one research server. If it hits the known model-load fault, and that is the first fault on this boot,
     recover once the way AGENTS.md says (stop, health probe, one fresh start). Returns (server, name, since)."""
     R.wait_port_free(port)  # a port just released by the previous server stays in TIME_WAIT for up to a minute
+    if os.environ.get('MU_IMAGE'):  # a research image other than R310 (the launcher takes the last --image)
+        args = list(args) + ['--image', os.environ['MU_IMAGE']]
     srv = R.Research(name, port, args)
     lines = R.journal_faults(since)
     if not lines:

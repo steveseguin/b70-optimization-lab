@@ -260,7 +260,7 @@ def census_gemm(name: str, k: int, n: int, device, gen, scale_dtype) -> dict:
 # Standalone compilation is not the server's fused graph; a pass here clears
 # the reduction's row structure, not every possible neighbour fusion.
 # ---------------------------------------------------------------------------
-NORM_M = [1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 17, 24, 31, 32, 33, 48, 64, 128]
+NORM_M = [1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 17, 24, 31, 32, 33, 48, 64, 128, 192, 248, 256, 384, 512]
 NORM_PERM_M = [2, 6, 17, 33, 64, 128]
 NORM_REPEAT_M = [1, 6, 33, 128]
 NORM_HINT_M = 4096  # --max-num-batched-tokens of both shipped launchers

@@ -83,10 +83,14 @@ class AdmitCountTest(unittest.TestCase):
         self.assertEqual(f([31, 31, 31, 31], 4096, 1), 1)
         self.assertEqual(f([31, 31, 31, 31], 4096, 8), 4)
         self.assertEqual(f([31] * 20, 4096, 8), 8)
-        self.assertEqual(f([3000, 2000, 31], 4096, 8), 1)        # the second would overflow the step
-        self.assertEqual(f([5000, 31], 4096, 8), 1)              # a long first prompt goes alone, in its usual chunks
+        self.assertEqual(f([31] * 20, 4096, 64), 16)             # 16 x 31 = 496 <= 512, a 17th would pass 512
+        self.assertEqual(f([300, 200, 31], 4096, 8), 2)          # 500, then 531 would pass 512
+        self.assertEqual(f([1645, 2434], 4096, 8), 1)            # long prompts never share a step
+        self.assertEqual(f([31, 16, 31], 4096, 8), 1)            # a prompt under 17 tokens stops the run
+        self.assertEqual(f([9, 31, 31], 4096, 8), 1)             # and is read alone when it is first
         self.assertEqual(f([31, None, 31], 4096, 8), 1)          # a request that is not a fresh prompt stops the run
         self.assertEqual(f([], 4096, 8), 1)
+        self.assertEqual(f([31, 31], 40, 8), 1)                  # the step's own budget still applies
 
 
 if __name__ == '__main__':
