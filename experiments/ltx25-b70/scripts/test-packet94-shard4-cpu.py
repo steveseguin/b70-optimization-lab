@@ -352,7 +352,7 @@ case('loads: after the freeze a non-resident load is refused before the native l
 
 
 def runner_registration_case():
-    sh = (HERE / 'run-campaign-94c.sh').read_text()
+    sh = (HERE / 'run-campaign-94d.sh').read_text()
     body = sh[sh.index('arm() {'):sh.index('pid_is_server()')]
     assert body.index('ARMS_RUN="$ARMS_RUN $1"') < body.index('timeout $5'), 'arm registered after its client'
     assert body.count('ARMS_RUN=') == 1

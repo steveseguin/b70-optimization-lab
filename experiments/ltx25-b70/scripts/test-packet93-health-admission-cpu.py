@@ -153,11 +153,11 @@ def signatures_case():
         assert re.search(alt, line) and L.FAULT.search(line), 'launcher misses a probe signature: ' + alt
     src = (HERE / 'serve-encoder-93.py').read_text()
     i_since = src.index("    since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')")
-    i_before = src.index("    before = subprocess.check_output(['journalctl', '-k', '-b', '--no-pager']")
-    i_receipt = src.index("since_receipt = subprocess.check_output(['journalctl', '-k', '-b', '--since', receipt['end_utc']")
+    i_before = src.index("    before = subprocess.check_output(['journalctl', '-k', '-b', '-o', 'short-unix', '--no-pager']")
+    i_receipt = src.index("since_receipt = subprocess.check_output(['journalctl', '-k', '-b', '-o', 'short-unix', '--since', receipt['end_utc']")
     assert i_since < i_before < i_receipt, 'the watcher window must start before the admission snapshots'
     assert src.count("    since = datetime.datetime.now(") == 1
-    assert "['journalctl', '-k', '-b', '--since', since," in src
+    assert "['journalctl', '-k', '-b', '-o', 'short-unix', '--since', since," in src
 
 
 case('93b: one shared signature list covers the probe; journal coverage has no gap', signatures_case)
@@ -198,17 +198,19 @@ case('journal: a fault line after the receipt refuses; earlier ones are admitted
 def unchanged_case():
     new = (HERE / 'serve-encoder-93.py').read_text()
     old = OLD.read_text()
-    for marker in ("    def watch_journal():", "def server_args(packet, run):", "def prepare_start(packet, digest, run_name):"):
+    # 94d: the watcher now classifies (known xe GuC stall recorded, everything else latches)
+    for marker in ("def server_args(packet, run):", "def prepare_start(packet, digest, run_name):"):
         a = old[old.index(marker):]
         b = new[new.index(marker):]
         end_a = a.index('\n\n')          # the block up to its first blank line
         assert len(a[:end_a]) > 200 and a[:end_a + 2] == b[:end_a + 2], 'inherited block changed: ' + marker
-    assert "    if health is None:\n        common.require(not FAULT.search(before), 'Kernel device or host fault in current boot')" in new
     old_alts = old.split("FAULT = re.compile(")[1].split(', re.I)')[0]
     new_alts = new.split("FAULT = re.compile(")[1].split(', re.I)')[0]
     assert old_alts.replace("coredump|'", "coredump|Timedout job|wedged|'") == new_alts, \
         'FAULT pattern changed beyond the two added signatures'
-    assert "if FAULT.search(journal):\n                fault('Kernel device or host fault', journal)" in new
+    assert ("verdict = classify_journal(journal)" in new and
+            "if verdict['latch']:\n                fault('Kernel device or host fault', journal)" in new)
+    assert "common.require(not classify_journal(before)['latch'], 'Kernel device or host fault in current boot')" in new
 
 
 case('without the option: whole-boot check, FAULT pattern and in-run watcher are the inherited ones', unchanged_case)

@@ -49,7 +49,7 @@ import pipeline_sampler_node as snode  # noqa: E402
 import pipeline_decode_node as dnode  # noqa: E402
 import resident_fastpath_node as fast  # noqa: E402
 
-PACKET = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-shard4-94c')
+PACKET = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-shard4-94d')
 LAYOUTS = ('two-way', 'shard3-c', 'shard4-a')
 results = []
 
@@ -223,12 +223,62 @@ def decode_prereq_case():
 case('decode probe: needs the resident fast path, which only a pipelined prompt installs', decode_prereq_case)
 
 
+def vae_residency_case():
+    """94d: the serial capture pass decodes nothing (every prompt is a fill), so the VAEs
+    stay on their offload device; the decode probe must load them explicitly first."""
+    import ltx_decode_replica as rep
+    run = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-shard4-94c-control')
+    if run.is_dir():   # what the real 94c capture pass left: no VAE among the loaded models
+        last = json.loads((run / 'pipeline-sampler-f94c-ctl-cap1-00.json').read_text())['loaded_models']
+        assert not any('VAE' in m['model'] for m in last), last
+        dec = [json.loads(p.read_text()) for p in sorted(run.glob('pipeline-decode-f94c-ctl-cap*.json'))]
+        assert all(d['detail'].get('upstream_fill') for d in dec), 'a capture prompt decoded something'
+
+    class StandInVAE:
+        def __init__(self):
+            self.first_stage_model = nn.Sequential(nn.Linear(2, 2), nn.Linear(2, 2))
+            self.device = torch.device('meta')        # its card; weights still on the offload device (CPU)
+            self.patcher = types.SimpleNamespace(model=self.first_stage_model)
+
+    vaes = (StandInVAE(), StandInVAE())
+    for v in vaes:
+        assert rep.placement_offenders(v.first_stage_model, v.device), 'stand-in should start off its card'
+    try:
+        rep.build_replica(vaes[0], 'xpu:1', None, None)
+        raise AssertionError('copied a moving model')
+    except RuntimeError as error:
+        assert 'not wholly on its device' in str(error)
+    loads = []
+
+    def fake_load(patchers, force_full_load=False):
+        loads.append((len(patchers), force_full_load))
+        for p in patchers:
+            p.model.to('meta')
+
+    for idle, frozen, text in ((False, False, 'idle pipeline'), (True, True, 'before the freeze')):
+        try:
+            rep.ensure_vaes_resident(fake_load, vaes, idle, frozen)
+            raise AssertionError('residency step ran when it must not')
+        except RuntimeError as error:
+            assert text in str(error)
+    assert loads == []
+    out = rep.ensure_vaes_resident(fake_load, vaes, True, False)
+    assert loads == [(2, True)] and not any(out['offending_tensors_after'].values())
+    assert all(not rep.placement_offenders(v.first_stage_model, v.device) for v in vaes)
+    src = (HERE / 'pipeline_decode_node.py').read_text()
+    assert src.index('placement.ensure_vaes_resident(') < src.index('placement.build_replica(source')
+
+
+case('decode probe precondition: VAEs left off-card by the capture pass are loaded explicitly first',
+     vae_residency_case)
+
+
 def order_case():
-    sh = (HERE / 'run-campaign-94c.sh').read_text()
+    sh = (HERE / 'run-campaign-94d.sh').read_text()
     body = sh[sh.index('# ---- 1. text-window probe'):]
-    marks = ['run-text-window-probe.py', 'arm f94c-$TAG-cap$k pipe-samp2-tsh-win', 'sampler-capture-coverage.json',
-             'run-decode-probe.py', 'sampler-capture-freeze.json', 'arm f94c-$TAG-probe pipe-samp2-tsh-win',
-             'arm f94c-$TAG-timed pipe-samp2-tsh-rep-wlean']
+    marks = ['run-text-window-probe.py', 'arm f94d-$TAG-cap$k pipe-samp2-tsh-win', 'sampler-capture-coverage.json',
+             'run-decode-probe.py', 'sampler-capture-freeze.json', 'arm f94d-$TAG-probe pipe-samp2-tsh-win',
+             'arm f94d-$TAG-timed pipe-samp2-tsh-rep-wlean']
     pos = [body.index(m) for m in marks]
     assert pos == sorted(pos), list(zip(marks, pos))
     if PACKET.is_dir():

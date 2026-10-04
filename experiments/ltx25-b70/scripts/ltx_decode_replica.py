@@ -123,6 +123,28 @@ def placement_offenders(module, device):
     return bad
 
 
+def ensure_vaes_resident(load_models_gpu, vaes, idle, loads_frozen):
+    """Packet 94d: bring the native VAEs wholly onto their card BEFORE a replica is copied.
+
+    Serial capture-pass prompts are pipeline fills, so nothing decodes and ComfyUI
+    leaves both VAEs on their offload device (in 93c a pipelined warm's first real
+    decode loaded them as a side effect). This is the explicit step: allowed only
+    before the freeze and with the pipeline idle; one full load through ComfyUI's
+    own loader (force_full_load); then every tensor must be on the VAE's device.
+    build_replica's own refusal to copy a moving model is unchanged."""
+    require(idle, 'VAE residency step needs an idle pipeline')
+    require(not loads_frozen, 'VAE residency step must run before the freeze (loads are frozen)')
+    before = {type(v.first_stage_model).__name__: len(placement_offenders(v.first_stage_model, v.device))
+              for v in vaes}
+    load_models_gpu([v.patcher for v in vaes], force_full_load=True)
+    after = {type(v.first_stage_model).__name__: len(placement_offenders(v.first_stage_model, v.device))
+             for v in vaes}
+    require(not any(after.values()), 'VAEs are still not wholly on their device after the load: %s' % after)
+    return {'step': 'explicit full load of both VAEs onto their card before the replica copy',
+            'offending_tensors_before': before, 'offending_tensors_after': after,
+            'devices': [str(v.device) for v in vaes]}
+
+
 def check_placement(module, slot):
     """The explicit allowlist: a module may serve `slot` only if all its tensors live on that slot's card."""
     require(slot in ALLOWED_DEVICES, 'Placement slot not admitted: ' + repr(slot))

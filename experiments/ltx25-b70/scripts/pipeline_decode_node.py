@@ -26,6 +26,7 @@ import os
 import contextlib
 import hashlib
 import json
+import sys
 from pathlib import Path
 import queue
 import re
@@ -694,6 +695,14 @@ class LTXDecodeReplicaProbe:
             report['memory_before'] = {'xpu:1': _xpu_memory(1),
                                        'xpu:1_free': placement.free_bytes(placement.REPLICA_DEVICE)}
             if not _REPLICAS:
+                # Packet 94d: the VAEs are made wholly resident on xpu:3 by an explicit
+                # serial step here, not by the side effect of an earlier decode.
+                # The freeze flag lives in ltx_graph_capture; if that module was never
+                # imported, nothing can have been frozen.
+                _cap = sys.modules.get('ltx_graph_capture')
+                frozen = bool(_cap is not None and _cap.LOADS_FROZEN[0])
+                report['vae_residency'] = placement.ensure_vaes_resident(
+                    mm.load_models_gpu, (vae, audio_vae), pipeline.busy() == 0, frozen)
                 stream = _new_stream(placement.REPLICA_DEVICE)
                 # Registered as soon as each copy exists, so any non-pass
                 # verdict below (including an exception half-way) releases it.

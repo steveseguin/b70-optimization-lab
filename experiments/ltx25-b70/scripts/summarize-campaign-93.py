@@ -74,13 +74,45 @@ def engine_window(rows, t_dones):
     return out
 
 
+def load_stalls(run):
+    """Packet 94d: known host-stall windows recorded by the launcher."""
+    stalls = []
+    p = Path(run) / 'host-stalls.jsonl'
+    if p.is_file():
+        for line in p.read_text().splitlines():
+            try:
+                e = json.loads(line)
+                stalls.append((float(e['window_unix'][0]), float(e['window_unix'][1]), e.get('duration_s')))
+            except (ValueError, KeyError, TypeError):
+                pass
+    return stalls
+
+
+def stall_filtered_intervals(rows, stalls):
+    """Intervals between consecutive distinct emitted clips; those overlapping a stall
+    window are dropped from the speed statistics (exactness is unaffected)."""
+    distinct = sorted((r for r in rows if not r.get('fill') and r.get('reference') and 't_done' in r),
+                      key=lambda r: r['t_done'])
+    kept, dropped = [], 0
+    for a, b in zip(distinct, distinct[1:]):
+        if any(s <= b['t_done'] and e >= a['t_done'] for s, e, _d in stalls):
+            dropped += 1
+        else:
+            kept.append(round(b['t_done'] - a['t_done'], 3))
+    return kept, dropped
+
+
 def arm_summary(run, out, prefix, label, fixtures, engine):
     tp = load(out / (prefix + '-throughput.json'))
     if tp is None:
         return {'label': label, 'present': False}
     rows = tp['rows']
     verified = [r for r in rows if not r.get('fill') and r.get('reference')]
-    ivs = tp.get('intervals_between_distinct_clips_s') or []
+    stalls = load_stalls(run)
+    if stalls:
+        ivs, stall_excluded = stall_filtered_intervals(rows, stalls)
+    else:
+        ivs, stall_excluded = tp.get('intervals_between_distinct_clips_s') or [], 0
     steady = ivs[1:] if len(ivs) > 1 else ivs
     encode, sampler, decode, sentries = [], [], [], {}
     lean = {'connector_computed': [], 'connector_reused': []}
@@ -114,6 +146,8 @@ def arm_summary(run, out, prefix, label, fixtures, engine):
             # emitted clips, mean over the client's steady intervals (the first excluded).
             'interval_median_s': median(ivs), 'interval_mean_s': mean(steady),
             'interval_median_steady_s': median(steady),
+            'intervals_excluded_for_host_stall': stall_excluded,
+            'host_stall_durations_s_in_run': [d for _s, _e, d in stalls],
             'encode_job_median_s': median(encode), 'sampler_job_median_s': median(sampler),
             'decode_job_median_s': median(decode),
             'connector_computed_per_clip_median': median(lean['connector_computed']),
@@ -185,6 +219,10 @@ def main():
         print('%-22s %8s %7s %9s %9s %8s %8s %8s  %s' % (prefix, s['clips_verified'], s['exact'],
               s['interval_median_s'], s['interval_mean_s'], s['encode_job_median_s'],
               s['sampler_job_median_s'], s['decode_job_median_s'], per or '-'))
+    for prefix, st in arms.items():
+        if st.get('present') and st.get('intervals_excluded_for_host_stall'):
+            print('%s: %d intervals excluded from speed statistics for known host stalls %s (exactness checked '
+                  'for every clip)' % (prefix, st['intervals_excluded_for_host_stall'], st['host_stall_durations_s_in_run']))
     for spec, c in pairs.items():
         print('context sentry %s: %d/%d fixtures identical %s' % (spec, c['identical'], c['fixtures_expected'],
                                                                  '; '.join(c['problems'][:5])))

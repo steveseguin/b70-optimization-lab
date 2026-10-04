@@ -490,6 +490,8 @@ def probe_release_case():
         (placement, 'build_replica'): lambda src, dev, ll, cl, make_stream=None:
             types.SimpleNamespace(module=None, report={'bytes': 1}),
         (placement, 'check_placement'): lambda m, slot: True,
+        # packet 94d: the explicit VAE residency step is exercised in test-packet94c-dryrun-cpu.py
+        (placement, 'ensure_vaes_resident'): lambda *a, **k: {'step': 'stubbed in this test'},
         (placement, 'free_bytes'): lambda device, xpu=None: (20 << 30, 'fake'),
         (placement, 'release_replicas'): lambda r, d, cl, xpu=None: real_release(r, d, cl, xpu=fx),
     }

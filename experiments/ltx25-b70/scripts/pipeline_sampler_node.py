@@ -139,6 +139,23 @@ class _Active:
         return False
 
 
+def stall_overlaps(path, start, end):
+    """Known host stalls (launcher's host-stalls.jsonl) whose window overlaps [start, end]."""
+    out = []
+    p = Path(path)
+    if not p.is_file():
+        return out
+    for line in p.read_text().splitlines():
+        try:
+            e = json.loads(line)
+            a, b = e['window_unix']
+        except (ValueError, KeyError, TypeError):
+            continue
+        if a <= end and b >= start:
+            out.append({'window_unix': [a, b], 'duration_s': e.get('duration_s')})
+    return out
+
+
 def placement_devices(guider):
     """Devices of a multi-segment placement (packet 94); empty for two-way."""
     try:
@@ -607,6 +624,13 @@ class LTXPipelineSampler:
         finally:
             report['seconds'] = time.monotonic() - started
             report['written_unix'] = time.time()  # packet 90b: occupancy wall for analyze-phases
+            try:  # packet 94d: mark a request that overlapped a known host stall (evidence only)
+                marks = stall_overlaps(run / 'host-stalls.jsonl', report['written_unix'] - report['seconds'],
+                                       report['written_unix'])
+                if marks:
+                    report['host_stall'] = marks
+            except Exception:  # noqa: BLE001
+                pass
             try:  # packet 92a: diagnostic only, never fails the clip
                 report['apply_cpu_seconds'] = round(time.thread_time() - apply_cpu0, 4)
                 report['gil'] = gil.report(drain=True)

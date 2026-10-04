@@ -46,6 +46,90 @@ FAULT = re.compile(
     r'\bINFO:[ \t]+task[ \t]+[^\r\n]+:\d+[ \t]+blocked for more than[ \t]+\d+(?:\.\d+)?[ \t]+seconds\.'
     , re.I)
 
+# Packet 94d: the same signatures split in two, plus a tolerance for ONE identified
+# host stall. On this host the xe GuC interrupt handler (card 0000:43:00.0, CPU 21)
+# spins draining page-fault messages every 15-30 minutes of GPU load: the kernel
+# logs `hard LOCKUP on cpu` with xe_guc_irq_handler / g2h_read in its trace, then
+# often a soft lockup or RCU stall on a neighbour CPU. It does not touch output
+# bytes (runs through it stayed byte-exact), but the soft-lockup line latched FAULT
+# and ended every campaign longer than about 15 minutes. It is a driver bug still to
+# be fixed; this is a workaround, recorded per event in host-stalls.jsonl.
+# - GPU_FAULT lines always latch, inside a stall window too.
+# - HOST_STALL lines latch unless they fall within STALL_WINDOW_S after a hard
+#   lockup whose same-second trace shows the xe GuC signature.
+GPU_FAULT = re.compile(r'Fault response|CAT error|engine reset|GPU HANG|GuC.*reset|coredump|Timedout job|wedged',
+                       re.I)
+HOST_STALL = re.compile(FAULT.pattern.split('wedged|', 1)[1], re.I)
+STALL_FOLLOWER = re.compile(HOST_STALL.pattern + r'|\bclocksource: Long readout', re.I)
+HARD_LOCKUP = re.compile(r'hard LOCKUP on cpu', re.I)
+XE_STALL_TRACE = re.compile(r'\bxe_guc_irq_handler\b|\bg2h_read\b')
+STALL_WINDOW_S = 180
+STALL_LEAD_S = 10        # the watchdog reports a hard lockup after about 10 s of it
+_TS_UNIX = re.compile(r'^(\d{9,11}\.\d+)\s')
+_TS_ISO = re.compile(r'^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:?\d\d)\s')
+_TS_CLASSIC = re.compile(r'^([A-Z][a-z]{2} [ \d]\d \d\d:\d\d:\d\d)\s')
+
+
+def line_time(line, year=None):
+    """Unix time of a journal line (short-unix, ISO or classic short format), or None."""
+    m = _TS_UNIX.match(line)
+    if m:
+        return float(m.group(1))
+    m = _TS_ISO.match(line)
+    if m:
+        return datetime.datetime.fromisoformat(m.group(1)).timestamp()
+    m = _TS_CLASSIC.match(line)
+    if m:
+        year = year or datetime.datetime.now().year
+        return datetime.datetime.strptime('%d %s' % (year, m.group(1)), '%Y %b %d %H:%M:%S').timestamp()
+    return None
+
+
+def classify_journal(journal, year=None):
+    """Split a kernel journal into GPU faults, unexplained host stalls (both latch) and
+    known xe GuC stall events (recorded, tolerated)."""
+    rows, last = [], None
+    for line in journal.splitlines():
+        t = line_time(line, year)
+        last = t if t is not None else last
+        rows.append((last, line))
+    events = []
+    for i, (t, line) in enumerate(rows):
+        if t is None or not HARD_LOCKUP.search(line):
+            continue
+        second = int(t)
+        trace = [l for tt, l in rows[i + 1:i + 200] if tt is not None and int(tt) == second and XE_STALL_TRACE.search(l)]
+        if trace:
+            events.append({'start_unix': t, 'end_unix': t, 'anchor': line, 'trace': trace[0], 'lines': [line]})
+    gpu, unexplained = [], []
+    for t, line in rows:
+        if GPU_FAULT.search(line):
+            gpu.append(line)
+            continue
+        if HOST_STALL.search(line) or STALL_FOLLOWER.search(line):
+            owner = next((e for e in events if t is not None and e['start_unix'] <= t <= e['start_unix'] + STALL_WINDOW_S),
+                         None)
+            if owner is not None:
+                owner['lines'].append(line)
+                owner['end_unix'] = max(owner['end_unix'], t)
+            elif HOST_STALL.search(line):
+                unexplained.append(line)
+    for e in events:
+        e['window_unix'] = [e['start_unix'] - STALL_LEAD_S, e['end_unix']]
+        e['duration_s'] = round(e['end_unix'] - e['start_unix'] + STALL_LEAD_S, 1)
+    return {'gpu_faults': gpu, 'unexplained_host': unexplained, 'stalls': events,
+            'latch': bool(gpu or unexplained)}
+
+
+def record_stalls(path, events, seen):
+    """Append each new known-stall event (keyed by its anchor line) to host-stalls.jsonl."""
+    for e in events:
+        if e['anchor'] in seen:
+            continue
+        seen.add(e['anchor'])
+        with Path(path).open('a') as stream:
+            stream.write(json.dumps({'kind': 'xe-guc-hard-lockup', **e}) + '\n')
+
 
 HEALTH_SCHEMA = 'ltx.four-card-health.v1'
 HEALTH_MAX_AGE = datetime.timedelta(hours=6)
@@ -113,9 +197,11 @@ def fault_lines(journal):
 
 
 def admit_journal(whole_boot, since_receipt):
-    """Same-boot admission: refuse on any fault line after the receipt; return the
-    earlier fault lines being admitted."""
-    later = fault_lines(since_receipt)
+    """Same-boot admission: refuse on any GPU fault line after the receipt, or any host
+    stall line that is not part of a known xe GuC stall (94d); return the earlier fault
+    lines being admitted."""
+    verdict = classify_journal(since_receipt)
+    later = verdict['gpu_faults'] + verdict['unexplained_host']
     common.require(not later, 'Kernel device or host fault after the health receipt: ' + (later[:1] or [''])[0][:200])
     return fault_lines(whole_boot)
 
@@ -194,16 +280,16 @@ def launch(packet, digest, run_name, check_only=False, health_receipt=None):
     # snapshots are taken, so journal coverage has no gap (receipt end -> snapshot,
     # watch start <= snapshot end -> life of the server). Seconds are floored.
     since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-    before = subprocess.check_output(['journalctl', '-k', '-b', '--no-pager'], text=True, timeout=10)
+    before = subprocess.check_output(['journalctl', '-k', '-b', '-o', 'short-unix', '--no-pager'], text=True, timeout=10)
     admitted = None
     if health is None:
-        common.require(not FAULT.search(before), 'Kernel device or host fault in current boot')
+        common.require(not classify_journal(before)['latch'], 'Kernel device or host fault in current boot')
     else:
         # Re-verify at the moment of launch (age), then check only the journal
         # since the receipt's end. journalctl's --since is inclusive of that
         # second, so a line logged in the receipt's last second also refuses.
         receipt_end = verify_health_receipt(receipt, health['boot_id'], datetime.datetime.now(datetime.timezone.utc))
-        since_receipt = subprocess.check_output(['journalctl', '-k', '-b', '--since', receipt['end_utc'],
+        since_receipt = subprocess.check_output(['journalctl', '-k', '-b', '-o', 'short-unix', '--since', receipt['end_utc'],
                                                  '--no-pager'], text=True, timeout=10)
         admitted = admit_journal(before, since_receipt)
     common.verify_model_receipt()
@@ -235,15 +321,22 @@ def launch(packet, digest, run_name, check_only=False, health_receipt=None):
             sys.modules['comfy.model_management'].interrupt_current_processing(True)
         print('FAULT: halt new requests; preserve process for incident review', flush=True)
 
+    stalls_seen = set()
+
     def watch_journal():
         while True:
             try:
-                journal = subprocess.check_output(['journalctl', '-k', '-b', '--since', since,
+                journal = subprocess.check_output(['journalctl', '-k', '-b', '-o', 'short-unix', '--since', since,
                                                    '--no-pager'], text=True, timeout=10)
             except (subprocess.SubprocessError, OSError) as error:
                 fault('Journal observation failed: ' + str(error))
                 return
-            if FAULT.search(journal):
+            verdict = classify_journal(journal)
+            try:
+                record_stalls(run / 'host-stalls.jsonl', verdict['stalls'], stalls_seen)
+            except OSError:
+                pass
+            if verdict['latch']:
                 fault('Kernel device or host fault', journal)
                 return
             time.sleep(5)
@@ -275,9 +368,9 @@ def launch(packet, digest, run_name, check_only=False, health_receipt=None):
                             'copy_compute': 'passed'})
             del value
         torch.xpu.set_device(0)
-        journal = subprocess.check_output(['journalctl', '-k', '-b', '--since', since, '--no-pager'], text=True, timeout=10)
+        journal = subprocess.check_output(['journalctl', '-k', '-b', '-o', 'short-unix', '--since', since, '--no-pager'], text=True, timeout=10)
         (run / 'journal-after-preflight.txt').write_text(journal)
-        if FAULT.search(journal):
+        if classify_journal(journal)['latch']:
             fault('Kernel device or host fault during preflight', journal)
         common.verify_model_receipt()
     except Exception as error:
