@@ -86,7 +86,7 @@
       <tr><td>One byte wrong after loading a 26 GB file that was correct on disk</td><td class="num">2</td><td>Faulty memory</td></tr>
       <tr><td>Program crash at the exact same instruction</td><td class="num">2</td><td>Faulty memory (inferred)</td></tr>
       <tr><td>One wrong result in about a hundred, neighbours perfect, never repeats</td><td class="num">5 runs</td><td>Probably faulty memory; not yet shown</td></tr>
-      <tr><td><code>hard LOCKUP</code> in the GPU driver's interrupt handler</td><td class="num">3</td><td>One specific GPU stops answering</td></tr>
+      <tr><td><code>hard LOCKUP</code> in the GPU driver's interrupt handler</td><td class="num">5</td><td>One specific GPU stops answering</td></tr>
       <tr><td><code>soft lockup</code>, a CPU waiting forever for another CPU</td><td class="num">2 boots</td><td>CPU deep idle state</td></tr>
       <tr><td>GPU engine faults when a program exits</td><td class="num">5 boots</td><td>Driver or card; did not lead straight to freezes</td></tr>
       <tr><td>Log stops minutes before the freeze; recent files empty</td><td class="num">every freeze</td><td>Normal caching, not a fault</td></tr>
@@ -136,7 +136,8 @@ sudo python3 tools/physmap_memtest.py --gib 99 --rounds 2 --all --out after.json
   </div>
 
   <h2>Fault 2: one GPU stops answering</h2>
-  <p>Three times the kernel reported a processor stuck inside the Intel GPU driver, reading a message from a card that did not reply. It was the same processor each time, and that processor handles one specific card. The machine recovered from the first two after 16 and 72 seconds. We do not yet know whether the card, its slot, its power cable or the driver is at fault. Swapping the card to another slot is the test.</p>
+  <p>Five times the kernel reported a processor stuck inside the Intel GPU driver, reading a message from a card that did not reply. It was the same processor each time, and that processor handles one specific card. The machine recovered from the first two after 16 and 72 seconds. We do not yet know whether the card, its slot, its power cable or the driver is at fault. Swapping the card to another slot is the test.</p>
+  <p>It happened twice more on a newer kernel (7.0.0-38). With panic-on-lockup switched off, the machine stalled for about 14 and 24 seconds and then carried on, and every video clip stayed exact. With it switched on, the same event is a silent freeze.</p>
   <pre class="command"><code>journalctl -k -b -1 | grep -A12 'hard LOCKUP'            # look for xe_guc_irq_handler
 i=$(ls /sys/bus/pci/devices/0000:43:00.0/msi_irqs | head -1)
 cat /proc/irq/$i/effective_affinity_list                 # which CPU serves this card</code></pre>

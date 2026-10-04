@@ -22,9 +22,9 @@ they are inference rather than measurement.
   itself during that test with every GPU idle.
 - **Fencing the bad memory in software worked.** Taking 10 GiB of memory
   blocks offline at runtime, then re-testing 99 GiB twice, gave zero errors.
-- **One GPU, separately, stops answering.** Three hard lockups sit in the
+- **One GPU, separately, stalls the machine.** Five hard lockups sit in the
   Intel `xe` driver's interrupt handler, always on the CPU that services one
-  specific card.
+  specific card. With panic-on-lockup off the machine survives them.
 - **A CPU idle-state bug caused idle freezes.** Disabling the deepest idle
   state ended them.
 - **A debugging setting made things worse.** Panic-on-lockup, with no crash
@@ -56,7 +56,7 @@ how every boot ended before theorising.
 | One byte wrong in a 32 MB tensor after loading a 26 GB file; file correct on disk | 2 | Memory | Same byte-lane signature in the memory test |
 | Python crash, general protection fault at the identical instruction | 2 | Memory (heap corruption during a large load), inferred | Same-address crash on two boots |
 | One wrong output in about a hundred, neighbours exact, never reproduces | 5 runs | Probably memory (data staged through host RAM); not yet shown | Open |
-| `watchdog: hard LOCKUP` in `xe_guc_irq_handler` | 3 | One GPU stops answering reads | Kernel trace, IRQ affinity |
+| `watchdog: hard LOCKUP` in `xe_guc_irq_handler` | 5 (3 in September, 2 on 2026-10-03) | One GPU stops answering reads | Kernel trace, IRQ affinity |
 | `soft lockup` waiting for other CPUs (`smp_call_function_many_cond`) | 2 boots, 6,603 log lines in one | CPU idle state (C6 class) | Gone after the idle state was disabled |
 | `clocksource: Long readout interval` (4 to 72 s) | 7 lines in 5 boots, all unclean | A symptom of the stalls above, not a cause | Follows the lockups |
 | `xe` engine faults (`Fault response: Unsuccessful -ENOENT`, CAT error, engine reset) | 5 boots | Driver or card, at process teardown | Not followed closely by freezes (22 to 100 minutes later; two of those boots ended cleanly) |
@@ -252,6 +252,29 @@ lockups after 16 s and 72 s stalls. Whether this is the card, its slot, its
 power feed or the driver is open; swapping the card to another slot would
 tell. It is a different fault from the memory one.
 
+**Update, 2026-10-03 evening: it recurs on kernel 7.0.0-38, and it is
+survivable.** With the bad memory fenced and panic-on-lockup switched off,
+the same lockup fired twice in 15 minutes of GPU load (19:38 and 19:53 EDT)
+and the machine carried on both times, after stalls of roughly 14 s and 24 s
+(`clocksource: Long readout interval ... 24242715672`). The workload saw a
+long gap between two clips and nothing else; every clip stayed byte-exact.
+On this kernel the stuck instruction is inside `g2h_read` itself and
+`xe_guc_pagefault_handler` is on the interrupt stack: the handler is
+draining GPU page-fault messages from the firmware in interrupt context and
+does not get out. Earlier the same evening, with panic-on-lockup still on,
+the machine had frozen silently mid-run; that is what this lockup looks like
+when the kernel is told to panic and nothing records the panic. The traces
+are in [`data/2026-10-03-xe-guc-hard-lockup/`](../data/2026-10-03-xe-guc-hard-lockup/).
+
+Practical consequences: keep `kernel.hardlockup_panic=0` (it is now 0 in
+`/etc/sysctl.d/` on this host); expect an occasional 10 to 70 second stall
+under GPU load rather than a freeze; and treat a multi-second gap in a run
+as this fault until the journal says otherwise:
+
+```bash
+journalctl -k -b 0 | grep -c 'hard LOCKUP'
+```
+
 ## The idle-state freezes
 
 Two boots died in `soft lockup` storms where one CPU waited forever for
@@ -389,6 +412,8 @@ available memory falls below a floor.
 
 - Ubuntu 7.0.0-34 is security-only: no `xe`, DRM, AMD or idle changes against
   -31. A newer number is not automatically a GPU fix.
+- 7.0.0-38 does **not** fix the interrupt lockup described above (two
+  occurrences on its first evening).
 - 7.0.0-38 (noble-updates) carries a fix for a deadlock at GPU exec-queue
   teardown, two `xe` page-table bind fixes and an AMD IOMMU locking fix.
   7.0.0-39 (proposed) stops the driver handing out video memory that the

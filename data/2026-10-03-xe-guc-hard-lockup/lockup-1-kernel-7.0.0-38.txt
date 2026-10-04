@@ -1,0 +1,160 @@
+2026-10-03T19:38:17-04:00 steve-b70s kernel: watchdog: CPU21: Watchdog detected hard LOCKUP on cpu 21
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Modules linked in: tcp_diag inet_diag xt_conntrack xt_MASQUERADE bridge stp llc xfrm_user xfrm_algo xt_set ip_set nft_chain_nat nf_nat nf_conntrack nf_defrag_ipv6 nf_defrag_ipv4 xt_addrtype nft_compat nf_tables mei_gsc_proxy mei_lb mei_gsc cmdlinepart mei_me pmt_telemetry pmt_discovery pmt_crashlog mtd_intel_dg mei pmt_class mtd qrtr overlay snd_hda_codec_intelhdmi snd_hda_codec_hdmi binfmt_misc nls_iso8859_1 amd_atl intel_rapl_msr intel_rapl_common ipmi_ssif xe edac_mce_amd snd_usb_audio kvm_amd drm_gpusvm_helper snd_usbmidi_lib snd_hda_intel intel_vsec gpu_sched snd_ump drm_gpuvm snd_hda_codec drm_buddy snd_seq_midi drm_ttm_helper snd_seq_midi_event snd_hda_core kvm ee1004 ttm snd_intel_dspcfg snd_rawmidi snd_intel_sdw_acpi drm_exec snd_hwdep drm_suballoc_helper snd_seq irqbypass drm_display_helper snd_pcm ghash_clmulni_intel aesni_intel snd_seq_device wmi_bmof cec rapl rc_core snd_timer ast video acpi_ipmi mc snd soundcore ipmi_si ccp i2c_piix4 ipmi_devintf k10temp i2c_smbus ipmi_msghandler joydev
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  input_leds mac_hid sch_fq_codel nfsd auth_rpcgss nfs_acl msr lockd parport_pc grace ppdev lp parport nvme_fabrics efi_pstore sunrpc nfnetlink dmi_sysfs ip_tables x_tables autofs4 hid_generic usbhid rndis_host cdc_ether hid usbnet mii uas usb_storage atlantic igb nvme i2c_algo_bit ahci macsec dca libahci nvme_core nvme_keyring nvme_auth hkdf wmi
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CPU: 21 UID: 0 PID: 0 Comm: swapper/21 Not tainted 7.0.0-38-generic #38~24.04.4-Ubuntu PREEMPT(lazy) 
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Hardware name: Supermicro Super Server/M12SWA-TF, BIOS 2.4a 07/17/2025
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RIP: 0010:g2h_read+0x125/0x4b0 [xe]
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Code: 8b 7d d0 e8 1d e1 fd ff 45 0f b6 6c 24 70 41 80 fd 01 0f 87 04 b7 1d 00 41 83 e5 01 49 8b 44 24 68 0f 84 05 02 00 00 8b 40 04 <89> 45 cc 45 8b ac 24 90 00 00 00 44 8b 7d cc 45 29 ef 44 89 7d c0
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RSP: 0018:ffffcf4340888cc8 EFLAGS: 00000002
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RAX: 0000000000001adb RBX: ffff8e6e2d14cbb0 RCX: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RDX: 0000000000000001 RSI: ffff8e6e2d14cbb0 RDI: ffff8e6e0f918000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RBP: ffffcf4340888d28 R08: 0000000000000000 R09: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000000 R12: ffff8e6e2d14c640
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R13: 0000000000000001 R14: ffff8e6e2d14c668 R15: 0000000000006002
+2026-10-03T19:38:17-04:00 steve-b70s kernel: FS:  0000000000000000(0000) GS:ffff8e8d18460000(0000) knlGS:0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CR2: 0000745061ff9e84 CR3: 0000001a0908c014 CR4: 0000000000f70ef0
+2026-10-03T19:38:17-04:00 steve-b70s kernel: PKRU: 55555554
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Call Trace:
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  <IRQ>
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? xe_guc_pagefault_handler+0xee/0x120 [xe]
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  xe_guc_ct_fast_path+0x78/0x1b0 [xe]
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  xe_guc_irq_handler+0x9e/0xb0 [xe]
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  gt_irq_handler+0x3f5/0x490 [xe]
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  dg1_irq_handler+0x193/0x280 [xe]
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  __handle_irq_event_percpu+0x58/0x280
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  handle_irq_event+0x39/0x80
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  handle_edge_irq+0xb2/0x1b0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  __common_interrupt+0x53/0x150
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  common_interrupt+0xb1/0xe0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  </IRQ>
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  <TASK>
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  asm_common_interrupt+0x27/0x40
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RIP: 0010:cpuidle_enter_state+0xda/0x720
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Code: 53 db fe e8 b8 ed ff ff 8b 53 04 49 89 c7 0f 1f 44 00 00 31 ff e8 16 33 d9 fe 80 7d d0 00 0f 85 ce 01 00 00 fb 0f 1f 44 00 00 <45> 85 f6 0f 88 4d 02 00 00 4d 63 ee 49 83 fd 0a 0f 83 35 05 00 00
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RSP: 0018:ffffcf43402dfe00 EFLAGS: 00000246
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RAX: 0000000000000000 RBX: ffff8e6e0238c800 RCX: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RDX: 0000000000000015 RSI: 0000000000000000 RDI: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RBP: ffffcf43402dfe50 R08: 0000000000000000 R09: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000000 R12: ffffffffa5f68f00
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R13: 0000000000000001 R14: 0000000000000001 R15: 000002effa1e035b
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? raw_spin_rq_unlock+0x14/0x50
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  cpuidle_enter+0x2e/0x50
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  call_cpuidle+0x21/0x50
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  cpuidle_idle_call+0x173/0x200
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  do_idle+0x90/0xf0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  cpu_startup_entry+0x29/0x30
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  start_secondary+0x128/0x170
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  common_startup_64+0x13e/0x141
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  </TASK>
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Sending NMI from CPU 21 to CPUs 0-20,22-31:
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 0 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 5 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 6 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 7 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 22 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 27 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 25 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 10 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 26 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 24 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 9
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CPU: 9 UID: 1000 PID: 6807 Comm: python Not tainted 7.0.0-38-generic #38~24.04.4-Ubuntu PREEMPT(lazy) 
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Hardware name: Supermicro Super Server/M12SWA-TF, BIOS 2.4a 07/17/2025
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RIP: 0033:0x7454022d7375
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Code: 02 00 00 8b 15 34 fe 7e 00 31 c0 85 d2 74 13 66 0f 1f 44 00 00 f3 90 83 c0 01 3b 05 1d fe 7e 00 72 f3 48 85 db 74 46 48 8b 03 <48> 83 7d b0 00 4c 89 7d 90 48 89 45 98 0f 84 78 04 00 00 4c 8d 6d
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RSP: 002b:0000744cf23c40b0 EFLAGS: 00000206
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RAX: 00000000002ebc7e RBX: 0000745391573e00 RCX: 0000000000000001
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RDX: 0000000000000001 RSI: 000000004f819310 RDI: 00000000430f2a50
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RBP: 0000744cf23c41c0 R08: 0000000000000000 R09: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R13: 0000744cf23c4160 R14: 000000004fb5d110 R15: 00000000002ebc80
+2026-10-03T19:38:17-04:00 steve-b70s kernel: FS:  0000744cf23c96c0 GS:  0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 11 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 8 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 30
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CPU: 30 UID: 1000 PID: 6637 Comm: python Not tainted 7.0.0-38-generic #38~24.04.4-Ubuntu PREEMPT(lazy) 
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Hardware name: Supermicro Super Server/M12SWA-TF, BIOS 2.4a 07/17/2025
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RIP: 0010:__schedule+0x184/0x660
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Code: 51 03 00 00 41 83 e5 01 75 1c 48 85 c0 74 17 48 8d 55 b8 4c 89 e6 48 89 df e8 c8 ab d5 fe 4d 8d bc 24 38 0c 00 00 48 8b 73 18 <48> 8d 55 c0 48 89 df e8 20 8e d5 fe 49 89 c5 48 8b 80 b8 03 00 00
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RSP: 0018:ffffcf4347d8fd28 EFLAGS: 00000046
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RAX: 0000000000000000 RBX: ffff8e8cbef33540 RCX: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RDX: 0000000000000000 RSI: ffff8e6e11932ac0 RDI: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RBP: ffffcf4347d8fd78 R08: 0000000000000000 R09: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000000 R12: ffff8e6e11932ac0
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R13: 0000000000000000 R14: 0000000000000018 R15: ffff8e6e11933700
+2026-10-03T19:38:17-04:00 steve-b70s kernel: FS:  00007445fa4266c0(0000) GS:ffff8e8d188e0000(0000) knlGS:0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CR2: 0000744f88eee000 CR3: 0000001a0908c014 CR4: 0000000000f70ef0
+2026-10-03T19:38:17-04:00 steve-b70s kernel: PKRU: 55555554
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Call Trace:
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  <TASK>
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  schedule+0x27/0xb0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  do_sched_yield+0x82/0xb0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  __do_sys_sched_yield+0xe/0x20
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  x64_sys_call+0x442/0x26e0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  do_syscall_64+0xd9/0x5b0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? raw_spin_rq_unlock+0x14/0x50
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? __schedule+0x512/0x660
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? schedule+0x27/0xb0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? do_sched_yield+0x82/0xb0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? arch_exit_to_user_mode_prepare.isra.0+0xd/0xe0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? do_syscall_64+0x116/0x5b0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? arch_exit_to_user_mode_prepare.isra.0+0xd/0xe0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? do_syscall_64+0x116/0x5b0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? srso_alias_return_thunk+0x5/0xfbef5
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  ? do_syscall_64+0x116/0x5b0
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  entry_SYSCALL_64_after_hwframe+0x76/0x7e
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RIP: 0033:0x7454ae70e90b
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Code: 73 01 c3 48 8b 0d 0d 55 0f 00 f7 d8 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 90 f3 0f 1e fa b8 18 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d dd 54 0f 00 f7 d8 64 89 01 48
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RSP: 002b:00007445fa423ca8 EFLAGS: 00000297 ORIG_RAX: 0000000000000018
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RAX: ffffffffffffffda RBX: 00007445fa423d70 RCX: 00007454ae70e90b
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RDX: 00007445fa423cc0 RSI: 00007445fa423cb8 RDI: 00007445fa423d70
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RBP: 00007445fa423d00 R08: 0000000000000000 R09: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000297 R12: 00007453ac726000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R13: 0000000000009f67 R14: 00007445fa423d70 R15: 0000745402237e00
+2026-10-03T19:38:17-04:00 steve-b70s kernel:  </TASK>
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 13 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 31 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 28 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 29
+2026-10-03T19:38:17-04:00 steve-b70s kernel: CPU: 29 UID: 1000 PID: 6638 Comm: python Not tainted 7.0.0-38-generic #38~24.04.4-Ubuntu PREEMPT(lazy) 
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Hardware name: Supermicro Super Server/M12SWA-TF, BIOS 2.4a 07/17/2025
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RIP: 0033:0x745402233016
+2026-10-03T19:38:17-04:00 steve-b70s kernel: Code: 0f 84 7e 00 00 00 8b 15 90 41 89 00 31 c0 85 d2 74 0f 66 90 f3 90 83 c0 01 3b 05 7d 41 89 00 72 f3 4d 85 e4 74 39 49 8b 04 24 <48> 83 7b 10 00 4c 89 6d c0 48 89 45 b8 0f 84 e1 00 00 00 48 8b 43
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RSP: 002b:000074465493d070 EFLAGS: 00000206
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RAX: 0000000000008a84 RBX: 000074465493d130 RCX: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RDX: 0000000000000001 RSI: 0000000000008a88 RDI: 00007453ac726600
+2026-10-03T19:38:17-04:00 steve-b70s kernel: RBP: 000074465493d0c0 R08: 0000000000000000 R09: 0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R10: 0000000000000000 R11: 0000000000000000 R12: 00007453ac726600
+2026-10-03T19:38:17-04:00 steve-b70s kernel: R13: 0000000000008a88 R14: 000074465493d130 R15: 0000745402237e00
+2026-10-03T19:38:17-04:00 steve-b70s kernel: FS:  00007446549406c0 GS:  0000000000000000
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 14 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 12 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 15 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 18 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 17 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 23 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 2 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 3 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 4 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 19 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 20 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 16 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: NMI backtrace for cpu 1 skipped: idling at acpi_processor_ffh_cstate_enter+0x92/0x120
+2026-10-03T19:38:17-04:00 steve-b70s kernel: INFO: NMI handler (perf_event_nmi_handler) took too long to run: 1.670 msecs
+2026-10-03T19:38:18-04:00 steve-b70s kernel: perf: interrupt took too long (15898 > 4918), lowering kernel.perf_event_max_sample_rate to 12000
