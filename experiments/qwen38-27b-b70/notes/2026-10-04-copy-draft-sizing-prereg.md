@@ -86,3 +86,16 @@ long **only on steps where a copy exists**. The synchronous step pipeline hands 
 as a list every step, which is where a per-step length is natural. First measurement, before any build: what the
 synchronous pipeline costs one user on the shipped recipe (`MU_MODE=syncprobe`). If it is within 2 %, build the
 variable-length draft there; if it costs more, the per-step length has to be done in the asynchronous pipeline.
+
+## The synchronous pipeline costs 2.3 % (17:55 EDT)
+
+`MU_MODE=syncprobe`, shipped recipe, one user, strict suite twice per server: asynchronous (the default) against
+`--no-async-scheduling`. Both 12/12 exact. See the campaign log for the two pairs of numbers; the synchronous
+server ran at 88.2 tok/s. That is just over the 2 % line, so it is not a free switch for the published recipe.
+
+**Decision.** Build the longer copy drafts in the synchronous pipeline first, because that is where a per-step
+draft length already exists and the real gain can be measured quickly. If long prompts gain what the sizing says,
+the result is a long-context profile that is faster there and 2.3 % slower on short prompts; the port to the
+asynchronous pipeline (longer drafts while a copy run is under way, decided one step ahead) follows only if the
+gain is real. A 17-row verify also needs the speculative recurrent kernel censused for that row count; the
+September census script does not run on this image and has to be repaired first.
