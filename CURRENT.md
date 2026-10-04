@@ -588,6 +588,9 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-card host, October 4 (15:00 UTC): rebooting into kernel 7.0.0-39 on the owner's say-so; no server is running.**
+Why: the GPU driver lockup (the machine stalls 14-70 seconds, about every 15-30 minutes of GPU load, five times on the last boot) now interrupts most test runs and would break a continuous stream, and 7.0.0-39 has fixes in exactly that driver code. This is the one change for this boot. After the reboot: check the kernel and the memory fence (both automatic now), run packet 94d (the sampler spread over three and four cards, [build note](experiments/ltx25-b70/notes/2026-10-04-packet-94-build.md)), and count lockups. Packets 94 to 94c produced no speed numbers: each stopped early on a packet bug or on the lockup, all without a GPU fault. The baseline is unchanged: 1.39 s per clip (18 fps) with the short-window encoder.
+
 **Four-card host, October 4 (05:20 UTC): milestone - the short-window text encoder is the new baseline (owner's decision); no server is running.**
 The owner accepted it after seeing the results: it is the same model, the same precision and the same steps, the mathematics is unchanged, and the finished clip differs the way another random seed would (same scene and quality, a different take). From here on the reference clips are the short-window ones (`stability-01-w93c-*`, fixtures file `experiments/ltx25-b70/data/stability-01-window-prereg.json`), and every later change must match them byte for byte. Results before this point were checked against the padded-encoder references and are not comparable clip for clip. Speed at the new baseline: 1.39 s per clip (18 fps); the goal is under 1.04. The two sampler cards are now the busy ones, so the next step is spreading the sampler onto the cards the encoder freed. [Milestone note](experiments/ltx25-b70/notes/2026-10-04-milestone-window-baseline.md).
 
