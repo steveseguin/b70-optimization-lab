@@ -239,3 +239,32 @@ overlays, no chunking) to know what the scheduling overlays alone cost at 64 use
 **Rule.** Lossless means 64/64 equal to solo on long and short prompts in both passes. If it is, the number to beat
 is 488 tok/s; a second fresh server confirms before anything is claimed. If it is not 64/64, the misses go to the
 kernel census (which switch is not row-invariant at 64), not to more arms.
+
+## Addendum, 15:30 EDT: results of the two 64-user runs, and the next test (class-padded output layer only)
+
+Owner's rule, restated today in capitals: a result counts only if it is exactly lossless and deterministic **by
+construction**, not because a suite passed.
+
+| Run at 64 users (speculation off, pure steps, per-sequence attention) | Equal to solo, long / short | Speed, short / long | Counts as a result? |
+|---|---|---|---|
+| Shipped arithmetic, output layer in 4-row calls (this morning) | 64/64 x2 / 64/64 x2, exact vs frozen | 488 / 64 tok/s | **Yes**: every call has a lone user's shape |
+| Shipped arithmetic, output layer not chunked (14:36) | 64/64 x2 / 64/64 x2, exact vs frozen | 630 / 66 tok/s | **No.** The output layer runs as 32-row pieces, a different rounding class from one row (census). It passed; it is not exact by construction. A ceiling measurement only |
+| All of the image's serial-exact switches (15:00) | 64/64 x2 / 64/64 x2; 59/64 vs frozen (its own arithmetic) | 593 / 20 tok/s | Deterministic, but three times slower on long prompts and a different reference. Not adopted |
+
+Reading the image (CPU): `VLLM_XPU_LM_HEAD_BATCH_INVARIANT` is not referenced anywhere in R310; it does nothing.
+What exists is `VLLM_XPU_FP16_LINEAR_CLASSPAD=1` (`vllm/model_executor/layers/utils.py`): at load it takes a census of
+the FP16 linear at each weight shape, picks one row class that is position- and pad-invariant, and pads **every**
+call, a lone user's included, into that class. With it the output layer is row-invariant by construction, in one
+call, for any number of users. The default without it is 32-row pieces, which for this head is not the one-row class.
+
+**Next test: class-pad only, everything else shipped.**
+1. `MU_MODE=longsweep MU_PURE=1 MU_FA_PER_SEQ=1 MU_CLASSPAD=1 MU_SEQS=64`: long and short, two passes.
+2. `MU_MODE=classpad`: one user with the same switch: its no-speculation answers, then depth-5 speculation
+   against them, strict twice.
+
+**Rule.** (1) must be 64/64 equal to solo on long and short in both passes; expected about 620 and 65 tok/s.
+(2) must be 12/12 and 64/64 against its own no-speculation answers, at the shipped speed within 1 % (90 tok/s).
+The answers will differ from today's frozen reference at exact ties, because the output layer rounds in another
+fixed order: same weights, same precision. If both pass, the choice is the owner's: adopt the class-padded output
+layer as the one arithmetic for one user and many (new frozen reference, packages re-accepted), or keep today's
+reference and stay at 488 until a kernel that reproduces the one-row rounding for any row count is built.

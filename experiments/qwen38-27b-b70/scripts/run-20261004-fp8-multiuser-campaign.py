@@ -38,6 +38,7 @@ MTP5 = ['--mtp', '5', '--draft-int4', '--shortlist', R.SHORTLIST]
 # The load-fault fix: CPU-to-card copies over 256 MiB go in 128 MiB pieces during model load, so the runtime never makes
 # the temporary host mapping the fault hits. (The runtime's own switch, ExperimentalH2DCpuCopyThreshold, was tried first
 # and has no effect here: the card-side memory is not the kind its CPU-copy path accepts.)
+CLASSPAD = ['--env', 'VLLM_XPU_FP16_LINEAR_CLASSPAD=1']
 NEO_KEYS = ['--extra-env', 'NEOReadDebugKeys=1']
 # one-at-a-time, speculation-off answers to the long suite (the oracle pass of the 64-user run of 2026-10-04)
 LONG_REF = Path('/mnt/fast-ai/bench-results/fp8-multiuser-three-s64-20261004/tp2-pure-faseq-head4-mtp0-s64-long-concurrency.json')
@@ -330,6 +331,11 @@ def main():
             spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
             if spec:
                 name = name.replace('-mtp0-', '-mtp5-')
+            if os.environ.get('MU_CLASSPAD') == '1':
+                # only the output layer's row class is fixed (the image pads every FP16 linear call, a lone user's
+                # included, into one census-verified row class); everything else is the shipped arithmetic
+                pure += CLASSPAD
+                name = name.replace('tp2-pure', 'tp2-cp-pure')
             if os.environ.get('MU_INVARIANT') == '1':
                 # the image's own batch-invariant arithmetic (output layer padded to one row class, serial-exact
                 # speculative kernels). Its lone-user answers differ from the shipped recipe's at exact ties, so the
@@ -379,6 +385,14 @@ def main():
             invariant_stage(results, since, 'inv-mtp5-s16', 18199, TP2 + MTP5 + SHIPPED + INVARIANT + ['--seqs', '16'], refs)
         else:
             R.log('no invariant reference produced; skipping the speculation stages')
+    elif os.environ.get('MU_MODE') == 'classpad':
+        # One arithmetic for one user and for many: the class-padded output layer. First its no-speculation answers
+        # (the reference for this arithmetic), then the shipped depth-5 speculation for one user against them.
+        refs = invariant_stage(results, since, 'cp-mtp0-s1', 18196, TP2 + SHIPPED + LOADCOPY_FIX + CLASSPAD, None, strict_runs=1)
+        if refs.get('ladder') and refs.get('strict') and Path(refs['strict']).exists():
+            invariant_stage(results, since, 'cp-mtp5-s1', 18197, TP2 + MTP5 + SHIPPED + LOADCOPY_FIX + CLASSPAD, refs, strict_runs=2)
+        else:
+            R.log('no class-pad reference produced; skipping the speculation stage')
     elif os.environ.get('MU_MODE') == 'exactarm':
         # One bounded arm, not a search: depth-5 speculation at 4 users with every serial-exact switch the image
         # already has turned on. Exact or not, this is the only arm; a miss goes to an operator census, not to more arms.
