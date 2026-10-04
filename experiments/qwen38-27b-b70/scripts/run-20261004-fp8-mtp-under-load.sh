@@ -14,11 +14,17 @@
 set -u
 cd "$(dirname "$0")/../../.." || exit 2
 FAULTED_BOOT=66541315-49f1-41f7-af1d-4756d6b89c9c
-if [ "$(cat /proc/sys/kernel/random/boot_id)" = "$FAULTED_BOOT" ]; then
-  echo "refusing: still on the boot that faulted twice; a reboot is needed first" >&2; exit 3
+# OWNER_OK_SINCE="2026-10-04 09:40": the owner chose a health check over a reboot (2026-10-04, probe passed 09:40 EDT).
+# Then only kernel lines after that time count, and any new fault halts everything: the next step is a reboot.
+if [ -n "${OWNER_OK_SINCE:-}" ]; then
+  SINCE=(--since "$OWNER_OK_SINCE")
+elif [ "$(cat /proc/sys/kernel/random/boot_id)" = "$FAULTED_BOOT" ]; then
+  echo "refusing: still on the boot that faulted; reboot, or set OWNER_OK_SINCE after a passing health check" >&2; exit 3
+else
+  SINCE=()
 fi
-if journalctl -k -b --no-pager | grep -qE 'xe 0000:.*(Fault response|Engine memory CAT error|Timedout job|device coredump)'; then
-  echo "refusing: this boot's kernel log already has a GPU fault line" >&2; exit 3
+if journalctl -k -b --no-pager "${SINCE[@]}" | grep -qE 'xe 0000:.*(Fault response|Engine memory CAT error|Timedout job|device coredump has been created)'; then
+  echo "refusing: the kernel log already has a GPU fault line" >&2; exit 3
 fi
 STAMP=${STAMP:-$(date +%Y%m%d)}
 # 0. The load-fault fix: allocation log without and with the switch, then the switch with the strict gate.
