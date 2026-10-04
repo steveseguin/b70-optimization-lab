@@ -102,6 +102,37 @@ def stall_filtered_intervals(rows, stalls):
     return kept, dropped
 
 
+def clips_in_flight(run, rows):
+    """Packet 95: sampler jobs running at once, from each emitted job's own time span
+    ([finish - stage_seconds, finish]: done marker and the collecting receipt). Returns
+    time-weighted mean over the steady part (from the sixth job's start) and maximum."""
+    spans = []
+    for r in rows:
+        smp = load(Path(run) / ('pipeline-sampler-' + r['prompt'] + '.json'))
+        det = (smp or {}).get('detail', {})
+        e, sec = det.get('emitted_index'), det.get('stage_seconds')
+        if not isinstance(e, int) or e < 0 or not isinstance(sec, (int, float)):
+            continue
+        mk = load(Path(run) / ('pipeline-done-sample-%d.json' % e))
+        if mk and isinstance(mk.get('finished_unix'), (int, float)):
+            spans.append((mk['finished_unix'] - sec, mk['finished_unix']))
+    if len(spans) < 7:
+        return None
+    spans.sort()
+    start, end = spans[5][0], max(b for _a, b in spans)
+    events = sorted([(a, 1) for a, _b in spans] + [(b, -1) for _a, b in spans])
+    level, last, area, peak = 0, None, 0.0, 0
+    for t, d in events:
+        if last is not None and t > start:
+            lo = max(last, start)
+            if t > lo:
+                area += level * (min(t, end) - lo)
+        level += d
+        peak = max(peak, level)
+        last = t
+    return {'mean': round(area / max(1e-9, end - start), 3), 'max': peak, 'jobs': len(spans)}
+
+
 def arm_summary(run, out, prefix, label, fixtures, engine):
     tp = load(out / (prefix + '-throughput.json'))
     if tp is None:
@@ -147,6 +178,7 @@ def arm_summary(run, out, prefix, label, fixtures, engine):
             'interval_median_s': median(ivs), 'interval_mean_s': mean(steady),
             'interval_median_steady_s': median(steady),
             'intervals_excluded_for_host_stall': stall_excluded,
+            'sampler_clips_in_flight': clips_in_flight(run, rows),
             'host_stall_durations_s_in_run': [d for _s, _e, d in stalls],
             'encode_job_median_s': median(encode), 'sampler_job_median_s': median(sampler),
             'decode_job_median_s': median(decode),
