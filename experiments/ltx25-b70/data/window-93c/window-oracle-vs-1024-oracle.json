@@ -1,0 +1,502 @@
+{
+  "schema": "ltx.window-oracle-93c.v1",
+  "label": "changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)",
+  "accepted": true,
+  "pass1": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/window-93c/f93c-or1-throughput.json",
+  "pass2": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/window-93c/f93c-or2-throughput.json",
+  "pass1_prompts": {
+    "boat": "f93c-or1-03",
+    "marble": "f93c-or1-04",
+    "bird": "f93c-or1-05",
+    "pendulum": "f93c-or1-06",
+    "rain": "f93c-or1-07",
+    "paper": "f93c-or1-08",
+    "candle": "f93c-or1-09",
+    "pour": "f93c-or1-10",
+    "fabric": "f93c-or1-11",
+    "wheel": "f93c-or1-12"
+  },
+  "pass2_prompts": {
+    "boat": "f93c-or2-03",
+    "marble": "f93c-or2-04",
+    "bird": "f93c-or2-05",
+    "pendulum": "f93c-or2-06",
+    "rain": "f93c-or2-07",
+    "paper": "f93c-or2-08",
+    "candle": "f93c-or2-09",
+    "pour": "f93c-or2-10",
+    "fabric": "f93c-or2-11",
+    "wheel": "f93c-or2-12"
+  },
+  "server": {
+    "pid": 253434,
+    "proc_start_ticks": "2097789",
+    "boot_id": "73884bca-1022-490a-91be-af7f713c5813",
+    "manifest": "b02b844ed5e15d40113e3d3d2fbd5e2e41c20d656be54a2f4b6423eb581ffdc8"
+  },
+  "window_buckets": {
+    "pass1": {
+      "bird": 64,
+      "boat": 64,
+      "candle": 64,
+      "fabric": 64,
+      "marble": 64,
+      "paper": 64,
+      "pendulum": 64,
+      "pour": 64,
+      "rain": 64,
+      "wheel": 64
+    },
+    "pass2": {
+      "bird": 64,
+      "boat": 64,
+      "candle": 64,
+      "fabric": 64,
+      "marble": 64,
+      "paper": 64,
+      "pendulum": 64,
+      "pour": 64,
+      "rain": 64,
+      "wheel": 64
+    }
+  },
+  "status": "accepted: new reference set stored",
+  "new_references": [
+    {
+      "id": "boat",
+      "prompt": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat.",
+      "seed": 42,
+      "reference": "stability-01-w93c-boat",
+      "oracle_pass1_prompt": "f93c-or1-03",
+      "window": 64
+    },
+    {
+      "id": "marble",
+      "prompt": "A clear blue glass marble rolls slowly across a light wooden tabletop. Fixed close-up camera, soft window light, detailed reflections, quiet rolling sound.",
+      "seed": 17,
+      "reference": "stability-01-w93c-marble",
+      "oracle_pass1_prompt": "f93c-or1-04",
+      "window": 64
+    },
+    {
+      "id": "bird",
+      "prompt": "A small yellow bird perched on a leafy branch turns its head slightly. Static camera, soft morning light, green garden background, a single quiet chirp.",
+      "seed": 123,
+      "reference": "stability-01-w93c-bird",
+      "oracle_pass1_prompt": "f93c-or1-05",
+      "window": 64
+    },
+    {
+      "id": "pendulum",
+      "prompt": "A brass pendulum swings gently in front of a dark wooden clock face. Fixed camera, warm indoor light, clear metal reflections, soft rhythmic ticking.",
+      "seed": 271,
+      "reference": "stability-01-w93c-pendulum",
+      "oracle_pass1_prompt": "f93c-or1-06",
+      "window": 64
+    },
+    {
+      "id": "rain",
+      "prompt": "Raindrops slide slowly down a clear window with an out-of-focus green garden behind it. Static close-up camera, soft daylight, quiet steady rain.",
+      "seed": 314,
+      "reference": "stability-01-w93c-rain",
+      "oracle_pass1_prompt": "f93c-or1-07",
+      "window": 64
+    },
+    {
+      "id": "paper",
+      "prompt": "A folded white paper crane rests on a blue desk while one wing moves slightly in a light breeze. Fixed close-up camera, soft side lighting, faint rustling sound.",
+      "seed": 519,
+      "reference": "stability-01-w93c-paper",
+      "oracle_pass1_prompt": "f93c-or1-08",
+      "window": 64
+    },
+    {
+      "id": "candle",
+      "prompt": "A single candle flame flickers gently above a white candle on a stone table. Static camera, dark neutral background, soft warm light, quiet room ambience.",
+      "seed": 808,
+      "reference": "stability-01-w93c-candle",
+      "oracle_pass1_prompt": "f93c-or1-09",
+      "window": 64
+    },
+    {
+      "id": "pour",
+      "prompt": "A thin stream of clear water pours into a transparent glass on a wooden table. Fixed close-up camera, daylight, detailed ripples and reflections, gentle pouring sound.",
+      "seed": 1201,
+      "reference": "stability-01-w93c-pour",
+      "oracle_pass1_prompt": "f93c-or1-10",
+      "window": 64
+    },
+    {
+      "id": "fabric",
+      "prompt": "A red fabric ribbon hanging from a branch moves gently in a light breeze. Static camera, green leaves in the background, natural daylight, quiet wind.",
+      "seed": 2026,
+      "reference": "stability-01-w93c-fabric",
+      "oracle_pass1_prompt": "f93c-or1-11",
+      "window": 64
+    },
+    {
+      "id": "wheel",
+      "prompt": "A small silver toy wheel turns slowly on a dark tabletop. Fixed close-up camera, soft studio lighting, clear mechanical details, a quiet rolling sound.",
+      "seed": 4096,
+      "reference": "stability-01-w93c-wheel",
+      "oracle_pass1_prompt": "f93c-or1-12",
+      "window": 64
+    }
+  ],
+  "prereg": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-window-prereg.json",
+  "pass_sha256": {
+    "bird": {
+      "images": "779374ccd324f742804ec5cf6b1f5b302dfb5b790d2b9861a130bbad4dd2155a",
+      "video_latent": "2020ce3e29474625ad9f97821dcce45695880052edf70138d1bcd432736e4794",
+      "audio_latent": "7db850c36b715b0c419f71ea139f17e0a017d2b4dfeecbaa92d4fbe9fcdef5af",
+      "waveform": "f6b2649324f40d56b029e456ca48e9f8c6a312fcba80fc2bc065d056a428bb70"
+    },
+    "boat": {
+      "images": "9f683e9e36b3fce8b97244eac1a5d5b6d50638925dfa5a1c4e824c3193c98f0b",
+      "video_latent": "7bc9e6268eadba946db7ea1e7f3e729cf55795dc68d1b052a800ae5079744c3d",
+      "audio_latent": "c80c3de645056deba0e78cb958f3d5d91e17b8bfacf64fb7f48a4d3104f871f2",
+      "waveform": "02e20ad8f4584fbd64baceb798bbda2260bb2d0d01af23cced19292928681700"
+    },
+    "candle": {
+      "images": "7a59f380605387a2dfa34ba961b259d436e5b98d3c412c06c81803eb237110fc",
+      "video_latent": "ae3dc1ebe837c6e95ef35a47149be6ac4e210659f831290b8ae95c72d2c83960",
+      "audio_latent": "4f39b42239241683587401aa0cb353fe7c3bb31d32d289c8fe92b5f539037307",
+      "waveform": "6577521097f5d29a394eb29eceabe7892d50407dfb35ae92b2bf7fb84b605b90"
+    },
+    "fabric": {
+      "images": "6fe7cddc485c88d9af89e4732dacdb0d1b1e5a8ac7718e3b265cdf63936ce9be",
+      "video_latent": "b893ccf2a6e2cd6850bbc03b712c3be67725a60f4e417f4c39fb3488a90febee",
+      "audio_latent": "162cd67433db722f96a3cd49138897b5d26d7f864ee8e8220c032b829a10a619",
+      "waveform": "3be8d897846804a8607576d8322c91685c3dffb891ceeceb909973c1e89ed15d"
+    },
+    "marble": {
+      "images": "7abc74064df01d071c709c0fa5701dfa60dae19bbbb9f6e04038b9d3a214225c",
+      "video_latent": "486d33325dc84687c97b8eb11b300c0d2dea47094fc31b25e954b70300268a72",
+      "audio_latent": "7d8c9340cb11951a9711af21ec39ba5fccd854fcf07b72312f2f5576f7f019fd",
+      "waveform": "99a3c1ef106af096be7dfb4824d2654d1b9f020f891a70b8c8784e6efebd320c"
+    },
+    "paper": {
+      "images": "407627f26a9e83b0982ffbc139a47971c7164d1a77b8d0a08e73d39692989037",
+      "video_latent": "7dacecc48109f5b5ad67c5c99be7f8a559f045ea3068b99359c70b1024cba212",
+      "audio_latent": "e59daead6f4d1d0cfd149045179ab84fa7a524643af3dcf301be93066f919c3f",
+      "waveform": "1a3a1f1af0814421c269bedcd999b34393cf79f04522f896180e542ade7d9ecf"
+    },
+    "pendulum": {
+      "images": "ca446c780efaa583bebadfa961858631bb56fe78ac4dd107e281cd013161245a",
+      "video_latent": "547a3cca83f1f1ba97d1b35ae910be03a7b660fb471bb58b259a383df600d2c6",
+      "audio_latent": "540bdfd4bc416b238af1b1f4149c11b90930b422794d3017caedec21b45318c4",
+      "waveform": "d0f3aa48b16e81b743a3bdf0db6cb8e265d5294751231598dc9f9a267b83221b"
+    },
+    "pour": {
+      "images": "f39b5876d29ab0bc7e0b3234cfa98045d4dda6b23b6161baf4a7211c9974a02a",
+      "video_latent": "2fb854d3600dc11a80e348beb4f7807e695e23a7e95c520cdb3fa773b4ab699d",
+      "audio_latent": "e4ff4e3ae54755464bf0e8340bb4d08093efcd4bd398b3f34f94246761c19e45",
+      "waveform": "5e53d6a9c4a3c488e6fe0141da1c2acf3e2c49ddd1401800e0a12bad5fbf6452"
+    },
+    "rain": {
+      "images": "68a01faca5c46a65ec008e3d828ffa59011170930408bb45530a0437a5784db9",
+      "video_latent": "d11c2386cadd8c8de9d034b2314927aec0c2d6ad96e215852d58855c7fdea13e",
+      "audio_latent": "449d1de133bd47a32b0e3bff622eab3d7c63b1835fb1876b0f28b8e7acbba952",
+      "waveform": "76d32fe534dc569edf58873ae17ea7ed664a97860f9677db7cde6c6fe5f85e0c"
+    },
+    "wheel": {
+      "images": "7cebcdc76c5f2f481ffd1db7c9e027e4d7cb7c77dd73f238002411aac5058806",
+      "video_latent": "acf80eb9cd01362d28ceae4a1f6ad9a8c796d13f18ca773f9a52d4f763c2adaf",
+      "audio_latent": "25f4cfcb1c83fd25da507624d774f8d28a469858935401e15df0b1d876d7cbda",
+      "waveform": "eea243ed6b688e4e75eb7416c35b4746c94a74796310e44ee2c2f342b4de70ac"
+    }
+  },
+  "finished_clip_comparison": [
+    {
+      "fixture": "boat",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-03/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 19.411568096793943,
+          "max_abs_255": 199.716796875,
+          "mean_abs_255": 17.773512759242383,
+          "fraction_pixels_over_1_255": 0.99967041015625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.003154754638671875,
+          "mean_abs": 0.00023791677164445592,
+          "snr_db": 2.866430843376206
+        },
+        "video_latent": {
+          "max_abs": 4.353957653045654,
+          "mean_abs": 0.41266171263305296
+        },
+        "audio_latent": {
+          "max_abs": 0.2293761968612671,
+          "mean_abs": 0.026888610189556718
+        }
+      }
+    },
+    {
+      "fixture": "marble",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-04/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 22.415791516507326,
+          "max_abs_255": 212.666015625,
+          "mean_abs_255": 12.612117122555992,
+          "fraction_pixels_over_1_255": 0.9946148681640625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.00897216796875,
+          "mean_abs": 0.0005461519498573216,
+          "snr_db": 2.9083243298961015
+        },
+        "video_latent": {
+          "max_abs": 4.111942231655121,
+          "mean_abs": 0.36443965220571783
+        },
+        "audio_latent": {
+          "max_abs": 0.6270849704742432,
+          "mean_abs": 0.04694960907419535
+        }
+      }
+    },
+    {
+      "fixture": "bird",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-05/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 16.792225881574204,
+          "max_abs_255": 239.560546875,
+          "mean_abs_255": 24.28899633859737,
+          "fraction_pixels_over_1_255": 0.9980645751953126,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.0097198486328125,
+          "mean_abs": 0.000547045652743847,
+          "snr_db": 8.336155676301633
+        },
+        "video_latent": {
+          "max_abs": 5.085615396499634,
+          "mean_abs": 0.48641939574611115
+        },
+        "audio_latent": {
+          "max_abs": 0.2998894453048706,
+          "mean_abs": 0.035475107220218675
+        }
+      }
+    },
+    {
+      "fixture": "pendulum",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-06/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 18.24432321853002,
+          "max_abs_255": 238.564453125,
+          "mean_abs_255": 17.758323100140114,
+          "fraction_pixels_over_1_255": 0.9809368896484375,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.0167236328125,
+          "mean_abs": 0.0012303099870142333,
+          "snr_db": 1.7759165586798074
+        },
+        "video_latent": {
+          "max_abs": 6.800673007965088,
+          "mean_abs": 0.6448075878132471
+        },
+        "audio_latent": {
+          "max_abs": 0.8975613117218018,
+          "mean_abs": 0.07386462926828805
+        }
+      }
+    },
+    {
+      "fixture": "rain",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-07/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 24.7739721628161,
+          "max_abs_255": 210.673828125,
+          "mean_abs_255": 8.530524447658081,
+          "fraction_pixels_over_1_255": 0.968720703125,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.00507354736328125,
+          "mean_abs": 0.0004953570931338438,
+          "snr_db": 7.003937827437698
+        },
+        "video_latent": {
+          "max_abs": 2.2124457210302353,
+          "mean_abs": 0.2563820167920916
+        },
+        "audio_latent": {
+          "max_abs": 0.32378333806991577,
+          "mean_abs": 0.03137803630558595
+        }
+      }
+    },
+    {
+      "fixture": "paper",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-08/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 20.31024725491514,
+          "max_abs_255": 173.0712890625,
+          "mean_abs_255": 12.949211748762808,
+          "fraction_pixels_over_1_255": 0.989844970703125,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.00164794921875,
+          "mean_abs": 0.00021451431180184504,
+          "snr_db": 3.3220410220410064
+        },
+        "video_latent": {
+          "max_abs": 4.129528760910034,
+          "mean_abs": 0.36424755056749447
+        },
+        "audio_latent": {
+          "max_abs": 0.6448169350624084,
+          "mean_abs": 0.06802333789528348
+        }
+      }
+    },
+    {
+      "fixture": "candle",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-09/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 21.08265989221024,
+          "max_abs_255": 227.109375,
+          "mean_abs_255": 15.662530926191083,
+          "fraction_pixels_over_1_255": 0.99897216796875,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.0068511962890625,
+          "mean_abs": 0.0010617894270355897,
+          "snr_db": 0.2748893896557109
+        },
+        "video_latent": {
+          "max_abs": 4.415827289223671,
+          "mean_abs": 0.4174626065419318
+        },
+        "audio_latent": {
+          "max_abs": 1.266328290104866,
+          "mean_abs": 0.10739966841244425
+        }
+      }
+    },
+    {
+      "fixture": "pour",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-10/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 18.701022374660916,
+          "max_abs_255": 249.0234375,
+          "mean_abs_255": 18.514256127222506,
+          "fraction_pixels_over_1_255": 0.991005859375,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.0068206787109375,
+          "mean_abs": 0.0005877648150008909,
+          "snr_db": 1.042458030462108
+        },
+        "video_latent": {
+          "max_abs": 4.462762415409088,
+          "mean_abs": 0.49624753163540447
+        },
+        "audio_latent": {
+          "max_abs": 0.4662437438964844,
+          "mean_abs": 0.07465573564639691
+        }
+      }
+    },
+    {
+      "fixture": "fabric",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-11/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 17.96374751564639,
+          "max_abs_255": 250.517578125,
+          "mean_abs_255": 20.31401817617152,
+          "fraction_pixels_over_1_255": 0.99844482421875,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.000598907470703125,
+          "mean_abs": 0.00010286157686807363,
+          "snr_db": 5.886922418941602
+        },
+        "video_latent": {
+          "max_abs": 4.136895537376404,
+          "mean_abs": 0.3915108760159498
+        },
+        "audio_latent": {
+          "max_abs": 0.3529462218284607,
+          "mean_abs": 0.034847104136133566
+        }
+      }
+    },
+    {
+      "fixture": "wheel",
+      "window": 64,
+      "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-12/tensors.safetensors",
+      "comparison": {
+        "images": {
+          "psnr_db": 27.095366353412537,
+          "max_abs_255": 225.615234375,
+          "mean_abs_255": 2.691013793198272,
+          "fraction_pixels_over_1_255": 0.437720947265625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "max_abs": 0.00293731689453125,
+          "mean_abs": 0.000170876726714845,
+          "snr_db": 1.9599684453373787
+        },
+        "video_latent": {
+          "max_abs": 2.9087328910827637,
+          "mean_abs": 0.10857951702188018
+        },
+        "audio_latent": {
+          "max_abs": 0.5750662088394165,
+          "mean_abs": 0.04479542181462211
+        }
+      }
+    }
+  ],
+  "table": [
+    "fixture     PSNR dB  max/255 mean/255    >1/255   wav SNR    wav max   vlat max   alat max",
+    "boat          19.41   199.72  17.7735   0.99967      2.87   3.15e-03   4.35e+00   2.29e-01",
+    "marble        22.42   212.67  12.6121   0.99461      2.91   8.97e-03   4.11e+00   6.27e-01",
+    "bird          16.79   239.56  24.2890   0.99806      8.34   9.72e-03   5.09e+00   3.00e-01",
+    "pendulum      18.24   238.56  17.7583   0.98094      1.78   1.67e-02   6.80e+00   8.98e-01",
+    "rain          24.77   210.67   8.5305   0.96872      7.00   5.07e-03   2.21e+00   3.24e-01",
+    "paper         20.31   173.07  12.9492   0.98984      3.32   1.65e-03   4.13e+00   6.45e-01",
+    "candle        21.08   227.11  15.6625   0.99897      0.27   6.85e-03   4.42e+00   1.27e+00",
+    "pour          18.70   249.02  18.5143   0.99101      1.04   6.82e-03   4.46e+00   4.66e-01",
+    "fabric        17.96   250.52  20.3140   0.99844      5.89   5.99e-04   4.14e+00   3.53e-01",
+    "wheel         27.10   225.62   2.6910   0.43772      1.96   2.94e-03   2.91e+00   5.75e-01"
+  ],
+  "definitions": {
+    "psnr_db": "images in [0, 1]: 10*log10(1/MSE)",
+    "max_abs_255/mean_abs_255": "image differences times 255",
+    "fraction_pixels_over_1_255": "share of pixels with any channel off by > 1/255",
+    "snr_db": "waveform: 10*log10(sum ref^2 / sum (new-ref)^2)",
+    "reference": "certified 1024-encode clip of the same fixture"
+  },
+  "owner_condition": "negligible finished-clip difference: recorded here, judged by the owner"
+}
