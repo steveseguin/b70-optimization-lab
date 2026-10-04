@@ -76,6 +76,26 @@ no arithmetic, so it is held to the existing references.
 - The measurement is stored as `data/batch-96/two-way-w2-b1-p1/pool-calibration.json` and is what admits
   the larger pooled runs.
 
+## Run 3: two batch-2 jobs in flight (four clips), shared pool: 1.122 s per clip
+
+Two cards, two sampler workers, batch 2, shared pool (run `two-way-w2-b2-p1`), admitted on the measured pool
+cost from run 2.
+
+| Arm | Checked against | Clips checked | Exact | Seconds per clip (mean) | Sampler job (2 clips) | Compute seconds per clip, cards 0-3 |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| proof: other neighbours | batch-2 references (from run 1) | 10 | 10 | – | 2.64 s | 0.74 / 1.01 / 0.26 / 0.58 |
+| proof: swapped slots | batch-2 references | 10 | 10 | – | 2.66 s | 0.57 / 0.81 / 0.26 / 0.55 |
+| timed, 120 prompts | batch-2 references | 113 | 113 | **1.122** (22.3 fps) | 3.42 s | 0.84 / 1.07 / 0.37 / 0.72 |
+
+- **1.122 s per clip, every clip byte-identical to its batch-2 reference.** The references were made in run 1
+  by a different server with private pools; this server reproduced them with the shared pool, other pairings
+  and two jobs in flight.
+- Card 1 is now the limit: 1.07 compute-seconds per clip at a 1.12 s stream is 95 % busy. It carries 25
+  transformer blocks and one of the two decode workers. Card 2 is busy a third of the time.
+- Total compute per clip is 2.99 GPU-seconds. Spread evenly over four cards that would be 0.75 s per clip, so
+  the remaining gap to 1.042 s is placement, not work.
+- Free video memory at the freeze: 7.1 / 9.9 / 11.8 / 14.7 GiB.
+
 ## What this means for 24 fps
 
 With one batch-2 job the two sampler cards have room. Two jobs in flight (four clips) should bring the stream
