@@ -175,3 +175,10 @@ so this is a direct endpoint test, one arm.
 both passes and the short ladder equals the frozen no-speculation reference. If it is exact, the number to beat is
 the speculation-off total at the same user count. If it is not, speculation stays single-user only and the lane
 closes here: no further arms without first rebuilding the speculative-kernel census for this image.
+
+## Addendum, 06:40 EDT: the speculation-under-load test did not run
+
+The 4-user server faulted card `0000:e3:00.0` at weight load (06:25:28 EDT), before any request. It was the second
+fault on the boot, so GPU work stopped. Nothing was measured; the question is still open and the rule above is
+unchanged. [Incident note](2026-10-04-gpu-fault-mtp-start.md). After a reboot, run
+`experiments/qwen38-27b-b70/scripts/run-20261004-fp8-mtp-under-load.sh`.

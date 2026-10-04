@@ -390,14 +390,21 @@ cap below what a job really touches is not a safety net; it is a source of memor
 | 10 start/stop cycles, first GPU work on the boot | 7.0.0-31 | 0 |
 | 3 more on the same boot, after nine video-model runs | 7.0.0-31 | 0 |
 | 10 start/stop cycles, first GPU work after the reboot | 7.0.0-38 | 0 |
+| 33 research-server starts on that same boot, overnight | 7.0.0-38 | **1** (the last) |
 
 Every start reproduced the reference outputs exactly (12 of 12 prompts) at about 90 tokens a second.
 The runner is `scripts/fp8-start-cycle-soak.sh`; the numbers are in
 [the kernel soak record](../experiments/qwen38-27b-b70/data/2026-10-03-kernel-soak/README.md).
 
-**What this does and does not show.** Twenty-six clean starts after at least five faulted ones is strong, but
-we never switched the swap allowance back on to watch the fault return, so the cause is "most likely",
-not proven. Two other triggers on this host are separate and still stand: a direct card-to-card copy
+**What this does and does not show.** The fix made the fault rare. It did not end it. After 58 clean starts,
+the 59th faulted the same way on 2026-10-04: copy engine, the second the weights finished loading, with the
+container unable to swap and 5 GiB of host memory free. That start was the 43rd on one ten-hour boot, and a
+killed job had already faulted the same card earlier on that boot; we do not know whether either matters. One
+in 59, against five in four days before, says container swap was the main cause and not the only one. We
+also never switched the swap allowance back on to watch the fault rate return.
+[Incident record](../experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
+
+Two other triggers on this host are separate and still stand: a direct card-to-card copy
 faulted both cards (staging the transfer through host memory avoids it), and **killing a busy GPU job
 logs the same fault lines by itself**. Our one freeze on September 21 came ten minutes into a rerun
 that was started 90 seconds after such a kill; after any fault line we now stop, save the evidence, and

@@ -1,7 +1,22 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-04 07:10 UTC** (2026-10-04 03:10 EDT), two-B70 host.
+Last reviewed: **2026-10-04 10:50 UTC** (2026-10-04 06:50 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
+
+## 2026-10-04 06:50 EDT: GPU work is stopped until the two-card host is rebooted
+
+**A card faulted at 06:25 while a research server was loading the model. It was the second fault since the last
+reboot, so by the owner's rule nothing more runs on the cards until a reboot.** Nothing was reset or retried. The
+cards are empty and no server is running. The evidence is saved.
+
+- The test that was starting (speculation with 4 and 8 users) did not run. No result is lost: everything in the
+  table below was measured and recorded before it.
+- This start had the September no-swap fix in place and plenty of free memory. So that fix made the start-up fault
+  rare (one in 59 starts since, against five in four days before), not gone.
+- **After the reboot:** `systemd-run --user --unit fp8-mtp-under-load --collect bash
+  experiments/qwen38-27b-b70/scripts/run-20261004-fp8-mtp-under-load.sh`. It checks the boot is clean first and
+  leaves no server running.
+- [Incident note](experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
 
 ## 2026-10-04, overnight: many users at once, lossless on short and long prompts, up to 488 tokens a second together
 
@@ -43,10 +58,11 @@ published single-user recipe gives. [Full result](experiments/qwen38-27b-b70/not
   working memory. The research launcher's memory guard, which stopped two healthy servers on October 3, now has
   a 2 GB floor.
 - **One GPU fault on October 3 (22:39), caused by that guard killing a busy server.** The health check passed
-  afterwards and work carried on without a reboot, as the owner's rule now says. No fault since.
+  afterwards and work carried on without a reboot, as the owner's rule now says. The second fault, at 06:25 on
+  October 4, is the entry at the top of this page.
 
-**Recommended next:** make the sixteen-user mode a real profile of the two-card package (it needs its own
-acceptance run, about an hour), then check it with long prompts. One card is being measured the same way now.
+**Recommended next:** reboot, then run the speculation-with-several-users test. After that, decide whether the
+multi-user mode becomes a profile of the two-card package (it needs its own acceptance run, about an hour).
 
 ## 2026-10-03: back after twelve days — the machine was stable all day, a newer kernel is installed, and it restarts itself to test it
 

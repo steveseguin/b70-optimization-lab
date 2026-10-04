@@ -121,11 +121,11 @@ configuration, against about 400,000 on two cards. Sixteen users on one card mea
 ## What this means for the recipe
 
 - **One user: the shipped recipe, 90 tok/s.** Unchanged.
-- **Several users: a second profile, speculation off, up to sixteen sequences.** Same image, same arithmetic, the
-  same reference answers as the single-user recipe. 237 tok/s together at eight users, 423 at sixteen; each user
-  sees 26 to 30 tok/s.
-- The two cannot be one server: speculation has to be off for the multi-user mode to be lossless, and that costs a
-  lone user two thirds of their speed.
+- **Several users: a second mode, speculation off, with the three overlays.** Same image, same arithmetic, the
+  same reference answers as the single-user recipe, on short and long prompts: 325 tok/s together at sixteen users,
+  428 at 32, 488 at 64. Without the overlays the mode is exact on short prompts only.
+- The two cannot be one server as measured so far: speculation is off in the multi-user mode, and that costs a lone
+  user two thirds of their speed. Whether speculation can stay on with several users is the open test below.
 - The batch-invariant speculation mode is recorded, not recommended: narrower win, different reference, slower solo.
 
 Nothing here is published as a package profile yet. A profile needs its own acceptance through the package
@@ -133,7 +133,10 @@ launcher, and editing the launcher moves bytes the frozen acceptance packet pins
 
 ## Not established
 
-- More than 128-token answers, long prompts, and mixed prefill-and-decode load at sixteen users (the 64-prompt
-  ladder is short-context). The September work found a mixed-step effect in the GDN kernel that `GDN_SPLIT_MIXED=1`
-  (shipped) handles; it should be re-checked at this width with long prompts.
-- Where between 16 and 32 the lossless boundary sits, and whether it is the same on every boot.
+- **Speculation with several users.** The test (depth-5 speculation plus the three overlays, 4 users, then 8) was
+  started at 06:24 EDT and did not run: the server faulted a card while loading its weights, the second fault on
+  the boot, so GPU work stopped. Nothing was measured. [Incident note](2026-10-04-gpu-fault-mtp-start.md); the
+  runner for after a reboot is `scripts/run-20261004-fp8-mtp-under-load.sh`.
+- Answers longer than 128 tokens at these widths.
+- One card with long prompts (the one-card numbers above are the short ladder, no overlays).
+- 32 and 64 users on a second fresh server each (sixteen has two).
