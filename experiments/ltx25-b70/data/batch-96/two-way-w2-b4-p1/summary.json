@@ -1,0 +1,35 @@
+{
+  "schema": "ltx.campaign-96-summary.v1",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-batch-96-two-way-w2-b4-p1",
+  "batch": 4,
+  "arms": {
+    "f96-twowayw2b4p1-proofn": {
+      "label": "proof-neighbours",
+      "present": false
+    },
+    "f96-twowayw2b4p1-proofs": {
+      "label": "proof-slots",
+      "present": false
+    },
+    "f96-twowayw2b4p1-timed": {
+      "label": "timed",
+      "present": false
+    }
+  },
+  "context_sentry_pairs": {},
+  "context_sentry_gate_passed": false,
+  "missing_or_failed": [
+    "arm f96-twowayw2b4p1-proofn",
+    "arm f96-twowayw2b4p1-proofs",
+    "arm f96-twowayw2b4p1-timed",
+    "pair f96-twowayw2b4p1-proofn:f96-twowayw2b4p1-timed",
+    "proof proof-neighbours.json missing",
+    "proof proof-slots.json missing",
+    "proof proof-timed.json missing"
+  ],
+  "batch_reference_closeness_vs_w93c": null,
+  "proofs": {},
+  "reference_sets": {},
+  "label": "batch 4: changes output at rounding level versus batch 1; checked against the stability-01-b4 references (owner decides adoption)",
+  "engine_samples": 946
+}
