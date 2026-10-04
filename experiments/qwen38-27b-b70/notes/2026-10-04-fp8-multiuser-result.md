@@ -1,16 +1,37 @@
-# Multi-user result: 16 users at once is lossless on short prompts (423 tok/s together) but not on long ones (2026-10-04)
+# Multi-user result: 16 users at once, lossless on short AND long prompts with three small overlays, 325 tok/s together (2026-10-04)
 
-## Correction first (03:40 EDT)
+## In plain words
 
-**The sixteen-user mode is lossless only on the short-prompt test. With long prompts it is not.** The first
-version of this note said "lossless" without that limit. A follow-up with prompts of about 2,000 to 8,000 tokens
-(64 requests, sixteen running together, two passes) found 60 and 61 of 64 answers equal to their solo answers, and
-15 and 16 of 16 when exactly sixteen were sent. The differing answers split at token 1 or 3 (the prompt-reading
-step, which batches several users' prompts together) or around token 64 to 93 (a tie flipping during writing).
-Everything below about short prompts stands as measured; **it must not be published as a lossless multi-user
-profile until long prompts are exact too.** Receipts: `../data/2026-10-04-fp8-multiuser/long16/`.
+Until tonight the Qwen 27B recipes were measured for one user at a time: about 90 tokens a second on two cards.
+**Sixteen users can now share the two cards and each still gets exactly the answer they would have got alone,
+at 325 tokens a second together, 3.6 times one user.** That holds for short prompts and for prompts of 2,000 to
+8,000 tokens, in two passes of 64 requests each, and the answers are the same ones the published single-user recipe
+gives.
 
-## In plain words (as first written; read with the correction above)
+It did not work out of the box. With speculation simply switched off, short prompts were exact at sixteen users
+(423 tokens a second together) but long prompts were not: three or four answers in 64 differed. Three separate
+causes were found, each by direct measurement, and each fixed without changing any arithmetic, only by giving
+every request the same call shapes it would see alone:
+
+| Cause | How it was found | Fix (research overlay) | Long prompts exact |
+| --- | --- | --- | --- |
+| Start: speculation off, nothing else | | | 60 and 61 of 64 |
+| The engine mixes one user's prompt reading with other users' work in one step | answers changed between passes at the same width | `b70-exclusive-prefill`: every step is one request's prompt chunk alone, or decode rows only | 63 and 63 |
+| The output layer rounds differently from five rows up | kernel census: the only body kernel that is not row-invariant | `b70-lm-head-chunk`: at most four rows per call | 63 and 63 (necessary, not sufficient) |
+| The attention decode kernel is not batch-invariant with long contexts | new long-key census: one ulp from four sequences up, at 1.6K-8.2K tokens | `b70-fa-decode-per-seq`: one call per sequence when the longest key exceeds 229 tokens | **64 and 64** |
+
+Cost of being exact everywhere: 423 -> 374 (pure steps) -> 325 tok/s together (head chunking) on the short ladder;
+the per-sequence attention calls cost nothing measurable there and about 3 % on the long-prompt run.
+
+Status: research overlays on a research server, one server so far (a second fresh server is running). Not a
+package profile yet.
+
+## How the first version of this note was wrong (kept for the record)
+
+The first version said sixteen users were "lossless" on the strength of the short-prompt ladder alone. The
+long-prompt check, added before anything was packaged, showed that was not true as shipped.
+
+## The first measurements (speculation off, no overlays; short prompts)
 
 Until tonight the Qwen 27B recipes were measured for one user at a time: about 90 tokens a second on two cards.
 We had never measured several users at once on this model. **With speculation switched off, sixteen users at once
