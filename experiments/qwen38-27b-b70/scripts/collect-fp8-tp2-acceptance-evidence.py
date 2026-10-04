@@ -25,7 +25,7 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather'  # the current recipe's packet; the ring-allreduce packet (2026-09-17-fp8-two-card-depth5) pins the earlier launcher
+DEFAULT = ROOT / 'experiments/qwen38-27b-b70/data/2026-10-03-fp8-two-card-noswap'  # the current recipe's packet (no-swap launcher, accepted 2026-10-03); 2026-09-17-fp8-two-card-allgather pins the --memory-swap 16g launcher, 2026-09-17-fp8-two-card-depth5 the ring-allreduce one
 EXPECTED_IMAGE = 'sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04'
 # Same-image no-MTP strict run (two cards, R310) and the qualified depth-5 research container, both from the
 # 2026-09-16 review campaign (experiments/qwen38-27b-b70/notes/2026-09-16-fp8-review-findings.md).

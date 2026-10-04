@@ -8,7 +8,7 @@
 > scripts only): strict 12/12 identical to no-MTP at 90.58 tok/s, six practical requests with exact repeats, clean stop
 > ([frozen packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/); the ring-allreduce replay at
 > `5b494649f`, 88.49 tok/s, is the [earlier packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/)), produced by
-> [run-fp8-tp2-acceptance-session.py](../../experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py)). A machine without Intel drivers, Docker or the model in place is still untested.
+> [run-fp8-tp2-acceptance-session.py](../../experiments/qwen38-27b-b70/scripts/run-fp8-tp2-acceptance-session.py)). The launcher has since stopped giving the container a swap allowance (`--memory-swap 12g`, September 19); that launcher was replayed the same way on October 3 at commit `ce0a51d7c` on kernel 7.0.0-38: twelve of twelve gates, strict 12/12 at 90.01 tok/s ([current packet](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-two-card-noswap/)). A machine without Intel drivers, Docker or the model in place is still untested.
 
 Quick start and daily use: [package guide](../../packages/qwen38-27b-fp8-tp2-b70/README.md).
 
@@ -33,7 +33,7 @@ prompts and on the chat quality suite.
 
 All speeds are tokens/s. The ring-allreduce depth-5 pair is 88.32 (this campaign) and 88.49 (the package acceptance
 replay), median 88.41; with the allgather allreduce the pair is 90.37 (comm-2 campaign) and 90.58 (acceptance replay),
-median 90.48. The depth-6 server measured 89.78 on the first 100 tokens but 2% slower over whole answers, so depth 5 stays.
+median 90.48; the October 3 replay of the no-swap launcher measured 90.01, which puts the current pair's median at 90.19. The depth-6 server measured 89.78 on the first 100 tokens but 2% slower over whole answers, so depth 5 stays.
 
 **Why it is exact now.** The September 3 depth-2 campaign on the R156 image found a phantom first token on one
 request in 64 under async scheduling and froze the recipe at depth 1. The lane has since moved to vLLM 0.29 (R304)

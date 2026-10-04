@@ -5901,7 +5901,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.5 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
+        "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.2 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -5928,15 +5928,15 @@
           "32K input"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.58 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit e24479d7f). Clean-host install and multiple users are untested.",
+        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.01 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit ce0a51d7c). Clean-host install and multiple users are untested.",
         "featured_metric": {
-          "value": 90.47631934345472,
+          "value": 90.19097312141272,
           "unit": "tok/s",
           "label": "Writing speed · MTP depth 5 · allgather allreduce · two cards",
-          "scope": "Median of two fresh R310 two-card servers (90.370 / 90.583) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
+          "scope": "Median of two fresh R310 two-card servers (90.370 / 90.012) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
         },
-        "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.5 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
+        "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.2 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
       },
       "contributors": [
         {
@@ -6461,7 +6461,9 @@
         "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp0-ladder-vs-mtp0.json",
         "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp0-quality.json",
         "experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/summary.json",
-        "experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/manifest.json"
+        "experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-allgather/manifest.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-two-card-noswap/summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-03-fp8-two-card-noswap/manifest.json"
       ],
       "performance_profiles": [
         {
@@ -7487,7 +7489,7 @@
         "ring_allreduce_decode_tokens_s": 88.320170008887,
         "strict_pair_decode_tokens_s": [
           90.36997965552153,
-          90.58265903138789
+          90.01196658730392
         ],
         "no_mtp_decode_tokens_s": 33.861142438999366,
         "depth1_decode_tokens_s": 54.89813975243729,

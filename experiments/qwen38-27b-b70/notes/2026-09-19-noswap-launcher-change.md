@@ -414,6 +414,31 @@ that the flagship packets in section D are deliberately left frozen and are not 
 still be recorded with `scripts/measure-swap-during-start.sh` beside it, so the next fault, if it
 comes, has a swap trace next to it.
 
+### GPU run 1, attempt 2 (2026-10-03 20:56-21:02 EDT) -- passed, packet frozen, pending entries retired
+
+Run with `QUALIFIED_CONTAINER` set on the session and on the collector, against pushed commit
+`ce0a51d7c`, on kernel 7.0.0-38 (the host was rebooted into it the same evening; the ten-cycle start
+soak on that kernel was clean first). Raw session
+`/mnt/fast-ai/bench-results/fp8-tp2-acceptance-noswap-20261003`, packet
+[`../data/2026-10-03-fp8-two-card-noswap/`](../data/2026-10-03-fp8-two-card-noswap/).
+
+**Twelve of twelve gates pass**, including `runtime_matches_qualified_depth5`
+(`environment_differences: {}` against the comm-2 allgather container). Strict 12/12 exact at
+**90.012 tok/s**; six practical requests with exact repeats; clean stop; health clean before and
+after; zero GPU fault lines. `host_memory_plus_swap_bytes` is `[12884901888, 17179869184]`, as
+predicted above: recorded, not gated.
+
+What changed in the repository: `DEFAULT` in the collector now points at the new packet (edited
+*before* the final collection, because the packet pins the collector's own bytes);
+`source-drift.json` is deleted from the September 17 packet, which keeps its frozen truth; the
+package manifest's featured value is the median of the comm-2 server and this replay,
+**90.19 tok/s** (was 90.48); catalog, model pages and the two READMEs follow. The approved
+LocalMaxxing record `cmu5qk0kz07zglq01eh1opkhx` (90.476) stays the public record and no new
+submission is made, as reasoned above. The attestation and queue payload of that record are
+deliberately left on the September 17 packet they describe.
+
+GPU run 2 (the one-card profiles) is still owed.
+
 ## Related
 
 [The container memory cap finding](2026-09-19-container-memory-cap-swap.md) (the mechanism, the three
