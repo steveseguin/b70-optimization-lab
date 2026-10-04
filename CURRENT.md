@@ -1,7 +1,36 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-04 00:05 UTC** (2026-10-03 20:05 EDT), two-B70 host.
+Last reviewed: **2026-10-04 07:10 UTC** (2026-10-04 03:10 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
+
+## 2026-10-04, overnight: sixteen users at once, losslessly, at 423 tokens a second
+
+**The owner's direction for this work: lossless only, no server left running, keep optimizing the Qwen 27B (one
+card or two) or the MiniMax video model.** The cards are empty between experiments.
+
+**The headline.** Until now the 27B was measured for one user: about 90 tokens a second on two cards. Tonight
+we measured several users at once. **With speculation off, sixteen users each get exactly the answer they would
+get alone, and together they get 423 tokens a second, 4.7 times the single-user rate.** Eight users get 237
+together. Past sixteen a few answers begin to differ, so sixteen is the limit. These are the same answers the
+published single-user recipe gives. [Full result](experiments/qwen38-27b-b70/notes/2026-10-04-fp8-multiuser-result.md).
+
+**What else was settled overnight, all lossless:**
+
+- **Video: 396.6 seconds a clip, down from 410**, eight clips in a row, every one bit-identical to September's.
+  That is twice the original baseline.
+- **Video clips are now repeatable as files**, not only as pictures: same seed and prompt, same `clip.mp4`, byte
+  for byte. The video encoder had been the odd one out.
+- **Single-user 27B is at its limit.** Reusing the card-to-card exchange buffers was exact and worth +0.05 %.
+  One card is limited by how fast it reads the weights; two cards lose under 4 ms a step to the exchange; the
+  model's own draft accuracy caps the rest. Every remaining idea was sized at one or two percent and closed.
+- **A loaded two-card 27B uses 9 GB of host memory and none of it can be released**; it is the GPU runtime's own
+  working memory. The research launcher's memory guard, which stopped two healthy servers on October 3, now has
+  a 2 GB floor.
+- **One GPU fault on October 3 (22:39), caused by that guard killing a busy server.** The health check passed
+  afterwards and work carried on without a reboot, as the owner's rule now says. No fault since.
+
+**Recommended next:** make the sixteen-user mode a real profile of the two-card package (it needs its own
+acceptance run, about an hour), then check it with long prompts. One card is being measured the same way now.
 
 ## 2026-10-03: back after twelve days — the machine was stable all day, a newer kernel is installed, and it restarts itself to test it
 
