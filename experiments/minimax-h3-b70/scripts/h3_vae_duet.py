@@ -251,7 +251,7 @@ def _collect_blend(torch, load_file, vae, plan, z, tiles_dir: pathlib.Path, stop
     pixel_mean = torch.tensor((0.485, 0.456, 0.406), device=blend_device).view(1, -1, 1, 1, 1)
     pixel_std = torch.tensor((0.229, 0.224, 0.225), device=blend_device).view(1, -1, 1, 1, 1)
     video = (dec.float() * pixel_std + pixel_mean).clamp(0, 1)
-    return video.detach().float().cpu().contiguous()
+    return R.move_in_pieces(video.detach().float(), "cpu").contiguous()
 
 
 def _serve(args, torch, work: pathlib.Path) -> int:

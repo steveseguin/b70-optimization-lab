@@ -1,0 +1,258 @@
+{
+  "run_name": "duet-20261004T160259Z",
+  "utc": "2026-10-04T16:16:54Z",
+  "host": "steve-TURIND8-2L2T",
+  "argv": [
+    "/home/steve/b70-optimization-lab/experiments/minimax-h3-b70/scripts/h3_duet.py",
+    "--prompts-file",
+    "/mnt/fast-ai/bench-results/minimax-h3/h3-piecewise-2prompts.txt",
+    "--height",
+    "544",
+    "--width",
+    "960",
+    "--frames",
+    "124",
+    "--steps",
+    "51",
+    "--seed",
+    "42",
+    "--vae-decode",
+    "two-proc",
+    "--vae-autocast",
+    "off",
+    "--split-index",
+    "25",
+    "--out-dir",
+    "/mnt/fast-ai/bench-results/minimax-h3",
+    "--run-name",
+    "duet-20261004T160259Z"
+  ],
+  "settings": {
+    "adaln_dtype": "fp32",
+    "adaln_out_dtype": "bf16",
+    "audio_shift": null,
+    "cards": [
+      0,
+      1
+    ],
+    "crf": 16,
+    "decode_only": false,
+    "denoiser": "pruned",
+    "denoiser_rotation": "hadamard",
+    "deterministic": false,
+    "dry_run": false,
+    "encoder_card": 0,
+    "frames": 124,
+    "height": 544,
+    "int8_share_rotation": true,
+    "latents_from": null,
+    "lora": null,
+    "out_dir": "/mnt/fast-ai/bench-results/minimax-h3",
+    "plan_memory": false,
+    "probe_tile_identity": null,
+    "prompt": "A slow dolly-in on a rain-slicked city street at night; neon signs reflect in the puddles, a lone figure with an umbrella walks away from camera. Ambient rain, distant traffic, a low synth drone.",
+    "prompt_embeds": null,
+    "prompts_file": "/mnt/fast-ai/bench-results/minimax-h3/h3-piecewise-2prompts.txt",
+    "run_name": "duet-20261004T160259Z",
+    "save_tensors": false,
+    "seed": 42,
+    "split_index": 25,
+    "steps": 51,
+    "te_rotation": "hadamard256",
+    "vae_autocast": "off",
+    "vae_card": null,
+    "vae_decode": "two-proc",
+    "vae_tiling": "auto",
+    "verbose": false,
+    "verify_remap": false,
+    "video_shift": null,
+    "width": 960
+  },
+  "prompt": "A golden-hour meadow with tall grass waving in the wind; a red fox trots across the frame. Birdsong, a gentle breeze.",
+  "prompt_tokens": 29,
+  "seed": 42,
+  "num_inference_steps": 51,
+  "num_function_evaluations": 50,
+  "num_inference_steps_note": "sigma grid points, terminal 0 included; NFE = steps - 1 (MiniMaxH3Scheduler.set_timesteps). Base reference is 50 NFE (steps 51); the 8-step turbo LoRA is 8 NFE (steps 9). CFG-distilled: no guidance_scale exists. See notes/2026-09-18-steps-and-lora.md",
+  "batch": {
+    "index": 1,
+    "count": 2,
+    "note": "encoder, denoiser and VAEs loaded once for the batch; this clip's arithmetic is the single-run path's, and the repeat gate checks the hashes match it"
+  },
+  "resolved": {
+    "video_latents_shape": [
+      1,
+      24,
+      37,
+      34,
+      60
+    ],
+    "audio_latents_shape": [
+      2,
+      32,
+      207
+    ],
+    "video_shape": [
+      1,
+      3,
+      124,
+      544,
+      960
+    ],
+    "audio_shape": [
+      1,
+      2,
+      165600
+    ],
+    "sampling_rate": 32000,
+    "fps": 24
+  },
+  "split_plan": {
+    "variant": "pruned",
+    "split_index": 25,
+    "num_layers": 50,
+    "non_block_bytes": 1602501728,
+    "quant_bytes": 0,
+    "rotation_bytes_per_card": 0,
+    "dequant_peak_bytes": 0,
+    "card0_bytes": 20957727328,
+    "card1_bytes": 19355225600,
+    "card0_gib": 19.518,
+    "card1_gib": 18.026,
+    "imbalance_bytes": 1602501728,
+    "adaln_table_bytes": 32800
+  },
+  "timings_seconds": {
+    "encode.tokenize": 0.158,
+    "encode.load": 12.857,
+    "encode.forward.0": 0.674,
+    "encode.forward.1": 0.405,
+    "encode": 16.965,
+    "sample.build_pipeline": 0.001,
+    "sample.1": 692.183,
+    "sample.0": 699.099,
+    "decode.video.1": 40.884,
+    "decode.audio.1": 0.0
+  },
+  "seconds_per_second_of_video": 283.205,
+  "peak_memory": {
+    "encode": {
+      "xpu:0": {
+        "allocated_bytes": 768000,
+        "max_allocated_bytes": 27410579456,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 27434942464
+      },
+      "xpu:1": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      }
+    },
+    "sample": {
+      "xpu:0": {
+        "allocated_bytes": 768512,
+        "max_allocated_bytes": 27410579456,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 27434942464
+      },
+      "xpu:1": {
+        "allocated_bytes": 0,
+        "max_allocated_bytes": 0,
+        "reserved_bytes": 0,
+        "max_reserved_bytes": 0
+      }
+    },
+    "decode_video": {
+      "xpu:0": {
+        "allocated_bytes": 768512,
+        "max_allocated_bytes": 27410579456,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 27434942464
+      },
+      "xpu:1": {
+        "allocated_bytes": 777093120,
+        "max_allocated_bytes": 778418176,
+        "reserved_bytes": 796917760,
+        "max_reserved_bytes": 796917760
+      }
+    },
+    "decode": {
+      "xpu:0": {
+        "allocated_bytes": 768512,
+        "max_allocated_bytes": 27410579456,
+        "reserved_bytes": 4194304,
+        "max_reserved_bytes": 27434942464
+      },
+      "xpu:1": {
+        "allocated_bytes": 778418176,
+        "max_allocated_bytes": 778418176,
+        "reserved_bytes": 796917760,
+        "max_reserved_bytes": 796917760
+      }
+    }
+  },
+  "decode_placement": {
+    "card": "xpu:1",
+    "requested": null,
+    "video_vae_tiling": "on",
+    "one_vae_at_a_time": false,
+    "vae_decode": "two-proc",
+    "vae_autocast": "off",
+    "vae_autocast_note": "off = the bit-identical path. fp16/bf16 is upstream's decoders.py autocast with enabled=True on XPU: an arithmetic change, gated by its own repeat and measured with compare-h3-runs.py",
+    "video_decode_plan": {
+      "mode": "two-proc",
+      "script": "h3_vae_duet.py",
+      "cards": [
+        "xpu:0",
+        "xpu:1"
+      ],
+      "autocast": "off",
+      "serve": true,
+      "audio_overlap": true,
+      "gate": "2.0x at 960x544 fp32, bytewise-equal to single (2026-09-20)"
+    },
+    "diffusers_vae_source": null
+  },
+  "decode_only": null,
+  "int8_share_rotation": null,
+  "int8_rotation_cache": null,
+  "host_peak_rss_bytes": 4360499200,
+  "hashes": {
+    "video_tensor_sha256": "b9cd64f74635ab8b8f28c095bc92d57ee1a3c49cdeb9f9407130012294f2b21a",
+    "audio_tensor_sha256": "ccdf063930449c1bf51d6c76016baeee4e32e3555a480f73ab9a1e2d36e1a355",
+    "video_latents_sha256": "d954508af62ce6d7cb71c145ff88ea65aca259263c4ac79a1749f152b21b8a7c",
+    "audio_latents_sha256": "9f1523e02dd9588cf4bdeeceb32d7e6dfbbec6fed6c62c6ca2acbaa674585142"
+  },
+  "inputs": {
+    "denoiser": "/mnt/fast-ai/llm-models/minimax-h3-comfy/diffusion_models/minimax_h3_fl2va_pruned_bf16.safetensors",
+    "denoiser_variant": "pruned",
+    "denoiser_rotation": null,
+    "denoiser_header_sha256": "59916d0f1ea260e0d9e0ce7a3cb2ceb4d59ecbb08a9f2e466de009cbc6fe26c0",
+    "lora": null,
+    "text_encoder": "/mnt/fast-ai/llm-models/minimax-h3-comfy/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+    "convrot_rotation_sha256": "ebb89aa1651e681f49461fe539bf2eb6fba0143c2733e5ad9cef438d48fb28d2",
+    "vae": "/mnt/fast-ai/llm-models/minimax-h3/vae",
+    "audio_vae": "/mnt/fast-ai/llm-models/minimax-h3/audio_vae"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "torch": "2.14.0+xpu",
+    "diffusers": "0.41.0.dev0",
+    "transformers": "5.17.0"
+  },
+  "environment": {
+    "PYTORCH_ALLOC_CONF": "expandable_segments:True"
+  },
+  "deterministic": false,
+  "loader": "pread",
+  "cross_card_transfer": "host",
+  "clip_mp4_sha256": "a88b02db749643b7722229535e2b9911bc36732e5f8c47a926c611e764faf27d",
+  "clip_mp4_encoder": {
+    "codec": "libx264",
+    "crf": 16,
+    "x264_params": "mbtree=0",
+    "muxer_flags": "+bitexact"
+  }
+}

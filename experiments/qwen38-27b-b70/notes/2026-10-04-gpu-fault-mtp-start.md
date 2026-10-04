@@ -177,6 +177,7 @@ Data: [`data/2026-10-04-load-fault-fix/`](../data/2026-10-04-load-fault-fix/). O
 2. One card is validated too (above). The research launcher can take the overlay as a default; not done yet.
 3. The two package launchers do not have it. Their bytes are pinned by the acceptance packets, so adding it means a
    new acceptance for each. Owner's call, since it changes the published packages.
-4. The MiniMax video lane loads its models with its own scripts; the same piece-wise upload applies there.
+4. The MiniMax video lane is done: the dividing line is exactly 512 MiB, its five large transfers go in pieces, and
+   two clips are bit-identical ([note](../../minimax-h3-b70/notes/2026-10-04-piecewise-transfers.md)).
 5. Post the finding upstream (`intel/compute-runtime#948`): the address, what lives there, the 256/512 MiB dividing
    line and the workaround. Needs the owner's go-ahead since it is a public post.

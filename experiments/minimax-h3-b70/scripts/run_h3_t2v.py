@@ -1280,7 +1280,7 @@ def sha256_tensor(t) -> str:
     """
     import torch
 
-    arr = t.detach().to("cpu").contiguous().flatten()
+    arr = move_in_pieces(t.detach(), "cpu").contiguous().flatten()
     if arr.dtype is not torch.uint8:
         arr = arr.view(torch.uint8)
     return hashlib.sha256(memoryview(arr.numpy())).hexdigest()
@@ -1414,6 +1414,39 @@ def host_mem_fields() -> dict:
     except OSError:
         pass
     return out
+
+
+# A host-to-card copy of 512 MiB or more makes compute-runtime map the host buffer temporarily (EXTERNAL_HOST_PTR) and
+# has the copy engine read it; every model-load GPU fault on this host is the copy engine finding that mapping gone
+# (../../qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md). Under 512 MiB no mapping is made (measured on this
+# venv). So a large tensor goes to the card in pieces. Same bytes, same dtype; only the route changes.
+PIECE_OVER_BYTES = 256 << 20
+PIECE_BYTES = 128 << 20
+
+
+def move_in_pieces(tensor, device):
+    """`tensor.to(device)` between host and card, in 128 MiB pieces when the tensor is larger than 256 MiB.
+
+    Either direction. Anything else (same device, card to card, small, not contiguous) goes through `.to` as before.
+    """
+    import torch
+
+    target = torch.device(device)
+    nbytes = tensor.numel() * tensor.element_size()
+    crossing = {tensor.device.type, target.type} == {"cpu", "xpu"}
+    if not crossing or nbytes <= PIECE_OVER_BYTES or not tensor.is_contiguous():
+        return tensor.to(device=target)
+    out = torch.empty(tensor.shape, dtype=tensor.dtype, device=target)
+    flat_out, flat_in = out.view(-1), tensor.view(-1)
+    step = max(1, PIECE_BYTES // tensor.element_size())
+    for start in range(0, flat_in.numel(), step):
+        flat_out[start:start + step].copy_(flat_in[start:start + step])
+    LOG.info("moved %.0f MiB %s -> %s in %d MiB pieces", nbytes / 2**20, tensor.device, target, PIECE_BYTES >> 20)
+    return out
+
+
+def to_card_in_pieces(torch, tensor, device):
+    return move_in_pieces(tensor, device)
 
 
 def log_host_mem(tag: str, index: int, total: int | None = None, force: bool = False) -> None:
@@ -1866,7 +1899,7 @@ def _build_text_encoder(torch, config, device, args):
             # straight back -- the module owns it now -- and drops the host buffer with it, so
             # nothing host-side survives this iteration.  `release` then drops that byte range
             # from the page cache (a no-op on the mmap loader, which cannot).
-            t = fh.get_tensor(key).to(device=device)
+            t = to_card_in_pieces(torch, fh.get_tensor(key), device)
             set_submodule_tensor(model, name, t)
             del t
             fh.release(key)
@@ -4310,7 +4343,7 @@ def _write_clip_and_receipt(torch, args, timings, video, audio, sampling_rate, l
                             vae_tiling, decode_plan, vae_source, source_run, prompt,
                             prompt_tokens, batch_info, receipt_timings) -> None:
     """Phase 5 for one clip: mp4 + optional tensors + receipt, into `clip_dir`."""
-    video_cpu = video.detach().float().cpu().contiguous()  # (1, 3, T, H, W) in [0, 1]
+    video_cpu = move_in_pieces(video.detach().float(), "cpu").contiguous()  # (1, 3, T, H, W) in [0, 1]
     audio_cpu = audio.detach().float().cpu().contiguous()  # (1, 2, N)
     clip_dir.mkdir(parents=True, exist_ok=True)
     write_phase = "write" if batch_info is None else f"write.{batch_info['index']}"
@@ -4425,7 +4458,7 @@ def _decode_video_two_proc(torch, args, timings, decode_device, latents, clip_in
                     raise RuntimeError(
                         f"vae serve died on clip {clip_index}; see {work}/worker-*.log")
                 time.sleep(0.01)
-            video = load_file(str(work / f"j{clip_index}-out.st"))["video"].to(decode_device)
+            video = move_in_pieces(load_file(str(work / f"j{clip_index}-out.st"))["video"], decode_device)
             for stale in work.glob(f"j{clip_index}-out.*"):
                 stale.unlink()
         return video, latents
@@ -4448,7 +4481,7 @@ def _decode_video_two_proc(torch, args, timings, decode_device, latents, clip_in
         if proc.returncode != 0:
             LOG.error("h3_vae_duet exited %d:\n%s", proc.returncode, proc.stdout[-3000:])
             raise RuntimeError(f"two-proc decode failed for clip {clip_index} (rc={proc.returncode})")
-        video = load_file(str(work / "out.st"))["video"].to(decode_device)
+        video = move_in_pieces(load_file(str(work / "out.st"))["video"], decode_device)
         for stale in work.glob("**/*"):
             if stale.is_file():
                 stale.unlink()
