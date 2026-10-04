@@ -55,9 +55,17 @@ and the service is down: that is a decision for you. If it says the wrong kernel
   [one triage file](audits/efficiency/TRIAGE-2026-10-03.md); the auditor now runs weekly and commits
   directly. The audit scripts got the fixes the reports kept asking for.
 
+### Result after the reboot (2026-10-03 20:55 EDT)
+
+**The new kernel passed its own test: ten of ten start/stop cycles clean, twelve of twelve prompts
+exact every time, 90.3 tokens a second, no GPU faults.** That is the same score as the old kernel, so
+the kernel is safe to stay on but was not what cured the September faults; the no-swap fix was. The
+chat service is running on port 18124 on kernel 7.0.0-38
+([numbers](experiments/qwen38-27b-b70/data/2026-10-03-kernel-soak/README.md)).
+
 ### Open items, dated 2026-10-03
 
-1. **Read the post-reboot result** (path above) and write the `k38` row into the kernel soak table.
+1. ~~Read the post-reboot result~~ done, see above.
 2. **If faults come back on 7.0.0-38:** try 7.0.0-39 (still in Ubuntu's testing pocket, it has the fix
    closest to our fault), then 6.17, one change per boot, same ten cycles each.
 3. **Why is the fast picture step not repeatable on two cards?** One card is repeatable. Not yet

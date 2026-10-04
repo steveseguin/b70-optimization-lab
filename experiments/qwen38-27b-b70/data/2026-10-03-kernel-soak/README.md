@@ -9,7 +9,7 @@ records the kernel, GuC, compute-runtime, swappiness, boot id and git revision.
 |---|---|---:|---:|---|---|---:|---:|
 | `k31` | 7.0.0-31-generic | 10 / 10 | 0 | 12/12 every cycle | 90.21 (89.85 to 90.41) | 151 s | 2,877 MiB |
 | `k31-after-h3` | 7.0.0-31-generic, same boot, after 7 MiniMax duet runs and 2 decode-only runs | 3 / 3 | 0 | 12/12 every cycle | 90.22 (90.20 to 90.36) | 151 s | 3,236 MiB |
-| `k38` | 7.0.0-38-generic | pending: runs by itself as the first GPU work after the reboot (`scripts/postboot-kernel-soak.sh`) | | | | | |
+| `k38` | 7.0.0-38-generic, first GPU work after the reboot (ran by itself from `scripts/postboot-kernel-soak.sh`) | 10 / 10 | 0 | 12/12 every cycle | 90.27 (89.88 to 90.40) | 151 s | 2,989 MiB |
 
 ## What the baseline says
 
@@ -26,6 +26,14 @@ too. What is still not covered: one-card FP8 research servers before the start, 
 by killing a busy job (the 2026-09-21 kill left a copy-engine CAT error). Those are the conditions
 under which a newer kernel could still differ.
 
-Kernel 7.0.0-38 was installed after these runs (7.0.0-31 stays installed as the fallback, GuC 70.54.0
-and compute-runtime unchanged). Its row is filled from
-`/mnt/fast-ai/bench-results/kernel-soak-20261003/k38/` after the reboot.
+Kernel 7.0.0-38 was installed after the 7.0.0-31 runs (7.0.0-31 stays installed as the fallback,
+GuC 70.54.0 and compute-runtime unchanged).
+
+## Verdict
+
+**The two kernels are indistinguishable on this test: ten clean starts each, the same speed to within
+a tenth of a token per second, the same start time.** 7.0.0-38 is therefore safe to stay on, and it is
+the better place to be because it carries real `xe` fixes (teardown deadlock, page-table binds) that
+this soak cannot exercise. It did not *cure* anything here, because after the no-swap launcher change
+there was nothing left for this test to cure. The chat service is left running on 7.0.0-38 (unit
+`fp8-soak-k38-c10`, state `/mnt/fast-ai/bench-results/kernel-soak-20261003/k38/c10/service`).
