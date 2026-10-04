@@ -8,6 +8,8 @@ records the kernel, GuC, compute-runtime, swappiness, boot id and git revision.
 | Label | Kernel | Cycles clean | Fault lines | Exact | tok/s median (min to max) | Ready, median | Lowest MemAvailable |
 |---|---|---:|---:|---|---|---:|---:|
 | `k31` | 7.0.0-31-generic | 10 / 10 | 0 | 12/12 every cycle | 90.21 (89.85 to 90.41) | 151 s | 2,877 MiB |
+| `k31-after-h3` | 7.0.0-31-generic, same boot, after 7 MiniMax duet runs and 2 decode-only runs | 3 / 3 | 0 | 12/12 every cycle | 90.22 (90.20 to 90.36) | 151 s | 3,236 MiB |
+| `k38` | 7.0.0-38-generic | pending: runs by itself as the first GPU work after the reboot (`scripts/postboot-kernel-soak.sh`) | | | | | |
 
 ## What the baseline says
 
@@ -18,6 +20,12 @@ start faults were most likely the container swapping its staging pages during th
 is fixed, and a kernel change cannot show an improvement on this particular measure: the best it can
 do is also score ten out of ten.
 
-What this soak does not cover: a service start that follows MiniMax or one-card work on the same boot
-(three of the five September faults), and fault lines caused by killing a busy job. Those are the
-conditions under which a newer kernel could still differ.
+The `k31-after-h3` row is the pattern behind three of the five September faults: a two-card service
+start that follows other GPU work on the same boot. Three starts after nine MiniMax runs were clean
+too. What is still not covered: one-card FP8 research servers before the start, and fault lines caused
+by killing a busy job (the 2026-09-21 kill left a copy-engine CAT error). Those are the conditions
+under which a newer kernel could still differ.
+
+Kernel 7.0.0-38 was installed after these runs (7.0.0-31 stays installed as the fallback, GuC 70.54.0
+and compute-runtime unchanged). Its row is filled from
+`/mnt/fast-ai/bench-results/kernel-soak-20261003/k38/` after the reboot.

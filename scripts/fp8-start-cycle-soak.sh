@@ -15,13 +15,14 @@
 #       bash scripts/fp8-start-cycle-soak.sh --label k31 --cycles 10 --out /mnt/fast-ai/bench-results/kernel-soak-20261003/k31
 #   --leave-up     keep the service of the last cycle running (unit fp8-soak-<label>-cNN)
 #   --wait-boot    first wait for /mnt/fast-ai and docker, then 60 s (for a post-boot one-shot unit)
+#   --prior-work   free text recorded in identity.json: what GPU work this boot did before the soak
 #
 # Output: <out>/session.log, identity.json, cycles.tsv, summary.json, cNN/{service,strict,strict-vs-reference.json,
 # swap.csv,faults.txt}. Exit 0 = all cycles clean and 12/12; 3 = halted on a fault; 1 = anything else.
 set -uo pipefail
 
 LAB="${LAB:-/home/steve/b70-optimization-lab}"
-LABEL="soak"; CYCLES=10; OUT=""; LEAVE_UP=0; WAIT_BOOT=0
+LABEL="soak"; CYCLES=10; OUT=""; LEAVE_UP=0; WAIT_BOOT=0; PRIOR="none (service-first)"
 while [ $# -gt 0 ]; do
   case "$1" in
     --label) LABEL="$2"; shift 2 ;;
@@ -29,6 +30,7 @@ while [ $# -gt 0 ]; do
     --out) OUT="$2"; shift 2 ;;
     --leave-up) LEAVE_UP=1; shift ;;
     --wait-boot) WAIT_BOOT=1; shift ;;
+    --prior-work) PRIOR="$2"; shift 2 ;;
     -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -114,7 +116,7 @@ halt_on_fault() {   # halt_on_fault <cycle dir> <phase> <since>
 }
 
 say "soak ${LABEL}: ${CYCLES} cycle(s), out ${OUT}, leave_up=${LEAVE_UP}"
-python3 - "${OUT}/identity.json" "${LABEL}" <<'PY' 2>>"${LOG}" || true
+python3 - "${OUT}/identity.json" "${LABEL}" "${PRIOR}" <<'PY' 2>>"${LOG}" || true
 import json, subprocess, sys, platform
 def sh(c):
     try: return subprocess.run(c, shell=True, capture_output=True, text=True, timeout=30).stdout.strip()
@@ -128,7 +130,7 @@ json.dump({
     "swappiness": sh("cat /proc/sys/vm/swappiness"), "mem_total_kb": sh("awk '/MemTotal/{print $2}' /proc/meminfo"),
     "git": sh("git -C /home/steve/b70-optimization-lab rev-parse HEAD"),
     "fault_lines_before_soak_this_boot": sh("journalctl -k -b --no-pager | grep -ciE 'Fault response|CAT error|Timedout job'"),
-    "gpu_work_before_soak_this_boot": "none (service-first)" ,
+    "gpu_work_before_soak_this_boot": sys.argv[3],
 }, open(sys.argv[1], "w"), indent=2)
 PY
 

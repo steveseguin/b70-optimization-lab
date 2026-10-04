@@ -1,9 +1,75 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-19 23:55 UTC** (2026-09-19 19:55 EDT).
+Last reviewed: **2026-10-04 00:05 UTC** (2026-10-03 20:05 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
-## A video clip now takes three minutes instead of four — and there is one question for you
+## 2026-10-03: back after twelve days — the machine was stable all day, a newer kernel is installed, and it restarts itself to test it
+
+**Where things stand, in one paragraph.** Today the two-card chat service was started and stopped
+thirteen times and the video model made nine runs, on the same old kernel that had all the September
+faults, and **not one GPU fault appeared**. The fix from September 19 (stop the service's container
+from swapping while it loads the model) looks like it was the real cure for the start-up faults. A
+newer kernel with genuine graphics-driver fixes is installed anyway, and the machine reboots into it
+at the end of this session and tests itself.
+
+**After the reboot, read this first:** `/mnt/fast-ai/bench-results/kernel-soak-20261003/k38/`
+(`postboot.log`, `summary.json`, `cycles.tsv`). The machine runs the same ten start/stop cycles by
+itself as its first GPU work and **leaves the chat service running on port 18124** (unit
+`fp8-soak-k38-c10`) if all ten are clean. If `postboot.log` says a fault happened, nothing was reset
+and the service is down: that is a decision for you. If it says the wrong kernel booted, nothing ran.
+
+### What was done today
+
+- **"Upgrade to kernel 7" turned out not to be news here.** This machine was already on kernel 7.0
+  for every September fault. What is new is build 7.0.0-38 (released October 1), which fixes a
+  driver deadlock at job teardown and several page-table bugs. It is installed; the old build
+  7.0.0-31 is kept as the fallback. Nothing else changed with it: same GPU firmware, same Intel
+  runtime. Automatic kernel and GPU-firmware upgrades are now switched off so a kernel can never
+  change without a decision (`/etc/apt/apt.conf.d/51b70-no-auto-kernel`); other security updates
+  still install by themselves.
+- **Our fault is a known, unfixed Intel bug.** Other owners of two B70 cards report the same
+  copy-engine fault at `intel/compute-runtime` issue 948, on several kernels and firmware versions.
+  Nobody there found a cure; some found the older 6.17 kernel calmer. Full notes:
+  [upstream, kernel and driver review](notes/2026-10-03-upstream-kernel-and-driver-review.md).
+- **A memory guard is in place.** Three of the September freezes were the 15 GB of RAM running
+  out. A small system service (`earlyoom`) now stops the model-loading program before the machine
+  locks up, and leaves the desktop, remote logins and Docker alone. It did not fire today; the
+  lowest free memory during a service start was 2.9 GB.
+- **The baseline was measured before changing anything.** Ten start/stop cycles of the chat service
+  on the old kernel: ten clean, twelve of twelve test prompts exact every time, 90.2 tokens a second.
+  Then three more cycles straight after the video runs (the pattern behind three of the five
+  September faults): also clean. Numbers:
+  [kernel soak](experiments/qwen38-27b-b70/data/2026-10-03-kernel-soak/README.md). Because the old
+  kernel scored ten out of ten, the new kernel cannot look *better* on this test; it can only match it.
+- **Video model: the stay-loaded picture step passed its exactness check.** In a batch, turning
+  the result into pixels now takes 41 seconds per clip instead of 56, and the output is identical
+  bit for bit. The test run found and fixed three bugs on the way.
+- **Your decision on the faster picture step is applied, with a limit.** On one card it takes 15
+  seconds instead of 80, gives the same result every time, and is now the default for making clips
+  (`EXACT=1` brings back the old exact way; all correctness checks still use the exact way). On two
+  cards it is faster still, 9 seconds, **but two identical runs produced slightly different
+  pictures**, so there it is not the default and the script warns if you ask for it. Details: the
+  2026-10-03 rows of the [video ledger](experiments/minimax-h3-b70/notes/2026-09-20-realtime-goal.md).
+- **Housekeeping.** Sixteen unpushed commits from September 21 are on GitHub. The 21 open audit
+  pull requests are closed with every recommendation answered in
+  [one triage file](audits/efficiency/TRIAGE-2026-10-03.md); the auditor now runs weekly and commits
+  directly. The audit scripts got the fixes the reports kept asking for.
+
+### Open items, dated 2026-10-03
+
+1. **Read the post-reboot result** (path above) and write the `k38` row into the kernel soak table.
+2. **If faults come back on 7.0.0-38:** try 7.0.0-39 (still in Ubuntu's testing pocket, it has the fix
+   closest to our fault), then 6.17, one change per boot, same ten cycles each.
+3. **Why is the fast picture step not repeatable on two cards?** One card is repeatable. Not yet
+   known whether it is the other card or the two-process arrangement.
+4. **Upstream code worth porting** when the chat-model lane is next opened: three small candidates
+   are listed in the review note. A full rebase to the newest vLLM is high risk for exact outputs.
+5. **`AGENTS.md` was not updated.** An edit recording today's approvals (the kernel change, the ten
+   start/stop cycles as a one-off measurement, the memory guard) was blocked by the permission
+   system. Its 2026-09-13 section still says "no restart chains" and "no reboot" without today's
+   exceptions; that wording is yours to change.
+
+## 2026-09-19 (decided 2026-10-03, see above): a video clip takes three minutes instead of four
 
 **Your call, when you have a moment: should the faster picture-conversion setting become the
 default?** Everything below is the evidence for that one decision. Nothing has been switched on; the
