@@ -321,28 +321,18 @@ case('freeze: every block signature must be captured on both sampler workers', c
 
 
 def load_freeze_case():
-    import ltx_graph_capture as g
+    # 94f: after the freeze every load call, forced or not, goes to frozen_load (no-op on
+    # wholly resident models with the free memory already there, else a refusal) before
+    # any branch that could reach ComfyUI's loader. The behaviour with real ComfyUI
+    # bookkeeping is tested in test-packet94c-dryrun-cpu.py.
     src = (HERE / 'resident_fastpath_node.py').read_text()
-    ns = {'Path': Path, 'os': __import__('os'), 'time': __import__('time'), 'json': json,
-          '_describe': lambda models: ['M'] * len(models)}
-    exec(compile(src[src.index('def _refuse_if_loads_frozen'):src.index('def fast_load_models_gpu')], 'rf', 'exec'), ns)
-    refuse = ns['_refuse_if_loads_frozen']
-    g.LOADS_FROZEN[0] = False
-    refuse([object()], False)                       # before the freeze: loads allowed
-    g.LOADS_FROZEN[0] = True
-    try:
-        refuse([object()], True)                    # resident: no load happens, admitted
-        with tempfile.TemporaryDirectory() as t:
-            __import__('os').environ['LTX_ENCODER_RUN_DIR'] = t
-            raises(lambda: refuse([object()], False), 'fail closed')
-            assert list(Path(t).glob('load-refused-*.json')), 'no refusal receipt'
-    finally:
-        g.LOADS_FROZEN[0] = False
-        __import__('os').environ.pop('LTX_ENCODER_RUN_DIR', None)
-    i_res = src.index('        resident = _resident(models)\n        _refuse_if_loads_frozen(models, resident)')
-    i_orig = src.index('return _original(models, *args, **kwargs)', i_res)
-    assert i_res < i_orig, 'the refusal must come before the native loader'
-    assert src.count('_refuse_if_loads_frozen(models, False)') == 1   # forced loads refused too
+    body = src[src.index('def fast_load_models_gpu'):src.index('class LTXResidentFastPath')]
+    i_frozen = body.index('if _frozen():\n            return frozen_load(models, args, kwargs)')
+    i_forced = body.index("if kwargs.get('force_patch_weights') or kwargs.get('force_full_load'):")
+    i_orig = body.index('return _original(models, *args, **kwargs)')
+    assert i_frozen < i_forced < i_orig
+    fl = src[src.index('def frozen_load'):src.index('def fast_load_models_gpu')]
+    assert '_original' not in fl and 'timed_load_models_gpu' not in fl, 'frozen_load must never reach the loader'
     smp = (HERE / 'pipeline_sampler_node.py').read_text()
     assert "require(report['resident_unchanged']" in smp and 'capture.LOADS_FROZEN[0] = True' in smp
 
@@ -352,7 +342,7 @@ case('loads: after the freeze a non-resident load is refused before the native l
 
 
 def runner_registration_case():
-    sh = (HERE / 'run-campaign-94d.sh').read_text()
+    sh = (HERE / 'run-campaign-94f.sh').read_text()
     body = sh[sh.index('arm() {'):sh.index('pid_is_server()')]
     assert body.index('ARMS_RUN="$ARMS_RUN $1"') < body.index('timeout $5'), 'arm registered after its client'
     assert body.count('ARMS_RUN=') == 1

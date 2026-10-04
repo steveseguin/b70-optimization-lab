@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-shard4-94d'
+OUTPUT = ROOT / 'prepared-encoder-shard4-94f'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -1323,7 +1323,7 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
-        'Packet 94d: transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
+        'Packet 94f: transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
         'conditions (negligible finished-clip difference; new references, byte-identical thereafter).\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),

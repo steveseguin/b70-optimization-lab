@@ -310,10 +310,14 @@ class LTXSamplerCaptureCoverage:
         import ltx_graph_capture as capture
         ok, coverage = capture.capture_coverage(_sample_worker_idents())
         busy = pipeline.busy()
+        executing = pipeline.running()
         outcome = 'covered' if ok and not busy else ('pipeline-busy' if busy else 'captures-incomplete')
+        # Packet 94f: also the read-only quiescence evidence the runner uses after a
+        # failed arm (queued/unfinished jobs and jobs executing on workers).
         write_json(run / ('sampler-capture-coverage-' + run_name + '.json'),
-                   {'schema': 'ltx.sampler-capture-coverage.v1', **identity, 'run_name': run_name,
-                    'outcome': outcome, 'coverage': coverage, 'frozen': bool(capture.CAPTURES_FROZEN[0])})
+                   {'schema': 'ltx.sampler-capture-coverage.v2', **identity, 'run_name': run_name,
+                    'outcome': outcome, 'coverage': coverage, 'frozen': bool(capture.CAPTURES_FROZEN[0]),
+                    'pipeline_busy': busy, 'pipeline_running': executing, 'time': time.time()})
         return {'ui': {'text': ['capture coverage: %s' % outcome]}}
 
 

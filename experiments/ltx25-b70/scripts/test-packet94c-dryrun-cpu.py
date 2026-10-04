@@ -49,7 +49,7 @@ import pipeline_sampler_node as snode  # noqa: E402
 import pipeline_decode_node as dnode  # noqa: E402
 import resident_fastpath_node as fast  # noqa: E402
 
-PACKET = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-shard4-94d')
+PACKET = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-shard4-94f')
 LAYOUTS = ('two-way', 'shard3-c', 'shard4-a')
 results = []
 
@@ -273,12 +273,123 @@ case('decode probe precondition: VAEs left off-card by the capture pass are load
      vae_residency_case)
 
 
+def frozen_vae_load_case():
+    """94f, with ComfyUI's real model_management and LoadedModel bookkeeping on CPU: the
+    VAE decode's own forced no-op load after the freeze (94e failure)."""
+    import comfy.model_management as mm
+    import ltx_graph_capture as g
+    vae_module = nn.Sequential(nn.Conv2d(3, 4, 3), nn.Conv2d(4, 3, 3))
+    patcher = ModelPatcher(vae_module, load_device=torch.device('cpu'), offload_device=torch.device('cpu'))
+    calls = []
+    saved_orig = fast._original
+    fast._original = lambda models, *a, **k: (calls.append((len(models), k)), saved_orig(models, *a, **k))[1]
+    try:
+        g.LOADS_FROZEN[0] = False
+        # the explicit residency step: a real full load through ComfyUI's loader
+        fast.fast_load_models_gpu([patcher], memory_required=1 << 20, force_full_load=True)
+        entry = next(l for l in mm.current_loaded_models if l.model is patcher)
+        assert patcher.loaded_size() == patcher.model_size() > 0 and not entry.is_dead()
+        assert fast.residency_reasons([patcher]) == []
+        n_before = len(calls)
+        g.LOADS_FROZEN[0] = True
+        # exactly the decode's call: comfy/sd.py VAE.decode, force_full_load=self.disable_offload
+        assert fast.fast_load_models_gpu([patcher], memory_required=1 << 20, force_full_load=True) is None
+        assert fast.fast_load_models_gpu([patcher], 1 << 20) is None             # positional, not forced
+        assert len(calls) == n_before, 'a frozen no-op load reached ComfyUI\'s loader'
+        assert entry.currently_used is True
+        # the loader would have to free memory: refused, nothing freed
+        saved_gfm, saved_cpu = mm.get_free_memory, mm.is_device_cpu
+        mm.get_free_memory = lambda dev=None, torch_free_too=False: 0
+        mm.is_device_cpu = lambda dev: False
+        try:
+            raises(lambda: fast.fast_load_models_gpu([patcher], memory_required=1 << 20, force_full_load=True),
+                   'would have to free memory')
+        finally:
+            mm.get_free_memory, mm.is_device_cpu = saved_gfm, saved_cpu
+        # a model that is not wholly loaded: refused, never loaded
+        other = ModelPatcher(nn.Linear(4, 4), load_device=torch.device('cpu'), offload_device=torch.device('cpu'))
+        raises(lambda: fast.fast_load_models_gpu([other], force_full_load=True), 'not fully resident')
+        raises(lambda: fast.fast_load_models_gpu([patcher], force_patch_weights=True), 'weight re-patch')
+        # partially unloaded after the freeze (what an eviction would leave): refused
+        patcher.partially_unload(patcher.offload_device, patcher.model_size() // 2) if hasattr(patcher, 'partially_unload') else None
+        if patcher.loaded_size() != patcher.model_size():
+            raises(lambda: fast.fast_load_models_gpu([patcher], force_full_load=True), 'loaded')
+        assert len(calls) == n_before
+    finally:
+        g.LOADS_FROZEN[0] = False
+        fast._original = saved_orig
+        for l in list(mm.current_loaded_models):
+            if l.model is patcher:
+                mm.current_loaded_models.remove(l)
+
+
+case('post-freeze VAE decode load (real ComfyUI bookkeeping on CPU): resident no-op passes without the loader; '
+     'memory shortfall, partial or missing models refused', frozen_vae_load_case)
+
+
+def quiescence_case():
+    import threading
+    import time as _t
+    import ltx_pipeline as p
+    p.clear()
+    gate = threading.Event()
+    p.submit('decode', 945000, lambda: gate.wait(5))
+    _t.sleep(0.2)
+    assert p.busy() == 1 and p.running() == 1
+    p.clear()                                   # a latched failure drops the job ...
+    assert p.busy() == 0 and p.running() == 1   # ... but its worker is still executing it
+    gate.set()
+    for _ in range(50):
+        if p.running() == 0:
+            break
+        _t.sleep(0.05)
+    assert p.running() == 0
+    sh = (HERE / 'run-campaign-94f.sh').read_text()
+    assert "d.get('pipeline_busy')==0 and d.get('pipeline_running')==0" in sh
+    body = sh[sh.index('stop_when_proven() {'):sh.index('summarize() {')]
+    assert body.index('if pipeline_idle_stable; then') < body.index('kill -INT $PID')
+
+
+case('stop after a failed arm: running() still counts a dropped job; the runner needs 3 idle readings',
+     quiescence_case)
+
+
+def selfcheck_case():
+    import importlib.util as iu
+    sp = iu.spec_from_file_location('sc94f', HERE / 'selfcheck-94f.py')
+    sc = iu.module_from_spec(sp)
+    sp.loader.exec_module(sc)
+    import tempfile
+    with tempfile.TemporaryDirectory() as t:
+        root, run = Path(t), Path(t) / 'run'
+        run.mkdir()
+        for i, msg in enumerate((None, 'Decode-ahead failed: Model load refused after the capture freeze: '
+                                       "['CausalDiffusionVAE']: not fully resident")):
+            req = root / 'requests' / ('f94f-ctl-self-%02d' % i)
+            req.mkdir(parents=True)
+            msgs = [] if msg is None else [['execution_error', {'exception_message': msg, 'node_type': 'LTXPipelineDecode'}]]
+            (req / 'history.json').write_text(json.dumps({'status': {'status_str': 'success' if msg is None else 'error',
+                                                                     'messages': msgs}}))
+        (run / 'load-refused-1-2.json').write_text(json.dumps({'time': 100.0, 'models': ['CausalDiffusionVAE'],
+                                                               'reason': 'not fully resident'}))
+        probs = sc.check(root, run, 'f94f-ctl-self', 50.0)
+        kinds = sorted(p['kind'] for p in probs)
+        assert kinds == ['load refused', 'load refused'], probs
+        assert any(p.get('models') == ['CausalDiffusionVAE'] for p in probs)
+        assert sc.check(root, run, 'f94f-ctl-self', 200.0)[0]['prompt'] == 'f94f-ctl-self-01'
+        assert sc.classify('Block 3: captures are frozen for timed arms') == 'sampler capture refused'
+
+
+case('self-check report names the refused model or graph', selfcheck_case)
+
+
 def order_case():
-    sh = (HERE / 'run-campaign-94d.sh').read_text()
+    sh = (HERE / 'run-campaign-94f.sh').read_text()
     body = sh[sh.index('# ---- 1. text-window probe'):]
-    marks = ['run-text-window-probe.py', 'arm f94d-$TAG-cap$k pipe-samp2-tsh-win', 'sampler-capture-coverage.json',
-             'run-decode-probe.py', 'sampler-capture-freeze.json', 'arm f94d-$TAG-probe pipe-samp2-tsh-win',
-             'arm f94d-$TAG-timed pipe-samp2-tsh-rep-wlean']
+    marks = ['run-text-window-probe.py', 'arm f94f-$TAG-cap$k pipe-samp2-tsh-win', 'sampler-capture-coverage.json',
+             'run-decode-probe.py', 'sampler-capture-freeze.json', 'arm f94f-$TAG-self pipe-samp2-tsh-rep-wlean',
+             'selfcheck-94f.py', 'arm f94f-$TAG-probe pipe-samp2-tsh-win',
+             'arm f94f-$TAG-timed pipe-samp2-tsh-rep-wlean']
     pos = [body.index(m) for m in marks]
     assert pos == sorted(pos), list(zip(marks, pos))
     if PACKET.is_dir():

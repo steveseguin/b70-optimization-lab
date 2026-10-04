@@ -88,33 +88,109 @@ def timed_load_models_gpu(models, *args, **kwargs):
                            'skipped': False, 'models': _describe(models)})
 
 
-def _refuse_if_loads_frozen(models, resident):
-    """Packet 94b: after the freeze nothing may load (and so nothing may be evicted by
-    native free_memory). Fail closed with a receipt; never fall through."""
-    import ltx_graph_capture as _capture
-    if not _capture.LOADS_FROZEN[0] or resident:
-        return
+def residency_reasons(models):
+    """Packet 94f: why each model is not fully resident (empty list = resident).
+    The same criterion as _resident, itemised for receipts."""
+    out = []
+    for m in models:
+        name = type(getattr(m, 'model', None)).__name__
+        if m.is_dynamic() or m.model_patches_models():
+            out.append((name, 'dynamic or carries model patches'))
+            continue
+        entry = next((l for l in mm.current_loaded_models if l.model is m), None)
+        if entry is None or entry.is_dead():
+            out.append((name, 'not in the loaded-model registry'))
+        elif m.loaded_size() != m.model_size() or m.model_size() <= 0:
+            out.append((name, 'loaded %d of %d bytes' % (m.loaded_size(), m.model_size())))
+        elif m.current_loaded_device() != m.load_device:
+            out.append((name, 'on %s, not %s' % (m.current_loaded_device(), m.load_device)))
+    return out
+
+
+def _load_arguments(args, kwargs):
+    """load_models_gpu(models, memory_required=0, force_patch_weights=False,
+    minimum_memory_required=None, force_full_load=False), models already removed."""
+    names = ('memory_required', 'force_patch_weights', 'minimum_memory_required', 'force_full_load')
+    out = dict(zip(names, args))
+    out.update(kwargs)
+    out.setdefault('memory_required', 0)
+    out.setdefault('minimum_memory_required', None)
+    return out
+
+
+def memory_shortfall(models, args, kwargs):
+    """Packet 94f: what ComfyUI's loader would have to free for a call on already
+    resident models (it frees until get_free_memory >= this, evicting other models).
+    Mirrors load_models_gpu: extra = max(inference, memory_required + reserve), and
+    the same for minimum_memory_required. Returns {device: bytes short} (empty = none)."""
+    a = _load_arguments(args, kwargs)
+    inference = mm.minimum_inference_memory()
+    need = max(inference, (a['memory_required'] or 0) + mm.extra_reserved_memory())
+    if a['minimum_memory_required'] is not None:
+        need = max(need, max(inference, a['minimum_memory_required'] + mm.extra_reserved_memory()))
+    short = {}
+    for device in {m.load_device for m in models}:
+        if mm.is_device_cpu(device):
+            continue
+        free = mm.get_free_memory(device)
+        if free < need:
+            short[str(device)] = int(need - free)
+    return short
+
+
+def _refuse(models, reason, detail):
     try:
         run = Path(os.environ['LTX_ENCODER_RUN_DIR'])
         path = run / ('load-refused-%d-%d.json' % (int(time.time() * 1000), os.getpid()))
         with path.open('x') as stream:
-            json.dump({'schema': 'ltx.load-refused.v1', 'models': _describe(models),
-                       'time': time.time(), 'reason': 'models not fully resident after the freeze'}, stream)
+            json.dump({'schema': 'ltx.load-refused.v2', 'models': _describe(models), 'time': time.time(),
+                       'reason': reason, 'detail': detail}, stream)
     except Exception:  # noqa: BLE001  (the refusal itself must still happen)
         pass
-    raise RuntimeError('Model load refused after the capture freeze: %s not fully resident '
-                       '(fail closed: no load, no eviction)' % _describe(models))
+    raise RuntimeError('Model load refused after the capture freeze: %s: %s %s (fail closed: no load, '
+                       'no eviction)' % (_describe(models), reason, detail))
+
+
+def _frozen():
+    import ltx_graph_capture as _capture
+    return bool(_capture.LOADS_FROZEN[0])
+
+
+def frozen_load(models, args, kwargs):
+    """Packet 94f: the only load allowed after the freeze is a no-op on models that are
+    wholly on their card, and only if the card already has the free memory the
+    loader would otherwise free (it would evict other models to get it). Forced
+    full loads count the same: the VAEs ask for force_full_load on every decode
+    (comfy/sd.py, disable_offload), which 94d refused even when resident. Nothing
+    reaches ComfyUI's loader here."""
+    a = _load_arguments(args, kwargs)
+    if a.get('force_patch_weights'):
+        _refuse(models, 'weight re-patch requested', {})
+    reasons = residency_reasons(models)
+    if reasons:
+        _refuse(models, 'not fully resident', {'models': reasons})
+    short = memory_shortfall(models, args, kwargs)
+    if short:
+        _refuse(models, 'the loader would have to free memory', {'bytes_short': short,
+                                                                 'memory_required': a['memory_required']})
+    for m in models:
+        for loaded in mm.current_loaded_models:
+            if loaded.model is m:
+                loaded.currently_used = True
+    _calls.append({'seconds': 0.0, 'resident': True, 'skipped': True, 'frozen': True,
+                   'forced': bool(a.get('force_full_load')), 'models': _describe(models)})
+    return None
 
 
 def fast_load_models_gpu(models, *args, **kwargs):
     models = list(models)
+    with _LOAD_LOCK:
+        if _frozen():
+            return frozen_load(models, args, kwargs)
     if kwargs.get('force_patch_weights') or kwargs.get('force_full_load'):
-        with _LOAD_LOCK:
-            _refuse_if_loads_frozen(models, False)
         return timed_load_models_gpu(models, *args, **kwargs)
     with _LOAD_LOCK:
         resident = _resident(models)
-        _refuse_if_loads_frozen(models, resident)
         if resident:
             for m in models:
                 for loaded in mm.current_loaded_models:

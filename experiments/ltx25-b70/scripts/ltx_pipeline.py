@@ -94,6 +94,7 @@ def cond_fingerprint(value):
 
 
 _LOCK = threading.Lock()
+_RUNNING = [0]        # packet 94f: worker jobs executing right now (read by running())
 _STAGES = {}          # stage -> {'jobs': {index: _Job}, 'queue': [], 'worker': Thread}
 _QUEUE_EVENT = threading.Condition(_LOCK)
 
@@ -145,6 +146,8 @@ def _worker_loop(stage):
                 _QUEUE_EVENT.wait()
             job = st['queue'].pop(0)
         job.started = time.monotonic()
+        with _LOCK:   # packet 94f: jobs executing now, even after clear() dropped them
+            _RUNNING[0] += 1
         try:   # packet 92a: CPU seconds of this job on this thread (diagnostic only)
             cpu0 = time.thread_time()
         except Exception:  # noqa: BLE001
@@ -167,6 +170,8 @@ def _worker_loop(stage):
                 job.cpu = None
             finally:
                 job.done.set()
+                with _LOCK:
+                    _RUNNING[0] -= 1
 
 
 def _ensure_worker(stage):
@@ -234,6 +239,14 @@ def busy():
     tail jobs do not count)."""
     with _LOCK:
         return sum(1 for st in _STAGES.values() for job in st['jobs'].values() if not job.done.is_set())
+
+
+def running():
+    """Packet 94f: worker jobs executing right now in any stage. Unlike busy(), this
+    still counts a job that clear() dropped after a latched failure while its worker
+    is finishing it."""
+    with _LOCK:
+        return _RUNNING[0]
 
 
 def pending(stage):
