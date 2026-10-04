@@ -150,6 +150,8 @@ Receipts: `/mnt/fast-ai/bench-results/fp8-loadcopy-20261004*/` and `fp8-loadcopy
 | Does uploading in 128 MiB pieces avoid it? | **Yes on the probe:** a 1.27 GB tensor sent in pieces made no mapping, arrived bit-identical, and took 0.08 s against 0.14 s. |
 | Does the first overlay do that in the real server? | No. The server was exact (12 of 12, 90.4 tok/s) but the overlay caught none of the eight uploads: the server's copy also converts the number format, which the first version left alone. |
 | Does the second overlay? | **Yes (11:00 to 11:07 EDT).** It sent all eight uploads in pieces (4 per card, 4.74 GiB per card). The runtime's log shows **no host mapping and nothing at the fault address** during the whole start (without the overlay: 8 mappings, 24 log lines there, in each of three logged starts). The strict gate is 12 of 12 exact at 90.33 tok/s. The weight load takes 8.4 s, as before. |
+| One card (11:10 to 11:36 EDT)? | Without the overlay the one-card server makes three such mappings of 2.54 GB: two uploads and one copy **back** to host memory (that lane keeps its embedding on the host). The overlay was extended to both directions. With it: **no mapping**, 3 transfers in pieces (7.1 GiB), 12 of 12 exact at 19.37 tok/s (speculation off, the reference configuration). |
+| Two cards again with the final overlay (11:37 to 11:44 EDT)? | **No mapping**, 12 of 12 exact, 90.21 tok/s. |
 
 **Verdict by the rule written above: adopted for research starts.** The operation that faulted no longer happens
 during a two-card model load. What this does not show is a fault count: at one fault in 59 starts, counting would
@@ -172,8 +174,7 @@ Data: [`data/2026-10-04-load-fault-fix/`](../data/2026-10-04-load-fault-fix/). O
 ## Next
 
 1. The multi-user campaign now uses the overlay by default (`MU_LOADCOPY_FIX=0` turns it off).
-2. One card: its output-layer weight is 2.5 GB, the same path. Validate the overlay there (allocation log and the
-   one-card strict gate) before making it the research launcher's default.
+2. One card is validated too (above). The research launcher can take the overlay as a default; not done yet.
 3. The two package launchers do not have it. Their bytes are pinned by the acceptance packets, so adding it means a
    new acceptance for each. Owner's call, since it changes the published packages.
 4. The MiniMax video lane loads its models with its own scripts; the same piece-wise upload applies there.

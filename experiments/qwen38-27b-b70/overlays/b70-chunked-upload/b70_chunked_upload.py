@@ -1,4 +1,4 @@
-"""Upload large CPU tensors to the card in pieces while the model loads (research overlay). B70_CHUNKED_UPLOAD=1.
+"""Move large tensors between host and card in pieces while the model loads (research overlay). B70_CHUNKED_UPLOAD=1.
 
 Why (notes/2026-10-04-gpu-fault-mtp-start.md): every model-load GPU fault on this host is the copy engine reading a
 temporary mapping of host memory at GPU address 0x800400200000 that is not mapped at that instant. Measured on the
@@ -6,7 +6,10 @@ R310 image with the runtime's own allocation log: a CPU-to-card copy of 256 MiB 
 staging buffers and creates no such mapping; a copy of 512 MiB or more creates one (EXTERNAL_HOST_PTR). The only
 tensors that large in this model are the 1.27 GB embedding and output-layer weights, eight uploads per two-card start.
 
-What this does: while `GPUModelRunner.load_model` runs, `Tensor.copy_` and `Tensor.to` from CPU to the card are done in
+The same mapping is made for a large copy from the card back to host memory (the one-card lane moves its 2.5 GB
+embedding to host memory that way), so both directions are covered.
+
+What this does: while `GPUModelRunner.load_model` runs, `Tensor.copy_` and `Tensor.to` between CPU and the card are done in
 pieces of B70_CHUNKED_UPLOAD_CHUNK_MIB (default 128) when the tensor is larger than B70_CHUNKED_UPLOAD_OVER_MIB
 (default 256). The same bytes arrive; only the route changes. Both methods are restored when the load ends, so
 serving and compiled code never see the wrappers. A copy that also changes the number type (the checkpoint stores
@@ -27,14 +30,14 @@ def pieces(count, element_size, chunk_bytes):
 def eligible(dst, src, over_bytes, card):
     """A large CPU-to-card copy of the same shape. The dtypes may differ: each piece then converts exactly as the
     whole copy would, element by element."""
-    return (src.device.type == 'cpu' and dst.device.type == card and src.shape == dst.shape
+    return ({src.device.type, dst.device.type} == {'cpu', card} and src.shape == dst.shape
             and src.is_contiguous() and dst.is_contiguous() and not src.is_sparse and src.layout == dst.layout
             and dst.numel() * dst.element_size() > over_bytes)
 
 
 def skipped(dst, src, over_bytes, card):
     """Why a large CPU-to-card copy was left to the original method (for the load log); '' if it is not one."""
-    if not hasattr(src, 'device') or src.device.type != 'cpu' or dst.device.type != card:
+    if not hasattr(src, 'device') or {src.device.type, dst.device.type} != {'cpu', card}:
         return ''
     if max(src.numel() * src.element_size(), dst.numel() * dst.element_size()) <= over_bytes:
         return ''
@@ -64,20 +67,22 @@ def wrap_copy(original, over_bytes, chunk_bytes, card='xpu', counter=None, misse
 
 
 def wrap_to(original, copy, empty, device_of, over_bytes, chunk_bytes, card='xpu', counter=None, missed=None):
-    """`Tensor.to(device)` with only a device (positional or keyword) and a large contiguous CPU tensor."""
+    """`Tensor.to(device)` with only a device (positional or keyword) and a large contiguous tensor crossing between
+    host and card, in either direction."""
     def to(self, *args, **kwargs):
         target = None
         if len(args) == 1 and not kwargs:
             target = device_of(args[0])
         elif not args and set(kwargs) == {'device'}:
             target = device_of(kwargs['device'])
-        if (target is not None and target.type == card and self.device.type == 'cpu' and self.is_contiguous()
+        if (target is not None and {target.type, self.device.type} == {'cpu', card} and self.is_contiguous()
                 and not self.is_sparse and self.numel() * self.element_size() > over_bytes):
             out = empty(self.shape, dtype=self.dtype, device=target)
             if counter is not None:
                 counter.append(self.numel() * self.element_size())
             return chunked_copy(out, self, chunk_bytes, copy)
-        if missed is not None and self.device.type == 'cpu' and self.numel() * self.element_size() > over_bytes:
+        if (missed is not None and self.numel() * self.element_size() > over_bytes and target is not None
+                and {target.type, self.device.type} == {'cpu', card}):
             missed.append(f'to shape {tuple(self.shape)} {self.dtype} args {[str(a)[:40] for a in args]} {sorted(kwargs)}')
         return original(self, *args, **kwargs)
     return to
@@ -113,10 +118,10 @@ def register():
             return original_load(self, *args, **kwargs)
         finally:
             torch.Tensor.copy_, torch.Tensor.to = copy, to
-            logger.warning('b70_chunked_upload: %d uploads over %d MiB went to the card in %d MiB pieces (%.2f GiB)',
+            logger.warning('b70_chunked_upload: %d transfers over %d MiB went between host and card in %d MiB pieces (%.2f GiB)',
                            len(done), over // MIB, chunk // MIB, sum(done) / 2**30)
             for line in missed[:20]:
-                logger.warning('b70_chunked_upload: large CPU tensor left to the original method: %s', line)
+                logger.warning('b70_chunked_upload: large host/card transfer left to the original method: %s', line)
 
     cls.load_model = load_model
     cls._b70_chunked_upload = True

@@ -73,6 +73,15 @@ class ChunkedUploadTest(unittest.TestCase):
             out = call()
             self.assertTrue(torch.equal(out, src)); self.assertIsNot(out, src)
             self.assertEqual(sum(seen), 4000); self.assertTrue(max(seen) <= 256)
+        # the other direction (card back to host) is chunked the same way: here the "card" is a fake device type
+        class Fake:
+            """Enough of a tensor for eligible(): pretends to live on the card."""
+            def __init__(self, t): self.t = t
+            device = torch.device('meta'); layout = torch.strided; is_sparse = False
+            def __getattr__(self, name): return getattr(self.t, name)
+        self.assertTrue(cu.eligible(torch.zeros(40, 50, dtype=torch.float16), Fake(src), 1000, 'meta'))
+        self.assertTrue(cu.eligible(Fake(torch.zeros(40, 50, dtype=torch.float16)), src, 1000, 'meta'))
+        self.assertFalse(cu.eligible(torch.zeros(40, 50, dtype=torch.float16), src, 1000, 'meta'))   # host to host
         seen.clear()
         self.assertEqual(to(src, torch.float32).dtype, torch.float32)      # dtype call: original
         self.assertEqual(to(src, 'cpu', torch.float32).dtype, torch.float32)

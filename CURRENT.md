@@ -13,15 +13,17 @@ The four-B70 host section below was added 2026-09-11.
   output-layer weights are that large: eight uploads per two-card start.
 - **The fix.** The `b70-chunked-upload` overlay sends those uploads in 128 MiB pieces during model load. Measured on
   the two-card server: the mapping is never made, answers are exact (12 of 12) and speed is unchanged (90.3 tok/s).
-- **What it does not cover yet.** The two published packages and the one-card lane do not have it (each needs its
-  own acceptance run), and the MiniMax video lane loads models with its own scripts.
+- **One card too.** The one-card server made three such mappings (2.5 GB each, one of them a copy back to host
+  memory); with the overlay none, 12 of 12 exact.
+- **What it does not cover yet.** The two published packages do not have it (each needs its own acceptance run),
+  and the MiniMax video lane loads models with its own scripts.
 - **Not caused by:** a bad card, memory running out, or container swap (swap only made the timing worse).
 - The owner chose a health check over a reboot at 09:40; it passed and there has been no fault since.
 - Also settled this morning: speculation is **not** lossless with several users (stays single-user), and exchanging
   the output-layer results once a step gains nothing (489 vs 488 tok/s at 64 users). Both closed.
 - [Fault note](experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
 
-**Recommended next:** validate the overlay on one card, then decide whether to put it in the two packages.
+**Recommended next:** decide whether to put the overlay in the two packages; measure the video lane's loaders.
 
 ## 2026-10-04, overnight: many users at once, lossless on short and long prompts, up to 488 tokens a second together
 

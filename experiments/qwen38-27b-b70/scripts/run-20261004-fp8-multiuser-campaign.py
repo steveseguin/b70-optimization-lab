@@ -206,11 +206,16 @@ def main():
         stages = (('chunked-log', NEO_KEYS + LOADCOPY_FIX + debug, False), ('chunked', LOADCOPY_FIX, True))
         if os.environ.get('MU_LOADCOPY_CONTROL') == '1':  # the log without the fix (done twice on 2026-10-04: 8 mappings each)
             stages = (('control-log', NEO_KEYS + debug, False),) + stages
+        # MU_LOADCOPY_TP=1: the one-card research server (speculation off), whose output-layer weight is 2.5 GB
+        one_card = os.environ.get('MU_LOADCOPY_TP') == '1'
+        base = (['--tp', '1', '--gpu', '0', '--mem', '0.965', '--max-model-len', '20480', '--batched', '4096', '--cpu-embed',
+                 '--fa-verify-rows'] if one_card else TP2 + MTP5 + SHIPPED)
+        reference, prefix = (R.TP1_MTP0_STRICT, 'tp1') if one_card else (R.TP2_CONTROL_STRICT, 'tp2')
         for label, extra, gate in stages:
-            srv, name, since = start_server(f'tp2-loadcopy-{label}', 18196, TP2 + MTP5 + SHIPPED + extra, since)
+            srv, name, since = start_server(f'{prefix}-loadcopy-{label}', 18196, base + extra, since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if gate and srv.ready:
-                r['strict'] = R.strict(srv.base, name, R.TP2_CONTROL_STRICT)
+                r['strict'] = R.strict(srv.base, name, reference)
                 R.log(f"{name}: strict {r['strict'].get('exact')} exact, {r['strict'].get('tok_s_1_100')} tok/s")
             r['stop'] = srv.stop()
             text = (OUT / name / 'server.log').read_text(errors='replace') if (OUT / name / 'server.log').exists() else ''
