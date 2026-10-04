@@ -1,9 +1,82 @@
-# Packets 94 / 94b / 94c: spread the transformer over more cards (build, 2026-10-04)
+# Packets 94 / 94b / 94c / 94d: spread the transformer over more cards (build, 2026-10-04)
 
 Built offline. **Not launched.** R = `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
 No GPU was used to build or test it. Baseline and references: the short-window
 encoder plus lean conditioning, `stability-01-w93c-*`
 ([milestone](2026-10-04-milestone-window-baseline.md)).
+
+**Launch 94d.** `prepared-encoder-shard4-94d`, manifest
+`cf13cd11b22f9e36b39747ba46dd90ed80c94ab139b5732501cec47ef46fccf3`, run names
+`encoder-server-shard4-94d-<mode>`, runner `scripts/run-campaign-94d.sh <mode>`.
+94, 94b and 94c stay in place; their runners refuse.
+
+### 94c runs, and what 94d fixes
+
+**control (rc 9): the VAEs were not on their card.** The serial capture pass
+worked (coverage complete after two prompts), but every capture prompt is a
+pipeline fill, so no clip is decoded. The 94c receipts show it: every decode
+receipt is an upstream fill, and the loaded models after the pass contain no
+VAE. ComfyUI therefore still held both VAEs on their offload device, and the
+replica builder rightly refused to copy them ("not wholly on its device"). In
+93c the pipelined warm's third prompt emitted a real clip and its native decode
+(ComfyUI `VAE.decode` through model management) loaded the VAEs fully as a side
+effect. 94d makes this explicit: the decode probe first runs one full load of
+both VAEs through ComfyUI's loader, onto xpu:3. That step is allowed only with
+the pipeline idle and before the freeze. It then checks that every VAE tensor is
+on xpu:3 and records before/after counts in the probe receipt
+(`vae_residency`). The replica builder's refusal is unchanged.
+
+**shard3-c (rc 11): the known host stall latched FAULT.** At 14:32:51 UTC the
+kernel logged a hard lockup on CPU 21 with `g2h_read`/`xe_guc_irq_handler` in its
+trace, then a soft lockup on CPU 20 26 s later. That second line matched the
+fault pattern. No GPU fault line occurred.
+
+**A tolerance for one identified host stall.** On this host the xe driver's GuC
+interrupt handler (card 0000:43:00.0) stalls a CPU every 15-30 minutes of GPU
+load. With panic-on-lockup off the machine carries on, and runs through it have
+stayed byte-exact. But it ended every campaign longer than about 15 minutes. It
+is a driver bug still to be fixed, and this is a workaround, not a fix. The
+launcher now:
+
+- treats a journal window as the known stall only if a `hard LOCKUP on cpu` line
+  has `xe_guc_irq_handler` or `g2h_read` in its trace within the same second;
+- counts as part of that event only soft-lockup, RCU-stall, `blocked for more
+  than` and `clocksource: Long readout` lines within 180 s after it;
+- writes each event once to `host-stalls.jsonl` in the run directory, with
+  timestamps and the matched lines;
+- still latches immediately on any GPU fault line (`Fault response`, CAT error,
+  engine reset, GPU HANG, GuC reset, coredump, Timedout job, wedged), inside a
+  stall window too, and on any soft lockup, RCU stall or blocked task without
+  that preceding xe hard lockup.
+
+The same classification is used by the start check, the admission since the
+health receipt, the preflight check and the in-run watcher; journals are read
+with `-o short-unix` for timestamps. Sampler receipts that overlap a stall
+carry `host_stall`. The summary drops intervals that overlap a stall from the
+speed statistics and prints how many and the stall durations, while exactness
+is still checked for every clip.
+
+Tests (`test-packet94d-stall-cpu.py`, real excerpts from
+`data/2026-10-03-xe-guc-hard-lockup/` and 94c's `journal-fault.txt`):
+- the known stall is recorded and not latched;
+- a soft lockup without the xe signature, or later than 180 s, latches;
+- the 02:46 excerpt (lockups followed by `Fault response`) latches.
+
+The dry run now also models the decode probe's precondition: the VAEs that the
+capture pass leaves off their card (checked against the real 94c receipts) are
+refused by the replica builder, then loaded by the explicit step (stand-in load
+to the `meta` device). The real device move and ComfyUI's loader cannot be
+modelled on CPU.
+
+Gate (2026-10-04 14:52 UTC): rc 0 for all three run names without a receipt,
+and with `four-card-health-20261004T1427Z.json`. The 14:32 stall after that
+receipt is admitted as the known stall.
+
+CPU tests: stall 5/5, dry run 6/6, packet 94 11/11, health 6/6. The packet 91
+probe-release test now stubs the new residency step (exercised in the dry run).
+Full lane sweep: 64 pass, 46 old failures unchanged.
+
+### 94c over 94b
 
 **Launch 94c.** `prepared-encoder-shard4-94c`, manifest
 `9af04d202f5c8e7031245bfe9dfa2dbf7616e51a804bbfcb8d0b878fba5722cc`, run names
@@ -195,7 +268,7 @@ placement allowlist. Not worth it in this packet.
   `LTXSamplerCaptureFreeze` (graph `graphs/sampler-capture-freeze.json`):
   pipeline idle and **every card at least 2 GiB free**, else it refuses and the
   timed arm is skipped (recorded, no latch).
-- `scripts/run-campaign-94c.sh <control|shard3-c|shard4-a>` (94 and 94b runners refuse),
+- `scripts/run-campaign-94d.sh <control|shard3-c|shard4-a>` (94, 94b and 94c runners refuse),
   `scripts/run-capture-freeze-94.py`, `scripts/decide-94.py`.
 - Tests: `scripts/test-packet94-shard4-cpu.py`.
 
@@ -226,9 +299,9 @@ control it gets its 160 when it runs; shard4-a gets them only if it beats both.
 
 | Server | Capture pass (base, +10 ... +70) | Placement probe | Timed | Extra |
 | --- | ---: | ---: | ---: | ---: |
-| control (two-way) | 228000 | 228300 | 228600 (40) | - |
-| shard3-c | 228900 | 229200 | 229500 (80) | 229800 (160) |
-| shard4-a | 230100 | 230400 | 230700 (80) | 231000 (160) |
+| control (two-way) | 232000 | 232300 | 232600 (40) | - |
+| shard3-c | 232900 | 233200 | 233500 (80) | 233800 (160) |
+| shard4-a | 234100 | 234400 | 234700 (80) | 235000 (160) |
 
 ## Packet and gate (94c)
 
@@ -271,12 +344,12 @@ control it gets its 160 when it runs; shard4-a gets them only if it beats both.
 
 ```
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-shard4-94c
-M=9af04d202f5c8e7031245bfe9dfa2dbf7616e51a804bbfcb8d0b878fba5722cc
+P=$R/prepared-encoder-shard4-94d
+M=cf13cd11b22f9e36b39747ba46dd90ed80c94ab139b5732501cec47ef46fccf3
 H=<fresh health receipt>
 # MODE=control -> PLACEMENT=two-way;  MODE=shard3-c -> shard3-c;  MODE=shard4-a -> shard4-a
-nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94c-$MODE --health-receipt $H > $R/encoder-server-shard4-94c-$MODE.log 2>&1 &
-nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94c.sh $MODE > $R/campaign-94c-$MODE.log 2>&1 &
+nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94d-$MODE --health-receipt $H > $R/encoder-server-shard4-94d-$MODE.log 2>&1 &
+nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94d.sh $MODE > $R/campaign-94d-$MODE.log 2>&1 &
 ```
 
 Wait for each runner to stop its server before launching the next layout.
