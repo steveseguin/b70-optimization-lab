@@ -1,0 +1,122 @@
+{
+  "schema": "ltx.throughput-fixtures.v1",
+  "prefix": "f95b-shard3cw3-self",
+  "arm": "pipe-samp2-tsh-rep-wlean-s3",
+  "index_base": 258200,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-workers-95/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean-s3.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-workers-95b-shard3-c-w3",
+  "count": 7,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 2,
+  "fills_excluded": [
+    "f95b-shard3cw3-self-00",
+    "f95b-shard3cw3-self-01",
+    "f95b-shard3cw3-self-02",
+    "f95b-shard3cw3-self-03",
+    "f95b-shard3cw3-self-04"
+  ],
+  "all_exact": true,
+  "intervals_between_distinct_clips_s": [
+    2.256
+  ],
+  "steady_mean_s": 2.256,
+  "steady_p95_s": 2.256,
+  "steady_min_s": 2.256,
+  "steady_max_s": 2.256,
+  "seconds_of_wall_per_second_of_video": 2.1657599999999997,
+  "effective_fps": 11.081560283687944,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that re-emit an already-emitted clip during pipeline fill",
+  "rows": [
+    {
+      "prompt": "f95b-shard3cw3-self-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791149388.461,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95b-shard3cw3-self-01",
+      "index": 1,
+      "prompt_fixture": "marble",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791149389.176,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95b-shard3cw3-self-02",
+      "index": 2,
+      "prompt_fixture": "bird",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791149389.241,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95b-shard3cw3-self-03",
+      "index": 3,
+      "prompt_fixture": "pendulum",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791149391.551,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95b-shard3cw3-self-04",
+      "index": 4,
+      "prompt_fixture": "rain",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791149393.22,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null
+    },
+    {
+      "prompt": "f95b-shard3cw3-self-05",
+      "index": 5,
+      "prompt_fixture": "paper",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "reference": "stability-01-w93c-boat",
+      "fill": false,
+      "t_done": 1791149393.502,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f95b-shard3cw3-self-06",
+      "index": 6,
+      "prompt_fixture": "candle",
+      "emitted_index": 1,
+      "emitted_fixture": "marble",
+      "reference": "stability-01-w93c-marble",
+      "fill": false,
+      "t_done": 1791149395.758,
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    }
+  ]
+}
