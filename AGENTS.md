@@ -484,8 +484,12 @@ Owner decisions that bind one lane:
   bit-identical to the base schedule at a fixed seed. Turbo LoRA, fp16 decode
   and anything else that changes a bit are measured, recorded and left to the
   owner. Publish only after a confirmed significant improvement, and the owner
-  reviews first. On 2026-10-03 the owner made fp16 picture decode the default
-  for clip-making on the single-card decode path; every gate stays fp32.
+  reviews first.
+- **All lanes (2026-10-03): lossless only.** No lossy shortcut is a default or
+  a goal: no turbo LoRA, no fp16/bf16 decode, no compressed KV, no pruned model
+  as the headline. The lanes to optimize on the two-card host are Qwen 27B FP8
+  (one card, or two cards in TP2) and MiniMax-H3 (faster, more stable, more
+  deterministic).
 
 Technical notes for the Qwen3.8 vLLM lane (2026-09-04/05), kept because each
 cost real time to learn:
