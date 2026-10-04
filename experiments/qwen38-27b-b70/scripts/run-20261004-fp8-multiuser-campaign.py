@@ -143,6 +143,15 @@ def main():
         # first look (2026-10-04 01:22): only N requests per level, too few to call anything exact
         stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
         stage(results, since, 'tp2-mtp5-s4', 18197, TP2 + MTP5 + SHIPPED + ['--seqs', '4'], '2,4')
+    elif os.environ.get('MU_MODE') == 'tp1':
+        # One card, no speculation, shipped arithmetic: 8 and 16 users against the one-card no-speculation reference
+        # the one-card package is gated on (R310, 896-token attention block, 24,576 context).
+        global REF_LADDER
+        REF_LADDER = Path('/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-ladder.json')
+        tp1 = ['--tp', '1', '--gpu', '0', '--mem', '0.975', '--batched', '2048', '--cpu-embed', '--fa-verify-rows',
+               '--serve-arg=--block-size', '--serve-arg=896', '--max-model-len', '24576']
+        for n, port in ((8, 18196), (16, 18197)):
+            stage(results, since, f'tp1-mtp0-s{n}-sat', port, tp1 + ['--seqs', str(n)], 'saturated')
     elif os.environ.get('MU_MODE') == 'invariant':
         # The batch-invariant switch set as its own arithmetic: first its no-speculation answers (the reference for
         # everything after it) at 64 users, then speculation alone, at 8 and at 16 users against that reference.
