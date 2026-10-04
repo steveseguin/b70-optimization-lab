@@ -3,6 +3,31 @@
 Last reviewed: **2026-10-04 17:45 UTC** (2026-10-04 13:45 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
+## 2026-10-04 15:25 EDT, four-B70 host: the video server was using host RAM equal to its video memory; found and fixed
+
+**A four-card process was costing a GiB of host RAM for every GiB of video memory. One runtime setting removes it.**
+
+- **What happened.** The LTX server with three clips in flight was killed by the out-of-memory killer (14:18 EDT,
+  no GPU fault). With two clips in flight the GPU driver was holding 92.6 GiB of the 115.6 GiB of host RAM
+  (`GPUActive` in `/proc/meminfo`), while the server's own memory was under 10 GiB.
+- **Cause.** In a process with several cards open, every GPU buffer is shared with the other cards, and with the
+  runtime's default deferred backing each shared buffer also holds system pages of its own size. A one-card
+  process does not pay this. Compute speed was never affected.
+- **Fix.** Launch with `NEOReadDebugKeys=1 EnableDeferBacking=0`. Placement only, no arithmetic change. In a small
+  four-card probe: host RAM held 12.6 GiB -> 0.3 GiB, same speed, identical results.
+- **On the real server (runner 95b).** Four-card layout, three clips in flight, the combination that was killed:
+  driver-held host RAM peaked at 3.6 GiB, swap untouched, 10 of 10 and 115 of 115 clips byte-identical to the
+  references, **1.387 s per clip** (best so far; two clips in flight on two cards was 1.413).
+- **What it does not fix.** Speed is now limited by compute per clip on the busiest card (about 1.27 s). More
+  clips in flight will not reach 1.042 s; less GPU work per clip is the next lever.
+- Zero lockups and zero GPU faults this boot on kernel 7.0.0-39 (4.3 hours up, several server runs).
+- This is a per-process environment setting. No host memory setting, power setting, kernel or driver was changed.
+- [Note](experiments/ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md);
+  [guide section](docs/host-stability-and-fault-diagnosis.md#host-ram-that-vanishes-while-a-multi-gpu-process-runs).
+
+**Doing next:** the rest of the 95b chain (two-clip control, four clips, other layouts), then cutting compute per clip
+on card 0.
+
 ## 2026-10-04 11:10 EDT: the model-load GPU fault is explained and has a validated fix; no reboot was needed
 
 **The fault that has hit this host since September is one specific thing, and a small overlay now avoids it.**

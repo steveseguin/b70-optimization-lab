@@ -31,6 +31,11 @@ they are inference rather than measurement.
   capture behind it, turned stalls the machine had survived into silent halts.
 - **"The disk dies first" was wrong.** The journal stops minutes before a
   freeze because journald only syncs every five minutes.
+- **A multi-GPU process was quietly using host RAM equal to its video memory.**
+  With all four cards open in one process, every GPU buffer also held
+  system-memory pages of its own size: 92.6 GiB of a 115.6 GiB host. The
+  kernel's out-of-memory killer took the server down. One runtime setting
+  removes the host copy (found 2026-10-04).
 
 If you only do three things on an unstable multi-GPU box: check whether your
 memory is ECC, run a memory test that covers nearly all of it, and classify
@@ -60,6 +65,7 @@ how every boot ended before theorising.
 | `soft lockup` waiting for other CPUs (`smp_call_function_many_cond`) | 2 boots, 6,603 log lines in one | CPU idle state (C6 class) | Gone after the idle state was disabled |
 | `clocksource: Long readout interval` (4 to 72 s) | 7 lines in 5 boots, all unclean | A symptom of the stalls above, not a cause | Follows the lockups |
 | `xe` engine faults (`Fault response: Unsuccessful -ENOENT`, CAT error, engine reset) | 5 boots | Driver or card, at process teardown | Not followed closely by freezes (22 to 100 minutes later; two of those boots ended cleanly) |
+| GPU server killed by the out-of-memory killer; swap full, page cache squeezed to nothing, yet the process's own memory (RSS) is under 10 GiB | 1 kill; present in every four-card run | The GPU runtime keeps a host-RAM copy of every buffer in a multi-card process | `GPUActive` in `/proc/meminfo`; see "Host RAM that vanishes" |
 | Files zero-length or NUL-filled after a freeze | every freeze | Normal: unflushed page cache is lost | See "Why evidence disappears" |
 | Journal ends minutes before the freeze | most freezes | Normal: journald's sync interval | See "Why evidence disappears" |
 
@@ -426,6 +432,93 @@ alone (with tens of GB of swap its default never triggers) and to prefer the mod
 over the desktop; and a watchdog around each job that kills that job, not the session, when
 available memory falls below a floor.
 
+## Host RAM that vanishes while a multi-GPU process runs
+
+Found 2026-10-04 on the four-card host (kernel 7.0.0-39, compute-runtime
+26.18.38308.1, Level Zero loader 1.28.2, PyTorch XPU). Not a hardware fault,
+but it ends the same way as one: the server dies.
+
+**Symptom.** A video server holding about 100 GB of video memory across four
+cards ran the host out of memory when a third sampler worker was added. The
+out-of-memory killer killed the server. No GPU fault was logged. While any
+four-card server was up:
+
+- `MemAvailable` fell to 6-16 GiB of 115.6 GiB and all 8 GiB of swap was used;
+- the page cache was squeezed to under 1 GiB (so model files were re-read
+  from disk);
+- the server's own memory (RSS) was only 1-9 GiB. Nothing in `ps`, page cache
+  or slab explained the other ~90 GiB.
+
+**Cause.** Two defaults of the GPU software stack combine:
+
+1. *Buffers are shared between cards.* When one process has several cards in
+   one SYCL context (PyTorch does this), Unified Runtime asks the driver to
+   make every device allocation reachable from the other cards, so card-to-card
+   copies can go directly. Each buffer is exported as a dma-buf and imported
+   on every peer card. Those imports are what `drm-total-gtt` in
+   `/proc/<pid>/fdinfo` and `gtt_mm` in debugfs count: on each card that figure
+   equals the other cards' video memory added together. It is bookkeeping,
+   not memory.
+2. *Deferred backing.* On this GPU family the runtime creates buffers with
+   their backing deferred. A buffer that is created that way and then shared
+   ends up holding system-memory pages of its own size as well as its video
+   memory. The kernel counts those pages as `GPUActive` in `/proc/meminfo`
+   (kernel 6.18 and later). They are not in any process's RSS.
+
+So in a multi-card process every GiB of video memory in use costs a GiB of
+host RAM. Host RAM, not video memory, becomes the limit: this host could use
+about 100 of its 128 GiB of video memory. A process that opens a single card
+does not pay this (16 GiB allocated on one card: `MemAvailable` unchanged).
+Why the system pages are kept once the buffer is in video memory is not
+established; the measurements below are.
+
+Speed is not affected. The cards compute from video memory either way
+(603 GB/s of weight read in the probe in every configuration).
+
+**How to check.**
+
+```bash
+grep -E 'GPUActive|MemAvailable|SwapFree' /proc/meminfo      # GPUActive near your VRAM use = this problem
+sudo tail -1 /sys/kernel/debug/dma_buf/bufinfo               # "Total N objects, B bytes": shared GPU buffers
+sudo grep usage /sys/kernel/debug/dri/0000:*/tile0/vram_mm   # real video memory in use per card
+sudo grep usage /sys/kernel/debug/dri/0000:*/gtt_mm          # imports (plus any real system-memory buffers)
+```
+
+Live server, two clips in flight, default settings: `GPUActive` 92.6 GiB,
+4,107 shared buffers totalling 98.9 GB, video memory in use 26.1 / 21.7 /
+30.0 / 22.6 GB, imports 74.1 / 78.4 / 70.3 / 77.7 GB.
+
+**Fix.** Start the process with
+
+```bash
+NEOReadDebugKeys=1 EnableDeferBacking=0
+```
+
+It changes where buffers are placed, not any arithmetic. Buffers are still
+shared, so direct card-to-card copies keep working.
+
+| Four-card probe, 12 GiB of buffers alive | Host RAM held by the GPU driver | Shared with other cards | Speed | Results |
+| --- | ---: | --- | ---: | --- |
+| default | 12.6 GiB | yes, at allocation | 603 GB/s | reference |
+| `SYCL_UR_USE_LEVEL_ZERO_V2=0 UR_L0_USM_RESIDENT=0x1` | 4.1 GiB | only buffers copied across cards | 603 GB/s | identical |
+| `NEOReadDebugKeys=1 ForceZeDeviceCanAccessPerReturnValue=0` | 0.3 GiB | no | 603 GB/s | identical |
+| `NEOReadDebugKeys=1 EnableDeferBacking=0` | 0.3 GiB | yes | 603 GB/s | identical |
+
+On the real server (86 GB of video memory in use, three sampler workers, the
+combination that had been killed): `GPUActive` 3.6 GiB and `MemAvailable`
+100 GiB, against 92.6 GiB and 16 GiB before. That run then
+finished with every checked clip byte-identical to its reference (10 of 10
+in the placement check, 115 of 115 timed), no fault and no lockup, at 1.387 s
+per clip. Swap was never touched.
+
+The second setting in the table (`ForceZeDeviceCanAccessPerReturnValue=0`)
+is the fallback. It stops the sharing itself, so card-to-card copies go
+through host memory.
+
+The probe is `experiments/ltx25-b70/scripts/probe-multicard-buffer-sharing.py`
+(30 seconds, all cards visible, no server running). Full account:
+[host RAM shadow of VRAM](../experiments/ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md).
+
 ## Kernel and firmware notes (as of 2026-10-03)
 
 - Ubuntu 7.0.0-34 is security-only: no `xe`, DRM, AMD or idle changes against
@@ -464,6 +557,8 @@ available memory falls below a floor.
 7. Change one thing per boot. A kernel swap and a firmware swap on the same
    boot told us nothing about either.
 8. No installs and no promoted measurements while known-bad memory is in use.
+9. When host memory runs short, read `GPUActive` in `/proc/meminfo` before
+   looking at processes. GPU driver pages are not in anyone's RSS.
 
 ## Not established
 
@@ -476,6 +571,7 @@ available memory falls below a floor.
 ## Evidence
 
 - [Raw memory-test logs and summaries](../data/2026-10-03-host-memory-fault/README.md)
+- [Host RAM shadow of video memory, 2026-10-04](../experiments/ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md)
 - [Host forensic review, 2026-10-03](../experiments/ltx25-b70/notes/2026-10-03-host-forensics-and-catch-up.md)
 - [Freeze evidence, 2026-09-19](../experiments/ltx25-b70/notes/2026-09-19-freeze-evidence-soft-lockup.md) (its "driver excluded" and "storage first" conclusions are corrected above)
 - [Userspace memory test that passed, 2026-09-20](../experiments/ltx25-b70/notes/2026-09-20-memtester-result.md)

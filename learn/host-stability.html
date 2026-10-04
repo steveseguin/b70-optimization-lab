@@ -71,6 +71,7 @@
       <li>We <strong>switched the bad memory off in software</strong> (10 GB of 125), tested the rest twice, and got <strong>zero errors</strong>.</li>
       <li>Separately: <strong>one GPU sometimes stops answering</strong>, a <strong>CPU idle-state bug</strong> caused idle freezes, and a <strong>debugging setting</strong> turned stalls the machine survived into silent halts.</li>
       <li>On our <strong>second machine</strong> the GPU faults came from a <strong>container memory limit</strong> that made the container swap while loading a model. One launcher argument made them rare (one fault in the 59 starts since, against five in four days before), and uploading large weights in pieces removes the operation that faults.</li>
+      <li>A program using <strong>several cards at once was silently using as much main memory as video memory</strong>: 92.6 GB of 115.6. The system killed it for running out of memory. One runtime setting fixes it.</li>
       <li>One popular theory, "the disk dies first", was <strong>wrong</strong>. It was the system log's five-minute save interval.</li>
     </ul>
   </div>
@@ -81,7 +82,7 @@
   <div class="scroller"><table class="data">
     <thead><tr><th>Symptom</th><th class="num">How often</th><th>Cause</th></tr></thead>
     <tbody>
-      <tr><td>Machine frozen solid, reset by hand</td><td class="num">25 boots</td><td>A mix of all four faults below</td></tr>
+      <tr><td>Machine frozen solid, reset by hand</td><td class="num">25 boots</td><td>A mix of faults 1 to 4 below</td></tr>
       <tr><td>Machine reset itself</td><td class="num">4 boots</td><td>Faulty memory (once during a memory-only test)</td></tr>
       <tr><td>One byte wrong after loading a 26 GB file that was correct on disk</td><td class="num">2</td><td>Faulty memory</td></tr>
       <tr><td>Program crash at the exact same instruction</td><td class="num">2</td><td>Faulty memory (inferred)</td></tr>
@@ -89,6 +90,7 @@
       <tr><td><code>hard LOCKUP</code> in the GPU driver's interrupt handler</td><td class="num">5</td><td>One specific GPU stops answering</td></tr>
       <tr><td><code>soft lockup</code>, a CPU waiting forever for another CPU</td><td class="num">2 boots</td><td>CPU deep idle state</td></tr>
       <tr><td>GPU engine faults when a program exits</td><td class="num">5 boots</td><td>Driver or card; did not lead straight to freezes</td></tr>
+      <tr><td>GPU program killed for running out of memory, though the program itself is small</td><td class="num">1 kill; present in every four-card run</td><td>The GPU runtime keeps a main-memory copy of every buffer when one program uses several cards</td></tr>
       <tr><td>Log stops minutes before the freeze; recent files empty</td><td class="num">every freeze</td><td>Normal caching, not a fault</td></tr>
     </tbody>
   </table></div>
@@ -148,6 +150,26 @@ cat /proc/irq/$i/effective_affinity_list                 # which CPU serves this
   <h2>Fault 4: a setting that hid the evidence</h2>
   <p>We had told the kernel to stop on any lockup so we could read the trace. Nothing was set up to save that trace, so the machine just stopped. A stall it had survived twice became a permanent silent freeze. Only use panic-on-lockup when something will catch the panic.</p>
 
+  <h2>Fault 5: video memory that also costs main memory</h2>
+  <p>Our video server uses all four cards from one program. When we added a third worker, the system ran out of main memory and killed the server. No GPU fault was logged. The puzzle: the program's own memory was under 10 GB, yet about 90 GB of the machine's 115.6 GB was gone, the swap was full and the file cache had been squeezed to almost nothing. <span class="badge lab">Lab-measured</span></p>
+  <p><strong>The cause is two defaults in Intel's GPU software that combine.</strong> When one program opens several cards, every buffer on a card is shared with the other cards so that card-to-card copies can go directly. And on this GPU family buffers are created with "deferred backing". A buffer that is both deferred and shared ends up holding main-memory pages of its own size as well as its video memory. So every gigabyte of video memory in use costs a gigabyte of main memory. Main memory, not video memory, became the limit: we could use about 100 of our 128 GB of video memory. A program that opens only one card does not pay this.</p>
+  <p>The kernel reports these pages on their own line, and nowhere else:</p>
+  <pre><code>grep -E 'GPUActive|MemAvailable' /proc/meminfo     # GPUActive close to your video memory use = this problem
+sudo tail -1 /sys/kernel/debug/dma_buf/bufinfo      # how many GPU buffers are shared, and their total size</code></pre>
+  <p>The fix is one setting on the program's command line. It changes where buffers live, not the arithmetic:</p>
+  <pre><code>NEOReadDebugKeys=1 EnableDeferBacking=0 python your_server.py</code></pre>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Measurement</th><th class="num">Default</th><th class="num">With the setting</th></tr></thead>
+    <tbody>
+      <tr><td>Small four-card test, 12 GB of buffers: main memory held by the GPU driver</td><td class="num">12.6 GB</td><td class="num">0.3 GB</td></tr>
+      <tr><td>Same test: speed reading a 4 GB weight</td><td class="num">603 GB/s</td><td class="num">603 GB/s</td></tr>
+      <tr><td>Same test: results</td><td>reference</td><td>identical</td></tr>
+      <tr><td>Real video server: main memory held by the GPU driver</td><td class="num">92.6 GB</td><td class="num">3.6 GB</td></tr>
+      <tr><td>Real video server: main memory still available</td><td class="num">16 GB</td><td class="num">100 GB</td></tr>
+    </tbody>
+  </table></div>
+  <p>With the setting, the three-worker server that had been killed ran to the end: every checked clip was byte-identical to its reference (125 of 125), with no fault. Speed was never affected: the cards compute from their own video memory either way. If the setting ever misbehaves, <code>NEOReadDebugKeys=1 ForceZeDeviceCanAccessPerReturnValue=0</code> stops the sharing itself, at the price of card-to-card copies going through main memory.</p>
+
   <h2>A second machine: faults from a container memory limit</h2>
   <p>Our two-card host has error-correcting memory and its error counters read zero, so none of the above applies to it. At least five times in two weeks a card's copy engine faulted while a model was loading, never while it was serving: <code>Fault response: Unsuccessful -EINVAL</code>, then <code>Engine memory CAT error ... class=bcs</code>, then a timed-out job. Other owners of two B70s report the same lines in an open Intel issue.</p>
   <p>A recorder beside a start showed 4.4 GB swapped out during the load with 7 GB of memory free. The host was not doing it. The container was started with <code>--memory 12g --memory-swap 16g</code>, the 29 GB of weights filled its page cache, it hit its own 12 GB limit about two thousand times, and each time the kernel pushed the container's working memory to swap. A container at its limit swaps whatever the host's swappiness is set to.</p>
@@ -179,6 +201,7 @@ cat /sys/fs/cgroup/system.slice/docker-&lt;id&gt;.scope/memory.swap.peak   # sho
       <tr><td>Freeze leaves no trace at all</td><td>Panic with nowhere to write</td><td><code>sysctl kernel.hardlockup_panic kernel.panic</code></td><td>Turn panic-on-lockup off, or set up a network console</td></tr>
       <tr><td>Log ends minutes early; new files empty</td><td>Normal caching</td><td>Nothing</td><td>Sync important results as they are written</td></tr>
       <tr><td>Copy-engine faults (<code>class=bcs</code>, <code>-EINVAL</code>) while a model loads in a container</td><td>The container is swapping at its own memory limit</td><td><code>memory.swap.peak</code> and <code>memory.events</code> in the container's cgroup</td><td>Set <code>--memory-swap</code> equal to <code>--memory</code></td></tr>
+      <tr><td>Multi-card program killed for lack of memory; swap full; the program itself is small</td><td>GPU buffers each hold a main-memory copy</td><td><code>GPUActive</code> in <code>/proc/meminfo</code></td><td>Start it with <code>NEOReadDebugKeys=1 EnableDeferBacking=0</code></td></tr>
       <tr><td>Newer kernel number, same GPU faults</td><td>The update had no GPU changes</td><td>The kernel changelog</td><td>Pick a kernel for its driver fixes, not its number</td></tr>
     </tbody>
   </table></div>
