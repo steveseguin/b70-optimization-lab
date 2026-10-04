@@ -54,6 +54,20 @@ So speculation **can** be made lossless under load on this image, through sixtee
 only at two to four users (about 165 against 125 together at four) and loses to it from eight users up; it also
 costs a single user 17 %. It does not make sixty-four users exact.
 
+## One card
+
+Same check on one card (shipped image, no speculation, 24,576-token context, 896-token attention block), against the
+frozen one-card no-speculation reference the one-card package is gated on:
+
+| Users at once | Equal to solo, pass 1 / 2 | Equal to the frozen reference | Together | Per user |
+| ---: | --- | --- | ---: | ---: |
+| 1 (shipped recipe, depth-5 speculation) | 12/12 strict | yes | 54.0 | 54.0 |
+| 8 | 64/64, 64/64 | yes | 137 | 17.1 |
+| 16 | 64/64, 64/64 | yes | **245** | 15.3 |
+
+One card has far less room for conversations than two: its shared context pool is about 52,000 tokens in this
+configuration, against about 400,000 on two cards. Sixteen users on one card means about 3,000 tokens each.
+
 ## What this means for the recipe
 
 - **One user: the shipped recipe, 90 tok/s.** Unchanged.
@@ -73,4 +87,3 @@ launcher, and editing the launcher moves bytes the frozen acceptance packet pins
   ladder is short-context). The September work found a mixed-step effect in the GDN kernel that `GDN_SPLIT_MIXED=1`
   (shipped) handles; it should be re-checked at this width with long prompts.
 - Where between 16 and 32 the lossless boundary sits, and whether it is the same on every boot.
-- One card (measured next).
