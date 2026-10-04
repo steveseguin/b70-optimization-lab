@@ -99,3 +99,25 @@ the result is a long-context profile that is faster there and 2.3 % slower on sh
 asynchronous pipeline (longer drafts while a copy run is under way, decided one step ahead) follows only if the
 gain is real. A 17-row verify also needs the speculative recurrent kernel censused for that row count; the
 September census script does not run on this image and has to be repaired first.
+
+## Longer copy drafts: built (18:30 EDT), first arm preregistered
+
+Built by reading the engine (helper agent), 27 CPU tests pass. How it works: the server is launched with more verify
+slots than the head's depth (`num_speculative_tokens` = K) and the stock per-batch-size schedule keeps the head at 5
+passes; in the synchronous pipeline the overlay lengthens a request's draft list to as many copied tokens as follow
+the match (6 to K). Requests without a copy keep the 5-token draft and the 6-row verify.
+
+**What the launch itself changes, even on steps with no copy** (so the control arm uses the same launch):
+the recurrent layers reserve K+1 state slots and a wider convolution state per request, and from K = 10 the
+attention block size moves from 832 to 896 tokens. K = 16 would also reach a different kernel for one recurrent
+projection at 17 rows. **First arm: K = 9**, which keeps the block size, stays under that switch, and stays inside
+state widths this lane has run before. Sized at about +11 % on the long suite.
+
+**Test.** `MU_MODE=copydraft MU_COPY_K=9`: two fresh two-card servers, same launch (synchronous, 9 slots, head at 5),
+one with long copy drafts and one without. Each: strict suite, the eight long prompts, the short ladder.
+
+**Rule.** Both arms must be 12/12, 8/8 and 64/64 against the frozen references. Then the long-suite decode rate of
+the copy arm against (a) its control and (b) the shipped asynchronous recipe (89.9 tok/s median on this suite).
+Kept only if it beats the shipped recipe on the long suite by 5 % or more; the strict-suite cost of this launch is
+reported beside it. An exact result here is exact by test; the by-construction claim for 7 to 10-row verifies also
+needs the repaired speculative-kernel census (in progress).

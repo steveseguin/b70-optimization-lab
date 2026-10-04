@@ -218,9 +218,19 @@ def main():
         copy = ['--overlay', 'b70-copy-draft', '--extra-env', 'B70_COPY_DRAFT=1']
         for extra in os.environ.get('MU_COPY_ENV', '').split():
             copy += ['--extra-env', extra]
+        deep, tag = [], ''
+        if os.environ.get('MU_COPY_K'):
+            # longer copy drafts: K verify slots reserved, the head still drafts 5 (the stock per-batch-size schedule),
+            # synchronous pipeline so each request's draft is a per-step list. Both arms get the same launch; only
+            # the copy arm lets a copy draft use more than 5 tokens.
+            k = int(os.environ['MU_COPY_K'])
+            deep = ['--serve-arg=--no-async-scheduling', '--spec-config-json', json.dumps({
+                'method': 'qwen3_next_mtp', 'num_speculative_tokens': k, 'num_speculative_tokens_per_batch_size': [[1, 1, 5]]})]
+            copy = copy + ['--extra-env', f'B70_COPY_DRAFT_K_MAX={k}']
+            tag = f'-sync-k{k}'
         arms = (('control', []), ('copy', copy)) if os.environ.get('MU_COPY_CONTROL', '1') == '1' else (('copy', copy),)
         for label, extra in arms:
-            srv, name, since = start_server(f'tp2-mtp5-{label}', 18196, TP2 + MTP5 + SHIPPED + LOADCOPY_FIX + extra, since)
+            srv, name, since = start_server(f'tp2-mtp5{tag}-{label}', 18196, TP2 + MTP5 + SHIPPED + LOADCOPY_FIX + deep + extra, since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
                 r['strict'] = R.strict(srv.base, name, R.TP2_CONTROL_STRICT)
@@ -252,7 +262,7 @@ def main():
             for line in r['copy_draft_lines']:
                 R.log(f'{name}: {line[:200]}')
             R.save_results(); R.fault_check(since); R.wait_gpus_free()
-        a, b = results.get('tp2-mtp5-control', {}).get('long'), results.get('tp2-mtp5-copy', {}).get('long')
+        a, b = results.get(f'tp2-mtp5{tag}-control', {}).get('long'), results.get(f'tp2-mtp5{tag}-copy', {}).get('long')
         if a and b:
             R.log(f"long suite answers identical between the arms: {a['token_sha'] == b['token_sha']}; decode median "
                   f"{a['decode_tok_s_median']:.1f} -> {b['decode_tok_s_median']:.1f} tok/s "

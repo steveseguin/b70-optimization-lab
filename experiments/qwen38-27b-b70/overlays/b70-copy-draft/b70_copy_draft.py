@@ -23,6 +23,20 @@ Where the context comes from (vLLM 0.29 V1 runner, read from the R310 image):
 
 Every TP rank makes the same decision from the same sampled tokens (no readiness polling, no rank-local state), so the
 ranks always feed identical ids.
+
+Long copy drafts (B70_COPY_DRAFT_K_MAX > the MTP depth, sync scheduling only; off by default; sizing in the same
+prereg note). A request whose context has a copy match with at least depth+1 tokens
+after it gets up to K_MAX copied tokens that step (as many as follow the occurrence, capped by its remaining
+max_tokens and max_model_len); every other request keeps its depth-k MTP draft. Needs a launch that reserves K_MAX
+verify slots while the MTP head keeps its depth:
+  --speculative-config '{"method": "qwen3_next_mtp", "num_speculative_tokens": K_MAX,
+                         "num_speculative_tokens_per_batch_size": [[1, <max_num_seqs>, 5]]}' --no-async-scheduling
+(the GDN layers allocate num_speculative_tokens+1 recurrent-state slots and conv columns per request and assert the
+verify width fits, so the slot count is fixed at startup; the one-tier schedule makes the scheduler pass 5 as
+`num_spec_tokens_to_schedule`, which the stock drafter uses as its loop count). The sync scheduler schedules
+len(list) spec tokens per request (no clamp to num_speculative_tokens), so the only change is in the list returned by
+`take_draft_token_ids` on the output rank; no scheduler or engine-core method is patched. In async mode a
+K_MAX > depth is ignored with one log line and the fixed-length behaviour above is kept.
 """
 import os
 from bisect import bisect_right
@@ -34,19 +48,21 @@ _PLACEHOLDER = -1
 # Pure lookup (no torch)
 # ----------------------------------------------------------------------------------------------------------------------
 
-def find_copy_draft(context, k, min_match, max_match):
+def find_copy_draft(context, k, min_match, max_match, k_max=None):
     """Reference lookup. The longest suffix of `context` of length max_match..min_match that occurs earlier with at
-    least k tokens after that occurrence; the most recent such occurrence; returns the k tokens that follow it, or
-    None. Occurrences may overlap the suffix (periodic text); the k tokens must lie inside the context."""
+    least k tokens after that occurrence; the most recent such occurrence; returns the tokens that follow it (k of
+    them, or with `k_max` as many as follow inside the context up to k_max), or None. Occurrences may overlap the
+    suffix (periodic text); the returned tokens must lie inside the context."""
     context = list(context)
     length = len(context)
     if k < 1 or min_match < 1 or max_match < min_match:
         return None
+    take = max(k, k_max or k)
     for n in range(min(max_match, length - k), min_match - 1, -1):
         suffix = context[length - n:]
         for start in range(length - n - k, -1, -1):
             if context[start:start + n] == suffix:
-                return context[start + n:start + n + k]
+                return context[start + n:start + n + take]
     return None
 
 
@@ -82,7 +98,8 @@ class CopyIndex:
             else:
                 positions.append(start)
 
-    def propose(self, k):
+    def propose(self, k, k_max=None):
+        """`find_copy_draft(self.tokens, k, min_match, max_match, k_max)` (exactly, when max_scan is None)."""
         tokens, m = self.tokens, self.min_match
         length = len(tokens)
         if k < 1 or length < m + k:
@@ -111,7 +128,7 @@ class CopyIndex:
         if best_start < 0:
             return None
         begin = best_start + m
-        return tokens[begin:begin + k]
+        return tokens[begin:begin + max(k, k_max or k)]
 
 
 def accepted_prefix(row):
@@ -127,13 +144,15 @@ def accepted_prefix(row):
 class CopyDraftBook:
     """Per-request histories, the copy decision, and counters. No torch."""
 
-    def __init__(self, k, min_match, max_match, max_scan=256):
+    def __init__(self, k, min_match, max_match, max_scan=256, k_max=0):
         self.k, self.min_match, self.max_match, self.max_scan = k, min_match, max_match, max_scan
+        self.k_max = k_max        # > k: long copy drafts of k+1..k_max tokens are on (sync scheduling only)
         self.index = {}           # req_id -> CopyIndex
         self.poisoned = set()     # req_ids whose history can no longer be trusted (never rebuilt in async mode)
-        self.last_kind = {}       # req_id -> 'copy' | 'mtp' for the draft now waiting for verification
+        self.last_kind = {}       # req_id -> 'copy' | 'long' | 'mtp' for the draft now waiting for verification
         self.stats = dict(steps=0, steps_with_copy=0, rows=0, copies=0, copy_verified=0, copy_accepted=0,
-                          mtp_verified=0, mtp_accepted=0, rebuilds=0, skipped_steps=0, poisoned=0)
+                          mtp_verified=0, mtp_accepted=0, rebuilds=0, skipped_steps=0, poisoned=0,
+                          long_drafts=0, long_tokens=0, long_verified=0, long_accepted=0, long_capped=0)
 
     def _new(self, tokens):
         return CopyIndex(self.min_match, self.max_match, self.max_scan, tokens)
@@ -204,6 +223,20 @@ class CopyDraftBook:
             self.last_kind[req_id] = 'copy' if draft is not None else 'mtp'
         return draft
 
+    def choose_long(self, req_id, min_len, max_len):
+        """A copy draft of min_len..max_len tokens (as many as follow the matched occurrence), or None. Records the
+        kind only when it places one; otherwise the caller falls back to `choose`."""
+        index = self.index.get(req_id)
+        if index is None or max_len < min_len or min_len < 1:
+            return None
+        draft = index.propose(min_len, max_len)
+        if draft is None or not min_len <= len(draft) <= max_len:
+            return None
+        self.last_kind[req_id] = 'long'
+        self.stats['long_drafts'] += 1
+        self.stats['long_tokens'] += len(draft)
+        return draft
+
     def step(self, rows, copies):
         self.stats['steps'] += 1
         self.stats['rows'] += rows
@@ -217,11 +250,19 @@ class CopyDraftBook:
         def rate(kind):
             verified = s[kind + '_verified']
             return '%.2f/%d over %d rows' % (s[kind + '_accepted'] / verified, self.k, verified) if verified else 'n/a'
-        return ('b70_copy_draft[%s]: %d draft steps, %d with a copy draft (%.1f%%), %d of %d rows copied; '
+        line = ('b70_copy_draft[%s]: %d draft steps, %d with a copy draft (%.1f%%), %d of %d rows copied; '
                 'accepted per verify: copy %s, mtp %s; skipped steps %d, history rebuilds %d, poisoned %d' % (
                     mode, s['steps'], s['steps_with_copy'], 100.0 * s['steps_with_copy'] / max(1, s['steps']),
                     s['copies'], s['rows'], rate('copy'), rate('mtp'), s['skipped_steps'], s['rebuilds'],
                     s['poisoned']))
+        if self.k_max:
+            line += ('; long drafts (max %d) %d placed, mean length %s, accepted per verify %s, '
+                     'rows with a shorter budget %d'
+                     % (self.k_max, s['long_drafts'],
+                        '%.1f' % (s['long_tokens'] / s['long_drafts']) if s['long_drafts'] else 'n/a',
+                        '%.2f over %d rows' % (s['long_accepted'] / s['long_verified'], s['long_verified'])
+                        if s['long_verified'] else 'n/a', s['long_capped']))
+        return line
 
 
 def _as_list(values):
@@ -234,9 +275,11 @@ def settings_from_env(environ=None):
     max_match = int(environ.get('B70_COPY_DRAFT_MAX_MATCH', '8'))
     max_scan = int(environ.get('B70_COPY_DRAFT_MAX_SCAN', '256'))
     log_every = int(environ.get('B70_COPY_DRAFT_LOG_EVERY', '2000'))
+    k_max = int(environ.get('B70_COPY_DRAFT_K_MAX', '0').strip() or '0')
     if min_match < 1 or max_match < min_match:
         raise ValueError('b70_copy_draft: need 1 <= B70_COPY_DRAFT_MIN_MATCH <= B70_COPY_DRAFT_MAX_MATCH')
-    return dict(min_match=min_match, max_match=max_match, max_scan=max_scan or None, log_every=max(1, log_every))
+    return dict(min_match=min_match, max_match=max_match, max_scan=max_scan or None, log_every=max(1, log_every),
+                k_max=max(0, k_max))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -295,6 +338,8 @@ class _State:
         self.proposed = False
         self.disabled = False
         self.announced = False
+        self.announced_long = False
+        self.long_k = 0           # > k: longest copy draft (sync only); 0 = the fixed-k behaviour
 
 
 def _is_mtp(spec):
@@ -322,15 +367,55 @@ def _state_for(runner, torch, logger, settings, copier_factory):
         logger.warning('b70_copy_draft: not active (%s); drafts are left as they are', reason)
         runner._b70_copy_draft_state = False
         return None
-    k = int(runner.num_spec_tokens)
+    num_spec = int(runner.num_spec_tokens)
+    k, single_tier = mtp_depth(spec, num_spec)
     mode = 'async' if runner.use_async_scheduling else 'sync'
-    book = CopyDraftBook(k, settings['min_match'], settings['max_match'], settings['max_scan'])
+    long_k = _long_mode(mode, k, single_tier, num_spec, settings.get('k_max', 0), logger)
+    book = CopyDraftBook(k, settings['min_match'], settings['max_match'], settings['max_scan'], long_k)
     copier = (copier_factory or (lambda: StreamCopier(torch)))() if mode == 'async' else None
     state = _State(mode, k, book, copier, settings['log_every'])
+    state.long_k = long_k
     runner._b70_copy_draft_state = state
-    logger.warning('b70_copy_draft: active, %s scheduling, %d draft tokens, match %d..%d tokens', mode, k,
-                   settings['min_match'], settings['max_match'])
+    logger.warning('b70_copy_draft: active, %s scheduling, %d draft tokens, match %d..%d tokens%s', mode, k,
+                   settings['min_match'], settings['max_match'],
+                   ', long copy drafts %d..%d tokens (verify slots %d)' % (k + 1, long_k, num_spec) if long_k else '')
     return state
+
+
+def mtp_depth(spec, num_spec):
+    """(draft tokens the MTP head makes per step at batch size 1, whether every batch size uses that depth). The
+    depth is `num_speculative_tokens` unless a `num_speculative_tokens_per_batch_size` schedule lowers it; the
+    scheduler hands the drafter that value as `num_spec_tokens_to_schedule` (scheduler.py, dynamic_sd_lookup)."""
+    schedule = getattr(spec, 'num_speculative_tokens_per_batch_size', None)
+    if not schedule:
+        return num_spec, True
+    tiers = sorted((int(e[0]), int(e[1]), min(num_spec, int(e[2]))) for e in schedule)
+    return tiers[0][2], len({t[2] for t in tiers}) == 1
+
+
+def _long_mode(mode, depth, single_tier, num_spec, k_max, logger):
+    """The longest copy draft to place (0 = off): k_max when the launch reserves k_max verify slots per request
+    (num_speculative_tokens >= k_max) while the MTP head drafts fewer (a one-tier dynamic schedule), sync only."""
+    if k_max <= depth:
+        return 0
+    if mode != 'sync':
+        logger.warning('b70_copy_draft: B70_COPY_DRAFT_K_MAX=%d ignored: long copy drafts need '
+                       '--no-async-scheduling; using fixed %d-token copy drafts', k_max, depth)
+        return 0
+    if not single_tier:
+        logger.warning('b70_copy_draft: B70_COPY_DRAFT_K_MAX=%d ignored: the num_speculative_tokens_per_batch_size '
+                       'schedule must use one depth for every batch size; using fixed %d-token copy drafts',
+                       k_max, depth)
+        return 0
+    if num_spec <= depth:
+        logger.warning('b70_copy_draft: B70_COPY_DRAFT_K_MAX=%d ignored: launch with num_speculative_tokens=%d and '
+                       'num_speculative_tokens_per_batch_size=[[1, <max_num_seqs>, %d]] (the GDN state slots and '
+                       'verify buffers are sized by num_speculative_tokens); using fixed %d-token copy drafts',
+                       k_max, k_max, depth, depth)
+        return 0
+    if num_spec < k_max:
+        logger.warning('b70_copy_draft: B70_COPY_DRAFT_K_MAX=%d capped to num_speculative_tokens=%d', k_max, num_spec)
+    return min(k_max, num_spec)
 
 
 def _fail(state, logger, where):
@@ -369,6 +454,9 @@ def _maybe_log(state, logger):
     if not state.announced and state.book.stats['copies']:
         state.announced = True
         logger.warning('b70_copy_draft: first copy draft placed')
+    if not state.announced_long and state.book.stats['long_drafts']:
+        state.announced_long = True
+        logger.warning('b70_copy_draft: first long copy draft placed (%d tokens)', state.book.stats['long_tokens'])
     if state.book.stats['steps'] % state.log_every == 0:
         logger.warning(state.book.summary(state.mode))
 
@@ -395,7 +483,39 @@ def _replace_async(runner, state, torch, logger):
     _maybe_log(state, logger)
 
 
+def long_budget(runner, req_id, i, long_k):
+    """The longest draft this request may take this step: a verify of L drafts yields up to L+1 tokens, which must
+    fit in the request's remaining max_tokens, and the scheduler only schedules positions below max_model_len
+    (scheduler.py: num_new_tokens <= max_model_len - num_computed_tokens - 1, i.e. L <= max_model_len - n - 1 for a
+    request holding n tokens). Also 0 for structured-output requests (the grammar rewrites their drafts)."""
+    request = runner.requests.get(req_id)
+    if request is None:
+        return 0
+    params = getattr(request, 'sampling_params', None)
+    if params is not None and getattr(params, 'structured_outputs', None) is not None:
+        return 0
+    n = int(runner.input_batch.num_tokens_no_spec[i])
+    budget = min(long_k, int(runner.max_model_len) - n - 1)
+    max_tokens = getattr(params, 'max_tokens', None) if params is not None else None
+    prompt_len = getattr(request, 'num_prompt_tokens', None)
+    if prompt_len is None:
+        prompt = getattr(request, 'prompt_token_ids', None)
+        prompt_len = len(prompt) if prompt is not None else None
+    if max_tokens is not None:
+        if prompt_len is None:
+            return 0
+        budget = min(budget, int(max_tokens) - (n - int(prompt_len)) - 1)
+    return budget
+
+
 def _apply_sync(runner, state, result, logger):
+    if state.k < int(runner.num_spec_tokens):
+        # The launch reserves more verify slots than the MTP head drafts (long copy drafts): a row wider than the
+        # head's depth is only the drafter-skipped zero fill (gpu_model_runner.sample_tokens, expand(n,
+        # num_spec_tokens)); stock with num_speculative_tokens = depth fills depth zeros, so cut it to that.
+        for row in result.draft_token_ids:
+            if len(row) > state.k:
+                del row[state.k:]
     if (not state.proposed or runner._draft_token_ids is not state.live
             or getattr(runner, '_draft_probs', None) is not None):
         state.book.stats['skipped_steps'] += 1
@@ -413,9 +533,17 @@ def _apply_sync(runner, state, result, logger):
         if discard[i] or req_id not in batch.greedy_reqs or len(draft_row) != state.k:
             continue
         rows += 1
-        draft = book.choose(req_id, state.k)
+        draft = None
+        if state.long_k:
+            budget = long_budget(runner, req_id, i, state.long_k)
+            if budget < state.long_k:
+                book.stats['long_capped'] += 1
+            if budget > state.k:
+                draft = book.choose_long(req_id, state.k + 1, budget)
+        if draft is None:
+            draft = book.choose(req_id, state.k)
         if draft is not None:
-            draft_row[:] = draft
+            draft_row[:] = draft      # a list: the scheduler schedules len(draft) spec tokens for this request
             copies += 1
     book.prune(runner.requests)
     book.step(rows, copies)

@@ -99,6 +99,8 @@ def build(args, name, out, image_env):
         del cmd[index:index + 2]
     else:
         cmd[index + 1] = json.dumps({'method': 'qwen3_next_mtp', 'num_speculative_tokens': args.mtp})
+        if args.spec_config_json:  # research probes: the whole speculative config, e.g. more verify slots than the depth
+            cmd[index + 1] = json.dumps(json.loads(args.spec_config_json))
     if args.eager:
         cmd.append('--enforce-eager')
     mounts = ['--mount', f'type=bind,source={MODEL_DIR},target=/model,readonly',
@@ -173,6 +175,8 @@ def main():
                     help='bind one host file read-only into the container (research probes only, e.g. a candidate shortlist)')
     ap.add_argument('--mount-dir', action='append', default=[], metavar='HOST:CONTAINER',
                     help='bind one host directory read-write into the container (research probes only, e.g. a profiler output dir)')
+    ap.add_argument('--spec-config-json', default='',
+                    help='replace the speculative config built from --mtp with this JSON (research probes only; recorded in launch.json)')
     ap.add_argument('--serve-arg', action='append', default=[], metavar='ARG',
                     help='append one vllm serve argument (research probes only; recorded in launch.json)')
     ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',
