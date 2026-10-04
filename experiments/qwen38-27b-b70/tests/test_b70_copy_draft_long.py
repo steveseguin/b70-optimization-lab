@@ -5,7 +5,11 @@ The fake runner mimics the stock pieces the overlay relies on (vLLM 0.29, R310 i
   zeros of width `num_spec_tokens` when it is skipped;
 - sync bookkeeping writes the accepted tokens into token_ids_cpu before `take_draft_token_ids`;
 - the scheduler schedules every token of each request's list (no clamp to num_speculative_tokens) and the greedy
-  rejection sampler accepts the longest prefix of the draft that matches the target, plus one bonus token.
+  rejection sampler accepts the longest prefix of the draft that matches the target, plus one bonus token;
+- `input_batch.num_accepted_tokens_cpu` holds each request's accepted count of the step just verified (bonus
+  included), which the GDN builder passes as num_accepted_tokens to the next step. The Engine checks the GDN width
+  rule on every verify: rows (draft length + 1) >= the previous step's accepted count, otherwise the XPU spec kernels
+  read the initial SSM state from past the end of the step's state-slot row (the R313 copy-arm mismatches).
 """
 import importlib.util
 import random
@@ -52,7 +56,9 @@ def fake_runner_class():
             self.requests = {}
             self.input_batch = NS(req_ids=[], greedy_reqs=set(), req_id_to_index={},
                                   token_ids_cpu=np.zeros((rows, max_model_len), dtype=np.int32),
-                                  num_tokens_no_spec=np.zeros(rows, dtype=np.int32))
+                                  num_tokens_no_spec=np.zeros(rows, dtype=np.int32),
+                                  num_accepted_tokens_cpu=np.ones(rows, dtype=np.int32))
+            self.num_accepted_tokens_event = None
             self.discard_request_mask = NS(np=np.zeros(rows, dtype=bool))
             self._draft_token_ids = None
             self._draft_probs = None
@@ -82,6 +88,8 @@ def fake_runner_class():
             else:
                 self._draft_token_ids = torch.zeros(1, dtype=torch.int64).expand(len(self.input_batch.req_ids),
                                                                                   self.num_spec_tokens)
+            for i, row in enumerate(self.sampled.tolist()):
+                self.input_batch.num_accepted_tokens_cpu[i] = len(cd.accepted_prefix(row))
             if not self.use_async_scheduling:
                 for i, row in enumerate(self.sampled.tolist()):
                     accepted = cd.accepted_prefix(row)
@@ -112,6 +120,8 @@ class Engine:
         self.drafts = None
         self.widths = []          # per step: the draft length each request was verified with
         self.verified = []        # per step: (request index, draft, accepted)
+        self.prev_accepted = [1 for _ in self.ids]
+        self.width_violations = []   # (step, request index, rows, previous accepted): GDN reads past its slot row
 
     def step(self):
         runner = self.runner
@@ -122,13 +132,18 @@ class Engine:
                 row = [truth[0]]
                 widths.append(0)
             else:
-                d = self.drafts[i]
+                n = len(self.prompts[i]) + pos
+                d = self.drafts[i][:max(0, runner.max_model_len - n - 1)]   # the scheduler's max_model_len clamp
                 a = 0
                 while a < len(d) and d[a] == truth[pos + a]:
                     a += 1
                 row = truth[pos:pos + a + 1]
                 widths.append(len(d))
                 self.verified.append((i, list(d), a))
+                if d and len(d) + 1 < self.prev_accepted[i]:
+                    self.width_violations.append((len(self.widths), i, len(d) + 1, self.prev_accepted[i],
+                                                  runner.max_model_len - n - 1))
+            self.prev_accepted[i] = len(row)
             rows.append(row)
             self.emitted[i].extend(row)
         width = max(len(r) for r in rows)
@@ -203,6 +218,7 @@ class LongDraftTest(unittest.TestCase):
     def assert_exact(self, engine):
         for e, t in zip(engine.emitted, engine.truths):
             self.assertEqual(e, t[:len(e)])
+        self.assertEqual(engine.width_violations, [])
 
     def test_k_max_unset_keeps_fixed_depth(self):
         self.install()
@@ -226,12 +242,13 @@ class LongDraftTest(unittest.TestCase):
         self.assert_exact(engine)
         state = runner._b70_copy_draft_state
         self.assertEqual(state.long_k, 16)
-        longs = [(d, a) for _, d, a in engine.verified if len(d) > DEPTH]
+        longs = [(d, a) for _, d, a in engine.verified if len(d) > DEPTH and MTP not in d]   # not width-padded MTP
         self.assertTrue(longs)
         self.assertTrue(all(len(d) <= 16 for d, _ in longs))
         self.assertTrue(any(a == 16 for _, a in longs))                # whole 16-token copies accepted
         s = state.book.stats
-        self.assertEqual(s['long_drafts'], len(longs) + (1 if len(engine.drafts[0]) > DEPTH else 0))
+        pending_long = len(engine.drafts[0]) > DEPTH and MTP not in engine.drafts[0]
+        self.assertEqual(s['long_drafts'], len(longs) + (1 if pending_long else 0))
         # attribution: every verified long draft is counted with exactly the accepted tokens the engine saw
         self.assertEqual(s['long_verified'], len(longs))
         self.assertEqual(s['long_accepted'], sum(a for _, a in longs))
@@ -249,11 +266,58 @@ class LongDraftTest(unittest.TestCase):
         runner = self.cls()
         engine = Engine(runner, [prompt], [truth]).run(60)
         self.assert_exact(engine)
-        longs = [(d, a) for _, d, a in engine.verified if len(d) > DEPTH]
+        longs = [(d, a) for _, d, a in engine.verified if len(d) > DEPTH and MTP not in d]
         self.assertTrue(any(a < len(d) for d, a in longs))             # some long drafts rejected partway
         s = runner._b70_copy_draft_state.book.stats
         self.assertEqual(s['long_accepted'], sum(a for _, a in longs))
         self.assertEqual(s['rebuilds'], 0)                              # history never desynchronised
+
+    def departing_case(self, seed, every=23):
+        prompt, truth = repeating_case(seed)
+        truth = list(truth)
+        for p in range(140, len(truth), every):            # long copies accepted partway (7..16 tokens), then MTP
+            truth[p] = 7 + p
+        return prompt, truth
+
+    def test_width_kept_after_long_acceptance(self):
+        # The R313 copy-arm defect: a long draft accepting a >= DEPTH+2 tokens followed by a DEPTH-token MTP draft.
+        for k_max in (9, 16):
+            self.install(k_max)
+            prompt, truth = self.departing_case(13)
+            runner = self.cls(num_spec=k_max)
+            engine = Engine(runner, [prompt], [truth]).run(80)
+            self.assert_exact(engine)                                  # includes: no width violation
+            s = runner._b70_copy_draft_state.book.stats
+            self.assertGreater(s['width_pads'], 0)
+            self.assertEqual(s['width_blocked'], 0)
+            self.assertIn('width pads %d' % s['width_pads'], runner._b70_copy_draft_state.book.summary('sync'))
+            self.assertTrue(all(len(d) <= k_max for _, d, _ in engine.verified))
+
+    def test_without_width_rule_the_engine_sees_the_defect(self):
+        original = cd.keep_width
+        cd.keep_width = lambda *args, **kwargs: None
+        try:
+            self.install(9)
+            prompt, truth = self.departing_case(13)
+            engine = Engine(self.cls(num_spec=9), [prompt], [truth]).run(80)
+        finally:
+            cd.keep_width = original
+        self.assertTrue(engine.width_violations)                       # e.g. 6 rows after 7..10 accepted
+        self.assertTrue(all(rows == DEPTH + 1 and prev > rows for _, _, rows, prev, _ in engine.width_violations))
+
+    def test_width_pad_capped_at_max_model_len(self):
+        self.install(9)
+        prompt, truth = repeating_case(14)
+        runner = self.cls(num_spec=9, max_model_len=len(prompt) + 60)
+        engine = Engine(runner, [prompt], [truth])
+        while len(prompt) + len(engine.emitted[0]) < runner.max_model_len - 2:
+            result = engine.step()
+            n = len(prompt) + len(engine.emitted[0])
+            d = result.draft_token_ids[0]
+            if len(d) > DEPTH:
+                self.assertLessEqual(len(d), runner.max_model_len - n - 1)
+        # the only steps narrower than the previous acceptance are the ones max_model_len itself cuts (stock R307)
+        self.assertTrue(all(rows - 1 == room for _, _, rows, _, room in engine.width_violations))
 
     def test_mixed_batch_only_matching_request_gets_long_draft(self):
         self.install(16)
@@ -279,11 +343,12 @@ class LongDraftTest(unittest.TestCase):
             result = engine.step()
             left = 50 - len(engine.emitted[0])
             d = result.draft_token_ids[0]
+            need = int(runner.input_batch.num_accepted_tokens_cpu[0]) - 1
             lengths.append(len(d))
-            if len(d) > DEPTH:
+            if len(d) > max(DEPTH, need):
                 self.assertLessEqual(len(d) + 1, left)
             elif left - 1 <= DEPTH:
-                self.assertEqual(len(d), DEPTH)                         # short budget: the fixed-length path
+                self.assertEqual(len(d), max(DEPTH, need))              # short budget: fixed length or width pad
         self.assertIn(16, lengths)
         self.assertTrue(any(DEPTH < n < 16 for n in lengths))           # a long draft shortened by the budget
         self.assert_exact(engine)
@@ -318,7 +383,8 @@ class LongDraftTest(unittest.TestCase):
         engine = Engine(runner, [prompt], [truth]).run(5)
         runner.fits = False
         result = engine.step()
-        self.assertEqual(result.draft_token_ids, [[0] * DEPTH])        # not 16 zeros
+        need = int(runner.input_batch.num_accepted_tokens_cpu[0]) - 1
+        self.assertEqual(result.draft_token_ids, [[0] * max(DEPTH, need)])   # not 16 zeros (unless the width needs)
         runner.fits = True
         engine.run(10)
         self.assert_exact(engine)

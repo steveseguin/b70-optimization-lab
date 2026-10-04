@@ -37,6 +37,18 @@ verify width fits, so the slot count is fixed at startup; the one-tier schedule 
 len(list) spec tokens per request (no clamp to num_speculative_tokens), so the only change is in the list returned by
 `take_draft_token_ids` on the output rank; no scheduler or engine-core method is patched. In async mode a
 K_MAX > depth is ignored with one log line and the fixed-length behaviour above is kept.
+
+Width rule (2026-10-04, fixes the R313 copy-arm mismatches): a request's next verify must have at least as many rows
+as tokens its previous verify accepted (draft length >= accepted - 1). The GDN metadata builder slices the request's
+state-slot row to the step's active width (gdn_attn.py: block_table_tensor[mask, :active_spec_width], a contiguous
+copy), and the XPU spec kernels read the initial SSM state from column num_accepted - 1 of that row
+(gated_delta_rule.hpp: cache_indices[batch_id * stride + init_col], stride = width, no bound check). A long copy
+draft that accepted a >= 7 tokens followed by a 5-token MTP draft (6 rows) indexes past the row, so every GDN layer
+starts that step from whatever int32 sits behind the index tensor: a stale or wrong state slot. With MTP-only drafts
+a <= 6 <= rows, so the stock launch never hits it (except at max_model_len, R307's defect 1). In long mode every
+draft shorter than accepted - 1 is padded (repeating its last token; padding is verified like any draft, so the
+output cannot change) up to the max_model_len limit the scheduler enforces; max_tokens does not cap the pad (the
+engine truncates past max_tokens, as it does for stock MTP rows near the end).
 """
 import os
 from bisect import bisect_right
@@ -152,7 +164,8 @@ class CopyDraftBook:
         self.last_kind = {}       # req_id -> 'copy' | 'long' | 'mtp' for the draft now waiting for verification
         self.stats = dict(steps=0, steps_with_copy=0, rows=0, copies=0, copy_verified=0, copy_accepted=0,
                           mtp_verified=0, mtp_accepted=0, rebuilds=0, skipped_steps=0, poisoned=0,
-                          long_drafts=0, long_tokens=0, long_verified=0, long_accepted=0, long_capped=0)
+                          long_drafts=0, long_tokens=0, long_verified=0, long_accepted=0, long_capped=0,
+                          width_pads=0, width_pad_tokens=0, width_blocked=0)
 
     def _new(self, tokens):
         return CopyIndex(self.min_match, self.max_match, self.max_scan, tokens)
@@ -257,11 +270,12 @@ class CopyDraftBook:
                     s['poisoned']))
         if self.k_max:
             line += ('; long drafts (max %d) %d placed, mean length %s, accepted per verify %s, '
-                     'rows with a shorter budget %d'
+                     'rows with a shorter budget %d; width pads %d (%d tokens), width blocked %d'
                      % (self.k_max, s['long_drafts'],
                         '%.1f' % (s['long_tokens'] / s['long_drafts']) if s['long_drafts'] else 'n/a',
                         '%.2f over %d rows' % (s['long_accepted'] / s['long_verified'], s['long_verified'])
-                        if s['long_verified'] else 'n/a', s['long_capped']))
+                        if s['long_verified'] else 'n/a', s['long_capped'], s['width_pads'],
+                        s['width_pad_tokens'], s['width_blocked']))
         return line
 
 
@@ -371,6 +385,11 @@ def _state_for(runner, torch, logger, settings, copier_factory):
     k, single_tier = mtp_depth(spec, num_spec)
     mode = 'async' if runner.use_async_scheduling else 'sync'
     long_k = _long_mode(mode, k, single_tier, num_spec, settings.get('k_max', 0), logger)
+    if long_k and getattr(getattr(runner, 'input_batch', None), 'num_accepted_tokens_cpu', None) is None:
+        logger.warning('b70_copy_draft: B70_COPY_DRAFT_K_MAX ignored: the runner has no '
+                       'input_batch.num_accepted_tokens_cpu, so the verify width cannot be kept >= the previous '
+                       'acceptance (GDN state slot); using fixed %d-token copy drafts', k)
+        long_k = 0
     book = CopyDraftBook(k, settings['min_match'], settings['max_match'], settings['max_scan'], long_k)
     copier = (copier_factory or (lambda: StreamCopier(torch)))() if mode == 'async' else None
     state = _State(mode, k, book, copier, settings['log_every'])
@@ -508,6 +527,42 @@ def long_budget(runner, req_id, i, long_k):
     return budget
 
 
+def keep_width(runner, state, result, logger=None):
+    """Long mode: pad every non-empty draft list shorter than (tokens the request's last verify accepted) - 1, so
+    the next verify has at least that many rows and the GDN kernels' initial-state column num_accepted - 1 lies
+    inside the step's state-slot row (see the module docstring). The pad repeats the row's last token; the scheduler
+    caps positions at max_model_len, so the pad is too (counted as 'width_blocked' when that is not enough)."""
+    if not state.long_k:
+        return
+    batch, stats = runner.input_batch, state.book.stats
+    event = getattr(runner, 'num_accepted_tokens_event', None)
+    if event is not None:
+        event.synchronize()     # sync mode: already complete (bookkeeping synced after it was queued)
+    accepted = batch.num_accepted_tokens_cpu
+    num_spec = int(runner.num_spec_tokens)
+    for j, req_id in enumerate(result.req_ids):
+        row = result.draft_token_ids[j]
+        if not row:
+            continue            # no drafts: the non-spec path (stock behaviour, not changed here)
+        i = batch.req_id_to_index.get(req_id)
+        if i is None:
+            continue
+        need = min(int(accepted[i]) - 1, num_spec)
+        if len(row) >= need:
+            continue
+        room = int(runner.max_model_len) - int(batch.num_tokens_no_spec[i]) - 1
+        target = min(need, max(room, len(row)))
+        if target < need:
+            stats['width_blocked'] += 1
+            if logger is not None and stats['width_blocked'] == 1:
+                logger.warning('b70_copy_draft: a draft could not be widened to %d tokens at max_model_len '
+                               '(previous verify accepted %d)', need, need + 1)
+        if target > len(row):
+            stats['width_pads'] += 1
+            stats['width_pad_tokens'] += target - len(row)
+            row.extend([row[-1]] * (target - len(row)))
+
+
 def _apply_sync(runner, state, result, logger):
     if state.k < int(runner.num_spec_tokens):
         # The launch reserves more verify slots than the MTP head drafts (long copy drafts): a row wider than the
@@ -519,6 +574,7 @@ def _apply_sync(runner, state, result, logger):
     if (not state.proposed or runner._draft_token_ids is not state.live
             or getattr(runner, '_draft_probs', None) is not None):
         state.book.stats['skipped_steps'] += 1
+        keep_width(runner, state, result, logger)
         return
     state.proposed = False
     batch, book = runner.input_batch, state.book
@@ -545,6 +601,7 @@ def _apply_sync(runner, state, result, logger):
         if draft is not None:
             draft_row[:] = draft      # a list: the scheduler schedules len(draft) spec tokens for this request
             copies += 1
+    keep_width(runner, state, result, logger)
     book.prune(runner.requests)
     book.step(rows, copies)
     _maybe_log(state, logger)
