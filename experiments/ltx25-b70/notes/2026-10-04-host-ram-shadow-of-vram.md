@@ -75,6 +75,7 @@ as the combinations finish.
 | --- | ---: | ---: | ---: | --- | ---: | ---: |
 | four cards (18/18/8/4), 3 | 10/10 | 115/115 | 1.387 / 1.489 | 1.273 / 1.245 / 0.847 / 1.085 | 3.6 GiB | 43.7 GiB (during model load, host copies of the weights) |
 | two cards, 2 (control) | 10/10 | 116/116 | **1.358** / 1.641 | 1.231 / 1.297 / 0.380 / 0.835 | 3.6 GiB | as above |
+| three cards (20/20/8), 3 | 10/10 | 115/115 | 1.470 / 1.411 | 1.328 / 1.367 / 0.861 / 1.046 | 3.7 GiB | as above |
 
 Three workers fit and are exact. Peak video memory per card: 27.3 / 24.0 / 29.3 / 23.3 GiB. The sampler's
 chain time grew from 2.94 s (two in flight) to 4.12 s (three in flight), so the cards are saturated: more clips
@@ -90,9 +91,10 @@ Four workers on the four-card layout were tried later (20:42 UTC): the runner's 
 the run cleanly before the fourth worker captured (exit 18, server stopped normally). With three workers the
 cards already hold 26.6 / 20.2 / 29.0 / 19.6 GiB of their 32. So with the host-RAM limit gone, video memory on
 the card that carries half the text encoder plus eight transformer blocks is the next ceiling for clips in
-flight. The 20/20/8 layout with three workers and two cards with three workers were not run; the three-worker
-result shows the cards saturated, so they would land within a few percent of the numbers above. Index bases
-258000 and 255000 are unused; 257000 (four cards, four workers) is used up to its capture pass.
+flight. The 20/20/8 layout with three workers was run at 21:20 UTC (row in the table: exact, 1.470 s per clip,
+slower than both other layouts, with a 4.2 s sampler chain). Two cards with three workers was not run (it does
+not fit video memory by the 94f figures). Index base 255000 is unused; 257000 (four cards, four workers) is
+used up to its capture pass.
 
 One operational trap, recorded so it is not repeated: an offline test imported packet 95's source tree without
 `python -B` and left 315 `__pycache__` files inside the sealed packet. The launcher refuses a packet with files
