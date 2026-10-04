@@ -34,10 +34,12 @@ R.SERVICE_STATE = Path('/nonexistent/no-resident-service')
 SHIPPED = ['--overlay', 'b70-allgather-allreduce', '--extra-env', 'B70_ALLGATHER_ALLREDUCE=1']
 TP2 = ['--tp', '2', '--mem', '0.95', '--max-model-len', str(R.TP2_MML), '--batched', '4096', '--fa-verify-rows']
 MTP5 = ['--mtp', '5', '--draft-int4', '--shortlist', R.SHORTLIST]
-# Runtime (compute-runtime) debug keys are read only with NEOReadDebugKeys=1. The fix raises the size up to which a
-# host-to-card copy is a CPU copy from 4 MiB to the largest value the key takes, so weight uploads use no copy-engine job.
+# Runtime (compute-runtime) debug keys are read only with NEOReadDebugKeys=1 (used for its allocation log).
+# The load-fault fix: CPU-to-card copies over 256 MiB go in 128 MiB pieces during model load, so the runtime never makes
+# the temporary host mapping the fault hits. (The runtime's own switch, ExperimentalH2DCpuCopyThreshold, was tried first
+# and has no effect here: the card-side memory is not the kind its CPU-copy path accepts.)
 NEO_KEYS = ['--extra-env', 'NEOReadDebugKeys=1']
-LOADCOPY_FIX = NEO_KEYS + ['--extra-env', 'ExperimentalH2DCpuCopyThreshold=2147483647']
+LOADCOPY_FIX = ['--overlay', 'b70-chunked-upload', '--extra-env', 'B70_CHUNKED_UPLOAD=1']
 
 
 def oracle(base, name, levels):
@@ -194,15 +196,17 @@ def main():
         R.wait_port_free(port)
     if os.environ.get('MU_MODE') == 'loadcopy':
         # The model-load fault is the copy engine reading a temporary mapping of host memory (every host-to-card copy
-        # above 4 MiB gets one, at GPU address 0x800400200000). The runtime has a switch that makes those copies plain
-        # CPU copies into the card's memory, so that mapping is never created. Three starts of the shipped two-card
-        # server: the runtime's own allocation log without the switch, the same log with it, then the switch alone
-        # with the strict gate. notes/2026-10-04-gpu-fault-mtp-start.md has the reading and the rule.
+        # of 512 MiB or more gets one, at GPU address 0x800400200000; 256 MiB or less does not). The chunked-upload
+        # overlay sends the large tensors in 128 MiB pieces. Two starts of the shipped two-card server: the runtime's
+        # allocation log with the overlay, then the overlay alone with the strict gate.
+        # notes/2026-10-04-gpu-fault-mtp-start.md has the reading and the rule.
         debug = []
         for key in ('LogAllocationType', 'LogAllocationStdout', 'PrintBOBindingResult', 'PrintBOCreateDestroyResult'):
             debug += ['--extra-env', f'{key}=1']
-        for label, extra, gate in (('control-log', NEO_KEYS + debug, False), ('fix-log', LOADCOPY_FIX + debug, False),
-                                   ('fix', LOADCOPY_FIX, True)):
+        stages = (('chunked-log', NEO_KEYS + LOADCOPY_FIX + debug, False), ('chunked', LOADCOPY_FIX, True))
+        if os.environ.get('MU_LOADCOPY_CONTROL') == '1':  # the log without the fix (done twice on 2026-10-04: 8 mappings each)
+            stages = (('control-log', NEO_KEYS + debug, False),) + stages
+        for label, extra, gate in stages:
             srv, name, since = start_server(f'tp2-loadcopy-{label}', 18196, TP2 + MTP5 + SHIPPED + extra, since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if gate and srv.ready:
@@ -214,6 +218,7 @@ def main():
             at_address = [line for line in lines if re.search(r'8004002[0-9a-f]{5}', line, re.I)]
             host_ptr = [line for line in lines if re.search(r'external.?host.?ptr', line, re.I)]
             r['load_seconds'] = [float(x) for x in re.findall(r'Loading weights took ([0-9.]+) seconds', text)]
+            r['chunked_upload_lines'] = re.findall(r'b70_chunked_upload: [^\n]*', text)[:4]
             r['log_lines'], r['lines_at_fault_address'], r['host_pointer_lines'] = len(lines), len(at_address), len(host_ptr)
             (OUT / f'{name}-fault-address-lines.txt').write_text('\n'.join((at_address + host_ptr)[:600]) + '\n')
             R.log(f"{name}: {r['server']['status']}; load {r['load_seconds']} s; {len(at_address)} log lines at the fault "

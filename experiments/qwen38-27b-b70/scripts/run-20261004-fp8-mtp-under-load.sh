@@ -27,16 +27,16 @@ if journalctl -k -b --no-pager "${SINCE[@]}" | grep -qE 'xe 0000:.*(Fault respon
   echo "refusing: the kernel log already has a GPU fault line" >&2; exit 3
 fi
 STAMP=${STAMP:-$(date +%Y%m%d)}
-# 0. The load-fault fix: allocation log without and with the switch, then the switch with the strict gate.
+# 0. The load-fault fix (chunked upload overlay): allocation log with it, then the strict gate.
 O=/mnt/fast-ai/bench-results/fp8-loadcopy-$STAMP
 [ -e "$O" ] && O=$O-$(date +%H%M)
 MU_MODE=loadcopy CAMPAIGN_OUT=$O python3 experiments/qwen38-27b-b70/scripts/run-20261004-fp8-multiuser-campaign.py
 [ -f "$O/FAULT-HALT.json" ] && exit 4
-# Later starts use the switch only if it gave 12/12 exact answers.
-if python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if any(d.get(k,{}).get('strict',{}).get('exact')=='12/12' for k in ('tp2-loadcopy-fix','tp2-loadcopy-fix-retry')) else 1)" "$O/results.json"; then
-  export MU_LOADCOPY_FIX=1; echo "load-copy switch passed the strict gate; later starts use it"
+# Later starts use the overlay only if it gave 12/12 exact answers.
+if python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if any(d.get(k,{}).get('strict',{}).get('exact')=='12/12' for k in ('tp2-loadcopy-chunked','tp2-loadcopy-chunked-retry')) else 1)" "$O/results.json"; then
+  export MU_LOADCOPY_FIX=1; echo "chunked upload passed the strict gate; later starts use it"
 else
-  echo "load-copy switch did not pass the strict gate; later starts do not use it"
+  echo "chunked upload did not pass the strict gate; later starts do not use it"
 fi
 for n in 4 8; do
   O=/mnt/fast-ai/bench-results/fp8-multiuser-three-mtp5-s$n-$STAMP
