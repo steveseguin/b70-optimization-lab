@@ -1,0 +1,350 @@
+{
+  "config": {
+    "expected_uuid": "868023e2-0000-0000-4700-000000000000",
+    "server_argv": [
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-decodeproc-92b/source/main.py",
+      "--listen",
+      "127.0.0.1",
+      "--port",
+      "8188",
+      "--disable-auto-launch",
+      "--cache-none",
+      "--deterministic",
+      "--disable-async-offload",
+      "--disable-dynamic-vram",
+      "--disable-comfy-compiler",
+      "--disable-cuda-graphs",
+      "--disable-pinned-memory",
+      "--reserve-vram",
+      "2",
+      "--bf16-unet",
+      "--bf16-text-enc",
+      "--bf16-vae",
+      "--use-pytorch-cross-attention",
+      "--disable-xformers",
+      "--disable-api-nodes",
+      "--extra-model-paths-config",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-decodeproc-92b/model-paths.yaml",
+      "--output-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output",
+      "--user-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-decodeproc-92b/user",
+      "--temp-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-decodeproc-92b/temp",
+      "--input-directory",
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-decodeproc-92b/input",
+      "--disable-all-custom-nodes",
+      "--whitelist-custom-nodes",
+      "ltx_speed_lab",
+      "ltx_baseline_capture",
+      "ltx_encoder_diagnostics",
+      "ltx_encoder_identity",
+      "ltx_block_compile_lab",
+      "ltx_multiblock_compile_lab",
+      "ltx_na_axis_decode_lab",
+      "ltx_host_embedding_lab",
+      "ltx_graph_capture_lab",
+      "ltx_graph_vae_lab",
+      "ltx_qkv_fusion_lab",
+      "ltx_graph_text_encoder_lab",
+      "ltx_pipeline_lab",
+      "ltx_pipeline_decode_lab",
+      "ltx_concurrent_cfg_lab",
+      "ltx_pipeline_sampler_lab",
+      "ltx_graph_upsampler_lab",
+      "ltx_phase_timed_upsampler_lab",
+      "ltx_resident_fastpath_lab"
+    ],
+    "source_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-decodeproc-92b/source",
+    "torch_threads": 16,
+    "vae_paths": [
+      "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors",
+      "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors"
+    ],
+    "ze_affinity_mask": "3"
+  },
+  "requested_unix": 1791081616.0375288,
+  "schema": "ltx.decode-child-startup.v1",
+  "state": {
+    "error": null,
+    "pid": 184500,
+    "ready": {
+      "cpu": {
+        "process_cpu_s": 26.91,
+        "threads": {
+          "184500": {
+            "cpu_s": 6.03,
+            "name": "MainThread"
+          },
+          "184501": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184502": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184503": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184504": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184505": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184506": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184507": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184508": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184509": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184510": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184511": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184512": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184513": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184514": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184515": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184518": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184519": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184520": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184521": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184522": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184523": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184524": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184525": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184526": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184527": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184528": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184529": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184530": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184531": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184532": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184554": {
+            "cpu_s": 0.0,
+            "name": "native:python"
+          },
+          "184582": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184583": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184584": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184585": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184586": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184587": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184588": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184589": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184590": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184591": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184592": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184593": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184594": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184595": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184596": {
+            "cpu_s": 0.06,
+            "name": "native:python"
+          },
+          "184597": {
+            "cpu_s": 1.31,
+            "name": "native:python"
+          },
+          "184598": {
+            "cpu_s": 1.26,
+            "name": "native:python"
+          },
+          "184599": {
+            "cpu_s": 1.27,
+            "name": "native:python"
+          },
+          "184600": {
+            "cpu_s": 1.26,
+            "name": "native:python"
+          },
+          "184601": {
+            "cpu_s": 1.26,
+            "name": "native:python"
+          },
+          "184602": {
+            "cpu_s": 1.27,
+            "name": "native:python"
+          },
+          "184603": {
+            "cpu_s": 1.28,
+            "name": "native:python"
+          },
+          "184604": {
+            "cpu_s": 1.25,
+            "name": "native:python"
+          },
+          "184605": {
+            "cpu_s": 1.28,
+            "name": "native:python"
+          },
+          "184606": {
+            "cpu_s": 1.26,
+            "name": "native:python"
+          },
+          "184607": {
+            "cpu_s": 1.28,
+            "name": "native:python"
+          },
+          "184608": {
+            "cpu_s": 1.26,
+            "name": "native:python"
+          },
+          "184609": {
+            "cpu_s": 1.28,
+            "name": "native:python"
+          },
+          "184610": {
+            "cpu_s": 1.26,
+            "name": "native:python"
+          },
+          "184611": {
+            "cpu_s": 1.3,
+            "name": "native:python"
+          }
+        },
+        "tick_s": 0.01,
+        "wall_unix": 1791081622.562805
+      },
+      "memory": {
+        "allocated": 0,
+        "free": 33690726400,
+        "reserved": 0,
+        "total": 34242297856
+      },
+      "op": "ready",
+      "pid": 184500,
+      "protocol": "ltx.decode-child.v1",
+      "tensors": [],
+      "torch": "2.14.0+xpu",
+      "uuid": "868023e2-0000-0000-4700-000000000000",
+      "vae_dtypes": [
+        "torch.bfloat16",
+        "torch.bfloat16"
+      ]
+    },
+    "returncode": null,
+    "started_unix": 1791081616.0390484,
+    "stopped": false
+  },
+  "xpu3_free_after": 33690726400,
+  "xpu3_free_before": 33891414016
+}
