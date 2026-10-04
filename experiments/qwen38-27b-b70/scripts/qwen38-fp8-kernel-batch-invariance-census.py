@@ -53,6 +53,9 @@ GEMMS: dict[str, tuple[int, int]] = {
     "attn_o_proj": (3072, 5120),
     "mlp_gate_up_proj": (5120, 17408),
     "mlp_down_proj": (8704, 5120),
+    # CAUTION (2026-10-04): this entry runs the FP8 W8A16 kernel at the output layer's SHAPE. The lane's real output
+    # layer is an FP16 F.linear, a different kernel with different row classes (bit-identical rows for 1..32 rows).
+    # Its census is qwen38-fp8-output-layer-row-census.py; do not read this entry as the output layer.
     "lm_head": (5120, 124160),
 }
 # Decode shapes (c requests x 2 MTP1 rows), the fixture prefill shapes

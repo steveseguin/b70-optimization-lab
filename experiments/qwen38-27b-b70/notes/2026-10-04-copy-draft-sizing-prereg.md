@@ -39,3 +39,30 @@ would not move; this is a second number for long-context use.
 4. **If the engine's asynchronous step pipeline makes the context one step stale** (the accepted tokens of the last
    step are not on the CPU when the next draft is placed), measure the acceptance with that lag before building
    around it.
+
+## Result, 16:51 EDT: exact, free, and no faster. Closed in this form.
+
+Two-card server, one user, shipped recipe with and without `b70-copy-draft` (5 copied tokens, match of 6 to 8).
+Data: `data/2026-10-04-copy-draft/`.
+
+| Gate | Without | With |
+|---|---|---|
+| Strict suite vs frozen reference | 12/12, 90.26 tok/s | 12/12, 89.91 tok/s |
+| Short ladder vs frozen reference | 64/64 | 64/64 |
+| Eight long prompts vs their no-speculation answers | 8/8 | 8/8 |
+| Long prompts, decode after the first token (median) | 89.9 tok/s | 89.7 tok/s |
+
+- **Exact and free:** every gate identical, and the one extra wait per step the engine needs costs nothing
+  measurable (0.3 %).
+- **No gain:** a copy draft was placed on 3.1 % of steps. Where it was, 2.97 of 5 tokens were accepted against 1.96
+  for the built-in head overall. Per prompt the decode rate did not move (for example 138.7 vs 138.3, 48.3 vs 47.5).
+- **Why the model was wrong:** it charged every non-copy step at the lane's average of about 3 tokens. On text that
+  can be copied, the built-in head already predicts the copy and is accepted up to its depth of 5; the long prompts
+  run at up to 139 tok/s without any help. Copying five tokens only matches what the head already does there.
+- **By the rule above (10 % on the long suite): not kept.** The overlay stays in the repo, off.
+
+**What is left of the idea:** only drafts *longer* than the head's depth can beat it, and only when a copy is
+available; a fixed deeper draft would slow every other step. That needs a per-step draft length, which the
+scheduler has a field for (`num_spec_tokens_to_schedule`). Size it from the control run's real steps per request
+before building.
+

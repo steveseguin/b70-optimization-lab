@@ -268,3 +268,28 @@ The answers will differ from today's frozen reference at exact ties, because the
 fixed order: same weights, same precision. If both pass, the choice is the owner's: adopt the class-padded output
 layer as the one arithmetic for one user and many (new frozen reference, packages re-accepted), or keep today's
 reference and stay at 488 until a kernel that reproduces the one-row rounding for any row count is built.
+
+## Addendum, 17:10 EDT: the output layer is row-invariant up to 32 rows; the 4-row overlay was not needed
+
+**Correction of this morning's reading.** The kernel census named the output layer as the one kernel that is not
+row-invariant (classes 1-4, 5-8, ...). That entry ran the FP8 W8A16 kernel at the output layer's shape. The lane's
+real output layer is an FP16 `F.linear`, a different kernel. Measured directly today:
+
+- `scripts/qwen38-fp8-output-layer-row-census.py`, both cards, three random weight/input sets each: **every row of a
+  1 to 32-row call is bit-identical to the same row computed alone**, in any position; 33 rows is the first size that
+  differs. 64 rows as two 32-row pieces equals 64 solo rows bit for bit
+  (`data/2026-10-04-fp8-multiuser/head-census/`).
+- The image already runs FP16 linears in pieces of at most 32 rows by default (`VLLM_XPU_FP16_LINEAR_ROWCHUNK=32`).
+- The class-pad switch's own load-time census on the real weights says the same: `1-32:c0 33-128:c1 129-320:c2`.
+
+So with the default path every output-layer call is in the lone user's row class, for any number of users, by
+construction. The `b70-lm-head-chunk` overlay (4 rows per call) bought nothing and cost 22 % at 64 users. This
+morning's "necessary, not sufficient" was wrong: the miss it was blamed for was the attention kernel's.
+
+| Run at 64 users (speculation off, pure steps, per-sequence attention) | Equal to solo | Speed, short / long | Status |
+|---|---|---|---|
+| Default output layer (32-row pieces), 14:36 | 64/64 x4, exact vs frozen | **630** / 66 tok/s | **Exact by construction.** The result; confirmation runs at 64, 32 and 16 users started 17:05 |
+| Class-padded output layer (15:44) | 64/64 x4, exact vs frozen | 640 / 67 tok/s | Also exact by construction (its own census), but it moves a lone user to another row class; not needed |
+| One user with class-pad (16:00) | 12/12 and 64/64 vs its own no-speculation answers; 12/12 vs frozen | 89.6 / 89.2 tok/s | Recorded; not adopted |
+| 4-row output-layer overlay (morning) | 64/64 x4, exact vs frozen | 488 / 64 tok/s | Superseded |
+
