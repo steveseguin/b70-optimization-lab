@@ -1,0 +1,382 @@
+{
+  "campaign": "stability-01-batch4-96",
+  "label": "batch-B sampler: the same arithmetic at a different batch size; changes output at rounding level versus batch 1 (GEMM rounding depends on the row count); adoption is the owner's decision",
+  "batch": 4,
+  "source": "packet 96 reference arm /home/steve/llm-optimizations/experiments/ltx25-b70/data/batch-96/two-way-w1-b4-p1/f96-twowayw1b4p1-ref-throughput.json (one job at a time, order ref)",
+  "server": {
+    "pid": 719229,
+    "proc_start_ticks": "3084168",
+    "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+    "manifest": "5822b050bdf5784ab62cc14e0b69f8c9612af26963e23b61605edd554eba049f"
+  },
+  "fixtures": [
+    {
+      "id": "boat",
+      "prompt": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat.",
+      "seed": 42,
+      "reference": "stability-01-b4-boat",
+      "reference_prompt": "f96-twowayw1b4p1-ref-05",
+      "window": 64,
+      "arrangement": {
+        "job": 302200,
+        "slot": 0,
+        "neighbour_fixtures": [
+          "bird",
+          "marble",
+          "pendulum"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-05",
+            "slot": 0,
+            "neighbour_fixtures": [
+              "bird",
+              "marble",
+              "pendulum"
+            ]
+          },
+          {
+            "prompt": "f96-twowayw1b4p1-ref-15",
+            "slot": 2,
+            "neighbour_fixtures": [
+              "fabric",
+              "marble",
+              "wheel"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "25e410f43c5382b7e6e4466abb19132d7397c55c58dfcc4406eeaeb06c8ad748",
+        "video_latent": "dfa2d19746bc5674daf105b684098f213a99512d208aac7d54788d11eacd1160",
+        "audio_latent": "022bd4a9342b08418aa8f6ab666ea5d1cbed8ffe2f638031904b3a03e5ac1e9d",
+        "waveform": "3a4e70203ab9a3c32ab25b3caf99d245a05cdb0f3ea5cd6aa2e585a47672d07d"
+      }
+    },
+    {
+      "id": "marble",
+      "prompt": "A clear blue glass marble rolls slowly across a light wooden tabletop. Fixed close-up camera, soft window light, detailed reflections, quiet rolling sound.",
+      "seed": 17,
+      "reference": "stability-01-b4-marble",
+      "reference_prompt": "f96-twowayw1b4p1-ref-06",
+      "window": 64,
+      "arrangement": {
+        "job": 302200,
+        "slot": 1,
+        "neighbour_fixtures": [
+          "bird",
+          "boat",
+          "pendulum"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-06",
+            "slot": 1,
+            "neighbour_fixtures": [
+              "bird",
+              "boat",
+              "pendulum"
+            ]
+          },
+          {
+            "prompt": "f96-twowayw1b4p1-ref-16",
+            "slot": 3,
+            "neighbour_fixtures": [
+              "boat",
+              "fabric",
+              "wheel"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "0235e50d2baeeb4e279506cecbb09af700974f048da7f438e1540f71d704b317",
+        "video_latent": "35f81035cdffd9a827dfe330b36829de1f7418f12bb09b1fbd64a9cd29a33027",
+        "audio_latent": "13eef822346df42f2f3d0bb8da46cd2a1e00ac78bba34ec0ea2ec3d05bfee94f",
+        "waveform": "b87879162b0e1ddb060f284bffcb1c106539e91726ef6d26821ac8f675f6b93d"
+      }
+    },
+    {
+      "id": "bird",
+      "prompt": "A small yellow bird perched on a leafy branch turns its head slightly. Static camera, soft morning light, green garden background, a single quiet chirp.",
+      "seed": 123,
+      "reference": "stability-01-b4-bird",
+      "reference_prompt": "f96-twowayw1b4p1-ref-07",
+      "window": 64,
+      "arrangement": {
+        "job": 302200,
+        "slot": 2,
+        "neighbour_fixtures": [
+          "boat",
+          "marble",
+          "pendulum"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-07",
+            "slot": 2,
+            "neighbour_fixtures": [
+              "boat",
+              "marble",
+              "pendulum"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "7b3110e612d1131957e4d09bdc7982f817baecc3a55272d0bf2cabbe93a32d41",
+        "video_latent": "8cd2c747886b28841e3450d13fe7eb9eddae1e99c363863b19e6d766104fdfc6",
+        "audio_latent": "cebc05692c84e73ee722cf456de17e78bae7f9ebd6365cb482d4b0b1f5ca8d78",
+        "waveform": "3714987601abc7e7494831c5b37f90a8b4aec7a9910e8b68196beb7bb61fbd12"
+      }
+    },
+    {
+      "id": "pendulum",
+      "prompt": "A brass pendulum swings gently in front of a dark wooden clock face. Fixed camera, warm indoor light, clear metal reflections, soft rhythmic ticking.",
+      "seed": 271,
+      "reference": "stability-01-b4-pendulum",
+      "reference_prompt": "f96-twowayw1b4p1-ref-08",
+      "window": 64,
+      "arrangement": {
+        "job": 302200,
+        "slot": 3,
+        "neighbour_fixtures": [
+          "bird",
+          "boat",
+          "marble"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-08",
+            "slot": 3,
+            "neighbour_fixtures": [
+              "bird",
+              "boat",
+              "marble"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "cc8e11ac552f9f44417d5b503c1140f583b2e71af9067885c31fd3c0fadad4bd",
+        "video_latent": "98d1a4adbf184bebd0b9fce67826343b5454166329ccbdc776b09002ffaf1ca8",
+        "audio_latent": "9fb2c7d468108fdf765e383c83c7dfa3487c98f719a68499cd04d12ada1d908a",
+        "waveform": "46d181c1e138e5ecab8e457d1f7d9d60cfa4a2b35452b099dd07f60b3d1e6e47"
+      }
+    },
+    {
+      "id": "rain",
+      "prompt": "Raindrops slide slowly down a clear window with an out-of-focus green garden behind it. Static close-up camera, soft daylight, quiet steady rain.",
+      "seed": 314,
+      "reference": "stability-01-b4-rain",
+      "reference_prompt": "f96-twowayw1b4p1-ref-09",
+      "window": 64,
+      "arrangement": {
+        "job": 302204,
+        "slot": 0,
+        "neighbour_fixtures": [
+          "candle",
+          "paper",
+          "pour"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-09",
+            "slot": 0,
+            "neighbour_fixtures": [
+              "candle",
+              "paper",
+              "pour"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "2564f9539dca21c9b6d1924809506ba3070068d37aaa3a4e0e006c48c6baeaa7",
+        "video_latent": "5b65ef983b6de288d931f7c9aef1b7e5ed5f57adbee7c03fbbb570e0b4b15b64",
+        "audio_latent": "9118dd8dec9e594e0f3122f186ecfd5f9616bdb1302eff4b579c4694e937d000",
+        "waveform": "925c18446cd59882d8d50bc768610650c3c64c9083584ae17587c419fff6f10b"
+      }
+    },
+    {
+      "id": "paper",
+      "prompt": "A folded white paper crane rests on a blue desk while one wing moves slightly in a light breeze. Fixed close-up camera, soft side lighting, faint rustling sound.",
+      "seed": 519,
+      "reference": "stability-01-b4-paper",
+      "reference_prompt": "f96-twowayw1b4p1-ref-10",
+      "window": 64,
+      "arrangement": {
+        "job": 302204,
+        "slot": 1,
+        "neighbour_fixtures": [
+          "candle",
+          "pour",
+          "rain"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-10",
+            "slot": 1,
+            "neighbour_fixtures": [
+              "candle",
+              "pour",
+              "rain"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "704301306b08d4183a082d354504a25138331814f55c15e7bd727f3603c54e69",
+        "video_latent": "55029d5d026a8b1865c9acb47eeb44ef3a1d7c8b4bdfbbbde55ed1ff9d6d9ff0",
+        "audio_latent": "9956a51c68d5c13d5294b95cf19acfa6e4f3b48a022eeafef335f7744ce18397",
+        "waveform": "472aaaf7e8285df0eb5209c823eb63f8de379b7db1f32bcf13e8956c8df8eddb"
+      }
+    },
+    {
+      "id": "candle",
+      "prompt": "A single candle flame flickers gently above a white candle on a stone table. Static camera, dark neutral background, soft warm light, quiet room ambience.",
+      "seed": 808,
+      "reference": "stability-01-b4-candle",
+      "reference_prompt": "f96-twowayw1b4p1-ref-11",
+      "window": 64,
+      "arrangement": {
+        "job": 302204,
+        "slot": 2,
+        "neighbour_fixtures": [
+          "paper",
+          "pour",
+          "rain"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-11",
+            "slot": 2,
+            "neighbour_fixtures": [
+              "paper",
+              "pour",
+              "rain"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "e9afc499224348af42a749efc44f24a361ae1c332ea454f4a845e007fedccd43",
+        "video_latent": "39841f20e6766589724eb58a9abeb2d3e48833ea08613c2c326f06f4f56989d5",
+        "audio_latent": "6bdcc2fe7edb5b40d8b9218e8eef10e4f151abc90eb9b9637f1f363cd4edc5ad",
+        "waveform": "882b2900835a66284694b616940b6829c37ba62a3ab965aee7ce3ac638d9566d"
+      }
+    },
+    {
+      "id": "pour",
+      "prompt": "A thin stream of clear water pours into a transparent glass on a wooden table. Fixed close-up camera, daylight, detailed ripples and reflections, gentle pouring sound.",
+      "seed": 1201,
+      "reference": "stability-01-b4-pour",
+      "reference_prompt": "f96-twowayw1b4p1-ref-12",
+      "window": 64,
+      "arrangement": {
+        "job": 302204,
+        "slot": 3,
+        "neighbour_fixtures": [
+          "candle",
+          "paper",
+          "rain"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-12",
+            "slot": 3,
+            "neighbour_fixtures": [
+              "candle",
+              "paper",
+              "rain"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "fe6d2320c4ecb7b8ae67cc5e6ca02a404bc61e5235f1c75fbfda7079fde12eae",
+        "video_latent": "6e318eb5b48162c6b2915f81e521ce6fdb454a86ff565afe192791851c8cb7e6",
+        "audio_latent": "2e9306d3dbc3106b1da406039d0e593992508a7b1d454a4ad4e461c0274913be",
+        "waveform": "67a53fd3e5986722ee3cbf049ae47d15b84dda2883b7c2f7201c553586743a18"
+      }
+    },
+    {
+      "id": "fabric",
+      "prompt": "A red fabric ribbon hanging from a branch moves gently in a light breeze. Static camera, green leaves in the background, natural daylight, quiet wind.",
+      "seed": 2026,
+      "reference": "stability-01-b4-fabric",
+      "reference_prompt": "f96-twowayw1b4p1-ref-13",
+      "window": 64,
+      "arrangement": {
+        "job": 302208,
+        "slot": 0,
+        "neighbour_fixtures": [
+          "boat",
+          "marble",
+          "wheel"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-13",
+            "slot": 0,
+            "neighbour_fixtures": [
+              "boat",
+              "marble",
+              "wheel"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "a9636d425b7f341add00680968447a416664fbb047ad6f129a53672f4f56048d",
+        "video_latent": "029809d3288c1957056efed813effe6bd7846efbf87b4f6271d5a5b46d7677b6",
+        "audio_latent": "50d096023b4e4cc4874930c7f761cd64912be2751fb3d0b6b0fc4f02733b90d6",
+        "waveform": "fac633c9d5713d06622b828d67ba6cb4b732508bd35fb02942976a6a132fc0f2"
+      }
+    },
+    {
+      "id": "wheel",
+      "prompt": "A small silver toy wheel turns slowly on a dark tabletop. Fixed close-up camera, soft studio lighting, clear mechanical details, a quiet rolling sound.",
+      "seed": 4096,
+      "reference": "stability-01-b4-wheel",
+      "reference_prompt": "f96-twowayw1b4p1-ref-14",
+      "window": 64,
+      "arrangement": {
+        "job": 302208,
+        "slot": 1,
+        "neighbour_fixtures": [
+          "boat",
+          "fabric",
+          "marble"
+        ],
+        "fill_slots": [],
+        "occurrences": [
+          {
+            "prompt": "f96-twowayw1b4p1-ref-14",
+            "slot": 1,
+            "neighbour_fixtures": [
+              "boat",
+              "fabric",
+              "marble"
+            ]
+          }
+        ]
+      },
+      "tensor_sha256": {
+        "images": "e94e37b4d97af6a5c9829fd2f88629c8283dd56473aa3c0b2a56029e99464677",
+        "video_latent": "f285952b19df223837f9445d36440c9b1839f07ffad2fca505e81544898c98cb",
+        "audio_latent": "7731c6cdc625d2aa6c4ad814616448b1e1d0a7fbd4658c8e2b05350279fae118",
+        "waveform": "594091808319682d57169a63bfbf1369f639cf9875e991beba4e68051a866f0d"
+      }
+    }
+  ]
+}

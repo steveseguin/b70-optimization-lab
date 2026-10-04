@@ -1,0 +1,579 @@
+{
+  "schema": "ltx.batch-oracle-96.v1",
+  "label": "batch-B sampler: the same arithmetic at a different batch size; changes output at rounding level versus batch 1 (GEMM rounding depends on the row count); adoption is the owner's decision",
+  "batch": 4,
+  "accepted": true,
+  "reference_arm": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/batch-96/two-way-w1-b4-p1/f96-twowayw1b4p1-ref-throughput.json",
+  "arrangement": {
+    "bird": {
+      "job": 302200,
+      "slot": 2,
+      "neighbour_fixtures": [
+        "boat",
+        "marble",
+        "pendulum"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-07",
+          "slot": 2,
+          "neighbour_fixtures": [
+            "boat",
+            "marble",
+            "pendulum"
+          ]
+        }
+      ]
+    },
+    "boat": {
+      "job": 302200,
+      "slot": 0,
+      "neighbour_fixtures": [
+        "bird",
+        "marble",
+        "pendulum"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-05",
+          "slot": 0,
+          "neighbour_fixtures": [
+            "bird",
+            "marble",
+            "pendulum"
+          ]
+        },
+        {
+          "prompt": "f96-twowayw1b4p1-ref-15",
+          "slot": 2,
+          "neighbour_fixtures": [
+            "fabric",
+            "marble",
+            "wheel"
+          ]
+        }
+      ]
+    },
+    "candle": {
+      "job": 302204,
+      "slot": 2,
+      "neighbour_fixtures": [
+        "paper",
+        "pour",
+        "rain"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-11",
+          "slot": 2,
+          "neighbour_fixtures": [
+            "paper",
+            "pour",
+            "rain"
+          ]
+        }
+      ]
+    },
+    "fabric": {
+      "job": 302208,
+      "slot": 0,
+      "neighbour_fixtures": [
+        "boat",
+        "marble",
+        "wheel"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-13",
+          "slot": 0,
+          "neighbour_fixtures": [
+            "boat",
+            "marble",
+            "wheel"
+          ]
+        }
+      ]
+    },
+    "marble": {
+      "job": 302200,
+      "slot": 1,
+      "neighbour_fixtures": [
+        "bird",
+        "boat",
+        "pendulum"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-06",
+          "slot": 1,
+          "neighbour_fixtures": [
+            "bird",
+            "boat",
+            "pendulum"
+          ]
+        },
+        {
+          "prompt": "f96-twowayw1b4p1-ref-16",
+          "slot": 3,
+          "neighbour_fixtures": [
+            "boat",
+            "fabric",
+            "wheel"
+          ]
+        }
+      ]
+    },
+    "paper": {
+      "job": 302204,
+      "slot": 1,
+      "neighbour_fixtures": [
+        "candle",
+        "pour",
+        "rain"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-10",
+          "slot": 1,
+          "neighbour_fixtures": [
+            "candle",
+            "pour",
+            "rain"
+          ]
+        }
+      ]
+    },
+    "pendulum": {
+      "job": 302200,
+      "slot": 3,
+      "neighbour_fixtures": [
+        "bird",
+        "boat",
+        "marble"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-08",
+          "slot": 3,
+          "neighbour_fixtures": [
+            "bird",
+            "boat",
+            "marble"
+          ]
+        }
+      ]
+    },
+    "pour": {
+      "job": 302204,
+      "slot": 3,
+      "neighbour_fixtures": [
+        "candle",
+        "paper",
+        "rain"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-12",
+          "slot": 3,
+          "neighbour_fixtures": [
+            "candle",
+            "paper",
+            "rain"
+          ]
+        }
+      ]
+    },
+    "rain": {
+      "job": 302204,
+      "slot": 0,
+      "neighbour_fixtures": [
+        "candle",
+        "paper",
+        "pour"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-09",
+          "slot": 0,
+          "neighbour_fixtures": [
+            "candle",
+            "paper",
+            "pour"
+          ]
+        }
+      ]
+    },
+    "wheel": {
+      "job": 302208,
+      "slot": 1,
+      "neighbour_fixtures": [
+        "boat",
+        "fabric",
+        "marble"
+      ],
+      "fill_slots": [],
+      "occurrences": [
+        {
+          "prompt": "f96-twowayw1b4p1-ref-14",
+          "slot": 1,
+          "neighbour_fixtures": [
+            "boat",
+            "fabric",
+            "marble"
+          ]
+        }
+      ]
+    }
+  },
+  "server": {
+    "pid": 719229,
+    "proc_start_ticks": "3084168",
+    "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+    "manifest": "5822b050bdf5784ab62cc14e0b69f8c9612af26963e23b61605edd554eba049f"
+  },
+  "window_buckets": {
+    "bird": 64,
+    "boat": 64,
+    "candle": 64,
+    "fabric": 64,
+    "marble": 64,
+    "paper": 64,
+    "pendulum": 64,
+    "pour": 64,
+    "rain": 64,
+    "wheel": 64
+  },
+  "repeats_byte_identical": {
+    "boat": [
+      "f96-twowayw1b4p1-ref-15"
+    ],
+    "marble": [
+      "f96-twowayw1b4p1-ref-16"
+    ]
+  },
+  "status": "accepted: batch-4 reference set stored",
+  "prereg": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch4-prereg.json",
+  "new_references": [
+    "stability-01-b4-boat",
+    "stability-01-b4-marble",
+    "stability-01-b4-bird",
+    "stability-01-b4-pendulum",
+    "stability-01-b4-rain",
+    "stability-01-b4-paper",
+    "stability-01-b4-candle",
+    "stability-01-b4-pour",
+    "stability-01-b4-fabric",
+    "stability-01-b4-wheel"
+  ],
+  "closeness_vs_w93c": [
+    {
+      "fixture": "boat",
+      "slot": 0,
+      "against": "stability-01-w93c-boat",
+      "comparison": {
+        "images": {
+          "psnr_db": 17.886530768441403,
+          "max_abs_255": 193.740234375,
+          "mean_abs_255": 20.773168251002605,
+          "fraction_pixels_over_1_255": 0.998392333984375,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 3.8002201160610043,
+          "psnr_db": 70.83893290396036,
+          "max_abs": 0.002849578857421875,
+          "mean_abs": 0.00021746324532029063
+        },
+        "video_latent": {
+          "max_abs": 4.421415090560913,
+          "mean_abs": 0.4645055458103684
+        },
+        "audio_latent": {
+          "max_abs": 0.19271397590637207,
+          "mean_abs": 0.0310687171765424
+        }
+      }
+    },
+    {
+      "fixture": "marble",
+      "slot": 1,
+      "against": "stability-01-w93c-marble",
+      "comparison": {
+        "images": {
+          "psnr_db": 25.24243508474229,
+          "max_abs_255": 211.171875,
+          "mean_abs_255": 8.593647066018821,
+          "fraction_pixels_over_1_255": 0.9945123291015625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 4.530344581567512,
+          "psnr_db": 65.09138163706525,
+          "max_abs": 0.00499725341796875,
+          "mean_abs": 0.00037326854907234413
+        },
+        "video_latent": {
+          "max_abs": 3.086036801338196,
+          "mean_abs": 0.3439609666254171
+        },
+        "audio_latent": {
+          "max_abs": 0.43327784538269043,
+          "mean_abs": 0.04141392115427432
+        }
+      }
+    },
+    {
+      "fixture": "bird",
+      "slot": 2,
+      "against": "stability-01-w93c-bird",
+      "comparison": {
+        "images": {
+          "psnr_db": 18.074602226883606,
+          "max_abs_255": 238.564453125,
+          "mean_abs_255": 21.263135733547372,
+          "fraction_pixels_over_1_255": 0.998804931640625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 3.629528620809297,
+          "psnr_db": 57.27332702720935,
+          "max_abs": 0.011493682861328125,
+          "mean_abs": 0.0008337741972810954
+        },
+        "video_latent": {
+          "max_abs": 4.379749774932861,
+          "mean_abs": 0.44123088008819167
+        },
+        "audio_latent": {
+          "max_abs": 0.7158530950546265,
+          "mean_abs": 0.050220941716431225
+        }
+      }
+    },
+    {
+      "fixture": "pendulum",
+      "slot": 3,
+      "against": "stability-01-w93c-pendulum",
+      "comparison": {
+        "images": {
+          "psnr_db": 21.67275938205368,
+          "max_abs_255": 236.572265625,
+          "mean_abs_255": 11.333498199652878,
+          "fraction_pixels_over_1_255": 0.9647662353515625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 4.199976563919719,
+          "psnr_db": 52.67052697916559,
+          "max_abs": 0.020263671875,
+          "mean_abs": 0.0010337573899726134
+        },
+        "video_latent": {
+          "max_abs": 4.857925653457642,
+          "mean_abs": 0.49174671780934887
+        },
+        "audio_latent": {
+          "max_abs": 1.2691718339920044,
+          "mean_abs": 0.0732550566597358
+        }
+      }
+    },
+    {
+      "fixture": "rain",
+      "slot": 0,
+      "against": "stability-01-w93c-rain",
+      "comparison": {
+        "images": {
+          "psnr_db": 24.197977836641634,
+          "max_abs_255": 205.1953125,
+          "mean_abs_255": 10.357786870210203,
+          "fraction_pixels_over_1_255": 0.994169921875,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 7.4004682112050935,
+          "psnr_db": 63.81299335856152,
+          "max_abs": 0.00437164306640625,
+          "mean_abs": 0.0004820815060078704
+        },
+        "video_latent": {
+          "max_abs": 2.8608042299747467,
+          "mean_abs": 0.3319414351319452
+        },
+        "audio_latent": {
+          "max_abs": 0.19410601258277893,
+          "mean_abs": 0.037530124735964746
+        }
+      }
+    },
+    {
+      "fixture": "paper",
+      "slot": 1,
+      "against": "stability-01-w93c-paper",
+      "comparison": {
+        "images": {
+          "psnr_db": 20.470909129861088,
+          "max_abs_255": 165.849609375,
+          "mean_abs_255": 13.867797360356962,
+          "fraction_pixels_over_1_255": 0.9980206298828125,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 2.0225349497773752,
+          "psnr_db": 70.36214062270041,
+          "max_abs": 0.0020294189453125,
+          "mean_abs": 0.00022587226455948213
+        },
+        "video_latent": {
+          "max_abs": 4.803131103515625,
+          "mean_abs": 0.358500133195399
+        },
+        "audio_latent": {
+          "max_abs": 0.7854407429695129,
+          "mean_abs": 0.06499797246271136
+        }
+      }
+    },
+    {
+      "fixture": "candle",
+      "slot": 2,
+      "against": "stability-01-w93c-candle",
+      "comparison": {
+        "images": {
+          "psnr_db": 21.84120674012009,
+          "max_abs_255": 232.08984375,
+          "mean_abs_255": 12.72026984902577,
+          "fraction_pixels_over_1_255": 0.99121337890625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 2.4250923156336697,
+          "psnr_db": 60.530454624825126,
+          "max_abs": 0.0052032470703125,
+          "mean_abs": 0.00069668269835308
+        },
+        "video_latent": {
+          "max_abs": 4.582537680864334,
+          "mean_abs": 0.319713534392875
+        },
+        "audio_latent": {
+          "max_abs": 0.9414241313934326,
+          "mean_abs": 0.05818460556978467
+        }
+      }
+    },
+    {
+      "fixture": "pour",
+      "slot": 3,
+      "against": "stability-01-w93c-pour",
+      "comparison": {
+        "images": {
+          "psnr_db": 17.988731383089153,
+          "max_abs_255": 227.109375,
+          "mean_abs_255": 20.724672831737372,
+          "fraction_pixels_over_1_255": 0.991968994140625,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": 1.8913623976921192,
+          "psnr_db": 63.82788545778824,
+          "max_abs": 0.00531768798828125,
+          "mean_abs": 0.0004849628020322301
+        },
+        "video_latent": {
+          "max_abs": 4.519209623336792,
+          "mean_abs": 0.5256564229310925
+        },
+        "audio_latent": {
+          "max_abs": 0.5381256937980652,
+          "mean_abs": 0.05265177713954472
+        }
+      }
+    },
+    {
+      "fixture": "fabric",
+      "slot": 0,
+      "against": "stability-01-w93c-fabric",
+      "comparison": {
+        "images": {
+          "psnr_db": 18.80915770539027,
+          "max_abs_255": 241.0546875,
+          "mean_abs_255": 18.726530868843472,
+          "fraction_pixels_over_1_255": 0.9988592529296875,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": -6.396984723475435,
+          "psnr_db": 64.81218050949641,
+          "max_abs": 0.0027780532836914062,
+          "mean_abs": 0.0004407440170241526
+        },
+        "video_latent": {
+          "max_abs": 3.349276542663574,
+          "mean_abs": 0.3615014392947309
+        },
+        "audio_latent": {
+          "max_abs": 1.2333359718322754,
+          "mean_abs": 0.2738310130085805
+        }
+      }
+    },
+    {
+      "fixture": "wheel",
+      "slot": 1,
+      "against": "stability-01-w93c-wheel",
+      "comparison": {
+        "images": {
+          "psnr_db": 29.49483081614281,
+          "max_abs_255": 226.11328125,
+          "mean_abs_255": 2.676729942797465,
+          "fraction_pixels_over_1_255": 0.6349560546875,
+          "bitwise_equal": false
+        },
+        "waveform": {
+          "snr_db": -0.06156422083541156,
+          "psnr_db": 69.76132178256225,
+          "max_abs": 0.0043487548828125,
+          "mean_abs": 0.0002175896358983622
+        },
+        "video_latent": {
+          "max_abs": 1.7985273972153664,
+          "mean_abs": 0.13554146755760854
+        },
+        "audio_latent": {
+          "max_abs": 0.23481783270835876,
+          "mean_abs": 0.03653753315414248
+        }
+      }
+    }
+  ],
+  "table": [
+    "fixture     slot  img PSNR   max/255    wav SNR   wav PSNR   vlat max   alat max",
+    "boat           0     17.89    193.74       3.80      70.84   4.42e+00   1.93e-01",
+    "marble         1     25.24    211.17       4.53      65.09   3.09e+00   4.33e-01",
+    "bird           2     18.07    238.56       3.63      57.27   4.38e+00   7.16e-01",
+    "pendulum       3     21.67    236.57       4.20      52.67   4.86e+00   1.27e+00",
+    "rain           0     24.20    205.20       7.40      63.81   2.86e+00   1.94e-01",
+    "paper          1     20.47    165.85       2.02      70.36   4.80e+00   7.85e-01",
+    "candle         2     21.84    232.09       2.43      60.53   4.58e+00   9.41e-01",
+    "pour           3     17.99    227.11       1.89      63.83   4.52e+00   5.38e-01",
+    "fabric         0     18.81    241.05      -6.40      64.81   3.35e+00   1.23e+00",
+    "wheel          1     29.49    226.11      -0.06      69.76   1.80e+00   2.35e-01"
+  ],
+  "definitions": {
+    "images psnr_db": "images in [0, 1]: 10*log10(1/MSE)",
+    "waveform snr_db": "10*log10(sum ref^2 / sum (new-ref)^2)",
+    "waveform psnr_db": "peak 1.0: 10*log10(1/MSE)",
+    "against": "the w93c (batch-1, window encoder) reference of the same fixture"
+  },
+  "gate": "none: recorded for the owner (a different take, not a failure)"
+}
