@@ -138,7 +138,10 @@ def build(args, name, out, image_env):
         env.update(B70_LAYER_HASH_TOKENS=str(args.layer_hash), B70_LAYER_HASH_DIR='/hash')
     argv = ['docker', 'run', '--name', name, '--restart', 'no', '--network', 'bridge',
             '--device', '/dev/dri', '--group-add', 'render', '--ipc', 'host', '--cap-add', 'SYS_PTRACE',
-            '--shm-size', '8g', '--memory', '12g', '--memory-swap', '16g', '--ulimit', 'core=0',
+            # --memory-swap equal to --memory: no swap allowance, same as both package launchers since 2026-09-19.
+            # Until 2026-10-03 research servers still ran with 16g and swapped their staging pages during the weight
+            # load (notes/2026-09-19-container-memory-cap-swap.md), the leading explanation for the copy-engine faults.
+            '--shm-size', '8g', '--memory', '12g', '--memory-swap', '12g', '--ulimit', 'core=0',
             '--security-opt', 'label=disable', '-p', f'127.0.0.1:{args.port}:8000', '--workdir', '/'] + mounts
     for key, value in sorted(env.items()):
         argv += ['--env', f'{key}={value}']
