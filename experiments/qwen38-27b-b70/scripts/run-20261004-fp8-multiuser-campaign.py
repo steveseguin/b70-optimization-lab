@@ -139,6 +139,8 @@ def main():
     if results['preflight_health_rc'] != 0:
         raise SystemExit(4)
     R.fault_check(since)
+    for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
+        R.wait_port_free(port)
     if os.environ.get('MU_MODE', 'screen') == 'screen':
         # first look (2026-10-04 01:22): only N requests per level, too few to call anything exact
         stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
@@ -183,7 +185,9 @@ def main():
                 # third fix, from the long-key census: decode attention is not batch-invariant with long keys
                 pure += ['--overlay', 'b70-fa-decode-per-seq', '--extra-env', 'B70_FA_DECODE_PER_SEQ=1']
                 name = name.replace('tp2-pure', 'tp2-pure-faseq')
-            srv = R.Research(name, 18196, TP2 + SHIPPED + pure + ['--seqs', '16'])
+            seqs = os.environ.get('MU_SEQS', '16')
+            name = name.replace('-s16', f'-s{seqs}')
+            srv = R.Research(name, 18196, TP2 + SHIPPED + pure + ['--seqs', seqs])
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
                 out = OUT / f'{name}-long-concurrency.json'

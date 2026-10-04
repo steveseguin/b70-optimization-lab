@@ -23,8 +23,13 @@ every request the same call shapes it would see alone:
 Cost of being exact everywhere: 423 -> 374 (pure steps) -> 325 tok/s together (head chunking) on the short ladder;
 the per-sequence attention calls cost nothing measurable there and about 3 % on the long-prompt run.
 
-Status: research overlays on a research server, one server so far (a second fresh server is running). Not a
-package profile yet.
+**Confirmed on a second fresh server** (05:32-05:46 EDT): long prompts 64/64 and 64/64, short ladder 64/64 twice
+and exact against the frozen reference, 325.0 tok/s together. Cross-checks between servers: the solo answers of the
+two overlay servers are identical (64/64), they are identical to the solo answers of a plain server without the
+overlays (64/64, so the overlays do not change what a lone user gets), and all 128 concurrent answers of the second
+server equal the first server's solo answers.
+
+Status: research overlays on a research server, two fresh servers. Not a package profile yet.
 
 ## How the first version of this note was wrong (kept for the record)
 
