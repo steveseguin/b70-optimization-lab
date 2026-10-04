@@ -23,11 +23,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE = ROOT / 'packages/qwen38-27b-fp8-tp1-b70/package.json'
-# The acceptance receipts the manifest is derived from. Default: the 2026-10-03 replay of all three profiles on the
-# no-swap launcher (--memory-swap 12g) and kernel 7.0.0-38; FP8_TP1_ACC selects another campaign's receipts
-# (the first R312d-c acceptance is data/2026-09-18-fp8-onecard-r312d/).
+# The acceptance receipts the manifest is derived from. Default: the 2026-10-04 replay of all three profiles with the
+# chunked-upload overlay shipped (no-swap launcher, kernel 7.0.0-38); FP8_TP1_ACC selects another campaign's receipts
+# (data/2026-10-03-fp8-onecard-noswap/ is the replay before the overlay, data/2026-09-18-fp8-onecard-r312d/ the first).
 import os
-ACC = os.environ.get('FP8_TP1_ACC', 'experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/')
+ACC = os.environ.get('FP8_TP1_ACC', 'experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/')
 
 
 def _acceptance_window():
@@ -153,7 +153,8 @@ def main():
         'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_fa_verify_rows.py',
         'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_fa_multiq.py',
         'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_draft_fp16_shortlist.py',
-        'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_gdn_checkpoint.py']}
+        'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_gdn_checkpoint.py',
+        'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_chunked_upload.py']}
     package['commands']['preflight'] = f'docker pull {R312D}'
 
     setup = package['recommended_setup']
@@ -229,6 +230,9 @@ def main():
                     'experiments/qwen38-27b-b70/scripts/run-20260918-fp8-onecard-r312d-campaign.py',
                     'experiments/qwen38-27b-b70/overlays/b70-fa-multiq/b70_fa_multiq.py',
                     'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_fa_multiq.py',
+                    'experiments/qwen38-27b-b70/overlays/b70-chunked-upload/b70_chunked_upload.py',
+                    'packages/qwen38-27b-fp8-tp1-b70/overlays/b70_chunked_upload.py',
+                    'experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md',
                     'experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-paged-decode-multiq-r312-20260917.patch',
                     'experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r312c-multiq',
                     'experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r312d-multiq',

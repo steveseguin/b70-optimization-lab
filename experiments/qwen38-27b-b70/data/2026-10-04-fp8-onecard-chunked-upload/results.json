@@ -1,0 +1,392 @@
+{
+  "started": "2026-10-04T16:33:56.526703+00:00",
+  "image": "neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r312d-c-multiq",
+  "preflight_health_rc": 0,
+  "tp1-pkg-32k": {
+    "profile": "recommended",
+    "max_model_len": 32768,
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-10-04T16:36:18.994630+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 54.04713845884902,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "strict_run2": {
+      "rc": 0,
+      "tok_s_1_100": 54.02582887626986,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64",
+        "batch-c64-r2": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "context_long": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-probe1-20260917/tp1-mtp0-40k-context-5lengths/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 30,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {},
+        "24576": {},
+        "30720": {}
+      }
+    },
+    "quality": {
+      "rc": 0,
+      "pass_all": true,
+      "baseline_match_all": true,
+      "baseline_status": "passed"
+    },
+    "history": {
+      "rc": 0,
+      "divergent": [],
+      "logprob_divergent": [],
+      "cached_tokens_all_zero": true
+    },
+    "long_prompt_speed": {
+      "verdict": "measured",
+      "baseline": "/mnt/fast-ai/bench-results/fp8-probe1-20260917/tp1-pkg-max-context/summary.json",
+      "candidate_summary": "/mnt/fast-ai/bench-results/fp8-onecard-chunked-20261004/tp1-pkg-32k-long-context/summary.json",
+      "note": "R311b reference is the probe-1 max-context profile (40,960) on the same long corpus; the short prompts are expected to be within noise and 16K+ faster.",
+      "lengths": [
+        "2048",
+        "8192",
+        "16384",
+        "24576",
+        "30720"
+      ],
+      "r312d_c": {
+        "2048": {
+          "decode_tok_s": 59.24,
+          "prefill_tok_s": 2031.1,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 59.24,
+            "code": 85.49,
+            "docs": 44.07
+          }
+        },
+        "8192": {
+          "decode_tok_s": 79.92,
+          "prefill_tok_s": 2022.6,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 36.07,
+            "code": 80.03,
+            "docs": 79.92
+          }
+        },
+        "16384": {
+          "decode_tok_s": 72.08,
+          "prefill_tok_s": 1938.5,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 76.04,
+            "code": 72.08,
+            "docs": 71.67
+          }
+        },
+        "24576": {
+          "decode_tok_s": 45.42,
+          "prefill_tok_s": 1861.7,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 45.42,
+            "code": 68.67,
+            "docs": 44.87
+          }
+        },
+        "30720": {
+          "decode_tok_s": 43.96,
+          "prefill_tok_s": 1807.1,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 43.96,
+            "code": 63.15,
+            "docs": 33.35
+          }
+        }
+      },
+      "r311b": {
+        "2048": {
+          "decode_tok_s": 59.23,
+          "prefill_tok_s": 2025.9,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 59.23,
+            "code": 85.89,
+            "docs": 44.17
+          }
+        },
+        "8192": {
+          "decode_tok_s": 76.91,
+          "prefill_tok_s": 2010.7,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 34.6,
+            "code": 77.07,
+            "docs": 76.91
+          }
+        },
+        "16384": {
+          "decode_tok_s": 65.82,
+          "prefill_tok_s": 1930.3,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 69.1,
+            "code": 65.69,
+            "docs": 65.82
+          }
+        },
+        "24576": {
+          "decode_tok_s": 39.76,
+          "prefill_tok_s": 1853.4,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 39.67,
+            "code": 60.72,
+            "docs": 39.76
+          }
+        },
+        "30720": {
+          "decode_tok_s": 37.5,
+          "prefill_tok_s": 1799.2,
+          "samples": 6,
+          "decode_tok_s_by_class": {
+            "prose": 37.5,
+            "code": 54.55,
+            "docs": 28.67
+          }
+        }
+      },
+      "decode_change_percent": {
+        "2048": 0.0,
+        "8192": 3.9,
+        "16384": 9.5,
+        "24576": 14.2,
+        "30720": 17.2
+      }
+    },
+    "status_rc": 0,
+    "cgroup_memory": {
+      "read": true,
+      "container_id": "a638756a4ed5d59448c0df6e05a9a3c2a9b80440e6cabad65141f4e5fd3fd798",
+      "cgroup": "/sys/fs/cgroup/system.slice/docker-a638756a4ed5d59448c0df6e05a9a3c2a9b80440e6cabad65141f4e5fd3fd798.scope",
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 10365,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "sock_throttled": 0
+      },
+      "oom_kill": 0,
+      "oom": 0,
+      "max_events": 10365,
+      "memory_max": 12884901888,
+      "memory_peak": 12884987904,
+      "memory_current": 12807815168,
+      "swap_max": 0,
+      "swap_peak": 0,
+      "anon": 8232779776,
+      "file": 4447506432,
+      "file_dirty": 8192,
+      "pswpout": 0,
+      "pswpin": 0,
+      "pgscan_direct": 5977402,
+      "anon_headroom_bytes": 4652122112,
+      "no_swap_configured": true,
+      "passed": true
+    },
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "tp1-pkg-max-context": {
+    "profile": "max-context",
+    "max_model_len": 40960,
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-10-04T17:03:40.283970+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 54.02302603984681,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "status_rc": 0,
+    "cgroup_memory": {
+      "read": true,
+      "container_id": "36df91c133a870c2ee865a5217849b128199225147fad125f0b23a2955e2261a",
+      "cgroup": "/sys/fs/cgroup/system.slice/docker-36df91c133a870c2ee865a5217849b128199225147fad125f0b23a2955e2261a.scope",
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 11273,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "sock_throttled": 0
+      },
+      "oom_kill": 0,
+      "oom": 0,
+      "max_events": 11273,
+      "memory_max": 12884901888,
+      "memory_peak": 12884901888,
+      "memory_current": 12883828736,
+      "swap_max": 0,
+      "swap_peak": 0,
+      "anon": 7520571392,
+      "file": 5222318080,
+      "file_dirty": 12288,
+      "pswpout": 0,
+      "pswpin": 0,
+      "pgscan_direct": 6344807,
+      "anon_headroom_bytes": 5364330496,
+      "no_swap_configured": true,
+      "passed": true
+    },
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "tp1-pkg-no-quantization": {
+    "profile": "no-quantization",
+    "max_model_len": 28672,
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-10-04T17:16:42.881994+00:00"
+    },
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 52.18779163390635,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-strict"
+    },
+    "ladder": {
+      "verdict": "exact",
+      "sections": {
+        "sequential-oracle": "64/64",
+        "batch-c64-r1": "64/64"
+      },
+      "first_divergences": []
+    },
+    "context": {
+      "rc": 0,
+      "baseline": "/mnt/fast-ai/bench-results/fp8-ckpt2-20260917/tp1-mtp0-b896-context/summary.json",
+      "passed": true,
+      "error": null,
+      "rows": 18,
+      "by_length": {
+        "2048": {},
+        "8192": {},
+        "16384": {}
+      }
+    },
+    "status_rc": 0,
+    "cgroup_memory": {
+      "read": true,
+      "container_id": "0d628429b49bdcf85f38d1b307de9b1c8ac5b38d9c06296f575f48bcb6971c96",
+      "cgroup": "/sys/fs/cgroup/system.slice/docker-0d628429b49bdcf85f38d1b307de9b1c8ac5b38d9c06296f575f48bcb6971c96.scope",
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 11137,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "sock_throttled": 0
+      },
+      "oom_kill": 0,
+      "oom": 0,
+      "max_events": 11137,
+      "memory_max": 12884901888,
+      "memory_peak": 12884901888,
+      "memory_current": 12883173376,
+      "swap_max": 0,
+      "swap_peak": 0,
+      "anon": 7344025600,
+      "file": 5444071424,
+      "file_dirty": 8192,
+      "pswpout": 0,
+      "pswpin": 0,
+      "pgscan_direct": 6531107,
+      "anon_headroom_bytes": 5540876288,
+      "no_swap_configured": true,
+      "passed": true
+    },
+    "stop": {
+      "status": "stopped",
+      "error": null,
+      "container_removed": true
+    }
+  },
+  "service_health_rc": 0,
+  "service": {
+    "status": "ready",
+    "error": null,
+    "unit": "fp8-service-chunked-20261004",
+    "state_dir": "/mnt/fast-ai/bench-results/fp8-onecard-chunked-20261004/service",
+    "strict": {
+      "rc": 0,
+      "tok_s_1_100": 90.12312573016501,
+      "exact": "12/12",
+      "reference": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict"
+    }
+  },
+  "finished": "2026-10-04T17:32:08.647975+00:00"
+}

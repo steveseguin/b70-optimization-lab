@@ -14,8 +14,10 @@ which is worth 10-17% more writing speed after a long prompt and changes no outp
 | `max-context` (0.983 of GPU memory) | 40,960 tokens | 54.0 tok/s | 2,028 / 2,018 / 1,936 tok/s |
 | `no-quantization` (full-precision draft head) | 28,672 tokens | 52.2 tok/s | 2,019 / 2,014 / 1,932 tok/s |
 
-Every row was measured through this launcher on the pinned image on October 3-4, after the launcher stopped giving
-the container a swap allowance ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/); the
+Every row was measured through this launcher on the pinned image on October 4, with the chunked-upload overlay the
+package now ships ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/); the
+October 3-4 run without it is within 0.1 % on every row:
+[receipts](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/); the
 first acceptance on this image, September 18, is within 0.7 % on every row:
 [receipts](../../experiments/qwen38-27b-b70/data/2026-09-18-fp8-onecard-r312d/)).
 
@@ -141,6 +143,14 @@ and the answer.
   twice (54.06 / 54.03 tok/s), `max-context` 12/12 at 53.98, `no-quantization` 12/12 at 52.20, every other gate exact,
   no out-of-memory kill, 6.9-7.7 GiB of working memory against the 12 GiB limit
   ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-03-fp8-onecard-noswap/)).
+- **Accepted again with the chunked-upload overlay (October 4, 16:33-17:32 UTC).** The package now ships
+  `overlays/b70_chunked_upload.py`, which moves the 2.5 GB output-layer and embedding weights between host and card in
+  128 MiB pieces while the model loads. That avoids the driver path behind the model-load GPU fault
+  ([what it is](../../experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md)); the bytes that arrive are
+  the same and `serve.py` is unchanged. The same campaign, all three profiles: `recommended` 12/12 twice
+  (54.05 / 54.03 tok/s), `max-context` 12/12 at 54.02, `no-quantization` 12/12 at 52.19, every other gate exact, no
+  GPU fault ([receipts](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-onecard-chunked-upload/)).
+  `B70_CHUNKED_UPLOAD=0` turns the overlay off.
 - Not yet tested: a machine without Intel drivers, Docker or the model already
   in place, and more than one user at a time. The image itself is public: it was pushed on September 18 as
   `r312d-fp8-tp1-20260918`, so the `docker pull` above works anywhere.
