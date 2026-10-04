@@ -57,3 +57,40 @@ compares every answer both with the same server's one-at-a-time answers and with
 no-speculation reference (`fp8-comm2-20260917/tp2-ag-mtp0-ladder.json`). Servers: no speculation at 8; depth-5
 speculation at 2, 4 and 8. The rule above is unchanged: a level is lossless only if all 64 answers are identical in
 both passes.
+
+## Addendum, 02:25 EDT: results so far, and one more preregistered run on the batch-invariant switch set
+
+Results of the gate and scaling runs (64 answers per pass, two passes, shipped arithmetic):
+
+| Server | Users | Equal to solo, pass 1 / 2 | Equal to the frozen single-user reference | Together |
+| --- | ---: | --- | --- | ---: |
+| no speculation | 8 | 64/64, 64/64 | yes | 237 tok/s |
+| no speculation | 16 | 64/64, 64/64 | yes | **423 tok/s** |
+| no speculation | 32 | 60/64, 58/64 | no | 656-676 |
+| no speculation | 64 | 61/64, 58/64 | no | 876-917 |
+| depth-5 speculation | 2 | 60/64, 61/64 | no | 136-140 |
+| depth-5 speculation | 4 | 61/64, 61/64 | no | 227-239 |
+| depth-5 speculation | 8 | 57/64, 61/64 | no | 335-363 |
+
+So on the shipped arithmetic, **no speculation is lossless through 16 users at 423 tok/s together**, and speculation
+is not lossless at any user count above one.
+
+One bounded arm then turned on the batch-invariant switches the image already carries (packed-serial FP8 linear,
+serial-exact GDN speculation, serial verify attention, batch-invariant LM head and RMSNorm, FP16 class pad) for
+depth-5 speculation at 4 users: **64/64 equal to its own solo answers in both passes, 163-169 tok/s together**, but
+59/64 against the frozen reference. The second number is the wrong comparison, by this lab's own rule: those
+switches change the rounding order, so that arithmetic has to be judged against its own no-speculation answers
+(AGENTS.md, campaign rule 2), not against answers produced by the shipped arithmetic.
+
+**The run that settles it (`MU_MODE=invariant`), written down before it starts:**
+
+1. `inv-mtp0-s64`: switches on, no speculation, 64 users. Its one-at-a-time answers become the reference for this
+   arithmetic. Also: are all 64 answers still equal to solo with 64 users at once?
+2. `inv-mtp5-s1`: switches on, depth-5 speculation, one user. Strict suite twice and the 64-prompt ladder against the
+   reference from step 1: is speculation lossless on this arithmetic, and what does one user get?
+3. `inv-mtp5-s8`, `inv-mtp5-s16`: the same with 8 and 16 users.
+
+A level counts as lossless only if all 64 answers equal the step-1 reference in both passes. This is the same
+precision as the shipped recipe (FP8 weights, FP16 activations and KV); only the order of rounding differs, which
+is why it needs its own reference. No further arms after this: if speculation is not exact against its own
+reference, the next step is an operator census, not more switches.

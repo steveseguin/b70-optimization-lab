@@ -1,0 +1,213 @@
+{
+  "schema": "b70-lab.ladder-oracle-comparison.v1",
+  "candidate": "/mnt/fast-ai/bench-results/fp8-multiuser-gate-20261004/tp2-mtp5-s2-sat-ladder.json",
+  "reference": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-ladder.json",
+  "reference_rows": 64,
+  "sections": [
+    {
+      "section": "sequential-oracle",
+      "exact": 64,
+      "total": 64,
+      "mismatches": []
+    },
+    {
+      "section": "batch-c64-r1",
+      "exact": 60,
+      "total": 64,
+      "mismatches": [
+        {
+          "prompt_id": "rollback-c010",
+          "first_divergence": 97,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            318,
+            815,
+            7566,
+            11,
+            37972,
+            11,
+            2478,
+            710
+          ],
+          "reference_tokens": [
+            321,
+            7463,
+            2272,
+            264,
+            25045,
+            13,
+            198,
+            17
+          ]
+        },
+        {
+          "prompt_id": "index-c033",
+          "first_divergence": 75,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1857,
+            14934,
+            8307,
+            4370,
+            314,
+            2400,
+            1898,
+            8307
+          ],
+          "reference_tokens": [
+            874,
+            2400,
+            1898,
+            8307,
+            553,
+            198,
+            256,
+            471
+          ]
+        },
+        {
+          "prompt_id": "evidence-c047",
+          "first_divergence": 85,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            446,
+            24869,
+            11,
+            1324,
+            314,
+            18100,
+            8213,
+            11
+          ],
+          "reference_tokens": [
+            5072,
+            24869,
+            11,
+            1324,
+            314,
+            8213,
+            11,
+            55968
+          ]
+        },
+        {
+          "prompt_id": "evidence-c063",
+          "first_divergence": 88,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            32783,
+            1331,
+            11,
+            8240,
+            2984,
+            11,
+            15579,
+            318
+          ],
+          "reference_tokens": [
+            5396,
+            795,
+            16935,
+            318,
+            13646,
+            1331,
+            11,
+            8240
+          ]
+        }
+      ],
+      "cached_tokens_all_zero": true
+    },
+    {
+      "section": "batch-c64-r2",
+      "exact": 61,
+      "total": 64,
+      "mismatches": [
+        {
+          "prompt_id": "rollback-c010",
+          "first_divergence": 97,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            318,
+            815,
+            7566,
+            11,
+            37972,
+            11,
+            2478,
+            710
+          ],
+          "reference_tokens": [
+            321,
+            7463,
+            2272,
+            264,
+            25045,
+            13,
+            198,
+            17
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c019",
+          "first_divergence": 60,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            271,
+            16,
+            13,
+            220,
+            2972,
+            28999,
+            473,
+            318
+          ],
+          "reference_tokens": [
+            2972,
+            28999,
+            473,
+            332,
+            318,
+            20034,
+            279,
+            1879
+          ]
+        },
+        {
+          "prompt_id": "cache-c040",
+          "first_divergence": 60,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            29749,
+            383,
+            264,
+            1510,
+            14011,
+            593,
+            9843,
+            9109
+          ],
+          "reference_tokens": [
+            54703,
+            279,
+            6297,
+            948,
+            264,
+            1918,
+            369,
+            348
+          ]
+        }
+      ],
+      "cached_tokens_all_zero": true
+    }
+  ],
+  "all_exact": false
+}

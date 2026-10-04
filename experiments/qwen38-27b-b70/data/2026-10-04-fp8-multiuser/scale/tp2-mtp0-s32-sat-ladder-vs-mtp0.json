@@ -1,0 +1,291 @@
+{
+  "schema": "b70-lab.ladder-oracle-comparison.v1",
+  "candidate": "/mnt/fast-ai/bench-results/fp8-multiuser-scale-20261004/tp2-mtp0-s32-sat-ladder.json",
+  "reference": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-ladder.json",
+  "reference_rows": 64,
+  "sections": [
+    {
+      "section": "sequential-oracle",
+      "exact": 64,
+      "total": 64,
+      "mismatches": []
+    },
+    {
+      "section": "batch-c64-r1",
+      "exact": 60,
+      "total": 64,
+      "mismatches": [
+        {
+          "prompt_id": "cache-c040",
+          "first_divergence": 60,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            29749,
+            383,
+            264,
+            1510,
+            14011,
+            593,
+            9843,
+            9109
+          ],
+          "reference_tokens": [
+            54703,
+            279,
+            6297,
+            948,
+            264,
+            1918,
+            369,
+            348
+          ]
+        },
+        {
+          "prompt_id": "index-c041",
+          "first_divergence": 46,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            31789,
+            383,
+            279,
+            2100,
+            18959,
+            440,
+            321,
+            1973
+          ],
+          "reference_tokens": [
+            63,
+            303,
+            71100,
+            8,
+            383,
+            279,
+            2100,
+            18959
+          ]
+        },
+        {
+          "prompt_id": "testing-c045",
+          "first_divergence": 28,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            32907,
+            9830,
+            7154,
+            310,
+            279,
+            1788,
+            14456,
+            25
+          ],
+          "reference_tokens": [
+            49282,
+            9830,
+            7154,
+            310,
+            279,
+            1788,
+            14456,
+            318
+          ]
+        },
+        {
+          "prompt_id": "evidence-c047",
+          "first_divergence": 85,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            446,
+            24869,
+            11,
+            1324,
+            314,
+            18100,
+            8213,
+            11
+          ],
+          "reference_tokens": [
+            5072,
+            24869,
+            11,
+            1324,
+            314,
+            8213,
+            11,
+            55968
+          ]
+        }
+      ],
+      "cached_tokens_all_zero": true
+    },
+    {
+      "section": "batch-c64-r2",
+      "exact": 58,
+      "total": 64,
+      "mismatches": [
+        {
+          "prompt_id": "index-c017",
+          "first_divergence": 49,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            31789,
+            310,
+            7440,
+            279,
+            24816,
+            668,
+            958,
+            279
+          ],
+          "reference_tokens": [
+            63,
+            303,
+            71100,
+            8,
+            310,
+            7440,
+            279,
+            24816
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c019",
+          "first_divergence": 60,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            271,
+            16,
+            13,
+            220,
+            2972,
+            28999,
+            473,
+            318
+          ],
+          "reference_tokens": [
+            2972,
+            28999,
+            473,
+            332,
+            318,
+            20034,
+            279,
+            1879
+          ]
+        },
+        {
+          "prompt_id": "cache-c032",
+          "first_divergence": 35,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            63,
+            4523,
+            264,
+            1103,
+            314,
+            3741,
+            11,
+            321
+          ],
+          "reference_tokens": [
+            9109,
+            306,
+            5368,
+            4523,
+            1918,
+            3447,
+            11,
+            321
+          ]
+        },
+        {
+          "prompt_id": "cache-c040",
+          "first_divergence": 60,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            29749,
+            383,
+            264,
+            1510,
+            14011,
+            593,
+            9843,
+            9109
+          ],
+          "reference_tokens": [
+            54703,
+            279,
+            6297,
+            948,
+            264,
+            1918,
+            369,
+            348
+          ]
+        },
+        {
+          "prompt_id": "index-c041",
+          "first_divergence": 46,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            31789,
+            383,
+            279,
+            2100,
+            18959,
+            440,
+            321,
+            1973
+          ],
+          "reference_tokens": [
+            63,
+            303,
+            71100,
+            8,
+            383,
+            279,
+            2100,
+            18959
+          ]
+        },
+        {
+          "prompt_id": "evidence-c047",
+          "first_divergence": 85,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            446,
+            24869,
+            11,
+            1324,
+            314,
+            18100,
+            8213,
+            11
+          ],
+          "reference_tokens": [
+            5072,
+            24869,
+            11,
+            1324,
+            314,
+            8213,
+            11,
+            55968
+          ]
+        }
+      ],
+      "cached_tokens_all_zero": true
+    }
+  ],
+  "all_exact": false
+}

@@ -83,6 +83,51 @@ def stage(results, since, name, port, args, levels):
     R.save_results(); R.fault_check(since); R.wait_gpus_free()
 
 
+INVARIANT = []
+for _key in ('VLLM_XPU_FP8_PACKED_SERIAL_EXACT', 'VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT',
+             'VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT', 'VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT',
+             'VLLM_XPU_FA_SERIAL_SPEC_DECODE', 'VLLM_XPU_LM_HEAD_BATCH_INVARIANT',
+             'VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT', 'VLLM_XPU_FP16_LINEAR_CLASSPAD'):
+    INVARIANT += ['--env', f'{_key}=1']
+
+
+def invariant_stage(results, since, name, port, args, refs, strict_runs=0):
+    """A server with the batch-invariant switch set. `refs` are this arithmetic's own no-speculation answers
+    (AGENTS.md: an oracle is bound to a kernel identity); None means this stage produces them."""
+    srv = R.Research(name, port, args)
+    r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+    mine = {}
+    if srv.ready:
+        strict_ref = (refs or {}).get('strict') or REF_STRICT_OLD
+        for i in range(1, strict_runs + 1):
+            tag = name if i == 1 else f'{name}-run{i}'
+            r['strict' if i == 1 else f'strict_run{i}'] = R.strict(srv.base, tag, strict_ref)
+            R.save_results(); R.fault_check(since)
+            R.log(f"{name}: strict run {i}: {r['strict' if i == 1 else f'strict_run{i}'].get('exact')} vs "
+                  f"{'its own no-speculation answers' if refs else 'the SHIPPED arithmetic (expected to differ at ties)'} "
+                  f"at {r['strict' if i == 1 else f'strict_run{i}'].get('tok_s_1_100')} tok/s")
+        if strict_runs:
+            mine['strict'] = OUT / f'{name}-strict'
+        ladder = R.ladder(srv.base, name, 2)
+        if ladder:
+            data = json.loads(Path(ladder).read_text())
+            r['passes'] = [{'repeat': b['repeat'], 'exact_vs_own_solo': f"{b['oracle_exact_count']}/{b['oracle_exact_total']}",
+                            'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2)} for b in data['batches']]
+            for row in r['passes']:
+                R.log(f"{name}: pass {row['repeat']}: {row['exact_vs_own_solo']} equal to solo, {row['aggregate_tok_s']} tok/s together")
+            if refs and refs.get('ladder'):
+                r['vs_invariant_reference'] = R.ladder_compare(name, ladder, refs['ladder'])
+                R.log(f"{name}: vs this arithmetic's no-speculation reference: {r['vs_invariant_reference'].get('verdict')} "
+                      f"{r['vs_invariant_reference'].get('sections')}")
+            mine['ladder'] = ladder
+    r['stop'] = srv.stop()
+    R.save_results(); R.fault_check(since); R.wait_gpus_free()
+    return mine
+
+
+REF_STRICT_OLD = Path('/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict')
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=False)
     since = R.now()
@@ -98,6 +143,30 @@ def main():
         # first look (2026-10-04 01:22): only N requests per level, too few to call anything exact
         stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
         stage(results, since, 'tp2-mtp5-s4', 18197, TP2 + MTP5 + SHIPPED + ['--seqs', '4'], '2,4')
+    elif os.environ.get('MU_MODE') == 'invariant':
+        # The batch-invariant switch set as its own arithmetic: first its no-speculation answers (the reference for
+        # everything after it) at 64 users, then speculation alone, at 8 and at 16 users against that reference.
+        refs = invariant_stage(results, since, 'inv-mtp0-s64', 18196, TP2 + SHIPPED + INVARIANT + ['--seqs', '64'], None, strict_runs=1)
+        if refs.get('ladder') and refs.get('strict') and Path(refs['strict']).exists():
+            invariant_stage(results, since, 'inv-mtp5-s1', 18197, TP2 + MTP5 + SHIPPED + INVARIANT, refs, strict_runs=2)
+            invariant_stage(results, since, 'inv-mtp5-s8', 18198, TP2 + MTP5 + SHIPPED + INVARIANT + ['--seqs', '8'], refs)
+            invariant_stage(results, since, 'inv-mtp5-s16', 18199, TP2 + MTP5 + SHIPPED + INVARIANT + ['--seqs', '16'], refs)
+        else:
+            R.log('no invariant reference produced; skipping the speculation stages')
+    elif os.environ.get('MU_MODE') == 'exactarm':
+        # One bounded arm, not a search: depth-5 speculation at 4 users with every serial-exact switch the image
+        # already has turned on. Exact or not, this is the only arm; a miss goes to an operator census, not to more arms.
+        exact = []
+        for key in ('VLLM_XPU_FP8_PACKED_SERIAL_EXACT', 'VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT',
+                    'VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT', 'VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT',
+                    'VLLM_XPU_FA_SERIAL_SPEC_DECODE', 'VLLM_XPU_LM_HEAD_BATCH_INVARIANT',
+                    'VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT', 'VLLM_XPU_FP16_LINEAR_CLASSPAD'):
+            exact += ['--env', f'{key}=1']
+        stage(results, since, 'tp2-mtp5-s4-serialexact-sat', 18197, TP2 + MTP5 + SHIPPED + exact + ['--seqs', '4'], 'saturated')
+    elif os.environ.get('MU_MODE') == 'scale':
+        # how far does the lossless no-speculation profile scale? 16, 32 and 64 users
+        for n, port in ((16, 18196), (32, 18197), (64, 18198)):
+            stage(results, since, f'tp2-mtp0-s{n}-sat', port, TP2 + SHIPPED + ['--seqs', str(n)], 'saturated')
     else:
         # the gate: 64 prompts per pass against a server running N at a time
         stage(results, since, 'tp2-mtp0-s8-sat', 18196, TP2 + SHIPPED + ['--seqs', '8'], 'saturated')

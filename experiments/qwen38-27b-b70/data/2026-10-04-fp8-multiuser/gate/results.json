@@ -1,0 +1,398 @@
+{
+  "started": "2026-10-04T05:29:21.488240+00:00",
+  "preflight_health_rc": 0,
+  "tp2-mtp0-s8-sat": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-10-04T05:31:49.226288+00:00"
+    },
+    "saturated": {
+      "vs_reference": {
+        "verdict": "exact",
+        "sections": {
+          "sequential-oracle": "64/64",
+          "batch-c64-r1": "64/64",
+          "batch-c64-r2": "64/64"
+        },
+        "first_divergences": []
+      },
+      "passes": [
+        {
+          "repeat": 1,
+          "answers": 64,
+          "exact_vs_own_solo": "64/64",
+          "aggregate_tok_s": 236.95,
+          "cache_zero": true
+        },
+        {
+          "repeat": 2,
+          "answers": 64,
+          "exact_vs_own_solo": "64/64",
+          "aggregate_tok_s": 237.08,
+          "cache_zero": true
+        }
+      ]
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 220316,
+      "container_name": "fp8-tp1-73c9665cc9ad",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18196,
+      "started_at": "2026-10-04T05:29:30.636404+00:00",
+      "boot_id": "66541315-49f1-41f7-af1d-4756d6b89c9c",
+      "container_id": "eebcd8bc22bf6e268aa21050d7270a2a4de296d206666ec1bc007d33205e9a7d",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 2.546
+      },
+      "ready_at": "2026-10-04T05:31:49.226288+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-10-04T05:37:11.182998+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(Worker_TP0 pid=196) INFO 10-04 05:30:17 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(Worker_TP0 pid=196) INFO 10-04 05:30:26 [default_loader.py:430] Loading weights took 9.25 seconds",
+        "(Worker_TP0 pid=196) INFO 10-04 05:30:27 [gpu_model_runner.py:5486] Model loading took 13.85 GiB memory and 10.133676 seconds",
+        "(Worker_TP0 pid=196) INFO 10-04 05:31:29 [monitor.py:53] torch.compile took 59.11 s in total",
+        "(Worker_TP0 pid=196) INFO 10-04 05:31:39 [gpu_worker.py:625] Available KV cache memory: 13.28 GiB",
+        "(EngineCore pid=134) INFO 10-04 05:31:39 [kv_cache_utils.py:2032] GPU KV cache size: 401,664 tokens, Maximum concurrency for 33,024 tokens per request: 12.16x",
+        "(Worker_TP0 pid=196) WARNING 10-04 05:31:41 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP1 pid=197) WARNING 10-04 05:31:41 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP0 pid=196) INFO 10-04 05:31:41 [gpu_worker.py:860] Free memory on device (29.07/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.28 GiB for consumed memory (weights + non-torch), 1.22 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=14106556621` (13.14 GiB) to fit into requested memory, or `--kv-cache-memory=14416820224` (13.43 GiB) to fully utilize gpu memory. Current kv cache memory in use is 13.28 GiB.",
+        "(Worker_TP1 pid=197) INFO 10-04 05:31:41 [gpu_worker.py:860] Free memory on device (29.36/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.28 GiB for consumed memory (weights + non-torch), 1.22 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=14102579405` (13.13 GiB) to fit into requested memory, or `--kv-cache-memory=14727600128` (13.72 GiB) to fully utilize gpu memory. Current kv cache memory in use is 13.28 GiB.",
+        "(EngineCore pid=134) INFO 10-04 05:31:42 [core.py:361] init engine (profile, create kv cache, warmup model) took 74.12 s (compilation: 59.11 s)",
+        "(EngineCore pid=134) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=134) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py."
+      ]
+    }
+  },
+  "tp2-mtp5-s2-sat": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-10-04T05:39:41.200076+00:00"
+    },
+    "saturated": {
+      "vs_reference": {
+        "verdict": "NOT exact",
+        "sections": {
+          "sequential-oracle": "64/64",
+          "batch-c64-r1": "60/64",
+          "batch-c64-r2": "61/64"
+        },
+        "first_divergences": [
+          [
+            "rollback-c010",
+            97
+          ],
+          [
+            "index-c033",
+            75
+          ],
+          [
+            "evidence-c047",
+            85
+          ],
+          [
+            "evidence-c063",
+            88
+          ],
+          [
+            "rollback-c010",
+            97
+          ],
+          [
+            "benchmark-c019",
+            60
+          ],
+          [
+            "cache-c040",
+            60
+          ]
+        ]
+      },
+      "passes": [
+        {
+          "repeat": 1,
+          "answers": 64,
+          "exact_vs_own_solo": "60/64",
+          "aggregate_tok_s": 135.5,
+          "cache_zero": true
+        },
+        {
+          "repeat": 2,
+          "answers": 64,
+          "exact_vs_own_solo": "61/64",
+          "aggregate_tok_s": 139.64,
+          "cache_zero": true
+        }
+      ]
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 221673,
+      "container_name": "fp8-tp1-055f7407910e",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18197,
+      "started_at": "2026-10-04T05:37:11.395565+00:00",
+      "boot_id": "66541315-49f1-41f7-af1d-4756d6b89c9c",
+      "container_id": "be46088c87c328c354cca599563790c5aedb8e2c87fd158f80dd7b518b7aff70",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 1.745
+      },
+      "ready_at": "2026-10-04T05:39:41.200076+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-10-04T05:43:35.954876+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(Worker_TP0 pid=249) INFO 10-04 05:38:09 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(Worker_TP0 pid=249) INFO 10-04 05:38:18 [default_loader.py:430] Loading weights took 8.28 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:38:20 [default_loader.py:430] Loading weights took 2.03 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:38:21 [gpu_model_runner.py:5486] Model loading took 14.21 GiB memory and 11.591854 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:39:22 [monitor.py:53] torch.compile took 58.86 s in total",
+        "(Worker_TP0 pid=249) INFO 10-04 05:39:28 [monitor.py:53] torch.compile took 4.77 s in total",
+        "(Worker_TP0 pid=249) INFO 10-04 05:39:30 [gpu_worker.py:625] Available KV cache memory: 12.76 GiB",
+        "(EngineCore pid=187) INFO 10-04 05:39:30 [kv_cache_utils.py:2032] GPU KV cache size: 268,747 tokens, Maximum concurrency for 33,024 tokens per request: 8.14x",
+        "(Worker_TP0 pid=249) WARNING 10-04 05:39:33 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP0 pid=249) INFO 10-04 05:39:33 [gpu_worker.py:860] Free memory on device (29.07/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.76 GiB for consumed memory (weights + non-torch), 1.26 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13543882957` (12.61 GiB) to fit into requested memory, or `--kv-cache-memory=13854134272` (12.9 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.76 GiB.",
+        "(Worker_TP1 pid=276) WARNING 10-04 05:39:33 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP1 pid=276) INFO 10-04 05:39:33 [gpu_worker.py:860] Free memory on device (29.36/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.65 GiB for consumed memory (weights + non-torch), 1.26 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13663473869` (12.73 GiB) to fit into requested memory, or `--kv-cache-memory=14288490496` (13.31 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.87 GiB.",
+        "(EngineCore pid=187) INFO 10-04 05:39:34 [core.py:361] init engine (profile, create kv cache, warmup model) took 72.45 s (compilation: 63.81 s)",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py."
+      ]
+    }
+  },
+  "tp2-mtp5-s4-sat": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-10-04T05:46:05.743009+00:00"
+    },
+    "saturated": {
+      "vs_reference": {
+        "verdict": "NOT exact",
+        "sections": {
+          "sequential-oracle": "64/64",
+          "batch-c64-r1": "61/64",
+          "batch-c64-r2": "61/64"
+        },
+        "first_divergences": [
+          [
+            "cache-c000",
+            96
+          ],
+          [
+            "monitoring-c044",
+            84
+          ],
+          [
+            "evidence-c047",
+            85
+          ],
+          [
+            "index-c017",
+            49
+          ],
+          [
+            "cache-c040",
+            60
+          ],
+          [
+            "evidence-c047",
+            85
+          ]
+        ]
+      },
+      "passes": [
+        {
+          "repeat": 1,
+          "answers": 64,
+          "exact_vs_own_solo": "61/64",
+          "aggregate_tok_s": 226.86,
+          "cache_zero": true
+        },
+        {
+          "repeat": 2,
+          "answers": 64,
+          "exact_vs_own_solo": "61/64",
+          "aggregate_tok_s": 238.51,
+          "cache_zero": true
+        }
+      ]
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 223101,
+      "container_name": "fp8-tp1-eefcce33611a",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18198,
+      "started_at": "2026-10-04T05:43:36.191557+00:00",
+      "boot_id": "66541315-49f1-41f7-af1d-4756d6b89c9c",
+      "container_id": "ea743550d7e98ffa2501f8fe506a41419b185eb4d24eb6e68d96f284f5376472",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 1.852
+      },
+      "ready_at": "2026-10-04T05:46:05.743009+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-10-04T05:49:12.357599+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(Worker_TP0 pid=249) INFO 10-04 05:44:34 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(Worker_TP0 pid=249) INFO 10-04 05:44:43 [default_loader.py:430] Loading weights took 8.21 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:44:44 [default_loader.py:430] Loading weights took 1.41 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:44:45 [gpu_model_runner.py:5486] Model loading took 14.21 GiB memory and 11.026053 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:45:47 [monitor.py:53] torch.compile took 58.81 s in total",
+        "(Worker_TP0 pid=249) INFO 10-04 05:45:52 [monitor.py:53] torch.compile took 4.80 s in total",
+        "(Worker_TP0 pid=249) INFO 10-04 05:45:55 [gpu_worker.py:625] Available KV cache memory: 12.76 GiB",
+        "(EngineCore pid=187) INFO 10-04 05:45:55 [kv_cache_utils.py:2032] GPU KV cache size: 268,747 tokens, Maximum concurrency for 33,024 tokens per request: 8.14x",
+        "(Worker_TP1 pid=276) WARNING 10-04 05:45:58 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP1 pid=276) INFO 10-04 05:45:58 [gpu_worker.py:860] Free memory on device (29.36/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.65 GiB for consumed memory (weights + non-torch), 1.26 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13663473869` (12.73 GiB) to fit into requested memory, or `--kv-cache-memory=14288498688` (13.31 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.87 GiB.",
+        "(Worker_TP0 pid=249) WARNING 10-04 05:45:58 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP0 pid=249) INFO 10-04 05:45:58 [gpu_worker.py:860] Free memory on device (29.07/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.76 GiB for consumed memory (weights + non-torch), 1.26 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13544022221` (12.61 GiB) to fit into requested memory, or `--kv-cache-memory=13854183424` (12.9 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.76 GiB.",
+        "(EngineCore pid=187) INFO 10-04 05:45:58 [core.py:361] init engine (profile, create kv cache, warmup model) took 72.99 s (compilation: 63.76 s)",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py."
+      ]
+    }
+  },
+  "tp2-mtp5-s8-sat": {
+    "server": {
+      "status": "ready",
+      "error": null,
+      "ready_at": "2026-10-04T05:51:48.258334+00:00"
+    },
+    "saturated": {
+      "vs_reference": {
+        "verdict": "NOT exact",
+        "sections": {
+          "sequential-oracle": "64/64",
+          "batch-c64-r1": "57/64",
+          "batch-c64-r2": "61/64"
+        },
+        "first_divergences": [
+          [
+            "cache-c000",
+            96
+          ],
+          [
+            "rollback-c010",
+            97
+          ],
+          [
+            "testing-c013",
+            34
+          ],
+          [
+            "index-c033",
+            49
+          ],
+          [
+            "cache-c040",
+            60
+          ],
+          [
+            "testing-c045",
+            28
+          ],
+          [
+            "evidence-c047",
+            85
+          ],
+          [
+            "index-c009",
+            79
+          ],
+          [
+            "testing-c045",
+            28
+          ],
+          [
+            "evidence-c047",
+            85
+          ]
+        ]
+      },
+      "passes": [
+        {
+          "repeat": 1,
+          "answers": 64,
+          "exact_vs_own_solo": "57/64",
+          "aggregate_tok_s": 335.34,
+          "cache_zero": true
+        },
+        {
+          "repeat": 2,
+          "answers": 64,
+          "exact_vs_own_solo": "61/64",
+          "aggregate_tok_s": 363.47,
+          "cache_zero": true
+        }
+      ]
+    },
+    "stop": {
+      "status": "stopped",
+      "owner_pid": 224463,
+      "container_name": "fp8-tp1-de908c29f973",
+      "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+      "port": 18199,
+      "started_at": "2026-10-04T05:49:12.563614+00:00",
+      "boot_id": "66541315-49f1-41f7-af1d-4756d6b89c9c",
+      "container_id": "dde1788ead185a11a9fa890b93c748f76db27c335e243b2346e6095f7086ce24",
+      "warmup": {
+        "completion_tokens": 64,
+        "seconds": 1.929
+      },
+      "ready_at": "2026-10-04T05:51:48.258334+00:00",
+      "error": null,
+      "stop_confirmed": true,
+      "finished_at": "2026-10-04T05:54:33.920590+00:00",
+      "memory_log": [
+        "(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(Worker_TP0 pid=249) INFO 10-04 05:50:10 [qwen_gdn_linear_attn.py:215] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).",
+        "(Worker_TP0 pid=249) INFO 10-04 05:50:19 [default_loader.py:430] Loading weights took 8.27 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:50:20 [default_loader.py:430] Loading weights took 1.11 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:50:22 [gpu_model_runner.py:5486] Model loading took 14.21 GiB memory and 10.837152 seconds",
+        "(Worker_TP0 pid=249) INFO 10-04 05:51:23 [monitor.py:53] torch.compile took 59.01 s in total",
+        "(Worker_TP0 pid=249) INFO 10-04 05:51:30 [monitor.py:53] torch.compile took 5.47 s in total",
+        "(Worker_TP0 pid=249) INFO 10-04 05:51:39 [gpu_worker.py:625] Available KV cache memory: 12.76 GiB",
+        "(EngineCore pid=187) INFO 10-04 05:51:39 [kv_cache_utils.py:2032] GPU KV cache size: 269,316 tokens, Maximum concurrency for 33,024 tokens per request: 8.16x",
+        "(Worker_TP1 pid=276) WARNING 10-04 05:51:41 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP0 pid=249) WARNING 10-04 05:51:41 [gpu_model_runner.py:6919] Skipping CUDA graph capture. To turn on CUDA graph capture, ensure `cudagraph_mode` was not manually set to `NONE`",
+        "(Worker_TP1 pid=276) INFO 10-04 05:51:41 [gpu_worker.py:860] Free memory on device (29.36/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.65 GiB for consumed memory (weights + non-torch), 1.25 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13666998477` (12.73 GiB) to fit into requested memory, or `--kv-cache-memory=14292011008` (13.31 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.87 GiB.",
+        "(Worker_TP0 pid=249) INFO 10-04 05:51:41 [gpu_worker.py:860] Free memory on device (29.07/30.3 GiB) on startup. Desired GPU memory utilization is (0.95, 28.78 GiB). Actual usage is 14.76 GiB for consumed memory (weights + non-torch), 1.25 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=13546997965` (12.62 GiB) to fit into requested memory, or `--kv-cache-memory=13857253376` (12.91 GiB) to fully utilize gpu memory. Current kv cache memory in use is 12.76 GiB.",
+        "(EngineCore pid=187) INFO 10-04 05:51:42 [core.py:361] init engine (profile, create kv cache, warmup model) took 80.40 s (compilation: 64.48 s)",
+        "(EngineCore pid=187) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.",
+        "(EngineCore pid=187) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py."
+      ]
+    }
+  },
+  "finished": "2026-10-04T05:54:34.028584+00:00"
+}
