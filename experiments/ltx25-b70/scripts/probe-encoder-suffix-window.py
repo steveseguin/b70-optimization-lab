@@ -40,6 +40,11 @@ sys.argv = [SRC + '/main.py', '--cache-none', '--deterministic', '--disable-asyn
 sys.path.insert(0, SRC)
 os.chdir(SRC)
 
+import comfy.options  # noqa: E402
+
+# Added 2026-10-04: without this ComfyUI parses an empty argument list and ignores the flags above. The results
+# recorded before this date were taken under ComfyUI defaults (see the correction in the probe note).
+comfy.options.enable_args_parsing()
 import torch  # noqa: E402
 import comfy.sd  # noqa: E402
 import comfy.model_management as mm  # noqa: E402

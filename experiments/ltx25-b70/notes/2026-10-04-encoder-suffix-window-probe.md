@@ -1,5 +1,14 @@
 # Suffix-window text encoding: five times faster, mathematically the same, not byte-identical (2026-10-04)
 
+> **Correction, 2026-10-04 (later the same day).** The three stand-alone probe scripts behind this note
+> (`probe-encoder-suffix-window.py`, `probe-encoder-window-localiser.py`,
+> `probe-encoder-window-vs-hardware-noise.py`) set the server's command-line flags in `sys.argv` but never
+> called `comfy.options.enable_args_parsing()`, so ComfyUI ignored them and the probes ran under ComfyUI's
+> default flags, not the server's (`--bf16-text-enc`, `--deterministic` and the rest). Each comparison in
+> this note is between two encodes in the same process, so the comparisons themselves stand, but the numbers
+> were not taken under the server's numerics. Nothing downstream depends on them: the window's behaviour in
+> the real server was measured by packets 93b and 93c. The scripts now make the call.
+
 Stand-alone probes on one idle card (0000:27:00.0, `ZE_AFFINITY_MASK=1`),
 eager, no server and no launcher, on kernel 7.0.0-38. Scripts:
 `scripts/probe-encoder-suffix-window.py`,

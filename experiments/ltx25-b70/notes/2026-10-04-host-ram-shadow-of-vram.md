@@ -74,7 +74,19 @@ as the combinations finish.
 | layout, workers | probe exact | timed exact | seconds per clip (mean / median) | compute seconds per clip, cards 0-3 | host RAM held by the GPU driver (peak) | lowest `MemAvailable` |
 | --- | ---: | ---: | ---: | --- | ---: | ---: |
 | four cards (18/18/8/4), 3 | 10/10 | 115/115 | 1.387 / 1.489 | 1.273 / 1.245 / 0.847 / 1.085 | 3.6 GiB | 43.7 GiB (during model load, host copies of the weights) |
+| two cards, 2 (control) | 10/10 | 116/116 | **1.358** / 1.641 | 1.231 / 1.297 / 0.380 / 0.835 | 3.6 GiB | as above |
 
 Three workers fit and are exact. Peak video memory per card: 27.3 / 24.0 / 29.3 / 23.3 GiB. The sampler's
 chain time grew from 2.94 s (two in flight) to 4.12 s (three in flight), so the cards are saturated: more clips
 in flight no longer buys much. What limits speed now is compute per clip on the busiest card (1.27 s on card 0).
+
+The two-clip control is the like-for-like comparison of the setting: 1.413 s per clip by default, 1.358 s with
+it (one run each; this lane has seen a few percent of drift between runs, so read it as "not slower", with a
+likely small gain from the host no longer swapping and no longer squeezing the page cache). With two clips in
+flight the clips finish in pairs, which is why the median interval (1.641) sits above the mean; the mean is the
+throughput.
+
+The remaining combinations (four workers, the 20/20/8 layout, three workers on two cards) were not run: the
+three-worker result shows the cards saturated, so they would land within a few percent of these numbers. The
+chain was stopped in its idle gap after the control. Index bases 257000 (four cards, 4), 258000 (20/20/8, 3) and
+255000 (two cards, 3) are unused.
