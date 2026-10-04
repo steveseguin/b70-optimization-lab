@@ -133,6 +133,18 @@ fault in 59 starts a fair comparison needs well over a hundred starts.
 - The test is now a script that refuses to run on this boot or on any boot that already has a fault line:
   `experiments/qwen38-27b-b70/scripts/run-20261004-fp8-mtp-under-load.sh`.
 
+## Measured on the cards, 09:40 to 10:10 EDT (owner chose a health check over a reboot; it passed)
+
+Receipts: `/mnt/fast-ai/bench-results/fp8-loadcopy-20261004*/` and `fp8-loadcopy-probe-20261004/`.
+
+| Question | Result |
+|---|---|
+| What is at the fault address? | The runtime's own log says it: `EXTERNAL_HOST_PTR`, 1,271,398,400 bytes, GPU address `0xffff800400200040`. That is the embedding and output-layer weight (124,160 x 5,120 values of 16 bits). Eight such mappings per two-card start: at the very end of the main weight load and during the draft-model load, exactly where the faults have struck. |
+| Does the runtime switch (`ExperimentalH2DCpuCopyThreshold`) avoid it? | **No.** Same eight mappings with it, on the server and on a one-card probe. The card-side memory torch uses is not the kind the runtime's CPU-copy path accepts. Forcing that path (`ExperimentalForceCopyThroughLock=1`) crashes the process. Dropped. |
+| Which uploads make the mapping? | One-card probe by size: 2, 8, 64 and 256 MiB make none (they go through the runtime's staging buffers). 512, 1,024 and 1,212 MiB each make one, at the fault address. |
+| Does uploading in 128 MiB pieces avoid it? | **Yes on the probe:** a 1.27 GB tensor sent in pieces made no mapping, arrived bit-identical, and took 0.08 s against 0.14 s. |
+| Does the first overlay do that in the real server? | **Not yet.** The server was exact (12 of 12, 90.4 tok/s) but the overlay caught none of the eight uploads: the server's copy also converts the number format, which the first version left alone. The second version covers it; it is tested next. |
+
 ## What is now in place (09:30 EDT, built and dry-run on the CPU; not yet exercised on the cards)
 
 - **Automatic one-time recovery.** `scripts/load_fault_recovery.py` recognises this exact fault (copy-engine reads at
