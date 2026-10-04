@@ -48,6 +48,21 @@ def device_memory():
     return rows
 
 
+
+def check_shard_report(shard_report):
+    """Two-way: the packet-declared split. Packet 94: a named multi-segment placement
+    from the packet's allowlist, with one shard owner per extra segment."""
+    if shard_report.get('segments') is None:
+        require(shard_report['split_index'] == DECLARED_SPLIT_INDEX, 'Expected the packet-declared split')
+        return 'two-way'
+    import ltx_layer_shard as _shard
+    names = [name for name, segs in _shard.PLACEMENTS.items()
+             if name != 'two-way' and shard_report['segments'] == [list(seg) for seg in segs]]
+    require(len(names) == 1, 'Multi-segment placement is not in the packet allowlist')
+    require(len(shard_report.get('segment_bytes', ())) == len(shard_report['segments']),
+            'Multi-segment report does not account for every segment owner')
+    return names[0]
+
 class LTXGraphCaptureGate:
     @classmethod
     def INPUT_TYPES(cls):
@@ -94,15 +109,7 @@ class LTXGraphCaptureGate:
                 'Original resident model generation changed')
         _original_model = model
         adapter.validate_patcher(model)
-        shard_report = model.ltx_layer_shard_report
-        if shard_report.get('segments') is None:
-            require(shard_report['split_index'] == DECLARED_SPLIT_INDEX, 'Expected the packet-declared split')
-        else:
-            # Packet 94: a named multi-segment placement from the packet's allowlist.
-            import ltx_layer_shard as _shard
-            require(any(shard_report['segments'] == [list(seg) for seg in segs]
-                        for name, segs in _shard.PLACEMENTS.items() if name != 'two-way'),
-                    'Multi-segment placement is not in the packet allowlist')
+        check_shard_report(model.ltx_layer_shard_report)
 
         report = {'schema': 'ltx.graph-capture-request.v1', **identity, 'run_name': run_name,
                   'mode': mode, 'selection': selection, 'chain': chain, 'extension_sha256s': hashes,

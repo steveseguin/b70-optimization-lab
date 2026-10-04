@@ -149,6 +149,7 @@ def placement_devices(guider):
 
 
 MEMORY_FLOOR_GIB = 2.0
+_FREEZE_DEVICES = [None]     # transformer segment devices seen by the sampler (packet 94c)
 MEMORY_FLOOR_BYTES = int(MEMORY_FLOOR_GIB * 2**30)
 
 
@@ -157,13 +158,30 @@ class SerialPassRequired(RuntimeError):
     serial capture pass). Refused with a receipt; does not latch."""
 
 
-def freeze_verdict(free_bytes, busy, coverage_ok=True, floor_bytes=MEMORY_FLOOR_BYTES):
-    """Packet 94/94b admission for timed arms: pipeline idle, every sampler signature
-    captured on both workers, every card at or above the floor (raw bytes)."""
+def expected_residents(segment_devices):
+    """Packet 94c: what must be resident (model type, card) at the freeze. Two-way:
+    segment_devices = ['xpu:0', 'xpu:1']."""
+    want = {('LTXAV', 'xpu:0'), ('LatentUpsampler', 'xpu:0'), ('LTXAVTEModel_', 'xpu:2'),
+            ('_TextShard', 'xpu:3'), ('CausalDiffusionVAE', 'xpu:3'), ('AudioVAE', 'xpu:3')}
+    want |= {('_Shard', d) for d in segment_devices[1:]}
+    return want
+
+
+def residents_missing(resident, segment_devices):
+    have = {(t, d) for t, d, nbytes in resident if nbytes > 0}
+    return sorted(expected_residents(segment_devices) - have)
+
+
+def freeze_verdict(free_bytes, busy, coverage_ok=True, floor_bytes=MEMORY_FLOOR_BYTES, missing=()):
+    """Packet 94/94b/94c admission for timed arms: pipeline idle, every sampler signature
+    captured on both workers, every expected model resident on its card, every card
+    at or above the floor (raw bytes)."""
     if busy:
         return False, 'pipeline-busy'
     if not coverage_ok:
         return False, 'captures-incomplete'
+    if missing:
+        return False, 'residents-missing'
     short = {d: v for d, v in free_bytes.items() if v is None or v < floor_bytes}
     if short:
         return False, 'memory-floor'
@@ -231,8 +249,10 @@ class LTXSamplerCaptureFreeze:
             except Exception:  # noqa: BLE001
                 free['xpu:%d' % i] = None
         coverage_ok, coverage = capture.capture_coverage(_sample_worker_idents())
-        ok, outcome = freeze_verdict(free, pipeline.busy(), coverage_ok)
         resident = resident_set()
+        devices = _FREEZE_DEVICES[0] or ['xpu:0', 'xpu:1']
+        missing = residents_missing(resident, devices)
+        ok, outcome = freeze_verdict(free, pipeline.busy(), coverage_ok, missing=missing)
         if ok:
             capture.CAPTURES_FROZEN[0] = True
             capture.LOADS_FROZEN[0] = True
@@ -246,9 +266,38 @@ class LTXSamplerCaptureFreeze:
                   'reserved_gib': {'xpu:%d' % i: round(torch.xpu.memory_reserved(i) / 2**30, 3)
                                    for i in range(torch.xpu.device_count())},
                   'resident_models': [list(r) for r in resident],
+                  'residents_missing': [list(m) for m in missing], 'segment_devices': devices,
                   'placement': __import__('os').environ.get('LTX_SAMPLER_PLACEMENT', 'two-way')}
         write_json(run / ('sampler-capture-freeze-' + run_name + '.json'), report)
         return {'ui': {'text': ['capture freeze: %s' % outcome]}}
+
+
+class LTXSamplerCaptureCoverage:
+    """Packet 94c: report (never change) whether the serial capture pass has captured
+    every sampler block signature on both workers. Lets the runner finish the capture
+    pass, then build the decode replica, before the one freeze."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, run_name):
+        require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
+                'Unsafe request name')
+        run, identity = _context()
+        import ltx_graph_capture as capture
+        ok, coverage = capture.capture_coverage(_sample_worker_idents())
+        busy = pipeline.busy()
+        outcome = 'covered' if ok and not busy else ('pipeline-busy' if busy else 'captures-incomplete')
+        write_json(run / ('sampler-capture-coverage-' + run_name + '.json'),
+                   {'schema': 'ltx.sampler-capture-coverage.v1', **identity, 'run_name': run_name,
+                    'outcome': outcome, 'coverage': coverage, 'frozen': bool(capture.CAPTURES_FROZEN[0])})
+        return {'ui': {'text': ['capture coverage: %s' % outcome]}}
 
 
 def _node(name):
@@ -475,6 +524,7 @@ class LTXPipelineSampler:
                 # memo shadow only from the first lean request on (a control
                 # arm run before it never sees the shadow).
                 report['sentry_installed_now'] = lean.install_sentry(patcher.model.diffusion_model)
+                _FREEZE_DEVICES[0] = placement_devices(chain['guider_a']) or ['xpu:0', 'xpu:1']
                 if mode == 'pipeline-lean':
                     report['lean'] = {'memo_installed_now': lean.install_memo(patcher.model.diffusion_model),
                                       'claim': 'connector pass computed once per clip and reused only for '
@@ -567,4 +617,5 @@ class LTXPipelineSampler:
 
 
 NODE_CLASS_MAPPINGS = {'LTXPipelineSampler': LTXPipelineSampler,
-                       'LTXSamplerCaptureFreeze': LTXSamplerCaptureFreeze}
+                       'LTXSamplerCaptureFreeze': LTXSamplerCaptureFreeze,
+                       'LTXSamplerCaptureCoverage': LTXSamplerCaptureCoverage}

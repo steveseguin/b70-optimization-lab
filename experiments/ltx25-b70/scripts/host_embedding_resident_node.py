@@ -73,9 +73,20 @@ def memory_gate(run_dir, prefix, stage, allocation):
 
 def shared_identity(shared):
     model, video, audio, upscaler = shared
-    shard, = model.get_additional_models_with_key('ltx_layer_shard')
-    return {'model_patcher': id(model), 'model': id(model.model), 'shard_patcher': id(shard),
-            'shard_model': id(shard.model), 'video_vae': id(video), 'audio_vae': id(audio),
+    shards = model.get_additional_models_with_key('ltx_layer_shard')
+    segments = getattr(model.model.diffusion_model, '_ltx_layer_shard_identity', {}).get('segments')
+    if segments is None:
+        # Two-way: exactly one shard owner, recorded exactly as before.
+        shard, = shards
+        return {'model_patcher': id(model), 'model': id(model.model), 'shard_patcher': id(shard),
+                'shard_model': id(shard.model), 'video_vae': id(video), 'audio_vae': id(audio),
+                'upscaler': id(upscaler)}
+    # Packet 94c: a multi-segment placement has one shard owner per extra segment.
+    require(len(shards) == len(segments) - 1 and len(shards) >= 2,
+            'Shard owners do not match the multi-segment placement')
+    return {'model_patcher': id(model), 'model': id(model.model),
+            'shard_patchers': [id(s) for s in shards], 'shard_models': [id(s.model) for s in shards],
+            'segments': [list(seg) for seg in segments], 'video_vae': id(video), 'audio_vae': id(audio),
             'upscaler': id(upscaler)}
 
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Packet 94: submit the capture-freeze / memory-floor admission once.
+"""Packet 94/94c: submit the capture-freeze admission (node 480) or, packet 94c, the
+capture-coverage check (node 481) once.
 
-Exit 0: frozen (every card at or above 2 GiB free; timed arms replay only).
+Exit 0: frozen / covered.
 Exit 10: refused (memory floor or busy pipeline); skip the timed arm, server healthy.
 Exit 1: no receipt. No retries.
 """
@@ -29,8 +30,12 @@ def call(path, payload=None):
 
 
 graph = json.loads(Path(a.graph).read_text())
-assert graph['480']['class_type'] == 'LTXSamplerCaptureFreeze'
-graph['480']['inputs']['run_name'] = a.name
+(node_id, node), = graph.items()
+KINDS = {'LTXSamplerCaptureFreeze': ('sampler-capture-freeze-', 'frozen'),
+         'LTXSamplerCaptureCoverage': ('sampler-capture-coverage-', 'covered')}
+assert node['class_type'] in KINDS, node
+prefix, success = KINDS[node['class_type']]
+node['inputs']['run_name'] = a.name
 q = call('/queue')
 assert not q['queue_running'] and not q['queue_pending'], 'server busy'
 req = ROOT / 'requests' / a.name
@@ -39,7 +44,7 @@ req.mkdir(parents=True, exist_ok=False)
 r = call('/prompt', {'prompt': graph, 'client_id': 'freeze-' + a.name})
 assert not r.get('node_errors'), r
 (req / 'submission.json').write_text(json.dumps(r, indent=2) + '\n')
-receipt = Path(a.server_run) / ('sampler-capture-freeze-' + a.name + '.json')
+receipt = Path(a.server_run) / (prefix + a.name + '.json')
 deadline = time.time() + a.timeout
 while time.time() < deadline and not receipt.is_file():
     time.sleep(1)
@@ -48,5 +53,6 @@ if not receipt.is_file():
     sys.exit(1)
 time.sleep(1)
 rep = json.loads(receipt.read_text())
-print(json.dumps({k: rep.get(k) for k in ('outcome', 'frozen', 'free_gib', 'reserved_gib', 'placement')}, indent=1))
-sys.exit(0 if rep.get('frozen') and rep.get('outcome') == 'frozen' else 10)
+print(json.dumps({k: rep.get(k) for k in ('outcome', 'frozen', 'free_gib', 'reserved_gib', 'placement',
+                                          'residents_missing', 'coverage')}, indent=1))
+sys.exit(0 if rep.get('outcome') == success else 10)

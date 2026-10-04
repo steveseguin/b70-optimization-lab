@@ -352,7 +352,7 @@ case('loads: after the freeze a non-resident load is refused before the native l
 
 
 def runner_registration_case():
-    sh = (HERE / 'run-campaign-94b.sh').read_text()
+    sh = (HERE / 'run-campaign-94c.sh').read_text()
     body = sh[sh.index('arm() {'):sh.index('pid_is_server()')]
     assert body.index('ARMS_RUN="$ARMS_RUN $1"') < body.index('timeout $5'), 'arm registered after its client'
     assert body.count('ARMS_RUN=') == 1
@@ -400,7 +400,7 @@ def manifest_case():
     assert ast.literal_eval(lit) == want, 'generator manifest placements differ from ltx_layer_shard.PLACEMENTS'
     assert ast.literal_eval(gen.split("sp['placements'] == ")[1].split(" and\n")[0]) == want
     gcn = (HERE / 'graph_capture_node.py').read_text()
-    assert "for name, segs in _shard.PLACEMENTS.items() if name != 'two-way'" in gcn
+    assert "names = [name for name, segs in _shard.PLACEMENTS.items()" in gcn and 'check_shard_report(' in gcn
 
 
 case('allowlist: generator manifest, gate check and ltx_layer_shard.PLACEMENTS agree', manifest_case)
