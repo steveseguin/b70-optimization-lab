@@ -65,7 +65,7 @@ published single-user recipe gives. [Full result](experiments/qwen38-27b-b70/not
   That is twice the original baseline.
 - **Video clips are now repeatable as files**, not only as pictures: same seed and prompt, same `clip.mp4`, byte
   for byte. The video encoder had been the odd one out.
-- **Single-user 27B is at its limit.** Reusing the card-to-card exchange buffers was exact and worth +0.05 %.
+- **Single-user 27B: the levers tried so far are used up (this is not a stopping point; new levers are owed).** Reusing the card-to-card exchange buffers was exact and worth +0.05 %.
   One card is limited by how fast it reads the weights; two cards lose under 4 ms a step to the exchange; the
   model's own draft accuracy caps the rest. Every remaining idea was sized at one or two percent and closed.
 - **A loaded two-card 27B uses 9 GB of host memory and none of it can be released**; it is the GPU runtime's own

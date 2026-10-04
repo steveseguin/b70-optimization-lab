@@ -95,18 +95,30 @@ around it.
 - Historical recipes are preserved as evidence, not as current operating
   instructions.
 
-### 4. Keep working, and report in plain words (2026-10-03)
+### 4. Never stop optimizing; report in plain words (2026-10-03, strengthened 2026-10-04)
 
+- **When the task is optimizing, keep optimizing until the owner says stop.**
+  Never stop, pause or offer to stop because a result looks maxed out. "It is
+  at its limit" is not a conclusion this lab accepts: it only means the levers
+  tried so far are used up, and the job is then to find new ones. Do not list
+  "stop here" as an option and do not ask whether to continue.
+- **A lever can be closed. A lane is never finished.** When one lever is
+  spent, say so in a line and move to the next. If the narrow number stops
+  moving, widen the target rather than stopping: more users at once, faster
+  prompt reading, longer context, lower memory, faster start, more stable,
+  another kernel or runtime path, the other model in scope.
+- **Carry on without being asked.** After a batch of work is done and
+  reported, start the next lever in the same turn. Pause only for something
+  that is the owner's to decide (a reboot, publishing, a quality judgement),
+  say exactly what is needed, and keep working on everything that does not
+  depend on the answer.
 - **Reports to the owner are plain, everyday words: simple and direct.** Say
-  what happened, then what you recommend doing next. Details, commands and
+  what happened, then what you are doing next. Details, commands and
   experiment IDs go in lane notes, and `CURRENT.md` is written the same way.
 - **Stay on the goal; do not rabbit-hole.** Before starting a lever, ask what
   it can be worth. A change that can only move a result by a percent or two
-  is closed quickly or skipped, not turned into a campaign. Say plainly when
-  a lane is finished.
-- When a batch of work is done, take the next worthwhile lever instead of
-  wrapping up. Stop only for something that is the owner's to decide (a
-  reboot, publishing, a quality judgement), and say exactly what is needed.
+  is closed quickly or skipped, not turned into a campaign. That is a reason
+  to pick a bigger lever, never a reason to stop.
 
 ## First Read
 
