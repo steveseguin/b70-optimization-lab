@@ -291,10 +291,15 @@ def probe_pass_case():
     assert all(r['rel'] <= 1e-3 for r in report['rows'])
     assert report['label'] == window.LABEL and not freed
     assert p.pending('encode') == []
-    # a timed encode replays only: one that would capture is refused afterwards
+    # 93b: a timed encode whose graphs are missing is refused BEFORE anything runs
+    calls = []
+    real = clip.encode_from_tokens_scheduled
+    clip.encode_from_tokens_scheduled = lambda t: calls.append(1) or real(t)
     for s in shadows:
         s.entries_by_thread.clear()
-    raises(lambda: window.encode(clip, 'a bird turns its head'), 'captured')
+    raises(lambda: window.encode(clip, 'a bird turns its head'), 'refused before execution')
+    raises(lambda: window.encode(clip, ' '.join(['word'] * 600)), 'refused before execution')  # 1024 fallback
+    assert calls == [], 'an uncaptured timed encode executed'
     raises(lambda: window.run_probe(clip, prompts, fake_native_encode, p), 'once per server')
 
 
@@ -333,6 +338,91 @@ def probe_capture_error_case():
 
 
 case('probe: a capture-proof failure rejects and releases (no latch)', probe_capture_error_case)
+
+
+def timed_capture_case():
+    p, clip, layers, shadows, prompts, freed = setup_probe()
+    window._STATE.update(qualified=True, admitted=(64, 128), probe_run='done')
+    me = threading.get_ident()
+    other = me + 1
+    # precheck on the prompt thread: every encode worker must hold the row count
+    for s in shadows:
+        s.entries_by_thread[me] = {1024: FakeEntry(1024), 64: FakeEntry(64)}
+        s.entries_by_thread[other] = {1024: FakeEntry(1024)}
+    raises(lambda: window.precheck(clip, 'a bird turns its head', [me, other]), 'refused before execution')
+    assert window.precheck(clip, 'a bird turns its head', [me])['rows'] == 64
+    assert window.precheck(clip, ' '.join(['w'] * 600), [me, other])['rows'] == 1024
+    raises(lambda: window.precheck(clip, ' '.join(['w'] * 90), [me]), 'refused before execution')   # 128 missing
+    raises(lambda: window.precheck(clip, 'a bird', []), 'No encode worker')
+    del shadows[7].entries_by_thread[me][64]                     # one layer lacks the graph
+    raises(lambda: window.precheck(clip, 'a bird turns its head', [me]), 'refused before execution')
+    shadows[7].entries_by_thread[me][64] = FakeEntry(64)
+    # the timed encode runs with the capture guard armed on this thread only
+    seen = []
+    real = clip.encode_from_tokens_scheduled
+    clip.encode_from_tokens_scheduled = lambda t: seen.append(getattr(window._tls, 'no_capture', None)) or real(t)
+    window.install_capture_guard = lambda cls=None: None
+    out = window.encode(clip, 'a bird turns its head', tag='t1', index=5)
+    assert seen == [True] and getattr(window._tls, 'no_capture', False) is False
+    info = window.info_for(('t1', 5))
+    assert info['window'] == 64 and info['captured_graphs'] == 0 and info['clip_index'] == 5
+    assert isinstance(out, tuple) and len(out) == 1
+
+
+case('93b: timed encodes are checked before execution (prompt thread and worker), guard armed', timed_capture_case)
+
+
+def capture_guard_case():
+    import importlib
+    importlib.reload(window)            # undo the stubs of earlier cases for this module object
+    calls = []
+
+    class Layer:
+        index = 3
+
+        def _capture(self, kwargs, key):
+            calls.append(key)
+            return 'captured'
+
+    assert window.install_capture_guard(Layer) is True and window.install_capture_guard(Layer) is False
+    assert Layer()._capture({}, 'k1') == 'captured'
+    window._tls.no_capture = True
+    try:
+        raises(lambda: Layer()._capture({}, 'k2'), 'never captures')
+    finally:
+        window._tls.no_capture = False
+    assert calls == ['k1']
+
+
+case('93b: capture guard refuses any capture while a timed encode runs', capture_guard_case)
+
+
+def probe_timeout_case():
+    p, clip, layers, shadows, prompts, freed = setup_probe()
+    release = threading.Event()
+
+    def hanging(clip_, text, consume_observations=False, encode_fn=None):
+        release.wait(30)
+        return fake_native_encode(clip_, text, consume_observations, encode_fn)
+
+    saved = window.PROBE_TIMEOUT_S
+    window.PROBE_TIMEOUT_S = 0.5
+    try:
+        report = window.run_probe(clip, prompts, hanging, p)
+    finally:
+        window.PROBE_TIMEOUT_S = saved
+        release.set()
+    assert report['passed'] is False and report['outcome'] == 'error' and report.get('timed_out'), report
+    assert 'did not finish' in report['error'] and not window.qualified()
+    assert 'released_graphs' not in report and not freed, 'released while a worker may still run'
+    deadline = time.time() + 20
+    while p.busy() and time.time() < deadline:
+        time.sleep(0.1)
+    assert p.busy() == 0, 'stopped workers did not wind down'
+    p.clear()
+
+
+case('93b: a hung probe worker times out cleanly; window refused, graphs not released under it', probe_timeout_case)
 
 
 # --- 5. lean reuse guard and sentry ----------------------------------------------
@@ -453,6 +543,20 @@ def text_node_case():
             r = json.loads((run / 'pipeline-refuse-w.json').read_text())
             assert r['passed'] is False and 'probe' in r['refused'] and r['window']['label'] == window.LABEL
             assert node._failed is False and p.pending('encode') == [], 'a refusal must not latch or submit'
+            # 93b: qualified, but the workers lack this prompt's graphs -> refused, not latched
+            layers = [FakeLayer(1024 if (i % 6) != 5 else False) for i in range(48)]
+            shadows = [FakeShadow() for _ in range(48)]
+            fake = FakeClip(layers, shadows)
+            window._graph_layers = lambda c: (types.SimpleNamespace(), layers, shadows)
+            window._STATE.update(qualified=True, admitted=(64,), probe_run='done')
+            try:
+                node.LTXPipelineTextEncode().apply(fake, 'a bird', 'pipeline-window', 931250, 2, 'refuse-g')
+                raise AssertionError('window ran without captured graphs')
+            except node.WindowNotQualified as error:
+                assert 'encode worker' in str(error) or 'refused before execution' in str(error), str(error)
+            r = json.loads((run / 'pipeline-refuse-g.json').read_text())
+            assert r['passed'] is False and r['refused'] and node._failed is False and p.pending('encode') == []
+            window._STATE.update(qualified=False, admitted=(), probe_run=None)
             # an unknown mode still latches, as before
             try:
                 node.LTXPipelineTextEncode().apply(object(), 'a bird', 'bogus', 931300, 2, 'latch-x')

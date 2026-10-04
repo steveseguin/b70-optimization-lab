@@ -7,7 +7,8 @@ Exit 10: a valid negative outcome (window-not-deterministic, window-not-close,
          must be skipped, the server is healthy and the window graphs released.
 Exit 1: the probe did not complete or its receipt is missing/unreadable.
 No retries. Writes prompt/submission/history under R/requests/<name>/.
-The window CHANGES OUTPUT AT ROUNDING LEVEL; owner decision pending.
+The window changes output at rounding level; owner approved 2026-10-04 on two conditions
+(negligible finished-clip difference; new references, byte-identical thereafter).
 """
 import argparse
 import json

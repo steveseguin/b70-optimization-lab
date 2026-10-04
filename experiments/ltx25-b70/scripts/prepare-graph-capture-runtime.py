@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-window-93'
+OUTPUT = ROOT / 'prepared-encoder-window-93b'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -104,8 +104,9 @@ CHILD_STOP_GRAPH = 'graphs/decode-child-stop.json'
 CHILD_PROBE_NODE = '460'
 CHILD_STOP_NODE = '461'
 PSAMP_NODE_DIR = 'ltx_pipeline_sampler_lab'
-# Packet 93: suffix-window text encoder (OUTPUT-CHANGING candidate, owner
-# decision pending; off unless its arm is requested and its probe passed), lean
+# Packets 93/93b: suffix-window text encoder (changes output at rounding level; owner
+# approved 2026-10-04 on two conditions; off unless its arm is requested and its probe
+# passed), lean
 # conditioning (exact by construction), the context-hash sentry, and the
 # launcher's same-boot health-receipt admission.
 WINDOW_MODULE = 'ltx_text_window.py'
@@ -116,7 +117,7 @@ WINDOW_PROBE_GRAPH = 'graphs/text-window-probe.json'
 WINDOW_PROMPTS = 'probe/text-window-prompts.json'
 WINDOW_PROMPTS_SRC = LANE / 'data' / 'stability-01-prereg.json'
 WINDOW_PROBE_NODE = '470'
-WINDOW_LABEL = 'changes output at rounding level; owner decision pending'
+WINDOW_LABEL = 'changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)'
 TEXT_MODE_OVERRIDES = {'pipe-samp2-tsh-win': 'pipeline-window',
                        'pipe-samp2-tsh-rep-wlean': 'pipeline-window'}
 SAMPLER_NODE = '428'
@@ -693,7 +694,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     require(tw['module_sha256'] == manifest['extension_sha256s']['ltx_text_window.py'] and
             tw['probe_graph'] == 'graphs/text-window-probe.json' and
             tw['probe_prompts'] == 'probe/text-window-prompts.json' and
-            tw['label'] == 'changes output at rounding level; owner decision pending' and
+            tw['label'] == 'changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)' and
             tw['default'] == 'off' and tw['buckets'] == [64, 128, 256, 512, 1024] and
             tw['rel_bound'] == 1e-3, 'Text-window contract changed')
     prompts = json.loads(safe_path(packet, 'probe/text-window-prompts.json').read_text())['prompts']
@@ -1278,7 +1279,8 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
-        'Packet 93 window arms CHANGE OUTPUT AT ROUNDING LEVEL; owner decision pending.\n')
+        'Packet 93b window arms change output at rounding level; owner approved 2026-10-04 on two '
+        'conditions (negligible finished-clip difference; new references, byte-identical thereafter).\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),
                       'manifest_sha256': sha(output / 'manifest.json'),

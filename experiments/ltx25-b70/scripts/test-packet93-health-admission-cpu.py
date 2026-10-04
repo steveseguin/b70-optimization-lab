@@ -70,7 +70,7 @@ def refuses(fn, text):
 def admits_case():
     assert L.verify_health_receipt(REAL, BOOT, END + datetime.timedelta(minutes=1)) == END
     assert L.verify_health_receipt(REAL, BOOT, END + datetime.timedelta(hours=5, minutes=59)) == END
-    assert L.verify_health_receipt(REAL, BOOT, END - datetime.timedelta(minutes=1)) == END   # small clock skew
+    assert L.verify_health_receipt(REAL, BOOT, END) == END                                    # end == now
     data, raw = L.load_health_receipt(RECEIPT)
     assert data == REAL and raw == RECEIPT.read_bytes()
     refuses(lambda: L.load_health_receipt(Path('data/health/x.json')), 'absolute')
@@ -100,6 +100,7 @@ def refusal_case():
     refuses(lambda: L.verify_health_receipt(mutated(passed='true'), BOOT, now), 'did not pass')
     refuses(lambda: L.verify_health_receipt(REAL, BOOT, END + datetime.timedelta(hours=6, seconds=1)), 'older than 6 hours')
     refuses(lambda: L.verify_health_receipt(REAL, BOOT, END - datetime.timedelta(minutes=10)), 'in the future')
+    refuses(lambda: L.verify_health_receipt(REAL, BOOT, END - datetime.timedelta(seconds=1)), 'in the future')
     refuses(lambda: L.verify_health_receipt(mutated(cards=REAL['cards'][:3]), BOOT, now), 'four passing cards')
     bad = copy.deepcopy(REAL); bad['cards'][2]['pass'] = False
     refuses(lambda: L.verify_health_receipt(bad, BOOT, now), 'four passing cards')
@@ -109,9 +110,71 @@ def refusal_case():
             'during its own probe')
     refuses(lambda: L.verify_health_receipt(mutated(end_utc=None), BOOT, now), 'end_utc')
     refuses(lambda: L.verify_health_receipt(mutated(end_utc='yesterday'), BOOT, now), 'end_utc')
+    # 93b: complete probe evidence is required, inside the probe's own thresholds
+    bare = mutated(cards=[{'pass': True}] * 4)
+    refuses(lambda: L.verify_health_receipt(bare, BOOT, now), 'four passing cards')
+    for field in ('name', 'copy_roundtrip_exact', 'gemm_repeat_exact', 'gemm_fp32_max_abs_err',
+                  'gemm_bf16_max_abs_err'):
+        r = copy.deepcopy(REAL); del r['cards'][1][field]
+        refuses(lambda: L.verify_health_receipt(r, BOOT, now), 'card 1')
+    r = copy.deepcopy(REAL); del r['cards'][2]['staged_from_previous_exact']
+    refuses(lambda: L.verify_health_receipt(r, BOOT, now), 'card 2')
+    r = copy.deepcopy(REAL); r['cards'][3]['gemm_fp32_max_abs_err'] = 0.5
+    refuses(lambda: L.verify_health_receipt(r, BOOT, now), 'card 3')
+    r = copy.deepcopy(REAL); r['cards'][0]['gemm_bf16_max_abs_err'] = 7.0
+    refuses(lambda: L.verify_health_receipt(r, BOOT, now), 'card 0')
+    r = copy.deepcopy(REAL); r['cards'][0]['error'] = 'RuntimeError()'
+    refuses(lambda: L.verify_health_receipt(r, BOOT, now), 'card 0')
+    r = copy.deepcopy(REAL); r['cards'][1]['device'] = 'xpu:0'
+    refuses(lambda: L.verify_health_receipt(r, BOOT, now), 'devices')
+    for key in ('kernel', 'torch', 'start_utc'):
+        refuses(lambda: L.verify_health_receipt(mutated(**{key: None}), BOOT, now), 'lacks ' + key)
+    refuses(lambda: L.verify_health_receipt(mutated(journal_fault_lines_during_probe=None), BOOT, now),
+            'lacks that evidence')
+    refuses(lambda: L.verify_health_receipt(mutated(start_utc='2026-10-04 04:00:00 UTC'), BOOT, now), 'ends before')
 
 
-case('wrong boot / failed / stale / future / three cards / schema / probe faults refuse', refusal_case)
+case('wrong boot / failed / stale / future / stripped evidence / out-of-threshold / schema refuse', refusal_case)
+
+
+def signatures_case():
+    import re
+    probe = (HERE / 'check-four-card-health.py').read_text()
+    pattern = re.search(r"FAULT = re.compile\(r'([^']+)'\)", probe).group(1)
+    samples = {'Fault response': 'xe 0000:47:00.0: Fault response: Unsuccessful -ENOENT',
+               'CAT error': 'Engine memory CAT error [18]: class=ccs',
+               'engine reset': 'GT0: engine reset', 'Engine reset': 'GT0: Engine reset',
+               'GPU HANG': 'GPU HANG: ecode 12', 'GuC.*reset': 'GuC firmware reset',
+               'coredump': 'xe 0000:47:00.0: [drm] Xe device coredump has been created',
+               'Timedout job': 'Timedout job: seqno=123, lrc_seqno=1, guc_id=2 in python [184372]',
+               'wedged': 'xe 0000:47:00.0: [drm] device wedged, needs recovery'}
+    assert set(pattern.split('|')) == set(samples), pattern
+    for alt, line in samples.items():
+        assert re.search(alt, line) and L.FAULT.search(line), 'launcher misses a probe signature: ' + alt
+    src = (HERE / 'serve-encoder-93.py').read_text()
+    i_since = src.index("    since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')")
+    i_before = src.index("    before = subprocess.check_output(['journalctl', '-k', '-b', '--no-pager']")
+    i_receipt = src.index("since_receipt = subprocess.check_output(['journalctl', '-k', '-b', '--since', receipt['end_utc']")
+    assert i_since < i_before < i_receipt, 'the watcher window must start before the admission snapshots'
+    assert src.count("    since = datetime.datetime.now(") == 1
+    assert "['journalctl', '-k', '-b', '--since', since," in src
+
+
+case('93b: one shared signature list covers the probe; journal coverage has no gap', signatures_case)
+
+
+def boundary_case():
+    # receipt end -> admission snapshot -> watcher (starts at or before the snapshot):
+    # a fault logged between the snapshot and the old watcher start is in the watcher window.
+    whole = 'Oct 04 02:46:41 kernel: xe 0000:47:00.0: [drm] Fault response: Unsuccessful\n'
+    since_receipt = 'Oct 04 04:00:00 kernel: usb 1-2: new device\n'
+    assert L.admit_journal(whole, since_receipt)
+    watch = since_receipt + 'Oct 04 04:00:01 kernel: xe 0000:23:00.0: Timedout job: seqno=5 in python [9]\n'
+    assert L.fault_lines(watch), 'watcher signature list misses a Timedout job line'
+    refuses(lambda: L.admit_journal(whole, watch), 'after the health receipt')
+
+
+case('93b: boundary lines (Timedout job right after the snapshot) are caught', boundary_case)
 
 
 def journal_case():
@@ -141,8 +204,10 @@ def unchanged_case():
         end_a = a.index('\n\n')          # the block up to its first blank line
         assert len(a[:end_a]) > 200 and a[:end_a + 2] == b[:end_a + 2], 'inherited block changed: ' + marker
     assert "    if health is None:\n        common.require(not FAULT.search(before), 'Kernel device or host fault in current boot')" in new
-    assert old.split('# Additive host-kernel incident detection')[1].split('def write_json')[0].strip() in new, \
-        'FAULT pattern changed'
+    old_alts = old.split("FAULT = re.compile(")[1].split(', re.I)')[0]
+    new_alts = new.split("FAULT = re.compile(")[1].split(', re.I)')[0]
+    assert old_alts.replace("coredump|'", "coredump|Timedout job|wedged|'") == new_alts, \
+        'FAULT pattern changed beyond the two added signatures'
     assert "if FAULT.search(journal):\n                fault('Kernel device or host fault', journal)" in new
 
 

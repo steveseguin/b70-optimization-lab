@@ -1,4 +1,6 @@
-"""Packet 93: suffix-window text encoding. OUTPUT-CHANGING candidate; owner decision pending.
+"""Packet 93/93b: suffix-window text encoding. Changes output at rounding level; owner approved
+2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical
+thereafter).
 
 Every prompt is left-padded to 1024 tokens (comfy/text_encoders/lt.py:84-90)
 and only the last N real rows are kept (lt.py:188); real prompts are 30-56
@@ -24,8 +26,14 @@ per-(device, thread) pool. Those captures happen only inside the qualification
 probe, with the pipeline idle and the two workers run one after the other;
 the sliding layers' window attribute is set to W only for those captures and
 is back at 1024 before the probe's timed passes. A replay does not read the
-attribute, and a timed windowed encode that would capture anything is refused
-after the fact (the clip fails; nothing is emitted from an unqualified graph).
+attribute.
+
+Packet 93b: a timed encode never captures. Before any execution, the request
+is checked (on the prompt thread, for every encode worker) and again on the
+worker that runs it: every one of the 48 layers must already hold a graph for
+the row count it will use (W, or 1024 on the fallback). Otherwise it is refused
+before anything runs. As a backstop, a capture guard on GraphedLayer._capture
+raises before capturing whenever a timed encode is running on that thread.
 
 Nothing here runs unless a 'pipeline-window' request is admitted, and that
 needs a passed probe on this server (`qualified()`).
@@ -37,7 +45,8 @@ import time
 
 FULL = 1024
 BUCKETS = (64, 128, 256, 512, 1024)
-LABEL = 'changes output at rounding level; owner decision pending'
+LABEL = ('changes output at rounding level; owner approved 2026-10-04 on two conditions '
+         '(negligible finished-clip difference; new references, byte-identical thereafter)')
 POLICY = ('W = the smallest admitted bucket in (64, 128, 256, 512, 1024) holding the real token count '
           '(BOS included); W = 1024 is the certified full-length encode, called unchanged; position ids '
           '1024-W..1023; sliding layers captured with window W')
@@ -57,7 +66,16 @@ WORDS = ('a slow pan across a quiet harbour at dawn while gulls circle above the
 SYNTHETIC_WORDS = (1, 3, 6, 12, 20, 28, 40, 52, 58, 61, 63, 66, 80, 100, 118, 122, 126, 130, 160, 200, 240, 250,
                    256, 262, 300, 380, 440, 500, 508, 514)
 
+PROBE_TIMEOUT_S = 1200.0     # server-side bound on the whole probe (both workers)
 _STATE = {'qualified': False, 'admitted': (), 'outcome': 'not-run', 'probe_run': None}
+
+
+class WindowNotCaptured(RuntimeError):
+    """A timed encode whose signature has no captured graph: refused before execution."""
+
+
+class CaptureRefused(RuntimeError):
+    """Backstop: a capture attempted during a timed encode."""
 _LOCK = threading.Lock()
 _tls = threading.local()
 _INFO = {}
@@ -260,12 +278,7 @@ def _thread_entries(shadows):
     return sum(len(s.entries_by_thread.get(tid, {})) for s in shadows)
 
 
-def encode(clip, text, *, tag=None):
-    """Windowed CLIPTextEncode equivalent. Returns the same 1-tuple the native node returns."""
-    probing = getattr(_tls, 'probing', None)
-    require(probing is not None or qualified(),
-            'Window encode refused: no passed text-window probe on this server')
-    allowed = probing['admitted'] if probing is not None else admitted()
+def _plan(clip, text, allowed):
     tokens = clip.tokenize(text)
     require(isinstance(tokens, dict) and len(tokens) == 1, 'Unexpected tokenizer output')
     key = next(iter(tokens))
@@ -273,29 +286,94 @@ def encode(clip, text, *, tag=None):
     require(len(rows) == 1, 'Expected one token batch')
     n_total, n_real = len(rows[0]), real_token_count(rows[0])
     w = select_window(n_real, allowed) if n_total == FULL else FULL
+    exec_rows = w if w < FULL else n_total     # a prompt longer than 1024 tokens runs at its own length
+    return tokens, key, rows, n_total, n_real, w, exec_rows
+
+
+def rows_captured(shadows, tid, rows):
+    """True only if every layer holds a captured graph for `rows` on thread `tid`."""
+    return bool(shadows) and all(
+        any(int(e.output.shape[1]) == rows for e in s.entries_by_thread.get(tid, {}).values())
+        for s in shadows)
+
+
+def install_capture_guard(cls=None):
+    """Make GraphedLayer refuse to capture on a thread that is running a timed encode."""
+    if cls is None:
+        import ltx_graph_text_encoder as tenc
+        cls = tenc.GraphedLayer
+    if vars(cls).get('_ltx_window_capture_guard'):
+        return False
+    original = cls._capture
+
+    def _capture(self, kwargs, key):
+        if getattr(_tls, 'no_capture', False):
+            raise CaptureRefused('Gemma layer %s: a timed encode never captures (no graph for this '
+                                 'signature on this worker)' % getattr(self, 'index', '?'))
+        return original(self, kwargs, key)
+
+    cls._capture = _capture
+    cls._ltx_window_capture_guard = True
+    return True
+
+
+def precheck(clip, text, worker_idents):
+    """Prompt-thread check before a windowed request is admitted: every encode worker
+    must hold graphs for the row count this prompt will use. Raises WindowNotCaptured."""
+    require(qualified(), 'Window encode refused: no passed text-window probe on this server')
+    _tokens, _key, _rows, n_total, n_real, w, exec_rows = _plan(clip, text, admitted())
+    stack, layers, shadows = _graph_layers(clip)
+    idents = [t for t in worker_idents if t is not None]
+    if not idents:
+        raise WindowNotCaptured('No encode worker exists yet to check')
+    missing = [t for t in idents if not rows_captured(shadows, t, exec_rows)]
+    if missing:
+        raise WindowNotCaptured('No captured graphs for %d rows (real tokens %d, window %d) on encode '
+                                'worker(s) %s; refused before execution' % (exec_rows, n_real, w, missing))
+    return {'window': w, 'rows': exec_rows, 'real_tokens': n_real, 'workers_checked': len(idents)}
+
+
+def encode(clip, text, *, tag=None, index=None):
+    """Windowed CLIPTextEncode equivalent. Returns the same 1-tuple the native node returns."""
+    probing = getattr(_tls, 'probing', None)
+    require(probing is not None or qualified(),
+            'Window encode refused: no passed text-window probe on this server')
+    allowed = probing['admitted'] if probing is not None else admitted()
+    tokens, key, rows, n_total, n_real, w, exec_rows = _plan(clip, text, allowed)
     info = {'label': LABEL, 'policy': POLICY, 'admitted': list(allowed), 'real_tokens': n_real,
-            'padded_tokens': n_total, 'window': w, 'full_path': w == FULL}
+            'padded_tokens': n_total, 'window': w, 'rows': exec_rows, 'full_path': w == FULL,
+            'clip_index': index}
+    stack, layers, shadows = _graph_layers(clip)
+    timed = probing is None
+    if timed:
+        # Before ANY execution: this worker must already hold every layer's graph.
+        if not rows_captured(shadows, threading.get_ident(), exec_rows):
+            raise WindowNotCaptured('Encode worker %s has no captured graphs for %d rows; refused before '
+                                    'execution' % (threading.current_thread().name, exec_rows))
+        install_capture_guard()
     started = time.monotonic()
-    if w == FULL:
-        out = clip.encode_from_tokens_scheduled(tokens)
-    else:
-        stack, layers, shadows = _graph_layers(clip)
-        install_stack_wrapper(stack)
-        windowed = {key: [window_row(rows[0], w)]}
-        before = _thread_entries(shadows)
-        _tls.window = w
-        try:
-            out = clip.encode_from_tokens_scheduled(windowed)
-        finally:
-            _tls.window = None
-        captured = _thread_entries(shadows) - before
-        info['captured_graphs'] = captured
-        if probing is None:
-            require(captured == 0, 'A timed windowed encode captured %d graphs (bucket %d not qualified '
-                                   'on this worker); refused' % (captured, w))
+    before = _thread_entries(shadows)
+    _tls.no_capture = timed
+    try:
+        if w == FULL:
+            out = clip.encode_from_tokens_scheduled(tokens)
+        else:
+            install_stack_wrapper(stack)
+            windowed = {key: [window_row(rows[0], w)]}
+            _tls.window = w
+            try:
+                out = clip.encode_from_tokens_scheduled(windowed)
+            finally:
+                _tls.window = None
+    finally:
+        _tls.no_capture = False
+    captured = _thread_entries(shadows) - before
+    info['captured_graphs'] = captured
+    if timed:
+        require(captured == 0, 'A timed encode captured %d graphs; refused' % captured)
     info['seconds'] = round(time.monotonic() - started, 4)
     if tag is not None:
-        _record_info(tag, info)
+        _record_info((tag, index), info)
     if probing is not None:
         probing['last'] = info
     return (out,)
@@ -400,8 +478,19 @@ def run_probe(clip, prompts, native_encode, pipeline):
         go[0].set()
         results = [None, None]
         aborted = []
+        stop = threading.Event()             # set when the server-side bound expires
+        done = [threading.Event(), threading.Event()]
+
+        def check_stop():
+            require(not stop.is_set(), 'Probe stopped: the server-side time bound expired')
 
         def worker_probe(k):
+            try:
+                return worker_body(k)
+            finally:
+                done[k].set()
+
+        def worker_body(k):
             name = threading.current_thread().name
             barrier.wait()
             require(go[k].wait(BARRIER_TIMEOUT_S * 10), 'Worker %d was never released' % k)
@@ -410,6 +499,7 @@ def run_probe(clip, prompts, native_encode, pipeline):
                    'seconds': {}, 'capture': {}, 'admitted': [], 'memory': {}}
             try:
                 for pname, text in prompts:
+                    check_stop()
                     t0 = time.monotonic()
                     cond = native_encode(clip, text, consume_observations=True)
                     out['seconds'].setdefault('1024', []).append(round(time.monotonic() - t0, 4))
@@ -418,6 +508,7 @@ def run_probe(clip, prompts, native_encode, pipeline):
                 _tls.probing = probing
                 try:
                     for w in wanted:
+                        check_stop()
                         mem = _memory()
                         out['memory']['before-%d' % w] = mem
                         if min(m['free_gib'] for m in mem.values()) < MIN_FREE_GIB:
@@ -441,6 +532,7 @@ def run_probe(clip, prompts, native_encode, pipeline):
                     probing['admitted'] = tuple(out['admitted'])
                     for p in range(2):
                         for pname, text in prompts:
+                            check_stop()
                             t0 = time.monotonic()
                             cond = native_encode(clip, text, consume_observations=True,
                                                  encode_fn=lambda t=text: encode(clip, t))
@@ -465,6 +557,19 @@ def run_probe(clip, prompts, native_encode, pipeline):
         for k, index in enumerate(PROBE_JOB_INDICES):
             require(pipeline.submit('encode', index, (lambda kk=k: worker_probe(kk))),
                     'Probe job index already in use')
+        # Bounded: a hung worker must not block the prompt thread forever. On
+        # expiry the probe fails, the window stays refused, the workers are told
+        # to stop at their next prompt, and the window graphs are NOT released
+        # while a worker may still be using them (recorded).
+        deadline = time.monotonic() + PROBE_TIMEOUT_S
+        for k in range(2):
+            if not done[k].wait(max(0.0, deadline - time.monotonic())):
+                stop.set()
+                report['outcome'] = 'error'
+                report['error'] = ('probe worker %d did not finish within %.0f s; window refused, '
+                                   'graphs not released while a worker may still hold them' % (k, PROBE_TIMEOUT_S))
+                report['timed_out'] = True
+                raise RuntimeError(report['error'])
         errors = []
         for k, index in enumerate(PROBE_JOB_INDICES):
             try:
@@ -516,7 +621,7 @@ def run_probe(clip, prompts, native_encode, pipeline):
         report.setdefault('error', repr(error)[:3000])
         report['passed'] = False
     finally:
-        if not report['passed']:
+        if not report['passed'] and not report.get('timed_out'):
             try:
                 report['released_graphs'] = release_windows(clip)
                 report['memory_after_release'] = _memory()

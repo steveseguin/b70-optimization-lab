@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """One persistent encoder experiment server. No stop/restart/retry operations.
 
-Packet 93 adds one option, --health-receipt <path> (owner rule of 2026-10-03,
-AGENTS.md "One fault does not end the session"). Without it the launcher
-behaves exactly as before: any fault line in the whole boot's kernel journal
-refuses the start. With it, the launcher verifies the receipt written by
+Packet 93/93b adds one option, --health-receipt <path> (owner rule of 2026-10-03,
+AGENTS.md "One fault does not end the session"). Without it any fault line in
+the whole boot's kernel journal refuses the start, as before (93b: the fault
+signatures gain 'Timedout job' and 'wedged', and the watcher's window now
+starts before the start-check snapshot, so coverage has no gap). With it, the launcher verifies the receipt written by
 scripts/check-four-card-health.py (schema ltx.four-card-health.v1, passed,
-four passing cards, the running boot, end_utc no older than 6 hours and not in
-the future), copies it into the run directory, records the earlier fault lines
+four named passing cards with the probe's full evidence inside its own
+thresholds, the running boot, end_utc no older than 6 hours and not later than
+now), copies it into the run directory, records the earlier fault lines
 it admits (journal-admitted-faults.txt), and applies the no-fault-line check
 only to the journal since the receipt's end_utc. Any fault line after the
-receipt still refuses; the in-run journal watcher is unchanged.
+receipt still refuses; the in-run journal watcher is otherwise unchanged.
 """
 import argparse
 import datetime
@@ -33,8 +35,11 @@ sys.dont_write_bytecode = True
 import encoder_runtime_common as common
 
 # Additive host-kernel incident detection; no recovery or restart behavior.
+# Packet 93b: ONE signature list for the start check, the same-boot admission and
+# the in-run watcher; it covers every signature of scripts/check-four-card-health.py
+# (adds 'Timedout job' and 'wedged'; 'Engine reset' is matched case-insensitively).
 FAULT = re.compile(
-    r'Fault response|CAT error|engine reset|GPU HANG|GuC.*reset|coredump|'
+    r'Fault response|CAT error|engine reset|GPU HANG|GuC.*reset|coredump|Timedout job|wedged|'
     r'\bBUG:[ \t]+soft lockup[ \t]+-[ \t]+CPU#\d+[ \t]+stuck for[ \t]+\d+(?:\.\d+)?s!|'
     r'\bINFO:[ \t]+rcu_(?:preempt|sched|bh|tasks(?:_rude|_trace)?)[ \t]+(?:self-)?detected[ \t]+(?:expedited[ \t]+)?stalls?[ \t]+on[ \t]+(?:CPUs?(?:/tasks)?|tasks)\b|'
     r'\brcu_(?:preempt|sched|bh|tasks(?:_rude|_trace)?)[ \t]+kthread starved for[ \t]+\d+[ \t]+jiffies\b|'
@@ -44,31 +49,53 @@ FAULT = re.compile(
 
 HEALTH_SCHEMA = 'ltx.four-card-health.v1'
 HEALTH_MAX_AGE = datetime.timedelta(hours=6)
-HEALTH_CLOCK_SKEW = datetime.timedelta(minutes=2)
+# The probe's own pass thresholds (scripts/check-four-card-health.py).
+HEALTH_FP32_MAX_ERR = 1e-2
+HEALTH_BF16_MAX_ERR = 5.0
+HEALTH_DEVICES = ('xpu:0', 'xpu:1', 'xpu:2', 'xpu:3')
 
 
 def parse_utc(text):
     return datetime.datetime.strptime(text, '%Y-%m-%d %H:%M:%S UTC').replace(tzinfo=datetime.timezone.utc)
 
 
+def _number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and value == value
+
+
 def verify_health_receipt(receipt, boot_id, now):
-    """Return the receipt's end time if it admits a same-boot start, else raise."""
-    common.require(isinstance(receipt, dict) and receipt.get('schema') == HEALTH_SCHEMA,
-                   'Health receipt schema is not ' + HEALTH_SCHEMA)
-    common.require(receipt.get('passed') is True, 'Health receipt did not pass')
+    """Return the receipt's end time if it admits a same-boot start, else raise.
+
+    Requires the complete evidence check-four-card-health.py writes, re-checked
+    against that probe's own thresholds; a bare {"pass": true} is not evidence."""
+    req = common.require
+    req(isinstance(receipt, dict) and receipt.get('schema') == HEALTH_SCHEMA,
+        'Health receipt schema is not ' + HEALTH_SCHEMA)
+    req(receipt.get('passed') is True, 'Health receipt did not pass')
+    for key in ('kernel', 'torch', 'boot_id', 'start_utc', 'end_utc'):
+        req(isinstance(receipt.get(key), str) and receipt[key].strip(), 'Health receipt lacks ' + key)
+    req(receipt.get('boot_id') == boot_id, 'Health receipt is from another boot')
+    req('journal_fault_lines_during_probe' in receipt and receipt['journal_fault_lines_during_probe'] == [],
+        'Health receipt saw fault lines during its own probe, or lacks that evidence')
     cards = receipt.get('cards')
-    common.require(receipt.get('device_count') == 4 and isinstance(cards, list) and len(cards) == 4 and
-                   all(isinstance(c, dict) and c.get('pass') is True for c in cards),
-                   'Health receipt does not show four passing cards')
-    common.require(not receipt.get('journal_fault_lines_during_probe'),
-                   'Health receipt saw fault lines during its own probe')
-    common.require(receipt.get('boot_id') == boot_id, 'Health receipt is from another boot')
+    req(receipt.get('device_count') == 4 and isinstance(cards, list) and len(cards) == 4,
+        'Health receipt does not show four passing cards')
+    req([c.get('device') if isinstance(c, dict) else None for c in cards] == list(HEALTH_DEVICES),
+        'Health receipt does not show four passing cards (devices xpu:0..3 in order)')
+    for i, c in enumerate(cards):
+        ok = (isinstance(c.get('name'), str) and c['name'].strip() and c.get('pass') is True and
+              'error' not in c and c.get('copy_roundtrip_exact') is True and c.get('gemm_repeat_exact') is True and
+              _number(c.get('gemm_fp32_max_abs_err')) and c['gemm_fp32_max_abs_err'] < HEALTH_FP32_MAX_ERR and
+              _number(c.get('gemm_bf16_max_abs_err')) and c['gemm_bf16_max_abs_err'] < HEALTH_BF16_MAX_ERR and
+              (i == 0 or c.get('staged_from_previous_exact') is True))
+        req(ok, 'Health receipt does not show four passing cards (card %d evidence missing or out of bounds)' % i)
     try:
-        end = parse_utc(receipt['end_utc'])
+        start, end = parse_utc(receipt['start_utc']), parse_utc(receipt['end_utc'])
     except (KeyError, TypeError, ValueError):
-        raise RuntimeError('Health receipt has no readable end_utc')
-    common.require(end <= now + HEALTH_CLOCK_SKEW, 'Health receipt end_utc is in the future')
-    common.require(now - end <= HEALTH_MAX_AGE, 'Health receipt is older than 6 hours')
+        raise RuntimeError('Health receipt has no readable start_utc/end_utc')
+    req(start <= end, 'Health receipt ends before it starts')
+    req(end <= now, 'Health receipt end_utc is in the future')
+    req(now - end <= HEALTH_MAX_AGE, 'Health receipt is older than 6 hours')
     return end
 
 
@@ -163,6 +190,10 @@ def launch(packet, digest, run_name, check_only=False, health_receipt=None):
     owners = subprocess.run(['fuser', *map(str, nodes)], capture_output=True, text=True, timeout=10)
     common.require(owners.returncode == 1 and not owners.stdout.strip() and not owners.stderr.strip(),
                    'Render devices are owned or ownership check failed')
+    # Packet 93b: the in-run watcher's window starts HERE, before the start-check
+    # snapshots are taken, so journal coverage has no gap (receipt end -> snapshot,
+    # watch start <= snapshot end -> life of the server). Seconds are floored.
+    since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
     before = subprocess.check_output(['journalctl', '-k', '-b', '--no-pager'], text=True, timeout=10)
     admitted = None
     if health is None:
@@ -183,12 +214,14 @@ def launch(packet, digest, run_name, check_only=False, health_receipt=None):
     (run / 'journal-before.txt').write_text(before)
     if health is not None:
         (run / 'health-receipt.json').write_bytes(receipt_bytes)
+        (run / 'health-receipt.sha256').write_text(health['sha256'] + '  health-receipt.json\n')
         (run / 'journal-since-health-receipt.txt').write_text(since_receipt)
         (run / 'journal-admitted-faults.txt').write_text(
             '# Fault lines earlier in this boot, admitted by the health receipt %s (sha256 %s, end_utc %s)\n'
             % (health['path'], health['sha256'], health['end_utc']) + ''.join(line + '\n' for line in admitted))
         health['admitted_fault_lines'] = len(admitted)
-    since = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+    if health is not None:
+        health['watch_since'] = since
 
     def fault(reason, journal=None):
         if journal is not None:

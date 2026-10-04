@@ -34,8 +34,9 @@ gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 # Packet 93: 'pipeline-window' = 'pipeline' with the suffix-window encoder
-# (ltx_text_window). OUTPUT-CHANGING candidate, owner decision pending; refused
-# (without latching) until a text-window probe has passed on this server.
+# (ltx_text_window). Changes output at rounding level; owner approved 2026-10-04 on
+# two conditions (window.LABEL). Refused (without latching) until a text-window
+# probe has passed on this server, and (93b) whenever a worker lacks its graphs.
 TEXT_MODES = pipeline.MODES + ('pipeline-window',)
 PIPELINE_TEXT_MODES = ('pipeline', 'pipeline-window')
 _failed = False
@@ -132,10 +133,16 @@ def _job_tag(mode, text):
     return _text_sha256(text)
 
 
-def _encode_fn(clip, text, mode, tag):
+def _encode_fn(clip, text, mode, tag, index=None):
     if mode == 'pipeline-window':
-        return lambda: window.encode(clip, text, tag=tag)
+        return lambda: window.encode(clip, text, tag=tag, index=index)
     return None
+
+
+def _encode_worker_idents():
+    """Thread idents of the live encode workers (packet 93b pre-execution check)."""
+    st = getattr(pipeline, '_STAGES', {}).get('encode', {})
+    return [w.ident for w in st.get('workers', []) if w.is_alive()]
 
 
 def _queued_text(index):
@@ -248,6 +255,13 @@ class LTXPipelineTextEncode:
                     report['refused'] = ('pipeline-window requires a passed text-window probe on this server '
                                          '(probe outcome: %s)' % window.state().get('outcome'))
                     raise WindowNotQualified(report['refused'])
+                # Packet 93b: before anything runs, every encode worker must already
+                # hold graphs for this prompt's row count (a timed encode never captures).
+                try:
+                    report['window']['precheck'] = window.precheck(clip, text, _encode_worker_idents())
+                except window.WindowNotCaptured as error:
+                    report['refused'] = str(error)
+                    raise WindowNotQualified(report['refused'])
             if mode == 'original':
                 conditioning = native_encode(clip, text)
                 report['detail'] = {'computed_inline': True}
@@ -263,12 +277,20 @@ class LTXPipelineTextEncode:
                     if queued is None:
                         return None
                     q_text, q_mode = queued
+                    if q_mode == 'pipeline-window':
+                        # Never queue a window job that would be refused on its worker:
+                        # that prompt then refuses itself (receipt, no latch) when it runs.
+                        try:
+                            window.precheck(clip, q_text, _encode_worker_idents())
+                        except Exception as error:  # noqa: BLE001
+                            lookups[-1]['not_queued'] = repr(error)[:300]
+                            return None
                     q_tag = _job_tag(q_mode, q_text)
-                    q_fn = _encode_fn(clip, q_text, q_mode, q_tag)
+                    q_fn = _encode_fn(clip, q_text, q_mode, q_tag, i)
                     return (lambda: native_encode(clip, q_text, consume_observations=True, encode_fn=q_fn),
                             q_tag)
 
-                own_fn = _encode_fn(clip, text, mode, tag)
+                own_fn = _encode_fn(clip, text, mode, tag, clip_index)
                 conditioning, detail = pipeline.run_ahead(
                     'encode', clip_index, depth,
                     lambda: native_encode(clip, text, consume_observations=True, encode_fn=own_fn),
@@ -284,7 +306,7 @@ class LTXPipelineTextEncode:
                                             detail['conditioning_fingerprint'])
                 detail['lookahead'] = {'source': 'server prompt queue', 'lookups': lookups}
                 if mode == 'pipeline-window':
-                    detail['window_encode'] = window.info_for(tag)
+                    detail['window_encode'] = window.info_for((tag, clip_index))
                 report['detail'] = detail
             report['passed'] = True
         finally:
