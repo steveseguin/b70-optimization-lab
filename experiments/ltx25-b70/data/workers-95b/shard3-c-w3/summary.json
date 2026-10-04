@@ -1,0 +1,276 @@
+{
+  "schema": "ltx.campaign-93b-summary.v1",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-workers-95b-shard3-c-w3",
+  "arms": {
+    "f95b-shard3cw3-probe": {
+      "label": "placement-probe",
+      "present": true,
+      "prompts": 13,
+      "index_base": 258400,
+      "clips_verified": 10,
+      "exact": 10,
+      "all_exact": true,
+      "references": [
+        "stability-01-w93c-bird",
+        "stability-01-w93c-boat",
+        "stability-01-w93c-candle",
+        "stability-01-w93c-fabric",
+        "stability-01-w93c-marble",
+        "stability-01-w93c-paper",
+        "stability-01-w93c-pendulum",
+        "stability-01-w93c-pour",
+        "stability-01-w93c-rain",
+        "stability-01-w93c-wheel"
+      ],
+      "interval_median_s": 1.362,
+      "interval_mean_s": 1.4366,
+      "interval_median_steady_s": 1.3805,
+      "intervals_excluded_for_host_stall": 0,
+      "sampler_clips_in_flight": {
+        "mean": 2.205,
+        "max": 3,
+        "jobs": 11
+      },
+      "host_stall_durations_s_in_run": [],
+      "encode_job_median_s": 0.4811,
+      "sampler_job_median_s": 3.7213,
+      "decode_job_median_s": 1.7949,
+      "connector_computed_per_clip_median": 0,
+      "connector_reused_per_clip_median": 0,
+      "engine": {
+        "window_s": 10.14,
+        "prompts": 7,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.3404,
+            "bcs_s_per_clip": 1.184,
+            "ccs_util": 0.9249
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 0.9241,
+            "bcs_s_per_clip": 0.7687,
+            "ccs_util": 0.6376
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.7602,
+            "bcs_s_per_clip": 0.8054,
+            "ccs_util": 0.5245
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.3588,
+            "bcs_s_per_clip": 0.2359,
+            "ccs_util": 0.9376
+          }
+        },
+        "total_ccs_s_per_clip": 4.3835
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    },
+    "f95b-shard3cw3-timed": {
+      "label": "timed",
+      "present": true,
+      "prompts": 120,
+      "index_base": 258600,
+      "clips_verified": 115,
+      "exact": 115,
+      "all_exact": true,
+      "references": [
+        "stability-01-w93c-bird",
+        "stability-01-w93c-boat",
+        "stability-01-w93c-candle",
+        "stability-01-w93c-fabric",
+        "stability-01-w93c-marble",
+        "stability-01-w93c-paper",
+        "stability-01-w93c-pendulum",
+        "stability-01-w93c-pour",
+        "stability-01-w93c-rain",
+        "stability-01-w93c-wheel"
+      ],
+      "interval_median_s": 1.411,
+      "interval_mean_s": 1.4695,
+      "interval_median_steady_s": 1.4,
+      "intervals_excluded_for_host_stall": 0,
+      "sampler_clips_in_flight": {
+        "mean": 2.838,
+        "max": 4,
+        "jobs": 117
+      },
+      "host_stall_durations_s_in_run": [],
+      "encode_job_median_s": 0.5235,
+      "sampler_job_median_s": 4.2179,
+      "decode_job_median_s": 2.2989,
+      "connector_computed_per_clip_median": 1,
+      "connector_reused_per_clip_median": 3,
+      "engine": {
+        "window_s": 168.07,
+        "prompts": 114,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.3284,
+            "bcs_s_per_clip": 1.1532,
+            "ccs_util": 0.9011
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.3673,
+            "bcs_s_per_clip": 0.7924,
+            "ccs_util": 0.9274
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.8605,
+            "bcs_s_per_clip": 0.8667,
+            "ccs_util": 0.5837
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.0455,
+            "bcs_s_per_clip": 0.2843,
+            "ccs_util": 0.7092
+          }
+        },
+        "total_ccs_s_per_clip": 4.6017
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    }
+  },
+  "context_sentry_pairs": {
+    "f95b-shard3cw3-probe:f95b-shard3cw3-timed": {
+      "fixtures_expected": 10,
+      "identical": 10,
+      "passed": true,
+      "problems": []
+    }
+  },
+  "context_sentry_gate_passed": true,
+  "finished_clip_comparison_vs_1024": null,
+  "window_label": "changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)",
+  "engine_samples": 483
+}
