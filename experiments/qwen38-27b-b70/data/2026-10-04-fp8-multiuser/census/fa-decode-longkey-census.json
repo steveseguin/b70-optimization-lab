@@ -1,0 +1,571 @@
+{
+ "schema": "qwen38-fp8-fa-decode-longkey-batch-census.v1",
+ "torch": "2.13.0+xpu",
+ "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+ "cases": {
+  "short_40_to_85/num_splits_0": {
+   "num_splits": 0,
+   "kv_lens": [
+    40,
+    43,
+    46,
+    49,
+    52,
+    55,
+    58,
+    61,
+    64,
+    67,
+    70,
+    73,
+    76,
+    79,
+    82,
+    85
+   ],
+   "rows": [
+    {
+     "B": 2,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 4,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 8,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 16,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    }
+   ],
+   "all_batch_invariant": true,
+   "single_sequence_changes_with_larger_max_seqlen_k": []
+  },
+  "short_40_to_85/num_splits_1": {
+   "num_splits": 1,
+   "kv_lens": [
+    40,
+    43,
+    46,
+    49,
+    52,
+    55,
+    58,
+    61,
+    64,
+    67,
+    70,
+    73,
+    76,
+    79,
+    82,
+    85
+   ],
+   "rows": [
+    {
+     "B": 2,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 4,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 8,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 16,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    }
+   ],
+   "all_batch_invariant": true,
+   "single_sequence_changes_with_larger_max_seqlen_k": []
+  },
+  "mixed_1.6k_to_8.2k/num_splits_0": {
+   "num_splits": 0,
+   "kv_lens": [
+    1645,
+    2434,
+    3300,
+    3981,
+    5770,
+    6524,
+    8104,
+    6412,
+    1700,
+    2500,
+    3400,
+    4100,
+    5900,
+    6600,
+    8200,
+    6500
+   ],
+   "rows": [
+    {
+     "B": 2,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 4,
+     "sequences_differing_from_single": [
+      1
+     ],
+     "kv_lens_differing": [
+      2434
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 8,
+     "sequences_differing_from_single": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "kv_lens_differing": [
+      2434,
+      3300,
+      3981,
+      5770,
+      6524,
+      8104,
+      6412
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 16,
+     "sequences_differing_from_single": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "kv_lens_differing": [
+      2434,
+      3300,
+      3981,
+      5770,
+      6524,
+      8104,
+      6412,
+      3400,
+      4100,
+      5900,
+      6600,
+      8200,
+      6500
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    }
+   ],
+   "all_batch_invariant": false,
+   "single_sequence_changes_with_larger_max_seqlen_k": [
+    2434,
+    3300,
+    3981,
+    5770,
+    6524,
+    8104,
+    6412,
+    2500,
+    3400,
+    4100,
+    5900,
+    6500
+   ]
+  },
+  "mixed_1.6k_to_8.2k/num_splits_1": {
+   "num_splits": 1,
+   "kv_lens": [
+    1645,
+    2434,
+    3300,
+    3981,
+    5770,
+    6524,
+    8104,
+    6412,
+    1700,
+    2500,
+    3400,
+    4100,
+    5900,
+    6600,
+    8200,
+    6500
+   ],
+   "rows": [
+    {
+     "B": 2,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 4,
+     "sequences_differing_from_single": [
+      1
+     ],
+     "kv_lens_differing": [
+      2434
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 8,
+     "sequences_differing_from_single": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "kv_lens_differing": [
+      2434,
+      3300,
+      3981,
+      5770,
+      6524,
+      8104,
+      6412
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 16,
+     "sequences_differing_from_single": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "kv_lens_differing": [
+      2434,
+      3300,
+      3981,
+      5770,
+      6524,
+      8104,
+      6412,
+      3400,
+      4100,
+      5900,
+      6600,
+      8200,
+      6500
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    }
+   ],
+   "all_batch_invariant": false,
+   "single_sequence_changes_with_larger_max_seqlen_k": [
+    2434,
+    3300,
+    3981,
+    5770,
+    6524,
+    8104,
+    6412,
+    2500,
+    3400,
+    4100,
+    5900,
+    6500
+   ]
+  },
+  "all_6524/num_splits_0": {
+   "num_splits": 0,
+   "kv_lens": [
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524
+   ],
+   "rows": [
+    {
+     "B": 2,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 4,
+     "sequences_differing_from_single": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "kv_lens_differing": [
+      6524,
+      6524,
+      6524,
+      6524
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 8,
+     "sequences_differing_from_single": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "kv_lens_differing": [
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 16,
+     "sequences_differing_from_single": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "kv_lens_differing": [
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    }
+   ],
+   "all_batch_invariant": false,
+   "single_sequence_changes_with_larger_max_seqlen_k": []
+  },
+  "all_6524/num_splits_1": {
+   "num_splits": 1,
+   "kv_lens": [
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524,
+    6524
+   ],
+   "rows": [
+    {
+     "B": 2,
+     "sequences_differing_from_single": [],
+     "kv_lens_differing": [],
+     "max_abs": 0.0,
+     "repeat_equal": true
+    },
+    {
+     "B": 4,
+     "sequences_differing_from_single": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "kv_lens_differing": [
+      6524,
+      6524,
+      6524,
+      6524
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 8,
+     "sequences_differing_from_single": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "kv_lens_differing": [
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    },
+    {
+     "B": 16,
+     "sequences_differing_from_single": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "kv_lens_differing": [
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524,
+      6524
+     ],
+     "max_abs": 6.103515625e-05,
+     "repeat_equal": true
+    }
+   ],
+   "all_batch_invariant": false,
+   "single_sequence_changes_with_larger_max_seqlen_k": []
+  }
+ }
+}

@@ -137,3 +137,25 @@ first class; five or more users decoding together are not.
 so every call is in the single-user class. Same server shape, same two suites, same rule: both passes 64/64 on long
 prompts and 64/64 against the frozen reference on the short ladder. Expected cost: three extra head reads per step
 at sixteen users, about 3 ms of a 38 ms step.
+
+## Addendum, 05:40 EDT: head chunking alone did not fix the last miss; a long-key census names a third cause
+
+Pure steps plus the head fed four rows at a time: long prompts still 63/64 in both passes, the same request
+(`code6k-c060`, token 3) and the same wrong token every time; short ladder 64/64 against the frozen reference at
+325 tok/s together. A deterministic miss is not a scheduling race. Censuses on the shipped image, one card
+(`../data/2026-10-04-fp8-multiuser/census/`):
+
+- token selection (`argmax` with planted exact ties): the same pick at every batch size from 1 to 64;
+- the GDN decode kernel and the attention decode kernel at key lengths of 40 to 229 tokens: batch-invariant (this
+  is the September R151 census, rerun);
+- **the attention decode kernel at long key lengths (new script
+  `../scripts/qwen38-fp8-fa-decode-longkey-batch-census.py`): not batch-invariant.** With keys of 1.6K to 8.2K
+  tokens, one sequence of four, seven of eight and thirteen of sixteen get an output that differs by one ulp from
+  their single-sequence call; with sixteen sequences all 6,524 long, every one differs from four sequences up. A
+  single sequence's output also changes when the call is given a larger `max_seqlen_k` than its own length.
+
+**Test (`MU_PURE=1 MU_HEAD_ROWS=4 MU_FA_PER_SEQ=1`):** a third overlay,
+[`../overlays/b70-fa-decode-per-seq/`](../overlays/b70-fa-decode-per-seq/): when the longest key in a multi-sequence
+decode call exceeds 229 tokens (the longest length proven invariant), issue one call per sequence with that
+sequence's own length. Same server, same suites, same rule. If this is still not 64/64 on long prompts, the lane
+stops here and the remaining difference goes to a per-layer trace on the one known request, not to a fourth guess.

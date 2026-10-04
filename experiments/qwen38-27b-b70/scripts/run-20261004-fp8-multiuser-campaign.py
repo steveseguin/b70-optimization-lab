@@ -179,6 +179,10 @@ def main():
                 # second fix, from the kernel census: the LM head is the one kernel whose rounding depends on row count
                 pure += ['--overlay', 'b70-lm-head-chunk', '--extra-env', f"B70_LM_HEAD_CHUNK_ROWS={os.environ['MU_HEAD_ROWS']}"]
                 name = f"tp2-pure-head{os.environ['MU_HEAD_ROWS']}-mtp0-s16"
+            if os.environ.get('MU_FA_PER_SEQ') == '1':
+                # third fix, from the long-key census: decode attention is not batch-invariant with long keys
+                pure += ['--overlay', 'b70-fa-decode-per-seq', '--extra-env', 'B70_FA_DECODE_PER_SEQ=1']
+                name = name.replace('tp2-pure', 'tp2-pure-faseq')
             srv = R.Research(name, 18196, TP2 + SHIPPED + pure + ['--seqs', '16'])
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
