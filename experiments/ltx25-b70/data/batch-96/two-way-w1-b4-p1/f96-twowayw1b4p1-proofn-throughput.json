@@ -1,0 +1,534 @@
+{
+  "schema": "ltx.throughput-fixtures-96.v1",
+  "prefix": "f96-twowayw1b4p1-proofn",
+  "arm": "pipe-samp2-tsh-rep-wlean-b4-ref",
+  "index_base": 302300,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-batch-96/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean-b4-ref.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-batch-96-two-way-w1-b4-p1",
+  "count": 17,
+  "order": "proof-neighbours",
+  "fixture_order": [
+    "boat",
+    "paper",
+    "bird",
+    "pour",
+    "rain",
+    "wheel",
+    "candle",
+    "marble",
+    "fabric",
+    "pendulum",
+    "boat",
+    "paper",
+    "candle",
+    "pour",
+    "fabric",
+    "wheel",
+    "boat"
+  ],
+  "batch": 4,
+  "references_from": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch4-prereg.json",
+  "fixture_count": 10,
+  "distinct_clips_emitted": 12,
+  "sampler_depth": 3,
+  "decode_depth": 2,
+  "expected_clips": 12,
+  "emission_sequence_ok": true,
+  "emission_problems": [],
+  "fills_excluded": [
+    "f96-twowayw1b4p1-proofn-00",
+    "f96-twowayw1b4p1-proofn-01",
+    "f96-twowayw1b4p1-proofn-02",
+    "f96-twowayw1b4p1-proofn-03",
+    "f96-twowayw1b4p1-proofn-04"
+  ],
+  "all_exact": true,
+  "intervals_between_distinct_clips_s": [
+    0.133,
+    4.584,
+    0.523,
+    1.061,
+    0.141,
+    4.543,
+    0.112,
+    1.068,
+    0.136,
+    4.509,
+    0.519
+  ],
+  "steady_mean_s": 1.7196000000000002,
+  "steady_p95_s": 4.584,
+  "steady_min_s": 0.112,
+  "steady_max_s": 4.584,
+  "seconds_of_wall_per_second_of_video": 1.650816,
+  "effective_fps": 14.538264712723887,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that emit nothing (pipeline fill); a re-emitted clip fails the arm",
+  "rows": [
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157624.42,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-01",
+      "index": 1,
+      "prompt_fixture": "paper",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157625.082,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-02",
+      "index": 2,
+      "prompt_fixture": "bird",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157625.147,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-03",
+      "index": 3,
+      "prompt_fixture": "pour",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157630.17,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 5
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-04",
+      "index": 4,
+      "prompt_fixture": "rain",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791157630.267,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 6
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-05",
+      "index": 5,
+      "prompt_fixture": "wheel",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157631.379,
+      "batch": {
+        "job": 302300,
+        "slot": 0,
+        "rows": [
+          302300,
+          302301,
+          302302,
+          302303
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "bird",
+          "paper",
+          "pour"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-boat",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-06",
+      "index": 6,
+      "prompt_fixture": "candle",
+      "emitted_index": 1,
+      "emitted_fixture": "paper",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157631.512,
+      "batch": {
+        "job": 302300,
+        "slot": 1,
+        "rows": [
+          302300,
+          302301,
+          302302,
+          302303
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "bird",
+          "boat",
+          "pour"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-paper",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-07",
+      "index": 7,
+      "prompt_fixture": "marble",
+      "emitted_index": 2,
+      "emitted_fixture": "bird",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157636.096,
+      "batch": {
+        "job": 302300,
+        "slot": 2,
+        "rows": [
+          302300,
+          302301,
+          302302,
+          302303
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "paper",
+          "pour"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-bird",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-08",
+      "index": 8,
+      "prompt_fixture": "fabric",
+      "emitted_index": 3,
+      "emitted_fixture": "pour",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157636.619,
+      "batch": {
+        "job": 302300,
+        "slot": 3,
+        "rows": [
+          302300,
+          302301,
+          302302,
+          302303
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "bird",
+          "boat",
+          "paper"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-pour",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-09",
+      "index": 9,
+      "prompt_fixture": "pendulum",
+      "emitted_index": 4,
+      "emitted_fixture": "rain",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157637.68,
+      "batch": {
+        "job": 302304,
+        "slot": 0,
+        "rows": [
+          302304,
+          302305,
+          302306,
+          302307
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "candle",
+          "marble",
+          "wheel"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-rain",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-10",
+      "index": 10,
+      "prompt_fixture": "boat",
+      "emitted_index": 5,
+      "emitted_fixture": "wheel",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157637.821,
+      "batch": {
+        "job": 302304,
+        "slot": 1,
+        "rows": [
+          302304,
+          302305,
+          302306,
+          302307
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "candle",
+          "marble",
+          "rain"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-wheel",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-11",
+      "index": 11,
+      "prompt_fixture": "paper",
+      "emitted_index": 6,
+      "emitted_fixture": "candle",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157642.364,
+      "batch": {
+        "job": 302304,
+        "slot": 2,
+        "rows": [
+          302304,
+          302305,
+          302306,
+          302307
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "marble",
+          "rain",
+          "wheel"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-candle",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-12",
+      "index": 12,
+      "prompt_fixture": "candle",
+      "emitted_index": 7,
+      "emitted_fixture": "marble",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157642.476,
+      "batch": {
+        "job": 302304,
+        "slot": 3,
+        "rows": [
+          302304,
+          302305,
+          302306,
+          302307
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "candle",
+          "rain",
+          "wheel"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-marble",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-13",
+      "index": 13,
+      "prompt_fixture": "pour",
+      "emitted_index": 8,
+      "emitted_fixture": "fabric",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157643.544,
+      "batch": {
+        "job": 302308,
+        "slot": 0,
+        "rows": [
+          302308,
+          302309,
+          302310,
+          302311
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "paper",
+          "pendulum"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-fabric",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-14",
+      "index": 14,
+      "prompt_fixture": "fabric",
+      "emitted_index": 9,
+      "emitted_fixture": "pendulum",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157643.68,
+      "batch": {
+        "job": 302308,
+        "slot": 1,
+        "rows": [
+          302308,
+          302309,
+          302310,
+          302311
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "fabric",
+          "paper"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-pendulum",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-15",
+      "index": 15,
+      "prompt_fixture": "wheel",
+      "emitted_index": 10,
+      "emitted_fixture": "boat",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157648.189,
+      "batch": {
+        "job": 302308,
+        "slot": 2,
+        "rows": [
+          302308,
+          302309,
+          302310,
+          302311
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "fabric",
+          "paper",
+          "pendulum"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-boat",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    },
+    {
+      "prompt": "f96-twowayw1b4p1-proofn-16",
+      "index": 16,
+      "prompt_fixture": "boat",
+      "emitted_index": 11,
+      "emitted_fixture": "paper",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791157648.708,
+      "batch": {
+        "job": 302308,
+        "slot": 3,
+        "rows": [
+          302308,
+          302309,
+          302310,
+          302311
+        ],
+        "fill_slots": [],
+        "batch": 4,
+        "neighbour_fixtures": [
+          "boat",
+          "fabric",
+          "pendulum"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 6,
+      "reference": "stability-01-b4-paper",
+      "exact": true,
+      "parity_status": "passed",
+      "comparator": "scripts/compare-clip.py"
+    }
+  ]
+}
