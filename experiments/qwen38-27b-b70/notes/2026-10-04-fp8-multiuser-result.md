@@ -1,6 +1,16 @@
-# Multi-user result: the two-card 27B serves 16 users at once losslessly, 423 tok/s together (2026-10-04)
+# Multi-user result: 16 users at once is lossless on short prompts (423 tok/s together) but not on long ones (2026-10-04)
 
-## In plain words
+## Correction first (03:40 EDT)
+
+**The sixteen-user mode is lossless only on the short-prompt test. With long prompts it is not.** The first
+version of this note said "lossless" without that limit. A follow-up with prompts of about 2,000 to 8,000 tokens
+(64 requests, sixteen running together, two passes) found 60 and 61 of 64 answers equal to their solo answers, and
+15 and 16 of 16 when exactly sixteen were sent. The differing answers split at token 1 or 3 (the prompt-reading
+step, which batches several users' prompts together) or around token 64 to 93 (a tie flipping during writing).
+Everything below about short prompts stands as measured; **it must not be published as a lossless multi-user
+profile until long prompts are exact too.** Receipts: `../data/2026-10-04-fp8-multiuser/long16/`.
+
+## In plain words (as first written; read with the correction above)
 
 Until tonight the Qwen 27B recipes were measured for one user at a time: about 90 tokens a second on two cards.
 We had never measured several users at once on this model. **With speculation switched off, sixteen users at once

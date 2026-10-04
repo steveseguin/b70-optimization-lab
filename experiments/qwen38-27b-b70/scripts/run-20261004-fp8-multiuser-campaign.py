@@ -143,29 +143,38 @@ def main():
         # first look (2026-10-04 01:22): only N requests per level, too few to call anything exact
         stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
         stage(results, since, 'tp2-mtp5-s4', 18197, TP2 + MTP5 + SHIPPED + ['--seqs', '4'], '2,4')
-    elif os.environ.get('MU_MODE') == 'long16':
-        # The 16-user lossless mode with long prompts (2K-8K tokens): prefill and decode steps mix at this width.
-        # No frozen reference exists for these prompts; the reference is the same server's one-at-a-time answers.
+    elif os.environ.get('MU_MODE') in ('long16', 'longsweep'):
+        # Long prompts (2K-8K tokens): prefill and decode steps mix. No frozen reference exists for these prompts; the
+        # reference is the same server's one-at-a-time answers. `long16` was the first check (16 users, shipped
+        # arithmetic: NOT exact). `longsweep` asks where it becomes exact: fewer users, and the invariant switches.
         suite = ROOT / 'experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/long-prompt-suite.json'
-        name = 'tp2-mtp0-s16-long'
-        srv = R.Research(name, 18196, TP2 + SHIPPED + ['--seqs', '16'])
-        r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
-        if srv.ready:
-            out = OUT / f'{name}-concurrency.json'
-            R.sh([sys.executable, R.LADDER, '--base-url', srv.base, '--model', R.MODEL_NAME, '--api-mode', 'completions',
-                  '--suite', suite, '--concurrency', '16,64', '--repeats', '2', '--max-tokens', '128', '--seed', '42',
-                  '--timeout', '3600', '--return-token-ids', '--out', out], f'{name}-concurrency', 7200)
-            if out.exists():
-                data = json.loads(out.read_text())
-                r['passes'] = [{'requests_at_once': b['concurrency'], 'repeat': b['repeat'],
-                                'exact_vs_own_solo': f"{b['oracle_exact_count']}/{b['oracle_exact_total']}",
-                                'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2), 'cache_zero': b['cached_tokens_all_zero']}
-                               for b in data['batches']]
-                for row in r['passes']:
-                    R.log(f"{name}: {row['requests_at_once']} sent at once, pass {row['repeat']}: {row['exact_vs_own_solo']} "
-                          f"equal to solo, {row['aggregate_tok_s']} generated tok/s together, cache zero {row['cache_zero']}")
-        r['stop'] = srv.stop()
-        R.save_results(); R.fault_check(since); R.wait_gpus_free()
+
+        def long_stage(name, port, args):
+            srv = R.Research(name, port, args)
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if srv.ready:
+                out = OUT / f'{name}-concurrency.json'
+                R.sh([sys.executable, R.LADDER, '--base-url', srv.base, '--model', R.MODEL_NAME, '--api-mode', 'completions',
+                      '--suite', suite, '--concurrency', '64', '--repeats', '2', '--max-tokens', '128', '--seed', '42',
+                      '--timeout', '3600', '--return-token-ids', '--out', out], f'{name}-concurrency', 7200)
+                if out.exists():
+                    data = json.loads(out.read_text())
+                    r['passes'] = [{'requests_at_once': b['concurrency'], 'repeat': b['repeat'],
+                                    'exact_vs_own_solo': f"{b['oracle_exact_count']}/{b['oracle_exact_total']}",
+                                    'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2), 'cache_zero': b['cached_tokens_all_zero']}
+                                   for b in data['batches']]
+                    for row in r['passes']:
+                        R.log(f"{name}: {row['requests_at_once']} sent at once, pass {row['repeat']}: {row['exact_vs_own_solo']} "
+                              f"equal to solo, {row['aggregate_tok_s']} generated tok/s together, cache zero {row['cache_zero']}")
+            r['stop'] = srv.stop()
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
+
+        if os.environ.get('MU_MODE') == 'long16':
+            long_stage('tp2-mtp0-s16-long', 18196, TP2 + SHIPPED + ['--seqs', '16'])
+        else:
+            long_stage('tp2-mtp0-s4-long', 18196, TP2 + SHIPPED + ['--seqs', '4'])
+            long_stage('tp2-mtp0-s8-long', 18197, TP2 + SHIPPED + ['--seqs', '8'])
+            long_stage('tp2-inv-mtp0-s16-long', 18198, TP2 + SHIPPED + INVARIANT + ['--seqs', '16'])
     elif os.environ.get('MU_MODE') == 'tp1':
         # One card, no speculation, shipped arithmetic: 8 and 16 users against the one-card no-speculation reference
         # the one-card package is gated on (R310, 896-token attention block, 24,576 context).
