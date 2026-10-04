@@ -41,3 +41,30 @@ on speed alone, but it is the second guard kill of the night at the same margin.
 - **A host limit worth fixing before more 27B research:** a two-card server leaves about 3 GiB of the 15 GiB
   free, half a gigabyte above the launcher's guard. Either the guard floor comes down (earlyoom is the backstop at
   1.2 GiB) or research runs happen with nothing else in memory.
+
+## Where the 27B's remaining speed could come from, sized (added 2026-10-04)
+
+Written so the next agent does not have to redo the arithmetic. All figures are from the 2026-10-03 servers.
+
+| | One card | Two cards |
+| --- | ---: | ---: |
+| No speculation: time per step | 51.5 ms (19.4 tok/s) | 29.5 ms (33.9 tok/s) |
+| Depth-5 speculation: tokens per step | 2.98 | 2.98 |
+| Depth-5 speculation: time per step | 55.1 ms (54.05 tok/s) | 33.0 ms (90.3 tok/s) |
+| Cost of speculating (six verify rows, five draft passes) | 3.6 ms | 3.5 ms |
+
+- **One card is limited by memory bandwidth.** A step reads all 25 to 27 GB of weights once: about 500 GB/s, which
+  is most of what the card's memory can deliver. Speculation already gets nearly three tokens out of each such read.
+- **Two cards lose 3.75 ms a step to the exchange** against the ideal of half the one-card time (25.75 ms). Tonight's
+  test removed the allocations and gained nothing; the fused kernel was estimated at 1 to 2 %.
+- **Acceptance is the model's, not ours.** First draft token 75 %, each later one about 67 %, the same with an INT4
+  or a full-precision draft head.
+- **A second guess per step (tree speculation) does not pay.** If the draft's second choice were right in 45 % of
+  the misses (an assumption, not measured), a full second chain would add about 0.29 tokens per step (+10 %) and cost
+  five more draft passes plus five more verify rows, about 3.5 ms (+10 %): a wash. A two-token second chain nets
+  1 to 2 % at best. It would also need branch-aware attention masks and recurrent-state checkpoints in the GDN
+  kernels, which is days of kernel work with exactness at risk.
+- **Deeper drafts** were measured before: depth 6 is 2 % slower over whole answers.
+
+**Conclusion: the lossless 27B recipes are within a few percent of what this hardware and this model's own draft
+module allow.** One card about 54 tok/s, two cards about 90 tok/s. Nothing left on the list is worth more than 1 to 2 %.
