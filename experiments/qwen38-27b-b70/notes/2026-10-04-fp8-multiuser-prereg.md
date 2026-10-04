@@ -204,3 +204,17 @@ like the mode it replaces. If it is, the number to beat is 488 tok/s together at
 expected about 540 and 345. A gain under 2 % at 64 users means the exchange was not the cost and the mode is
 dropped. If it is not exact, it is dropped without a second arm: the mode it replaces stays.
 
+## Addendum, 11:00 EDT: both tests ran; both answers are no
+
+Run after the owner chose a health check over a reboot (passed 09:40 EDT). No GPU fault during either.
+
+| Test | Result | By the rule written above |
+|---|---|---|
+| Speculation with 4 users (depth 5, three overlays) | **Not lossless.** Long prompts 12/64 and 19/64 equal to solo; short ladder 6/64 and 4/64; 182 tok/s together. The solo pass is 64/64 against the frozen reference, so one user is unaffected. | Speculation stays single-user only. The lane is closed: no further arms without first rebuilding the speculative-kernel census for this image. The 8-user run was skipped as the rule says. |
+| One logits exchange per step (`MU_HEAD_AT=head`), 64 users | Lossless (64/64 long and short, both passes, exact against the frozen reference), **489.3 tok/s** against 488. | A gain under 2 %: the exchange was not the cost. Dropped. |
+| Same, 16 users | Lossless, **325.7 tok/s** against 325. | Same. Dropped. |
+
+So the cost of the four-rows-at-a-time output layer is the repeated product itself, not the card-to-card exchange.
+The remaining route to a faster wide mode is a row-invariant output-layer kernel, which is a kernel build.
+Data: `data/2026-10-04-fp8-multiuser/{three-mtp5-s4,headlocal-s64,headlocal-s16}/`.
+

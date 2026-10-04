@@ -2,6 +2,11 @@
 
 ## In plain words
 
+**Update, 11:10 EDT: the cause is found and a fix is validated; see "Review" and "Measured on the cards" below.**
+The fault is the card's copy engine reading a temporary mapping the runtime makes for any upload of 512 MiB or more
+(here the 1.27 GB embedding and output-layer weights). Sending those uploads in 128 MiB pieces makes no mapping. With
+that overlay the server is exact and as fast as before. No reboot was needed.
+
 The test of speculation with several users never ran. Its server faulted one of the two cards while it was loading
 the model, before any request was sent. This was the second fault since the last reboot, so by the owner's rule all
 GPU work stopped and the machine needs a reboot before the test is tried again. Nothing was reset and nothing was
@@ -143,7 +148,16 @@ Receipts: `/mnt/fast-ai/bench-results/fp8-loadcopy-20261004*/` and `fp8-loadcopy
 | Does the runtime switch (`ExperimentalH2DCpuCopyThreshold`) avoid it? | **No.** Same eight mappings with it, on the server and on a one-card probe. The card-side memory torch uses is not the kind the runtime's CPU-copy path accepts. Forcing that path (`ExperimentalForceCopyThroughLock=1`) crashes the process. Dropped. |
 | Which uploads make the mapping? | One-card probe by size: 2, 8, 64 and 256 MiB make none (they go through the runtime's staging buffers). 512, 1,024 and 1,212 MiB each make one, at the fault address. |
 | Does uploading in 128 MiB pieces avoid it? | **Yes on the probe:** a 1.27 GB tensor sent in pieces made no mapping, arrived bit-identical, and took 0.08 s against 0.14 s. |
-| Does the first overlay do that in the real server? | **Not yet.** The server was exact (12 of 12, 90.4 tok/s) but the overlay caught none of the eight uploads: the server's copy also converts the number format, which the first version left alone. The second version covers it; it is tested next. |
+| Does the first overlay do that in the real server? | No. The server was exact (12 of 12, 90.4 tok/s) but the overlay caught none of the eight uploads: the server's copy also converts the number format, which the first version left alone. |
+| Does the second overlay? | **Yes (11:00 to 11:07 EDT).** It sent all eight uploads in pieces (4 per card, 4.74 GiB per card). The runtime's log shows **no host mapping and nothing at the fault address** during the whole start (without the overlay: 8 mappings, 24 log lines there, in each of three logged starts). The strict gate is 12 of 12 exact at 90.33 tok/s. The weight load takes 8.4 s, as before. |
+
+**Verdict by the rule written above: adopted for research starts.** The operation that faulted no longer happens
+during a two-card model load. What this does not show is a fault count: at one fault in 59 starts, counting would
+take hundreds of starts. The claim is the mechanism: every saved start-up fault was a read of that mapping, and the
+mapping is no longer made.
+
+Data: [`data/2026-10-04-load-fault-fix/`](../data/2026-10-04-load-fault-fix/). Overlay:
+`overlays/b70-chunked-upload/` (`B70_CHUNKED_UPLOAD=1`), CPU test `tests/test_b70_chunked_upload.py`.
 
 ## What is now in place (09:30 EDT, built and dry-run on the CPU; not yet exercised on the cards)
 
@@ -157,10 +171,11 @@ Receipts: `/mnt/fast-ai/bench-results/fp8-loadcopy-20261004*/` and `fp8-loadcopy
 
 ## Next
 
-1. The owner reboots the machine (or says the health check is enough: this boot had one real fault).
-2. Run `scripts/run-20261004-fp8-mtp-under-load.sh`: the fix test first, then the speculation test and the
-   one-exchange speed-up (with the switch on if it passed).
-3. Post the finding upstream (`intel/compute-runtime#948`): the address, what lives there, and whether the switch
-   avoids it. Needs the owner's go-ahead since it is a public post.
-4. If the switch passes: new acceptance for the two package launchers with it, and try it on the MiniMax video
-   lane, whose model loads go through the same path.
+1. The multi-user campaign now uses the overlay by default (`MU_LOADCOPY_FIX=0` turns it off).
+2. One card: its output-layer weight is 2.5 GB, the same path. Validate the overlay there (allocation log and the
+   one-card strict gate) before making it the research launcher's default.
+3. The two package launchers do not have it. Their bytes are pinned by the acceptance packets, so adding it means a
+   new acceptance for each. Owner's call, since it changes the published packages.
+4. The MiniMax video lane loads its models with its own scripts; the same piece-wise upload applies there.
+5. Post the finding upstream (`intel/compute-runtime#948`): the address, what lives there, the 256/512 MiB dividing
+   line and the workaround. Needs the owner's go-ahead since it is a public post.

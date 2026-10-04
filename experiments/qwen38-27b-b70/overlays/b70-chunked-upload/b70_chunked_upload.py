@@ -9,8 +9,10 @@ tensors that large in this model are the 1.27 GB embedding and output-layer weig
 What this does: while `GPUModelRunner.load_model` runs, `Tensor.copy_` and `Tensor.to` from CPU to the card are done in
 pieces of B70_CHUNKED_UPLOAD_CHUNK_MIB (default 128) when the tensor is larger than B70_CHUNKED_UPLOAD_OVER_MIB
 (default 256). The same bytes arrive; only the route changes. Both methods are restored when the load ends, so
-serving and compiled code never see the wrappers. Anything that is not a plain same-shape, same-dtype, contiguous
-CPU-to-card copy goes to the original method untouched.
+serving and compiled code never see the wrappers. A copy that also changes the number type (the checkpoint stores
+these weights in another 16-bit format than the server runs) is converted piece by piece by the same method, element
+by element as before. Anything that is not a plain same-shape, contiguous CPU-to-card copy goes to the original
+method untouched and is named in the load log.
 """
 import os
 
@@ -23,29 +25,45 @@ def pieces(count, element_size, chunk_bytes):
 
 
 def eligible(dst, src, over_bytes, card):
-    return (src.device.type == 'cpu' and dst.device.type == card and src.dtype == dst.dtype and src.shape == dst.shape
+    """A large CPU-to-card copy of the same shape. The dtypes may differ: each piece then converts exactly as the
+    whole copy would, element by element."""
+    return (src.device.type == 'cpu' and dst.device.type == card and src.shape == dst.shape
             and src.is_contiguous() and dst.is_contiguous() and not src.is_sparse and src.layout == dst.layout
-            and src.numel() * src.element_size() > over_bytes)
+            and dst.numel() * dst.element_size() > over_bytes)
+
+
+def skipped(dst, src, over_bytes, card):
+    """Why a large CPU-to-card copy was left to the original method (for the load log); '' if it is not one."""
+    if not hasattr(src, 'device') or src.device.type != 'cpu' or dst.device.type != card:
+        return ''
+    if max(src.numel() * src.element_size(), dst.numel() * dst.element_size()) <= over_bytes:
+        return ''
+    return (f'shape {tuple(src.shape)} -> {tuple(dst.shape)}, {src.dtype} -> {dst.dtype}, '
+            f'contiguous {src.is_contiguous()}/{dst.is_contiguous()}')
 
 
 def chunked_copy(dst, src, chunk_bytes, copy):
     flat_dst, flat_src = dst.view(-1), src.view(-1)
-    for start, stop in pieces(flat_src.numel(), src.element_size(), chunk_bytes):
+    for start, stop in pieces(flat_src.numel(), max(src.element_size(), dst.element_size()), chunk_bytes):
         copy(flat_dst[start:stop], flat_src[start:stop])
     return dst
 
 
-def wrap_copy(original, over_bytes, chunk_bytes, card='xpu', counter=None):
+def wrap_copy(original, over_bytes, chunk_bytes, card='xpu', counter=None, missed=None):
     def copy_(self, src, *args, **kwargs):
         if hasattr(src, 'device') and eligible(self, src, over_bytes, card):
             if counter is not None:
-                counter.append(src.numel() * src.element_size())
+                counter.append(self.numel() * self.element_size())
             return chunked_copy(self, src, chunk_bytes, original)
+        if missed is not None:
+            why = skipped(self, src, over_bytes, card)
+            if why:
+                missed.append('copy_ ' + why)
         return original(self, src, *args, **kwargs)
     return copy_
 
 
-def wrap_to(original, copy, empty, device_of, over_bytes, chunk_bytes, card='xpu', counter=None):
+def wrap_to(original, copy, empty, device_of, over_bytes, chunk_bytes, card='xpu', counter=None, missed=None):
     """`Tensor.to(device)` with only a device (positional or keyword) and a large contiguous CPU tensor."""
     def to(self, *args, **kwargs):
         target = None
@@ -59,6 +77,8 @@ def wrap_to(original, copy, empty, device_of, over_bytes, chunk_bytes, card='xpu
             if counter is not None:
                 counter.append(self.numel() * self.element_size())
             return chunked_copy(out, self, chunk_bytes, copy)
+        if missed is not None and self.device.type == 'cpu' and self.numel() * self.element_size() > over_bytes:
+            missed.append(f'to shape {tuple(self.shape)} {self.dtype} args {[str(a)[:40] for a in args]} {sorted(kwargs)}')
         return original(self, *args, **kwargs)
     return to
 
@@ -86,15 +106,17 @@ def register():
         return None
 
     def load_model(self, *args, **kwargs):
-        copy, to, done = torch.Tensor.copy_, torch.Tensor.to, []
-        torch.Tensor.copy_ = wrap_copy(copy, over, chunk, counter=done)
-        torch.Tensor.to = wrap_to(to, copy, torch.empty, device_of, over, chunk, counter=done)
+        copy, to, done, missed = torch.Tensor.copy_, torch.Tensor.to, [], []
+        torch.Tensor.copy_ = wrap_copy(copy, over, chunk, counter=done, missed=missed)
+        torch.Tensor.to = wrap_to(to, copy, torch.empty, device_of, over, chunk, counter=done, missed=missed)
         try:
             return original_load(self, *args, **kwargs)
         finally:
             torch.Tensor.copy_, torch.Tensor.to = copy, to
             logger.warning('b70_chunked_upload: %d uploads over %d MiB went to the card in %d MiB pieces (%.2f GiB)',
                            len(done), over // MIB, chunk // MIB, sum(done) / 2**30)
+            for line in missed[:20]:
+                logger.warning('b70_chunked_upload: large CPU tensor left to the original method: %s', line)
 
     cls.load_model = load_model
     cls._b70_chunked_upload = True

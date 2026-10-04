@@ -277,7 +277,7 @@ def main():
             spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
             if spec:
                 name = name.replace('-mtp0-', '-mtp5-')
-            if os.environ.get('MU_LOADCOPY_FIX') == '1':  # only after the loadcopy test has passed on this image
+            if os.environ.get('MU_LOADCOPY_FIX', '1') == '1':  # validated on R310 two-card, 2026-10-04 11:07 EDT
                 pure += LOADCOPY_FIX
             srv, name, since = start_server(name, 18196, TP2 + spec + SHIPPED + pure + ['--seqs', seqs], since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}

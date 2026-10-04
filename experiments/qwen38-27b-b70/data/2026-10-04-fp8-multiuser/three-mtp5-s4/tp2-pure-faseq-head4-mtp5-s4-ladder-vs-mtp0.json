@@ -1,0 +1,3085 @@
+{
+  "schema": "b70-lab.ladder-oracle-comparison.v1",
+  "candidate": "/mnt/fast-ai/bench-results/fp8-multiuser-three-mtp5-s4-20261004-1008/tp2-pure-faseq-head4-mtp5-s4-ladder.json",
+  "reference": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-ladder.json",
+  "reference_rows": 64,
+  "sections": [
+    {
+      "section": "sequential-oracle",
+      "exact": 64,
+      "total": 64,
+      "mismatches": []
+    },
+    {
+      "section": "batch-c64-r1",
+      "exact": 6,
+      "total": 64,
+      "mismatches": [
+        {
+          "prompt_id": "cache-c000",
+          "first_divergence": 87,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            561,
+            6297,
+            8060,
+            362,
+            5728,
+            369,
+            5995,
+            310
+          ],
+          "reference_tokens": [
+            1368,
+            279,
+            8060,
+            362,
+            5728,
+            369,
+            11205,
+            430
+          ]
+        },
+        {
+          "prompt_id": "index-c001",
+          "first_divergence": 26,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            31058,
+            18381,
+            92217,
+            28320,
+            279,
+            1857,
+            7044,
+            369
+          ],
+          "reference_tokens": [
+            8167,
+            1861,
+            332,
+            198,
+            256,
+            471,
+            2972,
+            3840
+          ]
+        },
+        {
+          "prompt_id": "rollback-c002",
+          "first_divergence": 27,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            344,
+            681,
+            9184,
+            14333,
+            2491,
+            279,
+            69293,
+            321
+          ],
+          "reference_tokens": [
+            4296,
+            11,
+            466,
+            82290,
+            69293,
+            681,
+            9184,
+            14333
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c003",
+          "first_divergence": 25,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            6297,
+            37631,
+            310,
+            279,
+            52652,
+            51797,
+            13,
+            271
+          ],
+          "reference_tokens": [
+            52652,
+            51797,
+            321,
+            279,
+            3050,
+            4906,
+            16243,
+            421
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c004",
+          "first_divergence": 12,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            16779,
+            25,
+            271,
+            16,
+            13,
+            2972,
+            623,
+            2133
+          ],
+          "reference_tokens": [
+            14456,
+            25,
+            271,
+            16,
+            13,
+            2972,
+            623,
+            2133
+          ]
+        },
+        {
+          "prompt_id": "testing-c005",
+          "first_divergence": 102,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            32157,
+            9,
+            4833,
+            303,
+            866,
+            22038,
+            1965,
+            13
+          ],
+          "reference_tokens": [
+            1856,
+            9,
+            919,
+            314,
+            866,
+            22038,
+            1965,
+            13
+          ]
+        },
+        {
+          "prompt_id": "capacity-c006",
+          "first_divergence": 42,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            42903,
+            17120,
+            11,
+            11352,
+            279,
+            2972,
+            79852,
+            18887
+          ],
+          "reference_tokens": [
+            14791,
+            42903,
+            11,
+            11352,
+            8559,
+            2972,
+            48213,
+            13453
+          ]
+        },
+        {
+          "prompt_id": "evidence-c007",
+          "first_divergence": 112,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            4236,
+            60478,
+            332,
+            198,
+            256,
+            471,
+            11451,
+            279
+          ],
+          "reference_tokens": [
+            471,
+            11451,
+            279,
+            4581,
+            11436,
+            27764,
+            318,
+            30576
+          ]
+        },
+        {
+          "prompt_id": "cache-c008",
+          "first_divergence": 22,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1328,
+            92679,
+            159034,
+            271,
+            2381,
+            3010,
+            11,
+            21778
+          ],
+          "reference_tokens": [
+            6679,
+            421,
+            3564,
+            310,
+            2605,
+            364,
+            660,
+            9468
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c011",
+          "first_divergence": 28,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1439,
+            1330,
+            5134,
+            3875,
+            13,
+            733,
+            6278,
+            14791
+          ],
+          "reference_tokens": [
+            321,
+            279,
+            3050,
+            4906,
+            16243,
+            421,
+            4766,
+            364
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c012",
+          "first_divergence": 112,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            321,
+            38075,
+            4356,
+            332,
+            198,
+            256,
+            471,
+            2972
+          ],
+          "reference_tokens": [
+            594,
+            220,
+            19,
+            4010,
+            82699,
+            332,
+            198,
+            256
+          ]
+        },
+        {
+          "prompt_id": "testing-c013",
+          "first_divergence": 35,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1965,
+            2407,
+            13,
+            198,
+            17,
+            13,
+            10678,
+            1622
+          ],
+          "reference_tokens": [
+            2400,
+            1965,
+            2407,
+            13,
+            198,
+            17,
+            13,
+            10678
+          ]
+        },
+        {
+          "prompt_id": "evidence-c015",
+          "first_divergence": 9,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            488,
+            1144,
+            25,
+            271,
+            16,
+            13,
+            2972,
+            674
+          ],
+          "reference_tokens": [
+            279,
+            2614,
+            5721,
+            369,
+            4221,
+            25,
+            271,
+            16
+          ]
+        },
+        {
+          "prompt_id": "cache-c016",
+          "first_divergence": 105,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            21640,
+            2980,
+            1141,
+            75843,
+            26996,
+            13,
+            11615,
+            421
+          ],
+          "reference_tokens": [
+            2962,
+            310,
+            8418,
+            279,
+            2235,
+            3240,
+            2980,
+            279
+          ]
+        },
+        {
+          "prompt_id": "index-c017",
+          "first_divergence": 49,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            318,
+            269,
+            13185,
+            8,
+            310,
+            7440,
+            279,
+            24816
+          ],
+          "reference_tokens": [
+            63,
+            303,
+            71100,
+            8,
+            310,
+            7440,
+            279,
+            24816
+          ]
+        },
+        {
+          "prompt_id": "rollback-c018",
+          "first_divergence": 116,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            735,
+            198,
+            91,
+            4277,
+            91,
+            4277,
+            91,
+            4277
+          ],
+          "reference_tokens": [
+            91,
+            4277,
+            91,
+            4277,
+            91,
+            198,
+            91,
+            2972
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c019",
+          "first_divergence": 37,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            10551,
+            13,
+            271,
+            623,
+            6278,
+            19670,
+            11106,
+            4744
+          ],
+          "reference_tokens": [
+            13,
+            271,
+            623,
+            6278,
+            19670,
+            11106,
+            4744,
+            318
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c020",
+          "first_divergence": 96,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            421,
+            20843,
+            1156,
+            3039,
+            13,
+            271,
+            17,
+            13
+          ],
+          "reference_tokens": [
+            4562,
+            421,
+            7556,
+            1156,
+            3039,
+            13,
+            271,
+            17
+          ]
+        },
+        {
+          "prompt_id": "testing-c021",
+          "first_divergence": 21,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            318,
+            68,
+            1257,
+            2487,
+            264,
+            4055,
+            220,
+            18
+          ],
+          "reference_tokens": [
+            12,
+            2198,
+            12,
+            739,
+            25,
+            8029,
+            12,
+            16
+          ]
+        },
+        {
+          "prompt_id": "capacity-c022",
+          "first_divergence": 4,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            303,
+            264,
+            5492,
+            4424,
+            11,
+            264,
+            3349,
+            3992
+          ],
+          "reference_tokens": [
+            264,
+            3349,
+            3992,
+            1558,
+            318,
+            3950,
+            44,
+            8
+          ]
+        },
+        {
+          "prompt_id": "evidence-c023",
+          "first_divergence": 10,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5721,
+            1902,
+            381,
+            25,
+            271,
+            16,
+            13,
+            2972
+          ],
+          "reference_tokens": [
+            2614,
+            5721,
+            369,
+            4221,
+            25,
+            271,
+            16,
+            13
+          ]
+        },
+        {
+          "prompt_id": "cache-c024",
+          "first_divergence": 53,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            478,
+            3134,
+            4868,
+            13,
+            1368,
+            279,
+            1918,
+            579
+          ],
+          "reference_tokens": [
+            318,
+            68,
+            1257,
+            2487,
+            36066,
+            9843,
+            14,
+            19
+          ]
+        },
+        {
+          "prompt_id": "index-c025",
+          "first_divergence": 119,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            20722,
+            159034,
+            271,
+            17,
+            13,
+            2972,
+            5439,
+            425
+          ],
+          "reference_tokens": [
+            5439,
+            425,
+            279,
+            3165,
+            31997,
+            321,
+            5638,
+            5253
+          ]
+        },
+        {
+          "prompt_id": "rollback-c026",
+          "first_divergence": 26,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            344,
+            681,
+            9184,
+            14333,
+            2491,
+            279,
+            69293,
+            321
+          ],
+          "reference_tokens": [
+            4296,
+            11,
+            466,
+            82290,
+            69293,
+            681,
+            9184,
+            14333
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c027",
+          "first_divergence": 30,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            310,
+            19670,
+            11106,
+            26012,
+            318,
+            3950,
+            20971,
+            8
+          ],
+          "reference_tokens": [
+            4906,
+            16243,
+            421,
+            4766,
+            364,
+            1754,
+            14611,
+            13
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c028",
+          "first_divergence": 8,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            369,
+            9038,
+            11,
+            1092,
+            1220,
+            279,
+            280,
+            24
+          ],
+          "reference_tokens": [
+            11,
+            488,
+            1318,
+            310,
+            3627,
+            16779,
+            421,
+            3311
+          ]
+        },
+        {
+          "prompt_id": "testing-c029",
+          "first_divergence": 49,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            25,
+            198,
+            256,
+            471,
+            5952,
+            357,
+            25,
+            28763
+          ],
+          "reference_tokens": [
+            22151,
+            303,
+            279,
+            1622,
+            2407,
+            466,
+            6881,
+            13
+          ]
+        },
+        {
+          "prompt_id": "evidence-c031",
+          "first_divergence": 58,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            321,
+            2243,
+            681,
+            321,
+            4424,
+            318,
+            26308,
+            11
+          ],
+          "reference_tokens": [
+            2243,
+            11,
+            15579,
+            681,
+            321,
+            4424,
+            3447,
+            13
+          ]
+        },
+        {
+          "prompt_id": "cache-c032",
+          "first_divergence": 16,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            284,
+            948,
+            279,
+            5728,
+            32530,
+            383,
+            264,
+            47590
+          ],
+          "reference_tokens": [
+            1283,
+            25831,
+            466,
+            37157,
+            6979,
+            6297,
+            1328,
+            92679
+          ]
+        },
+        {
+          "prompt_id": "index-c033",
+          "first_divergence": 10,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5492,
+            11,
+            488,
+            1220,
+            2649,
+            279,
+            2614,
+            1330
+          ],
+          "reference_tokens": [
+            8751,
+            11988,
+            310,
+            2649,
+            513,
+            25,
+            271,
+            16
+          ]
+        },
+        {
+          "prompt_id": "rollback-c034",
+          "first_divergence": 3,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            24845,
+            14263,
+            1371,
+            29303,
+            364,
+            264,
+            769,
+            3173
+          ],
+          "reference_tokens": [
+            18112,
+            58377,
+            7926,
+            332,
+            369,
+            264,
+            829,
+            37435
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c035",
+          "first_divergence": 17,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            599,
+            310,
+            381,
+            12076,
+            24358,
+            11,
+            567,
+            1902
+          ],
+          "reference_tokens": [
+            1902,
+            1353,
+            506,
+            279,
+            15346,
+            6463,
+            303,
+            279
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c036",
+          "first_divergence": 26,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            337,
+            14,
+            24,
+            20,
+            15,
+            337,
+            321,
+            220
+          ],
+          "reference_tokens": [
+            4181,
+            24,
+            20,
+            4181,
+            24,
+            24,
+            31230,
+            198
+          ]
+        },
+        {
+          "prompt_id": "testing-c037",
+          "first_divergence": 43,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1590,
+            198,
+            256,
+            471,
+            5952,
+            357,
+            25,
+            28763
+          ],
+          "reference_tokens": [
+            8,
+            440,
+            12103,
+            11,
+            4752,
+            45640,
+            22151,
+            303
+          ]
+        },
+        {
+          "prompt_id": "capacity-c038",
+          "first_divergence": 26,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1558,
+            13914,
+            321,
+            279,
+            81726,
+            6297,
+            13,
+            561
+          ],
+          "reference_tokens": [
+            2972,
+            2448,
+            13914,
+            332,
+            318,
+            7949,
+            513,
+            8097
+          ]
+        },
+        {
+          "prompt_id": "evidence-c039",
+          "first_divergence": 69,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            77517,
+            11,
+            6656,
+            35,
+            9455,
+            11,
+            12263,
+            2243
+          ],
+          "reference_tokens": [
+            3666,
+            11,
+            18826,
+            11,
+            5404,
+            681,
+            321,
+            1785
+          ]
+        },
+        {
+          "prompt_id": "cache-c040",
+          "first_divergence": 115,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            271,
+            814,
+            20139,
+            799,
+            14542,
+            2781,
+            264,
+            6297
+          ],
+          "reference_tokens": [
+            1918,
+            579,
+            3240,
+            303,
+            279,
+            4475,
+            13,
+            198
+          ]
+        },
+        {
+          "prompt_id": "index-c041",
+          "first_divergence": 24,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            3186,
+            1861,
+            321,
+            3134,
+            10121,
+            6157,
+            332,
+            198
+          ],
+          "reference_tokens": [
+            668,
+            3404,
+            7042,
+            3134,
+            4906,
+            332,
+            198,
+            256
+          ]
+        },
+        {
+          "prompt_id": "rollback-c042",
+          "first_divergence": 3,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            24845,
+            14263,
+            1371,
+            29303,
+            364,
+            264,
+            769,
+            3173
+          ],
+          "reference_tokens": [
+            18112,
+            58377,
+            7926,
+            332,
+            369,
+            264,
+            60936,
+            2876
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c043",
+          "first_divergence": 8,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            381,
+            15513,
+            3069,
+            449,
+            42903,
+            27502,
+            1220,
+            3150
+          ],
+          "reference_tokens": [
+            3150,
+            20181,
+            3726,
+            321,
+            19954,
+            2961,
+            24358,
+            11
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c044",
+          "first_divergence": 66,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            269,
+            387,
+            24,
+            20,
+            15861,
+            24,
+            24,
+            8
+          ],
+          "reference_tokens": [
+            47,
+            24,
+            20,
+            15861,
+            24,
+            24,
+            31230,
+            198
+          ]
+        },
+        {
+          "prompt_id": "testing-c045",
+          "first_divergence": 25,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            64700,
+            198,
+            12,
+            10678,
+            5952,
+            357,
+            440,
+            264
+          ],
+          "reference_tokens": [
+            92217,
+            10678,
+            1330,
+            49282,
+            9830,
+            7154,
+            310,
+            279
+          ]
+        },
+        {
+          "prompt_id": "capacity-c046",
+          "first_divergence": 127,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1204
+          ],
+          "reference_tokens": [
+            279
+          ]
+        },
+        {
+          "prompt_id": "cache-c048",
+          "first_divergence": 115,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            13,
+            8938,
+            279,
+            6297,
+            1328,
+            12134,
+            914,
+            5324
+          ],
+          "reference_tokens": [
+            26996,
+            539,
+            75843,
+            466,
+            369,
+            19470,
+            3865,
+            3438
+          ]
+        },
+        {
+          "prompt_id": "index-c049",
+          "first_divergence": 17,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            47722,
+            310,
+            2649,
+            513,
+            25,
+            271,
+            16,
+            13
+          ],
+          "reference_tokens": [
+            16,
+            13,
+            2972,
+            31547,
+            279,
+            1857,
+            668,
+            3404
+          ]
+        },
+        {
+          "prompt_id": "rollback-c050",
+          "first_divergence": 9,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5902,
+            58377,
+            7926,
+            364,
+            264,
+            48372,
+            22449,
+            318
+          ],
+          "reference_tokens": [
+            48372,
+            22449,
+            318,
+            58768,
+            2512,
+            264,
+            628,
+            640
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c051",
+          "first_divergence": 27,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1439,
+            1330,
+            5134,
+            3875,
+            13,
+            733,
+            6278,
+            19670
+          ],
+          "reference_tokens": [
+            321,
+            279,
+            3050,
+            4906,
+            16243,
+            421,
+            4766,
+            364
+          ]
+        },
+        {
+          "prompt_id": "testing-c053",
+          "first_divergence": 82,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            7174,
+            63,
+            198,
+            256,
+            471,
+            5952,
+            417,
+            25
+          ],
+          "reference_tokens": [
+            12,
+            27528,
+            38593,
+            198,
+            256,
+            471,
+            5952,
+            417
+          ]
+        },
+        {
+          "prompt_id": "capacity-c054",
+          "first_divergence": 22,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            314,
+            6278,
+            19670,
+            11106,
+            4744,
+            318,
+            3950,
+            44
+          ],
+          "reference_tokens": [
+            303,
+            19670,
+            11106,
+            4744,
+            318,
+            3950,
+            44,
+            8
+          ]
+        },
+        {
+          "prompt_id": "evidence-c055",
+          "first_divergence": 98,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            421,
+            866,
+            4688,
+            4464,
+            628,
+            1542,
+            310,
+            22090
+          ],
+          "reference_tokens": [
+            11,
+            440,
+            264,
+            1510,
+            67752,
+            3778,
+            63,
+            593
+          ]
+        },
+        {
+          "prompt_id": "cache-c056",
+          "first_divergence": 33,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            35141,
+            421,
+            460,
+            1156,
+            5353,
+            795,
+            13,
+            1368
+          ],
+          "reference_tokens": [
+            421,
+            51790,
+            1156,
+            5353,
+            795,
+            13,
+            1368,
+            279
+          ]
+        },
+        {
+          "prompt_id": "index-c057",
+          "first_divergence": 52,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            63,
+            593,
+            1510,
+            3152,
+            87759,
+            50472,
+            28,
+            5202
+          ],
+          "reference_tokens": [
+            8,
+            310,
+            7440,
+            279,
+            24816,
+            1000,
+            958,
+            279
+          ]
+        },
+        {
+          "prompt_id": "rollback-c058",
+          "first_divergence": 48,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1328,
+            369,
+            421,
+            279,
+            7926,
+            369,
+            348,
+            81596
+          ],
+          "reference_tokens": [
+            5614,
+            369,
+            310,
+            28377,
+            1156,
+            5253,
+            321,
+            5471
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c059",
+          "first_divergence": 65,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            52782,
+            27212,
+            31230,
+            321,
+            2972,
+            318,
+            3214,
+            22738
+          ],
+          "reference_tokens": [
+            20034,
+            279,
+            1879,
+            9640,
+            8,
+            321,
+            2972,
+            4741
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c060",
+          "first_divergence": 50,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            271,
+            13962,
+            220,
+            16,
+            13,
+            733,
+            2133,
+            9632
+          ],
+          "reference_tokens": [
+            220,
+            2972,
+            623,
+            2133,
+            9632,
+            2179,
+            318,
+            47
+          ]
+        },
+        {
+          "prompt_id": "testing-c061",
+          "first_divergence": 15,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            33750,
+            4384,
+            10934,
+            12,
+            1835,
+            5764,
+            2025,
+            25979
+          ],
+          "reference_tokens": [
+            27714,
+            9372,
+            36556,
+            53611,
+            332,
+            271,
+            16,
+            13
+          ]
+        },
+        {
+          "prompt_id": "capacity-c062",
+          "first_divergence": 20,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            435,
+            3127,
+            8,
+            1558,
+            25459,
+            15250,
+            93868,
+            567
+          ],
+          "reference_tokens": [
+            58768,
+            13464,
+            310,
+            430,
+            75336,
+            11,
+            61610,
+            11
+          ]
+        },
+        {
+          "prompt_id": "evidence-c063",
+          "first_divergence": 10,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5721,
+            1902,
+            381,
+            13613,
+            310,
+            5728,
+            680,
+            18100
+          ],
+          "reference_tokens": [
+            2614,
+            5721,
+            369,
+            4221,
+            25,
+            271,
+            16,
+            13
+          ]
+        }
+      ],
+      "cached_tokens_all_zero": true
+    },
+    {
+      "section": "batch-c64-r2",
+      "exact": 4,
+      "total": 64,
+      "mismatches": [
+        {
+          "prompt_id": "cache-c000",
+          "first_divergence": 23,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            13514,
+            321,
+            8060,
+            362,
+            4216,
+            159034,
+            271,
+            35944
+          ],
+          "reference_tokens": [
+            8570,
+            159034,
+            271,
+            35944,
+            264,
+            14611,
+            1332,
+            264
+          ]
+        },
+        {
+          "prompt_id": "index-c001",
+          "first_divergence": 26,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            31058,
+            18381,
+            92217,
+            28320,
+            279,
+            1857,
+            7044,
+            369
+          ],
+          "reference_tokens": [
+            8167,
+            1861,
+            332,
+            198,
+            256,
+            471,
+            2972,
+            3840
+          ]
+        },
+        {
+          "prompt_id": "rollback-c002",
+          "first_divergence": 15,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            321,
+            63001,
+            11823,
+            421,
+            11,
+            948,
+            78272,
+            2261
+          ],
+          "reference_tokens": [
+            948,
+            2197,
+            2261,
+            264,
+            48372,
+            22449,
+            318,
+            4660
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c003",
+          "first_divergence": 80,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            10885,
+            799,
+            539,
+            799,
+            553,
+            351,
+            11490,
+            23038
+          ],
+          "reference_tokens": [
+            3817,
+            539,
+            3817,
+            553,
+            351,
+            11490,
+            23038,
+            11
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c004",
+          "first_divergence": 23,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            79,
+            20,
+            15,
+            4181,
+            24,
+            20,
+            4181,
+            24
+          ],
+          "reference_tokens": [
+            47,
+            20,
+            15,
+            15861,
+            24,
+            20,
+            15861,
+            24
+          ]
+        },
+        {
+          "prompt_id": "testing-c005",
+          "first_divergence": 41,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            357,
+            579,
+            1965,
+            2407,
+            5435,
+            795,
+            421,
+            16673
+          ],
+          "reference_tokens": [
+            1083,
+            279,
+            1965,
+            314,
+            264,
+            16905,
+            11,
+            43697
+          ]
+        },
+        {
+          "prompt_id": "capacity-c006",
+          "first_divergence": 65,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            426,
+            1537,
+            4851,
+            215495,
+            271,
+            13962,
+            220,
+            16
+          ],
+          "reference_tokens": [
+            279,
+            2923,
+            13909,
+            28253,
+            19214,
+            37557,
+            314,
+            411
+          ]
+        },
+        {
+          "prompt_id": "evidence-c007",
+          "first_divergence": 28,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            2961,
+            25,
+            271,
+            16,
+            13,
+            2972,
+            62428,
+            19107
+          ],
+          "reference_tokens": [
+            25,
+            271,
+            16,
+            13,
+            2972,
+            62428,
+            19107,
+            321
+          ]
+        },
+        {
+          "prompt_id": "cache-c008",
+          "first_divergence": 30,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1528,
+            4203,
+            159034,
+            271,
+            2381,
+            3010,
+            11,
+            21778
+          ],
+          "reference_tokens": [
+            3134,
+            4868,
+            466,
+            1156,
+            18336,
+            2193,
+            159034,
+            271
+          ]
+        },
+        {
+          "prompt_id": "index-c009",
+          "first_divergence": 80,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            14,
+            2680,
+            18054,
+            553,
+            198,
+            256,
+            471,
+            28320
+          ],
+          "reference_tokens": [
+            8307,
+            553,
+            198,
+            256,
+            471,
+            28320,
+            279,
+            1857
+          ]
+        },
+        {
+          "prompt_id": "rollback-c010",
+          "first_divergence": 48,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1328,
+            369,
+            421,
+            279,
+            7926,
+            369,
+            348,
+            81596
+          ],
+          "reference_tokens": [
+            5614,
+            369,
+            310,
+            10817,
+            67418,
+            880,
+            3988,
+            2218
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c011",
+          "first_divergence": 99,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            14835,
+            5979,
+            12197,
+            10393,
+            318,
+            38,
+            2629,
+            20971
+          ],
+          "reference_tokens": [
+            32504,
+            310,
+            2649,
+            5979,
+            12197,
+            10393,
+            364,
+            1396
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c012",
+          "first_divergence": 96,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            54771,
+            3719,
+            13,
+            271,
+            17,
+            13,
+            2972,
+            1401
+          ],
+          "reference_tokens": [
+            421,
+            20843,
+            1156,
+            3039,
+            13,
+            271,
+            17,
+            13
+          ]
+        },
+        {
+          "prompt_id": "testing-c013",
+          "first_divergence": 15,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1510,
+            55,
+            12,
+            2198,
+            25,
+            8029,
+            12,
+            27
+          ],
+          "reference_tokens": [
+            318,
+            68,
+            1257,
+            2487,
+            1510,
+            55,
+            12,
+            2198
+          ]
+        },
+        {
+          "prompt_id": "capacity-c014",
+          "first_divergence": 96,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            8160,
+            579,
+            279,
+            16456,
+            321,
+            279,
+            6355,
+            1783
+          ],
+          "reference_tokens": [
+            550,
+            8169,
+            781,
+            19643,
+            271,
+            46838,
+            436,
+            10673
+          ]
+        },
+        {
+          "prompt_id": "evidence-c015",
+          "first_divergence": 70,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            4055,
+            10014,
+            466,
+            69892,
+            3728,
+            1332,
+            8155,
+            13
+          ],
+          "reference_tokens": [
+            1879,
+            20182,
+            11,
+            6937,
+            11930,
+            11,
+            321,
+            8240
+          ]
+        },
+        {
+          "prompt_id": "cache-c016",
+          "first_divergence": 81,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            264,
+            2400,
+            1918,
+            348,
+            80747,
+            9,
+            318,
+            68
+          ],
+          "reference_tokens": [
+            348,
+            3081,
+            9,
+            321,
+            348,
+            4394,
+            9,
+            7289
+          ]
+        },
+        {
+          "prompt_id": "index-c017",
+          "first_divergence": 52,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            63,
+            593,
+            1510,
+            3152,
+            87759,
+            50472,
+            28,
+            5202
+          ],
+          "reference_tokens": [
+            8,
+            310,
+            7440,
+            279,
+            24816,
+            1000,
+            958,
+            279
+          ]
+        },
+        {
+          "prompt_id": "rollback-c018",
+          "first_divergence": 58,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5471,
+            1319,
+            13193,
+            264,
+            3743,
+            4722,
+            13,
+            271
+          ],
+          "reference_tokens": [
+            5190,
+            264,
+            3743,
+            4722,
+            494,
+            18176,
+            220,
+            16
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c019",
+          "first_divergence": 113,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1118,
+            854,
+            264,
+            9640,
+            369,
+            14789,
+            18468,
+            16905
+          ],
+          "reference_tokens": [
+            41173,
+            473,
+            9956,
+            13,
+            271,
+            8160,
+            369,
+            279
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c020",
+          "first_divergence": 117,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            7848,
+            39222,
+            332,
+            198,
+            256,
+            471,
+            2972,
+            3710
+          ],
+          "reference_tokens": [
+            82699,
+            332,
+            198,
+            256,
+            471,
+            2972,
+            3710,
+            310
+          ]
+        },
+        {
+          "prompt_id": "testing-c021",
+          "first_divergence": 119,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            874,
+            83698,
+            11,
+            874,
+            3790,
+            51809,
+            13,
+            1368
+          ],
+          "reference_tokens": [
+            466,
+            27534,
+            31626,
+            2483,
+            13,
+            271,
+            4639,
+            579
+          ]
+        },
+        {
+          "prompt_id": "capacity-c022",
+          "first_divergence": 50,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            41403,
+            553,
+            561,
+            6355,
+            1783,
+            1881,
+            2193,
+            2984
+          ],
+          "reference_tokens": [
+            7658,
+            553,
+            271,
+            760,
+            6355,
+            1783,
+            1881,
+            2193
+          ]
+        },
+        {
+          "prompt_id": "evidence-c023",
+          "first_divergence": 25,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            92217,
+            198,
+            256,
+            471,
+            35547,
+            27764,
+            318,
+            48213
+          ],
+          "reference_tokens": [
+            332,
+            198,
+            256,
+            471,
+            71946,
+            11436,
+            318,
+            48213
+          ]
+        },
+        {
+          "prompt_id": "cache-c024",
+          "first_divergence": 105,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            21640,
+            2980,
+            1141,
+            75843,
+            26996,
+            13,
+            45829,
+            78304
+          ],
+          "reference_tokens": [
+            2962,
+            310,
+            8418,
+            279,
+            2235,
+            3240,
+            2980,
+            279
+          ]
+        },
+        {
+          "prompt_id": "index-c025",
+          "first_divergence": 7,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5790,
+            279,
+            1857,
+            668,
+            7042,
+            4906,
+            1973,
+            13969
+          ],
+          "reference_tokens": [
+            5492,
+            11,
+            1330,
+            8751,
+            11988,
+            310,
+            2649,
+            513
+          ]
+        },
+        {
+          "prompt_id": "rollback-c026",
+          "first_divergence": 20,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            11,
+            9184,
+            14333,
+            2491,
+            279,
+            69293,
+            321,
+            311
+          ],
+          "reference_tokens": [
+            318,
+            4660,
+            640,
+            11,
+            6105,
+            4691,
+            4296,
+            11
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c027",
+          "first_divergence": 87,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            318,
+            4650,
+            81726,
+            7415,
+            1714,
+            11,
+            9640,
+            45850
+          ],
+          "reference_tokens": [
+            11,
+            1680,
+            430,
+            2972,
+            79852,
+            318,
+            1536,
+            12
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c028",
+          "first_divergence": 115,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            17723,
+            5774,
+            24115,
+            1156,
+            3039,
+            13,
+            271,
+            17
+          ],
+          "reference_tokens": [
+            16305,
+            2053,
+            13,
+            271,
+            17,
+            13,
+            2972,
+            1835
+          ]
+        },
+        {
+          "prompt_id": "testing-c029",
+          "first_divergence": 49,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            25,
+            198,
+            256,
+            471,
+            5952,
+            357,
+            25,
+            28763
+          ],
+          "reference_tokens": [
+            22151,
+            303,
+            279,
+            1622,
+            2407,
+            466,
+            6881,
+            13
+          ]
+        },
+        {
+          "prompt_id": "capacity-c030",
+          "first_divergence": 42,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            42903,
+            17120,
+            11,
+            11352,
+            279,
+            2972,
+            79852,
+            18887
+          ],
+          "reference_tokens": [
+            14791,
+            42903,
+            11,
+            11352,
+            8559,
+            2972,
+            48213,
+            13453
+          ]
+        },
+        {
+          "prompt_id": "evidence-c031",
+          "first_divergence": 91,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            9209,
+            8213,
+            440,
+            27534,
+            11782,
+            318,
+            13878,
+            11
+          ],
+          "reference_tokens": [
+            8213,
+            440,
+            27534,
+            12459,
+            318,
+            13878,
+            11,
+            21853
+          ]
+        },
+        {
+          "prompt_id": "cache-c032",
+          "first_divergence": 23,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5792,
+            8060,
+            362,
+            421,
+            46668,
+            23285,
+            4203,
+            159034
+          ],
+          "reference_tokens": [
+            92679,
+            159034,
+            271,
+            2381,
+            3010,
+            11,
+            21778,
+            449
+          ]
+        },
+        {
+          "prompt_id": "rollback-c034",
+          "first_divergence": 9,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            60936,
+            11,
+            16050,
+            2876,
+            421,
+            9184,
+            14333,
+            2491
+          ],
+          "reference_tokens": [
+            829,
+            37435,
+            2876,
+            421,
+            11,
+            948,
+            2197,
+            2261
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c035",
+          "first_divergence": 25,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            6297,
+            37631,
+            310,
+            279,
+            52652,
+            51797,
+            13,
+            271
+          ],
+          "reference_tokens": [
+            52652,
+            51797,
+            321,
+            279,
+            3050,
+            4906,
+            16243,
+            421
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c036",
+          "first_divergence": 57,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            66599,
+            332,
+            318,
+            76289,
+            3790,
+            29997,
+            413,
+            3102
+          ],
+          "reference_tokens": [
+            9930,
+            424,
+            12482,
+            64700,
+            4962,
+            466,
+            7459,
+            37972
+          ]
+        },
+        {
+          "prompt_id": "capacity-c038",
+          "first_divergence": 29,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            318,
+            7949,
+            513,
+            8097,
+            8,
+            321,
+            279,
+            2972
+          ],
+          "reference_tokens": [
+            332,
+            318,
+            7949,
+            513,
+            8097,
+            8,
+            321,
+            279
+          ]
+        },
+        {
+          "prompt_id": "evidence-c039",
+          "first_divergence": 26,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            318,
+            2448,
+            11,
+            11436,
+            11,
+            3061,
+            5436,
+            11
+          ],
+          "reference_tokens": [
+            1558,
+            11,
+            11436,
+            11,
+            3061,
+            5436,
+            11,
+            321
+          ]
+        },
+        {
+          "prompt_id": "cache-c040",
+          "first_divergence": 35,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            9109,
+            306,
+            5368,
+            4523,
+            1918,
+            3447,
+            11,
+            321
+          ],
+          "reference_tokens": [
+            63,
+            4523,
+            264,
+            1103,
+            314,
+            3741,
+            11,
+            321
+          ]
+        },
+        {
+          "prompt_id": "index-c041",
+          "first_divergence": 24,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            3186,
+            1861,
+            321,
+            3134,
+            10121,
+            6157,
+            332,
+            198
+          ],
+          "reference_tokens": [
+            668,
+            3404,
+            7042,
+            3134,
+            4906,
+            332,
+            198,
+            256
+          ]
+        },
+        {
+          "prompt_id": "rollback-c042",
+          "first_divergence": 3,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            24845,
+            14263,
+            1371,
+            29303,
+            364,
+            264,
+            769,
+            3173
+          ],
+          "reference_tokens": [
+            18112,
+            58377,
+            7926,
+            332,
+            369,
+            264,
+            60936,
+            2876
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c043",
+          "first_divergence": 23,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1881,
+            279,
+            1330,
+            24481,
+            321,
+            1092,
+            1754,
+            799
+          ],
+          "reference_tokens": [
+            303,
+            279,
+            52652,
+            51797,
+            321,
+            279,
+            3050,
+            4906
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c044",
+          "first_divergence": 18,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            14469,
+            4417,
+            264,
+            28191,
+            9830,
+            3421,
+            318,
+            68
+          ],
+          "reference_tokens": [
+            264,
+            12263,
+            1040,
+            16778,
+            6862,
+            11,
+            27258,
+            11
+          ]
+        },
+        {
+          "prompt_id": "testing-c045",
+          "first_divergence": 8,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            16520,
+            48409,
+            29310,
+            1228,
+            25,
+            271,
+            71093,
+            12305
+          ],
+          "reference_tokens": [
+            1965,
+            45148,
+            25,
+            271,
+            332,
+            2198,
+            25,
+            27714
+          ]
+        },
+        {
+          "prompt_id": "capacity-c046",
+          "first_divergence": 85,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            13030,
+            314,
+            21966,
+            4779,
+            513,
+            25,
+            198,
+            16
+          ],
+          "reference_tokens": [
+            10736,
+            25,
+            198,
+            16,
+            13,
+            220,
+            2972,
+            1652
+          ]
+        },
+        {
+          "prompt_id": "evidence-c047",
+          "first_divergence": 41,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            11,
+            15579,
+            681,
+            3061,
+            5436,
+            318,
+            3666,
+            11
+          ],
+          "reference_tokens": [
+            681,
+            3061,
+            5436,
+            318,
+            3026,
+            11,
+            5404,
+            11
+          ]
+        },
+        {
+          "prompt_id": "cache-c048",
+          "first_divergence": 30,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            264,
+            24609,
+            14456,
+            1040,
+            1510,
+            3678,
+            593,
+            9843
+          ],
+          "reference_tokens": [
+            449,
+            5165,
+            14456,
+            36066,
+            9843,
+            9109,
+            306,
+            5368
+          ]
+        },
+        {
+          "prompt_id": "index-c049",
+          "first_divergence": 27,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            24816,
+            668,
+            958,
+            424,
+            332,
+            198,
+            256,
+            471
+          ],
+          "reference_tokens": [
+            4906,
+            332,
+            198,
+            256,
+            471,
+            6250,
+            1510,
+            3152
+          ]
+        },
+        {
+          "prompt_id": "rollback-c050",
+          "first_divergence": 70,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            11639,
+            8,
+            466,
+            328,
+            66336,
+            26946,
+            1,
+            318
+          ],
+          "reference_tokens": [
+            39219,
+            11639,
+            8,
+            1345,
+            21873,
+            10725,
+            12964,
+            494
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c051",
+          "first_divergence": 25,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            6297,
+            37631,
+            310,
+            279,
+            52652,
+            51797,
+            13,
+            271
+          ],
+          "reference_tokens": [
+            52652,
+            51797,
+            321,
+            279,
+            3050,
+            4906,
+            16243,
+            421
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c052",
+          "first_divergence": 67,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            280,
+            24,
+            24,
+            31230,
+            2228,
+            256,
+            471,
+            348
+          ],
+          "reference_tokens": [
+            19182,
+            279,
+            854,
+            4284,
+            310,
+            8418,
+            264,
+            3074
+          ]
+        },
+        {
+          "prompt_id": "testing-c053",
+          "first_divergence": 112,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            63,
+            271,
+            17,
+            13,
+            2972,
+            19678,
+            92217,
+            10678
+          ],
+          "reference_tokens": [
+            38593,
+            271,
+            17,
+            13,
+            2972,
+            19678,
+            92217,
+            10678
+          ]
+        },
+        {
+          "prompt_id": "capacity-c054",
+          "first_divergence": 20,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            4864,
+            1881,
+            2972,
+            16759,
+            14849,
+            332,
+            321,
+            2972
+          ],
+          "reference_tokens": [
+            5839,
+            84810,
+            303,
+            19670,
+            11106,
+            4744,
+            318,
+            3950
+          ]
+        },
+        {
+          "prompt_id": "evidence-c055",
+          "first_divergence": 111,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            628,
+            381,
+            52783,
+            539,
+            264,
+            4688,
+            4464,
+            13
+          ],
+          "reference_tokens": [
+            14086,
+            1547,
+            279,
+            4424,
+            2612,
+            14751,
+            14813,
+            13
+          ]
+        },
+        {
+          "prompt_id": "cache-c056",
+          "first_divergence": 51,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            1788,
+            1560,
+            430,
+            279,
+            6297,
+            1328,
+            11,
+            424
+          ],
+          "reference_tokens": [
+            6297,
+            948,
+            264,
+            1156,
+            20335,
+            8570,
+            836,
+            5353
+          ]
+        },
+        {
+          "prompt_id": "index-c057",
+          "first_divergence": 7,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            5790,
+            279,
+            1857,
+            668,
+            7042,
+            4906,
+            1973,
+            13969
+          ],
+          "reference_tokens": [
+            5492,
+            11,
+            1330,
+            8751,
+            11988,
+            310,
+            2649,
+            513
+          ]
+        },
+        {
+          "prompt_id": "benchmark-c059",
+          "first_divergence": 21,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            2972,
+            258,
+            36312,
+            332,
+            2119,
+            11,
+            567,
+            599
+          ],
+          "reference_tokens": [
+            15346,
+            6463,
+            303,
+            279,
+            52652,
+            51797,
+            321,
+            279
+          ]
+        },
+        {
+          "prompt_id": "monitoring-c060",
+          "first_divergence": 26,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            11,
+            4906,
+            11,
+            321,
+            4131,
+            13,
+            5514,
+            513
+          ],
+          "reference_tokens": [
+            42529,
+            11457,
+            93868,
+            2972,
+            8960,
+            14849,
+            93868,
+            321
+          ]
+        },
+        {
+          "prompt_id": "testing-c061",
+          "first_divergence": 44,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            279,
+            1788,
+            3421,
+            13,
+            198,
+            256,
+            1788,
+            3421
+          ],
+          "reference_tokens": [
+            440,
+            12103,
+            11,
+            4752,
+            45640,
+            22151,
+            303,
+            279
+          ]
+        },
+        {
+          "prompt_id": "evidence-c063",
+          "first_divergence": 9,
+          "candidate_len": 128,
+          "reference_len": 128,
+          "candidate_tokens": [
+            488,
+            1144,
+            25,
+            271,
+            16,
+            13,
+            2972,
+            674
+          ],
+          "reference_tokens": [
+            279,
+            2614,
+            5721,
+            369,
+            4221,
+            25,
+            271,
+            16
+          ]
+        }
+      ],
+      "cached_tokens_all_zero": true
+    }
+  ],
+  "all_exact": false
+}

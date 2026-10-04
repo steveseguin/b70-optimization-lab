@@ -33,9 +33,21 @@ class ChunkedUploadTest(unittest.TestCase):
         self.assertIs(copy_(dst, src), dst)
         self.assertTrue(torch.equal(dst, src))
         self.assertEqual(sum(seen), 4000); self.assertTrue(max(seen) <= 256); self.assertEqual(done, [4000])
-        # small, dtype-converting, broadcast and non-contiguous copies go to the original in one call
+        # a copy that converts the number type is chunked too and gives exactly what one call gives
+        wide = torch.randn(40, 50, dtype=torch.float32) * 1e3
+        for dtype in (torch.bfloat16, torch.float16):
+            seen.clear()
+            dst_c, dst_ref = torch.zeros(40, 50, dtype=dtype), torch.zeros(40, 50, dtype=dtype)
+            copy_(dst_c, wide); original(dst_ref, wide)
+            self.assertTrue(torch.equal(dst_c.view(torch.int16), dst_ref.view(torch.int16)))
+            self.assertTrue(len(seen) > 1 and max(seen) <= 256 * 2)
+        bf = torch.randn(40, 50).to(torch.bfloat16)
+        dst_c, dst_ref = torch.zeros(40, 50, dtype=torch.float16), torch.zeros(40, 50, dtype=torch.float16)
+        copy_(dst_c, bf); original(dst_ref, bf)
+        self.assertTrue(torch.equal(dst_c.view(torch.int16), dst_ref.view(torch.int16)))
+        done.clear(); done.append(4000)
+        # small, broadcast and non-contiguous copies go to the original in one call
         for dst2, src2 in ((torch.zeros(4, 5, dtype=torch.float16), torch.ones(4, 5, dtype=torch.float16)),
-                           (torch.zeros(40, 50, dtype=torch.float32), src),
                            (torch.zeros(3, 40, 50, dtype=torch.float16), src),
                            (torch.zeros(50, 40, dtype=torch.float16), src.t())):
             seen.clear()

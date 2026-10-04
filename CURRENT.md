@@ -1,28 +1,27 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-04 10:40 UTC** (2026-10-04 06:40 EDT), two-B70 host.
+Last reviewed: **2026-10-04 15:10 UTC** (2026-10-04 11:10 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
-## 2026-10-04 06:40 EDT: GPU work is stopped until the two-card host is rebooted
+## 2026-10-04 11:10 EDT: the model-load GPU fault is explained and has a validated fix; no reboot was needed
 
-**A card faulted at 06:25 while a research server was loading the model. It was the second fault since the last
-reboot, so by the owner's rule nothing more runs on the cards until a reboot.** Nothing was reset or retried. The
-cards are empty and no server is running. The evidence is saved.
+**The fault that has hit this host since September is one specific thing, and a small overlay now avoids it.**
 
-- The test that was starting (speculation with 4 and 8 users) did not run. No result is lost: everything in the
-  table below was measured and recorded before it.
-- This start had the September no-swap fix in place and plenty of free memory. So that fix made the start-up fault
-  rare (one in 59 starts since, against five in four days before), not gone.
-- **After the reboot:** `systemd-run --user --unit fp8-mtp-under-load --collect bash
-  experiments/qwen38-27b-b70/scripts/run-20261004-fp8-mtp-under-load.sh`. It checks the boot is clean first and
-  leaves no server running.
-- The same script then tests a prepared speed-up for many users: the output-layer fix now exchanges results
-  between the cards once a step, not once per four users. Same arithmetic; expected about 10 % at 64 users. It was
-  written and CPU-tested while the cards were off limits and has not run on them yet.
-- **Why it failed (reviewed the same day):** a timing bug in Intel's driver stack, the open upstream report
-  `intel/compute-runtime#948`. All four of our start-up faults since September are the same event at the same
-  160 KiB of GPU address space, on both cards, on two kernels, with swap on and off. Not a bad card, not memory.
-- [Incident note](experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
+- **What it was.** When more than about 256 MiB is uploaded to a card in one go, Intel's runtime makes a temporary
+  mapping of the host memory and has the card's copy engine read it. Every saved start-up fault (four of them, both
+  cards, two kernels) is the copy engine finding that mapping gone. In this model only the 1.27 GB embedding and
+  output-layer weights are that large: eight uploads per two-card start.
+- **The fix.** The `b70-chunked-upload` overlay sends those uploads in 128 MiB pieces during model load. Measured on
+  the two-card server: the mapping is never made, answers are exact (12 of 12) and speed is unchanged (90.3 tok/s).
+- **What it does not cover yet.** The two published packages and the one-card lane do not have it (each needs its
+  own acceptance run), and the MiniMax video lane loads models with its own scripts.
+- **Not caused by:** a bad card, memory running out, or container swap (swap only made the timing worse).
+- The owner chose a health check over a reboot at 09:40; it passed and there has been no fault since.
+- Also settled this morning: speculation is **not** lossless with several users (stays single-user), and exchanging
+  the output-layer results once a step gains nothing (489 vs 488 tok/s at 64 users). Both closed.
+- [Fault note](experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
+
+**Recommended next:** validate the overlay on one card, then decide whether to put it in the two packages.
 
 ## 2026-10-04, overnight: many users at once, lossless on short and long prompts, up to 488 tokens a second together
 
@@ -67,8 +66,7 @@ published single-user recipe gives. [Full result](experiments/qwen38-27b-b70/not
   afterwards and work carried on without a reboot, as the owner's rule now says. The second fault, at 06:25 on
   October 4, is the entry at the top of this page.
 
-**Recommended next:** reboot, then run the speculation-with-several-users test. After that, decide whether the
-multi-user mode becomes a profile of the two-card package (it needs its own acceptance run, about an hour).
+**Recommended next:** see the entry at the top of this page.
 
 ## 2026-10-03: back after twelve days — the machine was stable all day, a newer kernel is installed, and it restarts itself to test it
 

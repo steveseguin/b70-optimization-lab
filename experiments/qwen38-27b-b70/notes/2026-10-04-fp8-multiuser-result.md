@@ -131,12 +131,17 @@ configuration, against about 400,000 on two cards. Sixteen users on one card mea
 Nothing here is published as a package profile yet. A profile needs its own acceptance through the package
 launcher, and editing the launcher moves bytes the frozen acceptance packet pins.
 
+## Two follow-up tests, both negative (11:00 EDT)
+
+- **Speculation does not survive several users.** Depth-5 speculation with the three overlays at 4 users: long
+  prompts 12 and 19 of 64 equal to solo, short ladder 6 and 4 of 64, 182 tok/s together. One user alone is still
+  exact. Speculation stays a single-user feature; the multi-user mode runs with it off.
+- **Exchanging the logits once a step instead of once per four rows gains nothing.** Lossless, but 489.3 tok/s at
+  64 users against 488, and 325.7 at 16 against 325. The cost of the output-layer fix is the repeated product, not
+  the exchange. The mode is dropped (the code stays behind `B70_LM_HEAD_CHUNK_AT=head`, off by default).
+
 ## Not established
 
-- **Speculation with several users.** The test (depth-5 speculation plus the three overlays, 4 users, then 8) was
-  started at 06:24 EDT and did not run: the server faulted a card while loading its weights, the second fault on
-  the boot, so GPU work stopped. Nothing was measured. [Incident note](2026-10-04-gpu-fault-mtp-start.md); the
-  runner for after a reboot is `scripts/run-20261004-fp8-mtp-under-load.sh`.
 - Answers longer than 128 tokens at these widths.
 - One card with long prompts (the one-card numbers above are the short ladder, no overlays).
 - 32 and 64 users on a second fresh server each (sixteen has two).

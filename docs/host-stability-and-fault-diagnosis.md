@@ -404,6 +404,17 @@ in 59, against five in four days before, says container swap was the main cause 
 also never switched the swap allowance back on to watch the fault rate return.
 [Incident record](../experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
 
+**What the fault actually is (found 2026-10-04).** The kernel records each fault as one multi-line message; read it
+with `journalctl -k -o cat`, because a line filter keeps only its empty first line. All four saved start-up faults
+show the copy engine reading the same 160 KiB at GPU address `0x800400200000`. The runtime's allocation log
+(`NEOReadDebugKeys=1 LogAllocationType=1 LogAllocationStdout=1 PrintBOBindingResult=1`) names what lives there: an
+`EXTERNAL_HOST_PTR` mapping, the temporary mapping of host memory that compute-runtime 26.27 makes for a
+host-to-card copy. Measured by size, a copy of 256 MiB or less makes no such mapping and a copy of 512 MiB or more
+makes one. The kernel's `-EINVAL` means no mapping existed at that address when the copy engine read it. In our
+model only the 1.27 GB embedding and output-layer weights are that large. **Sending those uploads in 128 MiB pieces
+makes no mapping at all**, gives bit-identical weights and exact answers, and costs no load time
+(`experiments/qwen38-27b-b70/overlays/b70-chunked-upload/`). Container swap was a timing aggravator, not the cause.
+
 Two other triggers on this host are separate and still stand: a direct card-to-card copy
 faulted both cards (staging the transfer through host memory avoids it), and **killing a busy GPU job
 logs the same fault lines by itself**. Our one freeze on September 21 came ten minutes into a rerun
