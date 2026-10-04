@@ -149,22 +149,66 @@ def placement_devices(guider):
 
 
 MEMORY_FLOOR_GIB = 2.0
+MEMORY_FLOOR_BYTES = int(MEMORY_FLOOR_GIB * 2**30)
 
 
-def freeze_verdict(free_gib, busy, floor_gib=MEMORY_FLOOR_GIB):
-    """Packet 94 admission for timed arms: pipeline idle and every card at or above the floor."""
+class SerialPassRequired(RuntimeError):
+    """Packet 94b: before the freeze a pipelined sampler request must run alone (the
+    serial capture pass). Refused with a receipt; does not latch."""
+
+
+def freeze_verdict(free_bytes, busy, coverage_ok=True, floor_bytes=MEMORY_FLOOR_BYTES):
+    """Packet 94/94b admission for timed arms: pipeline idle, every sampler signature
+    captured on both workers, every card at or above the floor (raw bytes)."""
     if busy:
         return False, 'pipeline-busy'
-    short = {d: v for d, v in free_gib.items() if v is None or v < floor_gib}
+    if not coverage_ok:
+        return False, 'captures-incomplete'
+    short = {d: v for d, v in free_bytes.items() if v is None or v < floor_bytes}
     if short:
         return False, 'memory-floor'
     return True, 'frozen'
 
 
+def serial_admission(frozen, busy, pending_prompts):
+    """Before the freeze only one request may be in the server (no lookahead, no
+    decode-behind, no second sampler worker busy). After it, pipelining is free."""
+    if frozen:
+        return True, None
+    if busy:
+        return False, 'pipeline jobs still running (%d)' % busy
+    if pending_prompts:
+        return False, '%d other prompts queued' % pending_prompts
+    return True, None
+
+
+def resident_set():
+    """(model type, device, loaded bytes) of every model ComfyUI holds."""
+    import comfy.model_management as _mm
+    return sorted((type(getattr(lm.model, 'model', lm.model)).__name__, str(lm.device), int(lm.model.loaded_size()))
+                  for lm in list(_mm.current_loaded_models))
+
+
+def _pending_prompts():
+    try:
+        import server
+        _running, queued = server.PromptServer.instance.prompt_queue.get_current_queue_volatile()
+        return len(queued)
+    except Exception:  # noqa: BLE001
+        return 0
+
+
+def _sample_worker_idents():
+    st = getattr(pipeline, '_STAGES', {}).get('sample', {})
+    return [w.ident for w in st.get('workers', []) if w.is_alive()]
+
+
 class LTXSamplerCaptureFreeze:
-    """Packet 94: after warm, check the memory floor on all four cards and freeze
-    sampler captures so timed arms only replay. Never latches; a refusal is a
-    recorded outcome and the runner skips the timed arm."""
+    """Packet 94/94b: after the serial capture pass, check that every sampler block
+    signature was captured on both sampler workers and that every card keeps the
+    2 GiB floor, then freeze captures AND model loads so timed arms only replay on
+    resident weights. Records the resident models and free memory per card. Never
+    latches; a refusal is a recorded outcome."""
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -183,18 +227,25 @@ class LTXSamplerCaptureFreeze:
         free = {}
         for i in range(torch.xpu.device_count()):
             try:
-                f, _t = torch.xpu.mem_get_info(i)
-                free['xpu:%d' % i] = round(f / 2**30, 3)
+                free['xpu:%d' % i] = int(torch.xpu.mem_get_info(i)[0])
             except Exception:  # noqa: BLE001
                 free['xpu:%d' % i] = None
-        ok, outcome = freeze_verdict(free, pipeline.busy())
+        coverage_ok, coverage = capture.capture_coverage(_sample_worker_idents())
+        ok, outcome = freeze_verdict(free, pipeline.busy(), coverage_ok)
+        resident = resident_set()
         if ok:
             capture.CAPTURES_FROZEN[0] = True
-        report = {'schema': 'ltx.sampler-capture-freeze.v1', **identity, 'run_name': run_name,
-                  'outcome': outcome, 'frozen': bool(capture.CAPTURES_FROZEN[0]), 'free_gib': free,
-                  'floor_gib': MEMORY_FLOOR_GIB,
+            capture.LOADS_FROZEN[0] = True
+            capture.RESIDENT_SNAPSHOT[0] = resident
+        report = {'schema': 'ltx.sampler-capture-freeze.v2', **identity, 'run_name': run_name,
+                  'outcome': outcome, 'frozen': bool(capture.CAPTURES_FROZEN[0]),
+                  'loads_frozen': bool(capture.LOADS_FROZEN[0]), 'coverage': coverage,
+                  'free_bytes': free,
+                  'free_gib': {d: (None if v is None else round(v / 2**30, 3)) for d, v in free.items()},
+                  'floor_bytes': MEMORY_FLOOR_BYTES,
                   'reserved_gib': {'xpu:%d' % i: round(torch.xpu.memory_reserved(i) / 2**30, 3)
                                    for i in range(torch.xpu.device_count())},
+                  'resident_models': [list(r) for r in resident],
                   'placement': __import__('os').environ.get('LTX_SAMPLER_PLACEMENT', 'two-way')}
         write_json(run / ('sampler-capture-freeze-' + run_name + '.json'), report)
         return {'ui': {'text': ['capture freeze: %s' % outcome]}}
@@ -360,6 +411,8 @@ class LTXPipelineSampler:
         global _failed
         try:
             return self._apply(**kwargs)
+        except SerialPassRequired:
+            raise
         except BaseException:
             _failed = True
             gil.restore_default('latched failure: pipeline-sampler-')
@@ -386,6 +439,17 @@ class LTXPipelineSampler:
                 not torch.is_deterministic_algorithms_warn_only_enabled(),
                 'Strict determinism required')
 
+        if mode != 'original':
+            # Packet 94b: before the freeze, a pipelined request must be alone in the
+            # server, so a sampler capture can never overlap encode or decode work.
+            import ltx_graph_capture as _cap
+            admitted, why = serial_admission(_cap.CAPTURES_FROZEN[0], pipeline.busy(), _pending_prompts())
+            if not admitted:
+                refusal = {'schema': 'ltx.pipeline-sampler-request.v1', **identity, 'run_name': run_name,
+                           'mode': mode, 'clip_index': clip_index, 'passed': False,
+                           'refused': 'serial capture pass required before the freeze: ' + why}
+                write_json(run / ('pipeline-sampler-' + run_name + '.json'), refusal)
+                raise SerialPassRequired(refusal['refused'])
         report = {'schema': 'ltx.pipeline-sampler-request.v1', **identity, 'run_name': run_name,
                   'mode': mode, 'clip_index': clip_index, 'depth': depth,
                   'extension_sha256s': {'pipeline_sampler_node.py': actual,
@@ -474,6 +538,13 @@ class LTXPipelineSampler:
                 report['route_busy_ms'] = _capture.busy_window_report()
             except Exception as error:  # noqa: BLE001  (diagnostic only)
                 report['route_busy_ms'] = 'unavailable: ' + repr(error)
+            import ltx_graph_capture as _cap2
+            if _cap2.RESIDENT_SNAPSHOT[0] is not None:
+                # Packet 94b: after the freeze the resident models never change.
+                now = resident_set()
+                report['resident_unchanged'] = now == _cap2.RESIDENT_SNAPSHOT[0]
+                require(report['resident_unchanged'], 'Resident models changed since the freeze: %s vs %s'
+                        % (now, _cap2.RESIDENT_SNAPSHOT[0]))
             try:
                 import comfy.model_management as _mm
                 report['loaded_models'] = [

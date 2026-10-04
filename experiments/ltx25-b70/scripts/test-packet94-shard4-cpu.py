@@ -233,10 +233,14 @@ def memory_case():
     end = src.index('class LTXSamplerCaptureFreeze')
     exec(compile(src[start:end], 'psn', 'exec'), ns)
     fv = ns['freeze_verdict']
-    assert fv({'xpu:0': 2.5, 'xpu:1': 2.0, 'xpu:2': 5, 'xpu:3': 9}, 0) == (True, 'frozen')
-    assert fv({'xpu:0': 1.9, 'xpu:1': 3, 'xpu:2': 5, 'xpu:3': 9}, 0) == (False, 'memory-floor')
-    assert fv({'xpu:0': None, 'xpu:1': 3, 'xpu:2': 5, 'xpu:3': 9}, 0) == (False, 'memory-floor')
-    assert fv({'xpu:0': 5, 'xpu:1': 5, 'xpu:2': 5, 'xpu:3': 5}, 2) == (False, 'pipeline-busy')
+    G = 2**30
+    ok = {'xpu:0': int(2.5 * G), 'xpu:1': 2 * G, 'xpu:2': 5 * G, 'xpu:3': 9 * G}
+    assert fv(ok, 0) == (True, 'frozen')
+    assert fv(dict(ok, **{'xpu:1': 2 * G - 1}), 0) == (False, 'memory-floor')   # raw bytes, no rounding
+    assert round((2 * G - 1) / G, 3) == 2.0, 'the 94 rounding would have admitted this'
+    assert fv(dict(ok, **{'xpu:0': None}), 0) == (False, 'memory-floor')
+    assert fv(ok, 2) == (False, 'pipeline-busy')
+    assert fv(ok, 0, coverage_ok=False) == (False, 'captures-incomplete')
 
 
 case('memory floor: plan and freeze admission refuse below 2 GiB free', memory_case)
@@ -259,6 +263,105 @@ def capture_refusal_case():
 
 
 case('timed arms: a sampler capture after the freeze is refused before it starts', capture_refusal_case)
+
+
+def serial_pass_case():
+    # 94b: before the freeze a sampler request (and so any sampler capture) runs alone:
+    # no encode/decode/sample job running, no other prompt queued; and vice versa the
+    # freeze (which ends the capture window) refuses while any job is running.
+    src = (HERE / 'pipeline_sampler_node.py').read_text()
+    ns = {}
+    exec(compile(src[src.index('MEMORY_FLOOR_GIB = 2.0'):src.index('class LTXSamplerCaptureFreeze')], 'psn', 'exec'), ns)
+    sa, fv = ns['serial_admission'], ns['freeze_verdict']
+    assert sa(False, 0, 0) == (True, None)
+    assert sa(False, 1, 0)[0] is False and 'running' in sa(False, 1, 0)[1]      # an encode/decode job holds a card
+    assert sa(False, 0, 2)[0] is False and 'queued' in sa(False, 0, 2)[1]       # lookahead would start
+    assert sa(True, 3, 5) == (True, None)                                      # after the freeze: no captures at all
+    assert fv({'xpu:0': 5 * 2**30}, 1)[1] == 'pipeline-busy'
+    # with the real pipeline: a decode job holding its card blocks admission until it is done
+    import threading
+    import ltx_pipeline as p
+    p.clear()
+    gate = threading.Event()
+    p.submit('decode', 941000, lambda: gate.wait(5))
+    import time as _t
+    _t.sleep(0.1)
+    assert sa(False, p.busy(), 0)[0] is False
+    gate.set()
+    p.collect('decode', 941000)
+    assert sa(False, p.busy(), 0)[0] is True
+    p.clear()
+    i_adm = src.index('admitted, why = serial_admission(')
+    i_submit = src.index("out, detail = pipeline.run_behind(")
+    assert i_adm < i_submit, 'serial admission must come before the sample job is submitted'
+    assert 'except SerialPassRequired:\n            raise' in src
+
+
+case('serial pass: no sampler capture while another job holds a card, and no freeze while one runs',
+     serial_pass_case)
+
+
+def coverage_case():
+    import ltx_graph_capture as g
+
+    class R:
+        def __init__(self, index, entries):
+            self.index, self.entries = index, entries
+    a, b = 101, 202
+    full = [R(i, {a: {'s1': 1, 's2': 1}, b: {'s1': 1, 's2': 1}}) for i in range(48)]
+    assert g.capture_coverage([a, b], full)[0] is True
+    part = list(full); part[7] = R(7, {a: {'s1': 1, 's2': 1}, b: {'s1': 1}})
+    ok, d = g.capture_coverage([a, b], part)
+    assert ok is False and d['incomplete_routes'] == [7]
+    assert g.capture_coverage([a], full)[0] is False
+    assert g.capture_coverage([a, b], [])[0] is False
+
+
+case('freeze: every block signature must be captured on both sampler workers', coverage_case)
+
+
+def load_freeze_case():
+    import ltx_graph_capture as g
+    src = (HERE / 'resident_fastpath_node.py').read_text()
+    ns = {'Path': Path, 'os': __import__('os'), 'time': __import__('time'), 'json': json,
+          '_describe': lambda models: ['M'] * len(models)}
+    exec(compile(src[src.index('def _refuse_if_loads_frozen'):src.index('def fast_load_models_gpu')], 'rf', 'exec'), ns)
+    refuse = ns['_refuse_if_loads_frozen']
+    g.LOADS_FROZEN[0] = False
+    refuse([object()], False)                       # before the freeze: loads allowed
+    g.LOADS_FROZEN[0] = True
+    try:
+        refuse([object()], True)                    # resident: no load happens, admitted
+        with tempfile.TemporaryDirectory() as t:
+            __import__('os').environ['LTX_ENCODER_RUN_DIR'] = t
+            raises(lambda: refuse([object()], False), 'fail closed')
+            assert list(Path(t).glob('load-refused-*.json')), 'no refusal receipt'
+    finally:
+        g.LOADS_FROZEN[0] = False
+        __import__('os').environ.pop('LTX_ENCODER_RUN_DIR', None)
+    i_res = src.index('        resident = _resident(models)\n        _refuse_if_loads_frozen(models, resident)')
+    i_orig = src.index('return _original(models, *args, **kwargs)', i_res)
+    assert i_res < i_orig, 'the refusal must come before the native loader'
+    assert src.count('_refuse_if_loads_frozen(models, False)') == 1   # forced loads refused too
+    smp = (HERE / 'pipeline_sampler_node.py').read_text()
+    assert "require(report['resident_unchanged']" in smp and 'capture.LOADS_FROZEN[0] = True' in smp
+
+
+case('loads: after the freeze a non-resident load is refused before the native loader (receipt)',
+     load_freeze_case)
+
+
+def runner_registration_case():
+    sh = (HERE / 'run-campaign-94b.sh').read_text()
+    body = sh[sh.index('arm() {'):sh.index('pid_is_server()')]
+    assert body.index('ARMS_RUN="$ARMS_RUN $1"') < body.index('timeout $5'), 'arm registered after its client'
+    assert body.count('ARMS_RUN=') == 1
+    assert 'missing-markers-93b.py --root $R --run $RUN $ARMS_RUN' in sh
+    old = (HERE / 'run-campaign-94.sh').read_text()
+    assert 'superseded by run-campaign-94b.sh' in old and old.index('exit 8') < old.index('MODE=${1:-}')
+
+
+case('runner: an arm is registered before its client starts; 94 refuses', runner_registration_case)
 
 
 def decide_case():

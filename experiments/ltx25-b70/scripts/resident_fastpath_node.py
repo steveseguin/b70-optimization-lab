@@ -88,12 +88,33 @@ def timed_load_models_gpu(models, *args, **kwargs):
                            'skipped': False, 'models': _describe(models)})
 
 
+def _refuse_if_loads_frozen(models, resident):
+    """Packet 94b: after the freeze nothing may load (and so nothing may be evicted by
+    native free_memory). Fail closed with a receipt; never fall through."""
+    import ltx_graph_capture as _capture
+    if not _capture.LOADS_FROZEN[0] or resident:
+        return
+    try:
+        run = Path(os.environ['LTX_ENCODER_RUN_DIR'])
+        path = run / ('load-refused-%d-%d.json' % (int(time.time() * 1000), os.getpid()))
+        with path.open('x') as stream:
+            json.dump({'schema': 'ltx.load-refused.v1', 'models': _describe(models),
+                       'time': time.time(), 'reason': 'models not fully resident after the freeze'}, stream)
+    except Exception:  # noqa: BLE001  (the refusal itself must still happen)
+        pass
+    raise RuntimeError('Model load refused after the capture freeze: %s not fully resident '
+                       '(fail closed: no load, no eviction)' % _describe(models))
+
+
 def fast_load_models_gpu(models, *args, **kwargs):
     models = list(models)
     if kwargs.get('force_patch_weights') or kwargs.get('force_full_load'):
+        with _LOAD_LOCK:
+            _refuse_if_loads_frozen(models, False)
         return timed_load_models_gpu(models, *args, **kwargs)
     with _LOAD_LOCK:
         resident = _resident(models)
+        _refuse_if_loads_frozen(models, resident)
         if resident:
             for m in models:
                 for loaded in mm.current_loaded_models:

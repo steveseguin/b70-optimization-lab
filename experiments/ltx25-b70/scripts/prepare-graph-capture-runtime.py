@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-shard4-94'
+OUTPUT = ROOT / 'prepared-encoder-shard4-94b'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -1234,7 +1234,10 @@ def main():
                                         ['xpu:3', 44, 48]]},
             'rule': 'fixed at the first model load, one server per placement; whole blocks only; '
                     'two-way is the unchanged 23/25 install()',
-            'freeze_graph': FREEZE_GRAPH, 'memory_floor_gib': 2.0},
+            'freeze_graph': FREEZE_GRAPH, 'memory_floor_gib': 2.0,
+            'capture_rule': 'packet 94b: sampler captures only in a serial capture pass (one request '
+                            'in the server at a time) before the freeze; after it no capture and no '
+                            'model load; resident models recorded and asserted unchanged'},
         'health_admission': {
             'launcher_option': '--health-receipt <path>', 'schema': 'ltx.four-card-health.v1',
             'max_age_hours': 6,
@@ -1310,7 +1313,7 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
-        'Packet 94: transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
+        'Packet 94b: transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
         'conditions (negligible finished-clip difference; new references, byte-identical thereafter).\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),

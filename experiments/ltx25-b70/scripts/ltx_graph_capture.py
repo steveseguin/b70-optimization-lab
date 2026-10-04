@@ -525,6 +525,37 @@ CAPTURES_FROZEN = [False]
 def refuse_if_frozen(index):
     require(not CAPTURES_FROZEN[0], 'Block %s: captures are frozen for timed arms and this worker has no '
                                     'graph for this signature; refused before capture' % index)
+
+
+# Packet 94b: after the freeze, a model load that is not already fully resident is
+# refused (resident_fastpath_node checks this flag; it lives here because this
+# module is imported once under one name by every lane node).
+LOADS_FROZEN = [False]
+# The resident models (type, device, loaded bytes) recorded at the freeze; every
+# later sampler request must still see exactly this set.
+RESIDENT_SNAPSHOT = [None]
+_ROUTES = []
+
+
+def capture_coverage(worker_idents, routes=None):
+    """Packet 94b: did the serial capture pass capture every block signature on every
+    sampler worker? Returns (complete, detail)."""
+    routes = list(_ROUTES if routes is None else routes)
+    idents = list(worker_idents)
+    if len(idents) < 2:
+        return False, {'reason': 'fewer than two sampler workers exist', 'workers': len(idents)}
+    if not routes:
+        return False, {'reason': 'no graph routes installed'}
+    missing = []
+    signatures = None
+    for route in routes:
+        per = [set(route.entries.get(t, {})) for t in idents]
+        union = set().union(*per)
+        if not union or any(p != union for p in per):
+            missing.append(route.index)
+        signatures = len(union) if signatures is None else min(signatures, len(union))
+    return not missing, {'routes': len(routes), 'workers': len(idents), 'incomplete_routes': missing[:48],
+                         'signatures_per_route_min': signatures}
 # Pipelined (two-clip) mode is per thread: the sampler worker turns it on
 # around a clip; every block route then issues on that thread's own streams
 # and stages cross-card activations through pinned host memory.
@@ -772,6 +803,7 @@ class GraphBlockRoute:
         self._route_identity = (original_route.device, original_route.primary, original_route.last)
         self.report = report
         self.entries = {}          # thread id -> {signature: Entry}
+        _ROUTES.append(self)       # packet 94b: capture coverage before the freeze
 
     # -- validation ---------------------------------------------------------
     def _validate_fast(self):
