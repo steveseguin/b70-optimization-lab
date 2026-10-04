@@ -1,0 +1,28 @@
+{
+  "error": "Traceback (most recent call last):\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-shard4-94c/source/custom_nodes/ltx_pipeline_decode_lab/__init__.py\", line 702, in apply\n    _REPLICAS[key] = placement.build_replica(source, placement.REPLICA_DEVICE, load_lock,\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-shard4-94c/source/scripts/ltx_decode_replica.py\", line 218, in build_replica\n    require(not placement_offenders(src, source_device),\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-shard4-94c/source/scripts/ltx_decode_replica.py\", line 75, in require\n    raise RuntimeError(message)\nRuntimeError: Resident VAE is not wholly on its device; refusing to copy a moving model\n",
+  "extension_sha256s": {
+    "ltx_decode_replica.py": "da9daab31306781711227988787d3405910abb5255ab39886809179536de4f8d",
+    "pipeline_decode_node.py": "a0b6fac09e5467366e674f9c5717cc3fe87284237f4edc0ac476322365ed7440"
+  },
+  "memory_before": {
+    "xpu:1": {
+      "allocated": 19476582400,
+      "reserved": 25979518976
+    },
+    "xpu:1_free": [
+      7695986688,
+      "mem_get_info"
+    ]
+  },
+  "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "native_device": "xpu:3",
+  "outcome": "error",
+  "passed": false,
+  "replica_device": "xpu:1",
+  "replicas_resident": [],
+  "run_name": "f94c-ctl-dprobe",
+  "schema": "ltx.decode-replica-probe.v1",
+  "seconds": 0.074,
+  "server_identity_sha256": "ccf1ef3d6bc20e8bff92789f8142964322b97a12a419c2340367cac7c1de1f1f",
+  "written_unix": 1791123732.2115304
+}
