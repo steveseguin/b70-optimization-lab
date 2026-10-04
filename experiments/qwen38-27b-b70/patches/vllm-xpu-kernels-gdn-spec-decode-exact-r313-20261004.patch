@@ -1,0 +1,36 @@
+diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+index 445ff26..8bc4ff4 100644
+--- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
++++ b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+@@ -507,6 +507,14 @@ struct gated_delta_rule_spec_kernel {
+       // Write the new SSM state back to this token's dedicated cache slot,
+       // so that the next forward can pick the right rollback column based on
+       // num_accepted_tokens.
++      //
++      // r313 (b70 lab): carry the state into the next verify row through the
++      // same StateT rounding the slot holds. The one-token decode kernel
++      // (gated_delta_rule_kernel) reloads the state from its StateT slot for
++      // every token, so carrying the float32 value here made verify rows >= 1
++      // and prefix states >= 2 differ from token-by-token decode by an ulp.
++      // Reusing the converted value keeps the stored slot and the carried
++      // value identical; for StateT == float this is a no-op.
+       const int final_state_idx =
+           cache_indices[batch_id * cache_indices_stride_0 + t_local];
+       StateT* final_state_ptr =
+@@ -516,11 +524,14 @@ struct gated_delta_rule_spec_kernel {
+       for (int j = 0; j < v_dim_per_sg; ++j) {
+ #pragma unroll
+         for (int i = 0; i < k_bucket_size; ++i) {
++          const StateT state_rounded =
++              static_cast<StateT>(state_local[j * k_bucket_size + i]);
+           final_state_ptr
+               [num_v_heads_id * head_k_dim * head_v_dim +
+                (k_bucket_size * sg_local_id + i) +
+-               (head_v_dim_id + j) * head_k_dim] =
+-                  static_cast<StateT>(state_local[j * k_bucket_size + i]);
++               (head_v_dim_id + j) * head_k_dim] = state_rounded;
++          state_local[j * k_bucket_size + i] =
++              static_cast<float>(state_rounded);
+         }
+       }
+     }

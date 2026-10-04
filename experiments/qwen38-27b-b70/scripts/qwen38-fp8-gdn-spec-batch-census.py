@@ -58,6 +58,11 @@ Run on R310 (one card; both TP shapes run on it):
     -v $PWD/experiments/qwen38-27b-b70/scripts:/work:ro -v $OUT:/out \
     sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04 \
     /work/qwen38-fp8-gdn-spec-batch-census.py --out /out/gdn-spec-census-r310.json
+
+R313 (patches/vllm-xpu-kernels-gdn-spec-decode-exact-r313-20261004.patch: the spec kernel carries
+the SSM state through the slot's float16 rounding, as decode does): same command on the R313 image
+with --expect-decode-equal (exit 1 unless every row/state equals token-by-token decode and the
+row-count, batch and repeat checks still pass).
 """
 from __future__ import annotations
 
@@ -315,6 +320,10 @@ def main() -> int:
     ap.add_argument("--batches", default=",".join(map(str, BATCHES)))
     ap.add_argument("--skip-batch", action="store_true")
     ap.add_argument("--skip-rows", action="store_true")
+    ap.add_argument("--expect-decode-equal", action="store_true",
+                    help="gate for the r313 kernel: exit 1 unless every row census is equal to "
+                         "token-by-token decode, the 6-row shape and its repeat, and every batch "
+                         "census is batch-invariant and repeatable")
     a = ap.parse_args()
 
     if not torch.xpu.is_available():
@@ -377,8 +386,23 @@ def main() -> int:
             summary[f"{tp} batch"] = {k: bc.get(k, "unavailable") for k in
                                       ("all_batch_invariant", "first_failing_requests")}
     report["summary"] = summary
+    if a.expect_decode_equal:
+        failed = []
+        for tp, sec in report["by_tp"].items():
+            for key, rc in sec.get("row_count_census", {}).items():
+                if not all(rc.get(k) is True for k in
+                           ("all_equal_6row_shape", "all_equal_decode", "all_repeat_equal")):
+                    failed.append(f"{tp} rows {key}")
+            bc = sec.get("batch_census")
+            if bc and not (bc.get("all_batch_invariant") is True and all(
+                    e["repeat_equal"] for e in bc.get("by_requests", []))):
+                failed.append(f"{tp} batch")
+        report["expect_decode_equal"] = {"passed": not failed, "failed": failed}
+        print(f"CENSUS expect_decode_equal passed={not failed} failed={failed}", flush=True)
     a.out.write_text(json.dumps(report, indent=1))
     print(json.dumps(summary, indent=1))
+    if a.expect_decode_equal and not report["expect_decode_equal"]["passed"]:
+        return 1
     return 0
 
 

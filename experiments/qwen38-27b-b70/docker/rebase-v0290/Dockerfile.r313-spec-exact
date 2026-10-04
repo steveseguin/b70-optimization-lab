@@ -1,0 +1,25 @@
+# R313 (2026-10-04): R310 with only _xpu_C.abi3.so replaced by a build with vllm-xpu-kernels r313
+# (patches/vllm-xpu-kernels-gdn-spec-decode-exact-r313-20261004.patch: the speculative GDN kernel carries the SSM state
+# between verify rows through the slot's float16 rounding, exactly as one-token decode does). Everything else, Python
+# included, is the R310 image byte for byte; libgdn_attn_kernels_xe_2.so stays R310's. No runtime switch.
+#
+# Build (CPU only; host has 15 GiB / 8 cores, so nothing else heavy may run):
+#   1. kernel library (incremental: recompiles gdn_attn_interface.cpp.o, relinks _xpu_C; JOBS=2, container
+#      --memory 10g --memory-swap 20g as in the R311/R312c recipes):
+#        BUILD_ROOT=/mnt/fast-ai/build/kernels-r313-spec-exact-20261004 \
+#          bash experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r313-spec-exact.sh
+#   2. image (the context is the directory step 1 staged; the only heavy step is a Python import):
+#        docker build --network none \
+#          -f experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r313-spec-exact \
+#          -t neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r313-spec-exact \
+#          /mnt/fast-ai/build/kernels-r313-spec-exact-20261004/image
+#   Gate: experiments/qwen38-27b-b70/scripts/qwen38-fp8-gdn-spec-batch-census.py --expect-decode-equal on this image.
+ARG BASE=ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04
+FROM ${BASE}
+COPY _xpu_C.abi3.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so
+RUN cd /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels \
+ && echo "5b00b4d44f51169d0e610ae682aa90d7120ad6ac6a389c9d898c4d9141abec4a  libgdn_attn_kernels_xe_2.so" | sha256sum -c - \
+ && ! echo "043083fc64cd6f4e779004dc05515d4bfbdefa9e5febaf7ec057199558859057  _xpu_C.abi3.so" | sha256sum -c --status - \
+ && sha256sum _xpu_C.abi3.so \
+ && cd / && python3 -c "import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, 'gdn_attention'); print('kernels import ok', torch.__version__)"
+LABEL neural.download.build.lane="qwen38-fp8-v0290-r313-spec-exact" neural.download.kernel.patch="onednn r137a+r137b+r221+r309 on 0e2a5bfe; vllm-xpu-kernels r310+r313 (_xpu_C only)"
