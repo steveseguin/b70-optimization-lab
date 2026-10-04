@@ -86,7 +86,17 @@ likely small gain from the host no longer swapping and no longer squeezing the p
 flight the clips finish in pairs, which is why the median interval (1.641) sits above the mean; the mean is the
 throughput.
 
-The remaining combinations (four workers, the 20/20/8 layout, three workers on two cards) were not run: the
-three-worker result shows the cards saturated, so they would land within a few percent of these numbers. The
-chain was stopped in its idle gap after the control. Index bases 257000 (four cards, 4), 258000 (20/20/8, 3) and
-255000 (two cards, 3) are unused.
+Four workers on the four-card layout were tried later (20:42 UTC): the runner's video-memory check stopped
+the run cleanly before the fourth worker captured (exit 18, server stopped normally). With three workers the
+cards already hold 26.6 / 20.2 / 29.0 / 19.6 GiB of their 32. So with the host-RAM limit gone, video memory on
+the card that carries half the text encoder plus eight transformer blocks is the next ceiling for clips in
+flight. The 20/20/8 layout with three workers and two cards with three workers were not run; the three-worker
+result shows the cards saturated, so they would land within a few percent of the numbers above. Index bases
+258000 and 255000 are unused; 257000 (four cards, four workers) is used up to its capture pass.
+
+One operational trap, recorded so it is not repeated: an offline test imported packet 95's source tree without
+`python -B` and left 315 `__pycache__` files inside the sealed packet. The launcher refuses a packet with files
+that are not in its manifest ("Uninventoried packet files"), so two launches at 19:57 and 20:32 UTC never
+started a server; the runner waited out its 30-minute health timeout. Nothing ran and no clip index was used.
+The cache files were removed (only those) and the packet's gate passes again. Rule: anything that imports
+from a `prepared-*` directory runs with `-B`.
