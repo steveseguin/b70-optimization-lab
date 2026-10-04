@@ -8,8 +8,11 @@ runtime, service, and benchmark work. It must never contain secret values.
 The local sudo password file is outside this repo:
 
 ```text
-/home/steve/SUDOPASSWORD.txt
+/home/steve/SUDOPASSWORD.txt      # four-card host
+/home/steve/SUDO_PASSWORD.txt     # two-card host
 ```
+
+The name differs by host; use whichever exists.
 
 Use it only when privileged local operations are actually needed, such as
 driver/runtime package checks, systemd service changes, or recovery from a
@@ -32,9 +35,9 @@ iteration-heavy implementation where practical.
 Useful Codex CLI forms:
 
 ```bash
-codex --cd /home/steve/llm-optimizations
-codex exec --cd /home/steve/llm-optimizations "audit the Qwen docs and propose focused cleanup"
-codex review --cd /home/steve/llm-optimizations
+codex exec --sandbox read-only -C /home/steve/b70-optimization-lab "audit the Qwen docs and propose focused cleanup"
+codex exec --sandbox workspace-write -C /home/steve/b70-optimization-lab "edit ONLY <files>; do not commit; do not run docker or GPU commands"
+codex review -C /home/steve/b70-optimization-lab
 codex resume --last
 ```
 
@@ -46,6 +49,10 @@ may stage, commit, push, or only report findings.
 
 Do not reboot automatically and do not treat every stalled process as a device
 wedge.
+
+The numbered sequence below was written on the four-card host and names its
+cards. The same order applies on the two-card host (cards `0000:03:00.0` and
+`0000:e3:00.0`, bounded health probe `scripts/check-qwen36-xpu-xccl-health.sh`).
 
 There is no one-experiment or one-model-load-per-boot rule. A boot ID is
 provenance, never an admission or consumption token. After a run tears down,

@@ -6,8 +6,10 @@ The experiment never reached its real test. Its first stage was a measurement ru
 profiler used host memory faster than expected, the launcher's own safety guard stopped the server before the machine
 could run short, and stopping a busy GPU server that abruptly made the graphics driver log fault lines. The campaign
 runner saw those lines, halted as it is built to, and did **not** put the chat service back. The machine stayed up and
-responsive throughout. **The chat service is down until the machine is rebooted**, because our rule is no GPU work on
-a boot that has logged a fault.
+responsive throughout. The cards were left empty, which is where the owner wants them between experiments anyway.
+(Correction, same night: this note first said the machine had to be rebooted. The repository's rule, in `AGENTS.md`
+and `docs/local-ops.md`, is that a fault halts GPU work until health is re-established with a bounded probe and a
+clean journal window; it does not by itself mandate a reboot.)
 
 Nothing about the candidate change (reusing the exchange buffers) was tested. It is neither confirmed nor refuted.
 
@@ -39,7 +41,7 @@ raw run `/mnt/fast-ai/bench-results/fp8-comm5-20261003/`.
    its event buffers and export. The September 17 profile ran with the same settings and survived; tonight the host
    also carried an interactive agent session and its tools (roughly 1 GiB).
 3. **The safety chain did its job.** Guard before memory exhaustion, fault latch before a second GPU run, service left
-   down rather than restarted on a boot with fault lines. The cost is a reboot.
+   down rather than restarted on a boot with fault lines. The cost is a health check, or a reboot if that fails.
 
 ## What changes
 

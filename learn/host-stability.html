@@ -162,7 +162,7 @@ cat /sys/fs/cgroup/system.slice/docker-&lt;id&gt;.scope/memory.swap.peak   # sho
     </tbody>
   </table></div>
   <p>Every start gave the reference answers exactly, at about 90 tokens a second. <span class="badge lab">Lab-measured</span> We did not switch the swap back on to watch the fault return, so read the cause as most likely, not proven. A memory limit set below what a job really touches is not a safety net. It creates memory pressure.</p>
-  <p>Two things on that host are separate and still true: copying directly from one card to the other faulted both cards, and killing a busy GPU job logs the same fault lines by itself. After any fault line we do no more GPU work until the machine is rebooted.</p>
+  <p>Two things on that host are separate and still true: copying directly from one card to the other faulted both cards, and killing a busy GPU job logs the same fault lines by itself. After any fault line we stop, save the evidence, and do no more GPU work on that boot until a health check passes cleanly.</p>
 
   <h2>The false lead: "the disk dies first"</h2>
   <p>The system log stopped up to five minutes before each freeze while work carried on, and files written just before the freeze came back empty. Both are normal. The log is saved to disk every five minutes, and file data about 30 seconds late. A freeze loses whatever was not yet saved. The disk was healthy. To keep a machine's last words, send kernel messages to another computer, or follow the kernel log into a file and sync after every line.</p>

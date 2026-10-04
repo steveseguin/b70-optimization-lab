@@ -400,8 +400,8 @@ we never switched the swap allowance back on to watch the fault return, so the c
 not proven. Two other triggers on this host are separate and still stand: a direct card-to-card copy
 faulted both cards (staging the transfer through host memory avoids it), and **killing a busy GPU job
 logs the same fault lines by itself**. Our one freeze on September 21 came ten minutes into a rerun
-that was started 90 seconds after such a kill; we now treat any fault line as the end of GPU work for
-that boot.
+that was started 90 seconds after such a kill; after any fault line we now stop, save the evidence, and
+do no more GPU work on that boot until a health check passes cleanly.
 
 **Two guards worth copying on a small-memory host.** `earlyoom`, set to act on available memory
 alone (with tens of GB of swap its default never triggers) and to prefer the model-loading process

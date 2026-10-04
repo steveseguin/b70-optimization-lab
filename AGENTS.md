@@ -1,54 +1,120 @@
 # Agent Notes
 
-## User stability constraints (2026-09-13)
+This repository is a shared, reproducible lab notebook for optimizing local AI
+models on Intel XPUs: recipes, patches, measurements and the history of what
+was tried. It covers several model lanes (Qwen, MiniMax, Gemma, LTX and future
+ones) and is worked on from two machines that both push to `main`:
 
-The user explicitly prohibits repeated server restarts and AI changes to power
-settings. This overrides older benchmark and recovery recipes on this host.
-Do not change ASPM, PCIe power management, CPU governors, GPU clocks/power limits,
-or other power settings, including changing them back as an automated cleanup.
-Leave swap and page-cache settings alone as well for the stability effort.
-Do not run fresh-server chains, automatic restart/retry policies, swap toggles,
-cache drops or host-controlled benchmark wrappers. Preserve historical recipes
-as evidence, not current operating instructions. Prefer one continuously running
-server and reuse its endpoint; failed client requests must not cycle the server.
-No automatic reboot or driver reset. Record faults and halt new requests; any
-needed graceful shutdown is a single incident action, never a restart loop.
+- the **two-card host** (`steve-TURIND8-2L2T`: two Arc Pro B70, 15 GiB of RAM);
+- the **four-card host** (`steve-b70s`: four Arc Pro B70, 128 GiB of RAM).
 
-2026-09-14 clarification: the user objected to an approval pause for a routine
-LTX application restart and to optimization stopping afterward. Do not interpret
-the preference for a persistent application as a blanket approval requirement
-for a necessary, controlled application reload within authorized work. Explain
-application reloads plainly, distinguish them from restarting the computer,
-and continue optimization afterward. The no-restart-chain, no host reboot or
-driver reset, no power/memory-setting changes, and fault-halt rules still apply.
+A rule below applies to both hosts unless it names one. Reviewed and
+consolidated on 2026-10-03; older dated wording that this replaces is noted
+where it matters.
 
+## Owner's Standing Rules
 
-2026-09-14 preferred 27B FP8 lane: the user explicitly excludes DFlash from
-further work. Keep native MTP, official FP8 target weights, the qualified target
-arithmetic/KV settings and lossless output gates. Investigate other transferable
-ideas without reopening the DFlash startup candidate.
+These come directly from the owner and override anything else in this file,
+any older note, and any recipe.
 
-This repository is a reproducible lab notebook and deployment guide for Intel
-XPU local AI work across multiple B70 model efforts: MiniMax, Qwen, Gemma, and
-future lanes.
+### 1. The job is optimizing, not hosting (2026-10-03)
+
+The focus of this lab is making models faster without losing quality. A server
+is hosted when the optimizing is done, and it is not done.
+
+- **No model server is left running.** A server exists only for the length of
+  an experiment: start it, measure, stop it gracefully, leave the cards empty.
+- Do not start, restore, queue or auto-launch a resident server unless the
+  owner asks for one. A campaign runner must not end by "putting the service
+  back".
+- This replaces the 2026-09-13 wording "prefer one continuously running server
+  and reuse its endpoint", which was an agent's reading and is withdrawn.
+
+### 2. No cheating (standing)
+
+A speed number only counts if the output is what the unchanged model would
+have produced and the test was a fair one. The full rules are in
+[Quality Rules](#quality-rules-no-cheating); in short, none of these may ever
+produce a headline: cached or warmed prompts, prompt/KV/response reuse,
+hand-picked easy prompts, a lower precision or a compressed KV cache presented
+as the original, speculative tokens the target model did not verify,
+extrapolated or interpolated points, one lucky server, or a diagnostic
+workload dressed up as a benchmark. A change that alters the output is
+recorded as lossy and left for the owner to judge; it is never adopted
+quietly.
+
+### 3. Keep the machine safe (2026-09-13, clarified 2026-09-14 and 2026-10-03)
+
+- **Power settings are off limits.** Do not change ASPM, PCIe power
+  management, CPU governors, GPU clocks or power limits, or any other power
+  setting, including changing one back as a cleanup.
+- **No automatic reboot or driver reset.** A reboot always needs the owner's
+  explicit authorization. The evidence-first recovery sequence, including
+  when a driver reload is appropriate on the four-card host, is in
+  `docs/local-ops.md`. Never clear a device coredump before copying it out.
+- **Host memory, swap and page-cache settings change only with the owner's
+  approval**, and each change is recorded in `CURRENT.md`. No swap toggles,
+  cache drops or host-controlled benchmark wrappers. Settings the owner has
+  approved are listed under [Host Facts](#host-facts).
+- **No restart loops.** Nothing restarts or retries a failed server
+  automatically, and a failed client request never cycles a server. A
+  preregistered campaign runner may start and stop the servers its stages
+  need, each exactly once.
+- **A controlled reload inside authorized work does not need an approval
+  pause** (2026-09-14). Explain it in plain words, distinguish it from
+  restarting the computer, and continue optimizing afterwards.
+- **A GPU fault halts GPU work.** On the first `Fault response`, CAT error,
+  engine reset, timed-out job or coredump line: stop new launches, preserve
+  the evidence, and do not retry in a loop. Later device work on that boot
+  waits until health is re-established as `docs/local-ops.md` describes (one
+  bounded health probe and a clean new journal window). A fault does not by
+  itself mandate a reboot, and there is no one-experiment-per-boot rule. If
+  health cannot be re-established, or a second fault follows on the same boot,
+  stop and bring it to the owner.
+- **Stop GPU jobs gracefully.** Hard-killing a busy GPU process (a cgroup
+  kill, `docker rm -f`, a watchdog's group kill) logs fault lines by itself on
+  this driver. It is the last resort, and it is handled as a fault under the
+  rule above.
+- **Never give a container a memory limit below what the job touches while
+  also allowing it swap.** Launchers use `--memory-swap` equal to `--memory`.
+  A cap that is too low is a source of memory pressure, not a safety net.
+- **One kernel, driver or firmware change per boot,** each measured before the
+  next (`scripts/fp8-start-cycle-soak.sh` is the measurement for the two-card
+  host). Symptoms, counts and checks:
+  `docs/host-stability-and-fault-diagnosis.md`.
+- Historical recipes are preserved as evidence, not as current operating
+  instructions.
+
+### 4. Keep working, and report in plain words
+
+- When a batch of work is finished, take the next lever from the active lane's
+  notes instead of wrapping up. Stop only for something that is the owner's to
+  decide (a reboot after a fault, publishing, a quality judgement), say exactly
+  what is needed in one line, and have the follow-up ready.
+- Write `CURRENT.md` entries and reports to the owner in everyday words, with
+  the outcome or the decision first. Details, commands and experiment IDs go in
+  lane notes.
 
 ## First Read
 
 Read these in order before changing runtime behavior:
 
 1. `CURRENT.md`
-2. Current lane `HANDOFF.md` and result packet linked from `CURRENT.md`
+2. The active lane's handoff, notes and `DO-NOT-REPEAT.md` (linked from
+   `CURRENT.md`)
 3. `README.md`
 4. `docs/current-reproducibility-map.md`
 5. `docs/model-optimization-guide.md`
-6. `AGENT_HANDOFF.md`
-7. `docs/model-effort-index.md`
+6. `docs/model-effort-index.md`
+7. `docs/host-stability-and-fault-diagnosis.md`
 8. `docs/local-ops.md`
 9. `docs/localmaxxing.md`
 10. A model packet, for example
-   `results/gemma4-26b-a4b-q8-b70/HANDOFF.md`,
-   `results/gemma4-26b-a4b-q8-b70/README.md` and
-   `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
+    `results/gemma4-26b-a4b-q8-b70/HANDOFF.md`,
+    `results/gemma4-26b-a4b-q8-b70/README.md` and
+    `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
+
+`AGENT_HANDOFF.md` is only a pointer to the list above.
 
 The model weights, secrets, and full raw `/mnt/fast-ai/bench-results` tree are
 not in GitHub. The repo does include scripts, patch artifacts, summarized
@@ -66,10 +132,30 @@ Use these common folders consistently:
   planning, and the discovery-to-validation queue.
 - `experiments/` for active research lanes that are not production recipes.
 - `repro/` for runnable promoted reproduction recipes.
+- `packages/` for the user-facing package manifests the site is built from.
+- `audits/` for the weekly efficiency audit and its triage
+  (`audits/efficiency/TRIAGE-2026-10-03.md`).
 - `community/` for outside contributions at any evidence level. Contributed
   work stays here until it is reproduced on B70; never move an unverified
   contribution into `results/` or `repro/`, and never record a contributor's
   claim as a lab measurement.
+
+## Live State Authority
+
+`CURRENT.md` is the sole cross-repository authority for what is loaded on each
+host's cards (normally nothing), the active optimization lane, protected work,
+and immediate next actions. Detailed evidence remains in the lane handoff and
+result packet linked from that file.
+
+Do not infer what is live from a deployable recipe, old handoff, service unit,
+historical note, or result packet. Verify Git status, relevant processes, and
+the actual endpoint before operational changes. Preserve any paths marked
+active or protected in `CURRENT.md`; do not disturb shared runtime trees or GPU
+work merely because another lane has a runnable recipe.
+
+Update `CURRENT.md` when ground truth changes, in the same commit as the work.
+An entry that waits on the owner carries its date, and is updated when work
+moves past it.
 
 ## Source of Truth and Attribution
 
@@ -114,82 +200,7 @@ binary, or a hand-maintained hash allow-list is not publication. Do not mark a
 recipe `published` until every release asset has been downloaded from its
 public URL and re-hashed.
 
-## Human-readable public results (2026-09-13)
-
-Always report **prefill (reading the prompt)** alongside decode (writing the
-answer) on neural.download: a main-table column and a short section on model
-details pages. Use measured 512-token, one-user prefill rates where available;
-state the input length and timing definition. Show “not measured” for missing
-results. Never borrow a rate from another card count, quantization, runtime or
-draft setting, or turn a diagnostic optimization into a promoted speed claim.
-
-Write the main page and model details for a reader with no lab background,
-including a ten-year-old: short sentences, familiar words, and only information
-needed to understand the model, choose a setup, and read its speeds. Explain
-prefill, decode, units and graph axes in plain language. Graph titles must say
-what is measured; internal experiment IDs such as R187 are not public labels.
-Keep captions brief and preserve meaningful differences between test setups.
-Put commands, experiment history, detailed methods, logs and full evidence in
-GitHub files linked as “Setup guide” or “Test details”, rather than copying
-walls of technical text into public pages. Keep exact points and accessible
-value tables; simplicity never permits invented or misleading measurements.
-
-## External Projections (ML Bottleneck bridge)
-
-`learn/assets/mlbottleneck-bridge.js` loads the ML Bottleneck physics engine
-(https://mlbottleneck.com/, same author) at page load and renders projections
-next to lab measurements: the landing page's "How much faster could these
-get?" headroom cards and Intel mini-planner, and the Hardware guide's projected
-cross-card comparison. Those numbers are model projections, never lab
-measurements: keep them in their labeled sections, never copy one into a
-benchmark table, result packet, README, or LocalMaxxing submission, and keep
-the "projected, not measured" wording. The measured rows feed the bridge through
-`data-ml-*` attributes on `<tr>` elements (model preset key, quant label,
-runtime, card count, speed-up); the measured tok/s is read from the row's own
-speed cell, so only the attributes need updating when a row's setup changes.
-Deep links into the planner use
-`https://mlbottleneck.com/?model=&hardware=&count=&format=&runtime=&spec=`.
-
-`models/<id>.html` (one page per package) and `models/index.html` are generated
-by `python3 tools/build-model-pages.py` from `packages/catalog.json`; rerun it
-whenever the catalog changes and commit the output. The generator's
-`PACKAGE_ML` map ties a package to its ML Bottleneck preset/quant/runtime; a
-package without an entry simply gets no projection block.
-
-## Local Secrets
-
-Never print, paste, or commit local credentials. The Hugging Face access token
-for model downloads is stored outside the repo at:
-
-```text
-/home/steve/.config/huggingface/token
-```
-
-Scripts that need faster Hugging Face downloads should read this file into
-`HF_TOKEN` locally. The token file is covered by repo and global Git ignores.
-
-LocalMaxxing credential guidance is in `docs/localmaxxing.md`; the key itself
-is outside Git at `/home/steve/.config/localmaxxing/api_key` or supplied as
-`LMX_API_KEY`. Never print or commit it.
-
-The local sudo password file is `/home/steve/SUDOPASSWORD.txt`; local privileged
-operations guidance is in `docs/local-ops.md`. Use it only for local driver,
-runtime, service, or recovery tasks that truly require sudo. Never print or
-commit the password or a copy of the file.
-
-## Live State Authority
-
-`CURRENT.md` is the sole cross-repository authority for the loaded service,
-active optimization lane, protected work, and immediate next actions. Detailed
-evidence remains in the lane handoff and result packet linked from that file.
-
-Do not infer what is live from a deployable recipe, old handoff, service unit,
-historical note, or result packet. Verify Git status, relevant processes, and
-the actual endpoint before operational changes. Preserve any paths marked
-active or protected in `CURRENT.md`; do not disturb shared runtime trees or GPU
-work merely because another lane has a runnable recipe.
-
-## Quality Rules
+## Quality Rules: No Cheating
 
 Never promote a speed or context result unless quality is labeled and tested.
 
@@ -245,61 +256,53 @@ identity, target-oracle parity, deterministic repeats, a fresh-server repeat,
 an unchanged verifier, and an explicit no-quality-loss decision. A stored
 benchmark `passed` boolean is never sufficient by itself.
 
-The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
+The current best result, its exact configuration and its superseded
+predecessors live in each lane's result packet and in `results/scoreboard.md`,
+not in this file. (The long Gemma 4 26B Q8 record that used to sit here is in
+`results/gemma4-26b-a4b-q8-b70/README.md`.) Never promote a lower-precision,
+QAT or side-lane result as a higher-precision lane's headline.
 
-- result packet: `results/gemma4-26b-a4b-q8-b70/README.md`;
-- reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
-- standalone current repro:
-  `repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md`;
-- realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
-- best strict cold-suite result:
-  published legacy `124.97714084813418 tok/s`, or
-  `123.72736943965285 tok/s` under conventional 99-interval accounting,
-  `cached_tokens=0` on every prompt,
-  `realistic_final_gate.passed=true`;
-- evidence:
-  `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`;
-- latest same-recipe doc-pass rerun:
-  `data/gemma4-q8-gpu0-125repro-docpass-20260702T231635Z/summary.json`
-  at `120.92334534956485 tok/s`, valid/fresh/cached-zero with `512/512`
-  canary rows; support only, not a new record;
-- config:
-  llama.cpp `c926ad098`, reordered-Q8 VDR2, Q4_0 MTP draft,
-  `FLASH_ATTN=on`, `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`,
-  `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`,
-  `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
-  `LLAMA_SPEC_VERIFY_BULK_SAMPLED_IDS=1`,
-  `LLAMA_GEMMA4_MOE_FUSED_DOWN_WEIGHTED_SUM_REORDER_VDR2=1`,
-  `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`;
-- representative / submitted status:
-  the VDR2 selected-down fused weighted-sum path plus FA-on 32K/VMM plus final
-  post-norm residual fusion is the current policy-compliant LocalMaxxing
-  submission, approved as `cmr1u77na01k2ld01kalwzs1e`. Same-family support
-  includes the prior `123.67689864739785 tok/s` row
-  (`cmr01nnet000mld01x2tt6qds`), the prior `121.41411987308553 tok/s` row
-  (`cmqztiqdn02vnoe01egox6q3f`) and
-  `data/gemma4-q8-gpu2-baseline-recordconfirm-full512-20260629T225215Z/summary.json`
-  at `119.94842631460949 tok/s`. The prior selected-down repeat
-  `cmqyrpox4021dqk01co5o4fcw`, initial selected-down confirmation
-  `cmqyo0jyt08ippk01vhiobdnm`, VDR2/F16-p021 row
-  `cmqxchyra03xmqr01b963gmi1`, F16-p021 small-ncols submission
-  `cmqx3687103v4qr01ace1ft3m`, earlier VDR2 rows, and prior VDR4 rows are
-  superseded;
-- current clean no-spec control:
-  `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`
-  at `74.29709476830473 tok/s` median. Use it as the simplest target-side
-  quality/control reference.
+## Human-readable public results (2026-09-13)
 
-The previous Gemma 4 26B A4B Q8 one-B70 diagnostic best is:
+Always report **prefill (reading the prompt)** alongside decode (writing the
+answer) on neural.download: a main-table column and a short section on model
+details pages. Use measured 512-token, one-user prefill rates where available;
+state the input length and timing definition. Show “not measured” for missing
+results. Never borrow a rate from another card count, quantization, runtime or
+draft setting, or turn a diagnostic optimization into a promoted speed claim.
 
-- result packet: `results/gemma4-26b-a4b-q8-b70/README.md`;
-- reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
-- synthetic filled-long row0: `176.21623213048554 tok/s` after TTFT,
-  `176.40259133127742` support mean, 1536 canary repeats / 6144 rows,
-  LocalMaxxing `cmqwkedg303jeqr013z753j62`, now classified as diagnostic until
-  the fixed realistic prompt suite passes with that configuration;
-- target/verifier: UD-Q8_K_XL, Q4_0 MTP draft only; do not promote lower
-  precision/QAT/Q4XL side-lane results as this Q8 headline.
+Write the main page and model details for a reader with no lab background,
+including a ten-year-old: short sentences, familiar words, and only information
+needed to understand the model, choose a setup, and read its speeds. Explain
+prefill, decode, units and graph axes in plain language. Graph titles must say
+what is measured; internal experiment IDs such as R187 are not public labels.
+Keep captions brief and preserve meaningful differences between test setups.
+Put commands, experiment history, detailed methods, logs and full evidence in
+GitHub files linked as “Setup guide” or “Test details”, rather than copying
+walls of technical text into public pages. Keep exact points and accessible
+value tables; simplicity never permits invented or misleading measurements.
+
+## External Projections (ML Bottleneck bridge)
+
+`learn/assets/mlbottleneck-bridge.js` loads the ML Bottleneck physics engine
+(https://mlbottleneck.com/, same author) at page load and renders projections
+next to lab measurements: the landing page's "How much faster could these
+get?" headroom cards and Intel mini-planner, and the Hardware guide's projected
+cross-card comparison. Those numbers are model projections, never lab
+measurements: keep them in their labeled sections, never copy one into a
+benchmark table, result packet, README, or LocalMaxxing submission, and keep
+the "projected, not measured" wording. The measured rows feed the bridge through
+`data-ml-*` attributes on `<tr>` elements (model preset key, quant label,
+runtime, card count, speed-up); the measured tok/s is read from the row's own
+speed cell, so only the attributes need updating when a row's setup changes.
+Deep links into the planner use
+`https://mlbottleneck.com/?model=&hardware=&count=&format=&runtime=&spec=`.
+
+`models/<id>.html` (one page per package) and `models/index.html` are generated
+by `python3 tools/build-model-pages.py` from `packages/catalog.json`; rerun it
+whenever the catalog changes and commit the output. The generator's
+`PACKAGE_ML` map ties a package to its ML Bottleneck preset/quant/runtime; a
+package without an entry simply gets no projection block.
 
 ## Working Rules
 
@@ -342,31 +345,40 @@ Work directly on `main` only. Never create or maintain feature, experiment,
 promotion, temporary, maintenance, or agent branches or secondary Git
 worktrees. Preserve alternate implementations and recovery points as focused
 commits, patches, bundles, configs, notes, tags, and result artifacts. Pull
-`main` before starting when appropriate, and push focused verified commits back
-to `main` rather than accumulating unpublished side histories.
+`main` before starting, and push focused verified commits back to `main`
+rather than accumulating unpublished side histories. The only branches that
+exist are outside contributors' pull requests.
 
-- Keep c1 easy to restore.
-- Record commands, logs, result paths, patches, and caveats.
-- Put scripts and patches in GitHub whenever they are needed to reproduce a
-  result.
-- Do not claim c4, c8, TurboQuant, or CPU-paged attention is production-ready
-  until the documented blockers are cleared.
+Both hosts push to the same `main`. Before rebasing onto incoming commits,
+look at `git diff --stat` for unexpected deletions or emptied files (a commit
+from one host once zeroed 302 files).
+
+- Commit regularly with focused commits and explicit paths. Do not use broad
+  `git add -A` in a mixed experiment tree.
+- Record commands, logs, result paths, patches, and caveats. Put scripts and
+  patches in GitHub whenever they are needed to reproduce a result.
 - Preserve experiment patches and their results, including failed patches, so
   future agents do not rediscover the same dead ends. Promote successful
   patches only after verification, while keeping the experiment record linked.
-- Commit regularly with focused commits and explicit paths. Do not use broad
-  `git add -A` in a mixed experiment tree.
+- Check the lane's `DO-NOT-REPEAT.md` before opening an experiment arm, and add
+  a row when an arm closes.
+- A `package.json` dependency and the file it points at land in the same
+  commit, or CI fails that commit.
+- Do not call a concurrency level, a compressed-KV mode or an offload path
+  production-ready until its documented blockers are cleared.
 - When a verified realistic-suite run breaks a real LocalMaxxing record for a
   matching 1/2/3/4 GPU configuration, submit it with model, quantization, GPU
   count, mode, run identity, throughput, correctness status, prompt/output
   hashes, and supporting artifact links. Do not submit warmed/history,
   synthetic-only, or lower-precision side-lane results as the Q8/INT8 headline.
+  If the owner is running the publish steps themselves, do not run the same
+  external step in parallel.
 
 ### Diagnosis And Campaign Speed Rules (2026-09-02)
 
 Recorded after the Qwen3.8 27B FP8 identity lane spent R64-R146 (three days)
 on a defect that one operator-level sweep and one chained campaign then
-settled in an evening. These are binding for every lane on this host.
+settled in an evening. These are binding for every lane on both hosts.
 
 1. **Census before bisection.** When a greedy output flips with batch shape,
    prompt length, or concurrency, run every production GEMM shape through the
@@ -399,8 +411,119 @@ settled in an evening. These are binding for every lane on this host.
 7. **Delegate read-only work while GPUs are busy.** Recipe audits,
    preregistration drafting, and result summarization run in parallel through
    `codex exec --sandbox read-only` or a subagent; they never wait for a GPU.
-8. **One lane per host.** GPU faults and reboots from one model lane cost the
-   other lane its boot; Flash-Next now lives on the other machine.
+8. **One lane per host at a time.** GPU faults and reboots from one model lane cost
+   the other lane its boot. Before starting GPU work, check what else is
+   running on that host and what `CURRENT.md` marks active there.
+
+### Process Hygiene
+
+- **Long GPU jobs run in their own systemd user unit** (`systemd-run --user`),
+  not in an agent's shell: the agent harness kills long jobs.
+- **Kill by pid, never by pattern.** Capture the pid with `$!` at launch, or
+  run the search in its own command and kill the printed pids in the next one.
+  A `pgrep -f`/`pkill -f` pattern matches the calling shell's own command line
+  when any path, file name or script name on that line contains it (exit 144 =
+  you killed yourself; it happened three times on 2026-09-05).
+- A queued wrapper that has passed its wait loop has already spawned its
+  campaign; killing the wrapper does not stop the child. Check for the child
+  first.
+- Never put `cut`, `head`, or another block-buffered stage in a Monitor
+  pipeline; a verdict sat unseen for an hour behind `cut` (R211).
+- Profiling is never the first stage of a campaign and never a speed
+  measurement. On the two-card host a profiler window is about 8 steps, not 30
+  (`experiments/qwen38-27b-b70/notes/2026-10-03-fp8-comm5-attempt1-guard-kill.md`).
+- Container-written caches and state directories are owned by root; a
+  user-level `rm -rf` fails silently per file.
+
+## Host Facts
+
+Things that differ between the two machines. Check `hostname` first.
+
+| | Two-card host | Four-card host |
+| --- | --- | --- |
+| Hostname | `steve-TURIND8-2L2T` | `steve-b70s` |
+| Cards | two B70 (`0000:03:00.0`, `0000:e3:00.0`) | four B70 |
+| Host memory | 15 GiB, ECC, error counters work | 128 GiB, **no ECC**, one module has a bad chip (see the stability guide) |
+| Sudo password file | `/home/steve/SUDO_PASSWORD.txt` | `/home/steve/SUDOPASSWORD.txt` (as `docs/local-ops.md` records it; check which exists) |
+| Active lanes | Qwen3.8 27B FP8, MiniMax-H3 | LTX 2.5, Flash-Next |
+
+Owner-approved host settings on the two-card host, as of 2026-10-03:
+`vm.swappiness=1` (`/etc/sysctl.d/90-b70-swappiness.conf`); `earlyoom` as a
+low-memory backstop (`/etc/default/earlyoom`); automatic kernel and GPU-firmware
+upgrades switched off (`/etc/apt/apt.conf.d/51b70-no-auto-kernel`); kernel
+7.0.0-38 with 7.0.0-31 kept as the fallback. On that 15 GiB machine one
+host-memory-heavy job runs at a time, never beside a build container, and
+MiniMax-H3 GPU work goes only through
+`experiments/minimax-h3-b70/scripts/smoke_h3.sh` (its memory watchdog is not
+optional). The four-card host's approved workarounds (offlined memory blocks,
+the deepest CPU idle state disabled) are in
+`docs/host-stability-and-fault-diagnosis.md`.
+
+## Lane Decisions And Lane Notes
+
+Owner decisions that bind one lane:
+
+- **Qwen 27B FP8 (2026-09-14):** DFlash is excluded from further work. Keep
+  native MTP, official FP8 target weights, the qualified target arithmetic and
+  KV settings, and lossless output gates. Investigate other transferable ideas
+  without reopening the DFlash startup candidate.
+- **Qwen 27B FP8 (2026-09-17):** no FP8 KV cache in this lane, ever. The owner
+  counts it as cheating; context is gained without compressing the KV.
+- **MiniMax-H3 (2026-09-19/20):** the goal track is deterministic and lossless,
+  bit-identical to the base schedule at a fixed seed. Turbo LoRA, fp16 decode
+  and anything else that changes a bit are measured, recorded and left to the
+  owner. Publish only after a confirmed significant improvement, and the owner
+  reviews first. On 2026-10-03 the owner made fp16 picture decode the default
+  for clip-making on the single-card decode path; every gate stays fp32.
+
+Technical notes for the Qwen3.8 vLLM lane (2026-09-04/05), kept because each
+cost real time to learn:
+
+- The lane compiles with `CompilationMode.VLLM_COMPILE` (the CLI's `mode: None` is unresolved). Plain Python logging inside model code is traced away by Dynamo; a probe must be a custom op with a fake impl (`direct_register_custom_op`, `mutates_args=["tensor"]`, see `experiments/qwen38-27b-b70/docker/r182-layer-trace-v3.py`) and gate on the forward context's GDN metadata, indexing the last real row by `num_actual_tokens`. Any such op splits the graph and changes numerics; it is not observation-neutral.
+- CPU import tests inside the lane images need `docker run -w / ...`: the container WORKDIR is a vLLM source checkout that shadows the installed package for bare `python -c`, while the server uses `/opt/venv`.
+- Any Python branch on the batch/row count inside a compiled forward (padding, kernel selection, chunking) must live inside a registered custom op with a fake impl (`direct_register_custom_op`). An in-graph branch survives the strict stage and then fails the ladder config with `ConstraintViolationError` (R213 -> R213b, 2026-09-05).
+- Judge the MTP first-token phantom by divergence at index 0 against the oracle, not by token 60 (it also appears as 220). Its signature is an inserted token that the model never saw: the tokens after it equal the normal answer for 16-18 tokens, then drift. It occurs on the unmodified upstream XPU image in any compile mode (R192/R194); on this deterministic build `splitting_ops=[]` avoids it, it does not fix it. Say "avoids" in every published sentence.
+- `COMPILATION_CONFIG` and `SPECULATIVE_CONFIG` reach `run-server.sh` / `run-w8a16-mtp1-server.sh` through the environment from any runner; the r152 runner honours `EXTRA_SERVE_ARGS`, `QUERY_ONLY`, `PROBE_AND_LADDER_MTP1`, `STRICT_MTP1_ONLY` (+`ORACLE_ROOT`), `LADDERS_ONLY`.
+- Identity claims use the two-run rule: the deepest rung exact in both ladders; aggregate rates are published only through that rung.
+- Any attention-path kernel for this lane must be built with the
+  `CUTLASS_REVISION` the kernel CMake pins; a build against another sycl-tla
+  checkout is not bit-identical (2026-09-18).
+- Editing either FP8 package launcher (`packages/qwen38-27b-fp8-tp*-b70/scripts/serve.py`)
+  moves bytes that frozen evidence packets pin. Follow
+  `experiments/qwen38-27b-b70/notes/2026-09-19-noswap-launcher-change.md`
+  and run every `run:` line of `.github/workflows/guides.yml` locally.
+
+## Publication Checklist
+
+- Publication surface for a lane, in order: `experiments/.../data/*-result.json` + note, `repro/.../README.md`, `publication-manifest.json` chain entry (refresh every sha256 after editing an evidence file), `packages/.../package.json` (commands must be exactly benchmark/health/launch/preflight/stop; `dependencies` must be git-tracked), sync `packages/catalog.json` from it (embed + keep `manifest`), `python3 tools/build-model-pages.py`, `python3 tools/validate-repro-guides.py`, top `README.md`, `CURRENT.md`. LocalMaxxing: queue JSON in `data/`, `--server-dry-run`, then submit; record `data/localmaxxing-responses/`, `results/localmaxxing-submissions.md`.
+- Before pushing anything that touches published surfaces, run both integrity checks: `python3 tools/check-doc-links.py` (repo-relative links in Markdown) and `python3 tools/check-manifest-paths.py` (repo-relative paths inside `families/*.json`, `packages/*/package.json` and `packages/catalog.json`). The second exists because the first cannot see JSON: a family manifest's `evidence` list and a package's `dependencies` are how a reader gets from a published number to the file supporting it, so a stale entry there is a broken claim, not a broken link. Both are quiet and take seconds.
+- `python3 tools/check-pinned-hashes.py` exercises the repo's literal SHA256 file pins. A gate that pins shared tooling only fails when someone runs it, so an unexercised pin is indistinguishable from a satisfied one: the Laguna record's gate was unrunnable for two weeks before anyone noticed, and 224 Flash-Next clients are in the same state. Drift is not automatically a defect — a frozen packet *should* pin what it was verified against — but it should be a known fact rather than a surprise at replay time. Run it after editing anything under `tools/` or `scripts/` that a packet might pin.
+- When a JSON manifest is rewritten programmatically, dump it with `ensure_ascii=False`. `json.dumps`'s default escaped 55 non-ASCII labels across the shared family manifest in one commit on 2026-09-08; the content was fine and the diff was not.
+- CI is `.github/workflows/guides.yml`. Before pushing a change to a package,
+  a guide, a model page or pinned evidence, run each of its `run:` lines
+  locally.
+
+## Local Secrets
+
+Never print, paste, or commit local credentials. The Hugging Face access token
+for model downloads is stored outside the repo at:
+
+```text
+/home/steve/.config/huggingface/token
+```
+
+Scripts that need faster Hugging Face downloads should read this file into
+`HF_TOKEN` locally. The token file is covered by repo and global Git ignores.
+
+LocalMaxxing credential guidance is in `docs/localmaxxing.md`; the key itself
+is outside Git at `/home/steve/.config/localmaxxing/api_key` or supplied as
+`LMX_API_KEY`. Never print or commit it.
+
+The local sudo password file is outside the repo and its name differs by host
+(see [Host Facts](#host-facts)); guidance is in `docs/local-ops.md`. Use it
+only for local driver, runtime or recovery tasks that truly require sudo, and
+pass it to `sudo -S` on standard input. Never print or commit the password or
+a copy of the file.
 
 ## Cross-Agent Delegation
 
@@ -408,35 +531,27 @@ When Claude/OpenCode is orchestrating work, prefer delegating concrete research,
 audit, patch, and validation tasks to Codex/GPT through the CLI. GPT token use
 is less constrained here, so Claude/OpenCode should manage/review and ask Codex
 to do bulky searches, source reading, and iteration-heavy implementation where
-practical.
+practical. Decisions and GPU actions stay with the orchestrating agent.
 
-Useful forms:
+Useful forms (the repository is `/home/steve/b70-optimization-lab`):
 
 ```bash
-codex --cd /home/steve/llm-optimizations
-codex exec --cd /home/steve/llm-optimizations "audit the Gemma docs and propose focused cleanup"
-codex review --cd /home/steve/llm-optimizations
+codex exec --sandbox read-only -C /home/steve/b70-optimization-lab "audit the FP8 package docs and list stale numbers"
+codex exec --sandbox workspace-write -C /home/steve/b70-optimization-lab "edit ONLY <files>; do not commit; do not run docker or GPU commands"
+codex review -C /home/steve/b70-optimization-lab
 codex resume --last
 ```
 
+Give a delegated agent the files it may touch, tell it not to commit and not
+to run GPU, docker or systemd commands, and verify what it reports before
+relying on it.
+
 Codex should use subagents whenever reasonable and available, especially for
 parallel source audits, independent review of risky changes, log/result
-classification, and research synthesis. The main Codex agent still owns final
+classification, and research synthesis. The main agent still owns final
 edits, verification, and safety around active experiment processes.
 
-## Probe And Publication Rules (2026-09-04)
-
-- The lane compiles with `CompilationMode.VLLM_COMPILE` (the CLI's `mode: None` is unresolved). Plain Python logging inside model code is traced away by Dynamo; a probe must be a custom op with a fake impl (`direct_register_custom_op`, `mutates_args=["tensor"]`, see `docker/r182-layer-trace-v3.py`) and gate on the forward context's GDN metadata, indexing the last real row by `num_actual_tokens`. Any such op splits the graph and changes numerics; it is not observation-neutral.
-- CPU import tests inside the lane images need `docker run -w / ...`: the container WORKDIR is a vLLM source checkout that shadows the installed package for bare `python -c`, while the server uses `/opt/venv`.
-- A queued wrapper that has passed its wait loop has already spawned its campaign; `kill` on the wrapper does not stop the child. Check `pgrep -af r152.sh` before killing, and never `pkill -f` a pattern that appears in the calling shell's own command line.
-- Kill only with pids printed by a PREVIOUS command; a `pgrep`/`pkill` pattern may never share a command with any path, file name or script name (three self-kills on 2026-09-05, the last via `r152.sh` inside a `sed` on the same line).
-- Kill by pid, never by pattern, whenever the same command also names scripts or logs: a `pgrep -f`/`pkill -f` pattern matches the calling shell's own command line if any file name on that line contains it (exit 144 = killed yourself; it happened twice on 2026-09-05 with `r214`/`r215` wrapper names). Capture pids with `$!` at launch, or run the pattern search in its own command and kill the printed pids in the next one.
-- Any Python branch on the batch/row count inside a compiled forward (padding, kernel selection, chunking) must live inside a registered custom op with a fake impl (`direct_register_custom_op`). An in-graph branch survives the strict stage and then fails the ladder config with `ConstraintViolationError` (R213 -> R213b, 2026-09-05).
-- Never put `cut`, `head`, or another block-buffered stage in a Monitor pipeline; a G1 verdict sat unseen for an hour behind `cut` (R211).
-- Judge the MTP first-token phantom by divergence at index 0 against the oracle, not by token 60 (it also appears as 220). Its signature is an inserted token that the model never saw: the tokens after it equal the normal answer for 16-18 tokens, then drift. It occurs on the unmodified upstream XPU image in any compile mode (R192/R194); on this deterministic build `splitting_ops=[]` avoids it, it does not fix it. Say "avoids" in every published sentence.
-- `COMPILATION_CONFIG` and `SPECULATIVE_CONFIG` reach `run-server.sh` / `run-w8a16-mtp1-server.sh` through the environment from any runner; the r152 runner honours `EXTRA_SERVE_ARGS`, `QUERY_ONLY`, `PROBE_AND_LADDER_MTP1`, `STRICT_MTP1_ONLY` (+`ORACLE_ROOT`), `LADDERS_ONLY`.
-- Publication surface for this lane, in order: `experiments/.../data/*-result.json` + note, `repro/.../README.md`, `publication-manifest.json` chain entry (refresh every sha256 after editing an evidence file), `packages/.../package.json` (commands must be exactly benchmark/health/launch/preflight/stop; `dependencies` must be git-tracked), sync `packages/catalog.json` from it (embed + keep `manifest`), `python3 tools/build-model-pages.py`, `python3 tools/validate-repro-guides.py`, top `README.md`, `CURRENT.md`. LocalMaxxing: queue JSON in `data/`, `--server-dry-run`, then submit; record `data/localmaxxing-responses/`, `results/localmaxxing-submissions.md`.
-- Identity claims use the two-run rule: the deepest rung exact in both ladders; aggregate rates are published only through that rung.
-- Before pushing anything that touches published surfaces, run both integrity checks: `python3 tools/check-doc-links.py` (repo-relative links in Markdown) and `python3 tools/check-manifest-paths.py` (repo-relative paths inside `families/*.json`, `packages/*/package.json` and `packages/catalog.json`). The second exists because the first cannot see JSON: a family manifest's `evidence` list and a package's `dependencies` are how a reader gets from a published number to the file supporting it, so a stale entry there is a broken claim, not a broken link. Both are quiet and take seconds.
-- `python3 tools/check-pinned-hashes.py` exercises the repo's literal SHA256 file pins. A gate that pins shared tooling only fails when someone runs it, so an unexercised pin is indistinguishable from a satisfied one: the Laguna record's gate was unrunnable for two weeks before anyone noticed, and 224 Flash-Next clients are in the same state. Drift is not automatically a defect — a frozen packet *should* pin what it was verified against — but it should be a known fact rather than a surprise at replay time. Run it after editing anything under `tools/` or `scripts/` that a packet might pin.
-- When a JSON manifest is rewritten programmatically, dump it with `ensure_ascii=False`. `json.dumps`'s default escaped 55 non-ASCII labels across the shared family manifest in one commit on 2026-09-08; the content was fine and the diff was not.
+Use the repository-local skills under `.agents/skills/`:
+`$review-model-contribution` for outside patches, recipes, results and pull
+requests, and `$publish-model-package` for packages, public guides and
+featured benchmarks.

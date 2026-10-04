@@ -96,11 +96,11 @@ this is a shared repository whose focus is optimizing; a server gets hosted when
 done, and it is not done. Earlier entries on this page (and tonight's runs) kept putting the Qwen3.8
 27B model back on port 18124 after every experiment, following a September 13 line in `AGENTS.md`
 ("prefer one continuously running server"). That was not what the owner wanted. Do not start, restore
-or queue a resident server unless the owner asks for one. That `AGENTS.md` line is the owner's to
-reword; an agent edit of that file was blocked by the permission system today.
+or queue a resident server unless the owner asks for one. `AGENTS.md` now says the same (rule 1 of the owner's standing rules).
 
 **State of the machine:** nothing loaded, about 14 GB of host memory free, kernel 7.0.0-38. **This
-boot has GPU fault lines on it, so no GPU work until a reboot** (the owner's decision).
+boot has GPU fault lines on it** (three lines at 22:39:47 EDT, caused by a hard kill, see below). GPU
+work waits until health is re-established with the bounded probe, or until a reboot.
 
 **How the fault lines got there (22:37-22:40 EDT).** The next speed idea for the two-card recipe was
 started (reusing the buffers of the card-to-card exchange, expected gain small). Its first stage was a
@@ -109,7 +109,7 @@ safety guard stopped the server, and stopping a busy GPU server that abruptly ma
 fault lines. The experiment halted itself. The machine never froze and nothing was lost; the real
 test did not run. [Full account](experiments/qwen38-27b-b70/notes/2026-10-03-fp8-comm5-attempt1-guard-kill.md).
 
-**Ready to run after a reboot, nothing is queued to start by itself:** the reworked experiment
+**Ready to run once the cards are cleared for work, nothing is queued to start by itself:** the reworked experiment
 `experiments/qwen38-27b-b70/scripts/run-20261003-fp8-comm5b-campaign.py`. It needs no server before
 it and leaves none after it.
 
@@ -122,10 +122,10 @@ it and leaves none after it.
    known whether it is the other card or the two-process arrangement.
 4. **Upstream code worth porting** when the chat-model lane is next opened: three small candidates
    are listed in the review note. A full rebase to the newest vLLM is high risk for exact outputs.
-5. **`AGENTS.md` was not updated.** An edit recording today's approvals (the kernel change, the ten
-   start/stop cycles as a one-off measurement, the memory guard) was blocked by the permission
-   system. Its 2026-09-13 section still says "no restart chains" and "no reboot" without today's
-   exceptions; that wording is yours to change.
+5. ~~`AGENTS.md` was not updated~~ Done 2026-10-03 at the owner's request: the file was reviewed and
+   consolidated (no resident server, the no-cheating rules kept whole, machine-safety rules reconciled
+   with `docs/local-ops.md`, stale paths and duplicated rules removed, the old Gemma record moved out
+   to its result packet).
 
 ## 2026-09-19 (decided 2026-10-03, see above): a video clip takes three minutes instead of four
 
