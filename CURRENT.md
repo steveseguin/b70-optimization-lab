@@ -89,6 +89,24 @@ September 19 no-swap fix: the launcher had changed and nobody had re-run the ful
 - **Upstream fixes: nothing worth a rebuild.** None of the three candidate fixes reaches our serving
   path ([review note](notes/2026-10-03-upstream-kernel-and-driver-review.md)).
 
+### 22:40 EDT: the chat service is DOWN, and it needs a reboot to come back
+
+**What you need to decide: reboot the machine.** Nothing else is required. On the next boot it starts
+the chat service by itself, checks it, and then runs the experiment described below on its own.
+
+After both packages passed, the next speed idea for the two-card recipe was started (reusing the
+buffers of the card-to-card exchange, expected gain small). Its first stage was a measurement run with
+a profiler on. **The profiler used memory faster than expected, the launcher's safety guard stopped
+the server, and stopping a busy GPU server that abruptly made the driver log fault lines.** The
+experiment halted itself and, by our rule of no GPU work on a boot that has logged a fault, did not
+put the service back. The machine never froze and nothing was lost; the real test simply did not run.
+[Full account](experiments/qwen38-27b-b70/notes/2026-10-03-fp8-comm5-attempt1-guard-kill.md).
+
+What is queued for the next boot (it runs once, by itself): one service start with the usual twelve-prompt
+check, then the reworked experiment with the profiler stage switched off, then the service is put
+back. Results will be in `/mnt/fast-ai/bench-results/kernel-soak-20261003/k38b/` and
+`/mnt/fast-ai/bench-results/fp8-comm5b-20261003/`.
+
 ### Open items, dated 2026-10-03
 
 1. ~~Read the post-reboot result~~ done, see above.

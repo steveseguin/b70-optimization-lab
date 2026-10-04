@@ -49,3 +49,10 @@ of work) is worth starting, or whether the two-card lane is finished at about 90
 The research launcher [`../scripts/run-fp8-tp1-server.py`](../scripts/run-fp8-tp1-server.py) still started containers
 with `--memory-swap 16g`. It now uses `12g`, the same no-swap setting both package launchers ship. Every research
 server before today ran with the 4 GiB swap allowance.
+
+## Addendum, 22:45 EDT: attempt 1 halted before the test; the rerun changes order only
+
+The first run halted in its profile stage ([what happened](2026-10-03-fp8-comm5-attempt1-guard-kill.md)) and tested
+nothing. The rerun, [`../scripts/run-20261003-fp8-comm5b-campaign.py`](../scripts/run-20261003-fp8-comm5b-campaign.py),
+keeps every gate and the 1.0 % rule above exactly as written. Only the order changes: control, candidate A, candidate
+B, then an optional 8-step profile, then the service restore. It needs a fresh boot.

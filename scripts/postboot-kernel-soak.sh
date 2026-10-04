@@ -5,6 +5,7 @@
 # only when the flag file exists; it removes the flag first so it can never run twice.
 #
 #   flag file content: "<expected kernel release> <label> <out dir> <cycles>"
+#   optional ~/.b70-postboot-next: one shell command run after a clean soak (for example a queued campaign)
 #   e.g.  7.0.0-38-generic k38 /mnt/fast-ai/bench-results/kernel-soak-20261003/k38 10
 set -u
 FLAG="${HOME}/.b70-kernel-soak-once"
@@ -21,5 +22,17 @@ mkdir -p "${OUT}"
     exit 1
   fi
   cd "${LAB}" && bash scripts/fp8-start-cycle-soak.sh --wait-boot --leave-up --label "${LABEL}" --cycles "${CYCLES:-10}" --out "${OUT}"
-  echo "$(date -Is) soak rc=$?"
+  rc=$?
+  echo "$(date -Is) soak rc=${rc}"
+  # Optional follow-up, queued before the reboot: one shell command in ~/.b70-postboot-next. It runs only after a clean
+  # soak (service up, no fault lines) and the file is removed first, so it can never run twice.
+  NEXT="${HOME}/.b70-postboot-next"
+  if [ "${rc}" -eq 0 ] && [ -f "${NEXT}" ]; then
+    cmd="$(cat "${NEXT}")"; rm -f "${NEXT}"
+    echo "$(date -Is) follow-up: ${cmd}"
+    bash -c "${cmd}"
+    echo "$(date -Is) follow-up rc=$?"
+  elif [ -f "${NEXT}" ]; then
+    echo "$(date -Is) follow-up NOT run (soak rc=${rc}); ${NEXT} left in place"
+  fi
 } >> "${OUT}/postboot.log" 2>&1
