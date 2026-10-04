@@ -319,6 +319,72 @@ sudo ipmitool sensor | grep -Ei '12V|5VCC|3.3VCC|Temp'                      # ra
   with four cards under load, so the power supply is not cleared.
 - **BIOS.** No newer release exists for this board.
 
+## A second machine: GPU faults that came from a container memory limit
+
+Our other host has two B70s, an 8-core EPYC, **15 GiB of ECC memory** and 36 GiB of swap. Its memory
+error counters work and read zero, so nothing above applies to it. Its problem looked like a driver
+bug and was mostly our own launcher.
+
+**Symptom.** At least five times between September 6 and 19, 2026 a card's copy engine faulted while a model
+was loading its weights, never during steady serving:
+
+```
+xe 0000:03:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -EINVAL
+xe 0000:03:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs
+xe 0000:03:00.0: [drm] Tile0: GT0: Timedout job ... in python3
+xe 0000:03:00.0: [drm] Xe device coredump has been created
+```
+
+The same signature is reported by other dual-B70 owners in `intel/compute-runtime` issue 948, on
+several kernels, driver releases and firmware versions. It is still open.
+
+**What we measured.** A recorder beside a service start showed 4.4 GB swapped out during the
+weight load, 4.2 GB of it in one 20-second burst, with 7 GB of host memory free and
+`vm.swappiness` at 1. The swapping was not the host's decision. The container was started with
+`--memory 12g --memory-swap 16g`; reading 29 GB of weights filled the container's page cache, the
+container hit its own 12 GB ceiling about two thousand times, and each time the kernel pushed the
+container's working memory out to its 4 GB swap allowance. A cgroup at its limit swaps whatever the
+host's swappiness says. Pages the copy engine was reading from host memory could be swapped out
+from under it.
+
+**The fix** is one argument: give the container no swap, so reclaim drops clean file pages instead.
+
+```
+docker run --memory 12g --memory-swap 12g ...     # equal values = memory.swap.max 0
+cat /sys/fs/cgroup/system.slice/docker-<id>.scope/memory.swap.peak    # should read 0
+cat /sys/fs/cgroup/system.slice/docker-<id>.scope/memory.events       # oom_kill should read 0
+```
+
+The same mistake had already cost us the desktop session once: a 4 GiB `MemoryMax` "tripwire" around
+a 27 GB model load made the cgroup thrash until `systemd-oomd` killed the user's session. **A memory
+cap below what a job really touches is not a safety net; it is a source of memory pressure.**
+
+**What happened after the fix** (lab-measured, 2026-09-19 to 2026-10-03).
+
+| Starts of the two-card service | Kernel | Faults |
+|---|---|---:|
+| 3 validation starts, container swap-out 0 each | 7.0.0-31 | 0 |
+| 10 start/stop cycles, first GPU work on the boot | 7.0.0-31 | 0 |
+| 3 more on the same boot, after nine video-model runs | 7.0.0-31 | 0 |
+| 10 start/stop cycles, first GPU work after the reboot | 7.0.0-38 | 0 |
+
+Every start reproduced the reference outputs exactly (12 of 12 prompts) at about 90 tokens a second.
+The runner is `scripts/fp8-start-cycle-soak.sh`; the numbers are in
+[the kernel soak record](../experiments/qwen38-27b-b70/data/2026-10-03-kernel-soak/README.md).
+
+**What this does and does not show.** Twenty-six clean starts after at least five faulted ones is strong, but
+we never switched the swap allowance back on to watch the fault return, so the cause is "most likely",
+not proven. Two other triggers on this host are separate and still stand: a direct card-to-card copy
+faulted both cards (staging the transfer through host memory avoids it), and **killing a busy GPU job
+logs the same fault lines by itself**. Our one freeze on September 21 came ten minutes into a rerun
+that was started 90 seconds after such a kill; we now treat any fault line as the end of GPU work for
+that boot.
+
+**Two guards worth copying on a small-memory host.** `earlyoom`, set to act on available memory
+alone (with tens of GB of swap its default never triggers) and to prefer the model-loading process
+over the desktop; and a watchdog around each job that kills that job, not the session, when
+available memory falls below a floor.
+
 ## Kernel and firmware notes (as of 2026-10-03)
 
 - Ubuntu 7.0.0-34 is security-only: no `xe`, DRM, AMD or idle changes against
@@ -333,6 +399,9 @@ sudo ipmitool sensor | grep -Ei '12V|5VCC|3.3VCC|Temp'                      # ra
 - `unattended-upgrades` installs and removes kernels on its own. It replaced
   our fallback kernel during the gap. Record the kernel in every run identity
   and decide deliberately whether automatic kernel upgrades stay on.
+- On the two-card host, 7.0.0-31 and 7.0.0-38 scored the same on ten service start/stop cycles
+  each (zero faults, same speed). A tip that "kernel 7 fixed it" did not apply: that host was already
+  on 7.0 for every fault it had.
 - We found no public report of a kernel version curing B70 freezes; two open
   upstream issues describe the same engine-fault signature on dual-card
   machines.
