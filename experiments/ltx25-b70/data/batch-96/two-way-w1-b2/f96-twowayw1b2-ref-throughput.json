@@ -1,0 +1,392 @@
+{
+  "schema": "ltx.throughput-fixtures-96.v1",
+  "prefix": "f96-twowayw1b2-ref",
+  "arm": "pipe-samp2-tsh-rep-wlean-b2-ref",
+  "index_base": 265200,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-batch-96/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean-b2-ref.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-batch-96-two-way-w1-b2",
+  "count": 13,
+  "order": "ref",
+  "fixture_order": [
+    "boat",
+    "marble",
+    "bird",
+    "pendulum",
+    "rain",
+    "paper",
+    "candle",
+    "pour",
+    "fabric",
+    "wheel",
+    "boat",
+    "marble",
+    "bird"
+  ],
+  "batch": 2,
+  "references_from": null,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 10,
+  "sampler_depth": 1,
+  "decode_depth": 2,
+  "expected_clips": 10,
+  "emission_sequence_ok": true,
+  "emission_problems": [],
+  "fills_excluded": [
+    "f96-twowayw1b2-ref-00",
+    "f96-twowayw1b2-ref-01",
+    "f96-twowayw1b2-ref-02"
+  ],
+  "all_exact": null,
+  "intervals_between_distinct_clips_s": [
+    0.113,
+    2.739,
+    0.124,
+    2.722,
+    0.497,
+    2.751,
+    0.117,
+    2.698,
+    0.132
+  ],
+  "steady_mean_s": 1.4725,
+  "steady_p95_s": 2.751,
+  "steady_min_s": 0.117,
+  "steady_max_s": 2.751,
+  "seconds_of_wall_per_second_of_video": 1.4135999999999997,
+  "effective_fps": 16.977928692699493,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that emit nothing (pipeline fill); a re-emitted clip fails the arm",
+  "rows": [
+    {
+      "prompt": "f96-twowayw1b2-ref-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151353.534,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-01",
+      "index": 1,
+      "prompt_fixture": "marble",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151356.782,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 3
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-02",
+      "index": 2,
+      "prompt_fixture": "bird",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151356.873,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 4
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-03",
+      "index": 3,
+      "prompt_fixture": "pendulum",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151359.605,
+      "batch": {
+        "job": 265200,
+        "slot": 0,
+        "rows": [
+          265200,
+          265201
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "marble"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-04",
+      "index": 4,
+      "prompt_fixture": "rain",
+      "emitted_index": 1,
+      "emitted_fixture": "marble",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151359.718,
+      "batch": {
+        "job": 265200,
+        "slot": 1,
+        "rows": [
+          265200,
+          265201
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "boat"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-05",
+      "index": 5,
+      "prompt_fixture": "paper",
+      "emitted_index": 2,
+      "emitted_fixture": "bird",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151362.457,
+      "batch": {
+        "job": 265202,
+        "slot": 0,
+        "rows": [
+          265202,
+          265203
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "pendulum"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-06",
+      "index": 6,
+      "prompt_fixture": "candle",
+      "emitted_index": 3,
+      "emitted_fixture": "pendulum",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151362.581,
+      "batch": {
+        "job": 265202,
+        "slot": 1,
+        "rows": [
+          265202,
+          265203
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "bird"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-07",
+      "index": 7,
+      "prompt_fixture": "pour",
+      "emitted_index": 4,
+      "emitted_fixture": "rain",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151365.303,
+      "batch": {
+        "job": 265204,
+        "slot": 0,
+        "rows": [
+          265204,
+          265205
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "paper"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-08",
+      "index": 8,
+      "prompt_fixture": "fabric",
+      "emitted_index": 5,
+      "emitted_fixture": "paper",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151365.8,
+      "batch": {
+        "job": 265204,
+        "slot": 1,
+        "rows": [
+          265204,
+          265205
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "rain"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-09",
+      "index": 9,
+      "prompt_fixture": "wheel",
+      "emitted_index": 6,
+      "emitted_fixture": "candle",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151368.551,
+      "batch": {
+        "job": 265206,
+        "slot": 0,
+        "rows": [
+          265206,
+          265207
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "pour"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-10",
+      "index": 10,
+      "prompt_fixture": "boat",
+      "emitted_index": 7,
+      "emitted_fixture": "pour",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151368.668,
+      "batch": {
+        "job": 265206,
+        "slot": 1,
+        "rows": [
+          265206,
+          265207
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "candle"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-11",
+      "index": 11,
+      "prompt_fixture": "marble",
+      "emitted_index": 8,
+      "emitted_fixture": "fabric",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151371.366,
+      "batch": {
+        "job": 265208,
+        "slot": 0,
+        "rows": [
+          265208,
+          265209
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "wheel"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-ref-12",
+      "index": 12,
+      "prompt_fixture": "bird",
+      "emitted_index": 9,
+      "emitted_fixture": "wheel",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151371.498,
+      "batch": {
+        "job": 265208,
+        "slot": 1,
+        "rows": [
+          265208,
+          265209
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "fabric"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 4,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    }
+  ]
+}
