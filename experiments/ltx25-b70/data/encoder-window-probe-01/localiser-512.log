@@ -1,0 +1,32 @@
+loaded in 7 s on xpu:0; 40 sliding layers; model Gemma4Transformer
+embed_tokens                       torch.float32   in: exact            in(real): exact            out: exact            out(real): exact
+layer0.input_layernorm             torch.float32   in: exact            in(real): exact            out: exact            out(real): exact
+layer0.self_attn.q_proj            torch.float32   in: exact            in(real): exact            out: exact            out(real): exact
+layer0.self_attn.q_norm            torch.float32   in: exact            in(real): exact            out: exact            out(real): exact
+layer0.self_attn.k_proj            torch.float32   in: exact            in(real): exact            out: exact            out(real): exact
+layer0.self_attn.v_proj            torch.float32   in: exact            in(real): exact            out: exact            out(real): exact
+layer0.self_attn.k_norm            torch.float32   in: exact            in(real): exact            out: exact            out(real): exact
+layer0.self_attn.o_proj            torch.float32   in: diff 7.929e+00   in(real): exact            out: diff 2.663e+00   out(real): diff 1.717e-05
+layer0.post_attention_layernorm    torch.float32   in: diff 2.663e+00   in(real): diff 1.717e-05   out: diff 4.095e+01   out(real): diff 1.564e-04
+layer0.pre_feedforward_layernorm   torch.float32   in: diff 4.095e+01   in(real): diff 1.564e-04   out: diff 4.569e+01   out(real): diff 5.913e-05
+layer0.mlp.gate_proj               torch.float32   in: diff 4.569e+01   in(real): diff 5.913e-05   out: diff 3.372e+01   out(real): diff 1.297e-04
+layer0.mlp.up_proj                 torch.float32   in: diff 4.569e+01   in(real): diff 5.913e-05   out: diff 2.235e+01   out(real): diff 1.297e-04
+layer0.mlp.down_proj               torch.float32   in: diff 9.990e+02   in(real): diff 1.038e-03   out: diff 2.997e+02   out(real): diff 1.953e-03
+layer0.post_feedforward_layernorm  torch.float32   in: diff 2.997e+02   in(real): diff 1.953e-03   out: diff 1.296e+02   out(real): diff 1.312e-03
+layer0                             torch.float32   in: None             in(real): None             out: diff 7.259e+00   out(real): diff 6.866e-05
+layer1.input_layernorm             torch.float32   in: diff 7.259e+00   in(real): diff 6.866e-05   out: diff 2.095e+01   out(real): diff 6.294e-05
+layer1.self_attn.q_proj            torch.float32   in: diff 2.095e+01   in(real): diff 6.294e-05   out: diff 1.478e+01   out(real): diff 5.341e-05
+layer1.self_attn.q_norm            torch.float32   in: diff 1.478e+01   in(real): diff 5.341e-05   out: diff 3.006e+00   out(real): diff 1.192e-05
+layer1.self_attn.k_proj            torch.float32   in: diff 2.095e+01   in(real): diff 6.294e-05   out: diff 1.869e+01   out(real): diff 4.196e-05
+layer1.self_attn.v_proj            torch.float32   in: diff 2.095e+01   in(real): diff 6.294e-05   out: diff 3.059e+01   out(real): diff 4.959e-05
+layer1.self_attn.k_norm            torch.float32   in: diff 1.869e+01   in(real): diff 4.196e-05   out: diff 5.224e-01   out(real): diff 7.898e-07
+layer1.self_attn.o_proj            torch.float32   in: diff 9.474e+00   in(real): diff 7.033e-05   out: diff 5.139e+00   out(real): diff 1.001e-05
+layer1.post_attention_layernorm    torch.float32   in: diff 5.139e+00   in(real): diff 1.001e-05   out: diff 1.282e+01   out(real): diff 4.005e-05
+layer1.pre_feedforward_layernorm   torch.float32   in: diff 1.323e+01   in(real): diff 7.248e-05   out: diff 3.910e+01   out(real): diff 6.390e-05
+layer1.mlp.gate_proj               torch.float32   in: diff 3.910e+01   in(real): diff 6.390e-05   out: diff 1.466e+01   out(real): diff 7.439e-05
+layer1.mlp.up_proj                 torch.float32   in: diff 3.910e+01   in(real): diff 6.390e-05   out: diff 2.333e+01   out(real): diff 7.629e-05
+layer1.mlp.down_proj               torch.float32   in: diff 5.404e+02   in(real): diff 1.465e-03   out: diff 9.147e+01   out(real): diff 5.112e-04
+layer1.post_feedforward_layernorm  torch.float32   in: diff 9.147e+01   in(real): diff 5.112e-04   out: diff 4.703e+01   out(real): diff 4.349e-04
+layer1                             torch.float32   in: None             in(real): None             out: diff 6.485e+00   out(real): diff 7.153e-05
+layer24                            torch.float32   in: None             in(real): None             out: diff 6.153e+01   out(real): diff 2.289e-03
+layer47                            torch.float32   in: None             in(real): None             out: diff 2.426e-01   out(real): diff 1.335e-05
