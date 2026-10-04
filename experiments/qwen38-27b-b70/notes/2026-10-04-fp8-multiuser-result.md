@@ -1,4 +1,4 @@
-# Multi-user result: 16 users at once, lossless on short AND long prompts with three small overlays, 325 tok/s together (2026-10-04)
+# Multi-user result: lossless through 64 users on short and long prompts with three small overlays, up to 488 tok/s together (2026-10-04)
 
 ## In plain words
 
@@ -29,7 +29,21 @@ two overlay servers are identical (64/64), they are identical to the solo answer
 overlays (64/64, so the overlays do not change what a lone user gets), and all 128 concurrent answers of the second
 server equal the first server's solo answers.
 
-Status: research overlays on a research server, two fresh servers. Not a package profile yet.
+**The same three overlays lift the old ceiling.** Without them speculation-off serving stopped being exact above
+sixteen users. With them (06:00-06:22 EDT, one fresh server each, long suite and short ladder, two passes each):
+
+| Users at once | Long prompts equal to solo | Short ladder equal to solo | Equal to the frozen reference | Together (short ladder) | Per user |
+| ---: | --- | --- | --- | ---: | ---: |
+| 16 (two servers) | 64/64, 64/64 | 64/64, 64/64 | yes | 325 tok/s | 20.3 |
+| 32 | 64/64, 64/64 | 64/64, 64/64 | yes | 428 tok/s | 13.4 |
+| 64 | 64/64, 64/64 | 64/64, 64/64 | yes | **488 tok/s** | 7.6 |
+
+The total flattens because exactness is paid per step: at 64 users the output layer is read sixteen times a step
+(four rows at a time) and every new request gets a prompt step to itself. A row-invariant LM head kernel, like the
+ones the body layers already have, would remove the first cost; that is a kernel build, not an overlay.
+
+Status: research overlays on a research server; 16 users on two fresh servers, 32 and 64 on one each. Not a package
+profile yet.
 
 ## How the first version of this note was wrong (kept for the record)
 

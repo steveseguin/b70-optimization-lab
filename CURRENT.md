@@ -3,15 +3,23 @@
 Last reviewed: **2026-10-04 07:10 UTC** (2026-10-04 03:10 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
-## 2026-10-04, overnight: sixteen users at once, lossless on short and long prompts, 325 tokens a second together
+## 2026-10-04, overnight: many users at once, lossless on short and long prompts, up to 488 tokens a second together
 
 **Sixteen users can share the two cards and each still gets exactly their solo answer, at 325 tokens a second
 together (one user gets 90).** This holds for short prompts and for prompts of 2,000 to 8,000 tokens. It needed
 three small fixes, none of which changes any arithmetic: keep each processing step pure (one user's prompt chunk
 alone, or writing only), feed the output layer four rows at a time, and give each long conversation its own
 attention call. Each cause was found by measurement, not guessed. Earlier tonight this page said "lossless" on the
-short test alone; the long-prompt test showed that was not yet true, and this entry replaces it. A second fresh
-server is confirming the result now; it is not a package profile yet.
+short test alone; the long-prompt test showed that was not yet true, and this entry replaces it. Confirmed on a second fresh
+server. The same three fixes also make 32 users (428 tokens a second together) and 64 users (488) lossless, where
+before nothing above sixteen was. It is a research setup, not a package profile yet.
+
+| Users at once | Tokens a second together | Each user gets | Lossless |
+| ---: | ---: | ---: | --- |
+| 1 (the shipped recipe) | 90 | 90 | yes |
+| 16 | 325 | 20 | yes, short and long prompts |
+| 32 | 428 | 13 | yes, short and long prompts |
+| 64 | 488 | 8 | yes, short and long prompts |
 
 **The owner's direction for this work: lossless only, no server left running, keep optimizing the Qwen 27B (one
 card or two) or the MiniMax video model.** The cards are empty between experiments.
