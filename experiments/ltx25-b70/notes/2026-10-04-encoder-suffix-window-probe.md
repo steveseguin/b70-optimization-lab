@@ -76,3 +76,25 @@ What this note does not show: the windowed path under graph capture (only
 eager was run), the effect on the final video (expected at rounding level;
 to be measured as old-versus-new reference differences), and whether a fixed
 row-tile formulation would make all buckets agree with each other.
+
+## 4. Is the difference bigger than honest hardware variation? (added 03:50 UTC)
+
+`scripts/probe-encoder-window-vs-hardware-noise.py`, three fixtures, real-token
+rows of the all-layer hidden-state stack (values up to about 3,270, mean
+magnitude about 0.74). "Unchanged on CPU" is the same padded 1024-token
+encode of the unchanged model run on the host CPU instead of the GPU.
+
+| Fixture (real tokens) | Unchanged on CPU vs GPU reference: mean / max abs diff | 64-token window vs GPU reference: mean / max abs diff |
+| --- | ---: | ---: |
+| 0 (56) | 3.7e-6 / 7.0e-3 | 4.5e-6 / 8.6e-3 |
+| 1 (31) | 4.2e-6 / 2.7e-3 | 3.4e-6 / 2.4e-3 |
+| 2 (31) | 3.7e-6 / 2.7e-3 | 2.9e-6 / 2.4e-3 |
+
+Relative mean difference is 4-6 parts per million in both columns; cosine
+similarity is 0.999999999998 or better in both. The window differs from the
+GPU reference by the same amount as the unchanged encoder does when it is
+simply run on a CPU, and for two of three prompts by less. On this measure
+the window is inside the variation the unchanged model already shows between
+two honest machines. Still to be measured: the difference in finished frames
+and audio (packet 93). Linear-layer row-count scan (which row counts match a
+1024-row call per shape): `data/encoder-window-probe-01/linear-row-count-scan.json`.
