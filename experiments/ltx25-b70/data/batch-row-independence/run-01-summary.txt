@@ -1,0 +1,32 @@
+device xpu:0 Intel(R) Arc(TM) Pro B70 Graphics; loading 12 blocks from /mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors
+loaded in 4 s: {"blocks_kept": 12, "tensors_skipped": 3024, "model_parameter_bytes": 14167459840, "dtype_inference": "torch.bfloat16"}
+== batch row independence (12 blocks, forwards=first, device xpu:0) ==
+sampling: {"stage1": {"forwards": 8}, "stage2": {"forwards": 3}, "final_finite": true, "final_sha256": {"video": "e743b7e36fc50f4ea684a858bb6468f5475d5f3af881c75a4786c97a2cd4a56f", "audio": "2f84a0609a07285df5a5fa0ec07f589690dad1e73a58b25b8bdcc338959c98dc"}}
+stage1 f0: batch1 repeat True; A-vs-B video max 40.1 (|A| max 32.5, rms 7.72); A-vs-B audio max 16.7 (|A| max 14.6, rms 3.55)
+   batch 2 A-row vs batch1 video: max 0.125 mean 0.00954 frac 0.385 ulps max 336.0 median 0.0
+   batch 2 A-row vs batch1 audio: max 0.0625 mean 0.00505 frac 0.440 ulps max 186.8 median 0.0
+   batch 3 A-row vs batch1 video: max 0.25 mean 0.0149 frac 0.508 ulps max 501.0 median 1.0
+   batch 3 A-row vs batch1 audio: max 0.0625 mean 0.00492 frac 0.441 ulps max 197.1 median 0.0
+   batch 4 A-row vs batch1 video: max 0.25 mean 0.0149 frac 0.508 ulps max 501.0 median 1.0
+   batch 4 A-row vs batch1 audio: max 0.0625 mean 0.00492 frac 0.441 ulps max 197.1 median 0.0
+stage2 f0: batch1 repeat True; A-vs-B video max 56 (|A| max 34.2, rms 8); A-vs-B audio max 21.1 (|A| max 14.6, rms 4.6)
+   batch 2 A-row vs batch1 video: max 0.125 mean 0.0131 frac 0.469 ulps max 439.0 median 0.0
+   batch 2 A-row vs batch1 audio: max 0.0625 mean 0.00787 frac 0.465 ulps max 244.0 median 0.0
+   batch 3 A-row vs batch1 video: max 0.125 mean 0.0134 frac 0.472 ulps max 346.0 median 0.0
+   batch 3 A-row vs batch1 audio: max 0.0625 mean 0.00739 frac 0.447 ulps max 187.2 median 0.0
+   batch 4 A-row vs batch1 video: max 0.125 mean 0.013 frac 0.467 ulps max 365.0 median 0.0
+   batch 4 A-row vs batch1 audio: max 0.0625 mean 0.00761 frac 0.458 ulps max 297.0 median 0.0
+timing stage1:
+   batch 1: wall 100.2 ms/fwd, 100.2 ms/clip (x1.00); ccs busy 100.4 ms/fwd, 100.4 ms/clip (x1.00)
+   batch 2: wall 100.6 ms/fwd, 50.3 ms/clip (x0.50); ccs busy 100.8 ms/fwd, 50.4 ms/clip (x0.50)
+   batch 3: wall 100.7 ms/fwd, 33.6 ms/clip (x0.33); ccs busy 100.8 ms/fwd, 33.6 ms/clip (x0.33)
+   batch 4: wall 101.4 ms/fwd, 25.4 ms/clip (x0.25); ccs busy 101.5 ms/fwd, 25.4 ms/clip (x0.25)
+timing stage2:
+   batch 1: wall 99.8 ms/fwd, 99.8 ms/clip (x1.00); ccs busy 100.0 ms/fwd, 100.0 ms/clip (x1.00)
+   batch 2: wall 101.3 ms/fwd, 50.7 ms/clip (x0.51); ccs busy 101.4 ms/fwd, 50.7 ms/clip (x0.51)
+   batch 3: wall 102.0 ms/fwd, 34.0 ms/clip (x0.34); ccs busy 102.2 ms/fwd, 34.1 ms/clip (x0.34)
+   batch 4: wall 127.1 ms/fwd, 31.8 ms/clip (x0.32); ccs busy 126.8 ms/fwd, 31.7 ms/clip (x0.32)
+batch 2: row-independent: yes (neighbour yes, slot yes, identical yes, repeat yes); equal to batch1: no; forwards 2, errors 0
+batch 3: row-independent: no (neighbour yes, slot no, identical no, repeat yes); equal to batch1: no; forwards 2, errors 0
+batch 4: row-independent: yes (neighbour yes, slot yes, identical yes, repeat yes); equal to batch1: no; forwards 2, errors 0
+wrote /home/steve/b70-host-diagnostics/batch-probe/batch-row-independence-01.json
