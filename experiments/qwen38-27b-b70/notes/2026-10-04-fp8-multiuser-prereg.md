@@ -94,3 +94,26 @@ A level counts as lossless only if all 64 answers equal the step-1 reference in 
 precision as the shipped recipe (FP8 weights, FP16 activations and KV); only the order of rounding differs, which
 is why it needs its own reference. No further arms after this: if speculation is not exact against its own
 reference, the next step is an operator census, not more switches.
+
+## Addendum, 04:35 EDT: long prompts are not exact at any width; one preregistered fix, the pure-step overlay
+
+Long prompts (2K-8K tokens, 64 requests, two passes), shipped arithmetic, no speculation: 4 users 63 and 62 of 64
+equal to solo; 8 users 63 and 58; 16 users 60 and 61; 16 users with the batch-invariant switches 60 and 61 (and
+three times slower). The same few tie sites flip (`prose2k` at token 93 or 100, `code6k-c060` at 3, `code2k-c001` at
+1, `docs6k-c021` near 100), and which ones flip changes between passes at the same width, so it depends on which
+requests happen to share a step.
+
+**Hypothesis:** a lone request's steps are pure (its prompt chunks alone, then its decode rows alone). With several
+users the scheduler mixes one user's prompt chunk with other users' decode rows, shortens chunks by the tokens the
+decodes use, and can put two prompts in one step. Each of those changes what shares a kernel call with a row, and
+on this lane that moves the last bit.
+
+**Test (`MU_MODE=longsweep MU_PURE=1`):** overlay
+[`../overlays/b70-exclusive-prefill/`](../overlays/b70-exclusive-prefill/) makes every step either one request's
+prompt chunk alone (full token budget) or decode rows only, alternating; no arithmetic changes. One server, no
+speculation, 16 sequences: the long-prompt suite, then the short ladder against the frozen reference.
+
+**Rule:** the overlay is a fix only if all 64 long-prompt answers equal their solo answers in both passes **and**
+the short ladder is still 64/64 against the frozen reference in both passes. Speed is recorded. If long prompts are
+still not exact, the mixing hypothesis is wrong or incomplete and the next step is the operator census at decode
+widths with long contexts, not another overlay.

@@ -171,6 +171,28 @@ def main():
 
         if os.environ.get('MU_MODE') == 'long16':
             long_stage('tp2-mtp0-s16-long', 18196, TP2 + SHIPPED + ['--seqs', '16'])
+        elif os.environ.get('MU_PURE') == '1':
+            # the pure-step scheduling overlay: 16 users, long prompts, then the short ladder against the frozen reference
+            pure = ['--overlay', 'b70-exclusive-prefill', '--extra-env', 'B70_EXCLUSIVE_PREFILL=1']
+            name = 'tp2-pure-mtp0-s16'
+            srv = R.Research(name, 18196, TP2 + SHIPPED + pure + ['--seqs', '16'])
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if srv.ready:
+                out = OUT / f'{name}-long-concurrency.json'
+                R.sh([sys.executable, R.LADDER, '--base-url', srv.base, '--model', R.MODEL_NAME, '--api-mode', 'completions',
+                      '--suite', suite, '--concurrency', '64', '--repeats', '2', '--max-tokens', '128', '--seed', '42',
+                      '--timeout', '3600', '--return-token-ids', '--out', out], f'{name}-long-concurrency', 7200)
+                if out.exists():
+                    data = json.loads(out.read_text())
+                    r['long'] = [{'repeat': b['repeat'], 'exact_vs_own_solo': f"{b['oracle_exact_count']}/{b['oracle_exact_total']}",
+                                  'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2)} for b in data['batches']]
+                    for row in r['long']:
+                        R.log(f"{name}: LONG prompts, pass {row['repeat']}: {row['exact_vs_own_solo']} equal to solo, "
+                              f"{row['aggregate_tok_s']} generated tok/s together")
+                R.save_results(); R.fault_check(since)
+                r['short'] = saturated(srv.base, name)
+            r['stop'] = srv.stop()
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
         else:
             long_stage('tp2-mtp0-s4-long', 18196, TP2 + SHIPPED + ['--seqs', '4'])
             long_stage('tp2-mtp0-s8-long', 18197, TP2 + SHIPPED + ['--seqs', '8'])
