@@ -63,6 +63,26 @@ the kernel is safe to stay on but was not what cured the September faults; the n
 chat service is running on port 18124 on kernel 7.0.0-38
 ([numbers](experiments/qwen38-27b-b70/data/2026-10-03-kernel-soak/README.md)).
 
+### Later the same evening: the flagship two-card recipe was re-checked end to end and passed
+
+After the reboot the repo's own goals were re-read to choose what to do next. The clearest owed work
+was that the two published Qwen3.8 FP8 packages had carried an "acceptance pending" label since the
+September 19 no-swap fix: the launcher had changed and nobody had re-run the full user-style check.
+
+- **Two-card package: done.** From an anonymous download of the repository, through the package's
+  own scripts: twelve of twelve gates pass, the twelve test prompts are exact, six practical
+  requests repeat exactly, clean stop, no faults, **90.0 tokens a second**. The pending label is
+  retired. The published headline moves from 90.5 to **90.2** (it is the median of two fresh
+  servers and the new one was a little slower, well inside normal run-to-run spread). The approved
+  LocalMaxxing record is left as it is; no new submission was made.
+- **One-card package: running** as this is written (three profiles, about an hour, then it puts the
+  two-card service back). Results: `/mnt/fast-ai/bench-results/fp8-onecard-noswap-20261003/`.
+- **The stability finding is published** in the [host stability guide](docs/host-stability-and-fault-diagnosis.md)
+  and its site page: the two-card host's GPU faults came from the container swapping at its own
+  memory limit, and one launcher argument ended them.
+- **Upstream fixes: nothing worth a rebuild.** None of the three candidate fixes reaches our serving
+  path ([review note](notes/2026-10-03-upstream-kernel-and-driver-review.md)).
+
 ### Open items, dated 2026-10-03
 
 1. ~~Read the post-reboot result~~ done, see above.
