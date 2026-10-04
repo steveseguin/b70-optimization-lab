@@ -66,3 +66,23 @@ available; a fixed deeper draft would slow every other step. That needs a per-st
 scheduler has a field for (`num_spec_tokens_to_schedule`). Size it from the control run's real steps per request
 before building.
 
+
+## Longer copy drafts, sized from the real run (17:20 EDT)
+
+Conservative count on the eight long prompts, using the control run's real steps per request and crediting a copy
+draft only with the tokens it would get accepted **beyond** the head's five:
+
+| Copy draft length (only when a match of 6+ exists) | Steps saved | Gain on this suite, before the cost of a longer verify |
+|---|---:|---:|
+| 8 | 19 of 182 | +11.5 % |
+| 16 | 38 of 182 | +26 % |
+| 32 | 39 of 182 | +27 % |
+
+Two of the eight prompts already run at the head's cap (5.33 tokens a step, 139 tok/s); on those a 16-token copy
+would more than double the rate. Short prompts would not change.
+
+A longer verify is not free (with speculation off, 16 rows cost about 13 ms more than one), so the draft must be
+long **only on steps where a copy exists**. The synchronous step pipeline hands the scheduler each request's draft
+as a list every step, which is where a per-step length is natural. First measurement, before any build: what the
+synchronous pipeline costs one user on the shipped recipe (`MU_MODE=syncprobe`). If it is within 2 %, build the
+variable-length draft there; if it costs more, the per-step length has to be done in the asynchronous pipeline.

@@ -197,7 +197,20 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE') == 'copydraft':
+    if os.environ.get('MU_MODE') == 'syncprobe':
+        # What does the synchronous step pipeline cost one user on the shipped recipe? (A per-step draft length, which
+        # longer copy drafts need, is natural there: the scheduler takes each request's draft as a list every step.)
+        for label, extra in (('async', []), ('sync', ['--serve-arg=--no-async-scheduling'])):
+            srv, name, since = start_server(f'tp2-mtp5-{label}', 18196, TP2 + MTP5 + SHIPPED + LOADCOPY_FIX + extra, since)
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if srv.ready:
+                r['strict'] = R.strict(srv.base, name, R.TP2_CONTROL_STRICT)
+                r['strict_run2'] = R.strict(srv.base, f'{name}-run2', R.TP2_CONTROL_STRICT)
+                R.log(f"{name}: strict {r['strict'].get('exact')} at {r['strict'].get('tok_s_1_100')} and "
+                      f"{r['strict_run2'].get('exact')} at {r['strict_run2'].get('tok_s_1_100')} tok/s")
+            r['stop'] = srv.stop()
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
+    elif os.environ.get('MU_MODE') == 'copydraft':
         # One user, shipped two-card recipe, with and without copy-from-context drafts (b70-copy-draft). Gates against
         # the frozen references; speed on the long suite as the per-request decode rate after the first token.
         # notes/2026-10-04-copy-draft-sizing-prereg.md
