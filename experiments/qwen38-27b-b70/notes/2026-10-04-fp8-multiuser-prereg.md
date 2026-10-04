@@ -324,3 +324,21 @@ The prompt kernels then see several sequences in one call.
 recurrent prompt kernels have no census across sequences on this image. If any answer differs from solo, the
 option is closed. If all are equal and the gain is 5 % or more, the prompt kernels get a census across sequences
 before anything is claimed; under 5 %, it is dropped.
+
+## Addendum, 18:35 EDT: screen of several prompts per prompt-only step (up to 8), 64 users
+
+| Suite | Equal to solo | Together |
+|---|---|---:|
+| Long prompts (two prompts of 1,645 and 2,434 tokens can share a step) | **63/64**, 64/64 | 66.2 / 66.5 tok/s |
+| Short ladder (31-token prompts, up to 8 per step) | 64/64, 64/64, exact vs frozen | **874 tok/s** (630 one at a time) |
+
+**By the rule: not a result, and closed in this form**, because one long answer differed. But it splits cleanly:
+the short prompts were all exact and 39 % faster; the miss is with long prompts sharing a step. So some
+prompt-reading kernel is not batch-invariant across sequences for long sequences.
+
+**Next, before any claim:** a census of the prompt-reading kernels across sequences (attention prefill and the
+recurrent kernel's prefill path), by sequence length and count, in `scripts/qwen38-fp8-prefill-multiseq-census.py`
+(being written). If it proves multi-sequence prefill bit-identical to solo up to some length, the overlay gets that
+length as its limit for sharing a step (longer prompts keep a step to themselves), and the short-prompt speed
+becomes a result by construction. If it shows no safe length, the option stays closed.
+Data: `data/2026-10-04-fp8-multiuser/prefill-batch8-s64/`.
