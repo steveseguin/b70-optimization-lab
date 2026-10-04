@@ -117,3 +117,23 @@ speculation, 16 sequences: the long-prompt suite, then the short ladder against 
 the short ladder is still 64/64 against the frozen reference in both passes. Speed is recorded. If long prompts are
 still not exact, the mixing hypothesis is wrong or incomplete and the next step is the operator census at decode
 widths with long contexts, not another overlay.
+
+## Addendum, 05:00 EDT: pure steps took long prompts from 60-61 to 63 of 64; the census names the last cause
+
+Pure-step overlay, 16 users: long prompts 63/64 in both passes (was 60 and 61), the short ladder still 64/64 against
+the frozen reference, 374 tok/s together on the short ladder (423 without the overlay). The one remaining miss is the
+same request both times: `code6k-c060`, token 3. So mixing was most of it, not all of it; by the rule above the next
+step was the census.
+
+**Census** (`qwen38-fp8-kernel-batch-invariance-census.py`, shipped R310 image, the recipe's environment, one card;
+`../data/2026-10-04-fp8-multiuser/census/census.json`): every body GEMM (attention q/k/v and output, GDN in and
+out, MLP gate-up and down) is bitwise row-invariant across all tested row counts from 1 to 512, position-invariant
+and repeat-deterministic. **One kernel is not: the LM head.** Row results are identical for 1 to 4 rows and differ
+by one ulp (6.1e-5) from 5 rows up, in classes {1-4}, {5-8}, {12-48}, {59-128}, {256}, {512}. A lone user is in the
+first class; five or more users decoding together are not.
+
+**Test (`MU_MODE=longsweep MU_PURE=1 MU_HEAD_ROWS=4`):** the pure-step overlay plus
+[`../overlays/b70-lm-head-chunk/`](../overlays/b70-lm-head-chunk/), which feeds the head at most four rows per call
+so every call is in the single-user class. Same server shape, same two suites, same rule: both passes 64/64 on long
+prompts and 64/64 against the frozen reference on the short ladder. Expected cost: three extra head reads per step
+at sixteen users, about 3 ms of a 38 ms step.

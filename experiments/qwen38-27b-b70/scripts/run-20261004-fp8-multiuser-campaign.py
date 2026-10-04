@@ -175,6 +175,10 @@ def main():
             # the pure-step scheduling overlay: 16 users, long prompts, then the short ladder against the frozen reference
             pure = ['--overlay', 'b70-exclusive-prefill', '--extra-env', 'B70_EXCLUSIVE_PREFILL=1']
             name = 'tp2-pure-mtp0-s16'
+            if os.environ.get('MU_HEAD_ROWS'):
+                # second fix, from the kernel census: the LM head is the one kernel whose rounding depends on row count
+                pure += ['--overlay', 'b70-lm-head-chunk', '--extra-env', f"B70_LM_HEAD_CHUNK_ROWS={os.environ['MU_HEAD_ROWS']}"]
+                name = f"tp2-pure-head{os.environ['MU_HEAD_ROWS']}-mtp0-s16"
             srv = R.Research(name, 18196, TP2 + SHIPPED + pure + ['--seqs', '16'])
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
