@@ -1,0 +1,254 @@
+{
+  "status": "passed",
+  "scope": "exact output comparison; graph changes are intentional and must be reviewed separately",
+  "executions": [
+    {
+      "name": "stability-01-w93c-marble",
+      "prompt_id": "b459ca98-cc26-4a7f-9c3c-30ce8cc818b6",
+      "prompt_sha256": "e584e715451dae5d8767f7f3810b0a5d5c88417df1eda85d6856b17a51d50fe9",
+      "server_identity": {
+        "pid": 253434,
+        "proc_start_ticks": "2097789",
+        "boot_id": "73884bca-1022-490a-91be-af7f713c5813",
+        "start_utc": "2026-10-04 04:33:55 UTC",
+        "devices": [
+          {
+            "ordinal": 0,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 1,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 2,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 3,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          }
+        ],
+        "torch": "2.14.0+xpu",
+        "runtime": {
+          "files": {
+            "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a"
+          },
+          "python": "3.12.13",
+          "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+          "torch": "2.14.0+xpu"
+        },
+        "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+        "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-window-93c",
+        "source_packet_manifest_sha256": "b02b844ed5e15d40113e3d3d2fbd5e2e41c20d656be54a2f4b6423eb581ffdc8",
+        "encoder_run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c",
+        "extension_sha256s": {
+          "av_model.py": "e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213",
+          "block_compile_node.py": "f1c5441ec25bdb093d939598d319ecea769fa15879b425f22cba7694938435a7",
+          "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+          "concurrent_cfg_node.py": "48d2b4dd1d95c6729a3b7dbc7a767f60efe70f2af723a0833e6561153dcdd96e",
+          "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+          "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+          "graph_capture_node.py": "4daa6c625a56a327cafdae571c529e523232f9863be406cb232ffe93eca3ed11",
+          "graph_fusion_node.py": "12899f9972369971d3e3a4f81ea215ab2915915bcbc9d2f33134b906d0d7caca",
+          "graph_text_encoder_node.py": "cb6a60c94c621a7b47de785a20b7d6f875579ba20537bd2718a536dbf58ee1d6",
+          "graph_upsampler_node.py": "6abf7e4958c4d6c4d9a4aff8bc3145c1a5f81ace50ee733366a1a6a8dd9b9151",
+          "graph_vae_node.py": "1e61796a4a6ea5c6f2d5c9645c2045e122836565514725831fe7ed40f1e31c10",
+          "host_embedding_clip.py": "61b04906cb1520362a60138a4ac31f14fa13f22fe08bd7c6b03cfb1040d2caec",
+          "host_embedding_placement_node.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+          "host_embedding_resident_node.py": "3b2d5d8adffe924de7fd6a77ccb560a1bbaf0a43f7bbcadd51e28e3d8411cc2d",
+          "host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+          "ltx_block_compile.py": "e439b052e8bf72375d280c0a078fc0030a84f4ed521b149f80cf5e67537b2a41",
+          "ltx_decode_child.py": "d149793333d091989773e63ca4fd0bbc5aa0aa4cd05a8a25bf5c3d6b7709708d",
+          "ltx_decode_replica.py": "da9daab31306781711227988787d3405910abb5255ab39886809179536de4f8d",
+          "ltx_gil_probe.py": "12377616151fc2c3d94ce082c3f9dd78803e1a3f27e38db25d93a278ebc7550c",
+          "ltx_graph_capture.py": "bc1a6c52a01de5863ac39b4f716c8a931b32818f831904286f216c29acbd3e87",
+          "ltx_graph_text_encoder.py": "b488e89d16053eb517e99cec8922a6e97af3c8bed6a65943191f2fbc2e153e6d",
+          "ltx_graph_upsampler.py": "03d828654bb8a3a10c93bcd3b95c9582e4ad01f2cd7c62fc0009e619fd54de58",
+          "ltx_graph_vae.py": "02199884f583dd4c0cfce795599d5d32d0aff91d9fa9e414b7f068f313e8055c",
+          "ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+          "ltx_layer_shard.py": "025eb527133653d53d26c976e1b11a2b3107b9f59610ede1a490247c37689bc6",
+          "ltx_lean_conditioning.py": "7fe0e4ed41ac64f4d22bdd524c8649a6a3ee9c86b2d9270d202583d4e34f921c",
+          "ltx_multiblock_compile.py": "f3e1401aa9898587ff67f9727ac3fe44099003ac71a74d02ee7f07fb362854b9",
+          "ltx_na_axis_candidate.py": "d2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a",
+          "ltx_na_axis_router.py": "1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7",
+          "ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+          "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+          "ltx_pipeline.py": "73aa5742903ff3e1525f6fa99f09cc3cf50700b32008c022a3faff526a54f49c",
+          "ltx_qkv_fusion.py": "e32e18f260ba8593f47f55c3897a57e41d69675efc12da295348d635f1062c1b",
+          "ltx_text_shard.py": "0a2e085b2d6f51a1ba754c2355e601ae15022f8a25e828ab43490ef6412ec047",
+          "ltx_text_window.py": "70bb7be90cc458a7e0940759650a7cc438ff4d8f713c5163df1ae0358c4ac611",
+          "multiblock_compile_node.py": "e1fc1e6f8e42344c1e23582c9d284c89eda8ca1b058ea242948db1388650d743",
+          "na_axis_decode_node.py": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+          "phase_timed_upsampler_node.py": "262dfbae0cbd0b5f43ca308b259fe33e1743c83c3fbc41eb42475eed82557895",
+          "pipeline_decode_node.py": "a0b6fac09e5467366e674f9c5717cc3fe87284237f4edc0ac476322365ed7440",
+          "pipeline_node.py": "e33eb50e3c9d3019f8091c1922655541b921e32f21081eaaf05c16ce6966a6dc",
+          "pipeline_sampler_node.py": "fcd6e3956e2330b19ec8d4e0b2b96b18a046493a3c78e6dd17832f52e138598d",
+          "resident_fastpath_node.py": "a689ab7975f202753803dc4b159c05d0d6aa89eae332c132424c1f97eaf00f6f",
+          "resident_node.py": "3523c95ab0a250a56ff9ce16251d16f6d5ffa76e03c0addf927e638d0b724951"
+        },
+        "compiler_environment": {
+          "TORCHINDUCTOR_COMPILE_THREADS": "1",
+          "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c/inductor-cache",
+          "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c/triton-cache"
+        },
+        "launcher_sha256": "84bc118529ff51594eb21c31606639ea64979ea5b60ca32ab0cebb4b3ae974de",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_args_sha256": "a471c879d3fd0a7affd00ffd497029720875b3d28b9821f23d97f0e4d85bb546",
+        "health_admission": {
+          "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/health/four-card-health-20261004T0413Z.json",
+          "sha256": "98acad3fdeeb4aacd8a51eaa01c68fca98ae11daf1e2c57e116a270f1e49f540",
+          "end_utc": "2026-10-04 04:13:30 UTC",
+          "boot_id": "73884bca-1022-490a-91be-af7f713c5813",
+          "admitted_fault_lines": 11,
+          "watch_since": "2026-10-04 04:33:55 UTC"
+        }
+      },
+      "sample_rate": 48000,
+      "client_seconds": 1.309999942779541
+    },
+    {
+      "name": "f93c-wlean-15",
+      "prompt_id": "19694595-5129-4c75-a6c3-fd8d3e3b471b",
+      "prompt_sha256": "a329da7fc91157d6073e54eb9215739461882f8ca3027df2190c049c32464df4",
+      "server_identity": {
+        "pid": 253434,
+        "proc_start_ticks": "2097789",
+        "boot_id": "73884bca-1022-490a-91be-af7f713c5813",
+        "start_utc": "2026-10-04 04:33:55 UTC",
+        "devices": [
+          {
+            "ordinal": 0,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 1,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 2,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 3,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          }
+        ],
+        "torch": "2.14.0+xpu",
+        "runtime": {
+          "files": {
+            "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a"
+          },
+          "python": "3.12.13",
+          "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+          "torch": "2.14.0+xpu"
+        },
+        "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+        "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-window-93c",
+        "source_packet_manifest_sha256": "b02b844ed5e15d40113e3d3d2fbd5e2e41c20d656be54a2f4b6423eb581ffdc8",
+        "encoder_run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c",
+        "extension_sha256s": {
+          "av_model.py": "e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213",
+          "block_compile_node.py": "f1c5441ec25bdb093d939598d319ecea769fa15879b425f22cba7694938435a7",
+          "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+          "concurrent_cfg_node.py": "48d2b4dd1d95c6729a3b7dbc7a767f60efe70f2af723a0833e6561153dcdd96e",
+          "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+          "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+          "graph_capture_node.py": "4daa6c625a56a327cafdae571c529e523232f9863be406cb232ffe93eca3ed11",
+          "graph_fusion_node.py": "12899f9972369971d3e3a4f81ea215ab2915915bcbc9d2f33134b906d0d7caca",
+          "graph_text_encoder_node.py": "cb6a60c94c621a7b47de785a20b7d6f875579ba20537bd2718a536dbf58ee1d6",
+          "graph_upsampler_node.py": "6abf7e4958c4d6c4d9a4aff8bc3145c1a5f81ace50ee733366a1a6a8dd9b9151",
+          "graph_vae_node.py": "1e61796a4a6ea5c6f2d5c9645c2045e122836565514725831fe7ed40f1e31c10",
+          "host_embedding_clip.py": "61b04906cb1520362a60138a4ac31f14fa13f22fe08bd7c6b03cfb1040d2caec",
+          "host_embedding_placement_node.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+          "host_embedding_resident_node.py": "3b2d5d8adffe924de7fd6a77ccb560a1bbaf0a43f7bbcadd51e28e3d8411cc2d",
+          "host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+          "ltx_block_compile.py": "e439b052e8bf72375d280c0a078fc0030a84f4ed521b149f80cf5e67537b2a41",
+          "ltx_decode_child.py": "d149793333d091989773e63ca4fd0bbc5aa0aa4cd05a8a25bf5c3d6b7709708d",
+          "ltx_decode_replica.py": "da9daab31306781711227988787d3405910abb5255ab39886809179536de4f8d",
+          "ltx_gil_probe.py": "12377616151fc2c3d94ce082c3f9dd78803e1a3f27e38db25d93a278ebc7550c",
+          "ltx_graph_capture.py": "bc1a6c52a01de5863ac39b4f716c8a931b32818f831904286f216c29acbd3e87",
+          "ltx_graph_text_encoder.py": "b488e89d16053eb517e99cec8922a6e97af3c8bed6a65943191f2fbc2e153e6d",
+          "ltx_graph_upsampler.py": "03d828654bb8a3a10c93bcd3b95c9582e4ad01f2cd7c62fc0009e619fd54de58",
+          "ltx_graph_vae.py": "02199884f583dd4c0cfce795599d5d32d0aff91d9fa9e414b7f068f313e8055c",
+          "ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+          "ltx_layer_shard.py": "025eb527133653d53d26c976e1b11a2b3107b9f59610ede1a490247c37689bc6",
+          "ltx_lean_conditioning.py": "7fe0e4ed41ac64f4d22bdd524c8649a6a3ee9c86b2d9270d202583d4e34f921c",
+          "ltx_multiblock_compile.py": "f3e1401aa9898587ff67f9727ac3fe44099003ac71a74d02ee7f07fb362854b9",
+          "ltx_na_axis_candidate.py": "d2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a",
+          "ltx_na_axis_router.py": "1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7",
+          "ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+          "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+          "ltx_pipeline.py": "73aa5742903ff3e1525f6fa99f09cc3cf50700b32008c022a3faff526a54f49c",
+          "ltx_qkv_fusion.py": "e32e18f260ba8593f47f55c3897a57e41d69675efc12da295348d635f1062c1b",
+          "ltx_text_shard.py": "0a2e085b2d6f51a1ba754c2355e601ae15022f8a25e828ab43490ef6412ec047",
+          "ltx_text_window.py": "70bb7be90cc458a7e0940759650a7cc438ff4d8f713c5163df1ae0358c4ac611",
+          "multiblock_compile_node.py": "e1fc1e6f8e42344c1e23582c9d284c89eda8ca1b058ea242948db1388650d743",
+          "na_axis_decode_node.py": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+          "phase_timed_upsampler_node.py": "262dfbae0cbd0b5f43ca308b259fe33e1743c83c3fbc41eb42475eed82557895",
+          "pipeline_decode_node.py": "a0b6fac09e5467366e674f9c5717cc3fe87284237f4edc0ac476322365ed7440",
+          "pipeline_node.py": "e33eb50e3c9d3019f8091c1922655541b921e32f21081eaaf05c16ce6966a6dc",
+          "pipeline_sampler_node.py": "fcd6e3956e2330b19ec8d4e0b2b96b18a046493a3c78e6dd17832f52e138598d",
+          "resident_fastpath_node.py": "a689ab7975f202753803dc4b159c05d0d6aa89eae332c132424c1f97eaf00f6f",
+          "resident_node.py": "3523c95ab0a250a56ff9ce16251d16f6d5ffa76e03c0addf927e638d0b724951"
+        },
+        "compiler_environment": {
+          "TORCHINDUCTOR_COMPILE_THREADS": "1",
+          "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c/inductor-cache",
+          "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c/triton-cache"
+        },
+        "launcher_sha256": "84bc118529ff51594eb21c31606639ea64979ea5b60ca32ab0cebb4b3ae974de",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_args_sha256": "a471c879d3fd0a7affd00ffd497029720875b3d28b9821f23d97f0e4d85bb546",
+        "health_admission": {
+          "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/health/four-card-health-20261004T0413Z.json",
+          "sha256": "98acad3fdeeb4aacd8a51eaa01c68fca98ae11daf1e2c57e116a270f1e49f540",
+          "end_utc": "2026-10-04 04:13:30 UTC",
+          "boot_id": "73884bca-1022-490a-91be-af7f713c5813",
+          "admitted_fault_lines": 11,
+          "watch_since": "2026-10-04 04:33:55 UTC"
+        }
+      },
+      "sample_rate": 48000,
+      "client_seconds": 1.1579999923706055
+    }
+  ],
+  "comparisons": {
+    "audio_latent": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    },
+    "images": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    },
+    "video_latent": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    },
+    "waveform": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    }
+  }
+}
