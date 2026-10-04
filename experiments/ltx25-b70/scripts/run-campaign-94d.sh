@@ -45,6 +45,10 @@
 # Codes 5/6/7 mean the server could NOT be stopped safely and is still up.
 # Do not edit while running.
 set -u
+# SUPERSEDED (2026-10-04) by packet 94f / run-campaign-94f.sh: after the freeze the resident fast path
+# refused the VAE's own forced no-op load on every decode (the placement probe failed). Never rerun.
+echo "run-campaign-94d.sh is superseded by run-campaign-94f.sh; refusing"
+exit 8
 MODE=${1:-}
 case "$MODE" in
   control)  PLACEMENT=two-way;  TAG=ctl; CAP_BASE=232000; PROBE_BASE=232300; TIMED_BASE=232600; TIMED_N=40; EXTRA_BASE= ;;

@@ -1,9 +1,96 @@
-# Packets 94 / 94b / 94c / 94d: spread the transformer over more cards (build, 2026-10-04)
+# Packets 94 to 94f: spread the transformer over more cards (build, 2026-10-04)
 
 Built offline. **Not launched.** R = `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
 No GPU was used to build or test it. Baseline and references: the short-window
 encoder plus lean conditioning, `stability-01-w93c-*`
 ([milestone](2026-10-04-milestone-window-baseline.md)).
+
+**Launch 94f.** `prepared-encoder-shard4-94f`, manifest
+`6638e7fa62f69ccc3147b15ca1b1a2b55bad515da47a2e1f755dd331554daea5`, run names
+`encoder-server-shard4-94f-<mode>`, runner `scripts/run-campaign-94f.sh <mode>`,
+request names `f94f-*`. Runners of 94, 94b, 94c, 94d and 94e refuse.
+
+### The 94e run (packet 94d, control layout), and what 94f fixes
+
+On kernel 7.0.0-39 the control layout got as far as the freeze. The text-window
+probe, the serial capture pass, the decode probe and the freeze all passed, and
+the freeze listed both VAEs as resident on xpu:3. The placement probe's first
+decode then failed with `load-refused` for `CausalDiffusionVAE`. There was no
+GPU fault and no lockup.
+
+**Root cause.** ComfyUI's VAE decode always calls the loader with
+`force_full_load=True` for this VAE (`comfy/sd.py`: `force_full_load=self.disable_offload`,
+and the LTX VAEs set `disable_offload`). It also passes `memory_required`, the
+decode's working memory. The 94b change to the resident fast path sent every
+forced load after the freeze to the refusal path with "resident" hard-coded to
+false. It never asked whether the VAE was already wholly on its card, which it
+was. The ComfyUI bookkeeping was fine: loaded size equals model size, the
+registry entry is live, and the device is right. In 93c, before there was a
+freeze, every decode went to ComfyUI's loader, which did nothing because the
+VAE was loaded. One more thing matters: for an already-loaded model ComfyUI's
+loader still frees memory up to `max(inference reserve, memory_required +
+--reserve-vram)` on that card. It would evict other models to get it.
+
+**Rule as fixed.** After the freeze, every load call, forced or not, is handled
+without ComfyUI's loader:
+- it passes as a no-op only if every requested model is wholly loaded, live in
+  the registry and on its load device, and the card already has the free memory
+  the loader would otherwise free (same formula as `load_models_gpu`);
+- otherwise it is refused with a receipt naming the model and the reason (not
+  resident, loaded X of Y bytes, wrong device, bytes short, weight re-patch).
+Nothing is ever moved or evicted after the freeze. Before the freeze nothing
+changed.
+
+The other models the timed path loads after the freeze, checked the same way:
+- the text-encoder halves (one non-forced call per encode, with the host
+  embedding owner);
+- the transformer patcher and its shard owners (`prepare_sampling`, non-forced,
+  with an inference-memory estimate);
+- the upsampler (non-forced, small);
+- the audio VAE (forced, like the video VAE).
+
+All of them go through the same rule. The xpu:1 replica is outside ComfyUI's
+model manager and makes no load call. In 94e the encodes and samples after
+the freeze were not refused, only the forced VAE load.
+
+**Post-freeze self-check.** Before the placement probe, 6 prompts run the exact
+timed arm: window encode, lean sampler, native decode on xpu:3, replica decode
+on xpu:1, with both emitted clips checked. Then `selfcheck-94f.py` lists any
+load refusal, capture refusal or residency failure after the freeze, by model
+or graph (exit 17).
+
+**Stop after a failed arm.** Failed jobs never write done markers. The runner
+now asks the read-only coverage node three times over 30 s. The node reports
+jobs queued or unfinished (`busy`) and jobs still executing on a worker
+(`running`, a new counter that also sees a job `clear()` dropped after a latch).
+Only if the queue is empty and both counts are zero every time does the runner
+send the single SIGINT; otherwise it leaves the server up as before.
+
+**Dry run additions:**
+- with ComfyUI's real `model_management` and LoadedModel bookkeeping on CPU, a
+  stand-in VAE is loaded fully, then after the freeze the decode's exact call
+  passes without reaching the loader;
+- a memory shortfall, a missing model, a re-patch and a partly unloaded model
+  are refused;
+- the runner's idle rule and the self-check report.
+
+Not covered: real device memory figures and the real VAE decode's
+`memory_required` value. Whether xpu:3 has that much free decides the no-op at
+run time, and the self-check will show it.
+
+CPU tests: dry run 9/9, packet 94 11/11, stall 5/5, packet 90c-93b and the
+layer-shard and pipeline tests pass; full lane sweep 64 pass, 46 old failures.
+
+Gate (2026-10-04 16:42 UTC, kernel 7.0.0-39): rc 0 for all three run names
+without a receipt and with `four-card-health-20261004T1608Z.json`.
+
+| Server | Capture pass | Self-check | Placement probe | Timed | Extra |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| control (two-way) | 240000 | 240300 | 240600 | 240900 (40) | - |
+| shard3-c | 241200 | 241500 | 241800 | 242100 (80) | 242400 (160) |
+| shard4-a | 242700 | 243000 | 243300 | 243600 (80) | 243900 (160) |
+
+### 94d over 94c
 
 **Launch 94d.** `prepared-encoder-shard4-94d`, manifest
 `cf13cd11b22f9e36b39747ba46dd90ed80c94ab139b5732501cec47ef46fccf3`, run names
@@ -268,7 +355,7 @@ placement allowlist. Not worth it in this packet.
   `LTXSamplerCaptureFreeze` (graph `graphs/sampler-capture-freeze.json`):
   pipeline idle and **every card at least 2 GiB free**, else it refuses and the
   timed arm is skipped (recorded, no latch).
-- `scripts/run-campaign-94d.sh <control|shard3-c|shard4-a>` (94, 94b and 94c runners refuse),
+- `scripts/run-campaign-94f.sh <control|shard3-c|shard4-a>` (earlier runners refuse),
   `scripts/run-capture-freeze-94.py`, `scripts/decide-94.py`.
 - Tests: `scripts/test-packet94-shard4-cpu.py`.
 
@@ -344,12 +431,12 @@ control it gets its 160 when it runs; shard4-a gets them only if it beats both.
 
 ```
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-shard4-94d
-M=cf13cd11b22f9e36b39747ba46dd90ed80c94ab139b5732501cec47ef46fccf3
+P=$R/prepared-encoder-shard4-94f
+M=6638e7fa62f69ccc3147b15ca1b1a2b55bad515da47a2e1f755dd331554daea5
 H=<fresh health receipt>
 # MODE=control -> PLACEMENT=two-way;  MODE=shard3-c -> shard3-c;  MODE=shard4-a -> shard4-a
-nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94d-$MODE --health-receipt $H > $R/encoder-server-shard4-94d-$MODE.log 2>&1 &
-nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94d.sh $MODE > $R/campaign-94d-$MODE.log 2>&1 &
+nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94f-$MODE --health-receipt $H > $R/encoder-server-shard4-94f-$MODE.log 2>&1 &
+nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94f.sh $MODE > $R/campaign-94f-$MODE.log 2>&1 &
 ```
 
 Wait for each runner to stop its server before launching the next layout.
