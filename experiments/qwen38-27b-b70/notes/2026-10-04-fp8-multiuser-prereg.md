@@ -342,3 +342,25 @@ recurrent kernel's prefill path), by sequence length and count, in `scripts/qwen
 length as its limit for sharing a step (longer prompts keep a step to themselves), and the short-prompt speed
 becomes a result by construction. If it shows no safe length, the option stays closed.
 Data: `data/2026-10-04-fp8-multiuser/prefill-batch8-s64/`.
+
+## Addendum, 19:45 EDT: several short prompts per prompt-only step, inside census limits: 874 tok/s at 64 users
+
+**Census of the prompt-reading kernels across sequences** (`scripts/qwen38-fp8-prefill-multiseq-census.py`, 231
+cases, `data/2026-10-04-kernel-census/prefill-multiseq-*`): attention prefill and the recurrent kernel's prefill
+are bit-identical to reading each prompt alone in every case, up to 2,434 tokens and 16 sequences. The recurrent
+layers' small FP16 projection is not, when a prompt has 16 tokens or fewer (it takes another code path once the step
+holds 17 rows or more). The GEMM and normalisation censuses cover up to 512 rows in a call (normalisation extended
+to 512 today, all invariant).
+
+**Limits now built into the overlay:** prompts share a prompt-only step only if each has at least 17 tokens and the
+step holds at most 512 tokens. Everything else is read alone, as before.
+
+| 64 users, `B70_EXCLUSIVE_PREFILL_BATCH=8` with those limits | Equal to solo | Together |
+|---|---|---:|
+| Long prompts (read alone, as before) | 64/64, 64/64 | 66.4 / 66.6 tok/s |
+| Short ladder (31-token prompts, eight per step) | 64/64, 64/64, exact vs frozen | **874 tok/s** (630 one prompt per step) |
+
+Inside those limits every kernel on the path has a census, so this counts as exact by construction. One fresh
+server so far; a second, and 16 and 32 users, are owed before it replaces the table.
+Data: `data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/`.
+

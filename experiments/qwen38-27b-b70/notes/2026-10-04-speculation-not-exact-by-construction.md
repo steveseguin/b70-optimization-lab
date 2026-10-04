@@ -58,3 +58,25 @@ verify row and every stored prefix state bit-identical to decoding one token at 
 
 It needs a new image (R313, built from R310 plus the patch), the census, then the full gates and a speed check.
 Until then the published single-user numbers stand as "identical on every test", which is what the packages say.
+
+## R313: the patch works (19:45 EDT)
+
+Patch `patches/vllm-xpu-kernels-gdn-spec-decode-exact-r313-20261004.patch`: in the speculative kernel, the state
+carried into the next verify row is the same fp16-rounded value that is stored in the slot (eight lines). Image
+R313 is R310 with only `_xpu_C` replaced (`data/2026-10-04-r313/`).
+
+| Check on R313 | Result |
+|---|---|
+| Census, two-card and one-card shapes, 2 to 33 verify rows, three previous-accepted counts | **Every row and every prefix state bit-identical to one-token decode** (74 of 74 cases; on R310: 0). Row-count and batch invariance kept |
+| Shipped recipe, strict suite twice | 12/12 and 12/12, 90.31 and 90.25 tok/s (R310 the same hour: 90.40 and 90.27). No cost |
+| Synchronous pipeline, strict twice | 12/12 and 12/12, 88.00 and 88.11 tok/s |
+
+So on R313 the recurrent layers' part of speculation is exact by construction. What still has no census for the
+verify shape (6 rows against one row at a time): the attention kernel for verify rows at short contexts and the
+recurrent layers' small FP16 projection. Those are next.
+
+**Longer copy drafts are still not exact on R313** (same counts as on R310: 11/12, 5/8, 55/64, +25.8 % on long
+prompts), so the kernel rounding was not their problem. The pattern in the answers is sharp: after a step that
+accepts six or more drafted tokens, the second row of the following step is wrong. That points at something in the
+engine or another kernel that mishandles more than five accepted tokens; it is being traced.
+
