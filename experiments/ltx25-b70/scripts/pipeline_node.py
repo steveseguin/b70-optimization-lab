@@ -27,12 +27,25 @@ import torch
 
 import ltx_pipeline as pipeline
 import ltx_gil_probe as gil
+import ltx_text_window as window
 from encoder_diagnostics import _context
 
 gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
+# Packet 93: 'pipeline-window' = 'pipeline' with the suffix-window encoder
+# (ltx_text_window). OUTPUT-CHANGING candidate, owner decision pending; refused
+# (without latching) until a text-window probe has passed on this server.
+TEXT_MODES = pipeline.MODES + ('pipeline-window',)
+PIPELINE_TEXT_MODES = ('pipeline', 'pipeline-window')
 _failed = False
+
+
+class WindowNotQualified(RuntimeError):
+    """A windowed request before a passed probe: refused with a receipt, nothing latched."""
+
+
+NON_LATCHING = (WindowNotQualified,)
 
 
 def require(value, message):
@@ -46,8 +59,12 @@ def write_json(path, value):
         stream.write('\n')
 
 
-def native_encode(clip, text, consume_observations=False):
+def native_encode(clip, text, consume_observations=False, encode_fn=None):
+    """encode_fn (packet 93) replaces only the CLIPTextEncode call itself; None is
+    the native call, unchanged."""
     import nodes
+    if encode_fn is None:
+        encode_fn = lambda: nodes.CLIPTextEncode().encode(clip, text)
     require(clip is not None, 'CLIP input is invalid: None')
     # On a worker thread the encode issues on this thread's own streams and
     # stages any cross-card moves (sharded encoder) through pinned memory.
@@ -75,9 +92,9 @@ def native_encode(clip, text, consume_observations=False):
             with contextlib.ExitStack() as stack:
                 for i in range(torch.xpu.device_count()):
                     stack.enter_context(torch.xpu.stream(capture.thread_stream(torch.device('xpu', i))))
-                encoded = nodes.CLIPTextEncode().encode(clip, text)
+                encoded = encode_fn()
         else:
-            encoded = nodes.CLIPTextEncode().encode(clip, text)
+            encoded = encode_fn()
     finally:
         if worker:
             for i in range(torch.xpu.device_count()):
@@ -106,8 +123,29 @@ def _text_sha256(text):
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 
+def _job_tag(mode, text):
+    """What an encode job is computed FOR. 'pipeline' keeps the original tag (the
+    text's SHA-256), so a window job can never be collected by a 1024 request
+    or the other way round (a mismatch is a speculation miss: inline encode)."""
+    if mode == 'pipeline-window':
+        return hashlib.sha256(('pipeline-window\n' + text).encode('utf-8')).hexdigest()
+    return _text_sha256(text)
+
+
+def _encode_fn(clip, text, mode, tag):
+    if mode == 'pipeline-window':
+        return lambda: window.encode(clip, text, tag=tag)
+    return None
+
+
 def _queued_text(index):
-    """The prompt text of the queued request for clip `index`, from the server's own queue.
+    """Text of a queued 'pipeline' request for clip `index` (pre-93 interface)."""
+    found = _queued_request(index)
+    return found[0] if found is not None and found[1] == 'pipeline' else None
+
+
+def _queued_request(index):
+    """(text, mode) of the queued request for clip `index`, from the server's own queue.
 
     Returns None when no pending prompt carries a pipeline-mode
     LTXPipelineTextEncode node with that clip index. Only pending prompts are
@@ -130,13 +168,13 @@ def _queued_text(index):
             if not isinstance(node, dict) or node.get('class_type') != 'LTXPipelineTextEncode':
                 continue
             inputs = node.get('inputs', {})
-            if inputs.get('mode') == 'pipeline' and inputs.get('clip_index') == index:
+            if inputs.get('mode') in PIPELINE_TEXT_MODES and inputs.get('clip_index') == index:
                 text = inputs.get('text')
                 if not isinstance(text, str):
                     return None
-                require(found is None or found == text,
-                        f'Two queued prompts claim clip {index} with different text')
-                found = text
+                require(found is None or found == (text, inputs['mode']),
+                        f'Two queued prompts claim clip {index} with different text or mode')
+                found = (text, inputs['mode'])
     return found
 
 
@@ -147,7 +185,7 @@ class LTXPipelineTextEncode:
     def INPUT_TYPES(cls):
         return {'required': {'clip': ('CLIP',),
                              'text': ('STRING', {'multiline': True}),
-                             'mode': (list(pipeline.MODES),),
+                             'mode': (list(TEXT_MODES),),
                              'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
                              'depth': ('INT', {'default': 1, 'min': 1,
                                                'max': pipeline.MAX_PENDING}),
@@ -161,6 +199,8 @@ class LTXPipelineTextEncode:
         global _failed
         try:
             return self._apply(clip, text, mode, clip_index, depth, run_name)
+        except NON_LATCHING:
+            raise
         except BaseException:
             # Sticky: preserve the process and the evidence, never retry.
             _failed = True
@@ -170,7 +210,7 @@ class LTXPipelineTextEncode:
 
     def _apply(self, clip, text, mode, clip_index, depth, run_name):
         require(not _failed, 'Previous pipeline failure; halt submissions and inspect evidence')
-        require(mode in pipeline.MODES, 'Only preregistered modes are admitted')
+        require(mode in TEXT_MODES, 'Only preregistered modes are admitted')
         require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
                 'Unsafe request name')
         run, identity = _context()
@@ -180,6 +220,7 @@ class LTXPipelineTextEncode:
         server = json.loads((run / 'server-identity.json').read_text())
         hashes = {}
         for path, name in ((Path(pipeline.__file__), 'ltx_pipeline.py'),
+                           (Path(window.__file__), 'ltx_text_window.py'),
                            (Path(__file__), 'pipeline_node.py')):
             actual = hashlib.sha256(path.read_bytes()).hexdigest()
             require(server['extension_sha256s'][name] == actual, 'Sealed extension changed: ' + name)
@@ -200,25 +241,37 @@ class LTXPipelineTextEncode:
         gil.mark_lane_thread('prompt')
         apply_cpu0 = time.thread_time()   # packet 92a
         try:
+            if mode == 'pipeline-window':
+                report['window'] = {'label': window.LABEL, 'policy': window.POLICY,
+                                    'admitted': list(window.admitted()), 'probe': window.state()}
+                if not window.qualified():
+                    report['refused'] = ('pipeline-window requires a passed text-window probe on this server '
+                                         '(probe outcome: %s)' % window.state().get('outcome'))
+                    raise WindowNotQualified(report['refused'])
             if mode == 'original':
                 conditioning = native_encode(clip, text)
                 report['detail'] = {'computed_inline': True}
             else:
-                tag = _text_sha256(text)
+                tag = _job_tag(mode, text)
                 lookups = []
 
                 def lookahead(i):
-                    queued = _queued_text(i)
+                    queued = _queued_request(i)
                     lookups.append({'index': i, 'queued': queued is not None,
-                                    'text_sha256': None if queued is None else _text_sha256(queued)})
+                                    'text_sha256': None if queued is None else _text_sha256(queued[0]),
+                                    'mode': None if queued is None else queued[1]})
                     if queued is None:
                         return None
-                    return (lambda: native_encode(clip, queued, consume_observations=True),
-                            _text_sha256(queued))
+                    q_text, q_mode = queued
+                    q_tag = _job_tag(q_mode, q_text)
+                    q_fn = _encode_fn(clip, q_text, q_mode, q_tag)
+                    return (lambda: native_encode(clip, q_text, consume_observations=True, encode_fn=q_fn),
+                            q_tag)
 
+                own_fn = _encode_fn(clip, text, mode, tag)
                 conditioning, detail = pipeline.run_ahead(
                     'encode', clip_index, depth,
-                    lambda: native_encode(clip, text, consume_observations=True),
+                    lambda: native_encode(clip, text, consume_observations=True, encode_fn=own_fn),
                     tag=tag, lookahead=lookahead)
                 detail['placement_observations'] = 'consumed by the pipeline worker'
                 detail['text_sha256'] = tag
@@ -230,6 +283,8 @@ class LTXPipelineTextEncode:
                 pipeline.record_fingerprint(('encode', clip_index),
                                             detail['conditioning_fingerprint'])
                 detail['lookahead'] = {'source': 'server prompt queue', 'lookups': lookups}
+                if mode == 'pipeline-window':
+                    detail['window_encode'] = window.info_for(tag)
                 report['detail'] = detail
             report['passed'] = True
         finally:
@@ -243,4 +298,61 @@ class LTXPipelineTextEncode:
         return (conditioning,)
 
 
-NODE_CLASS_MAPPINGS = {'LTXPipelineTextEncode': LTXPipelineTextEncode}
+class LTXTextWindowProbe:
+    """Packet 93 qualification probe for 'pipeline-window' (never latches).
+
+    On the two encode workers, one after the other: the certified 1024 encode of
+    every probe prompt, then per bucket one capture encode (per-layer capture
+    proof), then two windowed passes. Passes only if all four windowed results
+    per prompt are byte-identical, every bucket captured 48 proven graphs per
+    worker, and every relative difference against the 1024 encode is within
+    1e-3. A failed probe releases the window graphs and leaves 'pipeline-window'
+    refused; the control and lean arms are unaffected.
+    """
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'clip': ('CLIP',),
+                             'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, clip, run_name):
+        require(not _failed, 'Previous pipeline failure; halt submissions and inspect evidence')
+        require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
+                'Unsafe request name')
+        run, identity = _context()
+        require(identity['model_verification_sha256'] == MODEL_SHA256 and
+                identity['server_identity_sha256'] == os.environ.get('LTX_ENCODER_IDENTITY_SHA256'),
+                'Model/startup identity changed')
+        server = json.loads((run / 'server-identity.json').read_text())
+        hashes = {}
+        for path, name in ((Path(pipeline.__file__), 'ltx_pipeline.py'),
+                           (Path(window.__file__), 'ltx_text_window.py'),
+                           (Path(__file__), 'pipeline_node.py')):
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+            require(server['extension_sha256s'][name] == actual, 'Sealed extension changed: ' + name)
+            hashes[name] = actual
+        require(torch.are_deterministic_algorithms_enabled() and
+                not torch.is_deterministic_algorithms_warn_only_enabled(),
+                'Strict determinism required')
+        prompts_path = Path(server['source_packet_path']) / 'probe' / 'text-window-prompts.json'
+        rows = json.loads(prompts_path.read_text())['prompts']
+        prompts = [(r['name'], r['prompt']) for r in rows]
+        try:
+            report = window.run_probe(clip, prompts, native_encode, pipeline)
+        except Exception as error:  # noqa: BLE001  (a recorded verdict, never a latch)
+            report = {'schema': 'ltx.text-window-probe.v1', 'passed': False, 'outcome': 'error',
+                      'error': repr(error)[:3000], 'label': window.LABEL}
+        report.update({**identity, 'run_name': run_name, 'extension_sha256s': hashes,
+                       'prompts_file_sha256': hashlib.sha256(prompts_path.read_bytes()).hexdigest(),
+                       'prompt_count': len(prompts)})
+        write_json(run / ('text-window-probe-' + run_name + '.json'), report)
+        return {'ui': {'text': ['text-window probe: %s (passed=%s)' % (report.get('outcome'), report.get('passed'))]}}
+
+
+NODE_CLASS_MAPPINGS = {'LTXPipelineTextEncode': LTXPipelineTextEncode,
+                       'LTXTextWindowProbe': LTXTextWindowProbe}

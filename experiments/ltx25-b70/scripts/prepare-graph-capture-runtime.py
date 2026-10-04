@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-decodeproc-92b'
+OUTPUT = ROOT / 'prepared-encoder-window-93'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -104,6 +104,21 @@ CHILD_STOP_GRAPH = 'graphs/decode-child-stop.json'
 CHILD_PROBE_NODE = '460'
 CHILD_STOP_NODE = '461'
 PSAMP_NODE_DIR = 'ltx_pipeline_sampler_lab'
+# Packet 93: suffix-window text encoder (OUTPUT-CHANGING candidate, owner
+# decision pending; off unless its arm is requested and its probe passed), lean
+# conditioning (exact by construction), the context-hash sentry, and the
+# launcher's same-boot health-receipt admission.
+WINDOW_MODULE = 'ltx_text_window.py'
+LEAN_MODULE = 'ltx_lean_conditioning.py'
+LAUNCHER = 'launch/serve-encoder.py'
+LAUNCHER_SRC = 'serve-encoder-93.py'
+WINDOW_PROBE_GRAPH = 'graphs/text-window-probe.json'
+WINDOW_PROMPTS = 'probe/text-window-prompts.json'
+WINDOW_PROMPTS_SRC = LANE / 'data' / 'stability-01-prereg.json'
+WINDOW_PROBE_NODE = '470'
+WINDOW_LABEL = 'changes output at rounding level; owner decision pending'
+TEXT_MODE_OVERRIDES = {'pipe-samp2-tsh-win': 'pipeline-window',
+                       'pipe-samp2-tsh-rep-wlean': 'pipeline-window'}
 SAMPLER_NODE = '428'
 UPS_ADAPTER = 'ltx_graph_upsampler.py'
 UPS_NODE_FILE = 'graph_upsampler_node.py'
@@ -163,7 +178,14 @@ ARMS = (
     ('pipe-samp2-tsh-rep', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline', 'original', 'original', 'fast'),
     ('pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast'),
     # Packet 92b: the same arm with decode in a child process on xpu:3.
-    ('pipe-samp2-tsh-child', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-child', 'original', 'pipeline', 'original', 'original', 'fast'),)
+    ('pipe-samp2-tsh-child', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-child', 'original', 'pipeline', 'original', 'original', 'fast'),
+    # Packet 93: the replica placement with lean conditioning; the control
+    # placement (decode on xpu:3, three fill prompts, so 13 prompts emit all ten
+    # fixtures) with the window encoder for the two oracle passes; and the replica
+    # placement with window and lean (text-encode mode from TEXT_MODE_OVERRIDES).
+    ('pipe-samp2-tsh-rep-lean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-win', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),)
 VAE_NODE = '423'
 
 
@@ -284,7 +306,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-uptime', 'pipe-up', 'pipe-up-save', 'pipe-upphase', 'pipe-fwdtimed',
                           'pipe-fasttimed', 'pipe-fast', 'pipe-fast-save', 'pipe-batchproof', 'pipe-samp2',
                           'pipe-samp2-tsh', 'pipe-samp2-tsh-rep', 'pipe-samp2-tsh-mov',
-                          'pipe-samp2-tsh-child')}
+                          'pipe-samp2-tsh-child', 'pipe-samp2-tsh-rep-lean', 'pipe-samp2-tsh-win',
+                          'pipe-samp2-tsh-rep-wlean')}
     # Packet 91: the replica-placement module, the probe graph and its pinned fixtures.
     added |= {'source/scripts/ltx_decode_replica.py', 'graphs/decode-replica-probe.json',
               'probe/decode-replica-fixtures.json'}
@@ -293,7 +316,12 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     # Packet 92b: the decode-child module and its probe/stop graphs.
     added |= {'source/scripts/ltx_decode_child.py', 'graphs/decode-child-probe.json',
               'graphs/decode-child-stop.json'}
-    replaced = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_na_axis_candidate.py',
+    # Packet 93: window encoder, lean conditioning, the window probe graph and
+    # prompts, and the packet13 original of the replaced launcher.
+    added |= {'source/scripts/ltx_text_window.py', 'source/scripts/ltx_lean_conditioning.py',
+              'graphs/text-window-probe.json', 'probe/text-window-prompts.json',
+              'provenance/graph-capture/parent/launch/serve-encoder.py'}
+    replaced = ('launch/encoder_runtime_common.py', 'launch/serve-encoder.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
                 'source/scripts/host_embedding_clip.py',
                 # Packet 84: the 23/25 split rebalance. Each replaced file ships
@@ -467,8 +495,13 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['pipe-samp2-tsh', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh-rep', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh-mov', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-moved', 'original', 'pipeline', 'original', 'original', 'fast'],
-                     ['pipe-samp2-tsh-child', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-child', 'original', 'pipeline', 'original', 'original', 'fast']]
+                     ['pipe-samp2-tsh-child', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-child', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-lean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-win', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
+    text_overrides = {'pipe-samp2-tsh-win': 'pipeline-window', 'pipe-samp2-tsh-rep-wlean': 'pipeline-window'}
+    require(manifest['text_window']['text_mode_overrides'] == text_overrides, 'Window arm set changed')
     expected_graphs = []
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,
          samp_mode, ups_mode, phase_mode, fast_mode) in expected_arms:
@@ -571,7 +604,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             graph['374'] = {'class_type': 'VAEDecode',
                             'inputs': {'samples': ['369', 0], 'vae': ['423', 0]}}
         require(graph['364']['class_type'] == 'LTXPipelineTextEncode' and
-                graph['364']['inputs']['mode'] == ('original' if pipe_mode == 'original' else 'pipeline') and
+                graph['364']['inputs']['mode'] == text_overrides.get(
+                    arm, 'original' if pipe_mode == 'original' else 'pipeline') and
                 graph['364']['inputs']['clip_index'] == 0 and
                 graph['364']['inputs']['depth'] == (2 if text_mode == 'graph-shard' else 1) and
                 graph['364']['inputs']['run_name'] == 'assign-unique-request-name',
@@ -647,6 +681,26 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
         graph = json.loads(safe_path(packet, name).read_text())
         require(graph == {node: {'class_type': cls, 'inputs': {'run_name': 'assign-unique-request-name'}}},
                 'Decode child graph changed: ' + name)
+    # Packet 93: the window probe graph is the loader, the text gate and the probe node.
+    wprobe = json.loads(safe_path(packet, 'graphs/text-window-probe.json').read_text())
+    require(wprobe == {'420': control['420'],
+                       '425': {'class_type': 'LTXTextEncoderGraphGate', 'inputs': {
+                           'clip': ['420', 1], 'mode': 'graph-shard', 'run_name': 'assign-unique-request-name'}},
+                       '470': {'class_type': 'LTXTextWindowProbe', 'inputs': {
+                           'clip': ['425', 0], 'run_name': 'assign-unique-request-name'}}},
+            'Text-window probe graph changed')
+    tw = manifest['text_window']
+    require(tw['module_sha256'] == manifest['extension_sha256s']['ltx_text_window.py'] and
+            tw['probe_graph'] == 'graphs/text-window-probe.json' and
+            tw['probe_prompts'] == 'probe/text-window-prompts.json' and
+            tw['label'] == 'changes output at rounding level; owner decision pending' and
+            tw['default'] == 'off' and tw['buckets'] == [64, 128, 256, 512, 1024] and
+            tw['rel_bound'] == 1e-3, 'Text-window contract changed')
+    prompts = json.loads(safe_path(packet, 'probe/text-window-prompts.json').read_text())['prompts']
+    require(len(prompts) == 40 and len({p['name'] for p in prompts}) == 40, 'Text-window prompt list changed')
+    require(manifest['lean_conditioning']['module_sha256'] ==
+            manifest['extension_sha256s']['ltx_lean_conditioning.py'] and
+            manifest['lean_conditioning']['default'] == 'off', 'Lean conditioning contract changed')
     child = manifest['decode_child']
     require(child['module_sha256'] == manifest['extension_sha256s']['ltx_decode_child.py'] and
             child['device'] == 'xpu:3' and child['probe_graph'] == 'graphs/decode-child-probe.json' and
@@ -718,7 +772,8 @@ def build_checker(text):
                                        "              'phase_timed_upsampler_node.py',\n"
                                        "              'resident_fastpath_node.py',\n"
                                        "              'av_model.py', 'ltx_decode_replica.py', 'ltx_gil_probe.py',\n"
-                                       "              'ltx_decode_child.py')", 1)
+                                       "              'ltx_decode_child.py', 'ltx_text_window.py',\n"
+                                       "              'ltx_lean_conditioning.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -805,6 +860,12 @@ def main():
 
     shutil.copyfile(parent / 'manifest.json', staging / PARENT_MANIFEST_FILE)
     (staging / CHECKER).write_text(checker_new)
+    # Packet 93: the launcher gains --health-receipt; packet13's original is kept.
+    launcher_src = LANE / 'scripts' / LAUNCHER_SRC
+    require(launcher_src.is_file(), 'Missing prepared launcher: ' + str(launcher_src))
+    ast.parse(launcher_src.read_text())
+    shutil.copyfile(parent / LAUNCHER, staging / PROV / LAUNCHER)
+    shutil.copyfile(launcher_src, staging / LAUNCHER)
 
     for src_name, dir_name in ((ADAPTER, None), (NODE, NODE_DIR),
                                (VAE_ADAPTER, None), (VAE_NODE_FILE, VAE_NODE_DIR),
@@ -815,7 +876,8 @@ def main():
                                (PSAMP_NODE_FILE, PSAMP_NODE_DIR),
                                (UPS_ADAPTER, None), (UPS_NODE_FILE, UPS_NODE_DIR),
                                (PHASE_NODE_FILE, PHASE_NODE_DIR), (FAST_NODE_FILE, FAST_NODE_DIR),
-                               (REPLICA_ADAPTER, None), (GIL_PROBE, None), (CHILD_MODULE, None)):
+                               (REPLICA_ADAPTER, None), (GIL_PROBE, None), (CHILD_MODULE, None),
+                               (WINDOW_MODULE, None), (LEAN_MODULE, None)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -853,7 +915,7 @@ def main():
         # the arms differ only by mode. 'original' calls the native node.
         graph[TEXT_ENCODE_NODE] = {'class_type': 'LTXPipelineTextEncode', 'inputs': {
             'clip': [TEXT_NODE, 0], 'text': prompt_text,
-            'mode': 'original' if pipe_mode == 'original' else 'pipeline',
+            'mode': TEXT_MODE_OVERRIDES.get(arm, 'original' if pipe_mode == 'original' else 'pipeline'),
             # A sharded encoder has two workers, so two prompts run ahead.
             'clip_index': 0, 'depth': 2 if text_mode == 'graph-shard' else 1,
             'run_name': 'assign-unique-request-name'}}
@@ -991,6 +1053,26 @@ def main():
             handle.write('\n')
     (staging / 'probe').mkdir(exist_ok=False)
     shutil.copyfile(PROBE_FIXTURES_SRC, staging / PROBE_FIXTURES)
+    # Packet 93: the text-window probe graph and its 40 prompts (the ten fixtures
+    # plus the synthetic lengths of scripts/probe-encoder-suffix-window.py).
+    with (staging / WINDOW_PROBE_GRAPH).open('x') as handle:
+        json.dump({'420': copy.deepcopy(control['420']),
+                   '425': {'class_type': 'LTXTextEncoderGraphGate', 'inputs': {
+                       'clip': ['420', 1], 'mode': 'graph-shard', 'run_name': 'assign-unique-request-name'}},
+                   WINDOW_PROBE_NODE: {'class_type': 'LTXTextWindowProbe', 'inputs': {
+                       'clip': ['425', 0], 'run_name': 'assign-unique-request-name'}}},
+                  handle, indent=2, sort_keys=True)
+        handle.write('\n')
+    sys.path.insert(0, str(LANE / 'scripts'))
+    import ltx_text_window as _window
+    fixtures = json.loads(WINDOW_PROMPTS_SRC.read_text())['fixtures']
+    require(len(fixtures) == 10, 'Expected the ten stability-01 fixtures')
+    window_prompts = [{'name': 'fixture-' + f['id'], 'prompt': f['prompt']} for f in fixtures]
+    window_prompts += [{'name': n, 'prompt': t} for n, t in _window.synthetic_prompts()]
+    with (staging / WINDOW_PROMPTS).open('x') as handle:
+        json.dump({'schema': 'ltx.text-window-prompts.v1', 'source': 'data/stability-01-prereg.json + '
+                   'ltx_text_window.synthetic_prompts()', 'prompts': window_prompts}, handle, indent=2)
+        handle.write('\n')
 
     files = {}
     for p in sorted(staging.rglob('*')):
@@ -1029,7 +1111,9 @@ def main():
               f'source/custom_nodes/{FAST_NODE_DIR}/__init__.py',
               'source/scripts/' + REPLICA_ADAPTER, PROBE_GRAPH, PROBE_FIXTURES,
               'source/scripts/' + GIL_PROBE, KNOB_GRAPH,
-              'source/scripts/' + CHILD_MODULE, CHILD_PROBE_GRAPH, CHILD_STOP_GRAPH}
+              'source/scripts/' + CHILD_MODULE, CHILD_PROBE_GRAPH, CHILD_STOP_GRAPH,
+              'source/scripts/' + WINDOW_MODULE, 'source/scripts/' + LEAN_MODULE,
+              WINDOW_PROBE_GRAPH, WINDOW_PROMPTS, PROV + LAUNCHER}
     added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
               for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
@@ -1037,6 +1121,9 @@ def main():
         if name == CHECKER:
             require(files[PROV + 'launch/encoder_runtime_common.py'] == digest, 'Provenance copy differs')
             require(files[name] != digest, 'Checker is unchanged')
+        elif name == LAUNCHER:
+            require(files[PROV + LAUNCHER] == digest, 'Launcher provenance copy differs')
+            require(files[name] != digest, 'Launcher is unchanged')
         elif name in {pp for pp, _ in NA_REPLACED} or name == NA_NODE_COPY:
             if name != NA_NODE_COPY:
                 require(files[PROV + 'source/scripts/' + Path(name).name] == digest,
@@ -1064,7 +1151,7 @@ def main():
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
                      TEXT_ADAPTER, TEXT_SHARD, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
                      CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE, PHASE_NODE_FILE,
-                     FAST_NODE_FILE, REPLICA_ADAPTER, GIL_PROBE, CHILD_MODULE):
+                     FAST_NODE_FILE, REPLICA_ADAPTER, GIL_PROBE, CHILD_MODULE, WINDOW_MODULE, LEAN_MODULE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -1098,6 +1185,30 @@ def main():
                             '0.5 ms sleep-overshoot lock-wait histogram (ltx-gil-probe thread)',
                             'LTXSchedulerKnob: sys.setswitchinterval only when the pipeline is idle'],
             'touches': 'no tensor, stream, device, RNG state or GPU work order'},
+        'text_window': {
+            'module_sha256': extensions[WINDOW_MODULE], 'label': WINDOW_LABEL, 'default': 'off',
+            'text_mode': 'pipeline-window', 'text_mode_overrides': TEXT_MODE_OVERRIDES,
+            'buckets': list(_window.BUCKETS), 'policy': _window.POLICY, 'rel_bound': _window.REL_BOUND,
+            'rel_definition': _window.REL_DEFINITION,
+            'probe_graph': WINDOW_PROBE_GRAPH, 'probe_prompts': WINDOW_PROMPTS,
+            'implementation': 'the window runs through the unchanged per-layer graph stand-ins; each bucket '
+                              'captures one more graph per layer per encode worker inside the probe, with '
+                              'the lane capture proof and per-(device, thread) pools',
+            'requires': 'a passed LTXTextWindowProbe in the same server process; refused without latching '
+                        'otherwise',
+            'oracle': 'its own oracle (two identical passes) stored as new references; never the 1024 ones'},
+        'lean_conditioning': {
+            'module_sha256': extensions[LEAN_MODULE], 'default': 'off', 'sampler_mode': 'pipeline-lean',
+            'claim': 'connector pass computed once per clip per sampler worker and reused only for '
+                     'byte-identical inputs (asserted); never across clips',
+            'sentry': 'sha256 of the context fed to the first diffusion forward of each stage, every '
+                      'pipelined arm'},
+        'health_admission': {
+            'launcher_option': '--health-receipt <path>', 'schema': 'ltx.four-card-health.v1',
+            'max_age_hours': 6,
+            'rule': 'without the option the whole-boot no-fault rule is unchanged; with it the receipt must '
+                    'pass, name four passing cards and this boot, and the no-fault rule applies to the '
+                    'journal since its end_utc'},
         'decode_child': {
             'module_sha256': extensions[CHILD_MODULE], 'device': 'xpu:3',
             'probe_graph': CHILD_PROBE_GRAPH, 'stop_graph': CHILD_STOP_GRAPH,
@@ -1166,12 +1277,13 @@ def main():
         json.dump(manifest, handle, indent=2, sort_keys=True)
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
-        'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n')
+        'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
+        'Packet 93 window arms CHANGE OUTPUT AT ROUNDING LEVEL; owner decision pending.\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),
                       'manifest_sha256': sha(output / 'manifest.json'),
                       'parent_manifest_sha256': PARENT_SHA,
-                      'added_files': sorted(added), 'changed_files': [CHECKER],
+                      'added_files': sorted(added), 'changed_files': [CHECKER, LAUNCHER],
                       'inherited_files': len(parent_manifest['files']) - 1}, indent=2))
 
 

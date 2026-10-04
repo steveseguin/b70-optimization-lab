@@ -35,11 +35,15 @@ import torch
 
 import ltx_pipeline as pipeline
 import ltx_gil_probe as gil
+import ltx_lean_conditioning as lean
 from encoder_diagnostics import _context
 
 gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
 
 MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
+# Packet 93: 'pipeline-lean' = 'pipeline' plus the per-clip connector memo
+# (ltx_lean_conditioning; exact by construction, off unless requested).
+SAMPLER_MODES = pipeline.MODES + ('pipeline-lean',)
 _failed = False
 
 
@@ -155,7 +159,7 @@ def sample_clip_original(noise_a, guider_a, sampler_a, sigmas_a,
 
 def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
                 noise_b, guider_b, sampler_b, sigmas_b,
-                video_latent, audio_latent, upscale_model, vae):
+                video_latent, audio_latent, upscale_model, vae, lean_mode=False):
     """Exactly the sealed chain 377 -> 344 -> 367 -> 348 -> 340 -> 368 -> 369."""
     concat = _node('LTXVConcatAVLatent')
     separate = _node('LTXVSeparateAVLatent')
@@ -181,6 +185,9 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
     # on both shard cards (probe 5: the overlap needs per-clip streams and
     # staged cross-card moves; shared default streams fence the clips).
     streams = [capture.thread_stream(torch.device('xpu', i)) for i in range(2)]
+    # Packet 93: per-clip context for the context-hash sentry (every pipelined
+    # arm) and, under 'pipeline-lean' only, the connector memo.
+    lean.begin_clip(clip_index, lean_mode)
     try:
         with _Active(), torch.xpu.stream(streams[0]):
             torch.xpu.set_stream(streams[1])
@@ -193,6 +200,7 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
         for st in streams:
             st.synchronize()
         capture.set_pipelined(False)
+        pipeline.record_fingerprint(('context-sentry', clip_index), lean.end_clip())
         marks = _PHASE_MARKS.pop(clip_index, None)
         if marks is not None:
             phases = {}
@@ -243,6 +251,7 @@ def _sample_chain(clip_index, streams,
     mark('start')
     av = concat.execute(video_latent=video_latent, audio_latent=audio_latent).result[0]
     mark('concat_a')
+    lean.set_stage('a')
     stage_a = sampler_node.execute(noise=noise_a, guider=guider_a, sampler=sampler_a,
                                    sigmas=sigmas_a, latent_image=av).result[0]
     mark('sample_a')
@@ -252,6 +261,7 @@ def _sample_chain(clip_index, streams,
     mark('upsample')
     av2 = concat.execute(video_latent=upscaled, audio_latent=audio_a).result[0]
     mark('concat_b')
+    lean.set_stage('b')
     stage_b = sampler_node.execute(noise=noise_b, guider=guider_b, sampler=sampler_b,
                                    sigmas=sigmas_b, latent_image=av2).result[0]
     mark('sample_b')
@@ -271,7 +281,7 @@ class LTXPipelineSampler:
             'sigmas_b': ('SIGMAS',),
             'video_latent': ('LATENT',), 'audio_latent': ('LATENT',),
             'upscale_model': ('LATENT_UPSCALE_MODEL',), 'vae': ('VAE',),
-            'mode': (list(pipeline.MODES),),
+            'mode': (list(SAMPLER_MODES),),
             'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
             'depth': ('INT', {'default': 2, 'min': 1, 'max': pipeline.MAX_PENDING}),
             'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
@@ -293,7 +303,7 @@ class LTXPipelineSampler:
 
     def _apply(self, mode, clip_index, depth, run_name, **chain):
         require(not _failed, 'Previous pipeline failure; halt submissions and inspect evidence')
-        require(mode in pipeline.MODES, 'Only preregistered modes are admitted')
+        require(mode in SAMPLER_MODES, 'Only preregistered modes are admitted')
         require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
                 'Unsafe request name')
         run, identity = _context()
@@ -304,13 +314,17 @@ class LTXPipelineSampler:
         actual = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
         require(server['extension_sha256s']['pipeline_sampler_node.py'] == actual,
                 'Sealed extension changed: pipeline_sampler_node.py')
+        lean_sha = hashlib.sha256(Path(lean.__file__).read_bytes()).hexdigest()
+        require(server['extension_sha256s']['ltx_lean_conditioning.py'] == lean_sha,
+                'Sealed extension changed: ltx_lean_conditioning.py')
         require(torch.are_deterministic_algorithms_enabled() and
                 not torch.is_deterministic_algorithms_warn_only_enabled(),
                 'Strict determinism required')
 
         report = {'schema': 'ltx.pipeline-sampler-request.v1', **identity, 'run_name': run_name,
                   'mode': mode, 'clip_index': clip_index, 'depth': depth,
-                  'extension_sha256s': {'pipeline_sampler_node.py': actual},
+                  'extension_sha256s': {'pipeline_sampler_node.py': actual,
+                                        'ltx_lean_conditioning.py': lean_sha},
                   'claim': 'every clip is sampled exactly once by its own sampler, from its own '
                            'conditioning and its own noise; nothing is cached or shared between '
                            'clips. Two clips sample at once so one occupies xpu:1 while the other '
@@ -328,14 +342,25 @@ class LTXPipelineSampler:
                 require(getattr(chain['guider_b'], 'model_patcher', None) is patcher,
                         'The two sampler stages use different patchers; pinning would be unsound')
                 pin_current_patcher(patcher.model)
+                # Packet 93: the context sentry on every pipelined arm; the
+                # memo shadow only from the first lean request on (a control
+                # arm run before it never sees the shadow).
+                report['sentry_installed_now'] = lean.install_sentry(patcher.model.diffusion_model)
+                if mode == 'pipeline-lean':
+                    report['lean'] = {'memo_installed_now': lean.install_memo(patcher.model.diffusion_model),
+                                      'claim': 'connector pass computed once per clip and reused only for '
+                                               'byte-identical inputs (asserted); the negative, identical '
+                                               'to the positive and unused at cfg 1, is served the same way'}
             if mode == 'original':
                 with torch.inference_mode():
                     out = sample_clip_original(**chain)
                 report['detail'] = {'emitted_index': clip_index, 'primed': True}
                 emitted = clip_index
             else:
+                lean_mode = mode == 'pipeline-lean'
                 out, detail = pipeline.run_behind(
-                    'sample', clip_index, depth, lambda: sample_clip(clip_index, **chain))
+                    'sample', clip_index, depth,
+                    lambda: sample_clip(clip_index, lean_mode=lean_mode, **chain))
                 # The worker fingerprints the clip's actual sample inputs at
                 # execution time; tie the emitted clip's pair to this receipt,
                 # together with the conditioning fingerprint the encode stage
@@ -348,6 +373,7 @@ class LTXPipelineSampler:
                     detail['emitted_sample_inputs'] = pipeline.fingerprint(('sample-inputs', emitted))
                     detail['emitted_conditioning_fingerprint'] = pipeline.fingerprint(('encode', emitted))
                     detail['emitted_phases'] = pipeline.fingerprint(('phases', emitted))
+                    detail['emitted_context_sentry'] = pipeline.fingerprint(('context-sentry', emitted))
                     # Packet 90: compare the emitted clip's bytes against the
                     # worker-side sentry recorded when its streams drained. A
                     # change between the two reads is in-transit corruption
