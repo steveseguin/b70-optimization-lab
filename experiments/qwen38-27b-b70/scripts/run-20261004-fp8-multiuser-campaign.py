@@ -282,6 +282,12 @@ def main():
             spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
             if spec:
                 name = name.replace('-mtp0-', '-mtp5-')
+            if os.environ.get('MU_INVARIANT') == '1':
+                # the image's own batch-invariant arithmetic (output layer padded to one row class, serial-exact
+                # speculative kernels). Its lone-user answers differ from the shipped recipe's at exact ties, so the
+                # gate that matters here is "equal to solo on this same server", not the frozen reference.
+                pure += INVARIANT
+                name = name.replace('tp2-pure', 'tp2-inv-pure')
             if os.environ.get('MU_LOADCOPY_FIX', '1') == '1':  # validated on R310 two-card, 2026-10-04 11:07 EDT
                 pure += LOADCOPY_FIX
             srv, name, since = start_server(name, 18196, TP2 + spec + SHIPPED + pure + ['--seqs', seqs], since)

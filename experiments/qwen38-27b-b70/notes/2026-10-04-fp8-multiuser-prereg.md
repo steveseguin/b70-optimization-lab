@@ -218,3 +218,24 @@ So the cost of the four-rows-at-a-time output layer is the repeated product itse
 The remaining route to a faster wide mode is a row-invariant output-layer kernel, which is a kernel build.
 Data: `data/2026-10-04-fp8-multiuser/{three-mtp5-s4,headlocal-s64,headlocal-s16}/`.
 
+
+## Addendum, 14:40 EDT: the wide mode on the image's batch-invariant arithmetic
+
+**Why.** With the shipped arithmetic, staying exact at 64 users costs the output layer sixteen calls a step (488
+tok/s together). Last night's screen of the image's own batch-invariant switches (output layer padded to one row
+class, so one call for any number of rows) ran 64 users at **857 to 865 tok/s** with speculation off, but only 54 of
+64 answers matched solo. That screen had neither the pure-step overlay nor the per-sequence attention overlay,
+which are the two fixes found later for exactly that kind of miss.
+
+**What this arithmetic is.** Same weights, same 16-bit precision, nothing quantized further. It rounds the output
+layer in a different (fixed) order, so a lone user's answers differ from the shipped recipe's at exact ties (9 of 12
+on the strict suite). It is therefore its own reference: the claim to test is "every user gets exactly what a lone
+user of this same server gets", not equality with the published single-user recipe.
+
+**Test.** `MU_MODE=longsweep MU_PURE=1 MU_FA_PER_SEQ=1 MU_INVARIANT=1 MU_SEQS=64` (no output-layer chunking), long
+suite and short ladder, two passes each. First the ceiling run already started at 14:34 (shipped arithmetic, same
+overlays, no chunking) to know what the scheduling overlays alone cost at 64 users.
+
+**Rule.** Lossless means 64/64 equal to solo on long and short prompts in both passes. If it is, the number to beat
+is 488 tok/s; a second fresh server confirms before anything is claimed. If it is not 64/64, the misses go to the
+kernel census (which switch is not row-invariant at 64), not to more arms.
