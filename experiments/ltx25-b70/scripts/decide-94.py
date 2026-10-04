@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 def timed(base, mode):
-    for p in sorted((base / mode).glob('f94-*-timed-throughput.json')):
+    for p in sorted((base / mode).glob('f94*-*-timed-throughput.json')):
         return json.loads(p.read_text())
     return None
 

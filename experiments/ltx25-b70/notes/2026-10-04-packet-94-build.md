@@ -1,9 +1,41 @@
-# Packet 94: spread the transformer over more cards (build, 2026-10-04)
+# Packets 94 / 94b: spread the transformer over more cards (build, 2026-10-04)
 
 Built offline. **Not launched.** R = `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
 No GPU was used to build or test it. Baseline and references: the short-window
 encoder plus lean conditioning, `stability-01-w93c-*`
 ([milestone](2026-10-04-milestone-window-baseline.md)).
+
+**Launch 94b, not 94.** `prepared-encoder-shard4-94b`, manifest
+`b9e5417a9799cb750c9cd67ddfd07e308b5baca7e7975e7e518398971e3e262d`, run names
+`encoder-server-shard4-94b-<mode>`, runner `scripts/run-campaign-94b.sh`.
+`prepared-encoder-shard4-94` (manifest `8fd0183b...`) stays in place and was never
+launched; `run-campaign-94.sh` refuses. A review found these defects in 94,
+all fixed in 94b:
+
+1. **A sampler capture could overlap other GPU work on the shared cards** (native
+   VAE decode on xpu:3 and the encoder's eager parts do not take the capture
+   lock). 94b chooses a **serial capture pass**: before the freeze the server
+   admits a sampler request only when nothing else runs (no pipeline job queued
+   or running, no other prompt queued; otherwise it refuses with a receipt and
+   no latch). The runner sends one prompt at a time on a fresh index base, so
+   there is no lookahead, no encode-ahead and no decode-behind, and it waits for
+   that prompt's sample job to finish. It repeats (at most 8) until the freeze
+   confirms that every block signature is captured on both sampler workers.
+   After the freeze no sampler capture can start. I chose this over making
+   decode and every encoder step take the capture lock in shared mode because
+   that does not work: an encode already captures its own text graphs under the
+   exclusive lock, so holding shared for the whole encode would deadlock. A
+   piecemeal lock over the eager parts would be hard to prove complete.
+2. **Weights could be evicted after the freeze** by a fall-through to ComfyUI's
+   loader. After the freeze, a load of anything not fully resident is refused
+   before the native loader runs, with a receipt (`load-refused-*.json`): no
+   load, no eviction. The freeze records the resident models (type, card,
+   bytes) and free memory per card. Every later sampler request, the placement
+   probe and the timed arms included, asserts the set is unchanged.
+3. **An interrupted arm was not awaited at the stop**: the runner now registers
+   the arm before its client starts. The marker check counts only what the
+   client actually submitted.
+4. **The memory floor compared a rounded figure**: it now compares raw bytes.
 
 ## In plain words
 
@@ -93,7 +125,7 @@ placement allowlist. Not worth it in this packet.
   `LTXSamplerCaptureFreeze` (graph `graphs/sampler-capture-freeze.json`):
   pipeline idle and **every card at least 2 GiB free**, else it refuses and the
   timed arm is skipped (recorded, no latch).
-- `scripts/run-campaign-94.sh <control|shard3-c|shard4-a>`,
+- `scripts/run-campaign-94b.sh <control|shard3-c|shard4-a>` (94's runner refuses),
   `scripts/run-capture-freeze-94.py`, `scripts/decide-94.py`.
 - Tests: `scripts/test-packet94-shard4-cpu.py`.
 
@@ -101,17 +133,19 @@ placement allowlist. Not worth it in this packet.
 arm on the xpu:3 decode placement must reproduce all ten fixtures byte for byte
 against the w93c references. This is the full pipelined path, not the serial
 sampler-only run first proposed: it needs no stored conditioning and it tests
-exactly what the timed arm runs. It also serves as that layout's warm, so every
-capture happens there. Anything but 10/10 refuses the timed arms (exit 15).
+exactly what the timed arm runs. In 94b it runs after the freeze, so it may
+neither capture nor load. Anything but 10/10 refuses the timed arms (exit 15).
 
 **Restore.** There is no in-process restore to two-way: a layout cannot change
 after the model loads. A failed candidate never blocks the control because the
 control has its own server. The runner then stops that server gracefully.
 
-## Runner, per server
+## Runner, per server (94b)
 
-warm 3 → text-window probe → placement probe (13 prompts, all ten fixtures
-exact) → decode probe → capture freeze and memory floor → timed
+text-window probe → decode probe → serial capture pass with freeze attempts
+(capture coverage on both workers, 2 GiB floor, resident snapshot; captures and
+loads frozen) → placement probe (13 pipelined prompts, all ten fixtures exact,
+no capture or load allowed) → timed
 `pipe-samp2-tsh-rep-wlean` against the w93c references (control 40, candidates
 80) → candidates only: if this is the fastest exact arm so far and faster than
 the control (`decide-94.py`), 160 more → summary with the context-sentry gate
@@ -120,13 +154,24 @@ proven quiescence. The SIGINT check, traps, submitted-job tracking and exit
 codes follow 93c. Run order: control, shard3-c, shard4-a. If shard3-c beats the
 control it gets its 160 when it runs; shard4-a gets them only if it beats both.
 
-| Server | Warm | Placement probe | Timed | Extra |
+| Server | Capture pass (base, +10 ... +70) | Placement probe | Timed | Extra |
 | --- | ---: | ---: | ---: | ---: |
-| control (two-way) | 220000 | 220300 | 220600 (40) | - |
-| shard3-c | 220900 | 221200 | 221500 (80) | 221800 (160) |
-| shard4-a | 222100 | 222400 | 222700 (80) | 223000 (160) |
+| control (two-way) | 224000 | 224300 | 224600 (40) | - |
+| shard3-c | 224900 | 225200 | 225500 (80) | 225800 (160) |
+| shard4-a | 226100 | 226400 | 226700 (80) | 227000 (160) |
 
-## Packet and gate
+## Packet and gate (94b)
+
+- `R/prepared-encoder-shard4-94b`, manifest
+  `b9e5417a9799cb750c9cd67ddfd07e308b5baca7e7975e7e518398971e3e262d`.
+- Gate (`--check-only`, 2026-10-04 13:36 UTC, **without a receipt**, because
+  no fresh one exists yet): passes for all three run names (rc 0). The operator
+  passes the fresh receipt at launch.
+- CPU tests: `test-packet94-shard4-cpu.py` 11/11, with new cases for the
+  serial-pass admission, capture coverage, load refusal, raw-byte floor and arm
+  registration. The layer-shard test and packet 90c-93b tests pass.
+
+## Packet and gate (94, superseded)
 
 - `R/prepared-encoder-shard4-94`, **manifest sha256
   `8fd0183b71a792f03f5061002921a6c1ca8c2b94a8977d1b3bf80d7f171bdcd2`**. The
@@ -146,12 +191,12 @@ control it gets its 160 when it runs; shard4-a gets them only if it beats both.
 
 ```
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-shard4-94
-M=8fd0183b71a792f03f5061002921a6c1ca8c2b94a8977d1b3bf80d7f171bdcd2
+P=$R/prepared-encoder-shard4-94b
+M=b9e5417a9799cb750c9cd67ddfd07e308b5baca7e7975e7e518398971e3e262d
 H=<fresh health receipt>
 # MODE=control -> PLACEMENT=two-way;  MODE=shard3-c -> shard3-c;  MODE=shard4-a -> shard4-a
-nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94-$MODE --health-receipt $H > $R/encoder-server-shard4-94-$MODE.log 2>&1 &
-nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94.sh $MODE > $R/campaign-94-$MODE.log 2>&1 &
+nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94b-$MODE --health-receipt $H > $R/encoder-server-shard4-94b-$MODE.log 2>&1 &
+nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94b.sh $MODE > $R/campaign-94b-$MODE.log 2>&1 &
 ```
 
 Wait for each runner to stop its server before launching the next layout.
@@ -166,5 +211,9 @@ Wait for each runner to stop its server before launching the next layout.
   and ignores the extra boundary copies. ComfyUI's model manager loading
   transformer shards onto the text-encoder cards is untested; the receipts
   record loaded models.
+- Whether 8 serial prompts are always enough for both sampler workers to
+  capture (which worker takes a job is not controlled); otherwise exit 16.
+- The serial pass sends `pipe-samp2-tsh-win` prompts as fills, so their
+  outputs are not checked; the placement probe checks the outputs.
 - Whether two sampler threads pipeline well over four cards with the text
   encoder and decode sharing xpu:2/xpu:3 (one compute engine per card).

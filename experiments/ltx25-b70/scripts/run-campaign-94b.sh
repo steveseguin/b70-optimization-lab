@@ -1,67 +1,65 @@
 #!/bin/bash
-# Packet 94 (prepared-encoder-shard4-94): spread the transformer's 48 blocks over more cards.
-# The placement is fixed when a server first loads the model, so each placement gets its own
-# server launch and this runner takes the placement as its argument:
+# Packet 94b (prepared-encoder-shard4-94b; supersedes 94): spread the transformer's 48 blocks
+# over more cards. The placement is fixed when a server first loads the model, so each placement
+# gets its own server launch and this runner takes the placement as its argument:
 #
-#   bash run-campaign-94.sh control     (two-way 23/25, the baseline layout)   run 1
-#   bash run-campaign-94.sh shard3-c    (20/20/8 over xpu:0/1/2)               run 2
-#   bash run-campaign-94.sh shard4-a    (18/18/8/4 over xpu:0/1/2/3)           run 3
+#   bash run-campaign-94b.sh control     (two-way 23/25, the baseline layout)   run 1
+#   bash run-campaign-94b.sh shard3-c    (20/20/8 over xpu:0/1/2)               run 2
+#   bash run-campaign-94b.sh shard4-a    (18/18/8/4 over xpu:0/1/2/3)           run 3
 #
 # The operator launches each server first (exact commands in notes/2026-10-04-packet-94-build.md):
 #   env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=<placement> ... --health-receipt <r>
-# Run the control first. Text path for every arm: short window + lean conditioning (the baseline).
 #
 # Per server, in order (every client call under `timeout`, waits on pids and files):
-#   1. warm 3 (pipe-samp2-tsh): captures the 1024 text graphs and every sampler graph
-#   2. text-window probe (needed before any window request on a server)
-#   3. PLACEMENT PROBE: 13 prompts of pipe-samp2-tsh-win, verified byte for byte against the
+#   1. text-window probe (serial; loads the components, captures the encoder graphs)
+#   2. decode probe (serial; the replica stays on xpu:1)
+#   3. SERIAL CAPTURE PASS: one prompt at a time (fresh index base each, so no lookahead, no
+#      encode-ahead, no decode-behind), waiting for its sample job to finish, then a freeze
+#      attempt; repeated (at most 8 prompts) until every sampler block signature is captured on
+#      both sampler workers. The freeze also requires every card >= 2 GiB free, records the
+#      resident models, and from then on forbids captures AND model loads.
+#      Before the freeze the server refuses any sampler request that is not alone.
+#   4. PLACEMENT PROBE: 13 pipelined prompts of pipe-samp2-tsh-win, byte for byte against the
 #      w93c references (all ten fixtures). Anything but 10/10 exact refuses the timed arms.
-#   4. decode probe (the replica stays on xpu:1)
-#   5. capture freeze + memory floor (every card >= 2 GiB free); refusal skips the timed arm
-#   6. timed: pipe-samp2-tsh-rep-wlean, control 40 / candidates 80, against the w93c references
-#   7. candidates only: if this is the fastest exact arm so far and faster than the control
-#      (decide-94.py), 160 more prompts
-#   8. summary (context-sentry gate probe vs timed, engine busy per card); graceful stop.
+#   5. timed: pipe-samp2-tsh-rep-wlean, control 40 / candidates 80, against the w93c references
+#   6. candidates only: fastest exact arm so far and faster than the control -> 160 more
+#   7. summary (context-sentry gate probe vs timed, engine busy per card); graceful stop.
 #
-# Index bases (spaced by 300): control 220000/220300/220600; shard3-c 220900/221200/221500/221800;
-# shard4-a 222100/222400/222700/223000 (warm/probe/timed/extra).
+# Index bases (spaced by 300): control 224000/224300/224600; shard3-c 224900/225200/225500/225800;
+# shard4-a 226100/226400/226700/227000 (capture pass/probe/timed/extra; the capture pass uses
+# base, base+10, ... base+70).
 #
 # Exit codes: 0 all good; 3 an oracle mismatch in the timed arm; 1/2 arm error/timeout; 4 FAULT
 # (server left up for incident review); 5 queue not provably empty; 6 jobs not provably finished;
 # 7 stop failed; 8 pre-run refusal; 9 decode probe failed; 11 window probe negative; 13 runner
 # interrupted (stop attempted); 14 context-sentry gate or summary failed; 15 placement probe not
-# exact (timed arms refused); 16 capture freeze / memory floor refused.
+# exact (timed arms refused); 16 freeze refused (memory floor, or captures incomplete after 8).
 # Codes 5/6/7 mean the server could NOT be stopped safely and is still up.
 # Do not edit while running.
 set -u
-# SUPERSEDED (2026-10-04) by packet 94b / run-campaign-94b.sh before any launch: review found that a
-# sampler capture could overlap decode/encode work on the shared cards, that a cold load could evict
-# weights after the freeze, and that an interrupted arm was not awaited at the stop. Never launch 94.
-echo "run-campaign-94.sh is superseded by run-campaign-94b.sh (packet 94 must not be launched); refusing"
-exit 8
 MODE=${1:-}
 case "$MODE" in
-  control)  PLACEMENT=two-way;  TAG=ctl; WARM_BASE=220000; PROBE_BASE=220300; TIMED_BASE=220600; TIMED_N=40; EXTRA_BASE= ;;
-  shard3-c) PLACEMENT=shard3-c; TAG=s3c; WARM_BASE=220900; PROBE_BASE=221200; TIMED_BASE=221500; TIMED_N=80; EXTRA_BASE=221800 ;;
-  shard4-a) PLACEMENT=shard4-a; TAG=s4a; WARM_BASE=222100; PROBE_BASE=222400; TIMED_BASE=222700; TIMED_N=80; EXTRA_BASE=223000 ;;
-  *) echo "usage: run-campaign-94.sh control|shard3-c|shard4-a"; exit 8 ;;
+  control)  PLACEMENT=two-way;  TAG=ctl; CAP_BASE=224000; PROBE_BASE=224300; TIMED_BASE=224600; TIMED_N=40; EXTRA_BASE= ;;
+  shard3-c) PLACEMENT=shard3-c; TAG=s3c; CAP_BASE=224900; PROBE_BASE=225200; TIMED_BASE=225500; TIMED_N=80; EXTRA_BASE=225800 ;;
+  shard4-a) PLACEMENT=shard4-a; TAG=s4a; CAP_BASE=226100; PROBE_BASE=226400; TIMED_BASE=226700; TIMED_N=80; EXTRA_BASE=227000 ;;
+  *) echo "usage: run-campaign-94b.sh control|shard3-c|shard4-a"; exit 8 ;;
 esac
-WARM_N=3; PROBE_N=13; EXTRA_N=160
+CAP_MAX=8; PROBE_N=13; EXTRA_N=160
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-shard4-94
-MANIFEST=8fd0183b71a792f03f5061002921a6c1ca8c2b94a8977d1b3bf80d7f171bdcd2
+P=$R/prepared-encoder-shard4-94b
+MANIFEST=b9e5417a9799cb750c9cd67ddfd07e308b5baca7e7975e7e518398971e3e262d
 LANE=/home/steve/llm-optimizations/experiments/ltx25-b70
 REPO=/home/steve/llm-optimizations
 PY=/home/steve/.venvs/ltx25-baseline/bin/python
-RUN_NAME=encoder-server-shard4-94-$MODE
+RUN_NAME=encoder-server-shard4-94b-$MODE
 RUN=$R/$RUN_NAME
-BASE_OUT=$LANE/data/shard4-94
+BASE_OUT=$LANE/data/shard4-94b
 OUT=$BASE_OUT/$MODE
 PREREG=$LANE/data/stability-01-window-prereg.json
 mkdir -p "$OUT"
 step() { echo "=== $(date -u +%FT%TZ) [$MODE] $*"; }
 save() {
-  ( cd $REPO && git add "${OUT#$REPO/}" && git commit -q -m "LTX packet 94 ($MODE): $1 receipts
+  ( cd $REPO && git add "${OUT#$REPO/}" && git commit -q -m "LTX packet 94b ($MODE): $1 receipts
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" ) >/dev/null 2>&1 && step "committed $1" || step "commit of $1 failed (continuing)"
 }
@@ -82,11 +80,13 @@ arm() { # name graph-arm count index-base client-timeout-s watch|- [fixtures]
   step "$1: arm $2, $3 prompts, index base $4"
   local wpid= fx=()
   [ -n "${7:-}" ] && fx=(--fixtures "$7")
+  # 94b: registered BEFORE the client starts, so an interrupted arm is still awaited at the stop
+  # (missing-markers-93b.py expects only what the client actually submitted).
+  ARMS_RUN="$ARMS_RUN $1"
   if [ "${6:-}" = watch ]; then rm -f "$SYNC_FLAG"; sync_watch $1 & wpid=$!; fi
   timeout $5 $PY -B $LANE/scripts/run-throughput-fixtures.py $1 --graph $P/graphs/graph-capture-all48-$2.json \
     --arm $2 --server-run $RUN --count $3 --index-base $4 --out $OUT "${fx[@]}"
   ARM_RC=$?
-  ARMS_RUN="$ARMS_RUN $1"
   if [ -n "$wpid" ]; then touch "$SYNC_FLAG" || kill $wpid; wait $wpid; rm -f "$SYNC_FLAG"; fi
   sync
   step "$1 finished rc=$ARM_RC; synced"
@@ -148,9 +148,9 @@ stop_when_proven() {
 
 SUMMARY_RC=0
 summarize() { # the context-sentry gate (probe pass vs timed arm): a failure fails the campaign (exit 14)
-  local arms="--arm f94-$TAG-probe:placement-probe --arm f94-$TAG-timed:timed --arm f94-$TAG-extra:extra"
+  local arms="--arm f94b-$TAG-probe:placement-probe --arm f94b-$TAG-timed:timed --arm f94b-$TAG-extra:extra"
   timeout 300 $PY -B $LANE/scripts/summarize-campaign-93.py --run $RUN --out $OUT $arms \
-    --pair f94-$TAG-probe:f94-$TAG-timed
+    --pair f94b-$TAG-probe:f94b-$TAG-timed
   SUMMARY_RC=$?
   [ $SUMMARY_RC -eq 0 ] || step "SUMMARY / CONTEXT-SENTRY GATE FAILED (rc=$SUMMARY_RC)"
 }
@@ -210,10 +210,10 @@ curl -sf -m 10 http://127.0.0.1:8188/queue >/dev/null || { step server never ans
 PID=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['pid'])")
 TICKS=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['proc_start_ticks'])")
 [ "$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['source_packet_manifest_sha256'])")" = "$MANIFEST" ] \
-  || { step "server is not the packet 94 build; refusing"; exit 8; }
+  || { step "server is not the packet 94b build; refusing"; exit 8; }
 pid_is_server $PID $TICKS || { step "server pid $PID does not match $RUN_NAME identity; refusing"; exit 8; }
 BW=$(tr '\0' '\n' < /proc/$PID/environ 2>/dev/null | sed -n 's/^LTX_BUSY_WINDOWS=//p')
-[ "$BW" = 0 ] || { step "packet 94 is a speed comparison: launch the server with LTX_BUSY_WINDOWS=0 (found '$BW'); refusing"; exit 8; }
+[ "$BW" = 0 ] || { step "packet 94b is a speed comparison: launch the server with LTX_BUSY_WINDOWS=0 (found '$BW'); refusing"; exit 8; }
 PL=$(tr '\0' '\n' < /proc/$PID/environ 2>/dev/null | sed -n 's/^LTX_SAMPLER_PLACEMENT=//p')
 [ "${PL:-two-way}" = "$PLACEMENT" ] || { step "server placement is '${PL:-two-way}', this run needs '$PLACEMENT'; refusing"; exit 8; }
 SIGINT_IGN=$($PY -c "print(int(open('/proc/$PID/status').read().split('SigIgn:')[1].split()[0], 16) >> 1 & 1)")
@@ -226,48 +226,60 @@ step "engine-busy sampler pid $SAMPLER_PID (fdinfo only, no device access)"
 step "rest 60 s after construction"
 sleep 60
 
-# ---- 1. warm, 2. text-window probe ------------------------------------------------------------
-arm f94-$TAG-warm pipe-samp2-tsh $WARM_N $WARM_BASE 900 -
-[ $ARM_RC -eq 0 ] || { step "warm failed rc=$ARM_RC"; finish $ARM_RC; }
-step "settle 30 s"; sleep 30
+# ---- 1. text-window probe, 2. decode probe (serial) ----------------------------------------
 queue_empty || { step "queue not provably empty before the window probe"; finish 5; }
-timeout 1800 $PY -B $LANE/scripts/run-text-window-probe.py f94-$TAG-wprobe --graph $P/graphs/text-window-probe.json --server-run $RUN
+timeout 2400 $PY -B $LANE/scripts/run-text-window-probe.py f94b-$TAG-wprobe --graph $P/graphs/text-window-probe.json --server-run $RUN
 WPROBE_RC=$?
-cp $RUN/text-window-probe-f94-$TAG-wprobe.json $OUT/ 2>/dev/null; sync
+cp $RUN/text-window-probe-f94b-$TAG-wprobe.json $OUT/ 2>/dev/null; sync
 save "text-window probe (rc=$WPROBE_RC)"
 [ $WPROBE_RC -eq 0 ] || { step "text-window probe did not qualify (rc=$WPROBE_RC)"; finish 11; }
-
-# ---- 3. placement probe: ten fixtures byte for byte against the w93c references ----------------
 step "settle 30 s"; sleep 30
-arm f94-$TAG-probe pipe-samp2-tsh-win $PROBE_N $PROBE_BASE 1200 - "$PREREG"
+queue_empty || { step "queue not provably empty before the decode probe"; finish 5; }
+timeout 1500 $PY -B $LANE/scripts/run-decode-probe.py f94b-$TAG-dprobe --graph $P/graphs/decode-replica-probe.json --server-run $RUN
+DPROBE_RC=$?
+cp $RUN/decode-probe-f94b-$TAG-dprobe.json $OUT/ 2>/dev/null; sync
+save "decode probe (rc=$DPROBE_RC)"
+[ $DPROBE_RC -eq 0 ] || { step "decode probe did not pass (rc=$DPROBE_RC)"; finish 9; }
+
+# ---- 3. serial capture pass, then the freeze ----------------------------------------------------
+FROZEN=0
+for k in $(seq 0 $((CAP_MAX - 1))); do
+  IDX=$((CAP_BASE + 10 * k))
+  queue_empty || { step "queue not provably empty in the capture pass"; finish 5; }
+  arm f94b-$TAG-cap$k pipe-samp2-tsh-win 1 $IDX 1800 - "$PREREG"
+  [ $ARM_RC -eq 0 ] || { step "capture-pass prompt $k ended rc=$ARM_RC"; finish $ARM_RC; }
+  for i in $(seq 1 180); do [ -f $RUN/pipeline-done-sample-$IDX.json ] && break; sleep 5; done
+  [ -f $RUN/pipeline-done-sample-$IDX.json ] || { step "sample job $IDX never finished"; finish 6; }
+  sleep 5
+  queue_empty || { step "queue not provably empty after capture prompt $k"; finish 5; }
+  timeout 360 $PY -B $LANE/scripts/run-capture-freeze-94.py f94b-$TAG-freeze$k --graph $P/graphs/sampler-capture-freeze.json --server-run $RUN
+  FREEZE_RC=$?
+  cp $RUN/sampler-capture-freeze-f94b-$TAG-freeze$k.json $OUT/ 2>/dev/null
+  OUTCOME=$($PY -c "import json;print(json.load(open('$RUN/sampler-capture-freeze-f94b-$TAG-freeze$k.json'))['outcome'])" 2>/dev/null)
+  step "freeze attempt $k: rc=$FREEZE_RC outcome=${OUTCOME:-none}"
+  [ $FREEZE_RC -eq 0 ] && { FROZEN=1; break; }
+  [ "$OUTCOME" = captures-incomplete ] || { step "freeze refused ($OUTCOME): timed arms skipped"; save "freeze refused"; finish 16; }
+done
+sync; save "capture pass and freeze (frozen=$FROZEN)"
+[ $FROZEN = 1 ] || { step "captures still incomplete after $CAP_MAX serial prompts: timed arms skipped"; finish 16; }
+
+# ---- 4. placement probe: ten fixtures byte for byte against the w93c references ----------------
+step "settle 30 s"; sleep 30
+arm f94b-$TAG-probe pipe-samp2-tsh-win $PROBE_N $PROBE_BASE 1200 - "$PREREG"
 PROBE_RC=$ARM_RC
-EXACT=$($PY -c "import json;d=json.load(open('$OUT/f94-$TAG-probe-throughput.json'));r=[x for x in d['rows'] if not x['fill']];print(sum(1 for x in r if x['exact']), len({x['emitted_fixture'] for x in r if x['exact']}))" 2>/dev/null)
+EXACT=$($PY -c "import json;d=json.load(open('$OUT/f94b-$TAG-probe-throughput.json'));r=[x for x in d['rows'] if not x['fill']];print(sum(1 for x in r if x['exact']), len({x['emitted_fixture'] for x in r if x['exact']}))" 2>/dev/null)
 step "placement probe: rc=$PROBE_RC, exact clips / fixtures: ${EXACT:-none}"
 { [ $PROBE_RC -eq 0 ] && [ "${EXACT##* }" = 10 ]; } || { step "placement $PLACEMENT is NOT byte-identical to the references: timed arms refused"; finish 15; }
 
-# ---- 4. decode probe, 5. capture freeze and memory floor ---------------------------------------
-step "settle 30 s"; sleep 30
-queue_empty || { step "queue not provably empty before the decode probe"; finish 5; }
-timeout 1500 $PY -B $LANE/scripts/run-decode-probe.py f94-$TAG-dprobe --graph $P/graphs/decode-replica-probe.json --server-run $RUN
-DPROBE_RC=$?
-cp $RUN/decode-probe-f94-$TAG-dprobe.json $OUT/ 2>/dev/null; sync
-save "decode probe (rc=$DPROBE_RC)"
-[ $DPROBE_RC -eq 0 ] || { step "decode probe did not pass (rc=$DPROBE_RC)"; finish 9; }
-timeout 360 $PY -B $LANE/scripts/run-capture-freeze-94.py f94-$TAG-freeze --graph $P/graphs/sampler-capture-freeze.json --server-run $RUN
-FREEZE_RC=$?
-cp $RUN/sampler-capture-freeze-f94-$TAG-freeze.json $OUT/ 2>/dev/null; sync
-save "capture freeze (rc=$FREEZE_RC)"
-[ $FREEZE_RC -eq 0 ] || { step "capture freeze / memory floor refused (rc=$FREEZE_RC): timed arm skipped"; finish 16; }
-
-# ---- 6. timed arm, 7. extra prompts for the best candidate --------------------------------------
+# ---- 5. timed arm, 6. extra prompts for the best candidate --------------------------------------
 step "settle 60 s"; sleep 60
-arm f94-$TAG-timed pipe-samp2-tsh-rep-wlean $TIMED_N $TIMED_BASE 3000 watch "$PREREG"
+arm f94b-$TAG-timed pipe-samp2-tsh-rep-wlean $TIMED_N $TIMED_BASE 3000 watch "$PREREG"
 TIMED_RC=$ARM_RC
 [ $TIMED_RC -eq 0 ] || [ $TIMED_RC -eq 3 ] || { step "timed arm ended rc=$TIMED_RC"; finish $TIMED_RC; }
 if [ -n "$EXTRA_BASE" ] && [ $TIMED_RC -eq 0 ]; then
   if $PY -B $LANE/scripts/decide-94.py $BASE_OUT $MODE; then
     step "settle 60 s"; sleep 60
-    arm f94-$TAG-extra pipe-samp2-tsh-rep-wlean $EXTRA_N $EXTRA_BASE 5400 watch "$PREREG"
+    arm f94b-$TAG-extra pipe-samp2-tsh-rep-wlean $EXTRA_N $EXTRA_BASE 5400 watch "$PREREG"
     [ $ARM_RC -eq 0 ] || [ $ARM_RC -eq 3 ] || { step "extra arm ended rc=$ARM_RC"; finish $ARM_RC; }
     [ $ARM_RC -eq 3 ] && TIMED_RC=3
   fi
