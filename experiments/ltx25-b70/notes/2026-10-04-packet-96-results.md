@@ -96,6 +96,37 @@ cost from run 2.
   the remaining gap to 1.042 s is placement, not work.
 - Free video memory at the freeze: 7.1 / 9.9 / 11.8 / 14.7 GiB.
 
+## Run 4: batch 4 (one job, four clips), shared pool: proven the same way, 1.209 s per clip
+
+Two cards, one sampler worker, batch 4, shared pool (run `two-way-w1-b4-p1`). This run made the batch-4
+references (`stability-01-b4-*`).
+
+| Arm | Checked against | Clips checked | Exact | Seconds per clip (mean) | Sampler job (4 clips) | Compute seconds per clip, cards 0-3 |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| reference (makes `stability-01-b4-*`; two fixtures generated twice in other slots, byte-identical) | – | – | – | – | 4.42 s | 0.64 / 1.05 / 0.35 / 0.68 |
+| proof: other neighbours | batch-4 references | 12 | 12 | – | 4.42 s | 0.66 / 1.05 / 0.35 / 0.68 |
+| proof: rotated slots | batch-4 references | 12 | 12 | – | 4.42 s | 0.56 / 0.94 / 0.35 / 0.68 |
+| timed, 120 prompts | batch-4 references | 111 | 111 | **1.209** | 4.64 s | 0.63 / 0.97 / 0.37 / 0.69 |
+
+- **Batch 4 is row-independent in the real server too:** 135 of 135 clips byte-identical to their batch-4
+  references with other neighbours, other slots and changing groupings.
+- One job at a time gives 1.16 s per clip from the sampler alone (4.64 s for four clips), so this run could not
+  beat two batch-2 jobs. Compute per clip fell again, to 2.66 GPU-seconds.
+- The sampler job costs 2.6 s for two clips and 4.4 s for four: the saving per added clip shrinks, because the
+  work that scales with clips (the 1024-token text context of each clip) now dominates the weight reads.
+- Picture PSNR of the batch-4 references against today's references: 17.9-29.5 dB (boat 17.9, marble 25.2,
+  bird 18.1, pendulum 21.7, rain 24.2, paper 20.5, candle 21.8, pour 18.0, fabric 18.8, wheel 29.5). A
+  different take again, the same range as batch 2 and as the text window.
+- Card 1 (25 blocks plus a decode worker) is the busiest card in every batch run, at 0.97-1.07 s per clip.
+
+### Two batch-4 jobs: the first capture job failed, cause not yet known
+
+Run `two-way-w2-b4-p1` (23:00 UTC) stopped cleanly with exit 6: worker 0's pinned capture job ended without
+its done marker and without capturing a graph. No GPU fault, no refusal receipt, and the server log has no
+traceback: a failed pipeline job keeps its error in memory until a prompt waits for it, and the capture prompt
+does not wait. The same step passes with one worker at batch 4 and with two workers at batch 2. To do: read
+the stored error from a live reproduction, and make failed jobs write their error to the run directory.
+
 ## What this means for 24 fps
 
 With one batch-2 job the two sampler cards have room. Two jobs in flight (four clips) should bring the stream
