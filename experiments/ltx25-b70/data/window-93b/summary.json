@@ -1,0 +1,274 @@
+{
+  "schema": "ltx.campaign-93b-summary.v1",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93b",
+  "arms": {
+    "f93b-ctl": {
+      "label": "control",
+      "present": true,
+      "prompts": 40,
+      "index_base": 217600,
+      "clips_verified": 36,
+      "exact": 36,
+      "all_exact": true,
+      "references": [
+        "baseline-01",
+        "speed-oracle-bird",
+        "speed-oracle-marble",
+        "stability-01-r01-candle",
+        "stability-01-r01-fabric",
+        "stability-01-r01-paper",
+        "stability-01-r01-pendulum",
+        "stability-01-r01-pour",
+        "stability-01-r01-rain",
+        "stability-01-r01-wheel"
+      ],
+      "interval_median_s": 1.941,
+      "interval_mean_s": 1.6448,
+      "interval_median_steady_s": 1.5855,
+      "encode_job_median_s": 3.1517,
+      "sampler_job_median_s": 2.8702,
+      "decode_job_median_s": 2.57,
+      "connector_computed_per_clip_median": 0.0,
+      "connector_reused_per_clip_median": 0.0,
+      "engine": {
+        "window_s": 55.92,
+        "prompts": 34,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.4315,
+            "bcs_s_per_clip": 1.1411,
+            "ccs_util": 0.8703
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.4305,
+            "bcs_s_per_clip": 0.9652,
+            "ccs_util": 0.8697
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 1.159,
+            "bcs_s_per_clip": 1.03,
+            "ccs_util": 0.7046
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.4227,
+            "bcs_s_per_clip": 0.8174,
+            "ccs_util": 0.8649
+          }
+        },
+        "total_ccs_s_per_clip": 5.4437
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af",
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af"
+          ]
+        ],
+        "boat": [
+          [
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd",
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd"
+          ]
+        ],
+        "candle": [
+          [
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9",
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9"
+          ]
+        ],
+        "fabric": [
+          [
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66",
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66"
+          ]
+        ],
+        "marble": [
+          [
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9",
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9"
+          ]
+        ],
+        "paper": [
+          [
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020",
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020"
+          ]
+        ],
+        "pendulum": [
+          [
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e",
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e"
+          ]
+        ],
+        "pour": [
+          [
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49",
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49"
+          ]
+        ],
+        "rain": [
+          [
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254",
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254"
+          ]
+        ],
+        "wheel": [
+          [
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1",
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1"
+          ]
+        ]
+      }
+    },
+    "f93b-lean": {
+      "label": "lean",
+      "present": true,
+      "prompts": 40,
+      "index_base": 217800,
+      "clips_verified": 36,
+      "exact": 36,
+      "all_exact": true,
+      "references": [
+        "baseline-01",
+        "speed-oracle-bird",
+        "speed-oracle-marble",
+        "stability-01-r01-candle",
+        "stability-01-r01-fabric",
+        "stability-01-r01-paper",
+        "stability-01-r01-pendulum",
+        "stability-01-r01-pour",
+        "stability-01-r01-rain",
+        "stability-01-r01-wheel"
+      ],
+      "interval_median_s": 2.11,
+      "interval_mean_s": 1.6628,
+      "interval_median_steady_s": 1.612,
+      "encode_job_median_s": 3.1949,
+      "sampler_job_median_s": 2.7098,
+      "decode_job_median_s": 2.6846,
+      "connector_computed_per_clip_median": 1.0,
+      "connector_reused_per_clip_median": 3.0,
+      "engine": {
+        "window_s": 56.53,
+        "prompts": 34,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.2798,
+            "bcs_s_per_clip": 1.0394,
+            "ccs_util": 0.7697
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.3304,
+            "bcs_s_per_clip": 0.9085,
+            "ccs_util": 0.8001
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 1.1343,
+            "bcs_s_per_clip": 1.0221,
+            "ccs_util": 0.6822
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.3393,
+            "bcs_s_per_clip": 0.7778,
+            "ccs_util": 0.8055
+          }
+        },
+        "total_ccs_s_per_clip": 5.0838
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af",
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af"
+          ]
+        ],
+        "boat": [
+          [
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd",
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd"
+          ]
+        ],
+        "candle": [
+          [
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9",
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9"
+          ]
+        ],
+        "fabric": [
+          [
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66",
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66"
+          ]
+        ],
+        "marble": [
+          [
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9",
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9"
+          ]
+        ],
+        "paper": [
+          [
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020",
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020"
+          ]
+        ],
+        "pendulum": [
+          [
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e",
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e"
+          ]
+        ],
+        "pour": [
+          [
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49",
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49"
+          ]
+        ],
+        "rain": [
+          [
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254",
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254"
+          ]
+        ],
+        "wheel": [
+          [
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1",
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1"
+          ]
+        ]
+      }
+    },
+    "f93b-or1": {
+      "label": "window-oracle-pass-1",
+      "present": false
+    },
+    "f93b-or2": {
+      "label": "window-oracle-pass-2",
+      "present": false
+    },
+    "f93b-wlean": {
+      "label": "window+lean",
+      "present": false
+    }
+  },
+  "context_sentry_pairs": {
+    "f93b-ctl:f93b-lean": {
+      "fixtures_expected": 10,
+      "identical": 10,
+      "passed": true,
+      "problems": []
+    }
+  },
+  "context_sentry_gate_passed": true,
+  "finished_clip_comparison_vs_1024": null,
+  "window_label": "changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)",
+  "engine_samples": 447
+}
