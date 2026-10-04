@@ -1,9 +1,79 @@
-# Packets 94 / 94b: spread the transformer over more cards (build, 2026-10-04)
+# Packets 94 / 94b / 94c: spread the transformer over more cards (build, 2026-10-04)
 
 Built offline. **Not launched.** R = `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
 No GPU was used to build or test it. Baseline and references: the short-window
 encoder plus lean conditioning, `stability-01-w93c-*`
 ([milestone](2026-10-04-milestone-window-baseline.md)).
+
+**Launch 94c.** `prepared-encoder-shard4-94c`, manifest
+`9af04d202f5c8e7031245bfe9dfa2dbf7616e51a804bbfcb8d0b878fba5722cc`, run names
+`encoder-server-shard4-94c-<mode>`, runner `scripts/run-campaign-94c.sh <mode>`.
+94 and 94b stay in place; their runners refuse.
+
+### 94b runs, and what 94c fixes
+
+94b ran on three servers. Each started and stopped cleanly with no fault, but
+no timed arm ran:
+
+- **control, rc 9:** the decode probe ran before any pipelined prompt, and it
+  needs the resident fast path's load lock, which only a pipelined prompt
+  installs (node 431).
+- **shard3-c and shard4-a, rc 11:** the component loader's `shared_identity`
+  unpacked exactly one transformer shard owner (`shard, = ...`).
+
+94c fixes:
+
+1. **Order, from what installs what:**
+   1. Text-window probe. Its loader loads the components and its text gate
+      installs the sharded graph encoder and two encode workers. It captures
+      the 1024 and window encoder graphs and needs nothing.
+   2. Serial capture pass. These are window prompts, so it needs step 1. It
+      installs the fast path and the graph-capture gate, loads the
+      transformer shards and the upsampler, and captures the sampler graphs.
+      After each prompt a coverage check (new node `LTXSamplerCaptureCoverage`,
+      read only) asks whether both workers hold every graph.
+   3. Decode probe. It needs the fast path from step 2. It builds the xpu:1
+      replica, which is a load, so it comes before the freeze while nothing
+      else runs.
+   4. Freeze. It needs steps 2 and 3. Coverage again, and every expected model
+      must be resident on its card: transformer owners per layout, text
+      encoder halves on xpu:2/3, VAEs on xpu:3, upsampler on xpu:0. This catches
+      an eviction before the freeze as well as after it. The 2 GiB floor
+      applies.
+   5. Placement probe. It needs step 4 and may not capture or load.
+   6. Timed arms. They need the replica from step 3 and the freeze from step 4.
+2. **Single-owner assumptions, searched across the shipped scripts and custom
+   nodes:**
+   - Fixed: `shared_identity` in `host_embedding_resident_node.py`. Two-way
+     still requires exactly one shard owner and records the same fields.
+     Multi-segment layouts require one owner per extra segment and record all
+     of them.
+   - Tightened: the graph gate's report check, now `check_shard_report`, also
+     requires one owner per segment.
+   - Already fail closed, and not used by any 94 arm: `ltx_block_compile.py`
+     and `ltx_multiblock_compile.py` raise unless there is exactly one shard
+     owner; `block_compile_node`/`multiblock_compile_node` require the
+     declared split.
+   - Reviewed, nothing to change: the pinned devices `xpu:2`/`xpu:3` for the
+     encoder (`graph_text_encoder_node`, `host_embedding_clip`, `ltx_text_window`),
+     `xpu:3` for native decode, `xpu:1` for the replica, the fusion,
+     concurrent-CFG, upsampler and VAE gates (all `original` in these arms),
+     and the sampler's two named streams. The extra cards are drained
+     separately (94).
+   None of these checks reads which transformer blocks share their card.
+
+**Offline dry run** (`test-packet94c-dryrun-cpu.py`). With a stand-in 48-block
+model, for each layout, it runs real lane code under the shipped ComfyUI tree:
+the component loader module (layout from the environment, the same apply_*
+call `load()` makes, the real `shared_identity` and receipt), the graph-capture
+gate checks and `validate_patcher`, the sampler's placement/residency/freeze
+logic, the decode probe's fast-path prerequisite, and the runner order against
+the built graphs. It would have caught both 94b failures. Not covered:
+ComfyUI's executor, checkpoint loading and the model manager, XPU memory, real
+graph capture, and the full `apply()` bodies of the loader, text gate, window
+probe, decode probe and freeze nodes.
+
+### 94b over 94
 
 **Launch 94b, not 94.** `prepared-encoder-shard4-94b`, manifest
 `b9e5417a9799cb750c9cd67ddfd07e308b5baca7e7975e7e518398971e3e262d`, run names
@@ -125,7 +195,7 @@ placement allowlist. Not worth it in this packet.
   `LTXSamplerCaptureFreeze` (graph `graphs/sampler-capture-freeze.json`):
   pipeline idle and **every card at least 2 GiB free**, else it refuses and the
   timed arm is skipped (recorded, no latch).
-- `scripts/run-campaign-94b.sh <control|shard3-c|shard4-a>` (94's runner refuses),
+- `scripts/run-campaign-94c.sh <control|shard3-c|shard4-a>` (94 and 94b runners refuse),
   `scripts/run-capture-freeze-94.py`, `scripts/decide-94.py`.
 - Tests: `scripts/test-packet94-shard4-cpu.py`.
 
@@ -140,11 +210,11 @@ neither capture nor load. Anything but 10/10 refuses the timed arms (exit 15).
 after the model loads. A failed candidate never blocks the control because the
 control has its own server. The runner then stops that server gracefully.
 
-## Runner, per server (94b)
+## Runner, per server (94c)
 
-text-window probe → decode probe → serial capture pass with freeze attempts
-(capture coverage on both workers, 2 GiB floor, resident snapshot; captures and
-loads frozen) → placement probe (13 pipelined prompts, all ten fixtures exact,
+text-window probe → serial capture pass with coverage checks → decode probe →
+freeze (coverage, expected residents, 2 GiB floor, resident snapshot; captures
+and loads frozen) → placement probe (13 pipelined prompts, all ten fixtures exact,
 no capture or load allowed) → timed
 `pipe-samp2-tsh-rep-wlean` against the w93c references (control 40, candidates
 80) → candidates only: if this is the fastest exact arm so far and faster than
@@ -156,11 +226,21 @@ control it gets its 160 when it runs; shard4-a gets them only if it beats both.
 
 | Server | Capture pass (base, +10 ... +70) | Placement probe | Timed | Extra |
 | --- | ---: | ---: | ---: | ---: |
-| control (two-way) | 224000 | 224300 | 224600 (40) | - |
-| shard3-c | 224900 | 225200 | 225500 (80) | 225800 (160) |
-| shard4-a | 226100 | 226400 | 226700 (80) | 227000 (160) |
+| control (two-way) | 228000 | 228300 | 228600 (40) | - |
+| shard3-c | 228900 | 229200 | 229500 (80) | 229800 (160) |
+| shard4-a | 230100 | 230400 | 230700 (80) | 231000 (160) |
 
-## Packet and gate (94b)
+## Packet and gate (94c)
+
+- `R/prepared-encoder-shard4-94c`, manifest
+  `9af04d202f5c8e7031245bfe9dfa2dbf7616e51a804bbfcb8d0b878fba5722cc`.
+- Gate (`--check-only`, 2026-10-04 14:06 UTC): passes for all three run names
+  without a receipt (rc 0). With `data/health/four-card-health-20261004T1357Z.json`
+  it passes (receipt end 13:57:49 UTC).
+- CPU tests: dry run 5/5, packet 94 tests 11/11, the layer-shard test and
+  packet 90c-93b tests pass.
+
+## Packet and gate (94b, superseded)
 
 - `R/prepared-encoder-shard4-94b`, manifest
   `b9e5417a9799cb750c9cd67ddfd07e308b5baca7e7975e7e518398971e3e262d`.
@@ -191,12 +271,12 @@ control it gets its 160 when it runs; shard4-a gets them only if it beats both.
 
 ```
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-shard4-94b
-M=b9e5417a9799cb750c9cd67ddfd07e308b5baca7e7975e7e518398971e3e262d
+P=$R/prepared-encoder-shard4-94c
+M=9af04d202f5c8e7031245bfe9dfa2dbf7616e51a804bbfcb8d0b878fba5722cc
 H=<fresh health receipt>
 # MODE=control -> PLACEMENT=two-way;  MODE=shard3-c -> shard3-c;  MODE=shard4-a -> shard4-a
-nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94b-$MODE --health-receipt $H > $R/encoder-server-shard4-94b-$MODE.log 2>&1 &
-nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94b.sh $MODE > $R/campaign-94b-$MODE.log 2>&1 &
+nohup env --default-signal=INT LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=$PLACEMENT /home/steve/.venvs/ltx25-baseline/bin/python -B $P/launch/serve-encoder.py --packet $P --manifest-sha256 $M --run-name encoder-server-shard4-94c-$MODE --health-receipt $H > $R/encoder-server-shard4-94c-$MODE.log 2>&1 &
+nohup bash /home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-94c.sh $MODE > $R/campaign-94c-$MODE.log 2>&1 &
 ```
 
 Wait for each runner to stop its server before launching the next layout.
