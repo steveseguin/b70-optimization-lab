@@ -23,6 +23,14 @@ clip's noise. With equal seeds that is invisible; with distinct seeds it
 corrupts a clip. Every `Noise` handed to the sampler here is wrapped so
 `generate_noise` runs under one process-wide lock. Same generator sequence,
 never interleaved: bit-identical by construction.
+
+Packet 96 (LTX_SAMPLER_BATCH, allowlist 1/2/4, default 1 = the packet 95 path,
+unchanged): on a batch server one sampler job carries B consecutive clips and runs
+the whole chain once as a batch of B (stage-1 sampling, latent upsample, stage-2
+sampling), then splits the result into B per-clip latents for the unchanged
+batch-1 decode. Every clip's inputs are what it would get alone, stacked (see
+ltx_sampler_batch); the batch shape is fixed (missing rows repeat the last real
+clip and are discarded); any mismatch refuses the job with a recorded reason.
 """
 import hashlib
 import json
@@ -36,6 +44,7 @@ import torch
 import ltx_pipeline as pipeline
 import ltx_gil_probe as gil
 import ltx_lean_conditioning as lean
+import ltx_sampler_batch as batching
 from encoder_diagnostics import _context
 
 gil.start_probe()   # packet 92a lock-wait probe (idempotent, never raises)
@@ -47,14 +56,26 @@ SAMPLER_MODES = pipeline.MODES + ('pipeline-lean',)
 # Packet 95: clips in flight in the sampler stage, chosen per server at launch
 # (LTX_SAMPLER_WORKERS, allowlist 2/3/4; 2 = today's two workers). Each worker
 # keeps its own per-device graph pools, capture streams and static buffers.
-SAMPLER_WORKER_CHOICES = (2, 3, 4)
+# Packet 96 adds 1 (one sampler job in flight; with a batch of B that is B clips).
+SAMPLER_WORKER_CHOICES = (1, 2, 3, 4)
 SAMPLER_WORKERS = int(os.environ.get('LTX_SAMPLER_WORKERS', '2') or '2')
 if SAMPLER_WORKERS not in SAMPLER_WORKER_CHOICES:
     raise RuntimeError('LTX_SAMPLER_WORKERS must be one of %s' % (SAMPLER_WORKER_CHOICES,))
 if SAMPLER_WORKERS != pipeline.STAGE_WORKERS.get('sample', 2):
     pipeline.set_stage_workers('sample', SAMPLER_WORKERS)
+# Packet 96: clips per sampler job, chosen per server at launch (allowlist 1/2/4; 3 is
+# refused because batch 3 failed the row-independence probe's slot and identical-row
+# tests). 1 = the packet 95 path, byte for byte.
+SAMPLER_BATCH = batching.read_batch(os.environ)
+_GROUPER = batching.Grouper(SAMPLER_BATCH)
 _PIN = [None]        # packet 95: one-shot worker name for the next pinned capture-pass job
 _failed = False
+
+
+def _shared_pool():
+    """Packet 96: LTX_SAMPLER_SHARED_POOL as the capture adapter read it at import."""
+    import ltx_graph_capture as _c
+    return _c.SHARED_POOL
 
 
 def require(value, message):
@@ -180,6 +201,44 @@ _FREEZE_DEVICES = [None]     # transformer segment devices seen by the sampler (
 MEMORY_FLOOR_BYTES = int(MEMORY_FLOOR_GIB * 2**30)
 
 
+# Packet 96: the chain check runs before the freeze. Its peak (snapshots, seeded inputs,
+# eager and replay outputs, from chain_check_budget) plus an allowance for the eager
+# blocks' own scratch must fit with a margin before it runs; afterwards its memory is
+# returned and the floor is enforced on a fresh reading.
+CHAIN_TRANSIENT_BYTES_PER_BATCH = int(0.25 * 2**30)
+CHAIN_MARGIN_BYTES = int(0.5 * 2**30)
+
+
+def chain_room(free_bytes, budget, margin=CHAIN_MARGIN_BYTES):
+    """Cards where the chain check's budgeted peak plus the margin does not fit: {card: short}."""
+    short = {}
+    for dev, need in budget.items():
+        have = free_bytes.get(dev)
+        if have is None or have < need + margin:
+            short[dev] = {'free_bytes': have, 'needed_bytes': int(need + margin)}
+    return short
+
+
+def _read_free():
+    free = {}
+    for i in range(torch.xpu.device_count()):
+        try:
+            free['xpu:%d' % i] = int(torch.xpu.mem_get_info(i)[0])
+        except Exception:  # noqa: BLE001
+            free['xpu:%d' % i] = None
+    return free
+
+
+def _release_cached():
+    """Return cached allocator blocks to the device on every card (graph pools are kept)."""
+    import gc
+    gc.collect()
+    for i in range(torch.xpu.device_count()):
+        with torch.xpu.device(i):
+            torch.xpu.synchronize(i)
+            torch.xpu.empty_cache()
+
+
 class SerialPassRequired(RuntimeError):
     """Packet 94b: before the freeze a pipelined sampler request must run alone (the
     serial capture pass). Refused with a receipt; does not latch."""
@@ -286,10 +345,46 @@ class LTXSamplerCaptureFreeze:
             except Exception:  # noqa: BLE001
                 free['xpu:%d' % i] = None
         coverage_ok, coverage = capture.capture_coverage(_sample_worker_idents(), expected=SAMPLER_WORKERS)
+        # Packet 96: on a batch server every captured sampler signature must be batch B
+        # (no batch-1 sampler graph is captured there); recorded on every server.
+        sig_batches = batching.signature_batches(capture._ROUTES, _sample_worker_idents())
+        batch_ok = SAMPLER_BATCH == 1 or sig_batches == [SAMPLER_BATCH]
         resident = resident_set()
         devices = _FREEZE_DEVICES[0] or ['xpu:0', 'xpu:1']
         missing = residents_missing(resident, devices)
-        ok, outcome = freeze_verdict(free, pipeline.busy(), coverage_ok, missing=missing)
+        ok, outcome = freeze_verdict(free, pipeline.busy(), coverage_ok and batch_ok, missing=missing)
+        # Packet 96: the whole-chain replay check per (card, worker, stage shape), with the
+        # shared graph pool on or off (same receipt shape); a mismatch refuses the freeze.
+        chain = {'skipped': 'freeze not otherwise admissible: ' + outcome}
+        free_before_chain = free
+        if ok:
+            routes = list(capture._ROUTES)
+            registries = {id(r.registry): r.registry for r in routes}
+            if len(registries) != 1:
+                chain_ok, chain = False, {'reason': '%d route registries (expected one install)' % len(registries)}
+            else:
+                registry = next(iter(registries.values()))
+                budget = capture.chain_check_budget(routes, registry, _sample_worker_idents(),
+                                                    transient_bytes=CHAIN_TRANSIENT_BYTES_PER_BATCH * SAMPLER_BATCH)
+                short = chain_room(free, budget)
+                if short:
+                    chain_ok, chain = False, {'reason': 'no room for the chain check', 'budget_bytes': budget,
+                                              'short': short}
+                    outcome_if_fail = 'chain-check-no-room'
+                else:
+                    chain_ok, chain = capture.chain_check(routes, registry, _sample_worker_idents())
+                    chain['budget_bytes'] = budget
+                    outcome_if_fail = 'chain-check-failed'
+            if not chain_ok:
+                ok, outcome = False, (outcome_if_fail if len(registries) == 1 else 'chain-check-failed')
+            # Release everything the check made, then judge the floor and residency on a fresh
+            # reading (the first reading predates the check's allocations).
+            _release_cached()
+            free = _read_free()
+            resident = resident_set()
+            missing = residents_missing(resident, devices)
+            if ok:
+                ok, outcome = freeze_verdict(free, pipeline.busy(), coverage_ok and batch_ok, missing=missing)
         if ok:
             capture.CAPTURES_FROZEN[0] = True
             capture.LOADS_FROZEN[0] = True
@@ -299,13 +394,18 @@ class LTXSamplerCaptureFreeze:
                   'loads_frozen': bool(capture.LOADS_FROZEN[0]), 'coverage': coverage,
                   'free_bytes': free,
                   'free_gib': {d: (None if v is None else round(v / 2**30, 3)) for d, v in free.items()},
+                  'free_bytes_before_chain_check': free_before_chain,
+                  'floor_judged_on': ('the reading after the chain check released its memory'
+                                      if free is not free_before_chain else 'the first reading (no chain check ran)'),
                   'floor_bytes': MEMORY_FLOOR_BYTES,
                   'reserved_gib': {'xpu:%d' % i: round(torch.xpu.memory_reserved(i) / 2**30, 3)
                                    for i in range(torch.xpu.device_count())},
                   'resident_models': [list(r) for r in resident],
                   'residents_missing': [list(m) for m in missing], 'segment_devices': devices,
                   'placement': __import__('os').environ.get('LTX_SAMPLER_PLACEMENT', 'two-way'),
-                  'sampler_workers': SAMPLER_WORKERS}
+                  'sampler_workers': SAMPLER_WORKERS, 'sampler_batch': SAMPLER_BATCH,
+                  'signature_batches': sig_batches, 'sampler_shared_pool': capture.SHARED_POOL,
+                  'chain_check': chain}
         write_json(run / ('sampler-capture-freeze-' + run_name + '.json'), report)
         return {'ui': {'text': ['capture freeze: %s' % outcome]}}
 
@@ -343,7 +443,8 @@ class LTXSamplerPin:
             _PIN[0] = name
         write_json(run / ('sampler-pin-' + run_name + '.json'),
                    {'schema': 'ltx.sampler-pin.v1', **identity, 'run_name': run_name, 'worker': worker,
-                    'worker_name': name, 'outcome': outcome, 'sampler_workers': SAMPLER_WORKERS})
+                    'worker_name': name, 'outcome': outcome, 'sampler_workers': SAMPLER_WORKERS,
+                    'sampler_batch': SAMPLER_BATCH})
         return {'ui': {'text': ['sampler pin: %s %s' % (name, outcome)]}}
 
 
@@ -370,13 +471,18 @@ class LTXSamplerCaptureCoverage:
         busy = pipeline.busy()
         executing = pipeline.running()
         outcome = 'covered' if ok and not busy else ('pipeline-busy' if busy else 'captures-incomplete')
+        sig_batches = batching.signature_batches(capture._ROUTES, _sample_worker_idents())
+        if outcome == 'covered' and SAMPLER_BATCH != 1 and sig_batches != [SAMPLER_BATCH]:
+            outcome = 'captures-wrong-batch'   # packet 96: a batch server holds batch-B graphs only
         # Packet 94f: also the read-only quiescence evidence the runner uses after a
         # failed arm (queued/unfinished jobs and jobs executing on workers).
         write_json(run / ('sampler-capture-coverage-' + run_name + '.json'),
                    {'schema': 'ltx.sampler-capture-coverage.v2', **identity, 'run_name': run_name,
                     'outcome': outcome, 'coverage': coverage, 'frozen': bool(capture.CAPTURES_FROZEN[0]),
                     'pipeline_busy': busy, 'pipeline_running': executing, 'time': time.time(),
-                    'sampler_workers': SAMPLER_WORKERS,
+                    'sampler_workers': SAMPLER_WORKERS, 'sampler_batch': SAMPLER_BATCH,
+                    'signature_batches': sig_batches, 'open_batch_group': _GROUPER.open_clips(),
+                    'sampler_shared_pool': capture.SHARED_POOL,
                     'worker_names': pipeline.worker_names('sample'),
                     'free_bytes': _free_bytes_all()})
         return {'ui': {'text': ['capture coverage: %s' % outcome]}}
@@ -518,6 +624,170 @@ def _sample_chain(clip_index, streams,
     return video_b, audio_b
 
 
+# --- packet 96: one sampler job for B consecutive clips ------------------------------
+def _refusal_receipt(job_key, reason, extra=None):
+    """Recorded reason for a refused batch job (evidence; never raises)."""
+    try:
+        run = Path(os.environ['LTX_ENCODER_RUN_DIR'])
+        write_json(run / ('sampler-batch-refused-%d-%d.json' % (job_key, int(time.time() * 1000))),
+                   {'schema': 'ltx.sampler-batch-refused.v1', 'job': job_key, 'batch': SAMPLER_BATCH,
+                    'reason': str(reason)[:2000], 'time': time.time(), **(extra or {})})
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _batch_inputs(chains):
+    """Fail-closed checks on the B clips' sampler inputs before anything runs."""
+    need = batching.need
+    first = chains[0]
+    patcher = getattr(first['guider_a'], 'model_patcher', None)
+    need(patcher is not None, 'guider has no model patcher')
+    for ch in chains:
+        need(getattr(ch['guider_a'], 'model_patcher', None) is patcher and
+             getattr(ch['guider_b'], 'model_patcher', None) is patcher, 'clips use different patchers')
+        need(ch['upscale_model'] is first['upscale_model'] and ch['vae'] is first['vae'],
+             'clips use different upsampler models or VAEs')
+    sig_a = batching.lockstep_sigmas([ch['sigmas_a'] for ch in chains], 'stage a')
+    sig_b = batching.lockstep_sigmas([ch['sigmas_b'] for ch in chains], 'stage b')
+    return patcher, sig_a, sig_b
+
+
+def sample_batch(job, lean_mode):
+    """Exactly the sealed chain 377 -> 344 -> 367 -> 348 -> 340 -> 368 -> 369, once, for B
+    rows. Returns {clip_index: (video_latent, audio_latent)} for the real rows; fill rows
+    are computed (fixed shape) and discarded."""
+    import comfy.samplers
+    from comfy.k_diffusion.sampling import default_noise_sampler
+    import ltx_graph_capture as capture
+    key, rows, batch = job['key'], job['rows'], job['batch']
+    chains = [ch for _c, ch in rows]
+    real = [(slot, c) for slot, (c, _ch) in enumerate(rows) if c is not None]
+    concat = _node('LTXVConcatAVLatent')
+    separate = _node('LTXVSeparateAVLatent')
+    upsampler = _node('LTXVLatentUpsampler')
+    sampler_node = _node('SamplerCustomAdvanced')
+    job_info = {'job': key, 'batch': batch, 'rows': [c for c, _ch in rows], 'fill_slots': job['fill_slots'],
+                'fill_of': job['fill_of'], 'mode': 'pipeline-lean' if lean_mode else 'pipeline'}
+    for slot, c in real:
+        ch = rows[slot][1]
+        pipeline.record_fingerprint(('sample-inputs', c), {
+            'guider_a_conds': pipeline.cond_fingerprint(getattr(ch['guider_a'], 'original_conds', None)),
+            'guider_b_conds': pipeline.cond_fingerprint(getattr(ch['guider_b'], 'original_conds', None)),
+            'noise_seeds': [getattr(ch['noise_a'], 'seed', None), getattr(ch['noise_b'], 'seed', None)],
+            'video_latent': pipeline.cond_fingerprint(ch['video_latent']),
+            'audio_latent': pipeline.cond_fingerprint(ch['audio_latent']),
+            'batch_job': key, 'slot': slot})
+        pipeline.record_fingerprint(('batch-job', c), {**job_info, 'slot': slot})
+
+    def refuse(reason):
+        raise batching.BatchRefused(reason)
+
+    capture.set_pipelined(True)
+    streams = [capture.thread_stream(torch.device('xpu', i)) for i in range(2)]
+    extra_streams = [capture.thread_stream(torch.device(d)) for d in placement_devices(chains[0]['guider_a'])
+                     if d not in ('xpu:0', 'xpu:1')]
+    lean.begin_clip(key, lean_mode, batch=batch, observer=batching.make_forward_guard(batch, refuse))
+    ctx_summary = None
+    try:
+        patcher, sig_a, sig_b = _batch_inputs(chains)
+        with _Active(), torch.xpu.stream(streams[0]):
+            torch.xpu.set_stream(streams[1])
+            marks = []
+
+            def mark(name):
+                events = []
+                for st in streams:
+                    ev = torch.xpu.Event(enable_timing=True)
+                    ev.record(st)
+                    events.append(ev)
+                marks.append((name, time.perf_counter(), events))
+
+            mark('start')
+            video_in = batching.stack_latent_dicts([ch['video_latent'] for ch in chains], 'stage-a video latent')
+            audio_in = batching.stack_latent_dicts([ch['audio_latent'] for ch in chains], 'stage-a audio latent')
+            av = concat.execute(video_latent=video_in, audio_latent=audio_in).result[0]
+            ok, flags = batching.rows_uniform_nonzero(av['samples'], batch)
+            batching.need(ok, 'stage a: rows disagree on an all-zero latent %s (the latent shift is batch-wide)' % flags)
+            mark('concat_a')
+            lean.set_stage('a')
+            stage_a = sampler_node.execute(
+                noise=batching.BatchNoise([ch['noise_a'] for ch in chains], _NOISE_LOCK),
+                guider=batching.batch_guider([ch['guider_a'] for ch in chains], 'stage a', lean.register_batch_raw),
+                sampler=batching.batched_ksampler([ch['sampler_a'] for ch in chains],
+                                                  [getattr(ch['noise_a'], 'seed', None) for ch in chains],
+                                                  comfy.samplers.KSAMPLER, default_noise_sampler),
+                sigmas=sig_a, latent_image=av).result[0]
+            mark('sample_a')
+            video_a, audio_a = separate.execute(av_latent=stage_a).result[:2]
+            mark('separate_a')
+            upscaled = upsampler.execute(samples=video_a, upscale_model=chains[0]['upscale_model'],
+                                         vae=chains[0]['vae']).result[0]
+            mark('upsample')
+            av2 = concat.execute(video_latent=upscaled, audio_latent=audio_a).result[0]
+            ok, flags = batching.rows_uniform_nonzero(av2['samples'], batch)
+            batching.need(ok, 'stage b: rows disagree on an all-zero latent %s (the latent shift is batch-wide)' % flags)
+            mark('concat_b')
+            lean.set_stage('b')
+            stage_b = sampler_node.execute(
+                noise=batching.BatchNoise([ch['noise_b'] for ch in chains], _NOISE_LOCK),
+                guider=batching.batch_guider([ch['guider_b'] for ch in chains], 'stage b', lean.register_batch_raw),
+                sampler=batching.batched_ksampler([ch['sampler_b'] for ch in chains],
+                                                  [getattr(ch['noise_b'], 'seed', None) for ch in chains],
+                                                  comfy.samplers.KSAMPLER, default_noise_sampler),
+                sigmas=sig_b, latent_image=av2).result[0]
+            mark('sample_b')
+            video_b, audio_b = separate.execute(av_latent=stage_b).result[:2]
+            mark('separate_b')
+    except batching.BatchRefused as error:
+        _refusal_receipt(key, error, {'rows': job_info['rows']})
+        raise
+    finally:
+        for st in streams + extra_streams:
+            st.synchronize()
+        capture.set_pipelined(False)
+        ctx_summary = lean.end_clip()
+    phases = {}
+    for (name, t0, ev0), (next_name, t1, ev1) in zip(marks, marks[1:]):
+        phases[name + '->' + next_name] = {'cpu_s': round(t1 - t0, 4),
+                                           'xpu0_ms': round(ev0[0].elapsed_time(ev1[0]), 2),
+                                           'xpu1_ms': round(ev0[1].elapsed_time(ev1[1]), 2)}
+    v_all, a_all = video_b['samples'], audio_b['samples']
+    batching.need(v_all.shape[0] == batch and a_all.shape[0] == batch,
+                  'sampler output has %d/%d rows, batch %d' % (v_all.shape[0], a_all.shape[0], batch))
+    out = {}
+    for slot, c in real:
+        v_s = v_all[slot:slot + 1].clone()
+        a_s = a_all[slot:slot + 1].clone()
+        video_k = {**video_b, 'samples': v_s}
+        audio_k = {**audio_b, 'samples': a_s}
+        sentry = {'video_finite': bool(torch.isfinite(v_s).all().item()),
+                  'audio_finite': bool(torch.isfinite(a_s).all().item()),
+                  'video_ptr': int(v_s.data_ptr()), 'audio_ptr': int(a_s.data_ptr()),
+                  'batch_job': key, 'slot': slot}
+        for name, tensor in (('video', v_s), ('audio', a_s)):
+            sentry[name + '_sha256'] = (hashlib.sha256(tensor.detach().to('cpu', copy=True)
+                                                       .view(torch.uint8).numpy().tobytes()).hexdigest()
+                                        if sentry[name + '_finite'] else None)
+        rows_a = (ctx_summary or {}).get('stage_a_row_sha256s') or [None] * batch
+        rows_b = (ctx_summary or {}).get('stage_b_row_sha256s') or [None] * batch
+        pipeline.record_fingerprint(('context-sentry', c), {
+            'clip_index': c, 'lean': bool(lean_mode), 'batch_job': key, 'slot': slot,
+            'connector_computed': (ctx_summary or {}).get('connector_computed'),
+            'connector_reused': (ctx_summary or {}).get('connector_reused'),
+            'connector_passthrough': (ctx_summary or {}).get('connector_passthrough'),
+            'connector_scope': 'per job (all B rows); each row computed at batch 1',
+            'stage_a_context_sha256': rows_a[slot], 'stage_b_context_sha256': rows_b[slot],
+            'forwards_per_stage': (ctx_summary or {}).get('forwards_per_stage')})
+        pipeline.record_fingerprint(('phases', c), phases)
+        pipeline.record_fingerprint(('sample-output', c), sentry)
+        out[c] = (video_k, audio_k)
+    for slot, c in real:
+        done_marker('sample', c, {'finite': pipeline.fingerprint(('sample-output', c))['video_finite'] and
+                                  pipeline.fingerprint(('sample-output', c))['audio_finite'],
+                                  'batch_job': key, 'slot': slot, 'batch': batch})
+    return out
+
+
 class LTXPipelineSampler:
     @classmethod
     def INPUT_TYPES(cls):
@@ -530,8 +800,13 @@ class LTXPipelineSampler:
             'upscale_model': ('LATENT_UPSCALE_MODEL',), 'vae': ('VAE',),
             'mode': (list(SAMPLER_MODES),),
             'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
-            'depth': ('INT', {'default': 2, 'min': 1, 'max': pipeline.MAX_PENDING}),
-            'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+            # Packet 96: batch arms need deeper emission (batch 1 still enforces MAX_PENDING).
+            'depth': ('INT', {'default': 2, 'min': 1, 'max': batching.MAX_BATCH_DEPTH}),
+            'run_name': ('STRING', {'default': 'assign-unique-request-name'})},
+            # Packet 96, batch arms only (absent from every batch-1 graph): the batch the
+            # arm was built for, and 1 on the last prompt of a stream (flush the open group).
+            'optional': {'batch': ('INT', {'default': 1, 'min': 1, 'max': 4}),
+                         'stream_last': ('INT', {'default': 0, 'min': 0, 'max': 1})}}
 
     RETURN_TYPES = ('LATENT', 'LATENT', 'INT')
     RETURN_NAMES = ('video_latent', 'audio_latent', 'emitted_index')
@@ -550,9 +825,21 @@ class LTXPipelineSampler:
             pipeline.clear()
             raise
 
-    def _apply(self, mode, clip_index, depth, run_name, **chain):
+    def _apply(self, mode, clip_index, depth, run_name, batch=None, stream_last=None, **chain):
         require(not _failed, 'Previous pipeline failure; halt submissions and inspect evidence')
         require(mode in SAMPLER_MODES, 'Only preregistered modes are admitted')
+        # Packet 96: an arm built for one batch size never runs on a server of another.
+        if SAMPLER_BATCH == 1:
+            require(batch is None and stream_last is None,
+                    'Batch arm (batch=%r) sent to a batch-1 server; refused' % (batch,))
+        else:
+            require(batch == SAMPLER_BATCH, 'Arm built for batch %r sent to a batch-%d server; refused'
+                    % (batch, SAMPLER_BATCH))
+            require(mode != 'original', 'The prompt-thread sampler is batch 1; refused on a batch server')
+            require(batching.depth_ok(depth, SAMPLER_BATCH),
+                    'Depth %r cannot serve batch %d (needs %d..%d)' % (depth, SAMPLER_BATCH,
+                                                                     max(1, batching.serial_depth(SAMPLER_BATCH)),
+                                                                     batching.MAX_BATCH_DEPTH))
         require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
                 'Unsafe request name')
         run, identity = _context()
@@ -575,6 +862,9 @@ class LTXPipelineSampler:
             # server, so a sampler capture can never overlap encode or decode work.
             import ltx_graph_capture as _cap
             admitted, why = serial_admission(_cap.CAPTURES_FROZEN[0], pipeline.busy(), _pending_prompts())
+            if admitted and SAMPLER_BATCH != 1 and not _cap.CAPTURES_FROZEN[0] and not stream_last:
+                # Packet 96: before the freeze each batch job is submitted by one prompt alone.
+                admitted, why = False, 'a batch request before the freeze must be the last of its stream'
             if not admitted:
                 refusal = {'schema': 'ltx.pipeline-sampler-request.v1', **identity, 'run_name': run_name,
                            'mode': mode, 'clip_index': clip_index, 'passed': False,
@@ -582,7 +872,8 @@ class LTXPipelineSampler:
                 write_json(run / ('pipeline-sampler-' + run_name + '.json'), refusal)
                 raise SerialPassRequired(refusal['refused'])
         report = {'schema': 'ltx.pipeline-sampler-request.v1', **identity, 'run_name': run_name,
-                  'mode': mode, 'clip_index': clip_index, 'depth': depth,
+                  'mode': mode, 'clip_index': clip_index, 'depth': depth, 'sampler_batch': SAMPLER_BATCH,
+                  'sampler_shared_pool': _shared_pool(),
                   'extension_sha256s': {'pipeline_sampler_node.py': actual,
                                         'ltx_lean_conditioning.py': lean_sha},
                   'claim': 'every clip is sampled exactly once by its own sampler, from its own '
@@ -607,6 +898,10 @@ class LTXPipelineSampler:
                 # arm run before it never sees the shadow).
                 report['sentry_installed_now'] = lean.install_sentry(patcher.model.diffusion_model)
                 _FREEZE_DEVICES[0] = placement_devices(chain['guider_a']) or ['xpu:0', 'xpu:1']
+                if SAMPLER_BATCH != 1:
+                    # Packet 96: the per-row connector split lives in the memo shadow, so a
+                    # batch server installs it in every pipelined mode (lean or not).
+                    report['batch_rows_installed_now'] = lean.install_batch_rows(patcher.model.diffusion_model)
                 if mode == 'pipeline-lean':
                     report['lean'] = {'memo_installed_now': lean.install_memo(patcher.model.diffusion_model),
                                       'claim': 'connector pass computed once per clip and reused only for '
@@ -624,9 +919,13 @@ class LTXPipelineSampler:
                 _PIN[0] = None
                 report['sampler_workers'] = SAMPLER_WORKERS
                 report['pinned_worker'] = target
-                out, detail = pipeline.run_behind(
-                    'sample', clip_index, depth,
-                    lambda: sample_clip(clip_index, lean_mode=lean_mode, **chain), target=target)
+                if SAMPLER_BATCH != 1:
+                    out, detail = self._batch_step(report, mode, clip_index, depth, bool(stream_last),
+                                                   lean_mode, chain, target)
+                else:
+                    out, detail = pipeline.run_behind(
+                        'sample', clip_index, depth,
+                        lambda: sample_clip(clip_index, lean_mode=lean_mode, **chain), target=target)
                 # The worker fingerprints the clip's actual sample inputs at
                 # execution time; tie the emitted clip's pair to this receipt,
                 # together with the conditioning fingerprint the encode stage
@@ -640,6 +939,8 @@ class LTXPipelineSampler:
                     detail['emitted_conditioning_fingerprint'] = pipeline.fingerprint(('encode', emitted))
                     detail['emitted_phases'] = pipeline.fingerprint(('phases', emitted))
                     detail['emitted_context_sentry'] = pipeline.fingerprint(('context-sentry', emitted))
+                    if SAMPLER_BATCH != 1:
+                        detail['emitted_batch_job'] = pipeline.fingerprint(('batch-job', emitted))
                     # Packet 90: compare the emitted clip's bytes against the
                     # worker-side sentry recorded when its streams drained. A
                     # change between the two reads is in-transit corruption
@@ -708,6 +1009,42 @@ class LTXPipelineSampler:
                 report['gil'] = 'unavailable: ' + repr(error)[:200]
             write_json(run / ('pipeline-sampler-' + run_name + '.json'), report)
         return (out[0], out[1], emitted)
+
+    def _batch_step(self, report, mode, clip_index, depth, stream_last, lean_mode, chain, target):
+        """Packet 96: deposit this clip into the open group; submit the group as one job when
+        it holds B clips (or this prompt ends its stream: fill rows repeat the last real
+        clip); then emit clip `clip_index - depth` from the job that holds it."""
+        try:
+            job = _GROUPER.deposit(clip_index, dict(chain), (mode, depth, SAMPLER_BATCH), stream_last)
+        except batching.BatchRefused as error:
+            report['refused'] = 'batch grouping: %s' % error
+            raise
+        info = {'deposited_clip': clip_index, 'stream_last': stream_last, 'open_group': _GROUPER.open_clips(),
+                'claim': 'one job samples B consecutive clips as one batch; each row gets exactly its own '
+                         'clip\'s noise draws, conditioning (connector at batch 1 per clip) and sigmas; '
+                         'missing rows repeat the last real clip and are discarded; nothing crosses clips'}
+        if job is not None:
+            require(pipeline.submit('sample', job['key'], lambda job=job: sample_batch(job, lean_mode), target=target),
+                    'sample job already exists for clip %d: stale index from an earlier stream' % job['key'])
+            info['submitted_job'] = {'job': job['key'], 'rows': [c for c, _ in job['rows']],
+                                     'fill_slots': job['fill_slots'], 'target': target}
+        report['batch'] = info
+        emit = batching.emission_index(clip_index, depth)
+        key = _GROUPER.job_of(emit) if emit >= 0 else None
+        if key is None:
+            return None, {'emitted_index': -1, 'primed': False, 'fill': True, 'queued_ahead': True,
+                          'stage_seconds': 0.0, 'pending_after': pipeline.pending('sample'),
+                          'submitted_job_clips': (job or {}).get('clips', [])}
+        value, detail = pipeline.peek('sample', key)
+        require(emit in value, 'Batch job %d returned no latents for clip %d' % (key, emit))
+        out = value[emit]
+        if _GROUPER.emitted(emit):
+            pipeline.collect('sample', key)          # every real clip of the job emitted: release it
+            detail['job_released'] = True
+        detail.update({'emitted_index': emit, 'primed': True, 'batch_job': key,
+                       'pending_after': pipeline.pending('sample'),
+                       'submitted_job_clips': (job or {}).get('clips', [])})
+        return out, detail
 
 
 NODE_CLASS_MAPPINGS = {'LTXPipelineSampler': LTXPipelineSampler,

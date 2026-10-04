@@ -101,11 +101,15 @@ _QUEUE_EVENT = threading.Condition(_LOCK)
 
 def set_stage_workers(stage, count):
     """Raise a stage's worker count (packet 91: a second decode worker for the
-    xpu:1 replica). Only increases are admitted: a running worker is never
-    retired, so a lower count could not be honoured."""
+    xpu:1 replica). Only increases are admitted once the stage has a live
+    worker: a running worker is never retired, so a lower count could not be
+    honoured. Packet 96: before the stage's first worker starts, any count from
+    1 is admitted (one sampler job in flight)."""
     with _QUEUE_EVENT:
         require(stage in STAGES, 'Unknown pipeline stage: ' + repr(stage))
-        require(isinstance(count, int) and STAGE_WORKERS.get(stage, 1) <= count <= MAX_PENDING,
+        started = any(w.is_alive() for w in _STAGES.get(stage, {}).get('workers', []))
+        floor = STAGE_WORKERS.get(stage, 1) if started else 1
+        require(isinstance(count, int) and floor <= count <= MAX_PENDING,
                 'Stage workers may only increase, up to MAX_PENDING')
         STAGE_WORKERS[stage] = count
 

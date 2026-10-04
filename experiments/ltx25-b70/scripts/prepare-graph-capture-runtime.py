@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-workers-95'
+OUTPUT = ROOT / 'prepared-encoder-batch-96'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -125,12 +125,22 @@ COVERAGE_GRAPH = 'graphs/sampler-capture-coverage.json'
 COVERAGE_NODE = '481'
 WINDOW_LABEL = 'changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)'
 SAMPLER_DEPTH_OVERRIDES = {'pipe-samp2-tsh-rep-wlean-s3': 3, 'pipe-samp2-tsh-rep-wlean-s4': 4}
+# Packet 96: one sampler worker at batch 1 (-s1), and the batch arms. Capture arms
+# (tsh-win-b<B>) and reference/proof arms (-b<B>-ref) use the serial depth B-1 (a job
+# completes before the next starts); timed arms -b<B>-w<W> use (W+1)*B-1 (W jobs in
+# flight plus one queued). The batch arms' sampler node also carries 'batch' (the batch
+# the arm was built for) and 'stream_last' (set to 1 by the client on a stream's last prompt).
+SAMPLER_DEPTH_OVERRIDES_96 = {'pipe-samp2-tsh-rep-wlean-s1': 1, 'pipe-samp2-tsh-win-b2': 1, 'pipe-samp2-tsh-rep-wlean-b2-ref': 1, 'pipe-samp2-tsh-rep-wlean-b2-w1': 3, 'pipe-samp2-tsh-rep-wlean-b2-w2': 5, 'pipe-samp2-tsh-rep-wlean-b2-w3': 7, 'pipe-samp2-tsh-rep-wlean-b2-w4': 9, 'pipe-samp2-tsh-win-b4': 3, 'pipe-samp2-tsh-rep-wlean-b4-ref': 3, 'pipe-samp2-tsh-rep-wlean-b4-w1': 7, 'pipe-samp2-tsh-rep-wlean-b4-w2': 11, 'pipe-samp2-tsh-rep-wlean-b4-w3': 15, 'pipe-samp2-tsh-rep-wlean-b4-w4': 19}
+SAMPLER_BATCH_ARMS = {'pipe-samp2-tsh-win-b2': 2, 'pipe-samp2-tsh-rep-wlean-b2-ref': 2, 'pipe-samp2-tsh-rep-wlean-b2-w1': 2, 'pipe-samp2-tsh-rep-wlean-b2-w2': 2, 'pipe-samp2-tsh-rep-wlean-b2-w3': 2, 'pipe-samp2-tsh-rep-wlean-b2-w4': 2, 'pipe-samp2-tsh-win-b4': 4, 'pipe-samp2-tsh-rep-wlean-b4-ref': 4, 'pipe-samp2-tsh-rep-wlean-b4-w1': 4, 'pipe-samp2-tsh-rep-wlean-b4-w2': 4, 'pipe-samp2-tsh-rep-wlean-b4-w3': 4, 'pipe-samp2-tsh-rep-wlean-b4-w4': 4}
+BATCH_MODULE = 'ltx_sampler_batch.py'
 PIN_GRAPH = 'graphs/sampler-pin.json'
 PIN_NODE = '483'
 TEXT_MODE_OVERRIDES = {'pipe-samp2-tsh-win': 'pipeline-window',
                        'pipe-samp2-tsh-rep-wlean-s3': 'pipeline-window',
                        'pipe-samp2-tsh-rep-wlean-s4': 'pipeline-window',
                        'pipe-samp2-tsh-rep-wlean': 'pipeline-window'}
+# Packet 96: every new arm uses the window encoder.
+TEXT_MODE_OVERRIDES.update({_arm: 'pipeline-window' for _arm in SAMPLER_DEPTH_OVERRIDES_96})
 SAMPLER_NODE = '428'
 UPS_ADAPTER = 'ltx_graph_upsampler.py'
 UPS_NODE_FILE = 'graph_upsampler_node.py'
@@ -200,7 +210,21 @@ ARMS = (
     ('pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
     # Packet 95: the same arm with three or four sampler clips in flight (sampler depth 3/4).
     ('pipe-samp2-tsh-rep-wlean-s3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
-    ('pipe-samp2-tsh-rep-wlean-s4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),)
+    ('pipe-samp2-tsh-rep-wlean-s4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    # Packet 96: one sampler worker (batch 1), and the batch-2 / batch-4 arms.
+    ('pipe-samp2-tsh-rep-wlean-s1', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-win-b2', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b2-ref', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b2-w1', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b2-w2', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b2-w3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b2-w4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-win-b4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b4-ref', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b4-w1', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b4-w2', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b4-w3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-b4-w4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),)
 VAE_NODE = '423'
 
 
@@ -323,7 +347,9 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-samp2-tsh', 'pipe-samp2-tsh-rep', 'pipe-samp2-tsh-mov',
                           'pipe-samp2-tsh-child', 'pipe-samp2-tsh-rep-lean', 'pipe-samp2-tsh-win',
                           'pipe-samp2-tsh-rep-wlean', 'pipe-samp2-tsh-rep-wlean-s3',
-                          'pipe-samp2-tsh-rep-wlean-s4')}
+                          'pipe-samp2-tsh-rep-wlean-s4') + ('pipe-samp2-tsh-rep-wlean-s1', 'pipe-samp2-tsh-win-b2', 'pipe-samp2-tsh-rep-wlean-b2-ref', 'pipe-samp2-tsh-rep-wlean-b2-w1', 'pipe-samp2-tsh-rep-wlean-b2-w2', 'pipe-samp2-tsh-rep-wlean-b2-w3', 'pipe-samp2-tsh-rep-wlean-b2-w4', 'pipe-samp2-tsh-win-b4', 'pipe-samp2-tsh-rep-wlean-b4-ref', 'pipe-samp2-tsh-rep-wlean-b4-w1', 'pipe-samp2-tsh-rep-wlean-b4-w2', 'pipe-samp2-tsh-rep-wlean-b4-w3', 'pipe-samp2-tsh-rep-wlean-b4-w4')}
+    # Packet 96: the batched-sampler helper module.
+    added |= {'source/scripts/ltx_sampler_batch.py'}
     # Packet 91: the replica-placement module, the probe graph and its pinned fixtures.
     added |= {'source/scripts/ltx_decode_replica.py', 'graphs/decode-replica-probe.json',
               'probe/decode-replica-fixtures.json'}
@@ -519,14 +545,46 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['pipe-samp2-tsh-win', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh-rep-wlean-s3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
-                     ['pipe-samp2-tsh-rep-wlean-s4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast']]
+                     ['pipe-samp2-tsh-rep-wlean-s4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-s1', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-win-b2', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b2-ref', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b2-w1', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b2-w2', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b2-w3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b2-w4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-win-b4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b4-ref', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b4-w1', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b4-w2', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b4-w3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-b4-w4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
     text_overrides = {'pipe-samp2-tsh-win': 'pipeline-window', 'pipe-samp2-tsh-rep-wlean': 'pipeline-window',
                       'pipe-samp2-tsh-rep-wlean-s3': 'pipeline-window', 'pipe-samp2-tsh-rep-wlean-s4': 'pipeline-window'}
     sampler_depths = {'pipe-samp2-tsh-rep-wlean-s3': 3, 'pipe-samp2-tsh-rep-wlean-s4': 4}
     require(manifest['sampler_workers']['sampler_depths'] == sampler_depths and
-            manifest['sampler_workers']['choices'] == [2, 3, 4] and
+            manifest['sampler_workers']['choices'] == [1, 2, 3, 4] and
             manifest['sampler_workers']['environment'] == 'LTX_SAMPLER_WORKERS', 'Sampler worker contract changed')
+    # Packet 96: the batch arms and the one-worker arm (depths), and the batch contract.
+    batch_depths = {'pipe-samp2-tsh-rep-wlean-s1': 1, 'pipe-samp2-tsh-win-b2': 1, 'pipe-samp2-tsh-rep-wlean-b2-ref': 1, 'pipe-samp2-tsh-rep-wlean-b2-w1': 3, 'pipe-samp2-tsh-rep-wlean-b2-w2': 5, 'pipe-samp2-tsh-rep-wlean-b2-w3': 7, 'pipe-samp2-tsh-rep-wlean-b2-w4': 9, 'pipe-samp2-tsh-win-b4': 3, 'pipe-samp2-tsh-rep-wlean-b4-ref': 3, 'pipe-samp2-tsh-rep-wlean-b4-w1': 7, 'pipe-samp2-tsh-rep-wlean-b4-w2': 11, 'pipe-samp2-tsh-rep-wlean-b4-w3': 15, 'pipe-samp2-tsh-rep-wlean-b4-w4': 19}
+    batch_arms = {'pipe-samp2-tsh-win-b2': 2, 'pipe-samp2-tsh-rep-wlean-b2-ref': 2, 'pipe-samp2-tsh-rep-wlean-b2-w1': 2, 'pipe-samp2-tsh-rep-wlean-b2-w2': 2, 'pipe-samp2-tsh-rep-wlean-b2-w3': 2, 'pipe-samp2-tsh-rep-wlean-b2-w4': 2, 'pipe-samp2-tsh-win-b4': 4, 'pipe-samp2-tsh-rep-wlean-b4-ref': 4, 'pipe-samp2-tsh-rep-wlean-b4-w1': 4, 'pipe-samp2-tsh-rep-wlean-b4-w2': 4, 'pipe-samp2-tsh-rep-wlean-b4-w3': 4, 'pipe-samp2-tsh-rep-wlean-b4-w4': 4}
+    for name in batch_depths:
+        text_overrides[name] = 'pipeline-window'
+    spool = manifest['sampler_shared_pool']
+    require(spool['environment'] == 'LTX_SAMPLER_SHARED_POOL' and spool['choices'] == [0, 1] and
+            spool['default'] == 0 and spool['adapter_sha256'] == manifest['extension_sha256s']['ltx_graph_capture.py'],
+            'Sampler shared-pool contract changed')
+    sb = manifest['sampler_batch']
+    require(sb['environment'] == 'LTX_SAMPLER_BATCH' and sb['choices'] == [1, 2, 4] and sb['default'] == 1 and
+            sb['sampler_depths'] == batch_depths and sb['batch_arms'] == batch_arms and
+            sb['module_sha256'] == manifest['extension_sha256s']['ltx_sampler_batch.py'],
+            'Sampler batch contract changed')
+    for name, b in batch_arms.items():
+        want = b - 1 if ('-ref' in name or 'tsh-win-b' in name) else (int(name.rsplit('-w', 1)[1]) + 1) * b - 1
+        require(batch_depths[name] == want, 'Batch arm depth is not the preregistered formula: ' + name)
+    all_depths = dict(sampler_depths)
+    all_depths.update(batch_depths)
     pin = json.loads(safe_path(packet, 'graphs/sampler-pin.json').read_text())
     require(pin == {'483': {'class_type': 'LTXSamplerPin', 'inputs': {
                 'worker': 0, 'run_name': 'assign-unique-request-name'}}}, 'Sampler pin graph changed')
@@ -575,13 +633,17 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
         if samp_mode != 'original':
             require(all(k not in graph for k in ('377', '344', '367', '348', '340', '368', '369')),
                     'Pipelined-sampler arm still carries the sealed sampler chain')
+            if arm in batch_arms:
+                # Packet 96: the batch arms' two extra sampler inputs, nothing else.
+                require(graph['428']['inputs'].pop('batch') == batch_arms[arm] and
+                        graph['428']['inputs'].pop('stream_last') == 0, 'Batch sampler inputs changed')
             require(graph.pop('428') == {'class_type': 'LTXPipelineSampler', 'inputs': {
                     'noise_a': ['339', 0], 'guider_a': ['388', 0], 'sampler_a': ['352', 0],
                     'sigmas_a': ['404', 0], 'noise_b': ['338', 0], 'guider_b': ['391', 0],
                     'sampler_b': ['341', 0], 'sigmas_b': ['395', 0],
                     'video_latent': ['356', 0], 'audio_latent': ['366', 0],
                     'upscale_model': ['420', 4], 'vae': ['420', 2],
-                    'mode': samp_mode, 'clip_index': 0, 'depth': sampler_depths.get(arm, 2),
+                    'mode': samp_mode, 'clip_index': 0, 'depth': all_depths.get(arm, 2),
                     'run_name': 'assign-unique-request-name'}}, 'Pipelined sampler node changed')
             require(graph['426']['inputs']['video_latent'] == ['428', 0] and
                     graph['426']['inputs']['audio_latent'] == ['428', 1] and
@@ -816,7 +878,7 @@ def build_checker(text):
                                        "              'resident_fastpath_node.py',\n"
                                        "              'av_model.py', 'ltx_decode_replica.py', 'ltx_gil_probe.py',\n"
                                        "              'ltx_decode_child.py', 'ltx_text_window.py',\n"
-                                       "              'ltx_lean_conditioning.py')", 1)
+                                       "              'ltx_lean_conditioning.py', 'ltx_sampler_batch.py')", 1)
     old_nodes = "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}"
     require(updated.count(old_nodes) == 1, 'Unexpected NODES layout')
     updated = updated.replace(old_nodes, "         'ltx_host_embedding_lab': 'host_embedding_resident_node.py',\n"
@@ -920,7 +982,7 @@ def main():
                                (UPS_ADAPTER, None), (UPS_NODE_FILE, UPS_NODE_DIR),
                                (PHASE_NODE_FILE, PHASE_NODE_DIR), (FAST_NODE_FILE, FAST_NODE_DIR),
                                (REPLICA_ADAPTER, None), (GIL_PROBE, None), (CHILD_MODULE, None),
-                               (WINDOW_MODULE, None), (LEAN_MODULE, None)):
+                               (WINDOW_MODULE, None), (LEAN_MODULE, None), (BATCH_MODULE, None)):
         src = LANE / 'scripts' / src_name
         require(src.is_file(), 'Missing prepared source: ' + str(src))
         ast.parse(src.read_text())
@@ -1047,8 +1109,11 @@ def main():
                     'sampler_b': ['341', 0], 'sigmas_b': ['395', 0],
                     'video_latent': ['356', 0], 'audio_latent': ['366', 0],
                     'upscale_model': [UPS_NODE, 0], 'vae': ['420', 2],
-                    'mode': samp_mode, 'clip_index': 0, 'depth': SAMPLER_DEPTH_OVERRIDES.get(arm, SAMPLER_DEPTH),
+                    'mode': samp_mode, 'clip_index': 0,
+                    'depth': SAMPLER_DEPTH_OVERRIDES.get(arm, SAMPLER_DEPTH_OVERRIDES_96.get(arm, SAMPLER_DEPTH)),
                     'run_name': 'assign-unique-request-name'}}
+                if arm in SAMPLER_BATCH_ARMS:
+                    graph[SAMPLER_NODE]['inputs'].update({'batch': SAMPLER_BATCH_ARMS[arm], 'stream_last': 0})
                 graph[DECODE_NODE]['inputs']['video_latent'] = [SAMPLER_NODE, 0]
                 graph[DECODE_NODE]['inputs']['audio_latent'] = [SAMPLER_NODE, 1]
                 # The sampler emits the clip index it actually released (or -1
@@ -1169,7 +1234,7 @@ def main():
               'source/scripts/' + CHILD_MODULE, CHILD_PROBE_GRAPH, CHILD_STOP_GRAPH,
               'source/scripts/' + WINDOW_MODULE, 'source/scripts/' + LEAN_MODULE,
               WINDOW_PROBE_GRAPH, WINDOW_PROMPTS, PROV + LAUNCHER, FREEZE_GRAPH,
-              COVERAGE_GRAPH, PIN_GRAPH}
+              COVERAGE_GRAPH, PIN_GRAPH, 'source/scripts/' + BATCH_MODULE}
     added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
               for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
@@ -1207,7 +1272,8 @@ def main():
     for src_name in (ADAPTER, NODE, VAE_ADAPTER, VAE_NODE_FILE, FUSE_ADAPTER, FUSE_NODE_FILE,
                      TEXT_ADAPTER, TEXT_SHARD, TEXT_NODE_FILE, PIPE_ADAPTER, PIPE_NODE_FILE, PDEC_NODE_FILE,
                      CCFG_NODE_FILE, PSAMP_NODE_FILE, UPS_ADAPTER, UPS_NODE_FILE, PHASE_NODE_FILE,
-                     FAST_NODE_FILE, REPLICA_ADAPTER, GIL_PROBE, CHILD_MODULE, WINDOW_MODULE, LEAN_MODULE):
+                     FAST_NODE_FILE, REPLICA_ADAPTER, GIL_PROBE, CHILD_MODULE, WINDOW_MODULE, LEAN_MODULE,
+                     BATCH_MODULE):
         extensions[src_name] = files['source/scripts/' + src_name]
     for packet_path, _ in NA_REPLACED:
         extensions[Path(packet_path).name] = files[packet_path]
@@ -1260,8 +1326,30 @@ def main():
                      'byte-identical inputs (asserted); never across clips',
             'sentry': 'sha256 of the context fed to the first diffusion forward of each stage, every '
                       'pipelined arm'},
+        'sampler_batch': {
+            'environment': 'LTX_SAMPLER_BATCH', 'choices': [1, 2, 4], 'default': 1,
+            'module_sha256': extensions[BATCH_MODULE], 'sampler_depths': SAMPLER_DEPTH_OVERRIDES_96,
+            'batch_arms': SAMPLER_BATCH_ARMS,
+            'label': 'changes output at rounding level (GEMM rounding depends on the row count); the owner '
+                     'decides adoption; at a fixed batch a clip\'s bytes depend only on its own inputs '
+                     '(probe, 2026-10-04) and the runner proves it in the server against b<B> references',
+            'rule': 'per server, read once at import; 1 = the packet 95 path unchanged; 2 or 4: one sampler '
+                    'job carries B consecutive clips as one batch (stage 1, latent upsample, stage 2), split '
+                    'into B batch-1 latents for the unchanged decode; per-clip noise, per-clip connector at '
+                    'batch 1, lockstep sigmas, fixed batch shape (fill rows repeat the last real clip and '
+                    'are discarded), fail closed; batch 3 refused (failed the probe slot/identical-row tests)'},
+        'sampler_shared_pool': {
+            'environment': 'LTX_SAMPLER_SHARED_POOL', 'choices': [0, 1], 'default': 0,
+            'adapter_sha256': extensions[ADAPTER],
+            'rule': 'per server, read once at import by ltx_graph_capture; 0 = a private pool and a fresh '
+                    'capture stream per block graph (unchanged); 1 = one graph pool and one capture stream '
+                    'per (card, thread), the text encoder pattern; handles dropped at install and restore; a '
+                    'capture that caches a tensor on a block module is refused',
+            'proof': 'before the freeze, with either setting: per (card, worker, stage shape) the whole graph '
+                     'chain replayed on a seeded input equals the eager chain and a second replay, bitwise; a '
+                     'mismatch refuses the freeze'},
         'sampler_workers': {
-            'environment': 'LTX_SAMPLER_WORKERS', 'choices': [2, 3, 4], 'default': 2,
+            'environment': 'LTX_SAMPLER_WORKERS', 'choices': [1, 2, 3, 4], 'default': 2,
             'sampler_depths': SAMPLER_DEPTH_OVERRIDES, 'pin_graph': PIN_GRAPH,
             'rule': 'per server; each worker has its own per-device graph pools, capture streams and static '
                     'buffers; the serial capture pass pins one prompt to each worker before the freeze'},
@@ -1352,7 +1440,9 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
-        'Packet 95: sampler workers and transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
+        'Packet 96: sampler batch (LTX_SAMPLER_BATCH 1/2/4), sampler workers and transformer placement per server '
+        '(LTX_SAMPLER_PLACEMENT). Batch 2/4 changes output at rounding level and is the owner\'s decision. Window arms '
+        'change output at rounding level; owner approved 2026-10-04 on two '
         'conditions (negligible finished-clip difference; new references, byte-identical thereafter).\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),

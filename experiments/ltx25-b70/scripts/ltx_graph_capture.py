@@ -479,6 +479,232 @@ class Entry:
         self.replays = 0
 
 
+# Packet 96: LTX_SAMPLER_SHARED_POOL (allowlist 0/1, default 0 = the packet 95 capture,
+# unchanged). With 1, every sampler block graph of one (card, thread) is captured into
+# that (card, thread)'s single graph memory pool on its single capture stream, the
+# text encoder's pattern (ltx_graph_text_encoder _POOLS/_STREAMS). Without it each
+# graph keeps a private pool (~60 MiB, ~0.12 GiB per block per worker with two stage
+# shapes). Sound only because nothing a graph must keep lives in the pool: outputs
+# are the slot's static buffers (asserted in place), and a capture that leaves a new
+# tensor cached on a block module is refused (_module_tensors). Keyed by (device,
+# thread): a cached capture stream reused on another device records an EMPTY graph
+# on this stack, and two worker threads replaying concurrently must never share
+# transients. The cached pool handles are dropped at install() and restore(): a
+# handle that outlives its graphs aborts capture_begin with an INTERNAL ASSERT.
+SHARED_POOL_CHOICES = (0, 1)
+_SP_RAW = os.environ.get('LTX_SAMPLER_SHARED_POOL', '0') or '0'
+SHARED_POOL = int(_SP_RAW) if _SP_RAW in ('0', '1') else None
+if SHARED_POOL not in SHARED_POOL_CHOICES:
+    raise RuntimeError('LTX_SAMPLER_SHARED_POOL must be one of %s' % (SHARED_POOL_CHOICES,))
+_SHARED_POOLS = {}
+_SHARED_STREAMS = {}
+_POOL_OWNERS = {}          # (device, thread) -> graphs captured into the current pool handle
+_POOL_LOCK = threading.Lock()
+# Indirection so CPU tests can stand in for the XPU graph API.
+_POOL_FACTORY = [lambda device: torch.xpu.graph_pool_handle()]
+_STREAM_FACTORY = [lambda device: torch.xpu.Stream(device=device)]
+
+
+def capture_resources(device):
+    """(pool, capture stream) for one sampler block capture on this thread. Shared pool
+    off: no pool (a private one per graph) and a fresh stream per capture, exactly as
+    before. On: this (device, thread)'s single pool and single stream."""
+    if not SHARED_POOL:
+        return None, _STREAM_FACTORY[0](device)
+    key = (str(device), threading.get_ident())
+    with _POOL_LOCK:
+        pool = _SHARED_POOLS.get(key)
+        if pool is None:
+            pool = _SHARED_POOLS[key] = _POOL_FACTORY[0](device)
+        stream = _SHARED_STREAMS.get(key)
+        if stream is None:
+            stream = _SHARED_STREAMS[key] = _STREAM_FACTORY[0](device)
+    return pool, stream
+
+
+def clear_shared_pools():
+    """Drop every cached pool handle and capture stream (install and restore)."""
+    with _POOL_LOCK:
+        _SHARED_POOLS.clear()
+        _SHARED_STREAMS.clear()
+        _POOL_OWNERS.clear()
+
+
+def pool_owned(device):
+    """A graph was captured successfully into this (device, thread)'s pool."""
+    key = (str(device), threading.get_ident())
+    with _POOL_LOCK:
+        _POOL_OWNERS[key] = _POOL_OWNERS.get(key, 0) + 1
+
+
+def retire_pool_if_unowned(device):
+    """After a graph was reset (failed, inert or refused capture): if no graph holds this
+    (device, thread)'s pool handle, drop the handle so the next capture makes a fresh pool.
+    Reusing a handle whose last graph is gone aborts capture_begin with an INTERNAL ASSERT.
+    Returns True if a handle was retired."""
+    key = (str(device), threading.get_ident())
+    with _POOL_LOCK:
+        if key in _SHARED_POOLS and not _POOL_OWNERS.get(key):
+            del _SHARED_POOLS[key]
+            return True
+    return False
+
+
+def _module_tensors(blocks):
+    """{(module path, attribute): id} of every tensor a block's modules hold: parameters,
+    buffers, and plain tensor attributes (one level into lists/tuples/dicts). A capture
+    that adds one cached a tensor that would live in the graph pool."""
+    out = {}
+    for b, block in enumerate(blocks):
+        for name, module in block.named_modules():
+            for attr, value in vars(module).items():
+                if attr in ('_parameters', '_buffers'):
+                    for k, t in value.items():
+                        if isinstance(t, torch.Tensor):
+                            out[('%d.%s' % (b, name), attr + '.' + k)] = id(t)
+                elif isinstance(value, torch.Tensor):
+                    out[('%d.%s' % (b, name), attr)] = id(value)
+                elif isinstance(value, (list, tuple)):
+                    for i, t in enumerate(value):
+                        if isinstance(t, torch.Tensor):
+                            out[('%d.%s' % (b, name), '%s[%d]' % (attr, i))] = id(t)
+                elif isinstance(value, dict):
+                    for k, t in value.items():
+                        if isinstance(t, torch.Tensor):
+                            out[('%d.%s' % (b, name), '%s[%r]' % (attr, k))] = id(t)
+    return out
+
+
+def _chain_plan(routes, registry, idents, expected_shapes):
+    """Per (device, thread): the route chain and its stage signatures, or a problem."""
+    by_device = {}
+    for r in routes:
+        by_device.setdefault(str(r.device), []).append(r)
+    plans, problems = [], []
+    for dev, chain in sorted(by_device.items()):
+        chain = sorted(chain, key=lambda r: r.index)
+        device = chain[0].device
+        for tid in idents:
+            group = registry.groups.get((device, tid)) if registry is not None else None
+            sets = [set(r.entries.get(tid, {})) for r in chain]
+            union = set().union(*sets) if sets else set()
+            if group is None:
+                problems.append({'device': dev, 'thread': tid, 'passed': False, 'reason': 'no buffers on this thread'})
+                continue
+            missing = [r.index for r, ks in zip(chain, sets) if ks != union]
+            if missing or len(union) != expected_shapes:
+                problems.append({'device': dev, 'thread': tid, 'passed': False,
+                                 'reason': '%d stage signatures (expected %d); routes missing one: %s'
+                                           % (len(union), expected_shapes, missing[:12])})
+                continue
+            keys = sorted(union, key=repr)
+            slots = [group.slots.get(k) for k in keys]
+            if any(sl is None for sl in slots):
+                problems.append({'device': dev, 'thread': tid, 'passed': False, 'reason': 'no static slot'})
+                continue
+            plans.append((dev, device, tid, chain, keys, slots))
+    return plans, problems
+
+
+def _nbytes(tensors):
+    return sum(t.numel() * t.element_size() for t in tensors)
+
+
+def chain_check_budget(routes, registry, idents, expected_shapes=2, transient_bytes=0):
+    """Peak extra device bytes the chain check holds per device (it runs one (device,
+    thread) at a time): snapshots of every slot buffer of that thread, a seeded input per
+    shape, eager copies of the keyword tensors, eager and four replay outputs per shape,
+    plus `transient_bytes` for the eager blocks' own scratch."""
+    plans, _problems = _chain_plan(routes, registry, idents, expected_shapes)
+    out = {}
+    for dev, _device, _tid, _chain, _keys, slots in plans:
+        need = 0
+        for sl in slots:
+            need += _nbytes(sl.flat) * 2 + _nbytes(sl.img) * 6
+        out[dev] = max(out.get(dev, 0), need + transient_bytes)
+    return out
+
+
+def chain_check(routes, registry, idents, seed=20261004, invoke=None, sync=None, expected_shapes=2):
+    """Packet 96, before the freeze, with the shared pool on or off (same receipt): for every
+    (card, worker) the card's whole graph chain must hold exactly `expected_shapes` stage
+    signatures on every route (a route missing one rejects). On a seeded activation input per
+    shape the eager chain is computed, then the chains are replayed in the order a clip uses
+    them, A, B, A, B: every replay must equal its eager chain and its repeat, bitwise. The
+    per-graph capture proof runs before later captures reuse shared memory, so it cannot see
+    cross-graph or cross-shape reuse; this does. Slot contents are restored afterwards and
+    every tensor the check made is released. Returns (ok, detail)."""
+    sync = sync or (lambda device: torch.xpu.synchronize(device) if str(device).startswith('xpu') else None)
+    plans, rows = _chain_plan(routes, registry, idents, expected_shapes)
+    ok = not rows
+
+    def same(a, b):
+        return all(x.dtype == y.dtype and x.shape == y.shape and
+                   torch.equal(x.contiguous().view(torch.uint8), y.contiguous().view(torch.uint8))
+                   for x, y in zip(a, b))
+    for dev, device, tid, chain, keys, slots in plans:
+        row = {'device': dev, 'thread': tid, 'blocks': [r.index for r in chain],
+               'shapes': [[list(t.shape) for t in sl.img] for sl in slots],
+               'signatures_sha256': [hashlib.sha256(repr(k).encode()).hexdigest()[:16] for k in keys]}
+        snapshots = [[t.clone() for t in sl.flat] for sl in slots]
+        try:
+            ctx = torch.xpu.device(device) if str(device).startswith('xpu') else _NullContext()
+            with ctx, torch.no_grad():
+                seeded, eager = [], []
+                for j, sl in enumerate(slots):
+                    gen = torch.Generator(device='cpu')
+                    gen.manual_seed(seed + j)
+                    seeded.append([torch.randn(t.shape, generator=gen, device='cpu').to(dtype=t.dtype, device=t.device)
+                                   for t in sl.img])
+                    img = tuple(t.clone() for t in seeded[j])
+                    kw = {name: mirror(sl.kw.get(name), lambda t: t.clone()) for name in KEYWORDS}
+                    kw['transformer_options'] = sl.kw['transformer_options']
+                    for r in chain:
+                        img = r._invoke(img, kw) if invoke is None else invoke(r, img, kw)
+                    eager.append([t.clone() for t in img])
+                    del img, kw
+                replays = {j: [] for j in range(len(slots))}
+                order = [j for _ in range(2) for j in range(len(slots))]       # A, B, A, B
+                for j in order:
+                    for buf, value in zip(slots[j].img, seeded[j]):
+                        fill_static(buf, value)
+                    for r in chain:
+                        r.entries[tid][keys[j]].graph.replay()
+                    sync(device)
+                    last = chain[-1].entries[tid][keys[j]]
+                    replays[j].append([last.out_vx.clone(), last.out_ax.clone()])
+            row['order'] = ''.join('AB'[j] if len(slots) == 2 else str(j) for j in order)
+            row['replay_equals_eager'] = [same(replays[j][0], eager[j]) for j in range(len(slots))]
+            row['replay_equals_repeat'] = [same(replays[j][0], replays[j][1]) for j in range(len(slots))]
+            row['passed'] = all(row['replay_equals_eager']) and all(row['replay_equals_repeat'])
+        except BaseException as error:  # noqa: BLE001  (recorded; refuses the freeze)
+            row['passed'] = False
+            row['error'] = repr(error)[:300]
+        finally:
+            for sl, snap in zip(slots, snapshots):
+                for buf, value in zip(sl.flat, snap):
+                    fill_static(buf, value)
+            sync(device)
+            seeded = eager = replays = snapshots = None
+        ok = ok and row['passed']
+        rows.append(row)
+    checked = [r for r in rows if r.get('passed') is not None]
+    if not plans:
+        ok = False
+    return ok, {'shared_pool': SHARED_POOL, 'expected_shapes': expected_shapes, 'chains_checked': len(plans),
+                'chains_passed': sum(1 for r in checked if r['passed']), 'rows': rows, 'seed': seed,
+                'rule': 'per (card, worker): every route holds the expected stage signatures; the whole graph '
+                        'chain replayed A, B, A, B on seeded inputs equals the eager chain and its repeat, bitwise'}
+
+
+class _NullContext:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
 class CaptureReplayLock:
     """Captures are exclusive; replays are shared. Two clip threads may issue
     replays at once, but a capture (which synchronises and empties the device
@@ -877,10 +1103,19 @@ class GraphBlockRoute:
         # An explicit per-device capture stream is required: torch.xpu.graph
         # otherwise reuses one class-level stream bound to the first device it
         # saw, which records an EMPTY graph on any other device.
-        capture_stream = torch.xpu.Stream(device=self.device)
+        # Packet 96: with LTX_SAMPLER_SHARED_POOL=1 the pool and stream are this
+        # (device, thread)'s shared ones; with 0, no pool and a fresh stream, as before.
+        pool, capture_stream = capture_resources(self.device)
+        cached_before = _module_tensors(self.blocks)
         try:
-            with torch.no_grad(), torch.xpu.graph(graph, stream=capture_stream):
-                out_vx, out_ax = self._invoke(slot.img, slot.kw)
+            if pool is None:
+                with torch.no_grad(), torch.xpu.graph(graph, stream=capture_stream):
+                    out_vx, out_ax = self._invoke(slot.img, slot.kw)
+            else:
+                # torch.xpu.graph synchronises and empties the CURRENT device: name it.
+                with torch.xpu.device(self.device), torch.no_grad(), \
+                        torch.xpu.graph(graph, pool=pool, stream=capture_stream):
+                    out_vx, out_ax = self._invoke(slot.img, slot.kw)
         except BaseException:
             # A capture abandoned part-way leaves the device recording. On
             # 2026-09-15 an exception inside capture (a host read of tensor
@@ -892,6 +1127,8 @@ class GraphBlockRoute:
             except BaseException:
                 pass
             torch.xpu.synchronize(self.device)
+            if pool is not None:
+                retire_pool_if_unowned(self.device)
             raise
         torch.xpu.synchronize(self.device)
 
@@ -899,6 +1136,18 @@ class GraphBlockRoute:
         require(out_vx is static_vx and out_ax is static_ax,
                 f'Block {self.index} did not update its activations in place; the shared-buffer '
                 'chain between blocks assumes it does')
+        cached = sorted(set(_module_tensors(self.blocks).items()) - set(cached_before.items()))
+        if pool is not None and cached:
+            # Packet 96: a tensor cached on a module during capture lives in the shared
+            # pool, where a later graph may reuse its memory. Refuse, never risk it.
+            try:
+                graph.reset()
+            except BaseException:  # noqa: BLE001
+                pass
+            torch.xpu.synchronize(self.device)
+            retire_pool_if_unowned(self.device)
+            require(False, f'Block {self.index} cached tensors on its modules during capture '
+                           f'({[c[0] for c in cached][:4]}); refused under the shared graph pool')
 
         # Non-emptiness: a graph that ignores its input would replay unchanged.
         restore()
@@ -925,14 +1174,26 @@ class GraphBlockRoute:
                 pass
             for i in range(torch.xpu.device_count()):
                 torch.xpu.synchronize(i)
+            # Packet 96: if the reset graph was this pool's only owner, retire the handle so the
+            # retry captures into a fresh pool (a handle without graphs aborts capture_begin).
+            diag['pool_retired'] = bool(pool is not None and retire_pool_if_unowned(self.device))
             require(attempt == 0, f'Block {self.index} captured an inert graph twice; replay ignored its input: {diag}')
             restore()
             return self._capture(routed, slot, key, entries, attempt=1)
 
         # Bitwise proof against the eager reference.
-        require(torch.equal(out_vx.view(torch.int16), eager_vx.view(torch.int16)) and
-                torch.equal(out_ax.view(torch.int16), eager_ax.view(torch.int16)),
-                f'Block {self.index} graph replay differs from eager execution; refuse graph mode')
+        proven = (torch.equal(out_vx.view(torch.int16), eager_vx.view(torch.int16)) and
+                  torch.equal(out_ax.view(torch.int16), eager_ax.view(torch.int16)))
+        if not proven and pool is not None:
+            try:
+                graph.reset()
+            except BaseException:  # noqa: BLE001
+                pass
+            torch.xpu.synchronize(self.device)
+            retire_pool_if_unowned(self.device)
+        require(proven, f'Block {self.index} graph replay differs from eager execution; refuse graph mode')
+        if pool is not None:
+            pool_owned(self.device)
 
         entry = Entry(self.index, key, graph, out_vx, out_ax)
         entries[key] = entry
@@ -1097,7 +1358,7 @@ class Report:
             self.captures[-1]['option_census'] = census
 
     def summary(self):
-        return {'chain': self.chain, 'chains': self.chains,
+        return {'chain': self.chain, 'chains': self.chains, 'shared_pool': SHARED_POOL,
                 'forward_threads': (self.registry.threads() if self.registry else []),
                 'captured_graphs': len(self.captures), 'replays': self.replays, 'capture_failures': list(self.capture_failures),
                 'static_buffer_copies': self.copies,
@@ -1196,6 +1457,7 @@ def install(patcher, indices, chain=1):
     require(isinstance(chain, int) and not isinstance(chain, bool) and chain >= 1,
             'chain must be a positive integer')
     report = Report()
+    clear_shared_pools()       # packet 96: a pool handle must not outlive its graphs
     # Named `groups` to keep it distinct from `registry`, which is the block
     # route registry this function already holds.
     groups = GroupRegistry()
@@ -1387,3 +1649,4 @@ def restore(patcher, originals):
     diffusion, registry = validate_patcher(patcher)
     require(all(type(registry[('double_block', i)]) is _BlockRoute for i in range(48)),
             'Original routes were not fully restored')
+    clear_shared_pools()       # packet 96: every graph holding a pool is gone; drop the handles
