@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-04 17:45 UTC** (2026-10-04 13:45 EDT), two-B70 host.
+Last reviewed: **2026-10-04 21:45 UTC** (2026-10-04 17:45 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
 ## 2026-10-04 15:25 EDT, four-B70 host: the video server was using host RAM equal to its video memory; found and fixed
@@ -30,6 +30,32 @@ The four-B70 host section below was added 2026-09-11.
 read once instead of once per clip); a one-card probe is checking whether each clip's result in a fixed-size batch
 depends only on its own inputs. That would change rounding, like the text window did, so adopting it is the
 owner's call.
+
+## 2026-10-04 17:45 EDT: many users at once is faster, still exact: 630 tokens a second for 64 users
+
+**The many-users mode needs only two small fixes, not three, and is 15 to 29 % faster than this morning's table.**
+Every answer is exactly what a lone user gets, on short and long prompts, and exactly the published single-user
+reference. It is exact by construction: every kernel on the path gives a row the same result whether it is alone
+or in a batch.
+
+| Users at once | Tokens a second together | This morning | Each user gets | Exact |
+| ---: | ---: | ---: | ---: | --- |
+| 1 (the shipped recipe) | 90 | 90 | 90 | yes |
+| 16 | **374** | 325 | 23 | yes, short and long prompts |
+| 32 | **536** | 428 | 17 | yes, short and long prompts |
+| 64 | **630** | 488 | 10 | yes, short and long prompts, two fresh servers |
+
+- **What changed.** This morning's third fix (running the word-picking step four rows at a time) was not needed. A
+  direct check on both cards shows that step is bit-identical for every row from 1 to 32 rows, and the image
+  already works in pieces of 32. The earlier check had tested the wrong kernel. The two fixes that are needed:
+  each step is either one user's prompt chunk or writing only, and each long conversation gets its own attention
+  call.
+- **Tried and not adopted:** the image's full set of "exact" switches (deterministic, but long prompts three times
+  slower); copying text as the draft at the built-in depth (exact, free, no faster).
+- **Running next:** longer copy drafts for one user, used only when there is something to copy (sized at about
+  +26 % on long prompts); first a short test of the simpler step pipeline that needs.
+- [Test record](experiments/qwen38-27b-b70/notes/2026-10-04-fp8-multiuser-prereg.md),
+  [copy drafts](experiments/qwen38-27b-b70/notes/2026-10-04-copy-draft-sizing-prereg.md).
 
 ## 2026-10-04 11:10 EDT: the model-load GPU fault is explained and has a validated fix; no reboot was needed
 

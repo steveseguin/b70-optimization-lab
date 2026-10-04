@@ -293,3 +293,17 @@ morning's "necessary, not sufficient" was wrong: the miss it was blamed for was 
 | One user with class-pad (16:00) | 12/12 and 64/64 vs its own no-speculation answers; 12/12 vs frozen | 89.6 / 89.2 tok/s | Recorded; not adopted |
 | 4-row output-layer overlay (morning) | 64/64 x4, exact vs frozen | 488 / 64 tok/s | Superseded |
 
+## Addendum, 17:45 EDT: confirmation runs of the two-overlay mode
+
+One fresh server each (64 users now has two), long suite and short ladder, two passes each, speculation off, pure
+steps and per-sequence attention, default output layer. All exact against solo and against the frozen reference.
+
+| Users | Long prompts equal to solo | Short ladder equal to solo | Equal to the frozen reference | Together (short / long) |
+| ---: | --- | --- | --- | ---: |
+| 16 | 64/64, 64/64 | 64/64, 64/64 | yes | 374 / 62.5 tok/s |
+| 32 | 64/64, 64/64 | 64/64, 64/64 | yes | 536 / 66.1 tok/s |
+| 64 (14:36) | 64/64, 64/64 | 64/64, 64/64 | yes | 630 / 66.4 tok/s |
+| 64 (17:00) | 64/64, 64/64 | 64/64, 64/64 | yes | 629 / 66.4 tok/s |
+
+Data: `data/2026-10-04-fp8-multiuser/two-overlays-s{16,32,64}/` and `ceiling-s64/`.
+

@@ -1,5 +1,10 @@
 # Multi-user result: lossless through 64 users on short and long prompts with three small overlays, up to 488 tok/s together (2026-10-04)
 
+> **Superseded in part, 17:45 EDT.** The output-layer overlay described below was not needed: the real output layer
+> is bit-identical per row for 1 to 32 rows. With the other two overlays alone the mode is exact by construction and
+> faster: **374 tok/s at 16 users, 536 at 32, 630 at 64**. See the last addenda of
+> [the test record](2026-10-04-fp8-multiuser-prereg.md).
+
 ## In plain words
 
 Until tonight the Qwen 27B recipes were measured for one user at a time: about 90 tokens a second on two cards.
