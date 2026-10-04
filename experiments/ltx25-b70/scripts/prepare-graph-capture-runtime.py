@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-shard4-94f'
+OUTPUT = ROOT / 'prepared-encoder-workers-95'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -124,7 +124,12 @@ FREEZE_NODE = '480'
 COVERAGE_GRAPH = 'graphs/sampler-capture-coverage.json'
 COVERAGE_NODE = '481'
 WINDOW_LABEL = 'changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)'
+SAMPLER_DEPTH_OVERRIDES = {'pipe-samp2-tsh-rep-wlean-s3': 3, 'pipe-samp2-tsh-rep-wlean-s4': 4}
+PIN_GRAPH = 'graphs/sampler-pin.json'
+PIN_NODE = '483'
 TEXT_MODE_OVERRIDES = {'pipe-samp2-tsh-win': 'pipeline-window',
+                       'pipe-samp2-tsh-rep-wlean-s3': 'pipeline-window',
+                       'pipe-samp2-tsh-rep-wlean-s4': 'pipeline-window',
                        'pipe-samp2-tsh-rep-wlean': 'pipeline-window'}
 SAMPLER_NODE = '428'
 UPS_ADAPTER = 'ltx_graph_upsampler.py'
@@ -192,7 +197,10 @@ ARMS = (
     # placement with window and lean (text-encode mode from TEXT_MODE_OVERRIDES).
     ('pipe-samp2-tsh-rep-lean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
     ('pipe-samp2-tsh-win', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'),
-    ('pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),)
+    ('pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    # Packet 95: the same arm with three or four sampler clips in flight (sampler depth 3/4).
+    ('pipe-samp2-tsh-rep-wlean-s3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),
+    ('pipe-samp2-tsh-rep-wlean-s4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'),)
 VAE_NODE = '423'
 
 
@@ -314,7 +322,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                           'pipe-fasttimed', 'pipe-fast', 'pipe-fast-save', 'pipe-batchproof', 'pipe-samp2',
                           'pipe-samp2-tsh', 'pipe-samp2-tsh-rep', 'pipe-samp2-tsh-mov',
                           'pipe-samp2-tsh-child', 'pipe-samp2-tsh-rep-lean', 'pipe-samp2-tsh-win',
-                          'pipe-samp2-tsh-rep-wlean')}
+                          'pipe-samp2-tsh-rep-wlean', 'pipe-samp2-tsh-rep-wlean-s3',
+                          'pipe-samp2-tsh-rep-wlean-s4')}
     # Packet 91: the replica-placement module, the probe graph and its pinned fixtures.
     added |= {'source/scripts/ltx_decode_replica.py', 'graphs/decode-replica-probe.json',
               'probe/decode-replica-fixtures.json'}
@@ -329,7 +338,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
               'graphs/text-window-probe.json', 'probe/text-window-prompts.json',
               'provenance/graph-capture/parent/launch/serve-encoder.py'}
     # Packet 94: the capture-freeze graph.
-    added |= {'graphs/sampler-capture-freeze.json', 'graphs/sampler-capture-coverage.json'}
+    added |= {'graphs/sampler-capture-freeze.json', 'graphs/sampler-capture-coverage.json',
+              'graphs/sampler-pin.json'}
     replaced = ('launch/encoder_runtime_common.py', 'launch/serve-encoder.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
                 'source/scripts/host_embedding_clip.py',
@@ -507,9 +517,19 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                      ['pipe-samp2-tsh-child', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-child', 'original', 'pipeline', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh-rep-lean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
                      ['pipe-samp2-tsh-win', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-save', 'original', 'pipeline', 'original', 'original', 'fast'],
-                     ['pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast']]
+                     ['pipe-samp2-tsh-rep-wlean', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-s3', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast'],
+                     ['pipe-samp2-tsh-rep-wlean-s4', 'graph', 'original', 'original', 'original', '1', 'graph-shard', 'pipeline-replica', 'original', 'pipeline-lean', 'original', 'original', 'fast']]
     require(capture['arms'] == expected_arms, 'Graph-capture arm set changed')
-    text_overrides = {'pipe-samp2-tsh-win': 'pipeline-window', 'pipe-samp2-tsh-rep-wlean': 'pipeline-window'}
+    text_overrides = {'pipe-samp2-tsh-win': 'pipeline-window', 'pipe-samp2-tsh-rep-wlean': 'pipeline-window',
+                      'pipe-samp2-tsh-rep-wlean-s3': 'pipeline-window', 'pipe-samp2-tsh-rep-wlean-s4': 'pipeline-window'}
+    sampler_depths = {'pipe-samp2-tsh-rep-wlean-s3': 3, 'pipe-samp2-tsh-rep-wlean-s4': 4}
+    require(manifest['sampler_workers']['sampler_depths'] == sampler_depths and
+            manifest['sampler_workers']['choices'] == [2, 3, 4] and
+            manifest['sampler_workers']['environment'] == 'LTX_SAMPLER_WORKERS', 'Sampler worker contract changed')
+    pin = json.loads(safe_path(packet, 'graphs/sampler-pin.json').read_text())
+    require(pin == {'483': {'class_type': 'LTXSamplerPin', 'inputs': {
+                'worker': 0, 'run_name': 'assign-unique-request-name'}}}, 'Sampler pin graph changed')
     require(manifest['text_window']['text_mode_overrides'] == text_overrides, 'Window arm set changed')
     expected_graphs = []
     for (arm, mode, vae_mode, decode, fuse_mode, chain, text_mode, pipe_mode, ccfg_mode,
@@ -561,7 +581,7 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
                     'sampler_b': ['341', 0], 'sigmas_b': ['395', 0],
                     'video_latent': ['356', 0], 'audio_latent': ['366', 0],
                     'upscale_model': ['420', 4], 'vae': ['420', 2],
-                    'mode': samp_mode, 'clip_index': 0, 'depth': 2,
+                    'mode': samp_mode, 'clip_index': 0, 'depth': sampler_depths.get(arm, 2),
                     'run_name': 'assign-unique-request-name'}}, 'Pipelined sampler node changed')
             require(graph['426']['inputs']['video_latent'] == ['428', 0] and
                     graph['426']['inputs']['audio_latent'] == ['428', 1] and
@@ -1027,7 +1047,7 @@ def main():
                     'sampler_b': ['341', 0], 'sigmas_b': ['395', 0],
                     'video_latent': ['356', 0], 'audio_latent': ['366', 0],
                     'upscale_model': [UPS_NODE, 0], 'vae': ['420', 2],
-                    'mode': samp_mode, 'clip_index': 0, 'depth': SAMPLER_DEPTH,
+                    'mode': samp_mode, 'clip_index': 0, 'depth': SAMPLER_DEPTH_OVERRIDES.get(arm, SAMPLER_DEPTH),
                     'run_name': 'assign-unique-request-name'}}
                 graph[DECODE_NODE]['inputs']['video_latent'] = [SAMPLER_NODE, 0]
                 graph[DECODE_NODE]['inputs']['audio_latent'] = [SAMPLER_NODE, 1]
@@ -1085,6 +1105,10 @@ def main():
                    WINDOW_PROBE_NODE: {'class_type': 'LTXTextWindowProbe', 'inputs': {
                        'clip': ['425', 0], 'run_name': 'assign-unique-request-name'}}},
                   handle, indent=2, sort_keys=True)
+        handle.write('\n')
+    with (staging / PIN_GRAPH).open('x') as handle:
+        json.dump({PIN_NODE: {'class_type': 'LTXSamplerPin', 'inputs': {
+            'worker': 0, 'run_name': 'assign-unique-request-name'}}}, handle, indent=2, sort_keys=True)
         handle.write('\n')
     with (staging / COVERAGE_GRAPH).open('x') as handle:
         json.dump({COVERAGE_NODE: {'class_type': 'LTXSamplerCaptureCoverage', 'inputs': {
@@ -1145,7 +1169,7 @@ def main():
               'source/scripts/' + CHILD_MODULE, CHILD_PROBE_GRAPH, CHILD_STOP_GRAPH,
               'source/scripts/' + WINDOW_MODULE, 'source/scripts/' + LEAN_MODULE,
               WINDOW_PROBE_GRAPH, WINDOW_PROMPTS, PROV + LAUNCHER, FREEZE_GRAPH,
-              COVERAGE_GRAPH}
+              COVERAGE_GRAPH, PIN_GRAPH}
     added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
               for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
@@ -1236,6 +1260,11 @@ def main():
                      'byte-identical inputs (asserted); never across clips',
             'sentry': 'sha256 of the context fed to the first diffusion forward of each stage, every '
                       'pipelined arm'},
+        'sampler_workers': {
+            'environment': 'LTX_SAMPLER_WORKERS', 'choices': [2, 3, 4], 'default': 2,
+            'sampler_depths': SAMPLER_DEPTH_OVERRIDES, 'pin_graph': PIN_GRAPH,
+            'rule': 'per server; each worker has its own per-device graph pools, capture streams and static '
+                    'buffers; the serial capture pass pins one prompt to each worker before the freeze'},
         'sampler_placement': {
             'environment': 'LTX_SAMPLER_PLACEMENT', 'default': 'two-way',
             'placements': {'two-way': [['xpu:0', 0, 23], ['xpu:1', 23, 48]],
@@ -1323,7 +1352,7 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
-        'Packet 94f: transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
+        'Packet 95: sampler workers and transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
         'conditions (negligible finished-clip difference; new references, byte-identical thereafter).\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),

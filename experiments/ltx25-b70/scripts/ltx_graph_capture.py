@@ -537,13 +537,14 @@ RESIDENT_SNAPSHOT = [None]
 _ROUTES = []
 
 
-def capture_coverage(worker_idents, routes=None):
-    """Packet 94b: did the serial capture pass capture every block signature on every
-    sampler worker? Returns (complete, detail)."""
+def capture_coverage(worker_idents, routes=None, expected=2):
+    """Packet 94b/95: did the serial capture pass capture every block signature on every
+    one of the `expected` sampler workers? Returns (complete, detail)."""
     routes = list(_ROUTES if routes is None else routes)
     idents = list(worker_idents)
-    if len(idents) < 2:
-        return False, {'reason': 'fewer than two sampler workers exist', 'workers': len(idents)}
+    if len(idents) != expected:
+        return False, {'reason': '%d sampler workers exist, %d expected' % (len(idents), expected),
+                       'workers': len(idents)}
     if not routes:
         return False, {'reason': 'no graph routes installed'}
     missing = []

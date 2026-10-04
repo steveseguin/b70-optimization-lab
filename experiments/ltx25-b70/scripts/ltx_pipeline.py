@@ -121,10 +121,13 @@ def require(value, message):
 
 
 class _Job:
-    __slots__ = ('index', 'fn', 'tag', 'done', 'value', 'error', 'started', 'finished', 'cpu')
+    __slots__ = ('index', 'fn', 'tag', 'done', 'value', 'error', 'started', 'finished', 'cpu', 'target')
 
-    def __init__(self, index, fn, tag=None):
+    def __init__(self, index, fn, tag=None, target=None):
         self.index = index
+        # Packet 95: the worker thread name this job must run on (None = any worker);
+        # used only by the serial capture pass to reach every sampler worker.
+        self.target = target
         self.fn = fn
         # What the job was computed FOR (for the encode: the SHA-256 of the
         # prompt text). A collect with a different tag must not accept it.
@@ -141,10 +144,14 @@ def _worker_loop(stage):
     import time
     st = _state(stage)
     while True:
+        me = threading.current_thread().name
         with _QUEUE_EVENT:
-            while not st['queue']:
+            while True:
+                pick = next((i for i, j in enumerate(st['queue']) if j.target is None or j.target == me), None)
+                if pick is not None:
+                    break
                 _QUEUE_EVENT.wait()
-            job = st['queue'].pop(0)
+            job = st['queue'].pop(pick)
         job.started = time.monotonic()
         with _LOCK:   # packet 94f: jobs executing now, even after clear() dropped them
             _RUNNING[0] += 1
@@ -184,14 +191,24 @@ def _ensure_worker(stage):
         worker.start()
 
 
-def submit(stage, index, fn, tag=None):
-    """Queue `stage` work for `index` if it is not already queued or finished."""
+def worker_names(stage):
+    """Packet 95: names of the live workers of a stage ('ltx-<stage>-<i>')."""
+    with _LOCK:
+        return [w.name for w in _state(stage)['workers'] if w.is_alive()]
+
+
+def submit(stage, index, fn, tag=None, target=None):
+    """Queue `stage` work for `index` if it is not already queued or finished.
+    `target` (packet 95) pins the job to one named worker of the stage."""
     with _QUEUE_EVENT:
         _ensure_worker(stage)
         st = _state(stage)
         if index in st['jobs']:
             return False
-        job = _Job(index, fn, tag)
+        if target is not None:
+            require(target in [w.name for w in st['workers'] if w.is_alive()],
+                    'No live worker named %r in stage %s' % (target, stage))
+        job = _Job(index, fn, tag, target)
         st['jobs'][index] = job
         st['queue'].append(job)
         _QUEUE_EVENT.notify_all()
@@ -305,7 +322,7 @@ def run_ahead(stage, index, depth, fn, tag=None, lookahead=None):
     return value, detail
 
 
-def run_behind(stage, index, depth, fn):
+def run_behind(stage, index, depth, fn, target=None):
     """Start clip `index`'s work, then return clip `index - depth`'s result.
 
     For work that DEPENDS on this clip's sampler output -- the decode. Clip N's
@@ -320,7 +337,7 @@ def run_behind(stage, index, depth, fn):
     # stream (a warm clip's un-consumed fill, or a stream restarted at 0), and
     # collecting it later would emit a stale clip. Streams must use fresh clip
     # indices; reuse is a hard error, never a silent substitution.
-    require(submit(stage, index, fn),
+    require(submit(stage, index, fn, target=target),
             f'{stage} job already exists for clip {index}: stale index from an earlier stream')
     emit = index - depth
     with _LOCK:

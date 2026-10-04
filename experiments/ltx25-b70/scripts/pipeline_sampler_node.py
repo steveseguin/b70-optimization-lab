@@ -44,6 +44,16 @@ MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f
 # Packet 93: 'pipeline-lean' = 'pipeline' plus the per-clip connector memo
 # (ltx_lean_conditioning; exact by construction, off unless requested).
 SAMPLER_MODES = pipeline.MODES + ('pipeline-lean',)
+# Packet 95: clips in flight in the sampler stage, chosen per server at launch
+# (LTX_SAMPLER_WORKERS, allowlist 2/3/4; 2 = today's two workers). Each worker
+# keeps its own per-device graph pools, capture streams and static buffers.
+SAMPLER_WORKER_CHOICES = (2, 3, 4)
+SAMPLER_WORKERS = int(os.environ.get('LTX_SAMPLER_WORKERS', '2') or '2')
+if SAMPLER_WORKERS not in SAMPLER_WORKER_CHOICES:
+    raise RuntimeError('LTX_SAMPLER_WORKERS must be one of %s' % (SAMPLER_WORKER_CHOICES,))
+if SAMPLER_WORKERS != pipeline.STAGE_WORKERS.get('sample', 2):
+    pipeline.set_stage_workers('sample', SAMPLER_WORKERS)
+_PIN = [None]        # packet 95: one-shot worker name for the next pinned capture-pass job
 _failed = False
 
 
@@ -233,6 +243,16 @@ def _pending_prompts():
         return 0
 
 
+def _free_bytes_all():
+    out = {}
+    try:
+        for i in range(torch.xpu.device_count()):
+            out['xpu:%d' % i] = int(torch.xpu.mem_get_info(i)[0])
+    except Exception:  # noqa: BLE001  (evidence only)
+        pass
+    return out
+
+
 def _sample_worker_idents():
     st = getattr(pipeline, '_STAGES', {}).get('sample', {})
     return [w.ident for w in st.get('workers', []) if w.is_alive()]
@@ -265,7 +285,7 @@ class LTXSamplerCaptureFreeze:
                 free['xpu:%d' % i] = int(torch.xpu.mem_get_info(i)[0])
             except Exception:  # noqa: BLE001
                 free['xpu:%d' % i] = None
-        coverage_ok, coverage = capture.capture_coverage(_sample_worker_idents())
+        coverage_ok, coverage = capture.capture_coverage(_sample_worker_idents(), expected=SAMPLER_WORKERS)
         resident = resident_set()
         devices = _FREEZE_DEVICES[0] or ['xpu:0', 'xpu:1']
         missing = residents_missing(resident, devices)
@@ -284,9 +304,47 @@ class LTXSamplerCaptureFreeze:
                                    for i in range(torch.xpu.device_count())},
                   'resident_models': [list(r) for r in resident],
                   'residents_missing': [list(m) for m in missing], 'segment_devices': devices,
-                  'placement': __import__('os').environ.get('LTX_SAMPLER_PLACEMENT', 'two-way')}
+                  'placement': __import__('os').environ.get('LTX_SAMPLER_PLACEMENT', 'two-way'),
+                  'sampler_workers': SAMPLER_WORKERS}
         write_json(run / ('sampler-capture-freeze-' + run_name + '.json'), report)
         return {'ui': {'text': ['capture freeze: %s' % outcome]}}
+
+
+class LTXSamplerPin:
+    """Packet 95: pin the NEXT sampler job to sampler worker `worker` (serial capture pass
+    only: before the freeze, pipeline idle). Lets the capture pass reach every worker
+    deterministically. Never latches; a refusal is a recorded outcome."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'worker': ('INT', {'default': 0, 'min': 0, 'max': 3}),
+                             'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, worker, run_name):
+        require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
+                'Unsafe request name')
+        run, identity = _context()
+        import ltx_graph_capture as capture
+        name = 'ltx-sample-%d' % worker
+        outcome = 'pinned'
+        if capture.CAPTURES_FROZEN[0]:
+            outcome = 'refused-frozen'
+        elif pipeline.busy():
+            outcome = 'refused-busy'
+        elif not 0 <= worker < SAMPLER_WORKERS:
+            outcome = 'refused-no-such-worker'
+        else:
+            pipeline.set_stage_workers('sample', SAMPLER_WORKERS)
+            _PIN[0] = name
+        write_json(run / ('sampler-pin-' + run_name + '.json'),
+                   {'schema': 'ltx.sampler-pin.v1', **identity, 'run_name': run_name, 'worker': worker,
+                    'worker_name': name, 'outcome': outcome, 'sampler_workers': SAMPLER_WORKERS})
+        return {'ui': {'text': ['sampler pin: %s %s' % (name, outcome)]}}
 
 
 class LTXSamplerCaptureCoverage:
@@ -308,7 +366,7 @@ class LTXSamplerCaptureCoverage:
                 'Unsafe request name')
         run, identity = _context()
         import ltx_graph_capture as capture
-        ok, coverage = capture.capture_coverage(_sample_worker_idents())
+        ok, coverage = capture.capture_coverage(_sample_worker_idents(), expected=SAMPLER_WORKERS)
         busy = pipeline.busy()
         executing = pipeline.running()
         outcome = 'covered' if ok and not busy else ('pipeline-busy' if busy else 'captures-incomplete')
@@ -317,7 +375,10 @@ class LTXSamplerCaptureCoverage:
         write_json(run / ('sampler-capture-coverage-' + run_name + '.json'),
                    {'schema': 'ltx.sampler-capture-coverage.v2', **identity, 'run_name': run_name,
                     'outcome': outcome, 'coverage': coverage, 'frozen': bool(capture.CAPTURES_FROZEN[0]),
-                    'pipeline_busy': busy, 'pipeline_running': executing, 'time': time.time()})
+                    'pipeline_busy': busy, 'pipeline_running': executing, 'time': time.time(),
+                    'sampler_workers': SAMPLER_WORKERS,
+                    'worker_names': pipeline.worker_names('sample'),
+                    'free_bytes': _free_bytes_all()})
         return {'ui': {'text': ['capture coverage: %s' % outcome]}}
 
 
@@ -558,9 +619,14 @@ class LTXPipelineSampler:
                 emitted = clip_index
             else:
                 lean_mode = mode == 'pipeline-lean'
+                import ltx_graph_capture as _capp
+                target = _PIN[0] if not _capp.CAPTURES_FROZEN[0] else None
+                _PIN[0] = None
+                report['sampler_workers'] = SAMPLER_WORKERS
+                report['pinned_worker'] = target
                 out, detail = pipeline.run_behind(
                     'sample', clip_index, depth,
-                    lambda: sample_clip(clip_index, lean_mode=lean_mode, **chain))
+                    lambda: sample_clip(clip_index, lean_mode=lean_mode, **chain), target=target)
                 # The worker fingerprints the clip's actual sample inputs at
                 # execution time; tie the emitted clip's pair to this receipt,
                 # together with the conditioning fingerprint the encode stage
@@ -646,4 +712,5 @@ class LTXPipelineSampler:
 
 NODE_CLASS_MAPPINGS = {'LTXPipelineSampler': LTXPipelineSampler,
                        'LTXSamplerCaptureFreeze': LTXSamplerCaptureFreeze,
-                       'LTXSamplerCaptureCoverage': LTXSamplerCaptureCoverage}
+                       'LTXSamplerCaptureCoverage': LTXSamplerCaptureCoverage,
+                       'LTXSamplerPin': LTXSamplerPin}
