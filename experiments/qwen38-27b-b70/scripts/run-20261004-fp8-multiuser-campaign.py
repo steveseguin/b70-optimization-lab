@@ -39,6 +39,8 @@ MTP5 = ['--mtp', '5', '--draft-int4', '--shortlist', R.SHORTLIST]
 # the temporary host mapping the fault hits. (The runtime's own switch, ExperimentalH2DCpuCopyThreshold, was tried first
 # and has no effect here: the card-side memory is not the kind its CPU-copy path accepts.)
 NEO_KEYS = ['--extra-env', 'NEOReadDebugKeys=1']
+# one-at-a-time, speculation-off answers to the long suite (the oracle pass of the 64-user run of 2026-10-04)
+LONG_REF = Path('/mnt/fast-ai/bench-results/fp8-multiuser-three-s64-20261004/tp2-pure-faseq-head4-mtp0-s64-long-concurrency.json')
 LOADCOPY_FIX = ['--overlay', 'b70-chunked-upload', '--extra-env', 'B70_CHUNKED_UPLOAD=1']
 
 
@@ -194,7 +196,53 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE') == 'loadcopy':
+    if os.environ.get('MU_MODE') == 'copydraft':
+        # One user, shipped two-card recipe, with and without copy-from-context drafts (b70-copy-draft). Gates against
+        # the frozen references; speed on the long suite as the per-request decode rate after the first token.
+        # notes/2026-10-04-copy-draft-sizing-prereg.md
+        suite = str(ROOT / 'experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/long-prompt-suite.json')
+        copy = ['--overlay', 'b70-copy-draft', '--extra-env', 'B70_COPY_DRAFT=1']
+        for extra in os.environ.get('MU_COPY_ENV', '').split():
+            copy += ['--extra-env', extra]
+        arms = (('control', []), ('copy', copy)) if os.environ.get('MU_COPY_CONTROL', '1') == '1' else (('copy', copy),)
+        for label, extra in arms:
+            srv, name, since = start_server(f'tp2-mtp5-{label}', 18196, TP2 + MTP5 + SHIPPED + LOADCOPY_FIX + extra, since)
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if srv.ready:
+                r['strict'] = R.strict(srv.base, name, R.TP2_CONTROL_STRICT)
+                R.log(f"{name}: strict {r['strict'].get('exact')} exact, {r['strict'].get('tok_s_1_100')} tok/s")
+                R.save_results(); R.fault_check(since)
+                out = OUT / f'{name}-long.json'
+                R.sh([sys.executable, R.LADDER, '--base-url', srv.base, '--model', R.MODEL_NAME, '--api-mode', 'completions',
+                      '--suite', suite, '--concurrency', '1', '--repeats', '1', '--max-tokens', '128', '--seed', '42',
+                      '--timeout', '3600', '--return-token-ids', '--out', out], f'{name}-long', 7200)
+                if out.exists():
+                    rows = json.loads(out.read_text())['oracle']['rows']
+                    rates = sorted(x['tok_s_after_ttft_full'] for x in rows if x.get('tok_s_after_ttft_full'))
+                    ref_rows = json.loads(LONG_REF.read_text())['oracle']['rows'] if LONG_REF.exists() else []
+                    ref = {x['prompt_id'].rsplit('-c', 1)[0]: x['token_ids'] for x in ref_rows}
+                    same = [ref.get(x['prompt_id'].rsplit('-c', 1)[0]) == x['token_ids'] for x in rows]
+                    R.log(f"{name}: long suite vs the no-speculation answers of 2026-10-04: {sum(same)}/{len(same)} identical")
+                    r['long_vs_no_speculation'] = f'{sum(same)}/{len(same)}'
+                    r['long'] = {'requests': len(rows), 'decode_tok_s_median': rates[len(rates) // 2] if rates else None,
+                                 'decode_tok_s_mean': sum(rates) / len(rates) if rates else None,
+                                 'token_sha': [x['sha256'] for x in rows]}
+                    R.log(f"{name}: long suite, {len(rows)} requests, decode after first token: median "
+                          f"{r['long']['decode_tok_s_median']:.1f} tok/s, mean {r['long']['decode_tok_s_mean']:.1f}")
+                R.save_results(); R.fault_check(since)
+                r['short'] = saturated(srv.base, name)
+            r['stop'] = srv.stop()
+            text = (OUT / name / 'server.log').read_text(errors='replace') if (OUT / name / 'server.log').exists() else ''
+            r['copy_draft_lines'] = re.findall(r'b70_copy_draft: [^\n]*', text)[-6:]
+            for line in r['copy_draft_lines']:
+                R.log(f'{name}: {line[:200]}')
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
+        a, b = results.get('tp2-mtp5-control', {}).get('long'), results.get('tp2-mtp5-copy', {}).get('long')
+        if a and b:
+            R.log(f"long suite answers identical between the arms: {a['token_sha'] == b['token_sha']}; decode median "
+                  f"{a['decode_tok_s_median']:.1f} -> {b['decode_tok_s_median']:.1f} tok/s "
+                  f"({(b['decode_tok_s_median'] / a['decode_tok_s_median'] - 1) * 100:+.1f}%)")
+    elif os.environ.get('MU_MODE') == 'loadcopy':
         # The model-load fault is the copy engine reading a temporary mapping of host memory (every host-to-card copy
         # of 512 MiB or more gets one, at GPU address 0x800400200000; 256 MiB or less does not). The chunked-upload
         # overlay sends the large tensors in 128 MiB pieces. Two starts of the shipped two-card server: the runtime's
