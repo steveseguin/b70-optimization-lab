@@ -1,0 +1,922 @@
+{
+  "schema": "ltx.campaign-93b-summary.v1",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c",
+  "arms": {
+    "f93c-ctl": {
+      "label": "control",
+      "present": true,
+      "prompts": 40,
+      "index_base": 219000,
+      "clips_verified": 36,
+      "exact": 36,
+      "all_exact": true,
+      "references": [
+        "baseline-01",
+        "speed-oracle-bird",
+        "speed-oracle-marble",
+        "stability-01-r01-candle",
+        "stability-01-r01-fabric",
+        "stability-01-r01-paper",
+        "stability-01-r01-pendulum",
+        "stability-01-r01-pour",
+        "stability-01-r01-rain",
+        "stability-01-r01-wheel"
+      ],
+      "interval_median_s": 1.824,
+      "interval_mean_s": 1.5872,
+      "interval_median_steady_s": 1.7505,
+      "encode_job_median_s": 3.1757,
+      "sampler_job_median_s": 2.8293,
+      "decode_job_median_s": 2.38,
+      "connector_computed_per_clip_median": 0.0,
+      "connector_reused_per_clip_median": 0.0,
+      "engine": {
+        "window_s": 53.96,
+        "prompts": 34,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.3611,
+            "bcs_s_per_clip": 1.0935,
+            "ccs_util": 0.8576
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.3657,
+            "bcs_s_per_clip": 0.9253,
+            "ccs_util": 0.8605
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 1.1265,
+            "bcs_s_per_clip": 1.0191,
+            "ccs_util": 0.7098
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.3134,
+            "bcs_s_per_clip": 0.7861,
+            "ccs_util": 0.8275
+          }
+        },
+        "total_ccs_s_per_clip": 5.1667
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af",
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af"
+          ]
+        ],
+        "boat": [
+          [
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd",
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd"
+          ]
+        ],
+        "candle": [
+          [
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9",
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9"
+          ]
+        ],
+        "fabric": [
+          [
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66",
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66"
+          ]
+        ],
+        "marble": [
+          [
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9",
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9"
+          ]
+        ],
+        "paper": [
+          [
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020",
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020"
+          ]
+        ],
+        "pendulum": [
+          [
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e",
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e"
+          ]
+        ],
+        "pour": [
+          [
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49",
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49"
+          ]
+        ],
+        "rain": [
+          [
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254",
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254"
+          ]
+        ],
+        "wheel": [
+          [
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1",
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1"
+          ]
+        ]
+      }
+    },
+    "f93c-lean": {
+      "label": "lean",
+      "present": true,
+      "prompts": 40,
+      "index_base": 219200,
+      "clips_verified": 36,
+      "exact": 36,
+      "all_exact": true,
+      "references": [
+        "baseline-01",
+        "speed-oracle-bird",
+        "speed-oracle-marble",
+        "stability-01-r01-candle",
+        "stability-01-r01-fabric",
+        "stability-01-r01-paper",
+        "stability-01-r01-pendulum",
+        "stability-01-r01-pour",
+        "stability-01-r01-rain",
+        "stability-01-r01-wheel"
+      ],
+      "interval_median_s": 2.164,
+      "interval_mean_s": 1.6764,
+      "interval_median_steady_s": 1.612,
+      "encode_job_median_s": 3.2046,
+      "sampler_job_median_s": 2.5558,
+      "decode_job_median_s": 2.6169,
+      "connector_computed_per_clip_median": 1.0,
+      "connector_reused_per_clip_median": 3.0,
+      "engine": {
+        "window_s": 57.0,
+        "prompts": 34,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.2974,
+            "bcs_s_per_clip": 1.0655,
+            "ccs_util": 0.7739
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.3701,
+            "bcs_s_per_clip": 0.9487,
+            "ccs_util": 0.8173
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 1.1391,
+            "bcs_s_per_clip": 1.024,
+            "ccs_util": 0.6795
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.3689,
+            "bcs_s_per_clip": 0.7994,
+            "ccs_util": 0.8166
+          }
+        },
+        "total_ccs_s_per_clip": 5.1755
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af",
+            "b45ef30dedbb02e685b0334f3f6ea26ccf553377cdc3ef63aef48667786ec9af"
+          ]
+        ],
+        "boat": [
+          [
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd",
+            "dca57e2a1e833bdbeaa3419dedf49ba0140c2f98fce2bd8863dae76f08001cbd"
+          ]
+        ],
+        "candle": [
+          [
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9",
+            "418d4f698a443ac3d0f35de2d3e105d45dc20a24175a3de8f13bc819584acfe9"
+          ]
+        ],
+        "fabric": [
+          [
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66",
+            "6ca26bcb8b301797f8fae121543f2cfc4dc3c6e27abb9002ccc254aca833bb66"
+          ]
+        ],
+        "marble": [
+          [
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9",
+            "20b52bd1b48d15bbb7883b73c07c29d67198f4b09a6b8a58eae67d269f7a61c9"
+          ]
+        ],
+        "paper": [
+          [
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020",
+            "c5084e5bf47c95b4d1a7ad8c34339cdd05cb51d172208fab4b4019eb3af30020"
+          ]
+        ],
+        "pendulum": [
+          [
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e",
+            "b3fb0e02d823e61e058bd8130ba53c6ea1192a31f2b3a28c7af15aa6d7a17f7e"
+          ]
+        ],
+        "pour": [
+          [
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49",
+            "220158bce7aa24ddf3e9185edb8f702cb64288b12519d3b13699ffc1bcc3cf49"
+          ]
+        ],
+        "rain": [
+          [
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254",
+            "9c11dc3e924f146a106f77d0a76090908549748b48fbc4af66de5015dd1f5254"
+          ]
+        ],
+        "wheel": [
+          [
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1",
+            "a955ae81edd5156c80b06303f6dffa9c0ee7765f03e0f07c788f1e38baa39fc1"
+          ]
+        ]
+      }
+    },
+    "f93c-or1": {
+      "label": "window-oracle-pass-1",
+      "present": true,
+      "prompts": 13,
+      "index_base": 219400,
+      "clips_verified": 10,
+      "exact": 0,
+      "all_exact": false,
+      "references": [
+        "baseline-01",
+        "speed-oracle-bird",
+        "speed-oracle-marble",
+        "stability-01-r01-candle",
+        "stability-01-r01-fabric",
+        "stability-01-r01-paper",
+        "stability-01-r01-pendulum",
+        "stability-01-r01-pour",
+        "stability-01-r01-rain",
+        "stability-01-r01-wheel"
+      ],
+      "interval_median_s": 1.299,
+      "interval_mean_s": 1.3516,
+      "interval_median_steady_s": 1.2985,
+      "encode_job_median_s": 0.4526,
+      "sampler_job_median_s": 2.6372,
+      "decode_job_median_s": 1.7305,
+      "connector_computed_per_clip_median": 0,
+      "connector_reused_per_clip_median": 0,
+      "engine": {
+        "window_s": 9.54,
+        "prompts": 7,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.1124,
+            "bcs_s_per_clip": 0.8973,
+            "ccs_util": 0.8162
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 0.836,
+            "bcs_s_per_clip": 0.7888,
+            "ccs_util": 0.6133
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.303,
+            "bcs_s_per_clip": 0.2771,
+            "ccs_util": 0.2223
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.1209,
+            "bcs_s_per_clip": 0.1945,
+            "ccs_util": 0.8224
+          }
+        },
+        "total_ccs_s_per_clip": 3.3723
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    },
+    "f93c-or2": {
+      "label": "window-oracle-pass-2",
+      "present": true,
+      "prompts": 13,
+      "index_base": 219600,
+      "clips_verified": 10,
+      "exact": 0,
+      "all_exact": false,
+      "references": [
+        "baseline-01",
+        "speed-oracle-bird",
+        "speed-oracle-marble",
+        "stability-01-r01-candle",
+        "stability-01-r01-fabric",
+        "stability-01-r01-paper",
+        "stability-01-r01-pendulum",
+        "stability-01-r01-pour",
+        "stability-01-r01-rain",
+        "stability-01-r01-wheel"
+      ],
+      "interval_median_s": 1.337,
+      "interval_mean_s": 1.385,
+      "interval_median_steady_s": 1.348,
+      "encode_job_median_s": 0.4698,
+      "sampler_job_median_s": 2.7103,
+      "decode_job_median_s": 1.6672,
+      "connector_computed_per_clip_median": 0,
+      "connector_reused_per_clip_median": 0,
+      "engine": {
+        "window_s": 9.74,
+        "prompts": 7,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.3966,
+            "bcs_s_per_clip": 1.1389,
+            "ccs_util": 1.0034
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.0471,
+            "bcs_s_per_clip": 0.9901,
+            "ccs_util": 0.7523
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.3191,
+            "bcs_s_per_clip": 0.284,
+            "ccs_util": 0.2293
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.3552,
+            "bcs_s_per_clip": 0.2104,
+            "ccs_util": 0.9737
+          }
+        },
+        "total_ccs_s_per_clip": 4.118
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    },
+    "f93c-wlean": {
+      "label": "window+lean",
+      "present": true,
+      "prompts": 120,
+      "index_base": 219800,
+      "clips_verified": 116,
+      "exact": 116,
+      "all_exact": true,
+      "references": [
+        "stability-01-w93c-bird",
+        "stability-01-w93c-boat",
+        "stability-01-w93c-candle",
+        "stability-01-w93c-fabric",
+        "stability-01-w93c-marble",
+        "stability-01-w93c-paper",
+        "stability-01-w93c-pendulum",
+        "stability-01-w93c-pour",
+        "stability-01-w93c-rain",
+        "stability-01-w93c-wheel"
+      ],
+      "interval_median_s": 1.519,
+      "interval_mean_s": 1.3875,
+      "interval_median_steady_s": 1.54,
+      "encode_job_median_s": 0.5561,
+      "sampler_job_median_s": 2.5469,
+      "decode_job_median_s": 2.3888,
+      "connector_computed_per_clip_median": 1.0,
+      "connector_reused_per_clip_median": 3.0,
+      "engine": {
+        "window_s": 158.17,
+        "prompts": 114,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.2441,
+            "bcs_s_per_clip": 1.0142,
+            "ccs_util": 0.8966
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.3268,
+            "bcs_s_per_clip": 0.9383,
+            "ccs_util": 0.9563
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.396,
+            "bcs_s_per_clip": 0.3683,
+            "ccs_util": 0.2854
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 0.8497,
+            "bcs_s_per_clip": 0.2559,
+            "ccs_util": 0.6124
+          }
+        },
+        "total_ccs_s_per_clip": 3.8166
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    }
+  },
+  "context_sentry_pairs": {
+    "f93c-ctl:f93c-lean": {
+      "fixtures_expected": 10,
+      "identical": 10,
+      "passed": true,
+      "problems": []
+    },
+    "f93c-or1:f93c-wlean": {
+      "fixtures_expected": 10,
+      "identical": 10,
+      "passed": true,
+      "problems": []
+    }
+  },
+  "context_sentry_gate_passed": true,
+  "finished_clip_comparison_vs_1024": {
+    "accepted": true,
+    "status": "accepted: new reference set stored",
+    "rows": [
+      {
+        "fixture": "boat",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-03/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 19.411568096793943,
+            "max_abs_255": 199.716796875,
+            "mean_abs_255": 17.773512759242383,
+            "fraction_pixels_over_1_255": 0.99967041015625,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.003154754638671875,
+            "mean_abs": 0.00023791677164445592,
+            "snr_db": 2.866430843376206
+          },
+          "video_latent": {
+            "max_abs": 4.353957653045654,
+            "mean_abs": 0.41266171263305296
+          },
+          "audio_latent": {
+            "max_abs": 0.2293761968612671,
+            "mean_abs": 0.026888610189556718
+          }
+        }
+      },
+      {
+        "fixture": "marble",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-04/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 22.415791516507326,
+            "max_abs_255": 212.666015625,
+            "mean_abs_255": 12.612117122555992,
+            "fraction_pixels_over_1_255": 0.9946148681640625,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.00897216796875,
+            "mean_abs": 0.0005461519498573216,
+            "snr_db": 2.9083243298961015
+          },
+          "video_latent": {
+            "max_abs": 4.111942231655121,
+            "mean_abs": 0.36443965220571783
+          },
+          "audio_latent": {
+            "max_abs": 0.6270849704742432,
+            "mean_abs": 0.04694960907419535
+          }
+        }
+      },
+      {
+        "fixture": "bird",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-05/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 16.792225881574204,
+            "max_abs_255": 239.560546875,
+            "mean_abs_255": 24.28899633859737,
+            "fraction_pixels_over_1_255": 0.9980645751953126,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.0097198486328125,
+            "mean_abs": 0.000547045652743847,
+            "snr_db": 8.336155676301633
+          },
+          "video_latent": {
+            "max_abs": 5.085615396499634,
+            "mean_abs": 0.48641939574611115
+          },
+          "audio_latent": {
+            "max_abs": 0.2998894453048706,
+            "mean_abs": 0.035475107220218675
+          }
+        }
+      },
+      {
+        "fixture": "pendulum",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-06/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 18.24432321853002,
+            "max_abs_255": 238.564453125,
+            "mean_abs_255": 17.758323100140114,
+            "fraction_pixels_over_1_255": 0.9809368896484375,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.0167236328125,
+            "mean_abs": 0.0012303099870142333,
+            "snr_db": 1.7759165586798074
+          },
+          "video_latent": {
+            "max_abs": 6.800673007965088,
+            "mean_abs": 0.6448075878132471
+          },
+          "audio_latent": {
+            "max_abs": 0.8975613117218018,
+            "mean_abs": 0.07386462926828805
+          }
+        }
+      },
+      {
+        "fixture": "rain",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-07/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 24.7739721628161,
+            "max_abs_255": 210.673828125,
+            "mean_abs_255": 8.530524447658081,
+            "fraction_pixels_over_1_255": 0.968720703125,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.00507354736328125,
+            "mean_abs": 0.0004953570931338438,
+            "snr_db": 7.003937827437698
+          },
+          "video_latent": {
+            "max_abs": 2.2124457210302353,
+            "mean_abs": 0.2563820167920916
+          },
+          "audio_latent": {
+            "max_abs": 0.32378333806991577,
+            "mean_abs": 0.03137803630558595
+          }
+        }
+      },
+      {
+        "fixture": "paper",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-08/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 20.31024725491514,
+            "max_abs_255": 173.0712890625,
+            "mean_abs_255": 12.949211748762808,
+            "fraction_pixels_over_1_255": 0.989844970703125,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.00164794921875,
+            "mean_abs": 0.00021451431180184504,
+            "snr_db": 3.3220410220410064
+          },
+          "video_latent": {
+            "max_abs": 4.129528760910034,
+            "mean_abs": 0.36424755056749447
+          },
+          "audio_latent": {
+            "max_abs": 0.6448169350624084,
+            "mean_abs": 0.06802333789528348
+          }
+        }
+      },
+      {
+        "fixture": "candle",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-09/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 21.08265989221024,
+            "max_abs_255": 227.109375,
+            "mean_abs_255": 15.662530926191083,
+            "fraction_pixels_over_1_255": 0.99897216796875,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.0068511962890625,
+            "mean_abs": 0.0010617894270355897,
+            "snr_db": 0.2748893896557109
+          },
+          "video_latent": {
+            "max_abs": 4.415827289223671,
+            "mean_abs": 0.4174626065419318
+          },
+          "audio_latent": {
+            "max_abs": 1.266328290104866,
+            "mean_abs": 0.10739966841244425
+          }
+        }
+      },
+      {
+        "fixture": "pour",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-10/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 18.701022374660916,
+            "max_abs_255": 249.0234375,
+            "mean_abs_255": 18.514256127222506,
+            "fraction_pixels_over_1_255": 0.991005859375,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.0068206787109375,
+            "mean_abs": 0.0005877648150008909,
+            "snr_db": 1.042458030462108
+          },
+          "video_latent": {
+            "max_abs": 4.462762415409088,
+            "mean_abs": 0.49624753163540447
+          },
+          "audio_latent": {
+            "max_abs": 0.4662437438964844,
+            "mean_abs": 0.07465573564639691
+          }
+        }
+      },
+      {
+        "fixture": "fabric",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-11/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 17.96374751564639,
+            "max_abs_255": 250.517578125,
+            "mean_abs_255": 20.31401817617152,
+            "fraction_pixels_over_1_255": 0.99844482421875,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.000598907470703125,
+            "mean_abs": 0.00010286157686807363,
+            "snr_db": 5.886922418941602
+          },
+          "video_latent": {
+            "max_abs": 4.136895537376404,
+            "mean_abs": 0.3915108760159498
+          },
+          "audio_latent": {
+            "max_abs": 0.3529462218284607,
+            "mean_abs": 0.034847104136133566
+          }
+        }
+      },
+      {
+        "fixture": "wheel",
+        "window": 64,
+        "certified_capture": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-12/tensors.safetensors",
+        "comparison": {
+          "images": {
+            "psnr_db": 27.095366353412537,
+            "max_abs_255": 225.615234375,
+            "mean_abs_255": 2.691013793198272,
+            "fraction_pixels_over_1_255": 0.437720947265625,
+            "bitwise_equal": false
+          },
+          "waveform": {
+            "max_abs": 0.00293731689453125,
+            "mean_abs": 0.000170876726714845,
+            "snr_db": 1.9599684453373787
+          },
+          "video_latent": {
+            "max_abs": 2.9087328910827637,
+            "mean_abs": 0.10857951702188018
+          },
+          "audio_latent": {
+            "max_abs": 0.5750662088394165,
+            "mean_abs": 0.04479542181462211
+          }
+        }
+      }
+    ],
+    "table": [
+      "fixture     PSNR dB  max/255 mean/255    >1/255   wav SNR    wav max   vlat max   alat max",
+      "boat          19.41   199.72  17.7735   0.99967      2.87   3.15e-03   4.35e+00   2.29e-01",
+      "marble        22.42   212.67  12.6121   0.99461      2.91   8.97e-03   4.11e+00   6.27e-01",
+      "bird          16.79   239.56  24.2890   0.99806      8.34   9.72e-03   5.09e+00   3.00e-01",
+      "pendulum      18.24   238.56  17.7583   0.98094      1.78   1.67e-02   6.80e+00   8.98e-01",
+      "rain          24.77   210.67   8.5305   0.96872      7.00   5.07e-03   2.21e+00   3.24e-01",
+      "paper         20.31   173.07  12.9492   0.98984      3.32   1.65e-03   4.13e+00   6.45e-01",
+      "candle        21.08   227.11  15.6625   0.99897      0.27   6.85e-03   4.42e+00   1.27e+00",
+      "pour          18.70   249.02  18.5143   0.99101      1.04   6.82e-03   4.46e+00   4.66e-01",
+      "fabric        17.96   250.52  20.3140   0.99844      5.89   5.99e-04   4.14e+00   3.53e-01",
+      "wheel         27.10   225.62   2.6910   0.43772      1.96   2.94e-03   2.91e+00   5.75e-01"
+    ]
+  },
+  "window_label": "changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)",
+  "engine_samples": 679
+}
