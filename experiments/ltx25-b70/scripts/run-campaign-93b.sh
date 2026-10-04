@@ -1,65 +1,65 @@
 #!/bin/bash
-# Packet 93 (prepared-encoder-window-93): lean conditioning (exact by construction) and the
-# suffix-window text encoder (CHANGES OUTPUT AT ROUNDING LEVEL; owner decision pending),
-# on ONE server. Build note: notes/2026-10-04-packet-93-build.md.
+# Packet 93b (prepared-encoder-window-93b; supersedes 93): lean conditioning (exact by
+# construction) and the suffix-window text encoder (changes output at rounding level; owner
+# approved 2026-10-04 on two conditions: negligible finished-clip difference; new references,
+# byte-identical thereafter), on ONE server. Build note: notes/2026-10-04-packet-93-build.md.
 #
 # The operator launches the server first (exact command in the note), with
 #   env --default-signal=INT LTX_BUSY_WINDOWS=0 ... serve-encoder.py ... --health-receipt <receipt>
 # then starts this runner:
-#   bash run-campaign-93.sh
+#   bash run-campaign-93b.sh
 #
 # Order on the one server (every client call under `timeout`; waits are on pids and files,
 # never on log wording):
-#   1. warm 3 (pipe-samp2-tsh)                                         index base 216000
+#   1. warm 3 (pipe-samp2-tsh)                                         index base 217400
 #   2. cross-card decode probe (replica placement must be exact)
-#   3. control 40 (pipe-samp2-tsh-rep), existing references            216200
-#   4. lean 40 (pipe-samp2-tsh-rep-lean), existing references          216400
+#   3. control 40 (pipe-samp2-tsh-rep), existing references            217600
+#   4. lean 40 (pipe-samp2-tsh-rep-lean), existing references          217800
 #      (exact by construction; the context-hash sentry compares 3 and 4)
 #   5. text-window qualification probe (determinism on both encode workers and a repeat,
 #      capture proof per bucket, closeness to the 1024 encode within 1e-3)
 #   6. two window oracle passes, 13 prompts each (pipe-samp2-tsh-win: the control placement,
-#      three fill prompts, so all ten fixtures are emitted)             216600, 216800
+#      three fill prompts, so all ten fixtures are emitted)             218000, 218200
 #      -> make-window-oracle-93.py: pass 1 == pass 2 on all four tensors per fixture, else
 #         the windowed identity is rejected; accepted -> new references stability-01-w93-*
-#   7. windowed+lean 120 (pipe-samp2-tsh-rep-wlean) against the NEW references   217000
-#   8. summary -> data/window-93/summary.json; graceful stop on proven quiescence.
+#   7. windowed+lean 120 (pipe-samp2-tsh-rep-wlean) against the NEW references   218400
+#   8. summary -> data/window-93b/summary.json (context-sentry GATE and the finished-clip
+#      comparison table, window vs 1024, printed); graceful stop on proven quiescence.
+#   An interrupted runner (INT/TERM/EXIT) attempts the same proven-quiescence stop once
+#   (never a kill) and says plainly if the server is still up.
 # A failed or negative probe skips the dependent arms and still stops cleanly.
 #
 # Exit codes: 0 all good; 3 an oracle mismatch in an arm that must be exact; 1/2 arm
 # error/timeout; 4 FAULT latched (server left up for incident review); 5 queue not provably
 # empty; 6 pipeline jobs not provably finished; 7 stop failed / pid not the server;
 # 8 pre-run refusal; 9 decode probe failed (all replica arms skipped); 11 window probe
-# negative or errored (window arms skipped); 12 window oracle rejected (windowed arm skipped).
+# negative or errored (window arms skipped); 12 window oracle rejected (windowed arm skipped);
+# 13 runner interrupted (stop attempted); 14 context-sentry gate or summary failed.
 # Codes 5/6/7 mean the server could NOT be stopped safely and is still up.
 # Do not edit while running.
 set -u
-# SUPERSEDED (2026-10-04) by packet 93b / run-campaign-93b.sh before any launch: review found that
-# a timed window encode could capture graphs, the oracle could accept one pass twice, the health
-# receipt check was too loose, the journal had a gap, and the stop had no trap. Never launch 93.
-echo "run-campaign-93.sh is superseded by run-campaign-93b.sh (packet 93 must not be launched); refusing"
-exit 8
 R=/mnt/fast-ai/bench-results/ltx25-baseline-20260913
-P=$R/prepared-encoder-window-93
-MANIFEST=997b2913dc612211ee6aa797376e6082e9d929c1b2a45c4cce554de013859efd
+P=$R/prepared-encoder-window-93b
+MANIFEST=655eac5725d9429a28cb0b4e87340a0c2a556d477aa0bbf5bf7b735c9db4db55
 LANE=/home/steve/llm-optimizations/experiments/ltx25-b70
 REPO=/home/steve/llm-optimizations
 PY=/home/steve/.venvs/ltx25-baseline/bin/python
-RUN_NAME=encoder-server-window-93
+RUN_NAME=encoder-server-window-93b
 RUN=$R/$RUN_NAME
-OUT=$LANE/data/window-93
+OUT=$LANE/data/window-93b
 WINDOW_PREREG=$LANE/data/stability-01-window-prereg.json
-WARM_BASE=216000;  WARM_N=3
-CTL_BASE=216200;   CTL_N=40
-LEAN_BASE=216400;  LEAN_N=40
-OR1_BASE=216600;   OR_N=13
-OR2_BASE=216800
-WLEAN_BASE=217000; WLEAN_N=120
+WARM_BASE=217400;  WARM_N=3
+CTL_BASE=217600;   CTL_N=40
+LEAN_BASE=217800;  LEAN_N=40
+OR1_BASE=218000;   OR_N=13
+OR2_BASE=218200
+WLEAN_BASE=218400; WLEAN_N=120
 mkdir -p "$OUT"
 step() { echo "=== $(date -u +%FT%TZ) $*"; }
 save() {
   local paths="${OUT#$REPO/}"
   [ -f "$WINDOW_PREREG" ] && paths="$paths ${WINDOW_PREREG#$REPO/}"
-  ( cd $REPO && git add $paths && git commit -q -m "LTX packet 93: $1 receipts
+  ( cd $REPO && git add $paths && git commit -q -m "LTX packet 93b: $1 receipts
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" ) >/dev/null 2>&1 && step "committed $1" || step "commit of $1 failed (continuing)"
 }
@@ -75,7 +75,7 @@ sync_watch() { # prefix
 }
 
 ARM_RC=0
-ARMS_RUN=""   # "base:n" pairs whose jobs must all have done markers
+ARMS_RUN=""   # arm prefixes; their actually-submitted jobs must all have done markers
 arm() { # name graph-arm count index-base client-timeout-s watch|- [fixtures]
   step "$1: arm $2, $3 prompts, index base $4"
   local wpid= fx=()
@@ -84,7 +84,7 @@ arm() { # name graph-arm count index-base client-timeout-s watch|- [fixtures]
   timeout $5 $PY -B $LANE/scripts/run-throughput-fixtures.py $1 --graph $P/graphs/graph-capture-all48-$2.json \
     --arm $2 --server-run $RUN --count $3 --index-base $4 --out $OUT "${fx[@]}"
   ARM_RC=$?
-  ARMS_RUN="$ARMS_RUN $4:$3"
+  ARMS_RUN="$ARMS_RUN $1"
   if [ -n "$wpid" ]; then touch "$SYNC_FLAG" || kill $wpid; wait $wpid; rm -f "$SYNC_FLAG"; fi
   sync
   step "$1 finished rc=$ARM_RC; synced"
@@ -106,20 +106,8 @@ d=json.load(sys.stdin)
 sys.exit(0 if d.get('queue_running') == [] and d.get('queue_pending') == [] else 1)"
 }
 
-missing_markers() { # every expected done marker that does not exist
-  # Sampler depth 2: prompt i submits sample job base+i and, from i >= 2, the decode job
-  # base+i-2 (whatever the decode depth), whose preview the writer saves.
-  local spec base n i
-  for spec in $ARMS_RUN; do
-    base=${spec%%:*}; n=${spec##*:}
-    for i in $(seq 0 $((n - 1))); do
-      [ -f $RUN/pipeline-done-sample-$((base + i)).json ] || echo "sample-$((base + i))"
-      if [ $i -ge 2 ]; then
-        [ -f $RUN/pipeline-done-decode-$((base + i - 2)).json ] || echo "decode-$((base + i - 2))"
-        [ -f $RUN/pipeline-done-save-$((base + i - 2)).json ] || echo "save-$((base + i - 2))"
-      fi
-    done
-  done
+missing_markers() { # done markers missing for jobs the server actually queued (93b)
+  timeout 120 $PY -B $LANE/scripts/missing-markers-93b.py --root $R --run $RUN $ARMS_RUN || echo "marker-check-failed"
 }
 
 stop_when_proven() {
@@ -156,15 +144,22 @@ stop_when_proven() {
   return 0
 }
 
-summarize() {
+SUMMARY_RC=0
+summarize() { # the context-sentry gate: a failure fails the campaign (exit 14)
   timeout 300 $PY -B $LANE/scripts/summarize-campaign-93.py --run $RUN --out $OUT \
-    --arm f93-ctl:control --arm f93-lean:lean --arm f93-or1:window-oracle-pass-1 \
-    --arm f93-or2:window-oracle-pass-2 --arm f93-wlean:window+lean \
-    --pair f93-ctl:f93-lean --pair f93-or1:f93-wlean || step "summary failed (rc=$?)"
+    --arm f93b-ctl:control --arm f93b-lean:lean --arm f93b-or1:window-oracle-pass-1 \
+    --arm f93b-or2:window-oracle-pass-2 --arm f93b-wlean:window+lean \
+    --pair f93b-ctl:f93b-lean --pair f93b-or1:f93b-wlean
+  SUMMARY_RC=$?
+  [ $SUMMARY_RC -eq 0 ] || step "SUMMARY / CONTEXT-SENTRY GATE FAILED (rc=$SUMMARY_RC)"
 }
 
-finish() { # final rc
+FINISHING=0
+finish() { # final rc; runs at most once
   local rc=$1 stop_rc i
+  [ $FINISHING = 1 ] && return
+  FINISHING=1
+  trap - INT TERM
   stop_when_proven
   stop_rc=$?
   if [ -n "${SAMPLER_PID:-}" ]; then
@@ -176,13 +171,27 @@ finish() { # final rc
   summarize
   sync
   save "summary (rc=$rc, stop rc=$stop_rc)"
+  [ $rc -eq 0 ] && [ $SUMMARY_RC -ne 0 ] && rc=14
   if [ $stop_rc -ne 0 ]; then
-    step "campaign finished (rc=$rc) but the server was NOT stopped (stop rc=$stop_rc)"
+    step "campaign finished (rc=$rc) but the server is STILL UP: it could not be stopped safely (stop rc=$stop_rc)"
     exit $stop_rc
   fi
   step "campaign complete (rc=$rc), server stopped and gone"
   exit $rc
 }
+
+# 93b: an interrupted runner still attempts the proven-quiescence stop, once, never a kill.
+on_signal() { step "runner interrupted by SIG$1"; if [ -n "${PID:-}" ]; then finish 13; fi; exit 13; }
+on_exit() {
+  local rc=$?
+  if [ $FINISHING = 0 ] && [ -n "${PID:-}" ]; then
+    step "runner exiting (rc=$rc) without its stop step: attempting the proven-quiescence stop once"
+    finish $([ $rc -eq 0 ] && echo 13 || echo $rc)
+  fi
+}
+trap 'on_signal INT' INT
+trap 'on_signal TERM' TERM
+trap on_exit EXIT
 
 # ---- preflight ----------------------------------------------------------------------------------
 [ "$MANIFEST" != "__MANIFEST__" ] || { step "runner not pinned to a built packet; refusing"; exit 8; }
@@ -200,10 +209,10 @@ curl -sf -m 10 http://127.0.0.1:8188/queue >/dev/null || { step server never ans
 PID=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['pid'])")
 TICKS=$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['proc_start_ticks'])")
 [ "$($PY -c "import json;print(json.load(open('$RUN/server-identity.json'))['source_packet_manifest_sha256'])")" = "$MANIFEST" ] \
-  || { step "server is not the packet 93 build; refusing"; exit 8; }
+  || { step "server is not the packet 93b build; refusing"; exit 8; }
 pid_is_server $PID $TICKS || { step "server pid $PID does not match $RUN_NAME identity; refusing"; exit 8; }
 BW=$(tr '\0' '\n' < /proc/$PID/environ 2>/dev/null | sed -n 's/^LTX_BUSY_WINDOWS=//p')
-[ "$BW" = 0 ] || { step "packet 93 is a speed comparison: launch the server with LTX_BUSY_WINDOWS=0 (found '$BW'); refusing"; exit 8; }
+[ "$BW" = 0 ] || { step "packet 93b is a speed comparison: launch the server with LTX_BUSY_WINDOWS=0 (found '$BW'); refusing"; exit 8; }
 SIGINT_IGN=$($PY -c "print(int(open('/proc/$PID/status').read().split('SigIgn:')[1].split()[0], 16) >> 1 & 1)")
 [ "$SIGINT_IGN" = 0 ] || { step "the server ignores SIGINT (launch it with env --default-signal=INT); refusing"; exit 8; }
 HEALTH=$($PY -c "import json;print('yes' if 'health_admission' in json.load(open('$RUN/server-identity.json')) else 'no')")
@@ -215,15 +224,15 @@ step "rest 60 s after construction"
 sleep 60
 
 # ---- 1. warm, 2. decode probe ---------------------------------------------------------------------
-arm f93-warm pipe-samp2-tsh $WARM_N $WARM_BASE 900 -
+arm f93b-warm pipe-samp2-tsh $WARM_N $WARM_BASE 900 -
 [ $ARM_RC -eq 0 ] || { step "warm failed rc=$ARM_RC"; finish $ARM_RC; }
 step "settle 30 s before the decode probe"
 sleep 30
 queue_empty || { step "queue not provably empty before the decode probe"; finish 5; }
 step "cross-card decode probe"
-timeout 1500 $PY -B $LANE/scripts/run-decode-probe.py f93-dprobe --graph $P/graphs/decode-replica-probe.json --server-run $RUN
+timeout 1500 $PY -B $LANE/scripts/run-decode-probe.py f93b-dprobe --graph $P/graphs/decode-replica-probe.json --server-run $RUN
 DPROBE_RC=$?
-cp $RUN/decode-probe-f93-dprobe.json $OUT/ 2>/dev/null
+cp $RUN/decode-probe-f93b-dprobe.json $OUT/ 2>/dev/null
 sync
 save "decode probe (rc=$DPROBE_RC)"
 [ $DPROBE_RC -eq 0 ] || { step "decode probe did not pass (rc=$DPROBE_RC): every arm uses the replica placement; skipping all"; finish 9; }
@@ -231,12 +240,12 @@ step "settle 30 s"
 sleep 30
 
 # ---- 3. control, 4. lean --------------------------------------------------------------------------
-arm f93-ctl pipe-samp2-tsh-rep $CTL_N $CTL_BASE 1800 -
+arm f93b-ctl pipe-samp2-tsh-rep $CTL_N $CTL_BASE 1800 -
 CTL_RC=$ARM_RC
 [ $CTL_RC -eq 0 ] || [ $CTL_RC -eq 3 ] || { step "control ended rc=$CTL_RC"; finish $CTL_RC; }
 step "settle 60 s between arms"
 sleep 60
-arm f93-lean pipe-samp2-tsh-rep-lean $LEAN_N $LEAN_BASE 1800 -
+arm f93b-lean pipe-samp2-tsh-rep-lean $LEAN_N $LEAN_BASE 1800 -
 LEAN_RC=$ARM_RC
 [ $LEAN_RC -eq 0 ] || [ $LEAN_RC -eq 3 ] || { step "lean ended rc=$LEAN_RC"; finish $LEAN_RC; }
 EXACT_RC=0
@@ -246,10 +255,10 @@ EXACT_RC=0
 step "settle 30 s before the text-window probe"
 sleep 30
 queue_empty || { step "queue not provably empty before the window probe"; finish 5; }
-step "text-window qualification probe (window CHANGES OUTPUT AT ROUNDING LEVEL; owner decision pending)"
-timeout 1800 $PY -B $LANE/scripts/run-text-window-probe.py f93-wprobe --graph $P/graphs/text-window-probe.json --server-run $RUN
+step "text-window qualification probe (window changes output at rounding level; owner approved 2026-10-04 on two conditions)"
+timeout 1800 $PY -B $LANE/scripts/run-text-window-probe.py f93b-wprobe --graph $P/graphs/text-window-probe.json --server-run $RUN
 WPROBE_RC=$?
-cp $RUN/text-window-probe-f93-wprobe.json $OUT/ 2>/dev/null
+cp $RUN/text-window-probe-f93b-wprobe.json $OUT/ 2>/dev/null
 sync
 save "text-window probe (rc=$WPROBE_RC)"
 if [ $WPROBE_RC -ne 0 ]; then
@@ -261,14 +270,15 @@ fi
 # ---- 6. two window oracle passes (compared with the 1024 references only for the record: rc 3 expected)
 step "settle 30 s"
 sleep 30
-arm f93-or1 pipe-samp2-tsh-win $OR_N $OR1_BASE 1200 -
+arm f93b-or1 pipe-samp2-tsh-win $OR_N $OR1_BASE 1200 -
 [ $ARM_RC -eq 0 ] || [ $ARM_RC -eq 3 ] || { step "oracle pass 1 ended rc=$ARM_RC"; finish $ARM_RC; }
 step "settle 30 s"
 sleep 30
-arm f93-or2 pipe-samp2-tsh-win $OR_N $OR2_BASE 1200 -
+arm f93b-or2 pipe-samp2-tsh-win $OR_N $OR2_BASE 1200 -
 [ $ARM_RC -eq 0 ] || [ $ARM_RC -eq 3 ] || { step "oracle pass 2 ended rc=$ARM_RC"; finish $ARM_RC; }
 step "window oracle: pass 1 vs pass 2, new references, distance to the 1024 oracle"
-timeout 900 $PY -B $LANE/scripts/make-window-oracle-93.py $OUT/f93-or1-throughput.json $OUT/f93-or2-throughput.json --out $OUT
+timeout 900 $PY -B $LANE/scripts/make-window-oracle-93.py $OUT/f93b-or1-throughput.json $OUT/f93b-or2-throughput.json \
+  --out $OUT --run $RUN --manifest $MANIFEST
 ORACLE_RC=$?
 sync
 save "window oracle (rc=$ORACLE_RC)"
@@ -281,7 +291,7 @@ fi
 # ---- 7. windowed + lean against the NEW references -------------------------------------------------
 step "settle 60 s"
 sleep 60
-arm f93-wlean pipe-samp2-tsh-rep-wlean $WLEAN_N $WLEAN_BASE 3600 watch "$WINDOW_PREREG"
+arm f93b-wlean pipe-samp2-tsh-rep-wlean $WLEAN_N $WLEAN_BASE 3600 watch "$WINDOW_PREREG"
 WLEAN_RC=$ARM_RC
 [ $WLEAN_RC -eq 0 ] || [ $WLEAN_RC -eq 3 ] || { step "windowed+lean ended rc=$WLEAN_RC"; finish $WLEAN_RC; }
 [ $EXACT_RC -ne 0 ] && finish $EXACT_RC

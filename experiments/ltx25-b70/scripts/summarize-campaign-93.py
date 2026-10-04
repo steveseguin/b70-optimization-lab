@@ -122,13 +122,24 @@ def arm_summary(run, out, prefix, label, fixtures, engine):
             'context_sentries': {fx: sorted([list(p) for p in v]) for fx, v in sorted(sentries.items())}}
 
 
-def compare_sentries(a, b):
-    """Per fixture: the (stage a, stage b) context hashes seen in both arms must be one equal pair."""
+def compare_sentries(a, b, fixtures):
+    """GATE (93b). Every fixture must appear in both arms with exactly one non-null
+    (stage a, stage b) pair of positive-context hashes, equal between the arms."""
     sa, sb = a.get('context_sentries', {}), b.get('context_sentries', {})
-    common = sorted(set(sa) & set(sb))
-    same = [fx for fx in common if len(sa[fx]) == 1 and sa[fx] == sb[fx] and None not in sa[fx][0]]
-    return {'fixtures_compared': len(common), 'identical': len(same),
-            'differing': [fx for fx in common if fx not in same]}
+    problems = []
+    for fx in fixtures:
+        if fx not in sa or fx not in sb:
+            problems.append('%s: missing in %s' % (fx, 'both' if fx not in sa and fx not in sb
+                                                  else ('first arm' if fx not in sa else 'second arm')))
+            continue
+        for label, s in (('first', sa[fx]), ('second', sb[fx])):
+            if len(s) != 1 or None in s[0]:
+                problems.append('%s: %s arm has %d hash pairs or a null hash' % (fx, label, len(s)))
+        if sa[fx] != sb[fx]:
+            problems.append('%s: context hashes differ between the arms' % fx)
+    same = [fx for fx in fixtures if not any(p.startswith(fx + ':') for p in problems)]
+    return {'fixtures_expected': len(fixtures), 'identical': len(same), 'passed': not problems,
+            'problems': problems}
 
 
 def main():
@@ -149,10 +160,18 @@ def main():
     for spec in a.pair:
         x, _, y = spec.partition(':')
         if arms.get(x, {}).get('present') and arms.get(y, {}).get('present'):
-            pairs[spec] = compare_sentries(arms[x], arms[y])
-    summary = {'schema': 'ltx.campaign-93-summary.v1', 'run': str(a.run), 'arms': arms,
-               'context_sentry_pairs': pairs,
-               'window_label': 'changes output at rounding level; owner decision pending',
+            pairs[spec] = compare_sentries(arms[x], arms[y], fixtures)
+    oracle = load(a.out / 'window-oracle-vs-1024-oracle.json')
+    clip_cmp = None
+    if oracle is not None:
+        clip_cmp = {'accepted': oracle.get('accepted'), 'status': oracle.get('status'),
+                    'rows': oracle.get('finished_clip_comparison'), 'table': oracle.get('table')}
+    gate_ok = all(p['passed'] for p in pairs.values())
+    summary = {'schema': 'ltx.campaign-93b-summary.v1', 'run': str(a.run), 'arms': arms,
+               'context_sentry_pairs': pairs, 'context_sentry_gate_passed': gate_ok,
+               'finished_clip_comparison_vs_1024': clip_cmp,
+               'window_label': ('changes output at rounding level; owner approved 2026-10-04 on two conditions '
+                                '(negligible finished-clip difference; new references, byte-identical thereafter)'),
                'engine_samples': len(engine)}
     (a.out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     print('%-22s %8s %7s %9s %9s %8s %8s %8s  %s' % ('arm', 'verified', 'exact', 'iv_med', 'iv_mean',
@@ -167,8 +186,15 @@ def main():
               s['interval_median_s'], s['interval_mean_s'], s['encode_job_median_s'],
               s['sampler_job_median_s'], s['decode_job_median_s'], per or '-'))
     for spec, c in pairs.items():
-        print('context sentry %s: %d/%d fixtures identical %s' % (spec, c['identical'], c['fixtures_compared'],
-                                                                 c['differing'] or ''))
+        print('context sentry %s: %d/%d fixtures identical %s' % (spec, c['identical'], c['fixtures_expected'],
+                                                                 '; '.join(c['problems'][:5])))
+    if clip_cmp is not None:
+        print('finished clips, window vs certified 1024 encode (%s):' % clip_cmp['status'])
+        for line in clip_cmp.get('table') or []:
+            print('  ' + line)
+    if not gate_ok:
+        print('CONTEXT SENTRY GATE FAILED')
+        return 2
     return 0
 
 
