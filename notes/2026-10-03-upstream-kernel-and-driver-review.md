@@ -71,3 +71,19 @@ Codex could not inspect some upstream patches (missing objects in the clones) an
 
 Suggested order when the FP8 lane is next opened: the empty-input guard, then the UVA pinning pair
 together with a read of `6c18a54648`, then the ragged GDN traversal against the MTP overlays.
+
+## Follow-up: do the three port candidates reach our serving path? (Codex, read-only, 2026-10-03 evening)
+
+Checked against our production forks (`vllm` 44fc8fde0, `vllm-xpu-kernels` 2dd55f3) and the shipped
+overlays. The local upstream clones are partial (blobless), so the exact upstream hunks could not
+be extracted; the findings below are from our own code, which is what decides exposure.
+
+| Candidate | Reaches our FP8 lane? | Can it change working outputs? | Decision |
+|---|---|---|---|
+| Zero-token guard in `per_token_group_quant_fp8` (`1dc2680`) | Not shown. Our W8A16 linear path calls `fp8_gemm_w8a16` directly and bypasses activation quantization (`scaled_mm/xpu.py:73`) | No, it is an early return | Harmless, but no reason to rebuild an image for it. Fold into the next kernel build |
+| UVA pinning keeps strides (`43abdd5` / `7230dfea50`) | Not shown. No non-contiguous UVA input was found in this lane; the one-card CPU-embedding overlay gathers on the CPU and copies | Values no, layout yes, so downstream kernel choice could move | Needs adapting in both layers and an exactness gate. Not now |
+| Ragged speculative GDN traversal (`da16a55`) | Not shown. Our `spec_decode.hpp` already walks per-request `query_start_loc` boundaries, and the one-card package uses its own `gdn_attention_ckpt` | Yes, a traversal change can alter recurrent state | Do not port blind. Reconcile against our custom speculative code first |
+
+**Net: nothing upstream justifies a rebuild of the FP8 image today.** The lane's own gates are exact,
+and none of the three fixes addresses a problem we can reproduce. Revisit at the next planned kernel
+build, guard first.
