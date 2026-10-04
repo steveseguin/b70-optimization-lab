@@ -1,6 +1,7 @@
 # MiniMax-H3 on the two-B70 host: lane packet (opened 2026-09-17)
 
-Status (2026-10-03): **lossless only; the persistent decode server passed its exact gate.** The server
+Status (2026-10-04): **lossless only; 8 clips in 3173 s = 396.6 s/clip (2.02x the baseline), every clip bit-identical
+to the September receipts.** The persistent decode server passed its exact gate. The server
 (`h3_vae_duet.py --serve`) keeps both decode workers loaded across a batch: 41.1 s per clip instead
 of 55.7 s, all four hashes bytewise equal to the standalone receipts (two bugs found and fixed by the
 gate run). The owner's direction is lossless only, so the exact fp32 picture decode is the default in
