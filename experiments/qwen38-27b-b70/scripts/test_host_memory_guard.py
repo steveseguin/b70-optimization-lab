@@ -32,7 +32,9 @@ class GuardTests(unittest.TestCase):
         self.assertIsNone(guard.decide(guard.parse_meminfo(meminfo()), base))
         grown = guard.parse_meminfo(meminfo(free=3))  # 5 GiB more outside the counters
         self.assertIn('driver-held', guard.decide(grown, base))
-        low = guard.parse_meminfo(meminfo(available=2))
+        # the floor is 2 GiB since 2026-10-04: exactly 2 GiB available is still fine, 1.5 GiB is not
+        self.assertIsNone(guard.decide(guard.parse_meminfo(meminfo(available=2)), base))
+        low = guard.parse_meminfo(meminfo(available=1.5))
         self.assertIn('available', guard.decide(low, base))
 
     def test_container_id_must_be_full_hex(self):

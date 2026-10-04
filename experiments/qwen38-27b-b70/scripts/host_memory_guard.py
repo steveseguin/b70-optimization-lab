@@ -26,7 +26,11 @@ GIB = 1024 ** 3
 COUNTED = ('MemFree', 'Buffers', 'Cached', 'SwapCached', 'AnonPages', 'Slab',
            'KernelStack', 'PageTables', 'SecPageTables', 'Percpu')
 DEFAULT_MAX_GROWTH = 4 * GIB
-DEFAULT_MIN_AVAILABLE = 5 * GIB // 2
+# 2 GiB since 2026-10-04 (was 2.5). A loaded two-card FP8 server leaves 3.1-3.4 GiB available on this 15 GiB host and
+# that is real working state (8.9 GiB of runtime memory; `malloc_trim` returns 0.2 GiB and there are no host-side
+# tensors to free), so a 2.5 GiB floor fired twice on 2026-10-03 at 2.4 GiB with the machine in no trouble, and a
+# guard kill of a busy server is itself a GPU fault source. earlyoom is the backstop below this at 1.2 GiB.
+DEFAULT_MIN_AVAILABLE = 2 * GIB
 FIRED_EXIT = 3
 CGROUP_ROOT = Path('/sys/fs/cgroup/system.slice')
 
