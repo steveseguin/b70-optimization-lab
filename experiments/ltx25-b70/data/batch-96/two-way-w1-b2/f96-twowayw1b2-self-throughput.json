@@ -1,0 +1,176 @@
+{
+  "schema": "ltx.throughput-fixtures-96.v1",
+  "prefix": "f96-twowayw1b2-self",
+  "arm": "pipe-samp2-tsh-rep-wlean-b2-w1",
+  "index_base": 265100,
+  "graph": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-batch-96/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean-b2-w1.json",
+  "server_run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-batch-96-two-way-w1-b2",
+  "count": 7,
+  "order": "shift",
+  "fixture_order": [
+    "boat",
+    "marble",
+    "bird",
+    "pendulum",
+    "rain",
+    "paper",
+    "candle"
+  ],
+  "batch": 2,
+  "references_from": null,
+  "fixture_count": 10,
+  "distinct_clips_emitted": 2,
+  "sampler_depth": 3,
+  "decode_depth": 2,
+  "expected_clips": 2,
+  "emission_sequence_ok": true,
+  "emission_problems": [],
+  "fills_excluded": [
+    "f96-twowayw1b2-self-00",
+    "f96-twowayw1b2-self-01",
+    "f96-twowayw1b2-self-02",
+    "f96-twowayw1b2-self-03",
+    "f96-twowayw1b2-self-04"
+  ],
+  "all_exact": null,
+  "intervals_between_distinct_clips_s": [
+    0.161
+  ],
+  "steady_mean_s": 0.161,
+  "steady_p95_s": 0.161,
+  "steady_min_s": 0.161,
+  "steady_max_s": 0.161,
+  "seconds_of_wall_per_second_of_video": 0.15456,
+  "effective_fps": 155.27950310559007,
+  "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that emit nothing (pipeline fill); a re-emitted clip fails the arm",
+  "rows": [
+    {
+      "prompt": "f96-twowayw1b2-self-00",
+      "index": 0,
+      "prompt_fixture": "boat",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151315.891,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-self-01",
+      "index": 1,
+      "prompt_fixture": "marble",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151316.686,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-self-02",
+      "index": 2,
+      "prompt_fixture": "bird",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151316.881,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-self-03",
+      "index": 3,
+      "prompt_fixture": "pendulum",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151319.325,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 1
+    },
+    {
+      "prompt": "f96-twowayw1b2-self-04",
+      "index": 4,
+      "prompt_fixture": "rain",
+      "emitted_index": -1,
+      "emitted_fixture": null,
+      "reference": null,
+      "fill": true,
+      "t_done": 1791151319.446,
+      "exact": true,
+      "parity_status": "fill",
+      "comparator": null,
+      "decode_pending": 2
+    },
+    {
+      "prompt": "f96-twowayw1b2-self-05",
+      "index": 5,
+      "prompt_fixture": "paper",
+      "emitted_index": 0,
+      "emitted_fixture": "boat",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151322.093,
+      "batch": {
+        "job": 265100,
+        "slot": 0,
+        "rows": [
+          265100,
+          265101
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "marble"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 2,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    },
+    {
+      "prompt": "f96-twowayw1b2-self-06",
+      "index": 6,
+      "prompt_fixture": "candle",
+      "emitted_index": 1,
+      "emitted_fixture": "marble",
+      "fill": false,
+      "duplicate": false,
+      "t_done": 1791151322.254,
+      "batch": {
+        "job": 265100,
+        "slot": 1,
+        "rows": [
+          265100,
+          265101
+        ],
+        "fill_slots": [],
+        "batch": 2,
+        "neighbour_fixtures": [
+          "boat"
+        ],
+        "neighbour_unknown": 0
+      },
+      "decode_pending": 2,
+      "reference": null,
+      "exact": null,
+      "parity_status": "not-compared",
+      "comparator": null
+    }
+  ]
+}
