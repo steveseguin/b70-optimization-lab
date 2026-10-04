@@ -215,14 +215,15 @@ def main():
                 R.save_results(); R.fault_check(since)
                 out = OUT / f'{name}-long.json'
                 R.sh([sys.executable, R.LADDER, '--base-url', srv.base, '--model', R.MODEL_NAME, '--api-mode', 'completions',
-                      '--suite', suite, '--concurrency', '1', '--repeats', '1', '--max-tokens', '128', '--seed', '42',
+                      '--suite', suite, '--concurrency', '8', '--repeats', '1', '--max-tokens', '128', '--seed', '42',
                       '--timeout', '3600', '--return-token-ids', '--out', out], f'{name}-long', 7200)
                 if out.exists():
                     rows = json.loads(out.read_text())['oracle']['rows']
                     rates = sorted(x['tok_s_after_ttft_full'] for x in rows if x.get('tok_s_after_ttft_full'))
                     ref_rows = json.loads(LONG_REF.read_text())['oracle']['rows'] if LONG_REF.exists() else []
-                    ref = {x['prompt_id'].rsplit('-c', 1)[0]: x['token_ids'] for x in ref_rows}
-                    same = [ref.get(x['prompt_id'].rsplit('-c', 1)[0]) == x['token_ids'] for x in rows]
+                    # the tool makes every request distinct (prompt-cNNN), so answers are matched by the full id
+                    ref = {x['prompt_id']: x['token_ids'] for x in ref_rows}
+                    same = [ref.get(x['prompt_id']) == x['token_ids'] for x in rows]
                     R.log(f"{name}: long suite vs the no-speculation answers of 2026-10-04: {sum(same)}/{len(same)} identical")
                     r['long_vs_no_speculation'] = f'{sum(same)}/{len(same)}'
                     r['long'] = {'requests': len(rows), 'decode_tok_s_median': rates[len(rates) // 2] if rates else None,
