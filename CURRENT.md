@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-04 15:10 UTC** (2026-10-04 11:10 EDT), two-B70 host.
+Last reviewed: **2026-10-04 17:45 UTC** (2026-10-04 13:45 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
 ## 2026-10-04 11:10 EDT: the model-load GPU fault is explained and has a validated fix; no reboot was needed
@@ -18,14 +18,19 @@ The four-B70 host section below was added 2026-09-11.
 - **Video lane too.** The exact dividing line is 512 MiB. The video lane made one such transfer per session and
   four per clip; they now go in pieces, and two clips are bit-identical to last night's
   ([note](experiments/minimax-h3-b70/notes/2026-10-04-piecewise-transfers.md)).
-- **What it does not cover yet.** The two published packages do not have it (each needs its own acceptance run).
+- **Both published 27B packages now ship it, re-accepted the same day.** Two cards: 12 of 12 gates, 12/12 exact,
+  90.32 tok/s. One card: all three profiles 12/12 exact (54.0, 54.0, 52.2 tok/s). The launcher files are unchanged;
+  the overlay is one more file in each package's `overlays/` folder.
+- **Reported to Intel** with the owner's approval:
+  [comment on compute-runtime#948](https://github.com/intel/compute-runtime/issues/948#issuecomment-5982081300).
 - **Not caused by:** a bad card, memory running out, or container swap (swap only made the timing worse).
 - The owner chose a health check over a reboot at 09:40; it passed and there has been no fault since.
 - Also settled this morning: speculation is **not** lossless with several users (stays single-user), and exchanging
   the output-layer results once a step gains nothing (489 vs 488 tok/s at 64 users). Both closed.
 - [Fault note](experiments/qwen38-27b-b70/notes/2026-10-04-gpu-fault-mtp-start.md).
 
-**Recommended next:** decide whether to put the overlay in the two packages.
+**Recommended next:** back to optimizing. The real remaining lever for many users on the 27B is an output-layer
+kernel that gives the same result for any number of rows (a kernel build); size it first.
 
 ## 2026-10-04, overnight: many users at once, lossless on short and long prompts, up to 488 tokens a second together
 
