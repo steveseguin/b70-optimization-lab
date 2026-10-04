@@ -100,10 +100,21 @@ fault in 59 starts a fair comparison needs well over a hundred starts.
 - The test is now a script that refuses to run on this boot or on any boot that already has a fault line:
   `experiments/qwen38-27b-b70/scripts/run-20261004-fp8-mtp-under-load.sh`.
 
+## What is now in place (09:30 EDT, built and dry-run on the CPU; not yet exercised on the cards)
+
+- **Automatic one-time recovery.** `scripts/load_fault_recovery.py` recognises this exact fault (copy-engine reads at
+  `0x800400200000`, before the server is ready). The multi-user campaign's `start_server` then does what AGENTS.md
+  already says for a first fault: stop the server, wait a minute, run the health probe, and make one fresh start.
+  Anything else still halts: a fault while serving, a different address, a failed probe, or any earlier fault on the
+  same boot.
+- **A start that names the buffer.** `MU_MODE=namebuffer` starts the shipped two-card server once with the runtime's
+  allocation logging on and saves every log line that mentions the fault address range. It is step 0 of the
+  after-reboot script.
+
 ## Next
 
 1. The owner reboots the machine (or says the health check is enough: this boot had one real fault).
-2. One logged start to name the buffer at `0x800400200000`, about three minutes, then post the finding upstream.
-3. Run the after-reboot script: the speculation test, then the one-exchange speed-up.
-4. Treat a load-time fault as recoverable from now on: stop the server, health check, one fresh start. It happens
-   before any request, so no measurement is ever affected.
+2. Run `scripts/run-20261004-fp8-mtp-under-load.sh`: the naming start, the speculation test, the one-exchange
+   speed-up.
+3. Post the finding upstream (`intel/compute-runtime#948`), with the buffer's name if step 2 found it. Needs the
+   owner's go-ahead since it is a public post.

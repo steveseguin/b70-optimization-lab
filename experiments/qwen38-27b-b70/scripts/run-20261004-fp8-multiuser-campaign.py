@@ -14,12 +14,15 @@ Every concurrent answer is compared token for token with the same request run al
 A GPU fault line halts the campaign.
 """
 from __future__ import annotations
+import datetime as dt
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 OUT = Path(os.environ.get('CAMPAIGN_OUT', '/mnt/fast-ai/bench-results/fp8-multiuser-20261004'))
 os.environ['CAMPAIGN_OUT'] = str(OUT)
@@ -128,6 +131,49 @@ def invariant_stage(results, since, name, port, args, refs, strict_runs=0):
 REF_STRICT_OLD = Path('/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-strict')
 
 
+def kernel_log(*extra):
+    return subprocess.run(['journalctl', '-k', '-b', '--no-pager', *extra], capture_output=True, text=True).stdout
+
+
+def start_server(name, port, args, since):
+    """Start one research server. If it hits the known model-load fault, and that is the first fault on this boot,
+    recover once the way AGENTS.md says (stop, health probe, one fresh start). Returns (server, name, since)."""
+    srv = R.Research(name, port, args)
+    lines = R.journal_faults(since)
+    if not lines:
+        return srv, name, since
+    spec = importlib.util.spec_from_file_location('lfr', ROOT / 'experiments/qwen38-27b-b70/scripts/load_fault_recovery.py')
+    lfr = importlib.util.module_from_spec(spec); spec.loader.exec_module(lfr)
+    local = dt.datetime.fromisoformat(since).astimezone().strftime('%Y-%m-%d %H:%M:%S')
+    text = kernel_log('-o', 'cat', '--since', local)
+    (OUT / f'{name}-load-fault-records.txt').write_text(text)
+    boot_lines = [line for line in kernel_log().splitlines() if R.FAULT.search(line)]
+    action, reason = lfr.decide(srv.ready, lfr.parse_records(text), len(lines), len(boot_lines))
+    R.log(f'{name}: GPU fault during start ({len(lines)} lines): {action}: {reason}')
+    if action != 'recover':
+        srv.stop()
+        R.fault_check(since)  # writes FAULT-HALT.json and exits
+    final = srv.stop()
+    R.wait_gpus_free()
+    time.sleep(60)  # quiet period before touching the cards again
+    after = R.now()
+    rc = R.health(f'{name}-recovery-health')
+    again = R.journal_faults(after)
+    (OUT / 'LOAD-FAULT-RECOVERY.json').write_text(json.dumps({
+        'at': after, 'server': name, 'fault_lines': len(lines), 'stopped': final.get('status'), 'health_rc': rc,
+        'fault_lines_after_stop': len(again), 'note': 'device dump not copied (root only); copy it within the hour'}, indent=2) + '\n')
+    if rc != 0 or again:
+        R.log(f'{name}: recovery refused: health rc={rc}, {len(again)} new fault lines')
+        R.fault_check(since)
+    latch = OUT / 'FAULT.json'  # the launcher's own latch; kept as a receipt under another name
+    if latch.exists():
+        latch.rename(OUT / f'FAULT-recovered-{name}.json')
+    R.log(f'{name}: health probe passed after the load fault; one fresh start')
+    R.wait_port_free(port)
+    retry = f'{name}-retry'
+    return R.Research(retry, port, args), retry, after
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=False)
     since = R.now()
@@ -141,7 +187,20 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE', 'screen') == 'screen':
+    if os.environ.get('MU_MODE') == 'namebuffer':
+        # One diagnostic start, no measurement: the runtime logs every allocation and bind, so the log can say what
+        # lives at the GPU address every model-load fault hits (0x800400200000). Shipped two-card server, then stop.
+        debug = []
+        for key in ('NEOReadDebugKeys', 'LogAllocationType', 'LogAllocationStdout', 'PrintBOBindingResult', 'PrintBOCreateDestroyResult'):
+            debug += ['--extra-env', f'{key}=1']
+        srv, name, since = start_server('tp2-namebuffer', 18196, TP2 + MTP5 + SHIPPED + debug, since)
+        results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+        results[name]['stop'] = srv.stop()
+        hits = [line for line in (OUT / name / 'server.log').read_text(errors='replace').splitlines() if re.search(r'8004002[0-3][0-9a-f]{4}', line, re.I)]
+        (OUT / 'buffer-at-fault-address.txt').write_text('\n'.join(hits[:400]) + '\n')
+        R.log(f'{name}: {len(hits)} log lines mention the fault address range (buffer-at-fault-address.txt)')
+        R.save_results(); R.fault_check(since); R.wait_gpus_free()
+    elif os.environ.get('MU_MODE', 'screen') == 'screen':
         # first look (2026-10-04 01:22): only N requests per level, too few to call anything exact
         stage(results, since, 'tp2-mtp0-s8', 18196, TP2 + SHIPPED + ['--seqs', '8'], '2,4,8')
         stage(results, since, 'tp2-mtp5-s4', 18197, TP2 + MTP5 + SHIPPED + ['--seqs', '4'], '2,4')
@@ -194,7 +253,7 @@ def main():
             spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
             if spec:
                 name = name.replace('-mtp0-', '-mtp5-')
-            srv = R.Research(name, 18196, TP2 + spec + SHIPPED + pure + ['--seqs', seqs])
+            srv, name, since = start_server(name, 18196, TP2 + spec + SHIPPED + pure + ['--seqs', seqs], since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
                 out = OUT / f'{name}-long-concurrency.json'
