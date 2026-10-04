@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-window-93c'
+OUTPUT = ROOT / 'prepared-encoder-shard4-94'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -117,6 +117,10 @@ WINDOW_PROBE_GRAPH = 'graphs/text-window-probe.json'
 WINDOW_PROMPTS = 'probe/text-window-prompts.json'
 WINDOW_PROMPTS_SRC = LANE / 'data' / 'stability-01-prereg.json'
 WINDOW_PROBE_NODE = '470'
+# Packet 94: multi-segment transformer placement (per server, LTX_SAMPLER_PLACEMENT)
+# and the capture-freeze / memory-floor admission graph for timed arms.
+FREEZE_GRAPH = 'graphs/sampler-capture-freeze.json'
+FREEZE_NODE = '480'
 WINDOW_LABEL = 'changes output at rounding level; owner approved 2026-10-04 on two conditions (negligible finished-clip difference; new references, byte-identical thereafter)'
 TEXT_MODE_OVERRIDES = {'pipe-samp2-tsh-win': 'pipeline-window',
                        'pipe-samp2-tsh-rep-wlean': 'pipeline-window'}
@@ -322,6 +326,8 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     added |= {'source/scripts/ltx_text_window.py', 'source/scripts/ltx_lean_conditioning.py',
               'graphs/text-window-probe.json', 'probe/text-window-prompts.json',
               'provenance/graph-capture/parent/launch/serve-encoder.py'}
+    # Packet 94: the capture-freeze graph.
+    added |= {'graphs/sampler-capture-freeze.json'}
     replaced = ('launch/encoder_runtime_common.py', 'launch/serve-encoder.py', 'source/scripts/ltx_na_axis_candidate.py',
                 'source/scripts/ltx_na_axis_router.py', 'source/scripts/na_axis_decode_node.py',
                 'source/scripts/host_embedding_clip.py',
@@ -702,6 +708,17 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
     require(manifest['lean_conditioning']['module_sha256'] ==
             manifest['extension_sha256s']['ltx_lean_conditioning.py'] and
             manifest['lean_conditioning']['default'] == 'off', 'Lean conditioning contract changed')
+    freeze = json.loads(safe_path(packet, 'graphs/sampler-capture-freeze.json').read_text())
+    require(freeze == {'480': {'class_type': 'LTXSamplerCaptureFreeze', 'inputs': {
+                'run_name': 'assign-unique-request-name'}}}, 'Capture-freeze graph changed')
+    sp = manifest['sampler_placement']
+    require(sp['environment'] == 'LTX_SAMPLER_PLACEMENT' and sp['default'] == 'two-way' and
+            sp['placements'] == {'two-way': [['xpu:0', 0, 23], ['xpu:1', 23, 48]],
+                                 'shard3-c': [['xpu:0', 0, 20], ['xpu:1', 20, 40], ['xpu:2', 40, 48]],
+                                 'shard4-a': [['xpu:0', 0, 18], ['xpu:1', 18, 36], ['xpu:2', 36, 44],
+                                              ['xpu:3', 44, 48]]} and
+            sp['freeze_graph'] == 'graphs/sampler-capture-freeze.json' and sp['memory_floor_gib'] == 2.0,
+            'Sampler placement contract changed')
     child = manifest['decode_child']
     require(child['module_sha256'] == manifest['extension_sha256s']['ltx_decode_child.py'] and
             child['device'] == 'xpu:3' and child['probe_graph'] == 'graphs/decode-child-probe.json' and
@@ -1064,6 +1081,10 @@ def main():
                        'clip': ['425', 0], 'run_name': 'assign-unique-request-name'}}},
                   handle, indent=2, sort_keys=True)
         handle.write('\n')
+    with (staging / FREEZE_GRAPH).open('x') as handle:
+        json.dump({FREEZE_NODE: {'class_type': 'LTXSamplerCaptureFreeze', 'inputs': {
+            'run_name': 'assign-unique-request-name'}}}, handle, indent=2, sort_keys=True)
+        handle.write('\n')
     sys.path.insert(0, str(LANE / 'scripts'))
     import ltx_text_window as _window
     fixtures = json.loads(WINDOW_PROMPTS_SRC.read_text())['fixtures']
@@ -1114,7 +1135,7 @@ def main():
               'source/scripts/' + GIL_PROBE, KNOB_GRAPH,
               'source/scripts/' + CHILD_MODULE, CHILD_PROBE_GRAPH, CHILD_STOP_GRAPH,
               'source/scripts/' + WINDOW_MODULE, 'source/scripts/' + LEAN_MODULE,
-              WINDOW_PROBE_GRAPH, WINDOW_PROMPTS, PROV + LAUNCHER}
+              WINDOW_PROBE_GRAPH, WINDOW_PROMPTS, PROV + LAUNCHER, FREEZE_GRAPH}
     added |= {PROV + preserved for pp, nc in SPLIT_REPLACED
               for preserved in (pp,) + ((nc,) if nc is not None else ())}
     require(set(files) == set(parent_manifest['files']) | added, 'Unexpected packet14 inventory')
@@ -1205,6 +1226,15 @@ def main():
                      'byte-identical inputs (asserted); never across clips',
             'sentry': 'sha256 of the context fed to the first diffusion forward of each stage, every '
                       'pipelined arm'},
+        'sampler_placement': {
+            'environment': 'LTX_SAMPLER_PLACEMENT', 'default': 'two-way',
+            'placements': {'two-way': [['xpu:0', 0, 23], ['xpu:1', 23, 48]],
+                           'shard3-c': [['xpu:0', 0, 20], ['xpu:1', 20, 40], ['xpu:2', 40, 48]],
+                           'shard4-a': [['xpu:0', 0, 18], ['xpu:1', 18, 36], ['xpu:2', 36, 44],
+                                        ['xpu:3', 44, 48]]},
+            'rule': 'fixed at the first model load, one server per placement; whole blocks only; '
+                    'two-way is the unchanged 23/25 install()',
+            'freeze_graph': FREEZE_GRAPH, 'memory_floor_gib': 2.0},
         'health_admission': {
             'launcher_option': '--health-receipt <path>', 'schema': 'ltx.four-card-health.v1',
             'max_age_hours': 6,
@@ -1280,7 +1310,7 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
-        'Packet 93c window arms change output at rounding level; owner approved 2026-10-04 on two '
+        'Packet 94: transformer placement per server (LTX_SAMPLER_PLACEMENT). Window arms change output at rounding level; owner approved 2026-10-04 on two '
         'conditions (negligible finished-clip difference; new references, byte-identical thereafter).\n')
     staging.rename(output)
     print(json.dumps({'status': 'prepared', 'packet': str(output),

@@ -36,7 +36,12 @@ AV_SOURCE_SHA256 = 'e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1
 # Packet 84: re-audited after the 23/25 split rebalance. The shard change is
 # the DECLARED_SPLIT_INDEX constant and its docstring only; _dest routing
 # arithmetic, _BlockRoute and the transfer helpers are byte-identical.
-SHARD_SOURCE_SHA256 = '025eb527133653d53d26c976e1b11a2b3107b9f59610ede1a490247c37689bc6'
+# Packet 94: re-audited again. Added the named multi-segment placements
+# (PLACEMENTS, segment_plan, memory_plan, _install_segments,
+# apply_layer_segments) and verify_placement now walks every shard patcher (one
+# for two-way, as before). install(), _BlockRoute, _move and the transfer
+# helpers are unchanged.
+SHARD_SOURCE_SHA256 = '9caaec0aeb68e9f391fab5ae9b6a63e464aa62a99e1ffc449775b3687d2149b2'
 WARMUP_ITERATIONS = 3
 # Two shapes per block (the 128x128 and 256x256 sampler stages) are expected.
 # Anything more means the signature is tracking something that is not a real
@@ -511,6 +516,15 @@ class CaptureReplayLock:
 
 
 CAPTURE_LOCK = CaptureReplayLock()
+
+# Packet 94: set by LTXSamplerCaptureFreeze once warm has captured every signature;
+# from then on a sampler block never captures (timed arms replay only).
+CAPTURES_FROZEN = [False]
+
+
+def refuse_if_frozen(index):
+    require(not CAPTURES_FROZEN[0], 'Block %s: captures are frozen for timed arms and this worker has no '
+                                    'graph for this signature; refused before capture' % index)
 # Pipelined (two-clip) mode is per thread: the sampler worker turns it on
 # around a clip; every block route then issues on that thread's own streams
 # and stages cross-card activations through pinned host memory.
@@ -924,6 +938,9 @@ class GraphBlockRoute:
             require(len(entries) < MAX_SIGNATURES_PER_BLOCK,
                     f'Block {self.index} reached {len(entries)} distinct argument signatures on '
                     'this thread; the signature is tracking something that is not a real input')
+            # Packet 94: after warm the runner freezes captures; a new signature in a
+            # timed arm is refused here, before any capture (and before this block runs).
+            refuse_if_frozen(self.index)
             CAPTURE_LOCK.acquire_exclusive()
             try:
                 torch.xpu.synchronize(self.device)

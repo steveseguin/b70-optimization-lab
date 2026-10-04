@@ -139,6 +139,67 @@ class _Active:
         return False
 
 
+def placement_devices(guider):
+    """Devices of a multi-segment placement (packet 94); empty for two-way."""
+    try:
+        identity = guider.model_patcher.model.diffusion_model._ltx_layer_shard_identity
+    except AttributeError:
+        return []
+    return list(identity.get('devices') or []) if identity.get('segments') else []
+
+
+MEMORY_FLOOR_GIB = 2.0
+
+
+def freeze_verdict(free_gib, busy, floor_gib=MEMORY_FLOOR_GIB):
+    """Packet 94 admission for timed arms: pipeline idle and every card at or above the floor."""
+    if busy:
+        return False, 'pipeline-busy'
+    short = {d: v for d, v in free_gib.items() if v is None or v < floor_gib}
+    if short:
+        return False, 'memory-floor'
+    return True, 'frozen'
+
+
+class LTXSamplerCaptureFreeze:
+    """Packet 94: after warm, check the memory floor on all four cards and freeze
+    sampler captures so timed arms only replay. Never latches; a refusal is a
+    recorded outcome and the runner skips the timed arm."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, run_name):
+        require(isinstance(run_name, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,119}', run_name),
+                'Unsafe request name')
+        run, identity = _context()
+        import ltx_graph_capture as capture
+        free = {}
+        for i in range(torch.xpu.device_count()):
+            try:
+                f, _t = torch.xpu.mem_get_info(i)
+                free['xpu:%d' % i] = round(f / 2**30, 3)
+            except Exception:  # noqa: BLE001
+                free['xpu:%d' % i] = None
+        ok, outcome = freeze_verdict(free, pipeline.busy())
+        if ok:
+            capture.CAPTURES_FROZEN[0] = True
+        report = {'schema': 'ltx.sampler-capture-freeze.v1', **identity, 'run_name': run_name,
+                  'outcome': outcome, 'frozen': bool(capture.CAPTURES_FROZEN[0]), 'free_gib': free,
+                  'floor_gib': MEMORY_FLOOR_GIB,
+                  'reserved_gib': {'xpu:%d' % i: round(torch.xpu.memory_reserved(i) / 2**30, 3)
+                                   for i in range(torch.xpu.device_count())},
+                  'placement': __import__('os').environ.get('LTX_SAMPLER_PLACEMENT', 'two-way')}
+        write_json(run / ('sampler-capture-freeze-' + run_name + '.json'), report)
+        return {'ui': {'text': ['capture freeze: %s' % outcome]}}
+
+
 def _node(name):
     import nodes
     cls = nodes.NODE_CLASS_MAPPINGS.get(name)
@@ -185,6 +246,10 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
     # on both shard cards (probe 5: the overlap needs per-clip streams and
     # staged cross-card moves; shared default streams fence the clips).
     streams = [capture.thread_stream(torch.device('xpu', i)) for i in range(2)]
+    # Packet 94: a multi-segment placement also runs blocks on other cards; their
+    # thread streams are drained with these at the end (two-way: none).
+    extra_streams = [capture.thread_stream(torch.device(d)) for d in placement_devices(guider_a)
+                     if d not in ('xpu:0', 'xpu:1')]
     # Packet 93: per-clip context for the context-hash sentry (every pipelined
     # arm) and, under 'pipeline-lean' only, the connector memo.
     lean.begin_clip(clip_index, lean_mode)
@@ -197,7 +262,7 @@ def sample_clip(clip_index, noise_a, guider_a, sampler_a, sigmas_a,
                                    _SerialisedNoise(noise_b), guider_b, sampler_b, sigmas_b,
                                    video_latent, audio_latent, upscale_model, vae)
     finally:
-        for st in streams:
+        for st in streams + extra_streams:
             st.synchronize()
         capture.set_pipelined(False)
         pipeline.record_fingerprint(('context-sentry', clip_index), lean.end_clip())
@@ -430,4 +495,5 @@ class LTXPipelineSampler:
         return (out[0], out[1], emitted)
 
 
-NODE_CLASS_MAPPINGS = {'LTXPipelineSampler': LTXPipelineSampler}
+NODE_CLASS_MAPPINGS = {'LTXPipelineSampler': LTXPipelineSampler,
+                       'LTXSamplerCaptureFreeze': LTXSamplerCaptureFreeze}

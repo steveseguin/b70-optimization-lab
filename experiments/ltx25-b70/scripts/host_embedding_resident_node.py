@@ -20,10 +20,18 @@ import folder_paths
 import nodes
 from comfy_extras.nodes_hunyuan import LatentUpscaleModelLoader
 
-from ltx_layer_shard import DECLARED_SPLIT_INDEX, apply_layer_shard
+from ltx_layer_shard import DECLARED_SPLIT_INDEX, PLACEMENTS, apply_layer_segments, apply_layer_shard
 from encoder_diagnostics import ROOT, _context, _exclusive_json
 from host_embedding_clip import load_clip, MODES, require
 from host_embedding_placement_node import NODE_CLASS_MAPPINGS as PLACEMENT_NODES
+
+import os as _os
+
+# Packet 94: the transformer placement is chosen once per server by the launch
+# environment (LTX_SAMPLER_PLACEMENT, default 'two-way' = the unchanged 23/25
+# split). It is fixed when the model first loads; it cannot change in-process.
+SAMPLER_PLACEMENT = _os.environ.get('LTX_SAMPLER_PLACEMENT', 'two-way')
+require(SAMPLER_PLACEMENT in PLACEMENTS, 'Unknown LTX_SAMPLER_PLACEMENT: %r' % SAMPLER_PLACEMENT)
 
 MODEL_SHA = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 _components = None
@@ -175,7 +183,10 @@ class LTXHostEmbeddingComponents:
                 phase = 'load-upscaler-and-split'
                 upscaler = LatentUpscaleModelLoader.execute('ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors')[0]
                 _pending.append(upscaler)
-                model = apply_layer_shard(model, secondary_device='xpu:1', split_index=DECLARED_SPLIT_INDEX)
+                if SAMPLER_PLACEMENT == 'two-way':
+                    model = apply_layer_shard(model, secondary_device='xpu:1', split_index=DECLARED_SPLIT_INDEX)
+                else:
+                    model = apply_layer_segments(model, SAMPLER_PLACEMENT)
                 _shared = (model, *vaes, upscaler)
             record['shared_owner_ids'] = shared_identity(_shared)
             if 'shared_owner_ids_before' in record:
