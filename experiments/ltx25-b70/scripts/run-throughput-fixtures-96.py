@@ -57,6 +57,9 @@ def parse(argv=None):
     return ap.parse_args(argv)
 
 
+POLL_WINDOW = 8   # unfinished prompts polled per cycle (see the polling loop)
+
+
 def expected_clip_count(count, sampler_depth, decode_depth):
     """Clips a stream of `count` prompts emits: prompt i emits clip i - sampler_depth -
     decode_depth (the sampler releases clip i - Ds, decode emits what it was handed Dd
@@ -216,9 +219,13 @@ def main(argv=None):
     done = 0
     deadline = time.time() + a.timeout
     while done < len(prompts) and time.time() < deadline:
-        for p in prompts:
-            if 'history' in p:
-                continue
+        # Poll only the next POLL_WINDOW unfinished prompts. The server runs prompts in submission order, so
+        # the others cannot have finished. Polling every pending prompt each cycle (the earlier behaviour) put
+        # hundreds of HTTP requests per cycle on the server's main thread when hundreds of prompts were queued,
+        # and the stream ran up to 20 % slower for it (2026-10-05, 600-prompt arm: 1.22 s per clip with 550
+        # prompts pending, 0.98 s with under 50). Completion times come from the server's own timestamps, so
+        # the polling pattern does not change what is measured, only how much the measurement costs.
+        for p in [q for q in prompts if 'history' not in q][:POLL_WINDOW]:
             h = call('/history/' + p['prompt_id'])
             entry = h.get(p['prompt_id'])
             if not entry:
