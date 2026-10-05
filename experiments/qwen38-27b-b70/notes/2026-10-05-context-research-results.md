@@ -91,7 +91,7 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | No management, **files allowed**, 478K stream | 24 | **1.9 min** | 8K tok | 11 calls, peak context 9.7K |
 | Self-editing, **files allowed**, 478K stream | 24 | **1.3 min** | 5K tok | 12 calls, peak context 7.1K |
 | No management, files allowed, 121K of **arbitrary key-values** (not a foldable table) | 24 | 1.1 min | 4K tok | 8 calls, peak context 5.8K |
-| Improved self-editing agent, 32K, **prose ledger** 122K (narrative text a script cannot parse; the model must read) | **0** | **3.5 h** | 926K tok | failed: 6 of 20 batches fetched in 120 calls, 18 wrong and 6 stale, and it broke the no-files rule; cause being traced |
+| Improved self-editing agent, 32K, **prose ledger** 122K (narrative text a script cannot parse; the model must read) | **0** | **3.5 h** | 926K tok | void and wrong: our protocol made it build a parser instead of reading; 6 of 20 batches in 120 calls (see below) |
 | Keep everything, no files, 121K of **arbitrary key-values** | 24 | 9.3 min | 19K tok | all 121K held in context (peak 129K); 24 look-ups all right |
 
 **Keeping everything in the big window is not robust.** It was fully right on the first seed and returned nothing on
@@ -133,12 +133,15 @@ What the transcripts show:
   batches; its script read the rest. That is a real answer to "can a 32K budget handle unlimited input": yes, when
   the model can write code that does the reading. It does not yet show the model *reading and understanding* more
   text than its window, which needs a task that code cannot parse (next task family).
-- **When the model has to read the text itself, the improved agent failed badly.** On the prose ledger (the same
-  counters, but each batch is narrative with numbers as words, pronouns, corrections and distractors; an 80-line
-  parser scores 13-33 %) it spent 3.5 hours, wrote 926K tokens, got through 6 of 20 batches and had none of the 24
-  answers right. Every earlier success in this table was a task that code could read. This is the first and so far
-  only measurement of the model reading more than its budget and folding by understanding, and it is a failure.
-  Whether the cause is the task, the harness or the model is being traced. A one-hour limit per trial was added
+- **The prose-ledger failure was our protocol, not a reading test.** The trace shows the model never read a batch
+  itself. The agent's instructions told it to write a fold script and use the fold helper, so on narrative text
+  (numbers as words, pronouns, corrections, distractors; an 80-line parser scores 13-33 %) it spent 3.5 hours
+  building and debugging a regex parser: 33 turns ran into the 16K output cap, 6 of 20 batches were fetched before
+  the step cap, the parser's table was mostly wrong, and none of the 24 answers were right. The run is also void:
+  the fold helper's check forced counter names into the script file, and the model backed its table up into the
+  answers file before each fetch. So whether the model can read more than its budget and fold by understanding is
+  still **not measured**. Next: a few-minute single-call probe (true previous table plus one batch in, new table
+  out), then a read-mode agent (no program, smaller batches, a thinking cap). A one-hour limit per trial was added
   after this run.
 - **The improved agent's one imperfect run was the model's own coding slip.** On the second seed its running state
   was exact through batch 16. Then, after two very long thinking turns, it re-typed its fold script with a mistake
