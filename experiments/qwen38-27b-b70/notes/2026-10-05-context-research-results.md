@@ -88,7 +88,9 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Improved self-editing agent, 32K, seed 0 | 24 | 15 min | 67K tok | peak context 20K; no delivered batch lost |
 | Improved self-editing agent, 32K, seed 1 | 21 | 21 min | 91K tok | 3 wrong: a bug in the script the model wrote to fold batches in (see below) |
 | Improved agent on a **478K stream** (1.8 times the whole window), 32K budget | 24 | **8.2 min** | 36K tok | peak context 10K; 76 batches, 37 calls |
-| Files allowed on the 478K stream | *running* | | | |
+| No management, **files allowed**, 478K stream | 24 | **1.9 min** | 8K tok | 11 calls, peak context 9.7K |
+| Self-editing, **files allowed**, 478K stream | 24 | **1.3 min** | 5K tok | 12 calls, peak context 7.1K |
+| No management, files allowed, 121K of **arbitrary key-values** (not a foldable table) | 24 | 1.1 min | 4K tok | 8 calls, peak context 5.8K |
 
 **Keeping everything in the big window is not robust.** It was fully right on the first seed and returned nothing on
 the second. On the second seed the model let every batch into its context raw and then typed the same 136 lines out
