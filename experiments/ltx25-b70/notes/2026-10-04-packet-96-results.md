@@ -147,6 +147,45 @@ Blocks spread 18/18/8/4 over the four cards (`shard4-a`), two sampler workers, b
   cards.
 - Free video memory at the freeze: 10.8 / 15.1 / 5.3 / 11.1 GiB.
 
+## Run 6: three batch-2 jobs on the four-card layout: 1.026 s per clip (24.4 fps)
+
+Same layout as run 5 (18/18/8/4), three sampler workers, batch 2, shared pool (run `shard4-a-w3-b2-p1`,
+2026-10-05 00:22 UTC).
+
+| Arm | Checked against | Clips checked | Exact | Seconds per clip (mean / median) | Sampler job (2 clips) | Compute seconds per clip, cards 0-3 |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| proof: other neighbours | batch-2 references (run 1) | 10 | 10 | – | 2.77 s | 0.60 / 0.71 / 0.45 / 0.65 |
+| proof: swapped slots | batch-2 references | 10 | 10 | – | 2.78 s | 0.61 / 0.72 / 0.45 / 0.65 |
+| timed, 120 prompts | batch-2 references | 111 | 111 | **1.026 / 0.979** (24.4 fps) | 4.76 s | 0.90 / 0.97 / 0.66 / 0.91 |
+
+- **This is the first run under the 1.042 s budget: one 25-frame clip with audio every 1.026 s, 24.4 fps
+  equivalent**, every clip byte-identical to its batch-2 reference, proofs passed, no fault, no lockup.
+- What it is and is not:
+  - It counts **only if the owner accepts batch-2 clips as the baseline**. Against today's references these
+    clips are a different take (17-29 dB). Against the batch-2 references they are exact, deterministic per
+    prompt and seed, and proven independent of batch neighbours and slots.
+  - It is one run of 111 clips (about two minutes) with a 1.5 % margin. This lane has seen a few percent of
+    drift between runs, so it needs repeats and a longer run before it is called a standing result.
+  - Clips arrive unevenly (95th-percentile gap 1.9 s; they are produced in pairs), so continuous playback needs
+    a buffer of a few clips.
+  - These are independent clips back to back, each from its own prompt and seed. Clip-to-clip continuation is
+    a separate piece of work.
+- The cards are 88-95 % busy except card 2 (64 %). Mean clips in flight 4.6 of 6.
+- Free video memory at the freeze: 10.4 / 14.8 / 5.0 / 10.8 GiB; a third pooled worker cost about 0.3 GiB per
+  card.
+
+## The day in one table
+
+| Step | Seconds per clip | fps | Exact against | Needs the owner's ruling |
+| --- | ---: | ---: | --- | --- |
+| Packet 95, default settings | 1.413 | 17.7 | today's references | no |
+| Host-RAM fix (defer-backing off) | 1.358 | 18.4 | today's references | no |
+| Shared graph pool | 1.348 | 18.5 | today's references | no |
+| Batch 2, two jobs, two cards | 1.122 | 22.3 | batch-2 references | yes |
+| Batch 2, two jobs, four-card layout | 1.053 | 23.7 | batch-2 references | yes |
+| **Batch 2, three jobs, four-card layout** | **1.026** | **24.4** | batch-2 references | yes |
+| Batch 4, one job, two cards | 1.209 | 20.7 | batch-4 references | yes |
+
 ## What this means for 24 fps
 
 With one batch-2 job the two sampler cards have room. Two jobs in flight (four clips) should bring the stream

@@ -3,6 +3,36 @@
 Last reviewed: **2026-10-05 00:40 UTC** (2026-10-04 20:40 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
+## 2026-10-04 20:40 EDT, four-B70 host: LTX 2.5 reached 24.4 fps with two clips per transformer pass; the owner must rule on the new baseline
+
+**One clip every 1.026 s (24.4 fps equivalent; the budget is 1.042 s), every clip byte-identical to its reference.
+The references are new ones made with two clips per pass, so this counts only if the owner accepts them.**
+
+- **What changed.** One sampler job now carries two clips through the transformer together, so the 42 GB of weights
+  are read once for both (packet 96, `LTX_SAMPLER_BATCH=2`). Three such jobs run at once on the four-card block
+  layout, with one shared graph memory pool per card and worker (`LTX_SAMPLER_SHARED_POOL=1`).
+- **Why it is not cheating, and why it still needs a ruling.** At batch 2 (and 4) a clip's bytes depend only on its
+  own prompt and seed: the server regenerated every fixture with other batch neighbours and in other slots and got
+  identical bytes (hundreds of clips, five servers, three block layouts). But a batch-2 clip is not byte-identical to
+  the same clip made alone: matrix products round differently with more rows, and 11 sampler steps turn that into a
+  different take (picture PSNR 17-29 dB against today's references, the same range as the text-window milestone).
+  Same mathematics, different rounding. **Decision needed from the owner: may batch-2 (and batch-4) clips be the
+  baseline?** Until then the standing exact figure on today's references is 1.348 s per clip.
+- **Also new and needing no ruling:** the shared graph pool is byte-exact on today's references (126 of 126) and
+  cuts a sampler worker's video memory from about 2.8 GiB per card to about 0.25 GiB.
+- **Caveats on the 24.4 fps figure:** one run of 111 clips with a 1.5 % margin (repeats and a long run are next);
+  clips arrive in pairs, so playback needs a small buffer; these are independent clips back to back, not
+  clip-to-clip continuation.
+- **Open:** two batch-4 jobs fail at their first capture with no recorded error (one batch-4 job works: 1.209 s per
+  clip, exact against batch-4 references).
+- Zero lockups and zero GPU faults in ten and a half hours on kernel 7.0.0-39, about fifteen server runs.
+- [Results](experiments/ltx25-b70/notes/2026-10-04-packet-96-results.md);
+  [why batching is row-independent](experiments/ltx25-b70/notes/2026-10-04-batch-row-independence-probe.md);
+  [packet build](experiments/ltx25-b70/notes/2026-10-04-packet-96-build.md).
+
+**Doing next:** repeat the 24.4 fps configuration and run it longer; find the batch-4 two-job failure; then decode
+capacity and uneven clip spacing.
+
 ## 2026-10-04 15:25 EDT, four-B70 host: the video server was using host RAM equal to its video memory; found and fixed
 
 **A four-card process was costing a GiB of host RAM for every GiB of video memory. One runtime setting removes it.**
