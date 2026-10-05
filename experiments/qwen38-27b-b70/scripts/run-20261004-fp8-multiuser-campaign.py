@@ -208,7 +208,44 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE') == 'syncprobe':
+    if os.environ.get('MU_MODE') == 'longctx':
+        # A window far beyond 33K, with the full 16-bit cache: the model has 262,144 trained positions and the two-card
+        # cache pool holds about 268,000 tokens. One user, drafting on and off (two servers), the ledger probe at
+        # growing lengths; the two servers' answers are compared token for token.
+        # notes/2026-10-05-context-window-prereg.md
+        mml = os.environ.get('MU_LONG_MML', '262144')
+        lengths = os.environ.get('MU_LONG_LENGTHS', '8000,30000,60000,120000,200000,250000')
+        wide = ['--tp', '2', '--mem', '0.95', '--max-model-len', mml, '--batched', '4096', '--fa-verify-rows']
+        probe = ROOT / 'experiments/qwen38-27b-b70/scripts/qwen38-fp8-long-context-probe.py'
+        answers = {}
+        for label, spec in (('mtp5', MTP5), ('mtp0', [])):
+            if label == 'mtp0' and os.environ.get('MU_LONG_CONTROL', '1') != '1':
+                continue
+            srv, name, since = start_server(f'tp2-long{mml}-{label}', 18196, wide + spec + SHIPPED + LOADCOPY_FIX, since)
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if srv.ready:
+                out = OUT / f'{name}-probe.json'
+                R.sh([str(R.XPU_PYTHON), probe, '--base-url', srv.base, '--model', R.MODEL_NAME, '--lengths', lengths,
+                      '--out', out], f'{name}-probe', 4 * 3600)
+                if out.exists():
+                    rows = json.loads(out.read_text())['rows']
+                    r['probe'] = [{k: row.get(k) for k in ('target_tokens', 'prompt_tokens_client', 'ttft_s', 'prompt_read_tok_s',
+                                                             'decode_tok_s', 'all_correct', 'in_order', 'error')} for row in rows]
+                    answers[label] = {row['target_tokens']: row.get('token_ids') for row in rows}
+                    for row in rows:
+                        R.log(f"{name}: {row['target_tokens']} tokens: " + (row['error'][:120] if row.get('error') else
+                              f"first token {row['ttft_s']:.1f} s, reads {row['prompt_read_tok_s']:.0f} tok/s, writes "
+                              f"{row['decode_tok_s'] and round(row['decode_tok_s'], 1)} tok/s, codes right {row['all_correct']}"))
+            r['stop'] = srv.stop()
+            text = (OUT / name / 'server.log').read_text(errors='replace') if (OUT / name / 'server.log').exists() else ''
+            r['kv_lines'] = re.findall(r'GPU KV cache size[^\n]*', text)[:2]
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
+        if 'mtp5' in answers and 'mtp0' in answers:
+            same = {n: answers['mtp5'].get(n) == answers['mtp0'].get(n) and answers['mtp5'].get(n) is not None for n in answers['mtp5']}
+            results['drafting_equal_to_no_drafting'] = same
+            R.log(f'answers with drafting equal to answers without, by length: {same}')
+            R.save_results()
+    elif os.environ.get('MU_MODE') == 'syncprobe':
         # What does the synchronous step pipeline cost one user on the shipped recipe? (A per-step draft length, which
         # longer copy drafts need, is natural there: the scheduler takes each request's draft as a list every step.)
         for label, extra in (('async', []), ('sync', ['--serve-arg=--no-async-scheduling'])):
