@@ -121,3 +121,45 @@ the copy arm against (a) its control and (b) the shipped asynchronous recipe (89
 Kept only if it beats the shipped recipe on the long suite by 5 % or more; the strict-suite cost of this launch is
 reported beside it. An exact result here is exact by test; the by-construction claim for 7 to 10-row verifies also
 needs the repaired speculative-kernel census (in progress).
+
+## Longer copy drafts, fixed: exact on two fresh servers, +10 to +17 % on long prompts (21:00 EDT)
+
+**Why the first K = 9 run gave wrong answers (found by reading the engine and the saved token streams).** After a
+step accepts `a` tokens, the next step's recurrent layers read their starting state from column `a - 1` of a
+state-slot table that is only as wide as that next step (`gdn_attn.py` builds it `[1, rows]`; the kernel indexes it
+without a bound check). With the shipped depth `a` is at most 6 and the next step has 6 rows, so it never happens;
+with a long copy draft `a` can be 7 to 10 while the next step has 6 rows, and the read lands past the end. All 12
+wrong answers in the three suites follow a step that accepted six or more drafts and was followed by a narrower
+step; answers with long acceptances not followed by a narrower step were exact. The same out-of-range read exists
+in the stock engine at the very end of the context window (found once before, 2026-09-13, "R307 defect 1").
+
+**Fix in the overlay:** after a long acceptance the next draft is padded (its last token repeated) so the step is at
+least as wide as the tokens just accepted. Pad tokens are verified like any draft, so they cannot change output.
+Plus `B70_FA_VERIFY_ROWS_MAX_Q=10`, so attention handles 9 and 10 verify rows with long keys one row at a time,
+as it already does for 2 to 8.
+
+**Result on image R313, two fresh two-card servers, same launch as before (synchronous, 9 slots, head at 5):**
+
+| Gate | Server 1 | Server 2 | Control (no long drafts) | Shipped recipe (async, R313) |
+|---|---|---|---|---|
+| Strict suite vs frozen reference | 12/12 | 12/12, 87.30 tok/s | 12/12, 88.25 | 12/12, 90.31 |
+| Long prompts vs no-speculation answers | 8/8 | 8/8 | 8/8 | 8/8 |
+| Short ladder vs frozen reference | 64/64 | 64/64 | 64/64 | 64/64 |
+| Long prompts, decode after first token: median / mean | 98.5 / 105.7 tok/s | 98.6 / 105.8 | 87.5 / 88.5 | 89.9 / 90.7 |
+
+About 245 long drafts placed per server, 4.06 of 9 accepted on average, 47 width pads, none blocked.
+Per prompt against the shipped recipe: prose4k 139.6 -> 195, docs4k 138.7 -> 164, docs6k 117.4 -> 149, docs8k 88.5
+-> 98.6; prose2k, code2k and the two that answer in two tokens unchanged.
+
+**By the rule (5 % over the shipped recipe on the long suite, every gate exact): kept, as a long-context
+candidate.** Median +9.6 %, mean +16.5 % over the shipped recipe on long prompts; the price is 3.3 % on short
+prompts (the synchronous pipeline and the wider launch). Not yet a package profile.
+
+**Still owed before "exact by construction" can be said of it (and of the shipped depth-5 verify):** a census of
+the attention kernel for 2 to 10 verify rows at contexts up to 1,536 tokens against one row at a time, and of the
+recurrent layers' small FP16 projection for 1 to 16 rows. The recurrent kernel (R313 census), the main layers, the
+normalisation and the output layer are covered.
+
+**Next for this lever:** more slots (K = 16 changes the attention block size and one projection path, so it needs
+the same gates), and moving it to the asynchronous pipeline to get the 2.3 % back.
+
