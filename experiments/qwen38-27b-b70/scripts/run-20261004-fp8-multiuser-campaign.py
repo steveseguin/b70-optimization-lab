@@ -236,6 +236,14 @@ def main():
                         R.log(f"{name}: {row['target_tokens']} tokens: " + (row['error'][:120] if row.get('error') else
                               f"first token {row['ttft_s']:.1f} s, reads {row['prompt_read_tok_s']:.0f} tok/s, writes "
                               f"{row['decode_tok_s'] and round(row['decode_tok_s'], 1)} tok/s, codes right {row['all_correct']}"))
+            if srv.ready and label == 'mtp5' and os.environ.get('MU_LONG_CHOICE', '1') == '1':
+                # track 4, same server: decisions read from the first step against decoding them (CPU client)
+                out = OUT / f'{name}-choice.json'
+                R.sh([str(R.XPU_PYTHON), ROOT / 'experiments/qwen38-27b-b70/scripts/qwen38-fp8-one-step-choice-probe.py',
+                      '--base-url', srv.base, '--model', R.MODEL_NAME, '--out', out], f'{name}-choice', 3600)
+                if out.exists():
+                    r['choice'] = json.loads(out.read_text()).get('summary')
+                    R.log(f"{name}: one-step choices: {json.dumps(r['choice'])[:600]}")
             r['stop'] = srv.stop()
             text = (OUT / name / 'server.log').read_text(errors='replace') if (OUT / name / 'server.log').exists() else ''
             r['kv_lines'] = re.findall(r'GPU KV cache size[^\n]*', text)[:2]

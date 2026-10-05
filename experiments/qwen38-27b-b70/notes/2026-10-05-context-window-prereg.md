@@ -44,3 +44,16 @@ writing speed; whether all six codes come back exactly; the answer's token ids.
   directly and beyond that by the verify-rows overlay, which makes each verify row a plain decode call.)
 - Speeds are reported as measured, one server each; this is a first look, not a published number.
 - No server is left running.
+
+## One-step answers (track 4), first test, written before it runs
+
+On the long-window server after the ledger probe (the window size does not matter for this).
+`scripts/qwen38-fp8-one-step-choice-probe.py`: 80 generated decision items of four kinds (yes/no, A to D, sentiment,
+routing) with known answers. Three ways to answer the same chat prompt: (1) one step: `max_tokens=1`, the label is
+the best-scoring allowed first token among the top 20; (2) thinking off, decode the label; (3) thinking on, reason
+then answer (24 items).
+
+**Recorded:** agreement of (1) with (2) and with (3); accuracy of each; seconds per item; tokens generated.
+**What would make it useful:** (1) agrees with (2) on every item (it is the same decision, read earlier) and is
+faster; how far (1) and (2) fall short of (3) shows what skipping the reasoning costs on these items. The items are
+easy on purpose; this measures the mechanism, not the model.
