@@ -207,6 +207,31 @@ No agent, no context management: this measures the reading step alone. Data: `da
   first (a few real changes per batch inside ordinary narrative, tuned until single-call accuracy is at least
   98 %), and only then run over a stream longer than the budget.
 
+### Calibrating a reading task the model can do one step at a time (measured 19:00 EDT)
+
+Sparse prose: ordinary narrative with a few real counter changes per 2K-token batch. Single call, thinking off, the
+true table given; share of changed counters right (12 batches per cell, 26 to 113 changes per cell, so each cell is
+rough). Data: `data/2026-10-05-context/calibration/`.
+
+| Real changes per batch | Plain | Numbers as words | Pronouns | Corrections | Cancelled plans | All together |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | 97 % | 100 % | 97 % | 100 % | 98 % | 88 % |
+| 6 | 96 % | 96 % | 96 % | 94 % | 96 % | 82 % |
+| 12 | 91 % | 91 % | 97 % | 95 % | 97 % | 92 % |
+
+- **Without thinking the model reads a sparse narrative batch right about 97 times in 100 per change at 3 changes
+  per batch, and about 91 to 95 at 12.** The step is easy but not perfect, and errors add up over a long stream: at
+  3 changes per batch a 120K stream has about 180 changes.
+- Asking for a one-line reason per change did not help (same or slightly worse).
+- The reading run uses 3 changes per batch with numbers as words (40 of 40 in the calibration).
+
+### Keep everything, with its window shown (measured 18:30 EDT)
+
+The plain keep-everything agent on the seed where it had returned nothing, now told its window and current size
+after every command: **again no answer** (0 of 24, 53 minutes, context grew to about 195K by the harness's count).
+Showing the window did not change what it did, and the guard that should refuse a fetch that cannot fit did not
+fire. Cause being traced (the harness counts tokens with a different tokenizer than the server).
+
 ### Where the time goes (reconstructed from the saved runs)
 
 | Run | Total | Writing | Reading | Tools | Tokens written |
