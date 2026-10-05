@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-05 00:40 UTC** (2026-10-04 20:40 EDT), two-B70 host.
+Last reviewed: **2026-10-05 05:30 UTC** (2026-10-05 01:30 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
 ## 2026-10-04 20:40 EDT, four-B70 host: LTX 2.5 reached 24.4 fps with two clips per transformer pass; the owner must rule on the new baseline
@@ -60,6 +60,28 @@ capacity and uneven clip spacing.
 read once instead of once per clip); a one-card probe is checking whether each clip's result in a fixed-size batch
 depends only on its own inputs. That would change rounding, like the text window did, so adopting it is the
 owner's call.
+
+## 2026-10-05 01:30 EDT: optimization work pinned; context-length research under way
+
+**The owner asked to pin the speed work and research context length.** The pin, with the full table and what is
+owed before anything is packaged, is
+[here](experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md). Short form, two cards, every
+answer exact by construction:
+
+| Users at once | Tokens a second together | Mode |
+| ---: | ---: | --- |
+| 1 | 90 | drafting on (the shipped recipe) |
+| 2 / 4 / 8 | 138 / 227 / 336 | drafting on (needs the new local image and tonight's engine fixes) |
+| 16 | about 420 | either |
+| 32 / 64 | 657 / 874 | drafting off |
+
+**Context length (new).** The model has 262,144 trained positions and the two-card cache holds about 268,000 tokens
+at full precision, so the 33K window was a packaging choice. Under test now: how the server reads, writes and
+recalls at 8K to 250K tokens; the model editing its own context (the Context Language Models paper) against simply
+keeping everything in the big window; an exact prefix cache so an edit only costs re-reading what follows it; and
+reading a decision from the first step instead of decoding it. Plan and test records:
+[context plan](experiments/qwen38-27b-b70/notes/2026-10-05-context-window-prereg.md),
+[paper review](experiments/qwen38-27b-b70/notes/2026-10-05-context-research-review.md).
 
 ## 2026-10-04 20:40 EDT: many users at once, exact by construction: 874 tokens a second for 64 users
 
