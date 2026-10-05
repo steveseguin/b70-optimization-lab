@@ -11,7 +11,7 @@ four kinds (yes/no, A-D choice, sentiment, routing), three ways of getting the a
 
 and reports agreement between them, accuracy against the generated ground truth, and time per item.
 `one_step` is exactly what greedy decoding restricted to the label set would output as its first token; whether that
-equals unrestricted decoding is what the agreement column measures. CPU client; needs `transformers` (tokenizer only).
+equals unrestricted decoding is what the agreement column measures. CPU client; needs the `tokenizers` library only.
 
   python3 qwen38-fp8-one-step-choice-probe.py --base-url http://127.0.0.1:18196 --out choice.json
 """
@@ -22,8 +22,25 @@ import json
 import random
 import re
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
+
+
+class LightTokenizer:
+    """The model's tokenizer through the `tokenizers` library alone. Importing `transformers` costs about a gigabyte of
+    host memory for a moment, and beside a two-card server with the full window that was enough to trip the host
+    memory guard (2026-10-05, the guard stopped the server as this client started)."""
+
+    def __init__(self, path):
+        from tokenizers import Tokenizer
+        self.t = Tokenizer.from_file(str(Path(path) / 'tokenizer.json'))
+
+    def __call__(self, text, add_special_tokens=False):
+        return {'input_ids': self.t.encode(text, add_special_tokens=add_special_tokens).ids}
+
+    def decode(self, ids, **_):
+        return self.t.decode(list(ids), skip_special_tokens=False)
 
 
 def items(seed: int, per_kind: int):
@@ -67,8 +84,11 @@ def chat(base, model, question, max_tokens, thinking, logprobs, timeout=900):
     req = urllib.request.Request(base.rstrip('/') + '/v1/chat/completions', data=json.dumps(body).encode(),
                                  headers={'Content-Type': 'application/json'})
     t0 = time.perf_counter()
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        data = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as error:  # show the server's reason, not just the status
+        raise RuntimeError(f'HTTP {error.code}: {error.read().decode("utf-8", "replace")[:600]}') from error
     return data, time.perf_counter() - t0
 
 
@@ -93,8 +113,7 @@ def main() -> int:
     ap.add_argument('--think-items', type=int, default=24, help='how many items also get the slow thinking pass')
     ap.add_argument('--out', type=Path, required=True)
     a = ap.parse_args()
-    from transformers import AutoTokenizer
-    tok = AutoTokenizer.from_pretrained(a.tokenizer)
+    tok = LightTokenizer(a.tokenizer)
     first = lambda s: tok(s, add_special_tokens=False)['input_ids'][0]
     rows = []
     data = items(a.seed, a.per_kind)

@@ -78,3 +78,25 @@ position where they differ and the largest score gap.
 Several requests at once (the step mix changes the row counts), drafting on (the drafter adds its own cache and moves
 the last reusable block back by one), the one-card server (needs `--gdn-head-groups 2` for repeatable prompt reading
 before any of this applies), and caches saved to disk.
+
+## Result, first run (03:00 EDT): every compared answer identical; the ledger prompts were not compared
+
+Two fresh two-card servers on R314, drafting off, prompts read in 832-token pieces on both: first without the cache
+(reference), then with it. Data: `data/2026-10-05-context/prefixcache/`.
+
+- **56 of 56 compared cases gave the same tokens and the same top-5 scores as the fresh reference**, bit for bit:
+  the eight suite prompts, seven cases each, including the chat next-turn case (f) that I had predicted would differ.
+- **Reuse works and is fast:** a repeated 8,300-token prompt starts answering in 0.04 to 0.14 s instead of 2.7 s.
+- **Why the next-turn case was exact:** the server reused one block *less* than the shared text in all eight (f)
+  cases. The block that was finished while the model was writing its answer was not reused, so the predicted
+  exception never came into play. Whether that is a rule of the engine or luck is being read from its source
+  (`notes/2026-10-05-prefix-cache-reuse-rules.md`); until then it is "exact in test", not "exact by construction".
+- **Reuse is patchier than the block arithmetic says.** A prompt with 64 tokens removed from the middle reused
+  nothing in all eight cases, and a changed ending reused nothing whenever the change reached back past the last
+  full block. The answers were still identical; the cost is speed. This matters for self-editing: an edit in the
+  middle of the context seems to throw away the whole cache, not just what follows the edit. Same source reading.
+- **The rule as written is not met yet:** the three ledger prompts (3K, 10K, 30K) were not compared. My mistake: I
+  edited the ledger builder for another probe while this test was between its two servers, so the second server was
+  asked different ledgers than the first. The probe refused to compare them, which is what it should do.
+- Next: the same test with drafting on, all eleven prompts (the builder is no longer being touched). Drafting is
+  how the lane is actually served, so that is the result that decides whether the cache goes into later runs.

@@ -107,4 +107,29 @@ with drafting and 430,606 without. Data: `data/2026-10-05-context/longctx/`.
   minutes before the first word. Writing with drafting falls from about 90 to 31 tok/s. A long window is usable,
   but every turn that re-reads it is expensive, which is why the exact prefix cache matters.
 - The one-step decision test did not run: its first request was dropped by the server without an error message.
-  To be debugged on the next server.
+  **Cause found (02:55 EDT): the host memory guard stopped the server, and my test client set it off.** With the
+  full window and drafting, the server leaves about 2.4 GiB of host memory free; the guard stops the server below
+  2.0 GiB. The choice client imported `transformers` to load the tokenizer, which takes about a gigabyte for a
+  moment (`tp2-long262144-mtp5/MEMORY-GUARD.json`: "available host memory fell to 1.84 GiB", four seconds after the
+  client started). The server without drafting had 3.6 GiB free and was not touched, so the empty answer at 250,000
+  is a separate matter. Fix: the three probe clients now load the tokenizer with the small `tokenizers` library
+  alone. Rule for this lane: **next to a full-window server, nothing heavy runs on the host.**
+
+## Second long-window test, written before it runs (02:55 EDT)
+
+`MU_MODE=serve_run` with `scripts/context/edge-and-choice.sh`, one two-card server, R314, 262,144 window, drafting on.
+
+1. The one-step choice probe on the fresh server (plan above, unchanged).
+2. Recall asked the way an application asks: chat form, thinking off, 400-token allowance, at 8K, 30K and 120K.
+   This repairs the two short rows of the first test.
+3. Recall with ordinary words around the codes (`--style prose`: about forty common words after every record) at
+   30K, 120K and 200K. The first test was a wall of codes; real context is mostly words.
+4. The edge: one ledger, prefixes of it at 200K and 250K, then halving the gap until the longest prompt that answers
+   all six codes and the shortest that does not are at most 1,600 tokens apart. Finish reason and first token ids
+   are recorded at every length.
+5. Both edge lengths again in chat form and in prose form.
+
+**Reading rule.** If the edge is the same number of tokens for the wall of codes and for prose, and sharp, the
+suspect is the stack (a size limit somewhere), and the next step is to find it. If recall fades gradually or the
+edge moves with the content, it is the model, and the longest reliable window is the largest length at which all
+forms answer everything, less a margin. The number that goes into the recipe is that window, not 262,144.

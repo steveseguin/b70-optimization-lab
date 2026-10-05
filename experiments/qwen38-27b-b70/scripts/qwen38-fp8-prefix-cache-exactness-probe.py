@@ -31,7 +31,7 @@ Cold twins, in order of preference:
   python3 qwen38-fp8-prefix-cache-exactness-probe.py --base-url http://127.0.0.1:18132 --compare-with control.json \
       --out cache.json
 
-Needs `transformers` for the tokenizer only (~/.venvs/vllm-xpu has it). Exit code 0 = every a..e/f0 comparison equal.
+Needs the `tokenizers` library only (~/.venvs/vllm-xpu has it). Exit code 0 = every a..e/f0 comparison equal.
 """
 from __future__ import annotations
 
@@ -54,6 +54,22 @@ PARAGRAPH = ('\n\nAdditional paragraph added after the original text: summarise 
              'is about, then name the single most specific detail it contains.\n')
 NEXT_TURN = '\n\nFollow-up: continue from where the previous answer stopped, in the same style.\n'
 EXACT_VARIANTS = ('a', 'b', 'c', 'd', 'e', 'f0')
+
+
+class LightTokenizer:
+    """The model's tokenizer through the `tokenizers` library alone. Importing `transformers` costs about a gigabyte of
+    host memory for a moment, and beside a two-card server with the full window that was enough to trip the host
+    memory guard (2026-10-05, the guard stopped the server as this client started)."""
+
+    def __init__(self, path):
+        from tokenizers import Tokenizer
+        self.t = Tokenizer.from_file(str(Path(path) / 'tokenizer.json'))
+
+    def __call__(self, text, add_special_tokens=False):
+        return {'input_ids': self.t.encode(text, add_special_tokens=add_special_tokens).ids}
+
+    def decode(self, ids, **_):
+        return self.t.decode(list(ids), skip_special_tokens=False)
 
 
 def ids_sha(ids):
@@ -205,8 +221,7 @@ def main() -> int:
         ap.error('--save is the control pass; it takes no cold source')
     if a.compare_with and a.control_url:
         ap.error('use one cold source')
-    from transformers import AutoTokenizer
-    tok = AutoTokenizer.from_pretrained(a.tokenizer)
+    tok = LightTokenizer(a.tokenizer)
     fams = families(tok, [int(x) for x in a.ledgers.split(',') if x], a.seed, set(filter(None, a.only.split(','))))
     run = uuid.uuid4().hex
 
