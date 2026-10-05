@@ -208,7 +208,27 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE') == 'longctx':
+    if os.environ.get('MU_MODE') == 'serve_run':
+        # Context experiments: one two-card server with a chosen window (and tool calling for agent harnesses), kept up
+        # while a client script runs against it, then stopped. MU_RUN_SCRIPT gets API_BASE, BASE_URL and OUT_DIR.
+        mml = os.environ.get('MU_LONG_MML', '65536')
+        wide = ['--tp', '2', '--mem', '0.95', '--max-model-len', mml, '--batched', os.environ.get('MU_BATCHED', '4096'), '--fa-verify-rows']
+        spec = [] if os.environ.get('MU_MTP') == '0' else MTP5
+        serve = [f'--serve-arg={x}' for x in os.environ.get('MU_SERVE_ARGS', '').split()]
+        extra = os.environ.get('MU_LAUNCH_ARGS', '').split()
+        tag = os.environ.get('MU_RUN_NAME', 'ctx')
+        srv, name, since = start_server(f'tp2-{tag}-w{mml}', 18196, wide + spec + SHIPPED + LOADCOPY_FIX + serve + extra, since)
+        r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+        if srv.ready:
+            client = OUT / 'client'
+            client.mkdir(exist_ok=True)
+            r['client_rc'] = R.sh(['bash', os.environ['MU_RUN_SCRIPT']], f'{name}-client', int(os.environ.get('MU_RUN_TIMEOUT', '14400')),
+                                  env={'API_BASE': srv.base + '/v1', 'BASE_URL': srv.base, 'OUT_DIR': str(client),
+                                       'MODEL_NAME': R.MODEL_NAME})
+            R.log(f"{name}: client script finished rc={r['client_rc']}")
+        r['stop'] = srv.stop()
+        R.save_results(); R.fault_check(since); R.wait_gpus_free()
+    elif os.environ.get('MU_MODE') == 'longctx':
         # A window far beyond 33K, with the full 16-bit cache: the model has 262,144 trained positions and the two-card
         # cache pool holds about 268,000 tokens. One user, drafting on and off (two servers), the ledger probe at
         # growing lengths; the two servers' answers are compared token for token.
