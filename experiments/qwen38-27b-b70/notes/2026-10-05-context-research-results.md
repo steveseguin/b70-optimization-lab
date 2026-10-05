@@ -85,7 +85,7 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | No management, **files allowed**, 32K | 24 | **1.9 min** | 8K tok | context never above 8.9K |
 | Keep everything, old thinking dropped | none | stopped at 2.6 h | 397K tok | stuck: re-derived everything each call, hit the output cap, never acted |
 | Improved self-editing agent, 32K, seed 0 | 24 | 15 min | 67K tok | peak context 20K; no delivered batch lost |
-| Improved self-editing agent, 32K, seed 1 | 21 | 21 min | 91K tok | 3 wrong; cause being traced |
+| Improved self-editing agent, 32K, seed 1 | 21 | 21 min | 91K tok | 3 wrong: a bug in the script the model wrote to fold batches in (see below) |
 | Improved agent on a 480K stream (bigger than the window) | *pending* | | | |
 
 **The clear winner so far is the plainest one: let the model keep its working data in files.** Same answers, a
@@ -112,6 +112,17 @@ What the transcripts show:
   113K of context, ran into the 16,384-token output cap without issuing a command, and repeated: 49 calls, 397K
   tokens written, no answer; I ended it after 2.6 hours. Old thinking can only be dropped when the working state
   lives somewhere else (a state block or a file).
+
+- **The improved agent's one imperfect run was the model's own coding slip.** On the second seed its running state
+  was exact through batch 16. Then, after two very long thinking turns, it re-typed its fold script with a mistake
+  in the pattern that reads delete lines, so every delete from batch 17 on did nothing, while the script still
+  printed "errors: 0". Three counters that should have been reported as deleted came back with old numbers. No
+  harness mechanism was involved and nothing was lost from the context. About 85 % of both runs' time was writing,
+  and more than half of the written tokens came from a few turns of 4,000 tokens or more.
+- **The fix under test** keeps the fold script in one place instead of having the model re-type it: the model
+  writes it once with a self-test, and the harness refuses a fold whose self-test fails or whose count of handled
+  lines does not match the batch. Replayed on the saved run, it refuses the buggy script and folds all batches to
+  the right answers with the correct one. A thinking cap is a separate arm.
 
 The improved agent (`scripts/context/clm_improved.py`) keeps the paper's idea and fixes the harness: a delivered
 item is never rolled back, there is a room check before fetching, old thinking is dropped, and the running state is
