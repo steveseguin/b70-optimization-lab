@@ -8,8 +8,10 @@ Table 1 (one row per trial): arm, task kind, storage mode, stream size, seed, re
 edits (real context-file edits) / summaries (ok+failed), peak sent context, prompt tokens read
 (summary calls included), cached prompt tokens (server-reported prompt_tokens_details, summed),
 think_share (share of the sent context, by characters over all agent-call snapshots, that was
-earlier turns' thinking; ~0 for the thinking-dropped arms), completion tokens, wall seconds,
-ended_by and rule.
+earlier turns' thinking; ~0 for the thinking-dropped arms), completion tokens split into
+think_tok_est / other_tok_est (by characters; dropped thinking read from dropped_thinking.jsonl),
+thinking_off_calls, prefix_stable_share (improved agent: share of calls whose messages, the pinned
+state aside, extend the previous call's exactly), wall seconds, ended_by and rule.
 
   ended_by  submit            the model ran the submit command
             submit(final)     it submitted on the budget's final-turn notice
@@ -202,6 +204,25 @@ def trial_row(t: Path) -> dict:
     opt_violation = any("/opt/kvstream" in c for c in cmds)
     suspect = sum(1 for c in cmds if is_suspect(c))
 
+    # written tokens split into thinking vs the rest, by characters (approximate: numbers and JSON
+    # tokenize denser than prose). Thinking-dropped arms keep it in agent/dropped_thinking.jsonl.
+    think_c = other_c = 0
+    for seg in (ctx.get("segments") or []) if isinstance(ctx, dict) else []:
+        for st in seg.get("steps") or []:
+            if st.get("source") != "agent":
+                continue
+            think_c += len(st.get("reasoning_content") or "")
+            other_c += len(str(st.get("message") or ""))
+            other_c += sum(len(str(tc.get("arguments") or "")) for tc in st.get("tool_calls") or [])
+    dropped_c = 0
+    if (agent / "dropped_thinking.jsonl").exists():
+        for ln in (agent / "dropped_thinking.jsonl").read_text().splitlines():
+            try:
+                dropped_c += int(json.loads(ln).get("chars") or 0)
+            except Exception:
+                pass
+    think_c = max(think_c, dropped_c)
+
     # turns that hit max_tokens
     mx = int(kw.get("max_tokens") or 0)
     hit_max = 0
@@ -302,6 +323,15 @@ def trial_row(t: Path) -> dict:
         "items_lost": items_lost, "gate_refusals": imp.get("gate_refusals"),
         "protected_rollbacks": imp.get("protected_rollbacks"), "state_rejected": imp.get("state_rejected"),
         "think_cap_cont": imp.get("think_cap_continuations"), "loop_guard": imp.get("loop_guard_calls"),
+        "thinking_off_calls": (imp.get("thinking_off_calls") if imp else
+                               (u.get("n_lm_calls") if str(kw.get("enable_thinking")).lower() == "false" else 0)),
+        "think_tok_est": (int((u.get("completion_tokens") or 0) * think_c / (think_c + other_c))
+                          if (think_c + other_c) else None),
+        "other_tok_est": (int((u.get("completion_tokens") or 0) * other_c / (think_c + other_c))
+                          if (think_c + other_c) else None),
+        "prefix_stable_share": (round(imp["prefix_stable"] / max(imp["prefix_calls"] - 1, 1), 3)
+                                if imp.get("prefix_calls") else None),
+        "prefix_unstable_no_edit": imp.get("prefix_unstable_no_edit"),
         "ctxfold_calls": sum(1 for c in cmds if re.search(r"(^|[;&|]\s*)ctxfold\b", c, re.M)) if imp else None,
         # from the full step record (a context edit turns old tool turns into user text)
         "ctxfold_refused": sum(1 for seg in (ctx.get("segments") or []) for st in seg.get("steps") or []
@@ -362,11 +392,12 @@ def main() -> None:
     rows.sort(key=lambda r: (str(r.get("kind")), str(r.get("mode")), int(r.get("size") or 0),
                              str(r.get("arm")), int(r.get("seed") or 0)))
     t1 = ["arm", "kind", "mode", "size", "seed", "budget", "reward", "lm_calls", "real_edits", "summaries",
-          "summary_failed", "peak_sent_ctx", "prompt_tokens", "cached_tokens", "think_share", "completion_tokens", "wall_s", "items_lost", "ended_by", "rule"]
+          "summary_failed", "peak_sent_ctx", "prompt_tokens", "cached_tokens", "think_share", "completion_tokens",
+          "think_tok_est", "other_tok_est", "thinking_off_calls", "prefix_stable_share", "wall_s", "items_lost", "ended_by", "rule"]
     t2 = ["arm", "kind", "mode", "size", "seed", "correct", "blank", "stale", "wrong", "lost_never",
           "lost_dropped", "lost_copy", "stored_frac", "items", "delivered", "seen_whole", "items_lost", "cut",
           "gate_refusals", "protected_rollbacks", "state_rejected", "think_cap_cont", "loop_guard",
-          "ctxfold_calls", "ctxfold_refused",
+          "ctxfold_calls", "ctxfold_refused", "prefix_unstable_no_edit",
           "broken_pipe", "to_file", "tee", "refused", "hit_max_tokens", "rollbacks", "nudges",
           "suspect_cmds", "score_raw"]
     print("\t".join(t1))

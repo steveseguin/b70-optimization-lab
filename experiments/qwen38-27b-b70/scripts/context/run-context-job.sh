@@ -18,6 +18,14 @@
 #   OBS_MAX_CHARS     observation_max_chars [auto: max(60000, 2 x largest item) ]  (a 100-SET batch is ~16k chars)
 #   THINK_CAP         improved agent only: per-turn thinking cap in tokens (two-call continue protocol,
 #                     see clm_improved.py) [unset = off]
+#   SHOW_WINDOW       plain agent: 1 = every tool result ends with "[context: N of M tokens used; K left]"
+#                     (M = server window - MAX_TOKENS) and a `next` that cannot fit is refused [0]
+#                     (WINDOW_TOKENS overrides the window read from /v1/models)
+#   STABLE_RENDER     1 = with dropped thinking, send preserve_thinking=true (earlier thinking is
+#                     stripped by the harness, so every earlier turn renders identically; the improved
+#                     agent does this by default) [0]
+#   THINKING_POLICY   improved agent: always | judgement (thinking off on routine fetch/fold calls)
+#                     | never [always]
 #   DROP_OLD_THINKING 1 = send chat_template_kwargs.preserve_thinking=false on every call and strip
 #                     earlier turns' reasoning from the history (clm -> clm_baselines:ClmAgentT) [0]
 #   TASK_TEMPLATE     task_template agent kwarg [unset = terminal_agent_tasks; open_problems = task text only]
@@ -143,6 +151,17 @@ KW=(
 [[ -n "${LM_CALL_CAP:-}" ]] && KW+=(--agent-kwarg "lm_call_cap=$LM_CALL_CAP")
 [[ "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_trigger_ratio=$SUMMARY_TRIGGER")
 [[ "$DROP_OLD_THINKING" == 1 ]] && KW+=(--agent-kwarg "drop_old_thinking=true")
+if [[ "${SHOW_WINDOW:-0}" == 1 && "$AGENT_KIND" == plain ]]; then   # arm Aw: window line + fetch guard
+  WIN=${WINDOW_TOKENS:-$("$PY" - "$API_BASE" "$MODEL_NAME" <<'PY'
+import json, sys, urllib.request
+d = json.load(urllib.request.urlopen(sys.argv[1].rstrip("/") + "/models", timeout=10))
+print({m.get("id"): m.get("max_model_len") for m in d.get("data", [])}.get(sys.argv[2]) or 0)
+PY
+)}
+  KW+=(--agent-kwarg "show_window=true" --agent-kwarg "window_tokens=$WIN")
+fi
+[[ "${STABLE_RENDER:-0}" == 1 && ( "$DROP_OLD_THINKING" == 1 || "$AGENT_KIND" == improved ) ]] && KW+=(--agent-kwarg "stable_render=true")
+[[ -n "${THINKING_POLICY:-}" && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "thinking_policy=$THINKING_POLICY")
 [[ -n "${THINK_CAP:-}" && "${THINK_CAP:-0}" != 0 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "think_cap=$THINK_CAP")
 [[ -n "${TASK_TEMPLATE:-}" ]] && KW+=(--agent-kwarg "task_template=$TASK_TEMPLATE")
 [[ -n "${SUMMARY_MAX_TOKENS:-}" && "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_max_tokens=$SUMMARY_MAX_TOKENS")

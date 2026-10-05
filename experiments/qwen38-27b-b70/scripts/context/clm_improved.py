@@ -55,6 +55,20 @@ So the changes below, in order of evidence:
      <tool_call> is returned as reasoning, not content; <tool_call> itself ends reasoning, so the
      action is still parsed. Untested on the real server.
 
+v3 (2026-10-05, after the third run):
+  8. Stable prompt layout: preserve_thinking=true with earlier thinking stripped (every earlier
+     turn renders the same on every call: no "empty-think flip"), mirror edits keep every turn the
+     model did not change as the exact original message (_stable_parse), rollback notices are
+     appended at the end instead of rewritten in place after the task prefix. improved_stats.json
+     records prefix stability per call (prefix_stable / prefix_unstable_no_edit / ..._after_edit,
+     mean longest-common-prefix share) and the first unstable call without an edit.
+  9. Per-call thinking, thinking_policy = always (default) | judgement (arm B32in; see
+     _wants_thinking for the exact rule) | never (arm B32io). With judgement, reasoning_effort=
+     medium keeps the system message identical whether thinking is on or off (stable_system).
+  Not stable by design: the pinned message moves to the end when STATE.txt/FOLD.py change; any
+  turn the model edits; switching thinking on/off when stable_system is off (system line changes);
+  the server's last-block re-read (832-token blocks, drafting).
+
 Not implemented: an "archive" of removed spans (no loss in the evidence came from pruning).
 
 Accounting (fairness vs B32): the pinned state is an ordinary user message in the history, so the
@@ -75,6 +89,8 @@ from clm_harness.clm_agent import harness as _h
 from clm_harness.context_env.env import ContextEnv
 from clm_harness.context_env.types import StepResult
 from clm_harness.utils import tokens as tk
+from clm_harness.context_env import env as _envmod
+from clm_harness.context_utils.context_string import rendered_text, _HEADER_RE, _VALID_ROLES
 
 import litellm
 
@@ -82,6 +98,8 @@ from clm_baselines import _as_bool, _setup_drop_thinking
 
 THINK_BRIDGE = "(Thinking budget reached; acting now.)"
 _NEXT_EXTRA: dict[str, Any] = {}
+# chat_template_kwargs added to every call (e.g. reasoning_effort, see stable_system)
+_CTK_EXTRA: dict[str, Any] = {}
 _EXTRA_PATCHED = False
 
 
@@ -94,10 +112,14 @@ def _install_extra_body_hook() -> None:
     orig = litellm.completion
 
     def completion(*a: Any, **kw: Any) -> Any:
-        if _NEXT_EXTRA:
+        if _NEXT_EXTRA or _CTK_EXTRA:
             eb = dict(kw.get("extra_body") or {})
             eb.update(_NEXT_EXTRA)
             _NEXT_EXTRA.clear()
+            if _CTK_EXTRA:
+                ctk = dict(eb.get("chat_template_kwargs") or {})
+                ctk.update(_CTK_EXTRA)
+                eb["chat_template_kwargs"] = ctk
             kw["extra_body"] = eb
         return orig(*a, **kw)
 
@@ -116,13 +138,17 @@ PROTOCOL = """
 - Keep everything you will need later in `/tmp/.live_ctx/STATE.txt`. It is part of your context:
   the harness shows its current content (and your FOLD.py) in a pinned message every turn. It is
   NOT a notes file; it counts against your budget like everything else. Keep it compact and exact.
-- Write `/tmp/.live_ctx/FOLD.py` ONCE, right after you have seen the first item, defining
+- After each item arrives, fold it into STATE.txt (by a script if the item is machine-readable,
+  by reading it yourself if it is not), then delete the raw item from your context.
+- For machine-readable items, write `/tmp/.live_ctx/FOLD.py` ONCE, defining
     fold(state: str, lines: list[str]) -> (new_state: str, tally: dict)   # tally = {first word: lines applied}
     selftest() -> list[str]   # asserts on a tiny MADE-UP example covering every kind of line; returns the first words covered
-  Then fold every item with the command `ctxfold`: it runs your selftest, applies fold() to each
+  and fold every item with the command `ctxfold`: it runs your selftest, applies fold() to each
   delivered item still in your context, checks the tally against the item, writes STATE.txt and
   removes the folded item turns from your context. If it says REFUSED, nothing changed: fix FOLD.py
   (edit it, do not re-type the data) and run `ctxfold` again. Do not re-type the fold logic each batch.
+- For items you have to read yourself, write the updated STATE.txt with a short inline command and
+  delete the item's turn from the mirror file in the same command.
 - Before running a command that delivers a large item, make sure there is room for it: the
   harness refuses to run such a command when the item would not fit ("NOT RUN").
 - Your earlier thinking is not kept between turns: write anything you must remember into
@@ -132,8 +158,62 @@ PROTOCOL = """
 """
 
 
+def _stable_parse(text: str, protected: list[dict[str, Any]], originals: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Map an edited mirror back to messages, keeping every turn the model did NOT change as the
+    exact original message dict (same role, content, tool_calls, ids), so it renders byte-for-byte
+    as it was sent. The upstream parse_back rebuilds ALL turns as plain role+text, merges
+    consecutive same-role turns and turns tool calls into `bash {...}` text, which changed
+    already-sent text after every edit (prefix-cache census, 2026-10-05). Turns whose text was
+    changed become plain turns exactly as parse_back would make them; tool-call/tool-result pairs
+    that lost their partner are flattened to text so the history stays legal."""
+    editable = originals[len(protected):]
+    matches = list(_HEADER_RE.finditer(text))
+    out: list[dict[str, Any]] = [dict(m) for m in protected]
+    lead = text[: matches[0].start()].strip() if matches else text.strip()
+    if lead:
+        out.append({"role": "user", "content": lead})
+    for k, mt in enumerate(matches):
+        n, role = int(mt.group(1)), mt.group(2).lower()
+        role = role if role in _VALID_ROLES else "user"
+        end = matches[k + 1].start() if k + 1 < len(matches) else len(text)
+        body = text[mt.end():end].strip()
+        if not body:
+            continue
+        orig = editable[n - 1] if 1 <= n <= len(editable) else None
+        if orig is not None and orig.get("role") == role and rendered_text(orig).strip() == body:
+            out.append(orig)
+        else:
+            out.append({"role": "assistant" if role == "assistant" else "user", "content": body})
+    # keep tool-call pairs legal: an assistant tool call must be followed by its tool result
+    fixed: list[dict[str, Any]] = []
+    for i, m in enumerate(out):
+        if m.get("role") == "assistant" and m.get("tool_calls"):
+            ids = {tc.get("id") for tc in m["tool_calls"]}
+            nxt = out[i + 1] if i + 1 < len(out) else None
+            if not (nxt and nxt.get("role") == "tool" and nxt.get("tool_call_id") in ids):
+                m = {"role": "assistant", "content": rendered_text(m)}
+        elif m.get("role") == "tool":
+            prv = fixed[-1] if fixed else None
+            if not (prv and prv.get("role") == "assistant" and prv.get("tool_calls")
+                    and m.get("tool_call_id") in {tc.get("id") for tc in prv["tool_calls"]}):
+                m = {"role": "user", "content": rendered_text(m)}
+        fixed.append(m)
+    return fixed
+
+
 class _ImprovedEnv(ContextEnv):
     agent: "ClmImprovedAgent"
+
+    def _apply_edit(self, messages, rendered, read_back, before, limit, edit_rec):
+        if not self.agent.stable_mirror:
+            return super()._apply_edit(messages, rendered, read_back, before, limit, edit_rec)
+        originals = list(messages)
+        orig_parse = _envmod.parse_back
+        _envmod.parse_back = lambda text, prot: _stable_parse(text, prot, originals)
+        try:
+            return super()._apply_edit(messages, rendered, read_back, before, limit, edit_rec)
+        finally:
+            _envmod.parse_back = orig_parse
 
     async def step(self, command, messages, *, environment, pending=None):
         a = self.agent
@@ -154,6 +234,10 @@ class _ImprovedEnv(ContextEnv):
                                   exec_time=0.0, touched_ctx=False)
         res = await super().step(command, messages, environment=environment, pending=pending)
         out = getattr(res.result, "stdout", "") or ""
+        if res.ctx_changed:
+            a._edit_since_call = True
+        if out.lstrip().startswith("ctxfold: folded"):
+            a._fold_ok = True
         if a._guard_out.search(out):
             a._largest_delivery = max(a._largest_delivery,
                                       int(tk.count_tokens([{"role": "tool", "content": out}])[0]
@@ -233,8 +317,33 @@ class ClmImprovedAgent(_h.ClmAgent):
                  guard_headroom: int | str = 4096,
                  state_line_regex: str = "", state_max_tokens: int | str = 8192,
                  think_cap: int | str = 0, empty_streak_limit: int | str = 1,
-                 fallback_think_cap: int | str = 2048, **kwargs: Any) -> None:
+                 fallback_think_cap: int | str = 2048,
+                 stable_render: Any = True, stable_mirror: Any = True,
+                 thinking_policy: str = "always", stable_system: Any = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        # v3 (2026-10-05): stable prompt layout and per-call thinking
+        self.stable_mirror = _as_bool(stable_mirror)
+        self.thinking_policy = str(thinking_policy or "always").strip().lower()
+        if self.thinking_policy not in ("always", "judgement", "never"):
+            raise ValueError(f"thinking_policy must be always|judgement|never, not {thinking_policy!r}")
+        self._base_thinking = self.enable_thinking
+        # The Qwen3.8 template puts a reasoning-effort sentence into the system message only when
+        # thinking is on (effort xhigh by default, or low). Switching thinking per call would then
+        # change the very first line of the prompt and force a full re-read at every switch.
+        # stable_system (default: on for thinking_policy=judgement) sends reasoning_effort=medium,
+        # for which the template adds no sentence, so the system message is identical with thinking
+        # on or off. Cost: thinking calls lose the "think carefully" xhigh sentence.
+        self.stable_system = (self.thinking_policy == "judgement") if stable_system is None \
+            else _as_bool(stable_system)
+        if self.stable_system:
+            _CTK_EXTRA["reasoning_effort"] = "medium"
+        self._fold_ok = False
+        self._edit_since_call = False
+        self._prev_canon: list[str] | None = None
+        self._prev_thinking: bool | None = None
+        self.pstats = {"calls": 0, "stable": 0, "unstable_no_edit": 0, "unstable_after_edit": 0,
+                       "lcp_share_sum": 0.0, "thinking_on": 0, "thinking_off": 0, "thinking_toggles": 0,
+                       "first_unstable_no_edit": None}
         self._guard_cmd = re.compile(guard_command_regex)
         self._guard_out = re.compile(guard_output_regex)
         self.guard_headroom = int(guard_headroom)
@@ -259,7 +368,7 @@ class ClmImprovedAgent(_h.ClmAgent):
         self._ctx.__class__ = _ImprovedEnv
         self._ctx.agent = self
         self._ckpt = _PinnedState(self._ckpt, self)
-        _setup_drop_thinking(self, drop_old_thinking)  # strip first, then pin the state
+        _setup_drop_thinking(self, drop_old_thinking, stable_render)  # strip first, then pin the state
         self._protect_deliveries()
         orig_cap = self._budget.cap_newest_output
         guard = self._guard_out
@@ -271,9 +380,88 @@ class ClmImprovedAgent(_h.ClmAgent):
 
         self._budget.cap_newest_output = cap_newest_output
 
+    # ---------------- per-call thinking (arms B32in / B32io)
+    _JUDGEMENT = ("ctxfold: REFUSED", "NOT RUN", "REJECTED", "Traceback", "This was the last item",
+                  "STREAM END", "No tool call in your last turn", "CONTEXT LIMIT", "FINAL turn",
+                  "ROLLED BACK")
+
+    def _wants_thinking(self, messages: list[dict[str, Any]]) -> bool:
+        """thinking_policy: always = the agent's enable_thinking; never = off on every call;
+        judgement = off on routine calls, on when (in this order):
+          1. no `ctxfold` has folded an item yet (FOLD.py not proven), or
+          2. the newest tool output, or any harness/user message after it (nudges, rollback and
+             final-turn notices, the pinned state with a REJECTED note), contains a judgement
+             marker (_JUDGEMENT: a ctxfold refusal, a room-check "NOT RUN", a state rejection,
+             a Python traceback, the final item, the stream end, a missing-tool-call notice, a
+             budget/rollback notice), or
+          3. the newest tool output ended with a non-zero exit code.
+        Everything else ("fetch the next item", "fold it") is routine: thinking off."""
+        if self.thinking_policy == "never":
+            return False
+        if self.thinking_policy == "always":
+            return bool(self._base_thinking)
+        if not self._fold_ok:
+            return True
+        last_tool = -1
+        for i in range(len(messages) - 1, -1, -1):
+            if messages[i].get("role") == "tool":
+                last_tool = i
+                break
+        tail = [str(m.get("content") or "") for m in messages[max(last_tool, 0):]] if last_tool >= 0 else \
+            [str(m.get("content") or "") for m in messages[-3:]]
+        if any(mark in t for t in tail for mark in self._JUDGEMENT):
+            return True
+        if last_tool >= 0:
+            mm = re.findall(r"\(exit_code=(-?\d+)\)", str(messages[last_tool].get("content") or ""))
+            if mm and mm[-1] != "0":
+                return True
+        return False
+
+    def _canon(self, messages: list[dict[str, Any]]) -> list[str]:
+        out = []
+        for m in messages:
+            if str(m.get("content") or "").startswith(PIN_TAG):
+                continue
+            out.append(json.dumps({k: m.get(k) for k in ("role", "content", "tool_calls", "tool_call_id",
+                                                           "reasoning_content")}, sort_keys=True, default=str))
+        return out
+
+    def _prefix_stats(self, messages: list[dict[str, Any]], thinking: bool) -> None:
+        cur = self._canon(messages)
+        p = self.pstats
+        p["calls"] += 1
+        if self._prev_canon is not None:
+            prev = self._prev_canon
+            stable = cur[:len(prev)] == prev and (self._prev_thinking == thinking or self.thinking_policy != "judgement")
+            a, b = "".join(prev), "".join(cur)
+            n = 0
+            lim = min(len(a), len(b))
+            while n < lim and a[n] == b[n]:
+                n += 1
+            p["lcp_share_sum"] += n / max(len(a), 1)
+            if cur[:len(prev)] == prev:
+                p["stable"] += 1
+            elif self._edit_since_call:
+                p["unstable_after_edit"] += 1
+            else:
+                p["unstable_no_edit"] += 1
+                if p["first_unstable_no_edit"] is None:
+                    k = next((i for i in range(min(len(prev), len(cur))) if prev[i] != cur[i]), min(len(prev), len(cur)))
+                    p["first_unstable_no_edit"] = {"call": p["calls"], "message": k,
+                                                   "prev": prev[k][:160] if k < len(prev) else None,
+                                                   "cur": cur[k][:160] if k < len(cur) else None}
+            if self._prev_thinking is not None and self._prev_thinking != thinking:
+                p["thinking_toggles"] += 1  # the template's system line changes: full re-read
+        self._prev_canon, self._prev_thinking = cur, thinking
+        self._edit_since_call = False
+
     async def _query_with_retry(self, model: str, messages: list[dict[str, Any]]) -> Any:
-        cap = self.think_cap
-        if (not cap and self.empty_streak_limit
+        thinking = self._wants_thinking(messages)
+        self.enable_thinking = thinking
+        self.pstats["thinking_on" if thinking else "thinking_off"] += 1
+        self._prefix_stats(messages, thinking)
+        cap = self.think_cap if thinking else 0
+        if (not cap and thinking and self.empty_streak_limit
                 and self._empty_streak >= self.empty_streak_limit):
             cap = min(self.fallback_think_cap, max(self.max_tokens // 2, 1))  # must be < max_tokens
             self.n_loop_guard += 1
@@ -331,6 +519,23 @@ class ClmImprovedAgent(_h.ClmAgent):
         except Exception:
             pass
         return r2
+
+    def _note_rollback(self, messages, dropped, after) -> None:
+        """Append-only variant: the upstream ledger sits right after the task prefix and is
+        rewritten in place on every retry ("retry 13/50" -> "14/50"), which re-read the whole
+        context each time in B32. Here the notice is appended at the end like any message."""
+        for m in dropped:
+            for tc in m.get("tool_calls") or []:
+                try:
+                    cmd = json.loads(tc["function"]["arguments"]).get("command", "")
+                except Exception:
+                    cmd = ""
+                cmd = " ".join(cmd.split())[:70]
+                if cmd and cmd not in self._rolled_back_cmds:
+                    self._rolled_back_cmds.append(cmd)
+        del self._rolled_back_cmds[:-5]
+        messages.append({"role": "user",
+                         "content": self._budget.rollback_message(len(dropped), after, self._rolled_back_cmds)})
 
     async def setup(self, environment: Any) -> None:
         await super().setup(environment)
@@ -391,6 +596,19 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "think_cap_continuations": self.n_think_cap_continuations,
                     "loop_guard_calls": self.n_loop_guard,
                     "continuation_error": self._continuation_broken,
+                    "thinking_policy": self.thinking_policy,
+                    "stable_system": self.stable_system,
+                    "stable_render": _as_bool(getattr(self, "stable_render", False)),
+                    "stable_mirror": self.stable_mirror,
+                    "thinking_on_calls": self.pstats["thinking_on"],
+                    "thinking_off_calls": self.pstats["thinking_off"],
+                    "thinking_toggles": self.pstats["thinking_toggles"],
+                    "prefix_calls": self.pstats["calls"],
+                    "prefix_stable": self.pstats["stable"],
+                    "prefix_unstable_after_edit": self.pstats["unstable_after_edit"],
+                    "prefix_unstable_no_edit": self.pstats["unstable_no_edit"],
+                    "prefix_lcp_share_mean": round(self.pstats["lcp_share_sum"] / max(self.pstats["calls"] - 1, 1), 4),
+                    "first_unstable_no_edit": self.pstats["first_unstable_no_edit"],
                     "extra_prompt_tokens": self.extra_prompt_tokens,
                     "dropped_thinking_chars": getattr(self, "dropped_thinking_chars", 0),
                     "drop_old_thinking": _as_bool(getattr(self, "drop_old_thinking", False)),

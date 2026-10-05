@@ -366,3 +366,48 @@ involved.**
    agent keeps running without it and records the error.
 3. For the cache: the pinned message stays in place while unchanged.
 4. The suspect check no longer flags stderr redirects or `which`/`type next`.
+
+## v3 patch: less thinking and a stable prompt (prepared 2026-10-05, after the time-and-reuse note)
+
+All changes are options with their own arm names; the defaults are unchanged.
+
+**Thinking (the biggest time lever).**
+- **B32in:** thinking is off on routine fetch-and-fold calls. It is on:
+  - until the model's FOLD.py has folded an item once;
+  - right after a ctxfold refusal, a room-check refusal, a state rejection, a non-zero exit code
+    or a Python traceback;
+  - after a budget, rollback or final-turn notice;
+  - when the final item has arrived.
+- **B32io:** thinking off on every call.
+- **E32o:** files allowed, plain agent, thinking off on every call.
+- B32in sends reasoning_effort=medium on every call. The template then writes no effort sentence
+  into the system message, so switching thinking on or off no longer changes the first line of
+  the prompt. Without this, every switch would force a full re-read.
+
+**Stable prompt.**
+- All improved arms send preserve_thinking=true. Their earlier thinking is already stripped, so
+  every earlier turn renders the same on every call, which ends the "empty-think flip".
+- After a mirror edit, every turn the model did not touch is kept as the exact message it was.
+  Before, all turns were rebuilt as plain text, with tool calls turned into `bash {...}` and
+  neighbouring turns merged.
+- Rollback notices are appended at the end instead of being rewritten in place after the task.
+- `improved_stats.json` records, per call, whether the messages (pinned state aside) extend the
+  previous call's exactly, and where the first unexplained break happened.
+- `STABLE_RENDER=1` gives the plain drop-thinking arms the same preserve_thinking=true.
+
+**Not stable by design:**
+- the pinned state moves to the end whenever STATE.txt or FOLD.py changes;
+- turns the model edits itself;
+- the server re-reads the last cache block (832 tokens, plus one more with drafting).
+
+**Reading rule, fixed before the run.** A thinking-reduced arm is "no worse" if, on both seeds,
+it is within 1 key of B32i on the same task and none of its trials is invalid. Time is compared
+only between arms with equal scores.
+
+**Window guard for the plain arms** (same patch). The keep-everything arm on seed 1 ran into the
+server window at about 246K: it re-typed every batch and lost the run (0/24). The new arm **Aw** is
+A with `SHOW_WINDOW=1`:
+- every tool result ends with one line, e.g. "context: 104,769 of 245,760 tokens used; 140,991
+  left" (245,760 is the window minus max_tokens);
+- a `next` whose item cannot fit (context + largest item so far + max_tokens > window) is not
+  run; the model is asked to write down what it needs first.

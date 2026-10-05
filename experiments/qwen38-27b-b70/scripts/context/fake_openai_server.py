@@ -7,7 +7,8 @@
 when the request carries tools: `next` until the stream ends, then write /app/answers.json
 with the answers a perfect agent would give (parsed from the stream text in the request, so
 a v2 task scores 1.0 unless a rule voids it; FAKE_PLAN=legacy writes an empty {} as before),
-then the submit command. FAKE_PLAN=violate (after the first item) tries `next > file`
+then the submit command (also when `next` was refused with "NOT RUN": it answers from what it has).
+FAKE_PLAN=violate (after the first item) tries `next > file`
 (must be refused) and writes one SET value / three counter names to /app/stash.txt (must
 void a memory-only run); FAKE_PLAN=inline puts a value inside an inline python command only
 (must NOT void: checks that the harness does not leave command text in files).
@@ -15,6 +16,8 @@ FAKE_PLAN=improved-fold | improved-probe (+ FAKE_CORRUPT=1): scripted clm_improv
 tasks (fold items into /tmp/.live_ctx/STATE.txt; see plan_improved). FAKE_THINKCAP=1: every tool
 request without continue_final_message gets a "length" reply with thinking only, so the
 improved agent's think-cap continuation (continue_final_message) is exercised.
+FAKE_REASONING=1: every tool-call reply carries reasoning_content (to check that the harness strips
+earlier thinking; the request log has asst_with_reasoning per request).
 FAKE_PLAN=improved-ctxfold: writes a buggy /tmp/.live_ctx/FOLD.py first (ctxfold must refuse it),
 then a correct one, and folds every item with `ctxfold`. Without tools (e.g. a summary request) it
 returns fixed text. /v1/completions returns fixed text. Usage numbers are rough
@@ -159,7 +162,8 @@ def plan(msgs):
         return plan_improved(msgs, mode)
     if "answers.json written" in tools:
         return "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
-    if "STREAM END" in tools or "This was the last item" in tools:
+    last_tool = next((str(m.get("content") or "") for m in reversed(msgs) if m.get("role") == "tool"), "")
+    if "STREAM END" in tools or "This was the last item" in tools or last_tool.startswith("NOT RUN"):
         ans = _solve(tools) if mode != "legacy" else {}
         return ("cat > /app/answers.json <<'EOF'\n" + json.dumps(ans) + "\nEOF\necho answers.json written")
     n_items = tools.count("ITEM ")
@@ -192,9 +196,14 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
         msgs = req.get("messages") or []
+        lt = next((str(m.get("content") or "") for m in reversed(msgs) if m.get("role") == "tool"), "")
         sys.stderr.write("fake-req: " + json.dumps({k: v for k, v in req.items()
                          if k not in ("messages", "tools")} | {"n_messages": len(msgs),
-                         "has_tools": bool(req.get("tools"))}) + "\n")
+                         "has_tools": bool(req.get("tools")), "last_tool_head": lt[:60],
+                         "last_tool_tail": lt[-200:],
+                         # assistant turns before the newest message that still carry thinking text
+                         "asst_with_reasoning": sum(1 for m in msgs[:-1] if m.get("role") == "assistant"
+                                                    and (m.get("reasoning_content") or m.get("reasoning")))}) + "\n")
         pt = sum(len(json.dumps(m)) for m in msgs) // 4 or 1
         usage = {"prompt_tokens": pt, "completion_tokens": 12, "total_tokens": pt + 12}
         base = {"id": "fake-%d" % time.time_ns(), "created": int(time.time()), "model": MODEL, "usage": usage}
@@ -216,6 +225,8 @@ class H(BaseHTTPRequestHandler):
                    "tool_calls": [{"id": "call_%d" % time.time_ns(), "type": "function",
                                    "function": {"name": "bash", "arguments": json.dumps({"command": cmd})}}]}
             fr = "tool_calls"
+            if os.environ.get("FAKE_REASONING") == "1":   # replies carry thinking the harness must strip later
+                msg["reasoning_content"] = "stub thinking for call %d" % len(msgs)
         else:
             msg = {"role": "assistant", "content": "Stub summary: nothing to report."}
             fr = "stop"

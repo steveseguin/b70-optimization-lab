@@ -18,6 +18,15 @@
 #   D32   self-editing, budget 32,768, notes allowed
 #   E32   no management, budget 32,768, notes allowed
 #   B32ik B131ik  the same with a per-turn thinking cap (THINK_CAP_K, default 8192 tokens)
+#   B32in  improved agent, thinking OFF on routine fetch/fold calls, ON where judgement is needed
+#          (clm_improved.ClmImprovedAgent._wants_thinking); B32io: thinking off on every call
+#   E32o   no management, files allowed, thinking off on every call
+#   Aw     A + SHOW_WINDOW: every tool result states the window used/left, and a fetch that cannot
+#          fit (context + largest item so far + max_tokens > window) is refused with a request to
+#          write down what is needed first (keep-everything seed 1 ran into the window at ~246K)
+#   (all improved arms render earlier turns stably: preserve_thinking=true with thinking stripped,
+#    mirror edits keep unchanged turns byte-identical, rollback notices appended at the end;
+#    STABLE_RENDER=1 gives the plain drop-thinking arms the same preserve_thinking=true)
 #   B32i B131i  the improved self-editing agent (clm_improved.py: delivered items never rolled back,
 #         room check before `next`, harness-owned pinned STATE.txt, old thinking dropped), memory-only
 #   At B32t C32t E32t   the same arms with earlier thinking dropped from every call (DROP_OLD_THINKING=1:
@@ -97,7 +106,9 @@ ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("
         "C32": ("summary", "memory", 32768), "C131": ("summary", "memory", 131072),
         "D32": ("clm", "notes", 32768), "E32": ("plain", "notes", 32768),
         "B32i": ("improved", "memory", 32768), "B131i": ("improved", "memory", 131072),
-        "B32ik": ("improved", "memory", 32768), "B131ik": ("improved", "memory", 131072)}
+        "B32ik": ("improved", "memory", 32768), "B131ik": ("improved", "memory", 131072),
+        "B32in": ("improved", "memory", 32768), "B32io": ("improved", "memory", 32768),
+        "E32o": ("plain", "notes", 32768), "Aw": ("plain", "memory", 0)}
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -191,9 +202,13 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   rm -rf "${RUNS:?}/jobs/$job"
   echo "== $(date +%H:%M:%S) $job (agent=$agent budget=$budget drop_old_thinking=$drop)"
-  local tc=${THINK_CAP:-}
+  local tc=${THINK_CAP:-} et=$ENABLE_THINKING tp=${THINKING_POLICY:-}
   [[ "$arm" == *ik ]] && tc=${THINK_CAP_K:-8192}   # B32ik/B131ik: improved agent + per-turn thinking cap
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
+  [[ "$arm" == *in ]] && tp=judgement              # B32in: thinking only where judgement is needed
+  [[ "$arm" == *io ]] && tp=never                  # B32io: improved agent, thinking off on every call
+  [[ "$arm" == E32o ]] && et=false                 # E32o: plain, files allowed, thinking off
+  local sw=0; [[ "$arm" == Aw ]] && sw=1           # Aw: A + window line and fetch guard
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
   echo "   rc=$? $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
   if ! "$PY" "$D/summarize_results.py" --brief --check "$RUNS/jobs/$job" > "$RUNS/$job.check" 2>&1; then
     echo "!!! $job: a cap, timeout, server refusal or the storage rule ended this run; it does not count:"

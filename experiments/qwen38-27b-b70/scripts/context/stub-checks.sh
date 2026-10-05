@@ -18,7 +18,7 @@
 #   the fake server's scripted "fold into STATE.txt" agent:
 #   7 imp-base      big budget; also corrupts STATE.txt once: reward 1.0, not VOID although STATE.txt
 #                   names the counters (iv), the bad edit restored (iii), every request carries
-#                   preserve_thinking=false (v), no delivered item lost. Its context readouts give the
+#                   preserve_thinking=true with no thinking left on earlier assistant turns (v, v3), no delivered item lost. Its context readouts give the
 #                   sizes for 8 and 9.
 #   8 imp-protect   budget between "after fold" and "after fold + one item", room check switched off:
 #                   every delivery overflows, the rollback must keep it (i): items_lost 0,
@@ -26,6 +26,14 @@
 #   9 imp-gate      budget for one item but not two, headroom 0; the stub runs `next` again before
 #                   folding: refused with "NOT RUN", then it folds and retries (ii): refusals >= 1,
 #                   items_lost 0, reward 1.0
+#  13 imp-judgement  THINKING_POLICY=judgement (arm B32in): thinking on until ctxfold has folded once,
+#                   after a ctxfold refusal and for the final item; off on routine fetch/fold calls;
+#                   and no call's messages (pinned state aside) differ from the previous call's except
+#                   after a context edit (prefix stability)
+#  14 imp-never      THINKING_POLICY=never (B32io): every request has enable_thinking=false
+#  16 aw             plain agent + SHOW_WINDOW on a 7,000-token stub window: every tool result ends with
+#                   the window line and a `next` that cannot fit is refused
+#  15 e32o           plain agent, files allowed, ENABLE_THINKING=false: every request has it false
 #  12 imp-ctxfold    the harness fold helper: a FOLD.py with the real seed-1 DEL bug must be refused by its
 #                   selftest, the fixed one must fold every item (reward 1.0, not VOID)
 #  11 imp-loopguard no think cap, every first reply cut with no command: after 2 in a row the agent
@@ -156,9 +164,13 @@ ijob() {  # name budget extra_kwargs think_cap
 
 # 7 base (+ corrupt STATE.txt once)
 SLR='state_line_regex=^[a-z]+[0-9]{2}\s-?[0-9]+$'   # the stub's state format "name value"
-FAKE_PLAN=improved-fold FAKE_CORRUPT=1 start_stub "$O/stub-imp-base.log"; ijob imp-base 200000 "$SLR"
-n_all=$(grep -c '^fake-req:' "$O/stub-imp-base.log"); n_ok=$(grep '^fake-req:' "$O/stub-imp-base.log" | grep -c '"preserve_thinking": false')
-msg="reward=$reward void=$void ended_by=$ended_by state_rejected=$state_rejected items_lost=$items_lost preserve_false=$n_ok/$n_all after_fold=$after_fold after_item=$after_item"
+FAKE_PLAN=improved-fold FAKE_CORRUPT=1 FAKE_REASONING=1 start_stub "$O/stub-imp-base.log"; ijob imp-base 200000 "$SLR"
+# v3: the improved agent strips earlier thinking itself and sends preserve_thinking=true (stable
+# render). Every request must carry preserve_thinking=true AND no assistant turn before the newest
+# message may still hold thinking text (the stub's replies all carry some: FAKE_REASONING=1).
+n_all=$(grep -c '^fake-req:' "$O/stub-imp-base.log")
+n_ok=$(grep '^fake-req:' "$O/stub-imp-base.log" | grep '"preserve_thinking": true' | grep -c '"asst_with_reasoning": 0')
+msg="reward=$reward void=$void ended_by=$ended_by state_rejected=$state_rejected items_lost=$items_lost preserve_true_and_stripped=$n_ok/$n_all after_fold=$after_fold after_item=$after_item"
 [[ $invalid == False && $void == False && $reward == 1.0 && ${state_rejected:-0} -ge 1 && $items_lost == 0 && $n_all -gt 0 && $n_ok == "$n_all" ]] \
   && pass imp-base "$msg" || fail imp-base "$msg"
 X=${after_fold:-0}; Y=${after_item:-0}
@@ -209,6 +221,90 @@ read -r cf_calls cf_ref <<< "$cf"
 msg="reward=$reward void=$void ended_by=$ended_by items_lost=$items_lost ctxfold_calls=$cf_calls refused=$cf_ref"
 [[ $invalid == False && $void == False && $reward == 1.0 && $items_lost == 0 && ${cf_ref:-0} -ge 1 && ${cf_calls:-0} -ge 2 ]] \
   && pass imp-ctxfold "$msg" || fail imp-ctxfold "$msg"
+# 13 thinking only where judgement is needed (B32in) + prefix stability
+FAKE_PLAN=improved-ctxfold start_stub "$O/stub-imp-judgement.log"
+THINKING_POLICY=judgement ijob imp-judgement 200000 ""
+jl=$("$PY" - "$O/stub-imp-judgement.log" "$O/runs/jobs/imp-judgement" <<'PY'
+import json, sys, glob, re
+reqs = [json.loads(l[len("fake-req: "):]) for l in open(sys.argv[1]) if l.startswith("fake-req: ")]
+reqs = [r for r in reqs if r.get("has_tools")]
+bad, off, on, fold_ok = [], 0, 0, False
+for i, r in enumerate(reqs):
+    th = (r.get("chat_template_kwargs") or {}).get("enable_thinking")
+    head, tail = r.get("last_tool_head", ""), r.get("last_tool_tail", "")
+    if head.startswith("ctxfold: folded"):
+        fold_ok = True
+    want = None
+    if not fold_ok or head.startswith("ctxfold: REFUSED") or "This was the last item" in tail:
+        want = True
+    elif head.startswith("ctxfold: folded") or re.match(r"ITEM \d+/\d+ \(UPDATE\)", head):
+        want = False
+    if want is not None and th != want:
+        bad.append((i, head[:30], th))
+    off += th is False
+    on += th is True
+    if (r.get("chat_template_kwargs") or {}).get("reasoning_effort") != "medium":
+        bad.append((i, "no reasoning_effort=medium (stable system prompt)", th))
+st = json.load(open(glob.glob(sys.argv[2] + "/*/agent/improved_stats.json")[0]))
+# Expected breaks of the message prefix: only the calls right after a context edit, i.e. after each
+# successful `ctxfold` (it removes the folded item turns). Not breaks by construction: the first call
+# (no predecessor), the pinned state changing (it is excluded from the comparison), thinking
+# toggles (the messages are unchanged; the system line is kept identical by reasoning_effort=medium).
+folds = sum(1 for r in reqs if r.get("last_tool_head", "").startswith("ctxfold: folded"))
+calls = st.get("prefix_calls") or 0
+after_edit = st.get("prefix_unstable_after_edit") or 0
+unexpected = (st.get("prefix_unstable_no_edit") or 0) + max(0, after_edit - folds) + \
+    (0 if (st.get("prefix_stable") or 0) + after_edit == max(calls - 1, 0) else 1)
+print(len(bad), off, on, unexpected, st.get("prefix_stable"), calls, st.get("thinking_toggles"), after_edit, folds)
+print("bad:", bad[:4], "first_unstable:", st.get("first_unstable_no_edit"), file=sys.stderr)
+PY
+)
+read -r j_bad j_off j_on j_unst j_stab j_calls j_tog j_aed j_folds <<< "$jl"
+msg="reward=$reward ended_by=$ended_by thinking off=$j_off on=$j_on wrong_choice=$j_bad prefix: stable=$j_stab of $((j_calls-1)) transitions, broken after an edit=$j_aed (ctxfold edits=$j_folds), unexpected=$j_unst; toggles=$j_tog"
+[[ $invalid == False && $reward == 1.0 && $j_bad == 0 && ${j_off:-0} -ge 2 && ${j_on:-0} -ge 2 && $j_unst == 0 ]] \
+  && pass imp-judgement "$msg" || fail imp-judgement "$msg"
+
+# 14 thinking off on every call (B32io)
+FAKE_PLAN=improved-ctxfold start_stub "$O/stub-imp-never.log"
+THINKING_POLICY=never ijob imp-never 200000 ""
+n_t=$(grep '^fake-req:' "$O/stub-imp-never.log" | grep -c '"has_tools": true')
+n_off=$(grep '^fake-req:' "$O/stub-imp-never.log" | grep '"has_tools": true' | grep -c '"enable_thinking": false')
+msg="reward=$reward ended_by=$ended_by requests with enable_thinking=false: $n_off/$n_t"
+[[ $invalid == False && $reward == 1.0 && $n_t -gt 0 && $n_off == "$n_t" ]] && pass imp-never "$msg" || fail imp-never "$msg"
+
+# 15 E32o: plain agent, files allowed, thinking off on every call
+"$PY" "$D/make_ledger_tasks.py" "$O/tasks-ledger-notes" --tokens 7000 --batch-size 30 --n-counters 8 \
+  --mode notes --seeds 0 > "$O/tasks-ledger-notes.json"
+start_stub "$O/stub-e32o.log"
+rm -rf "${O:?}/runs/jobs/e32o"
+TASKS=$(ls -d "$O"/tasks-ledger-notes/ledger-notes-t7k-s0) JOB_NAME=e32o CONTEXT_BUDGET=32768 BUDGET_RESERVE=2048 \
+  MAX_TOKENS=1024 ENABLE_THINKING=false TASK_TEMPLATE=open_problems "$D/run-context-job.sh" plain "$O/runs" > "$O/runs/e32o.out" 2>&1
+read -r rw inv vd ns nf eb < <(row e32o)
+n_t=$(grep '^fake-req:' "$O/stub-e32o.log" | grep -c '"has_tools": true')
+n_off=$(grep '^fake-req:' "$O/stub-e32o.log" | grep '"has_tools": true' | grep -c '"enable_thinking": false')
+msg="reward=$rw ended_by=$eb requests with enable_thinking=false: $n_off/$n_t"
+[[ $inv == False && $rw == 1.0 && $n_t -gt 0 && $n_off == "$n_t" ]] && pass e32o "$msg" || fail e32o "$msg"
+# 16 Aw: plain agent with SHOW_WINDOW on a tiny window (7,000 tokens, max_tokens 1,024): every tool
+# result carries the window line, and a `next` that cannot fit is refused ("NOT RUN"); the stub then
+# answers from what it has
+FAKE_MAX_MODEL_LEN=7000 start_stub "$O/stub-aw.log"
+rm -rf "${O:?}/runs/jobs/aw"
+TASKS="$LTASK" JOB_NAME=aw CONTEXT_BUDGET=0 MAX_TOKENS=1024 SHOW_WINDOW=1 TASK_TEMPLATE=open_problems \
+  "$D/run-context-job.sh" plain "$O/runs" > "$O/runs/aw.out" 2>&1
+read -r rw inv vd ns nf eb < <(row aw)
+aw=$("$PY" - "$O/runs/jobs/aw" <<'PY'
+import json, sys, glob
+t = glob.glob(sys.argv[1] + "/*/agent")[0]
+ws = json.load(open(t + "/window_stats.json"))
+ctx = json.load(open(t + "/trajectory.ctx.json"))
+obs = [res.get("content") or "" for seg in ctx["segments"] for st in seg["steps"]
+       for res in ((st.get("observation") or {}).get("results") or [])]
+print(ws["window_refusals"], sum(1 for o in obs if "tokens used;" in o), len(obs))
+PY
+)
+read -r aw_ref aw_lines aw_obs <<< "$aw"
+msg="ended_by=$eb reward=$rw refusals=$aw_ref window_lines=$aw_lines/$aw_obs"
+[[ $inv == False && ${aw_ref:-0} -ge 1 && $aw_obs -gt 0 && $aw_lines == "$aw_obs" ]] && pass aw "$msg" || fail aw "$msg"
 stop_stub
 
 echo; "$PY" "$D/summarize_results.py" --brief "$O/runs" | tee "$O/summary.txt"

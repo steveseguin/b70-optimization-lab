@@ -40,6 +40,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
+import types
 from typing import Any
 
 import litellm
@@ -48,6 +50,7 @@ from clm_harness.clm_agent import harness as _h
 from clm_harness.context_env.env import ContextEnv
 from clm_harness.utils import tokens as tk
 from clm_harness.utils.lm_compat import token_cap_key
+from clm_harness.context_env.types import StepResult
 
 logger = logging.getLogger(__name__)
 
@@ -123,10 +126,18 @@ def _as_bool(v: Any) -> bool:
 
 
 _PATCHED = False
+# Value sent as chat_template_kwargs.preserve_thinking. False = the original switch. True =
+# "stable render" (2026-10-05 v3): the harness has already stripped all earlier thinking, and with
+# preserve_thinking=true the Qwen3.8 template renders every assistant turn with the same empty
+# `<think>\n\n</think>\n\n`, wherever the last user message is. With false it writes that empty
+# block only after the last user message, so a new nudge/notice/pinned message changed the
+# rendering of already-sent turns ("empty-think flip", notes/2026-10-05-context-time-and-reuse.md).
+_PRESERVE_VALUE = False
 
 
-def _install_preserve_thinking_false() -> None:
-    global _PATCHED
+def _install_preserve_thinking_false(value: bool = False) -> None:
+    global _PATCHED, _PRESERVE_VALUE
+    _PRESERVE_VALUE = bool(value)
     if _PATCHED:
         return
     orig = litellm.completion
@@ -134,7 +145,7 @@ def _install_preserve_thinking_false() -> None:
     def completion(*a: Any, **kw: Any) -> Any:
         eb = dict(kw.get("extra_body") or {})
         ctk = dict(eb.get("chat_template_kwargs") or {})
-        ctk["preserve_thinking"] = False
+        ctk["preserve_thinking"] = _PRESERVE_VALUE
         eb["chat_template_kwargs"] = ctk
         kw["extra_body"] = eb
         return orig(*a, **kw)
@@ -158,12 +169,13 @@ class _PreCall:
         return await self._inner.maybe(environment, messages)
 
 
-def _setup_drop_thinking(agent: Any, flag: Any) -> None:
+def _setup_drop_thinking(agent: Any, flag: Any, stable_render: Any = False) -> None:
     agent.drop_old_thinking = _as_bool(flag)
+    agent.stable_render = _as_bool(stable_render)
     agent.dropped_thinking_chars = 0
     if not agent.drop_old_thinking:
         return
-    _install_preserve_thinking_false()
+    _install_preserve_thinking_false(agent.stable_render)
 
     def strip(messages: list[dict[str, Any]]) -> None:
         out = []
@@ -198,9 +210,10 @@ class ClmAgentT(_h.ClmAgent):
     def name() -> str:
         return "clm-drop-thinking"
 
-    def __init__(self, *args: Any, drop_old_thinking: Any = True, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, drop_old_thinking: Any = True, stable_render: Any = False,
+                 **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        _setup_drop_thinking(self, drop_old_thinking)
+        _setup_drop_thinking(self, drop_old_thinking, stable_render)
 
 
 def _baseline_defaults(kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -210,21 +223,77 @@ def _baseline_defaults(kwargs: dict[str, Any]) -> dict[str, Any]:
     return kwargs
 
 
+class _WindowEnv(_NoMirrorEnv):
+    """SHOW_WINDOW (arm Aw): every tool result ends with one line stating how much of the server
+    window is used and left, and a fetch that cannot fit (current context + largest item seen so
+    far + max_tokens > window) is not run. Context sizes are the harness's count calibrated to the
+    server's reported prompt tokens (the same ruler as the budget gate)."""
+
+    agent: "PlainAgent"
+
+    def _line(self, now: int) -> str:
+        a = self.agent
+        usable = max(a.window_tokens - a.max_tokens, 0)
+        return f"\n[context: {now:,} of {usable:,} tokens used; {max(usable - now, 0):,} left]"
+
+    async def step(self, command, messages, *, environment, pending=None):
+        a = self.agent
+        shown = messages + ([pending] if pending else [])
+        now = self.budget.count(shown)
+        if (a._guard_cmd.search(command or "") and a._largest_item
+                and now + a._largest_item + a.max_tokens > a.window_tokens):
+            a.n_window_refusals += 1
+            usable = max(a.window_tokens - a.max_tokens, 0)
+            text = (f"NOT RUN: `{command.strip()[:60]}` would deliver an item of up to "
+                    f"~{a._largest_item:,} tokens, but only ~{max(usable - now, 0):,} of the "
+                    f"{usable:,} usable tokens of the window are left. Write down what you still "
+                    f"need first (for example your answers or a compact summary of the values so "
+                    f"far), then decide how to continue.")
+            res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
+            return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
+                              readout=self._line(now), notes="", exec_time=0.0, touched_ctx=False)
+        res = await super().step(command, messages, environment=environment, pending=pending)
+        out = getattr(res.result, "stdout", "") or ""
+        if a._guard_out.search(out):
+            a._largest_item = max(a._largest_item, self.budget.count([{"role": "tool", "content": out}]))
+        res.readout = self._line(self.budget.count(shown + [{"role": "tool", "content": res.stdout_block}]))
+        return res
+
+
 class PlainAgent(_h.ClmAgent):
-    """No context management (see module docstring)."""
+    """No context management (see module docstring). show_window=true (run-context-job.sh
+    SHOW_WINDOW=1, arm Aw) adds the window line and the fetch guard of _WindowEnv."""
 
     @staticmethod
     def name() -> str:
         return "plain-baseline"
 
-    def __init__(self, *args: Any, drop_old_thinking: Any = False, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, drop_old_thinking: Any = False, stable_render: Any = False,
+                 show_window: Any = False, window_tokens: int | str = 0,
+                 guard_command_regex: str = r"(^|[;&|]\s*)next\b",
+                 guard_output_regex: str = r"(?m)^ITEM \d+/\d+ \(", **kwargs: Any) -> None:
         super().__init__(*args, **_baseline_defaults(kwargs))
-        self._ctx.__class__ = _NoMirrorEnv
-        _setup_drop_thinking(self, drop_old_thinking)
+        self.show_window = _as_bool(show_window)
+        self.window_tokens = int(window_tokens or 0)
+        if self.show_window and self.window_tokens <= 0:
+            raise ValueError("show_window needs window_tokens (the server's max_model_len)")
+        self._guard_cmd, self._guard_out = re.compile(guard_command_regex), re.compile(guard_output_regex)
+        self._largest_item = 0
+        self.n_window_refusals = 0
+        self._ctx.__class__ = _WindowEnv if self.show_window else _NoMirrorEnv
+        self._ctx.agent = self
+        _setup_drop_thinking(self, drop_old_thinking, stable_render)
 
     async def run(self, instruction, environment, context) -> None:
         _h._SYSTEM_TEMPLATE = BASELINE_SYSTEM
-        await super().run(instruction, environment, context)
+        try:
+            await super().run(instruction, environment, context)
+        finally:
+            if self.show_window:
+                (self.logs_dir / "window_stats.json").write_text(json.dumps({
+                    "window_tokens": self.window_tokens, "max_tokens": self.max_tokens,
+                    "window_refusals": self.n_window_refusals,
+                    "largest_item_tokens": self._largest_item}, indent=1) + "\n")
 
 
 class _SummaryEnv(_NoMirrorEnv):
@@ -271,14 +340,14 @@ class SummaryAgent(_h.ClmAgent):
 
     def __init__(self, *args: Any, summary_trigger_ratio: float | str = 0.75,
                  summary_max_tokens: int | str = 4096, drop_old_thinking: Any = False,
-                 **kwargs: Any) -> None:
+                 stable_render: Any = False, **kwargs: Any) -> None:
         super().__init__(*args, **_baseline_defaults(kwargs))
         self.summary_trigger_ratio = float(summary_trigger_ratio)
         self.summary_max_tokens = int(summary_max_tokens)
         self._ctx.__class__ = _SummaryEnv
         self._ctx.agent = self
         self._ckpt = _SummaryGuard(self._ckpt, self)
-        _setup_drop_thinking(self, drop_old_thinking)  # wraps outside: strip, then summary guard
+        _setup_drop_thinking(self, drop_old_thinking, stable_render)  # wraps outside: strip, then summary guard
         self.summary_calls: list[dict[str, Any]] = []
         self.n_summary_calls = 0
 
