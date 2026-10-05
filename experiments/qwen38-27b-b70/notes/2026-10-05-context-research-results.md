@@ -66,6 +66,8 @@ built to be hard in exactly this way (up to 11,879 records that differ only in t
   turns of a conversation; a cold repeat at 120K identical to the cached answer.
 - An edit in the middle of a long context resumes from the last kept state before the edit (every 6,656 or 13,312
   tokens, a dial) instead of from zero.
+- The standard 12-prompt gate is unchanged with the cache on: 12 of 12 exact on a cold pass and on a cached pass,
+  and the write rate is the same (88.5-88.7 tok/s off, 89.6-89.7 on).
 - Costs: a first, cold read is 14 to 27 % slower; each kept state costs the memory of about 2,500 tokens of
   context. Not yet tested: several users at once, the one-card server, a scores-level comparison.
 

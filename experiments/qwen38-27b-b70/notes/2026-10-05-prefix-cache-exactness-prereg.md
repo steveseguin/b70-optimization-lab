@@ -162,3 +162,19 @@ Data: `data/2026-10-05-context/prefixcache-exact-mtp/`.
   does not leave), several users at once, the one-card server, and prompts beyond 30K.
 - **Decision:** the context experiments from here on run with this cache (interval 13,312 for the long ones, so a
   180K conversation and its states fit the pool).
+
+## Does the cache change the standard gate or the write rate? (09:42 EDT)
+
+Asked by the owner: "did token decode rate change as a result of this?" Controlled check, `MU_MODE=pcgate`: two
+fresh two-card servers, drafting on, the shipped 33K window, the standard 12-prompt strict gate run twice on each
+(the second pass on the cache server reads its prompts from the cache). Data: `data/2026-10-05-context/pcgate/`.
+
+| Server | Gate, first pass | Write rate | Gate, second pass | Write rate |
+| --- | --- | ---: | --- | ---: |
+| Cache off, 4,096-token pieces (as shipped) | 12 of 12 exact | 88.5 tok/s | 12 of 12 exact | 88.7 tok/s |
+| Cache on, `b70-prefix-cache-exact`, 832-token pieces | 12 of 12 exact | 89.6 tok/s | 12 of 12 exact | 89.7 tok/s |
+
+- **The write rate did not change** (a one percent difference between two servers is inside the usual spread).
+- **The answers did not change:** both servers match the standing reference on all twelve prompts, on a cold pass
+  and on a pass served from the cache.
+- One server each; a first look, consistent with the cache only deciding which blocks are kept.
