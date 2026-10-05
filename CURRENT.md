@@ -25,7 +25,7 @@ The references are new ones made with two clips per pass, so this counts only if
   clip-to-clip continuation.
 - **Open:** two batch-4 jobs fail at their first capture with no recorded error (one batch-4 job works: 1.209 s per
   clip, exact against batch-4 references).
-- Zero lockups and zero GPU faults in ten and a half hours on kernel 7.0.0-39, about fifteen server runs.
+- Zero lockups and zero GPU faults in nine and a half hours on kernel 7.0.0-39, about fifteen server runs.
 - [Results](experiments/ltx25-b70/notes/2026-10-04-packet-96-results.md);
   [why batching is row-independent](experiments/ltx25-b70/notes/2026-10-04-batch-row-independence-probe.md);
   [packet build](experiments/ltx25-b70/notes/2026-10-04-packet-96-build.md).
