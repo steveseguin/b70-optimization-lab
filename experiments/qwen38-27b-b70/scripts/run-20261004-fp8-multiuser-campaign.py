@@ -153,6 +153,8 @@ def start_server(name, port, args, since):
     if os.environ.get('MU_SPEC_RESUME') == '1':
         # engine fix: a request that sat out a step keeps the accepted-token count the recurrent layers need
         args = list(args) + ['--overlay', 'b70-spec-resume-accepted', '--extra-env', 'B70_SPEC_RESUME_ACCEPTED=1']
+    for item in os.environ.get('MU_EXTRA_ENV', '').split():  # research probes: extra KEY=VALUE for the server
+        args = list(args) + ['--extra-env', item]
     if os.environ.get('MU_STATE_WIDTH') == '1':
         # engine fix for the recurrent layers' state-slot table (needs the R314 kernel): a step narrower than the tokens
         # just accepted no longer reads past the end of the table
