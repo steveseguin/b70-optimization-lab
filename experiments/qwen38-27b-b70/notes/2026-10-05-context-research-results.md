@@ -79,6 +79,7 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Strategy | Right of 24 | Time | Written | Note |
 | --- | ---: | ---: | ---: | --- |
 | Keep everything in the big window, cache on | 24 | 26 min | 89K tok | 91 % of reads served by the cache |
+| Keep everything in the big window, second seed | **0** | 38 min | 99K tok | all 24 blank; context grew to 202K and the run ended without answers (cause being traced) |
 | Paper's self-editing agent, 32K budget | 19 | 64 min | 233K tok | all 5 losses caused by the harness, see below |
 | Summarise at 75 %, 32K budget | 24 | 41 min | 211K tok | 12 summaries, 57 calls |
 | Self-editing, **files allowed**, 32K | 24 | **1.9 min** | 7K tok | context never above 8.2K; no edit needed |
@@ -87,6 +88,9 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Improved self-editing agent, 32K, seed 0 | 24 | 15 min | 67K tok | peak context 20K; no delivered batch lost |
 | Improved self-editing agent, 32K, seed 1 | 21 | 21 min | 91K tok | 3 wrong: a bug in the script the model wrote to fold batches in (see below) |
 | Improved agent on a 480K stream (bigger than the window) | *pending* | | | |
+
+**Keeping everything in the big window is not robust.** It was fully right on the first seed and returned nothing on
+the second, where the context grew to 202K. One success and one total failure in two tries.
 
 **The clear winner so far is the plainest one: let the model keep its working data in files.** Same answers, a
 context under 9K tokens on a 121K-token task, and 14 to 22 times faster than any strategy that keeps the data in
