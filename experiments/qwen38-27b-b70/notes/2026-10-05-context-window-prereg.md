@@ -57,3 +57,27 @@ then answer (24 items).
 **What would make it useful:** (1) agrees with (2) on every item (it is the same decision, read earlier) and is
 faster; how far (1) and (2) fall short of (3) shows what skipping the reasoning costs on these items. The items are
 easy on purpose; this measures the mechanism, not the model.
+
+## Self-editing, first comparison (track 2), written before it runs
+
+The paper's benchmark is not released, so this uses a re-creation of its key-value store task
+(`scripts/context/make_kvstream_tasks.py`): the agent receives batches of 100 `SET key = value` lines (each value 24
+words), each batch is gone once delivered, and at the end it must return the values of 24 keys exactly. "Pressure"
+1x, 2x and 4x is how many times the total input exceeds a 32,768-token budget. Scoring is exact match; no judge
+model. It is not the paper's data, so scores are not comparable with the paper's.
+
+**Arms, one two-card server (R314, drafting on, tool calling on, greedy, thinking on, a 262,144-token window so the
+last arm fits):**
+1. self-editing: the paper's own agent code and prompt, 32,768-token budget;
+2. summary at 75 % of the budget (a Codex-style compaction written for this test);
+3. no management at the same budget (stops when the context overflows);
+4. no management and no budget: the whole task simply stays in the big window.
+
+**Recorded per arm and pressure:** score (fraction of the 24 values exactly right), model calls, edits or
+summaries made, prompt tokens read, tokens written, wall time.
+
+**What it can and cannot show.** Arm 4 is the lossless baseline: nothing is ever dropped. Arms 1 and 2 show how much
+is kept when the model has to choose. A 24-key answer needs about 800 tokens of values out of up to 130,000 tokens
+of input, and the model does not know in advance which keys will be asked, so this task is hard for any pruning by
+design; it measures faithful retention under pressure, which is the owner's worry about "lossy" context. One seed,
+so differences of one or two keys mean nothing.
