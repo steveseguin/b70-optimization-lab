@@ -174,3 +174,23 @@ state-width fix. `MU_MODE=copydraft MU_COPY_K=15`, `B70_FA_VERIFY_ROWS_MAX_Q=16`
 
 **Rule:** both arms 12/12, 8/8, 64/64. Kept over the 9-token arm only if the long-suite median improves on it
 (98.6 tok/s) by 5 % or more without the strict-suite speed falling below it (87.6 tok/s) by more than 1 %.
+
+## Result of the 15-token arm (23:15 EDT): exact, better on copy-heavy prompts, misses the bar on the median
+
+Image R314 with the state-width fix, synchronous pipeline, 15 verify slots (attention block 896), head at 5.
+
+| Gate | Control (no long drafts) | 15-token copy drafts | 9-token arm |
+|---|---|---|---|
+| Strict suite vs frozen reference | 12/12 | 12/12, 87.20 tok/s | 12/12, 87.6 |
+| Long prompts vs no-speculation answers | 8/8 | 8/8 | 8/8 |
+| Short ladder vs frozen reference | 64/64 | 64/64 | 64/64 |
+| Long prompts, decode median / mean | 86.9 / 88.2 tok/s | 102.6 / 117.3 | 98.6 / 105.8 |
+
+224 long drafts, mean length 14.9, 4.54 accepted on average. Per prompt: prose4k 136 -> 246.5 tok/s (9-token arm:
+195), docs6k 115 -> 188 (149), docs4k 135 -> 163.5 (164), docs8k 87 -> 102.6 (98.6); the others unchanged.
+
+**By the rule written above (median +5 % over the 9-token arm): not adopted over it**, the median moved 4.1 %. The
+mean moved 10.9 % and the two most copy-heavy prompts gained 26 %. The honest reading is that eight prompts are too
+few to choose between 9 and 15 on a median; both are exact, and the launch with 15 slots is also exact with the
+wider attention block. A larger long-context suite with real copy-heavy tasks (editing, quoting, rewriting) is what
+should decide the depth.
