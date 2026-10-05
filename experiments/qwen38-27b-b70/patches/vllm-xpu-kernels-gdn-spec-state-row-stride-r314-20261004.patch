@@ -1,0 +1,41 @@
+r314 (2026-10-04, b70 lab, NOT BUILT): let the GDN speculative kernels take a row-strided state-index tensor.
+
+Applies on vllm-xpu-kernels 6d92b1b + r310 + r313 (only gdn_attn_interface.cpp, compiled into _xpu_C; rebuild like
+docker/rebase-v0290/build-kernels-0.1.14.1-r313-spec-exact.sh). Pair it with the research overlay
+experiments/qwen38-27b-b70/overlays/b70-gdn-state-width (B70_GDN_STATE_WIDTH=1), which hands the kernel a
+[n, step width] view of [n, num_spec + 1] block-table rows when a step is narrower than num_spec + 1.
+
+Why: after a verify step accepts `a` tokens, the next step's SSM spec kernel reads its initial state from
+spec_state_indices_tensor[n, a - 1] (gated_delta_rule.hpp:392-395) with no bound check, but the engine slices that
+tensor to the next step's width (vllm gdn_attn.py:338-340 / 359-361). Narrower next step => out-of-range read.
+The width cannot simply be made larger: both spec kernels and the interface take the number of tokens per request
+from size(1) (gdn_attn_interface.cpp:96 and :119, gated_delta_rule.hpp:705, causal_conv1d.hpp:1039). They already
+address elements through stride(0) (gated_delta_rule.hpp:395 and :511, causal_conv1d.hpp:681), so a strided view
+keeps size(1) = tokens per request and still exposes columns up to num_spec. The only obstacle is the
+is_contiguous() check, relaxed here to "rows contiguous". Every contiguous tensor still passes, with the same
+kernel arguments, so nothing changes for the stock engine.
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -79,9 +79,20 @@
+       "spec_token_indx must be 1D of shape [spec_token]");
+   const int spec_token = spec_token_indx.size(0);
+ 
++  // r314 (b70 lab): rows may be strided. size(1) is still the number of tokens
++  // per request in this step (num_speculative_tokens + 1 below), but the row
++  // stride may be wider: the conv and SSM spec kernels address every element
++  // as cache_indices[n * stride(0) + col] (causal_conv1d.hpp, gated_delta_rule.hpp)
++  // and read the initial SSM state from col num_accepted_tokens[n] - 1, which
++  // can lie past size(1) when this step is narrower than the previous step's
++  // acceptance. The engine passes a [n, width] view of [n, num_spec + 1]
++  // block-table rows for that case; a contiguous tensor is unchanged.
+   TORCH_CHECK(
+-      spec_state_indices_tensor.is_contiguous(),
+-      "spec_state_indices_tensor must be contiguous");
++      spec_state_indices_tensor.stride(1) == 1 &&
++          spec_state_indices_tensor.stride(0) >=
++              spec_state_indices_tensor.size(1),
++      "spec_state_indices_tensor rows must be contiguous (stride(1) == 1, "
++      "stride(0) >= size(1))");
+   TORCH_CHECK(
+       spec_state_indices_tensor.dtype() == torch::kInt32,
+       "spec_state_indices_tensor must be of int32 dtype");
