@@ -95,6 +95,9 @@ def extract_state(messages: list) -> dict | None:
             if isinstance(d, dict) and sum(1 for k in d if re.fullmatch(NAME, str(k))) >= 10 and \
                     all(v is None or isinstance(v, int) for v in d.values()):
                 found = {k: v for k, v in d.items()}
+        pairs = re.findall(rf"\b({NAME}) (-?\d+)\b", c) if "ITEM " not in c[:20] and "| memo:" not in c else []
+        if len(pairs) >= 20 and len({p[0] for p in pairs}) >= 20:   # e.g. "kane12 -309 lobape64 -103 ..." printed by a script
+            found = {k: int(v) for k, v in pairs}
         if found is None or c.count("\n") > 15:
             st = parse_lines(c)
             if st is not None and "ITEM " not in c[:20]:

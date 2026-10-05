@@ -222,6 +222,12 @@ rough). Data: `data/2026-10-05-context/calibration/`.
 - **Without thinking the model reads a sparse narrative batch right about 97 times in 100 per change at 3 changes
   per batch, and about 91 to 95 at 12.** The step is easy but not perfect, and errors add up over a long stream: at
   3 changes per batch a 120K stream has about 180 changes.
+- Pooled over the five single-feature settings, the error rate per change is 1.7 % at 3 changes per batch (3 of
+  175; 95 % interval 0.6 to 4.9 %), 4.3 % at 6 (12 of 277) and 5.7 % at 12 (28 of 495). At 3 per batch the three
+  errors coincide with three replies that were not in the asked format, so they may be format slips; the replies
+  were not saved, so that cannot be confirmed.
+- So on a 120K stream (about 180 changes) roughly three single-step errors are expected even with perfect context
+  management, and one to three of the 24 final answers may be wrong for that reason alone.
 - Asking for a one-line reason per change did not help (same or slightly worse).
 - The reading run uses 3 changes per batch with numbers as words (40 of 40 in the calibration).
 
@@ -229,8 +235,13 @@ rough). Data: `data/2026-10-05-context/calibration/`.
 
 The plain keep-everything agent on the seed where it had returned nothing, now told its window and current size
 after every command: **again no answer** (0 of 24, 53 minutes, context grew to about 195K by the harness's count).
-Showing the window did not change what it did, and the guard that should refuse a fetch that cannot fit did not
-fire. Cause being traced (the harness counts tokens with a different tokenizer than the server).
+Its table was exact at every batch checked. It kept every batch and re-typed the whole table in each command, about
+15K tokens of growth per batch, and never reacted to the shrinking room it was shown. The guard let the last fetch
+through because it reserved room for the batch and one reply only; the model's next 9,450-token command then took
+the context to 246,962, and the following request no longer fitted the 262,144 window. (My first guess, a tokenizer
+mismatch, was wrong: the harness count matched the server's within 0.4 %.) The corrected guard also reserves the
+largest turn seen so far plus a margin and, when room is short, tells the model to write its answers now; replayed
+on this run it stops the fetching with about 31K to spare. Not yet rerun.
 
 ### Where the time goes (reconstructed from the saved runs)
 
