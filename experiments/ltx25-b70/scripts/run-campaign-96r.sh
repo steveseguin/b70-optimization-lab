@@ -55,14 +55,18 @@
 # and an optional timed-arm length, so a finished combination can be run again and run longer.
 # Do not edit while running.
 set -u
-LAYOUT=${1:-}; WORKERS=${2:-}; BATCH=${3:-}; POOL=${4:-0}; REP=${5:-}; TIMED_ARG=${6:-120}
+LAYOUT=${1:-}; WORKERS=${2:-}; BATCH=${3:-}; POOL=${4:-0}; REP=${5:-}; TIMED_ARG=${6:-120}; TIMED_BASE_ARG=${7:-}
 case "$LAYOUT" in two-way) LI=0 ;; shard4-a) LI=1 ;; shard3-c) LI=2 ;; *) LI= ;; esac
 case "$WORKERS" in 1|2|3|4) ;; *) LI= ;; esac
 case "$BATCH" in 1) BI=0 ;; 2) BI=1 ;; 4) BI=2 ;; *) LI= ;; esac
 case "$POOL" in 0) PSUF= ; PBASE=264000 ;; 1) PSUF=-p1 ; PBASE=300000 ;; *) LI= ;; esac
-case "$REP" in 2|3|4|5|6|7|8|9) ;; *) LI= ;; esac
+case "$REP" in 2|3|4) ;; *) LI= ;; esac
 case "$TIMED_ARG" in *[!0-9]*|"") LI= ;; *) { [ "$TIMED_ARG" -ge 120 ] && [ "$TIMED_ARG" -le 9000 ]; } || LI= ;; esac
-[ -n "$LI" ] || { echo "usage: run-campaign-96r.sh <two-way|shard4-a|shard3-c> <1|2|3|4> <1|2|4> <0|1> <repeat 2-9> [timed prompts 120-9000]"; exit 8; }
+# The pipeline nodes accept clip_index up to 1,000,000 (ComfyUI rejects a larger literal before running the
+# prompt; the first 96r run lost its timed arm that way). Short arms of repeats 2-4 stay below 736,000; the
+# timed arm's base is given explicitly and must lie in 800,000 .. 1,000,000 - prompts.
+case "$TIMED_BASE_ARG" in *[!0-9]*|"") LI= ;; *) { [ "$TIMED_BASE_ARG" -ge 800000 ] && [ $((TIMED_BASE_ARG + TIMED_ARG)) -le 1000000 ]; } || LI= ;; esac
+[ -n "$LI" ] || { echo "usage: run-campaign-96r.sh <two-way|shard4-a|shard3-c> <1|2|3|4> <1|2|4> <0|1> <repeat 2-4> <timed prompts 120-9000> <timed index base 800000..>"; exit 8; }
 IDX=$((12 * LI + 3 * (WORKERS - 1) + BI))
 PLACEMENT=$LAYOUT
 MODE=$LAYOUT-w$WORKERS-b$BATCH$PSUF-r$REP
@@ -70,8 +74,8 @@ TAG=$(echo $LAYOUT | tr -d -)w${WORKERS}b$BATCH${PSUF#-}r$REP
 BASE=$((PBASE + 1000 * IDX + 100000 * REP))   # 96r: repeats live 100000 x repeat above the first runs
 CAP_BASE=$BASE; SELF_BASE=$((BASE + 100)); PROBE_BASE=$((BASE + 200)); REF_BASE=$((BASE + 200))
 PROOFN_BASE=$((BASE + 300)); PROOFS_BASE=$((BASE + 400))
-# 96r: the timed arm has its own 10000-wide index block per (repeat, pool, combination), so it can be long.
-TIMED_BASE=$((2000000 + 10000 * (72 * REP + 36 * POOL + IDX)))
+# 96r: the timed arm's index base is the operator's 7th argument (unused block, checked above).
+TIMED_BASE=$TIMED_BASE_ARG
 TIMED_N=$TIMED_ARG; PROBE_N=13
 if [ $BATCH = 1 ]; then
   DEPTH=$WORKERS
