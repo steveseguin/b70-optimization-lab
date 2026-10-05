@@ -80,3 +80,34 @@ prompts), so the kernel rounding was not their problem. The pattern in the answe
 accepts six or more drafted tokens, the second row of the following step is wrong. That points at something in the
 engine or another kernel that mishandles more than five accepted tokens; it is being traced.
 
+
+## Verify-path census and R314 (22:00 EDT)
+
+**The two kernels that had no census** (`scripts/qwen38-fp8-verify-path-census.py`, 570 cases, on R313;
+`data/2026-10-04-kernel-census/verify-path-*`):
+
+| Kernel | Result |
+|---|---|
+| Attention, q verify rows against one row at a time, as the server runs it (verify-rows overlay, limit 8) | q up to 6 (the shipped verify): **identical at every tested context up to 6,524 tokens**, two-card and one-card shapes. q up to 10 needs the overlay limit raised to 10 (then identical on two cards; on one card there is a gap at 1,281 to 1,536 tokens). 17 rows is a different kernel and never identical |
+| The recurrent layers' small FP16 projection, M rows against one | **Identical for 1 to 16 rows**; from 17 rows the server switches path and the rows differ from the one-row result |
+
+So for one user the shipped six-row verify is now covered end to end on R313/R314: main layers, normalisation,
+output layer, recurrent kernel (R313 patch), attention, and this projection.
+
+**R314** = R313 plus three kernel lines (`patches/vllm-xpu-kernels-gdn-spec-state-row-stride-r314-20261004.patch`)
+that let the engine hand the recurrent kernel a wider view of its state-slot table, used by the overlay
+`b70-gdn-state-width`. That removes the out-of-range state read when a step is narrower than the tokens just
+accepted (long copy drafts; the end of the context window in the stock recipe). On R314 with the overlay: recurrent
+census 74 of 74 identical to decode; shipped recipe 12/12 twice at 90.30 and 90.34 tok/s; long copy drafts (K = 9)
+12/12, 8/8, 64/64 and 98.6 / 105.8 tok/s on long prompts. Data: `data/2026-10-04-r314/`.
+
+**A consequence for the many-users mode, found by the same census.** A decode step with 17 or more users puts 17
+or more rows through that small projection, which then takes the other path, and its rows are not bit-identical to
+a lone user's. So the many-users table is exact by construction only up to 16 users (419 tok/s); at 32 and 64
+users (657 and 874) every answer has matched on every suite, but that is by test. The row-chunked path of that
+projection is identical to one row for every row count up to 512 on two cards, so the fix is to keep decode steps
+on that path whatever their size. It is being built.
+
+**Drafting with several users is still wrong** (R314 with the state-width fix, 4 users: 7 and 5 of 64 short answers,
+12 and 17 of 64 long ones). Last night without the scheduling overlay it was 60 or 61 of 64 at 2 and 4 users, so
+the large failure comes from the pure-step scheduling overlay combined with drafting. Being traced.
