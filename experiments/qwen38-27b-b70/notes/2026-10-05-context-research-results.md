@@ -14,8 +14,9 @@ Status: work in progress; rows marked *pending* are still running.
    250K, and above about 60K the model occasionally (about 1 lookup in 40) reads a look-alike line instead of the
    one asked for. So the right design is a big window as the safety net and a pruned working context as the habit.
 4. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
-   27B folds incoming data into a small running table or into files by itself and deletes the raw text. What broke
-   the paper's agent in our test was the harness around the model, not the model's pruning.
+   27B folds incoming data into a small running table or into files by itself and deletes the raw text. With files
+   allowed it finished a 121K-token task in under two minutes with every answer right and never more than 9K of
+   context. What broke the paper's agent in our test was the harness around the model, not the model's pruning.
 5. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
    under 2 %. The cheap, real lever is to stop re-sending the model's old thinking (10 % of a typical call, up to
    56 %).
@@ -77,12 +78,18 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | --- | ---: | ---: | ---: | --- |
 | Keep everything in the big window, cache on | 24 | 26 min | 89K tok | 91 % of reads served by the cache |
 | Paper's self-editing agent, 32K budget | 19 | 64 min | 233K tok | all 5 losses caused by the harness, see below |
-| Summarise at 75 %, 32K budget | *pending* | | | |
-| Self-editing, files allowed, 32K | *pending* | | | |
-| No management, files allowed, 32K | *pending* | | | |
+| Summarise at 75 %, 32K budget | 24 | 41 min | 211K tok | 12 summaries, 57 calls |
+| Self-editing, **files allowed**, 32K | 24 | **1.9 min** | 7K tok | context never above 8.2K; no edit needed |
+| No management, **files allowed**, 32K | 24 | **1.9 min** | 8K tok | context never above 8.9K |
 | Keep everything, old thinking dropped | *pending* | | | |
 | Improved self-editing agent, 32K | *pending* | | | |
 | Improved agent on a 480K stream (bigger than the window) | *pending* | | | |
+
+**The clear winner so far is the plainest one: let the model keep its working data in files.** Same answers, a
+context under 9K tokens on a 121K-token task, and 14 to 22 times faster than any strategy that keeps the data in
+the context. Where files are forbidden, keeping everything in the big window and summarising at 75 % both got
+everything right; summarising took longer than keeping everything (41 against 26 minutes), because the cache makes
+a big context cheap to re-read and every summary breaks the cache.
 
 What the transcripts show:
 
