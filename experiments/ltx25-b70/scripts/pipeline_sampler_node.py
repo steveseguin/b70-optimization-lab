@@ -83,6 +83,15 @@ def require(value, message):
         raise RuntimeError(message)
 
 
+def _decode_replica_record():
+    """Packet 97: the decode replica card(s) as the decode module read them at import (receipts only)."""
+    try:
+        import ltx_decode_replica as _replica
+        return _replica.replica_record()
+    except Exception as error:  # noqa: BLE001  (evidence only)
+        return 'unavailable: ' + repr(error)[:200]
+
+
 def write_json(path, value):
     with path.open('x') as stream:
         json.dump(value, stream, indent=2, sort_keys=True)
@@ -405,7 +414,7 @@ class LTXSamplerCaptureFreeze:
                   'placement': __import__('os').environ.get('LTX_SAMPLER_PLACEMENT', 'two-way'),
                   'sampler_workers': SAMPLER_WORKERS, 'sampler_batch': SAMPLER_BATCH,
                   'signature_batches': sig_batches, 'sampler_shared_pool': capture.SHARED_POOL,
-                  'chain_check': chain}
+                  'chain_check': chain, 'decode_replica': _decode_replica_record()}
         write_json(run / ('sampler-capture-freeze-' + run_name + '.json'), report)
         return {'ui': {'text': ['capture freeze: %s' % outcome]}}
 
@@ -483,6 +492,7 @@ class LTXSamplerCaptureCoverage:
                     'sampler_workers': SAMPLER_WORKERS, 'sampler_batch': SAMPLER_BATCH,
                     'signature_batches': sig_batches, 'open_batch_group': _GROUPER.open_clips(),
                     'sampler_shared_pool': capture.SHARED_POOL,
+                    'decode_replica': _decode_replica_record(),
                     'worker_names': pipeline.worker_names('sample'),
                     'free_bytes': _free_bytes_all()})
         return {'ui': {'text': ['capture coverage: %s' % outcome]}}
@@ -799,7 +809,7 @@ class LTXPipelineSampler:
             'video_latent': ('LATENT',), 'audio_latent': ('LATENT',),
             'upscale_model': ('LATENT_UPSCALE_MODEL',), 'vae': ('VAE',),
             'mode': (list(SAMPLER_MODES),),
-            'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
+            'clip_index': ('INT', {'default': 0, 'min': 0, 'max': pipeline.CLIP_INDEX_MAX}),
             # Packet 96: batch arms need deeper emission (batch 1 still enforces MAX_PENDING).
             'depth': ('INT', {'default': 2, 'min': 1, 'max': batching.MAX_BATCH_DEPTH}),
             'run_name': ('STRING', {'default': 'assign-unique-request-name'})},

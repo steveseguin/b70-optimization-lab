@@ -193,7 +193,7 @@ class LTXPipelineTextEncode:
         return {'required': {'clip': ('CLIP',),
                              'text': ('STRING', {'multiline': True}),
                              'mode': (list(TEXT_MODES),),
-                             'clip_index': ('INT', {'default': 0, 'min': 0, 'max': 1000000}),
+                             'clip_index': ('INT', {'default': 0, 'min': 0, 'max': pipeline.CLIP_INDEX_MAX}),
                              'depth': ('INT', {'default': 1, 'min': 1,
                                                'max': pipeline.MAX_PENDING}),
                              'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}

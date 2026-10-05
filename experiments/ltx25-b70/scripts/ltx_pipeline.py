@@ -25,6 +25,10 @@ next clip index and never checked it. That was correct only while every prompt
 was identical, which is exactly what the harness of the time did.
 """
 import hashlib
+import json
+import os
+import re
+import sys
 import threading
 import time
 import traceback
@@ -42,6 +46,10 @@ STAGES = ('encode', 'decode', 'sample')
 # identity, so each gets its own static buffers and captured graphs.
 STAGE_WORKERS = {'encode': 1, 'decode': 1, 'sample': 2}
 MAX_PENDING = 4
+# Packet 97: the largest clip index the lane nodes accept as a literal (their INT input's
+# 'max'; ComfyUI refuses a larger literal at validation with "value_bigger_than_max").
+# Was 1,000,000 through packet 96; packet 97's index bases start at 10,000,000.
+CLIP_INDEX_MAX = 100000000
 # Cross-stage input fingerprints, recorded so a wrong clip can be attributed to
 # a stage from receipts alone (the f82b/f83e bird clip was byte-identically
 # wrong across two servers; no receipt could say whether its conditioning or
@@ -144,6 +152,62 @@ class _Job:
         self.cpu = None
 
 
+FAILED_JOB_SCHEMA = 'ltx.pipeline-failed-job.v1'
+
+
+def _index_label(index):
+    """A file-name-safe rendering of a job index (an int for every stage today)."""
+    return re.sub(r'[^A-Za-z0-9_.-]', '_', str(index))[:64] or 'none'
+
+
+def record_failure(stage, job, worker, exc):
+    """Packet 97: a failed job of any stage leaves its error on disk and in the server log.
+
+    Writes ``pipeline-failed-<stage>-<index>-<ms>.json`` into the run directory
+    (LTX_ENCODER_RUN_DIR) with the stage, index, worker thread, target, the full
+    traceback text, the time and the server identity hash, and prints one line with the
+    exception type and message to stderr (the server log). Before this, the traceback lived
+    only in ``job.error`` and was seen only if a prompt later waited for that job: a capture
+    job that failed left nothing. Evidence only: never raises (returns the path or None)."""
+    path = None
+    try:
+        text = job.error if isinstance(job.error, str) else ''.join(
+            traceback.format_exception(type(exc), exc, exc.__traceback__))
+        message = str(exc)
+        record = {'schema': FAILED_JOB_SCHEMA, 'stage': stage,
+                  'index': job.index if isinstance(job.index, (int, str)) else repr(job.index),
+                  'clip': job.index if isinstance(job.index, int) else None,
+                  'worker': worker, 'target': job.target, 'tag': job.tag,
+                  'exception_type': type(exc).__name__, 'exception_message': message[:4000],
+                  'traceback': text, 'failed_unix': time.time(),
+                  'job_seconds': None if job.started is None else round(time.monotonic() - job.started, 4),
+                  'server_identity_sha256': os.environ.get('LTX_ENCODER_IDENTITY_SHA256'),
+                  'pid': os.getpid()}
+        run = os.environ.get('LTX_ENCODER_RUN_DIR')
+        if run:
+            stem = 'pipeline-failed-%s-%s-%d' % (stage, _index_label(job.index), int(time.time() * 1000))
+            for n in range(100):
+                candidate = os.path.join(run, stem + ('' if n == 0 else '-%d' % n) + '.json')
+                try:
+                    with open(candidate, 'x') as stream:
+                        json.dump(record, stream, indent=2, sort_keys=True, default=repr)
+                        stream.write('\n')
+                    path = candidate
+                    break
+                except FileExistsError:
+                    continue
+    except BaseException:  # noqa: BLE001  (evidence only; must never reach the worker loop)
+        path = None
+    try:
+        first = (str(exc).splitlines() or [''])[0][:500]
+        print('[ltx-pipeline] FAILED JOB stage=%s index=%s worker=%s %s: %s (receipt: %s)'
+              % (stage, getattr(job, 'index', None), worker, type(exc).__name__, first, path),
+              file=sys.stderr, flush=True)
+    except BaseException:  # noqa: BLE001
+        pass
+    return path
+
+
 def _worker_loop(stage):
     import time
     st = _state(stage)
@@ -173,6 +237,9 @@ def _worker_loop(stage):
                 job.value = job.fn()
         except BaseException as exc:                     # noqa: BLE001
             job.error = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+            # Packet 97: on disk and in the log before done is set, so whoever sees the job
+            # finish can also find why it failed. record_failure never raises.
+            record_failure(stage, job, me, exc)
         finally:
             try:   # a clock error must never strand a job: done is set regardless
                 job.finished = time.monotonic()

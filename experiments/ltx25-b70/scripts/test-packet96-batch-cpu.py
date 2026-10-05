@@ -518,7 +518,13 @@ def agreement_case():
             assert g['364']['inputs']['mode'] == 'pipeline-window'
         assert man['files']['source/scripts/ltx_sampler_batch.py'] == man['extension_sha256s']['ltx_sampler_batch.py']
         for f in ('pipeline_sampler_node.py', 'ltx_pipeline.py', 'ltx_lean_conditioning.py', 'ltx_sampler_batch.py'):
-            assert (P96 / 'source/scripts' / f).read_bytes() == (HERE / f).read_bytes(), f
+            # Packet 97 (2026-10-05) edited the lane copies of pipeline_sampler_node.py and ltx_pipeline.py
+            # for the next packet, so those two are held to packet 96's own manifest instead of the lane
+            # copy; the two files packet 97 did not touch must still equal the lane copy.
+            import hashlib
+            assert hashlib.sha256((P96 / 'source/scripts' / f).read_bytes()).hexdigest() == man['extension_sha256s'][f], f
+            if f not in ('pipeline_sampler_node.py', 'ltx_pipeline.py'):
+                assert (P96 / 'source/scripts' / f).read_bytes() == (HERE / f).read_bytes(), f
 
 
 case('generator, gate, runner, client and packet agree on arms, depths, prompt counts and index bases', agreement_case)

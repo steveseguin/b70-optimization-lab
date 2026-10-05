@@ -21,7 +21,7 @@ LANE = Path(__file__).resolve().parents[1]
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT_NAME = 'prepared-encoder-host-residency-13'
 PARENT_SHA = '174e80b56ce16d712f1315832463baa0f86657c5568d587719f421925ea7a29f'
-OUTPUT = ROOT / 'prepared-encoder-batch-96'
+OUTPUT = ROOT / 'prepared-encoder-place-97'
 CHECKER = 'launch/encoder_runtime_common.py'
 PROV = 'provenance/graph-capture/parent/'
 PARENT_MANIFEST_FILE = 'host-residency-13-parent-manifest.json'
@@ -816,6 +816,19 @@ NEW_VERIFY = '''def verify_packet(packet, expected_manifest_sha256):
             capture['numerical_source_changed'] is False and capture['graphs_changed'] is False and
             capture['native_gpu_qualified'] is False and capture['full_clip_qualified'] is False and
             capture['speed_qualified'] is False, 'Graph-capture contract changed')
+    # Packet 97: decode replica card(s) per server, failed-job receipts, clip index ceiling.
+    dr = manifest['decode_replicas']
+    require(dr['device_environment'] == 'LTX_DECODE_REPLICA_DEVICE' and dr['device_choices'] == ['xpu:1', 'xpu:2'] and
+            dr['device_default'] == 'xpu:1' and dr['count_environment'] == 'LTX_DECODE_REPLICAS' and
+            dr['count_choices'] == [1, 2] and dr['count_default'] == 1 and
+            dr['replica_module_sha256'] == manifest['extension_sha256s']['ltx_decode_replica.py'] and
+            dr['decode_node_sha256'] == manifest['extension_sha256s']['pipeline_decode_node.py'],
+            'Decode replica contract changed')
+    pf = manifest['pipeline_failures']
+    require(pf['schema'] == 'ltx.pipeline-failed-job.v1' and
+            pf['file'] == 'pipeline-failed-<stage>-<index>-<ms>.json' and
+            pf['module_sha256'] == manifest['extension_sha256s']['ltx_pipeline.py'], 'Failed-job contract changed')
+    require(manifest['clip_index_max'] == 100000000, 'Clip index ceiling changed')
     return manifest
 '''
 
@@ -1338,6 +1351,25 @@ def main():
                     'into B batch-1 latents for the unchanged decode; per-clip noise, per-clip connector at '
                     'batch 1, lockstep sigmas, fixed batch shape (fill rows repeat the last real clip and '
                     'are discarded), fail closed; batch 3 refused (failed the probe slot/identical-row tests)'},
+        'decode_replicas': {
+            'device_environment': 'LTX_DECODE_REPLICA_DEVICE', 'device_choices': ['xpu:1', 'xpu:2'],
+            'device_default': 'xpu:1', 'count_environment': 'LTX_DECODE_REPLICAS', 'count_choices': [1, 2],
+            'count_default': 1, 'replica_module_sha256': extensions[REPLICA_ADAPTER],
+            'decode_node_sha256': extensions[PDEC_NODE_FILE],
+            'rule': 'per server, read once at import by ltx_decode_replica; unset = packet 96 (one replica on '
+                    'xpu:1, even clips native on xpu:3, odd clips on the replica); one replica on xpu:2; or two '
+                    'replicas (LTX_DECODE_REPLICAS=2, LTX_DECODE_REPLICA_DEVICE a comma list of xpu:1 and xpu:2 in '
+                    'slot order): clips rotate native, replica, replica2 by clip index mod 3, emitted in clip order; '
+                    'xpu:0 not admitted',
+            'proof': 'the decode-replica probe builds every replica and requires every fixture decoded on every '
+                     'replica card byte-identical to the native decode and to the stored references before any '
+                     'replica placement is admitted'},
+        'pipeline_failures': {
+            'schema': 'ltx.pipeline-failed-job.v1', 'file': 'pipeline-failed-<stage>-<index>-<ms>.json',
+            'module_sha256': extensions[PIPE_ADAPTER],
+            'rule': 'every failed pipeline job of every stage writes its traceback, stage, index, worker, target, '
+                    'time and server identity hash into the run directory and logs one line; never raises'},
+        'clip_index_max': 100000000,
         'sampler_shared_pool': {
             'environment': 'LTX_SAMPLER_SHARED_POOL', 'choices': [0, 1], 'default': 0,
             'adapter_sha256': extensions[ADAPTER],
@@ -1440,6 +1472,8 @@ def main():
         handle.write('\n')
     (staging / 'STATUS.txt').write_text(
         'PREPARED, INACTIVE per-block XPU graph capture gate. Quality/speed unqualified.\n'
+        'Packet 97: decode replica card(s) per server (LTX_DECODE_REPLICA_DEVICE xpu:1/xpu:2, LTX_DECODE_REPLICAS 1/2), '
+        'failed pipeline jobs leave pipeline-failed-*.json receipts, clip indices up to 100,000,000.\n'
         'Packet 96: sampler batch (LTX_SAMPLER_BATCH 1/2/4), sampler workers and transformer placement per server '
         '(LTX_SAMPLER_PLACEMENT). Batch 2/4 changes output at rounding level and is the owner\'s decision. Window arms '
         'change output at rounding level; owner approved 2026-10-04 on two '

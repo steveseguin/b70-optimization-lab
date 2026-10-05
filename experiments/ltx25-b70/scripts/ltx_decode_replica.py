@@ -43,24 +43,76 @@ thread never captures, so it never requests the exclusive mode while
 holding the shared one.
 
 Placement is an explicit allowlist (``ALLOWED_DEVICES``); a replica whose
-tensors are not all on its slot's device is refused. The VAE graph gate is
+tensors are not all on its slot's device is refused. Packet 97: the replica card(s)
+come from LTX_DECODE_REPLICA_DEVICE / LTX_DECODE_REPLICAS (read once at import; default
+xpu:1 and one replica, today's placement). Every "xpu:1" above means the chosen card. The VAE graph gate is
 not involved: every packet-91 arm runs it in ``original`` mode, and no
 replica decode is graph-captured.
 """
 import contextlib
 import copy
 import hashlib
+import os
 import threading
 
 import torch
 
 NATIVE_DEVICE = 'xpu:3'
-REPLICA_DEVICE = 'xpu:1'
-ALLOWED_DEVICES = {'native': NATIVE_DEVICE, 'replica': REPLICA_DEVICE}
+# Packet 97: which card(s) hold the decode replica, chosen per server at launch and read
+# once at import. LTX_DECODE_REPLICAS (allowlist 1/2, default 1 = today's native + one
+# replica) and LTX_DECODE_REPLICA_DEVICE (allowlist xpu:1/xpu:2, default xpu:1; with two
+# replicas a comma list of both, e.g. 'xpu:1,xpu:2', in slot order). xpu:0 is not admitted:
+# it is ComfyUI's main device, whose memory the model manager budgets for the transformer
+# and upsampler loads, and it is already the busiest card in every layout. Anything outside
+# the allowlist raises at import. Unset = the packet 96 placement, byte for byte.
+REPLICA_DEVICE_CHOICES = ('xpu:1', 'xpu:2')
+REPLICA_COUNT_CHOICES = (1, 2)
+DEFAULT_REPLICA_DEVICE = 'xpu:1'
+
+
+def read_replica_config(environ):
+    """(count, devices) from the environment; raises RuntimeError outside the allowlist."""
+    raw_count = environ.get('LTX_DECODE_REPLICAS', '') or '1'
+    if raw_count not in ('1', '2'):
+        raise RuntimeError('LTX_DECODE_REPLICAS must be one of %s, not %r' % (REPLICA_COUNT_CHOICES, raw_count))
+    count = int(raw_count)
+    raw_dev = environ.get('LTX_DECODE_REPLICA_DEVICE', '')
+    if count == 1:
+        dev = raw_dev or DEFAULT_REPLICA_DEVICE
+        if dev not in REPLICA_DEVICE_CHOICES:
+            raise RuntimeError('LTX_DECODE_REPLICA_DEVICE must be one of %s, not %r' % (REPLICA_DEVICE_CHOICES, raw_dev))
+        return 1, (dev,)
+    devices = tuple(raw_dev.split(',')) if raw_dev else ()
+    if not (len(devices) == 2 and len(set(devices)) == 2 and all(d in REPLICA_DEVICE_CHOICES for d in devices)):
+        raise RuntimeError('LTX_DECODE_REPLICAS=2 needs LTX_DECODE_REPLICA_DEVICE as two distinct cards of %s '
+                           'separated by a comma, not %r' % (REPLICA_DEVICE_CHOICES, raw_dev))
+    return 2, devices
+
+
+def replica_slots(count):
+    """Slot names of the replicas: 'replica' (today's) and, with two, 'replica2'."""
+    return ('replica',) + tuple('replica%d' % (i + 1) for i in range(1, count))
+
+
+DECODE_REPLICAS, REPLICA_DEVICES = read_replica_config(os.environ)
+REPLICA_DEVICE = REPLICA_DEVICES[0]
+REPLICA_SLOTS = replica_slots(DECODE_REPLICAS)
+ALLOWED_DEVICES = {'native': NATIVE_DEVICE}
+ALLOWED_DEVICES.update(zip(REPLICA_SLOTS, REPLICA_DEVICES))
+# Decode jobs go to the slots round-robin by clip index (slot_for: index mod the number of
+# slots), so with one replica even clips decode natively and odd ones on the replica (today),
+# and with two the clips rotate native, replica, replica2.
 PLACEMENTS = {'pipeline': ('native',), 'pipeline-save': ('native',),
-              'pipeline-replica': ('native', 'replica'), 'pipeline-moved': ('replica',),
+              'pipeline-replica': ('native',) + REPLICA_SLOTS, 'pipeline-moved': ('replica',),
               # Packet 92b: decode in a child process with its own VAEs on xpu:3.
               'pipeline-child': ('child',)}
+
+
+def replica_record():
+    """What receipts record about the replica placement (packet 97)."""
+    return {'decode_replicas': DECODE_REPLICAS, 'replica_devices': list(REPLICA_DEVICES),
+            'replica_slots': list(REPLICA_SLOTS), 'native_device': NATIVE_DEVICE,
+            'rotation': list(PLACEMENTS['pipeline-replica'])}
 REPLICA_MODES = ('pipeline-replica', 'pipeline-moved')
 # Free device memory required on xpu:1 after the replica weights are placed
 # (decode working set on xpu:3 in f90c was at most ~4.8 GiB reserved beyond
@@ -236,7 +288,7 @@ def build_replica(vae, device, load_lock, capture_lock, make_stream=None):
     source_device = torch.device(str(vae.device))
     require(torch.device(device) != source_device, 'Replica must live on a different card')
     slot = [k for k, v in ALLOWED_DEVICES.items() if torch.device(v) == torch.device(device)]
-    require(slot == ['replica'], 'Replica device is not the admitted replica card')
+    require(len(slot) == 1 and slot[0] in REPLICA_SLOTS, 'Replica device is not the admitted replica card')
     require(not placement_offenders(src, source_device),
             'Resident VAE is not wholly on its device; refusing to copy a moving model')
     # Under ComfyUI's load lock, so model management cannot move the source
@@ -244,7 +296,7 @@ def build_replica(vae, device, load_lock, capture_lock, make_stream=None):
     # while the copies allocate on xpu:1. Order: _LOAD_LOCK -> CAPTURE_LOCK.
     with load_lock, shared(capture_lock):
         module, rewritten = clone_module(src, source_device, device)
-    check_placement(module, 'replica')
+    check_placement(module, slot[0])
     stream = (make_stream or (lambda d: torch.xpu.Stream(device=d)))(device)
     count, nbytes = verified_tensors(module)
     report = {'class': type(src).__name__, 'device': str(device),
@@ -346,8 +398,13 @@ def probe_rows(fixtures, load_tensors, native_decode, replica_decode):
     ({images, video_latent, audio_latent, waveform: sha256}).
     `load_tensors(row)` -> dict of CPU tensors (after checking the file hash).
     `native_decode` / `replica_decode`: (video_latent, audio_latent) -> (images, audio).
+    Packet 97: `replica_decode` may also be an ordered {slot: fn} for several replicas; every
+    replica must equal the reference and the native decode byte for byte. One callable is the
+    packet 91 behaviour, row keys unchanged ('replica', 'replica_matches_reference').
     Returns (passed, rows).
     """
+    decoders = list(replica_decode.items()) if isinstance(replica_decode, dict) else [('replica', replica_decode)]
+    require(decoders and decoders[0][0] == 'replica', 'The first replica slot must be named replica')
     rows = []
     for fx in fixtures:
         row = {'fixture': fx['fixture'], 'source': fx['source']}
@@ -361,19 +418,24 @@ def probe_rows(fixtures, load_tensors, native_decode, replica_decode):
         video_latent = {'samples': tensors['video_latent']}
         audio_latent = {'samples': tensors['audio_latent']}
         results = {}
-        for slot, fn in (('native', native_decode), ('replica', replica_decode)):
+        for slot, fn in [('native', native_decode)] + decoders:
             images, audio = fn(video_latent, audio_latent)
             results[slot] = (images.detach().cpu().contiguous(), audio['waveform'].detach().cpu().contiguous())
             row[slot] = {'images_sha256': tensor_sha256(images), 'waveform_sha256': tensor_sha256(audio['waveform'])}
         row['native_matches_reference'] = (row['native']['images_sha256'] == fx['expected']['images'] and
                                            row['native']['waveform_sha256'] == fx['expected']['waveform'])
-        row['replica_matches_reference'] = (row['replica']['images_sha256'] == fx['expected']['images'] and
-                                            row['replica']['waveform_sha256'] == fx['expected']['waveform'])
-        (ni, nw), (ri, rw) = results['native'], results['replica']
-        row['cards_bytewise_equal'] = (ni.dtype == ri.dtype and ni.shape == ri.shape and nw.shape == rw.shape and
-                                       bool(torch.equal(ni.view(torch.uint8), ri.view(torch.uint8))) and
-                                       bool(torch.equal(nw.view(torch.uint8), rw.view(torch.uint8))))
-        row['passed'] = (row['native_matches_reference'] and row['replica_matches_reference'] and
+        ni, nw = results['native']
+        equal = []
+        for slot, _fn in decoders:
+            row[slot + '_matches_reference'] = (row[slot]['images_sha256'] == fx['expected']['images'] and
+                                                row[slot]['waveform_sha256'] == fx['expected']['waveform'])
+            ri, rw = results[slot]
+            equal.append(ni.dtype == ri.dtype and ni.shape == ri.shape and nw.shape == rw.shape and
+                         bool(torch.equal(ni.view(torch.uint8), ri.view(torch.uint8))) and
+                         bool(torch.equal(nw.view(torch.uint8), rw.view(torch.uint8))))
+        row['cards_bytewise_equal'] = all(equal)
+        row['passed'] = (row['native_matches_reference'] and
+                         all(row[slot + '_matches_reference'] for slot, _fn in decoders) and
                          row['cards_bytewise_equal'])
         rows.append(row)
     passed = bool(rows) and all(r['passed'] for r in rows)

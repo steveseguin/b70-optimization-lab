@@ -213,8 +213,15 @@ _WRITER = PreviewWriter(lambda images, audio, prefix: save_preview_guarded(image
                         maxsize=4, marker=done_marker)
 # Packet 91 placement state, per server process.
 _NATIVE_LOCK = threading.Lock()     # one decode at a time on xpu:3 (the control's one worker)
-_REPLICA_LOCK = threading.Lock()    # one decode at a time on the xpu:1 replica
-_REPLICAS = {}                      # 'video' / 'audio' -> placement.Replica
+_REPLICA_LOCK = threading.Lock()    # one decode at a time on the (first) replica card
+_REPLICAS = {}                      # 'video' / 'audio' -> placement.Replica (first replica slot)
+# Packet 97: one VAE pair and one lock per replica slot ('replica' on LTX_DECODE_REPLICA_DEVICE's
+# first card is the objects above, unchanged; 'replica2' only with LTX_DECODE_REPLICAS=2).
+_REPLICA_SETS = {'replica': _REPLICAS}
+_REPLICA_LOCKS = {'replica': _REPLICA_LOCK}
+for _slot in placement.REPLICA_SLOTS[1:]:
+    _REPLICA_SETS[_slot] = {}
+    _REPLICA_LOCKS[_slot] = threading.Lock()
 _PROBE = {'passed': False, 'outcome': 'not run', 'receipt': None}
 
 
@@ -374,21 +381,25 @@ def decode_child(vae, audio_vae, video_latent, audio_latent, index):
     return images, {'waveform': waveform, 'sample_rate': reply['sample_rate']}, timing
 
 
-def decode_replica(vae, audio_vae, video_latent, audio_latent):
-    """Replica placement: the probe-qualified VAE copies on xpu:1."""
-    require(_PROBE['passed'] and 'video' in _REPLICAS and 'audio' in _REPLICAS,
+def decode_replica(vae, audio_vae, video_latent, audio_latent, slot='replica'):
+    """Replica placement: the probe-qualified VAE copies on the slot's card (packet 97:
+    LTX_DECODE_REPLICA_DEVICE; xpu:1 by default)."""
+    require(slot in placement.REPLICA_SLOTS, 'Not an admitted replica slot: %r' % (slot,))
+    pair = _REPLICA_SETS[slot]
+    require(_PROBE['passed'] and 'video' in pair and 'audio' in pair,
             'Replica decode without a passed cross-card probe')
     require(_PROBE.get('sources') == (id(vae), id(audio_vae)),
             'Replica decode for VAEs other than the ones the probe qualified')
-    video, audio_rep = _REPLICAS['video'], _REPLICAS['audio']
+    video, audio_rep = pair['video'], pair['audio']
+    device = placement.ALLOWED_DEVICES[slot]
     capture_lock = _capture_lock()
     t0 = time.monotonic()
-    # Lock order: _REPLICA_LOCK -> CAPTURE_LOCK (shared) -> Replica.lock.
-    with _REPLICA_LOCK, placement.shared(capture_lock):
+    # Lock order: the slot's replica lock -> CAPTURE_LOCK (shared) -> Replica.lock.
+    with _REPLICA_LOCKS[slot], placement.shared(capture_lock):
         t1 = time.monotonic()
-        cap, token = _busy_begin(placement.REPLICA_DEVICE, video.stream)
+        cap, token = _busy_begin(device, video.stream)
         images, audio = placement.decode_clip_replica(video, audio_rep, vae, audio_vae, video_latent, audio_latent)
-        _busy_end(cap, token, placement.REPLICA_DEVICE, video.stream)
+        _busy_end(cap, token, device, video.stream)
         t2 = time.monotonic()
     return images, audio, {'wait_s': round(t1 - t0, 4), 'vae_s': round(t2 - t1, 4)}
 
@@ -399,7 +410,7 @@ class LTXPipelineDecode:
         return {'required': {'vae': ('VAE',), 'audio_vae': ('VAE',),
                              'video_latent': ('LATENT',), 'audio_latent': ('LATENT',),
                              'mode': (list(DECODE_MODES),),
-                             'clip_index': ('INT', {'default': 0, 'min': -1, 'max': 1000000}),
+                             'clip_index': ('INT', {'default': 0, 'min': -1, 'max': pipeline.CLIP_INDEX_MAX}),
                              'depth': ('INT', {'default': 1, 'min': 1,
                                                'max': pipeline.MAX_PENDING}),
                              # How many prompts the latents arriving here already
@@ -474,11 +485,14 @@ class LTXPipelineDecode:
                                      'server (probe outcome: %s)' % _PROBE['outcome'])
                 raise ReplicaNotQualified(report['refused'])
             if mode in placement.REPLICA_MODES:
-                for key in ('video', 'audio'):
-                    placement.check_placement(_REPLICAS[key].module, 'replica')
+                for slot in placement.REPLICA_SLOTS:
+                    for key in ('video', 'audio'):
+                        placement.check_placement(_REPLICA_SETS[slot][key].module, slot)
             if mode == 'pipeline-replica':
-                pipeline.set_stage_workers('decode', 2)
+                # Packet 97: one decode worker per slot (native + each replica).
+                pipeline.set_stage_workers('decode', len(placement.PLACEMENTS['pipeline-replica']))
             report['placement'] = list(placement.PLACEMENTS.get(mode, ('native',)))
+            report['decode_replica'] = placement.replica_record()
             report['stage_workers'] = pipeline.STAGE_WORKERS.get('decode')
             if mode == 'original':
                 out = decode_clip(vae, audio_vae, video_latent, audio_latent)
@@ -532,8 +546,11 @@ class LTXPipelineDecode:
                         images, audio, timing = decode_native(vae, audio_vae, *latents)
                     elif slot == 'child':
                         images, audio, timing = decode_child(vae, audio_vae, *latents, decode_index)
-                    else:
+                    elif slot == 'replica':
+                        # The packet 96 call, unchanged (the first replica slot is the default).
                         images, audio, timing = decode_replica(vae, audio_vae, *latents)
+                    else:
+                        images, audio, timing = decode_replica(vae, audio_vae, *latents, slot=slot)
                     saved = ''
                     enqueue_s = 0.0
                     if save_prefix:
@@ -682,7 +699,10 @@ class LTXDecodeReplicaProbe:
                 not torch.is_deterministic_algorithms_warn_only_enabled(), 'Strict determinism required')
         report = {'schema': 'ltx.decode-replica-probe.v1', **identity, 'run_name': run_name,
                   'extension_sha256s': hashes, 'native_device': placement.NATIVE_DEVICE,
-                  'replica_device': placement.REPLICA_DEVICE, 'passed': False, 'outcome': 'error'}
+                  'replica_device': placement.REPLICA_DEVICE, 'passed': False, 'outcome': 'error',
+                  'decode_replica': placement.replica_record()}
+        slots = placement.REPLICA_SLOTS
+        devices = [placement.ALLOWED_DEVICES[s] for s in slots]
         started = time.monotonic()
         _PROBE.update(passed=False, outcome='running')
         capture_lock = None
@@ -692,9 +712,11 @@ class LTXDecodeReplicaProbe:
             import comfy.model_management as mm
             load_lock = getattr(mm.load_models_gpu, '__globals__', {}).get('_LOAD_LOCK')
             require(load_lock is not None, 'The resident fast path (and its load lock) is not installed')
-            report['memory_before'] = {'xpu:1': _xpu_memory(1),
-                                       'xpu:1_free': placement.free_bytes(placement.REPLICA_DEVICE)}
-            if not _REPLICAS:
+            report['memory_before'] = {}
+            for dev in devices:
+                report['memory_before'][dev] = _xpu_memory(torch.device(dev).index)
+                report['memory_before'][dev + '_free'] = placement.free_bytes(dev)
+            if not any(_REPLICA_SETS[s] for s in slots):
                 # Packet 94d: the VAEs are made wholly resident on xpu:3 by an explicit
                 # serial step here, not by the side effect of an earlier decode.
                 # The freeze flag lives in ltx_graph_capture; if that module was never
@@ -703,41 +725,56 @@ class LTXDecodeReplicaProbe:
                 frozen = bool(_cap is not None and _cap.LOADS_FROZEN[0])
                 report['vae_residency'] = placement.ensure_vaes_resident(
                     mm.load_models_gpu, (vae, audio_vae), pipeline.busy() == 0, frozen)
-                stream = _new_stream(placement.REPLICA_DEVICE)
                 # Registered as soon as each copy exists, so any non-pass
                 # verdict below (including an exception half-way) releases it.
                 _PROBE['sources'] = (id(vae), id(audio_vae))
-                for key, source in (('video', vae), ('audio', audio_vae)):
-                    _REPLICAS[key] = placement.build_replica(source, placement.REPLICA_DEVICE, load_lock,
-                                                             capture_lock, make_stream=lambda _d: stream)
+                for slot, dev in zip(slots, devices):
+                    stream = _new_stream(dev)    # one stream per replica card, shared by its VAE pair
+                    for key, source in (('video', vae), ('audio', audio_vae)):
+                        _REPLICA_SETS[slot][key] = placement.build_replica(source, dev, load_lock, capture_lock,
+                                                                           make_stream=lambda _d, s=stream: s)
                 report['replicas'] = {k: r.report for k, r in _REPLICAS.items()}
-                free, how = placement.free_bytes(placement.REPLICA_DEVICE)
-                report['xpu:1_free_after_build'] = [free, how]
-                if free < placement.MIN_FREE_AFTER_BUILD:
+                if len(slots) > 1:
+                    report['replica_sets'] = {s: {k: r.report for k, r in _REPLICA_SETS[s].items()} for s in slots}
+                short = False
+                for dev in devices:
+                    free, how = placement.free_bytes(dev)
+                    report[dev + '_free_after_build'] = [free, how]
+                    short = short or free < placement.MIN_FREE_AFTER_BUILD
+                if short:
                     report['outcome'] = 'insufficient-memory'
                     return {'ui': {'text': [report['outcome']]}}
             require(_PROBE.get('sources') == (id(vae), id(audio_vae)),
                     'Probe VAEs differ from the ones the replicas were built from')
-            replicas_ok = all(placement.check_placement(r.module, 'replica') for r in _REPLICAS.values())
+            require(all(set(_REPLICA_SETS[s]) == {'video', 'audio'} for s in slots),
+                    'A replica slot is missing its VAE pair')
+            replicas_ok = all(placement.check_placement(r.module, s) for s in slots for r in _REPLICA_SETS[s].values())
             report['placement_checked'] = replicas_ok
 
             def native(v, a):
                 return decode_native(vae, audio_vae, v, a)[:2]
 
-            def replica(v, a):
-                video, audio_rep = _REPLICAS['video'], _REPLICAS['audio']
-                # Lock order: _REPLICA_LOCK -> CAPTURE_LOCK (shared) -> Replica.lock.
-                with _REPLICA_LOCK, placement.shared(capture_lock):
-                    return placement.decode_clip_replica(video, audio_rep, vae, audio_vae, v, a)
+            def replica_on(slot):
+                def replica(v, a):
+                    pair = _REPLICA_SETS[slot]
+                    # Lock order: the slot's replica lock -> CAPTURE_LOCK (shared) -> Replica.lock.
+                    with _REPLICA_LOCKS[slot], placement.shared(capture_lock):
+                        return placement.decode_clip_replica(pair['video'], pair['audio'], vae, audio_vae, v, a)
+                return replica
 
-            passed, rows = placement.probe_rows(fixtures, _load_fixture_tensors, native, replica)
+            decoders = replica_on('replica') if len(slots) == 1 else {s: replica_on(s) for s in slots}
+            passed, rows = placement.probe_rows(fixtures, _load_fixture_tensors, native, decoders)
             report['rows'] = rows
-            free, how = placement.free_bytes(placement.REPLICA_DEVICE)
-            report['xpu:1_free_after_probe'] = [free, how]
-            report['memory_after'] = {'xpu:1': _xpu_memory(1)}
+            short = False
+            report['memory_after'] = {}
+            for dev in devices:
+                free, how = placement.free_bytes(dev)
+                report[dev + '_free_after_probe'] = [free, how]
+                report['memory_after'][dev] = _xpu_memory(torch.device(dev).index)
+                short = short or free < placement.MIN_FREE_AFTER_PROBE
             if not passed:
                 report['outcome'] = 'replica-not-exact'
-            elif free < placement.MIN_FREE_AFTER_PROBE:
+            elif short:
                 report['outcome'] = 'insufficient-memory'
             else:
                 report['outcome'] = 'replica-exact'
@@ -747,17 +784,26 @@ class LTXDecodeReplicaProbe:
             report['outcome'] = 'error'
             report['error'] = ''.join(traceback.format_exception(type(error), error, error.__traceback__))[-4000:]
         finally:
-            if not report['passed'] and _REPLICAS:
-                # Only a passed probe may leave replicas resident on xpu:1.
-                try:
-                    with _REPLICA_LOCK:
-                        report['released'] = placement.release_replicas(
-                            _REPLICAS, placement.REPLICA_DEVICE, capture_lock or _capture_lock())
-                except Exception as error:  # noqa: BLE001
-                    _REPLICAS.clear()
-                    report['release_error'] = repr(error)[:400]
+            if not report['passed'] and any(_REPLICA_SETS[s] for s in slots):
+                # Only a passed probe may leave replicas resident on their card(s).
+                for slot, dev in zip(slots, devices):
+                    if not _REPLICA_SETS[slot]:
+                        continue
+                    try:
+                        with _REPLICA_LOCKS[slot]:
+                            released = placement.release_replicas(
+                                _REPLICA_SETS[slot], dev, capture_lock or _capture_lock())
+                        if slot == 'replica':
+                            report['released'] = released
+                        else:
+                            report.setdefault('released_sets', {})[slot] = released
+                    except Exception as error:  # noqa: BLE001
+                        _REPLICA_SETS[slot].clear()
+                        report['release_error' if slot == 'replica' else 'release_error_' + slot] = repr(error)[:400]
                 _PROBE.pop('sources', None)
             report['replicas_resident'] = sorted(_REPLICAS)
+            if len(slots) > 1:
+                report['replica_sets_resident'] = {s: sorted(_REPLICA_SETS[s]) for s in slots}
             _PROBE.update(passed=bool(report['passed']), outcome=report['outcome'])
             report['seconds'] = round(time.monotonic() - started, 3)
             report['written_unix'] = time.time()
