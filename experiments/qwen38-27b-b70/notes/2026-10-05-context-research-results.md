@@ -84,7 +84,8 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Self-editing, **files allowed**, 32K | 24 | **1.9 min** | 7K tok | context never above 8.2K; no edit needed |
 | No management, **files allowed**, 32K | 24 | **1.9 min** | 8K tok | context never above 8.9K |
 | Keep everything, old thinking dropped | none | stopped at 2.6 h | 397K tok | stuck: re-derived everything each call, hit the output cap, never acted |
-| Improved self-editing agent, 32K | *pending* | | | |
+| Improved self-editing agent, 32K, seed 0 | 24 | 15 min | 67K tok | peak context 20K; no delivered batch lost |
+| Improved self-editing agent, 32K, seed 1 | 21 | 21 min | 91K tok | 3 wrong; cause being traced |
 | Improved agent on a 480K stream (bigger than the window) | *pending* | | | |
 
 **The clear winner so far is the plainest one: let the model keep its working data in files.** Same answers, a
