@@ -81,3 +81,30 @@ is kept when the model has to choose. A 24-key answer needs about 800 tokens of 
 of input, and the model does not know in advance which keys will be asked, so this task is hard for any pruning by
 design; it measures faithful retention under pressure, which is the owner's worry about "lossy" context. One seed,
 so differences of one or two keys mean nothing.
+
+## Result of the first long-window test (01:45 EDT)
+
+Two fresh two-card servers on R314 with a 262,144-token window, full 16-bit cache. The cache pool is 369,670 tokens
+with drafting and 430,606 without. Data: `data/2026-10-05-context/longctx/`.
+
+| Prompt | First token after | Reads | Writes, drafting on | Writes, drafting off | Six codes recalled | Drafting = no drafting |
+| ---: | ---: | ---: | ---: | ---: | --- | --- |
+| 7,848 | 2.4 s | 3,288 tok/s | 118 tok/s | 33 | see below | yes |
+| 29,865 | 9.8 s | 3,059 | 88 | 31 | see below | yes |
+| 59,836 | 22 s | 2,704 | 61 | 28 | **6 of 6** | yes |
+| 119,720 | 55 s | 2,187 | 38 | 25 | **6 of 6** | yes |
+| 199,588 | 114 s | 1,745 | 31 | 21 | **6 of 6** | yes |
+| 249,599 | 161 s | 1,552 | none | none | **0 of 6: the model ended its answer at once** | yes (both empty) |
+
+- **The window opens with no loss.** The server accepts the model's full 262,144 positions; nothing is quantized.
+- **Recall is exact to 200,000 tokens** in this test: codes from the first record to the last, right every time.
+- **At 250,000 the answer is empty** on both servers: the first token is the end-of-turn token. Whether that is the
+  model near its limit or something in the stack is not known yet; the edge between 200K and 250K is the next probe.
+- **The two short rows are a flaw in my probe, not a recall failure.** At 8K and 30K the model chose to reason out
+  loud and the 96-token allowance ran out after three codes, all three correct. Rerun with a larger allowance.
+- **Drafting gives exactly the no-drafting answer at every length**, as the kernel censuses predict.
+- **The cost of length:** reading slows from 3,300 to 1,750 tok/s at 200K, so a cold 200K prompt takes about two
+  minutes before the first word. Writing with drafting falls from about 90 to 31 tok/s. A long window is usable,
+  but every turn that re-reads it is expensive, which is why the exact prefix cache matters.
+- The one-step decision test did not run: its first request was dropped by the server without an error message.
+  To be debugged on the next server.
