@@ -163,3 +163,14 @@ normalisation and the output layer are covered.
 **Next for this lever:** more slots (K = 16 changes the attention block size and one projection path, so it needs
 the same gates), and moving it to the asynchronous pipeline to get the 2.3 % back.
 
+
+## Next arm, written before it runs (22:55 EDT): 15 copied tokens
+
+Fifteen, not sixteen: a 17-row verify uses a different attention kernel that is never identical to decoding
+(verify-path census), while 2 to 16 rows are identical with the verify-rows overlay limit raised to 16 for long
+contexts and natively up to 1,645 tokens. The launch reserves 15 slots, which moves the attention block size from
+832 to 896 tokens, so the control arm (same launch, no long drafts) has to pass every gate too. Image R314 with the
+state-width fix. `MU_MODE=copydraft MU_COPY_K=15`, `B70_FA_VERIFY_ROWS_MAX_Q=16`.
+
+**Rule:** both arms 12/12, 8/8, 64/64. Kept over the 9-token arm only if the long-suite median improves on it
+(98.6 tok/s) by 5 % or more without the strict-suite speed falling below it (87.6 tok/s) by more than 1 %.
