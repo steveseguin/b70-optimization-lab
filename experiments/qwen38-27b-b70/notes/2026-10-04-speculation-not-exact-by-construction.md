@@ -140,3 +140,18 @@ or more tokens. Fix: overlay `b70-spec-resume-accepted` (keeps the count across 
 no extra sync; 11 CPU tests). A returning request still loses its drafts for one step, which costs speed but not
 correctness. GPU test next.
 
+
+## Drafting with several users is exact with the fixes (23:25 EDT)
+
+Image R314, two cards, depth-5 drafting, 4 users, overlays: pure steps, per-sequence attention, state-width,
+`b70-spec-resume-accepted` 0.2.0 (the first version saved the accepted count too late and never acted; this one
+saves it before the worker drops the hidden request from its batch).
+
+| Suite | Equal to solo | Together |
+|---|---|---:|
+| Long prompts | 64/64, 64/64 | 55.0 / 55.4 tok/s |
+| Short ladder | 64/64, 64/64, exact vs frozen | 226 / 228 tok/s (about 57 each) |
+
+Before the fix the same test gave 4 to 8 of 64. One fresh server so far. Still owed: a second server, other user
+counts, and the comparison with drafting off at the same counts (a request that sits out a step still loses its
+drafts for one step, which costs speed, not correctness). Data: `data/2026-10-04-r314/fp8-r314-mtp5-s4-resume2-20261004/`.

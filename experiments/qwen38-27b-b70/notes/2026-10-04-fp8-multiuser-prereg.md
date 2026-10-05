@@ -378,3 +378,15 @@ against the frozen reference.
 
 Data: `data/2026-10-04-fp8-multiuser/prefill-batch8-limits-{s64,confirm-s16,confirm-s32,confirm-s64}/`.
 
+
+## Addendum, 23:30 EDT: user-count sweep with drafting on and off (written before it runs)
+
+Drafting with several users is exact at 4 users with tonight's fixes (R314 kernel, state-width, resume-accepted;
+see `2026-10-04-speculation-not-exact-by-construction.md`). Next: which is faster at each user count.
+
+**Runs** (R314, pure steps, per-sequence attention, up to 8 short prompts per prompt-only step, both fixes on
+everywhere so only drafting differs): drafting on at 2, 8 and 16 users (4 is done; repeated with prompt sharing);
+drafting off at 2, 4 and 8 users (16, 32, 64 are done on R310).
+
+**Rule.** Each run must be 64/64 on long and short prompts in both passes and exact against the frozen reference,
+or it is reported as not exact and not used. The table then says, per user count, the faster exact mode.
