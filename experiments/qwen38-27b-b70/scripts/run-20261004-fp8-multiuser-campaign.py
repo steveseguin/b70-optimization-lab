@@ -208,7 +208,35 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE') == 'serve_run':
+    if os.environ.get('MU_MODE') == 'prefixcache':
+        # Is a prefix-cache hit bit-identical to a cold read when the prompt is read in pieces of exactly one cache
+        # block (832 tokens)? A cache-off server gives the cold answers, then a cache-on server is compared with them.
+        # notes/2026-10-05-prefix-cache-exactness-prereg.md
+        mml = os.environ.get('MU_LONG_MML', '33024')
+        batched = os.environ.get('MU_BATCHED', '832')
+        spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
+        base = ['--tp', '2', '--mem', '0.95', '--max-model-len', mml, '--batched', batched, '--fa-verify-rows'] + spec + SHIPPED + LOADCOPY_FIX
+        probe = ROOT / 'experiments/qwen38-27b-b70/scripts/qwen38-fp8-prefix-cache-exactness-probe.py'
+        saved = OUT / 'control.json'
+        for label, extra, probe_args in (('control', [], ['--save', saved]),
+                                         ('cache', ['--prefix-cache', 'align'], ['--compare-with', saved, '--out', OUT / 'cache.json'])):
+            srv, name, since = start_server(f'tp2-pc-{label}', 18196, base + extra, since)
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if srv.ready:
+                r['probe_rc'] = R.sh([str(R.XPU_PYTHON), probe, '--base-url', srv.base] + probe_args, f'{name}-probe', 3 * 3600)
+            r['stop'] = srv.stop()
+            text = (OUT / name / 'server.log').read_text(errors='replace') if (OUT / name / 'server.log').exists() else ''
+            r['block_lines'] = re.findall(r'Setting attention block size to[^\n]*', text)[:1]
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
+            if not srv.ready or (label == 'control' and not saved.exists()):
+                R.log(f'{name}: no usable result; stopping this test')
+                break
+        if (OUT / 'cache.json').exists():
+            summary = json.loads((OUT / 'cache.json').read_text()).get('summary')
+            results['prefix_cache_summary'] = summary
+            R.log(f'prefix cache against cold: {json.dumps(summary)[:900]}')
+            R.save_results()
+    elif os.environ.get('MU_MODE') == 'serve_run':
         # Context experiments: one two-card server with a chosen window (and tool calling for agent harnesses), kept up
         # while a client script runs against it, then stopped. MU_RUN_SCRIPT gets API_BASE, BASE_URL and OUT_DIR.
         mml = os.environ.get('MU_LONG_MML', '65536')

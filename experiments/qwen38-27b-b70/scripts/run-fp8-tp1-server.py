@@ -103,7 +103,13 @@ def build(args, name, out, image_env):
             cmd[index + 1] = json.dumps(json.loads(args.spec_config_json))
     if args.eager:
         cmd.append('--enforce-eager')
-    mounts = ['--mount', f'type=bind,source={MODEL_DIR},target=/model,readonly',
+    if args.prefix_cache == 'align':
+        # Research only (E0, notes/2026-10-05-prefix-cache-exactness-prereg.md): prefix caching with the recurrent
+        # state stored at every attention block boundary. Hit == cold by construction needs --batched equal to one
+        # block (832 tokens on this model; server.log prints "Setting attention block size to N tokens").
+        index = cmd.index('--no-enable-prefix-caching')
+        cmd[index:index + 1] = ['--enable-prefix-caching', '--mamba-cache-mode', 'align']
+    mounts =['--mount', f'type=bind,source={MODEL_DIR},target=/model,readonly',
               '--mount', f'type=bind,source={out}/cache,target=/root/.cache/vllm']
     if args.cpu_embed or args.layer_hash or args.gdn_head_groups or args.fa_trace or args.fa_verify_rows \
             or args.draft_fp16_shortlist or args.overlay:
@@ -179,6 +185,9 @@ def main():
                     help='replace the speculative config built from --mtp with this JSON (research probes only; recorded in launch.json)')
     ap.add_argument('--serve-arg', action='append', default=[], metavar='ARG',
                     help='append one vllm serve argument (research probes only; recorded in launch.json)')
+    ap.add_argument('--prefix-cache', choices=('off', 'align'), default='off',
+                    help="research only: 'align' swaps --no-enable-prefix-caching for --enable-prefix-caching "
+                         "--mamba-cache-mode align (use with --batched 832 for hit == cold; recorded in launch.json)")
     ap.add_argument('--env', action='append', default=[], metavar='KEY=VALUE',
                     help='override one variable already present in the qualified record')
     ap.add_argument('--gdn-head-groups', type=int, default=0, help='run one-card GDN prefill delta rule in G head groups')
