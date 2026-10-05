@@ -40,7 +40,7 @@ from pathlib import Path
 
 NAME = r"[a-z]+\d\d"
 PIN_TAG = "[[PINNED STATE"
-LINE = re.compile(rf"^\s*[\"']?({NAME})[\"']?\s*[:=]?\s*(-?\d+|null|None|deleted)\s*,?\s*$")
+LINE = re.compile(rf"^\s*[\"']?({NAME})[\"']?\s*[:=]?\s*(-?\d+|null|None|deleted|removed)\s*,?\s*$")
 ITEM = re.compile(r"(?:ITEM |\bn=)(\d+)/(\d+)\b")   # "ITEM 3/20 (" or a parser's "n=3/20"
 LEDGER_LINE = re.compile(r"^(SET|ADD|DEL) (\S+)(?: (-?\d+))? \|")
 
