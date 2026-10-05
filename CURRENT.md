@@ -1,7 +1,44 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-05 05:30 UTC** (2026-10-05 01:30 EDT), two-B70 host.
+Last reviewed: **2026-10-05 08:40 UTC** (2026-10-05 04:40 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
+
+## 2026-10-05 04:40 EDT, two-B70 host: context research, results of the night so far
+
+**The 27B can open its whole 262,144-token window with nothing quantized, an exact prefix cache now makes a long
+context cheap to keep using, and the first measurements say a small, pruned working context is still the better
+place to be.** Work continues; the self-editing comparison is running.
+
+- **Window.** Opens at 262,144 tokens, 16-bit cache, drafting on. Reading: 3,300 tok/s at 8K falling to 1,550 at
+  250K (a cold 200K prompt takes about two minutes). Writing: 127 tok/s at 8K, 48 at 120K, 26 at 250K.
+- **Recall by length (720 codes asked).** Exact at 60K. From 120K to 250K about one lookup in forty returns a
+  look-alike record's code (the neighbour, or a number sharing most digits); never an invented value, and no
+  cliff. The "empty answer above 212K" I reported earlier was a bare-text prompt artifact; chat form answers.
+- **Exact prefix cache (new add-on `b70-prefix-cache-exact`).** The stock cache also stores what the model wrote,
+  which falls outside "a cached answer equals a cold answer". The add-on stores only what was made while reading a
+  prompt. With drafting on: 99 of 99 cases identical to a server without the cache, second and third turns
+  included; a question over a cached 200K context starts in 2 s instead of 114 s; an edit in the middle of a long
+  context resumes from just before the edit. Cost: cold reads are 14 to 27 % slower (832-token pieces).
+- **Self-editing, first comparison: it measured the wrong thing, and that is a finding.** In all 12 trials the
+  model saved the data to files and searched them at the end, keeping its context at 11-35K tokens on a 140K-token
+  task. Every lost answer came from one shell mistake while saving. A rebuilt comparison (files forbidden or
+  allowed, a second task with overwrites, arms that drop old thinking) is on the cards now.
+- **A CPU-side cleaner does not turn 32K into 100K.** On 5 million tokens of real agent sessions, strictly no-loss
+  cleaning frees 1.8 %; moving large tool outputs to disk 7.5 %. The one sizeable lever: the 27B re-sends all its
+  earlier thinking on every call, about 10 % of a typical call and up to 56 %.
+- **One-step decisions.** Restricting the first token to the allowed labels gave the same answer as decoding on
+  80 of 80 items. The time saved is in not thinking (0.09 s against 0.59 s), not in skipping the label.
+- **Host memory is the tight resource on this host.** The two-card server leaves about 3.2 GiB; a request for
+  token scores with drafting on, a heavy client, or CPU test jobs beside it tripped the memory guard five times
+  tonight before the cause was found. No GPU fault all night.
+- Notes: [window, recall, decisions](experiments/qwen38-27b-b70/notes/2026-10-05-context-window-prereg.md);
+  [exact prefix cache](experiments/qwen38-27b-b70/notes/2026-10-05-prefix-cache-exactness-prereg.md);
+  [cache reuse rules from the engine source](experiments/qwen38-27b-b70/notes/2026-10-05-prefix-cache-reuse-rules.md);
+  [self-editing comparisons](experiments/qwen38-27b-b70/notes/2026-10-05-self-editing-first-comparison.md);
+  [CPU cleaner census](experiments/qwen38-27b-b70/notes/2026-10-05-context-hygiene-census.md).
+
+**Doing next:** the second self-editing comparison (running), then the winners at longer sizes; a scores-level
+check of the cache; larger reading pieces that keep the cache exact.
 
 ## 2026-10-04 20:40 EDT, four-B70 host: LTX 2.5 reached 24.4 fps with two clips per transformer pass; the owner must rule on the new baseline
 
