@@ -150,6 +150,9 @@ def start_server(name, port, args, since):
     R.wait_port_free(port)  # a port just released by the previous server stays in TIME_WAIT for up to a minute
     if os.environ.get('MU_IMAGE'):  # a research image other than R310 (the launcher takes the last --image)
         args = list(args) + ['--image', os.environ['MU_IMAGE']]
+    if os.environ.get('MU_SPEC_RESUME') == '1':
+        # engine fix: a request that sat out a step keeps the accepted-token count the recurrent layers need
+        args = list(args) + ['--overlay', 'b70-spec-resume-accepted', '--extra-env', 'B70_SPEC_RESUME_ACCEPTED=1']
     if os.environ.get('MU_STATE_WIDTH') == '1':
         # engine fix for the recurrent layers' state-slot table (needs the R314 kernel): a step narrower than the tokens
         # just accepted no longer reads past the end of the table

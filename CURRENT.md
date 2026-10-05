@@ -74,11 +74,10 @@ path has been measured to give a row the same bits alone or in a batch, for the 
 | 32 | **657** | 536 | 428 | 21 |
 | 64 | **874** (two fresh servers) | 630 | 488 | 14 |
 
-- **Correction, 22:00 EDT: only the 16-user row is exact by construction so far.** A later check found one small
-  layer that takes a different code path when a writing step holds 17 or more users, and its rows are then not
-  bit-identical to a lone user's. At 32 and 64 users every answer has matched on every suite, but that is by test.
-  The fix (keep that layer on its small-batch path, which is identical up to 512 rows on two cards) is being
-  built; until it is confirmed, read the 32 and 64 rows as "identical on every test".
+- **All three rows are exact by construction (a 22:00 note here said only the 16-user row was; that was wrong and
+  is withdrawn).** The check behind it had assumed a code path the compiled server never takes. The server's own
+  compiled graphs show the small layer in question always uses one path, and that path is measured bit-identical
+  for 1 to 512 rows.
 - **How.** Two scheduling rules and nothing else: each step is either prompt reading or writing, never both; and
   each long conversation gets its own attention call. New tonight: several short prompts may be read in one step,
   but only inside the range the kernel checks prove identical to reading each alone (each prompt at least 17

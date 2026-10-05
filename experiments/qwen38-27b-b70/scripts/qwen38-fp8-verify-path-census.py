@@ -57,6 +57,14 @@ normalisation layers, the FP16 output layer, and (R313) the GDN speculative kern
     is M = 1 (row-chunk path); a 6-row verify is M = 6; a 17-row verify (or a step mixing users) takes the padded
     path.  Per M the census compares each row with the same row computed alone, for the server's path choice and
     for each path on its own.
+    CORRECTION 2026-10-04 (late): that Python branch is evaluated ONCE, when Dynamo traces the model at the warm-up
+    size (4,096 tokens), and vLLM drops the guard (dynamic_shapes_config evaluate_guards=False, one compile range
+    1-4096, splitting_ops=[] in both FP8 packages).  The compiled server therefore runs the padded 256-row path for
+    EVERY step, a one-row decode included: the run caches' computation_graph.py hold 48 calls of
+    torch.ops.vllm.qwen_gdn_ba_prefill_xpu and no row-chunk call for in_proj_ba (e.g. /mnt/fast-ai/bench-results/
+    fp8-r314-mtp5-s4-20261004/tp2-pure-faseq-mtp5-s4/cache/torch_compile_cache/*/rank_0_0/backbone/).
+    --ba-server-path compiled (the default) models that; --ba-server-path eager models the Python branch (only an
+    --enforce-eager launch takes it).
 
 Method, as in the other census scripts: deterministic per-case seeds (crc32 of the case key), comparison of bit
 patterns (int16 views for fp16, int32 for fp32; NaN-safe max_abs), every call repeated to check determinism, one
@@ -481,12 +489,20 @@ def summarize_fa(rows, l_list, q_list):
 
 
 # ----------------------------------------------------------------------------------------------- (b) in_proj_ba
+BA_SERVER_PATH = "compiled"   # see the 2026-10-04 correction in the module docstring
+
+
+def ba_server_padded(m, ba_min):
+    """Does the server run the padded 256-row path for a step of m rows?  Compiled: always; eager: m >= 17."""
+    return True if BA_SERVER_PATH == "compiled" else m >= ba_min
+
+
 def census_ba(sh, ops, seed, m_list, out_cb):
     w = rand((sh.ba_w, sh.hidden), 0.02, gen_for(seed, "ba-w", sh.tp))
     x = rand((max(m_list), sh.hidden), 1.0, gen_for(seed, "ba-x", sh.tp))
 
     def server(xm):
-        return ops.ba_padded(xm, w) if xm.shape[0] >= ops.ba_min else ops.ba_rowchunk(xm, w)
+        return ops.ba_padded(xm, w) if ba_server_padded(xm.shape[0], ops.ba_min) else ops.ba_rowchunk(xm, w)
 
     def run(fn, xm):
         y = fn(xm.contiguous())
@@ -496,11 +512,12 @@ def census_ba(sh, ops, seed, m_list, out_cb):
     alone = {p: [run(f, x[i:i + 1]) for i in range(max(m_list))]
              for p, f in (("rowchunk", lambda xm: ops.ba_rowchunk(xm, w)),
                           ("padded256", lambda xm: ops.ba_padded(xm, w)))}
-    alone["server"] = alone["rowchunk"] if ops.ba_min > 1 else alone["padded256"]
+    alone["server"] = alone["padded256"] if ba_server_padded(1, ops.ba_min) else alone["rowchunk"]
     rows = []
     for m in m_list:
         t0 = time.perf_counter()
-        e = {"tp": sh.tp, "M": m, "server_path": "padded256" if m >= ops.ba_min else "rowchunk"}
+        e = {"tp": sh.tp, "M": m, "server_path": "padded256" if ba_server_padded(m, ops.ba_min) else "rowchunk",
+             "ba_server_model": BA_SERVER_PATH}
         try:
             for p, f in (("server", server), ("rowchunk", lambda xm: ops.ba_rowchunk(xm, w)),
                          ("padded256", lambda xm: ops.ba_padded(xm, w))):
@@ -572,6 +589,7 @@ def environment(ops):
            "overlay_loaded": ops.overlay is not None, "overlay_error": ops.overlay_error,
            "overlay_min_k": ops.overlay_min_k, "overlay_measured_max_q": ops.overlay_measured_max_q,
            "shipped_max_q_settings": list(SHIPPED_MAX_Q), "ba_min_tokens": ops.ba_min, "ba_source": ops.ba_source,
+           "ba_server_path": BA_SERVER_PATH,
            "env": env}
     if DEV.type == "xpu":
         out["device"] = torch.xpu.get_device_properties(0).name
@@ -594,9 +612,13 @@ def main() -> int:
     ap.add_argument("--qs", default="", help="override the verify widths, e.g. 6,10")
     ap.add_argument("--skip-fa", action="store_true")
     ap.add_argument("--skip-ba", action="store_true")
+    ap.add_argument("--ba-server-path", choices=("compiled", "eager"), default="compiled",
+                    help="which in_proj_ba path the server takes: compiled = padded for every step (the FP8 packages)")
     ap.add_argument("--schema-only", action="store_true", help="no GPU: import entry points, print schemas")
     ap.add_argument("--cpu-selftest", action="store_true", help="bookkeeping check on CPU with stand-in ops")
     a = ap.parse_args()
+    global BA_SERVER_PATH
+    BA_SERVER_PATH = a.ba_server_path
     l_list = [int(x) for x in a.lens.split(",") if x] or L_LIST
     q_list = [int(x) for x in a.qs.split(",") if x] or Q_LIST
     if a.cpu_selftest:
@@ -682,8 +704,9 @@ def schema_only(a) -> int:
 def selftest(a) -> int:
     """CPU, float32, tiny shapes, stand-in ops (the real overlay module is driven through fake vllm modules):
     the census must call everything identical, then must catch a one-ulp dependence on the call's row count."""
-    global DEV, DT
+    global DEV, DT, BA_SERVER_PATH
     DEV, DT = torch.device("cpu"), torch.float32
+    BA_SERVER_PATH = "eager"      # the injected leak below lives in the row-chunk path, which only eager reaches
     l_list, q_list, m_list = [8, 17, 21, 40], [2, 3, 6, 9, 17], [1, 2, 6, 16, 17, 18, 33]
     result = {}
     for leak in (False, True):

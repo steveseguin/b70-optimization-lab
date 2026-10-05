@@ -111,3 +111,32 @@ on that path whatever their size. It is being built.
 **Drafting with several users is still wrong** (R314 with the state-width fix, 4 users: 7 and 5 of 64 short answers,
 12 and 17 of 64 long ones). Last night without the scheduling overlay it was 60 or 61 of 64 at 2 and 4 users, so
 the large failure comes from the pure-step scheduling overlay combined with drafting. Being traced.
+
+## Correction, 22:40 EDT: the many-users mode is exact by construction at 32 and 64 users after all
+
+The section above said the small FP16 projection breaks row-invariance from 17 rows. That was wrong for the server
+as it runs. The census's "server" column had assumed the Python branch at 17 tokens is taken per step. The compiled
+server evaluates that branch once, while tracing at the warm-up size of 4,096 tokens, and drops the guard, so **every
+step uses the padded 256-row path, a lone user's one-row decode included**. Evidence: the compiled backbone graphs
+saved by the servers (`cache/torch_compile_cache/*/rank_*/backbone/computation_graph.py`) contain 48 calls of
+`qwen_gdn_ba_prefill_xpu` and no row-chunked call for this projection, in the many-users runs and in the
+speculation runs alike (checked directly on three of today's servers; the helper agent checked 146 graphs, 145
+the same and one with no such call). And the census itself shows the padded path bit-identical to the same row
+alone for 1 to 512 rows, deterministic, on two-card and one-card shapes.
+
+So this projection is covered for up to 512 rows a step, and the 32- and 64-user rows (657 and 874 tok/s) stand as
+exact by construction. The "at least 17 tokens" limit on prompts sharing a step was justified by the same wrong
+assumption; it is harmless and stays. The census script now defaults to the compiled path
+(`--ba-server-path compiled`). An `--enforce-eager` launch would be different and is not covered.
+
+## Drafting with several users: cause found (22:40 EDT)
+
+A stock-engine bug that the pure-step overlay triggers on every prompt-only step. Under asynchronous scheduling
+the worker resets each request's accepted-token count to 1 and restores the real count only for requests that were
+in the immediately previous step. A request that sat out a step comes back with a count of 1, so the recurrent
+layers start from state slot 0, a state missing the tokens it had just accepted. All 215 wrong answers in the saved
+4-user run fit: each has, at or before its first wrong token, a skipped step right after a step that accepted two
+or more tokens. Fix: overlay `b70-spec-resume-accepted` (keeps the count across a skipped step, on the device,
+no extra sync; 11 CPU tests). A returning request still loses its drafts for one step, which costs speed but not
+correctness. GPU test next.
+
