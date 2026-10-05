@@ -127,6 +127,26 @@ traceback: a failed pipeline job keeps its error in memory until a prompt waits 
 does not wait. The same step passes with one worker at batch 4 and with two workers at batch 2. To do: read
 the stored error from a live reproduction, and make failed jobs write their error to the run directory.
 
+## Run 5: two batch-2 jobs on the four-card layout: 1.053 s per clip (23.7 fps)
+
+Blocks spread 18/18/8/4 over the four cards (`shard4-a`), two sampler workers, batch 2, shared pool (run
+`shard4-a-w2-b2-p1`, 2026-10-05 00:00 UTC).
+
+| Arm | Checked against | Clips checked | Exact | Seconds per clip (mean) | Sampler job (2 clips) | Compute seconds per clip, cards 0-3 |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| proof: other neighbours | batch-2 references (run 1) | 10 | 10 | – | 2.78 s | 0.61 / 0.73 / 0.45 / 0.64 |
+| proof: swapped slots | batch-2 references | 10 | 10 | – | 2.78 s | 0.60 / 0.72 / 0.45 / 0.65 |
+| timed, 120 prompts | batch-2 references | 113 | 113 | **1.053** (23.7 fps) | 4.15 s | 0.89 / 0.92 / 0.64 / 0.88 |
+
+- **1.053 s per clip against a target of 1.042 s: 1.1 % short of 24 fps**, every clip byte-identical to the
+  batch-2 references that a two-card server made in run 1. A different block layout on other cards reproduces
+  the same bytes.
+- The load is now even: all four cards 61-88 % busy, none saturated. The sampler sets the pace: two jobs of
+  4.15 s each give four clips per 4.15 s.
+- The spread costs more total work (3.33 GPU-seconds per clip against 2.99 on two cards) but uses the idle
+  cards.
+- Free video memory at the freeze: 10.8 / 15.1 / 5.3 / 11.1 GiB.
+
 ## What this means for 24 fps
 
 With one batch-2 job the two sampler cards have room. Two jobs in flight (four clips) should bring the stream
