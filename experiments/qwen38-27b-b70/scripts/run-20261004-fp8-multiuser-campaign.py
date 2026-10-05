@@ -208,7 +208,25 @@ def main():
     R.fault_check(since)
     for port in range(18196, 18200):  # a port just released by an earlier run stays in TIME_WAIT for up to a minute
         R.wait_port_free(port)
-    if os.environ.get('MU_MODE') == 'prefixcache':
+    if os.environ.get('MU_MODE') == 'pcgate':
+        # Does the exact prefix cache change the standard gate? Two fresh two-card servers with drafting, the shipped
+        # 33K window: the usual one (cache off, 4,096-token pieces), then cache on with b70-prefix-cache-exact
+        # (832-token pieces). Same 12-prompt strict gate on both: answers must be identical, and the write rate is
+        # compared. notes/2026-10-05-prefix-cache-exactness-prereg.md
+        base = ['--tp', '2', '--mem', '0.95', '--max-model-len', '33024', '--fa-verify-rows'] + MTP5 + SHIPPED + LOADCOPY_FIX
+        cache = ['--batched', '832', '--prefix-cache', 'align', '--overlay', 'b70-prefix-cache-exact', '--extra-env',
+                 'B70_PREFIX_CACHE_EXACT=1', f"--serve-arg=--prefix-cache-retention-interval={os.environ.get('MU_PC_INTERVAL', '6656')}"]
+        for label, extra in (('off', ['--batched', '4096']), ('on', cache)):
+            srv, name, since = start_server(f'tp2-pcgate-{label}', 18196, base + extra, since)
+            r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
+            if srv.ready:
+                r['strict'] = R.strict(srv.base, name, R.TP2_CONTROL_STRICT)
+                R.log(f"{name}: strict {r['strict'].get('exact')} exact, {r['strict'].get('tok_s_1_100')} tok/s")
+                r['strict_again'] = R.strict(srv.base, name + '-again', R.TP2_CONTROL_STRICT)  # second pass: cached prompts
+                R.log(f"{name}: second pass {r['strict_again'].get('exact')} exact, {r['strict_again'].get('tok_s_1_100')} tok/s")
+            r['stop'] = srv.stop()
+            R.save_results(); R.fault_check(since); R.wait_gpus_free()
+    elif os.environ.get('MU_MODE') == 'prefixcache':
         # Is a prefix-cache hit bit-identical to a cold read when the prompt is read in pieces of exactly one cache
         # block (832 tokens)? A cache-off server gives the cold answers, then a cache-on server is compared with them.
         # notes/2026-10-05-prefix-cache-exactness-prereg.md

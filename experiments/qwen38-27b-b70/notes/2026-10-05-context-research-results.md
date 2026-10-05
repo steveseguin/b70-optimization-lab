@@ -81,7 +81,7 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Summarise at 75 %, 32K budget | 24 | 41 min | 211K tok | 12 summaries, 57 calls |
 | Self-editing, **files allowed**, 32K | 24 | **1.9 min** | 7K tok | context never above 8.2K; no edit needed |
 | No management, **files allowed**, 32K | 24 | **1.9 min** | 8K tok | context never above 8.9K |
-| Keep everything, old thinking dropped | *pending* | | | |
+| Keep everything, old thinking dropped | none | stopped at 2.6 h | 397K tok | stuck: re-derived everything each call, hit the output cap, never acted |
 | Improved self-editing agent, 32K | *pending* | | | |
 | Improved agent on a 480K stream (bigger than the window) | *pending* | | | |
 
@@ -103,6 +103,12 @@ What the transcripts show:
 - **First comparison (earlier in the night):** with files allowed the model saved every batch to disk at once and
   searched at the end, holding 11-35K of context on a 140K task. Its only losses came from one shell mistake
   (`tee | head` cutting files short).
+
+- **Dropping old thinking is not safe as a blanket switch.** In the keep-everything run with old thinking dropped,
+  the model had been carrying its working state in its reasoning. Without it, each call re-derived everything from
+  113K of context, ran into the 16,384-token output cap without issuing a command, and repeated: 49 calls, 397K
+  tokens written, no answer; I ended it after 2.6 hours. Old thinking can only be dropped when the working state
+  lives somewhere else (a state block or a file).
 
 The improved agent (`scripts/context/clm_improved.py`) keeps the paper's idea and fixes the harness: a delivered
 item is never rolled back, there is a room check before fetching, old thinking is dropped, and the running state is
