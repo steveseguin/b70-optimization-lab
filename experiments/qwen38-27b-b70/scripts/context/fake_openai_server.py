@@ -18,6 +18,9 @@ request without continue_final_message gets a "length" reply with thinking only,
 improved agent's think-cap continuation (continue_final_message) is exercised.
 FAKE_REASONING=1: every tool-call reply carries reasoning_content (to check that the harness strips
 earlier thinking; the request log has asst_with_reasoning per request).
+FAKE_PLAN=improved-read (+ FAKE_REFERENCE=<task>/tests/reference.json): read-mode agent for sparse
+prose; takes the true state after each batch from the reference; first writes an incomplete
+STATE.txt so `ctxfold --drop` must refuse once.
 FAKE_PLAN=improved-ctxfold: writes a buggy /tmp/.live_ctx/FOLD.py first (ctxfold must refuse it),
 then a correct one, and folds every item with `ctxfold`. Without tools (e.g. a summary request) it
 returns fixed text. /v1/completions returns fixed text. Usage numbers are rough
@@ -150,6 +153,39 @@ def plan_ctxfold(msgs):
     return "next"
 
 
+def plan_read(msgs):
+    """Scripted read-mode agent (FAKE_PLAN=improved-read, FAKE_REFERENCE=<task>/tests/reference.json).
+    It 'reads' a batch by looking up the true state after it in the reference (a wiring test only).
+    For the first batch it first writes a STATE.txt missing one mentioned counter: `ctxfold --drop`
+    must refuse; then it writes the complete state and drops again."""
+    ref = json.load(open(os.environ["FAKE_REFERENCE"]))["after_batch"]
+    tools = [str(m.get("content") or "") for m in msgs if m.get("role") == "tool"]
+    last = tools[-1] if tools else ""
+    alltext = "\n".join(str(m.get("content") or "") for m in msgs[2:] if m.get("role") in ("tool", "user"))
+    if "answers.json written" in last:
+        return "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
+    items = [(int(n), body) for t in tools for n, body in re.findall(r"(?s)^ITEM (\d+)/\d+ \(UPDATE\)\n(.*)", t)]
+    if "This was the last item" in alltext and not items:
+        qs = re.findall(r"(?m)^QUERY (\S+)$", alltext)
+        fin = ref[-1]["state"]
+        return ("cat > /app/answers.json <<'EOF'\n" + json.dumps({q: fin.get(q) for q in qs})
+                + "\nEOF\necho answers.json written")
+    if not items:
+        return "next"
+    n, body = items[-1]
+    seen = set()
+    for r in ref[:n]:
+        seen |= set(r["state"]) | {o[0] for o in r["ops"]}
+    st = ref[n - 1]["state"]
+    lines = [f"{k} {st[k]}" if k in st else f"{k} removed" for k in sorted(seen)]
+    if n == 1 and "ctxfold: REFUSED" not in alltext:
+        named = sorted(set(re.findall(r"\b[a-z]+\d\d\b", body)))
+        lines = [ln for ln in lines if ln.split()[0] != (named[0] if named else "")]
+    payload = json.dumps("\n".join(lines) + "\n")
+    return ("python3 - <<'PYEOF'\nopen('/tmp/.live_ctx/STATE.txt', 'w').write(" + payload
+            + ")\nPYEOF\nctxfold --drop")
+
+
 def plan(msgs):
     """Scripted agent. FAKE_PLAN: honest (default) | violate | inline (see module doc)."""
     seen = [str(m.get("content") or "") for m in msgs if m.get("role") in ("tool", "user")
@@ -158,6 +194,8 @@ def plan(msgs):
     mode = os.environ.get("FAKE_PLAN", "honest")
     if mode == "improved-ctxfold":
         return plan_ctxfold(msgs)
+    if mode == "improved-read":
+        return plan_read(msgs)
     if mode.startswith("improved"):
         return plan_improved(msgs, mode)
     if "answers.json written" in tools:

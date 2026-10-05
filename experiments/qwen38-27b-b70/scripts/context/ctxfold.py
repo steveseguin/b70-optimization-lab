@@ -14,6 +14,8 @@ Before writing anything ctxfold checks, per item: selftest() passes and covers e
 present in the item, and fold()'s tally equals the item's line count per first word. On any
 failure NOTHING is changed (STATE.txt and the context stay as they were) and it says why.
 Usage: ctxfold [FINAL_KIND ...]   (items of these kinds are never folded; default GET QUERY)
+       ctxfold --drop [--force] [FINAL_KIND ...]   (reports read by the model: check that every
+                       mentioned counter has a STATE.txt line, then remove the item turns)
 """
 import collections
 import importlib.util
@@ -32,7 +34,44 @@ def die(msg):
     sys.exit(2)
 
 
+def drop(final, force=False):
+    """`ctxfold --drop`: for reports you read yourself. Checks that every counter name the delivered
+    items mention has a line in STATE.txt (`name value`, or `name removed` for a counter removed on
+    purpose); if not, it REFUSES and changes nothing. Otherwise it removes every delivered item turn
+    from the context. STATE.txt is never touched and no value is checked: the reading is yours.
+    `--force` drops even with missing names (e.g. names a report says are not in the ledger)."""
+    s = open(MIRROR).read()
+    try:
+        state = open(STATE).read()
+    except FileNotFoundError:
+        state = ""
+    held = set(re.findall(r"(?m)^\s*([a-z]+\d\d)\b", state))
+    parts = HDR.split(s)
+    out, done, named = [parts[0]], [], set()
+    for i in range(1, len(parts), 2):
+        h, b = parts[i], (parts[i + 1] if i + 1 < len(parts) else "")
+        m = ITEM.match(b)
+        if m and "role=tool" in h and m.group(3) not in final:
+            done.append(int(m.group(1)))
+            named |= set(re.findall(r"\b[a-z]+\d\d\b", b))
+            continue
+        out += [h, b]
+    if not done:
+        print("ctxfold: no delivered item in your context")
+        return
+    missing = sorted(named - held)
+    if missing and not force:
+        die(f"items {done} mention counters with no line in STATE.txt: {' '.join(missing)}. Add each "
+            f"(`name value`, or `name removed` if it was removed) and run `ctxfold --drop` again")
+    open(MIRROR, "w").write("".join(out))
+    print(f"ctxfold: removed items {done} from your context; STATE.txt has {len(held)} counter lines"
+          + (f" (forced; missing: {' '.join(missing)})" if missing else ""))
+
+
 def main():
+    if sys.argv[1:2] == ["--drop"]:
+        rest = [a for a in sys.argv[2:] if a != "--force"]
+        return drop(set(rest or ["GET", "QUERY"]), force="--force" in sys.argv[2:])
     final = set(sys.argv[1:] or ["GET", "QUERY"])
     try:
         spec = importlib.util.spec_from_file_location("fold_mod", FOLD)

@@ -21,6 +21,12 @@
 #   B32in  improved agent, thinking OFF on routine fetch/fold calls, ON where judgement is needed
 #          (clm_improved.ClmImprovedAgent._wants_thinking); B32io: thinking off on every call
 #   E32o   no management, files allowed, thinking off on every call
+#   B32ir  improved agent for prose: reads each report itself (FOLD_MODE=read, STATE.txt "name value" /
+#          "name removed" lines, `ctxfold --drop` checks every mentioned name has a line), thinking off on
+#          routine batches (judgement), cap THINK_CAP_R (4096) when on; READ_REASONS=1 adds reason lines
+#   Ar     keep everything + SHOW_WINDOW (reading-task baseline);  E32r: files allowed, plain
+#   KINDS=sparse  sparse prose (make_sparse_prose_tasks.py), options from SPARSE_ARGS (e.g. "--density 6 --words")
+#   PROSE_BATCH_TOKENS  prose batch size at generation [6400] (use a new OUT_DIR when changing it)
 #   Aw     A + SHOW_WINDOW: every tool result states the window used/left, and a fetch that cannot
 #          fit (context + largest item so far + max_tokens > window) is refused with a request to
 #          write down what is needed first (keep-everything seed 1 ran into the window at ~246K)
@@ -86,7 +92,8 @@ for kind in $K; do
     dir="$T/$kind-$mode"
     [[ -d "$dir" ]] && continue
     gen=$([[ $kind == kv ]] && echo make_kvstream_tasks.py || echo make_ledger_tasks.py)
-    xa=; [[ $kind == prose ]] && gen=make_prose_ledger_tasks.py && xa=--exact-tokens   # KINDS=prose
+    xa=; [[ $kind == prose ]] && gen=make_prose_ledger_tasks.py && xa="--exact-tokens --batch-tokens ${PROSE_BATCH_TOKENS:-6400}"   # KINDS=prose
+    [[ $kind == sparse ]] && gen=make_sparse_prose_tasks.py && xa="--exact-tokens ${SPARSE_ARGS:-}"   # KINDS=sparse
     # shellcheck disable=SC2086
     "$PY" "$D/$gen" "$dir" --tokens $Z --seeds $S --mode "$mode" $xa > "$dir.gen.json" || { echo "task generation failed"; exit 1; }
   done
@@ -108,7 +115,8 @@ ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("
         "B32i": ("improved", "memory", 32768), "B131i": ("improved", "memory", 131072),
         "B32ik": ("improved", "memory", 32768), "B131ik": ("improved", "memory", 131072),
         "B32in": ("improved", "memory", 32768), "B32io": ("improved", "memory", 32768),
-        "E32o": ("plain", "notes", 32768), "Aw": ("plain", "memory", 0)}
+        "E32o": ("plain", "notes", 32768), "Aw": ("plain", "memory", 0),
+        "B32ir": ("improved", "memory", 32768), "Ar": ("plain", "memory", 0), "E32r": ("plain", "notes", 32768)}
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -208,7 +216,10 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   [[ "$arm" == *io ]] && tp=never                  # B32io: improved agent, thinking off on every call
   [[ "$arm" == E32o ]] && et=false                 # E32o: plain, files allowed, thinking off
   local sw=0; [[ "$arm" == Aw ]] && sw=1           # Aw: A + window line and fetch guard
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
+  local fm=${FOLD_MODE:-}
+  [[ "$arm" == B32ir ]] && fm=read && tp=judgement && tc=${THINK_CAP_R:-4096}   # B32ir: reads prose itself
+  [[ "$arm" == Ar ]] && sw=1                       # Ar: keep everything + window line (reading task baseline)
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
   echo "   rc=$? $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
   if ! "$PY" "$D/summarize_results.py" --brief --check "$RUNS/jobs/$job" > "$RUNS/$job.check" 2>&1; then
     echo "!!! $job: a cap, timeout, server refusal or the storage rule ended this run; it does not count:"

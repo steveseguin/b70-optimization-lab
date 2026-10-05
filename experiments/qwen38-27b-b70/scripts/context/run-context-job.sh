@@ -24,6 +24,9 @@
 #   STABLE_RENDER     1 = with dropped thinking, send preserve_thinking=true (earlier thinking is
 #                     stripped by the harness, so every earlier turn renders identically; the improved
 #                     agent does this by default) [0]
+#   FOLD_MODE         improved agent: script (FOLD.py + ctxfold, default) | read (the model reads each
+#                     report itself, STATE.txt as "name value" lines, `ctxfold --drop`; prose ledger)
+#   READ_REASONS      improved agent, FOLD_MODE=read: 1 = one visible reason line per changed counter [0]
 #   THINKING_POLICY   improved agent: always | judgement (thinking off on routine fetch/fold calls)
 #                     | never [always]
 #   DROP_OLD_THINKING 1 = send chat_template_kwargs.preserve_thinking=false on every call and strip
@@ -162,6 +165,8 @@ PY
 fi
 [[ "${STABLE_RENDER:-0}" == 1 && ( "$DROP_OLD_THINKING" == 1 || "$AGENT_KIND" == improved ) ]] && KW+=(--agent-kwarg "stable_render=true")
 [[ -n "${THINKING_POLICY:-}" && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "thinking_policy=$THINKING_POLICY")
+[[ -n "${FOLD_MODE:-}" && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "fold_mode=$FOLD_MODE")
+[[ "${READ_REASONS:-0}" == 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "read_reasons=true")
 [[ -n "${THINK_CAP:-}" && "${THINK_CAP:-0}" != 0 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "think_cap=$THINK_CAP")
 [[ -n "${TASK_TEMPLATE:-}" ]] && KW+=(--agent-kwarg "task_template=$TASK_TEMPLATE")
 [[ -n "${SUMMARY_MAX_TOKENS:-}" && "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_max_tokens=$SUMMARY_MAX_TOKENS")

@@ -201,6 +201,30 @@ def _stable_parse(text: str, protected: list[dict[str, Any]], originals: list[di
     return fixed
 
 
+PROTOCOL_READ = """
+
+## Working protocol for streamed data (read carefully)
+
+- Keep every counter in `/tmp/.live_ctx/STATE.txt`, one line per counter: `name value`, or
+  `name removed` for a counter removed from the ledger (nothing else in the file). It is part of your
+  context: the harness shows it in a pinned message every turn. It is NOT a notes file.
+- The reports are prose. Do not write a program to parse them: read each report yourself and work out
+  exactly what it changes.
+- After each item, in ONE command: apply only the changed counters to STATE.txt with a short inline
+  script (for example `python3 - <<'EOF'` holding a dict of new values and the removed names, reading
+  and rewriting STATE.txt), then `ctxfold --drop`, which removes the item from your context. It
+  refuses (and changes nothing) if a counter the item mentions has no line in STATE.txt.
+- Before running a command that delivers a large item, make sure there is room for it: the harness
+  refuses to run such a command when the item would not fit ("NOT RUN").
+- Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs;
+  act every turn.
+"""
+
+READ_REASONS = """- In your visible reply (not in your thinking), before the command, write one short line per changed
+  counter: `name: old -> new (the words that decide it)`.
+"""
+
+
 class _ImprovedEnv(ContextEnv):
     agent: "ClmImprovedAgent"
 
@@ -236,7 +260,7 @@ class _ImprovedEnv(ContextEnv):
         out = getattr(res.result, "stdout", "") or ""
         if res.ctx_changed:
             a._edit_since_call = True
-        if out.lstrip().startswith("ctxfold: folded"):
+        if out.lstrip().startswith(("ctxfold: folded", "ctxfold: removed items")):
             a._fold_ok = True
         if a._guard_out.search(out):
             a._largest_delivery = max(a._largest_delivery,
@@ -319,10 +343,19 @@ class ClmImprovedAgent(_h.ClmAgent):
                  think_cap: int | str = 0, empty_streak_limit: int | str = 1,
                  fallback_think_cap: int | str = 2048,
                  stable_render: Any = True, stable_mirror: Any = True,
-                 thinking_policy: str = "always", stable_system: Any = None, **kwargs: Any) -> None:
+                 thinking_policy: str = "always", stable_system: Any = None,
+                 fold_mode: str = "script", read_reasons: Any = False, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # v3 (2026-10-05): stable prompt layout and per-call thinking
         self.stable_mirror = _as_bool(stable_mirror)
+        # fold_mode: script = FOLD.py + ctxfold (machine-readable items); read = the model reads each
+        # report itself, writes STATE.txt ("name value" lines, validated) and drops the item with
+        # `ctxfold --drop` (prose ledger; ctxfold's first-word coverage check cannot apply to prose and
+        # pushed counter names into FOLD.py in the first prose trial)
+        self.fold_mode = str(fold_mode or "script").strip().lower()
+        self.read_reasons = _as_bool(read_reasons)
+        if self.fold_mode == "read" and not state_line_regex:
+            state_line_regex = r"^[a-z]+\d\d\s+(-?\d+|removed)$"
         self.thinking_policy = str(thinking_policy or "always").strip().lower()
         if self.thinking_policy not in ("always", "judgement", "never"):
             raise ValueError(f"thinking_policy must be always|judgement|never, not {thinking_policy!r}")
@@ -581,8 +614,10 @@ class ClmImprovedAgent(_h.ClmAgent):
 
     async def run(self, instruction, environment, context) -> None:
         saved = _h._SYSTEM_TEMPLATE
-        _h._SYSTEM_TEMPLATE = saved.replace("{{finish_instructions}}", PROTOCOL + "\n{{finish_instructions}}") \
-            if "{{finish_instructions}}" in saved else saved + PROTOCOL
+        proto = (PROTOCOL_READ + (READ_REASONS if self.read_reasons else "")) if self.fold_mode == "read" \
+            else PROTOCOL
+        _h._SYSTEM_TEMPLATE = saved.replace("{{finish_instructions}}", proto + "\n{{finish_instructions}}") \
+            if "{{finish_instructions}}" in saved else saved + proto
         try:
             await super().run(instruction, environment, context)
         finally:
@@ -597,6 +632,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "loop_guard_calls": self.n_loop_guard,
                     "continuation_error": self._continuation_broken,
                     "thinking_policy": self.thinking_policy,
+                    "fold_mode": self.fold_mode,
+                    "read_reasons": self.read_reasons,
                     "stable_system": self.stable_system,
                     "stable_render": _as_bool(getattr(self, "stable_render", False)),
                     "stable_mirror": self.stable_mirror,

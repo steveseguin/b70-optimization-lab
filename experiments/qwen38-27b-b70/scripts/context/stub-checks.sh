@@ -31,6 +31,9 @@
 #                   and no call's messages (pinned state aside) differ from the previous call's except
 #                   after a context edit (prefix stability)
 #  14 imp-never      THINKING_POLICY=never (B32io): every request has enable_thinking=false
+#  17 imp-read       read mode (B32ir) on a tiny sparse-prose task: `ctxfold --drop` refuses an incomplete
+#                   STATE.txt once, thinking on until the first drop and after the refusal, off on routine
+#                   batches, reward 1.0, not VOID
 #  16 aw             plain agent + SHOW_WINDOW on a 7,000-token stub window: every tool result ends with
 #                   the window line and a `next` that cannot fit is refused
 #  15 e32o           plain agent, files allowed, ENABLE_THINKING=false: every request has it false
@@ -305,6 +308,40 @@ PY
 read -r aw_ref aw_lines aw_obs <<< "$aw"
 msg="ended_by=$eb reward=$rw refusals=$aw_ref window_lines=$aw_lines/$aw_obs"
 [[ $inv == False && ${aw_ref:-0} -ge 1 && $aw_obs -gt 0 && $aw_lines == "$aw_obs" ]] && pass aw "$msg" || fail aw "$msg"
+# 17 read mode (arm B32ir) on a tiny sparse-prose task: STATE.txt as name lines, `ctxfold --drop` must refuse
+# an incomplete STATE once, thinking on until the first successful drop and after the refusal, off on
+# routine batches; reward 1.0; STATE.txt (counter names) must not void the run
+"$PY" "$D/make_sparse_prose_tasks.py" "$O/tasks-sparse" --n-batches 4 --density 6 --batch-tokens 600 \
+  --n-counters 8 --pronouns --seeds 0 > "$O/tasks-sparse.json"
+STASK=$(ls -d "$O"/tasks-sparse/sparse-memory-b4-s0)
+FAKE_PLAN=improved-read FAKE_REFERENCE="$STASK/tests/reference.json" start_stub "$O/stub-read.log"
+LTASK_SAVE=$LTASK; LTASK=$STASK
+FOLD_MODE=read THINKING_POLICY=judgement ijob imp-read 200000 ""
+LTASK=$LTASK_SAVE
+rd=$("$PY" - "$O/stub-read.log" "$O/runs/jobs/imp-read" <<'PY'
+import json, sys, glob
+reqs = [json.loads(l[len("fake-req: "):]) for l in open(sys.argv[1]) if l.startswith("fake-req: ")]
+reqs = [r for r in reqs if r.get("has_tools")]
+bad, ok_seen = 0, False
+for r in reqs:
+    th = (r.get("chat_template_kwargs") or {}).get("enable_thinking")
+    head = r.get("last_tool_head", "")
+    if head.startswith("ctxfold: removed items"):
+        ok_seen = True
+    want = True if (not ok_seen or head.startswith("ctxfold: REFUSED")) else \
+        (False if head.startswith("ctxfold: removed") else None)
+    bad += want is not None and th != want
+t = glob.glob(sys.argv[2] + "/*/agent")[0]
+ctx = json.load(open(t + "/trajectory.ctx.json"))
+obs = [res.get("content") or "" for seg in ctx["segments"] for st in seg["steps"]
+       for res in ((st.get("observation") or {}).get("results") or [])]
+print(sum("ctxfold: REFUSED" in o for o in obs), sum("ctxfold: removed items" in o for o in obs), bad)
+PY
+)
+read -r rd_ref rd_drop rd_bad <<< "$rd"
+msg="reward=$reward void=$void ended_by=$ended_by drop_refused=$rd_ref drops=$rd_drop wrong_thinking_choice=$rd_bad items_lost=$items_lost"
+[[ $invalid == False && $void == False && $reward == 1.0 && ${rd_ref:-0} -ge 1 && ${rd_drop:-0} -ge 4 && $rd_bad == 0 ]] \
+  && pass imp-read "$msg" || fail imp-read "$msg"
 stop_stub
 
 echo; "$PY" "$D/summarize_results.py" --brief "$O/runs" | tee "$O/summary.txt"
