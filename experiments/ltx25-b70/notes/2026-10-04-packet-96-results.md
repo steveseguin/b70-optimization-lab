@@ -174,6 +174,14 @@ Same layout as run 5 (18/18/8/4), three sampler workers, batch 2, shared pool (r
 - Free video memory at the freeze: 10.4 / 14.8 / 5.0 / 10.8 GiB; a third pooled worker cost about 0.3 GiB per
   card.
 
+## Run 7: three batch-2 jobs on the 20/20/8 layout: 1.027 s per clip (24.3 fps)
+
+Blocks 20/20/8 on cards 0-2, none on card 3 (`shard3-c`), three workers, batch 2, shared pool (run
+`shard3-c-w3-b2-p1`, 00:44 UTC). Proofs 10/10 and 10/10, timed 111 of 111 exact against the batch-2 references,
+**1.027 s per clip (median 0.915)**, sampler job 4.72 s, compute per clip 0.87 / 0.98 / 0.63 / 0.78. A second
+layout under the budget, and the fourth block layout to reproduce the same reference bytes. Card 1 (20 blocks
+plus a decode worker) is at 95 %.
+
 ## The day in one table
 
 | Step | Seconds per clip | fps | Exact against | Needs the owner's ruling |
@@ -184,6 +192,7 @@ Same layout as run 5 (18/18/8/4), three sampler workers, batch 2, shared pool (r
 | Batch 2, two jobs, two cards | 1.122 | 22.3 | batch-2 references | yes |
 | Batch 2, two jobs, four-card layout | 1.053 | 23.7 | batch-2 references | yes |
 | **Batch 2, three jobs, four-card layout** | **1.026** | **24.4** | batch-2 references | yes |
+| Batch 2, three jobs, 20/20/8 layout | 1.027 | 24.3 | batch-2 references | yes |
 | Batch 4, one job, two cards | 1.209 | 20.7 | batch-4 references | yes |
 
 ## What this means for 24 fps
