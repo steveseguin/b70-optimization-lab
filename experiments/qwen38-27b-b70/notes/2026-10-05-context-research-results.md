@@ -87,11 +87,14 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Keep everything, old thinking dropped | none | stopped at 2.6 h | 397K tok | stuck: re-derived everything each call, hit the output cap, never acted |
 | Improved self-editing agent, 32K, seed 0 | 24 | 15 min | 67K tok | peak context 20K; no delivered batch lost |
 | Improved self-editing agent, 32K, seed 1 | 21 | 21 min | 91K tok | 3 wrong: a bug in the script the model wrote to fold batches in (see below) |
+| **Thinking-reduced** improved agent (verified fold, thinking only when judgement is needed), 32K, seed 0 | 24 | **6.6 min** | 20K tok | 84 calls, peak context 17K |
+| Thinking-reduced improved agent, 32K, seed 1 | 24 | **5.7 min** | 18K tok | the seed where the earlier version got 21 |
 | Improved agent on a **478K stream** (1.8 times the whole window), 32K budget | 24 | **8.2 min** | 36K tok | peak context 10K; 76 batches, 37 calls |
 | No management, **files allowed**, 478K stream | 24 | **1.9 min** | 8K tok | 11 calls, peak context 9.7K |
 | Self-editing, **files allowed**, 478K stream | 24 | **1.3 min** | 5K tok | 12 calls, peak context 7.1K |
 | No management, files allowed, 121K of **arbitrary key-values** (not a foldable table) | 24 | 1.1 min | 4K tok | 8 calls, peak context 5.8K |
 | Improved self-editing agent, 32K, **prose ledger** 122K (narrative text a script cannot parse; the model must read) | **0** | **3.5 h** | 926K tok | void and wrong: our protocol made it build a parser instead of reading; 6 of 20 batches in 120 calls (see below) |
+| No management, files allowed, 32K, **prose ledger** 122K | 0 | 12 min | 47K tok | no answer: four long thinking turns used up the 32K budget before any batch was folded |
 | Keep everything, no files, 121K of **arbitrary key-values** | 24 | 9.3 min | 19K tok | all 121K held in context (peak 129K); 24 look-ups all right |
 
 **Keeping everything in the big window is not robust.** It was fully right on the first seed and returned nothing on
@@ -101,6 +104,11 @@ received, but at 245,900 tokens the server refused the next request, one batch b
 answer was ever written. The model had said in its first call that it did not know its window size; without a
 budget the harness never told it. Two cheap guards would have saved the run: always show the window and the current
 size, and refuse a fetch that cannot fit.
+
+**Best no-files result: the thinking-reduced agent.** With the fold script written once and checked by the harness,
+and thinking switched on only at the start, after an error and for the final answer, it got 24 of 24 on both seeds
+in about six minutes at a 32K budget. That is four times faster than keeping everything in the big window on the
+seed where that worked (and that failed outright on the other), and ten times faster than the paper's agent.
 
 **The clear winner so far is the plainest one: let the model keep its working data in files.** Same answers, a
 context under 9K tokens on a 121K-token task, and 14 to 22 times faster than any strategy that keeps the data in
