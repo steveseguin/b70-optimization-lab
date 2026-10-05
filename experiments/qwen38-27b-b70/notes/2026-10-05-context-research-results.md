@@ -128,6 +128,27 @@ The improved agent (`scripts/context/clm_improved.py`) keeps the paper's idea an
 item is never rolled back, there is a room check before fetching, old thinking is dropped, and the running state is
 shown last so the transcript stays append-only and the prefix cache keeps working.
 
+### Where the time goes (reconstructed from the saved runs)
+
+| Run | Total | Writing | Reading | Tools | Tokens written |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Keep everything | 26 min | 24 min | 1.8 min | 3 s | 89K |
+| Paper's self-editing agent | 64 min | 58 min | 5.6 min | 6 s | 233K |
+| Summarise at 75 % | 41 min | 34 min | 4.2 min | 4 s | 211K |
+| Files allowed (both) | 1.9 min | 1.3 min | 0.3 min | 3 s | 7-8K |
+| Improved agent, seed 0 | 15 min | 12.6 min | 1.8 min | 5 s | 67K |
+
+- **Writing, mostly thinking, is where the time goes in every strategy.** Reading, the cache and the disk are small
+  by comparison: all the file commands of a files-allowed run took under 3 seconds together.
+- **The cache repays its slower first read by the fourth call.** Without it the keep-everything run would have
+  read for about 14 minutes instead of under 2, and taken about 39 minutes instead of 26.
+- **The cache does what the rules say** (its reuse was predicted exactly on 226 of 296 calls, within one block on
+  292). Where reuse was low, the layout of the prompt was the cause: a notice near the top whose retry counter
+  changes, a state block in an early turn that gets rewritten, and a chat-template effect that alters earlier
+  turns when old thinking is dropped.
+- **So the next lever is less writing per step**: no re-typing of state or scripts, and little or no thinking on
+  routine fetch-and-fold steps (untested for correctness). Detail: `2026-10-05-context-time-and-reuse.md`.
+
 ### CPU help
 
 Measured on 5.0 million tokens of real agent sessions and on the 27B's own transcripts:
