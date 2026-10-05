@@ -77,8 +77,9 @@ for kind in $K; do
     dir="$T/$kind-$mode"
     [[ -d "$dir" ]] && continue
     gen=$([[ $kind == kv ]] && echo make_kvstream_tasks.py || echo make_ledger_tasks.py)
+    xa=; [[ $kind == prose ]] && gen=make_prose_ledger_tasks.py && xa=--exact-tokens   # KINDS=prose
     # shellcheck disable=SC2086
-    "$PY" "$D/$gen" "$dir" --tokens $Z --seeds $S --mode "$mode" > "$dir.gen.json" || { echo "task generation failed"; exit 1; }
+    "$PY" "$D/$gen" "$dir" --tokens $Z --seeds $S --mode "$mode" $xa > "$dir.gen.json" || { echo "task generation failed"; exit 1; }
   done
 done
 
