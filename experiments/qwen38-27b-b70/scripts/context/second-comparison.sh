@@ -17,6 +17,8 @@
 #   C131  summary at 75 %, budget 131,072, memory-only (only where the task is >= 0.8 x budget)
 #   D32   self-editing, budget 32,768, notes allowed
 #   E32   no management, budget 32,768, notes allowed
+#   B32i B131i  the improved self-editing agent (clm_improved.py: delivered items never rolled back,
+#         room check before `next`, harness-owned pinned STATE.txt, old thinking dropped), memory-only
 #   At B32t C32t E32t   the same arms with earlier thinking dropped from every call (DROP_OLD_THINKING=1:
 #         preserve_thinking=false + earlier reasoning stripped from the history; see clm_baselines.py)
 # Every trial is its own Harbor job "<arm>__<task>" under $OUT_DIR/runs/jobs (finished jobs are
@@ -26,7 +28,10 @@
 # Environment:
 #   API_BASE MODEL_NAME OUT_DIR (required unless STUB=1)
 #   SUBSET    full [default] (~20 h) | core (~5 h) | quick (~1 h)   -- see the note for what each keeps
-#   KINDS SIZES SEEDS ARMS   override the subset's lists (e.g. SIZES="120000" ARMS="A B32")
+#   KINDS SIZES SEEDS ARMS   override the subset's lists (e.g. SIZES="120000" ARMS="A B32"). An explicit ARMS
+#             runs arm by arm in exactly that order (all seeds/sizes/kinds of the first arm first).
+#   THINK_CAP  per-turn thinking cap for the improved arms (tokens; default off)
+#   STOP file  if "$OUT_DIR/STOP" exists before a trial, the script prints "stopped by STOP file" and exits 0
 #   MAX_TOKENS [16384]  TEMPERATURE [0]  ENABLE_THINKING [true]  TASK_TEMPLATE [open_problems]
 #   DRY_RUN=1  print the plan and the time estimate only
 #   STUB=1     wiring test against fake_openai_server.py: tiny tasks (SIZES 4000 9000), all arms
@@ -76,60 +81,89 @@ for kind in $K; do
   done
 done
 
+# graders of tasks generated before 2026-10-05 22:00 lack the STATE.txt exclusion (clm_improved);
+# rewrite tests/grade.py only (the stream and expected answers are untouched)
+"$PY" "$D/make_kvstream_tasks.py" "$T" --refresh-graders || { echo "grader refresh failed"; exit 1; }
+
 # ---- plan + estimate
-PLAN=$("$PY" - "$T" "$SUBSET" "$FORCE" "$CORE_KV_SEEDS" "$K" "$Z" "$S" "$A" <<'PY'
+PLAN=$("$PY" - "$T" "$SUBSET" "$FORCE" "$CORE_KV_SEEDS" "$K" "$Z" "$S" "$A" "${ARMS:+explicit}" <<'PY'
 import sys, tomllib, pathlib
 T, subset, force, core_kv_seeds = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3] == "1", sys.argv[4].split()
 kinds, sizes, seeds, arms = (x.split() for x in sys.argv[5:9])
+explicit = len(sys.argv) > 9 and sys.argv[9] == "explicit"
 ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("clm", "memory", 131072),
         "C32": ("summary", "memory", 32768), "C131": ("summary", "memory", 131072),
-        "D32": ("clm", "notes", 32768), "E32": ("plain", "notes", 32768)}
+        "D32": ("clm", "notes", 32768), "E32": ("plain", "notes", 32768),
+        "B32i": ("improved", "memory", 32768), "B131i": ("improved", "memory", 131072)}
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
-R, W = 3000.0, 75.0          # prompt reading tok/s without prefix caching, writing tok/s
+bad = [a for a in arms if a not in ARMS]
+if bad:
+    sys.exit(f"unknown arm(s) {bad}; known: {sorted(ARMS)}")
+# Measured 2026-10-05 (prefix cache on): ~3,300 written tokens per call, writing ~90 tok/s under
+# 30K context falling to ~41 tok/s at 137K, reading only the new (uncached) prompt tokens at
+# ~2,000 tok/s. Self-editing/summary arms re-read ~70 % of their context per call (edits near the
+# top defeat the cache; B32 got 29 % cached).
+OUT, RNEW = 3300.0, 2000.0
+def wspeed(ctx):
+    return max(41.0, min(90.0, 90.0 - (ctx - 30000.0) * 49.0 / 107000.0))
 def est(arm, size, items):
-    agent, mode, budget = ARMS[arm]   # thinking-dropped arms: same estimate (a bit cheaper in reality)
-    over, out1 = 4000, 600
-    if budget == 0:
-        calls, p, ctx = items + 6, 0.0, over
-        for _ in range(items):
-            p += ctx; ctx += size / max(items - 1, 1) + out1
-        return p + 6 * ctx, calls * out1 + 2500
-    L = budget - 2048
-    if mode == "notes":
-        calls = items + 8
-        return calls * 12000.0, calls * 350.0
-    if agent == "clm":
-        calls = 2 * items + 6
-        return calls * min(0.65 * L, size / 2 + over), calls * out1 + items * 1500
-    n_sum = max(0, int(size / (0.75 * L - over - 3000)))
-    calls = items + 6 + n_sum
-    return calls * min(0.5 * L + over, size / 2 + over) + n_sum * 0.8 * L, calls * out1 + n_sum * 6000
+    agent, mode, budget = ARMS[arm]
+    item = size / max(items - 1, 1)
+    calls, read, sec, out = 0, 0.0, 0.0, 0.0
+    def call(ctx, new, o=OUT):
+        nonlocal calls, read, sec, out
+        calls += 1; read += new; out += o; sec += new / RNEW + o / wspeed(ctx)
+    if budget == 0 and mode == "memory":                    # A, At: everything stays
+        for i in range(items + 8):
+            call(4000 + min(i, items) * (item + 1000), item + OUT)
+    elif mode == "notes":                                   # D32, E32: data goes to files
+        for _ in range(items + 8):
+            call(12000, 3000 + OUT)
+    else:
+        L = budget - 2048
+        ctx = min(0.6 * L, size / 2 + 4000)
+        n = (2 * items + 8) if agent in ("clm", "improved") else (items + 8)
+        for _ in range(n):
+            call(ctx, 0.7 * ctx)
+        if agent == "summary":
+            for _ in range(max(0, int(size / (0.75 * L - 7000)))):
+                call(0.75 * L, 0.75 * L, 6000)
+    return read, out, sec
 tot = 0.0
-for seed in seeds:
-    for size in sizes:
-        for kind in kinds:
-            if subset == "core" and kind == "kv" and seed not in core_kv_seeds:
-                continue
-            for arm in arms:
-                agent, mode, budget = ARMS[arm]
-                name = f"{kind}-{mode}-t{int(size)//1000}k-s{seed}"
-                td = T / f"{kind}-{mode}" / name
-                md = tomllib.loads((td / "task.toml").read_text())["metadata"]
-                if budget and not force and md["stream_tokens"] < 0.8 * budget:
-                    print(f"#skip\t{arm}\t{name}\tno pressure: {md['stream_tokens']} tokens < 0.8 x {budget}")
-                    continue
-                p, o = est(arm, md["stream_tokens"], md["n_items"])
-                s = p / R + o / W
-                tot += s
-                print(f"{arm}\t{agent}\t{budget}\t{td}\t{name}\t{md['stream_tokens']}\t{md['n_items']}\t{p:.0f}\t{o:.0f}\t{s:.0f}\t{int(arm.endswith('t'))}")
+def cells():
+    if explicit:
+        for arm in arms:
+            for seed in seeds:
+                for size in sizes:
+                    for kind in kinds:
+                        yield seed, size, kind, arm
+    else:
+        for seed in seeds:
+            for size in sizes:
+                for kind in kinds:
+                    for arm in arms:
+                        yield seed, size, kind, arm
+for seed, size, kind, arm in cells():
+    if subset == "core" and kind == "kv" and seed not in core_kv_seeds and not explicit:
+        continue
+    agent, mode, budget = ARMS[arm]
+    name = f"{kind}-{mode}-t{int(size)//1000}k-s{seed}"
+    td = T / f"{kind}-{mode}" / name
+    md = tomllib.loads((td / "task.toml").read_text())["metadata"]
+    if budget and not force and md["stream_tokens"] < 0.8 * budget:
+        print(f"#skip\t{arm}\t{name}\tno pressure: {md['stream_tokens']} tokens < 0.8 x {budget}")
+        continue
+    p, o, s = est(arm, md["stream_tokens"], md["n_items"])
+    tot += s
+    print(f"{arm}\t{agent}\t{budget}\t{td}\t{name}\t{md['stream_tokens']}\t{md['n_items']}\t{p:.0f}\t{o:.0f}\t{s:.0f}\t{int(arm.endswith('t'))}")
 print(f"#total\t{tot:.0f}")
 PY
 ) || { echo "planning failed"; exit 1; }
-echo "== plan (SUBSET=$SUBSET; estimate at 3,000 tok/s reading without prefix caching, 75 tok/s writing)"
+echo "== plan (SUBSET=$SUBSET${ARMS:+, arms in the given order: $ARMS}; estimate from the 2026-10-05 measurements, prefix cache on)"
 echo "$PLAN" | awk -F'\t' '$1=="#skip"{print "  skip " $2 " " $3 " (" $4 ")"; next}
-  $1=="#total"{printf "  estimated total: %.1f h (writing at 60-90 tok/s moves this by about -10/+15 %%; reading above ~150K\n  context is slower than 3,000 tok/s, so the 180K cells are optimistic)\n", $2/3600; next}
-  {printf "  %-5s %-7s budget %-6s %-24s %7s tok %3s items  ~%4.1fM read ~%3.0fk written ~%3.0f min\n", $1,$2,$3,$5,$6,$7,$8/1e6,$9/1e3,$10/60}'
+  $1=="#total"{printf "  estimated total: %.1f h (3,300 written tokens/call at 90->41 tok/s by context, new prompt tokens at\n  2,000 tok/s; B32 took 1.9x its estimate on 2026-10-05 because of a thinking/rollback thrash)\n", $2/3600; next}
+  {printf "  %-6s %-8s budget %-6s %-24s %7s tok %3s items  ~%4.2fM new read ~%3.0fk written ~%3.0f min\n", $1,$2,$3,$5,$6,$7,$8/1e6,$9/1e3,$10/60}'
 [[ "${DRY_RUN:-0}" == 1 ]] && exit 0
 
 # ---- window check for the no-budget arm
@@ -164,6 +198,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
 }
 while IFS=$'\t' read -r arm agent budget td name _tok _items _p _o _s drop; do
   [[ -z "$arm" || "$arm" == \#* ]] && continue
+  if [[ -e "$O/STOP" ]]; then echo "stopped by STOP file"; exit 0; fi
   run_one "$arm" "$agent" "$budget" "$td" "${arm}__${name}" "$drop"
 done <<< "$PLAN"
 
@@ -176,6 +211,7 @@ if [[ "${STUB:-0}" == 1 ]]; then   # storage-rule probes (memory mode, no budget
       FAKE_PLAN=$plan "$PY" "$D/fake_openai_server.py" "$API_PORT" > "$O/stub-$plan.log" 2>&1 &
       STUB_PID=$!
       for _ in $(seq 50); do curl -sf "$API_BASE/models" >/dev/null && break; sleep 0.1; done
+      if [[ -e "$O/STOP" ]]; then echo "stopped by STOP file"; exit 0; fi
       job="PROBE-${plan}__$(basename "$td")"
       rm -rf "${RUNS:?}/jobs/$job"
       TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET=0 "$D/run-context-job.sh" plain "$RUNS" > "$RUNS/$job.out" 2>&1

@@ -26,7 +26,9 @@ Two size modes:
       memory  stream data may live only in the agent's context. Enforced by `next` (it refuses
               to write into a regular file or into a `tee`, without consuming the item) and
               audited by the grader: any file created/changed after the image build (except
-              /app/answers.json and the harness mirror /tmp/.live_ctx/LIVE_CTX_MAIN.txt) that
+              /app/answers.json, the harness mirror /tmp/.live_ctx/LIVE_CTX_MAIN.txt and the
+              improved agent's pinned state /tmp/.live_ctx/STATE.txt, both shown to the model
+              every call and counted in its context) that
               holds any 4 consecutive words of any SET value voids the run (reward 0; the raw
               score is still reported). Exported shell variables land in the harness state
               file, so they are caught too. Files written and deleted again before the end
@@ -254,6 +256,7 @@ GRADE_PY_V2 = r'''import json, os, re, stat
 spec = json.load(open("/tests/spec.json"))
 kind, mode, exp = spec["kind"], spec["mode"], spec["expected"]
 MIRROR = "/tmp/.live_ctx/LIVE_CTX_MAIN.txt"
+STATE = "/tmp/.live_ctx/STATE.txt"  # clm_improved: harness-owned pinned state = context
 ANS = "/app/answers.json"
 try:
     got = json.load(open(ANS))
@@ -330,7 +333,7 @@ else:
 NAME = re.compile(r"\b[a-z]+[0-9]{2}\b")
 holders = []
 for p in new_files:
-    if p == MIRROR:
+    if p in (MIRROR, STATE):
         continue
     try:
         txt = open(p, "rb").read().decode("utf-8", "replace")
@@ -358,7 +361,7 @@ stored = None
 if kind == "kv" and mode == "notes":
     blob = ""
     for p in new_files:
-        if p not in (MIRROR, ANS):
+        if p not in (MIRROR, STATE, ANS):
             try:
                 blob += open(p, "rb").read().decode("utf-8", "replace") + "\n"
             except Exception:
@@ -646,8 +649,18 @@ def main() -> None:
     ap.add_argument("--overwrite-frac", type=float, default=0.1)
     ap.add_argument("--limit", type=int, default=32768)
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--refresh-graders", action="store_true",
+                    help="only rewrite tests/grade.py of the v2 tasks under OUT_DIR (stream untouched)")
     a = ap.parse_args()
     out = Path(a.out)
+    if a.refresh_graders:
+        n = 0
+        for g in sorted(out.glob("**/tests/grade.py")):
+            if (g.parent / "spec.json").exists() and g.read_text() != GRADE_PY_V2:
+                g.write_text(GRADE_PY_V2)
+                n += 1
+        print(json.dumps({"refreshed_graders": n, "root": str(out)}))
+        return
     out.mkdir(parents=True, exist_ok=True)
     made = []
     if a.smoke:

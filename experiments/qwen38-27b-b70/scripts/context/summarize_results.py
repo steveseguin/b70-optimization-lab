@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Score, cost and "what happened" tables for one or more Harbor job directories.
 
-  summarize_results.py <job_dir> [<job_dir> ...] [--json out.json] [--check] [--brief]
+  summarize_results.py <path> [<path> ...] [--json out.json] [--check] [--brief]
+  <path> = a trial dir, a Harbor job dir, a jobs/ dir or a runs/ dir (e.g. $OUT_DIR/runs)
 
 Table 1 (one row per trial): arm, task kind, storage mode, stream size, seed, reward, LM calls,
 edits (real context-file edits) / summaries (ok+failed), peak sent context, prompt tokens read
@@ -48,6 +49,37 @@ ITEM_RE = re.compile(r"ITEM (\d+)/(\d+) \(")
 NEXT_STORE = [re.compile(r"\bnext\b[^\n;&|]*>"), re.compile(r"\bnext\b[^\n;&]*\|\s*tee\b")]
 WRITE_RE = re.compile(r"(>>?\s*(?!/dev/null)[/\w.$~-]+|\btee\b|open\([^)]*['\"][wa]['\"])")
 DATA_RE = re.compile(r"(SET k-[0-9a-f]{8} = \w+|\b(?:SET|ADD) [a-z]+\d\d -?\d+|\| memo:)")
+
+
+HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n(.*?)\n\1[ \t]*(?=\n|$)", re.S)
+QUOTED = re.compile(r"'[^']*'|\"(?:[^\"\\]|\\.)*\"")
+ALLOWED = ("/tmp/.live_ctx/", "/app/answers.json", "/dev/null", "/dev/stdout", "/dev/stderr")
+
+
+def is_suspect(c: str) -> bool:
+    """Memory-only audit of one command: does it send `next` output into a file or tee, or write
+    stream data somewhere other than the harness's own context files (the mirror and the improved
+    agent's STATE.txt, which ARE the context) or /app/answers.json? Shell text and embedded code
+    (heredoc bodies, quoted `python3 -c` code) are judged separately, so comparisons such as
+    `si>0` inside Python are not mistaken for redirections."""
+    bodies = [m.group(2) for m in HEREDOC.finditer(c)]
+    shell = HEREDOC.sub("<<HEREDOC\n", c)
+    bodies += [q[1:-1] for q in QUOTED.findall(shell)]
+    shell = QUOTED.sub("''", shell)
+    if re.search(r"\bnext\b[^\n;&|]*>|\bnext\b[^\n;&]*\|\s*tee\b", shell):
+        return True
+    if not DATA_RE.search(c):
+        return False
+    targets = [a or b for a, b in re.findall(
+        r"(?:^|[^<>0-9&])>>?\s*([/\w.$~-]+)|\btee\s+(?:-a\s+)?([/\w.$~-]+)", shell)]
+    if any(not t.startswith(ALLOWED) for t in targets if t):
+        return True
+    for body in bodies:
+        if re.search(r"open\([^)]*['\"][wa]b?\+?['\"]|\.write_text\(", body):
+            paths = re.findall(r"['\"](/(?:[\w.-]+/)+[\w.-]+)['\"]", body)  # real paths, not "/20"
+            if any(not p.startswith(ALLOWED) for p in paths) or not paths:
+                return True
+    return False
 
 
 def load(p: Path):
@@ -121,7 +153,7 @@ def trial_row(t: Path) -> dict:
             snaps.append(d)
     peak = max((int(d.get("sent_tokens") or d.get("tokens") or 0) for d in snaps
                 if d.get("kind") == "agent"), default=0)
-    seen_whole, cut = set(), set()
+    seen_whole, cut, headers_seen = set(), set(), set()
     # an item counts as seen whole only if its LAST line reached the context (a `| head -1`
     # shows the header but not the batch)
     tails = {}
@@ -148,6 +180,7 @@ def trial_row(t: Path) -> dict:
             if m.get("role") in ("tool", "user"):
                 for mm in ITEM_RE.finditer(tx):
                     n = int(mm.group(1))
+                    headers_seen.add(n)
                     if tails.get(n, "") in tx and "elided" not in tx:
                         seen_whole.add(n)
                     elif "elided" in tx:
@@ -163,8 +196,7 @@ def trial_row(t: Path) -> dict:
     ctx = load(agent / "trajectory.ctx.json") or {}
     cmds = commands(ctx, traj)
     opt_violation = any("/opt/kvstream" in c for c in cmds)
-    suspect = sum(1 for c in cmds if any(p.search(c) for p in NEXT_STORE)
-                  or (WRITE_RE.search(c) and DATA_RE.search(c)))
+    suspect = sum(1 for c in cmds if is_suspect(c))
 
     # turns that hit max_tokens
     mx = int(kw.get("max_tokens") or 0)
@@ -224,6 +256,12 @@ def trial_row(t: Path) -> dict:
             else:
                 attr["copy"] += 1
     dl = details.get("delivery") or {}
+    # a delivered item whose header never reached any context the model was sent: rolled back
+    # (or cut away) before the next call. Memory-only tasks only (notes runs may write to files).
+    n_deliv = dl.get("items_delivered")
+    items_lost = (sum(1 for n in range(1, int(n_deliv) + 1) if n not in headers_seen)
+                  if (mode == "memory" and n_deliv is not None and snaps) else None)
+    imp = load(agent / "improved_stats.json") or {}
     wall = None
     try:
         st, fi = res.get("started_at"), res.get("finished_at")
@@ -247,7 +285,8 @@ def trial_row(t: Path) -> dict:
         "turns_rolled_back": u.get("n_turns_rolled_back"),
         "budget_final": u.get("budget_finalized"), "summaries": len(ok_sum),
         "summary_failed": len(sc) - len(ok_sum),
-        "prompt_tokens": (u.get("prompt_tokens") or 0) + sum(x.get("prompt_tokens", 0) for x in sc),
+        "prompt_tokens": (u.get("prompt_tokens") or 0) + sum(x.get("prompt_tokens", 0) for x in sc)
+                         + int(imp.get("extra_prompt_tokens") or 0),
         "completion_tokens": (u.get("completion_tokens") or 0) + sum(x.get("completion_tokens", 0) for x in sc),
         "think_share": round(think_chars / all_chars, 3) if all_chars else None,
         "cached_tokens": (u.get("cached_tokens") or 0) + sum(x.get("cached_tokens", 0) for x in sc), "peak_sent_ctx": peak,
@@ -256,6 +295,9 @@ def trial_row(t: Path) -> dict:
         "rule_violation": opt_violation, "exception": exc,
         "correct": counts.get("correct", details.get("correct")), "blank": counts.get("blank"),
         "stale": counts.get("stale"), "wrong": counts.get("wrong"),
+        "items_lost": items_lost, "gate_refusals": imp.get("gate_refusals"),
+        "protected_rollbacks": imp.get("protected_rollbacks"), "state_rejected": imp.get("state_rejected"),
+        "think_cap_cont": imp.get("think_cap_continuations"),
         "delivered": dl.get("items_delivered"), "seen_whole": len(seen_whole) if snaps else None,
         "cut": len(cut), "broken_pipe": dl.get("items_broken_pipe"), "to_file": dl.get("items_to_file"),
         "tee": dl.get("items_with_tee"), "refused": dl.get("refused"), "hit_max_tokens": hit_max,
@@ -277,6 +319,27 @@ def fmt(v) -> str:
     return str(v)
 
 
+def is_trial(p: Path) -> bool:
+    return p.is_dir() and ((p / "agent").is_dir() or (p / "verifier").is_dir())
+
+
+def expand(paths: list[Path], depth: int = 3) -> list[Path]:
+    """Trial dirs from any mix of trial dirs, job dirs, a jobs/ dir or a runs/ dir (a Harbor job
+    dir also holds a job-level result.json, so result.json alone does not mark a trial)."""
+    out: list[Path] = []
+    for p in paths:
+        if not p.is_dir():
+            continue
+        if is_trial(p):
+            out.append(p)
+        elif depth > 0:
+            subs = sorted(x for x in p.iterdir() if x.is_dir())
+            if (p / "jobs").is_dir():
+                subs = [p / "jobs"]
+            out.extend(expand(subs, depth - 1))
+    return out
+
+
 def main() -> None:
     args = sys.argv[1:]
     out_json, check, brief = None, "--check" in args, "--brief" in args
@@ -284,18 +347,16 @@ def main() -> None:
     if "--json" in args:
         i = args.index("--json"); out_json = args[i + 1]; del args[i:i + 2]
     rows = []
-    for j in args:
-        jd = Path(j)
-        if not jd.is_dir():
-            continue
-        for t in sorted(p for p in jd.iterdir() if p.is_dir() and ((p / "agent").exists() or (p / "result.json").exists())):
-            r = trial_row(t); r["job"] = jd.name; r["arm"] = arm_of(jd.name); rows.append(r)
+    for t in expand([Path(j) for j in args]):
+        jd = t.parent
+        r = trial_row(t); r["job"] = jd.name; r["arm"] = arm_of(jd.name); rows.append(r)
     rows.sort(key=lambda r: (str(r.get("kind")), str(r.get("mode")), int(r.get("size") or 0),
                              str(r.get("arm")), int(r.get("seed") or 0)))
     t1 = ["arm", "kind", "mode", "size", "seed", "budget", "reward", "lm_calls", "real_edits", "summaries",
-          "summary_failed", "peak_sent_ctx", "prompt_tokens", "cached_tokens", "think_share", "completion_tokens", "wall_s", "ended_by", "rule"]
+          "summary_failed", "peak_sent_ctx", "prompt_tokens", "cached_tokens", "think_share", "completion_tokens", "wall_s", "items_lost", "ended_by", "rule"]
     t2 = ["arm", "kind", "mode", "size", "seed", "correct", "blank", "stale", "wrong", "lost_never",
-          "lost_dropped", "lost_copy", "stored_frac", "items", "delivered", "seen_whole", "cut",
+          "lost_dropped", "lost_copy", "stored_frac", "items", "delivered", "seen_whole", "items_lost", "cut",
+          "gate_refusals", "protected_rollbacks", "state_rejected", "think_cap_cont",
           "broken_pipe", "to_file", "tee", "refused", "hit_max_tokens", "rollbacks", "nudges",
           "suspect_cmds", "score_raw"]
     print("\t".join(t1))

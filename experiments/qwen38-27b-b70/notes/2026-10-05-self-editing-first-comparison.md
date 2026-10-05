@@ -299,3 +299,15 @@ seeds.
 
 **Pass rule:** B32i passes if both seeds are within 1 key of A, with no delivered item lost
 (`delivered == seen_whole`).
+
+**Ready to run as arms B32i / B131i** (patch prepared 2026-10-05 evening; applied at a stop point).
+`run-context-job.sh improved` → `clm_improved:ClmImprovedAgent`. The pinned STATE.txt is an
+ordinary user message in the history, so the budget gate, the readout, the snapshots and the
+server count it exactly like B32's context. The memory-only grader excludes it as it does the
+mirror. Optional `THINK_CAP=<tokens>` uses the two-call `continue_final_message` protocol
+described in `clm_improved.py`; it is off by default and untested on the real server. vLLM's
+qwen3 parser starts every reply in "reasoning", so text before the tool call in the second call
+is returned as reasoning; the tool call itself is parsed.
+
+**Reading rule** (unchanged): B32i passes if, on both seeds, it is within 1 key of A and
+`items_lost == 0`.

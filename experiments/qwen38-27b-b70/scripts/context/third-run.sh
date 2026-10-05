@@ -6,7 +6,9 @@ cd "$(dirname "$0")" || exit 2
 run() { [ -e "$OUT_DIR/STOP" ] && { echo "stopped by STOP file"; exit 0; }; echo "### $*"; env "$@" SUBSET=core ./second-comparison.sh || echo "### block ended rc=$?"; }
 run ARMS="B32i" KINDS=ledger SEEDS="0 1" SIZES=120000
 run ARMS="B32i" KINDS=ledger SEEDS="0" SIZES=480000
+# files allowed on the same beyond-window stream: where does the growing record of the agent's own steps bite?
+run ARMS="E32 D32" KINDS=ledger SEEDS="0" SIZES=480000
 run ARMS="A" KINDS=ledger SEEDS="1" SIZES=120000
 run ARMS="A B32i E32" KINDS=kv SEEDS="0" SIZES=120000
 run ARMS="B131i" KINDS=ledger SEEDS="0" SIZES=480000
-run ARMS="E32t B32t C32" KINDS=ledger SEEDS="0 1" SIZES=120000
+run ARMS="E32t C32" KINDS=ledger SEEDS="0 1" SIZES=120000

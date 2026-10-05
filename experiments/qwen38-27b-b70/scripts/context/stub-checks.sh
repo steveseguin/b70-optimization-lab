@@ -14,6 +14,23 @@
 #   5 drop-clm      ClmAgentT (DROP_OLD_THINKING=1), tiny budget: loads, requests carry it, not invalid
 #   6 drop-summary  SummaryAgent, tiny budget, DROP_OLD_THINKING=1: the tool-less summary request also
 #                   carries preserve_thinking=false
+#   improved agent (clm_improved.py) on a tiny ledger task (~5 items of 30 updates, 8 counters), with
+#   the fake server's scripted "fold into STATE.txt" agent:
+#   7 imp-base      big budget; also corrupts STATE.txt once: reward 1.0, not VOID although STATE.txt
+#                   names the counters (iv), the bad edit restored (iii), every request carries
+#                   preserve_thinking=false (v), no delivered item lost. Its context readouts give the
+#                   sizes for 8 and 9.
+#   8 imp-protect   budget between "after fold" and "after fold + one item", room check switched off:
+#                   every delivery overflows, the rollback must keep it (i): items_lost 0,
+#                   seen_whole == delivered, protected rollbacks >= 1, reward 1.0
+#   9 imp-gate      budget for one item but not two, headroom 0; the stub runs `next` again before
+#                   folding: refused with "NOT RUN", then it folds and retries (ii): refusals >= 1,
+#                   items_lost 0, reward 1.0
+#  11 imp-loopguard no think cap, every first reply cut with no command: after 2 in a row the agent
+#                   forces an action (continuation with a 2,048-token thinking allowance)
+#  10 imp-thinkcap  THINK_CAP=64 and a stub that cuts every first reply inside the thinking: the
+#                   continuation (continue_final_message, add_generation_prompt=false) must carry the
+#                   action; every first request has max_tokens 64; reward 1.0
 set -uo pipefail
 D=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PY=${VENV:-/mnt/fast-ai/venvs/clm}/bin/python
@@ -53,6 +70,7 @@ job() {  # name agent budget drop -> runs one Harbor trial on the tiny-budget ta
     "$D/run-context-job.sh" "$agent" "$O/runs" > "$O/runs/$name.out" 2>&1
 }
 
+if [[ "${ONLY_IMPROVED:-0}" != 1 ]]; then
 # 1 smoke
 if STUB=1 "$D/smoke.sh" "$O/smoke" > "$O/smoke.out" 2>&1; then pass smoke; else fail smoke "see $O/smoke.out"; fi
 
@@ -90,8 +108,92 @@ for c in "drop-plain plain 0" "drop-clm clm 4096" "drop-summary summary 4096"; d
     [[ $inv == False && $n_all -gt 0 && $n_ok == "$n_all" ]] && pass "$1" "$msg" || fail "$1" "$msg"
   fi
 done
+
+fi  # ONLY_IMPROVED
+mkdir -p "$O/runs"
+# ---------------- improved agent (clm_improved.py) ----------------
+"$PY" "$D/make_ledger_tasks.py" "$O/tasks-ledger" --tokens 7000 --batch-size 30 --n-counters 8 \
+  --mode memory --seeds 0 > "$O/tasks-ledger.json"
+LTASK=$(ls -d "$O"/tasks-ledger/ledger-memory-t7k-s0)
+info() {  # job -> key=value lines for the improved checks
+  "$PY" - "$O/runs/jobs/$1" "$D" <<'PY'
+import sys, json; sys.path.insert(0, sys.argv[2])
+from pathlib import Path
+import summarize_results as s
+ts = s.expand([Path(sys.argv[1])])
+if not ts:
+    print("reward=None"); print("invalid=True"); print("ended_by=no_trial"); sys.exit(0)
+t = ts[0]
+r = s.trial_row(t)
+for k in ("reward", "invalid", "void", "ended_by", "items_lost", "delivered", "seen_whole",
+          "gate_refusals", "protected_rollbacks", "state_rejected", "think_cap_cont"):
+    print(f"{k}={r.get(k)}")
+# context readouts after a fold ("folded ...") and after a delivered item ("ITEM ...")
+import re, statistics
+fold, item = [], []
+for m in json.load(open(t / "agent" / "trajectory.ctx.json"))["segments"]:
+    for st in m["steps"]:
+        for res in ((st.get("observation") or {}).get("results") or []):
+            c = res.get("content") or ""
+            mm = re.search(r"\[context: ~(\d+)/", c)
+            if mm:
+                (fold if c.startswith("folded") else item if c.startswith("ITEM ") else []).append(int(mm.group(1)))
+print(f"after_fold={int(statistics.median(fold)) if fold else 0}")
+print(f"after_item={int(statistics.median(item)) if item else 0}")
+PY
+}
+ijob() {  # name budget extra_kwargs think_cap
+  rm -rf "${O:?}/runs/jobs/$1"
+  TASKS="$LTASK" JOB_NAME="$1" CONTEXT_BUDGET="$2" BUDGET_RESERVE=512 MAX_TOKENS=1024 TASK_TEMPLATE=open_problems \
+    EXTRA_KWARGS="$3" THINK_CAP="${4:-}" "$D/run-context-job.sh" improved "$O/runs" > "$O/runs/$1.out" 2>&1
+  unset reward invalid void ended_by items_lost delivered seen_whole gate_refusals protected_rollbacks \
+    state_rejected think_cap_cont after_fold after_item
+  eval "$(info "$1")"
+  : "${reward:=None}" "${invalid:=True}" "${void:=None}" "${ended_by:=none}" "${items_lost:=None}"
+}
+
+# 7 base (+ corrupt STATE.txt once)
+SLR='state_line_regex=^[a-z]+[0-9]{2}\s-?[0-9]+$'   # the stub's state format "name value"
+FAKE_PLAN=improved-fold FAKE_CORRUPT=1 start_stub "$O/stub-imp-base.log"; ijob imp-base 200000 "$SLR"
+n_all=$(grep -c '^fake-req:' "$O/stub-imp-base.log"); n_ok=$(grep '^fake-req:' "$O/stub-imp-base.log" | grep -c '"preserve_thinking": false')
+msg="reward=$reward void=$void ended_by=$ended_by state_rejected=$state_rejected items_lost=$items_lost preserve_false=$n_ok/$n_all after_fold=$after_fold after_item=$after_item"
+[[ $invalid == False && $void == False && $reward == 1.0 && ${state_rejected:-0} -ge 1 && $items_lost == 0 && $n_all -gt 0 && $n_ok == "$n_all" ]] \
+  && pass imp-base "$msg" || fail imp-base "$msg"
+X=${after_fold:-0}; Y=${after_item:-0}
+if (( X > 0 && Y > X )); then
+  # 8 protect: limit halfway between "after fold" and "after fold + item"; room check off
+  FAKE_PLAN=improved-fold start_stub "$O/stub-imp-protect.log"
+  ijob imp-protect $(( X + (Y - X) / 2 + 512 )) "guard_command_regex=a^ $SLR"
+  msg="limit=$(( X + (Y - X) / 2 )) reward=$reward ended_by=$ended_by items_lost=$items_lost delivered=$delivered seen_whole=$seen_whole protected=$protected_rollbacks"
+  [[ $invalid == False && $reward == 1.0 && $items_lost == 0 && $delivered == "$seen_whole" && ${protected_rollbacks:-0} -ge 1 ]] \
+    && pass imp-protect "$msg" || fail imp-protect "$msg"
+  # 9 gate: room for one item, not two; the stub probes `next` before folding
+  FAKE_PLAN=improved-probe start_stub "$O/stub-imp-gate.log"
+  ijob imp-gate $(( Y + (Y - X) / 2 + 512 )) "guard_headroom=0 $SLR"
+  msg="limit=$(( Y + (Y - X) / 2 )) reward=$reward ended_by=$ended_by refusals=$gate_refusals items_lost=$items_lost"
+  [[ $invalid == False && $reward == 1.0 && $items_lost == 0 && ${gate_refusals:-0} -ge 1 ]] \
+    && pass imp-gate "$msg" || fail imp-gate "$msg"
+else
+  fail imp-protect "no context readouts from imp-base (after_fold=$X after_item=$Y)"
+  fail imp-gate "no context readouts from imp-base"
+fi
+# 10 thinking cap
+FAKE_PLAN=improved-fold FAKE_THINKCAP=1 start_stub "$O/stub-imp-thinkcap.log"; ijob imp-thinkcap 200000 "$SLR" 64
+L="$O/stub-imp-thinkcap.log"
+n_first=$(grep '^fake-req:' "$L" | grep '"has_tools": true' | grep -vc '"continue_final_message": true')
+n_first64=$(grep '^fake-req:' "$L" | grep '"has_tools": true' | grep -v '"continue_final_message": true' | grep -c '"max_tokens": 64')
+n_cont=$(grep '^fake-req:' "$L" | grep '"continue_final_message": true' | grep -c '"add_generation_prompt": false')
+msg="reward=$reward ended_by=$ended_by continuations=$think_cap_cont first_requests=$n_first (max_tokens 64: $n_first64) continue_requests=$n_cont"
+[[ $invalid == False && $reward == 1.0 && ${think_cap_cont:-0} -ge 1 && $n_first == "$n_first64" && $n_cont -ge 1 ]] \
+  && pass imp-thinkcap "$msg" || fail imp-thinkcap "$msg"
+# 11 loop guard: think cap OFF, the stub cuts every first reply inside the thinking (no command);
+# after 2 such replies in a row the agent must force an action with the continuation
+FAKE_PLAN=improved-fold FAKE_THINKCAP=1 start_stub "$O/stub-imp-loopguard.log"; ijob imp-loopguard 200000 "$SLR" ""
+lg=$("$PY" -c "import json,glob; print(json.load(open(glob.glob('$O/runs/jobs/imp-loopguard/*/agent/improved_stats.json')[0])).get('loop_guard_calls'))" 2>/dev/null)
+msg="reward=$reward ended_by=$ended_by loop_guard_calls=$lg continuations=$think_cap_cont"
+[[ $invalid == False && $reward == 1.0 && ${lg:-0} -ge 1 ]] && pass imp-loopguard "$msg" || fail imp-loopguard "$msg"
 stop_stub
 
-echo; "$PY" "$D/summarize_results.py" --brief "$O"/runs/jobs/* | tee "$O/summary.txt"
+echo; "$PY" "$D/summarize_results.py" --brief "$O/runs" | tee "$O/summary.txt"
 echo "== $FAILS check(s) failed"
 [[ $FAILS == 0 ]]

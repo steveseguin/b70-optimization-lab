@@ -16,6 +16,8 @@
 #   MAX_STEPS         task-step budget [auto: v2 tasks 4 x items + 40; legacy kvstream 3 x items + 20; else 64]
 #   LM_CALL_CAP       [auto: v2 tasks 3 x MAX_STEPS; else none = 2*MAX_STEPS+24]
 #   OBS_MAX_CHARS     observation_max_chars [auto: max(60000, 2 x largest item) ]  (a 100-SET batch is ~16k chars)
+#   THINK_CAP         improved agent only: per-turn thinking cap in tokens (two-call continue protocol,
+#                     see clm_improved.py) [unset = off]
 #   DROP_OLD_THINKING 1 = send chat_template_kwargs.preserve_thinking=false on every call and strip
 #                     earlier turns' reasoning from the history (clm -> clm_baselines:ClmAgentT) [0]
 #   TASK_TEMPLATE     task_template agent kwarg [unset = terminal_agent_tasks; open_problems = task text only]
@@ -30,8 +32,8 @@
 #   SKIP_ENDPOINT_CHECK=1 to skip the /v1/models probe
 set -euo pipefail
 
-AGENT_KIND=${1:?usage: run-context-job.sh <clm|plain|summary> <out_dir> [harbor args...]}
-OUT_DIR=${2:?usage: run-context-job.sh <clm|plain|summary> <out_dir> [harbor args...]}
+AGENT_KIND=${1:?usage: run-context-job.sh <clm|plain|summary|improved> <out_dir> [harbor args...]}
+OUT_DIR=${2:?usage: run-context-job.sh <clm|plain|summary|improved> <out_dir> [harbor args...]}
 shift 2
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -60,7 +62,8 @@ case "$AGENT_KIND" in
            [[ "$DROP_OLD_THINKING" == 1 ]] && AGENT=clm_baselines:ClmAgentT ;;
   plain)   AGENT=clm_baselines:PlainAgent ;;
   summary) AGENT=clm_baselines:SummaryAgent ;;
-  *) echo "unknown agent kind $AGENT_KIND (clm|plain|summary)" >&2; exit 2 ;;
+  improved) AGENT=clm_improved:ClmImprovedAgent ;;   # drops old thinking itself (drop_old_thinking=true default)
+  *) echo "unknown agent kind $AGENT_KIND (clm|plain|summary|improved)" >&2; exit 2 ;;
 esac
 
 mkdir -p "$OUT_DIR"
@@ -140,13 +143,14 @@ KW=(
 [[ -n "${LM_CALL_CAP:-}" ]] && KW+=(--agent-kwarg "lm_call_cap=$LM_CALL_CAP")
 [[ "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_trigger_ratio=$SUMMARY_TRIGGER")
 [[ "$DROP_OLD_THINKING" == 1 ]] && KW+=(--agent-kwarg "drop_old_thinking=true")
+[[ -n "${THINK_CAP:-}" && "${THINK_CAP:-0}" != 0 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "think_cap=$THINK_CAP")
 [[ -n "${TASK_TEMPLATE:-}" ]] && KW+=(--agent-kwarg "task_template=$TASK_TEMPLATE")
 [[ -n "${SUMMARY_MAX_TOKENS:-}" && "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_max_tokens=$SUMMARY_MAX_TOKENS")
-for kv in ${EXTRA_KWARGS:-}; do KW+=(--agent-kwarg "$kv"); done
+set -f; for kv in ${EXTRA_KWARGS:-}; do KW+=(--agent-kwarg "$kv"); done; set +f   # no globbing of regex values
 
 {
   echo "agent=$AGENT_KIND ($AGENT) api_base=$API_BASE model=openai/$MODEL_NAME"
-  echo "budget=$CONTEXT_BUDGET reserve=$BUDGET_RESERVE max_tokens=$MAX_TOKENS temperature=$TEMPERATURE top_p=$TOP_P thinking=$ENABLE_THINKING max_steps=$MAX_STEPS lm_call_cap=${LM_CALL_CAP:-default} obs_max_chars=$OBS_MAX_CHARS task_template=${TASK_TEMPLATE:-default} drop_old_thinking=$DROP_OLD_THINKING"
+  echo "budget=$CONTEXT_BUDGET reserve=$BUDGET_RESERVE max_tokens=$MAX_TOKENS temperature=$TEMPERATURE top_p=$TOP_P thinking=$ENABLE_THINKING max_steps=$MAX_STEPS lm_call_cap=${LM_CALL_CAP:-default} obs_max_chars=$OBS_MAX_CHARS task_template=${TASK_TEMPLATE:-default} drop_old_thinking=$DROP_OLD_THINKING think_cap=${THINK_CAP:-0}"
   echo "tasks=$TASKS job=$OUT_DIR/jobs/$JOB_NAME"
   echo "clm_commit=$(git -C /mnt/fast-ai/src/context-language-models rev-parse HEAD 2>/dev/null)"
 } | tee "$OUT_DIR/$JOB_NAME.settings.txt"

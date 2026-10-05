@@ -285,6 +285,9 @@ policy. New pieces:
 | `fake_openai_server.py` | answers correctly from the stream it saw; FAKE_PLAN=violate / inline probes |
 | `DROP_OLD_THINKING=1` (runner) / arms `At B32t C32t E32t` | every model call (agent and summary) sends `chat_template_kwargs.preserve_thinking=false`, and earlier turns' reasoning is stripped from the history before each call (logged to `agent/dropped_thinking.jsonl`), so what is sent, what the budget gate counts and the self-editing mirror agree; CLM uses `clm_baselines:ClmAgentT` (the unmodified agent plus this switch). Summary table: `cached_tokens`, `think_share` |
 | `stub-checks.sh <dir>` | smoke + tiny-budget summary/self-edit trials (summary must fire; container file list) + the drop-thinking request checks; PASS/FAIL lines |
+| `clm_improved.py` (`run-context-job.sh improved`, arms `B32i B131i`) | improved self-editing agent: a delivered item is never rolled back or cut, a room check refuses `next` when the item cannot fit, harness-owned `/tmp/.live_ctx/STATE.txt` shown as the last message each call (counted in the budget like any message; validated, restored if broken; excluded by the memory-only grader like the mirror), old thinking dropped, optional `THINK_CAP` (two-call `continue_final_message` protocol) |
+| `second-comparison.sh` extras | explicit `ARMS` run arm by arm in the given order; `$OUT_DIR/STOP` stops cleanly before the next trial; graders of existing tasks refreshed (`make_kvstream_tasks.py DIR --refresh-graders`); estimate from the measured speeds |
+| `summarize_results.py <OUT_DIR>/runs` | accepts trial, job, `jobs/` or `runs/` dirs; `items_lost` (delivered items that never reached any context), improved-agent counters; suspect check judges shell text and embedded code separately and ignores writes to the mirror/STATE.txt |
 
 ```bash
 D=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context
