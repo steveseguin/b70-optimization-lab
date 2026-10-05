@@ -13,9 +13,11 @@
 #   MAX_TOKENS        max output tokens per call [4096]
 #   TEMPERATURE       [0]      TOP_P [none]   (greedy; "none" omits the field)
 #   ENABLE_THINKING   chat_template_kwargs.enable_thinking [true]; SEND_CTK=false omits the field
-#   MAX_STEPS         task-step budget [auto: 3 x items + 20 for kvstream tasks, else 64]
-#   LM_CALL_CAP       [none = 2*MAX_STEPS+24]
-#   OBS_MAX_CHARS     observation_max_chars [60000]  (a 100-SET batch is ~16k chars)
+#   MAX_STEPS         task-step budget [auto: v2 tasks 4 x items + 40; legacy kvstream 3 x items + 20; else 64]
+#   LM_CALL_CAP       [auto: v2 tasks 3 x MAX_STEPS; else none = 2*MAX_STEPS+24]
+#   OBS_MAX_CHARS     observation_max_chars [auto: max(60000, 2 x largest item) ]  (a 100-SET batch is ~16k chars)
+#   TASK_TEMPLATE     task_template agent kwarg [unset = terminal_agent_tasks; open_problems = task text only]
+#   SUMMARY_MAX_TOKENS SummaryAgent summary cap [unset = 4096; the call uses max(this, MAX_TOKENS)]
 #   TASKS             task dir or dataset dir [<out_dir>/tasks, generated if missing]
 #   PRESSURES         kvstream pressures to generate [1 2 4];  SEEDS [0]
 #   N_CONCURRENT      parallel trials [1]
@@ -44,7 +46,6 @@ TEMPERATURE=${TEMPERATURE:-0}
 TOP_P=${TOP_P:-none}
 ENABLE_THINKING=${ENABLE_THINKING:-true}
 SEND_CTK=${SEND_CTK:-true}
-OBS_MAX_CHARS=${OBS_MAX_CHARS:-60000}
 N_CONCURRENT=${N_CONCURRENT:-1}
 COST_METRIC=${COST_METRIC:-flops}
 FLOPS_MODEL_KEY=${FLOPS_MODEL_KEY:-27b}
@@ -91,21 +92,32 @@ if win and budget + mx > int(win):
 PY
 fi
 
-# Step budget: kvstream tasks need ~1 step per item plus compaction/answer turns.
-if [[ -z "${MAX_STEPS:-}" ]]; then
-  MAX_STEPS=$("$PY" - "$TASKS" <<'PY'
+# Step / call caps and observation size.
+#  legacy kvstream tasks (first comparison): MAX_STEPS = 3 x items + 20, lm_call_cap harness default.
+#  v2 tasks (metadata n_items; kvstream v2 and ledger): caps that cannot be the reason a run ends:
+#    MAX_STEPS = 4 x items + 40, LM_CALL_CAP = 3 x MAX_STEPS (summary calls count as LM calls),
+#    OBS_MAX_CHARS >= 2 x the largest item (no batch is ever cut by observation truncation).
+#  summarize_results.py reports which limit ended each run (ended_by) and flags a cap.
+read -r AUTO_STEPS AUTO_CAP AUTO_OBS < <("$PY" - "$TASKS" <<'PY'
 import sys, tomllib, pathlib
 p = pathlib.Path(sys.argv[1])
 tomls = [p / "task.toml"] if (p / "task.toml").exists() else sorted(p.glob("*/task.toml"))
-best = 0
+steps, cap, obs = 0, 0, 60000
 for t in tomls:
     md = tomllib.loads(t.read_text()).get("metadata", {})
-    if "n_batches" in md:
-        best = max(best, 3 * (int(md["n_batches"]) + 1) + 20)
-print(best or 64)
+    if "n_items" in md:
+        s = 4 * int(md["n_items"]) + 40
+        steps, cap = max(steps, s), max(cap, 3 * s)
+        obs = max(obs, 2 * int(md.get("max_item_chars", 30000)))
+    elif "n_batches" in md:
+        steps = max(steps, 3 * (int(md["n_batches"]) + 1) + 20)
+print(steps or 64, cap or "none", obs)
 PY
 )
-fi
+MAX_STEPS=${MAX_STEPS:-$AUTO_STEPS}
+LM_CALL_CAP=${LM_CALL_CAP:-$AUTO_CAP}
+[[ "$LM_CALL_CAP" == none ]] && LM_CALL_CAP=
+OBS_MAX_CHARS=${OBS_MAX_CHARS:-$AUTO_OBS}
 
 KW=(
   --agent-kwarg "api_base=$API_BASE"
@@ -123,11 +135,13 @@ KW=(
 [[ "$COST_METRIC" == flops ]] && KW+=(--agent-kwarg "flops_model_key=$FLOPS_MODEL_KEY")
 [[ -n "${LM_CALL_CAP:-}" ]] && KW+=(--agent-kwarg "lm_call_cap=$LM_CALL_CAP")
 [[ "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_trigger_ratio=$SUMMARY_TRIGGER")
+[[ -n "${TASK_TEMPLATE:-}" ]] && KW+=(--agent-kwarg "task_template=$TASK_TEMPLATE")
+[[ -n "${SUMMARY_MAX_TOKENS:-}" && "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_max_tokens=$SUMMARY_MAX_TOKENS")
 for kv in ${EXTRA_KWARGS:-}; do KW+=(--agent-kwarg "$kv"); done
 
 {
   echo "agent=$AGENT_KIND ($AGENT) api_base=$API_BASE model=openai/$MODEL_NAME"
-  echo "budget=$CONTEXT_BUDGET reserve=$BUDGET_RESERVE max_tokens=$MAX_TOKENS temperature=$TEMPERATURE top_p=$TOP_P thinking=$ENABLE_THINKING max_steps=$MAX_STEPS"
+  echo "budget=$CONTEXT_BUDGET reserve=$BUDGET_RESERVE max_tokens=$MAX_TOKENS temperature=$TEMPERATURE top_p=$TOP_P thinking=$ENABLE_THINKING max_steps=$MAX_STEPS lm_call_cap=${LM_CALL_CAP:-default} obs_max_chars=$OBS_MAX_CHARS task_template=${TASK_TEMPLATE:-default}"
   echo "tasks=$TASKS job=$OUT_DIR/jobs/$JOB_NAME"
   echo "clm_commit=$(git -C /mnt/fast-ai/src/context-language-models rev-parse HEAD 2>/dev/null)"
 } | tee "$OUT_DIR/$JOB_NAME.settings.txt"

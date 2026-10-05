@@ -268,6 +268,29 @@ arms do better if the model offloads batches to files (`next > b1.txt`), which t
 allows, as in the paper's KV Store task. CLM editing turns force a re-read of everything
 after the edit. Without prefix caching every call re-reads everything anyway.
 
+## Second comparison (2026-10-05)
+
+Why and how: `../../notes/2026-10-05-self-editing-first-comparison.md`. The first run's losses
+all came from the model's own `next | tee file | head` (broken pipe), not from any context
+policy. New pieces:
+
+| file | what |
+|---|---|
+| `make_kvstream_tasks.py --tokens N --mode memory\|notes` | v2 kv tasks at absolute sizes (served-model tokens via `tokenizers` + the model's tokenizer.json), storage rule, delivery log, shared v2 grader (correct/blank/stale/wrong, file scan, void). `--pressure` still builds the first comparison's tasks byte for byte. |
+| `make_ledger_tasks.py` | running-ledger task (SET/ADD/DEL on ~160 counters + noise memos), same modes and grader |
+| `second-comparison.sh` | arms A, B32, B131, C32, C131, D32, E32 over both tasks; SUBSET full/core/quick; DRY_RUN=1; STUB=1 (+ rule probes) |
+| `run-context-job.sh` | v2 caps: steps 4 × items + 40, call cap 3 × steps, OBS_MAX_CHARS ≥ 2 × largest item; TASK_TEMPLATE, SUMMARY_MAX_TOKENS |
+| `clm_baselines.py` | summary cap max(4096, max_tokens), empty-reply retry with thinking off, over-limit summary before a call |
+| `summarize_results.py` | arm/kind/mode/size/seed, ended_by, rule (VOID/suspect), diagnostics table, `--check` |
+| `fake_openai_server.py` | answers correctly from the stream it saw; FAKE_PLAN=violate / inline probes |
+
+```bash
+D=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context
+OUT_DIR=/tmp/x API_BASE=http://unused DRY_RUN=1 SUBSET=core $D/second-comparison.sh    # plan + estimate
+STUB=1 SIZES=4000 OUT_DIR=/mnt/fast-ai/bench-results/context-stub-second $D/second-comparison.sh
+API_BASE=... OUT_DIR=/mnt/fast-ai/bench-results/context-clm-second-$(date +%Y%m%d) SUBSET=core $D/second-comparison.sh
+```
+
 ## Validation done (stub only)
 
 - `clm-harbor --help`, `harbor trial start --help`, and `import clm_harness.clm_agent.harness` work.

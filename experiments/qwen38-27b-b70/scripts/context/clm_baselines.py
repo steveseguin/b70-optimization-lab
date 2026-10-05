@@ -16,6 +16,12 @@ context-management policy, so a comparison isolates that policy:
                 everything after the pinned system+task prefix with that summary. The
                 prompt wording paraphrases the Codex CLI compaction prompt; it is not a copy
                 of the paper's baseline code.
+                Since 2026-10-05 (after the first comparison): the summary call's output cap is
+                max(summary_max_tokens, max_tokens) and an empty reply (thinking used up the
+                cap) is retried once with thinking off; if the context is already over the
+                enforced limit right before a model call, the summary runs there too, instead
+                of the gate's final-turn notice (_SummaryGuard). summary_calls.json records
+                each attempt (finish_reason, reasoning_chars, summary_chars, reason).
 
 Use with Harbor (the scripts directory must be on PYTHONPATH):
   -a clm_baselines:PlainAgent    or    -a clm_baselines:SummaryAgent
@@ -135,6 +141,29 @@ class _SummaryEnv(_NoMirrorEnv):
         return await super().step(command, messages, environment=environment, pending=pending)
 
 
+class _SummaryGuard:
+    """Wraps the agent's checkpointer, whose maybe() runs right before the budget gate of
+    every iteration. If the context is already over the enforced limit there (a large tool
+    output landed on a context just under the trigger), summarize now instead of letting the
+    gate hand out the final-turn notice. In the first comparison the gate issued that notice
+    once because summaries had failed; this keeps "summary" from being judged by the plain
+    arm's stop policy."""
+
+    def __init__(self, inner: Any, agent: "SummaryAgent") -> None:
+        self._inner, self._agent = inner, agent
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+    async def maybe(self, environment: Any, messages: list[dict[str, Any]]) -> bool:
+        r = await self._inner.maybe(environment, messages)
+        a = self._agent
+        lim = a._budget.strict_target
+        if lim and a._budget.count(messages) > lim:
+            await a._maybe_summarize(messages, reason="over_limit_before_call")
+        return r
+
+
 class SummaryAgent(_h.ClmAgent):
     """Codex-style harness-triggered summary compaction (see module docstring)."""
 
@@ -149,7 +178,9 @@ class SummaryAgent(_h.ClmAgent):
         self.summary_max_tokens = int(summary_max_tokens)
         self._ctx.__class__ = _SummaryEnv
         self._ctx.agent = self
+        self._ckpt = _SummaryGuard(self._ckpt, self)
         self.summary_calls: list[dict[str, Any]] = []
+        self.n_summary_calls = 0
 
     async def run(self, instruction, environment, context) -> None:
         _h._SYSTEM_TEMPLATE = BASELINE_SYSTEM
@@ -159,19 +190,11 @@ class SummaryAgent(_h.ClmAgent):
             (self.logs_dir / "summary_calls.json").write_text(
                 json.dumps(self.summary_calls, indent=2) + "\n")
 
-    async def _maybe_summarize(self, messages: list[dict[str, Any]]) -> None:
-        limit = self._budget.strict_target
-        if not limit or len(messages) <= self._protect + 1:
-            return
-        before = self._budget.count(messages)
-        if before < self.summary_trigger_ratio * limit:
-            return
-        req = list(messages) + [{"role": "user", "content": SUMMARY_PROMPT}]
-        self._snap(req, "summary")
+    def _summary_call(self, req: list[dict[str, Any]], thinking: bool):
         model = self.model_name or ""
         kw: dict[str, Any] = {
             "model": model, "messages": req,
-            token_cap_key(model): self.summary_max_tokens,
+            token_cap_key(model): max(self.summary_max_tokens, self.max_tokens),
             "api_base": self.api_base, "timeout": _h._LLM_TIMEOUT_SECONDS,
             "num_retries": 2, "drop_params": True,
         }
@@ -180,24 +203,57 @@ class SummaryAgent(_h.ClmAgent):
         if self.top_p is not None:
             kw["top_p"] = self.top_p
         if self.send_chat_template_kwargs:
-            kw["extra_body"] = {"chat_template_kwargs": {"enable_thinking": self.enable_thinking}}
+            kw["extra_body"] = {"chat_template_kwargs": {"enable_thinking": thinking}}
         self.n_lm_calls += 1
+        self.n_summary_calls += 1
         try:
-            resp = await asyncio.to_thread(litellm.completion, **kw)
+            return litellm.completion(**kw)
         except Exception as exc:  # summary failure: keep going uncompacted
             logger.warning("summary call failed: %s: %s", type(exc).__name__, exc)
-            self.summary_calls.append({"error": f"{type(exc).__name__}: {exc}", "before": before})
+            return exc
+
+    async def _maybe_summarize(self, messages: list[dict[str, Any]], reason: str = "trigger") -> None:
+        limit = self._budget.strict_target
+        if not limit or len(messages) <= self._protect + 1:
             return
-        text = (resp.choices[0].message.content or "").strip()
-        usage = getattr(resp, "usage", None)
-        rec = {
-            "before": before,
-            "prompt_tokens": getattr(usage, "prompt_tokens", 0) or 0,
-            "completion_tokens": getattr(usage, "completion_tokens", 0) or 0,
-            "summary_chars": len(text),
-        }
+        before = self._budget.count(messages)
+        if before < self.summary_trigger_ratio * limit:
+            return
+        if getattr(self, "_fail_at", None) == len(messages):
+            return  # the last attempt on this very context failed; do not loop
+        req = list(messages) + [{"role": "user", "content": SUMMARY_PROMPT}]
+        self._snap(req, "summary")
+        rec: dict[str, Any] = {"before": before, "reason": reason, "prompt_tokens": 0,
+                               "completion_tokens": 0, "attempts": []}
+        text = ""
+        # First comparison (2026-10-05): with thinking on, a 4,096-token summary cap was used up
+        # by the thinking in 3 of 5 calls and the summary came back empty. So: cap = the larger
+        # of summary_max_tokens and the agent's max_tokens, and if the reply is still empty,
+        # retry once with thinking off (recorded as attempt 2).
+        for thinking in ([self.enable_thinking, False] if self.enable_thinking else [False]):
+            resp = await asyncio.to_thread(self._summary_call, req, thinking)
+            if isinstance(resp, Exception):
+                rec["attempts"].append({"thinking": thinking, "error": f"{type(resp).__name__}: {resp}"})
+                continue
+            usage = getattr(resp, "usage", None)
+            choice = resp.choices[0]
+            text = (choice.message.content or "").strip()
+            rc = getattr(choice.message, "reasoning_content", None) or ""
+            rec["prompt_tokens"] += getattr(usage, "prompt_tokens", 0) or 0
+            rec["completion_tokens"] += getattr(usage, "completion_tokens", 0) or 0
+            ptd = getattr(usage, "prompt_tokens_details", None)
+            rec["cached_tokens"] = rec.get("cached_tokens", 0) + (
+                (getattr(ptd, "cached_tokens", 0) if ptd is not None else 0) or 0)
+            rec["attempts"].append({"thinking": thinking, "finish_reason": choice.finish_reason,
+                                    "completion_tokens": getattr(usage, "completion_tokens", 0) or 0,
+                                    "reasoning_chars": len(rc), "summary_chars": len(text)})
+            if text:
+                break
+        rec["summary_chars"] = len(text)
         if not text:
             rec["error"] = "empty summary"
+            logger.warning("summary call(s) returned no text; continuing uncompacted")
+            self._fail_at = len(messages)
             self.summary_calls.append(rec)
             return
         messages[:] = messages[: self._protect] + [
