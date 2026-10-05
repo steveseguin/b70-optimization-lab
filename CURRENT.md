@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-04 21:45 UTC** (2026-10-04 17:45 EDT), two-B70 host.
+Last reviewed: **2026-10-05 00:40 UTC** (2026-10-04 20:40 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
 ## 2026-10-04 15:25 EDT, four-B70 host: the video server was using host RAM equal to its video memory; found and fixed
@@ -31,30 +31,36 @@ read once instead of once per clip); a one-card probe is checking whether each c
 depends only on its own inputs. That would change rounding, like the text window did, so adopting it is the
 owner's call.
 
-## 2026-10-04 17:45 EDT: many users at once is faster, still exact: 630 tokens a second for 64 users
+## 2026-10-04 20:40 EDT: many users at once, exact by construction: 874 tokens a second for 64 users
 
-**The many-users mode needs only two small fixes, not three, and is 15 to 29 % faster than this morning's table.**
-Every answer is exactly what a lone user gets, on short and long prompts, and exactly the published single-user
-reference. It is exact by construction: every kernel on the path gives a row the same result whether it is alone
-or in a batch.
+**Three times this morning's first table, and every answer is still exactly what a lone user gets**, on short and
+long prompts, identical to the published single-user reference. "Exact by construction" means every kernel on the
+path has been measured to give a row the same bits alone or in a batch, for the shapes this mode uses.
 
-| Users at once | Tokens a second together | This morning | Each user gets | Exact |
-| ---: | ---: | ---: | ---: | --- |
-| 1 (the shipped recipe) | 90 | 90 | 90 | yes |
-| 16 | **374** | 325 | 23 | yes, short and long prompts |
-| 32 | **536** | 428 | 17 | yes, short and long prompts |
-| 64 | **630** | 488 | 10 | yes, short and long prompts, two fresh servers |
+| Users at once | Tokens a second together | 17:45 today | This morning | Each user gets |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 (the shipped recipe) | 90 | 90 | 90 | 90 |
+| 16 | **419** | 374 | 325 | 26 |
+| 32 | **657** | 536 | 428 | 21 |
+| 64 | **874** (two fresh servers) | 630 | 488 | 14 |
 
-- **What changed.** This morning's third fix (running the word-picking step four rows at a time) was not needed. A
-  direct check on both cards shows that step is bit-identical for every row from 1 to 32 rows, and the image
-  already works in pieces of 32. The earlier check had tested the wrong kernel. The two fixes that are needed:
-  each step is either one user's prompt chunk or writing only, and each long conversation gets its own attention
-  call.
-- **Tried and not adopted:** the image's full set of "exact" switches (deterministic, but long prompts three times
-  slower); copying text as the draft at the built-in depth (exact, free, no faster).
-- **Running next:** longer copy drafts for one user, used only when there is something to copy (sized at about
-  +26 % on long prompts); first a short test of the simpler step pipeline that needs.
-- [Test record](experiments/qwen38-27b-b70/notes/2026-10-04-fp8-multiuser-prereg.md),
+- **How.** Two scheduling rules and nothing else: each step is either prompt reading or writing, never both; and
+  each long conversation gets its own attention call. New tonight: several short prompts may be read in one step,
+  but only inside the range the kernel checks prove identical to reading each alone (each prompt at least 17
+  tokens, at most 512 tokens in the step). Long prompts are still read one at a time (66 tok/s together on the
+  2K to 8K suite at 64 users).
+- **Corrections made today.** The word-picking step is identical for 1 to 32 rows, so this morning's "four rows
+  at a time" fix was never needed. The image's own "exact" switches were either not read at all or three times
+  slower on long prompts.
+- **One user: the drafting kernel was not identical to plain decoding, and is now.** A direct check showed the
+  shipped drafting matched plain decoding on every test but not bit for bit inside one kernel. An eight-line kernel
+  fix (image R313, local only) makes it identical in all 74 checked cases at the same speed (90.3 tok/s). The
+  published packages are still on the old image; moving them needs the image pushed and a fresh acceptance each.
+- **In progress:** longer copy drafts for one user (+26 % on long prompts measured; the cause of their wrong
+  answers was an out-of-range read after six or more accepted words, now fixed in the overlay and being
+  confirmed).
+- Notes: [many users](experiments/qwen38-27b-b70/notes/2026-10-04-fp8-multiuser-prereg.md),
+  [drafting kernel](experiments/qwen38-27b-b70/notes/2026-10-04-speculation-not-exact-by-construction.md),
   [copy drafts](experiments/qwen38-27b-b70/notes/2026-10-04-copy-draft-sizing-prereg.md).
 
 ## 2026-10-04 11:10 EDT: the model-load GPU fault is explained and has a validated fix; no reboot was needed

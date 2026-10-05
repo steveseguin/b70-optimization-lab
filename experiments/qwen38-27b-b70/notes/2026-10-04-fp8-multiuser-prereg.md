@@ -364,3 +364,17 @@ Inside those limits every kernel on the path has a census, so this counts as exa
 server so far; a second, and 16 and 32 users, are owed before it replaces the table.
 Data: `data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/`.
 
+## Addendum, 20:40 EDT: prompt sharing inside census limits, confirmed at 16, 32 and 64 users
+
+One fresh server each (64 users has two), long suite and short ladder, two passes each. All exact against solo and
+against the frozen reference.
+
+| Users | Long prompts equal to solo | Short ladder equal to solo | Together (short / long) | One prompt per step |
+| ---: | --- | --- | ---: | ---: |
+| 16 | 64/64, 64/64 | 64/64, 64/64 | 419 / 62.6 tok/s | 374 |
+| 32 | 64/64, 64/64 | 64/64, 64/64 | 657 / 66.1 tok/s | 536 |
+| 64 (19:38) | 64/64, 64/64 | 64/64, 64/64 | 874 / 66.5 tok/s | 630 |
+| 64 (19:56) | 64/64, 64/64 | 64/64, 64/64 | 874 / 66.5 tok/s | 630 |
+
+Data: `data/2026-10-04-fp8-multiuser/prefill-batch8-limits-{s64,confirm-s16,confirm-s32,confirm-s64}/`.
+
