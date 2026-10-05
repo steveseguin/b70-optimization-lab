@@ -173,3 +173,40 @@ and at 120K one question repeated cold and compared token for token with its cac
 59 of 60 codes, and every shorter length does too. It goes into the recipe with that number. Where recall is below
 that, the wrong answers are read: a neighbour's code (a positional slip) is a different failure from an invented
 code. The cold repeat must match token for token; if it does not, the cache result is withdrawn.
+
+## Result: recall rate by length (04:32 EDT)
+
+One two-card server, R314, 262,144 window, drafting on, exact prefix cache on. 720 codes asked in all.
+Data: `data/2026-10-05-context/recall/`.
+
+| Context | Codes in ordinary words | Wall of codes | Wait for a question once the text is cached | Writes |
+| ---: | ---: | ---: | ---: | ---: |
+| 60K | 60 of 60 | 60 of 60 | 1.0 s | 70 tok/s |
+| 120K | 60 of 60 | 58 of 60 | 1.5 s | 48 |
+| 160K | 59 of 60 | 58 of 60 | | |
+| 200K | 58 of 60 | 57 of 60 | 2.0 s | 35 |
+| 230K | 60 of 60 | 60 of 60 | | |
+| 250K | 60 of 60 | 58 of 60 | 2.4 s | 26 |
+
+- **By the rule written before the run, the fully reliable window in this test is 60,000 tokens.** From 120K up,
+  about one lookup in forty comes back wrong (12 wrong of 480; 0 wrong of 240 at 60K and 120K-in-words). It does
+  not get steadily worse with length: 230K was perfect in both forms. It is a low, steady error rate, not a cliff.
+- **What the wrong answers are: never invented, always another record's real code.** Of the 12 misses, 6 are the
+  record just before the one asked (number off by one), and the other 6 are records whose number shares most digits
+  with the one asked (1550 -> 550, 5997 -> 3997, 1695 -> 1795, 4797 -> 4977). The model kept the text; it slipped
+  on *which* of thousands of near-identical lines to read. This test is built to be hard in exactly that way (up
+  to 11,879 records that differ only in their number); ordinary context with distinct content should do better,
+  but that is not measured.
+- **Nothing is lost by position:** misses fall in the first, middle and last thirds alike (the start of a 250K
+  context is recalled as well as the end).
+- **The cache makes a long context usable:** once a 200K text is cached, each further question starts in about
+  2 s instead of 114 s. The repeat-cold check at 120K gave the same tokens as the cached answer, in both forms.
+- **Costs seen here:** a cold read in 832-token pieces is slower than in 4,096-token pieces by more than I measured
+  at 30K: 120K took 69.6 s against 54.8 s (27 %); 60K took 26.7 s against 22 s. Writing slows with length whatever
+  the cache does (70 tok/s at 60K, 26 at 250K), because every word written reads the whole cache.
+
+**What this means for the recipe.** The window that can be opened is 262,144. The window I would rely on for
+needle-exact work is about 60K; up to 250K the model still reads and uses everything, with a small chance of
+picking a look-alike line. Keeping the working context small is right twice over: fewer slips and two to three
+times faster writing. That is the case for pruning, and for keeping bulk data in files, even though the big window
+exists.
