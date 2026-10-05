@@ -135,3 +135,30 @@ over 48 tokens on 99 cases is a weaker check than scores; a scores run without d
 served from the cache (reused tokens above zero where the prompt has at least two full blocks before the change).
 Any difference is a fail and the first differing case is the lead. Also recorded: how much is reused after the
 middle edit the first time (the periodic state should give a hit now), and the time saved.
+
+## Result of the second test (03:32 EDT): pass, 99 of 99, drafting on
+
+Two fresh two-card servers on R314 with drafting on, both reading in 832-token pieces: the reference without the
+cache, then the cache server with `b70-prefix-cache-exact` and a periodic state every 6,656 tokens.
+Data: `data/2026-10-05-context/prefixcache-exact-mtp/`.
+
+- **All 99 cases gave the reference's tokens**: eleven prompts (the three ledgers included this time), nine cases
+  each, among them the second turn (f) and the third turn (g) of a conversation, where the shared text holds
+  answers the server wrote. The server log confirms the add-on stopped caching at the end of each prompt.
+- **The cache was used** in 10 of 11 prompts for repeat, append, repeated edit, second turn and third turn (the
+  eleventh is 1,700 tokens, too short to have a reusable block once drafting moves the reuse point back by one).
+- **An edit in the middle now reuses the first time on a long prompt:** the 30K ledger with 300 tokens removed at
+  the half-way point resumed from token 13,312 (6.7 s instead of 11.3 s); sent again it resumed from 28,288 (0.7 s).
+  On prompts shorter than about 14K the first edit still reuses nothing, because the first periodic state is at
+  6,656 and the reuse point is one block earlier; the interval is a memory-for-reuse dial.
+- **Time:** over all cached cases the wait for the first token fell from 228 s to 69 s. A repeated 30K prompt
+  starts in 0.8 s instead of 11.4 s.
+- **Costs, measured:** reading in 832-token pieces is slower when nothing is reusable: 30K cold in 11.4 s
+  (2,620 tok/s) against 9.8 s (3,060 tok/s) in 4,096-token pieces, about 14 %. Reuse with drafting lands one block
+  (832 tokens) earlier than without. Each kept state costs as much memory as three blocks of context.
+- **What this is and is not.** By construction: every cached block was made by the same 832-token reading piece a
+  cold read runs, on the same earlier text, and nothing made while writing is ever stored. By test: token ids on 99
+  cases, up to 48 tokens each, one user. Not yet done: a scores-level comparison (needs host memory this server
+  does not leave), several users at once, the one-card server, and prompts beyond 30K.
+- **Decision:** the context experiments from here on run with this cache (interval 13,312 for the long ones, so a
+  180K conversation and its states fit the pool).
