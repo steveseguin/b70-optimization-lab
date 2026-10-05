@@ -17,13 +17,15 @@
 #   C131  summary at 75 %, budget 131,072, memory-only (only where the task is >= 0.8 x budget)
 #   D32   self-editing, budget 32,768, notes allowed
 #   E32   no management, budget 32,768, notes allowed
+#   At B32t C32t E32t   the same arms with earlier thinking dropped from every call (DROP_OLD_THINKING=1:
+#         preserve_thinking=false + earlier reasoning stripped from the history; see clm_baselines.py)
 # Every trial is its own Harbor job "<arm>__<task>" under $OUT_DIR/runs/jobs (finished jobs are
 # skipped on a re-run). Caps are derived from the task (run-context-job.sh) and summarize_results.py
 # --check marks any trial that a cap, a timeout or the storage rule ended; the script then exits 1.
 #
 # Environment:
 #   API_BASE MODEL_NAME OUT_DIR (required unless STUB=1)
-#   SUBSET    full [default] (~20 h) | core (~3 h) | quick (~1 h)   -- see the note for what each keeps
+#   SUBSET    full [default] (~20 h) | core (~5 h) | quick (~1 h)   -- see the note for what each keeps
 #   KINDS SIZES SEEDS ARMS   override the subset's lists (e.g. SIZES="120000" ARMS="A B32")
 #   MAX_TOKENS [16384]  TEMPERATURE [0]  ENABLE_THINKING [true]  TASK_TEMPLATE [open_problems]
 #   DRY_RUN=1  print the plan and the time estimate only
@@ -54,8 +56,8 @@ fi
 export API_BASE MODEL_NAME=${MODEL_NAME:-qwen38-27b-fp8}
 
 case "$SUBSET" in
-  full)  K=${KINDS:-ledger kv}; Z=${SIZES:-60000 120000 180000}; S=${SEEDS:-0 1}; A=${ARMS:-A B32 B131 C32 C131 D32 E32} ;;
-  core)  K=${KINDS:-ledger kv}; Z=${SIZES:-120000};              S=${SEEDS:-0 1}; A=${ARMS:-A B32 C32 D32 E32} ;;
+  full)  K=${KINDS:-ledger kv}; Z=${SIZES:-60000 120000 180000}; S=${SEEDS:-0 1}; A=${ARMS:-A B32 B131 C32 C131 D32 E32 At B32t C32t E32t} ;;
+  core)  K=${KINDS:-ledger kv}; Z=${SIZES:-120000};              S=${SEEDS:-0 1}; A=${ARMS:-A B32 C32 D32 E32 At B32t E32t} ;;
   quick) K=${KINDS:-ledger kv}; Z=${SIZES:-60000};               S=${SEEDS:-0};   A=${ARMS:-A B32 C32 D32 E32} ;;
   *) echo "SUBSET must be full|core|quick" >&2; exit 2 ;;
 esac
@@ -82,9 +84,11 @@ kinds, sizes, seeds, arms = (x.split() for x in sys.argv[5:9])
 ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("clm", "memory", 131072),
         "C32": ("summary", "memory", 32768), "C131": ("summary", "memory", 131072),
         "D32": ("clm", "notes", 32768), "E32": ("plain", "notes", 32768)}
+for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
+    ARMS[a + "t"] = ARMS[a]
 R, W = 3000.0, 75.0          # prompt reading tok/s without prefix caching, writing tok/s
 def est(arm, size, items):
-    agent, mode, budget = ARMS[arm]
+    agent, mode, budget = ARMS[arm]   # thinking-dropped arms: same estimate (a bit cheaper in reality)
     over, out1 = 4000, 600
     if budget == 0:
         calls, p, ctx = items + 6, 0.0, over
@@ -118,7 +122,7 @@ for seed in seeds:
                 p, o = est(arm, md["stream_tokens"], md["n_items"])
                 s = p / R + o / W
                 tot += s
-                print(f"{arm}\t{agent}\t{budget}\t{td}\t{name}\t{md['stream_tokens']}\t{md['n_items']}\t{p:.0f}\t{o:.0f}\t{s:.0f}")
+                print(f"{arm}\t{agent}\t{budget}\t{td}\t{name}\t{md['stream_tokens']}\t{md['n_items']}\t{p:.0f}\t{o:.0f}\t{s:.0f}\t{int(arm.endswith('t'))}")
 print(f"#total\t{tot:.0f}")
 PY
 ) || { echo "planning failed"; exit 1; }
@@ -143,14 +147,14 @@ PY
 
 RUNS="$O/runs"; mkdir -p "$RUNS"
 FAILED=0
-run_one() {  # arm agent budget task_dir job_name
-  local arm=$1 agent=$2 budget=$3 td=$4 job=$5
+run_one() {  # arm agent budget task_dir job_name drop_old_thinking
+  local arm=$1 agent=$2 budget=$3 td=$4 job=$5 drop=${6:-0}
   if compgen -G "$RUNS/jobs/$job/*/verifier/reward.txt" >/dev/null; then
     echo "== $job: done earlier, skipped"; return 0
   fi
   rm -rf "${RUNS:?}/jobs/$job"
-  echo "== $(date +%H:%M:%S) $job (agent=$agent budget=$budget)"
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
+  echo "== $(date +%H:%M:%S) $job (agent=$agent budget=$budget drop_old_thinking=$drop)"
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
   echo "   rc=$? $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
   if ! "$PY" "$D/summarize_results.py" --brief --check "$RUNS/jobs/$job" > "$RUNS/$job.check" 2>&1; then
     echo "!!! $job: a cap, timeout, server refusal or the storage rule ended this run; it does not count:"
@@ -158,9 +162,9 @@ run_one() {  # arm agent budget task_dir job_name
     FAILED=1
   fi
 }
-while IFS=$'\t' read -r arm agent budget td name _rest; do
+while IFS=$'\t' read -r arm agent budget td name _tok _items _p _o _s drop; do
   [[ -z "$arm" || "$arm" == \#* ]] && continue
-  run_one "$arm" "$agent" "$budget" "$td" "${arm}__${name}"
+  run_one "$arm" "$agent" "$budget" "$td" "${arm}__${name}" "$drop"
 done <<< "$PLAN"
 
 if [[ "${STUB:-0}" == 1 ]]; then   # storage-rule probes (memory mode, no budget, plain agent)

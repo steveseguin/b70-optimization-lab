@@ -5,7 +5,10 @@
 
 Table 1 (one row per trial): arm, task kind, storage mode, stream size, seed, reward, LM calls,
 edits (real context-file edits) / summaries (ok+failed), peak sent context, prompt tokens read
-(summary calls included), completion tokens, wall seconds, ended_by and rule.
+(summary calls included), cached prompt tokens (server-reported prompt_tokens_details, summed),
+think_share (share of the sent context, by characters over all agent-call snapshots, that was
+earlier turns' thinking; ~0 for the thinking-dropped arms), completion tokens, wall seconds,
+ended_by and rule.
 
   ended_by  submit            the model ran the submit command
             submit(final)     it submitted on the budget's final-turn notice
@@ -131,6 +134,7 @@ def trial_row(t: Path) -> dict:
     want = {k: " ".join(str(v).split()) for k, v in exp.items()} if spec.get("kind") == "kv" else {}
     seen_val = set()
     last_text = ""
+    think_chars = all_chars = 0
     for d in snaps:
         texts = []
         for m in d["messages"]:
@@ -138,6 +142,9 @@ def trial_row(t: Path) -> dict:
                 continue
             tx = msg_text(m)
             texts.append(tx)
+            if d.get("kind") == "agent":
+                all_chars += len(tx)
+                think_chars += len(m.get("reasoning_content") or "")
             if m.get("role") in ("tool", "user"):
                 for mm in ITEM_RE.finditer(tx):
                     n = int(mm.group(1))
@@ -242,6 +249,7 @@ def trial_row(t: Path) -> dict:
         "summary_failed": len(sc) - len(ok_sum),
         "prompt_tokens": (u.get("prompt_tokens") or 0) + sum(x.get("prompt_tokens", 0) for x in sc),
         "completion_tokens": (u.get("completion_tokens") or 0) + sum(x.get("completion_tokens", 0) for x in sc),
+        "think_share": round(think_chars / all_chars, 3) if all_chars else None,
         "cached_tokens": (u.get("cached_tokens") or 0) + sum(x.get("cached_tokens", 0) for x in sc), "peak_sent_ctx": peak,
         "pflops_cache_aware": round(kv_flops["cache_aware_flops"] / 1e15, 3) if kv_flops.get("cache_aware_flops") else None,
         "wall_s": wall, "ended_by": ended, "invalid": invalid, "rule": rule,
@@ -285,7 +293,7 @@ def main() -> None:
     rows.sort(key=lambda r: (str(r.get("kind")), str(r.get("mode")), int(r.get("size") or 0),
                              str(r.get("arm")), int(r.get("seed") or 0)))
     t1 = ["arm", "kind", "mode", "size", "seed", "budget", "reward", "lm_calls", "real_edits", "summaries",
-          "summary_failed", "peak_sent_ctx", "prompt_tokens", "cached_tokens", "completion_tokens", "wall_s", "ended_by", "rule"]
+          "summary_failed", "peak_sent_ctx", "prompt_tokens", "cached_tokens", "think_share", "completion_tokens", "wall_s", "ended_by", "rule"]
     t2 = ["arm", "kind", "mode", "size", "seed", "correct", "blank", "stale", "wrong", "lost_never",
           "lost_dropped", "lost_copy", "stored_frac", "items", "delivered", "seen_whole", "cut",
           "broken_pipe", "to_file", "tee", "refused", "hit_max_tokens", "rollbacks", "nudges",

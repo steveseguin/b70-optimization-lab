@@ -133,3 +133,43 @@ with drafting and 430,606 without. Data: `data/2026-10-05-context/longctx/`.
 suspect is the stack (a size limit somewhere), and the next step is to find it. If recall fades gradually or the
 edge moves with the content, it is the model, and the longest reliable window is the largest length at which all
 forms answer everything, less a margin. The number that goes into the recipe is that window, not 262,144.
+
+## Result of the second long-window test (04:07 EDT)
+
+One two-card server, R314, 262,144 window, drafting on. Data: `data/2026-10-05-context/edge/`.
+
+- **There is no cliff in the stack.** The empty answer beyond about 212,000 tokens only happens when the prompt is
+  sent as bare text ending in "Answer:" (the form my first probe used): 211,969 tokens answers all six codes,
+  213,545 and everything longer returns the end-of-turn token at once. Sent the way an application sends it (chat
+  form), the same 213,545-token prompt answers all six codes, in order. So the edge was the model treating a very
+  long bare document as finished, not a size limit in the engine.
+- **Chat form, wall of codes:** 6 of 6 at 8K, 30K, 120K, 212K and 213.5K.
+- **Chat form, codes buried in ordinary words:** 6 of 6 at 30K, 120K, 212K and 214K; **5 of 6 at 200K and at
+  250K** (one wrong code each: the first record at 200K, a middle record at 250K). Six codes per length is too few
+  to call a rate; the next test measures it properly.
+- **One-step decisions** (80 items: yes/no, A-D, sentiment, routing): restricting the first token to the labels gave
+  the same label as ordinary decoding on 80 of 80, both right on 78 of 80; on the 24 items also run with thinking,
+  one-step agreed with the thought-out answer on 24 of 24 (thinking was right on 23 of 24). Time per item: 0.09 s
+  one-step, 0.09 s decoded (a label is two tokens and drafting writes five per step, so decoding a label already is
+  one step), 0.59 s with thinking (45 tokens). **The saving is not in skipping the label, it is in not thinking**:
+  6.5 times faster with the same answers on these easy items. Restricting the tokens adds a guarantee instead: the
+  output is always one of the labels. Harder decisions, where thinking changes the answer, are not measured here.
+- **Speed by length is unchanged from the first test** (reads 3,280 tok/s at 8K to 1,550 at 250K; writes 127 to 30).
+- A try of the four-card host's driver setting (`EnableDeferBacking=0`) to win back host memory did not start: with
+  it the server's own start-up use puts the card under the 95 % free-memory check. Not pursued tonight.
+
+## Recall rate by length, written before it runs (04:15 EDT)
+
+`MU_MODE=serve_run` with `scripts/context/recall-rate.sh`: one server with the exact prefix cache on
+(`b70-prefix-cache-exact`, 832-token pieces, a state every 13,312 tokens), 262,144 window, drafting on.
+Two forms (codes in ordinary words; wall of codes), one text each, read at 60K, 120K, 160K, 200K, 230K and 250K
+(each length extends the last, so the cache carries over), ten different six-code questions per length, picked so
+the sixty codes are spread evenly from the first record to the last.
+
+**Recorded:** codes right out of 60 per length and form, by position (first, middle, last third), wait per question,
+and at 120K one question repeated cold and compared token for token with its cached answer.
+
+**Reading rule.** The longest reliable window for recall is the largest length at which both forms give at least
+59 of 60 codes, and every shorter length does too. It goes into the recipe with that number. Where recall is below
+that, the wrong answers are read: a neighbour's code (a positional slip) is a different failure from an invented
+code. The cold repeat must match token for token; if it does not, the cache result is withdrawn.

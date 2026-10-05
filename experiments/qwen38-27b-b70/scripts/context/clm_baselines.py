@@ -106,6 +106,103 @@ class _NoMirrorEnv(ContextEnv):
         return res
 
 
+# ---------------------------------------------------------------------------------------
+# "Drop old thinking" switch (2026-10-05, owner request; run-context-job.sh DROP_OLD_THINKING=1).
+# The served Qwen3.8 chat template re-sends every earlier turn's thinking
+# (preserve_thinking undefined = true). With drop_old_thinking=true an agent
+#   1. sends chat_template_kwargs.preserve_thinking=false on EVERY model call (agent calls and
+#      summary calls), via a wrapper around litellm.completion (one Harbor job = one process);
+#   2. removes reasoning_content (and the provider "reasoning" copy) from all earlier assistant
+#      turns in its own history right before each call, logging the removed text to
+#      agent/dropped_thinking.jsonl. The template alone would still keep the thinking of
+#      assistant turns after the last user message; stripping it in the harness makes what is
+#      sent, what the budget gate counts (it counts reasoning_content) and what the self-editing
+#      mirror shows all the same thing: no earlier thinking at all.
+def _as_bool(v: Any) -> bool:
+    return v if isinstance(v, bool) else str(v).strip().lower() in ("1", "true", "yes", "on")
+
+
+_PATCHED = False
+
+
+def _install_preserve_thinking_false() -> None:
+    global _PATCHED
+    if _PATCHED:
+        return
+    orig = litellm.completion
+
+    def completion(*a: Any, **kw: Any) -> Any:
+        eb = dict(kw.get("extra_body") or {})
+        ctk = dict(eb.get("chat_template_kwargs") or {})
+        ctk["preserve_thinking"] = False
+        eb["chat_template_kwargs"] = ctk
+        kw["extra_body"] = eb
+        return orig(*a, **kw)
+
+    litellm.completion = completion
+    _PATCHED = True
+
+
+class _PreCall:
+    """Wraps the agent's checkpointer (its maybe() runs every iteration right before the
+    budget gate and the model call) and runs `cb(messages)` first."""
+
+    def __init__(self, inner: Any, cb: Any) -> None:
+        self._inner, self._cb = inner, cb
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+    async def maybe(self, environment: Any, messages: list[dict[str, Any]]) -> bool:
+        self._cb(messages)
+        return await self._inner.maybe(environment, messages)
+
+
+def _setup_drop_thinking(agent: Any, flag: Any) -> None:
+    agent.drop_old_thinking = _as_bool(flag)
+    agent.dropped_thinking_chars = 0
+    if not agent.drop_old_thinking:
+        return
+    _install_preserve_thinking_false()
+
+    def strip(messages: list[dict[str, Any]]) -> None:
+        out = []
+        for i, m in enumerate(messages):
+            if not isinstance(m, dict) or m.get("role") != "assistant":
+                continue
+            rc = m.pop("reasoning_content", None)
+            m.pop("reasoning", None)
+            psf = m.get("provider_specific_fields")
+            if isinstance(psf, dict):
+                psf.pop("reasoning", None)
+                psf.pop("reasoning_content", None)
+            if rc:
+                agent.dropped_thinking_chars += len(rc)
+                out.append({"index": i, "chars": len(rc), "text": rc})
+        if out:
+            try:
+                agent.logs_dir.mkdir(parents=True, exist_ok=True)
+                with open(agent.logs_dir / "dropped_thinking.jsonl", "a") as f:
+                    for r in out:
+                        f.write(json.dumps(r) + "\n")
+            except Exception:
+                pass
+
+    agent._ckpt = _PreCall(agent._ckpt, strip)
+
+
+class ClmAgentT(_h.ClmAgent):
+    """The unmodified CLM agent plus the drop-old-thinking switch (nothing else differs)."""
+
+    @staticmethod
+    def name() -> str:
+        return "clm-drop-thinking"
+
+    def __init__(self, *args: Any, drop_old_thinking: Any = True, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        _setup_drop_thinking(self, drop_old_thinking)
+
+
 def _baseline_defaults(kwargs: dict[str, Any]) -> dict[str, Any]:
     kwargs.setdefault("nudge_ratios", "")
     kwargs.setdefault("persistent_nudge_ratio", "none")
@@ -120,9 +217,10 @@ class PlainAgent(_h.ClmAgent):
     def name() -> str:
         return "plain-baseline"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, drop_old_thinking: Any = False, **kwargs: Any) -> None:
         super().__init__(*args, **_baseline_defaults(kwargs))
         self._ctx.__class__ = _NoMirrorEnv
+        _setup_drop_thinking(self, drop_old_thinking)
 
     async def run(self, instruction, environment, context) -> None:
         _h._SYSTEM_TEMPLATE = BASELINE_SYSTEM
@@ -172,13 +270,15 @@ class SummaryAgent(_h.ClmAgent):
         return "summary-baseline"
 
     def __init__(self, *args: Any, summary_trigger_ratio: float | str = 0.75,
-                 summary_max_tokens: int | str = 4096, **kwargs: Any) -> None:
+                 summary_max_tokens: int | str = 4096, drop_old_thinking: Any = False,
+                 **kwargs: Any) -> None:
         super().__init__(*args, **_baseline_defaults(kwargs))
         self.summary_trigger_ratio = float(summary_trigger_ratio)
         self.summary_max_tokens = int(summary_max_tokens)
         self._ctx.__class__ = _SummaryEnv
         self._ctx.agent = self
         self._ckpt = _SummaryGuard(self._ckpt, self)
+        _setup_drop_thinking(self, drop_old_thinking)  # wraps outside: strip, then summary guard
         self.summary_calls: list[dict[str, Any]] = []
         self.n_summary_calls = 0
 

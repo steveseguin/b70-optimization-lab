@@ -283,6 +283,8 @@ policy. New pieces:
 | `clm_baselines.py` | summary cap max(4096, max_tokens), empty-reply retry with thinking off, over-limit summary before a call |
 | `summarize_results.py` | arm/kind/mode/size/seed, ended_by, rule (VOID/suspect), diagnostics table, `--check` |
 | `fake_openai_server.py` | answers correctly from the stream it saw; FAKE_PLAN=violate / inline probes |
+| `DROP_OLD_THINKING=1` (runner) / arms `At B32t C32t E32t` | every model call (agent and summary) sends `chat_template_kwargs.preserve_thinking=false`, and earlier turns' reasoning is stripped from the history before each call (logged to `agent/dropped_thinking.jsonl`), so what is sent, what the budget gate counts and the self-editing mirror agree; CLM uses `clm_baselines:ClmAgentT` (the unmodified agent plus this switch). Summary table: `cached_tokens`, `think_share` |
+| `stub-checks.sh <dir>` | smoke + tiny-budget summary/self-edit trials (summary must fire; container file list) + the drop-thinking request checks; PASS/FAIL lines |
 
 ```bash
 D=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context

@@ -135,6 +135,12 @@ DRY_RUN=1 prints the plan and a time estimate).
    max_tokens. For kv, each missed key gets a cause: *never* in any context, *dropped* (in an
    earlier context, not the last), or *copy* (in the last context but answered wrong).
 
+**Dropping old thinking** (added the same night): the served template re-sends all earlier thinking
+(about 10 % of a typical call, up to 56 % on long tasks). Arms At, B32t, C32t, E32t repeat A, B32, C32,
+E32 with `preserve_thinking=false` on every call and earlier reasoning stripped from the history, so the
+budget counts what is actually sent. `core` runs them after the first five arms (≈ 5 h in total).
+Reading: a thinking-dropped arm is "no worse" if, on both seeds, it is within 1 key of its parent arm.
+
 **Arms** (`second-comparison.sh` header): A = no management, no budget, memory-only (the lossless
 baseline). B32 / B131 = self-editing at 32,768 / 131,072, memory-only. C32 / C131 = summary at
 75 % at the same budgets, memory-only. D32 = self-editing with notes. E32 = no management with
@@ -145,8 +151,8 @@ sizes); below that there is no pressure.
 full matrix ≈ 20 h (2 seeds; arm A at 180K and the 131K arms are the expensive cells, and reading
 above ~150K is slower than 3,000/s, so those numbers are optimistic). Cheaper subsets, in the
 order to keep:
-- `SUBSET=core` ≈ 3.0 h: 120K only; ledger with both seeds and kv with seed 0; arms A, B32, C32,
-  D32, E32. This answers the central question: is self-editing at 32K lossless when the state is
+- `SUBSET=core` ≈ 3.0 h for arms A, B32, C32, D32, E32 (≈ 5 h with At, B32t, E32t added after them):
+  120K only; ledger with both seeds and kv with seed 0. This answers the central question: is self-editing at 32K lossless when the state is
   small, compared with keeping everything?
 - `SUBSET=quick` ≈ 1.0 h: 60K, seed 0, both tasks, arms A, B32, C32, D32, E32 (a sanity pass).
 - Add next, in this order: 180K for ledger (A, B32, C32); then B131 / C131 at 180K; then kv seed 1;

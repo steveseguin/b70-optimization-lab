@@ -15,6 +15,8 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
+import uuid
 import time
 import urllib.request
 from pathlib import Path
@@ -83,9 +85,31 @@ def build(tok, target_tokens: int, seed: int, asks: int, style: str = 'ledger'):
         count -= max(1, (n - target_tokens) // per_line + 1)
 
 
-def ask(base: str, model: str, prompt: str, max_tokens: int, timeout: int, api: str = 'completions'):
+def build_sets(tok, target_tokens: int, seed: int, asks: int, style: str, sets: int):
+    """One ledger and `sets` different questions about it (each `asks` records, spread over the whole ledger), so the
+    ledger is read once and, with a prefix cache, every further question costs only its own few tokens."""
+    prompt, _, _, _ = build(tok, target_tokens - 40, seed, asks, style)
+    body = prompt[:prompt.index('\nQuestion: what are the codes of records')]
+    codes = {int(n): c for n, c in re.findall(r'Record (\d{6}): code ([A-Z]{3}-\d{5}-[A-Z]{2})', body)}
+    count, rng = len(codes), random.Random(seed + 7)
+    strata = sets * asks
+    spots = [min(count - 1, int((j + rng.random()) * count / strata)) for j in range(strata)]
+    out = []
+    for k in range(sets):
+        picks = sorted(set(spots[k::sets]))
+        question = ('\nQuestion: what are the codes of records ' + ', '.join(f'{p:06d}' for p in picks)
+                    + '? Answer with the codes only, in that order, separated by commas.\nAnswer:')
+        text = body + question
+        out.append((text, len(tok(text, add_special_tokens=False)['input_ids']) if k == 0 else None,
+                    [codes[p] for p in picks], picks, count))
+    return out
+
+
+def ask(base: str, model: str, prompt: str, max_tokens: int, timeout: int, api: str = 'completions', salt: str = ''):
     body = {'model': model, 'max_tokens': max_tokens, 'temperature': 0, 'seed': 42, 'stream': True,
             'return_token_ids': True, 'stream_options': {'include_usage': True}}
+    if salt:  # a cache namespace of its own: this request shares nothing with earlier ones
+        body['cache_salt'] = salt
     if api == 'chat':  # the chat template with thinking off, the way an application would ask
         body.update(messages=[{'role': 'user', 'content': prompt}], chat_template_kwargs={'enable_thinking': False})
     else:
@@ -122,6 +146,56 @@ def ask(base: str, model: str, prompt: str, max_tokens: int, timeout: int, api: 
             'steps': len(stamps)}
 
 
+def recall_rate(a, tok) -> int:
+    report = {'schema': 'qwen38-fp8-long-context-probe.recall.v1', 'base_url': a.base_url, 'api': a.api, 'style': a.style, 'rows': []}
+    cold = {int(x) for x in a.cold_check.split(',') if x}
+    for target in [int(x) for x in a.lengths.split(',') if x]:
+        sets = build_sets(tok, target, a.seed if a.one_ledger else a.seed + target, a.asks, a.style, a.question_sets)
+        n, first = sets[0][1], None
+        right = total = 0
+        thirds = [[0, 0], [0, 0], [0, 0]]
+        for k, (text, _, expected, picks, count) in enumerate(sets):
+            row = {'target_tokens': target, 'prompt_tokens_client': n, 'set': k, 'asked_records': picks, 'records': count, 'expected': expected}
+            try:
+                r = ask(a.base_url, a.model, text, a.max_tokens, a.timeout, a.api)
+            except Exception as error:  # noqa: BLE001
+                row['error'] = f'{type(error).__name__}: {error}'[:400]
+                report['rows'].append(row)
+                a.out.write_text(json.dumps(report, indent=1) + '\n')
+                print(f"RECALL target={target} set={k} error={row['error']}", flush=True)
+                if 'Connection refused' in row['error'] or 'RemoteDisconnected' in row['error']:
+                    return 3
+                continue
+            got = [c.strip() for c in r['text'].strip().split('\n')[0].split(',')]
+            row.update(r, correct=[e in r['text'] for e in expected], in_order=got[:len(expected)] == expected,
+                       cached_tokens=((r['usage'] or {}).get('prompt_tokens_details') or {}).get('cached_tokens'))
+            for p, ok in zip(picks, row['correct']):
+                third = thirds[min(2, p * 3 // count)]
+                third[0] += ok
+                third[1] += 1
+            right += sum(row['correct'])
+            total += len(expected)
+            first = first or row
+            report['rows'].append(row)
+            a.out.write_text(json.dumps(report, indent=1) + '\n')
+            print(f"RECALL target={target} tokens={n} set={k} correct={sum(row['correct'])}/{len(expected)} in_order={row['in_order']} "
+                  f"first_token_s={row['ttft_s']:.1f} cached={row['cached_tokens']} decode_tok_s={row['decode_tok_s'] and round(row['decode_tok_s'], 1)} "
+                  f"finish={row['finish_reason']}", flush=True)
+        line = {'target_tokens': target, 'prompt_tokens': n, 'codes_right': right, 'codes_asked': total,
+                'by_third': [f'{x}/{y}' for x, y in thirds],
+                'answers_fully_right': sum(1 for r in report['rows'] if r['target_tokens'] == target and r.get('correct') and all(r['correct']))}
+        if target in cold and first:
+            text, _, expected, picks, count = sets[0]
+            r = ask(a.base_url, a.model, text, a.max_tokens, a.timeout, a.api, salt=f'cold-{uuid.uuid4().hex}')
+            line['cold_check'] = {'equal_tokens': r['token_ids'] == first['token_ids'], 'cold_first_token_s': r['ttft_s'],
+                                  'cached_first_token_s': first['ttft_s'], 'tokens': len(r['token_ids']),
+                                  'cold_cached_tokens': ((r['usage'] or {}).get('prompt_tokens_details') or {}).get('cached_tokens')}
+        report.setdefault('summary', []).append(line)
+        a.out.write_text(json.dumps(report, indent=1) + '\n')
+        print('RECALLSUM ' + json.dumps(line), flush=True)
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--base-url', required=True)
@@ -138,9 +212,15 @@ def main() -> int:
                     'answers every code (LOW) and one that does not (HIGH) until it is at most STEP tokens')
     ap.add_argument('--style', choices=('ledger', 'prose'), default='ledger')
     ap.add_argument('--one-ledger', action='store_true', help='every length is a prefix of the same ledger (same seed)')
+    ap.add_argument('--question-sets', type=int, default=0, help='recall-rate mode: this many different questions '
+                    'per length about one ledger (read once; the rest is served by the prefix cache if the server has one)')
+    ap.add_argument('--cold-check', default='', help='recall-rate mode: at these lengths, ask the first question again '
+                    'in a cache namespace of its own (a cold read) and compare the answer token for token')
     ap.add_argument('--out', type=Path, required=True)
     a = ap.parse_args()
     tok = LightTokenizer(a.tokenizer)
+    if a.question_sets:
+        return recall_rate(a, tok)
     report = {'schema': 'qwen38-fp8-long-context-probe.v1', 'base_url': a.base_url, 'api': a.api, 'style': a.style, 'rows': []}
     targets = [int(x) for x in a.lengths.split(',') if x]
     low, high, step = ([int(x) for x in a.bisect.split(',')] if a.bisect else (0, 0, 0))
