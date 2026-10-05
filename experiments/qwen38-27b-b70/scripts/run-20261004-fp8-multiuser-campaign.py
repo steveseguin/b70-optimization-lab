@@ -218,12 +218,19 @@ def main():
         base = ['--tp', '2', '--mem', '0.95', '--max-model-len', mml, '--batched', batched, '--fa-verify-rows'] + spec + SHIPPED + LOADCOPY_FIX
         probe = ROOT / 'experiments/qwen38-27b-b70/scripts/qwen38-fp8-prefix-cache-exactness-probe.py'
         saved = OUT / 'control.json'
+        # MU_PC_EXACT=1: the cache server also gets the b70-prefix-cache-exact overlay (nothing the model wrote is ever
+        # cached) and a sparse periodic state interval (MU_PC_INTERVAL tokens, a multiple of 832).
+        cache = ['--prefix-cache', 'align']
+        if os.environ.get('MU_PC_EXACT') == '1':
+            cache += ['--overlay', 'b70-prefix-cache-exact', '--extra-env', 'B70_PREFIX_CACHE_EXACT=1',
+                      f"--serve-arg=--prefix-cache-retention-interval={os.environ.get('MU_PC_INTERVAL', '6656')}"]
+        more = os.environ.get('MU_PROBE_ARGS', '').split()  # e.g. "--logprobs 0 --max-tokens 48 --rule-all"
         for label, extra, probe_args in (('control', [], ['--save', saved]),
-                                         ('cache', ['--prefix-cache', 'align'], ['--compare-with', saved, '--out', OUT / 'cache.json'])):
+                                         ('cache', cache, ['--compare-with', saved, '--out', OUT / 'cache.json'])):
             srv, name, since = start_server(f'tp2-pc-{label}', 18196, base + extra, since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
-                r['probe_rc'] = R.sh([str(R.XPU_PYTHON), probe, '--base-url', srv.base] + probe_args, f'{name}-probe', 3 * 3600)
+                r['probe_rc'] = R.sh([str(R.XPU_PYTHON), probe, '--base-url', srv.base] + probe_args + more, f'{name}-probe', 3 * 3600)
             r['stop'] = srv.stop()
             text = (OUT / name / 'server.log').read_text(errors='replace') if (OUT / name / 'server.log').exists() else ''
             r['block_lines'] = re.findall(r'Setting attention block size to[^\n]*', text)[:1]

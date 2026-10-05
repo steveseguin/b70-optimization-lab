@@ -100,3 +100,38 @@ Two fresh two-card servers on R314, drafting off, prompts read in 832-token piec
   asked different ledgers than the first. The probe refused to compare them, which is what it should do.
 - Next: the same test with drafting on, all eleven prompts (the builder is no longer being touched). Drafting is
   how the lane is actually served, so that is the result that decides whether the cache goes into later runs.
+
+## What the engine source says, and the second test, written before it runs (03:20 EDT)
+
+The reuse rules were read from the R314 engine source (`notes/2026-10-05-prefix-cache-reuse-rules.md`). In short:
+
+- The engine keeps the recurrent layers' state at only one point per prompt (its last full block) plus the point
+  where a new prompt left the cached text. That is why an edit in the middle reused nothing the first time.
+- **Two holes in "exact by construction", both real:** (1) blocks finished while the model is *writing* are cached
+  as well, so a third turn of a conversation can be served attention data made by the writing kernels instead of
+  the reading kernels a cold read uses (the first run had only two turns, so it never met this); (2) with drafting
+  on, the engine switches to keeping the state at every block, including blocks reached while writing, and that
+  costs four times the memory per token of context.
+- So the first run's "56 of 56" stands as measured, but the cache as shipped is **not** exact by construction.
+
+**The fix under test: `overlays/b70-prefix-cache-exact`** (CPU test `tests/test_b70_prefix_cache_exact.py`).
+It changes what is kept, never what is computed: nothing past the end of a prompt is ever cached (the next turn
+re-reads the previous answer as prompt, at reading speed, and caches it then), the state is also kept one block
+before each prompt's last full block (where a hit lands when drafting is on), and a sparse periodic state every
+6,656 tokens (eight blocks) lets an edit in the middle resume from just before the edit. Every cached block is then
+the product of the same 832-token reading piece a cold read would run.
+
+**Test** (`MU_MODE=prefixcache MU_MTP=1 MU_PC_EXACT=1`, R314, two cards, drafting on): reference server without the
+cache, then the cache server with the overlay, both reading in 832-token pieces. Eleven prompts (eight suite prompts,
+ledgers of 3K, 10K, 30K), nine cases each: the seven from before plus **e2** (the middle edit sent a second time) and
+**g** (a third turn, so the shared text holds two answers the server wrote). 48 tokens generated per case.
+
+Scores are not compared in this run, only token ids: asking the drafting server for scores makes it compile a
+scoring routine that needs over a gigabyte of host memory for a few seconds, and this host does not have it (three
+servers were stopped by the memory guard tonight before I found that; `context-memsample-20261005`). Token ids
+over 48 tokens on 99 cases is a weaker check than scores; a scores run without drafting follows if this passes.
+
+**Rules.** Pass: all 99 cases give the reference's tokens, including f and g, and cases b, c, d, e2, f, g are
+served from the cache (reused tokens above zero where the prompt has at least two full blocks before the change).
+Any difference is a fail and the first differing case is the lead. Also recorded: how much is reused after the
+middle edit the first time (the periodic state should give a hit now), and the time saved.

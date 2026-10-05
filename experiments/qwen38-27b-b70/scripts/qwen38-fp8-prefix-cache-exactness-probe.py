@@ -12,6 +12,8 @@ probe's builder). Variants of each family's prompt P:
   e  P with --edit-tokens tokens deleted at 50% (hit up to the edit, re-read after it)
   f0 P cut to end --answer-cross tokens before a block boundary (hit on earlier blocks; its 16-token answer crosses
      the boundary, so the next block holds tokens the server computed while *writing*, not reading)
+  e2 e again (the engine keeps a state at the point where e left the cached text, so the repeat should hit there)
+  g  f + f's answer + another paragraph: a third turn, whose shared text holds two answers the server wrote
   f  f0 + f0's answer + a new paragraph: a chat-style next turn. The reused block holds decode-made state; the cold
      twin reads those tokens as prompt. Reported separately: NOT expected to be exact (see the prereg note).
 Each variant is compared token for token (ids) and by the top-5 logprobs of the first --max-tokens generated tokens
@@ -53,7 +55,7 @@ REPLACEMENT = ('Unrelated note inserted for the cache test: the weather station 
 PARAGRAPH = ('\n\nAdditional paragraph added after the original text: summarise in one sentence what the text above '
              'is about, then name the single most specific detail it contains.\n')
 NEXT_TURN = '\n\nFollow-up: continue from where the previous answer stopped, in the same style.\n'
-EXACT_VARIANTS = ('a', 'b', 'c', 'd', 'e', 'f0')
+EXACT_VARIANTS = ('a', 'b', 'c', 'd', 'e', 'e2', 'f0')
 
 
 class LightTokenizer:
@@ -105,8 +107,10 @@ def text_ids(tok, text, count=None):
 
 def ask(base, model, ids, a, salt=None):
     body = {'model': model, 'prompt': ids, 'max_tokens': a.max_tokens, 'temperature': 0, 'seed': 42,
-            'logprobs': a.logprobs, 'return_tokens_as_token_ids': True, 'return_token_ids': True,
+            'return_tokens_as_token_ids': True, 'return_token_ids': True,
             'stream': True, 'stream_options': {'include_usage': True}}
+    if a.logprobs > 0:  # 0 = tokens only: asking a drafting two-card server for scores costs over 1 GiB of host memory
+        body['logprobs'] = a.logprobs
     if salt:
         body['cache_salt'] = salt
     req = urllib.request.Request(base.rstrip('/') + '/v1/completions', data=json.dumps(body).encode(),
@@ -184,7 +188,7 @@ def expected_hit(ids, seen, block):
     return best
 
 
-def variants(tok, ids, a, f0_answer=None):
+def variants(tok, ids, a, f0_answer=None, f_answer=None):
     half = len(ids) // 2
     cut = max(a.block, (len(ids) // a.block) * a.block) - a.answer_cross
     out = {'a': ids, 'b': ids,
@@ -192,8 +196,11 @@ def variants(tok, ids, a, f0_answer=None):
            'd': ids + text_ids(tok, PARAGRAPH),
            'e': ids[:half] + ids[half + a.edit_tokens:],
            'f0': ids[:cut] if cut > 0 else ids}
+    out['e2'] = out['e']
     if f0_answer is not None:
         out['f'] = out['f0'] + list(f0_answer) + text_ids(tok, NEXT_TURN)
+        if f_answer is not None:  # a third turn: its shared text holds two answers the server wrote
+            out['g'] = out['f'] + list(f_answer) + text_ids(tok, PARAGRAPH)
     return out
 
 
@@ -216,6 +223,8 @@ def main() -> int:
     ap.add_argument('--block', type=int, default=832, help='attention block size (server.log); for expected hits only')
     ap.add_argument('--answer-cross', type=int, default=8, help='f0 ends this many tokens before a block boundary')
     ap.add_argument('--timeout', type=int, default=3600)
+    ap.add_argument('--rule-all', action='store_true', help='the next-turn cases (f, g) are in the pass rule too: for a '
+                    'server that never caches what it wrote (b70-prefix-cache-exact)')
     a = ap.parse_args()
     if a.save and (a.compare_with or a.control_url):
         ap.error('--save is the control pass; it takes no cold source')
@@ -240,6 +249,11 @@ def main() -> int:
             r = ask(a.base_url, a.model, v['f'], a, salt=f'cold-{run}-{fid}-f')
             ref['cases'][f'{fid}/f'] = r | {'prompt_sha': ids_sha(v['f']), 'prompt_len': len(v['f'])}
             print(f"COLD prompt={fid} variant=f tokens={len(v['f'])} cached_tokens={r['cached_tokens']} "
+                  f"ttft={r['ttft_s']:.2f}", flush=True)
+            v = variants(tok, ids, a, ref['cases'][f'{fid}/f0']['token_ids'], ref['cases'][f'{fid}/f']['token_ids'])
+            r = ask(a.base_url, a.model, v['g'], a, salt=f'cold-{run}-{fid}-g')
+            ref['cases'][f'{fid}/g'] = r | {'prompt_sha': ids_sha(v['g']), 'prompt_len': len(v['g'])}
+            print(f"COLD prompt={fid} variant=g tokens={len(v['g'])} cached_tokens={r['cached_tokens']} "
                   f"ttft={r['ttft_s']:.2f}", flush=True)
             a.save.write_text(json.dumps(ref, indent=1) + '\n')
         bad = [k for k, r in ref['cases'].items() if r.get('cached_tokens')]
@@ -269,33 +283,38 @@ def main() -> int:
 
     for fid, ids in fams:
         v = variants(tok, ids, a)
-        f0_answer = None
-        for name in ('a', 'b', 'c', 'd', 'e', 'f0', 'f'):
+        f0_answer = f_answer = None
+        for name in ('a', 'b', 'c', 'd', 'e', 'e2', 'f0', 'f', 'g'):
             if name == 'f':
                 # the next turn uses the answer the cold reference gave to f0, so both sides send the same tokens
                 f0_answer = (ref['cases'][f'{fid}/f0']['token_ids'] if ref else f0_answer)
                 v = variants(tok, ids, a, f0_answer)
+            if name == 'g':
+                f_answer = (ref['cases'][f'{fid}/f']['token_ids'] if ref else f_answer)
+                v = variants(tok, ids, a, f0_answer, f_answer)
             prompt = v[name]
             expect = expected_hit(prompt, seen, a.block)
             hit = ask(a.base_url, a.model, prompt, a, salt=f'run-{run}')
             seen.append(prompt + hit['token_ids'][:-1])
             if name == 'f0' and not ref:
                 f0_answer = hit['token_ids']
+            if name == 'f' and not ref:
+                f_answer = hit['token_ids']
             # b is the same request as a. In salted mode, a's "hit" is itself cold (fresh run salt), so a's row
             # checks cold-to-cold repeatability on one server.
-            twin = cold_twin(fid, 'a' if name == 'b' else name, prompt)
+            twin = cold_twin(fid, {'b': 'a', 'e2': 'e'}.get(name, name), prompt)
             cmp = compare(hit, twin)
             row = {'prompt': fid, 'variant': name, 'prompt_len': len(prompt), 'cached_tokens': hit['cached_tokens'],
                    'expected_cached_tokens': expect, 'cold_cached_tokens': twin.get('cached_tokens'),
                    'ttft_cold': twin['ttft_s'], 'ttft_hit': hit['ttft_s'], **cmp,
-                   'exact_rule': name in EXACT_VARIANTS, 'hit': hit, 'cold': twin}
+                   'exact_rule': name in EXACT_VARIANTS or a.rule_all, 'hit': hit, 'cold': twin}
             report['rows'].append(row)
             out.write_text(json.dumps(report, indent=1) + '\n')
             print(f"CACHE prompt={fid} variant={name} cached_tokens={hit['cached_tokens']} "
                   f"equal_tokens={cmp['equal_tokens']} equal_logprobs={cmp['equal_logprobs']} "
                   f"ttft_cold={twin['ttft_s']:.2f} ttft_hit={hit['ttft_s']:.2f}"
                   + ('' if hit['cached_tokens'] in (None, expect) else f' expected_cached={expect}')
-                  + ('' if name in EXACT_VARIANTS else ' (decode-made blocks; not in the pass rule)'), flush=True)
+                  + ('' if name in EXACT_VARIANTS or a.rule_all else ' (decode-made blocks; not in the pass rule)'), flush=True)
 
     rows = report['rows']
     ruled = [r for r in rows if r['exact_rule']]
@@ -312,7 +331,7 @@ def main() -> int:
                                      if r['cached_tokens'] is not None and r['cached_tokens'] != r['expected_cached_tokens']],
         'block_size_from_hits': math.gcd(*cached) if cached else None,
         'decode_made_blocks_f': [{k: r[k] for k in ('prompt', 'cached_tokens', 'equal_tokens', 'equal_logprobs',
-                                                    'first_token_diff', 'max_logprob_gap')} for r in rows if r['variant'] == 'f'],
+                                                    'first_token_diff', 'max_logprob_gap')} for r in rows if r['variant'] in ('f', 'g')],
         'ttft_saving_s': sum(r['ttft_cold'] - r['ttft_hit'] for r in ruled if r['variant'] != 'a'),
     }
     out.write_text(json.dumps(report, indent=1) + '\n')

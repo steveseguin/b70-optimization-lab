@@ -6,7 +6,7 @@
 set -u
 S=$(cd "$(dirname "$0")/.." && pwd)
 PY=${PY:-$HOME/.venvs/vllm-xpu/bin/python}
-probe() { name=$1; shift; "$PY" "$S/qwen38-fp8-long-context-probe.py" --base-url "$BASE_URL" --model "$MODEL_NAME" --out "$OUT_DIR/$name.json" "$@" 2>&1 | tee "$OUT_DIR/$name.log"; }
+probe() { name=$1; shift; curl -sf -m 10 "$BASE_URL/health" >/dev/null || { echo "server gone before $name"; exit 3; }; "$PY" "$S/qwen38-fp8-long-context-probe.py" --base-url "$BASE_URL" --model "$MODEL_NAME" --out "$OUT_DIR/$name.json" "$@" 2>&1 | tee "$OUT_DIR/$name.log"; }
 "$PY" "$S/qwen38-fp8-one-step-choice-probe.py" --base-url "$BASE_URL" --model "$MODEL_NAME" --out "$OUT_DIR/choice.json" 2>&1 | tee "$OUT_DIR/choice.log" | tail -n 3
 probe chat-recall --api chat --lengths 8000,30000,120000
 probe prose-recall --api chat --style prose --lengths 30000,120000,200000

@@ -158,6 +158,11 @@ def main() -> int:
                            prompt_read_tok_s=n / r['ttft_s'] if r['ttft_s'] else None)
             except Exception as error:  # noqa: BLE001  (a refused length is a result, not a crash)
                 row['error'] = f'{type(error).__name__}: {error}'[:400]
+                if 'Connection refused' in row['error'] or 'RemoteDisconnected' in row['error']:
+                    report['rows'].append(row)  # the server is gone: nothing after this would be a measurement
+                    a.out.write_text(json.dumps(report, indent=1) + '\n')
+                    print(f"PROBE target={target} tokens={n} server gone: {row['error']}", flush=True)
+                    return 3
             report['rows'].append(row)
             a.out.write_text(json.dumps(report, indent=1) + '\n')
             print(f"PROBE target={target} tokens={n} rep={rep} "

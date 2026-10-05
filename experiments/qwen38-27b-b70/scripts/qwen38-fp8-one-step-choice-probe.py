@@ -5,7 +5,11 @@ When the answer must be one of a known set of labels whose first tokens differ, 
 logits the prompt pass produces: the best allowed first token. This client measures, on generated decision items of
 four kinds (yes/no, A-D choice, sentiment, routing), three ways of getting the answer from the same chat prompt:
 
-  one_step   max_tokens=1 with the top-20 first-token logprobs; the label is the best-scoring allowed first token
+  one_step   max_tokens=1 with sampling restricted to the labels' first tokens (`allowed_token_ids`): the server
+             returns the best-scoring allowed first token, which names the label. (The first version read the top-20
+             scores instead; asking a drafting two-card server for scores makes it compile a scoring routine that
+             needs over a gigabyte of host memory for some seconds, and the host memory guard stopped the server.
+             `--scores` keeps that variant for servers with the headroom.)
   decode     thinking off, the label decoded normally (greedy), parsed from the text
   think      thinking on, full reasoning then the label (greedy), parsed from the text after the reasoning
 
@@ -76,11 +80,13 @@ def items(seed: int, per_kind: int):
     return out
 
 
-def chat(base, model, question, max_tokens, thinking, logprobs, timeout=900):
+def chat(base, model, question, max_tokens, thinking, logprobs, timeout=900, allowed=None):
     body = {'model': model, 'messages': [{'role': 'user', 'content': question}], 'max_tokens': max_tokens,
             'temperature': 0, 'seed': 42, 'chat_template_kwargs': {'enable_thinking': thinking}}
     if logprobs:
         body.update(logprobs=True, top_logprobs=20)
+    if allowed:
+        body.update(allowed_token_ids=sorted(allowed), return_token_ids=True)
     req = urllib.request.Request(base.rstrip('/') + '/v1/chat/completions', data=json.dumps(body).encode(),
                                  headers={'Content-Type': 'application/json'})
     t0 = time.perf_counter()
@@ -111,6 +117,7 @@ def main() -> int:
     ap.add_argument('--per-kind', type=int, default=20)
     ap.add_argument('--seed', type=int, default=20261005)
     ap.add_argument('--think-items', type=int, default=24, help='how many items also get the slow thinking pass')
+    ap.add_argument('--scores', action='store_true', help='read the top-20 scores instead of restricting sampling')
     ap.add_argument('--out', type=Path, required=True)
     a = ap.parse_args()
     tok = LightTokenizer(a.tokenizer)
@@ -126,17 +133,24 @@ def main() -> int:
                 starts.setdefault(first(form), label)
         distinct = len({first(l) for l in item['labels']}) == len(item['labels'])
         row = {'kind': item['kind'], 'truth': item['truth'], 'labels_first_tokens_distinct': distinct}
-        one, t_one = chat(a.base_url, a.model, item['question'], 1, False, True)
-        top = one['choices'][0]['logprobs']['content'][0]['top_logprobs'] if one['choices'][0].get('logprobs') else []
-        scored = []
-        for entry in top:
-            ids = tok(entry['token'], add_special_tokens=False)['input_ids']
-            if len(ids) == 1 and ids[0] in starts:
-                scored.append((entry['logprob'], starts[ids[0]]))
-        row.update(one_step=max(scored)[1] if scored else None, one_step_s=t_one,
-                   one_step_margin=(sorted(scored, reverse=True)[0][0] - sorted(scored, reverse=True)[1][0]) if len(scored) > 1 else None,
-                   one_step_top_token=top[0]['token'] if top else None,
-                   prompt_tokens=one.get('usage', {}).get('prompt_tokens'))
+        if a.scores:
+            one, t_one = chat(a.base_url, a.model, item['question'], 1, False, True)
+            top = one['choices'][0]['logprobs']['content'][0]['top_logprobs'] if one['choices'][0].get('logprobs') else []
+            scored = []
+            for entry in top:
+                ids = tok(entry['token'], add_special_tokens=False)['input_ids']
+                if len(ids) == 1 and ids[0] in starts:
+                    scored.append((entry['logprob'], starts[ids[0]]))
+            row.update(one_step=max(scored)[1] if scored else None, one_step_s=t_one,
+                       one_step_margin=(sorted(scored, reverse=True)[0][0] - sorted(scored, reverse=True)[1][0]) if len(scored) > 1 else None,
+                       one_step_top_token=top[0]['token'] if top else None,
+                       prompt_tokens=one.get('usage', {}).get('prompt_tokens'))
+        else:
+            one, t_one = chat(a.base_url, a.model, item['question'], 1, False, False, allowed=starts)
+            choice = one['choices'][0]
+            ids = choice.get('token_ids') or tok(choice['message'].get('content') or '', add_special_tokens=False)['input_ids']
+            row.update(one_step=starts.get(ids[0]) if ids else None, one_step_s=t_one, one_step_token_id=ids[0] if ids else None,
+                       one_step_text=choice['message'].get('content'), prompt_tokens=one.get('usage', {}).get('prompt_tokens'))
         dec, t_dec = chat(a.base_url, a.model, item['question'], 16, False, False)
         text = dec['choices'][0]['message'].get('content') or ''
         row.update(decode=parse(text, item['labels']), decode_s=t_dec, decode_tokens=dec.get('usage', {}).get('completion_tokens'),
