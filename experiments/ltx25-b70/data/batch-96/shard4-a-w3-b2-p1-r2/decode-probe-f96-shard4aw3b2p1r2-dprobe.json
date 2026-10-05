@@ -1,0 +1,254 @@
+{
+  "extension_sha256s": {
+    "ltx_decode_replica.py": "8780160dc8ca5dba8378a2703db3140efbe7c398ed47d26a6c1cbf6fd3bdbffc",
+    "pipeline_decode_node.py": "cec25aa4c4f619b2e49ca6e0725dd58a11ea02e875cff38328a49b1927153b29"
+  },
+  "memory_after": {
+    "xpu:1": {
+      "allocated": 16199901696,
+      "reserved": 18668847104
+    }
+  },
+  "memory_before": {
+    "xpu:1": {
+      "allocated": 14348655616,
+      "reserved": 15158214656
+    },
+    "xpu:1_free": [
+      18308829184,
+      "mem_get_info"
+    ]
+  },
+  "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "native_device": "xpu:3",
+  "outcome": "replica-exact",
+  "passed": true,
+  "placement_checked": true,
+  "replica_device": "xpu:1",
+  "replicas": {
+    "audio": {
+      "bytes": 364666954,
+      "class": "AudioVAE",
+      "device": "xpu:1",
+      "device_attrs_rewritten": [
+        "AudioVAE.device"
+      ],
+      "tensors_byte_verified": 1330,
+      "verified": "parameters, all buffers (persistent and non-persistent), plain tensor attributes"
+    },
+    "video": {
+      "bytes": 1472207076,
+      "class": "CausalDiffusionVAE",
+      "device": "xpu:1",
+      "device_attrs_rewritten": [
+        "CausalDiffusionVAE.device"
+      ],
+      "tensors_byte_verified": 414,
+      "verified": "parameters, all buffers (persistent and non-persistent), plain tensor attributes"
+    }
+  },
+  "replicas_resident": [
+    "audio",
+    "video"
+  ],
+  "rows": [
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "bird",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+        "waveform_sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+        "waveform_sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-05/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "boat",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+        "waveform_sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+        "waveform_sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-03/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "candle",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "ac8c5303d263e4e3cf9697abaaf368d2877950f25a5fcb4e8d064e52883a9c02",
+        "waveform_sha256": "7f6b0e958140ce848d43d39c97490b6e5856e852900ee6c551818dd1058f3dbc"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "ac8c5303d263e4e3cf9697abaaf368d2877950f25a5fcb4e8d064e52883a9c02",
+        "waveform_sha256": "7f6b0e958140ce848d43d39c97490b6e5856e852900ee6c551818dd1058f3dbc"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-09/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "fabric",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "696ea2cd65c935440bd859c23de17a6e1d53d4e30f83321ccc0ed0d791c357c5",
+        "waveform_sha256": "b98b9eceb29b806ae7751a933ff50ecc1632d9db8a7c1ed45da5651232c9170e"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "696ea2cd65c935440bd859c23de17a6e1d53d4e30f83321ccc0ed0d791c357c5",
+        "waveform_sha256": "b98b9eceb29b806ae7751a933ff50ecc1632d9db8a7c1ed45da5651232c9170e"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-11/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "marble",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+        "waveform_sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+        "waveform_sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-04/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "paper",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "576de9d320059abbe25d302b3a63c0cba0b364e854f9c84acfac915c6dda9070",
+        "waveform_sha256": "7ec39a7515d7efe01c487e73b6944c584ca8ae7f29ae25e71eada2e483bee634"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "576de9d320059abbe25d302b3a63c0cba0b364e854f9c84acfac915c6dda9070",
+        "waveform_sha256": "7ec39a7515d7efe01c487e73b6944c584ca8ae7f29ae25e71eada2e483bee634"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-08/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "pendulum",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "044d9db83000aca048b2387cda7a997abcbf779fe54d0bb8d008ac42e6692634",
+        "waveform_sha256": "ca623c55e434b32c5dfc253a70d79facbaa547d0e6efda5729254386d7943fc6"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "044d9db83000aca048b2387cda7a997abcbf779fe54d0bb8d008ac42e6692634",
+        "waveform_sha256": "ca623c55e434b32c5dfc253a70d79facbaa547d0e6efda5729254386d7943fc6"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-06/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "pour",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "44a45a8f35145169ab60f75c8f40ca2a4e23f31db7239350d4b021e4515f7eb6",
+        "waveform_sha256": "08f825aeddfa08004fba1c4285c83500c8fd3e1f49a48f720295b899c2f24355"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "44a45a8f35145169ab60f75c8f40ca2a4e23f31db7239350d4b021e4515f7eb6",
+        "waveform_sha256": "08f825aeddfa08004fba1c4285c83500c8fd3e1f49a48f720295b899c2f24355"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-10/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "rain",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "7bc7cdd0e8ff71cfb22296a33c766a075871322ae6b223b82b9c965b83846888",
+        "waveform_sha256": "00bd6b1cfaa439efa049277d8954f0259dc50e490d97a70c14a9d8386f30f87c"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "7bc7cdd0e8ff71cfb22296a33c766a075871322ae6b223b82b9c965b83846888",
+        "waveform_sha256": "00bd6b1cfaa439efa049277d8954f0259dc50e490d97a70c14a9d8386f30f87c"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-07/tensors.safetensors"
+    },
+    {
+      "cards_bytewise_equal": true,
+      "fixture": "wheel",
+      "inputs_certified": true,
+      "native": {
+        "images_sha256": "874946ce293b68d2d139cf00dfcdafb43d0be1995248349e932490b033d2c85d",
+        "waveform_sha256": "a6934095001c68de03c85f11b8973dc4d829dbea79015b8c93637fdca341c023"
+      },
+      "native_matches_reference": true,
+      "passed": true,
+      "replica": {
+        "images_sha256": "874946ce293b68d2d139cf00dfcdafb43d0be1995248349e932490b033d2c85d",
+        "waveform_sha256": "a6934095001c68de03c85f11b8973dc4d829dbea79015b8c93637fdca341c023"
+      },
+      "replica_matches_reference": true,
+      "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/f90c-endure-12/tensors.safetensors"
+    }
+  ],
+  "run_name": "f96-shard4aw3b2p1r2-dprobe",
+  "schema": "ltx.decode-replica-probe.v1",
+  "seconds": 35.839,
+  "server_identity_sha256": "368466992ade95c0c3400da8267fe549e0261aa779fe6dc21a9d2094fa77ffd7",
+  "vae_residency": {
+    "devices": [
+      "xpu:3",
+      "xpu:3"
+    ],
+    "offending_tensors_after": {
+      "AudioVAE": 0,
+      "CausalDiffusionVAE": 0
+    },
+    "offending_tensors_before": {
+      "AudioVAE": 1330,
+      "CausalDiffusionVAE": 414
+    },
+    "step": "explicit full load of both VAEs onto their card before the replica copy"
+  },
+  "written_unix": 1791162892.178883,
+  "xpu:1_free_after_build": [
+    16452759552,
+    "mem_get_info"
+  ],
+  "xpu:1_free_after_probe": [
+    14302384128,
+    "mem_get_info"
+  ]
+}
