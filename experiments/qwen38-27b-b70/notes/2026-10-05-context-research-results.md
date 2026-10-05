@@ -87,7 +87,8 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Keep everything, old thinking dropped | none | stopped at 2.6 h | 397K tok | stuck: re-derived everything each call, hit the output cap, never acted |
 | Improved self-editing agent, 32K, seed 0 | 24 | 15 min | 67K tok | peak context 20K; no delivered batch lost |
 | Improved self-editing agent, 32K, seed 1 | 21 | 21 min | 91K tok | 3 wrong: a bug in the script the model wrote to fold batches in (see below) |
-| Improved agent on a 480K stream (bigger than the window) | *pending* | | | |
+| Improved agent on a **478K stream** (1.8 times the whole window), 32K budget | 24 | **8.2 min** | 36K tok | peak context 10K; 76 batches, 37 calls |
+| Files allowed on the 478K stream | *running* | | | |
 
 **Keeping everything in the big window is not robust.** It was fully right on the first seed and returned nothing on
 the second. On the second seed the model let every batch into its context raw and then typed the same 136 lines out
@@ -122,6 +123,12 @@ What the transcripts show:
   tokens written, no answer; I ended it after 2.6 hours. Old thinking can only be dropped when the working state
   lives somewhere else (a state block or a file).
 
+- **The stream larger than the window was handled, and how matters.** On 478K tokens (76 batches) the improved
+  agent wrote one small script, kept the running table in the pinned state, and ran `next | script` for each batch:
+  every answer right in 8.2 minutes, never more than 10K of context. The model itself read only 2 of the 76
+  batches; its script read the rest. That is a real answer to "can a 32K budget handle unlimited input": yes, when
+  the model can write code that does the reading. It does not yet show the model *reading and understanding* more
+  text than its window, which needs a task that code cannot parse (next task family).
 - **The improved agent's one imperfect run was the model's own coding slip.** On the second seed its running state
   was exact through batch 16. Then, after two very long thinking turns, it re-typed its fold script with a mistake
   in the pattern that reads delete lines, so every delete from batch 17 on did nothing, while the script still
