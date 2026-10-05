@@ -2,6 +2,8 @@
 
 Prepared 2026-10-05. Nothing here starts a server or touches a GPU.
 
+[Follow-up experiment ideas](../../notes/2026-10-05-context-followup-ideas.md): verify every delivered update, test historical recall, separate file I/O from decode speed, validate cache save/restore, and measure when prefix reuse pays off. These proposals build on the current queued runs; they do not launch additional work.
+
 ## What is where
 
 | item | location |
