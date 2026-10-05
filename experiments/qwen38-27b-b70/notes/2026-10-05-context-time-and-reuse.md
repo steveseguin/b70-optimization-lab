@@ -37,6 +37,7 @@ verifier.
 | trial | right | calls | prompt tok | cached | new read | written | wall s | writing | reading | tools | summaries | other |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | A keep all | 24 | 27 | 2,005,423 | 1,830,400 | 175,023 | 89,419 | 1,589 | 1,461 | 110 | 2.7 | – | 16 |
+| A keep all, seed 1 | 0 (window) | 37 | 4,382,472 | 4,096,768 | 285,704 | 99,106 | 2,277 | 2,007 | 250 | 3.6 | – | 16 |
 | At keep all, thinking dropped | stopped | 49 | 4,199,076 | 3,887,104 | 311,972 | 396,563 | 9,288 | 8,734 | 189 | 2.5 | – | 362 |
 | B32 paper agent | 19 | 65 | 1,253,647 | 365,248 | 888,399 | 233,308 | 3,841 | 3,476 | 336 | 5.8 | – | 23 |
 | C32 summarise | 24 | 44+12 | 1,040,504 | 370,240 | 670,264 | 211,405 | 2,464 | 2,068* | 253* | 4.4 | 1,266* | 139 |
@@ -47,8 +48,8 @@ verifier.
 
 \* C32: the harness does not time its 12 summary calls. Their time (12 cold reads plus 113,811 written tokens) is
 estimated from the constants and is included in the writing and reading columns. Per-call usage exists for only 19 of
-its 44 agent calls (`ctx-export ... attaching min()`), so its reading is a trial-average estimate. B32t and the
-third run's A seed 1 were unfinished and are skipped. At ended by cancellation and is shown for cost only.
+its 44 agent calls (`ctx-export ... attaching min()`), so its reading is a trial-average estimate. B32t was
+unfinished and is skipped. A seed 1 is covered in its own section below. At ended by cancellation and is shown for cost only.
 
 **Cross-checks that hold.** The server's 10-second engine lines inside each trial's window add up to the same totals:
 
@@ -133,6 +134,7 @@ characters and **converted** to tokens with that trial's own per-call ratio of s
 | trial | shared with previous call | predicted reusable | actually cached | prediction exact / within one block |
 |---|---:|---:|---:|---:|
 | A | 92.7 % | 91.3 % | 91.3 % | 27/27 / 27/27 |
+| A seed 1 | 94.5 % | 93.5 % | 93.5 % | 36/36 / 36/36 |
 | At | 94.0 % | 92.6 % | 92.6 % | 48/48 / 48/48 |
 | B32 | 37.2 % | 30.1 % | 29.1 % | 50/65 / 65/65 |
 | C32 | n/a (snapshot files of agent and summary calls overwrite each other) | | 35.6 % (agent calls alone 51.7 %) | |
@@ -141,7 +143,7 @@ characters and **converted** to tokens with that trial's own per-call ratio of s
 | B32i s0 | 69.7 % | 59.0 % | 53.3 % | 13/46 / 42/46 |
 | B32i s1 | 57.1 % | 42.3 % | 39.2 % | 36/58 / 58/58 |
 
-The rules reproduce the server's cached count exactly on 226 of 296 calls and within one block on 292 of 296. The
+The rules reproduce the server's cached count exactly on 262 of 332 calls and within one block on 328 of 332. The
 remaining one-block misses come from converting characters to tokens. So the cache behaves as documented, and every
 loss below comes from the prompt layout.
 
@@ -235,11 +237,106 @@ but only new text is read. Without it, every call re-reads the whole prompt in 4
    73 s for At from the template fix alone. The fixes are cheap, but this is the smallest lever of the three for
    the agent that already works.
 
+## Keep everything, second seed (A, seed 1: 0 of 24)
+
+Records: `context-clm-third-20261005/client/runs/jobs/A__ledger-memory-t120k-s1` and the third run's `server.log`.
+
+**In plain words.**
+
+- **The model's arithmetic was perfect, and it ran out of room.**
+  - After each of the 18 batches it received, its running table matched a replay of the stream exactly: all
+    counters, including deletions.
+  - It lost because of how it carried the data. Each batch came into the conversation raw (about 6.6K tokens), and
+    then the model typed the same 136 updates out again inside a Python command (about 4.9K tokens).
+  - So every batch sat in the context about twice, and the context grew about 13.3K tokens per batch.
+- **On the 37th call the conversation no longer fit.** The server refused the request and the harness stopped. Batch
+  19 and the final question list were never fetched, so the model never saw the 24 questions.
+  `/app/answers.json` was never written, and every answer was blank.
+- **It knew this could happen and could not check.**
+  - In its first call it estimated "probably 250-300k tokens total" and wrote "If token budget becomes an issue, I'll
+    reconsider".
+  - Nothing told it its window: with no budget, the harness prints no context readout.
+  - It chose re-typing because it judged reading the mirror file from a command too risky under the "read nothing
+    from disk" rule.
+  - It never considered piping `next` into a script. Seed 0 did that from its 6th call on and stayed at 112K.
+- **The pattern could not have finished in any case.** To finish it needed about 261K of prompt plus room for an
+  answer, and the server accepts at most 245,760 prompt tokens with a 16,384-token answer allowance.
+
+**What it did, call by call.**
+
+| calls | what | prompt tokens (server) | written |
+|---|---|---|---|
+| 1 | `which next; ls ...; next`: batch 1 arrives raw inside the exploration command | 983 | 5,214 (19.5K chars of planning) |
+| 2 | heredoc re-typing all 136 lines of batch 1 into Python, printing the state dict | 12,814 | 5,023 |
+| 3, 5, ..., 35 | bare `next`: a raw batch, about 16.2K characters | 18,848 → 232,434 | 235-456 each |
+| 4, 6, ..., 36 | heredoc: the previous state dict plus 136 re-typed update lines, memos stripped; prints the new state | 25,571 → 239,305 | 4,612-5,234 each |
+| 37 | refused by the server (HTTP 400) | about 245,900 (estimated) | – |
+
+- The context grew 6.6-6.9K tokens per call, about 13.3K per batch, with no edits.
+- Peak by the harness's own count: 202,285 (o200k tokenizer). By the server's count it was 239,305 at call 36.
+
+**How it ended.**
+
+- The client log has `Context window exceeded; stopping run`. This comes from the harness (`clm_agent/harness.py`,
+  line 566) catching litellm's `ContextWindowExceededError`.
+- The server log has `"POST /v1/chat/completions HTTP/1.1" 400 Bad Request` at 14:59:2x UTC, right after call 36's
+  `200 OK`. The response body is not logged.
+- The engine rule (R314, `vllm/renderers/params.py`, `_token_len_check`) rejects a prompt longer than
+  max_model_len − max_tokens = 262,144 − 16,384 = **245,760 tokens**. The refused message reads "This model's
+  maximum context length is 262144 tokens. However, you requested 16384 output tokens and your prompt contains N
+  input tokens ...".
+- Call 37's prompt is estimated at about 245,900. That is call 36's 239,305, plus its 4,885 written tokens, plus the
+  tool output, using the call-34→35 step of 6,614 tokens. It is over the limit by about 150.
+- It is not a harness cap and not an exception in the agent. `ended_by` shows "unknown" because `summarize_results.py`
+  looks for the text "Context window exceeded" in `trial.log`, but this harness writes it to the job log. The trial
+  is correctly marked invalid.
+
+**Did it have the right answers in view?**
+
+- Its state was exact after batch 18. Replaying the stream gives 0 differences at each of the 18 batch boundaries.
+- The questions (item 20) never arrived, so it had computed nothing for them.
+- Using its batch-18 state, 10 of the 24 queried counters already have their final values. The other 14 change in
+  batch 19. Nothing was lost to copying or arithmetic; the run lost because two of the 20 items were never fetched.
+
+**Writing speed as the context grew** (heredoc calls, about 4.9K tokens each; call time minus estimated reading;
+mostly re-typed numbers, so draft acceptance is high, 5.8 at the end):
+
+| prompt | 13K | 26K | 52K | 78K | 105K | 132K | 158K | 185K | 212K | 239K |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| tok/s | 93 | 96 | 77 | 64 | 55 | 47 | 42 | 37 | 34 | 32 |
+| call seconds | 59 | 58 | 65 | 82 | 97 | 111 | 125 | 141 | 155 | 169 |
+
+The server's 10-second averages during call 36 read 30-32 tok/s. These figures are averages per call, not
+per-token timestamps.
+
+**Time and reuse for this trial** (same method as above):
+
+- 37 calls; 4,382,472 prompt tokens, 4,096,768 cached (93.5 %; predicted 93.5 %, 36 of 36 calls exact).
+- 285,704 new tokens read; 99,106 written: thinking 47K, tool arguments 51K (the re-typed batches), visible 1.4K.
+- Wall time 2,277 s: writing 2,007, reading 250, tools 3.6, other 16.
+- The cache pays for itself from call 3. Without it, reading would take about 2,253 s instead of 250 s.
+- The 832-token cold-read speed above 200K is extrapolated.
+
+**Guards that would have prevented it.**
+
+1. **The harness refuses a fetch that cannot fit**, as B32i's room check does: context + largest item so far + the
+   next write + max_tokens must stay under the window. Here it would have refused around batch 17 or 18 and told
+   the model to compact first. The model could still have folded the data, because its state was exact.
+2. **Show the window and the current size in every tool result** (the B32i-style `[context: ~N/W tokens]` line),
+   also when there is no budget. The model explicitly did not know its window and planned to "reconsider" if needed.
+3. **A rule that the answers file is written early and updated**, or that the harness asks for the final answer
+   before 90 % of the window. That would at least have turned 24 blanks into about 10 right answers here. With
+   this task the final question list only comes with the last item, so the stronger fix is 1.
+
+The task text could also allow "pipe `next` into an inline script" in so many words, as seed 0 assumed, so the model
+does not have to choose between re-typing and reading the mirror. That is a change to the task, which is the
+owner's call for comparability.
+
 ## Method, assumptions, what is not measured
 
 - Records:
   - `context-clm-second-20261005/client/runs/jobs/*` (A, At, B32, C32, D32, E32; B32t unfinished, skipped);
-  - `context-clm-third-20261005/client/runs/jobs/*` (B32i s0, s1; A s1 still running, skipped);
+  - `context-clm-third-20261005/client/runs/jobs/*` (B32i s0, s1; A s1, which ended at the window);
   - the two `server.log` files.
 - Per call: `trajectory.ctx.json` step metrics (the server's prompt/cached/completion tokens; equal to `usage.json`
   totals in all trials except C32), `timing.json` (`llm_s` per call, `bash_s` per command) and

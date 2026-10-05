@@ -79,7 +79,7 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Strategy | Right of 24 | Time | Written | Note |
 | --- | ---: | ---: | ---: | --- |
 | Keep everything in the big window, cache on | 24 | 26 min | 89K tok | 91 % of reads served by the cache |
-| Keep everything in the big window, second seed | **0** | 38 min | 99K tok | all 24 blank; context grew to 202K and the run ended without answers (cause being traced) |
+| Keep everything in the big window, second seed | **0** | 38 min | 99K tok | all 24 blank: it ran out of window before the questions arrived (see below) |
 | Paper's self-editing agent, 32K budget | 19 | 64 min | 233K tok | all 5 losses caused by the harness, see below |
 | Summarise at 75 %, 32K budget | 24 | 41 min | 211K tok | 12 summaries, 57 calls |
 | Self-editing, **files allowed**, 32K | 24 | **1.9 min** | 7K tok | context never above 8.2K; no edit needed |
@@ -90,7 +90,12 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | Improved agent on a 480K stream (bigger than the window) | *pending* | | | |
 
 **Keeping everything in the big window is not robust.** It was fully right on the first seed and returned nothing on
-the second, where the context grew to 202K. One success and one total failure in two tries.
+the second. On the second seed the model let every batch into its context raw and then typed the same 136 lines out
+again in a command, about 13K tokens of growth per batch. Its running table was exact after all 18 batches it
+received, but at 245,900 tokens the server refused the next request, one batch before the questions arrived, so no
+answer was ever written. The model had said in its first call that it did not know its window size; without a
+budget the harness never told it. Two cheap guards would have saved the run: always show the window and the current
+size, and refuse a fetch that cannot fit.
 
 **The clear winner so far is the plainest one: let the model keep its working data in files.** Same answers, a
 context under 9K tokens on a 121K-token task, and 14 to 22 times faster than any strategy that keeps the data in
