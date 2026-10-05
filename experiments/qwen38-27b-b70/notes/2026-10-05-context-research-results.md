@@ -166,6 +166,47 @@ The improved agent (`scripts/context/clm_improved.py`) keeps the paper's idea an
 item is never rolled back, there is a room check before fetching, old thinking is dropped, and the running state is
 shown last so the transcript stays append-only and the prefix cache keeps working.
 
+### What an edit costs with the exact cache (measured 17:30 EDT)
+
+Wait for the first token after four lines are removed from a text the server has already read. Exact cache, a kept
+state every 13,312 tokens. Data: `data/2026-10-05-context/probes/edit-cost.*`.
+
+| Context | Cold read | Same text again | Edit in the last block | Edit at 90 % | Edit at 50 % | Edit at 10 % | Any edit, sent again |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 30K | 11.4 s | 0.8 s | 0.7 s | 6.7 s | 6.7 s | 11.3 s | 0.7 s |
+| 120K | 69.8 s | 1.6 s | 1.5 s | 11.0 s | 46.6 s | 69.6 s | 1.5 s |
+| 200K | 152 s | 1.8 s | 15.8 s | 30.7 s | 103 s | 152 s | 2.2 s |
+
+- **An edit costs a re-read from the last kept state before it to the end.** Near the end of the context that is
+  one to sixteen seconds; at the top of a 200K context it is the whole two and a half minutes. This is the cost the
+  paper's suffix reuse avoids by reusing stale cache, and the cost an exact scheme cannot avoid.
+- The kept states are 13,312 tokens apart, and a hit with drafting lands one block before the shared text ends, so
+  an edit just after a kept state falls back to the one before (the 15.8 s cell). A finer interval trades memory
+  for shorter re-reads.
+- A cold read of 200K in 832-token pieces took 152 s against 114 s in 4,096-token pieces: 33 % slower, more than
+  the 16-27 % measured up to 120K.
+
+### Can the model fold narrative text by reading? (single-call probe, measured 17:30 EDT)
+
+The model is given the true table and one batch of the prose ledger and must return the counters the batch changed.
+No agent, no context management: this measures the reading step alone. Data: `data/2026-10-05-context/probes/`.
+
+| Batch size | Thinking | Changed counters right | Note |
+| ---: | --- | ---: | --- |
+| 6.4K tokens (about 95 changes) | off | 38 % (679 of 1,805) | |
+| 6.4K tokens | on | 0 % (0 of 266) | all three calls ran into the 16,384-token output cap while thinking |
+| 2K tokens (about 40 changes) | off | 53 % (449 of 849) | |
+| 2K tokens | on | 43 % (102 of 238) | all six calls ran into the output cap |
+
+- **The prose ledger as built is beyond the model in one step, at either batch size.** Without thinking it gets
+  about half of the changes right; with thinking it reasons until the output cap and returns little or nothing.
+  The density is the problem: 40 to 95 interleaved changes per batch, with pronouns, relative amounts, corrections
+  and distractors.
+- **So this task cannot test context management.** A long-run test only means something when each step is easy
+  enough to get right; otherwise it measures the step. The next reading task will be calibrated with this probe
+  first (a few real changes per batch inside ordinary narrative, tuned until single-call accuracy is at least
+  98 %), and only then run over a stream longer than the budget.
+
 ### Where the time goes (reconstructed from the saved runs)
 
 | Run | Total | Writing | Reading | Tools | Tokens written |
