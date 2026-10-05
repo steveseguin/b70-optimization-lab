@@ -105,6 +105,8 @@ def _install_extra_body_hook() -> None:
     _EXTRA_PATCHED = True
 
 STATE_PATH = "/tmp/.live_ctx/STATE.txt"
+FOLD_PATH = "/tmp/.live_ctx/FOLD.py"
+CTXFOLD_SRC = __import__("pathlib").Path(__file__).with_name("ctxfold.py")
 PIN_TAG = "[[PINNED STATE: this is /tmp/.live_ctx/STATE.txt; edit that file, not this turn]]"
 
 PROTOCOL = """
@@ -112,15 +114,19 @@ PROTOCOL = """
 ## Working protocol for streamed data (read carefully)
 
 - Keep everything you will need later in `/tmp/.live_ctx/STATE.txt`. It is part of your context:
-  the harness shows its current content as the last message of every turn. It is NOT a notes file;
-  it counts against your budget like everything else. Keep it compact and exact.
-- After each item arrives, in your NEXT command: fold the item into STATE.txt with an inline
-  `python3 - <<'EOF'` script that reads the item's lines from the mirror file by code (never
-  retype data), then delete that item's turn from the mirror. One command does both.
+  the harness shows its current content (and your FOLD.py) in a pinned message every turn. It is
+  NOT a notes file; it counts against your budget like everything else. Keep it compact and exact.
+- Write `/tmp/.live_ctx/FOLD.py` ONCE, right after you have seen the first item, defining
+    fold(state: str, lines: list[str]) -> (new_state: str, tally: dict)   # tally = {first word: lines applied}
+    selftest() -> list[str]   # asserts on a tiny MADE-UP example covering every kind of line; returns the first words covered
+  Then fold every item with the command `ctxfold`: it runs your selftest, applies fold() to each
+  delivered item still in your context, checks the tally against the item, writes STATE.txt and
+  removes the folded item turns from your context. If it says REFUSED, nothing changed: fix FOLD.py
+  (edit it, do not re-type the data) and run `ctxfold` again. Do not re-type the fold logic each batch.
 - Before running a command that delivers a large item, make sure there is room for it: the
   harness refuses to run such a command when the item would not fit ("NOT RUN").
 - Your earlier thinking is not kept between turns: write anything you must remember into
-  STATE.txt.
+  STATE.txt. Keep each turn's thinking short; act every turn.
 - If STATE.txt plus the next item cannot fit in your budget, you must decide what to drop from
   STATE.txt yourself; anything dropped is lost (answer "" for it), so drop the least useful.
 """
@@ -166,13 +172,17 @@ class _PinnedState:
 
     async def maybe(self, environment: Any, messages: list[dict[str, Any]]) -> bool:
         a = self._agent
-        messages[:] = [m for m in messages
-                       if not (isinstance(m, dict) and str(m.get("content") or "").startswith(PIN_TAG))]
         try:
             r = await environment.exec(command=f"cat {STATE_PATH} 2>/dev/null", timeout_sec=30)
             text = (getattr(r, "stdout", "") or "").strip()
         except Exception:
             text = a._last_state
+        try:
+            r = await environment.exec(command=f"cat {FOLD_PATH} 2>/dev/null", timeout_sec=30)
+            fold = (getattr(r, "stdout", "") or "").strip()
+        except Exception:
+            fold = a._last_fold
+        a._last_fold = fold
         note = ""
         if text != a._last_state:
             bad = a._validate(text)
@@ -187,8 +197,26 @@ class _PinnedState:
                 text = a._last_state
             else:
                 a._last_state = text
-        if text or note:
-            messages.append({"role": "user", "content": f"{PIN_TAG}\n{text}{note}"})
+        content = f"{PIN_TAG}\n{text}{note}"
+        if fold:
+            content += f"\n--- {FOLD_PATH} ---\n{fold}"
+        # A context edit can merge the pinned message into a neighbouring turn (upstream
+        # parse_back merges consecutive same-role turns), which then no longer STARTS with the
+        # tag; cut any embedded copy so a stale state never survives in the history.
+        for m in messages:
+            c = m.get("content") if isinstance(m, dict) else None
+            if isinstance(c, str) and PIN_TAG in c and not c.startswith(PIN_TAG):
+                m["content"] = c[:c.index(PIN_TAG)].rstrip()
+        messages[:] = [m for m in messages
+                       if not (isinstance(m, dict) and m.get("content") == "" and m.get("role") == "user")]
+        pins = [i for i, m in enumerate(messages)
+                if isinstance(m, dict) and str(m.get("content") or "").startswith(PIN_TAG)]
+        if len(pins) == 1 and messages[pins[0]].get("content") == content:
+            pass  # unchanged: leave it where it is, so the prefix cache stays valid
+        else:
+            messages[:] = [m for i, m in enumerate(messages) if i not in set(pins)]
+            if text or note or fold:
+                messages.append({"role": "user", "content": content})
         return await self._inner.maybe(environment, messages)
 
 
@@ -204,7 +232,7 @@ class ClmImprovedAgent(_h.ClmAgent):
                  guard_output_regex: str = r"(?m)^ITEM \d+/\d+ \(",
                  guard_headroom: int | str = 4096,
                  state_line_regex: str = "", state_max_tokens: int | str = 8192,
-                 think_cap: int | str = 0, empty_streak_limit: int | str = 2,
+                 think_cap: int | str = 0, empty_streak_limit: int | str = 1,
                  fallback_think_cap: int | str = 2048, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._guard_cmd = re.compile(guard_command_regex)
@@ -214,6 +242,7 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.state_max_tokens = int(state_max_tokens)
         self._largest_delivery = 0
         self._last_state = ""
+        self._last_fold = ""
         self.n_gate_refusals = self.n_state_rejected = self.n_protected_rollbacks = 0
         self.think_cap = int(think_cap or 0)
         self.n_think_cap_continuations = 0
@@ -225,6 +254,7 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.fallback_think_cap = int(fallback_think_cap)
         self._empty_streak = 0
         self.n_loop_guard = 0
+        self._continuation_broken = ""
         _install_extra_body_hook()
         self._ctx.__class__ = _ImprovedEnv
         self._ctx.agent = self
@@ -274,10 +304,15 @@ class ClmImprovedAgent(_h.ClmAgent):
         prefill = {"role": "assistant", "reasoning_content": rc1, "content": bridge}
         u1 = r1.usage
         rest = max(full - (getattr(u1, "completion_tokens", 0) or 0), 1024)
+        if self._continuation_broken:
+            return r1
         _NEXT_EXTRA.update(continue_final_message=True, add_generation_prompt=False)
         self.max_tokens = rest
         try:
             r2 = await super()._query_with_retry(model, list(messages) + [prefill])
+        except Exception as exc:  # server rejects the continuation: keep running without it
+            self._continuation_broken = f"{type(exc).__name__}: {exc}"[:300]
+            return r1
         finally:
             self.max_tokens = full
             _NEXT_EXTRA.clear()
@@ -296,6 +331,13 @@ class ClmImprovedAgent(_h.ClmAgent):
         except Exception:
             pass
         return r2
+
+    async def setup(self, environment: Any) -> None:
+        await super().setup(environment)
+        src = CTXFOLD_SRC.read_text()
+        await environment.exec(
+            command="cat > /usr/local/bin/ctxfold <<'CTXFOLD_EOF'\n" + src + "\nCTXFOLD_EOF\n"
+                    "chmod +x /usr/local/bin/ctxfold", timeout_sec=60)
 
     def _validate(self, text: str) -> str:
         if tk.count_tokens([{"role": "user", "content": text}])[0] > self.state_max_tokens:
@@ -348,6 +390,7 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "think_cap": self.think_cap,
                     "think_cap_continuations": self.n_think_cap_continuations,
                     "loop_guard_calls": self.n_loop_guard,
+                    "continuation_error": self._continuation_broken,
                     "extra_prompt_tokens": self.extra_prompt_tokens,
                     "dropped_thinking_chars": getattr(self, "dropped_thinking_chars", 0),
                     "drop_old_thinking": _as_bool(getattr(self, "drop_old_thinking", False)),

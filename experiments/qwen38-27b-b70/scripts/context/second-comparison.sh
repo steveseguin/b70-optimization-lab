@@ -17,6 +17,7 @@
 #   C131  summary at 75 %, budget 131,072, memory-only (only where the task is >= 0.8 x budget)
 #   D32   self-editing, budget 32,768, notes allowed
 #   E32   no management, budget 32,768, notes allowed
+#   B32ik B131ik  the same with a per-turn thinking cap (THINK_CAP_K, default 8192 tokens)
 #   B32i B131i  the improved self-editing agent (clm_improved.py: delivered items never rolled back,
 #         room check before `next`, harness-owned pinned STATE.txt, old thinking dropped), memory-only
 #   At B32t C32t E32t   the same arms with earlier thinking dropped from every call (DROP_OLD_THINKING=1:
@@ -94,7 +95,8 @@ explicit = len(sys.argv) > 9 and sys.argv[9] == "explicit"
 ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("clm", "memory", 131072),
         "C32": ("summary", "memory", 32768), "C131": ("summary", "memory", 131072),
         "D32": ("clm", "notes", 32768), "E32": ("plain", "notes", 32768),
-        "B32i": ("improved", "memory", 32768), "B131i": ("improved", "memory", 131072)}
+        "B32i": ("improved", "memory", 32768), "B131i": ("improved", "memory", 131072),
+        "B32ik": ("improved", "memory", 32768), "B131ik": ("improved", "memory", 131072)}
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -188,7 +190,9 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   rm -rf "${RUNS:?}/jobs/$job"
   echo "== $(date +%H:%M:%S) $job (agent=$agent budget=$budget drop_old_thinking=$drop)"
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
+  local tc=${THINK_CAP:-}
+  [[ "$arm" == *ik ]] && tc=${THINK_CAP_K:-8192}   # B32ik/B131ik: improved agent + per-turn thinking cap
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
   echo "   rc=$? $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
   if ! "$PY" "$D/summarize_results.py" --brief --check "$RUNS/jobs/$job" > "$RUNS/$job.check" 2>&1; then
     echo "!!! $job: a cap, timeout, server refusal or the storage rule ended this run; it does not count:"

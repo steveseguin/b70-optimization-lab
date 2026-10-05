@@ -26,6 +26,8 @@
 #   9 imp-gate      budget for one item but not two, headroom 0; the stub runs `next` again before
 #                   folding: refused with "NOT RUN", then it folds and retries (ii): refusals >= 1,
 #                   items_lost 0, reward 1.0
+#  12 imp-ctxfold    the harness fold helper: a FOLD.py with the real seed-1 DEL bug must be refused by its
+#                   selftest, the fixed one must fold every item (reward 1.0, not VOID)
 #  11 imp-loopguard no think cap, every first reply cut with no command: after 2 in a row the agent
 #                   forces an action (continuation with a 2,048-token thinking allowance)
 #  10 imp-thinkcap  THINK_CAP=64 and a stub that cuts every first reply inside the thinking: the
@@ -192,6 +194,21 @@ FAKE_PLAN=improved-fold FAKE_THINKCAP=1 start_stub "$O/stub-imp-loopguard.log"; 
 lg=$("$PY" -c "import json,glob; print(json.load(open(glob.glob('$O/runs/jobs/imp-loopguard/*/agent/improved_stats.json')[0])).get('loop_guard_calls'))" 2>/dev/null)
 msg="reward=$reward ended_by=$ended_by loop_guard_calls=$lg continuations=$think_cap_cont"
 [[ $invalid == False && $reward == 1.0 && ${lg:-0} -ge 1 ]] && pass imp-loopguard "$msg" || fail imp-loopguard "$msg"
+# 12 ctxfold: a buggy FOLD.py (the real seed-1 DEL bug) must be refused, the fixed one folds every item
+FAKE_PLAN=improved-ctxfold start_stub "$O/stub-imp-ctxfold.log"; ijob imp-ctxfold 200000 ""
+cf=$("$PY" - "$O/runs/jobs/imp-ctxfold" "$D" <<'PY'
+import sys; sys.path.insert(0, sys.argv[2])
+from pathlib import Path
+import summarize_results as s
+ts = s.expand([Path(sys.argv[1])])
+r = s.trial_row(ts[0]) if ts else {}
+print(r.get("ctxfold_calls"), r.get("ctxfold_refused"))
+PY
+)
+read -r cf_calls cf_ref <<< "$cf"
+msg="reward=$reward void=$void ended_by=$ended_by items_lost=$items_lost ctxfold_calls=$cf_calls refused=$cf_ref"
+[[ $invalid == False && $void == False && $reward == 1.0 && $items_lost == 0 && ${cf_ref:-0} -ge 1 && ${cf_calls:-0} -ge 2 ]] \
+  && pass imp-ctxfold "$msg" || fail imp-ctxfold "$msg"
 stop_stub
 
 echo; "$PY" "$D/summarize_results.py" --brief "$O/runs" | tee "$O/summary.txt"

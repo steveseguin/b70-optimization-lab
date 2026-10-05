@@ -91,6 +91,7 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | No management, **files allowed**, 478K stream | 24 | **1.9 min** | 8K tok | 11 calls, peak context 9.7K |
 | Self-editing, **files allowed**, 478K stream | 24 | **1.3 min** | 5K tok | 12 calls, peak context 7.1K |
 | No management, files allowed, 121K of **arbitrary key-values** (not a foldable table) | 24 | 1.1 min | 4K tok | 8 calls, peak context 5.8K |
+| Keep everything, no files, 121K of **arbitrary key-values** | 24 | 9.3 min | 19K tok | all 121K held in context (peak 129K); 24 look-ups all right |
 
 **Keeping everything in the big window is not robust.** It was fully right on the first seed and returned nothing on
 the second. On the second seed the model let every batch into its context raw and then typed the same 136 lines out

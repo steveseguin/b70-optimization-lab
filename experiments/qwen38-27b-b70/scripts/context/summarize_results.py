@@ -66,7 +66,11 @@ def is_suspect(c: str) -> bool:
     shell = HEREDOC.sub("<<HEREDOC\n", c)
     bodies += [q[1:-1] for q in QUOTED.findall(shell)]
     shell = QUOTED.sub("''", shell)
-    if re.search(r"\bnext\b[^\n;&|]*>|\bnext\b[^\n;&]*\|\s*tee\b", shell):
+    # stdout of `next` into a file or tee; stderr redirects (2>/dev/null, 2>&1), >/dev/null and
+    # `which next` / `type next` are not storage
+    sh2 = re.sub(r"\d*>&\d|\d+>>?\s*\S+|>>?\s*/dev/null", "", shell)
+    if re.search(r"(?<!which )(?<!type )(?<!-v )\bnext\b[^\n;&|]*>|"
+                 r"(?<!which )(?<!type )(?<!-v )\bnext\b[^\n;&]*\|\s*tee\b", sh2):
         return True
     if not DATA_RE.search(c):
         return False
@@ -297,7 +301,12 @@ def trial_row(t: Path) -> dict:
         "stale": counts.get("stale"), "wrong": counts.get("wrong"),
         "items_lost": items_lost, "gate_refusals": imp.get("gate_refusals"),
         "protected_rollbacks": imp.get("protected_rollbacks"), "state_rejected": imp.get("state_rejected"),
-        "think_cap_cont": imp.get("think_cap_continuations"),
+        "think_cap_cont": imp.get("think_cap_continuations"), "loop_guard": imp.get("loop_guard_calls"),
+        "ctxfold_calls": sum(1 for c in cmds if re.search(r"(^|[;&|]\s*)ctxfold\b", c, re.M)) if imp else None,
+        # from the full step record (a context edit turns old tool turns into user text)
+        "ctxfold_refused": sum(1 for seg in (ctx.get("segments") or []) for st in seg.get("steps") or []
+                               for res in ((st.get("observation") or {}).get("results") or [])
+                               if "ctxfold: REFUSED" in str(res.get("content") or "")) if imp else None,
         "delivered": dl.get("items_delivered"), "seen_whole": len(seen_whole) if snaps else None,
         "cut": len(cut), "broken_pipe": dl.get("items_broken_pipe"), "to_file": dl.get("items_to_file"),
         "tee": dl.get("items_with_tee"), "refused": dl.get("refused"), "hit_max_tokens": hit_max,
@@ -356,7 +365,8 @@ def main() -> None:
           "summary_failed", "peak_sent_ctx", "prompt_tokens", "cached_tokens", "think_share", "completion_tokens", "wall_s", "items_lost", "ended_by", "rule"]
     t2 = ["arm", "kind", "mode", "size", "seed", "correct", "blank", "stale", "wrong", "lost_never",
           "lost_dropped", "lost_copy", "stored_frac", "items", "delivered", "seen_whole", "items_lost", "cut",
-          "gate_refusals", "protected_rollbacks", "state_rejected", "think_cap_cont",
+          "gate_refusals", "protected_rollbacks", "state_rejected", "think_cap_cont", "loop_guard",
+          "ctxfold_calls", "ctxfold_refused",
           "broken_pipe", "to_file", "tee", "refused", "hit_max_tokens", "rollbacks", "nudges",
           "suspect_cmds", "score_raw"]
     print("\t".join(t1))

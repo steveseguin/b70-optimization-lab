@@ -311,3 +311,58 @@ is returned as reasoning; the tool call itself is parsed.
 
 **Reading rule** (unchanged): B32i passes if, on both seeds, it is within 1 key of A and
 `items_lost == 0`.
+
+## Improved agent on the real server (third run, ledger 120K, memory-only)
+
+| | seed 0 | seed 1 |
+|---|---|---|
+| score | 24/24 | 21/24 |
+| time | 896 s | 1,258 s |
+| calls / edits | 46 / 19 | 58 / 22 |
+| written tokens | 66,899 | 91,364 |
+| cached share of prompt | 53 % | 39 % |
+| items lost | 0 | 0 |
+
+The paper's agent, B32, scored 19/24 in 3,841 s on seed 0.
+
+**Seed 1's three misses were a bug in the model's own fold script; the harness was not
+involved.**
+- **The counters:** keziqi59, suba49 and nine41 were deleted in batches 17 and 19, but the
+  model answered with numbers.
+- **The model did not use STATE.txt at all.** It kept its own JSON state block inside the
+  mirror and re-typed a fold script for every batch. Simulating the stream shows the state was
+  exact through batch 16.
+- **How the bug arose:** at batch 16 the model spent two turns of 15K and 16K thinking tokens
+  (one hit max_tokens with no command), then rebuilt the mirror. From batch 17 its re-typed
+  script used a five-group regex but popped `group(4)` (the word "DEL") instead of the counter
+  name, so every DEL did nothing. The script still printed "applied 136, errors 0".
+- **No harness mechanism was involved:** room-check refusals, state rejections, protected
+  rollbacks, the loop guard and thinking-cap continuations were all 0.
+- **The "suspect" flag was a false positive:** `which next 2>/dev/null` was read as a
+  redirect of `next`. The check is fixed.
+
+**Seed 0** used STATE.txt as intended.
+
+**Where the time went:**
+- Writing was most of it. Seed 0: about 720 s writing against about 150 s reading 292K new
+  tokens. Seed 1: about 1,050 s against about 180 s.
+- A few long turns of 4K or more did most of the writing: 36K of seed 0's 67K tokens, 64K of
+  seed 1's 91K. The settled loop wrote about 1.7K tokens per batch.
+
+**Why the cache share is only about half:**
+- Seed 0: each batch's 6.9K new tokens must be read anyway, and the pinned state (about 2.5K)
+  was removed and re-appended on every call, so it was read twice per batch.
+- Seed 1: the model's state block sat in an early turn, so every fold rewrote the context from
+  the top (only the 832-token system prompt was cached).
+
+**Fixes in the next patch, ranked:**
+1. A harness fold helper, `ctxfold`, for correctness. The model writes FOLD.py once (fold plus
+   selftest), and it is pinned next to the state. Each batch it runs `ctxfold`, which refuses
+   if the selftest fails, does not cover a kind of line in the item, or reports a tally that
+   does not match the item. The seed-1 bug fails its selftest. Over the real seed-1 stream, the
+   correct FOLD.py yields all 24 values.
+2. For time: the loop guard now acts after one reply without a command, and new arms `B32ik`
+   and `B131ik` add an 8,192-token thinking cap. If the server rejects the continuation the
+   agent keeps running without it and records the error.
+3. For the cache: the pinned message stays in place while unchanged.
+4. The suspect check no longer flags stderr redirects or `which`/`type next`.

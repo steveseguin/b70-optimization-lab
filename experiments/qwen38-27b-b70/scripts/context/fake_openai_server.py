@@ -14,7 +14,9 @@ void a memory-only run); FAKE_PLAN=inline puts a value inside an inline python c
 FAKE_PLAN=improved-fold | improved-probe (+ FAKE_CORRUPT=1): scripted clm_improved agent on ledger
 tasks (fold items into /tmp/.live_ctx/STATE.txt; see plan_improved). FAKE_THINKCAP=1: every tool
 request without continue_final_message gets a "length" reply with thinking only, so the
-improved agent's think-cap continuation (continue_final_message) is exercised. Without tools (e.g. a summary request) it
+improved agent's think-cap continuation (continue_final_message) is exercised.
+FAKE_PLAN=improved-ctxfold: writes a buggy /tmp/.live_ctx/FOLD.py first (ctxfold must refuse it),
+then a correct one, and folds every item with `ctxfold`. Without tools (e.g. a summary request) it
 returns fixed text. /v1/completions returns fixed text. Usage numbers are rough
 (chars/4) so the harness's tokenizer calibration has something to read.
 """
@@ -102,12 +104,57 @@ def plan_improved(msgs, mode):
     return "next"
 
 
+GOOD_FOLD = r"""import re
+def _parse(state):
+    st = {}
+    for ln in state.splitlines():
+        a = ln.split()
+        if len(a) == 2:
+            st[a[0]] = int(a[1])
+    return st
+def fold(state, lines):
+    st, t = _parse(state), {}
+    for ln in lines:
+        op, nm, v = re.match(r"^(SET|ADD|DEL) (\S+)(?: (-?\d+))? \| memo:", ln).groups()
+        if op == "SET": st[nm] = int(v)
+        elif op == "ADD": st[nm] = st.get(nm, 0) + int(v)
+        else: st.pop(nm, None)
+        t[op] = t.get(op, 0) + 1
+    return "".join("%s %d\n" % kv for kv in st.items()), t
+def selftest():
+    s, _ = fold("", ["SET a1 5 | memo: x", "ADD a1 2 | memo: x", "SET b2 1 | memo: x", "DEL b2 | memo: x"])
+    assert _parse(s) == {"a1": 7}, s
+    return ["SET", "ADD", "DEL"]
+"""
+# the seed-1 bug of 2026-10-05 (DEL popped the op word, not the counter): selftest must catch it
+BAD_FOLD = GOOD_FOLD.replace("else: st.pop(nm, None)", "else: st.pop(op, None)")
+
+
+def plan_ctxfold(msgs):
+    tools = [str(m.get("content") or "") for m in msgs if m.get("role") == "tool"]
+    last = tools[-1] if tools else ""
+    alltext = "\n".join(str(m.get("content") or "") for m in msgs[2:] if m.get("role") in ("tool", "user"))
+    unfolded = any(re.match(r"ITEM \d+/\d+ \((UPDATE|SET)\)", t) for t in tools)
+    write = lambda src: "cat > /tmp/.live_ctx/FOLD.py <<'FOLDEOF'\n" + src + "FOLDEOF\nctxfold"
+    if "answers.json written" in last:
+        return "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
+    if "ctxfold: REFUSED" in last:
+        return write(GOOD_FOLD)
+    if unfolded:
+        return write(BAD_FOLD) if "ctxfold:" not in alltext else "ctxfold"
+    if "This was the last item" in alltext:
+        return ("cat > /app/answers.json <<'EOF'\n" + json.dumps(_solve(alltext)) + "\nEOF\necho answers.json written")
+    return "next"
+
+
 def plan(msgs):
     """Scripted agent. FAKE_PLAN: honest (default) | violate | inline (see module doc)."""
     seen = [str(m.get("content") or "") for m in msgs if m.get("role") in ("tool", "user")
             and m is not msgs[1]]  # skip the task prompt (it names the submit command)
     tools = "\n".join(seen)
     mode = os.environ.get("FAKE_PLAN", "honest")
+    if mode == "improved-ctxfold":
+        return plan_ctxfold(msgs)
     if mode.startswith("improved"):
         return plan_improved(msgs, mode)
     if "answers.json written" in tools:
