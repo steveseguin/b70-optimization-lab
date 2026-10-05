@@ -180,3 +180,122 @@ order to keep:
    it was saved but read back wrong.
 7. Cost is compared only between arms with equal reward: prompt tokens read, calls and wall time.
    No speed claim comes out of this test.
+
+## Second comparison: the first two trials, read closely (ledger, 121K tokens, memory-only, seed 0)
+
+Results: `/mnt/fast-ai/bench-results/context-clm-second-20261005/client/runs/` (prefix cache on).
+
+**A, keep everything, no budget (24/24).** The model did not keep the raw batches. After the
+first batch, it piped every `next` into an inline Python script (`next | python3 -c '…' '<state
+JSON>'`). The script applied the updates and printed only the item header, the bare updates
+(memos removed) and the new state. The memos, which are noise, never entered its context, and
+the state table was carried as a JSON argument that the model re-typed in every command (~2,900
+characters). This is allowed under memory-only: piping is permitted, no file was written, and
+the grader found only harness files.
+
+Its 89K written tokens are about 109K characters of thinking (~700-1,000 tokens per call) plus
+about 69K characters of commands, mostly the state JSON copied again each call. Call 5 alone
+wrote 12.3K tokens: it hand-transcribed batch 1.
+
+Time: 1,571 s of the 1,589 s were model calls. The new prompt tokens to read were only about
+0.17M (2.0M sent, 1.83M from the cache), about 1.5 minutes at 1,700-2,600 tokens/s. Writing
+89K tokens took the rest: about 95 % of the time is writing. The rate fell from about 90 to 41
+tokens/s as the context grew to 137K. The answers were computed by its inline script, not in
+its head.
+
+**B32, self-editing at 32,768 (19/24: 4 wrong, 1 "stale").**
+
+Every loss came from one cause. The five missed counters equal the true state with batches
+2, 3, 4, 5 and 7 left out, and all 24 answers match that simulation exactly. Those five batches
+were delivered by `next` and then deleted by the harness's rollback-and-retry, and a delivered
+item cannot be fetched again. No arithmetic slip, no edit and no copying error lost anything.
+The "stale" one only happens to equal an older value.
+
+How it got there:
+
+- **Calls 1-44 (the thrash).** The first call wrote 14,425 tokens of planning (55,800
+  characters). The template keeps re-sending that thinking, so batch 1 (6.9K) already left the
+  context near 27K of the 30,720 limit, and the "urgent" nudge fired at once. Then came:
+  - many turns of 4-16K thinking, several cut at max_tokens with no command (10 calls of 10K
+    tokens or more);
+  - two of its own edit scripts crashing, because their marker text also appears inside the
+    mirror (the mirror contains its commands);
+  - the four `next` calls for items 2-5, each rolled back with its batch;
+  - item 7, delivered and rolled back as well.
+
+  All 20 rollbacks (56 turns dropped) were the harness cutting the newest turns after a huge
+  thinking turn or a delivered batch had pushed the context over the limit. No edit was ever
+  refused. The 22 nudges were mostly the "persistent" urgent nudge: it nags whenever the free
+  room is less than twice the last tool output (a 6.9K batch), so it said "about to be cut off"
+  at 55 %.
+- **Calls 45-86 (the settled loop).** Then it found the right pattern by itself:
+  - a state block between its own markers (`@@STn@@ … @@STnE@@`);
+  - after each `next`, one inline Python script reads the 136 new lines from the mirror by
+    code, applies them to the state, rewrites the block, and replaces the batch with one line;
+  - about 650 tokens written per batch.
+
+**The 21 real edits:**
+
+| edit | what it did |
+|---|---|
+| 1 | built the state block from batch 1 |
+| 1 | replaced the 55.8K-character planning turn with a summary |
+| 2 | folded item 6 and removed its leftover script turn |
+| 2 | cut everything after the state block |
+| 14 | the per-batch "apply and delete" edits for items 8-19 |
+| 1 | a final trim |
+
+**Cost.** It wrote 233K tokens: 213K in calls 1-44, 20.5K in the settled loop. Only 365K of
+1.25M prompt tokens came from the cache, because every edit rewrote the state block near the
+top, so everything after it was read again.
+
+**Rule.** The 17 "suspect" commands are false positives of the summary script's check: they
+open the mirror for writing and contain the text `| memo:` inside a regular expression. The
+grader found no file holding stream data. The new files were the mirror, the shell-state
+files and Python bytecode caches. The trial is clean.
+
+## Improved self-editing agent (proposal; `scripts/context/clm_improved.py`, not wired in yet)
+
+Built only from what B32 and A showed:
+
+1. **A delivered item is never rolled back.** Rollback may drop the turns after the newest
+   delivered item, but never that item. The model is asked to fold it in; going over the
+   budget for that one turn is allowed and recorded.
+2. **Room check before a destructive read.** A `next` (configurable) is not run when the
+   context plus the largest item seen so far plus 4K would not fit. The model gets "NOT RUN:
+   fold first".
+3. **Earlier thinking is dropped** (as in arm B32t). It caused the first overflow.
+4. **A pinned state file owned by the harness.** `/tmp/.live_ctx/STATE.txt` is shown as the
+   last message of every call, so the transcript stays almost append-only and the prefix cache
+   works. The harness checks its format and size after each edit and restores the last valid
+   version if an edit breaks it, so no marker can collide with command text. The memory-only
+   grader must then exclude STATE.txt like the mirror: a one-line change in GRADE_PY_V2 before
+   the next task generation.
+5. **A short protocol in the prompt:** fold every item right after it arrives, by code, then
+   delete the raw turn.
+
+**Weighing the listed ideas against the evidence:**
+
+| idea | verdict |
+|---|---|
+| (a) pinned state block | supported; the model invented it, the harness should own and validate it (item 4) |
+| (b) edit only at batch boundaries | supported for cache reuse; with the state shown last, deleting the just-folded batch touches only the tail |
+| (c) archive of removed spans | not supported; no loss came from pruning, so it is left out (it would be its own rule class) |
+| (d) drop old thinking | supported; it caused the first overflow |
+| (e) thinking cap per turn | supported by the evidence (10 calls of 10K tokens or more), but the server only has max_tokens, which cuts the action too |
+| (f) harness decides WHEN, model decides WHAT | partly; the timing was not the problem, the rollback of a delivered item was. The room check (item 2) is the harness's "when" |
+
+For (e), a real cap would cut the thinking at T tokens, close `</think>`, and continue with
+vLLM's `continue_final_message`. This is possible with this server but untested, so it is not
+implemented.
+
+**What the paper's harness already does:** nudges at 25/50/75 %, the adaptive persistent nudge,
+rollback-and-retry (the loss mechanism here), the editable mirror, free edit turns, and capping
+the newest output. **What it does not do:** a validated state, protection of a delivered item,
+a room check, dropping or capping thinking, an archive.
+
+**First test once the stub checks pass:** B32 against this agent ("B32i") on ledger 120K, both
+seeds.
+
+**Pass rule:** B32i passes if both seeds are within 1 key of A, with no delivered item lost
+(`delivered == seen_whole`).
