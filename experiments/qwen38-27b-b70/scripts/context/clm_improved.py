@@ -214,6 +214,9 @@ PROTOCOL_READ = """
   script (for example `python3 - <<'EOF'` holding a dict of new values and the removed names, reading
   and rewriting STATE.txt), then `ctxfold --drop`, which removes the item from your context. It
   refuses (and changes nothing) if a counter the item mentions has no line in STATE.txt.
+- Do not edit the mirror file by hand: `ctxfold --drop` removes the items, and the harness keeps the
+  rest compact. STATE.txt changes only in the same command as a new item's update; a counter line never
+  disappears (`name removed` stays until the counter is opened again, then it becomes `name value`).
 - Before running a command that delivers a large item, make sure there is room for it: the harness
   refuses to run such a command when the item would not fit ("NOT RUN").
 - Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs;
@@ -241,6 +244,24 @@ class _ImprovedEnv(ContextEnv):
 
     async def step(self, command, messages, *, environment, pending=None):
         a = self.agent
+        # Repeat guard (2026-10-05, B32in 480K: with thinking off, greedy decoding re-issued `ctxfold`
+        # about 150 times on an unchanged context until the step cap; B32ir re-ran an update command):
+        # the exact command just run, when no new item has been delivered since, is not run again.
+        cmd = (command or "").strip()
+        if (a.repeat_guard and cmd and cmd == a._last_cmd and a._deliveries == a._deliveries_at_last
+                and not a._guard_cmd.search(cmd)):
+            a.n_repeats_refused += 1
+            text = ("NOT RUN: this is exactly the command you just ran, and no new item has arrived since; "
+                    "running it again would change nothing or apply the same changes twice. Decide the next "
+                    "step (usually `next` to fetch the next item).")
+            res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
+            return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
+                              readout="", notes="", exec_time=0.0, touched_ctx=False)
+        a._last_cmd, a._deliveries_at_last = cmd, a._deliveries
+        # read mode: was an undropped item in the context when this command ran? (STATE.txt may change
+        # only then; see _PinnedState)
+        a._item_pending = any(m.get("role") == "tool" and re.match(r"ITEM \d+/\d+ \((?!QUERY|GET)", str(m.get("content") or ""))
+                              for m in messages if isinstance(m, dict))
         if a._guard_cmd.search(command or ""):
             shown = messages + ([pending] if pending else [])
             now = self.budget.count(shown)
@@ -258,6 +279,8 @@ class _ImprovedEnv(ContextEnv):
                                   exec_time=0.0, touched_ctx=False)
         res = await super().step(command, messages, environment=environment, pending=pending)
         out = getattr(res.result, "stdout", "") or ""
+        if a._guard_out.search(out):
+            a._deliveries += 1
         if res.ctx_changed:
             a._edit_since_call = True
         if out.lstrip().startswith(("ctxfold: folded", "ctxfold: removed items")):
@@ -267,6 +290,38 @@ class _ImprovedEnv(ContextEnv):
                                       int(tk.count_tokens([{"role": "tool", "content": out}])[0]
                                           * self.budget.tok_ratio))
         return res
+
+
+_TEXT_CALL = re.compile(r"(?s)\bbash\s*(\{\s*\"command\"\s*:.*\})\s*$")
+
+
+def _install_text_call_recovery(agent: Any) -> None:
+    """With thinking off the model sometimes writes its action as text (`... bash {"command": "next"}`)
+    instead of a tool call, imitating earlier turns that the mirror flattened into text; the harness then
+    answered "No tool call" and the call was wasted (77 of 343 calls in B32in 480K). If a reply has no
+    tool call but its text ends with such a block that parses as JSON with a "command", it is used as the
+    tool call (counted in improved_stats.json: text_calls_recovered)."""
+    orig = _h._extract_tool_call
+    if getattr(orig, "_recovering", False):
+        return
+
+    def extract(msg: dict) -> dict:
+        if not msg.get("tool_calls"):
+            m = _TEXT_CALL.search(str(msg.get("content") or ""))
+            if m:
+                try:
+                    args = json.loads(m.group(1))
+                except Exception:
+                    args = None
+                if isinstance(args, dict) and isinstance(args.get("command"), str):
+                    agent.n_text_calls_recovered += 1
+                    msg["content"] = str(msg.get("content") or "")[:m.start()].rstrip()
+                    msg["tool_calls"] = [{"id": f"recovered-{agent.n_text_calls_recovered}", "type": "function",
+                                          "function": {"name": "bash", "arguments": json.dumps(args)}}]
+        return orig(msg)
+
+    extract._recovering = True
+    _h._extract_tool_call = extract
 
 
 class _PinnedState:
@@ -294,6 +349,18 @@ class _PinnedState:
         note = ""
         if text != a._last_state:
             bad = a._validate(text)
+            if not bad and a.fold_mode == "read":
+                # (b) a counter line never just disappears: a removed counter keeps a `name removed` line
+                was = set(re.findall(r"(?m)^\s*([a-z]+\d\d)\b", a._last_state))
+                now_ = set(re.findall(r"(?m)^\s*([a-z]+\d\d)\b", text))
+                gone = sorted(was - now_)
+                if gone:
+                    bad = f"lines vanished without a `removed` marker: {' '.join(gone[:8])}"
+                # (d) STATE.txt changes only together with a delivered item (B32ir 119K: after a drop, with
+                # thinking off, it re-applied invented/old changes with no item in context)
+                elif not getattr(a, "_item_pending", True):
+                    bad = ("STATE.txt changed while no new item was in your context; fetch the next item "
+                           "first (corrections of earlier mistakes go into the next item's update)")
             if bad:
                 a.n_state_rejected += 1
                 note = f"\n[STATE.txt edit REJECTED ({bad}); the previous version was restored.]"
@@ -344,7 +411,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                  fallback_think_cap: int | str = 2048,
                  stable_render: Any = True, stable_mirror: Any = True,
                  thinking_policy: str = "always", stable_system: Any = None,
-                 fold_mode: str = "script", read_reasons: Any = False, **kwargs: Any) -> None:
+                 fold_mode: str = "script", read_reasons: Any = False, repeat_guard: Any = True,
+                 recover_text_calls: Any = True, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # v3 (2026-10-05): stable prompt layout and per-call thinking
         self.stable_mirror = _as_bool(stable_mirror)
@@ -354,6 +422,13 @@ class ClmImprovedAgent(_h.ClmAgent):
         # pushed counter names into FOLD.py in the first prose trial)
         self.fold_mode = str(fold_mode or "script").strip().lower()
         self.read_reasons = _as_bool(read_reasons)
+        self.repeat_guard = _as_bool(repeat_guard)
+        self._last_cmd, self._deliveries, self._deliveries_at_last = "", 0, -1
+        self._item_pending = True
+        self.n_repeats_refused = 0
+        self.n_text_calls_recovered = 0
+        if _as_bool(recover_text_calls):
+            _install_text_call_recovery(self)
         if self.fold_mode == "read" and not state_line_regex:
             state_line_regex = r"^[a-z]+\d\d\s+(-?\d+|removed)$"
         self.thinking_policy = str(thinking_policy or "always").strip().lower()
@@ -416,7 +491,7 @@ class ClmImprovedAgent(_h.ClmAgent):
     # ---------------- per-call thinking (arms B32in / B32io)
     _JUDGEMENT = ("ctxfold: REFUSED", "NOT RUN", "REJECTED", "Traceback", "This was the last item",
                   "STREAM END", "No tool call in your last turn", "CONTEXT LIMIT", "FINAL turn",
-                  "ROLLED BACK")
+                  "ROLLED BACK", "no unfolded item", "no delivered item", "harness recovered")
 
     def _wants_thinking(self, messages: list[dict[str, Any]]) -> bool:
         """thinking_policy: always = the agent's enable_thinking; never = off on every call;
@@ -631,6 +706,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "think_cap_continuations": self.n_think_cap_continuations,
                     "loop_guard_calls": self.n_loop_guard,
                     "continuation_error": self._continuation_broken,
+                    "repeats_refused": self.n_repeats_refused,
+                    "text_calls_recovered": self.n_text_calls_recovered,
                     "thinking_policy": self.thinking_policy,
                     "fold_mode": self.fold_mode,
                     "read_reasons": self.read_reasons,

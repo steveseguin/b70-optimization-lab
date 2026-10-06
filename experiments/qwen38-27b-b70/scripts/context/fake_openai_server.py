@@ -21,6 +21,9 @@ earlier thinking; the request log has asst_with_reasoning per request).
 FAKE_PLAN=improved-read (+ FAKE_REFERENCE=<task>/tests/reference.json): read-mode agent for sparse
 prose; takes the true state after each batch from the reference; first writes an incomplete
 STATE.txt so `ctxfold --drop` must refuse once.
+FAKE_GUARDS=1 (with improved-read): after the first drop, repeats its last command and then deletes a
+STATE.txt line with no item in context (the harness must refuse / restore). FAKE_TEXTCALL=1: `next` is
+written as text (`bash {"command": "next"}`) instead of a tool call (the harness must recover it).
 FAKE_PLAN=improved-ctxfold: writes a buggy /tmp/.live_ctx/FOLD.py first (ctxfold must refuse it),
 then a correct one, and folds every item with `ctxfold`. Without tools (e.g. a summary request) it
 returns fixed text. /v1/completions returns fixed text. Usage numbers are rough
@@ -171,6 +174,17 @@ def plan_read(msgs):
         return ("cat > /app/answers.json <<'EOF'\n" + json.dumps({q: fin.get(q) for q in qs})
                 + "\nEOF\necho answers.json written")
     if not items:
+        if os.environ.get("FAKE_GUARDS") == "1" and "ctxfold: removed items" in last and "guards-done" not in alltext:
+            # after the first successful drop: (1) repeat the last command; (2) then drop a STATE line with
+            # no item in the context; both must be stopped by the harness
+            prev = [str(tc["function"]["arguments"]) for m in msgs if m.get("role") == "assistant"
+                    for tc in (m.get("tool_calls") or [])]
+            if "NOT RUN: this is exactly" not in alltext and prev:
+                return json.loads(prev[-1])["command"]
+            if "REJECTED" not in alltext:
+                return ("python3 - <<'PYEOF'\np='/tmp/.live_ctx/STATE.txt'\nl=open(p).read().splitlines()\n"
+                        "open(p,'w').write('\\n'.join(l[1:])+'\\n')\nPYEOF\necho guards-probe")
+            return "echo guards-done"
         return "next"
     n, body = items[-1]
     seen = set()
@@ -257,6 +271,11 @@ class H(BaseHTTPRequestHandler):
             usage["completion_tokens"] = int(req.get("max_tokens") or 0)
             return self._send({**base, "object": "chat.completion",
                                "choices": [{"index": 0, "message": msg, "finish_reason": "length"}]})
+        if req.get("tools") and os.environ.get("FAKE_TEXTCALL") == "1" and plan(msgs) == "next" \
+                and not str(msgs[-1].get("content") or "").startswith("(No tool call"):
+            msg = {"role": "assistant", "content": 'Fetching the next item.\nbash {"command": "next"}'}
+            return self._send({**base, "object": "chat.completion",
+                               "choices": [{"index": 0, "message": msg, "finish_reason": "stop"}]})
         if req.get("tools"):
             cmd = plan(msgs)
             msg = {"role": "assistant", "content": "THOUGHT: scripted stub step.",

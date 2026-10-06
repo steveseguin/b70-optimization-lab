@@ -243,6 +243,12 @@ def trial_row(t: Path) -> dict:
     retries = int(u.get("max_num_retry_on_limit") or 0)
     max_iters = 2 * max_steps + 8 + min(retries, max_steps)
     tlog = (t / "trial.log").read_text(errors="replace") if (t / "trial.log").exists() else ""
+    jlog = t.parent.parent.parent / f"{t.parent.name}.log"   # runs/<job>.log: the agent's own log lines
+    if jlog.exists():
+        try:
+            tlog += jlog.read_text(errors="replace")[-200000:]
+        except Exception:
+            pass
     if exc:
         ended = f"EXC:{exc}"
     elif submitted:

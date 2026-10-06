@@ -31,11 +31,15 @@
 #                   and no call's messages (pinned state aside) differ from the previous call's except
 #                   after a context edit (prefix stability)
 #  14 imp-never      THINKING_POLICY=never (B32io): every request has enable_thinking=false
+#  18 imp-guards     read mode: repeated command refused, STATE line vanishing without an item rejected and
+#                   restored, `next` written as text recovered as a tool call; reward 1.0
 #  17 imp-read       read mode (B32ir) on a tiny sparse-prose task: `ctxfold --drop` refuses an incomplete
 #                   STATE.txt once, thinking on until the first drop and after the refusal, off on routine
 #                   batches, reward 1.0, not VOID
 #  16 aw             plain agent + SHOW_WINDOW on a 7,000-token stub window: every tool result ends with
-#                   the window line and a `next` that cannot fit is refused
+#                   the window line (sizes from the server's usage), a `next` that would not leave room to
+#                   work and answer is refused with "you cannot fetch more; write ... answers.json now",
+#                   and the run ends by submitting
 #  15 e32o           plain agent, files allowed, ENABLE_THINKING=false: every request has it false
 #  12 imp-ctxfold    the harness fold helper: a FOLD.py with the real seed-1 DEL bug must be refused by its
 #                   selftest, the fixed one must fold every item (reward 1.0, not VOID)
@@ -302,12 +306,14 @@ ws = json.load(open(t + "/window_stats.json"))
 ctx = json.load(open(t + "/trajectory.ctx.json"))
 obs = [res.get("content") or "" for seg in ctx["segments"] for st in seg["steps"]
        for res in ((st.get("observation") or {}).get("results") or [])]
-print(ws["window_refusals"], sum(1 for o in obs if "tokens used;" in o), len(obs))
+print(ws["window_refusals"], sum(1 for o in obs if "tokens used;" in o), len(obs),
+      sum(1 for o in obs if "cannot fetch more" in o), int(bool(ws.get("last_server_total"))))
 PY
 )
-read -r aw_ref aw_lines aw_obs <<< "$aw"
-msg="ended_by=$eb reward=$rw refusals=$aw_ref window_lines=$aw_lines/$aw_obs"
-[[ $inv == False && ${aw_ref:-0} -ge 1 && $aw_obs -gt 0 && $aw_lines == "$aw_obs" ]] && pass aw "$msg" || fail aw "$msg"
+read -r aw_ref aw_lines aw_obs aw_say aw_srv <<< "$aw"
+msg="ended_by=$eb reward=$rw refusals=$aw_ref window_lines=$aw_lines/$aw_obs says_cannot_fetch=$aw_say uses_server_count=$aw_srv"
+[[ $inv == False && $eb == submit && ${aw_ref:-0} -ge 1 && $aw_obs -gt 0 && $aw_lines == "$aw_obs" && ${aw_say:-0} -ge 1 \
+   && $aw_srv == 1 ]] && pass aw "$msg" || fail aw "$msg"
 # 17 read mode (arm B32ir) on a tiny sparse-prose task: STATE.txt as name lines, `ctxfold --drop` must refuse
 # an incomplete STATE once, thinking on until the first successful drop and after the refusal, off on
 # routine batches; reward 1.0; STATE.txt (counter names) must not void the run
@@ -342,6 +348,23 @@ read -r rd_ref rd_drop rd_bad <<< "$rd"
 msg="reward=$reward void=$void ended_by=$ended_by drop_refused=$rd_ref drops=$rd_drop wrong_thinking_choice=$rd_bad items_lost=$items_lost"
 [[ $invalid == False && $void == False && $reward == 1.0 && ${rd_ref:-0} -ge 1 && ${rd_drop:-0} -ge 4 && $rd_bad == 0 ]] \
   && pass imp-read "$msg" || fail imp-read "$msg"
+# 18 harness guards for the read mode: a repeated command is refused, a STATE line vanishing (with no item
+# in context) is rejected and restored, `next` written as text is recovered as a tool call
+FAKE_PLAN=improved-read FAKE_GUARDS=1 FAKE_TEXTCALL=1 FAKE_REFERENCE="$STASK/tests/reference.json" start_stub "$O/stub-guards.log"
+LTASK_SAVE=$LTASK; LTASK=$STASK
+FOLD_MODE=read THINKING_POLICY=judgement ijob imp-guards 200000 ""
+LTASK=$LTASK_SAVE
+gd=$("$PY" - "$O/runs/jobs/imp-guards" <<'PY'
+import json, sys, glob
+t = glob.glob(sys.argv[1] + "/*/agent")[0]
+st = json.load(open(t + "/improved_stats.json"))
+print(st.get("repeats_refused", 0), st.get("state_rejected", 0), st.get("text_calls_recovered", 0))
+PY
+)
+read -r g_rep g_rej g_txt <<< "$gd"
+msg="reward=$reward ended_by=$ended_by repeats_refused=$g_rep state_rejected=$g_rej text_calls_recovered=$g_txt"
+[[ $invalid == False && $reward == 1.0 && ${g_rep:-0} -ge 1 && ${g_rej:-0} -ge 1 && ${g_txt:-0} -ge 1 ]] \
+  && pass imp-guards "$msg" || fail imp-guards "$msg"
 stop_stub
 
 echo; "$PY" "$D/summarize_results.py" --brief "$O/runs" | tee "$O/summary.txt"

@@ -83,6 +83,9 @@ def parse(text: str) -> tuple[dict, bool]:
         if not ln.strip():
             continue
         m = LINE.match(ln)
+        if not m:   # tolerate bullets and backticks, but still count the reply as not clean
+            m = LINE.match(re.sub(r"^\s*(?:[-*]\s+)?", "", ln).replace("`", ""))
+            ok = False
         if m:
             v = m.group(2)
             out[m.group(1)] = None if not re.fullmatch(r"-?\d+", v) else int(v)
@@ -111,7 +114,7 @@ def estimate(task: Path, batches, thinking: bool, variant: str, think_cap: int) 
 
 
 def run(task: Path, base: str, model: str, batches, thinking: bool, variant: str, max_tokens: int,
-        verbose: bool) -> dict:
+        verbose: bool, save: str = "") -> dict:
     items, ref = load_task(task)
     system = SYSTEM + (REASON if variant == "reason" else "")
     tot = {"changed": 0, "right": 0, "extra": 0, "all_right": 0, "all": 0, "written": 0, "sec": 0.0,
@@ -145,6 +148,15 @@ def run(task: Path, base: str, model: str, batches, thinking: bool, variant: str
         allk = set(new) | set(truth)
         all_right = sum(1 for k in allk if new.get(k) == truth.get(k))
         w = (d.get("usage") or {}).get("completion_tokens", 0)
+        if save:
+            Path(save).mkdir(parents=True, exist_ok=True)
+            with open(Path(save) / f"{task.parent.name}__{task.name}__{'on' if thinking else 'off'}-{variant}.jsonl", "a") as f:
+                f.write(json.dumps({"batch": b + 1, "finish": ch.get("finish_reason"), "parseable": ok,
+                                    "reply": ch["message"].get("content"),
+                                    "reasoning": ch["message"].get("reasoning_content") or ch["message"].get("reasoning"),
+                                    "truth_changes": {k: truth.get(k) for k in changed},
+                                    "wrong": {k: [new.get(k), truth.get(k)] for k in set(new) | set(truth)
+                                              if new.get(k) != truth.get(k)}}) + "\n")
         for k, v in (("changed", len(changed)), ("right", right), ("extra", extra), ("all_right", all_right),
                      ("all", len(allk)), ("written", w), ("sec", d["_seconds"]), ("cut", int(cut)),
                      ("parseable", int(ok)), ("calls", 1), ("batches_perfect", int(all_right == len(allk)))):
@@ -182,6 +194,7 @@ def main() -> None:
     ap.add_argument("--max-tokens", type=int, default=0, help="default 4096 without thinking, 16384 with")
     ap.add_argument("--think-cap", type=int, default=0, help="thinking on with this max_tokens")
     ap.add_argument("--sweep", action="store_true")
+    ap.add_argument("--save", default="", help="directory for per-call JSONL records (reply, parsed, truth)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     modes = {"on": [True], "off": [False], "both": [False, True]}[a.thinking]
@@ -211,7 +224,7 @@ def main() -> None:
     lines = []
     for t, bs, th, v in plan:
         mt = a.think_cap or a.max_tokens or (16384 if th else 4096)
-        tot = run(t, base, model, bs, th, v, mt, verbose=not a.sweep)
+        tot = run(t, base, model, bs, th, v, mt, verbose=not a.sweep, save=a.save)
         line = summary(t, th, v, tot)
         lines.append(line)
         print(("# " if not a.sweep else "") + line)

@@ -224,39 +224,64 @@ def _baseline_defaults(kwargs: dict[str, Any]) -> dict[str, Any]:
 
 
 class _WindowEnv(_NoMirrorEnv):
-    """SHOW_WINDOW (arm Aw): every tool result ends with one line stating how much of the server
-    window is used and left, and a fetch that cannot fit (current context + largest item seen so
-    far + max_tokens > window) is not run. Context sizes are the harness's count calibrated to the
-    server's reported prompt tokens (the same ruler as the budget gate)."""
+    """SHOW_WINDOW (arms Aw, Ar): every tool result ends with one line stating how much of the server
+    window is used and left, and a fetch that would not leave room to finish is refused.
+
+    v2 (2026-10-05, after Aw seed 1 hit the server window at ~247K with no answers written):
+      * current size = the SERVER's numbers for the previous call (usage.prompt_tokens +
+        completion_tokens, i.e. everything up to and including the command just issued) plus the
+        new tool output (harness count calibrated to the server); before the first call, the
+        harness count;
+      * a fetch (`next`) is refused when current + largest item so far + largest non-fetch turn so
+        far (the model's own folding/notes step after an item, completion + output) + max_tokens +
+        a safety margin > window. The old guard reserved only the item and one reply, and the run
+        died on the model's own 9K-token fold command after the last allowed fetch;
+      * when that point is reached the window line says plainly that no more can be fetched and
+        that the answers must be written to /app/answers.json now (room for that is kept by the
+        margin)."""
 
     agent: "PlainAgent"
 
+    def _now(self, shown, extra_text: str = "") -> int:
+        a = self.agent
+        base = a._server_total if a._server_total else self.budget.count(shown)
+        return base + (self.budget.count([{"role": "tool", "content": extra_text}]) if extra_text else 0)
+
+    def _need(self) -> int:
+        a = self.agent
+        return a._largest_item + a._largest_turn + a.max_tokens + a.window_margin
+
     def _line(self, now: int) -> str:
         a = self.agent
-        usable = max(a.window_tokens - a.max_tokens, 0)
-        return f"\n[context: {now:,} of {usable:,} tokens used; {max(usable - now, 0):,} left]"
+        left = max(a.window_tokens - now, 0)
+        line = (f"\n[context: {now:,} of {a.window_tokens:,} tokens used; {left:,} left "
+                f"(one reply needs up to {a.max_tokens:,})]")
+        if a._largest_item and now + self._need() > a.window_tokens:
+            line += ("\n[ROOM IS SHORT: you cannot fetch more items; write what you have to "
+                     "/app/answers.json now, then submit.]")
+        return line
 
     async def step(self, command, messages, *, environment, pending=None):
         a = self.agent
         shown = messages + ([pending] if pending else [])
-        now = self.budget.count(shown)
-        if (a._guard_cmd.search(command or "") and a._largest_item
-                and now + a._largest_item + a.max_tokens > a.window_tokens):
+        now = self._now(shown)
+        if a._guard_cmd.search(command or "") and a._largest_item and now + self._need() > a.window_tokens:
             a.n_window_refusals += 1
-            usable = max(a.window_tokens - a.max_tokens, 0)
-            text = (f"NOT RUN: `{command.strip()[:60]}` would deliver an item of up to "
-                    f"~{a._largest_item:,} tokens, but only ~{max(usable - now, 0):,} of the "
-                    f"{usable:,} usable tokens of the window are left. Write down what you still "
-                    f"need first (for example your answers or a compact summary of the values so "
-                    f"far), then decide how to continue.")
+            text = (f"NOT RUN: `{command.strip()[:60]}` would deliver an item of up to ~{a._largest_item:,} "
+                    f"tokens, and after it there would not be room to work on it and still answer "
+                    f"({now:,} of {a.window_tokens:,} tokens used). You cannot fetch more; write what you "
+                    f"have to /app/answers.json now, then submit.")
             res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
             return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
                               readout=self._line(now), notes="", exec_time=0.0, touched_ctx=False)
         res = await super().step(command, messages, environment=environment, pending=pending)
         out = getattr(res.result, "stdout", "") or ""
+        out_tok = self.budget.count([{"role": "tool", "content": res.stdout_block}])
         if a._guard_out.search(out):
-            a._largest_item = max(a._largest_item, self.budget.count([{"role": "tool", "content": out}]))
-        res.readout = self._line(self.budget.count(shown + [{"role": "tool", "content": res.stdout_block}]))
+            a._largest_item = max(a._largest_item, out_tok)
+        else:
+            a._largest_turn = max(a._largest_turn, a._last_completion + out_tok)
+        res.readout = self._line(self._now(shown, res.stdout_block))
         return res
 
 
@@ -271,7 +296,8 @@ class PlainAgent(_h.ClmAgent):
     def __init__(self, *args: Any, drop_old_thinking: Any = False, stable_render: Any = False,
                  show_window: Any = False, window_tokens: int | str = 0,
                  guard_command_regex: str = r"(^|[;&|]\s*)next\b",
-                 guard_output_regex: str = r"(?m)^ITEM \d+/\d+ \(", **kwargs: Any) -> None:
+                 guard_output_regex: str = r"(?m)^ITEM \d+/\d+ \(", window_margin: int | str = 0,
+                 **kwargs: Any) -> None:
         super().__init__(*args, **_baseline_defaults(kwargs))
         self.show_window = _as_bool(show_window)
         self.window_tokens = int(window_tokens or 0)
@@ -279,10 +305,23 @@ class PlainAgent(_h.ClmAgent):
             raise ValueError("show_window needs window_tokens (the server's max_model_len)")
         self._guard_cmd, self._guard_out = re.compile(guard_command_regex), re.compile(guard_output_regex)
         self._largest_item = 0
+        self._largest_turn = 0
+        self._server_total = 0
+        self._last_completion = 0
+        self.window_margin = int(window_margin) or max(2048, self.window_tokens // 50)
         self.n_window_refusals = 0
         self._ctx.__class__ = _WindowEnv if self.show_window else _NoMirrorEnv
         self._ctx.agent = self
         _setup_drop_thinking(self, drop_old_thinking, stable_render)
+
+    async def _query_with_retry(self, model: str, messages: list[dict[str, Any]]) -> Any:
+        r = await super()._query_with_retry(model, messages)
+        if self.show_window:
+            u = getattr(r, "usage", None)
+            pt, ct = (getattr(u, "prompt_tokens", 0) or 0), (getattr(u, "completion_tokens", 0) or 0)
+            if pt:
+                self._server_total, self._last_completion = pt + ct, ct
+        return r
 
     async def run(self, instruction, environment, context) -> None:
         _h._SYSTEM_TEMPLATE = BASELINE_SYSTEM
@@ -292,8 +331,9 @@ class PlainAgent(_h.ClmAgent):
             if self.show_window:
                 (self.logs_dir / "window_stats.json").write_text(json.dumps({
                     "window_tokens": self.window_tokens, "max_tokens": self.max_tokens,
-                    "window_refusals": self.n_window_refusals,
-                    "largest_item_tokens": self._largest_item}, indent=1) + "\n")
+                    "window_margin": self.window_margin, "window_refusals": self.n_window_refusals,
+                    "largest_item_tokens": self._largest_item, "largest_turn_tokens": self._largest_turn,
+                    "last_server_total": self._server_total}, indent=1) + "\n")
 
 
 class _SummaryEnv(_NoMirrorEnv):

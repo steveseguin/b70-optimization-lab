@@ -271,7 +271,11 @@ the run ends).
 - **Files won again, by a different route:** the model wrote a script that finds the sentences naming a counter
   and then read only those. The names in this task are explicit words, so search can narrow the reading; that is
   what files plus search are good for, and it is lossless by reference.
-- The read-mode agent on a 480K stream (240 batches, larger than the window) is running now.
+- **The read-mode agent on a 480K stream (240 batches, larger than the window) failed before the fixes:** 42
+  minutes, 1,172 calls, 285 edits, about half of the answers it gave right, and void (it broke the no-files rule).
+  The repeat loop and invented updates seen at 120K compound over 240 batches. It is being rerun with the guards
+  (repeat refusal, text tool-call recovery, state changes only with a batch in view, no silent dropped lines),
+  which passed all twelve dry checks.
 
 ### Where the time goes (reconstructed from the saved runs)
 
