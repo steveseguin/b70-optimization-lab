@@ -194,6 +194,14 @@ so this changes the cost of measuring, not what is measured. Until a repeat with
 it, the standing long-run figure for this configuration is 1.131 s per clip, and 1.026 s is the figure of a
 120-prompt arm.
 
+## Run 9: the same configuration with the fixed client: 0.992 s per clip (25.2 fps), 2026-10-06 01:49 UTC
+
+`shard4-a-w3-b2-p1-r4`, 120 prompts, the client polling only the next 8 unfinished prompts. Proofs 10/10 and
+10/10, timed **111 of 111 exact, 0.992 s per clip (25.2 fps)**, and flat through the arm (0.998, 1.023,
+0.974, 1.003 over successive quarters) where run 6 had drifted with the queue. So the polling load was real:
+the same server configuration measured 1.026 with the old client and 0.992 with the new one. Long runs
+with the fixed client are next (packet 97's runner takes a timed-arm length).
+
 ## Lost day (2026-10-05 02:11 to 2026-10-06 01:43 UTC)
 
 A hand reproduction of the two-worker batch-4 capture failure (`run-96/diag-w2b4.sh`) attached a debugger to the
@@ -212,7 +220,8 @@ deterministic; packet 97 writes every failed job's error to disk, which is the r
 | Shared graph pool | 1.348 | 18.5 | today's references | no |
 | Batch 2, two jobs, two cards | 1.122 | 22.3 | batch-2 references | yes |
 | Batch 2, two jobs, four-card layout | 1.053 | 23.7 | batch-2 references | yes |
-| **Batch 2, three jobs, four-card layout** | **1.026** | **24.4** | batch-2 references | yes |
+| Batch 2, three jobs, four-card layout (old client) | 1.026 | 24.4 | batch-2 references | yes |
+| **Batch 2, three jobs, four-card layout (fixed client)** | **0.992** | **25.2** | batch-2 references | yes |
 | Batch 2, three jobs, 20/20/8 layout | 1.027 | 24.3 | batch-2 references | yes |
 | Batch 4, one job, two cards | 1.209 | 20.7 | batch-4 references | yes |
 

@@ -42,7 +42,7 @@ check of the cache; larger reading pieces that keep the cache exact.
 
 ## 2026-10-04 20:40 EDT, four-B70 host: LTX 2.5 reached 24.4 fps with two clips per transformer pass; the owner must rule on the new baseline
 
-**One clip every 1.026 s (24.4 fps equivalent; the budget is 1.042 s), every clip byte-identical to its reference.
+**One clip every 0.992 s (25.2 fps equivalent; the budget is 1.042 s; 2026-10-06 01:49 UTC, 111 of 111 exact), every clip byte-identical to its reference.
 The references are new ones made with two clips per pass, so this counts only if the owner accepts them.**
 
 - **What changed.** One sampler job now carries two clips through the transformer together, so the 42 GB of weights
@@ -57,9 +57,11 @@ The references are new ones made with two clips per pass, so this counts only if
   baseline?** Until then the standing exact figure on today's references is 1.348 s per clip.
 - **Also new and needing no ruling:** the shared graph pool is byte-exact on today's references (126 of 126) and
   cuts a sampler worker's video memory from about 2.8 GiB per card to about 0.25 GiB.
-- **Caveats on the 24.4 fps figure:** one run of 111 clips with a 1.5 % margin (repeats and a long run are next);
-  clips arrive in pairs, so playback needs a small buffer; these are independent clips back to back, not
-  clip-to-clip continuation.
+- **Caveats:** 120-prompt arms (the measurement client's polling had been slowing the server in proportion to the
+  queued prompts; fixed 2026-10-05, which took the same configuration from 1.026 to 0.992 s per clip; a 600-prompt
+  arm under the old client ran at 1.131); clips arrive in pairs, so playback needs a small buffer; these are
+  independent clips back to back, not clip-to-clip continuation. A day was lost between 2026-10-05 02:11 and
+  2026-10-06 01:43 UTC to a hung debugger step with no deadline on its watcher (recorded in the results note).
 - **Open:** two batch-4 jobs fail at their first capture with no recorded error (one batch-4 job works: 1.209 s per
   clip, exact against batch-4 references).
 - Zero lockups and zero GPU faults in nine and a half hours on kernel 7.0.0-39, about fifteen server runs.
