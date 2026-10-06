@@ -182,6 +182,27 @@ Blocks 20/20/8 on cards 0-2, none on card 3 (`shard3-c`), three workers, batch 2
 layout under the budget, and the fourth block layout to reproduce the same reference bytes. Card 1 (20 blocks
 plus a decode worker) is at 95 %.
 
+## Run 8: the 600-clip repeat, and a measurement-client cost (2026-10-05 01:23 UTC)
+
+Same configuration as run 6 (`shard4-a-w3-b2-p1-r3`), timed arm of 600 prompts: proofs 10/10 and 10/10, **591 of
+591 clips exact**, but **1.131 s per clip (22.1 fps)**, not 1.026. The pace rose steadily through the arm:
+1.22 s per clip over the first 50 clips, 0.98 s over the last 50, in step with how many prompts were still
+queued. Cause, by reading the client: it polled the server once per queued prompt per cycle, hundreds of
+requests per cycle with 600 queued, all served by the server's main thread. The client now polls only the
+next 8 unfinished prompts (commit of 02:02 UTC); the completion times come from the server's own timestamps,
+so this changes the cost of measuring, not what is measured. Until a repeat with the fixed client confirms
+it, the standing long-run figure for this configuration is 1.131 s per clip, and 1.026 s is the figure of a
+120-prompt arm.
+
+## Lost day (2026-10-05 02:11 to 2026-10-06 01:43 UTC)
+
+A hand reproduction of the two-worker batch-4 capture failure (`run-96/diag-w2b4.sh`) attached a debugger to the
+live server to read the failed job's stored error. That call never returned, the debugger held the server, and
+the waiter watching the script had no deadline, so the queue behind it (the repeat with the fixed client,
+packet 97) did not run for 23.5 hours. Killing the debugger ended the server with a segmentation fault; no GPU
+fault followed. In that reproduction the batch-4 capture job **succeeded**, so the earlier failure was not
+deterministic; packet 97 writes every failed job's error to disk, which is the right way to catch it.
+
 ## The day in one table
 
 | Step | Seconds per clip | fps | Exact against | Needs the owner's ruling |
