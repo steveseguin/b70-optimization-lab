@@ -1,7 +1,33 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-06 03:10 UTC** (2026-10-05 23:10 EDT), two-B70 host.
+Last reviewed: **2026-10-06 17:50 UTC** (2026-10-06 13:50 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
+
+## 2026-10-06 13:50 EDT, two-B70 host: quoted events (the model quotes, code keeps the books) is the best agent on a stream larger than the window; archive and recall beat summarising on retention
+
+**On the 480K narrative stream (1.8 times the window), at a 32K budget, the quoted-events agent got 24 of 24 in
+19.6 minutes with 542 thinking tokens in the whole run; the read-mode agent had taken 25.7 minutes. On the
+retention test (36 questions, twelve about dropped text) the archive-and-recall agent got 36 of 36 in 6 minutes;
+summarising also got 36 but took 26 minutes and wrote eight times as much.**
+
+- Quoted events: the model reports each change as one line with an exact quote; the harness checks the quote, the
+  counter and the amount, does the arithmetic, archives the batch and drops it. Arithmetic and bookkeeping errors
+  are impossible by construction. A bug in the harness's own number reader cost most of the time in the first
+  runs and made the model game the check; fixed. Two 120K cells failed on context compaction losing the question
+  batch and on an untypeable counter name; fixes live, reruns on the cards.
+- Memory guard lowered to 1.6 GiB for research runs with the owner's approval (five runs were lost at 2.0; the
+  supervisor now resumes a plan after a guard kill with finished trials skipped). One fault event (23:08, teardown
+  lines after a guard kill, health probe passed); work continued per the one-fault rule.
+- Site: how-to-reproduce page, retention page, explainer on the paper's suffix cache reuse with a measured
+  edit-cost table (an edit re-reads from the last kept state: 0.7-16 s near the end of a 30K-200K context, the
+  whole cold read near the start).
+- Notes: [results for the owner](experiments/qwen38-27b-b70/notes/2026-10-05-context-research-results.md),
+  [approaches survey](experiments/qwen38-27b-b70/notes/2026-10-05-context-approaches-survey.md),
+  [fault note](experiments/qwen38-27b-b70/notes/2026-10-05-fault-2308-guard-kill.md).
+
+**Doing next:** parallel quoted extraction on the exact multi-user server (16 batches at once; gate: identical event
+lists alone and in a group); the reruns of the two failed quoted cells; second seeds; the lost ledger cells; the
+1M stream; the one-card server.
 
 ## 2026-10-05 23:10 EDT, two-B70 host: the model read 1.8 times its window by understanding, every answer right; the comparison matrix and an explainer page are up
 
