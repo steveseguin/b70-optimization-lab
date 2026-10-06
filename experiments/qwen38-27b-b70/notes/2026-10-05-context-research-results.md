@@ -13,22 +13,27 @@ Status: work in progress; rows marked *pending* are still running.
 3. **Small is still better where it can be had.** Writing speed falls from about 127 tokens a second at 8K to 26 at
    250K, and above about 60K the model occasionally (about 1 lookup in 40) reads a look-alike line instead of the
    one asked for. So the right design is a big window as the safety net and a pruned working context as the habit.
-4. **Nothing has to be lost: an archive the model can search beat summarising.** With dropped text moved to an
+4. **The best agent so far quotes and lets code keep the books.** The model reports each change as a quote plus a
+   fixed-format line; the harness checks the quote, does the arithmetic, archives the batch and drops it. On the
+   480K narrative stream: 24 of 24 in 19.6 minutes with almost no thinking, 23 % faster than reading and folding by
+   hand, and the arithmetic cannot go wrong. It still needs care around the agent loop (two of its 120K cells
+   failed on context compaction and an untypeable name; fixes in).
+5. **Nothing has to be lost: an archive the model can search beat summarising.** With dropped text moved to an
    archive instead of deleted, the agent answered 36 of 36 questions, twelve of them about text it had dropped, in
    6 minutes with 23K of context; summarising also got 36 but took 26 minutes and wrote eight times as much.
-5. **Reading more than the window by understanding works, with guards around the loop (one seed so far).** On
+6. **Reading more than the window by understanding works, with guards around the loop (one seed so far).** On
    a 480K stream of narrative text, 1.8 times the whole window, the read-mode agent at a 32K budget got all 24
    answers right in 26 minutes with never more than 24K tokens in view. The failures along the way were the agent
    loop (repeating itself with thinking off, writing answers before the questions arrived), not the reading; each
    got a guard. The remaining reading error is about 1 to 2 per 100 changes without thinking.
-6. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
+7. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
    27B folds incoming data into a small running table or into files by itself and deletes the raw text. With files
    allowed it finished a 121K-token task in under two minutes with every answer right and never more than 9K of
    context. What broke the paper's agent in our test was the harness around the model, not the model's pruning.
-7. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
+8. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
    under 2 %. The cheap, real lever is to stop re-sending the model's old thinking (10 % of a typical call, up to
    56 %).
-8. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
+9. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
    restricting the output to the labels gave the same answers 6.5 times faster on easy items.
 
 ## What was tested, and what happened
@@ -356,6 +361,10 @@ it; a list with any bad line is refused whole and the model retries with thinkin
   kept in the pinned message once it arrives; a name typo is corrected by the harness when exactly one name in the
   text is within two letters and the quote then matches; a batch merged into notes is still found and applied; event
   lists cannot be written to files; the retry thinking cap grows 2K, 4K, then full. Rerun queued.
+- **The 480K stream with the quoted agent (fixed checker, measured 13:40 EDT): 24 of 24 in 19.6 minutes**, 578
+  calls, 573 of them with thinking off, 542 thinking tokens in the whole run, 37K tokens written, never more than
+  22K in view, no rule broken. Against the read-mode agent's 24 of 24 in 25.7 minutes on the same stream: 23 %
+  faster, and the bookkeeping is now exact by construction rather than by luck.
 
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 
