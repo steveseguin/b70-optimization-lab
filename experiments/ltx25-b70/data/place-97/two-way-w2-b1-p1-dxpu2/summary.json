@@ -1,0 +1,301 @@
+{
+  "schema": "ltx.campaign-96-summary.v1",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-place-97-two-way-w2-b1-p1-dxpu2",
+  "batch": 1,
+  "arms": {
+    "f97-twowayw2b1p1dxpu2-probe": {
+      "label": "placement-probe",
+      "present": true,
+      "prompts": 13,
+      "index_base": 10111200,
+      "order": "cycle",
+      "batch": 1,
+      "references_checked_against": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-window-prereg.json",
+      "clips_emitted": 10,
+      "clips_verified": 10,
+      "exact": 10,
+      "all_exact": true,
+      "references": [
+        "stability-01-w93c-bird",
+        "stability-01-w93c-boat",
+        "stability-01-w93c-candle",
+        "stability-01-w93c-fabric",
+        "stability-01-w93c-marble",
+        "stability-01-w93c-paper",
+        "stability-01-w93c-pendulum",
+        "stability-01-w93c-pour",
+        "stability-01-w93c-rain",
+        "stability-01-w93c-wheel"
+      ],
+      "interval_median_s": 1.33,
+      "interval_mean_s": 1.3631,
+      "interval_median_steady_s": 1.33,
+      "intervals_excluded_for_host_stall": 0,
+      "host_stall_durations_s_in_run": [],
+      "sampler_in_flight": {
+        "jobs_mean": 1.819,
+        "jobs_max": 3,
+        "jobs": 11,
+        "clips_mean": 1.819,
+        "clips_max": 3
+      },
+      "encode_job_median_s": 0.4401,
+      "sampler_job_median_s": 2.6402,
+      "sampler_job_median_per_clip_s": 2.6402,
+      "decode_job_median_s": 1.4968,
+      "decode_queue_depth_median": 3,
+      "decode_queue_depth_max": 3,
+      "connector_computed_per_job_median": 0,
+      "connector_reused_per_job_median": 0,
+      "engine": {
+        "window_s": 9.58,
+        "prompts": 7,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.3903,
+            "bcs_s_per_clip": 1.1351,
+            "ccs_util": 1.0161
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.0355,
+            "bcs_s_per_clip": 0.9726,
+            "ccs_util": 0.7568
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.3618,
+            "bcs_s_per_clip": 0.329,
+            "ccs_util": 0.2644
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.3803,
+            "bcs_s_per_clip": 0.2344,
+            "ccs_util": 1.0088
+          }
+        },
+        "total_ccs_s_per_clip": 4.1679
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    },
+    "f97-twowayw2b1p1dxpu2-timed": {
+      "label": "timed",
+      "present": true,
+      "prompts": 120,
+      "index_base": 21110000,
+      "order": "cycle",
+      "batch": 1,
+      "references_checked_against": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-window-prereg.json",
+      "clips_emitted": 116,
+      "clips_verified": 116,
+      "exact": 116,
+      "all_exact": true,
+      "references": [
+        "stability-01-w93c-bird",
+        "stability-01-w93c-boat",
+        "stability-01-w93c-candle",
+        "stability-01-w93c-fabric",
+        "stability-01-w93c-marble",
+        "stability-01-w93c-paper",
+        "stability-01-w93c-pendulum",
+        "stability-01-w93c-pour",
+        "stability-01-w93c-rain",
+        "stability-01-w93c-wheel"
+      ],
+      "interval_median_s": 1.217,
+      "interval_mean_s": 1.3082,
+      "interval_median_steady_s": 1.2585,
+      "intervals_excluded_for_host_stall": 0,
+      "host_stall_durations_s_in_run": [],
+      "sampler_in_flight": {
+        "jobs_mean": 1.993,
+        "jobs_max": 3,
+        "jobs": 118,
+        "clips_mean": 1.993,
+        "clips_max": 3
+      },
+      "encode_job_median_s": 0.4409,
+      "sampler_job_median_s": 2.5301,
+      "sampler_job_median_per_clip_s": 2.5301,
+      "decode_job_median_s": 1.4654,
+      "decode_queue_depth_median": 5.0,
+      "decode_queue_depth_max": 5,
+      "connector_computed_per_job_median": 1.0,
+      "connector_reused_per_job_median": 3.0,
+      "engine": {
+        "window_s": 149.13,
+        "prompts": 114,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.2095,
+            "bcs_s_per_clip": 0.9828,
+            "ccs_util": 0.9246
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 0.9634,
+            "bcs_s_per_clip": 0.8816,
+            "ccs_util": 0.7364
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.8808,
+            "bcs_s_per_clip": 0.3983,
+            "ccs_util": 0.6733
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 0.844,
+            "bcs_s_per_clip": 0.2682,
+            "ccs_util": 0.6452
+          }
+        },
+        "total_ccs_s_per_clip": 3.8977
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    }
+  },
+  "context_sentry_pairs": {
+    "f97-twowayw2b1p1dxpu2-probe:f97-twowayw2b1p1dxpu2-timed": {
+      "fixtures_expected": 10,
+      "identical": 10,
+      "passed": true,
+      "problems": []
+    }
+  },
+  "context_sentry_gate_passed": true,
+  "missing_or_failed": [],
+  "batch_reference_closeness_vs_w93c": null,
+  "proofs": {},
+  "reference_sets": {
+    "f97-twowayw2b1p1dxpu2-probe": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-window-prereg.json",
+    "f97-twowayw2b1p1dxpu2-timed": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-window-prereg.json"
+  },
+  "label": "batch 1: the packet 95 path, checked against the w93c references",
+  "engine_samples": 492
+}
