@@ -1,0 +1,23 @@
+{
+  "source_hashes_match": true,
+  "copied_source_hashes_match": true,
+  "stream_480k_same_sha256": true,
+  "expected_480k_same_sha256": true,
+  "quoted_480k_elapsed_reduction_percent": 23.781676413255358,
+  "planner_seed0_existing_task": {
+    "exit_code": 0,
+    "stdout": "B32ir\timproved\t32768\t<temporary-task-root>/sparse-memory/sparse-memory-t480k-s0\tsparse-memory-t480k-s0\t479512\t283\t7405978\t1894200\t24750\t0\n#total\t24750\n",
+    "stderr": ""
+  },
+  "planner_seed1_missing_task": {
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 69, in <module>\n  File \"/usr/lib/python3.12/pathlib.py\", line 1029, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '<temporary-task-root>/sparse-memory/sparse-memory-t480k-s1/task.toml'\n"
+  },
+  "planner_script_source": {
+    "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/context/second-comparison.sh",
+    "sha256": "405baec1e3c25466a6995d34aea88b1d4826e0ec766eff067db7641bee51fba9"
+  },
+  "finding": "Task generation skips existing kind-mode directories; requesting a missing seed then fails during planning with FileNotFoundError. This is not silent zero-task success. No matching completed 480K narrative read seed-1 artifact was found under /mnt/fast-ai/bench-results/context-*.",
+  "limitations": "Read-only review of saved artifacts. No inference was run and no active harness, runner, or experiment plan was changed. Elapsed percent is a single-run comparison, not a replicated speed estimate."
+}

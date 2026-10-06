@@ -1,38 +1,36 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-06 17:50 UTC** (2026-10-06 13:50 EDT), two-B70 host.
+Last reviewed: **2026-10-06 23:27 UTC** (2026-10-06 19:27 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
 
-## 2026-10-06 13:50 EDT, two-B70 host: quoted events (the model quotes, code keeps the books) is the best agent on a stream larger than the window; archive and recall beat summarising on retention
+## 2026-10-06 19:27 EDT, two-B70 host: context results reviewed; experiment still active
 
-**On the 480K narrative stream (1.8 times the window), at a 32K budget, the quoted-events agent got 24 of 24 in
-19.6 minutes with 542 thinking tokens in the whole run; the read-mode agent had taken 25.7 minutes. On the
-retention test (36 questions, twelve about dropped text) the archive-and-recall agent got 36 of 36 in 6 minutes;
-summarising also got 36 but took 26 minutes and wrote eight times as much.**
+**The matched 480K narrative runs both answered 10 of 10 questions correctly, not the 24 of 24
+previously reported.** Quoted events took 19.6 minutes; the read-mode agent took 25.7 minutes
+(about 24% less elapsed time for quoted events on this one seed). The million-token read-mode
+run is verified at 23 of 24. A claimed second 480K seed has no completed artifact and is withdrawn.
 
-- Quoted events: the model reports each change as one line with an exact quote; the harness checks the quote, the
-  counter and the amount, does the arithmetic, archives the batch and drops it. Arithmetic and bookkeeping errors
-  are impossible by construction. A bug in the harness's own number reader cost most of the time in the first
-  runs and made the model game the check; fixed. Two 120K cells failed on context compaction losing the question
-  batch and on an untypeable counter name; fixes live, reruns on the cards.
-- Memory guard lowered to 1.6 GiB for research runs with the owner's approval (five runs were lost at 2.0; the
-  supervisor now resumes a plan after a guard kill with finished trials skipped). One fault event (23:08, teardown
-  lines after a guard kill, health probe passed); work continued per the one-fault rule.
-- Site: how-to-reproduce page, retention page, explainer on the paper's suffix cache reuse with a measured
-  edit-cost table (an edit re-reads from the last kept state: 0.7-16 s near the end of a 30K-200K context, the
-  whole cold read near the start).
-- Notes: [results for the owner](experiments/qwen38-27b-b70/notes/2026-10-05-context-research-results.md),
-  [approaches survey](experiments/qwen38-27b-b70/notes/2026-10-05-context-approaches-survey.md),
-  [fault note](experiments/qwen38-27b-b70/notes/2026-10-05-fault-2308-guard-kill.md).
+- Quoted reruns: retention seed 0 **35 of 36** in 5.7 minutes; density 12 **16 of 16** in
+  7.4 minutes. These are completed. Quoting plus arithmetic in code does not guarantee correct
+  event interpretation or completeness. Review found that the merged-batch fallback can accept
+  model-authored text and lose it from the archive; an unapplied repair is being validated.
+- **Protected active work:** `context-planE-a1` on the two cards, endpoint port 18196, output
+  `/mnt/fast-ai/bench-results/context-planE-a1`, plan `/mnt/fast-ai/bench-results/context-plan-20261006e.sh`.
+  The existing supervisor started its server at 19:20 EDT. Review leaves its server, plan and live
+  harness unchanged. The plan includes quoted 1M, quoted second seeds, denser 480K reading and
+  remaining retention/ledger trials; a queued entry is not evidence of completion.
+- Memory guard remains 1.6 GiB under the owner's earlier authorization. The recorded 23:08 fault
+  and passed health probe remain in the [fault note](experiments/qwen38-27b-b70/notes/2026-10-05-fault-2308-guard-kill.md).
+- [Review and repair status](experiments/qwen38-27b-b70/notes/2026-10-06-context-review.md) ·
+  [corrected results](experiments/qwen38-27b-b70/notes/2026-10-05-context-research-results.md).
 
-**Doing next:** parallel quoted extraction on the exact multi-user server (16 batches at once; gate: identical event
-lists alone and in a group); the reruns of the two failed quoted cells; second seeds; the lost ledger cells; the
-1M stream; the one-card server.
+**Next:** assess completed plan-E artifacts, then validate the checker repair as a separately
+identified experiment. Parallel extraction and the one-card comparison remain proposed work.
 
 ## 2026-10-05 23:10 EDT, two-B70 host: the model read 1.8 times its window by understanding, every answer right; the comparison matrix and an explainer page are up
 
 **A read-mode self-editing agent at a 32K budget read a 480K-token narrative stream (1.8 times the whole window),
-kept an exact running table and got 24 of 24, in 26 minutes with never more than 24K tokens in view. Files plus
+answered 10 of 10 final questions correctly (denominator corrected 2026-10-06), in 26 minutes with never more than 24K tokens in view. Files plus
 search stay the fastest route when code can do the reading. Keeping everything in the big window failed twice at
 the window edge on long jobs. All of it is one or two seeds, one machine.**
 
@@ -41,7 +39,7 @@ the window edge on long jobs. All of it is one or two seeds, one machine.**
   exact table); improved agent 24 and 21 in 15-21 min; **thinking-reduced improved agent 24 and 24 in about 6 min**.
   With files allowed: 24 in under 2 minutes, context under 9K, at 121K and at 478K.
 - **Reading by understanding (narrative text, 3 changes per 2K batch, calibrated so a single step is about 98 %
-  right):** read-mode agent 23 of 24 and 18 of 18 at 119K (5 minutes each), **24 of 24 at 480K**; keep everything 24
+  right):** read-mode agent 23 of 24 and 18 of 18 at 119K (5 minutes each), **10 of 10 at 480K**; keep everything 24
   at 119K in 20 min; files 24 in 5 min. Before the loop guards the same agent got 20 of 24 at 119K and failed at
   480K; the losses were the loop repeating itself with thinking off, not the reading.
 - **What an edit costs with the exact cache:** re-read from the last kept state before the edit to the end: 0.7 to

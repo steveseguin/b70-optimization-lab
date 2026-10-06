@@ -1,0 +1,4509 @@
+{
+  "schema": "context-review-evidence.v1",
+  "review_date": "2026-10-06",
+  "scope": "Completed selected trials, including invalid attempts. Raw sources unchanged. Scores from verifier/details.json; timing and token counts from saved summary TSV. Source hashes bind originals; copies permit score and summary review without the originating host. These files are not a complete inference-runtime reproduction package.",
+  "rows": [
+    {
+      "id": "context-planA-client/kv120/runs/jobs/B32in__kv-memory-t120k-s0/kv-memory-t120k-s0__zvGETUy",
+      "metrics": {
+        "arm": "B32in",
+        "kind": "kvstream",
+        "mode": "memory",
+        "size": "121396",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.083",
+        "lm_calls": "77",
+        "real_edits": "25",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "22467",
+        "prompt_tokens": "1441201",
+        "cached_tokens": "813696",
+        "think_share": "0.000",
+        "completion_tokens": "132223",
+        "think_tok_est": "118402",
+        "other_tok_est": "13820",
+        "thinking_off_calls": "42",
+        "prefix_stable_share": "0.645",
+        "wall_s": "2111",
+        "items_lost": "3",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 121396,
+        "token_counter": "tokenizer:/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json",
+        "batch_size": 100,
+        "batch_tokens": 6389,
+        "n_get": 24,
+        "n_overwritten_queried": 8,
+        "n_items": 20,
+        "n_batches": 19,
+        "mode": "memory",
+        "kind": "kvstream",
+        "max_item_chars": 16419
+      },
+      "grade": {
+        "n": 24,
+        "correct": 2,
+        "score": 0.08333333333333333,
+        "score_raw": 0.08333333333333333,
+        "void": false,
+        "counts": {
+          "correct": 2,
+          "blank": 22,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "k-5a63dc2c": "correct",
+          "k-90b67827": "blank",
+          "k-99a35221": "blank",
+          "k-9e2956cc": "blank",
+          "k-10eec51e": "blank",
+          "k-db061b3c": "blank",
+          "k-08899d5a": "blank",
+          "k-4cd439c2": "blank",
+          "k-9de590a2": "blank",
+          "k-51f45fbd": "blank",
+          "k-64b5939a": "blank",
+          "k-13a87990": "correct",
+          "k-0638a2ca": "blank",
+          "k-855d90c4": "blank",
+          "k-ffb054cc": "blank",
+          "k-ea4bcdbe": "blank",
+          "k-4459b343": "blank",
+          "k-ef563755": "blank",
+          "k-69c21799": "blank",
+          "k-1a3ec747": "blank",
+          "k-58966df3": "blank",
+          "k-f5de01b6": "blank",
+          "k-871f3f9b": "blank",
+          "k-7f6b8b60": "blank"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 120,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 360,
+          "thinking_policy": "judgement",
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/runs/B32in__kv-memory-t120k-s0.summary.txt",
+          "sha256": "9226812543309479db52f40dce5abd757df799ba2cea4ffc04b6c5c318cadce8",
+          "bytes": 1052
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/runs/jobs/B32in__kv-memory-t120k-s0/kv-memory-t120k-s0__zvGETUy/verifier/details.json",
+          "sha256": "513e5f59ffcfa1fa724e9a51973638be80ef7086dbbc954dd0b5f0054c295073",
+          "bytes": 3596
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/runs/jobs/B32in__kv-memory-t120k-s0/kv-memory-t120k-s0__zvGETUy/result.json",
+          "sha256": "e5559c56976c90dca270abbce6bdb77c76f3f0a5368051a8588e750b494f3f19",
+          "bytes": 4580
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/runs/jobs/B32in__kv-memory-t120k-s0/kv-memory-t120k-s0__zvGETUy/config.json",
+          "sha256": "51791b2bd55911cdda5222fb066ff768dcd3316176f1f370a61527083089b4d0",
+          "bytes": 2529
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/tasks/kv-memory/kv-memory-t120k-s0/task.toml",
+          "sha256": "d1e82ff49061f46b2aa47cbbd09eb5400214165a0564efe7dafc9d5d9f34ddd3",
+          "bytes": 812
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/tasks/kv-memory/kv-memory-t120k-s0/tests/expected.json",
+          "sha256": "980478dd331d2af7eba004c96bbe5aaaafbd8b9d5d4ddcbd2eec893663cba386",
+          "bytes": 3932
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/tasks/kv-memory/kv-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "fdcf50ce93499ec88d1a0792d505f3ba1d0c68c7fd333f0ce97faec891421c7d",
+          "bytes": 309118
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/kv120/tasks/kv-memory/kv-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/kv120/kv-memory-t120k-s0__zvGETUy/summary.tsv",
+        "verifier.json": "records/context-planA-client/kv120/kv-memory-t120k-s0__zvGETUy/verifier.json",
+        "task.toml": "records/context-planA-client/kv120/kv-memory-t120k-s0__zvGETUy/task.toml",
+        "expected.json": "records/context-planA-client/kv120/kv-memory-t120k-s0__zvGETUy/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/led120/runs/jobs/Aw__ledger-memory-t120k-s1/ledger-memory-t120k-s1__WuwjqE5",
+      "metrics": {
+        "arm": "Aw",
+        "kind": "ledger",
+        "mode": "memory",
+        "size": "121085",
+        "seed": "1",
+        "budget": "0",
+        "reward": "0.000",
+        "lm_calls": "36",
+        "real_edits": "0",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "174675",
+        "prompt_tokens": "4493645",
+        "cached_tokens": "4223232",
+        "think_share": "0.610",
+        "completion_tokens": "175018",
+        "think_tok_est": "131939",
+        "other_tok_est": "43078",
+        "thinking_off_calls": "0",
+        "prefix_stable_share": "",
+        "wall_s": "3998",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "VOID"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 121085,
+        "token_counter": "tokenizer:/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json",
+        "batch_size": 136,
+        "batch_tokens": 6372,
+        "n_get": 24,
+        "n_counters": 160,
+        "n_deleted_queried": 3,
+        "n_items": 20,
+        "n_batches": 19,
+        "mode": "memory",
+        "kind": "ledger",
+        "max_item_chars": 16575
+      },
+      "grade": {
+        "n": 24,
+        "correct": 1,
+        "score": 0.0,
+        "score_raw": 0.041666666666666664,
+        "void": true,
+        "counts": {
+          "correct": 1,
+          "blank": 0,
+          "wrong": 3,
+          "stale": 20
+        },
+        "violations": [
+          {
+            "path": "/app/answers.json",
+            "reason": "133 keys beyond the queried ones"
+          }
+        ],
+        "per_key": {
+          "zizi18": "stale",
+          "vodita65": "stale",
+          "tuka91": "stale",
+          "peyone65": "stale",
+          "tasa59": "stale",
+          "coka66": "stale",
+          "miwelo28": "stale",
+          "kake66": "correct",
+          "suxalo94": "stale",
+          "xatu68": "stale",
+          "guja54": "stale",
+          "dohixa45": "stale",
+          "xalomo25": "stale",
+          "yoruhi87": "stale",
+          "keziqi59": "wrong",
+          "suba49": "wrong",
+          "jasa18": "stale",
+          "guni65": "stale",
+          "logusu53": "stale",
+          "baweyo13": "stale",
+          "nine41": "wrong",
+          "ruba58": "stale",
+          "xawe54": "stale",
+          "tuzitu87": "stale"
+        }
+      },
+      "agent": {
+        "name": "clm_baselines:PlainAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 0,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 120,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 360,
+          "show_window": true,
+          "window_tokens": 262144,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/Aw__ledger-memory-t120k-s1.summary.txt",
+          "sha256": "8133670a3243e7d888ce4d191499082a238d3ae754b2b0fb77c163b982ac0250",
+          "bytes": 1248
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/Aw__ledger-memory-t120k-s1/ledger-memory-t120k-s1__WuwjqE5/verifier/details.json",
+          "sha256": "8f3bae0af43e658b009a4b7b04872ebefd35c5b40acde63b12596b0c049ce7a2",
+          "bytes": 2853
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/Aw__ledger-memory-t120k-s1/ledger-memory-t120k-s1__WuwjqE5/result.json",
+          "sha256": "ad477ebfa847d1d8904254dc4b549d09007c9563062d86764ae02d10d159ac01",
+          "bytes": 4636
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/Aw__ledger-memory-t120k-s1/ledger-memory-t120k-s1__WuwjqE5/config.json",
+          "sha256": "7e74c0d97ecc4fec2c46694a9a263f82a08caca826de5e530df549eaec4f39e3",
+          "bytes": 2561
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/task.toml",
+          "sha256": "105c4b9ae6fd7c04abe2992dd7618d86ea86d1209f8fe4b8af1c456352b155e2",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/tests/expected.json",
+          "sha256": "7d1a1ad6428df40cda1c98c7153f566134038a1b55bb3e91b7634d5a5e68696f",
+          "bytes": 416
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/environment/stream.jsonl",
+          "sha256": "9eb823c4aceb915a566401398e2898d6a4416124d6b94c7ee919aa1db793cce4",
+          "bytes": 312279
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/led120/ledger-memory-t120k-s1__WuwjqE5/summary.tsv",
+        "verifier.json": "records/context-planA-client/led120/ledger-memory-t120k-s1__WuwjqE5/verifier.json",
+        "task.toml": "records/context-planA-client/led120/ledger-memory-t120k-s1__WuwjqE5/task.toml",
+        "expected.json": "records/context-planA-client/led120/ledger-memory-t120k-s1__WuwjqE5/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/led120/runs/jobs/C32__ledger-memory-t120k-s1/ledger-memory-t120k-s1__d5QqA7X",
+      "metrics": {
+        "arm": "C32",
+        "kind": "ledger",
+        "mode": "memory",
+        "size": "121085",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "60",
+        "real_edits": "0",
+        "summaries": "15",
+        "summary_failed": "0",
+        "peak_sent_ctx": "23395",
+        "prompt_tokens": "1306221",
+        "cached_tokens": "388544",
+        "think_share": "0.288",
+        "completion_tokens": "395437",
+        "think_tok_est": "114447",
+        "other_tok_est": "45739",
+        "thinking_off_calls": "0",
+        "prefix_stable_share": "",
+        "wall_s": "4660",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 121085,
+        "token_counter": "tokenizer:/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json",
+        "batch_size": 136,
+        "batch_tokens": 6372,
+        "n_get": 24,
+        "n_counters": 160,
+        "n_deleted_queried": 3,
+        "n_items": 20,
+        "n_batches": 19,
+        "mode": "memory",
+        "kind": "ledger",
+        "max_item_chars": 16575
+      },
+      "grade": {
+        "n": 24,
+        "correct": 24,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "zizi18": "correct",
+          "vodita65": "correct",
+          "tuka91": "correct",
+          "peyone65": "correct",
+          "tasa59": "correct",
+          "coka66": "correct",
+          "miwelo28": "correct",
+          "kake66": "correct",
+          "suxalo94": "correct",
+          "xatu68": "correct",
+          "guja54": "correct",
+          "dohixa45": "correct",
+          "xalomo25": "correct",
+          "yoruhi87": "correct",
+          "keziqi59": "correct",
+          "suba49": "correct",
+          "jasa18": "correct",
+          "guni65": "correct",
+          "logusu53": "correct",
+          "baweyo13": "correct",
+          "nine41": "correct",
+          "ruba58": "correct",
+          "xawe54": "correct",
+          "tuzitu87": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_baselines:SummaryAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 120,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 360,
+          "summary_trigger_ratio": 0.75,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/C32__ledger-memory-t120k-s1.summary.txt",
+          "sha256": "2b941321f1d054c5e10bb967491c1519629a303d40b0756ad8f2d96c2f819d83",
+          "bytes": 1023
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/C32__ledger-memory-t120k-s1/ledger-memory-t120k-s1__d5QqA7X/verifier/details.json",
+          "sha256": "d1d4370196f12b1c9192905c1b1b9e4b30488f023838bb103668c5d48dc8e501",
+          "bytes": 2793
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/C32__ledger-memory-t120k-s1/ledger-memory-t120k-s1__d5QqA7X/result.json",
+          "sha256": "8555a9e9102a85f5fbade6a1333a4346f7278cba2745e6aacd95bea89626f8c7",
+          "bytes": 4614
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/C32__ledger-memory-t120k-s1/ledger-memory-t120k-s1__d5QqA7X/config.json",
+          "sha256": "2c83ac177cbc7cd670889673a3aba1424bc1fadbd6fd04d83f47afba35718dd1",
+          "bytes": 2541
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/task.toml",
+          "sha256": "105c4b9ae6fd7c04abe2992dd7618d86ea86d1209f8fe4b8af1c456352b155e2",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/tests/expected.json",
+          "sha256": "7d1a1ad6428df40cda1c98c7153f566134038a1b55bb3e91b7634d5a5e68696f",
+          "bytes": 416
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/environment/stream.jsonl",
+          "sha256": "9eb823c4aceb915a566401398e2898d6a4416124d6b94c7ee919aa1db793cce4",
+          "bytes": 312279
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-memory/ledger-memory-t120k-s1/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/led120/ledger-memory-t120k-s1__d5QqA7X/summary.tsv",
+        "verifier.json": "records/context-planA-client/led120/ledger-memory-t120k-s1__d5QqA7X/verifier.json",
+        "task.toml": "records/context-planA-client/led120/ledger-memory-t120k-s1__d5QqA7X/task.toml",
+        "expected.json": "records/context-planA-client/led120/ledger-memory-t120k-s1__d5QqA7X/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/led120/runs/jobs/D32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__Bxu6YPm",
+      "metrics": {
+        "arm": "D32",
+        "kind": "ledger",
+        "mode": "notes",
+        "size": "121085",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "25",
+        "real_edits": "0",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "7567",
+        "prompt_tokens": "151806",
+        "cached_tokens": "110656",
+        "think_share": "0.443",
+        "completion_tokens": "5886",
+        "think_tok_est": "3577",
+        "other_tok_est": "2308",
+        "thinking_off_calls": "0",
+        "prefix_stable_share": "",
+        "wall_s": "90",
+        "items_lost": "",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 121085,
+        "token_counter": "tokenizer:/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json",
+        "batch_size": 136,
+        "batch_tokens": 6372,
+        "n_get": 24,
+        "n_counters": 160,
+        "n_deleted_queried": 3,
+        "n_items": 20,
+        "n_batches": 19,
+        "mode": "notes",
+        "kind": "ledger",
+        "max_item_chars": 16575
+      },
+      "grade": {
+        "n": 24,
+        "correct": 24,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "zizi18": "correct",
+          "vodita65": "correct",
+          "tuka91": "correct",
+          "peyone65": "correct",
+          "tasa59": "correct",
+          "coka66": "correct",
+          "miwelo28": "correct",
+          "kake66": "correct",
+          "suxalo94": "correct",
+          "xatu68": "correct",
+          "guja54": "correct",
+          "dohixa45": "correct",
+          "xalomo25": "correct",
+          "yoruhi87": "correct",
+          "keziqi59": "correct",
+          "suba49": "correct",
+          "jasa18": "correct",
+          "guni65": "correct",
+          "logusu53": "correct",
+          "baweyo13": "correct",
+          "nine41": "correct",
+          "ruba58": "correct",
+          "xawe54": "correct",
+          "tuzitu87": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_harness.clm_agent.harness:ClmAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 120,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 360,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/D32__ledger-notes-t120k-s1.summary.txt",
+          "sha256": "18e72a75e2b7a494361dac27eb8e075dd2715d53453214899421e2f5cddf7856",
+          "bytes": 1007
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/D32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__Bxu6YPm/verifier/details.json",
+          "sha256": "18f24626425dbd427468c3dff6f20cd81456ddbcc34b7dcc31e75f7faddd7512",
+          "bytes": 4904
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/D32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__Bxu6YPm/result.json",
+          "sha256": "9ffdc9e9fdbdaf43d6e96012c6ac63d1d005bf03992293d053da59205de37fe4",
+          "bytes": 4560
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/D32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__Bxu6YPm/config.json",
+          "sha256": "63d1d48e0fa4e25228a8c8ad3596cc21d17f2f82244f6f274898b31ebc38e47a",
+          "bytes": 2506
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/task.toml",
+          "sha256": "519fc7135a390f269ae43d3d3e8c945ad8cd74953213d824de7cbbc1d9727fa8",
+          "bytes": 817
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/tests/expected.json",
+          "sha256": "7d1a1ad6428df40cda1c98c7153f566134038a1b55bb3e91b7634d5a5e68696f",
+          "bytes": 416
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/environment/stream.jsonl",
+          "sha256": "9eb823c4aceb915a566401398e2898d6a4416124d6b94c7ee919aa1db793cce4",
+          "bytes": 312279
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/led120/ledger-notes-t120k-s1__Bxu6YPm/summary.tsv",
+        "verifier.json": "records/context-planA-client/led120/ledger-notes-t120k-s1__Bxu6YPm/verifier.json",
+        "task.toml": "records/context-planA-client/led120/ledger-notes-t120k-s1__Bxu6YPm/task.toml",
+        "expected.json": "records/context-planA-client/led120/ledger-notes-t120k-s1__Bxu6YPm/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/led120/runs/jobs/E32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__KSx4aVV",
+      "metrics": {
+        "arm": "E32",
+        "kind": "ledger",
+        "mode": "notes",
+        "size": "121085",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "15",
+        "real_edits": "0",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "13387",
+        "prompt_tokens": "146147",
+        "cached_tokens": "113984",
+        "think_share": "0.613",
+        "completion_tokens": "10846",
+        "think_tok_est": "7974",
+        "other_tok_est": "2871",
+        "thinking_off_calls": "0",
+        "prefix_stable_share": "",
+        "wall_s": "150",
+        "items_lost": "",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 121085,
+        "token_counter": "tokenizer:/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json",
+        "batch_size": 136,
+        "batch_tokens": 6372,
+        "n_get": 24,
+        "n_counters": 160,
+        "n_deleted_queried": 3,
+        "n_items": 20,
+        "n_batches": 19,
+        "mode": "notes",
+        "kind": "ledger",
+        "max_item_chars": 16575
+      },
+      "grade": {
+        "n": 24,
+        "correct": 24,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "zizi18": "correct",
+          "vodita65": "correct",
+          "tuka91": "correct",
+          "peyone65": "correct",
+          "tasa59": "correct",
+          "coka66": "correct",
+          "miwelo28": "correct",
+          "kake66": "correct",
+          "suxalo94": "correct",
+          "xatu68": "correct",
+          "guja54": "correct",
+          "dohixa45": "correct",
+          "xalomo25": "correct",
+          "yoruhi87": "correct",
+          "keziqi59": "correct",
+          "suba49": "correct",
+          "jasa18": "correct",
+          "guni65": "correct",
+          "logusu53": "correct",
+          "baweyo13": "correct",
+          "nine41": "correct",
+          "ruba58": "correct",
+          "xawe54": "correct",
+          "tuzitu87": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_baselines:PlainAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 120,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 360,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/E32__ledger-notes-t120k-s1.summary.txt",
+          "sha256": "c6e9a23c4b64a5389d394c10841abf4931757fce8e9828f8552292ac19a95c74",
+          "bytes": 1010
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/E32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__KSx4aVV/verifier/details.json",
+          "sha256": "5d79f898cfeca3c6e9f45ea9a95fb569c042f5fe3674843a21ba0cb1784a33bc",
+          "bytes": 5218
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/E32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__KSx4aVV/result.json",
+          "sha256": "fbe10122da426b8944805db10ab4151718954080ed6bdfaabe3b93f6031f0e83",
+          "bytes": 4552
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/runs/jobs/E32__ledger-notes-t120k-s1/ledger-notes-t120k-s1__KSx4aVV/config.json",
+          "sha256": "6a92145bcc3f3550b36acecba572ecd8b171636781ef746ca530697d28b70283",
+          "bytes": 2492
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/task.toml",
+          "sha256": "519fc7135a390f269ae43d3d3e8c945ad8cd74953213d824de7cbbc1d9727fa8",
+          "bytes": 817
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/tests/expected.json",
+          "sha256": "7d1a1ad6428df40cda1c98c7153f566134038a1b55bb3e91b7634d5a5e68696f",
+          "bytes": 416
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/environment/stream.jsonl",
+          "sha256": "9eb823c4aceb915a566401398e2898d6a4416124d6b94c7ee919aa1db793cce4",
+          "bytes": 312279
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/led120/tasks/ledger-notes/ledger-notes-t120k-s1/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/led120/ledger-notes-t120k-s1__KSx4aVV/summary.tsv",
+        "verifier.json": "records/context-planA-client/led120/ledger-notes-t120k-s1__KSx4aVV/verifier.json",
+        "task.toml": "records/context-planA-client/led120/ledger-notes-t120k-s1__KSx4aVV/task.toml",
+        "expected.json": "records/context-planA-client/led120/ledger-notes-t120k-s1__KSx4aVV/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__JVEXzAu",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "178",
+        "real_edits": "74",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "20226",
+        "prompt_tokens": "2670932",
+        "cached_tokens": "2107456",
+        "think_share": "0.000",
+        "completion_tokens": "45557",
+        "think_tok_est": "36621",
+        "other_tok_est": "8935",
+        "thinking_off_calls": "151",
+        "prefix_stable_share": "0.582",
+        "wall_s": "744",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 24,
+        "correct": 24,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "correct",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "268ce27ceeaf07d9dd070cbc6543588129fe087a1dc8701ba604b1665830dd69",
+          "bytes": 1060
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__JVEXzAu/verifier/details.json",
+          "sha256": "c26f9408fe575710be15c99a57b144a4d0266673b288d5184db299f9628b843b",
+          "bytes": 6041
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__JVEXzAu/result.json",
+          "sha256": "4405b5f2b464d72088e3975880aa82d925da0f2c8e5b72de7cae06176ff65be2",
+          "bytes": 4751
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__JVEXzAu/config.json",
+          "sha256": "4a7140fb0cba87d2c224bc12940382d451de855c5217f6d38cc57ba4bbafb0f4",
+          "bytes": 2666
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "1e831640790a696025c3c4dcb6304e324a7211ae98fb04222b60cd30a6db4765",
+          "bytes": 819
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "f35ebb2e05d7079c6989d43caa1aaa2e345d44b154d4abce4233135fd8d2d4e4",
+          "bytes": 409
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "749ba77fb5ba8d46db4627593cf803191eb9c65872e57df964428dced8e65d85",
+          "bytes": 556276
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "47564b2d3ab542e6aade42b8b8a6461c68802c8fbb9b33c2cfdd10f548f188cf",
+          "bytes": 24757
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd120/sparse-memory-t120k-s0__JVEXzAu/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd120/sparse-memory-t120k-s0__JVEXzAu/verifier.json",
+        "task.toml": "records/context-planA-client/rd120/sparse-memory-t120k-s0__JVEXzAu/task.toml",
+        "expected.json": "records/context-planA-client/rd120/sparse-memory-t120k-s0__JVEXzAu/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd120-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__ULQ78qP",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119652",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "305",
+        "real_edits": "78",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "25319",
+        "prompt_tokens": "4824412",
+        "cached_tokens": "3612544",
+        "think_share": "0.000",
+        "completion_tokens": "273878",
+        "think_tok_est": "203234",
+        "other_tok_est": "70643",
+        "thinking_off_calls": "195",
+        "prefix_stable_share": "0.737",
+        "wall_s": "3654",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119652,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1734,
+        "density": 12.0,
+        "setting": "w",
+        "n_get": 16,
+        "n_counters": 57,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 70,
+        "n_batches": 69,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8117
+      },
+      "grade": {
+        "n": 16,
+        "correct": 16,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 16,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "yobalo53": "correct",
+          "dogu57": "correct",
+          "tasu45": "correct",
+          "basa92": "correct",
+          "peyo12": "correct",
+          "yomi81": "correct",
+          "wezi96": "correct",
+          "tasu75": "correct",
+          "wexahi84": "correct",
+          "rone91": "correct",
+          "qisu87": "correct",
+          "xaru16": "correct",
+          "xadivo80": "correct",
+          "zidi41": "correct",
+          "jatumo78": "correct",
+          "nigu24": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 320,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 960,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "523b571002cfb9593b0fabba11926c1065e0e850487955093377f7e0b39b8cfc",
+          "bytes": 1071
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__ULQ78qP/verifier/details.json",
+          "sha256": "8ca89d3363cc1aad686eaecc6241fd9d7ab3af20876a67e2b6719d0021fe8b5a",
+          "bytes": 5699
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__ULQ78qP/result.json",
+          "sha256": "a3b15e43eb26110e858c9867d020f6254ded97d354a0bab2ea5b399b125b0bdf",
+          "bytes": 4768
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__ULQ78qP/config.json",
+          "sha256": "efb37192d148b6982f7e9821a29db128ceb5d25e7e45365e28655f8d8342c1d8",
+          "bytes": 2674
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "773fe672ceb9e0a6c1f0a5a5d8d48000f7fc225bf5ec65de880d8d82e44ab1a0",
+          "bytes": 821
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "0a3c089f38fec873d59fb77deefe70242879f5cf4f59833ed061910274b65bbe",
+          "bytes": 267
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "3a4142a3f783a3ebf0ced3fe180e237e9d7534e205c40888b4962d791b561e4b",
+          "bytes": 549369
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "4b8d0704fc86b3b8d79f92e69efc0ee6c14615d1766ec4cd93085c4963cc2359",
+          "bytes": 43712
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd120-d12/sparse-memory-t120k-s0__ULQ78qP/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd120-d12/sparse-memory-t120k-s0__ULQ78qP/verifier.json",
+        "task.toml": "records/context-planA-client/rd120-d12/sparse-memory-t120k-s0__ULQ78qP/task.toml",
+        "expected.json": "records/context-planA-client/rd120-d12/sparse-memory-t120k-s0__ULQ78qP/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__MFciE7a",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "143",
+        "real_edits": "70",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "16829",
+        "prompt_tokens": "1780937",
+        "cached_tokens": "1441856",
+        "think_share": "0.000",
+        "completion_tokens": "8686",
+        "think_tok_est": "87",
+        "other_tok_est": "8598",
+        "thinking_off_calls": "140",
+        "prefix_stable_share": "0.507",
+        "wall_s": "280",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 24,
+        "correct": 24,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "correct",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "7357a53c49ee1f2e8133ceba343facc8f122e29c770d31822bb3119443ac0492",
+          "bytes": 1054
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__MFciE7a/verifier/details.json",
+          "sha256": "d97ce15fcd5bb77ba18796f5d70b18d8cc0be023c5064b587d2593a25ef5a536",
+          "bytes": 6173
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__MFciE7a/result.json",
+          "sha256": "fb92f1568da20ff3924172418288de68eb7e7ea34ac18031adb56865eaa95080",
+          "bytes": 4754
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__MFciE7a/config.json",
+          "sha256": "b11ec860025ec3d601b774a1d36d514eb3bfc6339d19f8947f4d4c7452af8ccc",
+          "bytes": 2668
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "1e831640790a696025c3c4dcb6304e324a7211ae98fb04222b60cd30a6db4765",
+          "bytes": 819
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "f35ebb2e05d7079c6989d43caa1aaa2e345d44b154d4abce4233135fd8d2d4e4",
+          "bytes": 409
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "749ba77fb5ba8d46db4627593cf803191eb9c65872e57df964428dced8e65d85",
+          "bytes": 556276
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "47564b2d3ab542e6aade42b8b8a6461c68802c8fbb9b33c2cfdd10f548f188cf",
+          "bytes": 24757
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd120q/sparse-memory-t120k-s0__MFciE7a/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd120q/sparse-memory-t120k-s0__MFciE7a/verifier.json",
+        "task.toml": "records/context-planA-client/rd120q/sparse-memory-t120k-s0__MFciE7a/task.toml",
+        "expected.json": "records/context-planA-client/rd120q/sparse-memory-t120k-s0__MFciE7a/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd120q-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__egPxnvz",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119652",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.000",
+        "lm_calls": "320",
+        "real_edits": "88",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "22945",
+        "prompt_tokens": "3261070",
+        "cached_tokens": "2580864",
+        "think_share": "0.000",
+        "completion_tokens": "76291",
+        "think_tok_est": "36778",
+        "other_tok_est": "39512",
+        "thinking_off_calls": "228",
+        "prefix_stable_share": "0.724",
+        "wall_s": "1145",
+        "items_lost": "0",
+        "ended_by": "CAP:max_steps",
+        "rule": "VOID+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119652,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1734,
+        "density": 12.0,
+        "setting": "w",
+        "n_get": 16,
+        "n_counters": 57,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 70,
+        "n_batches": 69,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8117
+      },
+      "grade": {
+        "n": 16,
+        "correct": 0,
+        "score": 0.0,
+        "score_raw": 0.0,
+        "void": true,
+        "counts": {
+          "correct": 0,
+          "blank": 16,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [
+          {
+            "path": "/tmp/ev22.sh",
+            "reason": "holds stream data (13 hits)"
+          },
+          {
+            "path": "/tmp/ev23.sh",
+            "reason": "holds stream data (10 hits)"
+          }
+        ],
+        "per_key": {
+          "yobalo53": "blank",
+          "dogu57": "blank",
+          "tasu45": "blank",
+          "basa92": "blank",
+          "peyo12": "blank",
+          "yomi81": "blank",
+          "wezi96": "blank",
+          "tasu75": "blank",
+          "wexahi84": "blank",
+          "rone91": "blank",
+          "qisu87": "blank",
+          "xaru16": "blank",
+          "xadivo80": "blank",
+          "zidi41": "blank",
+          "jatumo78": "blank",
+          "nigu24": "blank"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 320,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 960,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "88643bbe18a2c2af068ac42e393303759aa6f2325c95e4b6956c0a42c6028855",
+          "bytes": 1373
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__egPxnvz/verifier/details.json",
+          "sha256": "99f4149d3061621d8fb39da113e4014df7d6766bb992272bdfd81175f969be29",
+          "bytes": 4190
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__egPxnvz/result.json",
+          "sha256": "9768b964c4c533eaf8e30411a12ea3008532a44aaf3f6954972d4e479db65b48",
+          "bytes": 4771
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__egPxnvz/config.json",
+          "sha256": "98f4c22028ca917486c21105a2c7be367e6d44fe52e7a947398f4fce03223826",
+          "bytes": 2676
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "773fe672ceb9e0a6c1f0a5a5d8d48000f7fc225bf5ec65de880d8d82e44ab1a0",
+          "bytes": 821
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "0a3c089f38fec873d59fb77deefe70242879f5cf4f59833ed061910274b65bbe",
+          "bytes": 267
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "3a4142a3f783a3ebf0ced3fe180e237e9d7534e205c40888b4962d791b561e4b",
+          "bytes": 549369
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "4b8d0704fc86b3b8d79f92e69efc0ee6c14615d1766ec4cd93085c4963cc2359",
+          "bytes": 43712
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd120q-d12/sparse-memory-t120k-s0__egPxnvz/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd120q-d12/sparse-memory-t120k-s0__egPxnvz/verifier.json",
+        "task.toml": "records/context-planA-client/rd120q-d12/sparse-memory-t120k-s0__egPxnvz/task.toml",
+        "expected.json": "records/context-planA-client/rd120q-d12/sparse-memory-t120k-s0__egPxnvz/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd120q2-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__6nQ7wM5",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119652",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "144",
+        "real_edits": "70",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "21408",
+        "prompt_tokens": "2019568",
+        "cached_tokens": "1643200",
+        "think_share": "0.000",
+        "completion_tokens": "25158",
+        "think_tok_est": "698",
+        "other_tok_est": "24459",
+        "thinking_off_calls": "140",
+        "prefix_stable_share": "0.510",
+        "wall_s": "445",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119652,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1734,
+        "density": 12.0,
+        "setting": "w",
+        "n_get": 16,
+        "n_counters": 57,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 70,
+        "n_batches": 69,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8117
+      },
+      "grade": {
+        "n": 16,
+        "correct": 16,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 16,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "yobalo53": "correct",
+          "dogu57": "correct",
+          "tasu45": "correct",
+          "basa92": "correct",
+          "peyo12": "correct",
+          "yomi81": "correct",
+          "wezi96": "correct",
+          "tasu75": "correct",
+          "wexahi84": "correct",
+          "rone91": "correct",
+          "qisu87": "correct",
+          "xaru16": "correct",
+          "xadivo80": "correct",
+          "zidi41": "correct",
+          "jatumo78": "correct",
+          "nigu24": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 320,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 960,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "56aebb161736e6fa25ec27ac7f81d350fdf5542ad37500c9dbfca9c5d1dfcd23",
+          "bytes": 1058
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__6nQ7wM5/verifier/details.json",
+          "sha256": "6d928b14a327616e12a393cc9902e1329dfac5cabd4e17954aed4c62ba9ed7b1",
+          "bytes": 5934
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__6nQ7wM5/result.json",
+          "sha256": "9558068eb2747862b49a740d28acc47421f46ba7f405c512856fe551e7b64ee2",
+          "bytes": 4775
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__6nQ7wM5/config.json",
+          "sha256": "be5fbb71684903aab2a998ccaa99cf573bb3db549ea5336fe369e0768aeac8b8",
+          "bytes": 2678
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "773fe672ceb9e0a6c1f0a5a5d8d48000f7fc225bf5ec65de880d8d82e44ab1a0",
+          "bytes": 821
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "0a3c089f38fec873d59fb77deefe70242879f5cf4f59833ed061910274b65bbe",
+          "bytes": 267
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "3a4142a3f783a3ebf0ced3fe180e237e9d7534e205c40888b4962d791b561e4b",
+          "bytes": 549369
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd120q2-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "4b8d0704fc86b3b8d79f92e69efc0ee6c14615d1766ec4cd93085c4963cc2359",
+          "bytes": 43712
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd120q2-d12/sparse-memory-t120k-s0__6nQ7wM5/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd120q2-d12/sparse-memory-t120k-s0__6nQ7wM5/verifier.json",
+        "task.toml": "records/context-planA-client/rd120q2-d12/sparse-memory-t120k-s0__6nQ7wM5/task.toml",
+        "expected.json": "records/context-planA-client/rd120q2-d12/sparse-memory-t120k-s0__6nQ7wM5/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd1m/runs/jobs/B32ir__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__8gCWSuS",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "999361",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.958",
+        "lm_calls": "1351",
+        "real_edits": "606",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "22511",
+        "prompt_tokens": "21730419",
+        "cached_tokens": "18067712",
+        "think_share": "0.000",
+        "completion_tokens": "170271",
+        "think_tok_est": "49880",
+        "other_tok_est": "120390",
+        "thinking_off_calls": "1186",
+        "prefix_stable_share": "0.550",
+        "wall_s": "3734",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 1000000,
+        "stream_tokens": 999361,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1702,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 60,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 588,
+        "n_batches": 587,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8117
+      },
+      "grade": {
+        "n": 24,
+        "correct": 23,
+        "score": 0.9583333333333334,
+        "score_raw": 0.9583333333333334,
+        "void": false,
+        "counts": {
+          "correct": 23,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 1
+        },
+        "violations": [],
+        "per_key": {
+          "ruxa92": "correct",
+          "dokeja13": "correct",
+          "kamoke18": "correct",
+          "hiruni62": "correct",
+          "rorudo80": "correct",
+          "xaka26": "correct",
+          "pelo91": "correct",
+          "fado14": "correct",
+          "katu85": "correct",
+          "fagu11": "correct",
+          "ruyoba11": "correct",
+          "tasutu51": "correct",
+          "peroco54": "correct",
+          "nidi38": "stale",
+          "xaba13": "correct",
+          "kawe43": "correct",
+          "taneco90": "correct",
+          "pepe23": "correct",
+          "vodo54": "correct",
+          "dike72": "correct",
+          "ziru63": "correct",
+          "voke83": "correct",
+          "cota28": "correct",
+          "sufaqi53": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 2392,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 7176,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/runs/B32ir__sparse-memory-t1000k-s0.summary.txt",
+          "sha256": "b829b7932d813311d00d1094e42beb169708f7480e6ff5230b6ab4dac1f88a34",
+          "bytes": 1066
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/runs/jobs/B32ir__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__8gCWSuS/verifier/details.json",
+          "sha256": "08a7c2b6623b88f384511470e1de0fb0cc9c11fb0a356c222641e45d7fcd0c47",
+          "bytes": 3267
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/runs/jobs/B32ir__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__8gCWSuS/result.json",
+          "sha256": "1fdc3cad666f481f46305af3e6b7ce119af39647814cdc114f1a591bea453a1c",
+          "bytes": 4699
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/runs/jobs/B32ir__sparse-memory-t1000k-s0/sparse-memory-t1000k-s0__8gCWSuS/config.json",
+          "sha256": "d2a2e53dffddf3241dd2ae9f14d4d9cea3167732754b05b6b25b496ae10e9ee3",
+          "bytes": 2612
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/tasks/sparse-memory/sparse-memory-t1000k-s0/task.toml",
+          "sha256": "4a631976366973b67e8f2ae2ca0bee1e1998c8861140f851ede6ab35b9a97a44",
+          "bytes": 824
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/tasks/sparse-memory/sparse-memory-t1000k-s0/tests/expected.json",
+          "sha256": "d39a5522de482ce3260bcf1dffd0c686720e4ecf0cea9a2c9bb1786c81650d29",
+          "bytes": 401
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/tasks/sparse-memory/sparse-memory-t1000k-s0/environment/stream.jsonl",
+          "sha256": "63f84e772698a57cd9122d7b595476803692319d6bd15c658a3c1c70795bba05",
+          "bytes": 4664227
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/tasks/sparse-memory/sparse-memory-t1000k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd1m/tasks/sparse-memory/sparse-memory-t1000k-s0/tests/reference.json",
+          "sha256": "aab5a90b5dc535979ce7b3e36721712e0344cef7676bbe012b80e53e136aaa62",
+          "bytes": 219627
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd1m/sparse-memory-t1000k-s0__8gCWSuS/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd1m/sparse-memory-t1000k-s0__8gCWSuS/verifier.json",
+        "task.toml": "records/context-planA-client/rd1m/sparse-memory-t1000k-s0__8gCWSuS/task.toml",
+        "expected.json": "records/context-planA-client/rd1m/sparse-memory-t1000k-s0__8gCWSuS/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd480-d6/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__BHQ43ff",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "479935",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "596",
+        "real_edits": "288",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "24509",
+        "prompt_tokens": "8539678",
+        "cached_tokens": "6918912",
+        "think_share": "0.000",
+        "completion_tokens": "87206",
+        "think_tok_est": "13234",
+        "other_tok_est": "73971",
+        "thinking_off_calls": "574",
+        "prefix_stable_share": "0.514",
+        "wall_s": "1709",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 480000,
+        "stream_tokens": 479935,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1714,
+        "density": 6.0,
+        "setting": "w",
+        "n_get": 13,
+        "n_counters": 60,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 281,
+        "n_batches": 280,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8122
+      },
+      "grade": {
+        "n": 13,
+        "correct": 13,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 13,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "zimi27": "correct",
+          "doxatu30": "correct",
+          "ruvo62": "correct",
+          "qihiwe69": "correct",
+          "weni34": "correct",
+          "take90": "correct",
+          "pefa78": "correct",
+          "qiqipe10": "correct",
+          "kami51": "correct",
+          "mixa39": "correct",
+          "netuvo11": "correct",
+          "jaxaru68": "correct",
+          "rudo41": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 1164,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 3492,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/runs/B32ir__sparse-memory-t480k-s0.summary.txt",
+          "sha256": "79cf8e3cc211a1f30591f2fddeb9e7b2aee3ab2225ccf798ef21343fc6604fa2",
+          "bytes": 1052
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__BHQ43ff/verifier/details.json",
+          "sha256": "68318d8ea9ebe85b32653fd5b1d19c702802a6c49294767113eff1ff8ed75153",
+          "bytes": 2978
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__BHQ43ff/result.json",
+          "sha256": "2139d2490925f6dc1abe42d08e979a84f8af343ad92d1dcedf6c325380fc7a9a",
+          "bytes": 4700
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__BHQ43ff/config.json",
+          "sha256": "ef29c8186d58c27f9c888ee77bfe8d3a018182e9ded184400e4cd3aeadf10b76",
+          "bytes": 2617
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/tasks/sparse-memory/sparse-memory-t480k-s0/task.toml",
+          "sha256": "aa759ef6fcd585bd5feb78ce2744735585f3cb996c848f78a4fe23578e77b503",
+          "bytes": 822
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/tasks/sparse-memory/sparse-memory-t480k-s0/tests/expected.json",
+          "sha256": "4e1e649cd732e3b80c6b319ca32324725b68c88e2daf3406c39590c066d32ce7",
+          "bytes": 222
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/tasks/sparse-memory/sparse-memory-t480k-s0/environment/stream.jsonl",
+          "sha256": "f4a0b0d66a3c346a47d5cf4086bd475833eb96be41ab314efbf38d0d8e06d85a",
+          "bytes": 2226317
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/tasks/sparse-memory/sparse-memory-t480k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-d6/tasks/sparse-memory/sparse-memory-t480k-s0/tests/reference.json",
+          "sha256": "3cf006f5b06bdc00d8ab4982adf4d7c594d0716464394f6ce2164f91ace0cc2e",
+          "bytes": 123028
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd480-d6/sparse-memory-t480k-s0__BHQ43ff/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd480-d6/sparse-memory-t480k-s0__BHQ43ff/verifier.json",
+        "task.toml": "records/context-planA-client/rd480-d6/sparse-memory-t480k-s0__BHQ43ff/task.toml",
+        "expected.json": "records/context-planA-client/rd480-d6/sparse-memory-t480k-s0__BHQ43ff/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd480-files/runs/jobs/E32r__sparse-notes-t480k-s0/sparse-notes-t480k-s0__jbtpxHF",
+      "metrics": {
+        "arm": "E32r",
+        "kind": "sparse",
+        "mode": "notes",
+        "size": "479512",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "21",
+        "real_edits": "0",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "30773",
+        "prompt_tokens": "397768",
+        "cached_tokens": "338624",
+        "think_share": "0.440",
+        "completion_tokens": "20559",
+        "think_tok_est": "12207",
+        "other_tok_est": "8351",
+        "thinking_off_calls": "0",
+        "prefix_stable_share": "",
+        "wall_s": "310",
+        "items_lost": "",
+        "ended_by": "budget_stop",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 480000,
+        "stream_tokens": 479512,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1700,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 10,
+        "n_counters": 55,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 283,
+        "n_batches": 282,
+        "mode": "notes",
+        "kind": "sparse",
+        "max_item_chars": 8122
+      },
+      "grade": {
+        "n": 10,
+        "correct": 10,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 10,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "jatu20": "correct",
+          "zisupe61": "correct",
+          "mokelo49": "correct",
+          "qisa41": "correct",
+          "suyo40": "correct",
+          "jahixa58": "correct",
+          "baru54": "correct",
+          "nisu71": "correct",
+          "fawe38": "correct",
+          "fabaja16": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_baselines:PlainAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 1172,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 3516,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/runs/E32r__sparse-notes-t480k-s0.summary.txt",
+          "sha256": "f6a90ce38045fd03967ca371e876f63f5ceb8ba5024f5562bf783854e8924c42",
+          "bytes": 930
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/runs/jobs/E32r__sparse-notes-t480k-s0/sparse-notes-t480k-s0__jbtpxHF/verifier/details.json",
+          "sha256": "b5109a7d37dc4382c2b51e525367aaba0cabc1e0b394bf885621569933a78aad",
+          "bytes": 9613
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/runs/jobs/E32r__sparse-notes-t480k-s0/sparse-notes-t480k-s0__jbtpxHF/result.json",
+          "sha256": "58d6d31a86c438ea11220b36d6e6b52f722e5821a92e6c3bdfe59eeadf3410d5",
+          "bytes": 4576
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/runs/jobs/E32r__sparse-notes-t480k-s0/sparse-notes-t480k-s0__jbtpxHF/config.json",
+          "sha256": "bb0f26e49bc67b262b86b143c3ecdcc246d809b1de02d7012bade8016aacbe23",
+          "bytes": 2505
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/tasks/sparse-notes/sparse-notes-t480k-s0/task.toml",
+          "sha256": "28e9bfbac664318e61854161cd038bb6e895bbcf267d1ac8038f34f0dc30510d",
+          "bytes": 819
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/tasks/sparse-notes/sparse-notes-t480k-s0/tests/expected.json",
+          "sha256": "e8fd0d93c2a762fcb67cd897ed4301a6e9f0f900d62beef4a0b9fd41d4780f20",
+          "bytes": 171
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/tasks/sparse-notes/sparse-notes-t480k-s0/environment/stream.jsonl",
+          "sha256": "379aeef6552bcf26e15fedcc13cbcd324d87ebb7fb56e5e602a29cd021843c10",
+          "bytes": 2241168
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/tasks/sparse-notes/sparse-notes-t480k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480-files/tasks/sparse-notes/sparse-notes-t480k-s0/tests/reference.json",
+          "sha256": "a0903447c5c9c03c82351e8d519157c85b61b82245353b358e3e8f2d91c6cb24",
+          "bytes": 96097
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd480-files/sparse-notes-t480k-s0__jbtpxHF/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd480-files/sparse-notes-t480k-s0__jbtpxHF/verifier.json",
+        "task.toml": "records/context-planA-client/rd480-files/sparse-notes-t480k-s0__jbtpxHF/task.toml",
+        "expected.json": "records/context-planA-client/rd480-files/sparse-notes-t480k-s0__jbtpxHF/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/rd480q/runs/jobs/B32iq__sparse-memory-t480k-s0/sparse-memory-t480k-s0__DKggW8r",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "479512",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "578",
+        "real_edits": "286",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "22430",
+        "prompt_tokens": "8615832",
+        "cached_tokens": "7151872",
+        "think_share": "0.000",
+        "completion_tokens": "36702",
+        "think_tok_est": "542",
+        "other_tok_est": "36159",
+        "thinking_off_calls": "573",
+        "prefix_stable_share": "0.503",
+        "wall_s": "1173",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 480000,
+        "stream_tokens": 479512,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1700,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 10,
+        "n_counters": 55,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 283,
+        "n_batches": 282,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8122
+      },
+      "grade": {
+        "n": 10,
+        "correct": 10,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 10,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "jatu20": "correct",
+          "zisupe61": "correct",
+          "mokelo49": "correct",
+          "qisa41": "correct",
+          "suyo40": "correct",
+          "jahixa58": "correct",
+          "baru54": "correct",
+          "nisu71": "correct",
+          "fawe38": "correct",
+          "fabaja16": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 1172,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 3516,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/runs/B32iq__sparse-memory-t480k-s0.summary.txt",
+          "sha256": "cf722fe7d704aae1d2db2d4f1d827e06cf8dbf1308ee727a6497754bd002b7a2",
+          "bytes": 1064
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/runs/jobs/B32iq__sparse-memory-t480k-s0/sparse-memory-t480k-s0__DKggW8r/verifier/details.json",
+          "sha256": "307b041c1aa41281dddb9259801cf86292a8a8a2a8f51703b26cdd9526ce4f40",
+          "bytes": 8931
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/runs/jobs/B32iq__sparse-memory-t480k-s0/sparse-memory-t480k-s0__DKggW8r/result.json",
+          "sha256": "9b2a80b8bdf7c73aeef5be0d9f1fbc4f80fb9ef47e10d5980745d5f7d2d08b3f",
+          "bytes": 4757
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/runs/jobs/B32iq__sparse-memory-t480k-s0/sparse-memory-t480k-s0__DKggW8r/config.json",
+          "sha256": "524abca42a61f3a2b1ee3feee42c98b92e6f94be4dda7285a53095c0b82636ae",
+          "bytes": 2670
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/tasks/sparse-memory/sparse-memory-t480k-s0/task.toml",
+          "sha256": "296475827113a96d3a66d9f17f22ed55e43641b60187f2ece82c7bcee3c3da6b",
+          "bytes": 822
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/tasks/sparse-memory/sparse-memory-t480k-s0/tests/expected.json",
+          "sha256": "e8fd0d93c2a762fcb67cd897ed4301a6e9f0f900d62beef4a0b9fd41d4780f20",
+          "bytes": 171
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/tasks/sparse-memory/sparse-memory-t480k-s0/environment/stream.jsonl",
+          "sha256": "379aeef6552bcf26e15fedcc13cbcd324d87ebb7fb56e5e602a29cd021843c10",
+          "bytes": 2241168
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/tasks/sparse-memory/sparse-memory-t480k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/rd480q/tasks/sparse-memory/sparse-memory-t480k-s0/tests/reference.json",
+          "sha256": "a0903447c5c9c03c82351e8d519157c85b61b82245353b358e3e8f2d91c6cb24",
+          "bytes": 96097
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/rd480q/sparse-memory-t480k-s0__DKggW8r/summary.tsv",
+        "verifier.json": "records/context-planA-client/rd480q/sparse-memory-t480k-s0__DKggW8r/verifier.json",
+        "task.toml": "records/context-planA-client/rd480q/sparse-memory-t480k-s0__DKggW8r/task.toml",
+        "expected.json": "records/context-planA-client/rd480q/sparse-memory-t480k-s0__DKggW8r/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__QExekr8",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.861",
+        "lm_calls": "169",
+        "real_edits": "71",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "20232",
+        "prompt_tokens": "2411631",
+        "cached_tokens": "1852864",
+        "think_share": "0.000",
+        "completion_tokens": "44122",
+        "think_tok_est": "37146",
+        "other_tok_est": "6975",
+        "thinking_off_calls": "148",
+        "prefix_stable_share": "0.571",
+        "wall_s": "752",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_surprise": 12,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 36,
+        "correct": 31,
+        "score": 0.8611111111111112,
+        "score_raw": 0.8611111111111112,
+        "void": false,
+        "counts": {
+          "correct": 31,
+          "blank": 0,
+          "wrong": 5,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "correct",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct",
+          "s1": "correct",
+          "s2": "correct",
+          "s3": "correct",
+          "s4": "correct",
+          "s5": "correct",
+          "s6": "wrong",
+          "s7": "correct",
+          "s8": "correct",
+          "s9": "wrong",
+          "s10": "wrong",
+          "s11": "wrong",
+          "s12": "wrong"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "abc595dc5ff699d1c6cd1b553a97f173e3ef50708837b264efe3b9038c5e3ed1",
+          "bytes": 1061
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__QExekr8/verifier/details.json",
+          "sha256": "893ad37ab2eeb23c7553e676f5cf4d70924ed3dc4568d028e41b62066253055d",
+          "bytes": 6318
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__QExekr8/result.json",
+          "sha256": "12331882b948160b582836bda0b5a39c2be370fa8e73a989082b32e88b7040d5",
+          "bytes": 4760
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__QExekr8/config.json",
+          "sha256": "73b57c77ba6417c7d5cbc85daae33216717db86ebe3005fa91c102d978c51cf5",
+          "bytes": 2668
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "82d033f41b7b34579a2cc3cb163076560ffb30a975cf19be00fe5157711baca8",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "0448292f42c882d571a3ec59cc9211ab2a2bc1649115103c21be9fef04c42262",
+          "bytes": 642
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "9892bc30f28e5a8d6fd3421389db1dd31a80bfa5c86571b794031be434b388cc",
+          "bytes": 557191
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "4b6424b769d3e14458c8c4cdd42ce04b1fecd36a2771814feccf86512f66939b",
+          "bytes": 26190
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/ret120/sparse-memory-t120k-s0__QExekr8/summary.tsv",
+        "verifier.json": "records/context-planA-client/ret120/sparse-memory-t120k-s0__QExekr8/verifier.json",
+        "task.toml": "records/context-planA-client/ret120/sparse-memory-t120k-s0__QExekr8/task.toml",
+        "expected.json": "records/context-planA-client/ret120/sparse-memory-t120k-s0__QExekr8/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__cyVkoEM",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119172",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "0.867",
+        "lm_calls": "186",
+        "real_edits": "71",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "21366",
+        "prompt_tokens": "3081247",
+        "cached_tokens": "2436928",
+        "think_share": "0.000",
+        "completion_tokens": "82979",
+        "think_tok_est": "67552",
+        "other_tok_est": "15426",
+        "thinking_off_calls": "158",
+        "prefix_stable_share": "0.611",
+        "wall_s": "1166",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 119172,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1702,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 18,
+        "n_counters": 32,
+        "n_deleted_queried": 3,
+        "n_surprise": 12,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 30,
+        "correct": 26,
+        "score": 0.8666666666666667,
+        "score_raw": 0.8666666666666667,
+        "void": false,
+        "counts": {
+          "correct": 26,
+          "blank": 0,
+          "wrong": 2,
+          "stale": 2
+        },
+        "violations": [],
+        "per_key": {
+          "qiyozi75": "correct",
+          "cozi59": "correct",
+          "qiguwe34": "correct",
+          "zilo20": "correct",
+          "pesa83": "correct",
+          "motu59": "correct",
+          "voziwe35": "correct",
+          "doja20": "correct",
+          "qidoqi43": "correct",
+          "mika74": "correct",
+          "disa53": "stale",
+          "hifaka25": "correct",
+          "jaru79": "correct",
+          "suta73": "wrong",
+          "jaru23": "correct",
+          "xaxa42": "stale",
+          "ruxa84": "correct",
+          "yodiru44": "correct",
+          "s1": "correct",
+          "s2": "correct",
+          "s3": "correct",
+          "s4": "correct",
+          "s5": "wrong",
+          "s6": "correct",
+          "s7": "correct",
+          "s8": "correct",
+          "s9": "correct",
+          "s10": "correct",
+          "s11": "correct",
+          "s12": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/B32iq__sparse-memory-t120k-s1.summary.txt",
+          "sha256": "3502f91931af950b2116e9cb331c47f9b9631da6eb25f7f342c6e1cd9d801309",
+          "bytes": 1064
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__cyVkoEM/verifier/details.json",
+          "sha256": "11c4b063e3a1591aa43f943768403df06cf9459c6c7a75161c99a97a756af466",
+          "bytes": 6173
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__cyVkoEM/result.json",
+          "sha256": "733862a6b6d185a57b9b3203d61cc87217374ff8a4575ad6ac0c72720d317e2a",
+          "bytes": 4760
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__cyVkoEM/config.json",
+          "sha256": "980c689a1bf30cbd4e397b4e48e773054ca9574b30dc39b175d0272af5d37ff3",
+          "bytes": 2668
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/task.toml",
+          "sha256": "c40907e788a0942285b1fb9b38590facfa1ed688902ad830b0ca81643a52556f",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/expected.json",
+          "sha256": "781630867edfdd535dd0ed3d45f9349cd46ce5daff4c192c6d8a9e01599719be",
+          "bytes": 557
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/environment/stream.jsonl",
+          "sha256": "f50bf17e0fef3525a35e10c02e3bd270ff2d3550baa0ce17bb2e2dae44527d79",
+          "bytes": 557589
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/reference.json",
+          "sha256": "5cbb9170c670869a941c3649d11bb19d9ec2a1fd8c1c60553f3252098d281987",
+          "bytes": 22818
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/ret120/sparse-memory-t120k-s1__cyVkoEM/summary.tsv",
+        "verifier.json": "records/context-planA-client/ret120/sparse-memory-t120k-s1__cyVkoEM/verifier.json",
+        "task.toml": "records/context-planA-client/ret120/sparse-memory-t120k-s1__cyVkoEM/task.toml",
+        "expected.json": "records/context-planA-client/ret120/sparse-memory-t120k-s1__cyVkoEM/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/ret120/runs/jobs/B32ira__sparse-memory-t120k-s1/sparse-memory-t120k-s1__4yngWUR",
+      "metrics": {
+        "arm": "B32ira",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119172",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "0.967",
+        "lm_calls": "150",
+        "real_edits": "71",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "23385",
+        "prompt_tokens": "2016068",
+        "cached_tokens": "1655680",
+        "think_share": "0.000",
+        "completion_tokens": "13505",
+        "think_tok_est": "558",
+        "other_tok_est": "12946",
+        "thinking_off_calls": "147",
+        "prefix_stable_share": "0.523",
+        "wall_s": "338",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 119172,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1702,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 18,
+        "n_counters": 32,
+        "n_deleted_queried": 3,
+        "n_surprise": 12,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 30,
+        "correct": 29,
+        "score": 0.9666666666666667,
+        "score_raw": 0.9666666666666667,
+        "void": false,
+        "counts": {
+          "correct": 29,
+          "blank": 0,
+          "wrong": 1,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "qiyozi75": "correct",
+          "cozi59": "correct",
+          "qiguwe34": "correct",
+          "zilo20": "correct",
+          "pesa83": "correct",
+          "motu59": "correct",
+          "voziwe35": "correct",
+          "doja20": "correct",
+          "qidoqi43": "correct",
+          "mika74": "correct",
+          "disa53": "correct",
+          "hifaka25": "correct",
+          "jaru79": "correct",
+          "suta73": "correct",
+          "jaru23": "correct",
+          "xaxa42": "correct",
+          "ruxa84": "correct",
+          "yodiru44": "correct",
+          "s1": "correct",
+          "s2": "correct",
+          "s3": "correct",
+          "s4": "correct",
+          "s5": "correct",
+          "s6": "correct",
+          "s7": "correct",
+          "s8": "correct",
+          "s9": "wrong",
+          "s10": "correct",
+          "s11": "correct",
+          "s12": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/B32ira__sparse-memory-t120k-s1.summary.txt",
+          "sha256": "b1ce2868e07a524c38e59a3fe48c812cbb1799cefd59a8d1853bc97948798237",
+          "bytes": 1054
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32ira__sparse-memory-t120k-s1/sparse-memory-t120k-s1__4yngWUR/verifier/details.json",
+          "sha256": "bf0e588e9c7b5aa91d858ff9933977c74af60937633a5df8d0429e94eac7c75b",
+          "bytes": 6311
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32ira__sparse-memory-t120k-s1/sparse-memory-t120k-s1__4yngWUR/result.json",
+          "sha256": "cc23b5c9c70b1e2a24cb1a4cd6360b7762d215343db9da3c15d42c328c8215b0",
+          "bytes": 4730
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/runs/jobs/B32ira__sparse-memory-t120k-s1/sparse-memory-t120k-s1__4yngWUR/config.json",
+          "sha256": "460fbb869b14bf3281313825159376f885301c82c299782719fac1aee5f12760",
+          "bytes": 2641
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/task.toml",
+          "sha256": "c40907e788a0942285b1fb9b38590facfa1ed688902ad830b0ca81643a52556f",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/expected.json",
+          "sha256": "781630867edfdd535dd0ed3d45f9349cd46ce5daff4c192c6d8a9e01599719be",
+          "bytes": 557
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/environment/stream.jsonl",
+          "sha256": "f50bf17e0fef3525a35e10c02e3bd270ff2d3550baa0ce17bb2e2dae44527d79",
+          "bytes": 557589
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/reference.json",
+          "sha256": "5cbb9170c670869a941c3649d11bb19d9ec2a1fd8c1c60553f3252098d281987",
+          "bytes": 22818
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/ret120/sparse-memory-t120k-s1__4yngWUR/summary.tsv",
+        "verifier.json": "records/context-planA-client/ret120/sparse-memory-t120k-s1__4yngWUR/verifier.json",
+        "task.toml": "records/context-planA-client/ret120/sparse-memory-t120k-s1__4yngWUR/task.toml",
+        "expected.json": "records/context-planA-client/ret120/sparse-memory-t120k-s1__4yngWUR/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__yM9GpoM",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.667",
+        "lm_calls": "210",
+        "real_edits": "72",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "21717",
+        "prompt_tokens": "2914185",
+        "cached_tokens": "2429440",
+        "think_share": "0.000",
+        "completion_tokens": "26859",
+        "think_tok_est": "13033",
+        "other_tok_est": "13825",
+        "thinking_off_calls": "188",
+        "prefix_stable_share": "0.656",
+        "wall_s": "591",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_surprise": 12,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 36,
+        "correct": 24,
+        "score": 0.6666666666666666,
+        "score_raw": 0.6666666666666666,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 12,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "correct",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct",
+          "s1": "blank",
+          "s2": "blank",
+          "s3": "blank",
+          "s4": "blank",
+          "s5": "blank",
+          "s6": "blank",
+          "s7": "blank",
+          "s8": "blank",
+          "s9": "blank",
+          "s10": "blank",
+          "s11": "blank",
+          "s12": "blank"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "b357bab715888dffb6e67cb3fc8ccd9d32d422163c4ed186b5cfe58d973b02aa",
+          "bytes": 1061
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__yM9GpoM/verifier/details.json",
+          "sha256": "a6f22eeeaa01cb3768042facdc0245a7f841ef7d526a043e03d439fb64465ee1",
+          "bytes": 6993
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__yM9GpoM/result.json",
+          "sha256": "66e7c465a10432e6ae3687fd57e35c766abcb04f5853dbb0cdef6b057526eb5d",
+          "bytes": 4764
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__yM9GpoM/config.json",
+          "sha256": "71fcf5f51421dc7ab585e0470b06cda71a4056114964db7a03039cd49e138b1e",
+          "bytes": 2670
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "82d033f41b7b34579a2cc3cb163076560ffb30a975cf19be00fe5157711baca8",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "0448292f42c882d571a3ec59cc9211ab2a2bc1649115103c21be9fef04c42262",
+          "bytes": 642
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "9892bc30f28e5a8d6fd3421389db1dd31a80bfa5c86571b794031be434b388cc",
+          "bytes": 557191
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "4b6424b769d3e14458c8c4cdd42ce04b1fecd36a2771814feccf86512f66939b",
+          "bytes": 26190
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/ret120q/sparse-memory-t120k-s0__yM9GpoM/summary.tsv",
+        "verifier.json": "records/context-planA-client/ret120q/sparse-memory-t120k-s0__yM9GpoM/verifier.json",
+        "task.toml": "records/context-planA-client/ret120q/sparse-memory-t120k-s0__yM9GpoM/task.toml",
+        "expected.json": "records/context-planA-client/ret120q/sparse-memory-t120k-s0__yM9GpoM/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__fyzUWqh",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119172",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "0.967",
+        "lm_calls": "150",
+        "real_edits": "71",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "20820",
+        "prompt_tokens": "1832938",
+        "cached_tokens": "1467648",
+        "think_share": "0.000",
+        "completion_tokens": "10133",
+        "think_tok_est": "917",
+        "other_tok_est": "9215",
+        "thinking_off_calls": "147",
+        "prefix_stable_share": "0.523",
+        "wall_s": "308",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 119172,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1702,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 18,
+        "n_counters": 32,
+        "n_deleted_queried": 3,
+        "n_surprise": 12,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 30,
+        "correct": 29,
+        "score": 0.9666666666666667,
+        "score_raw": 0.9666666666666667,
+        "void": false,
+        "counts": {
+          "correct": 29,
+          "blank": 0,
+          "wrong": 1,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "qiyozi75": "correct",
+          "cozi59": "correct",
+          "qiguwe34": "correct",
+          "zilo20": "correct",
+          "pesa83": "correct",
+          "motu59": "correct",
+          "voziwe35": "correct",
+          "doja20": "correct",
+          "qidoqi43": "correct",
+          "mika74": "correct",
+          "disa53": "correct",
+          "hifaka25": "correct",
+          "jaru79": "correct",
+          "suta73": "correct",
+          "jaru23": "correct",
+          "xaxa42": "correct",
+          "ruxa84": "correct",
+          "yodiru44": "correct",
+          "s1": "correct",
+          "s2": "correct",
+          "s3": "correct",
+          "s4": "correct",
+          "s5": "wrong",
+          "s6": "correct",
+          "s7": "correct",
+          "s8": "correct",
+          "s9": "correct",
+          "s10": "correct",
+          "s11": "correct",
+          "s12": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/B32iq__sparse-memory-t120k-s1.summary.txt",
+          "sha256": "d0514f8c252051ae48f9c1ef30f631df7a2c6efc93f16af1e7b5d49f11d13cd6",
+          "bytes": 1057
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__fyzUWqh/verifier/details.json",
+          "sha256": "a751a1670393315a2a963b7cdcd091132c9a6b0769a4a6156855cf1d20168f19",
+          "bytes": 6311
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__fyzUWqh/result.json",
+          "sha256": "efcae96ceceb47f0d84b4fb62164238c0c61cd6ac7173bd65ed7cfdf6074c3ce",
+          "bytes": 4764
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/runs/jobs/B32iq__sparse-memory-t120k-s1/sparse-memory-t120k-s1__fyzUWqh/config.json",
+          "sha256": "699f8d4040dbb677cd7aec08d1de783c09743808c52d46a8e5147d372fa408ec",
+          "bytes": 2670
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s1/task.toml",
+          "sha256": "c40907e788a0942285b1fb9b38590facfa1ed688902ad830b0ca81643a52556f",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s1/tests/expected.json",
+          "sha256": "781630867edfdd535dd0ed3d45f9349cd46ce5daff4c192c6d8a9e01599719be",
+          "bytes": 557
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s1/environment/stream.jsonl",
+          "sha256": "f50bf17e0fef3525a35e10c02e3bd270ff2d3550baa0ce17bb2e2dae44527d79",
+          "bytes": 557589
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s1/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q/tasks/sparse-memory/sparse-memory-t120k-s1/tests/reference.json",
+          "sha256": "5cbb9170c670869a941c3649d11bb19d9ec2a1fd8c1c60553f3252098d281987",
+          "bytes": 22818
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/ret120q/sparse-memory-t120k-s1__fyzUWqh/summary.tsv",
+        "verifier.json": "records/context-planA-client/ret120q/sparse-memory-t120k-s1__fyzUWqh/verifier.json",
+        "task.toml": "records/context-planA-client/ret120q/sparse-memory-t120k-s1__fyzUWqh/task.toml",
+        "expected.json": "records/context-planA-client/ret120q/sparse-memory-t120k-s1__fyzUWqh/expected.json"
+      }
+    },
+    {
+      "id": "context-planA-client/ret120q2/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__rpcehLD",
+      "metrics": {
+        "arm": "B32iq",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.972",
+        "lm_calls": "159",
+        "real_edits": "73",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "20962",
+        "prompt_tokens": "2210762",
+        "cached_tokens": "1832064",
+        "think_share": "0.000",
+        "completion_tokens": "11776",
+        "think_tok_est": "475",
+        "other_tok_est": "11300",
+        "thinking_off_calls": "156",
+        "prefix_stable_share": "0.506",
+        "wall_s": "340",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+archive"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_surprise": 12,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 36,
+        "correct": 35,
+        "score": 0.9722222222222222,
+        "score_raw": 0.9722222222222222,
+        "void": false,
+        "counts": {
+          "correct": 35,
+          "blank": 0,
+          "wrong": 1,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "correct",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct",
+          "s1": "wrong",
+          "s2": "correct",
+          "s3": "correct",
+          "s4": "correct",
+          "s5": "correct",
+          "s6": "correct",
+          "s7": "correct",
+          "s8": "correct",
+          "s9": "correct",
+          "s10": "correct",
+          "s11": "correct",
+          "s12": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "archive": true,
+          "quoted": true,
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/runs/B32iq__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "d2536a40736131f576cf3e8e785626a2b296fab6c91e12fe437203511dc16b0b",
+          "bytes": 1058
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__rpcehLD/verifier/details.json",
+          "sha256": "83d5914367dbdc011574171a6bbaddaa228456e0abcadd5bad371e61f2961053",
+          "bytes": 6459
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__rpcehLD/result.json",
+          "sha256": "bec59f9879a56b5f422359d2d615933180c11e6f7f9f92123ebcc7a822f15b08",
+          "bytes": 4768
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/runs/jobs/B32iq__sparse-memory-t120k-s0/sparse-memory-t120k-s0__rpcehLD/config.json",
+          "sha256": "7d97cbc1bd3a8eb9c7b43f60c324bfb5504e984b1950a0d628f30193ab62f04d",
+          "bytes": 2672
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "82d033f41b7b34579a2cc3cb163076560ffb30a975cf19be00fe5157711baca8",
+          "bytes": 820
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "0448292f42c882d571a3ec59cc9211ab2a2bc1649115103c21be9fef04c42262",
+          "bytes": 642
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "9892bc30f28e5a8d6fd3421389db1dd31a80bfa5c86571b794031be434b388cc",
+          "bytes": 557191
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "4b6424b769d3e14458c8c4cdd42ce04b1fecd36a2771814feccf86512f66939b",
+          "bytes": 26190
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-planA-client/ret120q2/sparse-memory-t120k-s0__rpcehLD/summary.tsv",
+        "verifier.json": "records/context-planA-client/ret120q2/sparse-memory-t120k-s0__rpcehLD/verifier.json",
+        "task.toml": "records/context-planA-client/ret120q2/sparse-memory-t120k-s0__rpcehLD/task.toml",
+        "expected.json": "records/context-planA-client/ret120q2/sparse-memory-t120k-s0__rpcehLD/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-tenth-20261005/client/rd480/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__YzT5eSk",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "479512",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "634",
+        "real_edits": "287",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "23547",
+        "prompt_tokens": "9153735",
+        "cached_tokens": "7562048",
+        "think_share": "0.000",
+        "completion_tokens": "68185",
+        "think_tok_est": "7208",
+        "other_tok_est": "60976",
+        "thinking_off_calls": "576",
+        "prefix_stable_share": "0.547",
+        "wall_s": "1539",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 480000,
+        "stream_tokens": 479512,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1700,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 10,
+        "n_counters": 55,
+        "n_deleted_queried": 3,
+        "n_items": 283,
+        "n_batches": 282,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8122
+      },
+      "grade": {
+        "n": 10,
+        "correct": 10,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 10,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "jatu20": "correct",
+          "zisupe61": "correct",
+          "mokelo49": "correct",
+          "qisa41": "correct",
+          "suyo40": "correct",
+          "jahixa58": "correct",
+          "baru54": "correct",
+          "nisu71": "correct",
+          "fawe38": "correct",
+          "fabaja16": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 1172,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 3516,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/runs/B32ir__sparse-memory-t480k-s0.summary.txt",
+          "sha256": "262461e94e02250ca5c48ee3fc31f3901e1711b96faa492e48734264efa5e8ae",
+          "bytes": 959
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__YzT5eSk/verifier/details.json",
+          "sha256": "222ecdd7d997e913655b5dd4fa454bd1716175a9ea734ea051efc5ce713f27c5",
+          "bytes": 2708
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__YzT5eSk/result.json",
+          "sha256": "fa2747452ac2f9eedae3c669bc8d4ba050cbe4b95b21675baa92b453e3d567c7",
+          "bytes": 4740
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/runs/jobs/B32ir__sparse-memory-t480k-s0/sparse-memory-t480k-s0__YzT5eSk/config.json",
+          "sha256": "19ba68c3f533c46706381e1b17eec88208ca1d232b15d3fd5318db680224602f",
+          "bytes": 2637
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/tasks/sparse-memory/sparse-memory-t480k-s0/task.toml",
+          "sha256": "71bb32f490b960a572cfa4aae4a700d79eb43cd6df1ef9f5cb81aa7236577b96",
+          "bytes": 807
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/tasks/sparse-memory/sparse-memory-t480k-s0/tests/expected.json",
+          "sha256": "e8fd0d93c2a762fcb67cd897ed4301a6e9f0f900d62beef4a0b9fd41d4780f20",
+          "bytes": 171
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/tasks/sparse-memory/sparse-memory-t480k-s0/environment/stream.jsonl",
+          "sha256": "379aeef6552bcf26e15fedcc13cbcd324d87ebb7fb56e5e602a29cd021843c10",
+          "bytes": 2241168
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/tasks/sparse-memory/sparse-memory-t480k-s0/tests/grade.py",
+          "sha256": "b3e11b193a3920b0e5423dffe845bb053b4efb1fcf06fe477dc2a66db9a37426",
+          "bytes": 5535
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd480/tasks/sparse-memory/sparse-memory-t480k-s0/tests/reference.json",
+          "sha256": "a22053ada6675a892c54bedfaa8d5df40222a06f45a81bfc4c847e733ef1c045",
+          "bytes": 96081
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-tenth-20261005/rd480/sparse-memory-t480k-s0__YzT5eSk/summary.tsv",
+        "verifier.json": "records/context-clm-tenth-20261005/rd480/sparse-memory-t480k-s0__YzT5eSk/verifier.json",
+        "task.toml": "records/context-clm-tenth-20261005/rd480/sparse-memory-t480k-s0__YzT5eSk/task.toml",
+        "expected.json": "records/context-clm-tenth-20261005/rd480/sparse-memory-t480k-s0__YzT5eSk/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__w3fFKXY",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.958",
+        "lm_calls": "144",
+        "real_edits": "70",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "20109",
+        "prompt_tokens": "1931517",
+        "cached_tokens": "1586624",
+        "think_share": "0.000",
+        "completion_tokens": "13571",
+        "think_tok_est": "366",
+        "other_tok_est": "13204",
+        "thinking_off_calls": "140",
+        "prefix_stable_share": "0.510",
+        "wall_s": "325",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 24,
+        "correct": 23,
+        "score": 0.9583333333333334,
+        "score_raw": 0.9583333333333334,
+        "void": false,
+        "counts": {
+          "correct": 23,
+          "blank": 0,
+          "wrong": 1,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "wrong",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/B32ir__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "d89a7229687fa82b097725ae1e792055cbb80ad3ccd7257ccf9b0cf04f509bcf",
+          "bytes": 951
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__w3fFKXY/verifier/details.json",
+          "sha256": "6b44346ffabf6a080060184af26f850c87619869ad7edeb88d391e2883f7a3af",
+          "bytes": 3070
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__w3fFKXY/result.json",
+          "sha256": "67412243345d8a0c7b71f1002c4154fa3d900ee2013c641f54a22dfc41d9ca60",
+          "bytes": 4743
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__w3fFKXY/config.json",
+          "sha256": "b7e978a32636f06e103aa2cb632b23823e45fcee815e1b95cbf9675059d70b91",
+          "bytes": 2635
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "f62013a69642eae6a1ada3cc9561a86c4919c399970444b3e3f26c8d37f90039",
+          "bytes": 804
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "f35ebb2e05d7079c6989d43caa1aaa2e345d44b154d4abce4233135fd8d2d4e4",
+          "bytes": 409
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "749ba77fb5ba8d46db4627593cf803191eb9c65872e57df964428dced8e65d85",
+          "bytes": 556276
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "b3e11b193a3920b0e5423dffe845bb053b4efb1fcf06fe477dc2a66db9a37426",
+          "bytes": 5535
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "bc9349467e07bc34de5db2b9f00a38500b56990ca96118865fdf2e6f4a95345e",
+          "bytes": 24741
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s0__w3fFKXY/summary.tsv",
+        "verifier.json": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s0__w3fFKXY/verifier.json",
+        "task.toml": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s0__w3fFKXY/task.toml",
+        "expected.json": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s0__w3fFKXY/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__UithpWj",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119172",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "0.000",
+        "lm_calls": "142",
+        "real_edits": "70",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "18632",
+        "prompt_tokens": "1733740",
+        "cached_tokens": "1399424",
+        "think_share": "0.000",
+        "completion_tokens": "11736",
+        "think_tok_est": "82",
+        "other_tok_est": "11653",
+        "thinking_off_calls": "140",
+        "prefix_stable_share": "0.504",
+        "wall_s": "303",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "VOID"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 119172,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1702,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 18,
+        "n_counters": 32,
+        "n_deleted_queried": 3,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 18,
+        "correct": 18,
+        "score": 0.0,
+        "score_raw": 1.0,
+        "void": true,
+        "counts": {
+          "correct": 18,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [
+          {
+            "path": "/app/answers.json",
+            "reason": "14 keys beyond the queried ones"
+          }
+        ],
+        "per_key": {
+          "qiyozi75": "correct",
+          "cozi59": "correct",
+          "qiguwe34": "correct",
+          "zilo20": "correct",
+          "pesa83": "correct",
+          "motu59": "correct",
+          "voziwe35": "correct",
+          "doja20": "correct",
+          "qidoqi43": "correct",
+          "mika74": "correct",
+          "disa53": "correct",
+          "hifaka25": "correct",
+          "jaru79": "correct",
+          "suta73": "correct",
+          "jaru23": "correct",
+          "xaxa42": "correct",
+          "ruxa84": "correct",
+          "yodiru44": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/B32ir__sparse-memory-t120k-s1.summary.txt",
+          "sha256": "dd07a2036ad4148b21f4fa1f639cad463c1a0681cbdc1f27f8ecb7824cd18ffc",
+          "bytes": 1182
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__UithpWj/verifier/details.json",
+          "sha256": "1c8330b6af2b4dcfd4510c368f33f5c361927c9296109c5f4c5cf15036e5d98e",
+          "bytes": 2982
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__UithpWj/result.json",
+          "sha256": "a774145ef9fa95fe7c58b167b5333a99ff4ffff9ad8c873cb799b37a38cd0f69",
+          "bytes": 4738
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__UithpWj/config.json",
+          "sha256": "22b313fa0732e954354521c00f9c6d7dad79636923c3ef14504b478e099b8554",
+          "bytes": 2635
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/task.toml",
+          "sha256": "b09b2cba37ffcf1262258f1bfe79484b8c1fab98db7bed35dec188727a41d523",
+          "bytes": 804
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/expected.json",
+          "sha256": "43242921990717c1377541f75f940c0a7b5058fb4015d55ae4674f1277b39291",
+          "bytes": 303
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/environment/stream.jsonl",
+          "sha256": "9e3651f3d3c32b2f80a3bec872217caa8ea2e2034580de7d6748fb71ce7cd906",
+          "bytes": 556667
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/grade.py",
+          "sha256": "b3e11b193a3920b0e5423dffe845bb053b4efb1fcf06fe477dc2a66db9a37426",
+          "bytes": 5535
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-tenth-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/reference.json",
+          "sha256": "b0c6d5649820b12c4be708a5d6ddece54a62dae0af47533f39cb2bde21d50006",
+          "bytes": 21344
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s1__UithpWj/summary.tsv",
+        "verifier.json": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s1__UithpWj/verifier.json",
+        "task.toml": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s1__UithpWj/task.toml",
+        "expected.json": "records/context-clm-tenth-20261005/rd120/sparse-memory-t120k-s1__UithpWj/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-eleventh-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__tyQwrPZ",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119172",
+        "seed": "1",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "144",
+        "real_edits": "70",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "18873",
+        "prompt_tokens": "1797044",
+        "cached_tokens": "1458496",
+        "think_share": "0.000",
+        "completion_tokens": "12825",
+        "think_tok_est": "323",
+        "other_tok_est": "12501",
+        "thinking_off_calls": "140",
+        "prefix_stable_share": "0.510",
+        "wall_s": "315",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 1,
+        "target_tokens": 120000,
+        "stream_tokens": 119172,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1702,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 18,
+        "n_counters": 32,
+        "n_deleted_queried": 3,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 18,
+        "correct": 18,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 18,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "qiyozi75": "correct",
+          "cozi59": "correct",
+          "qiguwe34": "correct",
+          "zilo20": "correct",
+          "pesa83": "correct",
+          "motu59": "correct",
+          "voziwe35": "correct",
+          "doja20": "correct",
+          "qidoqi43": "correct",
+          "mika74": "correct",
+          "disa53": "correct",
+          "hifaka25": "correct",
+          "jaru79": "correct",
+          "suta73": "correct",
+          "jaru23": "correct",
+          "xaxa42": "correct",
+          "ruxa84": "correct",
+          "yodiru44": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/runs/B32ir__sparse-memory-t120k-s1.summary.txt",
+          "sha256": "ccc4102e8b009f74213ff3891b0f3170c47d4f40a6a674654cda87ee4d573c9a",
+          "bytes": 951
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__tyQwrPZ/verifier/details.json",
+          "sha256": "2c985da2d909c8a2f6fc475ec9ec8a93b1c9d3bcef38747f9682bf6854e9e2fe",
+          "bytes": 2894
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__tyQwrPZ/result.json",
+          "sha256": "73ae3fa9baa1e338a2c381887c01bb3aa6f9b4849f9a8fa97d42a6c9aed246e3",
+          "bytes": 4750
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/runs/jobs/B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__tyQwrPZ/config.json",
+          "sha256": "e08753dcfd64105e4863d0ef3d9ba74a915ac407c833db696e94e5fc73998b54",
+          "bytes": 2641
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/task.toml",
+          "sha256": "b09b2cba37ffcf1262258f1bfe79484b8c1fab98db7bed35dec188727a41d523",
+          "bytes": 804
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/expected.json",
+          "sha256": "43242921990717c1377541f75f940c0a7b5058fb4015d55ae4674f1277b39291",
+          "bytes": 303
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/environment/stream.jsonl",
+          "sha256": "9e3651f3d3c32b2f80a3bec872217caa8ea2e2034580de7d6748fb71ce7cd906",
+          "bytes": 556667
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/grade.py",
+          "sha256": "b3e11b193a3920b0e5423dffe845bb053b4efb1fcf06fe477dc2a66db9a37426",
+          "bytes": 5535
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-eleventh-20261005/client/rd120/tasks/sparse-memory/sparse-memory-t120k-s1/tests/reference.json",
+          "sha256": "b0c6d5649820b12c4be708a5d6ddece54a62dae0af47533f39cb2bde21d50006",
+          "bytes": 21344
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-eleventh-20261005/rd120/sparse-memory-t120k-s1__tyQwrPZ/summary.tsv",
+        "verifier.json": "records/context-clm-eleventh-20261005/rd120/sparse-memory-t120k-s1__tyQwrPZ/verifier.json",
+        "task.toml": "records/context-clm-eleventh-20261005/rd120/sparse-memory-t120k-s1__tyQwrPZ/task.toml",
+        "expected.json": "records/context-clm-eleventh-20261005/rd120/sparse-memory-t120k-s1__tyQwrPZ/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-fourteenth-20261005/client/rd120-d12/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__EbpSRTh",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119652",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "0.875",
+        "lm_calls": "217",
+        "real_edits": "76",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "20836",
+        "prompt_tokens": "2717874",
+        "cached_tokens": "2117440",
+        "think_share": "0.000",
+        "completion_tokens": "46295",
+        "think_tok_est": "16672",
+        "other_tok_est": "29622",
+        "thinking_off_calls": "169",
+        "prefix_stable_share": "0.648",
+        "wall_s": "804",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119652,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1734,
+        "density": 12.0,
+        "setting": "w",
+        "n_get": 16,
+        "n_counters": 57,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 70,
+        "n_batches": 69,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8117
+      },
+      "grade": {
+        "n": 16,
+        "correct": 14,
+        "score": 0.875,
+        "score_raw": 0.875,
+        "void": false,
+        "counts": {
+          "correct": 14,
+          "blank": 0,
+          "wrong": 1,
+          "stale": 1
+        },
+        "violations": [],
+        "per_key": {
+          "yobalo53": "correct",
+          "dogu57": "correct",
+          "tasu45": "wrong",
+          "basa92": "stale",
+          "peyo12": "correct",
+          "yomi81": "correct",
+          "wezi96": "correct",
+          "tasu75": "correct",
+          "wexahi84": "correct",
+          "rone91": "correct",
+          "qisu87": "correct",
+          "xaru16": "correct",
+          "xadivo80": "correct",
+          "zidi41": "correct",
+          "jatumo78": "correct",
+          "nigu24": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 320,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 960,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/runs/B32ir__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "16a01af7454f85236c44963d5370ddaaa24a5d1dd4c464d19bb5af278790bd18",
+          "bytes": 956
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__EbpSRTh/verifier/details.json",
+          "sha256": "076bf756defd68217b289cdd4ca3f5fddf1cb71c5932347ce56687ebede6f4d8",
+          "bytes": 2911
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__EbpSRTh/result.json",
+          "sha256": "8d2c54152d6d1804bb595b9c5f75c0a5f988ac541ed7e8842cb3171630f7944f",
+          "bytes": 4776
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__EbpSRTh/config.json",
+          "sha256": "4d8405b67f54810cf2c54d757a766c1955e97068acd4e72a7d29a1f3dcd74e25",
+          "bytes": 2653
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "773fe672ceb9e0a6c1f0a5a5d8d48000f7fc225bf5ec65de880d8d82e44ab1a0",
+          "bytes": 821
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "0a3c089f38fec873d59fb77deefe70242879f5cf4f59833ed061910274b65bbe",
+          "bytes": 267
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "3a4142a3f783a3ebf0ced3fe180e237e9d7534e205c40888b4962d791b561e4b",
+          "bytes": 549369
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d12/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "4b8d0704fc86b3b8d79f92e69efc0ee6c14615d1766ec4cd93085c4963cc2359",
+          "bytes": 43712
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-fourteenth-20261005/rd120-d12/sparse-memory-t120k-s0__EbpSRTh/summary.tsv",
+        "verifier.json": "records/context-clm-fourteenth-20261005/rd120-d12/sparse-memory-t120k-s0__EbpSRTh/verifier.json",
+        "task.toml": "records/context-clm-fourteenth-20261005/rd120-d12/sparse-memory-t120k-s0__EbpSRTh/task.toml",
+        "expected.json": "records/context-clm-fourteenth-20261005/rd120-d12/sparse-memory-t120k-s0__EbpSRTh/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-fourteenth-20261005/client/rd120-d6/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__cYMHaL5",
+      "metrics": {
+        "arm": "B32ir",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119687",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "166",
+        "real_edits": "74",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "23428",
+        "prompt_tokens": "2114795",
+        "cached_tokens": "1684800",
+        "think_share": "0.000",
+        "completion_tokens": "30983",
+        "think_tok_est": "10231",
+        "other_tok_est": "20751",
+        "thinking_off_calls": "147",
+        "prefix_stable_share": "0.552",
+        "wall_s": "527",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119687,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1709,
+        "density": 6.0,
+        "setting": "w",
+        "n_get": 22,
+        "n_counters": 48,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8115
+      },
+      "grade": {
+        "n": 22,
+        "correct": 22,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 22,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "coba93": "correct",
+          "taqihi34": "correct",
+          "wetuba57": "correct",
+          "satusa53": "correct",
+          "mimi35": "correct",
+          "xaka71": "correct",
+          "yovo41": "correct",
+          "zikegu55": "correct",
+          "xavofa20": "correct",
+          "mido88": "correct",
+          "qini91": "correct",
+          "wehi88": "correct",
+          "babaja53": "correct",
+          "guketa79": "correct",
+          "vohini86": "correct",
+          "sumodi34": "correct",
+          "suta21": "correct",
+          "qilo18": "correct",
+          "disa88": "correct",
+          "kamisu81": "correct",
+          "dodika68": "correct",
+          "dibaqi11": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_improved:ClmImprovedAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "thinking_policy": "judgement",
+          "fold_mode": "read",
+          "think_cap": 4096,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/runs/B32ir__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "4493b8292fc924117ad9cd9d3dd0c5e2ac8592ad64ad25d245df8800fe7b336d",
+          "bytes": 954
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__cYMHaL5/verifier/details.json",
+          "sha256": "0a8d353464c175e4f5dc9dd865eb2652d1677b21bf8e3fef29cf60518a5107a8",
+          "bytes": 3065
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__cYMHaL5/result.json",
+          "sha256": "fd6b5ba069ac8210b4fd67bad1c60e725b35411149b992501c883d076c42caaf",
+          "bytes": 4770
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/runs/jobs/B32ir__sparse-memory-t120k-s0/sparse-memory-t120k-s0__cYMHaL5/config.json",
+          "sha256": "be24bfc7553e6937507c0c128cbb079e302280e0f3f34f6b061151630cc6f0dd",
+          "bytes": 2651
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "3a3945d8cfa0481e44848c7d99a1f07ee693e5895904e78faf9f5448afce39d7",
+          "bytes": 819
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "cd4f77194b72b34afc6a8d85db38aafd8fcb035a7ca218f26a3274ef19e92e79",
+          "bytes": 383
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "6e8f5bd82422b8bcef932901a78d5ff621aeb40ffff9af8dba7aff1f06d25718",
+          "bytes": 556610
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-d6/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "8df8c54f33f14fefcf27b2f17242bbf992acbd30063c586aa2ebed67f8989ca7",
+          "bytes": 33248
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-fourteenth-20261005/rd120-d6/sparse-memory-t120k-s0__cYMHaL5/summary.tsv",
+        "verifier.json": "records/context-clm-fourteenth-20261005/rd120-d6/sparse-memory-t120k-s0__cYMHaL5/verifier.json",
+        "task.toml": "records/context-clm-fourteenth-20261005/rd120-d6/sparse-memory-t120k-s0__cYMHaL5/task.toml",
+        "expected.json": "records/context-clm-fourteenth-20261005/rd120-d6/sparse-memory-t120k-s0__cYMHaL5/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/B32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__XqHBYPX",
+      "metrics": {
+        "arm": "B32",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "156",
+        "real_edits": "73",
+        "summaries": "0",
+        "summary_failed": "0",
+        "peak_sent_ctx": "28042",
+        "prompt_tokens": "1333588",
+        "cached_tokens": "626496",
+        "think_share": "0.102",
+        "completion_tokens": "170682",
+        "think_tok_est": "111179",
+        "other_tok_est": "59502",
+        "thinking_off_calls": "0",
+        "prefix_stable_share": "",
+        "wall_s": "2321",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok+opt"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 24,
+        "correct": 24,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "correct",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_harness.clm_agent.harness:ClmAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/B32__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "afa1d4a07a10a9c407f63958ce67f395e78b89f84ec28595da7f16c1a5f708e2",
+          "bytes": 939
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/B32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__XqHBYPX/verifier/details.json",
+          "sha256": "cb055ba7401381d29e89d270dca7490443844e5d1e83b62708aa765043f36b9a",
+          "bytes": 2849
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/B32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__XqHBYPX/result.json",
+          "sha256": "06a169f5d373142d3c5a6e6a61013d66d819d659d0237a84bd309c84bc78bfc5",
+          "bytes": 4661
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/B32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__XqHBYPX/config.json",
+          "sha256": "83dd269665d6b75dc1e13a3fb7c3270242baca337033ad3438caddcf18871a5e",
+          "bytes": 2554
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "1e831640790a696025c3c4dcb6304e324a7211ae98fb04222b60cd30a6db4765",
+          "bytes": 819
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "f35ebb2e05d7079c6989d43caa1aaa2e345d44b154d4abce4233135fd8d2d4e4",
+          "bytes": 409
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "749ba77fb5ba8d46db4627593cf803191eb9c65872e57df964428dced8e65d85",
+          "bytes": 556276
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "47564b2d3ab542e6aade42b8b8a6461c68802c8fbb9b33c2cfdd10f548f188cf",
+          "bytes": 24757
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__XqHBYPX/summary.tsv",
+        "verifier.json": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__XqHBYPX/verifier.json",
+        "task.toml": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__XqHBYPX/task.toml",
+        "expected.json": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__XqHBYPX/expected.json"
+      }
+    },
+    {
+      "id": "context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/C32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__LduPkBe",
+      "metrics": {
+        "arm": "C32",
+        "kind": "sparse",
+        "mode": "memory",
+        "size": "119282",
+        "seed": "0",
+        "budget": "32768",
+        "reward": "1.000",
+        "lm_calls": "81",
+        "real_edits": "0",
+        "summaries": "7",
+        "summary_failed": "0",
+        "peak_sent_ctx": "22705",
+        "prompt_tokens": "1258908",
+        "cached_tokens": "827008",
+        "think_share": "0.048",
+        "completion_tokens": "77833",
+        "think_tok_est": "17005",
+        "other_tok_est": "5653",
+        "thinking_off_calls": "0",
+        "prefix_stable_share": "",
+        "wall_s": "1011",
+        "items_lost": "0",
+        "ended_by": "submit",
+        "rule": "ok"
+      },
+      "task_metadata": {
+        "seed": 0,
+        "target_tokens": 120000,
+        "stream_tokens": 119282,
+        "token_counter": "tokenizer",
+        "batch_tokens": 1704,
+        "density": 3.0,
+        "setting": "w",
+        "n_get": 24,
+        "n_counters": 35,
+        "n_deleted_queried": 3,
+        "n_surprise": 0,
+        "n_items": 71,
+        "n_batches": 70,
+        "mode": "memory",
+        "kind": "sparse",
+        "max_item_chars": 8116
+      },
+      "grade": {
+        "n": 24,
+        "correct": 24,
+        "score": 1.0,
+        "score_raw": 1.0,
+        "void": false,
+        "counts": {
+          "correct": 24,
+          "blank": 0,
+          "wrong": 0,
+          "stale": 0
+        },
+        "violations": [],
+        "per_key": {
+          "doqido55": "correct",
+          "tuta63": "correct",
+          "kabasu40": "correct",
+          "fatu25": "correct",
+          "kezivo98": "correct",
+          "sayo77": "correct",
+          "diqi27": "correct",
+          "coni82": "correct",
+          "hilodi77": "correct",
+          "hilo96": "correct",
+          "xakexa57": "correct",
+          "diruco38": "correct",
+          "jape61": "correct",
+          "qisaru66": "correct",
+          "guhi91": "correct",
+          "suyo85": "correct",
+          "nisu69": "correct",
+          "nisane95": "correct",
+          "wesuka11": "correct",
+          "qilo69": "correct",
+          "dopevo10": "correct",
+          "hiqi19": "correct",
+          "yoro85": "correct",
+          "taweru79": "correct"
+        }
+      },
+      "agent": {
+        "name": "clm_baselines:SummaryAgent",
+        "model_name": "openai/qwen38-27b-fp8",
+        "kwargs": {
+          "api_base": "http://127.0.0.1:18196/v1",
+          "context_budget_tokens": 32768,
+          "context_budget_reserve_tokens": 2048,
+          "max_tokens": 16384,
+          "temperature": 0,
+          "top_p": "none",
+          "enable_thinking": true,
+          "send_chat_template_kwargs": true,
+          "max_steps": 324,
+          "observation_max_chars": 60000,
+          "cost_metric": "flops",
+          "flops_model_key": "27b",
+          "lm_call_cap": 972,
+          "summary_trigger_ratio": 0.75,
+          "task_template": "open_problems"
+        }
+      },
+      "sources": {
+        "summary": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/C32__sparse-memory-t120k-s0.summary.txt",
+          "sha256": "4cb2f73a4c673f0b4166252ac515dca908b913b05742293a6ef021a4c755eb5e",
+          "bytes": 927
+        },
+        "verifier": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/C32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__LduPkBe/verifier/details.json",
+          "sha256": "13a4c76f0f17ef61e25e4ac9a0e521d73d1fe2feaec1b6b547bf1d8c02b470ee",
+          "bytes": 2793
+        },
+        "trial_result": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/C32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__LduPkBe/result.json",
+          "sha256": "34080a079ccb284fb6f155645206f08ad63b71231ffa9b985d16f0f4faaee570",
+          "bytes": 4702
+        },
+        "trial_config": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/runs/jobs/C32__sparse-memory-t120k-s0/sparse-memory-t120k-s0__LduPkBe/config.json",
+          "sha256": "4fc73d21dd4c6ff6067ca27c56b1e752e58b0e6a694ae43ab2b2f43dd4cf59b9",
+          "bytes": 2585
+        },
+        "task": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/task.toml",
+          "sha256": "1e831640790a696025c3c4dcb6304e324a7211ae98fb04222b60cd30a6db4765",
+          "bytes": 819
+        },
+        "expected": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/tests/expected.json",
+          "sha256": "f35ebb2e05d7079c6989d43caa1aaa2e345d44b154d4abce4233135fd8d2d4e4",
+          "bytes": 409
+        },
+        "stream": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/environment/stream.jsonl",
+          "sha256": "749ba77fb5ba8d46db4627593cf803191eb9c65872e57df964428dced8e65d85",
+          "bytes": 556276
+        },
+        "grader": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/tests/grade.py",
+          "sha256": "c7a92b4c3f03583045211cc942f23d46a6f3542900c132c3f5db52bc49efe119",
+          "bytes": 7147
+        },
+        "reference": {
+          "path": "/mnt/fast-ai/bench-results/context-clm-fourteenth-20261005/client/rd120-base/tasks/sparse-memory/sparse-memory-t120k-s0/tests/reference.json",
+          "sha256": "47564b2d3ab542e6aade42b8b8a6461c68802c8fbb9b33c2cfdd10f548f188cf",
+          "bytes": 24757
+        }
+      },
+      "copies": {
+        "summary.tsv": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__LduPkBe/summary.tsv",
+        "verifier.json": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__LduPkBe/verifier.json",
+        "task.toml": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__LduPkBe/task.toml",
+        "expected.json": "records/context-clm-fourteenth-20261005/rd120-base/sparse-memory-t120k-s0__LduPkBe/expected.json"
+      }
+    }
+  ]
+}
