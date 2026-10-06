@@ -264,7 +264,11 @@ PROTOCOL_QUOTED = """
   "ctxfold: applied N events".
 - A refusal names the failing line and shows the delivered sentence it should quote: copy that sentence,
   fix only that line, and send the whole list again (do not change a correct amount to get past a check).
-- Do not edit the mirror file by hand.
+- Do not edit the mirror file by hand, and never copy a report or an event list into a note or a file
+  (stream text in files voids the run). If a counter name keeps being refused, send the list again with
+  the sentence quoted exactly: the harness corrects a misspelled name when the quote shows the right one.
+- After the final item arrives, the harness keeps it in the pinned message, so compacting cannot lose the
+  questions.
 - Before running a command that delivers a large item, make sure there is room for it: the harness
   refuses to run such a command when the item would not fit ("NOT RUN").
 - Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs;
@@ -313,11 +317,17 @@ class _ImprovedEnv(ContextEnv):
         # (just the here-document), so nothing else in that command can touch STATE.txt.
         if a.quoted and (re.search(r"(?:^|[;&|]\s*|\n\s*)ctxfold\b(?!\s+--events)", cmd)
                          or (re.search(r"(?:^|[;&|]\s*|\n\s*)ctxfold\s+--events", cmd)
-                             and not _events_cmd_alone(cmd))):
+                             and not _events_cmd_alone(cmd))
+                         # d12 rerun: event lists written by python into /tmp/ev22.sh and run with `bash`
+                         # (two files holding stream data: VOID)
+                         or ("ctxfold --events" in cmd and not _events_cmd_alone(cmd) and _WRITES.search(cmd))
+                         or re.search(r"(?:^|[;&|]\s*)(?:bash|sh|source|\.)\s+/(?:tmp|app)/\S+", cmd)):
             a.n_quoted_refused_cmds += 1
             text = ("NOT RUN: in this run the harness keeps STATE.txt; send the item's changes as an event list, "
                     "as a command of its own: `ctxfold --events <<'EOF'`, one `name | op | amount | \"quote\"` line "
-                    "per change, then `EOF`, and nothing else in that command.")
+                    "per change, then `EOF`, and nothing else in that command. Never write event lists or "
+                    "stream text to files (that voids the run); a misspelled counter name is corrected by the "
+                    "harness when the quote shows the right one.")
             res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
             return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
                               readout="", notes="", exec_time=0.0, touched_ctx=False)
@@ -376,6 +386,12 @@ class _ImprovedEnv(ContextEnv):
         if _ITEM_FINAL.search(out0):
             a._final_seen = True
             a._asked = re.findall(r"(?m)^(?:QUERY|GET) (\S+)\s*$", out0) + re.findall(r"(?m)^ASK (\S+?):", out0)
+            if a.quoted:
+                # keep the final item (the questions) in the pinned message: B32iq ret s0 rerun compacted the
+                # mirror after two recalls, cut the final item away with it, and left all 12 retention
+                # questions blank (final items are never archived, so recall could not bring them back)
+                fm = _ITEM_FINAL.search(out0)
+                a._final_text = out0[fm.start():].split("\n\n(exit_code=")[0].strip()
         if a.answers_guard and a._final_seen and ANSWERS in cmd and _WRITES.search(cmd):
             try:
                 r = await environment.exec(command="python3 -c 'import json; print(json.dumps(sorted("
@@ -409,11 +425,13 @@ class _ImprovedEnv(ContextEnv):
                 if a._event_refused_last:
                     a.n_event_retries += 1
                 a._event_refused_last = False
+                a._refused_streak = 0
             else:
                 r = re.search(r"ctxfold: REFUSED \(([a-z ]+)\)", out)
                 if r:
                     a.lists_refused[r.group(1)] = a.lists_refused.get(r.group(1), 0) + 1
                     a._event_refused_last = True
+                    a._refused_streak += 1
         if a._guard_out.search(out):
             a._largest_delivery = max(a._largest_delivery,
                                       int(tk.count_tokens([{"role": "tool", "content": out}])[0]
@@ -532,6 +550,9 @@ class _PinnedState:
                 a._last_state = text
         a._harness_wrote = False
         content = f"{PIN_TAG}\n{text}{note}"
+        if a.quoted and a._final_text:
+            content += ("\n--- the final item, kept here by the harness (answer exactly these keys) ---\n"
+                        + a._final_text)
         if fold:
             content += f"\n--- {FOLD_PATH} ---\n{fold}"
         # A context edit can merge the pinned message into a neighbouring turn (upstream
@@ -591,6 +612,8 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.quoted = _as_bool(quoted)
         self.retry_think_cap = int(retry_think_cap or 0)
         self.n_retry_capped = 0
+        self._refused_streak = 0
+        self._final_text = ""
         if self.quoted:
             self.fold_mode = "read"
             if archive is False or archive is None:
@@ -752,10 +775,14 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.pstats["thinking_on" if thinking else "thinking_off"] += 1
         self._prefix_stats(messages, thinking)
         cap = self.think_cap if thinking else 0
-        if self.quoted and thinking and self._event_refused_last and self.retry_think_cap:
-            # a refused event list: the refusal names the line and the delivered sentence, so the retry
-            # needs little thinking (B32iq d12: 23 retries, ~4.2K thinking tokens each at THINK_CAP_R)
-            cap = min(cap or self.retry_think_cap, self.retry_think_cap)
+        last_tool = next((str(m.get("content") or "") for m in reversed(messages) if m.get("role") == "tool"), "")
+        if (self.quoted and thinking and self.retry_think_cap and self._refused_streak in (1, 2)
+                and "ctxfold: REFUSED" in last_tool):
+            # adaptive retry cap: the call right after a refused event list gets retry_think_cap (2K), after a
+            # second refusal in a row 2x that, from the third on the normal cap. Only that call: the d12
+            # rerun capped 90 calls at 2K because the flag stayed set through 230 steps of diagnosis.
+            rc = self.retry_think_cap * self._refused_streak
+            cap = min(cap or rc, rc)
             self.n_retry_capped += 1
         if (not cap and thinking and self.empty_streak_limit
                 and self._empty_streak >= self.empty_streak_limit):
@@ -918,7 +945,7 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "event_lists_refused_total": sum(self.lists_refused.values()),
                     "event_retries": self.n_event_retries, "quoted_cmds_refused": self.n_quoted_refused_cmds,
                     "retry_think_cap": self.retry_think_cap if self.quoted else None,
-                    "retry_capped_calls": self.n_retry_capped,
+                    "retry_capped_calls": self.n_retry_capped, "final_item_pinned": bool(self._final_text),
                     "recall_calls": self.n_recalls, "recall_output_tokens": self.recall_tokens,
                     "archive_write_refused": self.n_archive_refused,
                     "answer_key_notes": self.n_answer_key_notes,

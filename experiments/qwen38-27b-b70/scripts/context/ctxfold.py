@@ -162,6 +162,17 @@ def _sentences(text):
     return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
 
 
+def _dist(a, b):
+    """Levenshtein distance (short names only)."""
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
 def _closest(q, sents, nm):
     """The delivered sentence(s) the quote most likely meant: those naming the counter, else the nearest."""
     by_name = [s for s in sents if re.search(r"\b" + re.escape(nm) + r"\b", s)]
@@ -191,7 +202,7 @@ def events(final):
         if len(p) == 2 and re.fullmatch(r"[a-z]+\d\d", p[0]):
             st[p[0]] = None if p[1] == "removed" else int(p[1]) if re.fullmatch(r"-?\d+", p[1]) else None
     parts = HDR.split(s)
-    out, done, named, texts = [parts[0]], [], set(), {}
+    out, done, named, texts, merged = [parts[0]], [], set(), {}, set()
     for i in range(1, len(parts), 2):
         h, b = parts[i], (parts[i + 1] if i + 1 < len(parts) else "")
         m = ITEM.match(b)
@@ -207,6 +218,29 @@ def events(final):
                 named |= set(re.findall(r"\b[a-z]+\d\d\b", body[hm.end():end]))
             continue
         out += [h, b]
+    if not done and os.path.exists(ARCH + "/.on"):
+        # an item the model merged into another turn while compacting (B32iq d12 rerun: item 23 ended up
+        # inside its own note turn and ctxfold said "no delivered item" for 230 steps): an UPDATE item
+        # that is not archived yet, found anywhere in the context, from its header to the next turn
+        for idx in range(2, len(out), 2):
+            b = out[idx]
+            for hm in list(ITEMS.finditer(b)):
+                n = int(hm.group(1))
+                if (hm.group(3) in final or os.path.exists(f"{ARCH}/item-{n:03d}.txt") or n in texts
+                        or os.path.exists(f"{ARCH}/.done-{n:03d}")):
+                    continue
+                nxt = ITEMS.search(b, hm.end())
+                end = nxt.start() if nxt else len(b)
+                ec = b.find("\n\n(exit_code=", hm.end())
+                if ec != -1:
+                    end = min(end, ec)
+                texts[n] = b[hm.end():end].strip()
+                named |= set(re.findall(r"\b[a-z]+\d\d\b", texts[n]))
+                done.append(n)
+                merged.add(n)   # not archived: the text may carry the model's own notes (not verbatim)
+                out[idx] = b[:hm.start()] + b[end:]
+                b = out[idx]
+                break
     if not done:
         print("ctxfold: no delivered item in your context")
         return
@@ -221,6 +255,7 @@ def events(final):
         refuse("format", "the list is empty; send one line `none` if the item changes nothing")
     new = dict(st)
     applied = collections.Counter()
+    fixed = []
     for k, ln in enumerate(lines, 1):
         m = EVENT.match(ln)
         if not m:
@@ -236,6 +271,16 @@ def events(final):
         if q[-1:] in QUOTES:
             q = q[:-1]
         qn = " ".join(q.split())
+        if nm not in named:
+            same = [x for x in sorted(named) if re.sub(r"\D", "", x) == re.sub(r"\D", "", nm) and _dist(x, nm) <= 2]
+            if len(same) == 1:
+                q2 = re.sub(r"\b" + re.escape(nm) + r"\b", same[0], q)
+                q2n = " ".join(q2.split())
+                if q2n in batch or q2n.rstrip(".") in batch or q2n == qn:
+                    # B32iq d12 (both runs): the model kept typing dorusu62 for dorosu62 even after
+                    # "did you mean dorosu62?"; the corrected quote is verbatim, so the name is certain
+                    fixed.append(f"{nm}->{same[0]}")
+                    nm, q, qn = same[0], q2, q2n
         if nm not in named:
             near = difflib.get_close_matches(nm, sorted(named | set(st)), n=2, cutoff=0.6)
             refuse("unknown counter", f"line {k}: {nm} does not occur in the delivered text"
@@ -307,6 +352,9 @@ def events(final):
     archived = 0
     if os.path.exists(ARCH + "/.on"):
         for n, t in texts.items():
+            if n in merged:
+                open(f"{ARCH}/.done-{n:03d}", "w").close()   # empty marker: applied, never apply again
+                continue
             f = f"{ARCH}/item-{n:03d}.txt"
             if not os.path.exists(f):
                 with open(f, "w") as fh:
@@ -317,7 +365,10 @@ def events(final):
     print(f"ctxfold: applied {sum(applied.values())} events "
           f"({', '.join(f'{k} {v}' for k, v in sorted(applied.items())) or 'none'}) from items {done}"
           + (f"; archived verbatim: {archived}" if archived else "")
-          + f"; STATE.txt now has {len(new)} counter lines")
+          + f"; STATE.txt now has {len(new)} counter lines"
+          + (f"; name typos corrected from the quotes: {', '.join(fixed)}" if fixed else "")
+          + (f"; items {sorted(merged)} were found inside an edited turn (applied, not archived: do not merge "
+             f"items into notes)" if merged else ""))
 
 
 def main():
