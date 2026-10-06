@@ -1,0 +1,549 @@
+{
+  "schema": "ltx.campaign-96-summary.v1",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-place-97-two-way-w3-b2-p1-dxpu1xpu2",
+  "batch": 2,
+  "arms": {
+    "f97-twowayw3b2p1dxpu1xpu2-proofn": {
+      "label": "proof-neighbours",
+      "present": true,
+      "prompts": 13,
+      "index_base": 10187300,
+      "order": "proof-neighbours",
+      "batch": 2,
+      "references_checked_against": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json",
+      "clips_emitted": 10,
+      "clips_verified": 10,
+      "exact": 10,
+      "all_exact": true,
+      "references": [
+        "stability-01-b2-bird",
+        "stability-01-b2-boat",
+        "stability-01-b2-candle",
+        "stability-01-b2-fabric",
+        "stability-01-b2-marble",
+        "stability-01-b2-paper",
+        "stability-01-b2-pendulum",
+        "stability-01-b2-pour",
+        "stability-01-b2-rain",
+        "stability-01-b2-wheel"
+      ],
+      "interval_median_s": 0.544,
+      "interval_mean_s": 1.496,
+      "interval_median_steady_s": 1.6305,
+      "intervals_excluded_for_host_stall": 0,
+      "host_stall_durations_s_in_run": [],
+      "sampler_in_flight": null,
+      "encode_job_median_s": 0.6444,
+      "sampler_job_median_s": 2.5937,
+      "sampler_job_median_per_clip_s": 1.2969,
+      "decode_job_median_s": 1.3603,
+      "decode_queue_depth_median": 4.0,
+      "decode_queue_depth_max": 4,
+      "connector_computed_per_job_median": 2.0,
+      "connector_reused_per_job_median": 6.0,
+      "engine": {
+        "window_s": 9.25,
+        "prompts": 7,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 0.5657,
+            "bcs_s_per_clip": 0.5375,
+            "ccs_util": 0.428
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 0.7194,
+            "bcs_s_per_clip": 0.4719,
+            "ccs_util": 0.5444
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.4519,
+            "bcs_s_per_clip": 0.2566,
+            "ccs_util": 0.3419
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 0.4217,
+            "bcs_s_per_clip": 0.1631,
+            "ccs_util": 0.3191
+          }
+        },
+        "total_ccs_s_per_clip": 2.1587
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    },
+    "f97-twowayw3b2p1dxpu1xpu2-proofs": {
+      "label": "proof-slots",
+      "present": true,
+      "prompts": 13,
+      "index_base": 10187400,
+      "order": "proof-slots",
+      "batch": 2,
+      "references_checked_against": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json",
+      "clips_emitted": 10,
+      "clips_verified": 10,
+      "exact": 10,
+      "all_exact": true,
+      "references": [
+        "stability-01-b2-bird",
+        "stability-01-b2-boat",
+        "stability-01-b2-candle",
+        "stability-01-b2-fabric",
+        "stability-01-b2-marble",
+        "stability-01-b2-paper",
+        "stability-01-b2-pendulum",
+        "stability-01-b2-pour",
+        "stability-01-b2-rain",
+        "stability-01-b2-wheel"
+      ],
+      "interval_median_s": 0.584,
+      "interval_mean_s": 1.5043,
+      "interval_median_steady_s": 1.6465,
+      "intervals_excluded_for_host_stall": 0,
+      "host_stall_durations_s_in_run": [],
+      "sampler_in_flight": null,
+      "encode_job_median_s": 0.6313,
+      "sampler_job_median_s": 2.6113,
+      "sampler_job_median_per_clip_s": 1.3056,
+      "decode_job_median_s": 1.3148,
+      "decode_queue_depth_median": 6.0,
+      "decode_queue_depth_max": 6,
+      "connector_computed_per_job_median": 2.0,
+      "connector_reused_per_job_median": 6.0,
+      "engine": {
+        "window_s": 9.29,
+        "prompts": 7,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 0.5697,
+            "bcs_s_per_clip": 0.5386,
+            "ccs_util": 0.4295
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 0.722,
+            "bcs_s_per_clip": 0.4894,
+            "ccs_util": 0.5442
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.4488,
+            "bcs_s_per_clip": 0.2572,
+            "ccs_util": 0.3383
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 0.4224,
+            "bcs_s_per_clip": 0.1596,
+            "ccs_util": 0.3184
+          }
+        },
+        "total_ccs_s_per_clip": 2.1629
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    },
+    "f97-twowayw3b2p1dxpu1xpu2-timed": {
+      "label": "timed",
+      "present": true,
+      "prompts": 120,
+      "index_base": 21870000,
+      "order": "shift",
+      "batch": 2,
+      "references_checked_against": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json",
+      "clips_emitted": 111,
+      "clips_verified": 111,
+      "exact": 111,
+      "all_exact": true,
+      "references": [
+        "stability-01-b2-bird",
+        "stability-01-b2-boat",
+        "stability-01-b2-candle",
+        "stability-01-b2-fabric",
+        "stability-01-b2-marble",
+        "stability-01-b2-paper",
+        "stability-01-b2-pendulum",
+        "stability-01-b2-pour",
+        "stability-01-b2-rain",
+        "stability-01-b2-wheel"
+      ],
+      "interval_median_s": 0.2165,
+      "interval_mean_s": 0.9592,
+      "interval_median_steady_s": 0.216,
+      "intervals_excluded_for_host_stall": 0,
+      "host_stall_durations_s_in_run": [],
+      "sampler_in_flight": {
+        "jobs_mean": 2.492,
+        "jobs_max": 4,
+        "jobs": 57,
+        "clips_mean": 4.984,
+        "clips_max": 8
+      },
+      "encode_job_median_s": 0.671,
+      "sampler_job_median_s": 4.9705,
+      "sampler_job_median_per_clip_s": 2.4853,
+      "decode_job_median_s": 1.4068,
+      "decode_queue_depth_median": 8,
+      "decode_queue_depth_max": 8,
+      "connector_computed_per_job_median": 2,
+      "connector_reused_per_job_median": 6,
+      "engine": {
+        "window_s": 110.52,
+        "prompts": 114,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 0.8537,
+            "bcs_s_per_clip": 0.7292,
+            "ccs_util": 0.8806
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 0.9044,
+            "bcs_s_per_clip": 0.6428,
+            "ccs_util": 0.9329
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.5594,
+            "bcs_s_per_clip": 0.3801,
+            "ccs_util": 0.5771
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 0.5699,
+            "bcs_s_per_clip": 0.2509,
+            "ccs_util": 0.5878
+          }
+        },
+        "total_ccs_s_per_clip": 2.8874
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    }
+  },
+  "context_sentry_pairs": {
+    "f97-twowayw3b2p1dxpu1xpu2-proofn:f97-twowayw3b2p1dxpu1xpu2-timed": {
+      "fixtures_expected": 10,
+      "identical": 10,
+      "passed": true,
+      "problems": []
+    }
+  },
+  "context_sentry_gate_passed": true,
+  "missing_or_failed": [],
+  "batch_reference_closeness_vs_w93c": null,
+  "proofs": {
+    "proof-neighbours.json": {
+      "kind": "neighbours",
+      "batch": 2,
+      "expected_clips": 10,
+      "references": [
+        "stability-01-b2-bird",
+        "..."
+      ],
+      "reference_prereg_campaign": "stability-01-batch2-96",
+      "clips_checked": 10,
+      "clips_exact": 10,
+      "fixtures_emitted": [
+        "bird",
+        "boat",
+        "candle",
+        "fabric",
+        "marble",
+        "paper",
+        "pendulum",
+        "pour",
+        "rain",
+        "wheel"
+      ],
+      "arrangements_per_fixture": {
+        "bird": 1,
+        "boat": 1,
+        "candle": 1,
+        "fabric": 1,
+        "marble": 1,
+        "paper": 1,
+        "pendulum": 1,
+        "pour": 1,
+        "rain": 1,
+        "wheel": 1
+      },
+      "passed": true,
+      "problems": [],
+      "arm": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/place-97/two-way-w3-b2-p1-dxpu1xpu2/f97-twowayw3b2p1dxpu1xpu2-proofn-throughput.json",
+      "prereg": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json"
+    },
+    "proof-slots.json": {
+      "kind": "slots",
+      "batch": 2,
+      "expected_clips": 10,
+      "references": [
+        "stability-01-b2-bird",
+        "..."
+      ],
+      "reference_prereg_campaign": "stability-01-batch2-96",
+      "clips_checked": 10,
+      "clips_exact": 10,
+      "fixtures_emitted": [
+        "bird",
+        "boat",
+        "candle",
+        "fabric",
+        "marble",
+        "paper",
+        "pendulum",
+        "pour",
+        "rain",
+        "wheel"
+      ],
+      "arrangements_per_fixture": {
+        "bird": 1,
+        "boat": 1,
+        "candle": 1,
+        "fabric": 1,
+        "marble": 1,
+        "paper": 1,
+        "pendulum": 1,
+        "pour": 1,
+        "rain": 1,
+        "wheel": 1
+      },
+      "passed": true,
+      "problems": [],
+      "arm": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/place-97/two-way-w3-b2-p1-dxpu1xpu2/f97-twowayw3b2p1dxpu1xpu2-proofs-throughput.json",
+      "prereg": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json"
+    },
+    "proof-timed.json": {
+      "kind": "timed",
+      "batch": 2,
+      "expected_clips": 111,
+      "references": [
+        "stability-01-b2-bird",
+        "..."
+      ],
+      "reference_prereg_campaign": "stability-01-batch2-96",
+      "clips_checked": 111,
+      "clips_exact": 111,
+      "fixtures_emitted": [
+        "bird",
+        "boat",
+        "candle",
+        "fabric",
+        "marble",
+        "paper",
+        "pendulum",
+        "pour",
+        "rain",
+        "wheel"
+      ],
+      "arrangements_per_fixture": {
+        "bird": 2,
+        "boat": 2,
+        "candle": 2,
+        "fabric": 2,
+        "marble": 2,
+        "paper": 2,
+        "pendulum": 2,
+        "pour": 2,
+        "rain": 2,
+        "wheel": 2
+      },
+      "passed": true,
+      "problems": [],
+      "arm": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/place-97/two-way-w3-b2-p1-dxpu1xpu2/f97-twowayw3b2p1dxpu1xpu2-timed-throughput.json",
+      "prereg": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json"
+    }
+  },
+  "reference_sets": {
+    "f97-twowayw3b2p1dxpu1xpu2-proofn": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json",
+    "f97-twowayw3b2p1dxpu1xpu2-proofs": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json",
+    "f97-twowayw3b2p1dxpu1xpu2-timed": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-batch2-prereg.json"
+  },
+  "label": "batch 2: changes output at rounding level versus batch 1; checked against the stability-01-b2 references (owner decides adoption)",
+  "engine_samples": 494
+}
