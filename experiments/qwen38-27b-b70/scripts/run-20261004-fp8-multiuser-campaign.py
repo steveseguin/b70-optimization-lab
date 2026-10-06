@@ -233,7 +233,14 @@ def main():
         mml = os.environ.get('MU_LONG_MML', '33024')
         batched = os.environ.get('MU_BATCHED', '832')
         spec = MTP5 if os.environ.get('MU_MTP') == '1' else []
-        base = ['--tp', '2', '--mem', '0.95', '--max-model-len', mml, '--batched', batched, '--fa-verify-rows'] + spec + SHIPPED + LOADCOPY_FIX
+        if os.environ.get('MU_TP') == '1':
+            # One card (the small-video-memory case): the one-card package's arithmetic (host embedding, 896-token
+            # attention block), so the cache block and the reading piece are 896 tokens here.
+            batched = os.environ.get('MU_BATCHED', '896')
+            base = ['--tp', '1', '--gpu', '0', '--mem', '0.975', '--batched', batched, '--cpu-embed', '--fa-verify-rows',
+                    '--serve-arg=--block-size', '--serve-arg=896', '--max-model-len', os.environ.get('MU_LONG_MML', '40960')] + spec + LOADCOPY_FIX
+        else:
+            base = ['--tp', '2', '--mem', '0.95', '--max-model-len', mml, '--batched', batched, '--fa-verify-rows'] + spec + SHIPPED + LOADCOPY_FIX
         probe = ROOT / 'experiments/qwen38-27b-b70/scripts/qwen38-fp8-prefix-cache-exactness-probe.py'
         saved = OUT / 'control.json'
         # MU_PC_EXACT=1: the cache server also gets the b70-prefix-cache-exact overlay (nothing the model wrote is ever
@@ -243,6 +250,8 @@ def main():
             cache += ['--overlay', 'b70-prefix-cache-exact', '--extra-env', 'B70_PREFIX_CACHE_EXACT=1',
                       f"--serve-arg=--prefix-cache-retention-interval={os.environ.get('MU_PC_INTERVAL', '6656')}"]
         more = os.environ.get('MU_PROBE_ARGS', '').split()  # e.g. "--logprobs 0 --max-tokens 48 --rule-all"
+        if os.environ.get('MU_TP') == '1':
+            more = ['--block', '896'] + more
         for label, extra, probe_args in (('control', [], ['--save', saved]),
                                          ('cache', cache, ['--compare-with', saved, '--out', OUT / 'cache.json'])):
             srv, name, since = start_server(f'tp2-pc-{label}', 18196, base + extra, since)
