@@ -346,7 +346,16 @@ it; a list with any bad line is refused whole and the model retries with thinkin
   faster than the read-mode agent's 5.4 and exact); retention seed 1 **29 of 30 in 5.1 minutes** (was 26 in 19).
   But retention seed 0 answered all 24 current values and left all 12 old-value questions blank (9.9 min), and the
   hard-density reading run hit the step cap after 320 calls with no answers and a rule breach (was 16 of 16 in an
-  hour with the bug). Two cells better, two worse; being traced before any verdict.
+  hour with the bug). Two cells better, two worse.
+- **Traced (14:00 EDT): neither failure was the reading checks.** On the retention seed the model compacted its own
+  context and cut away the final batch that held the questions; final batches were never archived, so no search
+  could bring them back, and it searched for them for sixty steps. At the hard density the model could not type
+  one counter name (it wrote "dorusu62" for dorosu62 every time, even after the refusal said "did you mean
+  dorosu62?"); its workaround wrote the event list to a file, which breaks the rule, and then it folded a batch into
+  its own notes where the harness could not find it and looped to the step cap. Fixes queued: the final batch is
+  kept in the pinned message once it arrives; a name typo is corrected by the harness when exactly one name in the
+  text is within two letters and the quote then matches; a batch merged into notes is still found and applied; event
+  lists cannot be written to files; the retry thinking cap grows 2K, 4K, then full. Rerun queued.
 
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 
