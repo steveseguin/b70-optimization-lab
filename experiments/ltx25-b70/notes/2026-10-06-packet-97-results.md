@@ -32,11 +32,15 @@ its reference.
 | `two-way-w2-b4-p1-dxpu2` | 4 | 2 | batch-4 | 131 | 131 | **0.812** (30.8 fps) | 0.66 / 0.54 / 0.64 / 0.69 |
 | `two-way-w2-b2-p1-dxpu2-r2`, **600-prompt arm** | 2 | 2 | batch-2 | 613 | 613 | **0.910** (27.5 fps) | – |
 | `two-way-w2-b4-p1-dxpu1xpu2` (three decode workers) | 4 | 2 | batch-4 | 131 | 131 | 0.865 (28.9 fps) | – |
+| `two-way-w2-b4-p1-dxpu2-r2`, **600-prompt arm** (14:05 UTC) | 4 | 2 | batch-4 | 611 | 611 | **0.808** (31.0 fps) | – |
 
 - **The long run holds.** 600 prompts of the batch-2 configuration with the fixed client: 593 timed clips plus
   the 20 proof clips all byte-identical to the batch-2 references, 0.910 s per clip over the whole arm, steady
   (0.88-0.96 per hundred clips, no drift with the queue), largest gap 2.6 s, and the stream never fell more than
   1.8 s behind a steady pace at its mean rate: a buffer of two to three clips gives continuous playback.
+- **Batch 4 holds over a long run too:** 600 prompts, 587 timed clips plus 24 proof clips all byte-identical to
+  the batch-4 references, 0.808 s per clip (31.0 fps), steady per hundred (0.78-0.83), largest gap 2.4 s, never
+  more than 3.1 s behind a steady pace (a four-clip buffer).
 - A third decode worker (replicas on cards 1 and 2) did not help: it puts decode work back on card 1, which
   rises to 0.90 s per clip, and the stream is slower (0.959). Two decode workers, native on card 3 and the
   replica on card 2, is the right placement for this layout.
