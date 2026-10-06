@@ -276,6 +276,11 @@ the run ends).
   The repeat loop and invented updates seen at 120K compound over 240 batches. It is being rerun with the guards
   (repeat refusal, text tool-call recovery, state changes only with a batch in view, no silent dropped lines),
   which passed all twelve dry checks.
+- **With the guards (measured 21:25 EDT):** read-mode agent on the 120K narrative task, seed 0: **23 of 24 in 5.4
+  minutes** (was 20 in 10 minutes), 144 calls, 140 of them with thinking off. Seed 1: 18 answers given, all 18
+  right, but 6 missing and the run void for a files-rule breach; being traced. The thinking-reduced agent on the
+  478K ordinary ledger: **24 of 24 in 21.5 minutes** (was 0 of 24 and a 150-call loop). The 480K narrative stream
+  with the guards is running.
 
 ### Where the time goes (reconstructed from the saved runs)
 
