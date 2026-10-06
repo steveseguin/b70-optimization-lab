@@ -247,17 +247,23 @@ PROTOCOL_QUOTED = """
     sub     the counter went down by amount (amount positive)
     remove  the counter was removed from the ledger (leave amount empty: `name | remove | | "..."`)
     reopen  a counter opened (new, or opened again after a removal) with value amount
-  amount is always written in digits (`-7`, `42`), even when the report spells the number out
+  amount is written in digits (`-7`, `42`), even when the report spells the number out
   ("minus seven", "forty-two"). The quote is copied exactly from the report (whitespace aside) and is
   the words that state this change. A plan counts only if the report says it went ahead: then quote
   the sentence that says so and give the planned amount. If the item changes nothing, send one line
-  `none`.
-- The harness checks every line: the quote must be verbatim in the delivered report, the amount must be
-  written in the quote's paragraph, set/add/sub/remove need a live counter and reopen a new or removed
-  one, and every counter the report names must have a STATE line afterwards. If any line fails, it
+  `none`. Example (a report saying "abcd12 went down by eighty-three." and "A new page was started for
+  efgh34, at minus five."):
+      abcd12 | sub | 83 | "abcd12 went down by eighty-three."
+      efgh34 | reopen | -5 | "A new page was started for efgh34, at minus five."
+- The harness checks every line: the counter name occurs in the report, the quote is verbatim in it, the
+  amount is written in the quoted sentence (or in a sentence of the same paragraph that names the
+  counter), add/sub/remove need a live counter and reopen a new or removed one (set on a new counter
+  counts as reopen), and every counter the report names has a STATE line afterwards. If any line fails, it
   refuses the WHOLE list ("ctxfold: REFUSED (reason): ...") and applies nothing: fix it and send the
   whole list again. On success it applies the events, removes the item from your context and prints
   "ctxfold: applied N events".
+- A refusal names the failing line and shows the delivered sentence it should quote: copy that sentence,
+  fix only that line, and send the whole list again (do not change a correct amount to get past a check).
 - Do not edit the mirror file by hand.
 - Before running a command that delivers a large item, make sure there is room for it: the harness
   refuses to run such a command when the item would not fit ("NOT RUN").
@@ -265,6 +271,9 @@ PROTOCOL_QUOTED = """
   act every turn.
 - Write /app/answers.json only after the final item with the questions has arrived, and put in it only
   the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
+- A question about a counter's value at the end of an earlier item: `recall NAME` lists every archived
+  sentence about it with its item number (one short command per counter); apply them in order up to that
+  item. Do not answer such a question with the current value.
 """
 
 READ_REASONS = """- In your visible reply (not in your thinking), before the command, write one short line per changed
@@ -302,8 +311,9 @@ class _ImprovedEnv(ContextEnv):
         # Quoted events (arm B32iq): STATE.txt is written only by `ctxfold --events` (any other change is
         # restored by _PinnedState); the other fold commands are not run, and an events command runs alone
         # (just the here-document), so nothing else in that command can touch STATE.txt.
-        if a.quoted and (re.search(r"\bctxfold\b(?!\s+--events)", cmd)
-                         or ("ctxfold --events" in cmd and not _events_cmd_alone(cmd))):
+        if a.quoted and (re.search(r"(?:^|[;&|]\s*|\n\s*)ctxfold\b(?!\s+--events)", cmd)
+                         or (re.search(r"(?:^|[;&|]\s*|\n\s*)ctxfold\s+--events", cmd)
+                             and not _events_cmd_alone(cmd))):
             a.n_quoted_refused_cmds += 1
             text = ("NOT RUN: in this run the harness keeps STATE.txt; send the item's changes as an event list, "
                     "as a command of its own: `ctxfold --events <<'EOF'`, one `name | op | amount | \"quote\"` line "
@@ -562,7 +572,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                  thinking_policy: str = "always", stable_system: Any = None,
                  fold_mode: str = "script", read_reasons: Any = False, repeat_guard: Any = True,
                  recover_text_calls: Any = True, answers_guard: Any = True, archive: Any = False,
-                 fold_batches: int | str = 1, quoted: Any = False, **kwargs: Any) -> None:
+                 fold_batches: int | str = 1, quoted: Any = False,
+                 retry_think_cap: int | str = 2048, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # v3 (2026-10-05): stable prompt layout and per-call thinking
         self.stable_mirror = _as_bool(stable_mirror)
@@ -578,6 +589,8 @@ class ClmImprovedAgent(_h.ClmAgent):
         # `ctxfold --events`, which checks the quotes against the delivered text and does the arithmetic;
         # read mode, archive on unless archive is given explicitly as false
         self.quoted = _as_bool(quoted)
+        self.retry_think_cap = int(retry_think_cap or 0)
+        self.n_retry_capped = 0
         if self.quoted:
             self.fold_mode = "read"
             if archive is False or archive is None:
@@ -739,6 +752,11 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.pstats["thinking_on" if thinking else "thinking_off"] += 1
         self._prefix_stats(messages, thinking)
         cap = self.think_cap if thinking else 0
+        if self.quoted and thinking and self._event_refused_last and self.retry_think_cap:
+            # a refused event list: the refusal names the line and the delivered sentence, so the retry
+            # needs little thinking (B32iq d12: 23 retries, ~4.2K thinking tokens each at THINK_CAP_R)
+            cap = min(cap or self.retry_think_cap, self.retry_think_cap)
+            self.n_retry_capped += 1
         if (not cap and thinking and self.empty_streak_limit
                 and self._empty_streak >= self.empty_streak_limit):
             cap = min(self.fallback_think_cap, max(self.max_tokens // 2, 1))  # must be < max_tokens
@@ -899,6 +917,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "event_lists_refused": dict(self.lists_refused),
                     "event_lists_refused_total": sum(self.lists_refused.values()),
                     "event_retries": self.n_event_retries, "quoted_cmds_refused": self.n_quoted_refused_cmds,
+                    "retry_think_cap": self.retry_think_cap if self.quoted else None,
+                    "retry_capped_calls": self.n_retry_capped,
                     "recall_calls": self.n_recalls, "recall_output_tokens": self.recall_tokens,
                     "archive_write_refused": self.n_archive_refused,
                     "answer_key_notes": self.n_answer_key_notes,
