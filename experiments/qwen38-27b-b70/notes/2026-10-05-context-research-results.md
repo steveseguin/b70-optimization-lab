@@ -333,8 +333,15 @@ it; a list with any bad line is refused whole and the model retries with thinkin
   tokens over an hour.
 - **It did worse on the questions about dropped text** (31 of 36 and 26 of 30 against 36 of 36 for the
   archive-and-recall agent); being traced.
-- Verdict so far: the right tool when the figures must be exact and time is cheap; the archive-and-recall agent
-  stays the all-round best.
+- **Traced (13:00 EDT): most of that time, and three of the wrong values on the second retention seed, were a bug
+  in our own checker**, not the model. Its number reader ran across sentence ends ("down by eighty-three. Two of
+  the packers" read as 85), so correct lists were refused: 37 refusals across the four trials, each costing a
+  retry with up to 4K tokens of thinking, and on one seed the model started sending amounts that happened to pass
+  the check, which corrupted the table. The other misses: on seed 0 the model answered old-value questions with the
+  current value instead of looking them up; at the hard density a misspelled counter name caused a run of
+  refusals. The checker is fixed (stops at punctuation, ignores digits inside names), refusals now show the sentence
+  to copy, retries think at most 2K tokens, and the protocol says never to change a correct amount to pass a check.
+  The four trials are being rerun; the numbers above stand as measured with the bug.
 
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 
