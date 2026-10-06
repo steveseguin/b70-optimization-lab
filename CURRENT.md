@@ -71,6 +71,26 @@ place to be.** Work continues; the self-editing comparison is running.
 **Doing next:** the second self-editing comparison (running), then the winners at longer sizes; a scores-level
 check of the cache; larger reading pieces that keep the cache exact.
 
+## 2026-10-06 01:00 EDT, four-B70 host: LTX 2.5 at 27.5 fps over a ten-minute run, 30.8 fps at batch 4; the baseline ruling is still open
+
+**Packet 97 moved the second decode worker from the busiest sampler card to the idle one. Everything else is packet 96.**
+
+- **No ruling needed:** batch 1 with the decode worker on card 2 is byte-exact on today's references at **1.308 s per
+  clip** (was 1.348).
+- **Needs the owner's ruling (batch clips are a different take of the same prompt, see the 10-04 entry):**
+  two batch-2 jobs **0.927 s per clip (27.0 fps)**; held over a 600-prompt arm at **0.910 s per clip (27.5 fps), 613 of
+  613 clips exact, steady, never more than 1.8 s behind a steady pace**; two batch-4 jobs **0.812 s per clip (30.8 fps)**,
+  131 of 131 exact against the batch-4 references. A third decode worker makes both slower.
+- **Measurement correction:** the client had been polling every queued prompt each cycle and slowing the server in
+  proportion to the queue; fixed on 10-05. The 10-04 figure of 1.026 s became 0.992 s on the same server configuration.
+- **Lost day:** 2026-10-05 02:11 to 10-06 01:43 UTC, a debugger attached to a live server hung and its watcher had no
+  deadline; recorded in the packet 96 results note with the rules that follow from it.
+- Zero GPU faults and zero lockups in 38 hours on kernel 7.0.0-39, about thirty server runs.
+- [Packet 97 results](experiments/ltx25-b70/notes/2026-10-06-packet-97-results.md).
+
+**Doing next:** measuring what 640x384 output would cost (probe running), then the two-card machine question and
+clip-to-clip continuation, both the owner's calls.
+
 ## 2026-10-04 20:40 EDT, four-B70 host: LTX 2.5 reached 24.4 fps with two clips per transformer pass; the owner must rule on the new baseline
 
 **One clip every 0.992 s (25.2 fps equivalent; the budget is 1.042 s; 2026-10-06 01:49 UTC, 111 of 111 exact), every clip byte-identical to its reference.
