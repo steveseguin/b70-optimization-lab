@@ -366,6 +366,31 @@ it; a list with any bad line is refused whole and the model retries with thinkin
   22K in view, no rule broken. Against the read-mode agent's 24 of 24 in 25.7 minutes on the same stream: 23 %
   faster, and the bookkeeping is now exact by construction rather than by luck.
 
+### A million tokens, and the rest of the second seeds (measured 2026-10-06 14:00-18:30 EDT)
+
+| Run | Right | Time | Calls | Peak context |
+| --- | ---: | ---: | ---: | ---: |
+| **Read-mode agent, 1,000K-token narrative stream (3.8 times the window), 32K budget** | **23 of 24** (one stale value) | 62 min | 1,351 | 22.5K |
+| Read-mode agent, 480K stream, seed 1 | 24 of 24 | 25 min | | |
+| Read-mode agent, 480K stream, **6 changes per batch** | 24 of 24 | 28 min | 596 | 24.5K |
+| Quoted agent, retention seed 0, with the two fixes | 35 of 36 | 5.7 min | 159 | 21K |
+| Quoted agent, 12 changes per batch, with the two fixes | 16 of 16 | 7.4 min | 144 | 21K |
+| Summarise at 75 %, ledger seed 1 | 24 of 24 | 78 min | 60 | 23K |
+| Files allowed, ledger seed 1 (no management / self-editing) | 24 / 24 | 2.5 / 1.5 min | | 13K / 7.6K |
+| Keep everything with its window shown, ledger seed 1 (third try, corrected guard) | 0 of 24 | 67 min | 36 | 175K |
+| Thinking-reduced agent on 121K of arbitrary key-values, no files, 32K | 2 of 24 | | | |
+
+- **A million tokens of narrative, read by understanding at a 32K budget, with one value stale at the end.** Input
+  3.8 times the window, an hour of work, never more than 23K in view. Per-step reading error of about 1 in 100
+  changes over 1,500 changes gives roughly this; the quoted agent on the same stream is running now.
+- **Both quoted-agent failures are gone with the fixes:** 35 of 36 on the retention seed that had been blank, 16 of
+  16 at the hard density in 7 minutes (was an hour with the checker bug, then a failure).
+- **Keep-everything on ledger seed 1 failed a third time**, now with the corrected guard: the model re-types every
+  batch and thinks at length, and no guard changes that. A big window without management is not a strategy for a
+  long job on this model.
+- **A 32K budget cannot hold 121K of arbitrary key-values without files or an archive** (2 of 24), as expected; the
+  archive arm is the answer there and is queued on that task.
+
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 
 The narrative task at 119K with twelve extra questions that arrive only at the end, about values that were later
