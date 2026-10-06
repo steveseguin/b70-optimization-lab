@@ -1,0 +1,64 @@
+{
+  "timestamp_utc": "2026-10-06T23:22:45.642617+00:00",
+  "host": "steve-b70s",
+  "request": "Safe-first disk cleanup; preserve AI models and lab research",
+  "before": {
+    "filesystem_bytes": 982240026624,
+    "used_bytes": 932549218304,
+    "available_bytes": 0
+  },
+  "after": {
+    "used_bytes": 924554420224,
+    "available_bytes": 7715090432
+  },
+  "removed": [
+    {
+      "path": "/home/steve/.npm/_cacache",
+      "kind": "npm package download cache"
+    },
+    {
+      "path": "/home/steve/.cache/uv",
+      "method": "uv cache clean --cache-dir /home/steve/.cache/uv --no-config --offline",
+      "note": "59805 files, 8.3 GiB logical; mostly hardlinked to installed environments, so only about 284 MiB physically reclaimed"
+    },
+    {
+      "path": "/home/steve/.cache/pre-commit",
+      "method": "pre-commit clean"
+    },
+    {
+      "path": "/home/steve/.cache/ccache",
+      "method": "ccache --clear"
+    },
+    {
+      "path": "/home/steve/.cache/go-build",
+      "kind": "Go build cache"
+    },
+    {
+      "path": "/var/cache/apt",
+      "method": "apt-get clean"
+    },
+    {
+      "path": "/root/.npm/_cacache",
+      "kind": "npm package download cache"
+    },
+    {
+      "path": "/home/steve/.local/share/Trash/files/.installer-replay.3f54Nl",
+      "kind": "discarded August 27 installer staging, primarily compiled kernel libraries",
+      "metadata_removed": "/home/steve/.local/share/Trash/info/.installer-replay.3f54Nl.trashinfo"
+    }
+  ],
+  "preserved": [
+    "AI models, including Hugging Face caches",
+    "Research repositories, notes, experiments, patches, raw benchmark results",
+    "Source trees, installed environments, Docker images",
+    "GPU/compiler runtime caches",
+    "Agent session history and diagnostic evidence",
+    "Remaining Trash including source replay and audit records"
+  ],
+  "verification": {
+    "home_write_and_fsync": "passed",
+    "existing_ltx_python_pid_2652074": "still running"
+  },
+  "operational_changes": "No server restart, reboot, power change, swap change, or page-cache change",
+  "remaining_capacity_note": "Disk remains tight; this is a conservative first pass. Further substantial reclamation requires auditing research/build artifacts."
+}
