@@ -80,7 +80,10 @@ def is_suspect(c: str) -> bool:
         r"(?:^|[^<>0-9&])>>?\s*([/\w.$~-]+)|\btee\s+(?:-a\s+)?([/\w.$~-]+)", shell)]
     if any(not t.startswith(ALLOWED) for t in targets if t):
         return True
+    in_ctx_dir = bool(re.search(r"\bcd\s+/tmp/\.live_ctx/?(?:\s|;|&|$)", shell))
     for body in bodies:
+        if in_ctx_dir and not re.search(r"['\"]/(?!tmp/\.live_ctx)[\w.-]+/", body):
+            continue    # `cd /tmp/.live_ctx; python3 ... open("LIVE_CTX_MAIN.txt","w")`: the context files
         if re.search(r"open\([^)]*['\"][wa]b?\+?['\"]|\.write_text\(", body):
             paths = re.findall(r"['\"](/(?:[\w.-]+/)+[\w.-]+)['\"]", body)  # real paths, not "/20"
             if any(not p.startswith(ALLOWED) for p in paths) or not paths:

@@ -153,6 +153,8 @@ PROTOCOL = """
   harness refuses to run such a command when the item would not fit ("NOT RUN").
 - Your earlier thinking is not kept between turns: write anything you must remember into
   STATE.txt. Keep each turn's thinking short; act every turn.
+- Write /app/answers.json only after the final item with the questions has arrived, and put in it only
+  the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
 - If STATE.txt plus the next item cannot fit in your budget, you must decide what to drop from
   STATE.txt yourself; anything dropped is lost (answer "" for it), so drop the least useful.
 """
@@ -221,6 +223,8 @@ PROTOCOL_READ = """
   refuses to run such a command when the item would not fit ("NOT RUN").
 - Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs;
   act every turn.
+- Write /app/answers.json only after the final item with the questions has arrived, and put in it only
+  the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
 """
 
 READ_REASONS = """- In your visible reply (not in your thinking), before the command, write one short line per changed
@@ -248,6 +252,18 @@ class _ImprovedEnv(ContextEnv):
         # about 150 times on an unchanged context until the step cap; B32ir re-ran an update command):
         # the exact command just run, when no new item has been delivered since, is not run again.
         cmd = (command or "").strip()
+        # Answers guard (2026-10-05: B32ir sparse seed 1 and B32in 478K both wrote the WHOLE table to
+        # /app/answers.json before the final item with the questions had arrived -> VOID): writing the
+        # answers file or submitting is not run until the final item has been delivered.
+        if a.answers_guard and not a._final_seen and (
+                (ANSWERS in cmd and _WRITES.search(cmd)) or cmd == "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"):
+            a.n_answers_refused += 1
+            text = ("NOT RUN: the final item with the questions has not arrived yet. Fetch it with `next` "
+                    "(keep folding items until it comes). /app/answers.json may be written only after it, "
+                    "and only with the counters it asks for.")
+            res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
+            return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
+                              readout="", notes="", exec_time=0.0, touched_ctx=False)
         if (a.repeat_guard and cmd and cmd == a._last_cmd and a._deliveries == a._deliveries_at_last
                 and not a._guard_cmd.search(cmd)):
             a.n_repeats_refused += 1
@@ -277,7 +293,33 @@ class _ImprovedEnv(ContextEnv):
                 return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
                                   readout=f"\n[context: ~{now}/{limit} tokens]", notes="",
                                   exec_time=0.0, touched_ctx=False)
+        items_before = sum(1 for m in messages if isinstance(m, dict) and m.get("role") == "tool"
+                           and _ITEM_UPDATE.match(str(m.get("content") or "")))
         res = await super().step(command, messages, environment=environment, pending=pending)
+        # any context edit that removed a delivered item counts as a successful fold for the
+        # thinking-policy rule (B32in 478K folded with its own script, never via ctxfold, so the rule
+        # never saw "ctxfold: folded" and kept thinking on for all 177 calls)
+        if res.ctx_changed and sum(1 for m in messages if isinstance(m, dict) and m.get("role") == "tool"
+                                   and _ITEM_UPDATE.match(str(m.get("content") or ""))) < items_before:
+            a._fold_ok = True
+        out0 = getattr(res.result, "stdout", "") or ""
+        if _ITEM_FINAL.search(out0):
+            a._final_seen = True
+            a._asked = re.findall(r"(?m)^(?:QUERY|GET) (\S+)\s*$", out0)
+        if a.answers_guard and a._final_seen and ANSWERS in cmd and _WRITES.search(cmd):
+            try:
+                r = await environment.exec(command="python3 -c 'import json; print(json.dumps(sorted("
+                                                   "json.load(open(\"/app/answers.json\")))))'", timeout_sec=30)
+                keys = set(json.loads((getattr(r, "stdout", "") or "[]").strip() or "[]"))
+                extra, missing = sorted(keys - set(a._asked)), sorted(set(a._asked) - keys)
+                if extra or missing:
+                    a.n_answer_key_notes += 1
+                    res.notes += (f"\n[harness: /app/answers.json has {len(extra)} keys that were not asked"
+                                  + (f" ({' '.join(extra[:6])}...)" if extra else "")
+                                  + (f" and lacks {len(missing)} asked keys ({' '.join(missing[:6])})" if missing else "")
+                                  + "; it may contain exactly the asked counters. Rewrite it.]")
+            except Exception:
+                pass
         out = getattr(res.result, "stdout", "") or ""
         if a._guard_out.search(out):
             a._deliveries += 1
@@ -322,6 +364,12 @@ def _install_text_call_recovery(agent: Any) -> None:
 
     extract._recovering = True
     _h._extract_tool_call = extract
+
+
+ANSWERS = "/app/answers.json"
+_WRITES = re.compile(r">|open\(|json\.dump|write|tee\b|cp\b|mv\b")
+_ITEM_UPDATE = re.compile(r"ITEM \d+/\d+ \((?!QUERY|GET)")
+_ITEM_FINAL = re.compile(r"ITEM \d+/\d+ \((?:QUERY|GET)\)")
 
 
 class _PinnedState:
@@ -412,7 +460,7 @@ class ClmImprovedAgent(_h.ClmAgent):
                  stable_render: Any = True, stable_mirror: Any = True,
                  thinking_policy: str = "always", stable_system: Any = None,
                  fold_mode: str = "script", read_reasons: Any = False, repeat_guard: Any = True,
-                 recover_text_calls: Any = True, **kwargs: Any) -> None:
+                 recover_text_calls: Any = True, answers_guard: Any = True, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # v3 (2026-10-05): stable prompt layout and per-call thinking
         self.stable_mirror = _as_bool(stable_mirror)
@@ -423,6 +471,9 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.fold_mode = str(fold_mode or "script").strip().lower()
         self.read_reasons = _as_bool(read_reasons)
         self.repeat_guard = _as_bool(repeat_guard)
+        self.answers_guard = _as_bool(answers_guard)
+        self._final_seen, self._asked = False, []
+        self.n_answers_refused = self.n_answer_key_notes = 0
         self._last_cmd, self._deliveries, self._deliveries_at_last = "", 0, -1
         self._item_pending = True
         self.n_repeats_refused = 0
@@ -491,7 +542,8 @@ class ClmImprovedAgent(_h.ClmAgent):
     # ---------------- per-call thinking (arms B32in / B32io)
     _JUDGEMENT = ("ctxfold: REFUSED", "NOT RUN", "REJECTED", "Traceback", "This was the last item",
                   "STREAM END", "No tool call in your last turn", "CONTEXT LIMIT", "FINAL turn",
-                  "ROLLED BACK", "no unfolded item", "no delivered item", "harness recovered")
+                  "ROLLED BACK", "no unfolded item", "no delivered item", "harness recovered",
+                  "keys that were not asked", "asked keys", "has not arrived yet")
 
     def _wants_thinking(self, messages: list[dict[str, Any]]) -> bool:
         """thinking_policy: always = the agent's enable_thinking; never = off on every call;
@@ -707,6 +759,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "loop_guard_calls": self.n_loop_guard,
                     "continuation_error": self._continuation_broken,
                     "repeats_refused": self.n_repeats_refused,
+                    "answers_refused": self.n_answers_refused,
+                    "answer_key_notes": self.n_answer_key_notes,
                     "text_calls_recovered": self.n_text_calls_recovered,
                     "thinking_policy": self.thinking_policy,
                     "fold_mode": self.fold_mode,

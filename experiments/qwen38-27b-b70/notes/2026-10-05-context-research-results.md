@@ -13,14 +13,19 @@ Status: work in progress; rows marked *pending* are still running.
 3. **Small is still better where it can be had.** Writing speed falls from about 127 tokens a second at 8K to 26 at
    250K, and above about 60K the model occasionally (about 1 lookup in 40) reads a look-alike line instead of the
    one asked for. So the right design is a big window as the safety net and a pruned working context as the habit.
-4. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
+4. **Reading more than the window by understanding works, with guards around the loop (one seed so far).** On
+   a 480K stream of narrative text, 1.8 times the whole window, the read-mode agent at a 32K budget got all 24
+   answers right in 26 minutes with never more than 24K tokens in view. The failures along the way were the agent
+   loop (repeating itself with thinking off, writing answers before the questions arrived), not the reading; each
+   got a guard. The remaining reading error is about 1 to 2 per 100 changes without thinking.
+5. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
    27B folds incoming data into a small running table or into files by itself and deletes the raw text. With files
    allowed it finished a 121K-token task in under two minutes with every answer right and never more than 9K of
    context. What broke the paper's agent in our test was the harness around the model, not the model's pruning.
-5. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
+6. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
    under 2 %. The cheap, real lever is to stop re-sending the model's old thinking (10 % of a typical call, up to
    56 %).
-6. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
+7. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
    restricting the output to the labels gave the same answers 6.5 times faster on easy items.
 
 ## What was tested, and what happened
@@ -280,8 +285,12 @@ the run ends).
   minutes** (was 20 in 10 minutes), 144 calls, 140 of them with thinking off. Seed 1 asks only 18 counters (its stream has 32): **all 18 right, and its table matched the hidden reference
   after every one of the 70 batches**; the run is void only because the model wrote the whole 32-line table into
   the answers file before the question batch arrived (14 keys it was not asked for). A guard for that is queued. The thinking-reduced agent on the
-  478K ordinary ledger: **24 of 24 in 21.5 minutes** (was 0 of 24 and a 150-call loop). The 480K narrative stream
-  with the guards is running.
+  478K ordinary ledger: **24 of 24 in 21.5 minutes** (was 0 of 24 and a 150-call loop). 
+- **The 480K narrative stream, with the guards (measured 22:50 EDT): 24 of 24 in 25.7 minutes.** 479,512 tokens
+  of narrative in 240 batches, 1.8 times the model's whole window, read at a 32K budget: 634 calls, 576 of them
+  with thinking off, 287 edits of its own context, never more than 23.5K tokens in view, 68K tokens written, no
+  rule broken, no parser. This is the model reading more than it can hold, by understanding, and keeping an exact
+  running table of what it read. One seed; the second is queued.
 
 ### Where the time goes (reconstructed from the saved runs)
 

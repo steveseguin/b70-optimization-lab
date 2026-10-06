@@ -21,6 +21,8 @@ earlier thinking; the request log has asst_with_reasoning per request).
 FAKE_PLAN=improved-read (+ FAKE_REFERENCE=<task>/tests/reference.json): read-mode agent for sparse
 prose; takes the true state after each batch from the reference; first writes an incomplete
 STATE.txt so `ctxfold --drop` must refuse once.
+FAKE_EARLY_ANSWER=1 (with improved-read): after the first drop, tries to write /app/answers.json before
+the final item (the harness must refuse it).
 FAKE_GUARDS=1 (with improved-read): after the first drop, repeats its last command and then deletes a
 STATE.txt line with no item in context (the harness must refuse / restore). FAKE_TEXTCALL=1: `next` is
 written as text (`bash {"command": "next"}`) instead of a tool call (the harness must recover it).
@@ -174,6 +176,9 @@ def plan_read(msgs):
         return ("cat > /app/answers.json <<'EOF'\n" + json.dumps({q: fin.get(q) for q in qs})
                 + "\nEOF\necho answers.json written")
     if not items:
+        if os.environ.get("FAKE_EARLY_ANSWER") == "1" and "ctxfold: removed items" in last \
+                and "has not arrived yet" not in alltext:
+            return "echo '{}' > /app/answers.json && echo early-answer"
         if os.environ.get("FAKE_GUARDS") == "1" and "ctxfold: removed items" in last and "guards-done" not in alltext:
             # after the first successful drop: (1) repeat the last command; (2) then drop a STATE line with
             # no item in the context; both must be stopped by the harness

@@ -31,6 +31,7 @@
 #                   and no call's messages (pinned state aside) differ from the previous call's except
 #                   after a context edit (prefix stability)
 #  14 imp-never      THINKING_POLICY=never (B32io): every request has enable_thinking=false
+#  19 imp-answers    writing /app/answers.json before the final item is refused (answers guard); reward 1.0
 #  18 imp-guards     read mode: repeated command refused, STATE line vanishing without an item rejected and
 #                   restored, `next` written as text recovered as a tool call; reward 1.0
 #  17 imp-read       read mode (B32ir) on a tiny sparse-prose task: `ctxfold --drop` refuses an incomplete
@@ -365,6 +366,14 @@ read -r g_rep g_rej g_txt <<< "$gd"
 msg="reward=$reward ended_by=$ended_by repeats_refused=$g_rep state_rejected=$g_rej text_calls_recovered=$g_txt"
 [[ $invalid == False && $reward == 1.0 && ${g_rep:-0} -ge 1 && ${g_rej:-0} -ge 1 && ${g_txt:-0} -ge 1 ]] \
   && pass imp-guards "$msg" || fail imp-guards "$msg"
+# 19 answers guard: writing /app/answers.json before the final item is refused; the run completes
+FAKE_PLAN=improved-read FAKE_EARLY_ANSWER=1 FAKE_REFERENCE="$STASK/tests/reference.json" start_stub "$O/stub-early.log"
+LTASK_SAVE=$LTASK; LTASK=$STASK
+FOLD_MODE=read THINKING_POLICY=judgement ijob imp-answers 200000 ""
+LTASK=$LTASK_SAVE
+ar=$("$PY" -c "import json,glob; print(json.load(open(glob.glob('$O/runs/jobs/imp-answers/*/agent/improved_stats.json')[0])).get('answers_refused',0))")
+msg="reward=$reward void=$void ended_by=$ended_by answers_refused=$ar"
+[[ $invalid == False && $void == False && $reward == 1.0 && ${ar:-0} -ge 1 ]] && pass imp-answers "$msg" || fail imp-answers "$msg"
 stop_stub
 
 echo; "$PY" "$D/summarize_results.py" --brief "$O/runs" | tee "$O/summary.txt"
