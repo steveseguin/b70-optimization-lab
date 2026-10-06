@@ -90,6 +90,8 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | **Thinking-reduced** improved agent (verified fold, thinking only when judgement is needed), 32K, seed 0 | 24 | **6.6 min** | 20K tok | 84 calls, peak context 17K |
 | Thinking-reduced improved agent, 32K, seed 1 | 24 | **5.7 min** | 18K tok | the seed where the earlier version got 21 |
 | Improved agent on a **478K stream** (1.8 times the whole window), 32K budget | 24 | **8.2 min** | 36K tok | peak context 10K; 76 batches, 37 calls |
+| Thinking-reduced improved agent, 478K stream, 32K | **0** | 18 min | 49K tok | failed: 21 stale and 3 wrong, and void; cause being traced (the first improved agent had got 24 here) |
+| Files allowed, thinking fully off, 121K ledger | 24 | | | |
 | No management, **files allowed**, 478K stream | 24 | **1.9 min** | 8K tok | 11 calls, peak context 9.7K |
 | Self-editing, **files allowed**, 478K stream | 24 | **1.3 min** | 5K tok | 12 calls, peak context 7.1K |
 | No management, files allowed, 121K of **arbitrary key-values** (not a foldable table) | 24 | 1.1 min | 4K tok | 8 calls, peak context 5.8K |
@@ -242,6 +244,30 @@ the context to 246,962, and the following request no longer fitted the 262,144 w
 mismatch, was wrong: the harness count matched the server's within 0.4 %.) The corrected guard also reserves the
 largest turn seen so far plus a margin and, when room is short, tells the model to write its answers now; replayed
 on this run it stops the fetching with about 31K to spare. Not yet rerun.
+
+### The first valid reading test (measured 20:00 EDT)
+
+Sparse prose, 119K tokens in 70 batches of about 2K, three real changes per batch with numbers written as words,
+otherwise ordinary narrative; 24 final values asked. Data: `data/2026-10-05-context/reading/` (to be copied when
+the run ends).
+
+| Strategy | Files | Right of 24 | Time | Peak context | How it read |
+| --- | --- | ---: | ---: | ---: | --- |
+| Read-mode self-editing agent, 32K budget | no | **20** | 10 min | 24K | read each batch itself (152 of 283 calls with thinking off), kept a plain table, dropped the text |
+| Keep everything in the window | no | 24 | 20 min | 160K | read everything at the end with thinking on |
+| No management, files allowed | yes | 24 | 5 min | 26K | saved batches to files, pulled out the sentences that name a counter with a script, then read those |
+
+- **Reading more than the budget by understanding, with a 32K budget: 20 of 24.** The replay against the hidden
+  reference shows the table first went wrong at batch 12 (an addition done wrong), and at the end five counters
+  were wrong: two arithmetic slips, two counters dropped from the table, one lost during an edit. That is close to
+  the three single-step errors the calibration predicted, plus two losses from the editing itself. The agent wrote
+  no parser.
+- **With everything in view the model got all 24**, at twice the time: 160K of context and 53K tokens written,
+  most of it thinking at the end. 120K fits the window; a 480K stream would not.
+- **Files won again, by a different route:** the model wrote a script that finds the sentences naming a counter
+  and then read only those. The names in this task are explicit words, so search can narrow the reading; that is
+  what files plus search are good for, and it is lossless by reference.
+- The read-mode agent on a 480K stream (240 batches, larger than the window) is running now.
 
 ### Where the time goes (reconstructed from the saved runs)
 
