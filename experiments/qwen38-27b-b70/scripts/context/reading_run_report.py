@@ -17,6 +17,8 @@ Per trial:
       that of its cached part (measured 832-piece read speeds), writing = call time - reading; tools =
       sandbox command time; other = trial wall - calls - tools
   drops refused (`ctxfold: REFUSED`), room-check refusals, window refusals
+  quoted events (arm B32iq): events applied, event lists applied, lists refused by reason (bad quote /
+      unknown counter / format / amount not in text), retries (a list applied after a refusal)
   parser check: did the model write a program to fold the reports? (commands containing re.compile /
       re.match / re.findall / re.search / def fold / FOLD.py / split(" | ") applied to report text ...),
       with the first such command quoted
@@ -109,6 +111,10 @@ def report(t: Path) -> dict:
         "peak_ctx": row.get("peak_sent_ctx"), "time": time_split(t),
         "drops_refused": sum("ctxfold: REFUSED" in o for o in obs),
         "drops_ok": sum("ctxfold: removed items" in o for o in obs),
+        "quoted": bool(imp.get("quoted")), "events_applied": imp.get("events_applied"),
+        "event_lists_applied": imp.get("event_lists_applied"),
+        "event_lists_refused": imp.get("event_lists_refused") or {}, "event_retries": imp.get("event_retries"),
+        "quoted_cmds_refused": imp.get("quoted_cmds_refused"),
         "room_refusals": imp.get("gate_refusals"), "window_refusals": ws.get("window_refusals"),
         "parser_commands": n_parser, "first_parser_command": first_parser,
     }
@@ -133,6 +139,10 @@ def fmt(r: dict) -> str:
         f"+ tools {tm['tools_s']} + other {tm['other_s']}",
         f"   drops ok {r['drops_ok']} refused {r['drops_refused']}; room-check refusals {r['room_refusals']}; "
         f"window refusals {r['window_refusals']}",
+        *([f"   quoted events: applied {r['events_applied']} in {r['event_lists_applied']} lists; lists refused "
+            f"{sum(r['event_lists_refused'].values())} by reason {r['event_lists_refused']} "
+            f"(bad quote / unknown counter / format / amount not in text); retries {r['event_retries']}; "
+            f"STATE/fold commands refused {r['quoted_cmds_refused']}"] if r.get("quoted") else []),
         f"   wrote a parser/fold program: {'YES, ' + str(r['parser_commands']) + ' commands; first: ' + r['first_parser_command'] if r['parser_commands'] else 'no'}",
     ])
 

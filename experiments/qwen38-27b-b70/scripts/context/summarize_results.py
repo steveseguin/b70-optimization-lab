@@ -333,6 +333,13 @@ def trial_row(t: Path) -> dict:
         "stale": counts.get("stale"), "wrong": counts.get("wrong"),
         "items_lost": items_lost, "gate_refusals": imp.get("gate_refusals"),
         "protected_rollbacks": imp.get("protected_rollbacks"), "state_rejected": imp.get("state_rejected"),
+        # quoted events (arm B32iq): events applied, event lists refused by reason, retries
+        "events_applied": imp.get("events_applied"),
+        "ev_ref_quote": (imp.get("event_lists_refused") or {}).get("bad quote", 0) if imp.get("quoted") else None,
+        "ev_ref_counter": (imp.get("event_lists_refused") or {}).get("unknown counter", 0) if imp.get("quoted") else None,
+        "ev_ref_format": (imp.get("event_lists_refused") or {}).get("format", 0) if imp.get("quoted") else None,
+        "ev_ref_amount": (imp.get("event_lists_refused") or {}).get("amount not in text", 0) if imp.get("quoted") else None,
+        "event_retries": imp.get("event_retries"),
         "think_cap_cont": imp.get("think_cap_continuations"), "loop_guard": imp.get("loop_guard_calls"),
         "thinking_off_calls": (imp.get("thinking_off_calls") if imp else
                                (u.get("n_lm_calls") if str(kw.get("enable_thinking")).lower() == "false" else 0)),
@@ -408,7 +415,8 @@ def main() -> None:
     t2 = ["arm", "kind", "mode", "size", "seed", "correct", "blank", "stale", "wrong", "lost_never",
           "lost_dropped", "lost_copy", "stored_frac", "items", "delivered", "seen_whole", "items_lost", "cut",
           "gate_refusals", "protected_rollbacks", "state_rejected", "think_cap_cont", "loop_guard",
-          "ctxfold_calls", "ctxfold_refused", "prefix_unstable_no_edit",
+          "ctxfold_calls", "ctxfold_refused", "events_applied", "ev_ref_quote", "ev_ref_counter", "ev_ref_format",
+          "ev_ref_amount", "event_retries", "prefix_unstable_no_edit",
           "broken_pipe", "to_file", "tee", "refused", "hit_max_tokens", "rollbacks", "nudges",
           "suspect_cmds", "score_raw"]
     print("\t".join(t1))

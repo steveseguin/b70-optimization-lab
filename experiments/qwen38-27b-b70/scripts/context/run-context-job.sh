@@ -30,6 +30,9 @@
 #                     "archive allowed": verbatim item copies under /tmp/.live_ctx/archive/) [0]
 #   FOLD_BATCHES      improved agent: fetch and fold up to N items per command (room check scaled) [1]
 #   READ_REASONS      improved agent, FOLD_MODE=read: 1 = one visible reason line per changed counter [0]
+#   QUOTED            improved agent: 1 = quoted events (arm B32iq): the model sends `name | op | amount |
+#                     "quote"` lines to `ctxfold --events`; the harness checks the quotes and keeps STATE.txt;
+#                     implies FOLD_MODE=read and ARCHIVE=1 (unless ARCHIVE=0 is given) [0]
 #   THINKING_POLICY   improved agent: always | judgement (thinking off on routine fetch/fold calls)
 #                     | never [always]
 #   DROP_OLD_THINKING 1 = send chat_template_kwargs.preserve_thinking=false on every call and strip
@@ -171,6 +174,8 @@ fi
 [[ -n "${FOLD_MODE:-}" && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "fold_mode=$FOLD_MODE")
 [[ "${READ_REASONS:-0}" == 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "read_reasons=true")
 [[ "${ARCHIVE:-0}" == 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "archive=true")
+[[ "${QUOTED:-0}" == 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "quoted=true")
+[[ "${QUOTED:-0}" == 1 && "${ARCHIVE:-}" == 0 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "archive=false")
 [[ -n "${FOLD_BATCHES:-}" && "${FOLD_BATCHES:-1}" != 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "fold_batches=$FOLD_BATCHES")
 [[ -n "${THINK_CAP:-}" && "${THINK_CAP:-0}" != 0 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "think_cap=$THINK_CAP")
 [[ -n "${TASK_TEMPLATE:-}" ]] && KW+=(--agent-kwarg "task_template=$TASK_TEMPLATE")
