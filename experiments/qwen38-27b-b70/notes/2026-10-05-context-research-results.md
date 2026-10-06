@@ -295,6 +295,26 @@ the run ends).
   rule broken, no parser. This is the model reading more than it can hold, by understanding, and keeping an exact
   running table of what it read. One seed; the second is queued.
 
+### Scaling the reading result (measured 2026-10-06 01:00-03:00 EDT)
+
+Same narrative task at 119K, seed 0. Data: `data/2026-10-05-context/reading/`.
+
+| Strategy | Right of 24 | Time | Tokens written |
+| --- | ---: | ---: | ---: |
+| Paper's self-editing agent (as released, our harness fixes only) | 24 | 39 min | 171K |
+| Summarise at 75 % | 24 | 17 min | 78K |
+| Read-mode agent, guarded, 3 changes per batch | 23 | 5.4 min | 14K |
+| Read-mode agent, **6 changes per batch** | 24 | 8.8 min | 31K |
+| Read-mode agent, **12 changes per batch** | 21 | 13 min | 46K |
+
+- **On the reading task all three management strategies get the answers; they differ seven-fold in time.** The
+  paper's agent and the summariser spend their time thinking; the guarded read-mode agent reads with thinking off.
+- **Denser reading costs accuracy, as the calibration predicted:** 24 of 24 at 6 changes per batch, 21 at 12 (where
+  the single-step error is about 6 per 100 changes).
+- The run was ended at 03:10 by the host memory guard during the next trial (no fault lines; see the host-memory
+  note). The remaining cells resume under a supervisor that restarts the server after a guard kill and skips
+  finished trials.
+
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 
 The narrative task at 119K with twelve extra questions that arrive only at the end, about values that were later
