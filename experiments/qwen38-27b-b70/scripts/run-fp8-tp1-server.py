@@ -271,8 +271,12 @@ def main():
                         state['container_id'] = info['Id']
                         write(out / 'state.json', state)
                 if guard_proc is None and state.get('container_id'):
+                    # Research runs only: the owner approved 1.6 GiB on 2026-10-06 (the system's last-resort killer acts at
+                    # 1.2 GiB; the two-card server with the agent harness leaves about 2.0-2.4 GiB, so 2.0 fired at random).
+                    guard_min = os.environ.get('B70_GUARD_MIN_AVAILABLE_GIB', '2.0')
                     guard_proc = subprocess.Popen(['sudo', '-S', '-p', '', 'python3', str(GUARD), '--container-id', state['container_id'],
-                                                   '--out', str(out), '--baseline-unaccounted', str(baseline)],
+                                                   '--out', str(out), '--baseline-unaccounted', str(baseline),
+                                                   '--min-available-gib', guard_min],
                                                   stdin=subprocess.PIPE, text=True, start_new_session=True)
                     guard_proc.stdin.write(PASSWORD_FILE.read_text().strip() + '\n')
                     guard_proc.stdin.close()
