@@ -25,7 +25,11 @@ its reference.
 | `two-way-w2-b1-p1-dxpu2` | 1 | 2 | today's (`w93c`) | 126 | 126 | **1.308** | 1.21 / 0.96 / 0.88 / 0.84 |
 | `two-way-w2-b2-p1-dxpu2` | 2 | 2 | batch-2 | 133 | 133 | **0.927** (27.0 fps) | 0.83 / 0.67 / 0.73 / 0.79 |
 | `two-way-w3-b2-p1-dxpu2` | 2 | 3 | batch-2 | 131 | 131 | 0.935 (26.7 fps) | 0.86 / 0.68 / 0.76 / 0.82 |
+| `two-way-w3-b2-p1-dxpu1xpu2` (three decode workers) | 2 | 3 | batch-2 | 131 | 131 | 0.959 (26.1 fps) | 0.85 / 0.90 / 0.56 / 0.57 |
 
+- A third decode worker (replicas on cards 1 and 2) did not help: it puts decode work back on card 1, which
+  rises to 0.90 s per clip, and the stream is slower (0.959). Two decode workers, native on card 3 and the
+  replica on card 2, is the right placement for this layout.
 - Each run's proof arms (other neighbours, swapped slots) passed 10/10 and 10/10 before the timed arm; the
   decode-replica probe on card 2 passed before the freeze in every run.
 - The load is now spread 0.67-0.86 s per clip over the four cards; total compute is about 3.0 GPU-seconds per
