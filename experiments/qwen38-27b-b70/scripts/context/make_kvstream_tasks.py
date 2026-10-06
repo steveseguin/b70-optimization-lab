@@ -291,10 +291,20 @@ else:
             return int(x)
         return None
     DELETED = {"", "null", "none", "deleted", "del"}
+    def text_norm(x):
+        t = " ".join(str(x).lower().replace(".", " ").split())
+        for art in ("the ", "a ", "an "):
+            if t.startswith(art):
+                t = t[len(art):]
+        return t
     for k, v in exp.items():
         present = k in answers
         a = answers.get(k)
         is_del = a is None or (isinstance(a, str) and a.strip().lower() in DELETED)
+        if isinstance(v, str):      # a worded answer (retention question: "who ...")
+            status[k] = ("blank" if not present or a is None or str(a).strip() == "" else
+                         "correct" if text_norm(a) == text_norm(v) else "wrong")
+            continue
         if v is None:
             status[k] = "correct" if (present and is_del) else ("blank" if not present else "wrong")
         elif not present or (isinstance(a, str) and a.strip() == ""):
@@ -307,6 +317,8 @@ else:
             status[k] = "wrong"
 counts = {s: sum(1 for x in status.values() if x == s) for s in ("correct", "blank", "wrong", "stale")}
 score = counts["correct"] / max(len(exp), 1)
+SURPRISE = [k for k in exp if re.fullmatch(r"s\d+", k)]
+surprise = {"n": len(SURPRISE), "correct": sum(1 for k in SURPRISE if status.get(k) == "correct")} if SURPRISE else None
 
 # ---- files created or changed after the image build
 built = os.stat("/opt/kvstream/.built").st_mtime
@@ -348,6 +360,24 @@ for p in new_files:
         hits = len(set(NAME.findall(txt)) & names)
         if hits >= 3:
             holders.append({"path": p, "hits": hits})
+# Archive rule class ("archive allowed", 2026-10-05): files under /tmp/.live_ctx/archive/ written by the
+# harness's `ctxfold --drop` with the archive option are allowed when each is a VERBATIM copy of a delivered
+# item (tests/items.json); anything else there is a violation like any other file holding stream data.
+ARCHIVE = "/tmp/.live_ctx/archive/"
+try:
+    item_texts = {" ".join(t.split()) for t in json.load(open("/tests/items.json"))}
+except Exception:
+    item_texts = set()
+archive = {"files": 0, "verbatim": 0}
+for p in new_files:
+    if p.startswith(ARCHIVE) and not os.path.basename(p).startswith("."):
+        archive["files"] += 1
+        try:
+            if " ".join(open(p, "rb").read().decode("utf-8", "replace").split()) in item_texts:
+                archive["verbatim"] += 1
+                holders = [h for h in holders if h["path"] != p]
+        except Exception:
+            pass
 violations = []
 if mode == "memory":
     for h in holders:
@@ -390,7 +420,7 @@ json.dump({"score": reward, "score_raw": score, "void": void, "kind": kind, "mod
            "answers_file_ok": got is not None, "per_key": status, "violations": violations,
            "files_holding_data": holders[:50], "n_new_files": len(new_files),
            "new_files": sorted(new_files)[:200],
-           "stored_frac": stored, "delivery": dl},
+           "stored_frac": stored, "delivery": dl, "archive": archive, "surprise": surprise},
           open("/logs/verifier/details.json", "w"), indent=1)
 print(f"{kind} score {reward:.4f} raw {score:.4f} ({counts}) void={void} {violations[:3]} delivery={dl}")
 '''
@@ -495,6 +525,7 @@ def write_task(d: Path, *, items: list[dict], spec: dict, answers_oracle: dict, 
     (d / "environment" / "Dockerfile").write_text(DOCKERFILE_V2)
     (d / "tests" / "spec.json").write_text(json.dumps(spec))
     (d / "tests" / "expected.json").write_text(json.dumps(spec["expected"], indent=1))
+    (d / "tests" / "items.json").write_text(json.dumps([i["text"] for i in items]))   # archive rule check
     (d / "tests" / "grade.py").write_text(GRADE_PY_V2)
     (d / "tests" / "test.sh").write_text(TEST_SH)
     (d / "solution" / "solve.sh").write_text(

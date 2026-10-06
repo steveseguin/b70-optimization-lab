@@ -26,6 +26,9 @@
 #                     agent does this by default) [0]
 #   FOLD_MODE         improved agent: script (FOLD.py + ctxfold, default) | read (the model reads each
 #                     report itself, STATE.txt as "name value" lines, `ctxfold --drop`; prose ledger)
+#   ARCHIVE           improved agent, FOLD_MODE=read: 1 = archive-on-drop + `recall` (rule class
+#                     "archive allowed": verbatim item copies under /tmp/.live_ctx/archive/) [0]
+#   FOLD_BATCHES      improved agent: fetch and fold up to N items per command (room check scaled) [1]
 #   READ_REASONS      improved agent, FOLD_MODE=read: 1 = one visible reason line per changed counter [0]
 #   THINKING_POLICY   improved agent: always | judgement (thinking off on routine fetch/fold calls)
 #                     | never [always]
@@ -167,6 +170,8 @@ fi
 [[ -n "${THINKING_POLICY:-}" && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "thinking_policy=$THINKING_POLICY")
 [[ -n "${FOLD_MODE:-}" && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "fold_mode=$FOLD_MODE")
 [[ "${READ_REASONS:-0}" == 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "read_reasons=true")
+[[ "${ARCHIVE:-0}" == 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "archive=true")
+[[ -n "${FOLD_BATCHES:-}" && "${FOLD_BATCHES:-1}" != 1 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "fold_batches=$FOLD_BATCHES")
 [[ -n "${THINK_CAP:-}" && "${THINK_CAP:-0}" != 0 && "$AGENT_KIND" == improved ]] && KW+=(--agent-kwarg "think_cap=$THINK_CAP")
 [[ -n "${TASK_TEMPLATE:-}" ]] && KW+=(--agent-kwarg "task_template=$TASK_TEMPLATE")
 [[ -n "${SUMMARY_MAX_TOKENS:-}" && "$AGENT_KIND" == summary ]] && KW+=(--agent-kwarg "summary_max_tokens=$SUMMARY_MAX_TOKENS")

@@ -273,6 +273,8 @@ def trial_row(t: Path) -> dict:
     void = bool(details.get("void"))
     mode = md.get("mode") or spec.get("mode")
     rule = "VOID" if void else ("suspect" if (mode == "memory" and suspect) else "ok")
+    if (details.get("archive") or {}).get("verbatim"):
+        rule += "+archive"              # rule class "archive allowed": verbatim item copies only
     if opt_violation:
         rule += "+opt"
 

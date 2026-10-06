@@ -21,6 +21,9 @@ earlier thinking; the request log has asst_with_reasoning per request).
 FAKE_PLAN=improved-read (+ FAKE_REFERENCE=<task>/tests/reference.json): read-mode agent for sparse
 prose; takes the true state after each batch from the reference; first writes an incomplete
 STATE.txt so `ctxfold --drop` must refuse once.
+FAKE_ARCHIVE=1 (with improved-read): after the first drop runs `recall --item 1`, `recall <name>`, then
+tries to overwrite an archive file (must be refused); final answers include the ASK keys from the
+reference's "surprise" answers. FAKE_FOLD2=1: fetches two items per command (`next && next`).
 FAKE_EARLY_ANSWER=1 (with improved-read): after the first drop, tries to write /app/answers.json before
 the final item (the harness must refuse it).
 FAKE_GUARDS=1 (with improved-read): after the first drop, repeats its last command and then deletes a
@@ -169,13 +172,26 @@ def plan_read(msgs):
     alltext = "\n".join(str(m.get("content") or "") for m in msgs[2:] if m.get("role") in ("tool", "user"))
     if "answers.json written" in last:
         return "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
-    items = [(int(n), body) for t in tools for n, body in re.findall(r"(?s)^ITEM (\d+)/\d+ \(UPDATE\)\n(.*)", t)]
+    items = [(int(n), t) for t in tools for n in re.findall(r"(?m)^ITEM (\d+)/\d+ \(UPDATE\)", t)]
     if "This was the last item" in alltext and not items:
         qs = re.findall(r"(?m)^QUERY (\S+)$", alltext)
         fin = ref[-1]["state"]
-        return ("cat > /app/answers.json <<'EOF'\n" + json.dumps({q: fin.get(q) for q in qs})
-                + "\nEOF\necho answers.json written")
+        ans = {q: fin.get(q) for q in qs}
+        sur = json.load(open(os.environ["FAKE_REFERENCE"])).get("surprise") or {}
+        for k in re.findall(r"(?m)^ASK (\S+?):", alltext):
+            ans[k] = (sur.get(k) or {}).get("a")
+        return ("cat > /app/answers.json <<'EOF'\n" + json.dumps(ans) + "\nEOF\necho answers.json written")
+    if os.environ.get("FAKE_ARCHIVE") == "1" and not items and "ctxfold: removed items" in alltext:
+        if "ITEM 1 (archived)" not in alltext and "recall: item" not in alltext:
+            return "recall --item 1"
+        if "item 1:" not in alltext and "no archived sentence" not in alltext:
+            nm = sorted(set(re.findall(r"\b[a-z]+\d\d\b", json.dumps(ref[0]["state"]))))
+            return f"recall {nm[0] if nm else 'the'} --max-lines 5"
+        if "archive is read-only" not in alltext:
+            return "echo tampered > /tmp/.live_ctx/archive/item-001.txt"
     if not items:
+        if os.environ.get("FAKE_FOLD2") == "1":
+            return "next && next"
         if os.environ.get("FAKE_EARLY_ANSWER") == "1" and "ctxfold: removed items" in last \
                 and "has not arrived yet" not in alltext:
             return "echo '{}' > /app/answers.json && echo early-answer"
@@ -191,7 +207,7 @@ def plan_read(msgs):
                         "open(p,'w').write('\\n'.join(l[1:])+'\\n')\nPYEOF\necho guards-probe")
             return "echo guards-done"
         return "next"
-    n, body = items[-1]
+    n, body = max(items)
     seen = set()
     for r in ref[:n]:
         seen |= set(r["state"]) | {o[0] for o in r["ops"]}

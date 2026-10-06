@@ -21,6 +21,10 @@ Difficulty switches (each adds ONE kind of difficulty):
   --relative     some changes are relative: doubled, lost a third (only when divisible by 3),
                  went up by as much as another named counter holds at that moment
   --all          all of the above
+--surprise K   K hidden retention questions in the final item (keys s1..sK): the value a counter held at
+               the end of item b (later overwritten), who did X at Y in item b, a small number in item b.
+               Answers are graded exactly (numbers as integers; names case- and article-insensitive). The
+               report text is identical with and without --surprise.
 --density D = mean real changes per 2,000 tokens of text (default 3).
 Same grader, layout and per-batch reference (tests/reference.json: state and operations after every
 batch) as make_prose_ledger_tasks.py; task metadata kind = "sparse".
@@ -99,6 +103,7 @@ class Sparse:
         self.history: dict[str, list[int]] = {n: [] for n in names}
         self.ever: set[str] = set()
         self.ops: list[list] = []
+        self.fill_log: list[dict] = []     # structured record of this batch's filler (for --surprise)
 
     def num(self, n: int) -> str:
         return num_words(n) if self.o["words"] and self.r.random() < 0.7 else str(n)
@@ -128,8 +133,12 @@ class Sparse:
         if k < 0.15:
             return r.choice(WEATHER)
         if k < 0.25:
-            return r.choice(SMALL).format(n=r.randint(2, 40))
-        s = f"{r.choice(PEOPLE)} {r.choice(ACTS)} {r.choice(PLACES)} {r.choice(TIMES)}."
+            t, n = r.choice(SMALL), r.randint(2, 40)
+            self.fill_log.append({"kind": "small", "t": t, "n": n})
+            return t.format(n=n)
+        who, act, place, when = r.choice(PEOPLE), r.choice(ACTS), r.choice(PLACES), r.choice(TIMES)
+        self.fill_log.append({"kind": "act", "who": who, "act": act, "place": place})
+        s = f"{who} {act} {place} {when}."
         return s[0].upper() + s[1:]
 
     def change(self) -> list[str]:
@@ -233,16 +242,58 @@ class Sparse:
         return pre + [out]
 
 
+def surprise_questions(srng: random.Random, k: int, refs: list, fills: list, final: dict) -> list:
+    """k questions, half about old values (a counter's value at the end of item b that a later item
+    overwrote), half about filler details that occur exactly once in their item (who did X at Y; a small
+    number). Returns (key, question, answer, type, item)."""
+    nb = len(refs)
+    old = []
+    for b in range(1, nb - 1):
+        for c, v in refs[b - 1]["state"].items():
+            if final.get(c) != v and refs[b - 1]["state"].get(c) != (refs[b - 2]["state"].get(c) if b >= 2 else None):
+                old.append((b, c, v))
+    det = []
+    for b, fl in enumerate(fills, 1):
+        acts = [f for f in fl if f["kind"] == "act"]
+        for f in acts:
+            if sum(1 for x in acts if x["act"] == f["act"] and x["place"] == f["place"]) == 1:
+                det.append((b, "who", f))
+        smalls = [f for f in fl if f["kind"] == "small"]
+        for f in smalls:
+            if sum(1 for x in smalls if x["t"] == f["t"]) == 1:
+                det.append((b, "small", f))
+    out = []
+    n_old = min(len(old), k // 2)
+    for b, c, v in srng.sample(old, n_old):
+        out.append((f"What value did {c} hold at the end of item {b}?", v, "old_value", b))
+    picks = srng.sample(det, min(len(det), k - n_old))
+    small_q = {"The bus was {n} minutes late.": "how many minutes late was the bus",
+               "Someone counted {n} gulls on the roof.": "how many gulls were counted on the roof",
+               "The kettle took {n} minutes to boil.": "how many minutes did the kettle take to boil",
+               "The walk to the station took {n} minutes.": "how many minutes did the walk to the station take",
+               "There were {n} chairs in the meeting room.": "how many chairs were in the meeting room",
+               "The old clock was {n} seconds fast.": "how many seconds fast was the old clock"}
+    for b, kind, f in picks:
+        if kind == "who":
+            out.append((f"In item {b}, who {f['act']} {f['place']}?", f["who"], "who", b))
+        else:
+            out.append((f"In item {b}, {small_q[f['t']]}?", f["n"], "small", b))
+    srng.shuffle(out)
+    return [(f"s{i}", q, a, t, b) for i, (q, a, t, b) in enumerate(out, 1)]
+
+
 def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int, density: float,
           n_get: int, n_counters: int, mode: str, opts: dict, cpt: float, count_exact,
-          n_batches: int | None) -> dict:
+          n_batches: int | None, surprise: int = 0) -> dict:
     tag = "".join(k[0] for k in ("words", "pronouns", "corrections", "plans", "relative") if opts[k]) or "plain"
     rng = random.Random(f"sparse-{seed}-{target_tokens}-{batch_tokens}-{density}-{tag}-{n_counters}")
     g = Sparse(rng, n_counters, opts)
     count = count_exact or (lambda t: int(len(t) / cpt))
     batches, refs, tokens = [], [], 0
+    fills = []
     while True:
         g.ops = []
+        g.fill_log = []
         mean = density * batch_tokens / 2000
         k = max(0, round(rng.gauss(mean, max(1.0, mean ** 0.5))))
         units = [g.change() for _ in range(k)]
@@ -267,6 +318,7 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
         text = "\n\n".join(paras)
         batches.append(text)
         refs.append({"state": dict(g.state), "ops": g.ops})
+        fills.append(g.fill_log)
         tokens += count(text)
         if n_batches is not None:
             if len(batches) >= n_batches:
@@ -280,12 +332,24 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
     rng.shuffle(queried)
     exp = {n: g.state.get(n) for n in queried}
     total = len(batches) + 1
+    # --surprise K: hidden retention questions (asked only in the final item) about OLD values that were
+    # later overwritten and about details of the narrative filler. A separate random stream, so the
+    # report text is identical with and without --surprise.
+    asks = surprise_questions(random.Random(f"surprise-{seed}-{target_tokens}-{density}-{tag}"), surprise,
+                              refs, fills, g.state) if surprise else []
+    for key, q, a, _t, _b in asks:
+        exp[key] = a
+    ask_txt = ("\n\nAlso answer these questions about earlier items in /app/answers.json, under the keys "
+               "given (a number, or the words asked for):\n" + "\n".join(f"ASK {k}: {q}" for k, q, _a, _t, _b in asks)
+               ) if asks else ""
     items = [{"kind": "UPDATE", "total": total, "text": b} for b in batches]
     items.append({"kind": "QUERY", "total": total,
                   "text": "The auditors ask for the current value of each counter below (null if it has "
-                          "been removed). Answer in /app/answers.json:\n" + "\n".join(f"QUERY {n}" for n in queried),
+                          "been removed). Answer in /app/answers.json:\n" + "\n".join(f"QUERY {n}" for n in queried)
+                          + ask_txt,
                   "last": "This was the last item. Write /app/answers.json now."})
-    spec = {"kind": "ledger", "mode": mode, "expected": exp, "history": {n: g.history[n] for n in queried},
+    spec = {"kind": "ledger", "mode": mode, "expected": exp,
+            "history": {n: g.history[n] for n in queried},
             "all_names": sorted(g.ever), "n_items": total}
     extra = []
     if opts["pronouns"]:
@@ -294,6 +358,10 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
         extra.append('A correction of a figure given earlier ("should have been 40, not 14") replaces that figure.')
     if opts["plans"]:
         extra.append("A plan changes a counter only if a later sentence says it went ahead.")
+    if asks:
+        extra.append("The final item may also ask questions about earlier items: a value a counter held at the "
+                     "end of a given item, or a detail of the day book (who did something, a small number); answer "
+                     "them in /app/answers.json under the keys it gives (s1, s2, ...).")
     rel = ", doubled, reduced by a third, or increased by as much as another counter holds" if opts["relative"] else ""
     instr = INSTRUCTION.format(
         total=total, n_batches=len(batches), batch_tokens=tokens // len(batches), n_get=len(queried),
@@ -307,10 +375,13 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
                metadata={"seed": seed, "target_tokens": target_tokens, "stream_tokens": tokens,
                          "token_counter": "tokenizer" if count_exact else f"chars/{cpt}",
                          "batch_tokens": tokens // len(batches), "density": density, "setting": tag,
-                         "n_get": len(queried), "n_counters": len(g.ever), "n_deleted_queried": n_gone},
+                         "n_get": len(queried), "n_counters": len(g.ever), "n_deleted_queried": n_gone,
+                         "n_surprise": len(asks)},
                description=f"sparse prose ledger ({tag}, density {density}), {mode}, ~{tokens} tokens, seed {seed}",
                kind="sparse")
-    (d / "tests" / "reference.json").write_text(json.dumps({"after_batch": refs}))
+    (d / "tests" / "reference.json").write_text(json.dumps({
+        "after_batch": refs,
+        "surprise": {k: {"q": q, "a": a, "type": t, "item": b} for k, q, a, t, b in asks}}))
     return {"name": name, "setting": tag, "density": density, "n_batches": len(batches),
             "stream_tokens": tokens, "counters": len(g.ever),
             "changes": sum(len([o for o in r["ops"]]) for r in refs)}
@@ -328,6 +399,8 @@ def main() -> None:
     for f in ("words", "pronouns", "corrections", "plans", "relative", "all"):
         ap.add_argument(f"--{f}", action="store_true")
     ap.add_argument("--n-get", type=int, default=24)
+    ap.add_argument("--surprise", type=int, default=0,
+                    help="add K hidden retention questions to the final item (old values, filler details)")
     ap.add_argument("--n-counters", type=int, default=60)
     ap.add_argument("--chars-per-token", type=float, default=3.9)
     ap.add_argument("--exact-tokens", action="store_true")
@@ -345,7 +418,7 @@ def main() -> None:
             size = f"b{a.n_batches}" if a.n_batches else f"t{n // 1000}k"
             print(json.dumps(build(out, f"sparse-{a.mode}-{size}-s{s}", n, s, a.batch_tokens, a.density,
                                    a.n_get, a.n_counters, a.mode, opts, a.chars_per_token, count_exact,
-                                   a.n_batches)))
+                                   a.n_batches, a.surprise)))
 
 
 if __name__ == "__main__":

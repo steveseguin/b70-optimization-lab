@@ -18,6 +18,7 @@ Usage: ctxfold [FINAL_KIND ...]   (items of these kinds are never folded; defaul
                        mentioned counter has a STATE.txt line, then remove the item turns)
 """
 import collections
+import os
 import importlib.util
 import re
 import sys
@@ -27,6 +28,8 @@ D = "/tmp/.live_ctx"
 MIRROR, STATE, FOLD = D + "/LIVE_CTX_MAIN.txt", D + "/STATE.txt", D + "/FOLD.py"
 HDR = re.compile(r"(\[\[CTX_TURN \d+ [^\]]*\]\])")
 ITEM = re.compile(r"\s*ITEM (\d+)/(\d+) \((\w+)\)\n")
+ITEMS = re.compile(r"(?m)^ITEM (\d+)/(\d+) \((\w+)\)\n")
+ARCH = "/tmp/.live_ctx/archive"
 
 
 def die(msg):
@@ -47,12 +50,19 @@ def drop(final, force=False):
         state = ""
     held = set(re.findall(r"(?m)^\s*([a-z]+\d\d)\b", state))
     parts = HDR.split(s)
-    out, done, named = [parts[0]], [], set()
+    out, done, named, texts = [parts[0]], [], set(), {}
     for i in range(1, len(parts), 2):
         h, b = parts[i], (parts[i + 1] if i + 1 < len(parts) else "")
         m = ITEM.match(b)
         if m and "role=tool" in h and m.group(3) not in final:
-            done.append(int(m.group(1)))
+            body = b.split("\n\n(exit_code=")[0]
+            heads = list(ITEMS.finditer(body))       # one turn can hold several items (`next && next`)
+            for j, hm in enumerate(heads):
+                end = heads[j + 1].start() if j + 1 < len(heads) else len(body)
+                if hm.group(3) in final:
+                    continue
+                done.append(int(hm.group(1)))
+                texts[int(hm.group(1))] = body[hm.end():end].strip()
             named |= set(re.findall(r"\b[a-z]+\d\d\b", b))
             continue
         out += [h, b]
@@ -63,8 +73,19 @@ def drop(final, force=False):
     if missing and not force:
         die(f"items {done} mention counters with no line in STATE.txt: {' '.join(missing)}. Add each "
             f"(`name value`, or `name removed` if it was removed) and run `ctxfold --drop` again")
+    archived = 0
+    if os.path.exists(ARCH + "/.on"):            # archive-on-drop (arm B32ira): verbatim, never overwritten
+        for n, t in texts.items():
+            f = f"{ARCH}/item-{n:03d}.txt"
+            if not os.path.exists(f):
+                with open(f, "w") as fh:
+                    fh.write(t + "\n")
+                os.chmod(f, 0o444)
+                archived += 1
     open(MIRROR, "w").write("".join(out))
-    print(f"ctxfold: removed items {done} from your context; STATE.txt has {len(held)} counter lines"
+    print(f"ctxfold: removed items {done} from your context"
+          + (f" (archived verbatim: {archived}; `recall` searches them)" if archived else "")
+          + f"; STATE.txt has {len(held)} counter lines"
           + (f" (forced; missing: {' '.join(missing)})" if missing else ""))
 
 

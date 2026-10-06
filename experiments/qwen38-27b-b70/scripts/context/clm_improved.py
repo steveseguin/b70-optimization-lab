@@ -129,6 +129,7 @@ def _install_extra_body_hook() -> None:
 STATE_PATH = "/tmp/.live_ctx/STATE.txt"
 FOLD_PATH = "/tmp/.live_ctx/FOLD.py"
 CTXFOLD_SRC = __import__("pathlib").Path(__file__).with_name("ctxfold.py")
+RECALL_SRC = __import__("pathlib").Path(__file__).with_name("recall.py")
 PIN_TAG = "[[PINNED STATE: this is /tmp/.live_ctx/STATE.txt; edit that file, not this turn]]"
 
 PROTOCOL = """
@@ -252,6 +253,13 @@ class _ImprovedEnv(ContextEnv):
         # about 150 times on an unchanged context until the step cap; B32ir re-ran an update command):
         # the exact command just run, when no new item has been delivered since, is not run again.
         cmd = (command or "").strip()
+        if a.archive and "live_ctx/archive" in cmd and not re.match(r"(recall|ctxfold)\b", cmd):
+            a.n_archive_refused += 1
+            text = ("NOT RUN: the archive is read-only and kept by the harness; search it with `recall PATTERN` "
+                    "or `recall --item N`.")
+            res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
+            return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
+                              readout="", notes="", exec_time=0.0, touched_ctx=False)
         # Answers guard (2026-10-05: B32ir sparse seed 1 and B32in 478K both wrote the WHOLE table to
         # /app/answers.json before the final item with the questions had arrived -> VOID): writing the
         # answers file or submitting is not run until the final item has been delivered.
@@ -281,12 +289,13 @@ class _ImprovedEnv(ContextEnv):
         if a._guard_cmd.search(command or ""):
             shown = messages + ([pending] if pending else [])
             now = self.budget.count(shown)
-            need = a._largest_delivery + a.guard_headroom
+            n_fetch = max(1, len(re.findall(r"(?:^|[;&|]\s*)next\b", command or "")))
+            need = a._largest_delivery * n_fetch + a.guard_headroom
             limit = self.budget.strict_target or 0
             if limit and a._largest_delivery and now + need > limit:
                 a.n_gate_refusals += 1
-                text = (f"NOT RUN: `{command.strip()[:60]}` delivers an item of up to "
-                        f"~{a._largest_delivery} tokens, and only ~{max(limit - now, 0)} of the "
+                text = (f"NOT RUN: `{command.strip()[:60]}` delivers {n_fetch} item(s) of up to "
+                        f"~{a._largest_delivery} tokens each, and only ~{max(limit - now, 0)} of the "
                         f"{limit}-token limit are free (need ~{need} incl. headroom). Fold the "
                         f"newest item into {STATE_PATH} and delete its turn first.")
                 res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
@@ -305,7 +314,7 @@ class _ImprovedEnv(ContextEnv):
         out0 = getattr(res.result, "stdout", "") or ""
         if _ITEM_FINAL.search(out0):
             a._final_seen = True
-            a._asked = re.findall(r"(?m)^(?:QUERY|GET) (\S+)\s*$", out0)
+            a._asked = re.findall(r"(?m)^(?:QUERY|GET) (\S+)\s*$", out0) + re.findall(r"(?m)^ASK (\S+?):", out0)
         if a.answers_guard and a._final_seen and ANSWERS in cmd and _WRITES.search(cmd):
             try:
                 r = await environment.exec(command="python3 -c 'import json; print(json.dumps(sorted("
@@ -322,7 +331,10 @@ class _ImprovedEnv(ContextEnv):
                 pass
         out = getattr(res.result, "stdout", "") or ""
         if a._guard_out.search(out):
-            a._deliveries += 1
+            a._deliveries += max(1, len(re.findall(r"(?m)^ITEM \d+/\d+ \(", out)))
+        if re.match(r"recall\b", cmd):
+            a.n_recalls += 1
+            a.recall_tokens += self.budget.count([{"role": "tool", "content": res.stdout_block}])
         if res.ctx_changed:
             a._edit_since_call = True
         if out.lstrip().startswith(("ctxfold: folded", "ctxfold: removed items")):
@@ -370,6 +382,17 @@ ANSWERS = "/app/answers.json"
 _WRITES = re.compile(r">|open\(|json\.dump|write|tee\b|cp\b|mv\b")
 _ITEM_UPDATE = re.compile(r"ITEM \d+/\d+ \((?!QUERY|GET)")
 _ITEM_FINAL = re.compile(r"ITEM \d+/\d+ \((?:QUERY|GET)\)")
+
+
+ARCHIVE_NOTE = """- Every item you drop is kept verbatim in a read-only archive (nothing is lost, only moved out of view).
+  `recall PATTERN` prints the archived sentences that match (as `item N: ...`), `recall --item N` prints
+  item N. Their output enters your context like any tool output, so search narrowly. Questions about
+  earlier items (old values, who did what) are answered from the archive, not from STATE.txt.
+"""
+
+FOLD_N_NOTE = """- To save calls, fetch up to {k} items in one command (`{cmd}`) when the room check allows it, then
+  fold them all in ONE update (apply the items in order) and drop them together with `ctxfold --drop`.
+"""
 
 
 class _PinnedState:
@@ -460,7 +483,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                  stable_render: Any = True, stable_mirror: Any = True,
                  thinking_policy: str = "always", stable_system: Any = None,
                  fold_mode: str = "script", read_reasons: Any = False, repeat_guard: Any = True,
-                 recover_text_calls: Any = True, answers_guard: Any = True, **kwargs: Any) -> None:
+                 recover_text_calls: Any = True, answers_guard: Any = True, archive: Any = False,
+                 fold_batches: int | str = 1, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # v3 (2026-10-05): stable prompt layout and per-call thinking
         self.stable_mirror = _as_bool(stable_mirror)
@@ -472,6 +496,10 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.read_reasons = _as_bool(read_reasons)
         self.repeat_guard = _as_bool(repeat_guard)
         self.answers_guard = _as_bool(answers_guard)
+        # archive-on-drop + recall (arm B32ira) and multi-item folding (FOLD_BATCHES)
+        self.archive = _as_bool(archive)
+        self.fold_batches = max(1, int(fold_batches or 1))
+        self.n_archive_refused = self.n_recalls = self.recall_tokens = 0
         self._final_seen, self._asked = False, []
         self.n_answers_refused = self.n_answer_key_notes = 0
         self._last_cmd, self._deliveries, self._deliveries_at_last = "", 0, -1
@@ -703,6 +731,12 @@ class ClmImprovedAgent(_h.ClmAgent):
         await environment.exec(
             command="cat > /usr/local/bin/ctxfold <<'CTXFOLD_EOF'\n" + src + "\nCTXFOLD_EOF\n"
                     "chmod +x /usr/local/bin/ctxfold", timeout_sec=60)
+        if self.archive:
+            rsrc = RECALL_SRC.read_text()
+            await environment.exec(
+                command="mkdir -p /tmp/.live_ctx/archive && touch /tmp/.live_ctx/archive/.on && "
+                        "cat > /usr/local/bin/recall <<'RECALL_EOF'\n" + rsrc + "\nRECALL_EOF\n"
+                        "chmod +x /usr/local/bin/recall", timeout_sec=60)
 
     def _validate(self, text: str) -> str:
         if tk.count_tokens([{"role": "user", "content": text}])[0] > self.state_max_tokens:
@@ -743,6 +777,10 @@ class ClmImprovedAgent(_h.ClmAgent):
         saved = _h._SYSTEM_TEMPLATE
         proto = (PROTOCOL_READ + (READ_REASONS if self.read_reasons else "")) if self.fold_mode == "read" \
             else PROTOCOL
+        if self.archive:
+            proto += ARCHIVE_NOTE
+        if self.fold_batches > 1:
+            proto += FOLD_N_NOTE.format(k=self.fold_batches, cmd=" && ".join(["next"] * self.fold_batches))
         _h._SYSTEM_TEMPLATE = saved.replace("{{finish_instructions}}", proto + "\n{{finish_instructions}}") \
             if "{{finish_instructions}}" in saved else saved + proto
         try:
@@ -760,6 +798,9 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "continuation_error": self._continuation_broken,
                     "repeats_refused": self.n_repeats_refused,
                     "answers_refused": self.n_answers_refused,
+                    "archive": self.archive, "fold_batches": self.fold_batches,
+                    "recall_calls": self.n_recalls, "recall_output_tokens": self.recall_tokens,
+                    "archive_write_refused": self.n_archive_refused,
                     "answer_key_notes": self.n_answer_key_notes,
                     "text_calls_recovered": self.n_text_calls_recovered,
                     "thinking_policy": self.thinking_policy,

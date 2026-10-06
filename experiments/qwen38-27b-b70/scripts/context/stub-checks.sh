@@ -31,6 +31,9 @@
 #                   and no call's messages (pinned state aside) differ from the previous call's except
 #                   after a context edit (prefix stability)
 #  14 imp-never      THINKING_POLICY=never (B32io): every request has enable_thinking=false
+#  20 imp-archive    archive-on-drop + recall (B32ira) with retention questions: verbatim archive accepted by the
+#                   grader, archive writes refused, recall works, reward 1.0 incl. retention answers
+#  21 imp-fold2      FOLD_BATCHES=2: two items per fetch and per fold; reward 1.0
 #  19 imp-answers    writing /app/answers.json before the final item is refused (answers guard); reward 1.0
 #  18 imp-guards     read mode: repeated command refused, STATE line vanishing without an item rejected and
 #                   restored, `next` written as text recovered as a tool call; reward 1.0
@@ -374,6 +377,49 @@ LTASK=$LTASK_SAVE
 ar=$("$PY" -c "import json,glob; print(json.load(open(glob.glob('$O/runs/jobs/imp-answers/*/agent/improved_stats.json')[0])).get('answers_refused',0))")
 msg="reward=$reward void=$void ended_by=$ended_by answers_refused=$ar"
 [[ $invalid == False && $void == False && $reward == 1.0 && ${ar:-0} -ge 1 ]] && pass imp-answers "$msg" || fail imp-answers "$msg"
+# 20 archive-on-drop + recall (arm B32ira) on a tiny sparse task with retention questions: dropped items are
+# archived verbatim, `recall` reads them, writing into the archive is refused, the grader accepts the archive
+# (rule ok+archive, not VOID), reward 1.0 including the retention questions
+"$PY" "$D/make_sparse_prose_tasks.py" "$O/tasks-sparse-s" --n-batches 4 --density 6 --batch-tokens 600 \
+  --n-counters 8 --surprise 4 --seeds 0 > "$O/tasks-sparse-s.json"
+SSTASK=$(ls -d "$O"/tasks-sparse-s/sparse-memory-b4-s0)
+FAKE_PLAN=improved-read FAKE_ARCHIVE=1 FAKE_REFERENCE="$SSTASK/tests/reference.json" start_stub "$O/stub-archive.log"
+LTASK_SAVE=$LTASK; LTASK=$SSTASK
+FOLD_MODE=read THINKING_POLICY=judgement ARCHIVE=1 ijob imp-archive 200000 ""
+LTASK=$LTASK_SAVE
+ac=$("$PY" - "$O/runs/jobs/imp-archive" <<'PY'
+import json, sys, glob
+t = glob.glob(sys.argv[1] + "/*/agent/improved_stats.json")[0].rsplit("/agent/", 1)[0]   # the trial dir
+st = json.load(open(t + "/agent/improved_stats.json"))
+dt = json.load(open(t + "/verifier/details.json"))
+print(st.get("recall_calls", 0), st.get("archive_write_refused", 0), (dt.get("archive") or {}).get("verbatim", 0),
+      (dt.get("archive") or {}).get("files", 0), (dt.get("surprise") or {}).get("correct", 0), (dt.get("surprise") or {}).get("n", 0))
+PY
+)
+read -r a_rec a_ref a_ver a_files a_sc a_sn <<< "$ac"
+msg="reward=$reward void=$void recall_calls=$a_rec archive_write_refused=$a_ref archive_verbatim=$a_ver/$a_files surprise=$a_sc/$a_sn"
+[[ $invalid == False && $void == False && $reward == 1.0 && ${a_rec:-0} -ge 2 && ${a_ref:-0} -ge 1 && ${a_ver:-0} -ge 4 \
+   && $a_ver == "$a_files" && ${a_sn:-0} -ge 1 && $a_sc == "$a_sn" ]] && pass imp-archive "$msg" || fail imp-archive "$msg"
+
+# 21 FOLD_BATCHES=2: two items per fetch and per fold (`next && next`), room check scaled; reward 1.0
+FAKE_PLAN=improved-read FAKE_FOLD2=1 FAKE_REFERENCE="$STASK/tests/reference.json" start_stub "$O/stub-fold2.log"
+LTASK_SAVE=$LTASK; LTASK=$STASK
+FOLD_MODE=read THINKING_POLICY=judgement FOLD_BATCHES=2 ijob imp-fold2 200000 ""
+LTASK=$LTASK_SAVE
+f2=$("$PY" - "$O/runs/jobs/imp-fold2" <<'PY'
+import json, sys, glob, re
+t = glob.glob(sys.argv[1] + "/*/agent")[0]
+ctx = json.load(open(t + "/trajectory.ctx.json"))
+obs = [r.get("content") or "" for seg in ctx["segments"] for st in seg["steps"]
+       for r in ((st.get("observation") or {}).get("results") or [])]
+drops = [o for o in obs if o.startswith("ctxfold: removed items")]
+two = sum(1 for o in drops if re.search(r"\[\d+, \d+\]", o))
+print(len(drops), two, json.load(open(t + "/improved_stats.json")).get("fold_batches"))
+PY
+)
+read -r f_drops f_two f_fb <<< "$f2"
+msg="reward=$reward ended_by=$ended_by drops=$f_drops two_item_drops=$f_two fold_batches=$f_fb items_lost=$items_lost"
+[[ $invalid == False && $reward == 1.0 && ${f_two:-0} -ge 1 && $f_fb == 2 && $items_lost == 0 ]] && pass imp-fold2 "$msg" || fail imp-fold2 "$msg"
 stop_stub
 
 echo; "$PY" "$D/summarize_results.py" --brief "$O/runs" | tee "$O/summary.txt"
