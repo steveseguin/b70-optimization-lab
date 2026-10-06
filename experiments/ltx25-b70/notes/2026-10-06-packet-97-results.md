@@ -16,6 +16,9 @@ its reference.
   ruling (was 1.348).
 - **With batch 2 (two jobs): 0.927 s per clip, 27.0 fps equivalent, 133 of 133 exact** against the batch-2
   references. The best figure so far; it counts only if the owner accepts batch-2 clips.
+- **With batch 4 (two jobs): 0.812 s per clip, 30.8 fps equivalent, 131 of 131 exact** against the batch-4
+  references (proofs 12/12 and 12/12). The two-job batch-4 combination that failed once on packet 96 ran
+  cleanly here, with no failed-job record, so that failure was a one-off. Cards 54-69 % busy.
 - Three jobs instead of two gave nothing more (0.935). Card 0 is now the busiest at about 90 %.
 
 ## Runs
@@ -26,6 +29,7 @@ its reference.
 | `two-way-w2-b2-p1-dxpu2` | 2 | 2 | batch-2 | 133 | 133 | **0.927** (27.0 fps) | 0.83 / 0.67 / 0.73 / 0.79 |
 | `two-way-w3-b2-p1-dxpu2` | 2 | 3 | batch-2 | 131 | 131 | 0.935 (26.7 fps) | 0.86 / 0.68 / 0.76 / 0.82 |
 | `two-way-w3-b2-p1-dxpu1xpu2` (three decode workers) | 2 | 3 | batch-2 | 131 | 131 | 0.959 (26.1 fps) | 0.85 / 0.90 / 0.56 / 0.57 |
+| `two-way-w2-b4-p1-dxpu2` | 4 | 2 | batch-4 | 131 | 131 | **0.812** (30.8 fps) | 0.66 / 0.54 / 0.64 / 0.69 |
 
 - A third decode worker (replicas on cards 1 and 2) did not help: it puts decode work back on card 1, which
   rises to 0.90 s per clip, and the stream is slower (0.959). Two decode workers, native on card 3 and the
