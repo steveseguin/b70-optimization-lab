@@ -6,6 +6,9 @@ TOP=$OUT_DIR
 run() { sub=$1; shift; [ -e "$TOP/STOP" ] && { echo "stopped by STOP file"; exit 0; }; echo "### [$sub] $*"; mkdir -p "$TOP/$sub"
         [ -e "$TOP/STOP" ] && touch "$TOP/$sub/STOP"; env "$@" OUT_DIR="$TOP/$sub" SUBSET=core ./second-comparison.sh || echo "### block ended rc=$?"; }
 export READ_REASONS=0
+# the two things the owner wants to beat on the reading task: plain summarising at 75 % and the paper's agent
+SPARSE_ARGS="--density 3 --words"  run rd120-base ARMS="C32" KINDS=sparse SEEDS="0" SIZES=120000
+SPARSE_ARGS="--density 3 --words"  run rd120-base ARMS="B32" KINDS=sparse SEEDS="0" SIZES=120000
 SPARSE_ARGS="--density 6 --words"  run rd120-d6  ARMS="B32ir" KINDS=sparse SEEDS="0" SIZES=120000
 SPARSE_ARGS="--density 12 --words" run rd120-d12 ARMS="B32ir" KINDS=sparse SEEDS="0" SIZES=120000
 SPARSE_ARGS="--density 3 --words"  run rd480-files ARMS="E32r" KINDS=sparse SEEDS="0" SIZES=480000
