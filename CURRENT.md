@@ -1,7 +1,38 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-05 08:40 UTC** (2026-10-05 04:40 EDT), two-B70 host.
+Last reviewed: **2026-10-06 03:10 UTC** (2026-10-05 23:10 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
+
+## 2026-10-05 23:10 EDT, two-B70 host: the model read 1.8 times its window by understanding, every answer right; the comparison matrix and an explainer page are up
+
+**A read-mode self-editing agent at a 32K budget read a 480K-token narrative stream (1.8 times the whole window),
+kept an exact running table and got 24 of 24, in 26 minutes with never more than 24K tokens in view. Files plus
+search stay the fastest route when code can do the reading. Keeping everything in the big window failed twice at
+the window edge on long jobs. All of it is one or two seeds, one machine.**
+
+- **Comparison on the 121K running ledger (no files):** paper's self-editing agent 19 of 24 in 64 min; summarise
+  at 75 % 24 in 41 min; keep everything 24 in 26 min on one seed and 0 on the other (ran out of window with an
+  exact table); improved agent 24 and 21 in 15-21 min; **thinking-reduced improved agent 24 and 24 in about 6 min**.
+  With files allowed: 24 in under 2 minutes, context under 9K, at 121K and at 478K.
+- **Reading by understanding (narrative text, 3 changes per 2K batch, calibrated so a single step is about 98 %
+  right):** read-mode agent 23 of 24 and 18 of 18 at 119K (5 minutes each), **24 of 24 at 480K**; keep everything 24
+  at 119K in 20 min; files 24 in 5 min. Before the loop guards the same agent got 20 of 24 at 119K and failed at
+  480K; the losses were the loop repeating itself with thinking off, not the reading.
+- **What an edit costs with the exact cache:** re-read from the last kept state before the edit to the end: 0.7 to
+  16 s near the end of a 30K-200K context, the whole cold read (11 s to 152 s) near the start. The paper's suffix
+  reuse avoids that by reusing stale cache; an explainer page with diagrams is on the research site
+  (skindeep.ai, "Changing the context without re-reading it").
+- **Standard gate with the cache on:** 12 of 12 exact twice, 89.6 tok/s against 88.5 off; write rate unchanged.
+- **Prose ledger as first built** (40-95 interleaved changes per batch) is beyond the model in a single step (38-53
+  %); that run was not a reading test and was recorded as such.
+- Notes: [results for the owner](experiments/qwen38-27b-b70/notes/2026-10-05-context-research-results.md),
+  [time and reuse](experiments/qwen38-27b-b70/notes/2026-10-05-context-time-and-reuse.md),
+  [self-editing comparisons](experiments/qwen38-27b-b70/notes/2026-10-05-self-editing-first-comparison.md),
+  [follow-up proposals](experiments/qwen38-27b-b70/notes/2026-10-05-context-followup-ideas.md).
+
+**Doing next:** second seeds and the window-shown keep-everything retry (running); then harder reading (6 and 12
+changes per batch), a 1M-token stream (four times the window), the files baseline at 480K; then the one-card server
+(44K window) with the exact cache, which is the small-video-memory case the owner asked about.
 
 ## 2026-10-05 04:40 EDT, two-B70 host: context research, results of the night so far
 
