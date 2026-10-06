@@ -90,7 +90,7 @@ value of 24 counters. Files forbidden unless stated. Budget = how much context t
 | **Thinking-reduced** improved agent (verified fold, thinking only when judgement is needed), 32K, seed 0 | 24 | **6.6 min** | 20K tok | 84 calls, peak context 17K |
 | Thinking-reduced improved agent, 32K, seed 1 | 24 | **5.7 min** | 18K tok | the seed where the earlier version got 21 |
 | Improved agent on a **478K stream** (1.8 times the whole window), 32K budget | 24 | **8.2 min** | 36K tok | peak context 10K; 76 batches, 37 calls |
-| Thinking-reduced improved agent, 478K stream, 32K | **0** | 18 min | 49K tok | failed: 21 stale and 3 wrong, and void; cause being traced (the first improved agent had got 24 here) |
+| Thinking-reduced improved agent, 478K stream, 32K | **0** | 18 min | 49K tok | failed: with thinking off it repeated the same fold command about 150 times after batch 44 ("no unfolded item") until the step cap; its table was right through batch 44; void because it dumped every counter into the answers file |
 | Files allowed, thinking fully off, 121K ledger | 24 | | | |
 | No management, **files allowed**, 478K stream | 24 | **1.9 min** | 8K tok | 11 calls, peak context 9.7K |
 | Self-editing, **files allowed**, 478K stream | 24 | **1.3 min** | 5K tok | 12 calls, peak context 7.1K |
@@ -261,7 +261,11 @@ the run ends).
   reference shows the table first went wrong at batch 12 (an addition done wrong), and at the end five counters
   were wrong: two arithmetic slips, two counters dropped from the table, one lost during an edit. That is close to
   the three single-step errors the calibration predicted, plus two losses from the editing itself. The agent wrote
-  no parser.
+  no parser. Read closely: one genuine arithmetic slip (369 − 65 written as 309), two counters changed by a
+  command the model re-ran after the batch had already been dropped (an invented update, with thinking off), and
+  one counter it failed to re-open because its own one-line script treated the "removed" marker as "present". Two
+  misread numbers earlier in the run were corrected by later batches. So of four wrong answers, one is reading and
+  three are the agent loop with thinking off doing the same thing twice. Guards for that are being added.
 - **With everything in view the model got all 24**, at twice the time: 160K of context and 53K tokens written,
   most of it thinking at the end. 120K fits the window; a 480K stream would not.
 - **Files won again, by a different route:** the model wrote a script that finds the sentences naming a counter
