@@ -249,7 +249,12 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   echo "arm=$arm agent_class=${xa[1]:-run-context-job.sh default for $agent} extra_kwargs=$extra" > "$RUNS/$job.arm.txt"
   TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" EXTRA_KWARGS="${EXTRA_KWARGS:-} $extra" "$D/run-context-job.sh" "$agent" "$RUNS" "${xa[@]}" > "$RUNS/$job.out" 2>&1
-  echo "   rc=$? $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
+  local rc=$?
+  if (( rc != 0 )); then
+    echo "!!! $job: launcher exited with status $rc; this run does not count"
+    FAILED=1
+  fi
+  echo "   rc=$rc $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
   if ! "$PY" "$D/summarize_results.py" --brief --check "$RUNS/jobs/$job" > "$RUNS/$job.check" 2>&1; then
     echo "!!! $job: a cap, timeout, server refusal or the storage rule ended this run; it does not count:"
     grep '^!!!' "$RUNS/$job.check" | sed 's/^/    /'
