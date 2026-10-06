@@ -1,0 +1,1048 @@
+{
+  "schema": "ltx.resolution-cost-probe.v1",
+  "blocks": 12,
+  "batch_size": 1,
+  "frames": 25,
+  "frame_rate": 24.0,
+  "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-workers-95/source",
+  "affinity_mask": "0",
+  "comfy_args": [
+    "--cache-none",
+    "--deterministic",
+    "--disable-async-offload",
+    "--disable-dynamic-vram",
+    "--disable-comfy-compiler",
+    "--disable-cuda-graphs",
+    "--disable-pinned-memory",
+    "--reserve-vram",
+    "2",
+    "--bf16-unet",
+    "--bf16-text-enc",
+    "--bf16-vae",
+    "--use-pytorch-cross-attention",
+    "--disable-xformers",
+    "--disable-api-nodes"
+  ],
+  "skip_decode": false,
+  "sizes": {
+    "256x256": {
+      "width": 256,
+      "height": 256,
+      "stages": {
+        "stage1": {
+          "width": 128,
+          "height": 128,
+          "video_latent_shape": [
+            1,
+            128,
+            4,
+            4,
+            4
+          ],
+          "video_tokens": 64,
+          "audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "audio_tokens": 26,
+          "text_context_tokens": 1024,
+          "observed_video_latent_shape": [
+            1,
+            128,
+            4,
+            4,
+            4
+          ],
+          "observed_audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "observed_context_shape": [
+            1,
+            1024,
+            6144
+          ],
+          "timing": {
+            "wall_s": [
+              0.09887919700122438,
+              0.09802062201197259,
+              0.09844114299630746,
+              0.09792393000680022,
+              0.09773634801968001,
+              0.09776453100494109
+            ],
+            "wall_median_s": 0.0979722760093864,
+            "drm_samples": [
+              {
+                "ccs_busy_s": 0.09938730425967858,
+                "bcs_busy_s": 0.015658615804505616,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09831004640994787,
+                "bcs_busy_s": 0.011553080450490678,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09869923565751104,
+                "bcs_busy_s": 0.013626625296279121,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09815538802488499,
+                "bcs_busy_s": 0.015329905348299594,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09794701647973414,
+                "bcs_busy_s": 0.012540019202976203,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09796802008290129,
+                "bcs_busy_s": 0.015012061870925722,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              }
+            ],
+            "ccs_busy_s": [
+              0.09938730425967858,
+              0.09831004640994787,
+              0.09869923565751104,
+              0.09815538802488499,
+              0.09794701647973414,
+              0.09796802008290129
+            ],
+            "ccs_busy_median_s": 0.09823271721741643,
+            "bcs_busy_median_s": 0.014319343583602422,
+            "wall_ms_per_forward_per_block": 8.164356334115533,
+            "ccs_busy_ms_per_forward_per_block": 8.186059768118037,
+            "wall_ratio_to_256x256": 1.0,
+            "ccs_busy_ratio_to_256x256": 1.0
+          },
+          "sampler_forwards": 8
+        },
+        "stage2": {
+          "width": 256,
+          "height": 256,
+          "video_latent_shape": [
+            1,
+            128,
+            4,
+            8,
+            8
+          ],
+          "video_tokens": 256,
+          "audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "audio_tokens": 26,
+          "text_context_tokens": 1024,
+          "observed_video_latent_shape": [
+            1,
+            128,
+            4,
+            8,
+            8
+          ],
+          "observed_audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "observed_context_shape": [
+            1,
+            1024,
+            6144
+          ],
+          "timing": {
+            "wall_s": [
+              0.09765335099655204,
+              0.09748479397967458,
+              0.09745843400014564,
+              0.09748039601254277,
+              0.0971376119996421,
+              0.09724654597812332
+            ],
+            "wall_median_s": 0.0974694150063442,
+            "drm_samples": [
+              {
+                "ccs_busy_s": 0.09811867716302937,
+                "bcs_busy_s": 0.012299972774249424,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09772438722145571,
+                "bcs_busy_s": 0.014491383897628602,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09765107654397769,
+                "bcs_busy_s": 0.01202629331536445,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09764489377309736,
+                "bcs_busy_s": 0.014750327792433097,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.09729731057192349,
+                "bcs_busy_s": 0.012446652256488687,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.0973949805263165,
+                "bcs_busy_s": 0.015574477464506223,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              }
+            ],
+            "ccs_busy_s": [
+              0.09811867716302937,
+              0.09772438722145571,
+              0.09765107654397769,
+              0.09764489377309736,
+              0.09729731057192349,
+              0.0973949805263165
+            ],
+            "ccs_busy_median_s": 0.09764798515853752,
+            "bcs_busy_median_s": 0.013469018077058643,
+            "wall_ms_per_forward_per_block": 8.122451250528684,
+            "ccs_busy_ms_per_forward_per_block": 8.137332096544794,
+            "wall_ratio_to_256x256": 1.0,
+            "ccs_busy_ratio_to_256x256": 1.0
+          },
+          "sampler_forwards": 3
+        }
+      },
+      "sampling_status": "ok",
+      "sampling_peak_device_memory_bytes": 14315208704,
+      "video_decode": {
+        "wall_s": [
+          0.5167371999996249,
+          0.5161800030036829,
+          0.5162023240118288,
+          0.5156791699992027,
+          0.5167367389949504,
+          0.5167175729875453
+        ],
+        "wall_median_s": 0.516459948499687,
+        "drm_samples": [
+          {
+            "ccs_busy_s": 0.5170987808457812,
+            "bcs_busy_s": 0.5170983120697843,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 0.5164209918301157,
+            "bcs_busy_s": 0.5164222419147185,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 0.5164040210604637,
+            "bcs_busy_s": 0.5164137091811357,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 0.5159519520431107,
+            "bcs_busy_s": 0.5159529416965231,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 0.5169722240803508,
+            "bcs_busy_s": 0.5169735783441206,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 0.51694002804647,
+            "bcs_busy_s": 0.5169410697858244,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          }
+        ],
+        "ccs_busy_s": [
+          0.5170987808457812,
+          0.5164209918301157,
+          0.5164040210604637,
+          0.5159519520431107,
+          0.5169722240803508,
+          0.51694002804647
+        ],
+        "ccs_busy_median_s": 0.5166805099382928,
+        "bcs_busy_median_s": 0.5166816558502715,
+        "status": "ok",
+        "peak_device_memory_bytes": 2792497664,
+        "wall_ratio_to_256x256": 1.0,
+        "ccs_busy_ratio_to_256x256": 1.0
+      }
+    },
+    "512x320": {
+      "width": 512,
+      "height": 320,
+      "stages": {
+        "stage1": {
+          "width": 256,
+          "height": 160,
+          "video_latent_shape": [
+            1,
+            128,
+            4,
+            5,
+            8
+          ],
+          "video_tokens": 160,
+          "audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "audio_tokens": 26,
+          "text_context_tokens": 1024,
+          "observed_video_latent_shape": [
+            1,
+            128,
+            4,
+            5,
+            8
+          ],
+          "observed_audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "observed_context_shape": [
+            1,
+            1024,
+            6144
+          ],
+          "timing": {
+            "wall_s": [
+              0.10151524498360232,
+              0.10133862198563293,
+              0.10114013898419216,
+              0.10109716898296028,
+              0.10113672201987356,
+              0.101004174008267
+            ],
+            "wall_median_s": 0.10113843050203286,
+            "drm_samples": [
+              {
+                "ccs_busy_s": 0.10201418527402675,
+                "bcs_busy_s": 0.011207267747651805,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.1016121601192204,
+                "bcs_busy_s": 0.014514534639740454,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10140147030075113,
+                "bcs_busy_s": 0.013266048479181329,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.1012800922732715,
+                "bcs_busy_s": 0.012185984799111642,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.1013296654244627,
+                "bcs_busy_s": 0.01125921053476141,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10118865640982365,
+                "bcs_busy_s": 0.015360441178688074,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              }
+            ],
+            "ccs_busy_s": [
+              0.10201418527402675,
+              0.1016121601192204,
+              0.10140147030075113,
+              0.1012800922732715,
+              0.1013296654244627,
+              0.10118865640982365
+            ],
+            "ccs_busy_median_s": 0.10136556786260692,
+            "bcs_busy_median_s": 0.012726016639146485,
+            "wall_ms_per_forward_per_block": 8.428202541836072,
+            "ccs_busy_ms_per_forward_per_block": 8.447130655217244,
+            "wall_ratio_to_256x256": 1.0323168412699029,
+            "ccs_busy_ratio_to_256x256": 1.031892130584728
+          },
+          "sampler_forwards": 8
+        },
+        "stage2": {
+          "width": 512,
+          "height": 320,
+          "video_latent_shape": [
+            1,
+            128,
+            4,
+            10,
+            16
+          ],
+          "video_tokens": 640,
+          "audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "audio_tokens": 26,
+          "text_context_tokens": 1024,
+          "observed_video_latent_shape": [
+            1,
+            128,
+            4,
+            10,
+            16
+          ],
+          "observed_audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "observed_context_shape": [
+            1,
+            1024,
+            6144
+          ],
+          "timing": {
+            "wall_s": [
+              0.10261253800126724,
+              0.10308425599941984,
+              0.10271972001646645,
+              0.10191937501076609,
+              0.10275071900105104,
+              0.10226728999987245
+            ],
+            "wall_median_s": 0.10266612900886685,
+            "drm_samples": [
+              {
+                "ccs_busy_s": 0.10311548391871014,
+                "bcs_busy_s": 0.01140731457498963,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10318431748111631,
+                "bcs_busy_s": 0.013515187406207881,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.1028404389586875,
+                "bcs_busy_s": 0.015515152870770432,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10201939165717876,
+                "bcs_busy_s": 0.012943253475494803,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10277028290952091,
+                "bcs_busy_s": 0.011149618203722325,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10233739545524252,
+                "bcs_busy_s": 0.013710230458562346,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              }
+            ],
+            "ccs_busy_s": [
+              0.10311548391871014,
+              0.10318431748111631,
+              0.1028404389586875,
+              0.10201939165717876,
+              0.10277028290952091,
+              0.10233739545524252
+            ],
+            "ccs_busy_median_s": 0.1028053609341042,
+            "bcs_busy_median_s": 0.013229220440851341,
+            "wall_ms_per_forward_per_block": 8.555510750738904,
+            "ccs_busy_ms_per_forward_per_block": 8.56711341117535,
+            "wall_ratio_to_256x256": 1.053316355722299,
+            "ccs_busy_ratio_to_256x256": 1.0528159978640967
+          },
+          "sampler_forwards": 3
+        }
+      },
+      "sampling_status": "ok",
+      "sampling_peak_device_memory_bytes": 14315798528,
+      "video_decode": {
+        "wall_s": [
+          1.1694625790114515,
+          1.1678551439836156,
+          1.167502811003942,
+          1.1685274470073637,
+          1.1677159009850584,
+          1.1657704469980672
+        ],
+        "wall_median_s": 1.167785522484337,
+        "drm_samples": [
+          {
+            "ccs_busy_s": 1.1631531058687146,
+            "bcs_busy_s": 1.160223714545285,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.166062391687654,
+            "bcs_busy_s": 1.1639667334501396,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.166263835408274,
+            "bcs_busy_s": 1.1646240942034969,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.1675278450416817,
+            "bcs_busy_s": 1.162478713064186,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.1657604253178675,
+            "bcs_busy_s": 1.1644572134374973,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.1634510944834031,
+            "bcs_busy_s": 1.161656339111336,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          }
+        ],
+        "ccs_busy_s": [
+          1.1631531058687146,
+          1.166062391687654,
+          1.166263835408274,
+          1.1675278450416817,
+          1.1657604253178675,
+          1.1634510944834031
+        ],
+        "ccs_busy_median_s": 1.1659114085027609,
+        "bcs_busy_median_s": 1.1632227232571628,
+        "status": "ok",
+        "peak_device_memory_bytes": 3381608960,
+        "wall_ratio_to_256x256": 2.261134722792632,
+        "ccs_busy_ratio_to_256x256": 2.2565422656295
+      }
+    },
+    "640x384": {
+      "width": 640,
+      "height": 384,
+      "stages": {
+        "stage1": {
+          "width": 320,
+          "height": 192,
+          "video_latent_shape": [
+            1,
+            128,
+            4,
+            6,
+            10
+          ],
+          "video_tokens": 240,
+          "audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "audio_tokens": 26,
+          "text_context_tokens": 1024,
+          "observed_video_latent_shape": [
+            1,
+            128,
+            4,
+            6,
+            10
+          ],
+          "observed_audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "observed_context_shape": [
+            1,
+            1024,
+            6144
+          ],
+          "timing": {
+            "wall_s": [
+              0.10089716300717555,
+              0.1007889989996329,
+              0.10069373901933432,
+              0.10048475602525286,
+              0.10049619799247012,
+              0.1004500109993387
+            ],
+            "wall_median_s": 0.10059496850590222,
+            "drm_samples": [
+              {
+                "ccs_busy_s": 0.10141212880374981,
+                "bcs_busy_s": 0.011945024379298437,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10103335179000182,
+                "bcs_busy_s": 0.015873667094400922,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10092146540393704,
+                "bcs_busy_s": 0.015258259494176429,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10069847033009721,
+                "bcs_busy_s": 0.014738044891679477,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.1006876204869861,
+                "bcs_busy_s": 0.014442953164940446,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10060946098318456,
+                "bcs_busy_s": 0.014208251451068294,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              }
+            ],
+            "ccs_busy_s": [
+              0.10141212880374981,
+              0.10103335179000182,
+              0.10092146540393704,
+              0.10069847033009721,
+              0.1006876204869861,
+              0.10060946098318456
+            ],
+            "ccs_busy_median_s": 0.10080996786701713,
+            "bcs_busy_median_s": 0.014590499028309962,
+            "wall_ms_per_forward_per_block": 8.382914042158518,
+            "ccs_busy_ms_per_forward_per_block": 8.40083065558476,
+            "wall_ratio_to_256x256": 1.0267697414344497,
+            "ccs_busy_ratio_to_256x256": 1.0262361738797932
+          },
+          "sampler_forwards": 8
+        },
+        "stage2": {
+          "width": 640,
+          "height": 384,
+          "video_latent_shape": [
+            1,
+            128,
+            4,
+            12,
+            20
+          ],
+          "video_tokens": 960,
+          "audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "audio_tokens": 26,
+          "text_context_tokens": 1024,
+          "observed_video_latent_shape": [
+            1,
+            128,
+            4,
+            12,
+            20
+          ],
+          "observed_audio_latent_shape": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "observed_context_shape": [
+            1,
+            1024,
+            6144
+          ],
+          "timing": {
+            "wall_s": [
+              0.10206733300583437,
+              0.1018143359979149,
+              0.10182476698537357,
+              0.10151736799161881,
+              0.1015579950180836,
+              0.10157264201552607
+            ],
+            "wall_median_s": 0.10169348900672048,
+            "drm_samples": [
+              {
+                "ccs_busy_s": 0.10246245768787479,
+                "bcs_busy_s": 0.015644983897129282,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10203888679746834,
+                "bcs_busy_s": 0.01347861196426072,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10196219979348524,
+                "bcs_busy_s": 0.011777977056801546,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10168986643610009,
+                "bcs_busy_s": 0.015133031074213104,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10160407918382912,
+                "bcs_busy_s": 0.013845183838092974,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              },
+              {
+                "ccs_busy_s": 0.10162204252799367,
+                "bcs_busy_s": 0.012561262005562977,
+                "cards": [
+                  "0000:23:00.0"
+                ]
+              }
+            ],
+            "ccs_busy_s": [
+              0.10246245768787479,
+              0.10203888679746834,
+              0.10196219979348524,
+              0.10168986643610009,
+              0.10160407918382912,
+              0.10162204252799367
+            ],
+            "ccs_busy_median_s": 0.10182603311479266,
+            "bcs_busy_median_s": 0.013661897901176848,
+            "wall_ms_per_forward_per_block": 8.474457417226708,
+            "ccs_busy_ms_per_forward_per_block": 8.485502759566055,
+            "wall_ratio_to_256x256": 1.0433374305170635,
+            "ccs_busy_ratio_to_256x256": 1.0427868322062337
+          },
+          "sampler_forwards": 3
+        }
+      },
+      "sampling_status": "ok",
+      "sampling_peak_device_memory_bytes": 14322492928,
+      "video_decode": {
+        "wall_s": [
+          1.6675309629936237,
+          1.6696198399877176,
+          1.6685497460130136,
+          1.6678970869979821,
+          1.6682881719898432,
+          1.6679833859961946
+        ],
+        "wall_median_s": 1.668135778993019,
+        "drm_samples": [
+          {
+            "ccs_busy_s": 1.6589117642403257,
+            "bcs_busy_s": 1.5452726748895989,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.663354507989756,
+            "bcs_busy_s": 1.552281886774372,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.658458403517443,
+            "bcs_busy_s": 1.5461276798357126,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.658192068229108,
+            "bcs_busy_s": 1.5453964521300798,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.6583324999703093,
+            "bcs_busy_s": 1.5487575981377482,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          },
+          {
+            "ccs_busy_s": 1.6583434530613907,
+            "bcs_busy_s": 1.5475395613406555,
+            "cards": [
+              "0000:23:00.0"
+            ]
+          }
+        ],
+        "ccs_busy_s": [
+          1.6589117642403257,
+          1.663354507989756,
+          1.658458403517443,
+          1.658192068229108,
+          1.6583324999703093,
+          1.6583434530613907
+        ],
+        "ccs_busy_median_s": 1.6584009282894168,
+        "bcs_busy_median_s": 1.546833620588184,
+        "status": "ok",
+        "peak_device_memory_bytes": 3766243840,
+        "wall_ratio_to_256x256": 3.2299421936569197,
+        "ccs_busy_ratio_to_256x256": 3.209722248837061
+      }
+    }
+  },
+  "method": {
+    "warmups": 2,
+    "timed": 6,
+    "aggregate": "median",
+    "transformer_scope": "first forward inputs of each real sampler stage, replayed eagerly",
+    "sampler": "euler_ancestral",
+    "cfg": 1.0,
+    "noise_seed": 42,
+    "seed": 20261004,
+    "sigmas_stage1": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+    "sigmas_stage2": "0.85, 0.7250, 0.4219, 0.0",
+    "conditioning": "seeded fp32 [1,35,6144], unprocessed_ltxav_embeds=True; connector pads to 1024",
+    "stage2_driver": "seeded random full-resolution video latent plus actual stage-1 audio output",
+    "decode": "native VAEDecode / LTXVAudioVAEDecode, bf16 weights/compute, non-tiled",
+    "audio": "one shape measured once as a 2-warmup/6-timed group, shared by all resolutions",
+    "memory": "process max_memory_allocated, reset per size, includes resident weights and warmups; transformer unloaded before loading both VAEs"
+  },
+  "caveats": [
+    "Eager wall time includes Python dispatch. The process DRM compute-engine busy seconds are the GPU cost that matters; the earlier batch probe found nearly flat eager wall times.",
+    "Diagnostic only: truncated transformer, random conditioning and latents, no quality claim.",
+    "Per-block numbers divide the whole diffusion-model forward by blocks; non-block work is included.",
+    "No extrapolation to 48 blocks or deployed multi-card graph throughput; text encoding, latent upsampling, saving and end-to-end pipeline overlap are not timed.",
+    "640x384 is the valid padded geometry for the 640x360 question; no 640x360 cost is measured.",
+    "Decode wall includes native output copies to the intermediate device; VAE OOM tiling is excluded.",
+    "Ratios always use measured 256x256; that baseline is added to custom size lists. A missing/failed denominator produces null, never an estimated ratio.",
+    "stage1: compute busy time also looks flat (all available larger-size ratios within 10% of 256x256); this does not prove resolution is free.",
+    "stage2: compute busy time also looks flat (all available larger-size ratios within 10% of 256x256); this does not prove resolution is free."
+  ],
+  "partial": false,
+  "device": "xpu:0",
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "torch_version": "2.14.0+xpu",
+  "model": {
+    "checkpoint": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors",
+    "checkpoint_blocks": 48,
+    "checkpoint_num_layers_metadata": 48,
+    "blocks_kept": 12,
+    "tensors_kept": 1325,
+    "tensors_skipped": 3024,
+    "kept_bytes": 14169843712,
+    "left_over_keys": [],
+    "left_over_count": 0,
+    "model_parameter_bytes": 14167459840,
+    "weight_dtypes": [
+      "torch.bfloat16"
+    ],
+    "dtype_inference": "torch.bfloat16",
+    "manual_cast_dtype": "None",
+    "load_device": "xpu:0",
+    "offload_device": "cpu",
+    "model_patcher_class": "ModelPatcher"
+  },
+  "vaes": {
+    "video": {
+      "checkpoint": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors",
+      "dtype": "torch.bfloat16",
+      "device": "xpu:0",
+      "output_device": "cpu"
+    },
+    "audio": {
+      "checkpoint": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors",
+      "dtype": "torch.bfloat16",
+      "device": "xpu:0",
+      "output_device": "cpu"
+    }
+  },
+  "audio_decode": {
+    "latent_shape": [
+      1,
+      8,
+      26,
+      16
+    ],
+    "wall_s": [
+      0.18761964901932515,
+      0.1901019370125141,
+      0.18895331700332463,
+      0.19005256501259282,
+      0.18748620798578486,
+      0.18668726499890909
+    ],
+    "wall_median_s": 0.1882864830113249,
+    "drm_samples": [
+      {
+        "ccs_busy_s": 0.18831408531694832,
+        "bcs_busy_s": 0.009221344532880607,
+        "cards": [
+          "0000:23:00.0"
+        ]
+      },
+      {
+        "ccs_busy_s": 0.19057864973134778,
+        "bcs_busy_s": 0.007245276930859836,
+        "cards": [
+          "0000:23:00.0"
+        ]
+      },
+      {
+        "ccs_busy_s": 0.18943084949616978,
+        "bcs_busy_s": 0.008275929346147206,
+        "cards": [
+          "0000:23:00.0"
+        ]
+      },
+      {
+        "ccs_busy_s": 0.19048001524834138,
+        "bcs_busy_s": 0.010487663981496954,
+        "cards": [
+          "0000:23:00.0"
+        ]
+      },
+      {
+        "ccs_busy_s": 0.18790221388382172,
+        "bcs_busy_s": 0.006652412972843228,
+        "cards": [
+          "0000:23:00.0"
+        ]
+      },
+      {
+        "ccs_busy_s": 0.18710279923540618,
+        "bcs_busy_s": 0.010402314635700028,
+        "cards": [
+          "0000:23:00.0"
+        ]
+      }
+    ],
+    "ccs_busy_s": [
+      0.18831408531694832,
+      0.19057864973134778,
+      0.18943084949616978,
+      0.19048001524834138,
+      0.18790221388382172,
+      0.18710279923540618
+    ],
+    "ccs_busy_median_s": 0.18887246740655905,
+    "bcs_busy_median_s": 0.008748636939513907,
+    "status": "ok",
+    "peak_device_memory_bytes": 1883959808
+  },
+  "elapsed_s": 67.3493411510135
+}
