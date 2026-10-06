@@ -13,19 +13,22 @@ Status: work in progress; rows marked *pending* are still running.
 3. **Small is still better where it can be had.** Writing speed falls from about 127 tokens a second at 8K to 26 at
    250K, and above about 60K the model occasionally (about 1 lookup in 40) reads a look-alike line instead of the
    one asked for. So the right design is a big window as the safety net and a pruned working context as the habit.
-4. **Reading more than the window by understanding works, with guards around the loop (one seed so far).** On
+4. **Nothing has to be lost: an archive the model can search beat summarising.** With dropped text moved to an
+   archive instead of deleted, the agent answered 36 of 36 questions, twelve of them about text it had dropped, in
+   6 minutes with 23K of context; summarising also got 36 but took 26 minutes and wrote eight times as much.
+5. **Reading more than the window by understanding works, with guards around the loop (one seed so far).** On
    a 480K stream of narrative text, 1.8 times the whole window, the read-mode agent at a 32K budget got all 24
    answers right in 26 minutes with never more than 24K tokens in view. The failures along the way were the agent
    loop (repeating itself with thinking off, writing answers before the questions arrived), not the reading; each
    got a guard. The remaining reading error is about 1 to 2 per 100 changes without thinking.
-5. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
+6. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
    27B folds incoming data into a small running table or into files by itself and deletes the raw text. With files
    allowed it finished a 121K-token task in under two minutes with every answer right and never more than 9K of
    context. What broke the paper's agent in our test was the harness around the model, not the model's pruning.
-6. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
+7. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
    under 2 %. The cheap, real lever is to stop re-sending the model's old thinking (10 % of a typical call, up to
    56 %).
-7. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
+8. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
    restricting the output to the labels gave the same answers 6.5 times faster on easy items.
 
 ## What was tested, and what happened
@@ -291,6 +294,31 @@ the run ends).
   with thinking off, 287 edits of its own context, never more than 23.5K tokens in view, 68K tokens written, no
   rule broken, no parser. This is the model reading more than it can hold, by understanding, and keeping an exact
   running table of what it read. One seed; the second is queued.
+
+### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
+
+The narrative task at 119K with twelve extra questions that arrive only at the end, about values that were later
+overwritten and about incidental details in the text (36 questions in all). Data: `data/2026-10-05-context/retention/`.
+
+| Strategy | Files | Right of 36 | Time | Peak context | Tokens written |
+| --- | --- | ---: | ---: | ---: | ---: |
+| **Table plus archive and recall** (nothing deleted, only moved out of view; a search tool over the archive) | archive only | **36** | **6.1 min** | 23K | 14K |
+| Table only (read-mode agent) | no | 25 (6 blank, 5 wrong) | 5.7 min | 20K | 15K |
+| Summarise at 75 % | no | 36 | 26 min | 23K | 121K |
+| Keep everything in the window | no | 34 | 14 min | 144K | 33K |
+| No management, files allowed | yes | 3 | 6.6 min | 27K | 26K |
+
+- **Better than summarising, on the owner's terms:** the archive-and-recall agent answered every question, including
+  the twelve about dropped text, four times faster than the summariser and with an eighth of the writing, never
+  holding more than 23K tokens. Nothing it dropped was lost: dropped batches go verbatim to an archive it can only
+  read, and it searched that archive 12 times for the old-value questions.
+- **Summarising also got everything right here**, which is worth saying plainly: with thinking on, its eight
+  summaries kept the old values. The cost is time (26 minutes) and 121K tokens written.
+- **A table alone cannot answer questions about the past** (25 of 36), as designed.
+- **The plain files-allowed agent collapsed this time** (3 of 36): it thought its way through the 32K budget in 25
+  calls before it had finished reading, and the budget stop ended it. The same agent got 24 of 24 on the version
+  without the extra questions. The plain agent has no guards; its results swing.
+- One seed, one task family; the second seed is queued.
 
 ### Where the time goes (reconstructed from the saved runs)
 
