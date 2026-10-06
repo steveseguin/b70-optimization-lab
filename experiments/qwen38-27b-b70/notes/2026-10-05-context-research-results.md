@@ -342,6 +342,11 @@ it; a list with any bad line is refused whole and the model retries with thinkin
   refusals. The checker is fixed (stops at punctuation, ignores digits inside names), refusals now show the sentence
   to copy, retries think at most 2K tokens, and the protocol says never to change a correct amount to pass a check.
   The four trials are being rerun; the numbers above stand as measured with the bug.
+- **Rerun with the fixed checker (13:15 EDT):** reading at 3 changes per batch **24 of 24 in 4.7 minutes** (now
+  faster than the read-mode agent's 5.4 and exact); retention seed 1 **29 of 30 in 5.1 minutes** (was 26 in 19).
+  But retention seed 0 answered all 24 current values and left all 12 old-value questions blank (9.9 min), and the
+  hard-density reading run hit the step cap after 320 calls with no answers and a rule breach (was 16 of 16 in an
+  hour with the bug). Two cells better, two worse; being traced before any verdict.
 
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 
