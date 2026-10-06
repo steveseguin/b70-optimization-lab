@@ -315,6 +315,27 @@ Same narrative task at 119K, seed 0. Data: `data/2026-10-05-context/reading/`.
   note). The remaining cells resume under a supervisor that restarts the server after a guard kill and skips
   finished trials.
 
+### Quoted events: the model quotes, the code keeps the books (measured 2026-10-06 12:15 EDT)
+
+The model reports each change as one fixed-format line with an exact quote from the batch; the harness checks the
+quote is really there, checks the counter and the amount, does the arithmetic itself, archives the batch and drops
+it; a list with any bad line is refused whole and the model retries with thinking on.
+
+| Task | Right | Time | Tokens written | Compare |
+| --- | ---: | ---: | ---: | --- |
+| Reading, 3 changes per batch, 119K | **24 of 24** | 12.4 min | 46K | read-mode agent 23 of 24 in 5.4 min |
+| Reading, **12 changes per batch**, 120K | **16 of 16** | 61 min | 274K | read-mode agent 21 of 24 in 13 min |
+| Retention (36 questions), seed 0 | 31 of 36 | 12.5 min | 44K | archive-and-recall 36 of 36 in 6.1 min |
+| Retention (30 questions), seed 1 | 26 of 30 | 19 min | 83K | |
+
+- **Bookkeeping errors are gone:** every current-value answer right, including at the density where the read-mode
+  agent lost three. The price is time: refused lists make the model think, and at the hard density it wrote 274K
+  tokens over an hour.
+- **It did worse on the questions about dropped text** (31 of 36 and 26 of 30 against 36 of 36 for the
+  archive-and-recall agent); being traced.
+- Verdict so far: the right tool when the figures must be exact and time is cheap; the archive-and-recall agent
+  stays the all-round best.
+
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 
 The narrative task at 119K with twelve extra questions that arrive only at the end, about values that were later
