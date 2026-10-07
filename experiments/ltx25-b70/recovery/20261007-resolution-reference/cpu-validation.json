@@ -1,0 +1,37 @@
+{
+  "schema": "ltx.resolution-reference.cpu-validation.v1",
+  "created_at_utc": "2026-10-07T14:55:22.569906+00:00",
+  "status": "passed-CPU-plan-only-runtime-pending",
+  "tests_passed": 12,
+  "model_requests": 0,
+  "runtime_materialized": false,
+  "plan_sha256": "307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745",
+  "qualification_id": "29ef0d7afecc1254cb50477649b24a36d78648c177b7de3c553b02771ada5dc1",
+  "planned_request_count": 25,
+  "planned_native_captures": 6,
+  "planned_optimized_emitted": 13,
+  "comparison_count": 16,
+  "commands": [
+    "python3 -B experiments/ltx25-b70/recovery/20261007-resolution-reference/test_plan_reference.py",
+    "python3 -B experiments/ltx25-b70/recovery/20261007-resolution-reference/plan_reference.py validate --plan-file /home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-reference/candidate-plan.json"
+  ],
+  "files": {
+    "plan_reference.py": "88ff6420fbac1e4dc1f17d4053b29f865614730c1c4667efaf4b7026875985d7",
+    "test_plan_reference.py": "82f7f4b7c04f191eb40176e1235b44cafcf651e36303f4f6dc4df9ce03a72931",
+    "README.md": "e118bd051d35fc25ac420a0c378178770786fa5ad3590e0857ab25a5d27dcc16",
+    "candidate-plan.json": "055ff29ab775051544b41fc4ec1da724d2fbc792fd5ca940817d5a2d039e6e78",
+    "cpu-controls.log": "744b6e55fa63e0f494067652f854c8e9a4fd9ac59732cb9258249387c4bee307"
+  },
+  "limitations": [
+    "reviewed immutable runtime successor and complete source/dependency closure",
+    "new same-size reference admission and receipt mode; current nodes reject proposed fields",
+    "same-size native transient plus later graph-pool memory admission",
+    "same-size replica and whole-chain gates",
+    "fault-halt no-retry live client; execution identities and no-cached-node checks",
+    "phase quiescence/reset contract for monotonic clip indices; no stale queued conditioning",
+    "pre-native residency/physical-free gate and explicit OOM-to-tiled-decode refusal",
+    "enforce total capture cap32 including setup/repeats/queued tails; 4GiB admitted allowance",
+    "reserved request names/clip-index collision check before execution",
+    "bounded disk admission and reviewed reference retention"
+  ]
+}
