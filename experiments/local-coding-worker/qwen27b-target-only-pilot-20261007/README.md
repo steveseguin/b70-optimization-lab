@@ -1,6 +1,21 @@
 # Target-only 27B worker trial, October 7 UTC
 
-**Preregistered; model intake is running, no server or model request has run.**
+**Closed after healthy runtime gates; coding memory admission refused.**
+All eight boundary requests and the actual worker-format canary passed. The
+server allocated 9.51 GiB KV per rank (287,232 token capacity) although this
+one-sequence trial admits only 33,024 tokens. Host available RAM stayed around
+23.5 GiB, below the unchanged 24 GiB task admission. No coding or recall attempt
+ran. One SIGINT stopped the application; exit zero, no OOM/kernel fault, idle
+render nodes and all four postflight checks passed. See the preserved
+[admission](results/task-resource-admission.json) and
+[shutdown](results/server/shutdown.json).
+
+A [separately identified smaller-cache arm](../qwen27b-target-only-smallkv-20261007/README.md)
+will retain the same model, precision, prompts, context, task budgets and RAM
+admission. This original runtime/resource result is not a coding-quality score.
+
+All 80 publisher identities and post-remount cold-copy hashes passed; EX400U is
+cleanly unmounted. See the [preservation receipt](model-preservation/summary.json).
 This separately identified trial evaluates practical coding and source recall
 with the intended 27B model. It does not qualify the published speculative
 package, repair R314, or produce a performance headline. The two-card host's

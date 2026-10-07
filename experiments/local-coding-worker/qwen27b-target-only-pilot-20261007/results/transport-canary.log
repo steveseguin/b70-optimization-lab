@@ -1,0 +1,38 @@
+Model step 1: 393 input tokens
+{
+  "schema": "lab.worker-transport.v1",
+  "no_commands_executed": true,
+  "status": "passed",
+  "model": "qwen38-27b-fp8-target-only-worker-pilot",
+  "system_sha256": "c5d10c748c304c6d764530469de330a59d65e0657819a98cd2a9e42ade7e601b",
+  "profile_sha256": "f7dfc537364eb784fb47f4a22a30cde1352512adb4760a9d1050529ad7ac93ac",
+  "admitted_input_tokens": 393,
+  "proposed_message": {
+    "role": "assistant",
+    "content": "```bash\nprintf \"%s\\n\" pilot-ok\n```",
+    "extra": {
+      "cost": 0.0,
+      "timestamp": 1791344551.4864805,
+      "evidence": "/home/steve/worker-qwen27b-pilot-20261007/transport-canary/requests/001",
+      "actions": [
+        {
+          "command": "printf \"%s\\n\" pilot-ok"
+        }
+      ]
+    }
+  },
+  "model_requests": 1,
+  "requests": [
+    {
+      "directory": "001",
+      "status": "completed",
+      "prompt_tokens": 393,
+      "completion_tokens": 13,
+      "http_ttft_s": 0.23564517000340857,
+      "server_prefill_s": 0.23047212499659508,
+      "server_prefill_tokens_s": 1705.1953680116676,
+      "decode_stream_proxy_tokens_s": 10.598278266306282,
+      "elapsed_s": 1.3679697340121493
+    }
+  ]
+}

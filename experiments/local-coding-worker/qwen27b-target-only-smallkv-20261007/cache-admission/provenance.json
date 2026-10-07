@@ -1,0 +1,48 @@
+{
+  "schema": "lab.small-kv-source-admission.v1",
+  "image_id": "sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+  "container_id": "77e809e9b7661265c8e6345f50168ec78a0f7a137731dfe4a4f6c8db998a5745",
+  "source_container_state": {
+    "Status": "exited",
+    "Running": false,
+    "ExitCode": 0,
+    "OOMKilled": false,
+    "FinishedAt": "2026-10-07T03:43:26.122578196Z"
+  },
+  "source_method": "Read-only docker cp of exact installed files; no exec, server start or model request",
+  "files": [
+    {
+      "source_container_path": "/opt/venv/lib/python3.12/site-packages/vllm/config/cache.py",
+      "path": "source/vllm/config/cache.py",
+      "bytes": 13934,
+      "sha256": "8790351601be188ed1cc7ad9de2af1978b238269da4724873af1185c91165ef6"
+    },
+    {
+      "source_container_path": "/opt/venv/lib/python3.12/site-packages/vllm/engine/arg_utils.py",
+      "path": "source/vllm/engine/arg_utils.py",
+      "bytes": 124477,
+      "sha256": "c90f37cb9d95187d9296e77e54bba6fad4e1ebc233b88e88168062e82513b48d"
+    },
+    {
+      "source_container_path": "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_worker.py",
+      "path": "source/vllm/v1/worker/gpu_worker.py",
+      "bytes": 59583,
+      "sha256": "b2e580d74e7259ff2cbc82dabf38a43409ea5584d143880436583d9fc1ceedf1"
+    },
+    {
+      "source_container_path": "/opt/venv/lib/python3.12/site-packages/vllm/v1/core/kv_cache_utils.py",
+      "path": "source/vllm/v1/core/kv_cache_utils.py",
+      "bytes": 93945,
+      "sha256": "088f2201bee86fade694e78141b6e99a5cd0cdd23c5c7ab3526dd119f76e4aec"
+    }
+  ],
+  "license": {
+    "path": "LICENSE.vllm",
+    "source": "/home/steve/worker-qwen27b-intake-20261007/runtime-compatibility/installed/vllm-0.27.2rc1.dev77+gac7509e2b.xpu.dist-info/licenses/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  "first_arm_log_source": "/home/steve/worker-qwen27b-pilot-20261007/server/server.log",
+  "first_arm_log_excerpt": "first-arm-cache-log.txt",
+  "first_arm_log_excerpt_sha256": "40fdadf54bb868f1cb734c536314c66b6dd3827d74af275d916104cfb50a5b80",
+  "qualified": false
+}

@@ -1,0 +1,82 @@
+{
+  "schema": "lab.worker.smallkv-preparation.v1",
+  "source_arm": "experiments/local-coding-worker/qwen27b-target-only-pilot-20261007",
+  "files": [
+    {
+      "file": "serve_r276_once.py",
+      "old_sha256": "01cc962c0e154b40ee34ad8aa9fad0e3f06b798bf72ad6c7508373c8ead68781",
+      "new_sha256": "ea339a8066fad08d7711dc5e2d7d05c76cd55caf231aa510d1c272949b53070a",
+      "unchanged": false
+    },
+    {
+      "file": "check_boundaries.py",
+      "old_sha256": "8f9b1e3e028c7d81a2b527f51d0e1938d350b21d1f6d25c9a4ce74fa391a99cd",
+      "new_sha256": "8f9b1e3e028c7d81a2b527f51d0e1938d350b21d1f6d25c9a4ce74fa391a99cd",
+      "unchanged": true
+    },
+    {
+      "file": "check_transport.py",
+      "old_sha256": "725479b521416812a56dd5c2b9b2e8c0200146dabf307f2dd3e2217ac7117e53",
+      "new_sha256": "725479b521416812a56dd5c2b9b2e8c0200146dabf307f2dd3e2217ac7117e53",
+      "unchanged": true
+    },
+    {
+      "file": "run-task.py",
+      "old_sha256": "d884e00f082793555dd2eb88c2963e994df80457364cbe80d901fc3ef57900a9",
+      "new_sha256": "1665221d63aa2d149c572e3b3ae275420c6c822468bc34a579255450fbb4590c",
+      "unchanged": false
+    },
+    {
+      "file": "run-memory.py",
+      "old_sha256": "343c2136aadd047eb680de85c346d95e1a0de3862372be9164c70762075efd22",
+      "new_sha256": "0d3f5a31a82409d695dce391ac0b199c11be34d4e4c88d14c47af280c5cfb98c",
+      "unchanged": false
+    },
+    {
+      "file": "test_boundary_gate.py",
+      "old_sha256": "036157e16dc25c1304479cbf0427585c3b1bbfea6d98bcbd750da3586b78fa12",
+      "new_sha256": "075c9f023e5d239b803d31d8c0dbd3fb0d4ff68c2544736096ec92218df98f99",
+      "unchanged": false
+    },
+    {
+      "file": "probe_pidfd.py",
+      "old_sha256": "0370061071c21a0a0bf8bb58f54afb255cffbe28eaec36e771a8943383498228",
+      "new_sha256": "0370061071c21a0a0bf8bb58f54afb255cffbe28eaec36e771a8943383498228",
+      "unchanged": true
+    },
+    {
+      "file": "model-manifest.json",
+      "old_sha256": "e603fd7ec4506ce6a1078cfe293c6b37fe574ac01b4535557f6dc07251a56ccd",
+      "new_sha256": "e603fd7ec4506ce6a1078cfe293c6b37fe574ac01b4535557f6dc07251a56ccd",
+      "unchanged": true
+    },
+    {
+      "file": "communication-admission.json",
+      "old_sha256": "a4990bb3f0a9fcc46aa8ccce7fa4c298e62c542aa0e8d4124ff10c5dda420a77",
+      "new_sha256": "a4990bb3f0a9fcc46aa8ccce7fa4c298e62c542aa0e8d4124ff10c5dda420a77",
+      "unchanged": true
+    },
+    {
+      "file": "worker-profile.json",
+      "old_sha256": "f7dfc537364eb784fb47f4a22a30cde1352512adb4760a9d1050529ad7ac93ac",
+      "new_sha256": "f7dfc537364eb784fb47f4a22a30cde1352512adb4760a9d1050529ad7ac93ac",
+      "unchanged": true
+    },
+    {
+      "file": "boundary-protocol.json",
+      "old_sha256": "4ae8649925cf421467888f6227dcc7273930ca7bc0318e201f3821ace8a55429",
+      "new_sha256": "4ae8649925cf421467888f6227dcc7273930ca7bc0318e201f3821ace8a55429",
+      "unchanged": true
+    },
+    {
+      "file": "memory-protocol.json",
+      "old_sha256": "e17004e70604acbd27ada22ab039514d822f3dec35be1e826b3587c91ce71ebd",
+      "new_sha256": "e17004e70604acbd27ada22ab039514d822f3dec35be1e826b3587c91ce71ebd",
+      "unchanged": true
+    }
+  ],
+  "purpose": "Same frozen trial after explicit 2GiB/rank FP16 KV allocation restores host memory headroom; original arm remains closed and retained.",
+  "changed_model_or_task_instructions": false,
+  "changed_host_settings": false,
+  "changed_task_memory_floor": false
+}
