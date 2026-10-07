@@ -63,9 +63,9 @@ class IntegrationControls(unittest.TestCase):
         self.r.adapter=a;return a,seen
 
     def test_actual_pinned_schedule_registered_and_init_no_models(self):
-        self.assertEqual(len(self.r.authority.requests),71)
+        self.assertEqual(len(self.r.authority.requests),57)
         self.assertEqual(self.r.authority.phase,'native_reference')
-        self.assertEqual(self.r.schedule['raw_capture_requests'],64)
+        self.assertEqual(self.r.schedule['raw_capture_requests'],50)
         self.assertIsNone(self.r.adapter)
 
     def test_dependencies_cannot_be_bypassed_or_mutated(self):
@@ -374,43 +374,38 @@ class IntegrationControls(unittest.TestCase):
         self.assertNotIn('verify-native',self.r.actions_done)
         self.assertEqual(self.r.authority.phase,'native_reference')
 
-    def test_storage_allows_five_gib_drawdown_and_rejects_more(self):
+    def test_storage_allows_four_gib_drawdown_and_rejects_more(self):
         self.r.previous_free=64*2**30;self.r.consumed=0
-        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=59*2**30)):
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=60*2**30)):
             self.r.storage_check()
-        self.assertEqual(self.r.consumed,5*2**30)
-        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=59*2**30-1)):
+        self.assertEqual(self.r.consumed,4*2**30)
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=60*2**30-1)):
             with self.assertRaisesRegex(RuntimeError,'storage allowance'):self.r.storage_check()
 
-    def test_storage_fresh_admission_reserves_five_gib_above_fifty(self):
-        self.r.previous_free=55*2**30;self.r.consumed=0
-        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=55*2**30)):
+    def test_storage_fresh_admission_reserves_four_gib_above_fifty(self):
+        self.r.previous_free=54*2**30;self.r.consumed=0
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=54*2**30)):
             self.r.storage_check()
-        self.r.previous_free=55*2**30-1;self.r.consumed=0
-        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=55*2**30-1)):
+        self.r.previous_free=54*2**30-1;self.r.consumed=0
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=54*2**30-1)):
             with self.assertRaisesRegex(RuntimeError,'storage allowance'):self.r.storage_check()
 
-    def test_control_requests_require_fast_proof_and_durable_barrier(self):
-        fast=next(r for r in self.rows if r['phase']=='timed')
-        deps=self.r.schedule['boundary_dependencies'][fast['name']]
-        self.r.authority.completed.extend(d for d in deps if not d.startswith('barrier:'))
-        with self.assertRaisesRegex(RuntimeError,'barrier missing'):
-            self.r.before_request(fast,'cpu')
-        self.r.write('resolution-phase-fast_verified.json',{'synthetic':True})
-        with self.assertRaisesRegex(RuntimeError,'Fast proof not verified'):
-            self.r.before_request(fast,'cpu')
-        self.r.actions_done.add('verify-fast-timed')
-        self.r.authority.completed.append(self.setup_row('freeze')['name'])
-        self.state.update(captures_frozen=True,loads_frozen=True)
-        self.r.before_request(fast,'cpu')
+    def test_control_request_and_action_are_not_admitted(self):
+        row = dict(self.rows[-1], phase='timed')
+        with self.assertRaisesRegex(RuntimeError, 'Control requests'):
+            self.r.before_request(row, 'cpu')
+        with patch.object(self.r, 'retire_tails') as retire:
+            with self.assertRaisesRegex(RuntimeError, 'Unknown finite'):
+                self.r.action('verify-timed')
+        retire.assert_not_called()
 
-    def test_fast_verification_failure_never_opens_control_barrier(self):
+    def test_fast_verification_failure_never_writes_completion_barrier(self):
         with patch.object(self.r,'retire_tails'),patch.object(CAND,'verify_outputs',side_effect=RuntimeError('synthetic parity refusal')):
             with self.assertRaisesRegex(RuntimeError,'parity refusal'):
                 self.r.action('verify-fast-timed')
         self.assertNotIn('verify-fast-timed',self.r.actions_done)
         self.assertFalse((self.run/'resolution-phase-fast_verified.json').exists())
-        with self.assertRaisesRegex(RuntimeError,'Fast proof not verified'):
+        with self.assertRaisesRegex(RuntimeError,'Unknown finite'):
             self.r.action('verify-timed')
 
     def test_phase_actions_need_actual_native_completion(self):

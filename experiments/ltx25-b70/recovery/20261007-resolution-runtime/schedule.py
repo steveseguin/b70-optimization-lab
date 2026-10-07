@@ -7,11 +7,11 @@ import stat
 
 PARENT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA = 'f12dfbfa8be44c9798a1ac9f0dacb1ae7576e3ca30317a5b57de847642faec4f'
-QUALIFICATION_ID = '770e8efb25557f9820d7ed2a091c4be7231b25dbec5c23924f947925f7ba760d'
-PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-client-reverse-105/candidate-plan.json')
-PREFIX = 'resolution-client-reverse-20261007'
-CAPTURE_INDICES = {'capture0': 99905030, 'capture1': 99905041}
+PLAN_SHA = 'eb8f71c3f6073c654abb6eed215aa877f2256b35e75cf595ea598c83352b31af'
+QUALIFICATION_ID = '2a1bf0897e1b26173ff4143ae36c33da44f2287ed80e65679f9ebeae4ea4d318'
+PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-sampler-accounting106-plan/candidate-plan.json')
+PREFIX = 'resolution-sampler-accounting-20261007'
+CAPTURE_INDICES = {'capture0': 99906030, 'capture1': 99906041}
 GRAPHS = {
  'window-probe': ('text-window-probe.json','ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0'),
  'pin0': ('sampler-pin.json','fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005'),
@@ -124,7 +124,7 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
         max(r['clip_index'] for r in plan['requests'][:20])<i<min(r['clip_index'] for r in plan['requests'][20:])
         for i in CAPTURE_INDICES.values()),'Capture index collision')
     captures=sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave') for n in r['graph'].values()) for r in [*plan['requests'],*rows])
-    require(captures==64 and captures<=64,'Capture budget differs')
+    require(captures==50 and captures<=50,'Capture budget differs')
     result={'schema':'ltx.resolution-setup-schedule.v1','status':'CPU-plan-only-not-runtime-qualified',
             'parent_manifest_sha256':PARENT_SHA,'plan_sha256':PLAN_SHA,'qualification_id':QUALIFICATION_ID,
             'source_graph_sha256':sources,'rows':rows,
@@ -136,11 +136,12 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
                 'barrier:candidate_verified':[r['name'] for r in plan['requests'][20:34]],
                 'barrier:timing':['barrier:candidate_verified'],
                 plan['requests'][34]['name']:['barrier:timing'],
-                'barrier:fast_verified':[r['name'] for r in plan['requests'] if r['phase']=='timed-fast'],
-                plan['requests'][48]['name']:['barrier:fast_verified']},
-            'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':64,
-            'retry_or_extra_fill_requests':0,'native_reference_captures':20,'candidate_compared_clips':10,'timed_compared_clips':20,
-            'timed_control_compared_clips':10,'timed_fast_compared_clips':10,
+                'barrier:fast_verified':[r['name'] for r in plan['requests'] if r['phase']=='timed-fast']},
+            'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':50,
+            'retry_or_extra_fill_requests':0,'native_reference_captures':20,'candidate_compared_clips':10,'timed_compared_clips':10,
+            'timed_control_compared_clips':0,'timed_fast_compared_clips':10,
+            'final_verification_action':'verify-fast-timed',
+            'accounting_admission':'pending independently reviewed bounded collector contract; no GPU instrumentation',
             'obligations':['Exact registered setup order and per-kind verdict checks in trusted executor adapter',
                            'Quiescence plus durable completed-tail retirement at explicit barriers; no clear/recompute',
                            'Native proof verified before any sampler route/sentry/replica installation',

@@ -13,7 +13,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('request_client_tested', HERE/'request_client.py')
 C = importlib.util.module_from_spec(spec); spec.loader.exec_module(C)
-PLAN = HERE.parent/'20261007-client-reverse-105/candidate-plan.json'
+PLAN = HERE.parent/'20261007-sampler-accounting106-plan/candidate-plan.json'
 
 
 class Transport:
@@ -73,7 +73,7 @@ class ClientControls(unittest.TestCase):
                        'parent_manifest_sha256':C.G.PARENT_SHA,'root':str(self.root),'server_run':str(self.run),
                        'client_dir':str(self.client_dir),'plan_path':str(PLAN),'runtime_manifest_sha256':'a'*64,
                        'server_identity_sha256':C.G.sha((self.run/'server-identity.json').read_bytes()),
-                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':64,'max_attempts':71,
+                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':50,'max_attempts':57,
                        'request_timeout_seconds':10,'capture_guard_path':str(guard),
                        'source_bindings':{str(p.resolve()):C.G.sha(p.read_bytes()) for p in
                                           [guard, HERE/'request_client.py', HERE/'reference_gate.py']}}
@@ -98,7 +98,7 @@ class ClientControls(unittest.TestCase):
         self.client=self.make_client()
     def phase(self,row,**changes):
         phase={'native-setup':'native_reference','native-reference':'native_reference','native-repeat':'native_reference',
-               'optimized-setup':'optimized_preparation','candidate-check':'optimized_preparation','timed':'timing','timed-fast':'timing'}[row['phase']]
+               'optimized-setup':'optimized_preparation','candidate-check':'optimized_preparation','timed-fast':'timing'}[row['phase']]
         value={'schema':'ltx.resolution-client-phase.v1','phase':phase,'plan_sha256':C.G.PLAN_SHA,
                'qualification_id':C.G.QUALIFICATION_ID,'runtime_manifest_sha256':'a'*64,
                'server_identity_sha256':self.contract['server_identity_sha256'],'active_request':None,'fault':False,
@@ -162,8 +162,8 @@ class ClientControls(unittest.TestCase):
 
     def test_fullsuite_admission_keeps50GiB_and_exact5GiB_write_budget(self):
         self.assertEqual(C.MIN_FREE,50*1024**3)
-        self.assertEqual(C.WRITE_ALLOWANCE,5*1024**3)
-        self.assertEqual((C.ATTEMPT_CAP,C.CAPTURE_CAP),(71,64))
+        self.assertEqual(C.WRITE_ALLOWANCE,4*1024**3)
+        self.assertEqual((C.ATTEMPT_CAP,C.CAPTURE_CAP),(57,50))
         self.free=C.MIN_FREE+C.WRITE_ALLOWANCE
         t=Transport();self.execute(t)
         self.assertEqual(t.posts,1)
@@ -191,35 +191,35 @@ class ClientControls(unittest.TestCase):
         t=Transport();self.refused(t);self.assertEqual(t.posts,0)
         self.assertEqual(sorted(x.name for x in p.iterdir()),['original'])
 
-    def test_exact_full_schedule71_serial_requests_with_external_phase_observations(self):
+    def test_exact_full_schedule57_serial_requests_with_external_phase_observations(self):
         self.full_client();posts=0
         for name in self.client.ordered_names:
             row=self.client.rows[name];self.phase(row);t=Transport();self.execute(t,name);posts+=t.posts
-        self.assertEqual(posts,71)
-        self.assertEqual(C.CAPTURE_CAP,64)
+        self.assertEqual(posts,57)
+        self.assertEqual(C.CAPTURE_CAP,50)
         self.assertEqual(sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave')
-                                 for n in r['graph'].values()) for r in self.client.rows.values()),64)
-        for phase,count in (('candidate-check',14),('timed',14),('timed-fast',14)):
+                                 for n in r['graph'].values()) for r in self.client.rows.values()),50)
+        for phase,count in (('candidate-check',14),('timed-fast',14)):
             self.assertEqual(sum(self.client.rows[n]['phase']==phase for n in self.client.ordered_names),count)
         self.assertEqual(self.client.state['completed'],self.client.ordered_names)
         emitted=[r['expected_emitted_fixture'] for r in self.client.plan['requests']
-                 if r['phase']=='timed' and r['expected_emitted_fixture'] is not None]
+                 if r['phase']=='timed-fast' and r['expected_emitted_fixture'] is not None]
         fixture_ids=[f['id'] for f in self.client.plan['fixtures']]
         self.assertEqual(len(fixture_ids),10)
         self.assertEqual(emitted,fixture_ids)
         self.assertEqual(emitted[:10],fixture_ids)
         self.assertEqual(len(emitted[10:]),0)
 
-    def test_reversed_timing_order_is_exact_and_early_control_refused(self):
+    def test_only_accounting_block_and_retired_control_refused(self):
         self.full_client()
         phases=[self.client.rows[n]['phase'] for n in self.client.ordered_names]
-        self.assertEqual(phases[-28:],['timed-fast']*14+['timed']*14)
+        self.assertEqual(phases[-28:],['candidate-check']*14+['timed-fast']*14)
+        self.assertNotIn('timed',phases)
         fast=self.ready_for_phase('timed-fast')
-        control=next(r for r in self.client.rows.values() if r['phase']=='timed')
-        self.phase(control);t=Transport()
-        self.refused(t,control['name'])
+        name=fast['name'].replace('-timed-fast-','-timed-');t=Transport()
+        self.refused(t,name)
         self.assertEqual(t.posts,0)
-        self.assertFalse((self.root/'requests'/control['name']).exists())
+        self.assertFalse((self.root/'requests'/name).exists())
 
     def ready_for_phase(self,phase):
         self.full_client();row=next(r for r in self.client.rows.values() if r['phase']==phase)
@@ -317,15 +317,15 @@ class ClientControls(unittest.TestCase):
         self.assertNotIn(self.name,durable['completed']);self.assertIsNotNone(durable['halted'])
 
     def test_attempt_limit_separate_from_capture_limit_and_contract_strict(self):
-        for key, value in [('max_attempts',32),('max_attempts',71.0),('max_attempts',True),
-                           ('max_attempts',None),('max_captures',71),('max_captures',64.0)]:
+        for key, value in [('max_attempts',32),('max_attempts',57.0),('max_attempts',True),
+                           ('max_attempts',None),('max_captures',71),('max_captures',50.0)]:
             original=self.contract[key]
             self.contract[key]=value
             with self.subTest(key=key,value=value),self.assertRaisesRegex(ValueError,'budget contract'):
                 self.make_client()
             self.contract[key]=original
 
-    def test_exhausted71_attempts_refuses_before_transport_or_output(self):
+    def test_exhausted57_attempts_refuses_before_transport_or_output(self):
         self.client.acquire()
         try:
             self.client.state['attempts']=['prior-attempt-%d'%i for i in range(C.ATTEMPT_CAP)]
@@ -348,12 +348,12 @@ class ClientControls(unittest.TestCase):
 
     def test_timing_needs_candidate_receipt_in_actual_phase_observation(self):
         self.full_client();self.client.acquire()
-        first_timed = next(i for i,n in enumerate(self.client.ordered_names) if self.client.rows[n]['phase']=='timed')
+        first_timed = next(i for i,n in enumerate(self.client.ordered_names) if self.client.rows[n]['phase']=='timed-fast')
         try:
             self.client.state['completed']=self.client.ordered_names[:first_timed]
             self.client.state['attempts']=self.client.ordered_names[:first_timed];self.client.save_state()
         finally:self.client.release()
-        name=self.client.ordered_names[first_timed];self.assertEqual(self.client.rows[name]['phase'],'timed')
+        name=self.client.ordered_names[first_timed];self.assertEqual(self.client.rows[name]['phase'],'timed-fast')
         self.phase(self.client.rows[name],candidate_receipt_sha256=None)
         t=Transport();self.refused(t,name);self.assertEqual(t.posts,0)
 

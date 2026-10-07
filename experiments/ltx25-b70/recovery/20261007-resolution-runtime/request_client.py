@@ -15,11 +15,11 @@ _spec = importlib.util.spec_from_file_location('resolution_reference_gate_client
                                              Path(__file__).with_name('reference_gate.py'))
 G = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(G)
 MIN_FREE = 50 * 1024**3
-WRITE_ALLOWANCE = 5 * 1024**3
-CAPTURE_CAP = 64
-ATTEMPT_CAP = 71
+WRITE_ALLOWANCE = 4 * 1024**3
+CAPTURE_CAP = 50
+ATTEMPT_CAP = 57
 MODEL_SHA = G.MODEL_VERIFICATION_SHA256
-SCHEDULE_SHA = '1cc88d11b9fefb97f67c370e4e920df3fbb2cbf62c3739b606a84651c4fc0bcb'
+SCHEDULE_SHA = '074db6baaa4752a807ddd259dc713ec453ed45b51710b05e6bc79d6c48e13468'
 
 
 def write_new(path, value):
@@ -118,9 +118,9 @@ class Client:
         self.full_schedule = 'setup_schedule_path' in c
         native_rows = [r for r in self.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')]
         candidate_rows = [r for r in self.plan['requests'] if r['phase'] == 'candidate-check']
-        timed_rows = [r for r in self.plan['requests'] if r['phase'] == 'timed']
         fast_rows = [r for r in self.plan['requests'] if r['phase'] == 'timed-fast']
-        G.require((len(native_rows), len(candidate_rows), len(timed_rows), len(fast_rows)) == (20, 14, 14, 14),
+        G.require((len(native_rows), len(candidate_rows), len(fast_rows)) == (20, 14, 14) and
+                  len(self.plan['requests']) == 48,
                   'W2 plan phase counts differ')
         self.ordered_names = [r['name'] for r in native_rows]
         self.identity_raw = G.read_file(self.run / 'server-identity.json'); self.identity = G.strict_json(self.identity_raw)
@@ -152,7 +152,7 @@ class Client:
                 G.require(row['name'] not in self.rows, 'Duplicate setup/plan name')
                 self.rows[row['name']] = row
             groups = [[r for r in setup if r['phase'] == 'native-setup'], native_rows,
-                      [r for r in setup if r['phase'] == 'optimized-setup'], candidate_rows, fast_rows, timed_rows]
+                      [r for r in setup if r['phase'] == 'optimized-setup'], candidate_rows, fast_rows]
             self.ordered_names = [r['name'] for group in groups for r in group]
             G.require(len(self.ordered_names) == ATTEMPT_CAP and len(set(self.ordered_names)) == ATTEMPT_CAP,
                       'Complete schedule request count differs')
@@ -168,7 +168,7 @@ class Client:
         value = G.strict_json(raw)
         expected = {'native-setup': 'native_reference', 'native-reference': 'native_reference',
                     'native-repeat': 'native_reference', 'optimized-setup': 'optimized_preparation',
-                    'candidate-check': 'optimized_preparation', 'timed': 'timing', 'timed-fast': 'timing'}[row['phase']]
+                    'candidate-check': 'optimized_preparation', 'timed-fast': 'timing'}[row['phase']]
         G.require(value.get('schema') == 'ltx.resolution-client-phase.v1' and value.get('phase') == expected and
                   value.get('plan_sha256') == G.PLAN_SHA and value.get('qualification_id') == G.QUALIFICATION_ID and
                   value.get('runtime_manifest_sha256') == self.contract['runtime_manifest_sha256'] and

@@ -28,9 +28,9 @@ def literal(raw, name):
 
 class PacketControls(unittest.TestCase):
     def test_successor_identity_explicit_in_path_status_and_transition(self):
-        self.assertEqual(B.PACKET.name, 'prepared-client-reverse-105')
-        self.assertEqual(B.RUN_NAME, 'encoder-server-client-reverse-105-two-way-w2-b1-p1-dxpu2-s640x384')
-        self.assertIn(b'Packet105 reverse-order client checkpoint confirmation after packet104', B.STATUS)
+        self.assertEqual(B.PACKET.name, 'prepared-sampler-accounting-106')
+        self.assertEqual(B.RUN_NAME, 'encoder-server-sampler-accounting-106-two-way-w2-b1-p1-dxpu2-s640x384')
+        self.assertIn(b'Packet106 bounded passive sampler accounting after packet105', B.STATUS)
         tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
         transitions=[]
         for node in ast.walk(tree):
@@ -38,23 +38,33 @@ class PacketControls(unittest.TestCase):
                 fields={k.value:v for k,v in zip(node.keys,node.values) if isinstance(k,ast.Constant)}
                 if 'schema' in fields and isinstance(fields['schema'],ast.Constant) and fields['schema'].value=='ltx.resolution101.transition.v1':
                     transitions.append(ast.literal_eval(fields['packet_revision']))
-        self.assertEqual(transitions,['105','105'])
+        self.assertEqual(transitions,['106','106'])
 
-    def test_constructor99b_and_reviewed104_provenance_are_distinct_and_bound(self):
+    def test_passive_helpers_are_closed_but_not_server_imports(self):
+        extras = B.extra_files(B.AUTHOR, B.regular(B.PLAN))
+        for name in ('driver_accounting.py', 'driver_accounting_runner.py'):
+            self.assertIn(name, B.COMPONENTS)
+            self.assertNotIn(name, B.RUNTIME_MODULES)
+            self.assertEqual(extras['resolution/components/' + name], B.regular(HERE / name))
+            self.assertNotIn('source/scripts/' + name, extras)
+        self.assertEqual(B.digest(extras['resolution/components/driver_accounting.py']),
+                         'abee1ac0c0e2a47ec9d622f4639bfaec45c7bd45272380dba4c51f7a195fc480')
+
+    def test_constructor99b_and_reviewed105_provenance_are_distinct_and_bound(self):
         self.assertEqual(B.PARENT.name,'prepared-encoder-upstream-99b')
-        self.assertEqual(B.PREDECESSOR.name,'prepared-client-compare-104')
+        self.assertEqual(B.PREDECESSOR.name,'prepared-client-reverse-105')
         extras=B.extra_files(B.AUTHOR,B.regular(B.PLAN))
         self.assertEqual(B.digest(extras['provenance/packet99b-manifest.json']),B.PARENT_SHA)
-        self.assertEqual(B.digest(extras['provenance/reviewed-predecessor104-manifest.json']),B.PREDECESSOR_SHA)
-        prior=json.loads(extras['provenance/reviewed-predecessor104-manifest.json'])
-        self.assertEqual(prior['resolution101']['packet_revision'],'104')
+        self.assertEqual(B.digest(extras['provenance/reviewed-predecessor105-manifest.json']),B.PREDECESSOR_SHA)
+        prior=json.loads(extras['provenance/reviewed-predecessor105-manifest.json'])
+        self.assertEqual(prior['resolution101']['packet_revision'],'105')
         self.assertEqual(prior['resolution101']['parent_manifest_sha256'],B.PARENT_SHA)
         self.assertEqual(prior['resolution101']['control']['workers'],2)
         self.assertEqual(prior['rope99b'],B._parent_manifest['rope99b'])
         schedule=json.loads(extras['resolution/setup-schedule.json'])['schedule']
-        self.assertEqual(schedule['submitted_requests'],71)
-        self.assertEqual(schedule['raw_capture_requests'],64)
-        self.assertEqual(schedule['capture_cap'],64)
+        self.assertEqual(schedule['submitted_requests'],57)
+        self.assertEqual(schedule['raw_capture_requests'],50)
+        self.assertEqual(schedule['capture_cap'],50)
         tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
         transitions=[]
         for node in ast.walk(tree):

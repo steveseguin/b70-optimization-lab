@@ -12,7 +12,7 @@ HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('resolution_session_tested', HERE / 'session.py')
 S = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(S)
-PLAN = HERE.parent / '20261007-client-reverse-105/candidate-plan.json'
+PLAN = HERE.parent / '20261007-sampler-accounting106-plan/candidate-plan.json'
 
 
 def empty_state():
@@ -53,14 +53,14 @@ class SessionControls(unittest.TestCase):
         self.assertEqual(len(self.a.prompt_ids), 20)
         self.assertEqual(self.a.capture_count, 20)
 
-    def test_capture_cap64_separate_from71_request_plan(self):
-        self.assertEqual(len(self.rows),62)
-        self.a.capture_count=63
+    def test_capture_cap50_separate_from57_request_plan(self):
+        self.assertEqual(len(self.rows),48)
+        self.a.capture_count=49
         self.run_row(self.rows[0])
-        self.assertEqual(self.a.capture_count,64)
+        self.assertEqual(self.a.capture_count,50)
         with self.assertRaisesRegex(RuntimeError,'capture allowance exhausted'):
             self.run_row(self.rows[1])
-        self.assertEqual(self.a.capture_count,64)
+        self.assertEqual(self.a.capture_count,50)
         self.assertIsNotNone(self.a.failed)
 
     def test_noncapturing_setup_does_not_consume_capture_allowance(self):
@@ -69,13 +69,13 @@ class SessionControls(unittest.TestCase):
         setup=module.build_schedule()['schedule']['rows']
         self.assertEqual(len(setup),9)
         self.assertEqual(sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave')
-                                 for n in r['graph'].values()) for r in [*self.rows,*setup]),64)
+                                 for n in r['graph'].values()) for r in [*self.rows,*setup]),50)
         self.a=S.Authority(PLAN,'a'*64,'b'*64,self.root,lambda:copy.deepcopy(self.state),{},setup)
-        self.a.capture_count=64
+        self.a.capture_count=50
         row=setup[0]
         self.a.begin(row['name'],row['graph'],'setup-pid')
         self.a.finish([('execution_success',{'prompt_id':'setup-pid'})])
-        self.assertEqual(self.a.capture_count,64)
+        self.assertEqual(self.a.capture_count,50)
 
     def test_fast_requests_use_existing_timing_authority_and_keep_order(self):
         self.a.phase='timing';self.a.references_sha='c'*64;self.a.candidate_sha='d'*64
@@ -86,6 +86,13 @@ class SessionControls(unittest.TestCase):
             self.assertEqual(receipt['phase'],'timing')
             self.assertEqual(receipt['candidate_receipt_sha256'],'d'*64)
         self.assertEqual(self.a.completed,[r['name'] for r in fast])
+
+    def test_retired_control_request_not_admitted(self):
+        self.a.phase='timing';self.a.references_sha='c'*64;self.a.candidate_sha='d'*64
+        row=next(r for r in self.rows if r['phase']=='timed-fast')
+        with self.assertRaisesRegex(RuntimeError,'Unknown or reused request identity'):
+            self.a.begin(row['name'].replace('-timed-fast-','-timed-'),row['graph'],'control-pid')
+        self.assertIsNotNone(self.a.failed)
 
     def test_forged_graph_fails_before_authorization_and_latches(self):
         row = self.rows[0]

@@ -12,7 +12,7 @@ import re
 import threading
 import time
 
-PLAN_SHA256 = 'f12dfbfa8be44c9798a1ac9f0dacb1ae7576e3ca30317a5b57de847642faec4f'
+PLAN_SHA256 = 'eb8f71c3f6073c654abb6eed215aa877f2256b35e75cf595ea598c83352b31af'
 MODE = 'same-size-native-v1'
 PHASES = ('native_reference', 'reference_verified', 'optimized_preparation',
           'candidate_verified', 'timing')
@@ -219,7 +219,7 @@ class Authority:
                 require(digest(canonical(graph)) == row['graph_sha256'], 'Submitted graph differs')
                 expected = {'native-reference': 'native_reference', 'native-repeat': 'native_reference',
                             'native-setup': 'native_reference', 'optimized-setup': 'optimized_preparation',
-                            'candidate-check': 'optimized_preparation', 'timed': 'timing', 'timed-fast': 'timing'}[row['phase']]
+                            'candidate-check': 'optimized_preparation', 'timed-fast': 'timing'}[row['phase']]
                 require(self.phase == expected, 'Request submitted in wrong phase')
                 planned = [r['name'] for r in self.plan['requests'] if r['phase'] == row['phase']]
                 if planned:
@@ -240,7 +240,7 @@ class Authority:
                 capture = any(n['class_type'] in ('LTXBaselineCapture', 'LTXPipelineSave')
                               for n in graph.values())
                 if capture:
-                    require(self.capture_count < 64, 'Bounded capture allowance exhausted')
+                    require(self.capture_count < 50, 'Bounded capture allowance exhausted')
                     self.capture_count += 1
                 self.prompt_ids.add(prompt_id)
                 self.active = {'name': name, 'prompt_id': prompt_id, 'start_ns': time.time_ns()}

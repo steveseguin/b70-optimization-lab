@@ -37,14 +37,17 @@ class CampaignControls(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         self.run = self.root / 'server'; self.run.mkdir()
-        plan_path = HERE.parent / '20261007-client-reverse-105/candidate-plan.json'
+        plan_path = HERE.parent / '20261007-sampler-accounting106-plan/candidate-plan.json'
         self.plan = json.loads(plan_path.read_text())['plan']
         self.fake_client = NS(run=self.run, root=self.root, full_schedule=True,
             contract={'runtime_manifest_sha256': 'b' * 64, 'plan_path': str(plan_path),
                       'server_identity_sha256': 'c' * 64},
             contract_sha='a' * 64, identity={'pid': 123456789}, plan=self.plan,
             execute=AsyncMock(return_value={'passed': True}))
-        with patch.object(C.request_client, 'Client', return_value=self.fake_client):
+        self.accounting = Mock(start=Mock(return_value={'ready': True}),
+                               finish=Mock(return_value={'valid': True}))
+        with patch.object(C.request_client, 'Client', return_value=self.fake_client), \
+                patch.object(C, 'DriverAccounting', return_value=self.accounting):
             self.c = C.Campaign(self.root / 'contract.json', 'a' * 64, 'b' * 64)
         self.output = io.StringIO()
         self.clock = Clock()
@@ -72,7 +75,7 @@ class CampaignControls(unittest.TestCase):
         self.assertEqual((result['status'], result['model_requests'], result['server_actions']), ('plan-only', 0, 0))
         cls.assert_not_called(); C.call.assert_not_called(); C.os.kill.assert_not_called()
 
-    def test_exact_71_requests_and_memory_phase_barriers(self):
+    def test_exact_57_requests_and_memory_phase_barriers(self):
         self.c.wait_idle = Mock(return_value=self.status())
         self.c.status = Mock(return_value=self.status())
         self.c.check_identity = Mock()
@@ -87,7 +90,7 @@ class CampaignControls(unittest.TestCase):
         expected = [r['name'] for r in setup[:2]] + [r['name'] for r in self.plan['requests'][:20]]
         expected += [r['name'] for r in setup[2:]] + [r['name'] for r in self.plan['requests'][20:]]
         self.assertEqual(result['requests'], expected)
-        self.assertEqual(len(expected), 71); self.assertEqual(len(set(expected)), 71)
+        self.assertEqual(len(expected), 57); self.assertEqual(len(set(expected)), 57)
         for capture_index in (3, 5):
             row = setup[capture_index]
             self.assertEqual(log[log.index(('action', row['admission_action'])) + 1], ('request', row['name']))
@@ -101,21 +104,83 @@ class CampaignControls(unittest.TestCase):
         native_begin = log.index(('request', native_names[0]))
         self.assertEqual(log[native_begin:native_begin+20], [('request', n) for n in native_names])
         self.assertEqual(log[native_begin+20], ('action', 'verify-native'))
-        for phase,action in [('timed-fast','verify-fast-timed'),('timed','verify-timed')]:
+        for phase,action in [('timed-fast','verify-fast-timed')]:
             names=[r['name'] for r in self.plan['requests'] if r['phase']==phase]
             self.assertEqual(len(names),14)
             begin=log.index(('request',names[0]))
             self.assertEqual(log[begin:begin+14],[('request',n) for n in names])
             self.assertEqual(log[begin+14],('action',action))
-        self.assertLess(log.index(('action','verify-fast-timed')),
-                        log.index(('request',next(r['name'] for r in self.plan['requests'] if r['phase']=='timed'))))
+        self.assertNotIn(('action', 'verify-timed'), log)
+        self.accounting.start.assert_called_once_with()
+        self.accounting.finish.assert_called_once_with()
+        self.assertTrue(result['diagnostic_valid'])
         self.assertEqual(result['actions'], ['before-native', 'verify-native', 'start-optimized',
                          'admit-capture0', 'retire-capture0-tails', 'admit-capture1',
                          'retire-capture1-tails', 'admit-decode', 'verify-candidate',
-                         'start-timing', 'verify-fast-timed', 'verify-timed'])
+                         'start-timing', 'verify-fast-timed'])
         self.assertLess(log.index(('action', 'verify-native')), log.index(('action', 'start-optimized')))
         self.assertLess(log.index(('action', 'verify-candidate')), log.index(('action', 'start-timing')))
         C.os.kill.assert_not_called()
+
+    def test_accounting_readiness_precedes_first_diagnostic_request(self):
+        self.c.wait_idle = Mock(return_value=self.status())
+        self.c.status = Mock(return_value=self.status()); self.c.check_identity = Mock()
+        calls = []
+        self.accounting.start.side_effect = lambda: calls.append('ready') or {'ready': True}
+        self.accounting.finish.side_effect = lambda: calls.append('finish') or {'valid': False}
+        async def execute(name): calls.append(name)
+        self.fake_client.execute.side_effect = execute
+        with patch.object(C, 'call', side_effect=lambda path, body=None, **kw:
+                          {'passed': True, 'action': body['action']}):
+            result = asyncio.run(self.c.execute())
+        first = next(r['name'] for r in self.plan['requests'] if r['phase'] == 'timed-fast')
+        self.assertEqual(calls[calls.index(first)-1], 'ready')
+        self.assertEqual(calls[-1], 'finish')
+        self.assertTrue(result['passed']); self.assertFalse(result['diagnostic_valid'])
+        self.assertEqual(len(result['requests']), 57)
+
+    def test_readiness_failure_stops_before_diagnostic_without_request_retry(self):
+        self.c.wait_idle = Mock(return_value=self.status())
+        self.c.status = Mock(return_value=self.status()); self.c.check_identity = Mock()
+        self.accounting.start.side_effect = C.AccountingError('observer not ready')
+        with patch.object(C, 'call', side_effect=lambda path, body=None, **kw:
+                          {'passed': True, 'action': body['action']}):
+            with self.assertRaises(C.AccountingError): asyncio.run(self.c.execute())
+        self.assertEqual(len(self.c.requests), 43)
+        self.assertFalse(any('-timed-fast-' in n for n in self.c.requests))
+        self.accounting.finish.assert_not_called(); C.os.kill.assert_not_called()
+
+    def test_accounting_only_failure_retains_healthy_application(self):
+        async def execute():
+            self.c.owns_campaign = True
+            raise C.AccountingError('observer incomplete')
+        self.c.execute = execute; self.c.wait_idle = Mock(return_value=self.status())
+        self.c.graceful_stop = Mock(side_effect=AssertionError('Must retain app'))
+        with patch.object(C, 'Campaign', return_value=self.c), \
+                patch.object(sys, 'argv', ['campaign.py', '--run']), \
+                patch.object(C.signal, 'signal'), contextlib.redirect_stdout(self.output):
+            with self.assertRaises(SystemExit): C.main()
+        result = json.loads((self.run / 'resolution-campaign-result.json').read_text())
+        self.assertFalse(result['passed']); self.assertTrue(result['accounting_only_failure'])
+        self.assertFalse(result['stop']['stopped']); self.c.graceful_stop.assert_not_called()
+        C.os.kill.assert_not_called()
+
+    def test_model_failure_does_not_wait_for_or_hide_behind_observer(self):
+        async def execute():
+            self.c.owns_campaign = True; self.c.accounting_attempted = True
+            self.c.accounting_ready = {'ready': True}
+            raise RuntimeError('original model fault')
+        self.c.execute = execute
+        self.c.graceful_stop = Mock(side_effect=RuntimeError('GPU fault latched; preserve server'))
+        with patch.object(C, 'Campaign', return_value=self.c), \
+                patch.object(sys, 'argv', ['campaign.py', '--run']), \
+                patch.object(C.signal, 'signal'), contextlib.redirect_stdout(self.output):
+            with self.assertRaises(SystemExit): C.main()
+        result = json.loads((self.run / 'resolution-campaign-result.json').read_text())
+        self.assertIn('original model fault', result['error'])
+        self.assertFalse(result['diagnostic_valid'])
+        self.assertEqual(result['driver_accounting']['status'], 'unfinalized-after-campaign-failure')
+        self.accounting.finish.assert_not_called(); C.os.kill.assert_not_called()
 
     def test_failed_request_is_not_retried_and_stops_sequence(self):
         self.c.wait_idle = Mock(return_value=self.status()); self.c.status = Mock(return_value=self.status())

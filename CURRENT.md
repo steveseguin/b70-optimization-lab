@@ -37,8 +37,9 @@ The read-only collector passed independent review and 24 synthetic tests; it has
 never observed a live server. The fixed retirement helper passed 15 synthetic
 file-safety tests, without any real deletion or restore. The proposed 106 diagnostic retains the ten scenes and numerics with
 57 requests / 50 capture allowance, and needs fresh 4 GiB runtime plus 384 MiB
-source admission above the 50 GiB reserve. The standalone plan and schedule passed 31 CPU controls. Runtime integration,
-observer admission, source build and a necessary controlled reload are still pending.
+source admission above the 50 GiB reserve. The standalone plan and schedule passed 31 CPU controls. Runtime integration now passes253 CPU tests, including passive-child readiness,
+source binding and failure handling. The106 namespace scan found no collisions.
+Observer admission, source build and a necessary controlled reload are still pending.
 Sampler A/B timings describe denoising stages, not individual GPU utilization;
 they do not justify a blind placement or worker-count sweep.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded packet105 campaign on one already-owned server. Never starts or retries it.
+"""Bounded packet106 campaign on one already-owned server. Never starts or retries it.
 
 Default prints the CPU schedule. --run requires a pinned client contract and
 manifest. Success keeps the application available. Failure attempts one proven-idle
@@ -20,6 +20,7 @@ import urllib.request
 import reference_gate as gate
 import schedule
 import request_client
+from driver_accounting_runner import DriverAccounting, AccountingError
 
 
 def emit(message):
@@ -66,6 +67,10 @@ class Campaign:
         self.owns_campaign = False
         self.lock_fd = None
         self.started = time.time()
+        self.accounting = DriverAccounting(self.client)
+        self.accounting_attempted = False
+        self.accounting_ready = None
+        self.accounting_finished = False
 
     def check_identity(self):
         # This passive process check is also valid during graceful failure closeout.
@@ -110,7 +115,7 @@ class Campaign:
         self.check_identity()
         emit('phase action ' + name)
         # One POST; a lost response is uncertain and is never resubmitted.
-        # Final control proof also reconstructs the first fast proof; allow bounded CPU scans.
+        # Exact diagnostic proof reconstructs native and candidate gates; allow bounded CPU scans.
         timeout = 300 if name.startswith('verify-') else 180
         value = call('/ltx-resolution/action', {'action': name}, timeout=timeout)
         gate.require(value.get('passed') is True and value.get('action') == name, 'Phase action did not pass')
@@ -123,7 +128,7 @@ class Campaign:
         request_client.write_new(self.run / 'resolution-campaign-started.json', {
             'schema': 'ltx.resolution-campaign-start.v1', 'started_unix': self.started,
             'client_contract_sha256': self.client.contract_sha, 'manifest_sha256': self.manifest_sha,
-            'policy': '71 attempts maximum; one owned application; no restart/retry'})
+            'policy': '57 attempts maximum; one owned application; no restart/retry'})
         self.owns_campaign = True
         self.wait_idle()
         setup = schedule.build_schedule(plan_path=Path(self.client.contract['plan_path']))['schedule']['rows']
@@ -151,16 +156,21 @@ class Campaign:
             await self.request(row)
         self.action('verify-candidate')
         self.action('start-timing')
+        emit('starting bounded passive driver accounting')
+        self.accounting_attempted = True
+        accounting_ready = self.accounting.start()
+        self.accounting_ready = accounting_ready
         for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed-fast']:
             await self.request(row)
         self.action('verify-fast-timed')
-        for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed']:
-            await self.request(row)
-        self.action('verify-timed')
+        accounting_result = self.accounting.finish()
+        self.accounting_finished = True
         return {'passed': True, 'requests': self.requests, 'actions': self.actions,
-                'timed_receipt': str(self.run / 'same-size-timed.json'),
                 'fast_timed_receipt': str(self.run / 'same-size-timed-fast.json'),
-                'claim': 'Paired ten-fixture client checkpoint screen; fixed fast-first order, no record claim.'}
+                'driver_accounting_ready': accounting_ready,
+                'driver_accounting': accounting_result,
+                'diagnostic_valid': accounting_result['valid'],
+                'claim': 'Ten-fixture sampler diagnostic with exact outputs; raw accounting validity is separate from model quality. No speed record or utilization attribution.'}
 
     def graceful_stop(self):
         gate.require(self.owns_campaign and self.lock_fd is not None,
@@ -199,7 +209,7 @@ def main():
     if not args.run:
         value = schedule.build_schedule()
         print(json.dumps({'status': 'plan-only', 'schedule_sha256': value['schedule_sha256'],
-                          'requests': 71, 'model_requests': 0, 'server_actions': 0}))
+                          'requests': 57, 'model_requests': 0, 'server_actions': 0}))
         return
     campaign = Campaign(args.contract, args.contract_sha256, args.manifest_sha256)
     signal_received = []
@@ -216,17 +226,33 @@ def main():
     result = {'passed': False}
     try:
         result = asyncio.run(campaign.execute())
+    except AccountingError as error:
+        result.update(error=repr(error), requests=campaign.requests, actions=campaign.actions,
+                      accounting_only_failure=True, diagnostic_valid=False)
+        emit('driver accounting refused: ' + str(error))
     except (Exception, KeyboardInterrupt) as error:
         result.update(error=repr(error), requests=campaign.requests, actions=campaign.actions)
         emit('campaign halted: ' + str(error))
     finally:
         closing[0] = True
-        if campaign.owns_campaign and result['passed'] is True:
+        if campaign.owns_campaign and campaign.accounting_attempted and not campaign.accounting_finished:
+            # Preserve the original inference/fault outcome without waiting on or
+            # signaling the observer. Partial JSONL is evidence, not valid accounting.
+            result['diagnostic_valid'] = False
+            result['driver_accounting_ready'] = campaign.accounting_ready
+            result['driver_accounting'] = {
+                'valid': False, 'status': 'unfinalized-after-campaign-failure',
+                'output_path': str(campaign.run / 'driver-accounting.jsonl'),
+                'observer_may_be_running': True,
+                'limits': {'seconds': 120, 'samples': 64, 'bytes': 131072},
+                'note': 'No outcome inferred from partial output; no retry or signal. Collector deadlines are checked between bounded reads; kernel latency may overrun them.'}
+        if campaign.owns_campaign and (result['passed'] is True or result.get('accounting_only_failure') is True):
             try:
                 state = campaign.wait_idle()
                 result['application'] = {'running': True, 'available_for_reuse': True,
                                          'final_status': state}
-                result['stop'] = {'stopped': False, 'reason': 'successful application retained'}
+                result['stop'] = {'stopped': False, 'reason': ('accounting-only failure; healthy application retained'
+                           if result.get('accounting_only_failure') else 'successful application retained')}
             except Exception as error:
                 result['passed'] = False
                 result['application'] = {'requires_coordinator': True, 'error': repr(error)}

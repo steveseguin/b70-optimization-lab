@@ -70,7 +70,8 @@ def verify_client_policy(e, root, server, row, identity):
             contract['source_bindings'].get(str(source)) == source_sha,
             'Client policy source binding differs')
     value = e.json(root / 'requests' / row['name'] / 'client-policy.json')
-    policy = 'always' if row['phase'] == 'timed' else 'storage-change-only'
+    require(row['phase'] == 'timed-fast', 'Unsupported client policy phase')
+    policy = 'storage-change-only'
     require(row['client_checkpoint_policy'] == policy and
             value.get('schema') == 'ltx.client-checkpoint-policy.v1' and
             value.get('name') == row['name'] and value.get('phase') == row['phase'] and
@@ -84,8 +85,6 @@ def verify_client_policy(e, root, server, row, identity):
             value['checkpoint_count'] > 0 and
             value['checkpoint_count'] == value['storage_save_count'] + value['skipped_storage_save_count'],
             'Client policy counter accounting differs')
-    if policy == 'always':
-        require(value['skipped_storage_save_count'] == 0, 'Control policy skipped a storage save')
     return value
 
 
@@ -99,15 +98,15 @@ def phase_binding(value, role, name, phase, reference, reference_sha, candidate_
             auth.get('runtime_manifest_sha256') == reference['runtime_manifest_sha256'] and
             auth.get('server_identity_sha256') == reference['server_identity_sha256'] and
             auth.get('reference_receipt_sha256') == reference_sha, 'Phase identity differs')
-    if phase in ('timed', 'timed-fast'):
+    if phase == 'timed-fast':
         require(auth.get('candidate_receipt_sha256') == candidate_sha, 'Timing candidate binding differs')
     require(value.get('output_size') == '640x384' and value.get('speed_only') is False and
             value.get('output_parity_claimed') is False, 'Geometry or premature parity claim differs')
 
 
 def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
-            candidate_receipt_path=None, candidate_sha256=None, fast_receipt_path=None, fast_sha256=None):
-    require(phase in ('candidate-check', 'timed', 'timed-fast'), 'Unknown verification phase')
+            candidate_receipt_path=None, candidate_sha256=None):
+    require(phase in ('candidate-check', 'timed-fast'), 'Unknown verification phase')
     root = R.safe_path(root); require(not (root / 'FAULT.json').exists(), 'Fault present')
     e = R.Evidence(); plan = R.load_plan(plan_path, e)
     reference = R.verify_receipt(reference_receipt_path, reference_sha256)
@@ -118,24 +117,13 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
     require(R.sha(R.canonical(identity)) == R.sha(R.canonical(e.json(root / 'requests' / plan['requests'][0]['name'] / 'identity.json'))), 'Native identity differs')
     require(not (server / 'FAULT.json').exists() and not (server / 'resolution-halt.json').exists(), 'Server fault/halt present')
     candidate = None
-    if phase in ('timed', 'timed-fast'):
+    if phase == 'timed-fast':
         require(candidate_receipt_path is not None and candidate_sha256 is not None, 'Timing needs verified candidate')
         candidate = verify_candidate_receipt(candidate_receipt_path, candidate_sha256)
         require(candidate['reference_receipt_sha256'] == reference_sha256 and candidate['inputs']['root'] == str(root), 'Candidate basis differs')
         e.raw(candidate_receipt_path)
     else:
         require(candidate_receipt_path is None and candidate_sha256 is None, 'Unexpected candidate input')
-    first_fast = None
-    if phase == 'timed':
-        require(fast_receipt_path is not None and fast_sha256 is not None, 'Control timing needs verified fast block')
-        first_fast = verify_fast_receipt(fast_receipt_path, fast_sha256)
-        require(first_fast['reference_receipt_sha256'] == reference_sha256 and
-                first_fast['candidate_receipt_sha256'] == candidate_sha256 and
-                first_fast['inputs']['root'] == str(root) and
-                first_fast['server_identity_sha256'] == reference['server_identity_sha256'], 'Fast basis differs')
-        e.raw(fast_receipt_path)
-    else:
-        require(fast_receipt_path is None and fast_sha256 is None, 'Unexpected fast input')
     rows = R.request_groups(plan)[phase]
     require(len(rows) == 14, 'Request count differs')
     base = rows[0]['clip_index']; expected_count = len(rows) - 4
@@ -143,9 +131,7 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
     seen = {r['prompt_id'] for r in reference['executions']}
     if candidate:
         seen.update(r['prompt_id'] for r in candidate['executions'])
-    if first_fast:
-        seen.update(r['prompt_id'] for r in first_fast['executions'])
-    previous_end = (first_fast or candidate or reference)['executions'][-1]['success_ms']
+    previous_end = (candidate or reference)['executions'][-1]['success_ms']
     executions = []; emitted = []
     for i, row in enumerate(rows):
         name = row['name']; pid, start, end = request_evidence(e, root, row, identity, previous_end, seen)
@@ -179,8 +165,8 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
         record = {'name': name, 'prompt_id': pid, 'start_ms': start, 'success_ms': end,
                   'graph_sha256': row['graph_sha256'], 'fill': i < 4,
                   'emitted_index': None if i < 4 else row['expected_emitted_index']}
-        if phase in ('timed', 'timed-fast'):
-            expected_scope = 'unscored-fill' if i < 4 else ('client-control' if phase == 'timed' else 'client-storage-change-only')
+        if phase == 'timed-fast':
+            expected_scope = 'unscored-fill' if i < 4 else 'sampler-driver-accounting'
             require(row['timing_scope'] == expected_scope, 'Timing block mapping differs')
             policy = verify_client_policy(e, root, server, row, identity)
             record.update(timing_scope=expected_scope, client_policy=policy)
@@ -226,25 +212,23 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
     require(not (root / 'FAULT.json').exists() and not (server / 'FAULT.json').exists() and
             not (server / 'resolution-halt.json').exists(), 'Fault/halt before receipt')
     result = {'schema': 'ltx.same-size-optimized-evidence.v1',
-              'status': {'candidate-check': 'candidate_verified', 'timed': 'timed_verified', 'timed-fast': 'timed_fast_verified'}[phase],
+              'status': {'candidate-check': 'candidate_verified', 'timed-fast': 'timed_fast_verified'}[phase],
               'phase': phase, 'plan_sha256': R.PLAN_SHA, 'qualification_id': R.QUALIFICATION_ID,
               'runtime_manifest_sha256': reference['runtime_manifest_sha256'],
               'server_identity_sha256': reference['server_identity_sha256'],
               'reference_receipt_sha256': reference_sha256, 'candidate_receipt_sha256': candidate_sha256,
-              'fast_receipt_sha256': fast_sha256,
               'four_tensor_exact_clips': expected_count, 'distinct_fixtures': 10, 'fills_not_scored': 4,
               'executions': executions, 'evidence_sha256': e.hashes,
               'inputs': {'root': str(root), 'plan_path': str(plan_path), 'reference_receipt_path': str(reference_receipt_path),
-                         'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None,
-                         'fast_receipt_path': str(fast_receipt_path) if fast_receipt_path else None},
-              'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. The two client-policy timing blocks are a repeated-workload comparison, not broader visual quality, resolution, duration or speed-record evidence.'}
-    if phase in ('timed', 'timed-fast'):
+                         'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None},
+              'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. The sole timed block supports bounded passive accounting diagnostics, not a client comparison, aggregate device utilization, broader visual quality, resolution, duration or speed-record evidence.'}
+    if phase == 'timed-fast':
         ends = [r['success_ms'] for r in executions if not r['fill']]
         require(len(ends) == 10, 'Ten timed emissions required')
         result['completion_intervals_seconds'] = [(b-a)/1000 for a,b in zip(ends, ends[1:])]
-        result['client_checkpoint_policy'] = 'always' if phase == 'timed' else 'storage-change-only'
+        result['client_checkpoint_policy'] = 'storage-change-only'
         result['timing_definition'] = ('Nine server-success intervals between ten emitted original fixtures, '
-            'each once within this client-policy block; fills excluded and preview completion checked separately. '
+            'each once within this passive-accounting diagnostic block; fills excluded and preview completion checked separately. '
             'Repeated-workload screen, not a cold request, headline or record.')
         result['policy_totals'] = {key: sum(r['client_policy'][key] for r in executions)
             for key in ('checkpoint_count', 'storage_save_count', 'skipped_storage_save_count')}
@@ -252,9 +236,9 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
 
 
 def verify_outputs(root, plan_path, reference_receipt_path, reference_sha256, phase, output_path,
-                   candidate_receipt_path=None, candidate_sha256=None, fast_receipt_path=None, fast_sha256=None):
+                   candidate_receipt_path=None, candidate_sha256=None):
     output_path = R.safe_path(output_path); require(not output_path.exists(), 'Receipt already exists')
-    result = _verify(root, plan_path, reference_receipt_path, reference_sha256, phase, candidate_receipt_path, candidate_sha256, fast_receipt_path, fast_sha256)
+    result = _verify(root, plan_path, reference_receipt_path, reference_sha256, phase, candidate_receipt_path, candidate_sha256)
     with output_path.open('xb') as stream:
         stream.write(json.dumps(result, indent=2, sort_keys=True, allow_nan=False).encode() + b'\n')
         stream.flush(); os.fsync(stream.fileno())

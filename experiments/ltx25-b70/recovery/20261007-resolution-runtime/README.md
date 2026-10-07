@@ -1,4 +1,4 @@
-# 640×384 runtime — reverse-order client confirmation105 in preparation
+# 640×384 runtime — passive sampler accounting106 in preparation
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -22,31 +22,47 @@ with healthy four-card postflight.
 The sealed103 runtime passed all ten original fixtures:20
 native executions and50 scored optimized clips were exact. Initial throughput
 was12.00FPS and thirty continuity clips averaged11.03FPS; late client delivery
-drift has concurrent repository-work confounds. The application remains idle,
-and the unmodified proof reconstructed after completion.
+drift has concurrent repository-work confounds. The unmodified proof reconstructed
+after completion;103 later stopped cleanly for104.
 [103 closeout](../../data/resume-20261007/resolution103-closeout/summary.json).
 
 Sealed104 completed71 requests:20 native executions,10 candidate clips and both
 ten-clip timing blocks passed exact four-tensor comparisons. The unchanged-ledger
 policy measured12.786FPS versus12.040FPS, a6.20% gain in one quiet control-first
 pair. It skipped724 redundant storage saves. Full proof reconstructed afterward,
-and the successful application remains idle.
+and104 later stopped cleanly for105.
 [104 result](../../notes/2026-10-07-client104-performance.md).
 
-Current author sources prepare105, one quiet reverse-order confirmation. The
-[fixed plan](../20261007-client-reverse-105/README.md) preserves all ten fixtures,
-model arithmetic, steps, precision, encoder window and W2/B1. It admits20 native,
-14 candidate,14 fast timing and14 control timing requests, plus nine setup
-requests:71 attempts and64 captures. Fresh admission requires5GiB above50GiB.
+Sealed105 confirmed the client improvement in reverse order:12.617FPS versus
+12.098FPS, a4.29% gain, with all ten native repeat pairs and thirty scored optimized
+clips exact across all four tensors. Its full sealed proof reconstructed after
+completion;105 remains retained and idle with its finite plan consumed.
+[105 result](../../notes/2026-10-07-client105-performance.md).
+The client comparison lever is closed; keep the reduced-write policy.
 
-The fast block now precedes control. Its verified proof opens a durable
-`fast_verified` barrier; final control verification reconstructs that first proof.
-Both remain in the existing timing authority. Client checks, state durability,
-event fsyncs and policy readouts are unchanged from104. Only unchanged storage
-ledger rewrites may be skipped, and only for `timed-fast`. This is the final
-client-specific confirmation before pursuing sampler service/overlap. No105
-GPU result exists, and this remains a repeated-workload screen without a public
-record or endurance claim.
+Current author sources prepare106, one bounded passive sampler diagnostic. The
+[fixed plan](../20261007-sampler-accounting106-plan/README.md) preserves all ten
+fixtures, model arithmetic, steps, precision, encoder window and W2/B1. It admits
+20 native,14 candidate and14 reduced-write timing requests plus nine setup
+requests:57 attempts and50 captures. Fresh runtime admission requires4GiB above
+50GiB; source construction has a separate384MiB allowance.
+
+The final `verify-fast-timed` action reconstructs native and candidate proofs and
+opens the durable `fast_verified` barrier. There is no control timing block.
+Checks, state durability and event fsyncs retain the qualified client policy.
+A source-bound passive child reads the server's existing DRM fdinfo counters
+before the timing block. It never opens devices or changes server settings.
+It admits one child, a120-second observation,64 slots and128KiB output; kernel
+read latency can overrun the wall deadline. Readiness is bounded at10seconds,
+and normal finalization waits only to the original start plus130seconds.
+There are no child signals or retries. A failed model request preserves its
+original fault/lifecycle decision and any partial diagnostic without waiting.
+
+Diagnostic validity is independent of model equality. Complete raw records do
+not by themselves establish utilization or attribution inside the scored clips;
+those require subsequent interval/engine/client analysis. No106 GPU result
+exists. This remains a repeated-workload diagnostic, not a public record or
+endurance claim.
 
 The owner has supplied replacement instructions preferring application reuse.
 The runner now retains a successful application after verifying quiescence.
@@ -55,7 +71,7 @@ unresolved work remain for the coordinator. No automatic restart or request retr
 is allowed. Retaining the application does not authorize bypassing its consumed
 request plan; follow-up work needs its own registered admission.
 
-104 is the reviewed predecessor; 99b remains the constructor source. Sealed
+105 is the reviewed predecessor; 99b remains the constructor source. Sealed
 historical packets and plans are unchanged. New native references must precede
 optimized capture. The accepted text encoder remains graph-sharded, so this is
 not an all-eager oracle. The103 result is exact on the registered ten-fixture scope; it is not a public
@@ -90,7 +106,7 @@ registered node owners, unchanged resident tensor identities and fresh device
 memory. The narrow loader wrapper protects loaded owners from eviction; ordinary
 Comfy allocator bookkeeping is retained. `candidate_gate.py` verifies real
 emissions against the ten native reference pairs and excludes fills. The complete
-`request_client.py` accepts only the71 exact scheduled requests and reads fresh
+`request_client.py` accepts only the57 exact scheduled requests and reads fresh
 server phase observations; `schedule.py` binds the nine setup graphs.
 
 `integration.py` connects setup-result checks, native safety, source identity and
@@ -116,7 +132,7 @@ The latter keeps a provisional 4 GiB transient allowance, 1 GiB rounded pool
 allowance and 2 GiB floor on the sampler cards. Neither is a measured peak bound.
 Both captures record fresh post-capture memory and enforce the 2 GiB floor.
 Actual resident weights and encoder graphs must already be present.
-Keep the50GiB disk reserve, fresh5GiB write allowance and64-capture bound.
+Keep the50GiB disk reserve, fresh4GiB write allowance and50-capture bound.
 
 Tests are adjacent `test_*.py` scripts, run with `python3 -B` individually.
 Synthetic schema controls are labeled as such and are not model measurements.

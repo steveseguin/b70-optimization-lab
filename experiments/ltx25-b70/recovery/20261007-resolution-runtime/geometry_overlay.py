@@ -4,8 +4,8 @@ import ast
 import hashlib
 
 PARENT_MANIFEST_SHA256 = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA256 = 'f12dfbfa8be44c9798a1ac9f0dacb1ae7576e3ca30317a5b57de847642faec4f'
-QUALIFICATION_ID = '770e8efb25557f9820d7ed2a091c4be7231b25dbec5c23924f947925f7ba760d'
+PLAN_SHA256 = 'eb8f71c3f6073c654abb6eed215aa877f2256b35e75cf595ea598c83352b31af'
+QUALIFICATION_ID = '2a1bf0897e1b26173ff4143ae36c33da44f2287ed80e65679f9ebeae4ea4d318'
 GEOMETRY_PATH = 'source/scripts/ltx_output_size_98.py'
 SPECS = {
     'pipeline_node.py': ('text', '3c170dc810c95ad00aebd721c7031c1a9220b152b52a779925ef672e0e89b690', 'ltx_pipeline_lab'),
