@@ -46,6 +46,9 @@ EX400U, which is cleanly unmounted. No host power, memory, swap or page-cache
 setting changed. [Shutdown](results/server/shutdown.json),
 [model release](results/model-scratch-release.json), and
 [complete result inventory](result-inventory.json).
+An [independent closeout audit](closeout-review.json) verified all 142 inventory
+files, both empty patches, the incomplete recall classification, model
+preservation and final host-state receipts without new GPU work.
 
 ## Next decision
 
