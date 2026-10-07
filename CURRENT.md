@@ -106,22 +106,33 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 03:38 UTC**. Revision 2 is active in
-preflight; the failed first pilot remains preserved below.
+Latest two-card review: **2026-10-07 03:52 UTC**. Revision 2 finished its six
+full development trials and stopped at the quality gate. Both GPUs are released.
 
-## 2026-10-06 23:38 EDT, two-B70 host: durable revision 2 running
+## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 
-The [revision 2 plan](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r2-plan.md)
-is implemented separately from the first pilot. Partial answers now survive
-retrieval and restarts, submission is explicit, exact batch lookup is available,
-and repeated searches use a bounded action budget. CPU checks and independent
-reviews passed. Full development now requires six correct, clean model trials
-before any fresh held-out seed is used. No speed result is claimed.
+**No model server is running or queued.** All six revision 2 development trials
+completed, with all 24 question IDs present and no lost partial answers. Summary
+scored 36/48, archive 40/48 and quoted events 41/48 across both writing styles.
+Both structured methods scored 24/24 on the report style but failed historical
+questions in dispatch style. All 288 original batches survived exactly and all
+192 structured-table checkpoints were correct: the remaining problem is using
+the right evidence for the final question, rather than retaining the source.
 
-Designated output: `/mnt/fast-ai/bench-results/context-durable-r2-20261007`;
-owned unit: `ctx-durable-r2.service`. **The unit is active**, started at 03:38 UTC after passive preparation.
-Live `status.json` records the current stage. Do not start another GPU owner.
-One qualified server will be stopped on completion or failure, with no automatic retry.
+The server passed 12/12 reference checks and both extraction diagnostics. The
+complete development gate failed, so fresh held-out seeds were untouched and no
+speed result qualifies. The owned server stopped at 03:51:33 UTC; release was
+confirmed at 03:52:28 UTC. `ctx-durable-r2.service` exited with the expected
+quality-gate failure after cleanup. Full output remains at
+`/mnt/fast-ai/bench-results/context-durable-r2-20261007`.
+
+[Plan](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r2-plan.md),
+[results and next development lever](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r2-result.md),
+and [audited native evidence](experiments/qwen38-27b-b70/data/2026-10-07-durable-r2-result/audit.json).
+The next lever is bounded reasoning during final answering, with ingestion and
+retrieval fixed, in a new frozen development revision. Do not edit the preserved
+r2 sources or weaken its gate after seeing the result. Larger streams and speed
+tuning remain deferred.
 
 ## 2026-10-06 23:29 EDT, two-B70 host: durable pilot stopped; quality gate failed
 
