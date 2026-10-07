@@ -1,4 +1,4 @@
-# 640×384 reference/runtime components — full-suite successor in preparation
+# 640×384 reference/runtime components — ten-fixture qualification passed
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -19,8 +19,14 @@ reconstructed the proof. It later stopped cleanly for the controlled103 reload,
 with healthy four-card postflight.
 [102 closeout](../../data/resume-20261007/resolution102-closeout/summary.json).
 
-The current authored successor103 broadens qualification to all ten original
-fixtures. The model, steps, precision, encoder window and W2/B1 configuration
+The current authored and sealed103 runtime passed all ten original fixtures:20
+native executions and50 scored optimized clips were exact. Initial throughput
+was12.00FPS and thirty continuity clips averaged11.03FPS; late client delivery
+drift has concurrent repository-work confounds. The application remains idle,
+and the unmodified proof reconstructed after completion.
+[103 closeout](../../data/resume-20261007/resolution103-closeout/summary.json).
+
+The103 plan broadens qualification to all ten original fixtures. The model, steps, precision, encoder window and W2/B1 configuration
 remain unchanged. The [full-suite plan](../20261007-resolution-full-103/README.md)
 fixes20 native requests,14 candidate requests and44 timed/continuity requests;
 nine setup requests bring the total to87 attempts and80 raw captures. Both
@@ -39,7 +45,8 @@ request plan; follow-up work needs its own registered admission.
 102 is the reviewed W2 predecessor; 99b remains the constructor source. Sealed
 historical packets and plans are unchanged. New native references must precede
 optimized capture. The accepted text encoder remains graph-sharded, so this is
-not an all-eager oracle. The expanded103 result is not yet GPU-qualified.
+not an all-eager oracle. The103 result is exact on the registered ten-fixture scope; it is not a public
+record or a long endurance claim.
 
 Implemented components:
 
@@ -100,4 +107,5 @@ Keep the50GiB disk reserve, fresh7GiB write allowance and80-capture bound.
 
 Tests are adjacent `test_*.py` scripts, run with `python3 -B` individually.
 Synthetic schema controls are labeled as such and are not model measurements.
-No throughput or visual-quality result is claimed by this folder.
+CPU controls alone do not establish GPU performance or visual quality; measured
+claims above are limited to their linked result evidence.
