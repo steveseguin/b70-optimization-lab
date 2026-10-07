@@ -11,7 +11,6 @@ import argparse
 import ast
 import hashlib
 import json
-import math
 from pathlib import Path
 import time
 import urllib.error
@@ -96,20 +95,8 @@ def check_task(task_id, text):
     return {"passed": True, "parsed_answer": obj}
 
 
-def validate_timeout_seconds(timeout_seconds):
-    try:
-        valid = (not isinstance(timeout_seconds, bool)
-                 and isinstance(timeout_seconds, (int, float))
-                 and math.isfinite(timeout_seconds) and timeout_seconds > 0)
-    except (TypeError, ValueError, OverflowError):
-        valid = False
-    if not valid:
-        raise ValueError("timeout_seconds must be a finite positive number")
-
-
-def consume_stream(lines, raw_file, started, clock=time.perf_counter, *, timeout_seconds=120):
+def consume_stream(lines, raw_file, started, clock=time.perf_counter):
     """Parse SSE frames and preserve every received byte even when parsing fails."""
-    validate_timeout_seconds(timeout_seconds)
     text_parts, reasoning_parts, token_ids, token_offsets, text_offsets = [], [], [], [], []
     usage, finish_reasons, frames = {}, [], []
     done = False
@@ -162,8 +149,8 @@ def consume_stream(lines, raw_file, started, clock=time.perf_counter, *, timeout
     for raw in lines:
         raw_file.write(raw)
         raw_file.flush()
-        if clock() - started > timeout_seconds:
-            raise TimeoutError(f"request exceeded {timeout_seconds:g}-second total stream limit")
+        if clock() - started > 120:
+            raise TimeoutError("request exceeded 120-second total stream limit")
         line = raw.decode("utf-8").rstrip("\r\n")
         if line == "":
             consume_frame()
@@ -214,8 +201,7 @@ def consume_stream(lines, raw_file, started, clock=time.perf_counter, *, timeout
             "server_prefill_note": "not exposed by this chat stream; HTTP TTFT is not server prefill"}
 
 
-def request_one(base_url, payload, directory, opener=urllib.request.urlopen, *, timeout_seconds=120):
-    validate_timeout_seconds(timeout_seconds)
+def request_one(base_url, payload, directory, opener=urllib.request.urlopen):
     write_json(directory / "request.json", payload)
     base = base_url.rstrip("/")
     url = base + ("/chat/completions" if base.endswith("/v1") else "/v1/chat/completions")
@@ -224,9 +210,9 @@ def request_one(base_url, payload, directory, opener=urllib.request.urlopen, *, 
     with (directory / "response.sse").open("wb") as raw:
         started = time.perf_counter()
         try:
-            with opener(req, timeout=timeout_seconds) as response:
+            with opener(req, timeout=120) as response:
                 write_json(directory / "response-headers.json", dict(response.headers))
-                return consume_stream(response, raw, started, timeout_seconds=timeout_seconds)
+                return consume_stream(response, raw, started)
         except urllib.error.HTTPError as exc:
             raw.write(exc.read())
             raise

@@ -1,0 +1,25 @@
+{
+  "status": "unapplied candidate ready",
+  "tests_passed": 6,
+  "test_command": "python3 -B /home/steve/worker-recall-timeout-review-20261007/test_timeout_control.py -v",
+  "controls": [
+    "Default120 rejects121 seconds, matching baseline and error text",
+    "Explicit420 accepts121 seconds and rejects421 seconds",
+    "Exact120/420 deadline remains accepted by existing greater-than check",
+    "Default clock call sequence and parsed payload unchanged",
+    "request_one forwards120 default or420 explicit to socket and consumer",
+    "Nine invalid values fail before file/network IO"
+  ],
+  "syntax": "passed",
+  "git_apply_check": "both patches passed, application NOT performed",
+  "repository_source_files_unchanged": true,
+  "model_requests": 0,
+  "network_calls": 0,
+  "application_order": [
+    "Wait for both coding attempts and exports; do not retry the catalog timeout or change second-task parameters",
+    "Verify baseline hashes for shared wire and recall runner",
+    "Apply reviewed timeout-option.patch and recall-callsite.patch",
+    "Run existing shared-wire tests plus offline timeout controls; record changed source identities",
+    "First recall uses explicit420 for socket/stream and unchanged420 total SIGALRM; no model quality claim from changing this bound"
+  ]
+}

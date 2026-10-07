@@ -134,7 +134,7 @@ def main():
             save(request / 'metrics-before.txt', before.encode())
             healthy()
             result['model_requests'] = 1
-            response = model.wire.request_one(model.base, payload, request, opener=model.opener.open, timeout_seconds=420)
+            response = model.wire.request_one(model.base, payload, request, opener=model.opener.open)
             save(request / 'response.json', response)
             if response.get('token_ids_available') is not True or len(response['token_ids']) != response['completion_tokens']:
                 raise ValueError('Returned output token identities are missing or incomplete')

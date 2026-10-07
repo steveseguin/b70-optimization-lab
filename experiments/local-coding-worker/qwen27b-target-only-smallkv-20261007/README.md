@@ -2,8 +2,22 @@
 
 **Active:** startup reports 59,904-token cache capacity and about 39 GiB available
 host RAM. Eight boundary diagnostics and the unchanged worker-format canary
-passed. Coding and recall results remain pending. The supervised server must
-stop after this bounded trial.
+passed. Both coding attempts failed with empty patches and no acceptance attempts:
+catalog hit the fixed 120-second stream deadline while generating a large edit;
+context exhausted 40 steps in an investigation loop. Independent reviews reject
+both. Their complete compact evidence packets are verified and temporary source
+snapshots released. The six remaining frozen cases stay unused.
+
+Before the first recall request, an implementation discrepancy was corrected:
+the planned 420-second total alarm surrounded a wire helper hardcoded to 120
+seconds. The helper now accepts an optional timeout, preserving its 120-second
+default; recall alone explicitly passes 420. The outer 420-second alarm, corpus,
+questions, profile and validator are unchanged. Six focused controls, 107 worker
+tests and 15 existing wire tests passed. The correction was applied only after
+both coding archives were verified, and neither failed coding attempt is rerun.
+[Application receipt](recall-timeout-correction/application.json).
+
+Recall remains pending. The supervised server must stop after that one request.
 
 Preregistered follow-up to the [first target-only arm](../qwen27b-target-only-pilot-20261007/README.md),
 which passed its runtime gates but missed the fixed coding RAM admission. The

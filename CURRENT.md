@@ -26,8 +26,12 @@ the unchanged 24 GiB task admission. No coding task ran. The application stopped
 cleanly and all four cards passed postflight. The separately recorded arm now
 uses a 2 GiB full-precision cache per GPU for the same 33,024-token trial.
 It reports 59,904-token capacity and about 39 GiB available host RAM. Its eight
-boundary checks and unchanged worker-format canary passed; the two coding tasks
-and full-corpus recall are next. No task result or quality score exists yet.
+boundary checks and unchanged worker-format canary passed. Both coding tasks
+failed without a patch: catalog hit its per-request deadline while generating
+an edit; context exhausted 40 steps searching related files. Both independent
+reviews reject the attempts. Their verified evidence is preserved and disposable
+source copies released. The full-corpus recall request is next; its planned
+seven-minute total limit now reaches the underlying stream helper correctly.
 The intended 27B worker remains unqualified here. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving
 the evidence and checking passive GPU idleness, one SIGINT stopped the application;
@@ -78,9 +82,10 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
 - **Coding worker and lab memory:** the owner chose a bounded usefulness trial
   before connecting these projects. The [new evaluation packet](experiments/local-coding-worker/evaluation-20261007/README.md)
   contains eight historical coding repairs and ten source-backed research
-  questions. CPU controls are verified; the separate 4B trial produced **zero
-  completed patches in two attempts**. Judge reviewed patches rather than token
-  speed; do not present that small-model result as a 27B evaluation. The worker can now mount a separate read-only acceptance folder
+  questions. CPU controls are verified; both the separate 4B and 27B trials
+  produced **zero completed patches in two attempts each**, under different
+  model/runtime/budget identities. Judge reviewed patches rather than token
+  speed. The worker can now mount a separate read-only acceptance folder
   and record/check its hashes. This does not qualify a model or serving package.
   Pinned worker dependencies and the CPU image are now installed; all 107 worker
   tests pass. Both initial tasks also passed their real full-snapshot Docker
