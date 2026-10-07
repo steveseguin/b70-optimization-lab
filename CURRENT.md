@@ -9,8 +9,13 @@ The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
 local-worker tuning remain parked. The successful W2 application was retained after completion, then stopped once
 at17:37UTC for a controlled reload into the sealed ten-fixture successor.
-**No model application is running during this transition.** All four GPUs passed
-postflight with no kernel fault. No host or memory setting changed.
+**One LTX application is now running** for the ten-fixture103 campaign,
+PID3286256, unit `ltx103-resolution-server-20261007`, loopback port8188.
+The sealed manifest is
+`a8b78c0a73a3045f902a2cf7f6ff55dff1931f4f4872b12576e976399708b5cb`.
+All four GPUs passed the preceding postflight with no kernel fault. No host or
+memory setting changed. Do not launch other GPU work alongside this campaign.
+[Preregistration](experiments/ltx25-b70/data/resume-20261007/resolution103-preregistration.json).
 [Controlled reload](experiments/ltx25-b70/data/resume-20261007/resolution102-closeout/controlled-reload-stopped.json),
 [postflight](experiments/ltx25-b70/data/resume-20261007/postflight-102.json).
 
@@ -27,10 +32,10 @@ are empty. Post-freeze free memory is about7.20/11.99/9.74/14.74GiB.
 [performance](experiments/ltx25-b70/notes/2026-10-07-resolution102-performance.md),
 [memory](experiments/ltx25-b70/notes/2026-10-07-resolution102-memory.md).
 
-Next in CPU preparation: all ten original fixtures, twenty native references,
+The active campaign covers all ten original fixtures, twenty native references,
 ten scored candidate clips, ten initial timed clips and thirty additional
-continuity clips. The timing blocks remain separate. The proposed immutable plan
-needs87 attempts and80 captures, with a fresh7GiB write allowance and50GiB reserve.
+continuity clips. The timing blocks remain separate. The immutable plan
+allows87 attempts and80 captures, with a fresh7GiB write allowance and50GiB reserve.
 The controlled reload follows successful source and CPU checks; the previous
 sealed plan could not admit the new native fixtures. This is not an automatic restart chain.
 [Expanded plan](experiments/ltx25-b70/recovery/20261007-resolution-full-103/README.md).
