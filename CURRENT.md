@@ -59,8 +59,28 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 00:22 UTC**. Its protected context experiment
+Latest two-card review: **2026-10-07 00:31 UTC**. Its protected context experiment
 continues independently; see its latest entry below.
+
+## 2026-10-06 20:31 EDT, two-B70 host: next durable experiment queued and waiting
+
+**`ctx-durable-pilot-v1.service` is active, waiting for the protected plan-E
+supervisor.** It has sent no model requests. Its live status and output are in
+`/mnt/fast-ai/bench-results/context-durable-v1-20261007`; the
+[queue receipt](experiments/qwen38-27b-b70/data/2026-10-07-durable-host/receipt.json)
+records the pinned implementation/dependencies and the observed waiting state.
+
+After a clean release, it will run bounded health checks, start one pinned
+Plan-E-profile server, require the full strict qualification and both fixed
+extraction diagnostics, then execute the eighteen-trial held-out pilot. It stops
+its own server afterward. Failure leaves a recorded reason and does not retry
+or restart the server. Existing Docker stop timeout and emergency memory-guard
+behavior remain unchanged. **Do not launch another GPU lane alongside this
+queued owner.** See [operation and cancellation](experiments/qwen38-27b-b70/scripts/context/DURABLE-HOST-RUNNER.md).
+
+Seventeen host-coordinator tests and independent operational review passed;
+58 durable harness tests remain passing. The existing supervisor/server were
+still running when this service entered `waiting`. Model validation remains pending.
 
 ## 2026-10-06 20:22 EDT, two-B70 host: million-token quote run verified; handoff being prepared
 
