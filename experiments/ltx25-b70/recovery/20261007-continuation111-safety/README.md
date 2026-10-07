@@ -35,3 +35,19 @@ Run the bounded encode controls with:
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python -m unittest test_encode_safety
 ```
+
+
+## Six-output capture restriction
+
+`capture_adapter.transform_guard` accepts only sealed110's capture guard,
+SHA256`0f1b45631d87caf61e6d7b1396f9ddfd0fbdd66e719dd9df6abc9c2622c63036`.
+It restricts construction to six full-output rows and877,383,216 reserved raw
+bytes. The complete validation body, writer/source transforms and serializer
+pins remain unchanged. Full outputs cannot be replaced by placeholders; a seventh
+attempt or retry latches failure without refund. Four GiB is a proposed future
+aggregate write allowance, not implemented disk admission in this source delta.
+
+Five CPU tests pass in0.019seconds and independent source review found no blocker.
+The first CPU transform refused because its whitespace-sensitive allowance anchor
+was misspelled; the exact source anchor was corrected before any runtime source
+or output was produced. No model operations or actual tensor files were involved.

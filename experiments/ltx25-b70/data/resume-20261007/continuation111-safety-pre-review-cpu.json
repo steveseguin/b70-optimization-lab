@@ -1,0 +1,18 @@
+{
+  "accepted_for_runtime": false,
+  "combined_tests": 33,
+  "created_utc": "2026-10-07T23:58:59.447007+00:00",
+  "elapsed_seconds": 0.423,
+  "gpu_requests": 0,
+  "independent_review_findings": [
+    "Anchor/cache checked before memory snapshots but not freshly after them; snapshot callback mutation could reach native call or mark completed until next check.",
+    "Reentry latch covered native call only, not inspection callbacks/snapshots; recursive stage call could run while outer call paused."
+  ],
+  "next_action": "Tighten post-snapshot invariants and full-operation reentry coverage; add synthetic negative controls; rerun combined safety suite and independent source review.",
+  "passed_existing_tests": true,
+  "python": "/home/steve/.venvs/ltx25-baseline/bin/python",
+  "reviewed_guard_sha256": "bf0379fc9524757c628b23836c376fa82e8aa3653e08a521fe4a7a8a98baf39b",
+  "reviewed_guard_tests_sha256": "c8cd95ab808e8dcbe1e313d0bd223617d28c7b92a6a0367763b73413f939a1ec",
+  "runtime_built": false,
+  "schema": "ltx.continuation111.safety-cpu-review.v1"
+}

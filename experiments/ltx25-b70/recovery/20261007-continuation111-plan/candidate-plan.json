@@ -1,0 +1,2567 @@
+{
+  "plan": {
+    "after_each_request": "Complete durable proof_barrier before admitting next graph; no parallel submission, retries or extra fills.",
+    "basis": {
+      "native_graph_sha256": "6bf2475c5b30461006993c4a2483503fc8e18474c2474ded8071112436e995bc",
+      "prototype_numerical_design_sha256": "0605920645d83be98de0c46db949ca6198ecf146eb7280751afa4409a47bb39b",
+      "prototype_sources": {
+        "anchor.py": "a3aa2c357f47af7cc3e98b941f7473bcaf37ef376e2772dc9270c81159e96319",
+        "graph.py": "90c5c438d7341846edbac5f9c9fd2b6c62e3ecfeb56d854717bd2fb5f1c26a68"
+      },
+      "setup_schedule_file_sha256": "a16533121680eaaad8f952eb486d6a39a914290da7e6176ce537d78d940e714a",
+      "source_files": {
+        "source/comfy_extras/nodes_custom_sampler.py": "b0ba1521c72475e06fed15db004274ed7c8bb2bf73f1d58849faf6f9f9d264fe",
+        "source/comfy_extras/nodes_lt.py": "09ddb30d42244d64ae72e9c64261d1a6b4c512afe0570372222c43dbebd64243",
+        "source/comfy_extras/nodes_lt_audio.py": "19e958412230602ae5499f6fc4f9a50b18a42ddefa5fbcf565e4e39a5b9795f6",
+        "source/comfy_extras/nodes_lt_upsampler.py": "c9f225e4c54f19f31452016fd4e546119d69e9dec37b60a9dc4ddf133848a892",
+        "source/nodes.py": "e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96",
+        "source/scripts/capture_node.py": "ba880ce9114bd15b7b62c0719eb6620978c483f92ade8294d338a0c7d85164f2",
+        "source/scripts/graph_text_encoder_node.py": "cb6a60c94c621a7b47de785a20b7d6f875579ba20537bd2718a536dbf58ee1d6",
+        "source/scripts/host_embedding_resident_node.py": "4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065",
+        "source/scripts/ltx_output_size_98.py": "1699cbdff6992a950c25ce8ccb3f5bd395e9b3b34e1a18a747e25a63aca356eb",
+        "source/scripts/pipeline_node.py": "26df83e9e63b58fe4b56ca937dee5e723b5a0b154e1f1e33cc79ada71b3c7be7"
+      },
+      "source_manifest_sha256": "bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09",
+      "source_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110",
+      "source_plan_file_sha256": "fdfa389c12730659ff5ab067361ef06b3923f446db6f9ed16ef2d00f5aa8ea22",
+      "source_plan_sha256": "cafb272fcb182d80022a0e73eff838dc7fd0aeb5001704d0b9ccbd37fadeccab"
+    },
+    "budget": {
+      "admitted": false,
+      "all_other_outputs_must_fit_remaining_bytes": 3417584080,
+      "anchor_payload_artifacts_required": false,
+      "anchor_payload_bytes_each": 2949120,
+      "max_attempts": 8,
+      "max_captures": 6,
+      "min_free_bytes": 53687091200,
+      "minimum_free_before_build_bytes": 58384711680,
+      "native_requests": 6,
+      "predecessor_anchor_count": 4,
+      "raw_capture_bound_bytes": 877383216,
+      "retries": 0,
+      "runtime_write_allowance_bytes": 4294967296,
+      "setup_requests": 2,
+      "source_build_allowance_bytes": 402653184,
+      "write_allowance_status": "Conservative provisional ceiling; exact cache/other-output bound review and fresh measured storage admission still required."
+    },
+    "capture_contract": {
+      "count": 6,
+      "full_file_bound_bytes": 146230536,
+      "prewrite": "Exact full F32 shape/dtype/finite/active-request checks before mkdir/save; no setup or placeholder capture roles.",
+      "raw_capture_bound_bytes": 877383216,
+      "roles": {
+        "continuation111-pass0-chunk0": "full",
+        "continuation111-pass0-chunk1": "full",
+        "continuation111-pass0-chunk2": "full",
+        "continuation111-pass1-chunk0": "full",
+        "continuation111-pass1-chunk1": "full",
+        "continuation111-pass1-chunk2": "full"
+      },
+      "shapes": {
+        "audio_latent": [
+          1,
+          8,
+          51,
+          16
+        ],
+        "images": [
+          49,
+          384,
+          640,
+          3
+        ],
+        "video_latent": [
+          1,
+          128,
+          7,
+          12,
+          20
+        ],
+        "waveform": [
+          1,
+          2,
+          96480
+        ]
+      }
+    },
+    "claims": {
+      "adopted": false,
+      "audio": "Retain separate untouched raw outputs; no trim/resample/crossfade/concatenation.",
+      "audio_alignment_resolved": false,
+      "continuous_av": false,
+      "delivery_slicing_implemented": false,
+      "deterministic_replay_qualified": false,
+      "endurance": false,
+      "raw_video_frames_per_chain": 147,
+      "record": false,
+      "replay_is_additional_unique_content": false,
+      "seam_motion_identity_accepted": false,
+      "throughput_qualified": false,
+      "timing": "Future submit-to-complete and anchor-ready-to-next-ready include conditioning/verification; no independent-W2 rate borrowed.",
+      "unique_video_frames_per_chain": 145
+    },
+    "execution_order": [
+      "continuation111-window-probe",
+      "continuation111-prepare-native",
+      "continuation111-pass0-chunk0",
+      "continuation111-pass0-chunk1",
+      "continuation111-pass0-chunk2",
+      "continuation111-pass1-chunk0",
+      "continuation111-pass1-chunk1",
+      "continuation111-pass1-chunk2"
+    ],
+    "first_conditioned_admission": "After first-native proof; new encoding memory admission before pass0 chunk1 stages; accepted complete conditioned proof before subsequent conditioned requests.",
+    "node_contracts": {
+      "LTXContinuationAnchor111": {
+        "authority": "Resolve only active exact request and its accepted immediate same-pass predecessor proof; no caller path/hash.",
+        "cache": "No cross-request cached provider output; one owned IMAGE shared by both consumers inside current request.",
+        "output": "Owned contiguous CPU F32 [1,384,640,3] from predecessor frame48; no conversion; reread whole-capture SHA each request.",
+        "outputs": [
+          "IMAGE"
+        ],
+        "registered": false,
+        "required_inputs": {
+          "run_name": "STRING"
+        },
+        "source_binding": "Future sealed111 manifest must bind provider wrapper and reviewed anchor helper hashes."
+      },
+      "LTXContinuationCondition111": {
+        "authority": "Bind run_name to active request; require supplied image is the exact guard-owned anchor object; A then B once each.",
+        "call": "Use guard.run_stage(stage, request_id=run_name, vae=vae, latent=latent, native_call=exact_native_execute); same original kwargs strength1/bypassFalse.",
+        "native_class": "LTXVImgToVideoInplace",
+        "native_method": "execute",
+        "native_source_path": "source/comfy_extras/nodes_lt.py",
+        "native_source_sha256": "09ddb30d42244d64ae72e9c64261d1a6b4c512afe0570372222c43dbebd64243",
+        "outputs": [
+          "LATENT"
+        ],
+        "registered": false,
+        "required_inputs": {
+          "bypass": "BOOLEAN",
+          "image": "IMAGE",
+          "latent": "LATENT",
+          "run_name": "STRING",
+          "stage": "STRING",
+          "strength": "FLOAT",
+          "vae": "VAE"
+        },
+        "safety": "Fresh conditioning admission and encode OOM-to-tiled refusal required before either native call; no fallback.",
+        "source_binding": "Future sealed111 manifest must bind wrapper and ConditioningStageGuard helper hashes.",
+        "stage_values": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    "numerical_contract": {
+      "audio": "raw outputs unchanged; timeline unresolved; no trim/resample/crossfade/concatenation",
+      "base_graph_sha256": "6bf2475c5b30461006993c4a2483503fc8e18474c2474ded8071112436e995bc",
+      "conditioning": {
+        "bypass": false,
+        "chunk0": "ordinary native",
+        "chunks1_2": "predecessor frame48 before both samplers",
+        "image_shape": [
+          1,
+          384,
+          640,
+          3
+        ],
+        "strength": 1.0
+      },
+      "conditioning_native_api": "LTXVImgToVideoInplace.execute(vae,image,latent,strength=1.0,bypass=False)",
+      "conditioning_stage_order": [
+        "A",
+        "B"
+      ],
+      "frame_count": 49,
+      "mandatory_runtime_policy": {
+        "after_each_conditioning_stage_floor_gib": 2,
+        "before_each_conditioning_stage_floor_gib": [
+          8,
+          8,
+          2,
+          9
+        ],
+        "conditioning_latent_device": "cpu",
+        "conditioning_latent_dtype": "torch.float32",
+        "decoder_replicas": 0,
+        "intermediate_device": "cpu",
+        "lean_sampler_installed": false,
+        "policy": "Verify actual settings and tensors; never cast or change settings to satisfy this contract.",
+        "sampler_capture_routes": 0,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          7,
+          6,
+          10
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          7,
+          12,
+          20
+        ],
+        "text_encoder_route": "retain accepted graph-sharded window encoder",
+        "torch_default_dtype": "torch.float32",
+        "vae_encoder_route": "unchanged native encode only; no tiled or alternate fallback",
+        "vae_model_dtype": "torch.bfloat16",
+        "vae_output_dtype": "torch.float32"
+      },
+      "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+      "output_arithmetic": "unchanged110 except disclosed native conditioning before both samplers",
+      "output_size": "640x384",
+      "placement": "two-way20-28",
+      "precision": "unchanged BF16",
+      "prompt": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat.",
+      "reference_mode": "sequential native image-conditioned continuation plus full-chain replay",
+      "scene": "boat",
+      "schema": "ltx.continuation111.numerical-contract.v1",
+      "seed_order": [
+        42,
+        43,
+        44
+      ],
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "source_files": {
+        "source/comfy_extras/nodes_custom_sampler.py": "b0ba1521c72475e06fed15db004274ed7c8bb2bf73f1d58849faf6f9f9d264fe",
+        "source/comfy_extras/nodes_lt.py": "09ddb30d42244d64ae72e9c64261d1a6b4c512afe0570372222c43dbebd64243",
+        "source/comfy_extras/nodes_lt_audio.py": "19e958412230602ae5499f6fc4f9a50b18a42ddefa5fbcf565e4e39a5b9795f6",
+        "source/comfy_extras/nodes_lt_upsampler.py": "c9f225e4c54f19f31452016fd4e546119d69e9dec37b60a9dc4ddf133848a892",
+        "source/nodes.py": "e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96",
+        "source/scripts/capture_node.py": "ba880ce9114bd15b7b62c0719eb6620978c483f92ade8294d338a0c7d85164f2",
+        "source/scripts/graph_text_encoder_node.py": "cb6a60c94c621a7b47de785a20b7d6f875579ba20537bd2718a536dbf58ee1d6",
+        "source/scripts/host_embedding_resident_node.py": "4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065",
+        "source/scripts/ltx_output_size_98.py": "1699cbdff6992a950c25ce8ccb3f5bd395e9b3b34e1a18a747e25a63aca356eb",
+        "source/scripts/pipeline_node.py": "26df83e9e63b58fe4b56ca937dee5e723b5a0b154e1f1e33cc79ada71b3c7be7"
+      },
+      "source_packet_manifest_sha256": "bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09",
+      "source_plan_sha256": "cafb272fcb182d80022a0e73eff838dc7fd0aeb5001704d0b9ccbd37fadeccab",
+      "stage_steps": [
+        8,
+        3
+      ],
+      "window_encoder": "accepted graph-sharded window64"
+    },
+    "proof_contract": {
+      "encode_workspace_admitted": false,
+      "every_chunk": [
+        "exact registered graph and request/prompt/source identity",
+        "uncached required-node ordering",
+        "four full tensor shapes/F32/finiteness/hash",
+        "prewrite full-role accounting",
+        "fresh before/after native memory/owner/fault evidence",
+        "quiescence",
+        "whole capture SHA and immediate same-pass predecessor linkage",
+        "conditioned chunks require provider and A/B exact-call receipts"
+      ],
+      "final": "Six per-chunk proofs, four anchor/consumption links, two setup verdicts, source/plan/runtime identity, final quiescence and no fault.",
+      "native_pre_floor_gib": [
+        8,
+        8,
+        2,
+        9
+      ],
+      "post_request_floor_gib": 2,
+      "replay": "All four tensors equal corresponding pass0 chunk; pass1 derives anchors only from its own proven predecessor.",
+      "setup": [
+        "source-bound accepted window verdict",
+        "native full-residency preparation and before-state"
+      ]
+    },
+    "provider_binding": {
+      "context_plan_sha256": "Use actual outer plan_sha256, never prototype_numerical_design_sha256 or qualification_id.",
+      "context_runtime_sha256": "Use actual sealed111 runtime manifest, not source110 manifest or caller input.",
+      "dynamic_state": "Only verified per-chunk proof table changes; all eight graph hashes stay fixed.",
+      "required_fields": [
+        "active_name",
+        "prompt_id",
+        "current_graph_sha256",
+        "predecessor_capture_sha256",
+        "anchor_sha256",
+        "predecessor_graph_sha256",
+        "model_verification_sha256",
+        "prompt_sha256",
+        "pass_index",
+        "predecessor_chunk_index",
+        "predecessor_seed",
+        "actual_plan_sha256",
+        "actual_runtime_sha256"
+      ],
+      "retention": "Keep both complete chains and all anchor/consumption/proof metadata until no readers remain and replay plus seam review complete."
+    },
+    "qualification_id": "705fa3d73c603833591ac5ae13b5f2d4d79c329b860794ff4d061c71e8942266",
+    "requests": [
+      {
+        "authority_phase": "native_reference",
+        "capture_role": null,
+        "client_checkpoint_policy": "always",
+        "graph": {
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "continuation111-window-probe"
+            }
+          },
+          "470": {
+            "class_type": "LTXTextWindowProbe",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "run_name": "continuation111-window-probe"
+            }
+          }
+        },
+        "graph_sha256": "f422f2b8689a06951a942e017a897b3b32899e6d6e23154e6ca35b2cb889bfc2",
+        "kind": "window-probe",
+        "name": "continuation111-window-probe",
+        "phase": "native-setup",
+        "proof_barrier": "proof:continuation111-window-probe",
+        "requires_proofs": []
+      },
+      {
+        "authority_phase": "native_reference",
+        "capture_role": null,
+        "client_checkpoint_policy": "always",
+        "graph": {
+          "490": {
+            "class_type": "LTXResolutionPrepareNative",
+            "inputs": {
+              "run_name": "continuation111-prepare-native"
+            }
+          }
+        },
+        "graph_sha256": "4a149979b60754b5cc1fd14f1d351b5bbbb372860715ef2e288247cfad2ad8be",
+        "kind": "prepare-native",
+        "name": "continuation111-prepare-native",
+        "phase": "native-setup",
+        "proof_barrier": "proof:continuation111-prepare-native",
+        "requires_proofs": [
+          "proof:continuation111-window-probe"
+        ]
+      },
+      {
+        "authority_phase": "native_reference",
+        "capture_role": "full",
+        "chunk_index": 0,
+        "client_checkpoint_policy": "always",
+        "clip_index": 99911000,
+        "conditioning_stages": [],
+        "delivery_frame_start": 0,
+        "establishes": [
+          "first-native-verified"
+        ],
+        "fixture": "boat",
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "340": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "367",
+                1
+              ],
+              "video_latent": [
+                "348",
+                0
+              ]
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "344": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "388",
+                0
+              ],
+              "latent_image": [
+                "377",
+                0
+              ],
+              "noise": [
+                "339",
+                0
+              ],
+              "sampler": [
+                "352",
+                0
+              ],
+              "sigmas": [
+                "404",
+                0
+              ]
+            }
+          },
+          "348": {
+            "class_type": "LTXVLatentUpsampler",
+            "inputs": {
+              "samples": [
+                "367",
+                0
+              ],
+              "upscale_model": [
+                "420",
+                4
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "358": {
+            "class_type": "LTXVAudioVAEDecode",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "samples": [
+                "369",
+                1
+              ]
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99911000,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "705fa3d73c603833591ac5ae13b5f2d4d79c329b860794ff4d061c71e8942266",
+              "run_name": "continuation111-pass0-chunk0",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "367": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "344",
+                0
+              ]
+            }
+          },
+          "368": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "391",
+                0
+              ],
+              "latent_image": [
+                "340",
+                0
+              ],
+              "noise": [
+                "338",
+                0
+              ],
+              "sampler": [
+                "341",
+                0
+              ],
+              "sigmas": [
+                "395",
+                0
+              ]
+            }
+          },
+          "369": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "368",
+                0
+              ]
+            }
+          },
+          "374": {
+            "class_type": "VAEDecode",
+            "inputs": {
+              "samples": [
+                "369",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "377": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "video_latent": [
+                "356",
+                0
+              ]
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "358",
+                0
+              ],
+              "audio_latent": [
+                "369",
+                1
+              ],
+              "images": [
+                "374",
+                0
+              ],
+              "run_name": "continuation111-pass0-chunk0",
+              "video_latent": [
+                "369",
+                0
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "continuation111-pass0-chunk0"
+            }
+          }
+        },
+        "graph_sha256": "7baa6c4380a882885a7d834b6e82f4687790d4a1bafc70d75931089a9a34a15f",
+        "kind": "native-chunk",
+        "name": "continuation111-pass0-chunk0",
+        "new_video_frames": 49,
+        "pass_index": 0,
+        "phase": "native-reference",
+        "predecessor_capture": null,
+        "predecessor_frame_index": null,
+        "proof_barrier": "proof:continuation111-pass0-chunk0",
+        "reference_capture": null,
+        "requires_proofs": [
+          "proof:continuation111-prepare-native"
+        ],
+        "seed": 42
+      },
+      {
+        "authority_phase": "native_reference",
+        "capture_role": "full",
+        "chunk_index": 1,
+        "client_checkpoint_policy": "always",
+        "clip_index": 99911001,
+        "conditioning_stages": [
+          "A",
+          "B"
+        ],
+        "delivery_frame_start": 1,
+        "establishes": [
+          "first-conditioned-verified"
+        ],
+        "fixture": "boat",
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 43
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 43
+            }
+          },
+          "340": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "367",
+                1
+              ],
+              "video_latent": [
+                "anchor_stage_b",
+                0
+              ]
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "344": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "388",
+                0
+              ],
+              "latent_image": [
+                "377",
+                0
+              ],
+              "noise": [
+                "339",
+                0
+              ],
+              "sampler": [
+                "352",
+                0
+              ],
+              "sigmas": [
+                "404",
+                0
+              ]
+            }
+          },
+          "348": {
+            "class_type": "LTXVLatentUpsampler",
+            "inputs": {
+              "samples": [
+                "367",
+                0
+              ],
+              "upscale_model": [
+                "420",
+                4
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "358": {
+            "class_type": "LTXVAudioVAEDecode",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "samples": [
+                "369",
+                1
+              ]
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99911001,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "705fa3d73c603833591ac5ae13b5f2d4d79c329b860794ff4d061c71e8942266",
+              "run_name": "continuation111-pass0-chunk1",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "367": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "344",
+                0
+              ]
+            }
+          },
+          "368": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "391",
+                0
+              ],
+              "latent_image": [
+                "340",
+                0
+              ],
+              "noise": [
+                "338",
+                0
+              ],
+              "sampler": [
+                "341",
+                0
+              ],
+              "sigmas": [
+                "395",
+                0
+              ]
+            }
+          },
+          "369": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "368",
+                0
+              ]
+            }
+          },
+          "374": {
+            "class_type": "VAEDecode",
+            "inputs": {
+              "samples": [
+                "369",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "377": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "video_latent": [
+                "anchor_stage_a",
+                0
+              ]
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "358",
+                0
+              ],
+              "audio_latent": [
+                "369",
+                1
+              ],
+              "images": [
+                "374",
+                0
+              ],
+              "run_name": "continuation111-pass0-chunk1",
+              "video_latent": [
+                "369",
+                0
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "continuation111-pass0-chunk1"
+            }
+          },
+          "anchor_stage_a": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "356",
+                0
+              ],
+              "run_name": "continuation111-pass0-chunk1",
+              "stage": "A",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "anchor_stage_b": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "348",
+                0
+              ],
+              "run_name": "continuation111-pass0-chunk1",
+              "stage": "B",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "continuation111_anchor": {
+            "class_type": "LTXContinuationAnchor111",
+            "inputs": {
+              "run_name": "continuation111-pass0-chunk1"
+            }
+          }
+        },
+        "graph_sha256": "eb707d1c8878f6f57b117844942713f908fe1564218ee532a054647e1c85e828",
+        "kind": "native-chunk",
+        "name": "continuation111-pass0-chunk1",
+        "new_video_frames": 48,
+        "pass_index": 0,
+        "phase": "native-reference",
+        "predecessor_capture": "continuation111-pass0-chunk0",
+        "predecessor_frame_index": 48,
+        "proof_barrier": "proof:continuation111-pass0-chunk1",
+        "reference_capture": null,
+        "requires_proofs": [
+          "proof:continuation111-pass0-chunk0"
+        ],
+        "seed": 43
+      },
+      {
+        "authority_phase": "native_reference",
+        "capture_role": "full",
+        "chunk_index": 2,
+        "client_checkpoint_policy": "always",
+        "clip_index": 99911002,
+        "conditioning_stages": [
+          "A",
+          "B"
+        ],
+        "delivery_frame_start": 1,
+        "establishes": [],
+        "fixture": "boat",
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 44
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 44
+            }
+          },
+          "340": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "367",
+                1
+              ],
+              "video_latent": [
+                "anchor_stage_b",
+                0
+              ]
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "344": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "388",
+                0
+              ],
+              "latent_image": [
+                "377",
+                0
+              ],
+              "noise": [
+                "339",
+                0
+              ],
+              "sampler": [
+                "352",
+                0
+              ],
+              "sigmas": [
+                "404",
+                0
+              ]
+            }
+          },
+          "348": {
+            "class_type": "LTXVLatentUpsampler",
+            "inputs": {
+              "samples": [
+                "367",
+                0
+              ],
+              "upscale_model": [
+                "420",
+                4
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "358": {
+            "class_type": "LTXVAudioVAEDecode",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "samples": [
+                "369",
+                1
+              ]
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99911002,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "705fa3d73c603833591ac5ae13b5f2d4d79c329b860794ff4d061c71e8942266",
+              "run_name": "continuation111-pass0-chunk2",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "367": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "344",
+                0
+              ]
+            }
+          },
+          "368": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "391",
+                0
+              ],
+              "latent_image": [
+                "340",
+                0
+              ],
+              "noise": [
+                "338",
+                0
+              ],
+              "sampler": [
+                "341",
+                0
+              ],
+              "sigmas": [
+                "395",
+                0
+              ]
+            }
+          },
+          "369": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "368",
+                0
+              ]
+            }
+          },
+          "374": {
+            "class_type": "VAEDecode",
+            "inputs": {
+              "samples": [
+                "369",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "377": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "video_latent": [
+                "anchor_stage_a",
+                0
+              ]
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "358",
+                0
+              ],
+              "audio_latent": [
+                "369",
+                1
+              ],
+              "images": [
+                "374",
+                0
+              ],
+              "run_name": "continuation111-pass0-chunk2",
+              "video_latent": [
+                "369",
+                0
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "continuation111-pass0-chunk2"
+            }
+          },
+          "anchor_stage_a": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "356",
+                0
+              ],
+              "run_name": "continuation111-pass0-chunk2",
+              "stage": "A",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "anchor_stage_b": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "348",
+                0
+              ],
+              "run_name": "continuation111-pass0-chunk2",
+              "stage": "B",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "continuation111_anchor": {
+            "class_type": "LTXContinuationAnchor111",
+            "inputs": {
+              "run_name": "continuation111-pass0-chunk2"
+            }
+          }
+        },
+        "graph_sha256": "6cff847987b991fdb19688fce0e9839abc6a23123cae8e37a8974adf542fe6f7",
+        "kind": "native-chunk",
+        "name": "continuation111-pass0-chunk2",
+        "new_video_frames": 48,
+        "pass_index": 0,
+        "phase": "native-reference",
+        "predecessor_capture": "continuation111-pass0-chunk1",
+        "predecessor_frame_index": 48,
+        "proof_barrier": "proof:continuation111-pass0-chunk2",
+        "reference_capture": null,
+        "requires_proofs": [
+          "proof:continuation111-pass0-chunk1",
+          "first-conditioned-verified"
+        ],
+        "seed": 44
+      },
+      {
+        "authority_phase": "native_reference",
+        "capture_role": "full",
+        "chunk_index": 0,
+        "client_checkpoint_policy": "always",
+        "clip_index": 99911010,
+        "conditioning_stages": [],
+        "delivery_frame_start": 0,
+        "establishes": [],
+        "fixture": "boat",
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "340": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "367",
+                1
+              ],
+              "video_latent": [
+                "348",
+                0
+              ]
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "344": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "388",
+                0
+              ],
+              "latent_image": [
+                "377",
+                0
+              ],
+              "noise": [
+                "339",
+                0
+              ],
+              "sampler": [
+                "352",
+                0
+              ],
+              "sigmas": [
+                "404",
+                0
+              ]
+            }
+          },
+          "348": {
+            "class_type": "LTXVLatentUpsampler",
+            "inputs": {
+              "samples": [
+                "367",
+                0
+              ],
+              "upscale_model": [
+                "420",
+                4
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "358": {
+            "class_type": "LTXVAudioVAEDecode",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "samples": [
+                "369",
+                1
+              ]
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99911010,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "705fa3d73c603833591ac5ae13b5f2d4d79c329b860794ff4d061c71e8942266",
+              "run_name": "continuation111-pass1-chunk0",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "367": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "344",
+                0
+              ]
+            }
+          },
+          "368": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "391",
+                0
+              ],
+              "latent_image": [
+                "340",
+                0
+              ],
+              "noise": [
+                "338",
+                0
+              ],
+              "sampler": [
+                "341",
+                0
+              ],
+              "sigmas": [
+                "395",
+                0
+              ]
+            }
+          },
+          "369": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "368",
+                0
+              ]
+            }
+          },
+          "374": {
+            "class_type": "VAEDecode",
+            "inputs": {
+              "samples": [
+                "369",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "377": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "video_latent": [
+                "356",
+                0
+              ]
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "358",
+                0
+              ],
+              "audio_latent": [
+                "369",
+                1
+              ],
+              "images": [
+                "374",
+                0
+              ],
+              "run_name": "continuation111-pass1-chunk0",
+              "video_latent": [
+                "369",
+                0
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "continuation111-pass1-chunk0"
+            }
+          }
+        },
+        "graph_sha256": "ee0f001b9086483071c16956a30f9b5d18e4205c6d05eb277b9f5db3ac4c7585",
+        "kind": "native-chunk",
+        "name": "continuation111-pass1-chunk0",
+        "new_video_frames": 49,
+        "pass_index": 1,
+        "phase": "native-repeat",
+        "predecessor_capture": null,
+        "predecessor_frame_index": null,
+        "proof_barrier": "proof:continuation111-pass1-chunk0",
+        "reference_capture": "continuation111-pass0-chunk0",
+        "requires_proofs": [
+          "proof:continuation111-pass0-chunk2",
+          "proof:continuation111-pass0-chunk0"
+        ],
+        "seed": 42
+      },
+      {
+        "authority_phase": "native_reference",
+        "capture_role": "full",
+        "chunk_index": 1,
+        "client_checkpoint_policy": "always",
+        "clip_index": 99911011,
+        "conditioning_stages": [
+          "A",
+          "B"
+        ],
+        "delivery_frame_start": 1,
+        "establishes": [],
+        "fixture": "boat",
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 43
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 43
+            }
+          },
+          "340": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "367",
+                1
+              ],
+              "video_latent": [
+                "anchor_stage_b",
+                0
+              ]
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "344": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "388",
+                0
+              ],
+              "latent_image": [
+                "377",
+                0
+              ],
+              "noise": [
+                "339",
+                0
+              ],
+              "sampler": [
+                "352",
+                0
+              ],
+              "sigmas": [
+                "404",
+                0
+              ]
+            }
+          },
+          "348": {
+            "class_type": "LTXVLatentUpsampler",
+            "inputs": {
+              "samples": [
+                "367",
+                0
+              ],
+              "upscale_model": [
+                "420",
+                4
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "358": {
+            "class_type": "LTXVAudioVAEDecode",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "samples": [
+                "369",
+                1
+              ]
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99911011,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "705fa3d73c603833591ac5ae13b5f2d4d79c329b860794ff4d061c71e8942266",
+              "run_name": "continuation111-pass1-chunk1",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "367": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "344",
+                0
+              ]
+            }
+          },
+          "368": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "391",
+                0
+              ],
+              "latent_image": [
+                "340",
+                0
+              ],
+              "noise": [
+                "338",
+                0
+              ],
+              "sampler": [
+                "341",
+                0
+              ],
+              "sigmas": [
+                "395",
+                0
+              ]
+            }
+          },
+          "369": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "368",
+                0
+              ]
+            }
+          },
+          "374": {
+            "class_type": "VAEDecode",
+            "inputs": {
+              "samples": [
+                "369",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "377": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "video_latent": [
+                "anchor_stage_a",
+                0
+              ]
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "358",
+                0
+              ],
+              "audio_latent": [
+                "369",
+                1
+              ],
+              "images": [
+                "374",
+                0
+              ],
+              "run_name": "continuation111-pass1-chunk1",
+              "video_latent": [
+                "369",
+                0
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "continuation111-pass1-chunk1"
+            }
+          },
+          "anchor_stage_a": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "356",
+                0
+              ],
+              "run_name": "continuation111-pass1-chunk1",
+              "stage": "A",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "anchor_stage_b": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "348",
+                0
+              ],
+              "run_name": "continuation111-pass1-chunk1",
+              "stage": "B",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "continuation111_anchor": {
+            "class_type": "LTXContinuationAnchor111",
+            "inputs": {
+              "run_name": "continuation111-pass1-chunk1"
+            }
+          }
+        },
+        "graph_sha256": "05c4188f3d892ad96d257825a530023b23728eaa4c472a81dda52926445f0561",
+        "kind": "native-chunk",
+        "name": "continuation111-pass1-chunk1",
+        "new_video_frames": 48,
+        "pass_index": 1,
+        "phase": "native-repeat",
+        "predecessor_capture": "continuation111-pass1-chunk0",
+        "predecessor_frame_index": 48,
+        "proof_barrier": "proof:continuation111-pass1-chunk1",
+        "reference_capture": "continuation111-pass0-chunk1",
+        "requires_proofs": [
+          "proof:continuation111-pass1-chunk0",
+          "proof:continuation111-pass0-chunk1",
+          "first-conditioned-verified"
+        ],
+        "seed": 43
+      },
+      {
+        "authority_phase": "native_reference",
+        "capture_role": "full",
+        "chunk_index": 2,
+        "client_checkpoint_policy": "always",
+        "clip_index": 99911012,
+        "conditioning_stages": [
+          "A",
+          "B"
+        ],
+        "delivery_frame_start": 1,
+        "establishes": [],
+        "fixture": "boat",
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 44
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 44
+            }
+          },
+          "340": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "367",
+                1
+              ],
+              "video_latent": [
+                "anchor_stage_b",
+                0
+              ]
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "344": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "388",
+                0
+              ],
+              "latent_image": [
+                "377",
+                0
+              ],
+              "noise": [
+                "339",
+                0
+              ],
+              "sampler": [
+                "352",
+                0
+              ],
+              "sigmas": [
+                "404",
+                0
+              ]
+            }
+          },
+          "348": {
+            "class_type": "LTXVLatentUpsampler",
+            "inputs": {
+              "samples": [
+                "367",
+                0
+              ],
+              "upscale_model": [
+                "420",
+                4
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "358": {
+            "class_type": "LTXVAudioVAEDecode",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "samples": [
+                "369",
+                1
+              ]
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99911012,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "705fa3d73c603833591ac5ae13b5f2d4d79c329b860794ff4d061c71e8942266",
+              "run_name": "continuation111-pass1-chunk2",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "367": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "344",
+                0
+              ]
+            }
+          },
+          "368": {
+            "class_type": "SamplerCustomAdvanced",
+            "inputs": {
+              "guider": [
+                "391",
+                0
+              ],
+              "latent_image": [
+                "340",
+                0
+              ],
+              "noise": [
+                "338",
+                0
+              ],
+              "sampler": [
+                "341",
+                0
+              ],
+              "sigmas": [
+                "395",
+                0
+              ]
+            }
+          },
+          "369": {
+            "class_type": "LTXVSeparateAVLatent",
+            "inputs": {
+              "av_latent": [
+                "368",
+                0
+              ]
+            }
+          },
+          "374": {
+            "class_type": "VAEDecode",
+            "inputs": {
+              "samples": [
+                "369",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "377": {
+            "class_type": "LTXVConcatAVLatent",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "video_latent": [
+                "anchor_stage_a",
+                0
+              ]
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "420",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "358",
+                0
+              ],
+              "audio_latent": [
+                "369",
+                1
+              ],
+              "images": [
+                "374",
+                0
+              ],
+              "run_name": "continuation111-pass1-chunk2",
+              "video_latent": [
+                "369",
+                0
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "continuation111-pass1-chunk2"
+            }
+          },
+          "anchor_stage_a": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "356",
+                0
+              ],
+              "run_name": "continuation111-pass1-chunk2",
+              "stage": "A",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "anchor_stage_b": {
+            "class_type": "LTXContinuationCondition111",
+            "inputs": {
+              "bypass": false,
+              "image": [
+                "continuation111_anchor",
+                0
+              ],
+              "latent": [
+                "348",
+                0
+              ],
+              "run_name": "continuation111-pass1-chunk2",
+              "stage": "B",
+              "strength": 1.0,
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "continuation111_anchor": {
+            "class_type": "LTXContinuationAnchor111",
+            "inputs": {
+              "run_name": "continuation111-pass1-chunk2"
+            }
+          }
+        },
+        "graph_sha256": "13ecd02d3adc54c628f9d9d35353b46e101df4f2f5692b8c46b5eaa4607f2900",
+        "kind": "native-chunk",
+        "name": "continuation111-pass1-chunk2",
+        "new_video_frames": 48,
+        "pass_index": 1,
+        "phase": "native-repeat",
+        "predecessor_capture": "continuation111-pass1-chunk1",
+        "predecessor_frame_index": 48,
+        "proof_barrier": "proof:continuation111-pass1-chunk2",
+        "reference_capture": "continuation111-pass0-chunk2",
+        "requires_proofs": [
+          "proof:continuation111-pass1-chunk1",
+          "proof:continuation111-pass0-chunk2",
+          "first-conditioned-verified"
+        ],
+        "seed": 44
+      }
+    ],
+    "schema": "ltx.continuation111.native-plan.v1",
+    "status": "cpu-prepared-not-admitted"
+  },
+  "plan_sha256": "7944f8701244bd386c41bc5cdd6c4e9df1ea8fcf4d9dedf91e249f476105b2c5"
+}
