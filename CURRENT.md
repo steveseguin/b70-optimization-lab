@@ -7,7 +7,8 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **No model server is running.** The 20/28
+local-worker tuning remain parked. **The corrected 20/28 experiment is running**, unit
+`ltx100b-rebalance-server-20261007`, PID 3195828. The first 20/28
 candidate stopped cleanly at 14:17 UTC after a setup ownership check rejected its
 valid single secondary shard. No clips or timing were produced. All four GPUs
 passed postflight at 14:18 UTC, with no kernel GPU fault. The existing checker
@@ -42,7 +43,7 @@ preserved. The qualified packet manifest is
 The corrected ownership candidate is now sealed and independently reviewed;
 22 CPU checks and the inactive launch check pass. Its actual consuming function
 regression reproduces the old failure and validates the correction.
-Next: run the corrected 20/28 candidate against the accepted baseline.
+The corrected 20/28 candidate is now running against the accepted baseline.
 [Corrected test plan](experiments/ltx25-b70/data/resume-20261007/runtime100b-preregistration.json). The
 qualified 99b control remains the comparison and memory basis. The failed run
 is not a performance or quality verdict on 20/28. Each new experiment needs a
