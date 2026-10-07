@@ -7,7 +7,8 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **No model server is running.** The latest
+local-worker tuning remain parked. **The single 20/28 rebalance experiment is running**, unit
+`ltx100-rebalance-server-20261007`, PID 3193292. The preceding
 control stopped cleanly at 14:12 UTC; all four GPUs passed postflight with no
 kernel GPU fault. All five bad-memory blocks remain offline. No power, memory,
 swap, driver or reboot change was made.
@@ -33,11 +34,11 @@ preserved. The qualified packet manifest is
 [Original failure](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md),
 [compatibility plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
 
-Next: test the named 20/28 sampler split to reduce the busiest card's work.
+Now testing the named 20/28 sampler split to reduce the busiest card's work.
 Its CPU preparation and independent review pass, and the actual qualified
-control's memory receipts admit the conservative plan. Build only after the
-control has stopped, then run one exact-output candidate with a fresh 4 GiB
-output/cache allowance and the 50 GiB disk reserve. No projected gain counts as
+control's memory receipts admit the conservative plan. The separate candidate was built after the control stopped, passed its inactive
+launch check, and has a fresh 4 GiB output/cache allowance with the 50 GiB disk
+reserve. [Rebalance plan](experiments/ltx25-b70/data/resume-20261007/runtime100-preregistration.json). No projected gain counts as
 a measurement. After the placement decision, screen W3 only if occupancy and
 memory support it; then qualify a useful-resolution baseline rather than keep
 chasing the small-shape benchmark.
