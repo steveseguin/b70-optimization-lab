@@ -7,7 +7,10 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **No model server is running.** The corrected
+local-worker tuning remain parked. **One finite 640×384 reference application
+is starting at16:33UTC.** Packet101c corrects both producer job-tag checks and
+uses fresh names/indices; all15 CPU suites and historical-producer review pass.
+The corrected
 640×384 preparation passed and generated six native clips. Their three repeat
 pairs have identical hashes for all four tensors, but the new verifier refused
 a prompt-hash convention mismatch before optimized setup. The application
