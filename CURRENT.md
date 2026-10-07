@@ -1,7 +1,35 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-06 23:27 UTC** (2026-10-06 19:27 EDT), two-B70 host.
+Last reviewed: **2026-10-06 23:59 UTC** (2026-10-06 19:59 EDT), two-B70 host.
 The four-B70 host section below was added 2026-09-11.
+
+## 2026-10-06 19:59 EDT, two-B70 host: evidence pipeline and durable pilot ready; no new model results
+
+The [canonical historical manifest](experiments/qwen38-27b-b70/data/2026-10-05-context/canonical-2026-10-06/manifest.json)
+contains 28 completed, one interrupted and one incomplete attempt. Verified grader
+counts now drive the site’s selected rows; unsuccessful attempts remain visible.
+Unknown old runtime/checker identities remain unknown rather than being filled
+from the current checkout.
+
+A separate [durable pilot](experiments/qwen38-27b-b70/scripts/context/durable/README.md)
+archives source text before delivery, applies quoted events transactionally, and
+preserves records across restart. Its frozen eighteen-trial comparison uses
+three methods, equal retrieval permissions and current/history/cross-reference
+questions. It does not replace the active CLM code. Quote validity still does
+not prove correct semantic interpretation or complete extraction.
+
+[CPU validation and frozen tasks](experiments/qwen38-27b-b70/data/2026-10-06-durable-context/README.md):
+58 durable tests, nine exporter tests and 11 site-import tests pass. Six oracle-fed
+stub trials complete; these provide no model quality or speed evidence.
+
+**Protected active work remains `context-planE-a1`, port 18196.** Its supervisor,
+server and Harbor client were still running at 23:59 UTC. No new inference was
+sent and no active code or queue was changed. After it releases the machine,
+review its completed artifacts and run the normal preflight, then the frozen
+seed-7 extraction diagnostic in both styles. Only matching, perfect diagnostic
+results unlock the held-out pilot. The [preregistered protocol](experiments/qwen38-27b-b70/notes/2026-10-06-durable-context-prereg.md)
+sets correctness before speed; wider streams and new optimizations follow only
+if this comparison supports them. No unattended server launcher was installed.
 
 ## 2026-10-06 19:27 EDT, two-B70 host: context results reviewed; experiment still active
 

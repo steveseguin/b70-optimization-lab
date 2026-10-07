@@ -1,0 +1,31 @@
+name: context-evidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/context-evidence.yml'
+      - 'experiments/qwen38-27b-b70/scripts/context/durable/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/evidence/**'
+      - 'experiments/qwen38-27b-b70/data/2026-10-06-durable-context/**'
+  pull_request:
+    paths:
+      - '.github/workflows/context-evidence.yml'
+      - 'experiments/qwen38-27b-b70/scripts/context/durable/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/evidence/**'
+      - 'experiments/qwen38-27b-b70/data/2026-10-06-durable-context/**'
+
+jobs:
+  cpu-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context/durable -p 'test_*.py'
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context/evidence -p 'test_*.py'
+      - name: Verify frozen plan without model requests
+        run: |
+          python3 experiments/qwen38-27b-b70/scripts/context/durable/campaign.py --suite experiments/qwen38-27b-b70/data/2026-10-06-durable-context/holdout/suite.json --out "$RUNNER_TEMP/context-plan"
+          cmp "$RUNNER_TEMP/context-plan/plan.json" experiments/qwen38-27b-b70/data/2026-10-06-durable-context/plan.json
