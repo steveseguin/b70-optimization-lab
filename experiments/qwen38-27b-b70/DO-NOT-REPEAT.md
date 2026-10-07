@@ -354,3 +354,13 @@ is duplicated in Git. The notebook paths and SHA-256 values are the audit trail.
   (`cmu6ytvxr082alq015dpjgiz4`, withheld in the ledger; the API has no delete call). When the user is visibly
   running the publish sequence, the agent records results and does not submit; when the agent submits, it says so
   first and the user does not. [ledger](../../results/localmaxxing-submissions.md)
+
+
+## Context research: closed interpretations and controls (2026-10-07)
+
+| Do not repeat | Evidence and next boundary |
+| --- | --- |
+| Treat quote occurrence as proof of complete, correctly interpreted updates | The [review](notes/2026-10-06-context-review.md) separates source provenance from meaning. The semantic diagnostic independently compares every event and checkpoint; accepting a quotation alone cannot do that. |
+| Pool durable revisions or count a repaired protocol as completion of an older failed gate | [R3](notes/2026-10-07-durable-context-r3-result.md) failed its all-methods gate; [R4](notes/2026-10-07-durable-context-r4-result.md) retained five completed, one capped and six unstarted trials. Their holdouts remain unused. New development work needs its own identity. |
+| Use cache-enabled R3 timing or incomplete R4 timing as a cold speed win | R3 quoted/report had cache hits. R4's completed structured pairs were cold and exact, but quoted was slower in both. Preserve these outcomes; a different workload or retrieval policy is a new experiment. |
+| Grade only the final balance, or call all observable state exact because final questions pass | [Semantic results](notes/2026-10-07-context-semantic-result.md) expose a wrong credit later hidden by a reset. Check every admitted state and every quoted event, and keep source retention, extraction, bookkeeping and final answering separate. |

@@ -144,7 +144,7 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 05:27 UTC**. One supervised sparse-state
+Latest two-card review: **2026-10-07 05:52 UTC**. One supervised sparse-state
 screen is active. The semantic diagnostic completed all 36 trials, and its card
 release was verified at 05:19:26 UTC before this new owner started.
 
@@ -182,6 +182,19 @@ passive preparation verified the semantic audit, previous release and idle host.
 shutdown. Output: `/mnt/fast-ai/bench-results/context-sparse-v1-20261007`. Do not
 start another GPU owner; no resident service is authorized.
 Preserve frozen r2/r3/r4 sources and outcomes. Live status overrides this snapshot.
+
+Three sparse trials have completed; the 128-counter archive trial remains active.
+The eight-counter pair scored archive 23/24 and quoted 24/24. The 128-counter
+quoted trial scored 24/24 with every state checkpoint exact. These are interim
+native results pending the complete independent audit. The registered decision
+still applies: an exact, cold 128-counter pair with at least 10% less elapsed time
+for quoted events triggers fresh-server replication and another writing style.
+
+Separate [historical-state retrieval](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
+is CPU-only preparation. Both methods save their own accepted tables, including
+mistakes; source-only/history modes isolate model access to those tables.
+Nineteen CPU tests pass, and independent review caught and fixed missing final
+snapshot verification. No new model request or changed live protocol is implied.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 
