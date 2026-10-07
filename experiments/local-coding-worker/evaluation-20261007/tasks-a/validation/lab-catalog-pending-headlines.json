@@ -1,0 +1,37 @@
+{
+  "id": "lab-catalog-pending-headlines",
+  "baseline_commit": "8cf59e0dc0e0e1dd216465c7fc1803609f8826e7",
+  "fixed_commit": "e8d68a54009d82e2406f0b106648e007786c7127",
+  "validation_paths": [
+    "guides.html",
+    "packages/catalog.json"
+  ],
+  "acceptance_file": "catalog_pending_headlines.cjs",
+  "expected_baseline_error": "PENDING_HEADLINE_FAILURE",
+  "runs": {
+    "baseline": {
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "AssertionError [ERR_ASSERTION]: PENDING_HEADLINE_FAILURE: a valid package without a headline must not break the catalog\n    at Immediate._onImmediate (/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/catalog_pending_headlines.cjs:26:10)\n    at process.processImmediate (node:internal/timers:476:21)\n",
+      "archive_sha256": "d5f6a1303c91c8bb7e6b487f33377a585b328232117eccf17de8adb68881b2b4"
+    },
+    "fixed": {
+      "returncode": 0,
+      "stdout": "PASS: null/absent headlines, escaped status, speed/tie order and UI filtering\n",
+      "stderr": "",
+      "archive_sha256": "6c90078b97b3ce23bf9a77d173d258974c2f875e65f8f275580f3f1336e07fe4"
+    }
+  },
+  "schema": "lab.worker-heldout-task-validation.v1",
+  "validated_at": "2026-10-07T01:37:38.288860+00:00",
+  "repository": "lab",
+  "scope": "Historical real parent/fix snapshots; CPU validation only; no model attempt; targeted git-archive source projection",
+  "acceptance_sha256": "995d65dc7da2f44c353561c0f327503c759977c6cf930fbdd51b6ab52c676342",
+  "task_sha256": "9f675fbe14844b5c38b50a9b82439c4dd2c74a5bbb8a05c6c16cd0e229448249",
+  "gold_patch_sha256": "a6ceca59682e340f9fadf9acf23d772e727f5c8860f8ae8e65ff0007e5d64896",
+  "validation_environment": {
+    "python": "Python 3.12.3",
+    "node": "v18.19.1",
+    "container_replay": "not run; checks use only standard libraries compatible with worker Python 3.11 / Node 22"
+  }
+}

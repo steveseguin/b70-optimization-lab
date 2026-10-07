@@ -1,0 +1,78 @@
+{
+  "schema": "lab.worker-task-controls-replay.v1",
+  "checks": [
+    {
+      "id": "lab-catalog-pending-headlines",
+      "control": "baseline",
+      "passed": true,
+      "returncode": 1,
+      "archive_bytes": 481280,
+      "stdout": "",
+      "stderr": "AssertionError [ERR_ASSERTION]: PENDING_HEADLINE_FAILURE: a valid package without a headline must not break the catalog\n    at Immediate._onImmediate (/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/catalog_pending_headlines.cjs:26:10)\n    at process.processImmediate (node:internal/timers:476:21)\n"
+    },
+    {
+      "id": "lab-catalog-pending-headlines",
+      "control": "fixed",
+      "passed": true,
+      "returncode": 0,
+      "archive_bytes": 481280,
+      "stdout": "PASS: null/absent headlines, escaped status, speed/tie order and UI filtering\n",
+      "stderr": ""
+    },
+    {
+      "id": "lab-context-number-boundaries",
+      "control": "baseline",
+      "passed": true,
+      "returncode": 1,
+      "archive_bytes": 20480,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/context_number_boundaries.py\", line 20, in <module>\n    assert actual == expected, f'NUMBER_BOUNDARY_FAILURE: {text!r}: expected {expected}, got {actual}'\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: NUMBER_BOUNDARY_FAILURE: 'Stock fell by eighty-three. Two packers checked it.': expected [83, 2], got [85]\n"
+    },
+    {
+      "id": "lab-context-number-boundaries",
+      "control": "fixed",
+      "passed": true,
+      "returncode": 0,
+      "archive_bytes": 30720,
+      "stdout": "PASS: narrative number boundaries, identifiers, compounds and signs\n",
+      "stderr": ""
+    },
+    {
+      "id": "lab-worker-action-ready-latency",
+      "control": "baseline",
+      "passed": true,
+      "returncode": 1,
+      "archive_bytes": 471040,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/worker_action_latency.py\", line 22, in <module>\n    else:raise AssertionError(f'ACTION_LATENCY_FAILURE: invalid completed-action timing accepted, case {index}')\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ACTION_LATENCY_FAILURE: invalid completed-action timing accepted, case 0\n"
+    },
+    {
+      "id": "lab-worker-action-ready-latency",
+      "control": "fixed",
+      "passed": true,
+      "returncode": 0,
+      "archive_bytes": 481280,
+      "stdout": "PASS: valid and invalid action-ready timings; arrival-time regression\n",
+      "stderr": ""
+    },
+    {
+      "id": "lab-worker-canonical-reasoning",
+      "control": "baseline",
+      "passed": true,
+      "returncode": 1,
+      "archive_bytes": 20480,
+      "stdout": "Model step 1: 100 input tokens\n",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/worker_reasoning_wire.py\", line 37, in <module>\n    assert messages[1].get('reasoning')=='Retained private working state.', 'REASONING_WIRE_FAILURE: tokenizer must receive canonical assistant reasoning'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: REASONING_WIRE_FAILURE: tokenizer must receive canonical assistant reasoning\n"
+    },
+    {
+      "id": "lab-worker-canonical-reasoning",
+      "control": "fixed",
+      "passed": true,
+      "returncode": 0,
+      "archive_bytes": 20480,
+      "stdout": "Model step 1: 100 input tokens\nModel step 1: 100 input tokens\nPASS: tokenizer/generation preserve canonical reasoning and nonthinking history\n",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,36 @@
+{
+  "id": "lab-worker-canonical-reasoning",
+  "baseline_commit": "925c6df3664210d8b5be29b254434b8b716c7cb5",
+  "fixed_commit": "5faae3c98fab28cae1b77eeec90334fd63935a76",
+  "validation_paths": [
+    "worker/model.py"
+  ],
+  "acceptance_file": "worker_reasoning_wire.py",
+  "expected_baseline_error": "REASONING_WIRE_FAILURE",
+  "runs": {
+    "baseline": {
+      "returncode": 1,
+      "stdout": "Model step 1: 100 input tokens\n",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/worker_reasoning_wire.py\", line 37, in <module>\n    assert messages[1].get('reasoning')=='Retained private working state.', 'REASONING_WIRE_FAILURE: tokenizer must receive canonical assistant reasoning'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: REASONING_WIRE_FAILURE: tokenizer must receive canonical assistant reasoning\n",
+      "archive_sha256": "106dec87288854ed34e170cb6302b0043a96db5a348ab0fcbca793278708aeaf"
+    },
+    "fixed": {
+      "returncode": 0,
+      "stdout": "Model step 1: 100 input tokens\nModel step 1: 100 input tokens\nPASS: tokenizer/generation preserve canonical reasoning and nonthinking history\n",
+      "stderr": "",
+      "archive_sha256": "7c4f8b57edbb008b81caf0d4b672b49acd89dd07db93ff09f23b1b2c74a99b97"
+    }
+  },
+  "schema": "lab.worker-heldout-task-validation.v1",
+  "validated_at": "2026-10-07T01:37:38.360726+00:00",
+  "repository": "lab",
+  "scope": "Historical real parent/fix snapshots; CPU validation only; no model attempt; targeted git-archive source projection",
+  "acceptance_sha256": "904aaeced9c0f1d13d573702333622117957f4b171efc6056560cb2c7755e099",
+  "task_sha256": "0d9b56cbf682016004524cb5895e15183ff03077dac6217c4093472c9ba40d2f",
+  "gold_patch_sha256": "2083483a092f077ea220b52b6fe1c6a4e4c316d9a446d33dd3a1c22ef5e85d19",
+  "validation_environment": {
+    "python": "Python 3.12.3",
+    "node": "v18.19.1",
+    "container_replay": "not run; checks use only standard libraries compatible with worker Python 3.11 / Node 22"
+  }
+}

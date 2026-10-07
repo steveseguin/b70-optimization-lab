@@ -1,0 +1,210 @@
+diff --git a/experiments/qwen38-27b-b70/scripts/context/ctxfold.py b/experiments/qwen38-27b-b70/scripts/context/ctxfold.py
+index 7562be35b..8fd312038 100644
+--- a/experiments/qwen38-27b-b70/scripts/context/ctxfold.py
++++ b/experiments/qwen38-27b-b70/scripts/context/ctxfold.py
+@@ -21,6 +21,7 @@ Usage: ctxfold [FINAL_KIND ...]   (items of these kinds are never folded; defaul
+                        mentioned counter has a STATE.txt line, then remove the item turns)
+ """
+ import collections
++import difflib
+ import os
+ import importlib.util
+ import re
+@@ -96,12 +97,23 @@ UNITS = {w: i for i, w in enumerate("zero one two three four five six seven eigh
+                                      "thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split())}
+ UNITS.update({w: 10 * i for i, w in enumerate("_ _ twenty thirty forty fifty sixty seventy eighty ninety".split())
+               if i > 1})
+-EVENT = re.compile(r'^\s*([a-z]+\d\d)\s*\|\s*(set|add|sub|remove|reopen)\s*\|\s*(-?\d+)?\s*\|\s*"(.+)"\s*$')
++# quoted-events line; forgiving about the common slips (quoted-fix, 2026-10-06): smart or single quotes,
++# a missing closing quote, an amount in words or with a sign, op synonyms
++EVENT = re.compile(r'^\s*([a-z]+\d\d)\s*\|\s*([a-z]+)\s*\|\s*([^|]*?)\s*\|\s*(.*?)\s*$')
++OPS = {"set": "set", "add": "add", "sub": "sub", "remove": "remove", "reopen": "reopen",
++       "correct": "set", "correction": "set", "plus": "add", "increase": "add", "gain": "add",
++       "subtract": "sub", "minus": "sub", "decrease": "sub", "lose": "sub",
++       "del": "remove", "delete": "remove", "removed": "remove", "strike": "remove",
++       "open": "reopen", "opened": "reopen", "new": "reopen"}
++QUOTES = "\"'“”‘’`"
+ 
+ 
+ def numbers(text):
+-    """Integers written in digits or in words ("minus forty-two", "three hundred and six")."""
+-    toks = re.findall(r"-?\d+|[a-z]+(?:-[a-z]+)*", text.lower())
++    """Integers written in digits or in words ("minus forty-two", "three hundred and six"). A number in
++    words ends at punctuation and where the next word cannot continue it (quoted, 2026-10-06: "went down
++    by eighty-three. Two of the packers..." was read as 85, which refused correct lists 37 times)."""
++    text = re.sub(r"\b[a-z]+\d\d\b", " ", text.lower())   # counter names are not numbers
++    toks = re.findall(r"-?\d+|[a-z]+(?:-[a-z]+)*|[.,;:!?]", text)
+     out, i = [], 0
+     while i < len(toks):
+         t = toks[i]
+@@ -116,9 +128,12 @@ def numbers(text):
+             w = toks[j]
+             ps = w.split("-")
+             if all(p in UNITS for p in ps):
+-                cur += sum(UNITS[p] for p in ps)
++                val = sum(UNITS[p] for p in ps)
++                if used and cur % 100 and (val >= 10 or cur % 10):
++                    break                      # "eighty-three two": a new number
++                cur += val
+                 used = True
+-            elif w == "hundred" and used:
++            elif w == "hundred" and used and cur < 100:
+                 cur *= 100
+             elif w == "thousand" and used:
+                 total += cur * 1000
+@@ -137,18 +152,34 @@ def numbers(text):
+ 
+ 
+ def refuse(reason, msg):
+-    print(f"ctxfold: REFUSED ({reason}): {msg}. Nothing was applied; fix it and send the whole list again.")
++    msg = msg.rstrip(".")
++    print(f"ctxfold: REFUSED ({reason}): {msg}{'' if msg.endswith('?') else '.'} Nothing was applied; fix that line "
++          f"and send the whole list again.")
+     sys.exit(2)
+ 
+ 
++def _sentences(text):
++    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
++
++
++def _closest(q, sents, nm):
++    """The delivered sentence(s) the quote most likely meant: those naming the counter, else the nearest."""
++    by_name = [s for s in sents if re.search(r"\b" + re.escape(nm) + r"\b", s)]
++    if by_name:
++        return by_name[:3]
++    return difflib.get_close_matches(q, sents, n=2, cutoff=0.4)
++
++
+ def events(final):
+     """`ctxfold --events` (quoted events, arm B32iq): the model sends, on stdin, one line per change in the
+     delivered item(s): `name | op | amount | "exact quote"`, op in set/add/sub/remove/reopen, amount in
+-    digits (empty for remove). The harness checks every line (format; the quote is verbatim in the
+-    delivered text, whitespace aside; the amount is written in the quote's paragraph, in digits or words;
+-    the counter is live for set/add/sub/remove and new or removed for reopen; afterwards every counter the
+-    text names has a STATE line), then does the arithmetic itself, writes STATE.txt, archives the items
+-    (when the archive is on) and removes them from the context. Any failure refuses the WHOLE list."""
++    digits (empty for remove). The harness checks every line (format; the counter name occurs in the
++    delivered text; the quote is verbatim in it, whitespace aside; the amount is written in the quote's
++    sentence or paragraph, in digits or words; the counter is live for add/sub/remove and new or removed
++    for reopen; afterwards every counter the text names has a STATE line), then does the arithmetic
++    itself, writes STATE.txt, archives the items (when the archive is on) and removes them from the
++    context. Any failure refuses the WHOLE list, with the delivered sentence that the line should quote.
++    The result depends only on the delivered text and STATE.txt (seam for reading batches in parallel)."""
+     s = open(MIRROR).read()
+     try:
+         state_txt = open(STATE).read()
+@@ -181,41 +212,82 @@ def events(final):
+         return
+     batch = " ".join(" ".join(texts[n].split()) for n in sorted(texts))
+     paras = [" ".join(p.split()) for n in sorted(texts) for p in texts[n].split("\n\n") if p.strip()]
+-    # (a bare EOF line: an indented here-document terminator that bash did not see as one)
+-    lines = [ln for ln in sys.stdin.read().splitlines() if ln.strip() and ln.strip().lower() != "none"
+-             and ln.strip() != "EOF"]
++    sents = _sentences(batch)
++    raw = sys.stdin.read().splitlines()
++    # skipped: blank lines, `none`, comments, a bare EOF (an indented here-document terminator)
++    lines = [ln for ln in raw if ln.strip() and ln.strip().lower() != "none" and ln.strip() != "EOF"
++             and not ln.lstrip().startswith("#") and not re.match(r"\s*none\s*\|", ln, re.I)]
++    if not lines and not any(ln.strip().lower() == "none" or re.match(r"\s*none\s*\|", ln, re.I) for ln in raw):
++        refuse("format", "the list is empty; send one line `none` if the item changes nothing")
+     new = dict(st)
+     applied = collections.Counter()
+     for k, ln in enumerate(lines, 1):
+         m = EVENT.match(ln)
+         if not m:
+-            refuse("format", f'line {k} {ln.strip()[:120]!r} is not `name | op | amount | "quote"` (op: set, add, '
+-                             f'sub, remove, reopen; amount in digits, empty for remove; quote in double quotes)')
+-        nm, op, amt, q = m.groups()
++            refuse("format", f'line {k} {ln.strip()[:120]!r} is not `name | op | amount | "quote"`; for example '
++                             f'`abcd12 | sub | 83 | "abcd12 went down by eighty-three."`')
++        nm, op_raw, amt_raw, q = m.groups()
++        op = OPS.get(op_raw.lower())
++        if not op:
++            refuse("format", f"line {k}: op {op_raw!r} is not one of set, add, sub, remove, reopen")
++        q = q.strip()
++        if q[:1] in QUOTES:
++            q = q[1:]
++        if q[-1:] in QUOTES:
++            q = q[:-1]
+         qn = " ".join(q.split())
++        if nm not in named:
++            near = difflib.get_close_matches(nm, sorted(named | set(st)), n=2, cutoff=0.6)
++            refuse("unknown counter", f"line {k}: {nm} does not occur in the delivered text"
++                                      + (f"; did you mean {' or '.join(near)}?" if near else ""))
++        if qn and qn not in batch and qn.rstrip(".") in batch:
++            qn = qn.rstrip(".")
+         if not qn or qn not in batch:
+-            refuse("bad quote", f"line {k}: the quote {q[:100]!r} is not verbatim in the delivered text")
++            cl = _closest(qn, sents, nm)
++            refuse("bad quote", f"line {k}: the quote {q[:100]!r} is not verbatim in the delivered text"
++                                + ("; the delivered sentence(s) naming " + nm + ": "
++                                   + " | ".join(f'"{c}"' for c in cl) if cl else ""))
+         a = None
+         if op != "remove":
+-            if amt is None:
+-                refuse("format", f"line {k}: {op} needs an amount in digits")
+-            a = int(amt)
+-            if op in ("add", "sub") and a <= 0:
+-                refuse("format", f"line {k}: the amount for {op} must be a positive number")
+-            nums = set()
++            amt = amt_raw.strip().replace(",", "")
++            if re.fullmatch(r"[+-]?\d+", amt):
++                a = int(amt)
++            else:
++                vals = numbers(amt)
++                if len(vals) != 1:
++                    refuse("format", f"line {k}: {op} needs an amount in digits, not {amt_raw!r}")
++                a = vals[0]
++            if op in ("add", "sub") and a < 0:
++                a = -a
++            if op in ("add", "sub") and a == 0:
++                refuse("format", f"line {k}: the amount for {op} must not be 0")
++            # the amount must be written in the quoted sentence(s) or in a sentence of the same paragraph
++            # that names the counter (a plan's amount precedes its outcome; a correction names it again);
++            # a number elsewhere in the paragraph does not count (B32iq s1 got "2" past the old check from
++            # "Two of the packers ..." after the word-number bug refused its correct list)
++            nums = {x for sn in sents if qn in sn or sn in qn for x in numbers(sn)}
+             for p in paras:
+                 if qn in p:
+-                    nums.update(numbers(p))
++                    for sn in _sentences(p):
++                        if qn in sn or sn in qn or re.search(r"\b" + re.escape(nm) + r"\b", sn):
++                            nums.update(numbers(sn))
+             if a not in nums:
+-                refuse("amount not in text", f"line {k}: {a} is not written in the paragraph of the quote")
+-        elif amt is not None:
+-            refuse("format", f"line {k}: remove takes no amount")
++                hint = "; did you drop or add a minus sign?" if -a in nums else ""
++                in_sent = sorted({x for sn in sents if qn in sn or sn in qn for x in numbers(sn)})
++                refuse("amount not in text", f"line {k}: {a} is not written in the quote or in a sentence of its "
++                                             f"paragraph that names {nm}"
++                                             + (f" (the quoted sentence holds {', '.join(map(str, in_sent))})"
++                                                if in_sent else "") + hint)
+         live = new.get(nm) is not None
+-        if op in ("set", "add", "sub", "remove") and not live:
+-            refuse("unknown counter", f"line {k}: {nm} is not a live counter in STATE.txt "
+-                                      f"(use reopen for a new or removed counter)")
++        if op == "set" and not live:
++            op = "reopen"                          # a value given outright for a new or removed counter
++        if op in ("add", "sub", "remove") and not live:
++            refuse("unknown counter", f"line {k}: {nm} is {'removed' if nm in new else 'not in STATE.txt'}, "
++                                      f"so it cannot be {op}{'ed' if op == 'add' else 'bed' if op == 'sub' else 'd'}; "
++                                      f"if the report opens it again, use reopen with its value")
+         if op == "reopen" and live:
+-            refuse("unknown counter", f"line {k}: {nm} is already live; use set")
++            refuse("unknown counter", f"line {k}: {nm} is already live ({new[nm]}); use set for a value given "
++                                      f"outright, or add/sub for a change")
+         if op in ("set", "reopen"):
+             new[nm] = a
+         elif op == "add":
+@@ -227,8 +299,9 @@ def events(final):
+         applied[op] += 1
+     missing = sorted(n for n in named if n not in new)
+     if missing:
++        where = "; ".join(f'{n}: "{(_closest("", sents, n) or ["?"])[0]}"' for n in missing[:4])
+         refuse("unknown counter", f"the delivered text names counters that have no STATE line after these events: "
+-                                  f"{' '.join(missing)} (add a reopen event for each one that was opened)")
++                                  f"{' '.join(missing)} (add a reopen event for each one that was opened: {where})")
+     with open(STATE, "w") as fh:
+         fh.write("".join(f"{n} {'removed' if v is None else v}\n" for n, v in new.items()))
+     archived = 0

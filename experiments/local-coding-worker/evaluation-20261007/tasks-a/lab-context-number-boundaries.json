@@ -1,0 +1,9 @@
+{
+  "id": "lab-context-number-boundaries",
+  "repository": "lab",
+  "source_commit": "ecd9d94560ec50d0119fd9ae6d5b05195e21a806",
+  "issue": "The narrative number reader in experiments/qwen38-27b-b70/scripts/context/ctxfold.py merges separate numbers across punctuation: 'Stock fell by eighty-three. Two packers checked it.' is read as 85 instead of 83 and 2. Digits in counter identifiers such as aba12 are also being treated as amounts. Correct the number reader so independent amounts remain separate across punctuation or a word sequence that cannot continue the current number, and counter identifiers do not contribute numeric values. Preserve signed digits, negative word amounts and ordinary compound numbers including hundreds and thousands. Add focused offline regression tests without changing arithmetic application or the event-checking policy.",
+  "validation_command": "python3 /acceptance/context_number_boundaries.py",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "NUMBER_BOUNDARY_FAILURE"
+}

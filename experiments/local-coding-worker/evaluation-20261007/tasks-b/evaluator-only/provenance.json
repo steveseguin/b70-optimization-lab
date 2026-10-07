@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "task_id": "lab-oracle-request-ids",
+      "source_repo": "/home/steve/llm-optimizations",
+      "baseline_commit": "90518687759a42bd7f098f2adb2e1f92f39777f8",
+      "fixed_commit": "a54e2521c55d95bbd13244df2cd943d10a9863df",
+      "acceptance": "lab_oracle_request_ids.py",
+      "expected_marker": "RUN_ID_ISOLATION",
+      "snapshot_paths": [
+        "scripts/bench-openai-concurrency-oracle.py",
+        "scripts/bench-openai-realistic-suite.py"
+      ],
+      "source_bug": "historical parent-to-fix transition; no injected changes"
+    },
+    {
+      "task_id": "lab-oracle-pinned-subset",
+      "source_repo": "/home/steve/llm-optimizations",
+      "baseline_commit": "c22122410a67901d6d777e772c7c8d90b7b9a037",
+      "fixed_commit": "7f85cc78af6c1bdd770345d9fc70d69cb249b26a",
+      "acceptance": "lab_oracle_subset.py",
+      "expected_marker": "PINNED_SUBSET",
+      "snapshot_paths": [
+        "scripts/bench-openai-concurrency-oracle.py",
+        "scripts/bench-openai-realistic-suite.py"
+      ],
+      "source_bug": "historical parent-to-fix transition; no injected changes"
+    },
+    {
+      "task_id": "lab-stream-token-identity",
+      "source_repo": "/home/steve/llm-optimizations",
+      "baseline_commit": "6f8d1730a2ff84a47566404ab03e292d0db4f8d3",
+      "fixed_commit": "94efcf2e558958014e7f23b529a99a8e8bbd3a36",
+      "acceptance": "lab_stream_token_identity.py",
+      "expected_marker": "STREAM_TOKEN_IDENTITY",
+      "snapshot_paths": [
+        "scripts/bench-openai-long-context-suite.py"
+      ],
+      "source_bug": "historical parent-to-fix transition; no injected changes"
+    },
+    {
+      "task_id": "lab-release-query-failure",
+      "source_repo": "/home/steve/llm-optimizations",
+      "baseline_commit": "ec5c21a4a7e029d3dd3717b83579a38b98c8b035",
+      "fixed_commit": "15327a5f34ecadf2ba005ea028f89f5cfb421372",
+      "acceptance": "lab_release_query_failure.py",
+      "expected_marker": "RELEASE_UNKNOWN",
+      "snapshot_paths": [
+        "tools/public-closure-scanner.py"
+      ],
+      "source_bug": "historical parent-to-fix transition; no injected changes"
+    }
+  ]
+}

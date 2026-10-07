@@ -1,0 +1,9 @@
+{
+  "id": "lab-worker-canonical-reasoning",
+  "repository": "lab",
+  "source_commit": "925c6df3664210d8b5be29b254434b8b716c7cb5",
+  "issue": "The thinking-enabled local worker can stop on the second turn with a tokenizer/generation input-token mismatch even though the conversation text looks the same. worker/model.py retains assistant reasoning separately; vLLM's chat endpoint accepts legacy reasoning history that its /tokenize endpoint does not interpret the same way. Make both requests preserve the same reasoning-aware history in a representation supported by both endpoints. Preserve visible assistant answers, explicitly empty missing assistant reasoning, caller history, and nonthinking behavior. Add offline regression coverage; no real endpoint or model request is needed.",
+  "validation_command": "python3 /acceptance/worker_reasoning_wire.py",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "REASONING_WIRE_FAILURE"
+}

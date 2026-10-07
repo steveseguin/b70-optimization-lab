@@ -100,6 +100,34 @@ class BaselineTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'already passes'):
             RUN.validate_baseline(task,{'returncode':0,'output':''})
 
+class AcceptanceDirectoryTests(unittest.TestCase):
+    setUp=AcceptanceTreeTests.setUp
+
+    def test_records_exact_check_bytes(self):
+        identity=RUN.acceptance_identity(self.workspace)
+        self.assertEqual(identity['directory'],str(self.workspace.resolve()))
+        self.assertEqual(set(identity['files']),{'answer.py'})
+        self.assertEqual(len(identity['files']['answer.py']['sha256']),64)
+
+    def test_refuses_missing_or_empty_directory(self):
+        with self.assertRaisesRegex(ValueError,'must exist'):
+            RUN.acceptance_identity(self.root/'missing')
+        empty=self.root/'empty';empty.mkdir()
+        with self.assertRaisesRegex(ValueError,'contain checks'):
+            RUN.acceptance_identity(empty)
+
+    def test_refuses_symlink_inside_checks(self):
+        (self.workspace/'link').symlink_to(self.workspace/'answer.py')
+        with self.assertRaisesRegex(RuntimeError,'symlink'):
+            RUN.acceptance_identity(self.workspace)
+
+    def test_host_edit_invalidates_recorded_checks(self):
+        identity=RUN.acceptance_identity(self.workspace)
+        RUN.verify_acceptance_identity(identity)
+        (self.workspace/'answer.py').write_text('answer = 0\n')
+        with self.assertRaisesRegex(RuntimeError,'Acceptance checks changed'):
+            RUN.verify_acceptance_identity(identity)
+
 class RepeatedCommandTests(unittest.TestCase):
     setUp=AcceptanceTreeTests.setUp
     environment=AcceptanceTreeTests.environment

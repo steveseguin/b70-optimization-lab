@@ -1,0 +1,9 @@
+{
+  "id": "lab-catalog-pending-headlines",
+  "repository": "lab",
+  "source_commit": "8cf59e0dc0e0e1dd216465c7fc1803609f8826e7",
+  "issue": "The recipe catalog UI in guides.html fails to render a valid catalog when one package has no qualified headline metric. Such packages may have library.featured_metric set to null or omitted. Keep all cards visible with an honest pending label and their benchmark status, escape that status as normal page text, and keep sorting and filtering usable. Speed sorting should put measured packages first from fastest to slowest, pending packages afterward, and use package names to make ties deterministic. Preserve ordinary measured-card rendering. Add focused offline regression coverage; do not invent benchmark numbers or change package data.",
+  "validation_command": "node /acceptance/catalog_pending_headlines.cjs",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "PENDING_HEADLINE_FAILURE"
+}

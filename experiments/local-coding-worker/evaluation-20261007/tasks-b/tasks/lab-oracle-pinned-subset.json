@@ -1,0 +1,9 @@
+{
+  "id": "lab-oracle-pinned-subset",
+  "repository": "lab",
+  "source_commit": "c22122410a67901d6d777e772c7c8d90b7b9a037",
+  "issue": "A concurrency benchmark cannot use a frozen oracle captured for more prompts than this run needs, even when every requested prompt and its content match exactly. Make scripts/bench-openai-concurrency-oracle.py reuse the requested rows from a larger --oracle-digests file, regardless of file ordering, without regenerating oracle outputs. Keep the recorded oracle digest and selected row order tied to the run. Missing or changed prompts and ambiguous/invalid prompt IDs must fail before requests, including duplicate IDs in unused rows. Preserve equal-size oracle behavior and add offline regression coverage.",
+  "validation_command": "python3 /acceptance/lab_oracle_subset.py",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "PINNED_SUBSET"
+}

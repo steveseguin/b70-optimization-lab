@@ -128,12 +128,27 @@ def validate_baseline(task,result):
         raise RuntimeError('Baseline failed for an unexpected reason; resolve the test environment before sending model requests')
 
 
+def acceptance_identity(directory):
+    directory=directory.resolve()
+    if not directory.is_dir():raise ValueError('Acceptance directory must exist')
+    files=_regular_tree(directory)
+    if not files:raise ValueError('Acceptance directory must contain checks')
+    return {'directory':str(directory),'files':files}
+
+
+def verify_acceptance_identity(expected):
+    if acceptance_identity(Path(expected['directory']))!=expected:
+        raise RuntimeError('Acceptance checks changed during the run; patch remains unaccepted')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     source=parser.add_mutually_exclusive_group(required=True);source.add_argument('--task',type=Path);source.add_argument('--issue-file',type=Path)
     parser.add_argument('--repo',type=Path,required=True);parser.add_argument('--commit');parser.add_argument('--test-command')
     parser.add_argument('--out',type=Path,required=True);parser.add_argument('--config',type=Path,default=HERE/'config.json')
+    parser.add_argument('--acceptance-dir',type=Path,default=HERE/'acceptance',help='Read-only external checks; never mount solution receipts here')
     args=parser.parse_args();config=json.loads(args.config.read_text());repo=args.repo.resolve();out=args.out.resolve()
+    acceptance=acceptance_identity(args.acceptance_dir)
     task=json.loads(args.task.read_text()) if args.task else {'id':args.issue_file.stem,'issue':args.issue_file.read_text(),'validation_command':args.test_command,'expected_baseline_failure':False}
     command=args.test_command or task.get('validation_command')
     if not command:parser.error('Provide --test-command or a task with validation_command')
@@ -147,13 +162,14 @@ def main():
         from minisweagent.agents.default import DefaultAgent
         from minisweagent import __version__
         if __version__!='2.4.6':raise RuntimeError('Install the pinned worker requirements before running')
-        save(out/'task.json',task);save(out/'config.json',config)
+        save(out/'task.json',task);save(out/'config.json',config);save(out/'acceptance-identity.json',acceptance)
         save(out/'runner-identity.json',{'mini_swe_agent':__version__,'source_commit':commit,'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'model_adapter_sha256':hashlib.sha256((HERE/'model.py').read_bytes()).hexdigest(),'sandbox_sha256':hashlib.sha256((HERE/'sandbox.py').read_bytes()).hexdigest(),'thinking_stream_sha256':hashlib.sha256((HERE/'stream.py').read_bytes()).hexdigest() if config.get('generation',{}).get('enable_thinking') else None,'generation':config.get('generation',{}),'observation_format':config.get('observation_format','json'),'started_epoch_s':started})
         try:
-            sandbox=DockerSandbox(out,config['sandbox_image'],acceptance_dir=HERE/'acceptance');sandbox.start()
+            sandbox=DockerSandbox(out,config['sandbox_image'],acceptance_dir=acceptance['directory']);sandbox.start()
             baseline=sandbox.execute({'command':command});save(out/'baseline-validation.json',baseline)
             print(f'Baseline acceptance: exit {baseline["returncode"]}',flush=True)
             validate_baseline(task,baseline)
+            verify_acceptance_identity(acceptance)
             model=LocalModel(config['base_url'],config['model'],out/'requests',config['max_input_tokens'],config['max_output_tokens'],generation=config.get('generation'),observation_format=config.get('observation_format','json'))
             env=CheckedEnvironment(sandbox,command,out,config['validation_attempts'])
             agent=DefaultAgent(model,env,system_template=SYSTEM,instance_template='Issue: {{task}}\n\nAcceptance command: {{acceptance_command}}\nRead relevant project instructions, fix the issue, and add an appropriate regression test.',step_limit=config['step_limit'],cost_limit=0,wall_time_limit_seconds=config['wall_time_limit_seconds'],max_consecutive_format_errors=2,output_path=out/'trajectory.json')
@@ -166,6 +182,7 @@ def main():
             if sandbox is not None:
                 try:
                     sandbox.stop();patch=sandbox.export_patch()
+                    verify_acceptance_identity(acceptance)
                     if env and env.passing_tree_sha256:final_tree_matches=env.verify_final_tree()
                 except Exception as exc:error=(error+'; ' if error else '')+f'cleanup/export: {type(exc).__name__}: {exc}'
             passed=bool(not error and agent_result.get('exit_status')=='Submitted' and env and env.validations and env.validations[-1]['accepted'] and final_tree_matches and patch and patch.get('changed_files'))

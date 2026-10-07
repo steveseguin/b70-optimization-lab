@@ -1,0 +1,28 @@
+diff --git a/guides.html b/guides.html
+index 6882a9572..ce24eb08d 100644
+--- a/guides.html
++++ b/guides.html
+@@ -275,7 +275,9 @@
+       <div class="package-head"><div><h3>${escapeHtml(lib.model_family)}</h3><p class="variant">${escapeHtml(lib.variant)} · ${escapeHtml(lib.publisher)}</p></div><span class="status ${escapeHtml(item.status)}">${escapeHtml(item.status)} package</span></div>
+       <div class="package-body"><p class="package-summary">${escapeHtml(lib.summary)}</p>
+       <div class="facts">${facts.map(value => `<span class="fact">${escapeHtml(value)}</span>`).join("")}</div>
+-      <div class="metric"><strong>${escapeHtml(Number(metric.value).toFixed(metric.value >= 100 ? 2 : 3))} ${escapeHtml(metric.unit)}</strong><span>${escapeHtml(metric.scope)}</span></div>
++      <div class="metric">${metric
++        ? `<strong>${escapeHtml(Number(metric.value).toFixed(metric.value >= 100 ? 2 : 3))} ${escapeHtml(metric.unit)}</strong><span>${escapeHtml(metric.scope)}</span>`
++        : `<strong>Strict headline pending</strong><span>${escapeHtml(lib.benchmark_status || "No qualified headline measurement is published yet.")}</span>`}</div>
+       ${performanceBlock(item)}
+       <p class="credit"><strong>Built with:</strong> ${people}</p>
+       <details><summary>${item.missing.length} remaining package gate${item.missing.length === 1 ? "" : "s"}</summary><ul>${missing}</ul></details>
+@@ -299,7 +301,11 @@
+     const statusRank = {starter: 0, candidate: 1, preview: 2};
+     visible.sort((a, b) => {
+       if (sort === "name") return a.name.localeCompare(b.name);
+-      if (sort === "speed") return b.library.featured_metric.value - a.library.featured_metric.value;
++      if (sort === "speed") {
++        const am = a.library.featured_metric, bm = b.library.featured_metric;
++        if (!am || !bm) return Number(Boolean(bm)) - Number(Boolean(am)) || a.name.localeCompare(b.name);
++        return bm.value - am.value || a.name.localeCompare(b.name);
++      }
+       if (sort === "cards") return a.hardware.cards - b.hardware.cards || a.name.localeCompare(b.name);
+       return b.library.published_at.localeCompare(a.library.published_at) || statusRank[a.status] - statusRank[b.status] || a.name.localeCompare(b.name);
+     });

@@ -1,0 +1,9 @@
+{
+  "id": "lab-oracle-request-ids",
+  "repository": "lab",
+  "source_commit": "90518687759a42bd7f098f2adb2e1f92f39777f8",
+  "issue": "Repeated concurrency benchmark invocations reuse request IDs, making it impossible to attribute endpoint logs to the right run. Add an optional --request-id-prefix namespace to scripts/bench-openai-concurrency-oracle.py, apply its safely normalized value to sequential oracle requests and every measured request, and record it in the result configuration. A default namespace must keep existing invocations working; a prefix containing no safe characters must fail before any request. Preserve request counts and correctness classification. Add focused offline regression coverage without contacting a model endpoint.",
+  "validation_command": "python3 /acceptance/lab_oracle_request_ids.py",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "RUN_ID_ISOLATION"
+}

@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-06 evening EDT**. The dated two-card entries
+Latest four-card review: **2026-10-06 21:40 EDT**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
@@ -53,7 +53,17 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   may be ignored, so the owning runtime must verify activation inside every worker.
   TP1 needs a separate kernel port. This host lacks the documented R314 build/image
   and FP8 model inputs.
-- **Next:** qualify the corrected package when its exact inputs and host ownership
+- **Coding worker and lab memory:** the owner chose a bounded usefulness trial
+  before connecting these projects. The [new evaluation packet](experiments/local-coding-worker/evaluation-20261007/README.md)
+  contains eight historical coding repairs and ten source-backed research
+  questions. CPU controls are verified; **no model trials have run**. Begin with
+  two coding tasks, one attempt each, and judge reviewed patches rather than
+  token speed. The worker can now mount a separate read-only acceptance folder
+  and record/check its hashes. This does not qualify a model or serving package.
+- **Next:** run that small trial when the intended qualified runtime, host
+  ownership and full snapshot storage budget are available. Do not use the
+  protected two-card endpoint or start a large replacement download here.
+  Qualify the corrected package when its exact inputs and host ownership
   are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
   this does not admit a large build/download.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including

@@ -1,0 +1,38 @@
+{
+  "id": "lab-worker-action-ready-latency",
+  "baseline_commit": "7324c356f00901b4d53f9ec26bda46900294ebb4",
+  "fixed_commit": "fdfb9c3c91d3264c057054d4ca3b3bed32ef6fc0",
+  "validation_paths": [
+    "worker",
+    "experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py",
+    "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py"
+  ],
+  "acceptance_file": "worker_action_latency.py",
+  "expected_baseline_error": "ACTION_LATENCY_FAILURE",
+  "runs": {
+    "baseline": {
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/worker_action_latency.py\", line 22, in <module>\n    else:raise AssertionError(f'ACTION_LATENCY_FAILURE: invalid completed-action timing accepted, case {index}')\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ACTION_LATENCY_FAILURE: invalid completed-action timing accepted, case 0\n",
+      "archive_sha256": "2da5b9daf7eb11a2e12e4213805bc6b779c62ac486611085bbb6527f177518c4"
+    },
+    "fixed": {
+      "returncode": 0,
+      "stdout": "PASS: valid and invalid action-ready timings; arrival-time regression\n",
+      "stderr": "",
+      "archive_sha256": "be4ab17f64dde73cc6c12d71ca56d3908d0c77a6a7d0d166974ee04e2ea27ba9"
+    }
+  },
+  "schema": "lab.worker-heldout-task-validation.v1",
+  "validated_at": "2026-10-07T01:37:38.339516+00:00",
+  "repository": "lab",
+  "scope": "Historical real parent/fix snapshots; CPU validation only; no model attempt; targeted git-archive source projection",
+  "acceptance_sha256": "db1bc0d85b59979675e388d1f34aebae96cc6ad8b81f0fc0f5c847a0b2e81f9c",
+  "task_sha256": "6a057b6cb1807ab33a09ad9333990a9e47af99e822e6acbc5b8440778fc2de05",
+  "gold_patch_sha256": "608af98cd297dd6271c526c0f9e18a9e265261d0e7dcc905b15e2c6b36fd8369",
+  "validation_environment": {
+    "python": "Python 3.12.3",
+    "node": "v18.19.1",
+    "container_replay": "not run; checks use only standard libraries compatible with worker Python 3.11 / Node 22"
+  }
+}
