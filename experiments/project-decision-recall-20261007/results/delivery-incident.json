@@ -1,0 +1,9 @@
+{
+  "schema": "project-decision-recall.delivery-incident.v1",
+  "reported_by": "/root/recall_full",
+  "report": "The full reader was called once with both requested 50,000-token output budgets, but the returned tool display is truncated (shows 11995 tokens truncated).",
+  "scope": "Model-visible display incomplete; full response bytes exist in reader log. Exact visible subset is not independently captured.",
+  "original_full_valid_baseline": false,
+  "reader_audit_interpretation": "all_cited_lines_delivered and reference_span_coverage in audit.py concern reader-produced payloads, not proof of model-visible delivery. Interpret as an upper bound when display is truncated.",
+  "repair_policy": "Preserve original. Separate transport-plan.json predeclares one supplemental full-paged attempt with unchanged task."
+}

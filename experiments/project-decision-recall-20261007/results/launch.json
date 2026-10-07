@@ -1,0 +1,27 @@
+{
+  "schema": "project-decision-recall.launch.v1",
+  "observed_after_both_spawn_returns_utc": "2026-10-07T12:17:23.650353+00:00",
+  "freeze_commit": "2426d0eb067ef3c8e7dd21eab9b311dcb02159fc",
+  "freeze_sha256": "833573ff538ff4587164762a1fecebab163ccbbbfb62864e73d4c68127b1fe80",
+  "arms": {
+    "full": {
+      "agent": "/root/recall_full",
+      "fork_turns": "none",
+      "assignment_file": "prompt-full.txt",
+      "assignment_sha256": "e6a979ed4ae63c6ba1459a513d853ba880fbb39120f91f44588598f1263c3c00",
+      "model_override": null,
+      "model_snapshot": null
+    },
+    "search": {
+      "agent": "/root/recall_search",
+      "fork_turns": "none",
+      "assignment_file": "prompt-search.txt",
+      "assignment_sha256": "0511e614f2ad95fddb832a121e320af3ef0856cf577f1e31a3b39e6c30626362",
+      "model_override": null,
+      "model_snapshot": null
+    }
+  },
+  "scheduling": "Concurrent hosted assistant sessions; observed wall time is not controlled model latency.",
+  "budget": "one first submission per arm; no post-answer repair",
+  "gpu_actions": 0
+}
