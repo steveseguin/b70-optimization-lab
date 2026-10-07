@@ -1,0 +1,65 @@
+--- a/experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py
++++ b/experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py
+@@ -11,6 +11,7 @@
+ import ast
+ import hashlib
+ import json
++import math
+ from pathlib import Path
+ import time
+ import urllib.error
+@@ -95,8 +96,20 @@
+     return {"passed": True, "parsed_answer": obj}
+ 
+ 
+-def consume_stream(lines, raw_file, started, clock=time.perf_counter):
++def validate_timeout_seconds(timeout_seconds):
++    try:
++        valid = (not isinstance(timeout_seconds, bool)
++                 and isinstance(timeout_seconds, (int, float))
++                 and math.isfinite(timeout_seconds) and timeout_seconds > 0)
++    except (TypeError, ValueError, OverflowError):
++        valid = False
++    if not valid:
++        raise ValueError("timeout_seconds must be a finite positive number")
++
++
++def consume_stream(lines, raw_file, started, clock=time.perf_counter, *, timeout_seconds=120):
+     """Parse SSE frames and preserve every received byte even when parsing fails."""
++    validate_timeout_seconds(timeout_seconds)
+     text_parts, reasoning_parts, token_ids, token_offsets, text_offsets = [], [], [], [], []
+     usage, finish_reasons, frames = {}, [], []
+     done = False
+@@ -149,8 +162,8 @@
+     for raw in lines:
+         raw_file.write(raw)
+         raw_file.flush()
+-        if clock() - started > 120:
+-            raise TimeoutError("request exceeded 120-second total stream limit")
++        if clock() - started > timeout_seconds:
++            raise TimeoutError(f"request exceeded {timeout_seconds:g}-second total stream limit")
+         line = raw.decode("utf-8").rstrip("\r\n")
+         if line == "":
+             consume_frame()
+@@ -201,7 +214,8 @@
+             "server_prefill_note": "not exposed by this chat stream; HTTP TTFT is not server prefill"}
+ 
+ 
+-def request_one(base_url, payload, directory, opener=urllib.request.urlopen):
++def request_one(base_url, payload, directory, opener=urllib.request.urlopen, *, timeout_seconds=120):
++    validate_timeout_seconds(timeout_seconds)
+     write_json(directory / "request.json", payload)
+     base = base_url.rstrip("/")
+     url = base + ("/chat/completions" if base.endswith("/v1") else "/v1/chat/completions")
+@@ -210,9 +224,9 @@
+     with (directory / "response.sse").open("wb") as raw:
+         started = time.perf_counter()
+         try:
+-            with opener(req, timeout=120) as response:
++            with opener(req, timeout=timeout_seconds) as response:
+                 write_json(directory / "response-headers.json", dict(response.headers))
+-                return consume_stream(response, raw, started)
++                return consume_stream(response, raw, started, timeout_seconds=timeout_seconds)
+         except urllib.error.HTTPError as exc:
+             raw.write(exc.read())
+             raise

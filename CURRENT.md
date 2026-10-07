@@ -1,38 +1,34 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-06 23:46 EDT**. The dated two-card entries
+Latest four-card review: **2026-10-07 00:20 EDT**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-Both small-worker pilots and the first 27B runtime arm are closed. The
-**27B smaller-cache experiment is running on two of this host's four cards**,
-loopback port 18125, under one 60-minute supervisor. It is not a resident service.
-The
-[0.8B pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
-failed its minimal-prompt format gate. The separate
-[4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
-passed transport but completed zero of two coding tasks: both exhausted their
-20 steps without a patch. Recall needed 14,008 input tokens and was refused
-before generation by its context budget. All four cards passed final checks;
-no new kernel fault appeared. Task evidence is archived and verified, disposable
-RAM snapshots are released, and all twelve 4B model files remain in the verified
-cold copy. The external drive is unmounted.
-The 27B runtime passed eight boundary checks and the actual worker-format canary.
-Its automatically sized cache left about 23.5 GiB host RAM available, just below
-the unchanged 24 GiB task admission. No coding task ran. The application stopped
-cleanly and all four cards passed postflight. The separately recorded arm now
-uses a 2 GiB full-precision cache per GPU for the same 33,024-token trial.
-It reports 59,904-token capacity and about 39 GiB available host RAM. Its eight
-boundary checks and unchanged worker-format canary passed; the two coding tasks
-and full-corpus recall are next. No task result or quality score exists yet.
-The intended 27B worker remains unqualified here. LTX's
-disk-full incident left a worker blocked on a progress-bar lock. After preserving
-the evidence and checking passive GPU idleness, one SIGINT stopped the application;
-port 8188 closed, no render-node holders remained, and no kernel GPU fault appeared.
-No reboot, driver reset, power, swap or page-cache setting was changed.
+All bounded worker trials are closed and **no model server is running**.
+The [4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
+and separate [27B trial](experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md)
+each completed zero of two coding repairs under different runtime/budget profiles.
+The 27B source-recall request reached its seven-minute limit before finishing;
+partial answers are preserved without a quality score. Do not connect these
+components or leave them serving on this evidence. The six unused coding cases
+remain available for a separately defined future trial.
+
+A smaller full-precision application cache restored about 15 GiB of host RAM
+headroom while keeping the same context limit; both finite runtime checks passed.
+The server stopped cleanly, all four cards passed final checks, and no OOM or
+new kernel fault appeared. Coding evidence is archived and verified. Disposable
+source snapshots and the temporary 27B RAM model copy are released; all 80 model
+files remain in the verified cold copy. EX400U is cleanly unmounted. The next
+recall improvement is offline: let code copy exact quotations from document line
+ranges, with meaning and relevance still reviewed separately.
+
+LTX's earlier disk-full incident left a progress-bar lock stuck. Its evidence
+was preserved and one SIGINT stopped the application cleanly. LTX and Flash-Next
+stay parked. No reboot, driver reset, power, host memory, swap or page-cache
+setting was changed.
 
 - **LTX:** accepted-reference result 1.308 s/clip; batch-4 result 0.808 s/clip
   remains conditional on accepting its different outputs. Packet 98 is prepared,
@@ -78,9 +74,10 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
 - **Coding worker and lab memory:** the owner chose a bounded usefulness trial
   before connecting these projects. The [new evaluation packet](experiments/local-coding-worker/evaluation-20261007/README.md)
   contains eight historical coding repairs and ten source-backed research
-  questions. CPU controls are verified; the separate 4B trial produced **zero
-  completed patches in two attempts**. Judge reviewed patches rather than token
-  speed; do not present that small-model result as a 27B evaluation. The worker can now mount a separate read-only acceptance folder
+  questions. CPU controls are verified; both the separate 4B and 27B trials
+  produced **zero completed patches in two attempts each**, under different
+  model/runtime/budget identities. Judge reviewed patches rather than token
+  speed. The worker can now mount a separate read-only acceptance folder
   and record/check its hashes. This does not qualify a model or serving package.
   Pinned worker dependencies and the CPU image are now installed; all 107 worker
   tests pass. Both initial tasks also passed their real full-snapshot Docker
@@ -88,28 +85,20 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   Snapshot receipts are preserved at `/home/steve/worker-container-controls-20261007/`.
   Two hash-identical 0.8B weight-cache copies were consolidated into one read-only
   inode, preserving both model paths and recovering 1.63 GiB. The separate 0.8B
-  workflow pilot closed at its format gate; the planned 27B trial remains pending.
-- **27B next:** the corrected download manifest includes the required tokenizer
-  and runtime files while preserving all 66 weight pins; five offline controls
-  cover both package download wrappers. All 80 model files (30.89 GB) now pass
-  publisher hashes in `/dev/shm/qwen38-27b-fp8-worker-20261007`. Their additional
-  cold copy passed complete hashes after a clean read-only remount of EX400U;
-  the drive is unmounted and the RAM source is retained. The
-  [preservation receipt](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/model-preservation/summary.json)
-  clears the storage gate for one bounded trial. A separately tested download
-  fix now resumes preallocated aria2 partials instead of skipping them by size.
-  The separate [target-only pilot](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/README.md)
-  uses the installed R276 image and leaves the two-card host alone. Its source
-  and CPU communication checks passed, as did the first arm's finite runtime
-  checks. Coding admission refused that arm's host RAM headroom; its clean
-  shutdown and all results are preserved. A separate
-  [smaller-cache arm](experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/README.md)
-  is running, with identical precision/context/tasks and unchanged memory reserves.
-  Known one-token-prefill limitations
-  are explicitly restricted and prefill-boundary diagnostics precede useful tasks.
-  CPU tokenization confirms the full recall prompt fits its 33,024-token profile.
+  workflow pilot closed at its format gate; the 27B trial is now closed as described above.
+- **27B model and next steps:** the corrected download manifest includes required
+  tokenizer/runtime files while preserving all 66 weight pins; five offline
+  controls cover both wrappers. All 80 files (30.89 GB) passed publisher hashes
+  and a full cold-copy read-back after clean remount. They remain under
+  `/mnt/usb-models/worker-models/qwen38-27b-fp8-20261007/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/`.
+  Only the temporary RAM copy was removed after another full hash check and clean
+  server stop. [Preservation receipt](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/model-preservation/summary.json).
+  Restore into an admitted location before any later trial; no serving copy is
+  currently staged. The downloader now resumes preallocated aria2 partials
+  correctly. The separate R276 trials and failed usefulness outcomes are
+  preserved; they do not qualify the newer speculative package.
   Qualify the corrected package when its exact inputs and host ownership
-  are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
+  are available. The 50 GiB reserve is now met, with only about 3 GiB above it;
   this does not admit a large build/download on the root filesystem.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
   estimated peak output/cache/build bytes. A verified additional research backup

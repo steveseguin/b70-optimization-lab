@@ -1,0 +1,18 @@
+{
+  "schema": "lab.recall-timeout-candidate.v1",
+  "source": "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py",
+  "baseline_sha256": "aa737e945a4b369af4af669d182f9097ea406ceeca8ca268270b8f81a9da627b",
+  "candidate_sha256": "1059f06bc9f85aed9426d71441710988dbfbb31491f7dad864a8be9f4ac66d5d",
+  "status": "unapplied, outside repository",
+  "scope": "Optional keyword-only timeout_seconds=120 on consume_stream/request_one; preserve positional clock/opener and all default behavior. Explicit chosen timeout feeds socket and elapsed-stream deadline.",
+  "application_gate": "Do not edit shared repository until both coding attempts and exports are finished. Preserve the observed120-second coding timeout; second task retains original settings.",
+  "recall_adaptation": "After review/application, pass timeout_seconds=420 only at the run-memory.py model.wire.request_one call. Keep its existing420-second SIGALRM total network budget unchanged.",
+  "recall_callsite": {
+    "source": "/home/steve/llm-optimizations/experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/run-memory.py",
+    "baseline_sha256": "0d3f5a31a82409d695dce391ac0b199c11be34d4e4c88d14c47af280c5cfb98c",
+    "candidate_sha256": "edcdeea56bc7c2b9664885a46e799688416bd5d8d03e1e1c0dab7dcd33b1b4b0",
+    "patch": "recall-callsite.patch",
+    "outer_SIGALRM_seconds": 420,
+    "outer_alarm_unchanged": true
+  }
+}

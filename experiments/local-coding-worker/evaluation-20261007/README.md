@@ -1,7 +1,10 @@
 # Coding usefulness and lab-memory evaluation — October 7 UTC
 
-Status: CPU preparation and controls only. **No model trial has run on this
-packet.** The purpose is to measure completed, reviewable work before combining
+Status: frozen CPU controls and evaluation inputs. Separate
+[4B](../qwen4b-worker-pilot-20261007/CLOSEOUT.md) and
+[27B](../qwen27b-target-only-smallkv-20261007/README.md) trials each produced zero
+completed patches in the initial two tasks; remaining six cases stay unused.
+Their runtime identities and budgets differ. The purpose is to measure completed, reviewable work before combining
 the local coding worker with the long-context project.
 
 ## What is frozen
@@ -49,7 +52,7 @@ context. Score answers and citations independently with the rubric. Establish
 that small source-backed baseline before trying retrieval or durable memory.
 Only connect memory to coding after each component demonstrates useful results.
 
-## Runtime admission — currently blocked
+## Runtime admission at preparation time
 
 At preparation time on the four-card host, the worker virtual environment,
 pinned CPU sandbox image, official Qwen3.8-27B-FP8 model and documented R314

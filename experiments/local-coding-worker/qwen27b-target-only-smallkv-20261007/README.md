@@ -1,9 +1,27 @@
 # 27B worker trial with an explicit full-precision cache budget
 
-**Active:** startup reports 59,904-token cache capacity and about 39 GiB available
+**Closed:** [final results and next decision](CLOSEOUT.md). Startup reported 59,904-token cache capacity and about 39 GiB available
 host RAM. Eight boundary diagnostics and the unchanged worker-format canary
-passed. Coding and recall results remain pending. The supervised server must
-stop after this bounded trial.
+passed. Both coding attempts failed with empty patches and no acceptance attempts:
+catalog hit the fixed 120-second stream deadline while generating a large edit;
+context exhausted 40 steps in an investigation loop. Independent reviews reject
+both. Their complete compact evidence packets are verified and temporary source
+snapshots released. The six remaining frozen cases stay unused.
+
+Before the first recall request, an implementation discrepancy was corrected:
+the planned 420-second total alarm surrounded a wire helper hardcoded to 120
+seconds. The helper now accepts an optional timeout, preserving its 120-second
+default; recall alone explicitly passes 420. The outer 420-second alarm, corpus,
+questions, profile and validator are unchanged. Six focused controls, 107 worker
+tests and 15 existing wire tests passed. The correction was applied only after
+both coding archives were verified, and neither failed coding attempt is rerun.
+[Application receipt](recall-timeout-correction/application.json).
+
+Recall hit its 420-second total limit before a complete answer. The partial
+stream is preserved without answer repair or a semantic/citation score. The
+server stopped with exit zero, no OOM/kernel fault and all four postflight checks
+passing. All 80 model files were rehashed before releasing only their temporary
+RAM copy; the verified cold model remains preserved and EX400U is unmounted.
 
 Preregistered follow-up to the [first target-only arm](../qwen27b-target-only-pilot-20261007/README.md),
 which passed its runtime gates but missed the fixed coding RAM admission. The
