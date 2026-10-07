@@ -156,7 +156,9 @@ def main():
     started=time.time();sandbox=None;model=None;agent=None;env=None;error=None;agent_result={};baseline={};patch=None;final_tree_matches=False
     with open('/tmp/neural-local-worker.lock','a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
-        snapshot=prepare_snapshot(repo,commit,out)
+        snapshot=prepare_snapshot(repo,commit,out,
+            storage_min_free_bytes=config.get('storage_min_free_bytes',50*1024**3),
+            storage_require_mount=config.get('storage_require_mount'))
         # mini must not load the user's unrelated dotenv/provider configuration.
         os.environ['MSWEA_GLOBAL_CONFIG_DIR']=str(out/'mini-config');os.environ['MSWEA_SILENT_STARTUP']='1'
         from minisweagent.agents.default import DefaultAgent

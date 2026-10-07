@@ -6,6 +6,7 @@ the editable snapshot. Stop the container before exporting its reviewable patch.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -26,6 +27,12 @@ MAX_OUTPUT = 10_000
 COMMAND_TIMEOUT = 120
 COMPLETE = "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
 CHILD_ENV = {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "LC_ALL": "C.UTF-8"}
+DEFAULT_STORAGE_MIN_FREE_BYTES = 50 * 1024**3
+SNAPSHOT_RECEIPT_ALLOWANCE = 256 * 1024**2
+_storage_spec = importlib.util.spec_from_file_location(
+    "worker_storage_headroom", Path(__file__).resolve().parents[1] / "scripts/check-storage-headroom.py")
+_storage = importlib.util.module_from_spec(_storage_spec)
+_storage_spec.loader.exec_module(_storage)
 
 
 class SandboxError(RuntimeError):
@@ -108,7 +115,69 @@ def safe_extract(archive, destination):
                 shutil.copyfileobj(stream, output)
 
 
-def prepare_snapshot(repo, commit, run_dir):
+def _snapshot_storage_admission(run_dir, files, min_free_bytes, require_mount):
+    """Conservative initial snapshot budget, not a reservation or runtime quota.
+
+    Charge the retained tar and both unpacked trees concurrently. Round payloads
+    to filesystem blocks; overcharge per-file metadata/path entries and directory
+    blocks, PAX/long-path tar headers, missing output ancestors, and receipts.
+    Later model/tool writes and concurrent writers are not bounded by this check.
+    Git archive transformations or unusual filesystem metadata can exceed an
+    estimate; this is admission evidence, not a guarantee against ENOSPC.
+    """
+    if type(min_free_bytes) is not int or min_free_bytes < 0:
+        raise SandboxError("storage_min_free_bytes must be a nonnegative integer (not bool)")
+    if require_mount is not None and (not isinstance(require_mount, (str, Path))
+                                      or not str(require_mount).strip()):
+        raise SandboxError("storage_require_mount must be a nonempty path or null")
+    expected = Path(require_mount) if require_mount is not None else None
+    try:
+        probe = _storage.inspect_destination(run_dir, min_free_bytes, 0, expected)
+        if not probe["admitted"]:
+            raise SandboxError("snapshot storage admission refused: " + "; ".join(probe["failures"]))
+        existing = Path(probe["checked_existing_path"])
+        stats = os.statvfs(existing)
+        block = max(4096, stats.f_frsize, stats.f_bsize)
+        rounded = lambda size, unit: ((size + unit - 1) // unit) * unit
+        directories = set()
+        archive = 10240  # Git tar record/footer slack.
+        extracted = path_bytes = 0
+        for name, size in files:
+            path = Path(os.fsdecode(name))
+            directories.update(parent for parent in path.parents if parent != Path('.'))
+            length = len(name)
+            path_bytes += length
+            archive += rounded(size, 512) + 2048 + 2 * rounded(length, 512)
+            # Full path charged per file, even though directory names are shared.
+            extracted += max(block, rounded(size, block)) + block + rounded(2 * length, block)
+        for directory in directories:
+            length = len(os.fsencode(directory))
+            archive += 2048 + 2 * rounded(length, 512)
+            extracted += 2 * block + rounded(2 * length, block)
+        archive = rounded(archive, block)
+        ancestors = len(run_dir.relative_to(existing).parts) if run_dir != existing else 0
+        receipts = SNAPSHOT_RECEIPT_ALLOWANCE + 12 * path_bytes + 512 * len(files)
+        overhead = (ancestors + 2) * 2 * block
+        planned = archive + 2 * extracted + receipts + overhead
+        report = _storage.inspect_destination(run_dir, min_free_bytes, planned, expected)
+        if not report["admitted"]:
+            raise SandboxError("snapshot storage admission refused: " + "; ".join(report["failures"]))
+    except (OSError, ValueError) as error:
+        raise SandboxError("snapshot storage inspection failed: " + str(error)) from error
+    report["snapshot_estimate"] = {
+        "archive_bytes": archive, "each_extracted_tree_bytes": extracted,
+        "receipt_allowance_bytes": receipts, "output_directory_overhead_bytes": overhead,
+        "allocation_unit_bytes": block, "source_files": len(files),
+        "source_directories": len(directories),
+        "scope": "initial archive + baseline + workspace + conservative overhead/receipt allowance",
+        "reservation": False, "runtime_write_quota": False,
+    }
+    return report
+
+
+def prepare_snapshot(repo, commit, run_dir, *,
+                     storage_min_free_bytes=DEFAULT_STORAGE_MIN_FREE_BYTES,
+                     storage_require_mount=None):
     """Create a source snapshot from an exact commit in a clean repository."""
     repo, run_dir = Path(repo).resolve(), Path(run_dir).absolute()
     for ancestor in (run_dir, *run_dir.parents):
@@ -131,17 +200,21 @@ def prepare_snapshot(repo, commit, run_dir):
     # Check blob types/sizes before writing an archive; reject submodules too.
     tree = _run(["git", "-C", str(repo), "ls-tree", "-r", "-l", "-z", commit]).stdout
     total = count = 0
+    files = []
     for entry in tree.split(b"\0"):
         if not entry:
             continue
-        info, _ = entry.split(b"\t", 1)
+        info, name = entry.split(b"\t", 1)
         mode, kind, _, size = info.split()
         if mode not in (b"100644", b"100755") or kind != b"blob":
             raise SandboxError("source snapshot cannot contain symlinks or submodules")
         count += 1
         total += int(size)
+        files.append((name, int(size)))
     if count > MAX_FILES or total > MAX_SOURCE_BYTES:
         raise SandboxError("source snapshot exceeds size or file-count limit")
+    storage_admission = _snapshot_storage_admission(
+        run_dir, files, storage_min_free_bytes, storage_require_mount)
     run_dir.mkdir(parents=True, exist_ok=False)
     archive = run_dir / "source.tar"
     with archive.open("xb") as output:
@@ -157,6 +230,7 @@ def prepare_snapshot(repo, commit, run_dir):
     metadata = {"schema": "neural.download.worker.snapshot.v1", "source_repo": str(repo),
                 "source_commit": commit, "source_state": source,
                 "source_archive_sha256": archive_sha,
+                "storage_admission": storage_admission,
                 "source_tree_sha256": hashlib.sha256(tree).hexdigest(),
                 "baseline": _regular_tree(run_dir / "baseline")}
     if _source_state(repo) != source:
