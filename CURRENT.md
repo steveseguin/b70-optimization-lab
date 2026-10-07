@@ -7,11 +7,16 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **The103 LTX application is running and idle**,
-PID3286256, unit `ltx103-resolution-server-20261007`, loopback port8188. Its manifest
-is `a8b78c0a73a3045f902a2cf7f6ff55dff1931f4f4872b12576e976399708b5cb`.
-All87 registered requests completed; the finite plan is consumed. Do not send
-invented requests or run other GPU work alongside the resident application.
+local-worker tuning remain parked. **The104 LTX application is running and idle**,
+PID3311653, unit `ltx104-client-server-20261007`, loopback8188. Its sealed manifest is
+`49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`. The71-request paired client comparison is configured and validated; its
+campaign starts next. Do not submit invented requests or run other GPU work.
+
+The103 application stopped cleanly at18:28UTC for this controlled reload, and
+all four GPUs passed postflight. Thirty verified duplicate continuity archives
+were retired, reclaiming2.08GiB. The fresh5GiB+50GiB storage admission passed with
+about56GiB available. Models, reference samples, previews, metadata and failed
+experiments remain protected; the retired files have a durable restoration map.
 
 The two-worker640×384 configuration passed all ten original fixtures: twenty
 native executions form ten exact repeat pairs, and all50 scored optimized clips
@@ -50,16 +55,16 @@ clips in one application with identical numerical settings and inputs.
 
 104 is implemented and all fifteen CPU suites passed; its71 request names and
 64 capture indices are reserved without collisions. Independent review found no
-issues in client durability, ordering or source construction. No packet build or
-launch yet. Its71 attempts/64 captures need a fresh5GiB allowance plus50GiB reserve.
+issues in client durability, ordering or source construction. The successor is sealed and its application is running; the campaign is next. Its71 attempts/64 captures need a fresh5GiB allowance plus50GiB reserve.
 [Implementation and comparison rules](experiments/ltx25-b70/notes/2026-10-07-client104-comparison.md).
-All103 raw outputs remain intact. A conditional plan identifies30 continuity
-archives that may be byte-identical to retained initial samples; no retirement
-has run, and an explicit restoration map is required before any such deletion.
+Thirty103 continuity tensor archives were retired only after full proof
+reconstruction and whole-file equality checks. All native/candidate/initial
+reference samples, previews and metadata remain. The durable restoration map
+must be used to restore ordinary copies before replaying the full103 proof.
 [Storage plan](experiments/ltx25-b70/notes/2026-10-07-resolution103-retirement-plan.md).
 The successful102 application was retained until a necessary controlled reload
 for103's new native fixtures. It stopped cleanly at17:37UTC and all four cards
-passed postflight at17:38UTC.103 is still retained; no new probe runs alongside it.
+passed postflight at17:38UTC.103 stopped cleanly at18:28UTC for104 and all four cards passed postflight.
 
 The latest owner-provided instructions prefer one continuously running application
 and endpoint reuse. Future work must not carry forward automatic stop-on-success

@@ -46,4 +46,9 @@ or page-cache setting changes are part of this experiment.
 Status: implementation and independent review complete. All fifteen CPU suites
 passed; [validation](../data/resume-20261007/resolution104-cpu-validation.json).
 The71 request names and64 capture indices were checked against retained evidence
-and reserved without collisions. No104 packet build or GPU requests yet.
+and reserved without collisions. The104 source packet is sealed, manifest
+`49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`.
+A check-only attempt before cleanup correctly refused insufficient storage;
+no application was started by that check. After verified duplicate retirement,
+fresh5GiB+50GiB admission and the source-only launcher check passed.
+The application launch is now requested; no timing result exists yet.

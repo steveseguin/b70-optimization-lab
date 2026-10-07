@@ -110,3 +110,21 @@ No additional safe2GiB cache candidate is established by those ledgers. A later
 bounded read-only check of the exact already-cleaned generic cache paths could
 measure regrowth, but must prove inactivity/reconstructibility before removal;
 this plan performed no broad model scan or cleanup.
+
+## Applied after the controlled104 reload stop
+
+At18:28UTC the103 application stopped cleanly; all four cards passed postflight.
+The new fixed103 helper passed16 synthetic controls and independent review.
+Its plan reconstructed the unchanged sealed native/candidate/timed proof; apply
+reconstructed it again and verified whole-archive hashes and exact file identity
+before each removal. All30 planned removals completed, reclaiming2,238,803,968
+allocated bytes (2.085GiB). No original/native/candidate/initial timed tensor,
+preview, metadata, model, patch or failed experiment was removed.
+
+The [restoration map](../data/resume-20261007/resolution103-retirement-plan.json),
+[completed receipt](../data/resume-20261007/resolution103-retirement-applied.json)
+and its adjacent durable intent/events are retained. The
+[helper instructions](../recovery/20261007-resolution103-retirement/README.md)
+explain exclusive ordinary-copy restoration. Full sealed proof replay now
+requires restoring these missing paths first; the stored proof describes the
+verified pre-retirement state.
