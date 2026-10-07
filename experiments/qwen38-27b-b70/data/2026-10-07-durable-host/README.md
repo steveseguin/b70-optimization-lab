@@ -1,5 +1,12 @@
 # Queued durable pilot: execution receipt
 
+**Update, 01:50 UTC:** v1 failed its passive port check before device work.
+[Failure records](v1-failure/status.json) remain preserved. A bounded port-release
+wait passed 20 CPU tests and independent review; the explicit
+[v2 attempt](v2/receipt.json) is now active at
+`/mnt/fast-ai/bench-results/context-durable-v2-20261007` under unit
+`ctx-durable-pilot-v2.service`. The original receipt below remains historical.
+
 The service `ctx-durable-pilot-v1.service` entered `waiting` on 2026-10-07 at
 00:31 UTC. The protected plan-E supervisor still owned the host. **No new model
 trial had started at this snapshot.**

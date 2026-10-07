@@ -56,8 +56,24 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 00:31 UTC**. Its protected context experiment
+Latest two-card review: **2026-10-07 01:50 UTC**. Its protected context experiment
 continues independently; see its latest entry below.
+
+## 2026-10-06 21:50 EDT, two-B70 host: handoff repaired; durable v2 in preflight
+
+The protected legacy campaign ended and confirmed its server stop. The first
+queued coordinator then failed its passive port check at 01:27 UTC (`EADDRINUSE`),
+before health probes, server launch or model work. Its failure is preserved;
+it was not still waiting when checked at 01:46 UTC.
+
+**`ctx-durable-pilot-v2.service` is active in preflight**, output
+`/mnt/fast-ai/bench-results/context-durable-v2-20261007`. The coordinator now waits
+up to 180 seconds for socket teardown. This explicit new attempt requires proof
+that v1 did no device/server work, retains its original fault baseline, and
+allows only the coordinator code to differ. Twenty CPU tests and independent
+review passed. [v2 receipt](experiments/qwen38-27b-b70/data/2026-10-07-durable-host/v2/receipt.json).
+The model-facing harness, tasks and gates remain frozen. Do not launch another
+GPU lane alongside this owner; live `status.json` supersedes this snapshot.
 
 ## 2026-10-06 20:31 EDT, two-B70 host: next durable experiment queued and waiting
 

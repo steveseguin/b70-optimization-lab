@@ -28,6 +28,9 @@ the runner does not forcibly kill an unresponsive GPU owner.
 The qualified owner retains its existing Docker stop timeout and emergency
 memory guard. This coordinator does not disable or broaden those mechanisms.
 
+Port teardown is allowed up to 180 seconds before a resource check fails. Only
+`EADDRINUSE` is retried; another ownership or health error still fails immediately.
+
 ## Commands
 
 Run from the lab root. Use a new output directory for each attempted execution.
@@ -71,3 +74,17 @@ cat /mnt/fast-ai/bench-results/context-durable-v1-20261007/status.json
 To cancel this coordinator, stop its exact systemd unit. Its handler cancels
 only owned CPU clients and asks its own server to stop; it does not cancel the
 protected campaign it was waiting for.
+
+## Explicit replacement of a failed handoff
+
+The first queue failed before device work because port 18196 had not yet
+released. Its evidence remains in the v1 directory. The active replacement is
+`ctx-durable-pilot-v2.service`, output
+`/mnt/fast-ai/bench-results/context-durable-v2-20261007`.
+
+For a reviewed failure before any health probe or server launch, preparation
+accepts `--from-prelaunch-failure PREVIOUS_OUTPUT` with a fresh `--out` directory.
+It rejects previous device work, a changed boot, unreleased protected work or
+any changed dependency except the coordinator itself. It preserves the original
+fault-monitoring baseline and previous evidence hashes. This is an explicit new
+attempt, never automatic retry or resumption of a model trial.
