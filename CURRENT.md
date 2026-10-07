@@ -7,10 +7,13 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **One finite corrected 640×384 reference
-application is starting (16:16 UTC).** Packet101b retains original native FP32
-constructor state explicitly; all14 CPU suites and independent review pass.
-No reference quality or speed result is established yet. The first
+local-worker tuning remain parked. **No model server is running.** The corrected
+640×384 preparation passed and generated six native clips. Their three repeat
+pairs have identical hashes for all four tensors, but the new verifier refused
+a prompt-hash convention mismatch before optimized setup. The application
+stopped cleanly at16:24UTC; all four GPUs passed postflight with no fault.
+The verifier and its actual producer records are being audited before the next
+sealed candidate. No larger-size speed result is qualified. The first
 640×384 setup stopped cleanly at 16:05 UTC after its new dtype guard rejected
 a native FP32 text-encoder scalar. The encoder check passed; no reference clip
 was generated. All four cards passed postflight with no kernel fault. The guard
@@ -63,7 +66,8 @@ passed review. Runtime wiring and all 14 CPU test suites now pass, including
 independent launch/shutdown review. Packet 101 completed only its encoder check before preparation refused.
 Its [closeout](experiments/ltx25-b70/data/resume-20261007/resolution101-closeout/summary.json)
 preserves the failure. Actual resident memory and same-size output qualification
-remain pending; no 640×384 reference clip or speed result has been produced.
+remain pending. Six native clips are now preserved from101b, with its
+[verification refusal](experiments/ltx25-b70/data/resume-20261007/resolution101b-closeout/summary.json).
 [Resolution reference design](experiments/ltx25-b70/notes/2026-10-07-resolution-reference-design.md),
 [third-worker decision criteria](experiments/ltx25-b70/notes/2026-10-07-third-worker-decision.md),
 [original setup failure](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
