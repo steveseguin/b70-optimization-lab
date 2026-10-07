@@ -7,7 +7,9 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **No model server is running.** The corrected
+local-worker tuning remain parked. **One finite 640×384 reference experiment
+application is starting (15:58 UTC); no resident service is intended.** Its
+sealed packet passed source and inactive startup checks. The corrected
 20/28 candidate passed all 128 output comparisons and stopped cleanly at 14:45
 UTC. All four GPUs passed postflight with no kernel GPU fault. It measured
 1.3007 seconds per clip versus the qualified control's 1.3156, only about 1.1%
@@ -52,8 +54,9 @@ fresh storage/memory budget before any larger model request.
 now includes exact-request phase gates, independent reference-file verification,
 delayed success reporting and explicit setup-result checks. The same-size plan
 passed review. Runtime wiring and all 14 CPU test suites now pass, including
-independent launch/shutdown review. Immutable packet preparation and real memory
-admission are next; no 640×384 model request or new speed result has been produced.
+independent launch/shutdown review. Packet 101 is sealed and admitted for one
+bounded run; actual resident memory and same-size output qualification remain
+pending. No 640×384 model request or new speed result has been produced.
 [Resolution reference design](experiments/ltx25-b70/notes/2026-10-07-resolution-reference-design.md),
 [third-worker decision criteria](experiments/ltx25-b70/notes/2026-10-07-third-worker-decision.md),
 [original setup failure](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
