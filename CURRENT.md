@@ -144,12 +144,12 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 06:46 UTC**. **No model server is running or
-queued.** The four sparse replication trials completed; both cards were released
-at 06:44:55 UTC and the final health check passed at 06:45:05. CPU preparation for
-the next fixed history comparison is active.
+Latest two-card review: **2026-10-07 07:02 UTC**. One supervised historical-state
+study is active. Admission and health preflight passed; the owner is starting its
+single server before strict qualification. The prior replication stopped cleanly,
+released both cards at 06:44:55 UTC, and passed final health at 06:45:05.
 
-## 2026-10-07, two-B70 host: replication preserved; prepare history comparison
+## 2026-10-07, two-B70 host: replication preserved; history comparison active
 
 The [replication result](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-replication-result.md)
 is mixed. On the original generated task, both methods have 24/24 final answers
@@ -168,8 +168,8 @@ though final answers pass. No failed trial was replaced or budget increased.
 All 155 calls report zero cache reuse, all 96 source batches survived exactly,
 and all 352 quoted events match the references. The evidence and four databases
 are preserved; the independent audit replayed exactly from a restored copy.
-The supervisor stopped cleanly and completed health checks. No new server is
-admitted yet. Preserve all older frozen sources, packets and outcomes.
+The supervisor stopped cleanly and completed health checks. Preserve all older
+frozen sources, packets and outcomes.
 
 The previously fixed [decision tree](experiments/qwen38-27b-b70/notes/2026-10-07-context-next-study-decision.md)
 selects the [history study](experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-plan.md):
@@ -178,8 +178,14 @@ access on two fixed temporal documents. Both access modes save each method's
 actual accepted tables, including mistakes. The new client, independent auditor
 and supervised host wrapper have passed 74 CPU tests and a complete eight-trial
 stub replay checked independently. The prepared packet fits the unchanged limits;
-the host binds all 14 packet files and 97 dependencies. Launch admission remains
-separate from these software checks.
+the host binds all 14 packet files and 97 dependencies. Passive preparation passed
+at 07:00:43 UTC; `ctx-history-study-v1.service` owns this one campaign, its eight
+fixed trials and graceful cleanup. Output:
+`/mnt/fast-ai/bench-results/context-history-study-v1-20261007`.
+[Start receipts](experiments/qwen38-27b-b70/data/2026-10-07-history-study-live/queue.json).
+Do not edit its frozen engine, client, host, auditors, source/reference packet or
+plans, and do not start another GPU owner. The entire temporal source directory
+is included in the dependency inventory; use separate paths for new CPU work.
 No holdout has been admitted.
 
 The [temporal reference packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md)
