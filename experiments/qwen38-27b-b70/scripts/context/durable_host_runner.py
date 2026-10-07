@@ -9,6 +9,7 @@ cleanup requests STOP only; the qualified owner retains its existing Docker stop
 timeout and emergency memory-guard policy.
 """
 import argparse
+import errno
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import fcntl
@@ -196,9 +197,44 @@ def prepare(out, supervisor_pid, launch_path=DEFAULT_LAUNCH):
     return config
 
 
+def prepare_after_prelaunch_failure(out, previous):
+    """Explicit new attempt after a failed handoff; never restart a model trial."""
+    previous = previous.resolve()
+    with file_lock(HOST_LOCK), file_lock(previous / 'coordinator.lock'):
+        prior = json.loads((previous / 'queue.json').read_text())
+        last = json.loads((previous / 'status.json').read_text())
+        if last.get('phase') != 'failed' or any((previous / name).exists() for name in
+                ('preflight-health.command.json', 'server-owner.command.json', 'server')):
+            raise RuntimeError('previous attempt is not a failed handoff before device work')
+        if socket.gethostname() != 'steve-TURIND8-2L2T' or prior['boot_id'] != Path(
+                '/proc/sys/kernel/random/boot_id').read_text().strip():
+            raise RuntimeError('host/boot changed since previous attempt')
+        launch = json.loads(Path(prior['protected_launch']).read_text())
+        fresh = dependencies(prior['protected_launch'], launch)
+        own = str(Path(__file__).resolve())
+        if ({k: v for k, v in fresh.items() if k != own} !=
+                {k: v for k, v in prior['dependency_sha256'].items() if k != own}):
+            raise RuntimeError('dependencies other than the coordinator changed')
+        reason = release_reason(prior)
+        if reason:
+            raise RuntimeError('protected work is not released: ' + reason)
+        # Keep the original fault baseline, not just faults since this new attempt.
+        fault_check(prior, previous)
+        config = {**prior, 'prepared_at': now(),
+                  'fault_baseline_at': prior.get('fault_baseline_at', prior['prepared_at']),
+                  'dependency_sha256': fresh,
+                  'previous_prelaunch_failure': {'directory': str(previous),
+                      'artifacts': {name: sha(previous / name) for name in
+                                    ('queue.json', 'status.json', 'lifecycle.jsonl')}}}
+        out.mkdir(parents=True, exist_ok=False)
+        atomic(out / 'queue.json', config)
+        status(out, 'prepared', previous_prelaunch_failure=str(previous), device_actions=False)
+        return config
+
+
 def fault_check(config, out):
     result = read_command(['journalctl', '-k', '-b', '--no-pager', '-o', 'short-iso',
-                           '--since', config['prepared_at']])
+                           '--since', config.get('fault_baseline_at', config['prepared_at'])])
     if re.search(r'permission|not seeing messages|No journal files', result.stderr, re.I):
         raise RuntimeError('kernel journal access unavailable')
     faults = [line for line in result.stdout.splitlines() if FAULT.search(line)]
@@ -249,9 +285,30 @@ def load_helper():
     return module
 
 
+def wait_available(config, out, helper, *, timeout=180, monitor_faults=True):
+    """Allow bounded socket teardown; never evict a listener or ignore other conflicts."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            helper.check_available(config['port'], 'durable-preflight-no-container')
+            return
+        except OSError as exc:
+            if exc.errno != errno.EADDRINUSE:
+                raise
+            if STOP_REQUESTED:
+                raise RuntimeError('stop requested during port release') from exc
+            if time.monotonic() >= deadline:
+                raise RuntimeError('server port did not release within 180 seconds') from exc
+            if monitor_faults:
+                fault_check(config, out)
+            # Preserve the experiment phase in status.json; this detail lives in the log.
+            print(f'Waiting for port {config["port"]} to release', flush=True)
+            time.sleep(3)
+
+
 def resource_check(config, out, helper):
     """Call under a held stage lease before/after the bounded GPU health probe."""
-    helper.check_available(config['port'], 'durable-preflight-no-container')
+    wait_available(config, out, helper)
     info = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())
     available = int(info['MemAvailable'].split()[0]) * 1024
     if available < config['prelaunch_available_gib'] * 1024**3:
@@ -430,7 +487,7 @@ def execute(out):
                         stopped = server.stop()
                         atomic(out / 'server-stop.json', stopped)
                         with file_lock(STAGE_LOCK):
-                            load_helper().check_available(config['port'], 'durable-poststop-no-container')
+                            wait_available(config, out, load_helper(), monitor_faults=False)
                         atomic(out / 'cards-released.json', {'at': now(), 'verified': True})
                 except BaseException as cleanup_error:
                     if not stop_attempted:
@@ -462,14 +519,21 @@ def main():
     mode.add_argument('--prepare', action='store_true'); mode.add_argument('--execute', action='store_true')
     parser.add_argument('--supervisor-pid', type=int, default=1430254)
     parser.add_argument('--protected-launch', type=Path, default=DEFAULT_LAUNCH)
+    parser.add_argument('--from-prelaunch-failure', type=Path,
+                        help='explicit new queue from a preserved failure before any device work')
     args = parser.parse_args()
     def stop(*_):
         global STOP_REQUESTED
         STOP_REQUESTED = True
     signal.signal(signal.SIGTERM, stop); signal.signal(signal.SIGINT, stop)
     if args.prepare:
-        prepare(args.out.resolve(), args.supervisor_pid, args.protected_launch)
+        if args.from_prelaunch_failure:
+            prepare_after_prelaunch_failure(args.out.resolve(), args.from_prelaunch_failure)
+        else:
+            prepare(args.out.resolve(), args.supervisor_pid, args.protected_launch)
     else:
+        if args.from_prelaunch_failure:
+            parser.error('--from-prelaunch-failure is preparation only')
         execute(args.out.resolve())
 
 

@@ -1,11 +1,12 @@
 """CPU-only lifecycle tests: every process, device and service action is mocked."""
 from contextlib import ExitStack, contextmanager
 import json
+import errno
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import durable_host_runner as runner
 
@@ -228,6 +229,57 @@ class LifecycleTests(unittest.TestCase):
         with patch.object(runner, 'file_lock', racing_lock):
             with self.assertRaisesRegex(RuntimeError, 'already executed'): runner.execute(self.out)
         self.assertEqual(self.starts, 0)
+
+
+class PortHandoffTests(unittest.TestCase):
+    def test_transient_port_teardown_waits_without_device_actions(self):
+        helper = SimpleNamespace(check_available=Mock(side_effect=[
+            OSError(errno.EADDRINUSE, 'teardown'), None]))
+        with patch.object(runner.time, 'sleep') as sleep, patch.object(runner, 'fault_check') as faults:
+            runner.wait_available({'port': 18196}, Path('/unused'), helper)
+        self.assertEqual(helper.check_available.call_count, 2)
+        sleep.assert_called_once_with(3)
+        faults.assert_called_once()
+
+    def test_persistent_port_and_unrelated_errors_fail_closed(self):
+        helper = SimpleNamespace(check_available=Mock(side_effect=OSError(errno.EADDRINUSE, 'occupied')))
+        with patch.object(runner.time, 'monotonic', side_effect=[0, 181]):
+            with self.assertRaisesRegex(RuntimeError, 'did not release'):
+                runner.wait_available({'port': 18196}, Path('/unused'), helper)
+        helper.check_available.side_effect = OSError(errno.EACCES, 'not allowed')
+        with self.assertRaises(OSError):
+            runner.wait_available({'port': 18196}, Path('/unused'), helper)
+
+    def test_manual_requeue_preserves_failure_and_original_fault_baseline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); prior = root / 'prior'; prior.mkdir()
+            launch = root / 'launch.json'; launch.write_text('{}')
+            own = str(Path(runner.__file__).resolve())
+            config = {'prepared_at': '2026-10-07T00:30:00+00:00',
+                      'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+                      'protected_launch': str(launch), 'dependency_sha256': {own: 'old', 'task': 'same'}}
+            runner.atomic(prior / 'queue.json', config)
+            runner.atomic(prior / 'status.json', {'phase': 'failed', 'error': 'port occupied'})
+            (prior / 'lifecycle.jsonl').write_text('{"phase":"failed"}\n')
+            before = {name: runner.sha(prior / name) for name in ('queue.json', 'status.json', 'lifecycle.jsonl')}
+            with patch.object(runner, 'HOST_LOCK', root / 'host.lock'), \
+                 patch.object(runner.socket, 'gethostname', return_value='steve-TURIND8-2L2T'), \
+                 patch.object(runner, 'dependencies', return_value={own: 'new', 'task': 'same'}) as deps, \
+                 patch.object(runner, 'release_reason', return_value=None), \
+                 patch.object(runner, 'fault_check') as faults:
+                result = runner.prepare_after_prelaunch_failure(root / 'new', prior)
+                self.assertEqual(result['fault_baseline_at'], config['prepared_at'])
+                self.assertEqual(result['previous_prelaunch_failure']['artifacts'], before)
+                faults.assert_called_once_with(config, prior)
+                self.assertEqual(before, {name: runner.sha(prior / name) for name in before})
+                for forbidden in ('server-owner.command.json', 'preflight-health.command.json'):
+                    (prior / forbidden).touch()
+                    with self.assertRaisesRegex(RuntimeError, 'before device work'):
+                        runner.prepare_after_prelaunch_failure(root / 'refused', prior)
+                    (prior / forbidden).unlink()
+                deps.return_value = {own: 'new', 'task': 'changed'}
+                with self.assertRaisesRegex(RuntimeError, 'dependencies other'):
+                    runner.prepare_after_prelaunch_failure(root / 'changed', prior)
 
 
 if __name__ == '__main__': unittest.main()
