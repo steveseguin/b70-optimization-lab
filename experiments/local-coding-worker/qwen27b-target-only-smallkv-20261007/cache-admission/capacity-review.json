@@ -1,0 +1,89 @@
+{
+  "schema": "lab.small-kv-capacity-review.v1",
+  "recommendation": "Close and preserve the healthy capacity-blocked first arm, then one separately preregistered application reload with 2GiB KV per GPU; keep the 24GiB task floor, full16-bitKV,context and other settings unchanged. This is planned resource resizing, not recovery from a failed server.",
+  "exact_argument": [
+    "--kv-cache-memory-bytes",
+    "2147483648"
+  ],
+  "argument_source": {
+    "path": "source/vllm/engine/arg_utils.py",
+    "line": 1215
+  },
+  "per_gpu_override_source": {
+    "path": "source/vllm/config/cache.py",
+    "lines": [
+      180,
+      187
+    ]
+  },
+  "manual_allocation_source": {
+    "path": "source/vllm/v1/worker/gpu_worker.py",
+    "lines": [
+      475,
+      497
+    ],
+    "behavior": "Still calls profile_run for dummy max-batch inputs; skips automatic memory profiling and returns explicit per-worker budget. gpu_memory_utilization is ignored for cache budget."
+  },
+  "misleading_log_spelling": "gpu_worker.py780 prints --kv-cache-memory, but the parser registers --kv-cache-memory-bytes; use the registered full spelling.",
+  "model_config": {
+    "path": "/home/steve/worker-qwen27b-intake-20261007/metadata/config.json",
+    "sha256": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+    "full_attention_layers": 16,
+    "linear_attention_layers": 48,
+    "total_kv_heads": 4,
+    "tensor_parallel_size": 2,
+    "kv_heads_per_rank": 2,
+    "head_dimension": 256,
+    "cache_element_bytes": 2
+  },
+  "attention_only_capacity": {
+    "formula": "full_attention_layers * local_KV_heads * head_dimension * K_and_V(2) * FP16_bytes(2) * tokens",
+    "bytes_per_token_per_gpu": 32768,
+    "tokens_required": 33024,
+    "bytes_required_per_gpu": 1082130432,
+    "gib_required_per_gpu": 1.0078125,
+    "attention_only_tokens_in_2gib": 65536,
+    "limitation": "Excludes recurrent-state pools, hybrid-group padding, block alignment and implementation overhead. This is a lower bound on required total cache memory, not final admission."
+  },
+  "observed_first_arm": {
+    "kv_budget_gib_per_gpu_rounded": 9.51,
+    "reported_token_capacity": 287232,
+    "max_context_tokens": 33024,
+    "reported_capacity_multiple": 8.7,
+    "source": "first-arm-cache-log.txt"
+  },
+  "empirical_projection": {
+    "approx_tokens_at_2gib_if_allocation_scales_linearly": 60406,
+    "approx_total_device_allocation_reduction_gib": 15.02,
+    "limitation": "Approximate from rounded first-arm numbers; not a measured new allocation or guarantee of released host RAM."
+  },
+  "host_memory_scenario": {
+    "first_arm_memavailable_gib_approximately": 23.5,
+    "source": "Parent agent reported passive reading; first arm did not admit tasks under frozen24GiBfloor.",
+    "hypothetical_memavailable_if_device_reduction_returns_1_to_1_to_host_gib": 38.519999999999996,
+    "source_snapshot_allowance_gib": 6,
+    "cpu_task_allowance_gib": 2,
+    "hypothetical_after_snapshot_and_cpu_gib": 30.519999999999996,
+    "frozen_task_admission_floor_gib": 24,
+    "limitation": "Host driver backing/reclaim behavior is not guaranteed linear. Recheck actual MemAvailable after startup and boundary/canary; do not admit on this estimate or reduce the frozen floor."
+  },
+  "required_new_arm_checks": [
+    "Preserve first-arm boundary/canary/shutdown/postflight evidence; do not relabel it as a hardware fault.",
+    "Existing fresh host/device admission and cold-copy/unmount proofs still required.",
+    "Startup must report at least33024-token cache capacity with max_model_len fixed33024; do not use auto-fit or lower context.",
+    "Repeat the same frozen boundary and transport gates because resource identity changed.",
+    "Check actual task memory/storage/scratch admission before each task; stop cleanly without task requests if24GiBfloor not met.",
+    "Keep FP16 cache and noMTP; no KV offloading, host memory/cache/power changes, automatic retries or driver reset."
+  ],
+  "runtime_capacity_guard": {
+    "path": "source/vllm/v1/core/kv_cache_utils.py",
+    "lines": [
+      737,
+      767,
+      2189
+    ],
+    "behavior": "Raises if available cache memory cannot serve a max-length request. Hybrid groups and recurrent state are included by runtime specs; final allocation/capacity must still be observed."
+  },
+  "gpu_or_model_operations_performed": 0,
+  "new_arm_qualified": false
+}

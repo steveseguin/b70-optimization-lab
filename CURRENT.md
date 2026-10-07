@@ -1,13 +1,14 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-06 23:39 EDT**. The dated two-card entries
+Latest four-card review: **2026-10-06 23:46 EDT**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-Both small-worker pilots are closed and **no model server is running**. The
+Both small-worker pilots and the first 27B runtime arm are closed;
+**no model server is running**. The
 [0.8B pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
 failed its minimal-prompt format gate. The separate
 [4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
@@ -17,6 +18,11 @@ before generation by its context budget. All four cards passed final checks;
 no new kernel fault appeared. Task evidence is archived and verified, disposable
 RAM snapshots are released, and all twelve 4B model files remain in the verified
 cold copy. The external drive is unmounted.
+The 27B runtime passed eight boundary checks and the actual worker-format canary.
+Its automatically sized cache left about 23.5 GiB host RAM available, just below
+the unchanged 24 GiB task admission. No coding task ran. The application stopped
+cleanly and all four cards passed postflight. The next separately recorded arm
+uses a 2 GiB full-precision cache per GPU for the same 33,024-token trial.
 The intended 27B worker remains unqualified here. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving
 the evidence and checking passive GPU idleness, one SIGINT stopped the application;
@@ -89,8 +95,12 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   fix now resumes preallocated aria2 partials instead of skipping them by size.
   The separate [target-only pilot](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/README.md)
   uses the installed R276 image and leaves the two-card host alone. Its source
-  and CPU communication checks passed; actual model/collective qualification
-  remains pending. One bounded server is next. Known one-token-prefill limitations
+  and CPU communication checks passed, as did the first arm's finite runtime
+  checks. Coding admission refused that arm's host RAM headroom; its clean
+  shutdown and all results are preserved. A separate
+  [smaller-cache arm](experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/README.md)
+  is next, with identical precision/context/tasks and unchanged memory reserves.
+  Known one-token-prefill limitations
   are explicitly restricted and prefill-boundary diagnostics precede useful tasks.
   CPU tokenization confirms the full recall prompt fits its 33,024-token profile.
   Qualify the corrected package when its exact inputs and host ownership
