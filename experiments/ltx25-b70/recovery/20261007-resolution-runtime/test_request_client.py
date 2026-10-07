@@ -13,7 +13,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('request_client_tested', HERE/'request_client.py')
 C = importlib.util.module_from_spec(spec); spec.loader.exec_module(C)
-PLAN = HERE.parent/'20261007-sampler-accounting106-plan/candidate-plan.json'
+PLAN = HERE.parent/'20261007-sparse-transport107-plan/candidate-plan.json'
 
 
 class Transport:
@@ -210,7 +210,7 @@ class ClientControls(unittest.TestCase):
         self.assertEqual(emitted[:10],fixture_ids)
         self.assertEqual(len(emitted[10:]),0)
 
-    def test_only_accounting_block_and_retired_control_refused(self):
+    def test_only_uninstrumented_block_and_retired_control_refused(self):
         self.full_client()
         phases=[self.client.rows[n]['phase'] for n in self.client.ordered_names]
         self.assertEqual(phases[-28:],['candidate-check']*14+['timed-fast']*14)
@@ -220,6 +220,12 @@ class ClientControls(unittest.TestCase):
         self.refused(t,name)
         self.assertEqual(t.posts,0)
         self.assertFalse((self.root/'requests'/name).exists())
+
+    def test_trace_enabled_timed_request_refuses_before_submission(self):
+        row=self.ready_for_phase('timed-fast');row['trace_enabled']=True;t=Transport()
+        self.refused(t,row['name'])
+        self.assertEqual(t.posts,0)
+        self.assertFalse((self.root/'requests'/row['name']).exists())
 
     def ready_for_phase(self,phase):
         self.full_client();row=next(r for r in self.client.rows.values() if r['phase']==phase)

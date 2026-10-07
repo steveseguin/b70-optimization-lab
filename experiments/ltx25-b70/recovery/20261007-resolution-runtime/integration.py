@@ -4,6 +4,7 @@ Finite loopback-only actions use fixed evidence paths and pinned requests. No
 action starts/stops/restarts a process or changes host/device settings.
 """
 import asyncio
+import copy
 import json
 import os
 from pathlib import Path
@@ -39,6 +40,16 @@ class Runtime:
             self.run, self.inspect_state,
             {'reference_verified': reference_gate.verify_receipt,
              'candidate_verified': candidate_gate.verify_candidate_receipt}, self.schedule['rows'])
+        import ltx_sparse_transport107 as transport
+        self.transport_identity = transport.prepare({
+            'plan_sha256': self.session.PLAN_SHA256,
+            'runtime_manifest_sha256': self.manifest_sha,
+            'server_identity_sha256': self.identity_sha,
+            'qualification_id': self.authority.plan['qualification_id']})
+        self.session.require(self.transport_identity['source_sha256'] ==
+            self.manifest['files']['source/scripts/ltx_sparse_transport107.py'],
+            'Sparse transport helper source differs from sealed manifest')
+        self.transport_results = {}
         self.initial_free = shutil.disk_usage(self.root).free
         self.previous_free = self.initial_free
         self.consumed = 0
@@ -88,7 +99,7 @@ class Runtime:
             self.write('native-memory-before-' + row['name'] + '.json', value)
         self.session.require(row['phase'] != 'timed', 'Control requests are not admitted')
         if row['phase'] in ('candidate-check', 'timed-fast'):
-            name = 'resolution-sampler-accounting-20261007-freeze'
+            name = 'resolution-sparse-transport-20261007-freeze'
             self.session.require(name in self.authority.completed, 'Passed freeze required before candidate/timing')
             state = self.inspect_state()
             self.session.require(state['captures_frozen'] is True and state['loads_frozen'] is True,
@@ -135,7 +146,7 @@ class Runtime:
         import nodes
         import comfy.model_management as mm
         from native_adapter import NativeAdapter
-        self.session.require(name == 'resolution-sampler-accounting-20261007-prepare-native' and self.adapter is None,
+        self.session.require(name == 'resolution-sparse-transport-20261007-prepare-native' and self.adapter is None,
                              'Unexpected/repeated native preparation')
         self.session.require_phase('native', self.authority.plan['qualification_id'], name)
         hashes = {str(self.packet / path): sha for path, sha in self.manifest['files'].items()
@@ -188,6 +199,37 @@ class Runtime:
         self.session.retire_completed_tails(ltx_pipeline, self.run / ('resolution-tails-' + name + '.json'), empty)
         self.quiescent()
 
+    def record_transport(self, phase):
+        import ltx_pipeline
+        import ltx_sparse_transport107 as transport
+        import transport_gate
+        self.quiescent()
+        # Read pre-existing input/output sentries independently of trace census.
+        # Their retained physical indices include actual uncollected sampler tails.
+        observations = []
+        with ltx_pipeline._LOCK:
+            for row in self.authority.plan['requests']:
+                if row['phase'] != phase:
+                    continue
+                index = row['clip_index']
+                values = {key: ltx_pipeline._FINGERPRINTS.get((tag, index)) for key, tag in
+                    (('sample_inputs', 'sample-inputs'), ('sample_output', 'sample-output'),
+                     ('trace_receipt', 'transport-trace'))}
+                if any(v is not None for v in values.values()):
+                    observations.append({'clip_index': index, **copy.deepcopy(values)})
+        snapshot = transport.close_candidate() if phase == 'candidate-check' else transport.snapshot()
+        evidence = transport_gate.check(snapshot, observations, self.authority.plan['requests'],
+                                        self.transport_identity, phase)
+        self.session.require(len(self.session.canonical(evidence)) <= transport_gate.MAX_RECEIPT_BYTES,
+                             'Sparse transport receipt exceeded sealed output cap')
+        filename = 'sparse-transport-' + phase + '.json'
+        self.write(filename, evidence)
+        result = {'valid': evidence['valid'], 'errors': evidence['errors'],
+                  'path': str(self.run / filename),
+                  'sha256': self.session.digest(self.session.read_regular(self.run / filename))}
+        self.transport_results[phase] = result
+        return result
+
     def action(self, name):
         import reference_gate
         import candidate_gate
@@ -196,7 +238,7 @@ class Runtime:
             self.session.require(name not in self.actions_done, 'Phase action already performed')
             self.storage_check()
             if name == 'before-native':
-                self.session.require('resolution-sampler-accounting-20261007-prepare-native' in self.authority.completed,
+                self.session.require('resolution-sparse-transport-20261007-prepare-native' in self.authority.completed,
                                      'Native preparation incomplete')
                 self.native_observation('before')
             elif name == 'verify-native':
@@ -237,8 +279,8 @@ class Runtime:
                 before, after = {'admit-capture0': ('pin0', 'capture0'),
                                  'admit-capture1': ('pin1', 'capture1'),
                                  'admit-decode': ('coverage', 'decode-probe')}[name]
-                self.session.require('resolution-sampler-accounting-20261007-' + before in self.authority.completed and
-                                     'resolution-sampler-accounting-20261007-' + after not in self.authority.completed,
+                self.session.require('resolution-sparse-transport-20261007-' + before in self.authority.completed and
+                                     'resolution-sparse-transport-20261007-' + after not in self.authority.completed,
                                      'Memory admission must immediately precede its setup stage')
                 if name in ('admit-capture1', 'admit-decode'):
                     needed = ['retire-capture0-tails']
@@ -312,6 +354,7 @@ class Runtime:
                 self.retire_tails(name)
             elif name == 'verify-candidate':
                 self.retire_tails(name)
+                self.record_transport('candidate-check')
                 candidate_gate.verify_outputs(self.root, self.plan_path, self.reference_receipt,
                     self.authority.references_sha, 'candidate-check', self.candidate_receipt)
                 self.authority.advance('candidate_verified', self.candidate_receipt,
@@ -321,6 +364,7 @@ class Runtime:
                 self.authority.advance('timing')
             elif name == 'verify-fast-timed':
                 self.retire_tails(name)
+                self.record_transport('timed-fast')
                 candidate_gate.verify_outputs(self.root, self.plan_path, self.reference_receipt,
                     self.authority.references_sha, 'timed-fast', self.fast_timed_receipt,
                     self.candidate_receipt, self.authority.candidate_sha)
@@ -335,7 +379,11 @@ class Runtime:
                 raise RuntimeError('Unknown finite resolution action')
             self.actions_done.add(name)
             self.storage_check()
-            return {'passed': True, 'action': name, 'phase': self.authority.phase}
+            result = {'passed': True, 'action': name, 'phase': self.authority.phase}
+            trace_phase = {'verify-candidate': 'candidate-check', 'verify-fast-timed': 'timed-fast'}.get(name)
+            if trace_phase is not None:
+                result['transport_trace'] = self.transport_results[trace_phase]
+            return result
 
 
 class LTXResolutionPrepareNative:

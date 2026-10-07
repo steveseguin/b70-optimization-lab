@@ -166,10 +166,11 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
                   'graph_sha256': row['graph_sha256'], 'fill': i < 4,
                   'emitted_index': None if i < 4 else row['expected_emitted_index']}
         if phase == 'timed-fast':
-            expected_scope = 'unscored-fill' if i < 4 else 'sampler-driver-accounting'
-            require(row['timing_scope'] == expected_scope, 'Timing block mapping differs')
+            expected_scope = 'unscored-fill' if i < 4 else 'uninstrumented-after-sparse-transport'
+            require(row['timing_scope'] == expected_scope and row.get('trace_enabled') is False,
+                    'Timing block mapping or trace policy differs')
             policy = verify_client_policy(e, root, server, row, identity)
-            record.update(timing_scope=expected_scope, client_policy=policy)
+            record.update(timing_scope=expected_scope, trace_enabled=False, client_policy=policy)
         if i < 4:
             require(row['reference'] is None and row['expected_emitted_fixture'] is None, 'Fill cannot have oracle')
             record['parity_status'] = 'not-scored-fill'
@@ -221,14 +222,14 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
               'executions': executions, 'evidence_sha256': e.hashes,
               'inputs': {'root': str(root), 'plan_path': str(plan_path), 'reference_receipt_path': str(reference_receipt_path),
                          'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None},
-              'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. The sole timed block supports bounded passive accounting diagnostics, not a client comparison, aggregate device utilization, broader visual quality, resolution, duration or speed-record evidence.'}
+              'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. The timed plan disables tracing after the sparse candidate diagnostic; runtime trace absence requires the independent trace gate. No client comparison, aggregate device utilization, broader visual quality, resolution, duration or speed-record claim.'}
     if phase == 'timed-fast':
         ends = [r['success_ms'] for r in executions if not r['fill']]
         require(len(ends) == 10, 'Ten timed emissions required')
         result['completion_intervals_seconds'] = [(b-a)/1000 for a,b in zip(ends, ends[1:])]
         result['client_checkpoint_policy'] = 'storage-change-only'
         result['timing_definition'] = ('Nine server-success intervals between ten emitted original fixtures, '
-            'each once within this passive-accounting diagnostic block; fills excluded and preview completion checked separately. '
+            'each once within the planned uninstrumented-after-sparse-transport block; fills excluded and preview completion checked separately. '
             'Repeated-workload screen, not a cold request, headline or record.')
         result['policy_totals'] = {key: sum(r['client_policy'][key] for r in executions)
             for key in ('checkpoint_count', 'storage_save_count', 'skipped_storage_save_count')}

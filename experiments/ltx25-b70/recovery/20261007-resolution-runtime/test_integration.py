@@ -23,6 +23,7 @@ REF=load('reference_for_integration','reference_gate.py')
 CAND=load('candidate_for_integration','candidate_gate.py')
 GUARD=load('guard_for_integration','executor_guard.py')
 SAFETY=load('safety_for_integration','native_safety.py')
+TRANSPORT=load('transport_gate_for_integration','transport_gate.py')
 
 
 class IntegrationControls(unittest.TestCase):
@@ -37,13 +38,18 @@ class IntegrationControls(unittest.TestCase):
             'pipeline':{'running':0,'stages':{}},'fault':False,'sampler_routes':0,'lean_state':0,
             'decode_replicas':0,'captures_frozen':False,'loads_frozen':False}
         observer=types.SimpleNamespace(actual_state=lambda fault=False:dict(copy.deepcopy(self.state),fault=fault))
+        self.transport=types.SimpleNamespace(prepare=lambda identity:dict(identity,source_sha256='b'*64),
+            close_candidate=lambda:{'configured':False},snapshot=lambda:{'configured':False})
+        self.pipeline=types.SimpleNamespace(_LOCK=threading.RLock(),_FINGERPRINTS={})
         self.modules=patch.dict('sys.modules',{'ltx_resolution_session':self.session,'schedule':SCHEDULE,
-            'runtime_observer':observer,'reference_gate':REF,'candidate_gate':CAND,'setup_gates':GATES,'native_safety':SAFETY})
+            'runtime_observer':observer,'reference_gate':REF,'candidate_gate':CAND,'setup_gates':GATES,'native_safety':SAFETY,'transport_gate':TRANSPORT,
+            'ltx_sparse_transport107':self.transport,'ltx_pipeline':self.pipeline})
         self.modules.start();self.addCleanup(self.modules.stop)
         self.disk=patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=64*2**30))
         self.disk.start();self.addCleanup(self.disk.stop)
         self.manifest=json.loads(SCHEDULE.read(SCHEDULE.PARENT/'manifest.json'))
         self.manifest['resolution101']={'parent_manifest_sha256':SCHEDULE.PARENT_SHA}
+        self.manifest['files']['source/scripts/ltx_sparse_transport107.py']='b'*64
         self.r=I.Runtime(self.packet,self.manifest,'a'*64,self.run)
         self.rows=self.r.authority.plan['requests']
 
@@ -400,7 +406,7 @@ class IntegrationControls(unittest.TestCase):
         retire.assert_not_called()
 
     def test_fast_verification_failure_never_writes_completion_barrier(self):
-        with patch.object(self.r,'retire_tails'),patch.object(CAND,'verify_outputs',side_effect=RuntimeError('synthetic parity refusal')):
+        with patch.object(self.r,'retire_tails'),patch.object(self.r,'record_transport'),patch.object(CAND,'verify_outputs',side_effect=RuntimeError('synthetic parity refusal')):
             with self.assertRaisesRegex(RuntimeError,'parity refusal'):
                 self.r.action('verify-fast-timed')
         self.assertNotIn('verify-fast-timed',self.r.actions_done)
@@ -413,5 +419,35 @@ class IntegrationControls(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'not verified'):self.r.action('start-optimized')
         self.assertFalse((self.run/'native-runtime-contract.json').exists())
 
+
+
+    def test_trace_source_identity_is_checked_before_runtime_use(self):
+        self.session=load('fresh_trace_identity_session','session.py')
+        self.manifest['files']['source/scripts/ltx_sparse_transport107.py']='c'*64
+        with patch.dict('sys.modules', {'ltx_resolution_session':self.session}):
+            with self.assertRaisesRegex(RuntimeError,'helper source differs'):
+                I.Runtime(self.packet,self.manifest,'a'*64,self.run)
+
+    def test_trace_barrier_preserves_actual_tail_sentries_and_separate_failure(self):
+        self.state.update(preview_pending=0,preview_failures=0)
+        row=self.rows[-2]; index=row['clip_index']
+        self.pipeline._FINGERPRINTS[('sample-inputs',index)]={'real_input':'synthetic'}
+        self.pipeline._FINGERPRINTS[('sample-output',index)]={'video_finite':True,'audio_finite':True}
+        self.pipeline._FINGERPRINTS[('transport-trace',index)]={'events_recorded':0}
+        result=self.r.record_transport('timed-fast')
+        self.assertFalse(result['valid'])
+        evidence=json.loads(Path(result['path']).read_text())
+        self.assertEqual(evidence['sampler_observations'][0]['clip_index'],index)
+        self.assertEqual(evidence['sampler_observations'][0]['sample_inputs'],{'real_input':'synthetic'})
+        self.assertIsNone(self.r.authority.failed)
+        self.assertFalse((self.run/'same-size-timed-fast.json').exists())
+        self.assertEqual(result['sha256'],self.session.digest(Path(result['path']).read_bytes()))
+
+    def test_trace_barrier_refuses_busy_pipeline_without_census_read(self):
+        self.state.update(preview_pending=0,preview_failures=0)
+        self.state['pipeline']['running']=1
+        with patch.object(self.transport,'snapshot',side_effect=AssertionError('must not read')):
+            with self.assertRaisesRegex(RuntimeError,'still executing'):
+                self.r.record_transport('timed-fast')
 
 if __name__=='__main__':unittest.main(verbosity=2)

@@ -63,7 +63,13 @@ Sealed106 manifest:
 The standalone107 sparse-trace plan passes32 CPU tests. It retains57requests,
 50captures and4GiB, with at most one candidate job on each of the two actual
 sampler workers; every later timed request is trace-disabled. Runtime injection
-and its event budget remain pending review. The fixed40-file106 duplicate helper
+is now CPU-reviewed:257 author and35 helper/overlay tests pass. It records at most
+one candidate job per actual worker, with bounded events, and independently checks
+zero timing events across all actual later timed jobs including tails. Model
+quality gates remain mandatory; dormant CPU hooks remain. No107 build, launch,
+reload or106 deletion has occurred at this checkpoint.
+[107 injection contract and next sequence](experiments/ltx25-b70/notes/2026-10-07-sparse107-integration.md).
+The fixed40-file106 duplicate helper
 passes17 synthetic safety tests and independent review; no real106 retirement
 plan, deletion or restore has run. All106 live outputs remain protected.
 Sampler A/B timings describe denoising stages, not individual GPU utilization;

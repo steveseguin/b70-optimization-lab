@@ -12,10 +12,10 @@ import stat
 import struct
 import sys
 
-PLAN_SHA = 'eb8f71c3f6073c654abb6eed215aa877f2256b35e75cf595ea598c83352b31af'
+PLAN_SHA = 'b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
 MODEL_VERIFICATION_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-QUALIFICATION_ID = '2a1bf0897e1b26173ff4143ae36c33da44f2287ed80e65679f9ebeae4ea4d318'
+QUALIFICATION_ID = '1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923'
 SHAPES = {'images': [25, 384, 640, 3], 'video_latent': [1, 128, 4, 12, 20],
           'audio_latent': [1, 8, 26, 16], 'waveform': [1, 2, 48480]}
 FIXTURE_IDS = ('boat', 'marble', 'bird', 'pendulum', 'rain', 'paper', 'candle', 'pour', 'fabric', 'wheel')
@@ -145,11 +145,15 @@ def request_groups(plan):
     require([len(groups[p]) for p in groups] == [10, 10, 14, 14] and
             len(plan['requests']) == 48, 'Full-suite phase counts differ')
     require(plan['requests'] == [row for rows in groups.values() for row in rows],
-            'Reviewed accounting phase order differs')
+            'Reviewed sparse-transport phase order differs')
     for phase in ('native-reference', 'native-repeat'):
         require([r['fixture'] for r in groups[phase]] == fixtures, 'Native fixture sequence differs')
     require(plan['reference_names'] == {r['fixture']: r['name'] for r in groups['native-reference']},
             'Native reference fixture mapping differs')
+    for i, row in enumerate(groups['timed-fast']):
+        require(row.get('trace_enabled') is False and
+                row.get('timing_scope') == ('unscored-fill' if i < 4 else 'uninstrumented-after-sparse-transport'),
+                'Timed block must bind trace-disabled sparse-transport scope')
     return groups
 
 

@@ -33,7 +33,7 @@ class ScheduleControls(unittest.TestCase):
                 r['clip_index'] for r in setup['rows'] if 'clip_index' in r}
             self.assertTrue(names.isdisjoint(oldnames))
             self.assertTrue(indices.isdisjoint(oldindices))
-        self.assertTrue(all(99906000 <= i < 99907000 for i in indices))
+        self.assertTrue(all(99907000 <= i < 99908000 for i in indices))
 
     def test_frozen_setup_order_boundaries_and_budget(self):
         self.assertEqual(list(self.rows),['window-probe','prepare-native','pin0','capture0','pin1','capture1','coverage','decode-probe','freeze'])
@@ -48,7 +48,7 @@ class ScheduleControls(unittest.TestCase):
         self.assertEqual(len(self.schedule['boundary_dependencies']['barrier:candidate_verified']),14)
         self.assertEqual(self.rows['pin0']['depends_on'],['barrier:optimized_preparation'])
         self.assertEqual(self.rows['coverage']['depends_on'],[self.rows['capture1']['name']])
-        self.assertEqual(self.schedule['boundary_dependencies']['resolution-sampler-accounting-20261007-candidate-check-00'],[self.rows['freeze']['name']])
+        self.assertEqual(self.schedule['boundary_dependencies']['resolution-sparse-transport-20261007-candidate-check-00'],[self.rows['freeze']['name']])
         self.assertEqual(S.validate_schedule(self.envelope),self.envelope)
 
     def test_both_workers_are_pinned_and_capture_actions_are_distinct(self):
@@ -88,7 +88,7 @@ class ScheduleControls(unittest.TestCase):
 
     def test_native_prepare_only_one_trusted_node(self):
         self.assertEqual(self.rows['prepare-native']['graph'],{'490':{'class_type':'LTXResolutionPrepareNative',
-            'inputs':{'run_name':'resolution-sampler-accounting-20261007-prepare-native'}}})
+            'inputs':{'run_name':'resolution-sparse-transport-20261007-prepare-native'}}})
         self.assertEqual(self.rows['prepare-native']['phase'],'native-setup')
 
     def test_successor_setup_namespace_matches_fresh_plan(self):
@@ -97,13 +97,13 @@ class ScheduleControls(unittest.TestCase):
         self.assertEqual(S.sha(S.canonical(plan['plan'])),S.PLAN_SHA)
         self.assertEqual(plan['plan']['qualification_id'],S.QUALIFICATION_ID)
         for row in self.rows.values():
-            self.assertEqual(row['name'],'resolution-sampler-accounting-20261007-'+row['kind'])
+            self.assertEqual(row['name'],'resolution-sparse-transport-20261007-'+row['kind'])
             for node in row['graph'].values():
                 if 'run_name' in node['inputs']:
                     self.assertEqual(node['inputs']['run_name'],row['name'])
         names=[r['name'] for r in plan['plan']['requests']]
         self.assertEqual(len(names),48)
-        self.assertTrue(all(n.startswith('resolution-sampler-accounting-20261007-') for n in names))
+        self.assertTrue(all(n.startswith('resolution-sparse-transport-20261007-') for n in names))
         self.assertFalse(set(names)&{r['name'] for r in self.rows.values()})
 
     def test_capture_delta_is_only_names_geometry_identity_and_serial_setup_depth(self):
@@ -142,12 +142,12 @@ class ScheduleControls(unittest.TestCase):
         exec(compile(ast.Module(body=[fn],type_ignores=[]),str(path),'exec'),ns)
         value,detail=ns['run_behind']('sample',S.CAPTURE_INDICES['capture0'],1,forbidden,target='ltx-sample-0')
         self.assertIsNone(value);self.assertEqual(detail['emitted_index'],-1)
-        self.assertEqual(calls,[('sample',99906030,'ltx-sample-0')]);self.assertEqual(len(state['jobs']),1)
+        self.assertEqual(calls,[('sample',99907030,'ltx-sample-0')]);self.assertEqual(len(state['jobs']),1)
         # Even if a prior done tail remained, the second nonadjacent capture must
         # not collect it into the decoder. Runtime still explicitly retires it.
         value,detail=ns['run_behind']('sample',S.CAPTURE_INDICES['capture1'],1,forbidden,target='ltx-sample-1')
         self.assertIsNone(value);self.assertEqual(detail['emitted_index'],-1)
-        self.assertEqual(calls[-1],('sample',99906041,'ltx-sample-1'))
+        self.assertEqual(calls[-1],('sample',99907041,'ltx-sample-1'))
         # PipelineDecode's existing negative-index branch produces placeholders,
         # before its decode_job definition / run_behind('decode') call.
         text=S.read(S.PARENT/'source/scripts/pipeline_decode_node.py').decode()

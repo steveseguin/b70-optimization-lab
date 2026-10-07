@@ -19,7 +19,7 @@ WRITE_ALLOWANCE = 4 * 1024**3
 CAPTURE_CAP = 50
 ATTEMPT_CAP = 57
 MODEL_SHA = G.MODEL_VERIFICATION_SHA256
-SCHEDULE_SHA = '074db6baaa4752a807ddd259dc713ec453ed45b51710b05e6bc79d6c48e13468'
+SCHEDULE_SHA = 'b8d7176691e7c3a7a8470b4ec8b046c27db20f4f623b3fc1034930edbf58506b'
 
 
 def write_new(path, value):
@@ -122,6 +122,7 @@ class Client:
         G.require((len(native_rows), len(candidate_rows), len(fast_rows)) == (20, 14, 14) and
                   len(self.plan['requests']) == 48,
                   'W2 plan phase counts differ')
+        G.require(all(r.get('trace_enabled') is False for r in fast_rows), 'Timed request trace policy differs')
         self.ordered_names = [r['name'] for r in native_rows]
         self.identity_raw = G.read_file(self.run / 'server-identity.json'); self.identity = G.strict_json(self.identity_raw)
         G.require(G.sha(self.identity_raw) == G.digest(c['server_identity_sha256']) and
@@ -203,6 +204,8 @@ class Client:
         remaining = WRITE_ALLOWANCE - self.state['charged_write_bytes']
         G.require(remaining >= 0 and now >= MIN_FREE + remaining, 'Storage reserve/allowance exhausted')
         self.policy_counts['checkpoint_count'] += 1
+        if self.active_row['phase'] == 'timed-fast':
+            G.require(self.active_row.get('trace_enabled') is False, 'Timed request trace policy differs')
         expected = 'storage-change-only' if self.active_row['phase'] == 'timed-fast' else 'always'
         G.require(self.active_row['client_checkpoint_policy'] == self.checkpoint_policy == expected,
                   'Client checkpoint policy differs from pinned request')

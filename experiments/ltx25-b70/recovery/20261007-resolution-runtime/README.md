@@ -1,4 +1,4 @@
-# 640×384 runtime — sampler accounting106 completed
+# 640×384 runtime — sparse transport107 CPU-reviewed
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -40,7 +40,7 @@ completion;105 later stopped cleanly for106 after its finite plan was consumed.
 [105 result](../../notes/2026-10-07-client105-performance.md).
 The client comparison lever is closed; keep the reduced-write policy.
 
-Current author sources reconstruct106, one completed passive sampler diagnostic. The
+The prior sealed106 sources reconstruct one completed passive sampler diagnostic. The
 [fixed plan](../20261007-sampler-accounting106-plan/README.md) preserves all ten
 fixtures, model arithmetic, steps, precision, encoder window and W2/B1. It admits
 20 native,14 candidate and14 reduced-write timing requests plus nine setup
@@ -144,3 +144,14 @@ Tests are adjacent `test_*.py` scripts, run with `python3 -B` individually.
 Synthetic schema controls are labeled as such and are not model measurements.
 CPU controls alone do not establish GPU performance or visual quality; measured
 claims above are limited to their linked result evidence.
+
+## Current author successor107
+
+Author sources now construct107, a sparse transport trace during candidate
+validation followed by timing with zero trace events. The model workload and
+exact quality gates are unchanged; no passive collector is installed.257 author
+and35 helper/overlay CPU controls pass.106 remains retained idle until the
+reviewed successor is sealed and ready for one controlled reload. The
+[injection contract and operating sequence](../../notes/2026-10-07-sparse107-integration.md)
+record the event budgets, worker/physical-clip ownership, independent actual-tail
+census, output cap and interpretation limits. CPU tests are not GPU qualification.

@@ -12,7 +12,7 @@ import re
 import threading
 import time
 
-PLAN_SHA256 = 'eb8f71c3f6073c654abb6eed215aa877f2256b35e75cf595ea598c83352b31af'
+PLAN_SHA256 = 'b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d'
 MODE = 'same-size-native-v1'
 PHASES = ('native_reference', 'reference_verified', 'optimized_preparation',
           'candidate_verified', 'timing')
@@ -216,6 +216,8 @@ class Authority:
                         prompt_id not in self.prompt_ids and isinstance(prompt_id, str) and prompt_id,
                         'Unknown or reused request identity')
                 row = self.requests[name]
+                if row['phase'] == 'timed-fast':
+                    require(row.get('trace_enabled') is False, 'Timed request trace policy differs')
                 require(digest(canonical(graph)) == row['graph_sha256'], 'Submitted graph differs')
                 expected = {'native-reference': 'native_reference', 'native-repeat': 'native_reference',
                             'native-setup': 'native_reference', 'optimized-setup': 'optimized_preparation',

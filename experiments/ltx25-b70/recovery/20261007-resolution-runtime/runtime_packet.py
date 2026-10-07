@@ -20,25 +20,26 @@ sys.dont_write_bytecode = True
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT = ROOT / 'prepared-encoder-upstream-99b'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PACKET = ROOT / 'prepared-sampler-accounting-106'
-RUN_NAME = 'encoder-server-sampler-accounting-106-two-way-w2-b1-p1-dxpu2-s640x384'
+PACKET = ROOT / 'prepared-sparse-transport-107'
+RUN_NAME = 'encoder-server-sparse-transport-107-two-way-w2-b1-p1-dxpu2-s640x384'
 HERE = Path(__file__).resolve().parent
 AUTHOR = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-runtime')
-PLAN = AUTHOR.parent / '20261007-sampler-accounting106-plan/candidate-plan.json'
-PLAN_SHA = 'eb8f71c3f6073c654abb6eed215aa877f2256b35e75cf595ea598c83352b31af'
-PREDECESSOR = ROOT / 'prepared-client-reverse-105'
-PREDECESSOR_SHA = '1ff7bd5ab281dad1a19f8d01aaf8899505168f0606689ba43ccb23cc05311fad'
+PLAN = AUTHOR.parent / '20261007-sparse-transport107-plan/candidate-plan.json'
+PLAN_SHA = 'b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d'
+PREDECESSOR = ROOT / 'prepared-sampler-accounting-106'
+PREDECESSOR_SHA = '59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2'
 COMMON, LAUNCHER = 'launch/encoder_runtime_common.py', 'launch/serve-encoder.py'
-STATUS = b'Packet106 bounded passive sampler accounting after packet105; constructed from qualified99b, not GPU-qualified.\n'
+STATUS = b'Packet107 sparse sampler transport trace after packet106; constructed from qualified99b, not GPU-qualified.\n'
 # File names are deliberately explicit: no ambient files or caller-chosen code.
 COMPONENTS = ('geometry_overlay.py', 'native_safety.py', 'native_adapter.py',
               'session.py', 'executor_guard.py', 'runtime_observer.py', 'setup_gates.py',
               'reference_gate.py', 'candidate_gate.py', 'request_client.py',
               'schedule.py', 'integration.py', 'campaign.py', 'runtime_packet.py',
-              'driver_accounting.py', 'driver_accounting_runner.py')
-RUNTIME_MODULES = {n: ('ltx_resolution_session.py' if n == 'session.py' else n)
+              'sparse_transport.py', 'sparse_transport_overlay.py', 'transport_gate.py')
+RUNTIME_MODULES = {n: ({'session.py': 'ltx_resolution_session.py',
+                        'sparse_transport.py': 'ltx_sparse_transport107.py'}.get(n, n))
                    for n in COMPONENTS if n not in ('geometry_overlay.py', 'runtime_packet.py', 'campaign.py', 'request_client.py',
-                                                   'driver_accounting.py', 'driver_accounting_runner.py')}
+                                                   'sparse_transport_overlay.py')}
 
 
 def require(ok, why):
@@ -110,6 +111,12 @@ def source_delta(component_dir):
     geom = load(component_dir / 'geometry_overlay.py', 'resolution101_geometry')
     safety = load(component_dir / 'native_safety.py', 'resolution101_safety')
     delta = geom.transform_sources({p: regular(PARENT / p) for p in geom.SOURCE_HASHES})
+    transport = load(component_dir / 'sparse_transport_overlay.py', 'sparse_transport107_overlay')
+    traced = transport.transform_sources({p: delta.get(p, regular(PARENT / p))
+                                         for p in transport.SOURCE_HASHES})
+    delta.update(traced)
+    delta['source/custom_nodes/ltx_graph_capture_lab/__init__.py'] = delta['source/scripts/ltx_graph_capture.py']
+    delta['source/custom_nodes/ltx_pipeline_sampler_lab/__init__.py'] = delta['source/scripts/pipeline_sampler_node.py']
     delta['source/comfy/sd.py'] = safety.transform_sd(regular(PARENT / 'source/comfy/sd.py'))
     # Existing NA decoder initialization verifies comfy.sd's source bytes even
     # when its numerical path is not selected. Update only this integrity pin
@@ -141,8 +148,8 @@ def input_inventory():
 def extra_files(component_dir, plan_raw, plan_path=PLAN):
     result = {'provenance/packet99b-manifest.json': regular(PARENT / 'manifest.json'),
               'resolution/candidate-plan.json': plan_raw,
-              'provenance/reviewed-predecessor105-manifest.json': regular(PREDECESSOR / 'manifest.json')}
-    require(digest(result['provenance/reviewed-predecessor105-manifest.json']) == PREDECESSOR_SHA,
+              'provenance/reviewed-predecessor106-manifest.json': regular(PREDECESSOR / 'manifest.json')}
+    require(digest(result['provenance/reviewed-predecessor106-manifest.json']) == PREDECESSOR_SHA,
             'Reviewed W2 predecessor manifest changed')
     for name in COMPONENTS:
         raw = regular(component_dir / name)
@@ -215,7 +222,7 @@ def verify_packet(packet, expected_manifest_sha256):
     inventory = {n: filesha for n, filesha in
                  ((n, want['resolution/components/' + n]) for n in COMPONENTS)}
     inventory['candidate-plan.json'] = want['resolution/candidate-plan.json']
-    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '106',
+    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '107',
         'parent_packet': str(PARENT), 'parent_manifest_sha256': PARENT_SHA,
         'plan_sha256': PLAN_SHA, 'input_inventory': inventory,
         'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
@@ -265,7 +272,7 @@ def build(expected_inventory_sha256, parent_stopped=False):
         write_new(PACKET / path, raw)
     files = {str(p.relative_to(PACKET)): sha(p) for p in PACKET.rglob('*')
              if p.is_file() and p.name != 'STATUS.txt'}
-    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '106', 'parent_packet': str(PARENT),
+    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '107', 'parent_packet': str(PARENT),
         'parent_manifest_sha256': PARENT_SHA, 'plan_sha256': PLAN_SHA,
         'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
         'input_inventory': inventory, 'input_inventory_sha256': expected_inventory_sha256,

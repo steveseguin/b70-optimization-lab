@@ -14,7 +14,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('reference_gate', HERE / 'reference_gate.py')
 G = importlib.util.module_from_spec(spec); spec.loader.exec_module(G)
-PLAN = HERE.parent / '20261007-sampler-accounting106-plan/candidate-plan.json'
+PLAN = HERE.parent / '20261007-sparse-transport107-plan/candidate-plan.json'
 
 
 class GateTests(unittest.TestCase):
@@ -248,6 +248,14 @@ class GateTests(unittest.TestCase):
             mutate(plan)
             with self.assertRaises(ValueError):
                 G.request_groups(plan)
+
+    def test_timed_trace_false_and_scope_required_for_every_fill_and_output(self):
+        for index in (34, 38, 47):
+            for key, value in [('trace_enabled', True), ('trace_enabled', 0),
+                               ('trace_enabled', None), ('timing_scope', 'sampler-driver-accounting')]:
+                plan = copy.deepcopy(self.plan); plan['requests'][index][key] = value
+                with self.subTest(index=index, key=key, value=value), self.assertRaisesRegex(ValueError, 'trace-disabled'):
+                    G.request_groups(plan)
 
     def test_shape_and_missing_tensor_refused(self):
         p=self.root/'output/validation'/self.plan['requests'][0]['name']/'summary.json'

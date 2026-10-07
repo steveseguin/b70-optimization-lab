@@ -12,7 +12,7 @@ HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('resolution_session_tested', HERE / 'session.py')
 S = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(S)
-PLAN = HERE.parent / '20261007-sampler-accounting106-plan/candidate-plan.json'
+PLAN = HERE.parent / '20261007-sparse-transport107-plan/candidate-plan.json'
 
 
 def empty_state():
@@ -86,6 +86,15 @@ class SessionControls(unittest.TestCase):
             self.assertEqual(receipt['phase'],'timing')
             self.assertEqual(receipt['candidate_receipt_sha256'],'d'*64)
         self.assertEqual(self.a.completed,[r['name'] for r in fast])
+
+    def test_trace_enabled_timed_row_refused_and_latched(self):
+        self.a.phase='timing';self.a.references_sha='c'*64;self.a.candidate_sha='d'*64
+        row=next(r for r in self.rows if r['phase']=='timed-fast')
+        self.a.requests[row['name']]['trace_enabled']=True
+        with self.assertRaisesRegex(RuntimeError,'trace policy'):
+            self.a.begin(row['name'],row['graph'],'traced-timed-pid')
+        self.assertIsNotNone(self.a.failed)
+        self.assertIsNone(self.a.active)
 
     def test_retired_control_request_not_admitted(self):
         self.a.phase='timing';self.a.references_sha='c'*64;self.a.candidate_sha='d'*64

@@ -49,7 +49,7 @@ def entry(m,role='text',body=None):
 class GeometryControls(unittest.TestCase):
     def setUp(self):
         self.m=module();self.env=patch.dict(os.environ,ENV,clear=True);self.env.start();self.addCleanup(self.env.stop)
-        self.kw=dict(run_name='resolution-sampler-accounting-20261007-native-p1-boat',output_size='640x384',
+        self.kw=dict(run_name='resolution-sparse-transport-20261007-native-p1-boat',output_size='640x384',
                      speed_only=False,comparison_mode='same-size-native-v1',qualification_id=G.QUALIFICATION_ID)
 
     def test_historical_geometry_and_guards_unchanged(self):
@@ -135,7 +135,7 @@ class GeometryControls(unittest.TestCase):
     def test_actual_session_authority_integration(self):
         spec=importlib.util.spec_from_file_location('geometry_real_session',Path(__file__).with_name('session.py'))
         session=importlib.util.module_from_spec(spec);spec.loader.exec_module(session)
-        plan=Path(__file__).resolve().parent.parent/'20261007-sampler-accounting106-plan/candidate-plan.json'
+        plan=Path(__file__).resolve().parent.parent/'20261007-sparse-transport107-plan/candidate-plan.json'
         state={'queue_pending':0,'queue_running':0,'pipeline':{'running':0,'stages':{}},
                'fault':False,'sampler_routes':0,'lean_state':0,'decode_replicas':0}
         with tempfile.TemporaryDirectory() as td:
@@ -153,6 +153,28 @@ class GeometryControls(unittest.TestCase):
                 self.assertIsNotNone(a.failed)
                 with self.assertRaisesRegex(RuntimeError,'Session halted'):
                     a.begin(row['name'],row['graph'],'refused-after-halt')
+
+    def test_pretrace_numerical_sources_match_sealed106(self):
+        predecessor=PARENT.parent/'prepared-sampler-accounting-106'
+        raw=(predecessor/'manifest.json').read_bytes()
+        self.assertEqual(G.hashlib.sha256(raw).hexdigest(),
+            '59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2')
+        import json
+        manifest=json.loads(raw)
+        sources={p:(PARENT/p).read_bytes() for p in G.SOURCE_HASHES}
+        for path, candidate in G.transform_sources(sources).items():
+            actual=(predecessor/path).read_bytes()
+            self.assertEqual(G.hashlib.sha256(actual).hexdigest(),manifest['files'][path])
+            if path==G.GEOMETRY_PATH:
+                actual=actual.replace(b'eb8f71c3f6073c654abb6eed215aa877f2256b35e75cf595ea598c83352b31af',G.PLAN_SHA256.encode())
+                actual=actual.replace(b'2a1bf0897e1b26173ff4143ae36c33da44f2287ed80e65679f9ebeae4ea4d318',G.QUALIFICATION_ID.encode())
+            self.assertEqual(candidate,actual,path)
+        for path in ('source/scripts/ltx_graph_capture.py', 'source/scripts/graph_capture_node.py',
+                     'source/custom_nodes/ltx_graph_capture_lab/__init__.py',
+                     'source/scripts/ltx_pipeline.py', 'source/scripts/ltx_layer_shard.py'):
+            actual=(predecessor/path).read_bytes()
+            self.assertEqual(G.hashlib.sha256(actual).hexdigest(),manifest['files'][path])
+            self.assertEqual(actual,(PARENT/path).read_bytes(),path)
 
     def test_transform_exact_inventory_and_mirrors(self):
         sources={p:(PARENT/p).read_bytes() for p in G.SOURCE_HASHES};out=G.transform_sources(sources)
