@@ -1,0 +1,35 @@
+{
+  "schema": "lab.cited-recall-v2.independent-review.v1",
+  "utc": "2026-10-07T04:30:28.920454+00:00",
+  "reviewer": "independent Codex review_research agent",
+  "verdict": "no-blocking-bug-in-bounded-offline-scope",
+  "reviewed_files": [
+    {
+      "path": "compile_citations.py",
+      "bytes": 8054,
+      "sha256": "4be0fb6cd059e119531cf01502ae0ace51b3a8f41c6dff112a3f9ca935b7f008"
+    },
+    {
+      "path": "test_compile_citations.py",
+      "bytes": 11119,
+      "sha256": "96b5314a0df17ec926afecf387b9e776881d9b5d806b338d947f2fdf34ea9fec"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4296,
+      "sha256": "b34c5e60ca364d4f3229eab234e6db2181eec30f69de7c080ff05767315bafb6"
+    }
+  ],
+  "controls_passed": 13,
+  "findings": [
+    "Strict schema, complete ordered questions, opaque known document IDs and bounded integer line ranges are checked before output creation.",
+    "Line semantics preserve the original validator convention and content whitespace.",
+    "Raw inputs and full questions/corpus/compiler/output identities are retained; output reuse is refused.",
+    "Tests exercise the current compiler/CLI and demonstrate that a false claim can pass mechanical citation checks."
+  ],
+  "semantic_grading": "not-performed",
+  "model_quality_result": false,
+  "model_requests": 0,
+  "original_trial_processed": false,
+  "operational_limit": "Ordinary writes are not crash durability; a future cleanup workflow must independently preserve outputs before deleting originals. The compiler deletes nothing."
+}

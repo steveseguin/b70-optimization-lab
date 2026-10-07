@@ -1,0 +1,48 @@
+{
+  "schema": "lab.cited-recall-v2.offline-validation.v1",
+  "status": "offline-controls-passed; no model-quality result",
+  "test_command": "python3 -B experiments/local-coding-worker/cited-recall-v2-20261007/test_compile_citations.py -v",
+  "tests_passed": 13,
+  "fixtures": "Fresh synthetic FRESH_A/FRESH_B and SYNTH_A/SYNTH_B defined only in test_compile_citations.py; no original ten-question content or observed response loaded.",
+  "controls": [
+    "Exact blank-line, indentation, tab and Unicode preservation",
+    "Unchanged input objects and deterministic pure-function output",
+    "Missing, duplicate, unknown and out-of-order question rejection",
+    "Unknown document/path/URL references rejected without interpretation",
+    "Strict integer/nonbool bounds and inclusive20-line maximum",
+    "Empty/malformed values, unknown fields and any model-supplied quote rejected",
+    "Duplicate JSON keys, malformed JSON, non-finite constants and invalid UTF-8 rejected",
+    "CLI preserves raw refs/source bundle byte-for-byte and binds input/component/compiler/output hashes",
+    "CLI existing output refused without overwrite; invalid refs create no output",
+    "Unchanged original check_responses accepts both supported synthetic answer and deliberately false synthetic claim"
+  ],
+  "original_validator": {
+    "path": "experiments/local-coding-worker/evaluation-20261007/memory/validate.py",
+    "sha256": "76d1b7808d18dabad349b7a1c9769f04e99d3b32c6000830f9c263523eddc07d",
+    "function_called": "check_responses",
+    "packet_validation_or_original_question_replay": false
+  },
+  "files": [
+    {
+      "path": "compile_citations.py",
+      "bytes": 8054,
+      "sha256": "4be0fb6cd059e119531cf01502ae0ace51b3a8f41c6dff112a3f9ca935b7f008"
+    },
+    {
+      "path": "test_compile_citations.py",
+      "bytes": 11119,
+      "sha256": "96b5314a0df17ec926afecf387b9e776881d9b5d806b338d947f2fdf34ea9fec"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4296,
+      "sha256": "b34c5e60ca364d4f3229eab234e6db2181eec30f69de7c080ff05767315bafb6"
+    }
+  ],
+  "semantic_grading": "not-performed",
+  "model_requests": 0,
+  "gpu_calls": 0,
+  "external_actions_from_model_output": 0,
+  "future_qualification_requires_fresh_questions": true,
+  "original_trial_unchanged": true
+}
