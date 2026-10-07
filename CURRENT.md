@@ -5,9 +5,15 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-The owner resumed continuous LTX optimization on `steve-b70s`. **The104 application
-is running and idle**, PID3311653, unit `ltx104-client-server-20261007`, loopback8188.
-Its manifest is `49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`.
+The owner resumed continuous LTX optimization on `steve-b70s`. **The104 application stopped cleanly at19:14:56UTC for a controlled105 reload**.
+PID3311653 is gone, its service reports success, all render nodes are unowned
+and no fault is latched. The105 successor is sealed, manifest
+`1ff7bd5ab281dad1a19f8d01aaf8899505168f0606689ba43ccb23cc05311fad`;
+all four cards passed postflight at19:15:32UTC. The52-file duplicate retirement
+completed and fresh5GiB+50GiB storage admission passed.105 launched once at19:26:58UTC;
+PID3329528, start ticks27505015. Endpoint/source-bound client admission passed;
+its finite campaign is next. The same passive descriptor observer is running.
+The completed104 manifest is `49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`.
 The campaign completed all71 registered requests successfully at18:54:45UTC.
 Its finite plan is consumed: do not invent requests or run other GPU work beside it.
 Flash-Next and local-worker tuning remain parked.
@@ -36,16 +42,17 @@ second, then sampler service/overlap work. The standalone105 plan preserves all
 numerics and ten original scenes, with71 requests,64 captures and a fresh5GiB
 allowance above50GiB reserve. Runtime integration and independent review are complete; all fifteen CPU suites
 passed and its71 request names/64 capture indices are reserved without collisions.
-105 has no packet build or GPU requests yet. Current sampler phase A/B timings describe
+105 is launched and has no model requests yet. Current sampler phase A/B timings describe
 denoising stages, not per-card utilization, and cannot justify a blind partition
 or worker-count sweep.
 [Next priorities](experiments/ltx25-b70/notes/2026-10-07-after104-priorities.md),
 [reverse plan](experiments/ltx25-b70/recovery/20261007-client-reverse-105/README.md).
 
-About52.44GiB is free after104. A conditional52-archive duplicate retirement across
-101c,102 and104 could reclaim3.614GiB while retaining all103 restoration anchors.
-It requires fresh whole-file proof and all affected applications stopped; no part
-of that next retirement has run. Models, references, previews, metadata, patches
+About55.95GiB is free after the105 source build and completed52-archive duplicate
+retirement across101c,102 and104. It reclaimed3.614GiB after all three applications
+were stopped and their full sealed proofs reconstructed twice. All103 restoration
+anchors remain. Restore the mapped ordinary copies before replaying the affected
+full proofs; the original stored bindings describe their pre-retirement state. Models, references, previews, metadata, patches
 and failed experiments remain protected.
 [Storage options](experiments/ltx25-b70/notes/2026-10-07-after104-storage-options.md).
 

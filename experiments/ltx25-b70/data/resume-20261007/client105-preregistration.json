@@ -1,0 +1,69 @@
+{
+  "campaign_unit": "ltx105-client-campaign-20261007",
+  "claim": "One reverse-order confirmation: fast first, control second;20 native,10 candidate,10 fast,10 control exact-output gates. Quiet timing, repeated-workload screen, no record.",
+  "correction": "105 reverses104 policy order and proof dependencies only; model arithmetic unchanged.",
+  "environment": {
+    "EnableDeferBacking": "0",
+    "LTX_BUSY_WINDOWS": "0",
+    "LTX_DECODE_REPLICAS": "1",
+    "LTX_DECODE_REPLICA_DEVICE": "xpu:2",
+    "LTX_OUTPUT_SIZE": "640x384",
+    "LTX_SAMPLER_BATCH": "1",
+    "LTX_SAMPLER_PLACEMENT": "two-way",
+    "LTX_SAMPLER_SHARED_POOL": "1",
+    "LTX_SAMPLER_WORKERS": "2",
+    "NEOReadDebugKeys": "1"
+  },
+  "health_receipt": "experiments/ltx25-b70/data/resume-20261007/postflight-104.json",
+  "input_inventory_sha256": "48b2c138b9b33a655467301accfb9b74f930a9185e123964f0d603ed1485c909",
+  "limits": {
+    "capture_cap": 64,
+    "hard_kill": false,
+    "nofile": "65536:1048576",
+    "per_request_timeout_seconds": 1800,
+    "planned_captures": 64,
+    "requests": 71,
+    "server_restart": "no",
+    "storage_reserve_bytes": 53687091200,
+    "write_allowance_bytes": 5368709120,
+    "verification_action_timeout_seconds": 300
+  },
+  "manifest_sha256": "1ff7bd5ab281dad1a19f8d01aaf8899505168f0606689ba43ccb23cc05311fad",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-client-reverse-105",
+  "plan_sha256": "f12dfbfa8be44c9798a1ac9f0dacb1ae7576e3ca30317a5b57de847642faec4f",
+  "run_name": "encoder-server-client-reverse-105-two-way-w2-b1-p1-dxpu2-s640x384",
+  "schedule_sha256": "1cc88d11b9fefb97f67c370e4e920df3fbb2cbf62c3739b606a84651c4fc0bcb",
+  "schema": "ltx.client105.preregistration.v1",
+  "server_unit": "ltx105-client-server-20261007",
+  "source_commit": "019b4d323",
+  "utc": "2026-10-07T19:26:48.382363+00:00",
+  "lifecycle": "Retain successful application after verified quiescence. No automatic restart/retry. Failed campaign one proven-idle graceful incident stop; faults/unresolved work coordinator.",
+  "memory_admission_gib": {
+    "native": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture0": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture1": [
+      7,
+      7,
+      2,
+      7
+    ],
+    "decode": [
+      2,
+      2,
+      7,
+      7
+    ],
+    "postcapture_floor": 2,
+    "not_proven_peak_bounds": true
+  }
+}

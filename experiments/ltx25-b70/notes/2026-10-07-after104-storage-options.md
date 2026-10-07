@@ -1,6 +1,6 @@
 # Storage options after the104 comparison
 
-Metadata-only planning, October7.104 completed all71 requests and64 capture
+Original metadata-only planning, October7 (superseded by the completed operation below).104 completed all71 requests and64 capture
 requests according to the coordinator and remains retained idle. Its independent
 postcompletion proof is being completed by the coordinator. This audit read
 small proof/plan JSON and statted only exact archive paths named in those
@@ -156,3 +156,20 @@ Existing103 protection/restore map:
 `data/resume-20261007/resolution103-retirement-plan.json`, with completed
 `resolution103-retirement-applied.json` and adjacent intent/events. This audit
 creates no helper, deletion plan approval, new proof, or cleanup operation.
+
+## Completed retirement for105 admission
+
+After104 stopped cleanly for its necessary105 reload, the reviewed helper
+reconstructed all three full sealed proofs twice: once for the concrete plan
+and again immediately before apply. All52 exact whole-file duplicates were
+retired, reclaiming3,880,665,088 allocated bytes (3.614151GiB). Sixteen direct
+keepers remain, along with all103 restoration anchors. No103 path was changed.
+Fresh storage admission after the105 build passed with55.940208GiB available
+for the5GiB allowance above50GiB reserve.
+
+[Plan](../data/resume-20261007/post104-retirement-plan.json),
+[completed receipt](../data/resume-20261007/post104-retirement-applied.json),
+[reviewed helper and restoration procedure](../recovery/20261007-post104-retirement/README.md).
+The affected101c/102/104 full verifiers now require restoring the mapped ordinary
+copies first. Existing successful proof receipts describe the pre-retirement
+state; keeper copies on this same filesystem are not independent backups.

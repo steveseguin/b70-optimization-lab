@@ -23,7 +23,11 @@ All fifteen CPU suites passed, including early-control refusal, corrupted final
 fixtures, duplicate cross-block execution IDs, false proof and reordered timing.
 Independent review found no defects in ordering, proof dependencies or the
 99b constructor/104 predecessor distinction. Names and indices were reserved
-without collisions. No105 packet or GPU request exists yet.
+without collisions. The105 packet is now sealed with manifest
+`1ff7bd5ab281dad1a19f8d01aaf8899505168f0606689ba43ccb23cc05311fad`.
+All four cards passed104 postflight; duplicate retirement and fresh storage
+admission passed before the one controlled application launch at19:26:58UTC.
+No model request had been issued at launch.
 
 Keep both timing blocks free of unrelated tests, Git work and file writes, with
 the same passive descriptor observer. Interpret104 AB and105 BA as two bounded
