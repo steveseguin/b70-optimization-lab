@@ -1,0 +1,105 @@
+{
+  "schema": "ltx.rebalance100.setup-failure-closeout.v1",
+  "at_utc": "2026-10-07T14:21:42.444902+00:00",
+  "status": "setup-failed-clean-stop-not-performance-verdict",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100-two-way20-28-w2-b1-p1-dxpu2-s256x256",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100",
+  "packet_manifest_sha256": "5f156563da17edda65d8e0042a90344de665c5c93d4b61b603fc8ff0f9037bbc",
+  "source_commit": "b00c6e95279053474955540ba4f551646722b9aa",
+  "server_pid": 3193292,
+  "failed_request": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/f100-twoway2028w2b1p1dxpu2s256x256-wprobe",
+    "prompt_id": "9cd737dd-59a8-4ce4-81b1-fdd45d829828",
+    "node_id": "420",
+    "node_type": "LTXHostEmbeddingComponents",
+    "exception": "Shard owners do not match the multi-segment placement",
+    "phase": "load-upscaler-and-split",
+    "completed": false
+  },
+  "cause": {
+    "function": "shared_identity",
+    "source": "source/custom_nodes/ltx_host_embedding_lab/__init__.py:85",
+    "predicate": "len(shards) == len(segments) - 1 and len(shards) >= 2",
+    "segments": [
+      [
+        "xpu:0",
+        0,
+        20
+      ],
+      [
+        "xpu:1",
+        20,
+        48
+      ]
+    ],
+    "expected_secondary_shard_owners": 1,
+    "description": "The new valid two-segment representation enters the multi-segment identity branch; its historical >=2 secondary-owner assumption rejects the one correct secondary owner."
+  },
+  "cpu_review_gap": "Placement tests verified complete block coverage/device routing and rejected malformed segment plans, but never exercised the consuming host shared_identity function on the new two-segment representation. Inactive source-integrity checks were insufficient to establish setup integration.",
+  "progress": {
+    "host_components_construction_attempted": true,
+    "text_graph_capture_completed": false,
+    "full_clips_generated": 0,
+    "quality_comparisons": 0,
+    "timed_prompts_submitted": 0,
+    "throughput": null,
+    "quality_or_speed_verdict": "not measured; 20/28 hypothesis remains untested"
+  },
+  "shutdown": {
+    "single_SIGINT_utc": "2026-10-07T14:17:40Z",
+    "process_gone_utc": "2026-10-07T14:17:50Z",
+    "campaign_exit_code": 11,
+    "stop_exit_code": 0,
+    "basis": "bound campaign log"
+  },
+  "postflight": {
+    "passed": true,
+    "end_utc": "2026-10-07 14:18:58 UTC",
+    "all_four_cards_passed": true,
+    "gpu_fault_lines_this_boot": 0
+  },
+  "fd_observer": {
+    "samples": 53,
+    "peak": 37,
+    "terminal": {
+      "status": "process-exited",
+      "pid": 3193292,
+      "reason": "matching-zombie-or-dead-state",
+      "observed_identity": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "start_ticks": "25635228",
+        "state": "Z"
+      }
+    },
+    "stderr_bytes": 0,
+    "leak_fix_claim": false
+  },
+  "preservation": "Keep failed packet100, failed request, model-construction and process identities, logs, incomplete summary and health receipts unchanged. No full generated outputs existed to compare or retire.",
+  "next_100b_scope": "New immutable successor with narrowly corrected host shared_identity owner cardinality for explicitly supported segment representations and updated dependent source pins. Preserve legacy two-way identity and existing multi-segment cases. CPU tests must call the actual consuming function on valid two-segment/one-secondary owners, retained legacy and multi-segment cases, and missing/extra owners or malformed identity. Keep runtime99b RoPE compatibility, model, B1 precision, 8+3 schedule and all parity/health gates. New GPU setup and full output qualification remain required; no advance speed claim.",
+  "evidence_sha256": {
+    "experiments/ltx25-b70/data/rebalance-100/two-way20-28-w2-b1-p1-dxpu2-s256x256/summary.json": "a88f42a12ea34eb9609d67bcd5f4aa9defaf7b3d32e2cea52ea4ccb099f2383c",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/f100-twoway2028w2b1p1dxpu2s256x256-wprobe/prompt.json": "c6c6a192307b79a4e094077ee49f3d1a5b659a2089a5310583860fba32fd3a1b",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/f100-twoway2028w2b1p1dxpu2s256x256-wprobe/submission.json": "5e7d33a2b45298008e00edc93c3d39a6deefafe151e03ebf212f545b5ad1dc5e",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/f100-twoway2028w2b1p1dxpu2s256x256-wprobe/history.json": "5f1311911790f479d02ad77af8ba79c2dd031ebf096bfb810f195b52cc08691f",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100-two-way20-28-w2-b1-p1-dxpu2-s256x256/server-identity.json": "f569032a05b51655538e9d67d95d52b17f33e810f67b285f52762c50b6a6eb38",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100-two-way20-28-w2-b1-p1-dxpu2-s256x256/host-components-01-control-result.json": "3434f2a7662a8113797e36234c9d72a397474ec0e0764b817202afb92dc9ed62",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100-two-way20-28-w2-b1-p1-dxpu2-s256x256/rope-compat.json": "449ac80e6903ce5d692f184aa5710902a31405b1e9c4ffb863ddef2103bc9018",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100/manifest.json": "5f156563da17edda65d8e0042a90344de665c5c93d4b61b603fc8ff0f9037bbc",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100/source/custom_nodes/ltx_host_embedding_lab/__init__.py": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100/source/scripts/ltx_layer_shard.py": "a000ccd309e70b2f41167c84b73aae01caf50f9cd38d1256a21f6cc7b0dd2ef3",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/rebalance100-server-control.log": "3933eee3b4091019416f07f3eea980f59c6453c20c15152e7c449868c4a8a8ae",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/rebalance100-campaign-control.log": "995527b250c231179c1827b21bcc504c7b7553b8a1bbb795d637dfdbc12c1454",
+    "experiments/ltx25-b70/data/resume-20261007/runtime100-preregistration.json": "00cb2bdea64f625c46f7ba4ad0c3738883e27e4d107c042173d6bb458f2a5ee7",
+    "experiments/ltx25-b70/data/resume-20261007/runtime100-build.json": "96ff84452e5a150ea441cca266bc80d4ed586bb08886e628fc54029b1929c096",
+    "experiments/ltx25-b70/data/resume-20261007/runtime100-check-only.json": "3012235f2854ae0c8e04d4998584fa4ea0b499ad4340efb5b8d23d43e0436a3e",
+    "experiments/ltx25-b70/data/resume-20261007/runtime100-launch-commands.json": "1cc3fe64366df578946300bfe64df8dc55038ddf3174a655b6bf9529c8376fb6",
+    "experiments/ltx25-b70/data/resume-20261007/runtime100-process-admission.json": "0d07053405ae3c8e3781324cba39f561ddc870ce125719bd5412c830170af9e9",
+    "experiments/ltx25-b70/data/resume-20261007/postflight-100.json": "c347e511c416d22517e1766fe67f3b050e0045c241954d3ae5abc4b2c12804ce",
+    "experiments/ltx25-b70/data/resume-20261007/fd-observations-100.jsonl": "76b4725ed142ac621aebc472e9ff5fc696dc122b3d85292f3a7ac75d52146e9a",
+    "experiments/ltx25-b70/data/resume-20261007/fd-observations-100.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/ltx25-b70/data/resume-20261007/rebalance100-memory-plan.json": "8952d108894a0a4e6ecba5e87140aa026b54b8f4fb1b84cf57fee23b1b479c51",
+    "experiments/ltx25-b70/data/resume-20261007/rebalance100-control-basis.json": "c3ba80c2d92da7f295589403309d0a34bd3eb01e093958da8225d399ee1b3191",
+    "experiments/ltx25-b70/scripts/check-runtime-100.py": "0224dc905c72ba4b6a68eb2d2dda8a9ae473ae090d23c4c87ffdb9f91fa94b71",
+    "experiments/ltx25-b70/scripts/test-rebalance-100.py": "aa60fc29a02e08881049185562e146239a891492a850bf42b591dc73435666a7"
+  }
+}

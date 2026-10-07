@@ -7,11 +7,15 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **The single 20/28 rebalance experiment is running**, unit
-`ltx100-rebalance-server-20261007`, PID 3193292. The preceding
-control stopped cleanly at 14:12 UTC; all four GPUs passed postflight with no
-kernel GPU fault. All five bad-memory blocks remain offline. No power, memory,
-swap, driver or reboot change was made.
+local-worker tuning remain parked. **No model server is running.** The 20/28
+candidate stopped cleanly at 14:17 UTC after a setup ownership check rejected its
+valid single secondary shard. No clips or timing were produced. All four GPUs
+passed postflight at 14:18 UTC, with no kernel GPU fault. The existing checker
+assumed a named layout had at least three segments; the correction must exercise
+the actual two-segment ownership path on CPU before another sealed candidate.
+[Setup failure and correction](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
+All five bad-memory blocks remain offline. No power, memory, swap, driver or
+reboot change was made.
 
 The current-upstream compatibility control passed: **126 probe/timed clips and
 two self-check clips match the accepted references exactly**, including video,
@@ -35,14 +39,14 @@ preserved. The qualified packet manifest is
 [Original failure](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md),
 [compatibility plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
 
-Now testing the named 20/28 sampler split to reduce the busiest card's work.
-Its CPU preparation and independent review pass, and the actual qualified
-control's memory receipts admit the conservative plan. The separate candidate was built after the control stopped, passed its inactive
-launch check, and has a fresh 4 GiB output/cache allowance with the 50 GiB disk
-reserve. [Rebalance plan](experiments/ltx25-b70/data/resume-20261007/runtime100-preregistration.json). No projected gain counts as
-a measurement. After the placement decision, screen W3 only if occupancy and
-memory support it; then qualify a useful-resolution baseline rather than keep
-chasing the small-shape benchmark.
+Next: correct the named-layout ownership check while preserving the failed
+packet and its evidence, then test the intended 20/28 sampler placement. The
+qualified 99b control remains the comparison and memory basis. The failed run
+is not a performance or quality verdict on 20/28. Each new experiment needs a
+fresh 4 GiB output/cache allowance and the 50 GiB disk reserve. No projected gain
+counts as a measurement. After the placement decision, screen W3 only if
+occupancy and memory support it; then qualify a useful-resolution baseline
+rather than keep chasing the small-shape benchmark.
 [Next useful workload](experiments/ltx25-b70/notes/2026-10-07-next-useful-workload.md).
 
 The application-only 65,536-file soft limit prevented the original descriptor
