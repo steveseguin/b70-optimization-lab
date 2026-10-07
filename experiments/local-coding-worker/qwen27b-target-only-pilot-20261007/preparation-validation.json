@@ -1,0 +1,27 @@
+{
+  "status": "cpu-preparation-passed",
+  "model_requests": 0,
+  "gpu_actions": 0,
+  "checks": [
+    "12 offline boundary/recall controls",
+    "exact pinned-tokenizer boundary lengths511,512,513,1025",
+    "worker SYSTEM smoke input331tokens",
+    "memory fullprompt14008tokens fits33024 with4096output",
+    "same80-file manifest frozen locally",
+    "CPU siblingpidfd transfer UID0 onlySYS_PTRACE passed; UID1000 failed",
+    "syntax and repository link/manifest checks"
+  ],
+  "preparation_correction": "First CPU padding count assumed the empty/nonempty boundary tokenized identically. Corrected bounded local tokenizer search before freezing prompts; no model response existed.",
+  "memory_minimum_prompt_tokens": 2,
+  "worker_canary_minimum_prompt_tokens": 301,
+  "helper_sha256": {
+    "serve_r276_once.py": "01cc962c0e154b40ee34ad8aa9fad0e3f06b798bf72ad6c7508373c8ead68781",
+    "run-task.py": "d884e00f082793555dd2eb88c2963e994df80457364cbe80d901fc3ef57900a9",
+    "test_boundary_gate.py": "036157e16dc25c1304479cbf0427585c3b1bbfea6d98bcbd750da3586b78fa12",
+    "check_boundaries.py": "8f9b1e3e028c7d81a2b527f51d0e1938d350b21d1f6d25c9a4ce74fa391a99cd",
+    "check_transport.py": "725479b521416812a56dd5c2b9b2e8c0200146dabf307f2dd3e2217ac7117e53",
+    "probe_pidfd.py": "0370061071c21a0a0bf8bb58f54afb255cffbe28eaec36e771a8943383498228",
+    "run-memory.py": "343c2136aadd047eb680de85c346d95e1a0de3862372be9164c70762075efd22",
+    "prepare_boundaries.py": "3a0050184f13e61645ab1fd854509e476b8bc6858ee65d4f4490738a5090e1e0"
+  }
+}

@@ -1,0 +1,168 @@
+(APIServer pid=1) INFO 10-07 02:04:01 [api_utils.py:345] 
+(APIServer pid=1) INFO 10-07 02:04:01 [api_utils.py:345]        █     █     █▄   ▄█
+(APIServer pid=1) INFO 10-07 02:04:01 [api_utils.py:345]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.27.2rc1.dev77+gac7509e2b
+(APIServer pid=1) INFO 10-07 02:04:01 [api_utils.py:345]   █▄█▀ █     █     █     █  model   /home/steve/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B/snapshots/2fc06364715b967f1860aea9cf38778875588b17
+(APIServer pid=1) INFO 10-07 02:04:01 [api_utils.py:345]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=1) INFO 10-07 02:04:01 [api_utils.py:345] 
+(APIServer pid=1) INFO 10-07 02:04:01 [api_utils.py:273] non-default args: {'host': '127.0.0.1', 'port': 18125, 'model': '/home/steve/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B/snapshots/2fc06364715b967f1860aea9cf38778875588b17', 'dtype': 'bfloat16', 'max_model_len': 16384, 'enforce_eager': True, 'served_model_name': ['qwen35-0.8b-bf16-pilot'], 'gpu_memory_utilization': 0.25, 'enable_prefix_caching': False, 'language_model_only': True, 'max_num_batched_tokens': 512, 'max_num_seqs': 1}
+(APIServer pid=1) WARNING 10-07 02:04:01 [envs.py:2206] Unknown vLLM environment variable detected: VLLM_XPU_FP8_BLOCK_W8A16
+(APIServer pid=1) WARNING 10-07 02:04:01 [envs.py:2206] Unknown vLLM environment variable detected: VLLM_XPU_GDN_SPLIT_MIXED
+(APIServer pid=1) WARNING 10-07 02:04:01 [envs.py:2206] Unknown vLLM environment variable detected: VLLM_XPU_GDN_SPEC_GROUP
+(APIServer pid=1) WARNING 10-07 02:04:01 [envs.py:2206] Unknown vLLM environment variable detected: VLLM_XPU_FP16_LINEAR_ROWCHUNK
+(APIServer pid=1) WARNING 10-07 02:04:01 [envs.py:2206] Unknown vLLM environment variable detected: VLLM_XPU_DRAFT_LM_HEAD_INT4
+(APIServer pid=1) WARNING 10-07 02:04:01 [envs.py:2206] Unknown vLLM environment variable detected: VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT
+(APIServer pid=1) INFO 10-07 02:04:21 [model.py:682] Resolved architecture: Qwen3_5ForConditionalGeneration
+(APIServer pid=1) INFO 10-07 02:04:21 [model.py:1975] Using max model len 16384
+(APIServer pid=1) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(APIServer pid=1) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(APIServer pid=1) INFO 10-07 02:04:23 [registry.py:141] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(APIServer pid=1) INFO 10-07 02:04:23 [model.py:885] Disabled mm_prefix attention mode because multimodal inputs are configuration-disabled. Attention backends without mm_prefix support may now be selected.
+(APIServer pid=1) INFO 10-07 02:04:23 [scheduler.py:242] Chunked prefill is enabled with max_num_batched_tokens=512.
+(APIServer pid=1) WARNING 10-07 02:04:23 [vllm.py:1284] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+(APIServer pid=1) WARNING 10-07 02:04:23 [vllm.py:1353] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+(APIServer pid=1) INFO 10-07 02:04:23 [kernel.py:308] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'])
+(APIServer pid=1) INFO 10-07 02:04:23 [vllm.py:1532] Cudagraph is disabled under eager mode
+(APIServer pid=1) WARNING 10-07 02:04:23 [xpu.py:302] XPU Graph is disabled by environment variable, please set VLLM_XPU_ENABLE_XPU_GRAPH=1 to enable it.
+(APIServer pid=1) INFO 10-07 02:04:23 [xpu.py:381] XPU platform: set server shutdown_timeout=5.
+(APIServer pid=1) INFO 10-07 02:04:23 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(EngineCore pid=85) INFO 10-07 02:04:39 [core.py:122] Initializing a V1 LLM engine (v0.27.2rc1.dev77+gac7509e2b) with config: model='/home/steve/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B/snapshots/2fc06364715b967f1860aea9cf38778875588b17', speculative_config=None, tokenizer='/home/steve/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B/snapshots/2fc06364715b967f1860aea9cf38778875588b17', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=16384, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=True, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=xpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=qwen35-0.8b-bf16-pilot, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [512], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 0, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, enable_bf16x3_router_gemm=False, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=85) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(EngineCore pid=85) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/venv/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(EngineCore pid=85) INFO 10-07 02:04:41 [registry.py:141] All limits of multimodal modalities supported by the model are set to 0, running in text-only mode.
+(EngineCore pid=85) INFO 10-07 02:04:41 [parallel_state.py:1638] world_size=1 rank=0 local_rank=0 distributed_init_method=file:///tmp/vllm_dist_efec726558864fcf8a0d62a401722ae1 backend=xccl
+(EngineCore pid=85) INFO 10-07 02:04:41 [parallel_state.py:1982] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+2026:10:07-02:04:41:   85 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:07-02:04:41:   85 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:07-02:04:42:  143:[0] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+2026:10:07-02:04:42:   85:[0] |CCL_ERROR| ze_fd_manager.cpp:144 init_device_fds: condition dir failed
+opendir failed: could not open device directory
+2026:10:07-02:04:42:   85:[0] |CCL_WARN| pidfd is not supported, fallbacks to drmfd exchange mode
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344] EngineCore failed to start.
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344] Traceback (most recent call last):
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1313, in run_engine_core
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     return func(*args, **kwargs)
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1071, in __init__
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     super().__init__(
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 133, in __init__
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     return func(*args, **kwargs)
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     self._init_executor()
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 69, in _init_executor
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     self.driver_worker.init_device()
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/worker_base.py", line 331, in init_device
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     self.worker.init_device()  # type: ignore
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/xpu_worker.py", line 105, in init_device
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     torch.distributed.all_reduce(torch.zeros(1).xpu())
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py", line 83, in wrapper
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     return func(*args, **kwargs)
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py", line 3245, in all_reduce
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]     work = group.allreduce([tensor], opts)
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) ERROR 10-07 02:04:42 [core.py:1344] RuntimeError: oneCCL: ze_fd_manager.cpp:144 init_device_fds: EXCEPTION: opendir failed: could not open device directory
+(EngineCore pid=85) Process EngineCore:
+(EngineCore pid=85) Traceback (most recent call last):
+(EngineCore pid=85)   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore pid=85)     self.run()
+(EngineCore pid=85)   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+(EngineCore pid=85)     self._target(*self._args, **self._kwargs)
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1348, in run_engine_core
+(EngineCore pid=85)     raise e
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1313, in run_engine_core
+(EngineCore pid=85)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=85)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=85)     return func(*args, **kwargs)
+(EngineCore pid=85)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1071, in __init__
+(EngineCore pid=85)     super().__init__(
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 133, in __init__
+(EngineCore pid=85)     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=85)                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=85)     return func(*args, **kwargs)
+(EngineCore pid=85)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=85)     self._init_executor()
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 69, in _init_executor
+(EngineCore pid=85)     self.driver_worker.init_device()
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/worker_base.py", line 331, in init_device
+(EngineCore pid=85)     self.worker.init_device()  # type: ignore
+(EngineCore pid=85)     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/xpu_worker.py", line 105, in init_device
+(EngineCore pid=85)     torch.distributed.all_reduce(torch.zeros(1).xpu())
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py", line 83, in wrapper
+(EngineCore pid=85)     return func(*args, **kwargs)
+(EngineCore pid=85)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85)   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py", line 3245, in all_reduce
+(EngineCore pid=85)     work = group.allreduce([tensor], opts)
+(EngineCore pid=85)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=85) RuntimeError: oneCCL: ze_fd_manager.cpp:144 init_device_fds: EXCEPTION: opendir failed: could not open device directory
+(APIServer pid=1) Traceback (most recent call last):
+(APIServer pid=1)   File "<frozen runpy>", line 198, in _run_module_as_main
+(APIServer pid=1)   File "<frozen runpy>", line 88, in _run_code
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 804, in <module>
+(APIServer pid=1)     uvloop.run(run_server(args))
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=1)     return __asyncio.run(
+(APIServer pid=1)            ^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+(APIServer pid=1)     return runner.run(main)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=1)     return self._loop.run_until_complete(task)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=1)     return await main
+(APIServer pid=1)            ^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 764, in run_server
+(APIServer pid=1)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 778, in run_server_worker
+(APIServer pid=1)     async with build_async_engine_client(
+(APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1)     return await anext(self.gen)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 132, in build_async_engine_client
+(APIServer pid=1)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1)     return await anext(self.gen)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/entrypoints/openai/api_server.py", line 168, in build_async_engine_client_from_engine_args
+(APIServer pid=1)     async_llm = AsyncLLM.from_vllm_config(
+(APIServer pid=1)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/async_llm.py", line 220, in from_vllm_config
+(APIServer pid=1)     return cls(
+(APIServer pid=1)            ^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/async_llm.py", line 149, in __init__
+(APIServer pid=1)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=1)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=1)     return func(*args, **kwargs)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 139, in make_async_mp_client
+(APIServer pid=1)     return AsyncMPClient(*client_args)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=1)     return func(*args, **kwargs)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 990, in __init__
+(APIServer pid=1)     super().__init__(
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 609, in __init__
+(APIServer pid=1)     with launch_core_engines(
+(APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 144, in __exit__
+(APIServer pid=1)     next(self.gen)
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1206, in launch_core_engines
+(APIServer pid=1)     wait_for_engine_startup(
+(APIServer pid=1)   File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1286, in wait_for_engine_startup
+(APIServer pid=1)     raise RuntimeError(
+(APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}

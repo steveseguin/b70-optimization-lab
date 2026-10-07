@@ -6,7 +6,18 @@ below remain that host's own research record; this consolidation did not operate
 ## Four-card host now: consolidation; LTX and Flash-Next parked
 
 The owner asked to preserve both lanes and make the existing lab dependable before
-returning to optimization. **No model server is running on `steve-b70s`.** LTX's
+returning to optimization. **No resident model service is authorized on `steve-b70s`.**
+Both small-worker pilots are closed and **no model server is running**. The
+[0.8B pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
+failed its minimal-prompt format gate. The separate
+[4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
+passed transport but completed zero of two coding tasks: both exhausted their
+20 steps without a patch. Recall needed 14,008 input tokens and was refused
+before generation by its context budget. All four cards passed final checks;
+no new kernel fault appeared. Task evidence is archived and verified, disposable
+RAM snapshots are released, and all twelve 4B model files remain in the verified
+cold copy. The external drive is unmounted.
+The intended 27B worker remains unqualified here. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving
 the evidence and checking passive GPU idleness, one SIGINT stopped the application;
 port 8188 closed, no render-node holders remained, and no kernel GPU fault appeared.
@@ -56,16 +67,32 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
 - **Coding worker and lab memory:** the owner chose a bounded usefulness trial
   before connecting these projects. The [new evaluation packet](experiments/local-coding-worker/evaluation-20261007/README.md)
   contains eight historical coding repairs and ten source-backed research
-  questions. CPU controls are verified; **no model trials have run**. Begin with
-  two coding tasks, one attempt each, and judge reviewed patches rather than
-  token speed. The worker can now mount a separate read-only acceptance folder
+  questions. CPU controls are verified; the separate 4B trial produced **zero
+  completed patches in two attempts**. Judge reviewed patches rather than token
+  speed; do not present that small-model result as a 27B evaluation. The worker can now mount a separate read-only acceptance folder
   and record/check its hashes. This does not qualify a model or serving package.
-- **Next:** run that small trial when the intended qualified runtime, host
-  ownership and full snapshot storage budget are available. Do not use the
-  protected two-card endpoint or start a large replacement download here.
+  Pinned worker dependencies and the CPU image are now installed; all 107 worker
+  tests pass. Both initial tasks also passed their real full-snapshot Docker
+  controls (four baseline/fixed checks), using disposable `/dev/shm` snapshots.
+  Snapshot receipts are preserved at `/home/steve/worker-container-controls-20261007/`.
+  Two hash-identical 0.8B weight-cache copies were consolidated into one read-only
+  inode, preserving both model paths and recovering 1.63 GiB. The separate 0.8B
+  workflow pilot closed at its format gate; the planned 27B trial remains pending.
+- **27B next:** the corrected download manifest includes the required tokenizer
+  and runtime files while preserving all 66 weight pins; five offline controls
+  cover both package download wrappers. Independent model intake is now running
+  in `/dev/shm/qwen38-27b-fp8-worker-20261007`, with live receipts under
+  `/home/steve/worker-qwen27b-intake-20261007/`. A supervised cold-copy watcher
+  must fully verify preservation and unmount EX400U before any GPU launch.
+  The separate [target-only pilot](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/README.md)
+  uses the installed R276 image and leaves the two-card host alone. Its source
+  and CPU communication checks passed; actual model/collective qualification
+  remains pending. No new server is running. Known one-token-prefill limitations
+  are explicitly restricted and prefill-boundary diagnostics precede useful tasks.
+  CPU tokenization confirms the full recall prompt fits its 33,024-token profile.
   Qualify the corrected package when its exact inputs and host ownership
   are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
-  this does not admit a large build/download.
+  this does not admit a large build/download on the root filesystem.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
   estimated peak output/cache/build bytes. A verified additional research backup
   now exists; keep the internal sources and the documented backup-scope limits.

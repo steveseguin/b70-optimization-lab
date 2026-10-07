@@ -1,0 +1,86 @@
+{
+  "text": "#!/bin/bash\necho \"pilot-ok\"",
+  "text_sha256": "44639d0f241f6192b7f520448a623025383f8b9d9681dc2fb52276992534abc7",
+  "token_ids": [
+    8436,
+    6649,
+    16644,
+    198,
+    2949,
+    328,
+    79,
+    23210,
+    71725,
+    1,
+    248046
+  ],
+  "token_ids_available": true,
+  "token_offsets_s": [
+    0.2955122850253247,
+    0.3287990220123902,
+    0.3627422999998089,
+    0.39604145000339486,
+    0.4292806080193259,
+    0.46256916801212355,
+    0.49592620600014925,
+    0.529111483017914,
+    0.5623773500265088,
+    0.595466225000564,
+    0.6288101690006442
+  ],
+  "content_chunk_offsets_s": [
+    0.2955122850253247,
+    0.3287990220123902,
+    0.3627422999998089,
+    0.39604145000339486,
+    0.4292806080193259,
+    0.46256916801212355,
+    0.49592620600014925,
+    0.529111483017914,
+    0.5623773500265088,
+    0.595466225000564
+  ],
+  "usage": {
+    "prompt_tokens": 46,
+    "total_tokens": 57,
+    "completion_tokens": 11,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "created_cache_tokens": 0
+    }
+  },
+  "prompt_tokens": 46,
+  "completion_tokens": 11,
+  "cached_tokens": 0,
+  "finish_reasons": [
+    "stop"
+  ],
+  "response_ids": [
+    "chatcmpl-9089b3b57f410641"
+  ],
+  "elapsed_s": 0.6288774560089223,
+  "http_ttft_s": 0.2955122850253247,
+  "http_ttft_definition": "request start to first received token-ID chunk, or first content chunk if IDs unavailable",
+  "decode_stream_proxy_tokens_s": 30.00319078155471,
+  "decode_stream_proxy_definition": "(stream token IDs - 1) / (last minus first token-ID chunk arrival); network chunks can contain multiple tokens; not server decode timing",
+  "server_prefill_duration_s": null,
+  "server_prefill_note": "not exposed by this chat stream; HTTP TTFT is not server prefill",
+  "raw_delta": {
+    "vllm:prompt_tokens_total": 46.0,
+    "vllm:request_prefill_time_seconds_count": 1.0,
+    "vllm:request_prefill_time_seconds_sum": 0.27657284200540744
+  },
+  "server_prefill_s": 0.27657284200540744,
+  "server_prefill_tokens_per_s": 166.32146405430734,
+  "generation_profile": {
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "sampling": {
+      "temperature": 0,
+      "top_p": 1,
+      "seed": 42
+    }
+  },
+  "action_format_valid": false
+}
