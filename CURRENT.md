@@ -5,14 +5,29 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-**Live update,2026-10-07:**109 is running on the four-card host, PID3380321,
-start ticks28689819, unit`ltx109-duration-server-20261007`, same boot. Its finite
-29-request49-frame resource pilot started at2026-10-07T22:45:12.561586+00:00.
-The named20/28 placement targets native full-residency headroom while keeping
-all memory floors, BF16,8+3steps and exact video/audio gates. The first actual
-49-frame shape/finite/memory barrier precedes the second native request.
-No observer is running. This pilot is not full-suite quality, endurance, adoption,
-a speed-gain or public record claim. No49-frame result is available yet.
+**Live update, 2026-10-07:** the 49-frame LTX pilot completed successfully at
+22:56:44 UTC. Its application remains healthy and idle on the four-card host,
+PID3380321/start28689819, unit `ltx109-duration-server-20261007`, same boot.
+All 29 requests completed: six native outputs formed three exact repeat pairs,
+and three optimized plus three timed clips matched all four video/audio tensors.
+The unchanged sealed verifier independently rebuilt the full proof. All memory
+and capture limits passed; no kernel fault appeared in the campaign window.
+
+The two measured delivery intervals average 3.0805 seconds per 49-frame clip
+(15.91 generated frames/s). This is a three-fixture resource pilot, not a full-suite,
+matched speed-gain, endurance, adoption or public-record claim. Playback is 24 FPS.
+Named20/28 placement, BF16 and 8+3 steps remain unchanged. The tightest sampled
+poststage memory was 4.968GiB free on the decoder card, above its 2GiB floor;
+these observations are not continuous peak-memory bounds.
+
+Next: qualify the same configuration on all ten fixed fixtures. An older, stopped
+97 B4-r2 test arm has 577 potential duplicate archives (10.855GiB); fresh exact
+comparisons, complete file hashes and direct restore maps must precede retirement.
+That could fund the broader suite while retaining the successful109 application.
+No extra requests are authorized by the consumed pilot plan, and no passive
+observer is running. Models, failed experiments and unique outputs stay protected.
+[Completed pilot proof](experiments/ltx25-b70/data/resume-20261007/duration109-closeout/summary.json),
+[resource audit](experiments/ltx25-b70/notes/2026-10-07-duration109-resource-audit.md).
 
 108b completed text preparation then safely refused the full-residency guard,
 with zero49-frame generations and one graceful shutdown. Its missing setup

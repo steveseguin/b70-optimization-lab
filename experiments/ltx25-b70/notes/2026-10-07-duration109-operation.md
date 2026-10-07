@@ -43,3 +43,33 @@ requests. ContractSHA`aed8513ec6bdbc96571891738e7667772110b63261f2245eadaa98f209
 The29-request campaign began at2026-10-07T22:45:12.561586+00:00. No observer or extra
 requests are authorized by this plan; successful app retained, no automatic
 retry/restart, faults halt new work. No49-frame result exists at launch.
+
+## Completed pilot and retained application
+
+The finite campaign completed all29 requests at22:56:44.088812UTC. Six native
+executions form three exact repeat pairs; three candidate and three timed clips
+match all four native tensors. First-native shape/finite/memory barrier, ten
+seeded decoder probes, all four whole-graph chains and all48 block routes passed.
+The unchanged sealed verifier rebuilt the full proof at22:58:04.033296UTC;
+verifierSHA`a23ed1358ed80b51161a6a7a781962492ed956f81741133aee1692e69630a604`.
+The [closeout](../data/resume-20261007/duration109-closeout/summary.json) binds641
+files and explicitly validates all three capture checkpoints, including22 final
+captures and2,055,616,112 reserved raw bytes. Mutable phase observations/locks are
+excluded. The kernel campaign window was empty, endpoint idle and unlatched;
+the successful application remains running under the same process identity.
+
+The two completion intervals are3.264 and2.897seconds, mean3.0805seconds per49-frame
+clip,15.9065 generatedFPS. This repeated three-fixture resource pilot is not a
+matched gain, full-suite quality qualification, endurance, adoption or public
+record. Playback remains24FPS; native audio is unchanged with no padding/stretch.
+Actual memory results and their sampling limits are in the
+[resource audit](2026-10-07-duration109-resource-audit.md).
+
+The next useful measurement is the full ten-fixture suite at the same49-frame,
+640x384, BF16,8+3step,20/28 configuration. Fresh disk admission must cover9GiB
+runtime writes,50GiB reserve and separate384MiB source construction. A metadata
+screen found577 potential duplicate old97 B4-r2 outputs (10.855GiB) with direct
+protected stability references; no retirement has occurred at this checkpoint.
+Their original comparison, full archive hash/stat checks and stopped historical
+owner proof are required first. The live109 process and its raw outputs remain
+protected while this CPU-only preparation proceeds.
