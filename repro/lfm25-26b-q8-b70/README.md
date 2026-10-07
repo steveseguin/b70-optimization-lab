@@ -22,17 +22,54 @@ Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
 | SHA-256 | `1e22128dfa128bdfb684da167e74e072d0a056baa7d06d9f280291e2839b0fc9` |
 | Source | `LiquidAI/LFM2.5-2.6B-GGUF` @ `f4a289c8a200a5ca71005ba7abc2dad33058a450` |
 | Store | `/mnt/usb-models/llm-models/lfm2.5-2.6b-q8/` (catalog id `lfm25-26b-q8`) |
-| Base | upstream llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`, SYCL AOT bmg-g31, IntelLLVM 2026.0.0 |
+| Base | upstream llama.cpp `9fee29e9435f865ec0b811a783a6471a136d9317`, SYCL AOT bmg-g31; the earlier depth sweep used IntelLLVM 2026.0.0. Complete strict-headline toolchain identity remains unresolved. |
 | Device | 1x Intel Arc Pro B70 (32 GiB) |
 
 Question this packet answers: smallest honest single-command B70 recipe.
 
 ## Reproduce the strict operating point
 
-Clone this repository, build the pinned stock llama.cpp revision from the
-package manifest, and download the model named in `model-manifest.json`. Do not
-substitute another quantization or runtime build and retain the model filename
-from the manifest.
+The measured result is qualified; the package remains a **candidate**, with
+public build closure and clean-host replay pending. Source preparation below
+is CPU-only and does not build, install a toolchain, download weights, or start
+a server. It closes the missing source-acquisition step, not those later gates.
+
+From this repository's root, choose an existing parent on a filesystem with
+enough space and create a new source directory:
+
+```bash
+python3 repro/lfm25-26b-q8-b70/prepare-source.py --download \
+  --output /path/to/existing-parent/llama-lfm25-source
+```
+
+The [source-input manifest](source-inputs.json) pins the public commit archive,
+its size, SHA-256, member census and critical build inputs. The helper permits
+one bounded download, authenticates it before extraction, rejects links and
+unsafe paths, then reads back every extracted file and writes
+`SOURCE-PREPARATION.json`. Preparation admits at most 512 MiB additional space
+and retains 50 GiB free by default. A different destination's reserve requires
+an explicit `--min-free-gib` value; no reserve is lowered automatically. This
+is an initial space check, not a reservation or a build-space budget. An
+already-downloaded exact archive can be supplied with `--archive /path/to/source.tar.gz`
+instead of `--download`. Existing outputs are never overwritten; failed partial
+outputs are retained for inspection. The archive has no Git metadata, so a
+later CMake build can report an unknown Git version; the receipt binds the
+source identity independently.
+
+Before compilation, obtain the exact compiler/runtime, oneDPL, oneDNN,
+oneMKL, TBB and Level Zero dependencies. The pinned upstream
+[SYCL installation instructions](https://github.com/ggml-org/llama.cpp/blob/9fee29e9435f865ec0b811a783a6471a136d9317/docs/backend/SYCL.md#linux)
+and [Intel toolkit source](https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit.html)
+describe provisioning, but do not establish the missing historical versions.
+The [closure receipt](source-preparation-review.json) records the exact
+remaining gates. Do not substitute a new toolchain and call its build the
+measured runtime. The package manifest retains the historical CMake command;
+building it needs its own storage admission and subsequent runtime/quality
+validation. No build or fresh model result is claimed by source preparation.
+
+After those prerequisites are independently validated, download the model
+named in `model-manifest.json`, retain its exact filename, and verify it before
+using the measured launch settings below.
 
 ```bash
 export MODEL_DIR=/path/to/lfm2.5-2.6b-q8
@@ -70,13 +107,16 @@ python3 scripts/neural-download-canaries.py \
 ```
 
 Inspect `realistic_final_gate`, `fresh_response_validity`, and `pass_all`; every
-gate must pass and every request must report zero cached tokens. Stop and
-restart the server, repeat the complete procedure, then compare every retained
-token array. The lab's stricter automation is
+gate must pass and every request must report zero cached tokens. Historical
+qualification required two separately supervised server runs and comparison
+of every retained token array. This guide is not authorization for a restart
+chain on a shared host. The historical lab automation is
 `../../scripts/run-neural-download-stock-headline-attempt.sh`; it additionally
 pins the archived runtime hashes and repository state. It requires explicit
 `BUILD_DIR`, `MODEL_DIR`, `OUT_DIR`, `PROFILE_ID`, and `ATTEMPT` values and is
-intentionally fail-closed. Do not promote a replay from one attempt alone.
+intentionally fail-closed. It also contains historical host-memory and
+process-cleanup settings; preserve it as evidence, rather than executing it as
+the current safe runner. Do not promote a replay from one attempt alone.
 
 ## Context-depth sweep (llama-bench raw engine rates, fa on, 5 reps)
 

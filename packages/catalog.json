@@ -558,7 +558,8 @@
       "known_limitations": [
         "Emits untagged reasoning prose before final answers regardless of the reasoning flag; answers correct but verbose.",
         "The quality gate establishes objective correctness and exact fresh-server repeatability for this identity; it is not a cross-model capability comparison.",
-        "Clean-host beginner flow not yet executed."
+        "Clean-host beginner flow not yet executed.",
+        "Pinned upstream source preparation is verified separately; the complete strict-headline toolchain, rebuilt public runtime, and clean-host replay remain pending."
       ],
       "hardware": {
         "accelerator": "Intel Arc Pro B70 32 GiB",
@@ -607,9 +608,14 @@
         "docs/neural-download-packet-standard.md",
         "scripts/bench-openai-realistic-suite.py",
         "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
-        "scripts/neural-download-canaries.py"
+        "scripts/neural-download-canaries.py",
+        "repro/lfm25-26b-q8-b70/source-inputs.json",
+        "repro/lfm25-26b-q8-b70/prepare-source.py",
+        "repro/lfm25-26b-q8-b70/test_prepare_source.py",
+        "repro/lfm25-26b-q8-b70/source-preparation-review.json"
       ],
       "missing": [
+        "complete strict-headline toolchain identity and publicly rebuilt runtime closure",
         "tested clean-host platform installation",
         "output-qualified HTTP concurrency",
         "beginner recovery flow"
