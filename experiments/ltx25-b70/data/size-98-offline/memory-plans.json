@@ -1,0 +1,2075 @@
+[
+  {
+    "admitted": true,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "two-way",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.17,
+      "xpu:1": 10.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 5.31,
+      "xpu:1": 7.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 5.31,
+      "xpu:1": 7.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.86,
+      "xpu:1": 3.0,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": true,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.17,
+      "xpu:1": 10.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 5.31,
+      "xpu:1": 7.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 2.45,
+      "xpu:1": 4.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.86,
+      "xpu:1": 3.0,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": true,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "two-way",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.17,
+      "xpu:1": 10.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 2.45,
+      "xpu:1": 4.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 2.45,
+      "xpu:1": 4.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 5.72,
+      "xpu:1": 6.0,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": true,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.17,
+      "xpu:1": 10.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 2.45,
+      "xpu:1": 4.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -3.27,
+      "xpu:1": -1.22,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 5.72,
+      "xpu:1": 6.0,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.17,
+      "xpu:1": 10.78,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -3.27,
+      "xpu:1": -1.22,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -14.71,
+      "xpu:1": -13.22,
+      "xpu:2": 9.64,
+      "xpu:3": 14.55
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 11.44,
+      "xpu:1": 12.0,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": -3.27,
+      "xpu:1": -1.22
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard4-a",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 3.62,
+      "xpu:3": 11.57
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 2.66
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 9.59,
+      "xpu:1": 13.59,
+      "xpu:2": 2.66,
+      "xpu:3": 11.09
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 9.59,
+      "xpu:1": 13.59,
+      "xpu:2": 2.66,
+      "xpu:3": 11.09
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.26,
+      "xpu:1": 2.16,
+      "xpu:2": 0.96,
+      "xpu:3": 0.48
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 3.62,
+      "xpu:3": 11.57
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 2.66
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 9.59,
+      "xpu:1": 13.59,
+      "xpu:2": 2.66,
+      "xpu:3": 11.09
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 7.33,
+      "xpu:1": 11.43,
+      "xpu:2": 1.7,
+      "xpu:3": 10.61
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.26,
+      "xpu:1": 2.16,
+      "xpu:2": 0.96,
+      "xpu:3": 0.48
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard4-a",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 3.62,
+      "xpu:3": 11.57
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 1.7
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 7.33,
+      "xpu:1": 11.43,
+      "xpu:2": 1.7,
+      "xpu:3": 10.61
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 7.33,
+      "xpu:1": 11.43,
+      "xpu:2": 1.7,
+      "xpu:3": 10.61
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 4.52,
+      "xpu:1": 4.32,
+      "xpu:2": 1.92,
+      "xpu:3": 0.96
+    },
+    "short_with_one_worker": {
+      "xpu:2": 1.7
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 3.62,
+      "xpu:3": 11.57
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 1.7
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 7.33,
+      "xpu:1": 11.43,
+      "xpu:2": 1.7,
+      "xpu:3": 10.61
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 2.81,
+      "xpu:1": 7.11,
+      "xpu:2": -0.22,
+      "xpu:3": 9.65
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 4.52,
+      "xpu:1": 4.32,
+      "xpu:2": 1.92,
+      "xpu:3": 0.96
+    },
+    "short_with_one_worker": {
+      "xpu:2": 1.7
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 3.62,
+      "xpu:3": 11.57
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -0.22
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 2.81,
+      "xpu:1": 7.11,
+      "xpu:2": -0.22,
+      "xpu:3": 9.65
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -6.23,
+      "xpu:1": -1.53,
+      "xpu:2": -4.06,
+      "xpu:3": 7.73
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 9.04,
+      "xpu:1": 8.64,
+      "xpu:2": 3.84,
+      "xpu:3": 1.92
+    },
+    "short_with_one_worker": {
+      "xpu:2": -0.22
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard3-c",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 3.76,
+      "xpu:3": 14.9
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 2.8
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 8.02,
+      "xpu:1": 12.19,
+      "xpu:2": 2.8,
+      "xpu:3": 14.9
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 8.02,
+      "xpu:1": 12.19,
+      "xpu:2": 2.8,
+      "xpu:3": 14.9
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.5,
+      "xpu:1": 2.4,
+      "xpu:2": 0.96,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 3.76,
+      "xpu:3": 14.9
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 2.8
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 8.02,
+      "xpu:1": 12.19,
+      "xpu:2": 2.8,
+      "xpu:3": 14.9
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 5.52,
+      "xpu:1": 9.79,
+      "xpu:2": 1.84,
+      "xpu:3": 14.9
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.5,
+      "xpu:1": 2.4,
+      "xpu:2": 0.96,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard3-c",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 3.76,
+      "xpu:3": 14.9
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 1.84
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 5.52,
+      "xpu:1": 9.79,
+      "xpu:2": 1.84,
+      "xpu:3": 14.9
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 5.52,
+      "xpu:1": 9.79,
+      "xpu:2": 1.84,
+      "xpu:3": 14.9
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 5.0,
+      "xpu:1": 4.8,
+      "xpu:2": 1.92,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:2": 1.84
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 3.76,
+      "xpu:3": 14.9
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 1.84
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 5.52,
+      "xpu:1": 9.79,
+      "xpu:2": 1.84,
+      "xpu:3": 14.9
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 0.52,
+      "xpu:1": 4.99,
+      "xpu:2": -0.08,
+      "xpu:3": 14.9
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 5.0,
+      "xpu:1": 4.8,
+      "xpu:2": 1.92,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:2": 1.84
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "256x256",
+    "token_scale": 1.0,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 3.76,
+      "xpu:3": 14.9
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -0.08
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 0.52,
+      "xpu:1": 4.99,
+      "xpu:2": -0.08,
+      "xpu:3": 14.9
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -9.48,
+      "xpu:1": -4.61,
+      "xpu:2": -3.92,
+      "xpu:3": 14.9
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 10.0,
+      "xpu:1": 9.6,
+      "xpu:2": 3.84,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": 0.52,
+      "xpu:2": -0.08
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": true,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "two-way",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.066773693847656,
+      "xpu:1": 12.775692340087891,
+      "xpu:2": 8.616035461425781,
+      "xpu:3": 13.439212799072266
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.818,
+      "xpu:1": 11.67,
+      "xpu:2": 8.616,
+      "xpu:3": 13.439
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 6.818,
+      "xpu:1": 11.67,
+      "xpu:2": 8.616,
+      "xpu:3": 13.439
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 1.249,
+      "xpu:1": 1.105,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": true,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.066773693847656,
+      "xpu:1": 12.775692340087891,
+      "xpu:2": 8.616035461425781,
+      "xpu:3": 13.439212799072266
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.818,
+      "xpu:1": 11.67,
+      "xpu:2": 8.616,
+      "xpu:3": 13.439
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 5.569,
+      "xpu:1": 10.565,
+      "xpu:2": 8.616,
+      "xpu:3": 13.439
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 1.249,
+      "xpu:1": 1.105,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": true,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "two-way",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 7.9017294372558595,
+      "xpu:1": 12.748294775390626,
+      "xpu:2": 8.616008758544922,
+      "xpu:3": 13.614990234375
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.074,
+      "xpu:1": 11.35,
+      "xpu:2": 8.616,
+      "xpu:3": 13.615
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 6.074,
+      "xpu:1": 11.35,
+      "xpu:2": 8.616,
+      "xpu:3": 13.615
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 1.828,
+      "xpu:1": 1.398,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": true,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 7.9017294372558595,
+      "xpu:1": 12.748294775390626,
+      "xpu:2": 8.616008758544922,
+      "xpu:3": 13.614990234375
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.074,
+      "xpu:1": 11.35,
+      "xpu:2": 8.616,
+      "xpu:3": 13.615
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 4.246,
+      "xpu:1": 9.952,
+      "xpu:2": 8.616,
+      "xpu:3": 13.615
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 1.828,
+      "xpu:1": 1.398,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": true,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 7.969436328125,
+      "xpu:1": 12.716443432617188,
+      "xpu:2": 8.616046905517578,
+      "xpu:3": 13.615013122558594
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 5.043,
+      "xpu:1": 10.491,
+      "xpu:2": 8.616,
+      "xpu:3": 13.615
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 2.117,
+      "xpu:1": 8.265,
+      "xpu:2": 8.616,
+      "xpu:3": 13.615
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.926,
+      "xpu:1": 2.226,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard4-a",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 2.495,
+      "xpu:3": 10.445
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 0.095
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.2,
+      "xpu:1": 10.35,
+      "xpu:2": 0.095,
+      "xpu:3": 9.245
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 6.2,
+      "xpu:1": 10.35,
+      "xpu:2": 0.095,
+      "xpu:3": 9.245
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 5.65,
+      "xpu:1": 5.4,
+      "xpu:2": 2.4,
+      "xpu:3": 1.2
+    },
+    "short_with_one_worker": {
+      "xpu:2": 0.095
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 2.495,
+      "xpu:3": 10.445
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -2.305
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.2,
+      "xpu:1": 10.35,
+      "xpu:2": 0.095,
+      "xpu:3": 9.245
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 0.55,
+      "xpu:1": 4.95,
+      "xpu:2": -2.305,
+      "xpu:3": 8.045
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 5.65,
+      "xpu:1": 5.4,
+      "xpu:2": 2.4,
+      "xpu:3": 1.2
+    },
+    "short_with_one_worker": {
+      "xpu:2": 0.095
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard4-a",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 2.495,
+      "xpu:3": 10.445
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -2.305
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 0.55,
+      "xpu:1": 4.95,
+      "xpu:2": -2.305,
+      "xpu:3": 8.045
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 0.55,
+      "xpu:1": 4.95,
+      "xpu:2": -2.305,
+      "xpu:3": 8.045
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 11.3,
+      "xpu:1": 10.8,
+      "xpu:2": 4.8,
+      "xpu:3": 2.4
+    },
+    "short_with_one_worker": {
+      "xpu:0": 0.55,
+      "xpu:2": -2.305
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 2.495,
+      "xpu:3": 10.445
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -7.105
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 0.55,
+      "xpu:1": 4.95,
+      "xpu:2": -2.305,
+      "xpu:3": 8.045
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -10.75,
+      "xpu:1": -5.85,
+      "xpu:2": -7.105,
+      "xpu:3": 5.645
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 11.3,
+      "xpu:1": 10.8,
+      "xpu:2": 4.8,
+      "xpu:3": 2.4
+    },
+    "short_with_one_worker": {
+      "xpu:0": 0.55,
+      "xpu:2": -2.305
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 2.495,
+      "xpu:3": 10.445
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -16.705
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -10.75,
+      "xpu:1": -5.85,
+      "xpu:2": -7.105,
+      "xpu:3": 5.645
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -33.35,
+      "xpu:1": -27.45,
+      "xpu:2": -16.705,
+      "xpu:3": 0.845
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 22.6,
+      "xpu:1": 21.6,
+      "xpu:2": 9.6,
+      "xpu:3": 4.8
+    },
+    "short_with_one_worker": {
+      "xpu:0": -10.75,
+      "xpu:1": -5.85,
+      "xpu:2": -7.105
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard3-c",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 2.635,
+      "xpu:3": 13.775
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": 0.235
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 4.27,
+      "xpu:1": 8.59,
+      "xpu:2": 0.235,
+      "xpu:3": 13.775
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 4.27,
+      "xpu:1": 8.59,
+      "xpu:2": 0.235,
+      "xpu:3": 13.775
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 6.25,
+      "xpu:1": 6.0,
+      "xpu:2": 2.4,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:2": 0.235
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 2.635,
+      "xpu:3": 13.775
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -2.165
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 4.27,
+      "xpu:1": 8.59,
+      "xpu:2": 0.235,
+      "xpu:3": 13.775
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -1.98,
+      "xpu:1": 2.59,
+      "xpu:2": -2.165,
+      "xpu:3": 13.775
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 6.25,
+      "xpu:1": 6.0,
+      "xpu:2": 2.4,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:2": 0.235
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard3-c",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 2.635,
+      "xpu:3": 13.775
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -2.165
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -1.98,
+      "xpu:1": 2.59,
+      "xpu:2": -2.165,
+      "xpu:3": 13.775
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -1.98,
+      "xpu:1": 2.59,
+      "xpu:2": -2.165,
+      "xpu:3": 13.775
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 12.5,
+      "xpu:1": 12.0,
+      "xpu:2": 4.8,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": -1.98,
+      "xpu:2": -2.165
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 2.635,
+      "xpu:3": 13.775
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -6.965
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -1.98,
+      "xpu:1": 2.59,
+      "xpu:2": -2.165,
+      "xpu:3": 13.775
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -14.48,
+      "xpu:1": -9.41,
+      "xpu:2": -6.965,
+      "xpu:3": 13.775
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 12.5,
+      "xpu:1": 12.0,
+      "xpu:2": 4.8,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": -1.98,
+      "xpu:2": -2.165
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "512x320",
+    "token_scale": 2.5,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 2.635,
+      "xpu:3": 13.775
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -16.565
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -14.48,
+      "xpu:1": -9.41,
+      "xpu:2": -6.965,
+      "xpu:3": 13.775
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -39.48,
+      "xpu:1": -33.41,
+      "xpu:2": -16.565,
+      "xpu:3": 13.775
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 25.0,
+      "xpu:1": 24.0,
+      "xpu:2": 9.6,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": -14.48,
+      "xpu:1": -9.41,
+      "xpu:2": -6.965
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": true,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "two-way",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.066773693847656,
+      "xpu:1": 12.775692340087891,
+      "xpu:2": 7.678535461425781,
+      "xpu:3": 12.501712799072266
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.318,
+      "xpu:1": 11.243,
+      "xpu:2": 7.679,
+      "xpu:3": 12.502
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 6.318,
+      "xpu:1": 11.243,
+      "xpu:2": 7.679,
+      "xpu:3": 12.502
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 1.749,
+      "xpu:1": 1.533,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": true,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 8.066773693847656,
+      "xpu:1": 12.775692340087891,
+      "xpu:2": 7.678535461425781,
+      "xpu:3": 12.501712799072266
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 6.318,
+      "xpu:1": 11.243,
+      "xpu:2": 7.679,
+      "xpu:3": 12.502
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 4.57,
+      "xpu:1": 9.71,
+      "xpu:2": 7.679,
+      "xpu:3": 12.502
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 1.749,
+      "xpu:1": 1.533,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": true,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "two-way",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 7.9017294372558595,
+      "xpu:1": 12.748294775390626,
+      "xpu:2": 7.678508758544922,
+      "xpu:3": 12.677490234375
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 5.285,
+      "xpu:1": 10.776,
+      "xpu:2": 7.679,
+      "xpu:3": 12.677
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 5.285,
+      "xpu:1": 10.776,
+      "xpu:2": 7.679,
+      "xpu:3": 12.677
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.616,
+      "xpu:1": 1.972,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": true,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 7.9017294372558595,
+      "xpu:1": 12.748294775390626,
+      "xpu:2": 7.678508758544922,
+      "xpu:3": 12.677490234375
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 5.285,
+      "xpu:1": 10.776,
+      "xpu:2": 7.679,
+      "xpu:3": 12.677
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 2.669,
+      "xpu:1": 8.804,
+      "xpu:2": 7.679,
+      "xpu:3": 12.677
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 2.616,
+      "xpu:1": 1.972,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": true,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "two-way",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 7.969436328125,
+      "xpu:1": 12.716443432617188,
+      "xpu:2": 7.678546905517578,
+      "xpu:3": 12.677513122558594
+    },
+    "replica_cards_short_of_probe_room": {},
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 3.705,
+      "xpu:1": 9.503,
+      "xpu:2": 7.679,
+      "xpu:3": 12.678
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -0.559,
+      "xpu:1": 6.289,
+      "xpu:2": 7.679,
+      "xpu:3": 12.678
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 4.264,
+      "xpu:1": 3.214,
+      "xpu:2": 0.0,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {},
+    "all_workers_fit_prediction": false,
+    "basis": "packet 97 measured pooled worker x token ratio x 1.5 + 0.25 GiB",
+    "assumption": "worker 0's pooled cost does not exceed the calibrated worker's by more than the margin; the floor re-measured after the chain check at the freeze is the backstop"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard4-a",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 1.558,
+      "xpu:3": 9.5075
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -2.042
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 3.375,
+      "xpu:1": 7.65,
+      "xpu:2": -2.042,
+      "xpu:3": 7.708
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 3.375,
+      "xpu:1": 7.65,
+      "xpu:2": -2.042,
+      "xpu:3": 7.708
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 8.475,
+      "xpu:1": 8.1,
+      "xpu:2": 3.6,
+      "xpu:3": 1.8
+    },
+    "short_with_one_worker": {
+      "xpu:2": -2.042
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 1.558,
+      "xpu:3": 9.5075
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -5.642
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 3.375,
+      "xpu:1": 7.65,
+      "xpu:2": -2.042,
+      "xpu:3": 7.708
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -5.1,
+      "xpu:1": -0.45,
+      "xpu:2": -5.642,
+      "xpu:3": 5.908
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 8.475,
+      "xpu:1": 8.1,
+      "xpu:2": 3.6,
+      "xpu:3": 1.8
+    },
+    "short_with_one_worker": {
+      "xpu:2": -2.042
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard4-a",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 1.558,
+      "xpu:3": 9.5075
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -5.642
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -5.1,
+      "xpu:1": -0.45,
+      "xpu:2": -5.642,
+      "xpu:3": 5.908
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -5.1,
+      "xpu:1": -0.45,
+      "xpu:2": -5.642,
+      "xpu:3": 5.908
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 16.95,
+      "xpu:1": 16.2,
+      "xpu:2": 7.2,
+      "xpu:3": 3.6
+    },
+    "short_with_one_worker": {
+      "xpu:0": -5.1,
+      "xpu:1": -0.45,
+      "xpu:2": -5.642
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 1.558,
+      "xpu:3": 9.5075
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -12.842
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -5.1,
+      "xpu:1": -0.45,
+      "xpu:2": -5.642,
+      "xpu:3": 5.908
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -22.05,
+      "xpu:1": -16.65,
+      "xpu:2": -12.842,
+      "xpu:3": 2.308
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 16.95,
+      "xpu:1": 16.2,
+      "xpu:2": 7.2,
+      "xpu:3": 3.6
+    },
+    "short_with_one_worker": {
+      "xpu:0": -5.1,
+      "xpu:1": -0.45,
+      "xpu:2": -5.642
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard4-a",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 11.85,
+      "xpu:1": 15.75,
+      "xpu:2": 1.558,
+      "xpu:3": 9.5075
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -27.242
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -22.05,
+      "xpu:1": -16.65,
+      "xpu:2": -12.842,
+      "xpu:3": 2.308
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -55.95,
+      "xpu:1": -49.05,
+      "xpu:2": -27.242,
+      "xpu:3": -4.892
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 33.9,
+      "xpu:1": 32.4,
+      "xpu:2": 14.4,
+      "xpu:3": 7.2
+    },
+    "short_with_one_worker": {
+      "xpu:0": -22.05,
+      "xpu:1": -16.65,
+      "xpu:2": -12.842
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard3-c",
+    "workers": 1,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 1.697,
+      "xpu:3": 12.8375
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -1.903
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 1.145,
+      "xpu:1": 5.59,
+      "xpu:2": -1.903,
+      "xpu:3": 12.838
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": 1.145,
+      "xpu:1": 5.59,
+      "xpu:2": -1.903,
+      "xpu:3": 12.838
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 9.375,
+      "xpu:1": 9.0,
+      "xpu:2": 3.6,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": 1.145,
+      "xpu:2": -1.903
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 1,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 1.697,
+      "xpu:3": 12.8375
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -5.503
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": 1.145,
+      "xpu:1": 5.59,
+      "xpu:2": -1.903,
+      "xpu:3": 12.838
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -8.23,
+      "xpu:1": -3.41,
+      "xpu:2": -5.503,
+      "xpu:3": 12.838
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 9.375,
+      "xpu:1": 9.0,
+      "xpu:2": 3.6,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": 1.145,
+      "xpu:2": -1.903
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard3-c",
+    "workers": 1,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 1.697,
+      "xpu:3": 12.8375
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -5.503
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -8.23,
+      "xpu:1": -3.41,
+      "xpu:2": -5.503,
+      "xpu:3": 12.838
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -8.23,
+      "xpu:1": -3.41,
+      "xpu:2": -5.503,
+      "xpu:3": 12.838
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 18.75,
+      "xpu:1": 18.0,
+      "xpu:2": 7.2,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": -8.23,
+      "xpu:1": -3.41,
+      "xpu:2": -5.503
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 2,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 1.697,
+      "xpu:3": 12.8375
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -12.703
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -8.23,
+      "xpu:1": -3.41,
+      "xpu:2": -5.503,
+      "xpu:3": 12.838
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -26.98,
+      "xpu:1": -21.41,
+      "xpu:2": -12.703,
+      "xpu:3": 12.838
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 18.75,
+      "xpu:1": 18.0,
+      "xpu:2": 7.2,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": -8.23,
+      "xpu:1": -3.41,
+      "xpu:2": -5.503
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  },
+  {
+    "admitted": false,
+    "output_size": "640x384",
+    "token_scale": 3.75,
+    "layout": "shard3-c",
+    "workers": 2,
+    "batch": 4,
+    "shared_pool": 1,
+    "replica_spec": "xpu:2",
+    "replica_cards": [
+      "xpu:2"
+    ],
+    "zero_worker_free_gib": {
+      "xpu:0": 10.52,
+      "xpu:1": 14.59,
+      "xpu:2": 1.697,
+      "xpu:3": 12.8375
+    },
+    "replica_cards_short_of_probe_room": {
+      "xpu:2": -27.103
+    },
+    "replica_min_free_gib": 4.51,
+    "predicted_free_gib_one_worker": {
+      "xpu:0": -26.98,
+      "xpu:1": -21.41,
+      "xpu:2": -12.703,
+      "xpu:3": 12.838
+    },
+    "predicted_free_gib_all_workers": {
+      "xpu:0": -64.48,
+      "xpu:1": -57.41,
+      "xpu:2": -27.103,
+      "xpu:3": 12.838
+    },
+    "per_worker_cost_gib": {
+      "xpu:0": 37.5,
+      "xpu:1": 36.0,
+      "xpu:2": 14.4,
+      "xpu:3": 0.0
+    },
+    "short_with_one_worker": {
+      "xpu:0": -26.98,
+      "xpu:1": -21.41,
+      "xpu:2": -12.703
+    },
+    "all_workers_fit_prediction": false,
+    "basis": "private-pool bound",
+    "assumption": "private-pool bound, linear in the batch (an upper bound; also with the shared pool)"
+  }
+]

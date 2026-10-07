@@ -1,0 +1,19 @@
+[ltx-pipeline] FAILED JOB stage=encode index=-930002 worker=ltx-encode-1 RuntimeError: Worker 1 skipped: the first worker failed (receipt: None)
+[ltx-pipeline] FAILED JOB stage=encode index=-930001 worker=ltx-encode-0 RuntimeError: Gemma layer 7 graph replay differs from eager execution; refuse graph mode (receipt: None)
+[ltx-pipeline] FAILED JOB stage=encode index=-930002 worker=ltx-encode-1 RuntimeError: Worker 1 skipped: the first worker failed (receipt: None)
+[ltx-pipeline] FAILED JOB stage=encode index=-930001 worker=ltx-encode-0 RuntimeError: Probe stopped: the server-side time bound expired (receipt: None)
+ok  selection: smallest admitted bucket >= length, fallback 1024
+ok  layout: tail window, positions 1024-W..1023 and mask equal the padded layout (1..1024)
+ok  stack wrapper: positions only on the windowed thread, passthrough otherwise
+ok  qualification: determinism / capture proof / closeness / oracle-pass verdicts
+ok  probe: two workers in turn, W only while capturing, passes replay, qualifies
+ok  probe: a non-deterministic worker rejects, releases graphs, window stays refused
+ok  probe: a capture-proof failure rejects and releases (no latch)
+ok  93b: timed encodes are checked before execution (prompt thread and worker), guard armed
+ok  93b: capture guard refuses any capture while a timed encode runs
+ok  93b: a hung probe worker times out cleanly; window refused, graphs not released under it
+ok  lean: once per clip, bitwise-equal reuse only, never across clips or threads
+ok  sentry: sha256 of the first forward context per stage, read-only passthrough
+ok  fail-closed: pipeline-window refused before the probe (receipt, no submit, no latch)
+ok  control path unchanged with every switch off
+ALL CASES AS EXPECTED: True

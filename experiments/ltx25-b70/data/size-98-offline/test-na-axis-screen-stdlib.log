@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-na-axis-screen-stdlib.py", line 22, in <module>
+    config = validator.checkpoint_config('/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_na_axis_receipts.py", line 22, in checkpoint_config
+    with Path(path).open('rb') as stream:
+         ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/size98-guard-dwemow2k/sitecustomize.py", line 50, in audit
+    raise PermissionError('PACKET98_CPU_GUARD real weights forbidden: '+path)
+PermissionError: PACKET98_CPU_GUARD real weights forbidden: /mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors

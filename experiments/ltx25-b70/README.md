@@ -1,5 +1,13 @@
 # LTX 2.5 native BF16 baseline on B70
 
+**October 6, 2026: this lane is parked at the owner's request while the lab
+consolidates its work. Start with [the resume handoff](RESUME.md).** The accepted
+short-window reference result is 1.308 s per clip. Batch 4 sustained 0.808 s per
+clip against its own references; adopting those different outputs still needs
+the owner's quality decision. Packet 98 is prepared but unmeasured on GPUs.
+The September status, PID and launch examples below are historical evidence,
+not current operating instructions. Follow `CURRENT.md` for live host state.
+
 Status: **1.607 s per distinct clip, bytewise exact on ten fixtures, September 17, 2026**
 (packet 74: two clips in flight across the two shard cards, on top of the
 graph-captured pipeline with the resident fast path and save-behind). That

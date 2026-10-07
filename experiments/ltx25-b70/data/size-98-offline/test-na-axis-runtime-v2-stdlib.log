@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-na-axis-runtime-v2-stdlib.py", line 100, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-na-axis-runtime-v2-stdlib.py", line 36, in main
+    result = builder.verify_na_source_closure(original, node_path=corrected)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/prepare-na-axis-runtime-v2.py", line 94, in verify_na_source_closure
+    require(not mismatches, 'NA startup source closure failed: ' + '; '.join(mismatches))
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/prepare-na-axis-runtime-v2.py", line 48, in require
+    raise RuntimeError(message)
+RuntimeError: NA startup source closure failed: ROUTER_SHA: declared=1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7 actual=9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537; CANDIDATE_SHA: declared=d2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a actual=40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2

@@ -1,0 +1,134 @@
+EEEEEEFEE
+======================================================================
+ERROR: test_control_host_control_retires_before_unload (__main__.Tests.test_control_host_control_retires_before_unload)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 131, in test_control_host_control_retires_before_unload
+    with a.loaded() as (m, node):
+         ^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+ERROR: test_existing_result_receipt_refuses_before_work (__main__.Tests.test_existing_result_receipt_refuses_before_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 156, in test_existing_result_receipt_refuses_before_work
+    with a.loaded() as (m, node):
+         ^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+ERROR: test_existing_started_receipt_refuses_before_work (__main__.Tests.test_existing_started_receipt_refuses_before_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 148, in test_existing_started_receipt_refuses_before_work
+    with a.loaded() as (m, node):
+         ^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+ERROR: test_failed_retirement_does_not_unload_or_retry (__main__.Tests.test_failed_retirement_does_not_unload_or_retry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 187, in test_failed_retirement_does_not_unload_or_retry
+    with a.loaded() as (m,node):
+         ^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+ERROR: test_failure_is_sticky_and_retains_partial_owners (__main__.Tests.test_failure_is_sticky_and_retains_partial_owners)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 172, in test_failure_is_sticky_and_retains_partial_owners
+    with a.loaded() as (m, node):
+         ^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+ERROR: test_identity_change_refuses_reuse_or_transition (__main__.Tests.test_identity_change_refuses_reuse_or_transition)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 163, in test_identity_change_refuses_reuse_or_transition
+    with a.loaded() as (m, node):
+         ^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+ERROR: test_same_mode_reuses_five_components (__main__.Tests.test_same_mode_reuses_five_components)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 109, in test_same_mode_reuses_five_components
+    with a.loaded() as (m, node):
+         ^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+ERROR: test_stubs_are_removed (__main__.Tests.test_stubs_are_removed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 210, in test_stubs_are_removed
+    with Assembly(root).loaded(): self.assertIn('torch',sys.modules)
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 72, in loaded
+    if any(name in sys.modules for name in names): raise RuntimeError('Refuse preexisting native/runtime modules')
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Refuse preexisting native/runtime modules
+
+======================================================================
+FAIL: test_original_numerical_loading_calls_unchanged (__main__.Tests.test_original_numerical_loading_calls_unchanged)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-resident-stdlib.py", line 206, in test_original_numerical_loading_calls_unchanged
+    self.assertEqual(baseline,current)
+AssertionError: {'nod[1458 chars]:1'))])"]} != {'nod[1458 chars]:1')), keyword(arg='split_index', value=Name(i[38 chars]])"]}
+Diff is 2633 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.008s
+
+FAILED (failures=1, errors=8)

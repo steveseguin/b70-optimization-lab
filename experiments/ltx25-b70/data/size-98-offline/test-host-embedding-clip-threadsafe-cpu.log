@@ -1,0 +1,21 @@
+import needs more stubs: AssertionError Torch not compiled with CUDA enabled
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-host-embedding-clip-threadsafe-cpu.py", line 16, in <module>
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/host_embedding_clip_threadsafe.py", line 13, in <module>
+    import comfy.sd
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-77/source/comfy/sd.py", line 6, in <module>
+    from comfy import model_management
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-77/source/comfy/model_management.py", line 364, in <module>
+    total_vram = get_total_memory(get_torch_device()) / (1024 * 1024)
+                                  ^^^^^^^^^^^^^^^^^^
+  File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-graph-capture-77/source/comfy/model_management.py", line 213, in get_torch_device
+    return torch.device(torch.cuda.current_device())
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/cuda/__init__.py", line 1267, in current_device
+    _lazy_init()
+  File "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/cuda/__init__.py", line 584, in _lazy_init
+    raise AssertionError("Torch not compiled with CUDA enabled")
+AssertionError: Torch not compiled with CUDA enabled

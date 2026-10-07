@@ -1,0 +1,10 @@
+ok  component loader: layout from the environment, placement, shared identity and receipt
+ok  graph-capture gate: each layout accepted by the real checks; tampered reports refused
+ok  sampler: placement devices, extra streams, expected residents and freeze verdict per layout
+ok  decode probe: needs the resident fast path, which only a pipelined prompt installs
+ok  decode probe precondition: VAEs left off-card by the capture pass are loaded explicitly first
+ok  post-freeze VAE decode load (real ComfyUI bookkeeping on CPU): resident no-op passes without the loader; memory shortfall, partial or missing models refused
+ok  stop after a failed arm: running() still counts a dropped job; the runner needs 3 idle readings
+ok  self-check report names the refused model or graph
+ok  runner order: text probe < capture pass < coverage < decode probe < freeze < placement probe < timed
+ALL CASES AS EXPECTED: True

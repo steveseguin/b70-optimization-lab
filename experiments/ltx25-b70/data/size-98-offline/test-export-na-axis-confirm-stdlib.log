@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-export-na-axis-confirm-stdlib.py", line 117, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-export-na-axis-confirm-stdlib.py", line 108, in main
+    check('no-native-module-imports', not any(name == 'torch' or name.startswith(('torch.', 'comfy.', 'comfy_kitchen'))
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-export-na-axis-confirm-stdlib.py", line 20, in check
+    module.require(condition, name)
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/export-na-axis-confirm.py", line 63, in require
+    raise RuntimeError(message)
+RuntimeError: no-native-module-imports

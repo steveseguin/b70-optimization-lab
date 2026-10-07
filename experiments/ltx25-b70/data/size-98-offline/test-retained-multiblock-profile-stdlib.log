@@ -1,0 +1,35 @@
+test_attachment_failure_has_no_request (__main__.Tests.test_attachment_failure_has_no_request) ... ok
+test_cli_modes_do_not_need_terminal (__main__.Tests.test_cli_modes_do_not_need_terminal) ... ok
+test_closed_schedule (__main__.Tests.test_closed_schedule) ... ok
+test_diagnostic_success_and_failure_order (__main__.Tests.test_diagnostic_success_and_failure_order) ... ok
+test_exact_profiler_command (__main__.Tests.test_exact_profiler_command) ... ok
+test_strict_four_output_parity (__main__.Tests.test_strict_four_output_parity) ... ok
+test_terminal_process_and_status_gates (__main__.Tests.test_terminal_process_and_status_gates) ... ok
+test_trace_validation (__main__.Tests.test_trace_validation) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.031s
+
+OK
+usage: test-retained-multiblock-profile-stdlib.py [-h] --campaign CAMPAIGN
+                                                  --packet PACKET
+                                                  --manifest-sha256
+                                                  MANIFEST_SHA256 --server-run
+                                                  SERVER_RUN
+                                                  [--check-only | --ready-check]
+
+Packet08 retained all48 diagnostic: one profiled clip, then one restored clip.
+No server control or retry. --check-only verifies sealed sources offline;
+--ready-check additionally requires the same-process terminal screen03 and a
+healthy idle endpoint, without attaching or submitting. Ordinary execution
+uses one bounded nonblocking py-spy attachment and at most two native
+requests.
+
+options:
+  -h, --help            show this help message and exit
+  --campaign CAMPAIGN
+  --packet PACKET
+  --manifest-sha256 MANIFEST_SHA256
+  --server-run SERVER_RUN
+  --check-only
+  --ready-check

@@ -1,0 +1,12 @@
+ok  routing: arbitrary splits run every block once, in order, on its device; one move per boundary
+ok  install: one shard per extra segment, partitioned ownership, exact arithmetic, verify walks all
+ok  two-way: install/_BlockRoute/_move/transfers byte-identical to 93c; default placement two-way
+ok  memory floor: plan and freeze admission refuse below 2 GiB free
+ok  timed arms: a sampler capture after the freeze is refused before it starts
+ok  serial pass: no sampler capture while another job holds a card, and no freeze while one runs
+ok  freeze: every block signature must be captured on both sampler workers
+ok  loads: after the freeze a non-resident load is refused before the native loader (receipt)
+ok  runner: an arm is registered before its client starts; 94 refuses
+ok  best candidate: exact, faster than control and than the other candidate
+ok  allowlist: generator manifest, gate check and ltx_layer_shard.PLACEMENTS agree
+ALL CASES AS EXPECTED: True

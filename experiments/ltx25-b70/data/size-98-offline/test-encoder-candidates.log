@@ -1,0 +1,26 @@
+test_empty_sections (__main__.CropTests.test_empty_sections) ... ok
+test_full_prompt (__main__.CropTests.test_full_prompt) ... ok
+test_ltx_call_enables_opt_in (__main__.CropTests.test_ltx_call_enables_opt_in) ... ok
+test_short_prompt (__main__.CropTests.test_short_prompt) ... ok
+test_two_sections (__main__.CropTests.test_two_sections) ... ok
+test_zero_mask_preserves_negative_zero_slice (__main__.CropTests.test_zero_mask_preserves_negative_zero_slice) ... ok
+test_candidate_preserves_reported_physical_match (__main__.AccountingTests.test_candidate_preserves_reported_physical_match) ... ok
+test_changed_device_does_not_get_same_device_exemption (__main__.AccountingTests.test_changed_device_does_not_get_same_device_exemption) ... ok
+test_explicit_partial_unload_still_releases_module (__main__.AccountingTests.test_explicit_partial_unload_still_releases_module) ... ok
+test_larger_budget_loads_more_weights (__main__.AccountingTests.test_larger_budget_loads_more_weights) ... ok
+test_original_reproduces_counter_drift (__main__.AccountingTests.test_original_reproduces_counter_drift) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.161s
+
+OK
+{
+  "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "patch_sha256": {
+    "encoder-crop-before-cpu.patch": "2c319f597549e638a65437a3e5af360d9a5b16260884f767cdc80662cf101f9d",
+    "encoder-resident-accounting.patch": "14a28f05e6bb5988ee86a511d4558ab4721bf2e59a8cc202601b660c01aef456"
+  },
+  "tests_run": 11,
+  "passed": true,
+  "evidence_scope": "CPU tensors and fake-device method emulation; no GPU"
+}

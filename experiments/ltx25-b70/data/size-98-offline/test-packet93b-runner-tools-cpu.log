@@ -1,0 +1,28 @@
+fixture     PSNR dB  max/255 mean/255    >1/255   wav SNR    wav max   vlat max   alat max
+boat          60.01     0.26   0.2545   0.00000     39.62   1.00e-03   1.00e-03   1.00e-03
+marble        60.00     0.26   0.2550   0.00000     39.42   1.00e-03   1.00e-03   1.00e-03
+bird          60.01     0.26   0.2547   0.00000     39.08   1.00e-03   1.00e-03   1.00e-03
+pendulum      60.01     0.26   0.2545   0.00000     39.38   1.00e-03   1.00e-03   1.00e-03
+rain          60.00     0.26   0.2550   0.00000     40.78   1.00e-03   1.00e-03   1.00e-03
+paper         60.00     0.26   0.2550   0.00000     39.59   1.00e-03   1.00e-03   1.00e-03
+candle        60.00     0.26   0.2550   0.00000     39.40   1.00e-03   1.00e-03   1.00e-03
+pour          60.01     0.26   0.2547   0.00000     40.22   1.00e-03   1.00e-03   1.00e-03
+fabric        60.00     0.26   0.2549   0.00000     41.15   1.00e-03   1.00e-03   1.00e-03
+wheel         60.00     0.26   0.2550   0.00000     40.79   1.00e-03   1.00e-03   1.00e-03
+{"accepted": false, "reason": "both passes have the same prefix: one pass supplied twice?"}
+{"accepted": false, "reason": "bird/waveform bytes differ between passes"}
+{"accepted": false, "reason": "or1-07/images differs from its summary"}
+{"accepted": false, "reason": "clip or2/2 was not encoded in window mode"}
+{"accepted": false, "reason": "request or2-00 ran on a different server identity"}
+{"accepted": false, "reason": "request or2-00 ran another packet (bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)"}
+{"accepted": false, "reason": "clip or1/2 did not use a window bucket (1024)"}
+arm                    verified   exact    iv_med   iv_mean  enc_med  smp_med  dec_med  ccs s/clip per card
+ctl                          10      10       1.0       1.0     None      1.0     None  -
+lean                         10      10       1.0       1.0     None      1.0     None  -
+context sentry ctl:lean: 0/10 fixtures identical boat: context hashes differ between the arms; marble: context hashes differ between the arms; bird: context hashes differ between the arms; pendulum: context hashes differ between the arms; rain: context hashes differ between the arms
+CONTEXT SENTRY GATE FAILED
+ok  oracle: two distinct window passes accepted; references copied; finished-clip numbers recorded
+ok  oracle: identical pass, differing tensor, bad file, non-window, other server/manifest refused
+ok  markers: only jobs actually submitted and queued are awaited
+ok  summary: context-sentry gate (ten fixtures, non-null, equal) fails the campaign otherwise
+ALL CASES AS EXPECTED: True

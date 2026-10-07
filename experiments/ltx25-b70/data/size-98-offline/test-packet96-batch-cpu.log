@@ -1,0 +1,59 @@
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+pa                   none                 10     10     None     None    None     None      None    None    None         -  -
+pb                   none                 10     10     None     None    None     None      None    None    None         -  -
+context sentry pa:pb: 10/10 fixtures identical 
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+pa                   none                 10     10     None     None    None     None      None    None    None         -  -
+pz                   (not run)
+SUMMARY INCOMPLETE OR A PROOF FAILED: arm pz; pair pa:pz
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+pa                   none                 10     10     None     None    None     None      None    None    None         -  -
+pb                   none                 10     10     None     None    None     None      None    None    None         -  -
+context sentry pa:pb: 10/10 fixtures identical 
+SUMMARY INCOMPLETE OR A PROOF FAILED: proof proof-timed.json missing
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+pa                   none                 10     10     None     None    None     None      None    None    None         -  -
+pb                   none                 10     10     None     None    None     None      None    None    None         -  -
+context sentry pa:pb: 10/10 fixtures identical 
+proof-timed.json: FAILED (None/None exact)
+SUMMARY INCOMPLETE OR A PROOF FAILED: proof proof-timed.json did not pass
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+pa                   none                 10     10     None     None    None     None      None    None    None         -  -
+pb                   none                 10     10     None     None    None     None      None    None    None         -  -
+context sentry pa:pb: 10/10 fixtures identical 
+proof-timed.json: PASSED (None/None exact)
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+f96-t-proofn         none                 10     10     None     None    None     None      None    None    None         -  -
+f96-t-proofs         none                 10     10     None     None    None     None      None    None    None         -  -
+f96-t-timed          none                 10     10     None     None    None     None      None    None    None         -  -
+context sentry f96-t-proofn:f96-t-timed: 10/10 fixtures identical 
+proof-neighbours.json: PASSED (None/None exact)
+proof-slots.json: PASSED (None/None exact)
+proof-timed.json: PASSED (None/None exact)
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+f96-t-ref            (not run)
+f96-t-proofn         none                 10     10     None     None    None     None      None    None    None         -  -
+f96-t-proofs         none                 10     10     None     None    None     None      None    None    None         -  -
+f96-t-timed          none                 10     10     None     None    None     None      None    None    None         -  -
+proof-neighbours.json: PASSED (None/None exact)
+proof-slots.json: PASSED (None/None exact)
+proof-timed.json: PASSED (None/None exact)
+SUMMARY INCOMPLETE OR A PROOF FAILED: arm f96-t-ref; pair f96-t-ref:f96-t-timed
+ok  grouping B consecutive clips per job, workers 1-4, batches 2/4; ordered emission out of order
+ok  fixed batch shape: fill rows repeat the last real clip and are discarded; refusals
+ok  per-clip initial and ancestral noise equal the batch-1 draws of each seed
+ok  stacking: batchproof census (packet 72) agrees; forward guard; stacked conds
+ok  batch conds: connector per clip at batch 1 on its own raw features (any token count), memo per row
+ok  LTX_SAMPLER_BATCH allowlist 1/2/4 (3 refused), default 1; one sampler worker accepted
+ok  lockstep: unequal sigma schedules and mixed all-zero rows refuse
+ok  batch 1 unchanged: graphs, run_behind call, lean memo, refusal of batch arms, worker rule
+ok  generator, gate, runner, client and packet agree on arms, depths, prompt counts and index bases
+ok  simulated arms (real batch step, real decode lag): provenance per emitted clip, counts incl. drain
+ok  proof checker: other neighbours / slots pass; reference order, missing, duplicate, empty, miscount fail
+ok  memory plan/live on the 95b figures; missing markers only for submitted batch jobs
+ok  leading_dims through the real describe(); summary attribution, missing arms and proofs; runner commit/proof
+ok  shared graph pool: allowlist, per-(device, thread) pool/stream, handles cleared, chain check, default off
+ok  client end to end (real main, stand-in server): batch-1, reference, proof, timed; duplicate and mismatch fail
+ok  second run (references present): the summary does not request the reference arm and passes
+ok  pool calibration: matching receipt picked, mismatches refused, scaling and margin, basis recorded, fallback
+ALL CASES AS EXPECTED: True
