@@ -1,0 +1,179 @@
+{
+  "clips": [
+    {
+      "clip_index": 99909200,
+      "decode_marker_to_emission_seconds": 1.420343,
+      "decode_queue_request": "resolution-duration109-20261007-timed-fast-02",
+      "decode_service_receipt": {
+        "decode_split": {
+          "device": "xpu:3",
+          "enqueue_s": 0.0,
+          "slot": "native",
+          "vae_s": 4.2803,
+          "wait_s": 0.0
+        },
+        "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-decode-resolution-duration109-20261007-timed-fast-04.json",
+        "stage_seconds": 4.2949
+      },
+      "emission_request": "resolution-duration109-20261007-timed-fast-04",
+      "emission_row": 4,
+      "emission_success_ms": 1791413758682,
+      "fixture": "boat",
+      "preview_path_from_existing_gate": "resolution-duration109-20261007-timed-fast-02/preview_00001_.mp4",
+      "producer_request": "resolution-duration109-20261007-timed-fast-00",
+      "producer_row": 0,
+      "producer_start_ms": 1791413748202,
+      "sampler_collect_decode_queue_row": 2,
+      "save_marker_to_emission_seconds": 0.918402,
+      "seconds_from_producer_server_start": {
+        "decode": 9.059657,
+        "emission_success": 10.48,
+        "sample": 4.713415,
+        "save": 9.561598
+      },
+      "worker_finished_unix": {
+        "decode": 1791413757.2616568,
+        "sample": 1791413752.9154148,
+        "save": 1791413757.763598
+      }
+    },
+    {
+      "clip_index": 99909201,
+      "decode_marker_to_emission_seconds": 1.649336,
+      "decode_queue_request": "resolution-duration109-20261007-timed-fast-03",
+      "decode_service_receipt": {
+        "decode_split": {
+          "device": "xpu:2",
+          "enqueue_s": 0.0,
+          "slot": "replica",
+          "vae_s": 4.8445,
+          "wait_s": 0.0
+        },
+        "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-decode-resolution-duration109-20261007-timed-fast-05.json",
+        "stage_seconds": 4.8609
+      },
+      "emission_request": "resolution-duration109-20261007-timed-fast-05",
+      "emission_row": 5,
+      "emission_success_ms": 1791413761946,
+      "fixture": "marble",
+      "preview_path_from_existing_gate": "resolution-duration109-20261007-timed-fast-03/preview_00001_.mp4",
+      "producer_request": "resolution-duration109-20261007-timed-fast-01",
+      "producer_row": 1,
+      "producer_start_ms": 1791413749442,
+      "sampler_collect_decode_queue_row": 3,
+      "save_marker_to_emission_seconds": 1.244441,
+      "seconds_from_producer_server_start": {
+        "decode": 10.854664,
+        "emission_success": 12.504,
+        "sample": 5.940099,
+        "save": 11.259559
+      },
+      "worker_finished_unix": {
+        "decode": 1791413760.296664,
+        "sample": 1791413755.382099,
+        "save": 1791413760.7015588
+      }
+    },
+    {
+      "clip_index": 99909202,
+      "decode_marker_to_emission_seconds": 1.611481,
+      "decode_queue_request": "resolution-duration109-20261007-timed-fast-04",
+      "decode_service_receipt": {
+        "decode_split": {
+          "device": "xpu:3",
+          "enqueue_s": 0.0,
+          "slot": "native",
+          "vae_s": 4.8871,
+          "wait_s": 0.0
+        },
+        "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-decode-resolution-duration109-20261007-timed-fast-06.json",
+        "stage_seconds": 4.9017
+      },
+      "emission_request": "resolution-duration109-20261007-timed-fast-06",
+      "emission_row": 6,
+      "emission_success_ms": 1791413764843,
+      "fixture": "bird",
+      "preview_path_from_existing_gate": "resolution-duration109-20261007-timed-fast-04/preview_00001_.mp4",
+      "producer_request": "resolution-duration109-20261007-timed-fast-02",
+      "producer_row": 2,
+      "producer_start_ms": 1791413750769,
+      "sampler_collect_decode_queue_row": 4,
+      "save_marker_to_emission_seconds": 1.201651,
+      "seconds_from_producer_server_start": {
+        "decode": 12.462519,
+        "emission_success": 14.074,
+        "sample": 7.516203,
+        "save": 12.872349
+      },
+      "worker_finished_unix": {
+        "decode": 1791413763.2315187,
+        "sample": 1791413758.285203,
+        "save": 1791413763.6413486
+      }
+    }
+  ],
+  "limitations": [
+    "Only three fixtures/two delivery intervals in109; no steady-state, endurance, comparative speed-gain or public-record conclusion.",
+    "Wall-clock server timestamps have millisecond event resolution; worker markers use time.time(). Not monotonic end-to-end client tracing.",
+    "Worker finish gaps include queueing/collection/back-pressure and evidence work; not isolated kernel or stage service durations.",
+    "Preview bytes and raw tensors were not read or reverified in this audit; existing exact gate status is provenance only.",
+    "Neither save completion nor server execution_success proves client-observable first frame, notification delivery, playback availability or user-perceived latency.",
+    "Changing pipeline depth/scheduling can trade throughput against latency and would require separately exact qualification.",
+    "Root checked matched emitted decode service receipts. Sample-to-decode marker spans mostly reflect measured decoding service here; they are not evidence of a removable multi-second queue delay."
+  ],
+  "next_implication": "Track same-clip producer-to-delivery latency alongside interval throughput. After full-suite quality, evaluate an explicit latency/throughput operating point or clip-ready delivery semantics; do not infer benefit from tiny glue optimizations or claim an early usable preview from these markers.",
+  "plan_sha256": "6533fa06a31ec88e461abe4c43809950249655ec6c43dc86516831d38b1c3745",
+  "receipt_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/same-size-timed-fast.json",
+  "receipt_sha256": "e73eb9a005a450c7ac35d06c33ff69712ea43fc5cc45cb990142ad9502a87245",
+  "runtime_manifest_sha256": "e91e8994642cf03210c5bde724a485e0c314a409a300a40379cc79a43fc67906",
+  "schema": "ltx.duration109.responsiveness-metadata-audit.v1",
+  "scope": "Post-hoc analysis of existing109 pilot metadata; no new benchmark or quality re-verification.",
+  "server_identity_sha256": "91a1620521a8faaa8a5aba2b9a65351828cce3136e364d9fdf03b43224b63e56",
+  "source_semantics": {
+    "decode": "pipeline_decode_node.py:555-579 finishes decode and submits preview CPU copies before done_marker; timestamp includes enqueue, not pure VAE service.",
+    "lineage": "candidate_gate.py:158-165 enforces sampler i-2 and decode i-4;199-208 binds preview prefix to producer+2 and same emitted clip.",
+    "sample": "pipeline_sampler_node.py:564-593 drains existing streams, then finite/hash sentries, then worker done_marker.",
+    "save": "pipeline_decode_node.py:184-204 emits marker after save_fn returns;137-147 writes complete MP4; no client-viewability event.",
+    "server_events": "execution.py:679-686 adds int(time.time()*1000); start at744 and success at826 bracket prompt execution, not client receipt."
+  },
+  "throughput": {
+    "definition": "49 times2 divided by elapsed server-success time between first and third scored emission; excludes initial fill latency.",
+    "delivery_intervals_seconds": [
+      3.264,
+      2.897
+    ],
+    "denominator_seconds": 6.161,
+    "generated_frames_per_clip": 49,
+    "generated_frames_per_second": 15.906508683655252,
+    "interval_count": 2,
+    "numerator_frames": 98,
+    "playback_frames_per_second": 24
+  },
+  "verified_metadata_and_source_sha256": {
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-decode-resolution-duration109-20261007-timed-fast-04.json": "6407b6d3042d6c774336fbee8823dbd5004fec01da32b8a3edbf12c7d8378287",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-decode-resolution-duration109-20261007-timed-fast-05.json": "9aadbf736c07d61f4334f6695cc15d6d42dac9a2aac83366423d9090a1cc254e",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-decode-resolution-duration109-20261007-timed-fast-06.json": "25be9b6d589a97c68c902cb98b069adaad872f111e57a9c79fcd62a760c1831b",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-decode-99909200.json": "032290f527201788a8cd20582dc687f76c0ace4096d8e34978f426f627ed01ec",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-decode-99909201.json": "976fda56f85b3526e79c4a2eba1e9c9e5a1d4599e01e3f2e5e00f6a90c5da5e1",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-decode-99909202.json": "aee1a958e10756e654281bcb531ca57782d6dc49a620ba7ba6971a386416f7af",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-sample-99909200.json": "45d4a8c41d72b408c3ced5b13eed85caf7a48544b87ff18705a7b60affdcd455",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-sample-99909201.json": "1f144b62c7f6f3572669c251d9639878460f680e2c57e9ecd06fc44a0325ff98",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-sample-99909202.json": "076c483e459d407624f9ed52c387532877f660dc958f155ad966f574efc106d1",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-save-99909200.json": "313069db16fd87eca575bcc0591233fc5acdce2667594ca5c958f5e6bb19d710",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-save-99909201.json": "f9c1c1198c3174d4e5c96eab243daa57952f572e7b4a3d352d88e0152395361d",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/pipeline-done-save-99909202.json": "71c4ee4ac79659eb973fd998ebc8153b49f79dd4a15612b71c599d66d899fdd6",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-pilot-109-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/same-size-timed-fast.json": "e73eb9a005a450c7ac35d06c33ff69712ea43fc5cc45cb990142ad9502a87245",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-109/manifest.json": "e91e8994642cf03210c5bde724a485e0c314a409a300a40379cc79a43fc67906",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-109/resolution/candidate-plan.json": "44e5f65c58826f1b627e2ddbba742a0518adc7d789dce5e0b22129f8cae61eb4",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-109/resolution/components/candidate_gate.py": "a23ed1358ed80b51161a6a7a781962492ed956f81741133aee1692e69630a604",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-109/source/execution.py": "a628d8c81b8381147a8dafa5133340ab02e54a05694db4013833138297e7b9dc",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-109/source/scripts/pipeline_decode_node.py": "e7bdab34f213bb879192316ce6523f66758f88bde72c66d8bab6cc163eb8c825",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-109/source/scripts/pipeline_sampler_node.py": "3dcaa3186c4230fce65536e5a6b3737a3979eced12f33e84576529b06cb03701",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/resolution-duration109-20261007-timed-fast-00/history.json": "61eb63c5c69d4507a045eeabaea721d387066af91eb283d3a232a0b2230ee7ae",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/resolution-duration109-20261007-timed-fast-01/history.json": "08b1c87d363e51de5d218d0c8bd4d8eba5d32ef4cf22c06163f1e953f2485247",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/resolution-duration109-20261007-timed-fast-02/history.json": "acc681a54a0a203bb8faa065e378f5a673c68cf4922efa67d9e7b59d902e5cd6",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/resolution-duration109-20261007-timed-fast-04/history.json": "7f1d563632516a80883a873583ed922eb782da19129926a388b22f97ebdac862",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/resolution-duration109-20261007-timed-fast-05/history.json": "507407ba9926192922c1496ab34c39ad9f512d24b78a96f2153dbee8cbafc75c",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/requests/resolution-duration109-20261007-timed-fast-06/history.json": "7980f7163509f582432ef52b8e26c51720adfb530700b32893e8fd819c287a71"
+  }
+}
