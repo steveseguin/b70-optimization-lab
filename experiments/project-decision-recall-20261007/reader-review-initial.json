@@ -1,0 +1,147 @@
+{
+  "schema": "decision-reader-review.v1",
+  "date": "2026-10-07",
+  "reviewer": "audit_checker",
+  "scope": {
+    "reviewed_files": [
+      "experiments/project-decision-recall-20261007/evidence.py",
+      "experiments/project-decision-recall-20261007/test_evidence.py"
+    ],
+    "file_sha256": {
+      "evidence.py": "56abee1e30278a17fd5d0a8c42b97f27c9a8f225936afea6e0d2cf2542e8ae50",
+      "test_evidence.py": "5efe0709d903b979c5f1470fb5ccb364e2a0d71ae35121cf9cb18d324cc9ccb1"
+    },
+    "packet_or_questions_or_other_annotations_read": false,
+    "source_files_edited": false,
+    "model_network_gpu_or_process_control_actions": false,
+    "boundary": "Instruction-only blinding, not filesystem security. Findings concern ordinary replay, concurrent tool calls, accidental drift and honest cost accounting."
+  },
+  "verdict": "Fix submission serialization and attempted-operation accounting before readers start. Freeze and record corpus/question/reader identity before either arm. Existing citation checks are suitable mechanical checks, not semantic grading.",
+  "tests": {
+    "existing_suite": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -B experiments/project-decision-recall-20261007/test_evidence.py",
+      "passed": 10,
+      "failed": 0,
+      "seconds": 0.009
+    },
+    "additional_cpu_reproductions": [
+      {
+        "name": "concurrent_first_submission",
+        "method": "Temporary one-source corpus. Two same-arm run(submit) threads synchronized after the existence check; first answer write forced before second answer write. Both supplied mechanically invalid but distinct JSON bytes.",
+        "observed": {
+          "first_submission": "{\"first\":1}",
+          "retained_submission": "{\"second\":2}",
+          "submission_log_rows": 2,
+          "exceptions": []
+        }
+      },
+      {
+        "name": "rejected_operation_budget",
+        "method": "Temporary corpus; call run(read) with nonexistent end line 99 seventy times.",
+        "observed": {
+          "attempts": 70,
+          "reads_log_exists": false
+        }
+      },
+      {
+        "name": "within_trial_corpus_drift",
+        "method": "Temporary corpus; successful read, replace source text and update matching manifest SHA, then successful read in the same arm.",
+        "observed": {
+          "responses": [
+            "Original decision.",
+            "Revised decision."
+          ],
+          "error": null
+        }
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "high",
+      "file": "experiments/project-decision-recall-20261007/evidence.py",
+      "lines": [
+        88,
+        89,
+        91,
+        114,
+        115,
+        130
+      ],
+      "title": "First submission and operation budgets are not serialized",
+      "evidence": "The answers-exists and current-budget checks happen before an ordinary overwrite-capable write_bytes. Two callers can both pass checks; reproduction retained the second submission and appended two submit records. The same read/check/append race can exceed operation or returned-byte budgets and duplicate sequence numbers.",
+      "impact": "The explicit first-submission-immutable rule is false under concurrent same-arm calls. This can occur through ordinary parallel tool use, without bypassing the reader or editing files.",
+      "minimal_fix": "Hold one per-arm advisory lock around identity/budget checks, operation execution and log append. Create answers.json exclusively with xb/O_EXCL and preserve its exact bytes even on invalid content. Record submission SHA256 in the terminal record. Keep arms independently locked.",
+      "targeted_test": "Two concurrent submissions must preserve exactly the first successful exclusive write and yield one terminal record; concurrent reads at the last budget slot cannot both succeed."
+    },
+    {
+      "id": "R2",
+      "priority": "high",
+      "file": "experiments/project-decision-recall-20261007/evidence.py",
+      "lines": [
+        91,
+        92,
+        98,
+        103,
+        105,
+        111,
+        125,
+        126,
+        130
+      ],
+      "title": "Failed operations disappear and do not count toward the operation limit",
+      "evidence": "Invalid regexes, missing source/range requests, forbidden commands and returned-byte refusals raise before reads.jsonl is appended. Seventy invalid reads left no log at all.",
+      "impact": "The reader enforces 64 successful logged operations, not 64 attempted operations. Error-driven query retries and their cost are omitted, and replay cannot reconstruct what the assistant tried. After 64 successful operations, submit also fails before preserving any first submission.",
+      "minimal_fix": "Under the arm lock, log each attempted operation with success/error status and charge its operation slot; rejected retrieval delivers no source bytes. Define whether the 64 includes submission/catalog. Reserve a submission slot or separately retain the first terminal submission on exhaustion without accepting further source reads; report exhaustion explicitly rather than silently dropping the answer. Do not claim 64 total operations while errors are free.",
+      "targeted_test": "Invalid regex, bad range and over-byte read each leave a deterministic failure record and consume the declared attempt allowance; exercise the final slot and first submission at exhaustion."
+    },
+    {
+      "id": "R3",
+      "priority": "medium",
+      "file": "experiments/project-decision-recall-20261007/evidence.py",
+      "lines": [
+        25,
+        26,
+        33,
+        49,
+        50,
+        88,
+        127
+      ],
+      "title": "No fixed trial identity binds manifest, questions and reader version",
+      "evidence": "Each command trusts the current manifest and current question file. Logs contain only command/result hashes, not the manifest, question or implementation identity. Updating source bytes and their manifest hash allowed a different document to be returned later in the same trial.",
+      "impact": "Per-file checks detect source changes relative to a manifest, but do not establish that both arms saw the same immutable task or that citations were validated against the source version originally read. Question wording can likewise change without an identity check.",
+      "minimal_fix": "Before either arm starts, freeze the packet and record manifest/questions/evidence.py hashes and arm/model/session identity. Verify those fixed hashes at each call. This can be a small external immutable launch receipt plus reader checks; no filesystem sandbox or cryptographic ledger is required.",
+      "targeted_test": "Changing a source together with its manifest, changing questions, or changing the reader after the first operation must be refused as infrastructure/provenance drift."
+    }
+  ],
+  "mechanical_contract_assessment": {
+    "null": "JSON null with status unknown is mechanically valid when explanation and scope/context citations are supplied. The string null is correctly rejected.",
+    "citations": "Quotes must match the complete cited lines joined by newline; strict integer line bounds reject booleans. Duplicate answer IDs and duplicate JSON object keys are rejected. These verify textual support location only, not that the quote entails the claim or establishes an absence.",
+    "semantic_quality": "Remains null even for a false claim with a real quote, as intended. Preserve that distinction in all reports.",
+    "line_normalization": "splitlines() plus newline-join normalizes line separators and removes terminal newline; call these exact logical line quotes, not byte-identical file slices. Fine for frozen UTF-8 prose if stated.",
+    "first_invalid_submission": "Sequential valid-file submissions are preserved before mechanical validation, including malformed JSON, but concurrency and operation exhaustion currently break the stronger invariant.",
+    "test_gap": "All 10 existing tests exercise validation; none exercises run(), arm permissions, operation/byte boundaries, log replay or terminal immutability."
+  },
+  "minimal_cost_accounting": [
+    "Record parent-observed trial start/end and elapsed time from delivery of the initial arm instructions through the first immutable submission, including failed reader calls. Current time_unix is only a record timestamp; it is not assistant latency or per-operation duration.",
+    "Report attempted/successful/failed operations by command, returned serialized source/metadata bytes, first-submission bytes and mechanical status. Print adds one trailing newline beyond response_bytes; define payload-byte accounting explicitly or count it consistently.",
+    "Record assistant model/version, fork-none session identity and initial instruction/prompt hash. If model input/output/reasoning token usage is available from the session, preserve it; otherwise label it unmeasured rather than estimating from file bytes.",
+    "Full/read responses deliberately contain both unnumbered and numbered copies; search returns matching lines once with metadata. The byte cap measures these interface representations, not unique source bytes or model tokens. Report both delivered representation bytes and unique cited/read source coverage if cheap; do not equate a lower byte count with a proven model-cost saving.",
+    "CPU preflight should verify that catalog plus the single full response fits 300000 returned bytes before launch. Corpus not inspected here, so actual fit is not established by this review.",
+    "A broad regex such as .* can expose nearly every line in one search call. That is valid ordinary regex behavior, but means the search arm is not guaranteed to read sparsely. Keep it permitted if that is the registered interface and report actual coverage; do not restrict it after observing results."
+  ],
+  "minimal_replay_validation": [
+    "Against the frozen trial identity, independently replay catalog/full/search/read results, validate sequence/order/arm permissions, re-encode response hashes and byte charges, and include error outcomes. No model replay is needed.",
+    "Hash and preserve the first raw answer bytes and independently rerun mechanical validation once. Mechanical failure remains the observed first attempt; no repair/resubmission is admitted.",
+    "Record missing or interrupted logs/terminal receipts as incomplete evidence, not successful trials. Ordinary flush/fsync of the short records and terminal files is enough; do not build a generalized database or security boundary for this small study.",
+    "Perform the separate semantic review only after both first submissions are frozen. Exact line citations are not semantic correctness; null/unknown claims require reviewing corpus scope, and differing citations can still support equivalent answers."
+  ],
+  "not_claimed": [
+    "No actual packet size or quality assessment: only the requested reader and test files were reviewed.",
+    "No local Qwen inference, strict qualification or runtime comparison is relevant to these assistant sessions.",
+    "No adversarial filesystem isolation is claimed or requested.",
+    "This small two-reader comparison cannot establish statistical superiority or a broad speed headline."
+  ]
+}
