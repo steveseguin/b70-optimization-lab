@@ -16,11 +16,16 @@ with no kernel GPU fault.
 [Incident closeout](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
 
 The corrected historical control completed and stopped cleanly at 13:07 UTC.
-A separately preregistered current-upstream control is now running on PID
-**3123108**, unit `ltx99-upstream-server-20261007`, with runner
-`ltx99-upstream-campaign-20261007` and a read-only descriptor observer. Its
-actual 65,536/1,048,576 file limits and empty initial queue were verified before
-submitting work. This one experiment must stop gracefully on completion.
+The current-upstream control **failed exact output parity** for its two initial
+self-check clips and skipped the timed workload. One graceful SIGINT stopped
+PID 3123108 at 13:34 UTC; **no model server is running**. All four cards passed
+postflight with no GPU fault. Failed clips, source and dependency evidence are
+preserved. Prompts, seeds and initial latents match; the first observed difference
+is already in encoder conditioning. An upstream dependency changed split-half
+positional encoding from separate operations to `addcmul_`; this is a strong
+lead, not yet a proven full-clip cause. Work continues on a narrow arithmetic
+compatibility overlay on current upstream. The sampler rebalance must wait for
+an exact new-base control. [Failure evidence and next test](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md).
 All 126 historical probe/timed clips matched the accepted references
 exactly; two self-check clips also passed. Sustained generation measured
 **1.31786 seconds per 25-frame clip, about 18.97 generated frames/s**, close to
@@ -57,9 +62,10 @@ is prepared separately with all five native and 63 added lab overlays accounted
 for. The separate runtime candidate and isolated application dependencies now
 pass source, CPU and inactive launch checks, including independent review.
 Its manifest is `e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736`;
-**Exact-output qualification remains pending; startup passed.** The fixed
+**Exact-output qualification failed; this candidate is not adopted.** The fixed
 [upstream control](experiments/ltx25-b70/data/resume-20261007/runtime99-preregistration.json)
-is preregistered with a fresh 4 GiB allowance and about 64.45 GiB free.
+was preregistered with a 4 GiB allowance and about 64.45 GiB free. Its unused
+timed-output allowance is not a continuing reservation.
 First qualify its unchanged 23/25 sampler split against the accepted outputs;
 then test the planned 20/28 split to reduce the busiest card's work. No source
 port or speed estimate is a measured improvement. All five bad-memory blocks

@@ -1,0 +1,171 @@
+{
+  "schema": "ltx.upstream99.failed-quality-closeout.v1",
+  "at_utc": "2026-10-07T13:40:49.271843+00:00",
+  "status": "exact-quality-failed-clean-stop",
+  "pid": 3123108,
+  "pid_absent": true,
+  "campaign_exit_code": 17,
+  "stop_exit_code": 0,
+  "timed_prompts_submitted": 0,
+  "measured_throughput": null,
+  "postflight_passed": true,
+  "postflight_sha256": "1f5f16af8b0272c049db2f9dbc7e6d9398662c01ee44d0e1b92c5e5f320fbeac",
+  "gpu_fault_lines_this_boot": 0,
+  "comparisons": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/upstream-99/two-way-w2-b1-p1-dxpu2-s256x256/f99-twowayw2b1p1dxpu2s256x256-self-04-parity.json",
+      "sha256": "02f9af93bd975eea724af34c8f29bdfebf73403554ad0f0ec922359eb94eded9",
+      "status": "failed",
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 0.22869515419006348,
+          "unequal_values": 3328
+        },
+        "images": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 0.716796875,
+          "unequal_values": 4895196
+        },
+        "video_latent": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 5.560516357421875,
+          "unequal_values": 32768
+        },
+        "waveform": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 0.00189208984375,
+          "unequal_values": 96595
+        }
+      }
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/upstream-99/two-way-w2-b1-p1-dxpu2-s256x256/f99-twowayw2b1p1dxpu2s256x256-self-05-parity.json",
+      "sha256": "1ddab27399e51d9d3e800b94f6795a0080891e8039f83f9711b23bd0fe8600cb",
+      "status": "failed",
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 0.34949928522109985,
+          "unequal_values": 3328
+        },
+        "images": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 0.796875,
+          "unequal_values": 4742344
+        },
+        "video_latent": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 2.508542060852051,
+          "unequal_values": 32768
+        },
+        "waveform": {
+          "bitwise_equal": false,
+          "same_layout": true,
+          "max_abs_diff": 0.0070953369140625,
+          "unequal_values": 96728
+        }
+      }
+    }
+  ],
+  "boat_first_observed_divergence": [
+    {
+      "packet": "98",
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-sampler-f98-twowayw2b1p1dxpu2s256x256r2-self-02.json",
+      "sha256": "57fbe555408498b3e017f082f384107e9b5ed4e8ed2fd87bac6dca32b1b6ce13",
+      "emitted_conditioning_fingerprint": "ca4e91780703736d1f313898ddf10b618ada1851d2cd620bbfc6a3911bd6ab34",
+      "emitted_context_sentry": {
+        "clip_index": 46975100,
+        "connector_computed": 1,
+        "connector_passthrough": 0,
+        "connector_reused": 3,
+        "forwards_per_stage": {
+          "a": 8,
+          "b": 3
+        },
+        "lean": true,
+        "stage_a_context_sha256": "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+        "stage_b_context_sha256": "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+      },
+      "emitted_sample_inputs": {
+        "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+        "guider_a_conds": "1f158b64d3ac34040fd40e67c9f587b13b48bfef2f962e3c4d4b2474a25dae64",
+        "guider_b_conds": "1f158b64d3ac34040fd40e67c9f587b13b48bfef2f962e3c4d4b2474a25dae64",
+        "noise_seeds": [
+          42,
+          42
+        ],
+        "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+      },
+      "emitted_sample_output": {
+        "audio_finite": true,
+        "audio_ptr": 139746022108224,
+        "audio_sha256": "c80c3de645056deba0e78cb958f3d5d91e17b8bfacf64fb7f48a4d3104f871f2",
+        "video_finite": true,
+        "video_ptr": 139746063481216,
+        "video_sha256": "7bc9e6268eadba946db7ea1e7f3e729cf55795dc68d1b052a800ae5079744c3d"
+      }
+    },
+    {
+      "packet": "99",
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99-twowayw2b1p1dxpu2s256x256-self-02.json",
+      "sha256": "a2ec3c9ffb3878413a532e95553012ca3f69d043f05783a2395ef0b581f03b7d",
+      "emitted_conditioning_fingerprint": "4525b1eb0c846ae9844d533f6e4f51ef40bebc957f40e5146894465c3b412b93",
+      "emitted_context_sentry": {
+        "clip_index": 95000100,
+        "connector_computed": 1,
+        "connector_passthrough": 0,
+        "connector_reused": 3,
+        "forwards_per_stage": {
+          "a": 8,
+          "b": 3
+        },
+        "lean": true,
+        "stage_a_context_sha256": "1032e454026bc83dd8a4b2e2781ee473dc342071d7f51d0c5575f20b648698ee",
+        "stage_b_context_sha256": "1032e454026bc83dd8a4b2e2781ee473dc342071d7f51d0c5575f20b648698ee"
+      },
+      "emitted_sample_inputs": {
+        "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+        "guider_a_conds": "ea6d45b24114e61c2d5e2681146a1ade3fc1c296286d6c27b0ccdc592cfa441c",
+        "guider_b_conds": "ea6d45b24114e61c2d5e2681146a1ade3fc1c296286d6c27b0ccdc592cfa441c",
+        "noise_seeds": [
+          42,
+          42
+        ],
+        "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+      },
+      "emitted_sample_output": {
+        "audio_finite": true,
+        "audio_ptr": 125853970676416,
+        "audio_sha256": "26848a8ddd4ffda783dc38fb09add489cc73763e8d679831272befb283a0f3ef",
+        "video_finite": true,
+        "video_ptr": 125853990138432,
+        "video_sha256": "55e5c5262b287073bc8c8a9f61455565a45b16a3cb07feef76b543952fb0d10c"
+      }
+    }
+  ],
+  "fd_observation": {
+    "samples": 261,
+    "peak": 2627,
+    "terminal": {
+      "status": "process-exited",
+      "pid": 3123108,
+      "reason": "matching-zombie-or-dead-state",
+      "observed_identity": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "start_ticks": "25334432",
+        "state": "Z"
+      }
+    },
+    "stderr_bytes": 0
+  },
+  "preservation": "All failed output tensors, metadata, source packet and dependencies retained; no retirement admitted.",
+  "next": "Test narrow dependency split-half RoPE arithmetic compatibility on current upstream.20/28candidate blocked until exactnewbasecontrolpasses."
+}
