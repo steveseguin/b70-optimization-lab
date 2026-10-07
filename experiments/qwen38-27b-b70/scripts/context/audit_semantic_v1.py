@@ -124,7 +124,7 @@ def audit_trial(directory, result, task, item, plan):
     require(result['document_id'] == item['document_id'] and result['arm'] == item['arm'], 'trial identity differs from plan')
     require(result['task_sha256'] == item['task_sha256'] == task['task_sha256'], 'task hash mismatch')
     require(result['source_sha256'] == task['source_sha256'] and
-            result['adjudication_sha256'] == task['adjudication_sha256'], 'source/adjudication mismatch')
+            result['adjudication_sha256'] == task.get('adjudication_sha256'), 'source/adjudication mismatch')
     for key in ('measurement_kind', 'protocol', 'source_code_sha256', 'server_identity', 'answer_generation',
                 'ingestion_generation', 'context_limit_utf8_bytes', 'memory_limit_utf8_bytes',
                 'max_ingestion_attempts', 'max_retrieval', 'max_answer_calls'):
