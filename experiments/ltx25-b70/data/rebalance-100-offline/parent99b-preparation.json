@@ -1,0 +1,21 @@
+{
+  "at_utc": "2026-10-07T14:01:53.861534+00:00",
+  "status": "CPU preparation reviewed; actual99b success and stopped state required before build",
+  "parent_manifest_sha256": "f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a",
+  "controls": {
+    "runtime": 12,
+    "admission_and_runner": 14
+  },
+  "independent_review": "cleanup_audit: passed preparation; inherited RoPE/order/receipt preserved, source delta only placement plus dependent hash, actual control references/freeze bound; no build or GPU work",
+  "dependencies": {
+    "experiments/ltx25-b70/scripts/build-runtime-100.py": "1eefde159f00358aa037fd2fd6a671199dedba0d80bc37492353b35e6a6fc436",
+    "experiments/ltx25-b70/scripts/check-runtime-100.py": "0224dc905c72ba4b6a68eb2d2dda8a9ae473ae090d23c4c87ffdb9f91fa94b71",
+    "experiments/ltx25-b70/scripts/worker-headroom-100.py": "96df73e2f974ac68bcee6f05759d960130d0f681eafa6108c98a3b1720aa5932",
+    "experiments/ltx25-b70/scripts/test-rebalance-100.py": "aa60fc29a02e08881049185562e146239a891492a850bf42b591dc73435666a7",
+    "experiments/ltx25-b70/scripts/run-campaign-100.sh": "67de086d259d25f18fd80583224eef2b29fd94dc628dec9ba6d61818554e75dd"
+  },
+  "materialized": false,
+  "GPU_qualified": false,
+  "source_delta": "Add two-way20-28 with xpu0 blocks0..19,xpu1 blocks20..47; repin graph helper SHA. Original23/25 remains.",
+  "memory": "Card1 charge3.16GiB, no card0credit; actual100 memory and freeze still required."
+}

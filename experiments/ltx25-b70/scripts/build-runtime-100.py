@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Plan the one 20/28 successor, or explicitly build after packet99 qualifies/stops.
+"""Plan the one 20/28 successor, or explicitly build after packet99b qualifies/stops.
 
 Default is read-only. Never launches, stops, modifies or deletes an existing
-packet. The coordinator must stop99 before invoking --build; no retry policy.
+packet. The coordinator must stop99b before invoking --build; no retry policy.
 """
 import argparse
 import difflib
@@ -28,15 +28,15 @@ def plan():
             'output': str(C.PACKET), 'control': C.control(),
             'source_delta': {p: {'before_sha256': parent['files'][p], 'after_sha256': C.digest(raw),
                 'diff': ''.join(difflib.unified_diff(C.regular(C.PARENT / p).decode().splitlines(keepends=True),
-                    raw.decode().splitlines(keepends=True), fromfile='packet99/' + p, tofile='packet100/' + p))}
+                    raw.decode().splitlines(keepends=True), fromfile='packet99b/' + p, tofile='packet100/' + p))}
                 for p, raw in delta.items()},
             'unchanged': ['23/25 default layout', 'upstream source identity except named placement/pin',
                 'all graph JSON/arithmetic/native attention guards', 'isolated dependency overlay and baseline Torch',
                 'model/references', 'health/fault halt/progress lock/NOFILE/storage gates'],
-            'build_requires': ['qualified99 control basis SHA and original identity/freeze/quality receipts',
-                'reviewed bound runner100 and memory-helper100', 'coordinator confirms parent99 stopped',
+            'build_requires': ['qualified99b control basis SHA and original identity/freeze/quality receipts',
+                'reviewed bound runner100 and memory-helper100', 'coordinator confirms parent99b stopped',
                 '50GiB reserve plus384MiB preparation allowance', 'new destination only'],
-            'memory_projection': 'Validated99 freeze minus3*.97+.25GiB on card1; no card0 credit; live gates remain required',
+            'memory_projection': 'Validated99b freeze minus3*.97+.25GiB on card1; no card0 credit; live gates remain required',
             'qualification': False, 'model_requests': 0}
 
 
@@ -47,13 +47,13 @@ def write_new(path, raw, mode=0o644):
 
 
 def build(output, runner, memory_helper, control_basis, control_basis_sha256, parent_stopped):
-    C.require(parent_stopped is True, 'Coordinator must confirm parent99 cleanly stopped; no live materialization')
+    C.require(parent_stopped is True, 'Coordinator must confirm parent99b cleanly stopped; no live materialization')
     C.require(output == C.PACKET and not output.exists() and not output.is_symlink() and
               output.parent.is_dir() and not any(p.is_symlink() for p in output.parents),
               'Only agreed new output with regular existing parent admitted')
     parent = C.BASE.verify_packet(C.PARENT, C.PARENT_SHA)
     C.require(runner is not None and memory_helper is not None and control_basis is not None,
-              'Explicit reviewed runner, memory helper and qualified99 basis required')
+              'Explicit reviewed runner, memory helper and qualified99b basis required')
     bindings = {}
     for kind, path, filename in [('runner', runner, 'run-campaign-100.sh'),
                                  ('memory_helper', memory_helper, 'worker-headroom-100.py')]:
@@ -80,12 +80,12 @@ def build(output, runner, memory_helper, control_basis, control_basis_sha256, pa
         C.require(C.digest(raw) == expected, 'Parent changed while copying: ' + path)
         mode = stat.S_IMODE((C.PARENT / path).stat().st_mode)
         if path in delta:
-            write_new(output / 'provenance/packet99' / path, raw, mode)
+            write_new(output / 'provenance/packet99b' / path, raw, mode)
             raw = delta[path]
         write_new(output / path, raw, mode)
     for name in ('build-runtime-100.py', 'check-runtime-100.py'):
         write_new(output / 'provenance' / name, C.regular(HERE / name))
-    write_new(output / 'provenance/packet99-manifest.json', C.regular(C.PARENT / 'manifest.json'))
+    write_new(output / 'provenance/packet99b-manifest.json', C.regular(C.PARENT / 'manifest.json'))
     write_new(output / 'provenance/control-basis.json', basis_raw)
     for binding in bindings.values():
         raw = C.regular(Path(binding['source']))

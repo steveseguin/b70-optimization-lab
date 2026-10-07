@@ -35,14 +35,27 @@ class Headroom100(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='ltx100-cpu-'); self.addCleanup(self.tmp.cleanup)
         self.p = Path(self.tmp.name)
-        historical = HERE.parent / 'data/place-97/two-way-w2-b1-p1-dxpu2'
-        self.freeze = json.loads((historical / 'sampler-capture-freeze-f97-twowayw2b1p1dxpu2-freeze.json').read_text())
+        historical = HERE.parent / 'data/size-98/two-way-w2-b1-p1-dxpu2-s256x256-r2'
+        self.freeze = json.loads((historical / 'sampler-capture-freeze-f98-twowayw2b1p1dxpu2s256x256r2-freeze.json').read_text())
         self.summary = json.loads((historical / 'summary.json').read_text())
         self.identity = {'source_packet_manifest_sha256': M.CONTROL_MANIFEST,
-            'source_packet_path': str(M.ROOT / 'prepared-encoder-upstream-99'),
-            'encoder_run_dir': str(M.ROOT / 'encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256'),
+            'source_packet_path': str(M.ROOT / 'prepared-encoder-upstream-99b'),
+            'encoder_run_dir': str(M.ROOT / 'encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256'),
             'runtime99_transition': {'control': {'layout': 'two-way', 'blocks': [23, 25], 'workers': 2,
                 'batch': 1, 'shared_pool': 1, 'decode_replica': 'xpu:2', 'size': '256x256', 'references': 'w93c'}}}
+        parent = M.bound(M.ROOT / 'prepared-encoder-upstream-99b/manifest.json', M.CONTROL_MANIFEST)
+        self.identity['runtime99b_transition'] = parent['rope99b']
+        pins = parent['rope99b']['installer']['files']
+        # Synthetic receipt, never evidence of an actual99b qualification.
+        self.identity['rope_compatibility'] = {
+            'schema': 'ltx.rope-arithmetic-compat.v1', 'status': 'installed-unqualified',
+            'installer_sha256': pins['install_rope_compat.py'],
+            'source_path': '/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_kitchen/backends/eager/rope.py',
+            'original_source_sha256': pins['source-evidence/rope-0.2.37.py'],
+            'restored_source_sha256': pins['source-evidence/rope-0.2.33.py'],
+            'function': 'apply_rope_split_half1', 'backend': 'eager',
+            'package_files_changed': False, 'gpu_parity_qualified': False,
+            'before_code_sha256': '1' * 64, 'after_code_sha256': '2' * 64}
         self.freeze['output_size'] = '256x256'
         self.summary['run'] = self.identity['encoder_run_dir']
 
@@ -75,6 +88,18 @@ class Headroom100(unittest.TestCase):
         h = write(p, b)['sha256']
         with self.assertRaisesRegex(RuntimeError, 'Exact reviewed'): M.validate_control_basis(p, h)
 
+    def test_missing_wrong_or_unapplied_rope_compatibility_refuses(self):
+        original = copy.deepcopy(self.identity)
+        for kind in ('missing', 'wrong-installer', 'wrong-backend', 'unchanged-code', 'wrong-transition'):
+            self.identity = copy.deepcopy(original)
+            if kind == 'missing': del self.identity['rope_compatibility']
+            if kind == 'wrong-installer': self.identity['rope_compatibility']['installer_sha256'] = 'a' * 64
+            if kind == 'wrong-backend': self.identity['rope_compatibility']['backend'] = 'cuda'
+            if kind == 'unchanged-code': self.identity['rope_compatibility']['after_code_sha256'] = '1' * 64
+            if kind == 'wrong-transition': self.identity['runtime99b_transition']['control']['batch'] = 2
+            with self.subTest(kind=kind), self.assertRaises(RuntimeError):
+                M.validate_control_basis(*self.fixture())
+
     def test_partial_or_nonfinite_memory_refuses(self):
         for value in ({'xpu:0': 10 * M.GIB}, dict(zip(M.CARDS, [float('nan'), 10, 10, 10])),
                       dict(zip(M.CARDS, [True, 10, 10, 10]))):
@@ -84,7 +109,8 @@ class Headroom100(unittest.TestCase):
 
     def test_qualification_and_chain_failures_refuse(self):
         original = copy.deepcopy((self.freeze, self.summary, self.identity))
-        for kind in ('inexact', 'missing-timed', 'wrong-reference', 'wrong-blocks', 'chain-failed', 'wrong-control'):
+        for kind in ('inexact', 'missing-timed', 'wrong-reference', 'wrong-blocks', 'chain-failed', 'wrong-control',
+                     'fake-w93c-name', 'speed-only', 'wrong-size', 'shape-problem', 'bad-emission'):
             self.freeze, self.summary, self.identity = copy.deepcopy(original)
             timed = next(a for a in self.summary['arms'].values() if a['label'] == 'timed')
             if kind == 'inexact': timed['all_exact'] = False
@@ -93,6 +119,11 @@ class Headroom100(unittest.TestCase):
             if kind == 'wrong-blocks': self.freeze['chain_check']['rows'][0]['blocks'] = list(range(20))
             if kind == 'chain-failed': self.freeze['chain_check']['rows'][0]['replay_equals_eager'][0] = False
             if kind == 'wrong-control': self.identity['runtime99_transition']['control']['workers'] = 3
+            if kind == 'fake-w93c-name': timed['references'][0] = 'stability-01-w93c-invented'
+            if kind == 'speed-only': timed['speed_only'] = True
+            if kind == 'wrong-size': timed['output_size'] = '512x320'
+            if kind == 'shape-problem': timed['shape_problems'] = ['wrong']
+            if kind == 'bad-emission': timed['emission_sequence_ok'] = False
             with self.subTest(kind=kind), self.assertRaises(RuntimeError):
                 M.validate_control_basis(*self.fixture())
 

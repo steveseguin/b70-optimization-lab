@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CPU-only exact packet99 -> packet100 placement transition and launch contract."""
+"""CPU-only exact packet99b -> packet100 placement transition and launch contract."""
 import argparse
 import ast
 import copy
@@ -14,8 +14,8 @@ import sys
 
 sys.dont_write_bytecode = True
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
-PARENT = ROOT / 'prepared-encoder-upstream-99'
-PARENT_SHA = 'e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736'
+PARENT = ROOT / 'prepared-encoder-upstream-99b'
+PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
 PACKET = ROOT / 'prepared-encoder-rebalance-100'
 LAYOUT = 'two-way20-28'
 SEGMENTS = (('xpu:0', 0, 20), ('xpu:1', 20, 48))
@@ -44,11 +44,11 @@ def load(path, name):
 
 # Bootstrap only from the exact immutable parent, never a refreshed parent pin.
 _parent_raw = (PARENT / 'manifest.json').read_bytes()
-require(digest(_parent_raw) == PARENT_SHA, 'Packet99 parent manifest changed')
+require(digest(_parent_raw) == PARENT_SHA, 'Packet99b parent manifest changed')
 _parent_manifest = json.loads(_parent_raw)
 _parent_checker = PARENT / COMMON
 require(not _parent_checker.is_symlink() and digest(_parent_checker.read_bytes()) ==
-        _parent_manifest['files'][COMMON], 'Packet99 checker changed')
+        _parent_manifest['files'][COMMON], 'Packet99b checker changed')
 BASE = load(_parent_checker, 'packet100_immutable_parent')
 regular, sha, safe_path, module = BASE.regular, BASE.sha, BASE.safe_path, BASE.module
 
@@ -72,13 +72,13 @@ def source_delta(shard, capture):
 
 def launcher_source(raw):
     text = BASE.replace_once(raw.decode(),
-        "encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256",
+        "encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256",
         "encoder-server-rebalance-100-two-way20-28-w2-b1-p1-dxpu2-s256x256")
-    text = BASE.replace_once(text, 'Packet99 admits only the frozen batch-one control',
+    text = BASE.replace_once(text, 'Packet99b admits only the frozen batch-one compatibility control',
                             'Packet100 admits only the 20/28 batch-one candidate')
-    text = BASE.replace_once(text, "    identity = {'runtime99_transition': manifest['upstream99'],",
+    text = BASE.replace_once(text, "    identity = {'runtime99b_transition': manifest['rope99b'],",
                             "    identity = {'runtime100_transition': manifest['rebalance100'],\n"
-                            "                'runtime99_transition': manifest['upstream99'],")
+                            "                'runtime99b_transition': manifest['rope99b'],")
     ast.parse(text)
     return text.encode()
 
@@ -114,11 +114,11 @@ def control():
 
 def validate_basis(helper, path, expected_sha):
     require(re.fullmatch('[0-9a-f]{64}', expected_sha or '') and sha(path) == expected_sha,
-            'Qualified packet99 control basis changed')
-    # This helper owns the one frozen99 qualification/memory receipt schema.
+            'Qualified packet99b control basis changed')
+    # This helper owns the one frozen99b qualification/memory receipt schema.
     result = helper.validate_control_basis(path, expected_sha)
     require(result['admitted'] is True and result['control_manifest_sha256'] == PARENT_SHA,
-            'Qualified exact99 basis must admit the conservative20/28 projection')
+            'Qualified exact99b basis must admit the conservative20/28 projection')
     return result
 
 
@@ -150,10 +150,10 @@ def verify_packet(packet, expected_manifest_sha256):
     require(transition['source_delta'] == {
         p: {'before_sha256': parent['files'][p], 'after_sha256': digest(expected_delta[p])}
         for p in (SHARD, CAPTURE)}, 'Source delta receipt differs')
-    require(regular(packet / 'provenance/packet99-manifest.json') == regular(PARENT / 'manifest.json'),
+    require(regular(packet / 'provenance/packet99b-manifest.json') == regular(PARENT / 'manifest.json'),
             'Parent provenance differs')
     for path in CHANGED:
-        require(regular(packet / 'provenance/packet99' / path) == regular(PARENT / path),
+        require(regular(packet / 'provenance/packet99b' / path) == regular(PARENT / path),
                 'Original changed file provenance differs')
     bindings = transition['campaign_bindings']
     require(set(bindings) == {'runner', 'memory_helper'}, 'Campaign helper inventory differs')
@@ -171,8 +171,8 @@ def verify_packet(packet, expected_manifest_sha256):
     helper = module(packet / bindings['memory_helper']['packet_path'], 'packet100_checked_memory')
     validate_basis(helper, Path(basis['source']), basis['sha256'])
     extra = {'provenance/build-runtime-100.py', 'provenance/check-runtime-100.py',
-             'provenance/packet99-manifest.json', basis['packet_path']}
-    extra.update('provenance/packet99/' + p for p in CHANGED)
+             'provenance/packet99b-manifest.json', basis['packet_path']}
+    extra.update('provenance/packet99b/' + p for p in CHANGED)
     extra.update(v['packet_path'] for v in bindings.values())
     require(set(files) == set(parent['files']) | extra, 'Packet100 inventory differs')
     checker = module(PARENT / 'provenance/source99/check-upstream-source-99.py', 'packet100_inventory')
@@ -239,9 +239,23 @@ def self_test():
     parent = copy.deepcopy(_parent_manifest)
     files = dict(parent['files']); files.update({p: digest(v) for p, v in delta.items()})
     candidate = semantic_manifest(parent, files, 'a' * 64, {})
-    require(candidate['upstream99'] == parent['upstream99'] and candidate['runtime'] == parent['runtime'] and
+    require(candidate['upstream99'] == parent['upstream99'] and candidate['rope99b'] == parent['rope99b'] and
+            candidate['runtime'] == parent['runtime'] and
             candidate['sampler_placement']['default'] == 'two-way' and
             candidate['sampler_shared_pool']['adapter_sha256'] == digest(delta[CAPTURE]), 'Semantic identity changed')
+    launch_text = launcher_source(regular(PARENT / LAUNCHER)).decode()
+    ordering = [launch_text.index(x) for x in ('    import comfy.quant_ops',
+                '    rope_compat = common.install_rope_compat(packet)',
+                "    identity['rope_compatibility'] = rope_compat",
+                "    write_json(run / 'server-identity.json', identity)",
+                "    write_json(run / 'determinism-after-import.json',",
+                "    runpy.run_path(str(packet / 'source/main.py')")]
+    require(ordering == sorted(ordering) and
+            launch_text.count("write_json(run / 'server-identity.json', identity)") == 1 and
+            __getattr__('install_rope_compat') is BASE.install_rope_compat,
+            'Inherited process-local RoPE activation/receipt ordering changed')
+    added_provenance = {'provenance/packet99b/' + p for p in CHANGED} | {'provenance/packet99b-manifest.json'}
+    require(not added_provenance.intersection(parent['files']), 'Parent provenance would be overwritten')
     # Candidate environment matches the parent's frozen contract except layout.
     expected_env = {'LTX_OUTPUT_SIZE': '256x256', 'LTX_BUSY_WINDOWS': '0',
                     'LTX_SAMPLER_PLACEMENT': LAYOUT, 'LTX_SAMPLER_WORKERS': '2',
@@ -279,7 +293,8 @@ def self_test():
                          'gaps-overlaps-repeated-devices-refused', 'memory-floor-boundary',
                          'ambiguous-or-reapplied-port-refused', 'only-launch-identity-functions-change',
                          'inherited-runtime-dependencies-and-adapter-edges-preserved',
-                         'every-wrong-environment-field-refused', 'wrong-parent-or-low-memory-basis-refused']}
+                         'every-wrong-environment-field-refused', 'wrong-parent-or-low-memory-basis-refused',
+                         'rope-activation-and-one-identity-order-preserved', 'original-provenance-paths-disjoint']}
 
 
 def main():
