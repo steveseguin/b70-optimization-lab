@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'experiments/project-decision-recall-20261007/**'
       - 'tools/lab_navigator.py'
       - 'tools/lab_evidence.py'
       - 'tools/test_lab_navigator.py'
@@ -10,6 +11,7 @@ on:
       - '.github/workflows/lab-evidence.yml'
   pull_request:
     paths:
+      - 'experiments/project-decision-recall-20261007/**'
       - 'tools/lab_navigator.py'
       - 'tools/lab_evidence.py'
       - 'tools/test_lab_navigator.py'
@@ -23,3 +25,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 -m unittest tools/test_lab_navigator.py tools/test_lab_evidence.py
+      - run: python3 experiments/project-decision-recall-20261007/test_evidence.py

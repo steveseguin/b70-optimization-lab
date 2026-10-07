@@ -1,0 +1,1452 @@
+{
+  "schema": "project-decision-recall.semantic-review.v1",
+  "arm": "full-paged",
+  "reviewer": "Codex assistant, independent semantic grader",
+  "reviewed_at_utc": "2026-10-07T12:31:10.122151+00:00",
+  "semantic_passed": false,
+  "all_questions_passed": false,
+  "bindings": {
+    "manifest.json": "1284fd189c5a896895f17b5e7841bd7b29c582a569f0b09f4f90668046ffd671",
+    "protocol.json": "dc8b5c55d8a97bacc038fca6fb699fc3eaaa1a791abca588a5679b7117a4292e",
+    "questions.json": "25b31541407c6ceefeb5f8ad94c4e3a41274ebda31532ce7dfd3c06e5ccb35a0",
+    "reference.json": "531d92261d8f78782820f73333700dd92aafec2dd193a48db42bdf39bb3e2775",
+    "references-review.json": "60fd33b202fbd5f288e0853b361b83d9f8b30e5e3df863aa19b76364c170bdea",
+    "transport-plan.json": "deb1720361f013acf1d266735d62ea654e731f41f2034b25bc9626e88db0fe81",
+    "results/visibility.json": "f410285fd58e9b12acbce060d4629631e005f53c52c2d97742f92e7a5891e5c6"
+  },
+  "answer_sha256": "56160e5ff6d4e74f76474155e2405b008a94608e66100ea669f896db1dff881d",
+  "reads_sha256": "07bac8746e21ded934f439457d0b0f5eb2b95b3749e56c932ff7a08e6fc0bd23",
+  "source_sha256": {
+    "s01": "3b6faae522d7af7e7795887d75666c9cfd0e9beece989e9dfcaa1186e4f4b89f",
+    "s02": "50ba0433cb1c134478f4c4c2d79371e18e3aa9e3a996559cd69d00b0d9c51fa1",
+    "s03": "dc728fce4b077481f161094ff1d3d95cad9a5170e5e42215ac21cc9e5b34df57",
+    "s04": "c7a88d965b8684e0875cd156a6c698815b2e92f4d26c168cb78538f958a81fe1",
+    "s05": "3d97ee8a837a7be12fe360486ef92568f4e4e927736902bb28d79de82d29b15e"
+  },
+  "grading_method": "Independent criterion-level semantic review of answer and explanation against the same frozen 38 criteria and complete closed corpus. Equivalent wording and alternative supported citation spans credited. Citation existence and emission coverage checked separately; an essential qualification present only in a quotation does not fill an omission from answer/explanation. Parent independently flagged the same q08.c2 concern before final review; no blindness to that concern is claimed.",
+  "questions": [
+    {
+      "question_id": "q01",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q01.c1",
+          "status": "complete",
+          "rationale": "Explicit withdrawal resolves the earlier preference instead of treating both versions as live alternatives.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "was withdrawn as an agent’s reading",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 25,
+              "end_line": 31
+            }
+          ]
+        },
+        {
+          "criterion_id": "q01.c2",
+          "status": "complete",
+          "rationale": "States the full replacement experiment-only lifecycle.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "start, measure, stop gracefully, and leave the cards empty",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 25,
+              "end_line": 31
+            }
+          ]
+        },
+        {
+          "criterion_id": "q01.c3",
+          "status": "complete",
+          "rationale": "Retains the owner-request exception to resident-service prohibition.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "only when the owner asks",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 25,
+              "end_line": 31
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s01",
+          "start_line": 25,
+          "end_line": 31,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            2
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q02",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q02.c1",
+          "status": "complete",
+          "rationale": "Correct attributed authority and precedence.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "attributed to the owner and override everything else in that file, older notes, and recipes",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 15,
+              "end_line": 18
+            }
+          ]
+        },
+        {
+          "criterion_id": "q02.c2",
+          "status": "complete",
+          "rationale": "Explicit authorization is required without substituting general optimization permission.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "A reboot always requires the owner’s explicit authorization.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 59,
+              "end_line": 62
+            }
+          ]
+        },
+        {
+          "criterion_id": "q02.c3",
+          "status": "complete",
+          "rationale": "Separates role attribution from authentication of an original human instruction.",
+          "supporting_answer": {
+            "field": "explanation",
+            "exact_excerpt": "That textual attribution is not independent authentication of who wrote or issued them",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0,
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 15,
+              "end_line": 18
+            },
+            {
+              "source_id": "s01",
+              "start_line": 59,
+              "end_line": 62
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s01",
+          "start_line": 15,
+          "end_line": 18,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            2
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s01",
+          "start_line": 59,
+          "end_line": 62,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            3
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q03",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q03.c1",
+          "status": "complete",
+          "rationale": "Preserves both allowed full-precision forms.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "full 16-bit KV cache: BF16, or FP16 where the runtime uses it",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 46,
+              "end_line": 52
+            }
+          ]
+        },
+        {
+          "criterion_id": "q03.c2",
+          "status": "complete",
+          "rationale": "Includes model-specific unavailability exception.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "if a 16-bit cache is unavailable for that model",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 46,
+              "end_line": 52
+            }
+          ]
+        },
+        {
+          "criterion_id": "q03.c3",
+          "status": "complete",
+          "rationale": "Includes the distinct explicit owner-authorization exception.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "or the owner explicitly authorizes it",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 46,
+              "end_line": 52
+            }
+          ]
+        },
+        {
+          "criterion_id": "q03.c4",
+          "status": "complete",
+          "rationale": "Exceptions do not silently promote compressed KV to default or headline.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "Neither exception makes compressed KV a default or headline configuration.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 46,
+              "end_line": 52
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s01",
+          "start_line": 46,
+          "end_line": 52,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            3
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q04",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q04.c1",
+          "status": "complete",
+          "rationale": "Names the designated live-state authority.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "CURRENT.md is designated the sole cross-repository authority",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 170,
+              "end_line": 179
+            }
+          ]
+        },
+        {
+          "criterion_id": "q04.c2",
+          "status": "complete",
+          "rationale": "Rejects inference of current operation from historical results.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "Old experiment notes alone cannot establish what is running now.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 170,
+              "end_line": 179
+            }
+          ]
+        },
+        {
+          "criterion_id": "q04.c3",
+          "status": "complete",
+          "rationale": "Includes all three required checks without asserting actual current runtime state.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "verify Git status, relevant processes, and the actual endpoint",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 170,
+              "end_line": 179
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s01",
+          "start_line": 170,
+          "end_line": 179,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            5,
+            6
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s01",
+          "start_line": 181,
+          "end_line": 183,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            6
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q05",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q05.c1",
+          "status": "complete",
+          "rationale": "Correctly describes the million-token attempt transition in the October 7 snapshot.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "had advanced from incomplete to completed",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0,
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 3,
+              "end_line": 3
+            },
+            {
+              "source_id": "s02",
+              "start_line": 10,
+              "end_line": 15
+            }
+          ]
+        },
+        {
+          "criterion_id": "q05.c2",
+          "status": "complete",
+          "rationale": "Preserves the separate incomplete trial and its 21-question denominator.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "The 480K quoted seed-1 attempt remained incomplete",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 10,
+              "end_line": 15
+            }
+          ]
+        },
+        {
+          "criterion_id": "q05.c3",
+          "status": "complete",
+          "rationale": "Maintains historical knowledge instead of rewriting the earlier snapshot.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "The earlier snapshot remains unchanged as the record of what was known then.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 10,
+              "end_line": 15
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s02",
+          "start_line": 3,
+          "end_line": 3,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            16
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s02",
+          "start_line": 10,
+          "end_line": 15,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            16,
+            17
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q06",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q06.c1",
+          "status": "complete",
+          "rationale": "Classifies absent input as setup failure rather than failed model quality.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "failed during planning because its task file was absent and received no model score",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 19,
+              "end_line": 24
+            }
+          ]
+        },
+        {
+          "criterion_id": "q06.c2",
+          "status": "complete",
+          "rationale": "Attributes the score to the correct seed.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "The 35/36 result in the directory belonged to seed 0.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 19,
+              "end_line": 24
+            }
+          ]
+        },
+        {
+          "criterion_id": "q06.c3",
+          "status": "complete",
+          "rationale": "Explicitly rejects wrapper completion as full matrix completion.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "its final plan complete message did not establish completion of every cell",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 19,
+              "end_line": 24
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s02",
+          "start_line": 19,
+          "end_line": 24,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            17
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q07",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q07.c1",
+          "status": "complete",
+          "rationale": "Identifies cap exhaustion, no answer, and correct failure taxonomy.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "exhausted its fixed 8192-token output cap entirely on reasoning and returned no answer content (finish_reason=length). This was a measured bounded-model failure, not a transport or GPU failure.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0,
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 8,
+              "end_line": 12
+            },
+            {
+              "source_id": "s03",
+              "start_line": 26,
+              "end_line": 30
+            }
+          ]
+        },
+        {
+          "criterion_id": "q07.c2",
+          "status": "complete",
+          "rationale": "Preserves both stopping behavior and lack of held-out admission.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "without continuation or retry; the held-out gate remained closed and no held-out seeds were used",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 8,
+              "end_line": 12
+            }
+          ]
+        },
+        {
+          "criterion_id": "q07.c3",
+          "status": "complete",
+          "rationale": "Retains frozen failed outcome and forbids retrospective cap or label changes.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "keep r4 frozen and failed, not raise its cap or relabel its incomplete matrix",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 35,
+              "end_line": 39
+            }
+          ]
+        },
+        {
+          "criterion_id": "q07.c4",
+          "status": "complete",
+          "rationale": "Places future handling changes under a new protocol and tests.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "A changed evaluator would require a new protocol and tests and would not complete r4 retrospectively.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 35,
+              "end_line": 39
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s03",
+          "start_line": 8,
+          "end_line": 12,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            17,
+            18
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s03",
+          "start_line": 26,
+          "end_line": 30,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            18
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 2,
+          "source_id": "s03",
+          "start_line": 35,
+          "end_line": 39,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            18
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q08",
+      "status": "fail",
+      "all_essential_criteria_complete": false,
+      "criteria": [
+        {
+          "criterion_id": "q08.c1",
+          "status": "complete",
+          "rationale": "Separates the legacy and r4 comparisons; neither establishes a universal contradiction or speed verdict.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "distinct trial/protocol configurations and comparators, so their observations cannot be generalized across settings",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0,
+            1,
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 3,
+              "end_line": 8
+            },
+            {
+              "source_id": "s03",
+              "start_line": 3,
+              "end_line": 6
+            },
+            {
+              "source_id": "s03",
+              "start_line": 19,
+              "end_line": 24
+            }
+          ]
+        },
+        {
+          "criterion_id": "q08.c2",
+          "status": "partial",
+          "rationale": "PARTIAL: retains 23.0%, single-pair scope and absence of repeat confirmation. Neither answer nor explanation states the separate essential limitation that final 24/24 is not evidence of correctness at every intermediate state. Generic legacy-checker limitations does not specify that claim boundary. Citation 0 quotes the missing qualification, demonstrating relevant evidence was available, but quote presence does not make the answer semantically complete. This is an omission, not a contrary claim.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "a 23.0% elapsed reduction for that one pair, explicitly not repeat-confirmed and still subject to legacy-checker limitations",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s02",
+              "start_line": 3,
+              "end_line": 8
+            }
+          ]
+        },
+        {
+          "criterion_id": "q08.c3",
+          "status": "complete",
+          "rationale": "Correct r4 cold-cache conditions, without transferring the separate 480K cache-enabled label to the million-token run.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "prefix caching disabled and verified zero cache reuse",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1,
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 3,
+              "end_line": 6
+            },
+            {
+              "source_id": "s03",
+              "start_line": 19,
+              "end_line": 24
+            }
+          ]
+        },
+        {
+          "criterion_id": "q08.c4",
+          "status": "complete",
+          "rationale": "Preserves both observed slower comparisons and the incomplete-matrix limitation.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "quoted was slower than archive in both completed pairs, but the incomplete matrix yielded no qualifying speed signal or verdict",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 19,
+              "end_line": 24
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s02",
+          "start_line": 3,
+          "end_line": 8,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            16
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s03",
+          "start_line": 3,
+          "end_line": 6,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            17
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 2,
+          "source_id": "s03",
+          "start_line": 19,
+          "end_line": 24,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            18
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 3,
+          "source_id": "s03",
+          "start_line": 51,
+          "end_line": 54,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            18,
+            19
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 4,
+          "source_id": "s03",
+          "start_line": 63,
+          "end_line": 64,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            19
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": false
+    },
+    {
+      "question_id": "q09",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q09.c1",
+          "status": "complete",
+          "rationale": "Correct publication identity and measured context interval.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "published as the R187 line’s 2K–32K real-content depth profile",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1,
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s04",
+              "start_line": 9,
+              "end_line": 16
+            },
+            {
+              "source_id": "s04",
+              "start_line": 18,
+              "end_line": 20
+            }
+          ]
+        },
+        {
+          "criterion_id": "q09.c2",
+          "status": "complete",
+          "rationale": "Keeps relevant image, wrapper, graph configuration and one-slot scope.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "R156 image via R187 wrappers, whole-graph compilation with splitting_ops=[], 33,024-token capacity, one slot",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s04",
+              "start_line": 3,
+              "end_line": 5
+            }
+          ]
+        },
+        {
+          "criterion_id": "q09.c3",
+          "status": "complete",
+          "rationale": "Limits equivalence to the six tested context points and correct MTP1/MTP0 comparison.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "MTP1 remained lossless against MTP0 at the six measured depths: 2,048, 4,096, 8,192, 16,384, 24,576, and 32,768 tokens. This establishes neither every MTP depth nor every concurrency level.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1,
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s04",
+              "start_line": 9,
+              "end_line": 16
+            },
+            {
+              "source_id": "s04",
+              "start_line": 18,
+              "end_line": 20
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s04",
+          "start_line": 3,
+          "end_line": 5,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            19
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s04",
+          "start_line": 9,
+          "end_line": 16,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            19
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 2,
+          "source_id": "s04",
+          "start_line": 18,
+          "end_line": 20,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            19
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q10",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q10.c1",
+          "status": "complete",
+          "rationale": "Correct image, compile setting and speculative depth.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "R156 image with splitting_ops=[] and num_speculative_tokens=4",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            0
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s05",
+              "start_line": 3,
+              "end_line": 3
+            }
+          ]
+        },
+        {
+          "criterion_id": "q10.c2",
+          "status": "complete",
+          "rationale": "Fastest-lossless statement is explicitly as-of R197 and single-user, rather than universal current qualification.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "As of R197",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1,
+            2
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s05",
+              "start_line": 9,
+              "end_line": 13
+            },
+            {
+              "source_id": "s05",
+              "start_line": 16,
+              "end_line": 18
+            }
+          ]
+        },
+        {
+          "criterion_id": "q10.c3",
+          "status": "complete",
+          "rationale": "Retains first-ladder lower-rung exactness and both higher-rung failures.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "exact through c16 but 30/32 at c32 and 58/64 at c64",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s05",
+              "start_line": 9,
+              "end_line": 13
+            }
+          ]
+        },
+        {
+          "criterion_id": "q10.c4",
+          "status": "complete",
+          "rationale": "Keeps pending repetition and weaker high-concurrency performance; explanation correctly applies the two-run rule.",
+          "supporting_answer": {
+            "field": "answer",
+            "exact_excerpt": "the second ladder R201 was still queued. c64 throughput was also weaker than depths 3 and 2.",
+            "submitted_answer_is_null": false
+          },
+          "answer_citation_indices": [
+            2,
+            3
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s05",
+              "start_line": 16,
+              "end_line": 18
+            },
+            {
+              "source_id": "s01",
+              "start_line": 514,
+              "end_line": 514
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s05",
+          "start_line": 3,
+          "end_line": 3,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            19
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s05",
+          "start_line": 9,
+          "end_line": 13,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            20
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 2,
+          "source_id": "s05",
+          "start_line": 16,
+          "end_line": 18,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            20
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 3,
+          "source_id": "s01",
+          "start_line": 514,
+          "end_line": 514,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            14
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": null,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q11",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q11.c1",
+          "status": "complete",
+          "rationale": "Actual JSON null correctly abstains from inventing a named author; passages supply role attribution only.",
+          "supporting_answer": {
+            "field": "explanation",
+            "exact_excerpt": "do not establish a named human as the authenticated author of the withdrawal",
+            "submitted_answer_is_null": true
+          },
+          "answer_citation_indices": [
+            0,
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 15,
+              "end_line": 18
+            },
+            {
+              "source_id": "s01",
+              "start_line": 30,
+              "end_line": 31
+            }
+          ]
+        },
+        {
+          "criterion_id": "q11.c2",
+          "status": "complete",
+          "rationale": "Correctly rejects identity inference from repository/host strings; absence is scoped to all five documents.",
+          "supporting_answer": {
+            "field": "explanation",
+            "exact_excerpt": "Names suggested by paths or hostnames cannot supply that missing identity.",
+            "submitted_answer_is_null": true
+          },
+          "answer_citation_indices": [
+            0,
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s01",
+              "start_line": 15,
+              "end_line": 18
+            },
+            {
+              "source_id": "s01",
+              "start_line": 30,
+              "end_line": 31
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s01",
+          "start_line": 15,
+          "end_line": 18,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            2
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s01",
+          "start_line": 30,
+          "end_line": 31,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            2
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": true,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    },
+    {
+      "question_id": "q12",
+      "status": "pass",
+      "all_essential_criteria_complete": true,
+      "criteria": [
+        {
+          "criterion_id": "q12.c1",
+          "status": "complete",
+          "rationale": "Actual JSON null rather than zero, estimated cost, or another trial duration.",
+          "supporting_answer": {
+            "field": "explanation",
+            "exact_excerpt": "No measured total elapsed time for durable r4’s seed-29 dispatch quoted trial is supplied.",
+            "submitted_answer_is_null": true
+          },
+          "answer_citation_indices": [
+            0,
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 8,
+              "end_line": 12
+            },
+            {
+              "source_id": "s03",
+              "start_line": 19,
+              "end_line": 20
+            }
+          ]
+        },
+        {
+          "criterion_id": "q12.c2",
+          "status": "complete",
+          "rationale": "Correct unstarted status and closed-corpus absence of a later measurement.",
+          "supporting_answer": {
+            "field": "explanation",
+            "exact_excerpt": "seed 29’s six trials did not start; measurements from completed seed-17 or legacy trials cannot be substituted",
+            "submitted_answer_is_null": true
+          },
+          "answer_citation_indices": [
+            0,
+            1
+          ],
+          "supporting_sources": [
+            {
+              "source_id": "s03",
+              "start_line": 8,
+              "end_line": 12
+            },
+            {
+              "source_id": "s03",
+              "start_line": 19,
+              "end_line": 20
+            }
+          ]
+        }
+      ],
+      "citation_checks": [
+        {
+          "answer_citation_index": 0,
+          "source_id": "s03",
+          "start_line": 8,
+          "end_line": 12,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            17,
+            18
+          ],
+          "model_visible_bytes_independently_verified": false
+        },
+        {
+          "answer_citation_index": 1,
+          "source_id": "s03",
+          "start_line": 19,
+          "end_line": 20,
+          "exact": true,
+          "relevant": true,
+          "reader_log_covering_sequences": [
+            18
+          ],
+          "model_visible_bytes_independently_verified": false
+        }
+      ],
+      "relevant_citations_complete": true,
+      "temporal_scope_correct": true,
+      "authority_scope_correct": true,
+      "unknown_abstention_appropriate": true,
+      "unsupported_material_claims": [],
+      "source_scoped_reference_matches": true
+    }
+  ],
+  "aggregate": {
+    "questions": 12,
+    "passed_questions": 11,
+    "failed_questions": 1,
+    "essential_criteria": 38,
+    "complete": 37,
+    "partial": 1,
+    "absent": 0,
+    "contradicted": 0,
+    "answer_citations": 28,
+    "exact_relevant_citations": 28,
+    "unknown_questions_correct": 2,
+    "unsupported_material_claims": 0
+  },
+  "delivery_review": {
+    "reader_operations_including_submit": 21,
+    "page_count": 19,
+    "successful_pre_submit_payload_bytes": 104073,
+    "total_logged_response_bytes": 104149,
+    "all_source_lines_emitted": true,
+    "source_line_coverage": {
+      "s01": {
+        "covered": 584,
+        "total": 584
+      },
+      "s02": {
+        "covered": 39,
+        "total": 39
+      },
+      "s03": {
+        "covered": 64,
+        "total": 64
+      },
+      "s04": {
+        "covered": 20,
+        "total": 20
+      },
+      "s05": {
+        "covered": 18,
+        "total": 18
+      }
+    },
+    "source_lines_emitted_exactly_once_in_original_order": true,
+    "all_cited_lines_in_logged_reader_payloads": true,
+    "maximum_page_payload_bytes": 5489,
+    "declared_page_payload_cap_bytes": 6500,
+    "answerer_reported_complete_visibility": true,
+    "model_visible_delivery_complete": null,
+    "model_visible_delivery_independently_verified": false,
+    "interpretation": "Logs independently verify all 725 original lines were emitted exactly once in 19 ordered bounded pages before submission. Parent-recorded answerer attestation reports every page visibly received separately without truncation; no independent rendered model-visible transcript is available. The q08 missing qualification is in the emitted and submitted quoted evidence, so the observed defect is answer completeness rather than missing reader evidence."
+  },
+  "limitations": [
+    "This is the separately preregistered supplemental paged delivery, not a replacement for the original full-source protocol failure. Original full answers were not graded here.",
+    "One partial essential criterion fails q08 and the all-12 gate. It does not establish broad unreliability, a general retrieval advantage, or a need for structured memory.",
+    "Unknown answers are judgments about this closed corpus, not proof that the facts are absent elsewhere. Sources are agent-curated repository records with claimed owner input, not authenticated human transcripts.",
+    "Shared-filesystem blinding is instruction-based. Model token/cache/currency costs and exact backend identity remain unknown; paging changes delivery operations and does not support a speed verdict.",
+    "Reviewer previously validated references and graded search. The same frozen rubric was applied without repairing the answer or reference; no inter-rater blindness is claimed."
+  ]
+}

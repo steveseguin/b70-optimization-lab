@@ -191,15 +191,20 @@ No additional model experiment is queued.
 
 ## 2026-10-07, project decision recall workflow
 
-The owner authorized the next application check. A [fixed twelve-question packet](experiments/project-decision-recall-20261007/README.md)
-uses five complete existing project records, with explicit reference criteria,
-two source-unknown answers and exact citations. Independent reference review and
-CPU checks precede one complete-source and one ordinary search/read assistant
-attempt. These use fresh hosted assistant sessions, not the local Qwen server;
-no GPU experiment or resident service is queued. The sources are agent-curated
-with claimed owner input, not authenticated human transcripts. Source access and
-semantic answer coverage are graded separately; no new structured memory store
-is admitted by this plan.
+The [twelve-question application check](experiments/project-decision-recall-20261007/RESULTS.md)
+is complete. Ordinary search/read covered all 38 required criteria and all twelve
+questions. A separate complete-source delivery check covered 37 criteria fully
+and missed one required caveat, despite quoting the right evidence. The original
+full-source attempt remains a recorded failure: its display truncated and its
+first submission failed the required format. No answer was repaired.
+
+The [reviewed decision brief](experiments/project-decision-recall-20261007/DECISIONS.md)
+links exact historical sources. Use original source access and explicit answer
+completeness checks; no structured memory store or worker integration is admitted.
+The selected records are agent-curated with claimed owner input, not authenticated
+human transcripts. Fresh hosted assistant sessions supplied these answers; this
+does not qualify local Qwen, general memory or speed. No local model server or
+GPU experiment was started. Existing context owner units remain inactive.
 
 ## 2026-10-07, two-B70 host: short-document decision settled
 

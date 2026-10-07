@@ -1,0 +1,263 @@
+{
+  "answers": [
+    {
+      "id": "q01",
+      "status": "answered",
+      "answer": "The September 13 preference for one continuously running server and endpoint reuse was withdrawn as an agent's reading. The October 3 replacement says servers exist only for experiments: start, measure, stop gracefully, and leave the cards empty. A resident server may be started, restored, queued or auto-launched only if the owner asks for one; campaigns must not automatically restore service.",
+      "explanation": "This is an explicit replacement in the supplied standing policy, not an inference from a later experiment cleanup.",
+      "citations": [
+        {
+          "source_id": "s01",
+          "start_line": 20,
+          "end_line": 31,
+          "quote": "### 1. The job is optimizing, not hosting (2026-10-03)\n\nThe focus of this lab is making models faster without losing quality. A server\nis hosted when the optimizing is done, and it is not done.\n\n- **No model server is left running.** A server exists only for the length of\n  an experiment: start it, measure, stop it gracefully, leave the cards empty.\n- Do not start, restore, queue or auto-launch a resident server unless the\n  owner asks for one. A campaign runner must not end by \"putting the service\n  back\".\n- This replaces the 2026-09-13 wording \"prefer one continuously running server\n  and reuse its endpoint\", which was an agent's reading and is withdrawn."
+        }
+      ]
+    },
+    {
+      "id": "q02",
+      "status": "answered",
+      "answer": "The standing rules are attributed to the owner and explicitly override other text in that file, older notes, and recipes. A reboot always requires the owner's explicit authorization. The document establishes this attributed authority role, not an authenticated named human author.",
+      "explanation": "The authorization requirement is specifically for rebooting; the separately described controlled reload within authorized work does not itself require an approval pause. These policy statements do not authenticate who personally wrote or issued them.",
+      "citations": [
+        {
+          "source_id": "s01",
+          "start_line": 15,
+          "end_line": 18,
+          "quote": "## Owner's Standing Rules\n\nThese come directly from the owner and override anything else in this file,\nany older note, and any recipe."
+        },
+        {
+          "source_id": "s01",
+          "start_line": 59,
+          "end_line": 62,
+          "quote": "- **No automatic reboot or driver reset.** A reboot always needs the owner's\n  explicit authorization. The evidence-first recovery sequence, including\n  when a driver reload is appropriate on the four-card host, is in\n  `docs/local-ops.md`. Never clear a device coredump before copying it out."
+        },
+        {
+          "source_id": "s01",
+          "start_line": 71,
+          "end_line": 73,
+          "quote": "- **A controlled reload inside authorized work does not need an approval\n  pause** (2026-09-14). Explain it in plain words, distinguish it from\n  restarting the computer, and continue optimizing afterwards."
+        }
+      ]
+    },
+    {
+      "id": "q03",
+      "status": "answered",
+      "answer": "The default is full 16-bit KV cache: BF16, or FP16 where the runtime uses it. FP8 or another compressed cache is allowed only when a 16-bit cache is unavailable for that model or when the owner explicitly authorizes it. Neither exception makes compressed KV a default or a headline configuration.",
+      "explanation": "The policy explicitly says compressed KV is never a headline. A case that specifically should not use BF16 must be raised with the owner rather than silently worked around.",
+      "citations": [
+        {
+          "source_id": "s01",
+          "start_line": 46,
+          "end_line": 52,
+          "quote": "**KV cache stays at full 16-bit precision** (BF16, or FP16 where the runtime\nuses that) by default (owner, 2026-10-03). An FP8 or otherwise compressed KV\ncache is cheating, so it is not a default and never a headline. Use one only\nwhen a 16-bit cache is not available for that model, or when the owner says\nso explicitly. This rule is not meant to break things: if something\nspecifically should not be BF16, raise it with the owner instead of working\naround it."
+        }
+      ]
+    },
+    {
+      "id": "q04",
+      "status": "answered",
+      "answer": "CURRENT.md is designated the sole cross-repository authority for live card contents on each host, the active lane, protected work and immediate next actions. Old experiment notes cannot establish what is running now. Before operational changes, verify Git status, relevant processes and the actual endpoint, and preserve active or protected paths recorded in CURRENT.md.",
+      "explanation": "The supplied historical policy designates where live state belongs; it is not itself an observation of current processes. Detailed lane evidence and old recipes do not substitute for the required live verification.",
+      "citations": [
+        {
+          "source_id": "s01",
+          "start_line": 167,
+          "end_line": 178,
+          "quote": "\n## Live State Authority\n\n`CURRENT.md` is the sole cross-repository authority for what is loaded on each\nhost's cards (normally nothing), the active optimization lane, protected work,\nand immediate next actions. Detailed evidence remains in the lane handoff and\nresult packet linked from that file.\n\nDo not infer what is live from a deployable recipe, old handoff, service unit,\nhistorical note, or result packet. Verify Git status, relevant processes, and\nthe actual endpoint before operational changes. Preserve any paths marked\nactive or protected in `CURRENT.md`; do not disturb shared runtime trees or GPU"
+        }
+      ]
+    },
+    {
+      "id": "q05",
+      "status": "answered",
+      "answer": "At the October 7 follow-up, the million-token quoted attempt had progressed from incomplete to completed: 24/24, nonvoid, in 47.9 minutes. The snapshot retained all prior attempt IDs and contained 31 attempts: 29 completed, one interrupted and one incomplete. The 480K quoted seed-1 attempt remained incomplete and its generated task asked 21 questions, not 24. The earlier snapshot stays unchanged as a record of what was known then.",
+      "explanation": "The newer snapshot records progress without retroactively rewriting the earlier knowledge state.",
+      "citations": [
+        {
+          "source_id": "s02",
+          "start_line": 3,
+          "end_line": 8,
+          "quote": "The million-token quoted trial completed with **24/24**, nonvoid, in 47.9 minutes.\nIts input stream and expected-answer hashes match the read-mode trial that scored\n23/24 in 62.2 minutes. The observed elapsed reduction is 23.0% for this one pair;\nit is not a repeat-confirmed speed result or evidence that every intermediate\nstate was correct. The legacy checker limitations in the\n[review](2026-10-06-context-review.md) still apply."
+        },
+        {
+          "source_id": "s02",
+          "start_line": 10,
+          "end_line": 15,
+          "quote": "The new [canonical snapshot](../data/2026-10-05-context/canonical-2026-10-07/manifest.json)\ncontains 31 attempts: 29 completed, one interrupted and one incomplete. It retains\nall prior attempt IDs. The million-token attempt has progressed from incomplete\nto completed; the 480K quoted seed-1 attempt is still incomplete at this snapshot.\nThat seed's generated task asks 21 questions, not 24. The earlier snapshot remains\nunchanged as the record of what was known then."
+        }
+      ]
+    },
+    {
+      "id": "q06",
+      "status": "answered",
+      "answer": "No. ret120q2, the quoted retention seed-1 block, failed during planning because its task file was absent; it received no model score. The existing 35/36 belonged to seed 0. The wrapper continued to the next block, and its final plan complete message did not establish completion of every cell.",
+      "explanation": "The audit records a setup failure, which must not be converted into either a model score or successful completion.",
+      "citations": [
+        {
+          "source_id": "s02",
+          "start_line": 19,
+          "end_line": 24,
+          "quote": "The quoted retention seed-1 block (`ret120q2`) failed during planning because its\ntask file was absent. The existing 35/36 result in that directory is seed 0.\nThe wrapper continued to the next block. This is a setup failure, with no model\nscore, and is recorded in the [campaign audit](../data/2026-10-05-context/canonical-2026-10-07/campaign-audit.json)\nand its copied log prefix. A final `plan complete` message from this wrapper\nmust not be presented as completion of every cell."
+        }
+      ]
+    },
+    {
+      "id": "q07",
+      "status": "answered",
+      "answer": "The second r4 summary trial exhausted its fixed 8192-token output cap entirely on reasoning and submitted no answer (finish_reason=length). This was a measured bounded-model failure, not a transport or GPU failure. The harness recorded it and stopped the server without continuation or retry. R4 remains frozen and failed: do not raise its cap or relabel the incomplete matrix. The admission gate stayed closed and no held-out seeds were used.",
+      "explanation": "The 12-trial development matrix ended with five completed, one failed and six not started. Any evaluator change to preserve a secondary-method failure while continuing other trials needs a new protocol and tests; it cannot complete r4 retrospectively.",
+      "citations": [
+        {
+          "source_id": "s03",
+          "start_line": 8,
+          "end_line": 12,
+          "quote": "The planned 12-trial development matrix ended with **five completed trials, one\nfailed trial and six not started**. The second summary trial generated 8192\nreasoning tokens, reached the fixed output cap and returned no answer content.\nThe harness recorded the failure and stopped its server without continuation or\nretry. The gate stayed closed; none of the held-out seeds was used."
+        },
+        {
+          "source_id": "s03",
+          "start_line": 26,
+          "end_line": 31,
+          "quote": "The failed summary's final call reported 3615 input tokens, 8192 output tokens\n(all reported as reasoning), zero cached tokens, `finish_reason=length`, and no\nsubmitted answers. This is a measured bounded-model failure, not a transport or\nGPU failure. Its partial reasoning and usage are preserved; no partial output is\npresented as a successful answer. CPU validation passed 102 harness tests and 33\nhost-runner tests before the run."
+        },
+        {
+          "source_id": "s03",
+          "start_line": 35,
+          "end_line": 39,
+          "quote": "Keep r4 frozen and failed. Do not raise its cap or silently relabel the incomplete\nmatrix. A future evaluator should distinguish an expected bounded-model failure\nfrom an infrastructure failure: a secondary method's failure should remain a\nvisible outcome without hiding other planned trials. Such a change needs a new\nprotocol and tests; it does not complete this run retrospectively."
+        }
+      ]
+    },
+    {
+      "id": "q08",
+      "status": "answered",
+      "answer": "Neither a general speed verdict nor a contradiction is established. The legacy million-token pair observed quoted at 47.9 minutes, 24/24, versus read-mode at 62.2 minutes, 23/24: a 23.0% elapsed reduction with matching input-stream and expected-answer hashes, but no repeat-confirmed speed claim or proof of all intermediate states. R4 used a fresh server with prefix caching disabled and independently verified uncached primary trials; quoted was slower than archive in its two completed pairs, but the incomplete matrix supplies no qualifying speed verdict.",
+      "explanation": "These are scoped observations from different protocols/tasks, not a matched universal comparison. R4's report and dispatch styles represent the same seed's events, not independent arithmetic streams, and quoting adds output cost in that small eight-counter task. Future performance claims retain zero-cache and fresh-server replication requirements. The separately mentioned public 480K comparison used matching cache-enabled profiles and one-task scope; that statement does not establish the million-token pair's cache configuration.",
+      "citations": [
+        {
+          "source_id": "s02",
+          "start_line": 3,
+          "end_line": 8,
+          "quote": "The million-token quoted trial completed with **24/24**, nonvoid, in 47.9 minutes.\nIts input stream and expected-answer hashes match the read-mode trial that scored\n23/24 in 62.2 minutes. The observed elapsed reduction is 23.0% for this one pair;\nit is not a repeat-confirmed speed result or evidence that every intermediate\nstate was correct. The legacy checker limitations in the\n[review](2026-10-06-context-review.md) still apply."
+        },
+        {
+          "source_id": "s03",
+          "start_line": 3,
+          "end_line": 6,
+          "quote": "The [prospective r4 plan](2026-10-07-durable-context-r4-plan.md) ran on a fresh\nserver with prefix caching explicitly disabled. The emitted launch flags were\nverified before requests. Standing reference qualification passed 12/12, and both\nfixed extraction diagnostics passed with zero reported cache reuse on every call."
+        },
+        {
+          "source_id": "s03",
+          "start_line": 19,
+          "end_line": 24,
+          "quote": "Seed 29's six trials did not start. All four completed primary trials were exact\nand independently verified uncached. Their 192 structured-table checkpoints were\nexact. All 288 source batches in the six started stores were byte-exact. Quoted\nwas slower than archive in both completed pairs; the incomplete matrix provides\nno qualifying speed signal or verdict. The two styles are representations of the\nsame seed's underlying events, not independent arithmetic streams."
+        },
+        {
+          "source_id": "s03",
+          "start_line": 51,
+          "end_line": 54,
+          "quote": "After semantic diagnosis, larger sparse state tables are a more meaningful\nperformance lever than small tuning of an eight-counter task. Quoting adds output\ncost here; no speed advantage is assumed. Retain zero-cache evidence and fresh\nserver replication requirements for any future performance claim."
+        },
+        {
+          "source_id": "s03",
+          "start_line": 63,
+          "end_line": 64,
+          "quote": "The previous public 480K comparison now explicitly states its matching\ncache-enabled profiles and one-task scope; its native 10/10 scores are unchanged."
+        }
+      ]
+    },
+    {
+      "id": "q09",
+      "status": "answered",
+      "answer": "R189 was published as the R187 line's 2K–32K real-content depth profile, in package performance profiles and the guide table. It used the R156 image via R187 wrappers with whole-graph compilation (COMPILATION_CONFIG splitting_ops=[]), capacity 33,024 tokens, one slot, and 4,096-token chunked prefill. The R150 protocol used three real-content classes, three requests per depth, 128 output tokens, zero cache and canaries. MTP1 remained lossless against MTP0 at the six measured active-context lengths: 2048, 4096, 8192, 16384, 24576 and 32768.",
+      "explanation": "This establishes the tested MTP1-versus-MTP0 output equivalence and one-slot context profile, not every speculative MTP depth, arbitrary intermediate context point or concurrency level. Whole-graph performance was described as within measurement noise of the piecewise line; its largest gap, 24K MTP1 at -2.5%, was one three-sample median.",
+      "citations": [
+        {
+          "source_id": "s04",
+          "start_line": 1,
+          "end_line": 5,
+          "quote": "# R189: 2K-32K real-content depth curve on the R187 line (whole-graph compile)\n\nDate: 2026-09-03 21:54-22:07 EDT, boot 88f0984f (clean). R156 image via the R187 wrappers\n(`COMPILATION_CONFIG splitting_ops=[]`), capacity 33,024 tokens, one slot, 4,096-token chunked prefill; the R150\nprotocol (three real-content classes, three requests per depth, 128 output tokens, cache zero, canaries). Prereg"
+        },
+        {
+          "source_id": "s04",
+          "start_line": 9,
+          "end_line": 16,
+          "quote": "| active context | MTP1 decode (R150) | MTP1 TTFT | MTP0 decode (R150) | MTP0 TTFT | MTP1 = MTP0 |\n| ---: | ---: | ---: | ---: | ---: | :---: |\n| 2048 | 54.61 (54.81) | 0.60 s | 33.00 (33.36) | 0.58 s | yes |\n| 4096 | 55.17 (55.45) | 1.17 s | 32.74 (32.98) | 1.14 s | yes |\n| 8192 | 53.74 (54.14) | 2.37 s | 31.90 (32.11) | 2.33 s | yes |\n| 16384 | 52.68 (53.05) | 4.95 s | 31.18 (31.41) | 4.83 s | yes |\n| 24576 | 51.56 (52.88) | 7.74 s | 30.45 (30.62) | 7.55 s | yes |\n| 32768 | 51.55 (51.93) | 10.72 s | 29.78 (29.96) | 10.44 s | yes |"
+        },
+        {
+          "source_id": "s04",
+          "start_line": 18,
+          "end_line": 20,
+          "quote": "Reading: the whole-graph compile keeps the long-context profile of the piecewise line within measurement noise\n(the largest gap, 24K MTP1 at -2.5%, is a single three-sample median) and keeps MTP1 lossless against MTP0 at\nevery depth. Published as the R187 line's depth profile (package performance profiles, guide table)."
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "status": "answered",
+      "answer": "As of R197, MTP depth 4 on the R187 whole-graph line—R156 image, splitting_ops=[], num_speculative_tokens=4—was called the fastest lossless single-user profile so far: center 82.396 tok/s, about 4% above depth 3's 79.183. Its a/b gate was 12/12, both comparisons against the R187 MTP0 oracle were 12/12, and the repeat probe matched IDs, logprobs and top-k.",
+      "explanation": "It was not fully qualified at high concurrency: the first ladder was exact only at c1–c16; c32 passed 30/32 and c64 58/64. Its c64 aggregate was about 620 tok/s, below depth 3's 713–720 and depth 2's 784, with rejected draft work growing with depth and batch. The second ladder R201 was still queued and depth 5 R200 was a turnover probe, so neither is a completed qualification in this note.",
+      "citations": [
+        {
+          "source_id": "s05",
+          "start_line": 1,
+          "end_line": 3,
+          "quote": "# R197: MTP depth 4 on the R187 line\n\nDate: 2026-09-04 01:01-01:23 EDT, boot 88f0984f (clean). R156 image, `splitting_ops=[]`, `num_speculative_tokens=4`."
+        },
+        {
+          "source_id": "s05",
+          "start_line": 9,
+          "end_line": 14,
+          "quote": "| G2 depth-4 a vs b | 12/12; 82.447 / 82.345 tok/s (center **82.396**; depth 3: 79.183) |\n| G3 vs the R187 MTP0 oracle | 12/12 and 12/12 |\n| G5 repeat probe | ids, logprobs, top-k identical |\n| G6 ladder (first run) | c1-c16 exact; c32 30/32 (cache-c000 @96, rollback-c010 @97); c64 58/64; aggregate 78.8 / 71.6 / 218.0 / 384.7 / 530.7 / 558.6 / 619.8 tok/s |\n| sequential 64-prompt oracle | no phantom; token-identical to the depth-3 oracle |\n| acceptance | per position 0.893 / 0.828 / 0.562 / 0.521; mean accepted length 3.80 |"
+        },
+        {
+          "source_id": "s05",
+          "start_line": 16,
+          "end_line": 18,
+          "quote": "Reading: depth 4 is the fastest lossless single-user profile so far (+4% over depth 3) and the weakest at high\nconcurrency (c64 aggregate 620 vs depth 3's 713-720 and depth 2's 784): rejected draft work grows with depth and\nwith batch. The second ladder (R201) is queued; depth 5 (R200) probes the turnover."
+        }
+      ]
+    },
+    {
+      "id": "q11",
+      "status": "unknown",
+      "answer": null,
+      "explanation": "The visible supplied policy attributes its standing rules to the owner and calls the withdrawn preference an agent's reading; it does not establish an authenticated named human author of the withdrawal. A username or hostname does not establish that authorship. The full-source tool display truncated part of s01 despite the requested output budgets, so I cannot claim to have inspected every line of all five documents or establish absence in the unseen portion; no named human is established by the evidence available to this attempt.",
+      "citations": [
+        {
+          "source_id": "s01",
+          "start_line": 15,
+          "end_line": 18,
+          "quote": "## Owner's Standing Rules\n\nThese come directly from the owner and override anything else in this file,\nany older note, and any recipe."
+        },
+        {
+          "source_id": "s01",
+          "start_line": 25,
+          "end_line": 31,
+          "quote": "- **No model server is left running.** A server exists only for the length of\n  an experiment: start it, measure, stop it gracefully, leave the cards empty.\n- Do not start, restore, queue or auto-launch a resident server unless the\n  owner asks for one. A campaign runner must not end by \"putting the service\n  back\".\n- This replaces the 2026-09-13 wording \"prefer one continuously running server\n  and reuse its endpoint\", which was an agent's reading and is withdrawn."
+        }
+      ]
+    },
+    {
+      "id": "q12",
+      "status": "unknown",
+      "answer": null,
+      "explanation": "The complete r4 result note says all six seed-29 trials did not start, so it supplies no measured total elapsed time for seed-29 dispatch quoted. The GPU-release timestamp is cleanup evidence, not the requested trial duration. This is a limit of the supplied run evidence, not a claim about all possible future measurements.",
+      "citations": [
+        {
+          "source_id": "s03",
+          "start_line": 19,
+          "end_line": 24,
+          "quote": "Seed 29's six trials did not start. All four completed primary trials were exact\nand independently verified uncached. Their 192 structured-table checkpoints were\nexact. All 288 source batches in the six started stores were byte-exact. Quoted\nwas slower than archive in both completed pairs; the incomplete matrix provides\nno qualifying speed signal or verdict. The two styles are representations of the\nsame seed's underlying events, not independent arithmetic streams."
+        },
+        {
+          "source_id": "s03",
+          "start_line": 62,
+          "end_line": 62,
+          "quote": "GPU release was confirmed at **04:45:14 UTC**. No r4 server remains running."
+        }
+      ]
+    }
+  ],
+  "evidence_limitation": "The full reader was invoked exactly once with functions.exec max_output_tokens=50000 and exec_command max_output_tokens=50000, but its returned display contained a truncation marker (11995 tokens truncated) within s01. The four result notes s02-s05 were fully visible; relevant opening policy sections of s01 were visible. I used only visible evidence and did not reread or assume unseen text. Complete reading of all five documents was therefore not possible in this attempt."
+}

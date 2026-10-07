@@ -92,3 +92,16 @@ incorrect ownership joins; source integrity and semantic correctness remain
 separate checks. The [bounded toolchain audit](followup/toolchain-audit.json)
 also preserves newly located runtime-version clues without certifying the
 unrecovered strict LFM build environment.
+
+## Project decision recall diagnostic
+
+A separate [twelve-question application check](../project-decision-recall-20261007/RESULTS.md)
+used five complete historical project records. Ordinary search/read answered all
+twelve completely; a separately paged full-source attempt omitted one required
+qualification despite citing the correct passage. The first full-source attempt
+also exposed tool-display truncation and is preserved as a failed attempt.
+This supports explicit completeness review and checking actual displayed ranges,
+not new memory machinery or a local-model qualification. The
+[reviewed decision brief](../project-decision-recall-20261007/DECISIONS.md)
+provides the snapshot's answers with exact source links. These hosted assistant
+attempts do not change this navigator's frozen retrieval scores.
