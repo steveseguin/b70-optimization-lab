@@ -144,9 +144,9 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 06:09 UTC**. The four-trial sparse-state
-screen is complete and independently audited. Card release was verified at
-05:58:40 UTC; postflight health passed. No model server is running.
+Latest two-card review: **2026-10-07 06:10 UTC**. One supervised sparse-state
+replication is active. The previous four-trial screen completed and passed its
+registered replication trigger; card release was verified at 05:58:40 UTC.
 
 ## 2026-10-07, two-B70 host: sparse signal; prepare fresh-server replication
 
@@ -191,9 +191,12 @@ has passed CPU preparation: repeat the original 128-counter task with reversed
 method order on a fresh server, then test fixed seed 97 with dispatch wording.
 Nineteen client/packet tests, forty-five host tests and twenty-four sparse audit
 regressions pass. The original task bytes and new source references are checked;
-both cases retain the disclosed 2/16 historical-value distinction. Next is passive
-launch preparation against the frozen implementation and previous cleanup, then
-one supervised owner. No model server is running yet. Preserve every
+both cases retain the disclosed 2/16 historical-value distinction. Passive launch
+preparation passed at 06:09:28 UTC, and preflight health passed.
+`ctx-sparse-replication-v1.service` now owns startup, strict qualification, four
+trials and graceful cleanup. Output: `/mnt/fast-ai/bench-results/context-sparse-replication-v1-20261007`.
+[Preparation receipts](experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-replication-live/queue.json).
+Do not start another GPU owner or edit its frozen sources, packet or plan. Preserve every
 older frozen version and outcome; no holdout has been admitted.
 
 Separate [historical-state retrieval](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
