@@ -6,7 +6,11 @@ below remain that host's own research record; this consolidation did not operate
 ## Four-card host now: consolidation; LTX and Flash-Next parked
 
 The owner asked to preserve both lanes and make the existing lab dependable before
-returning to optimization. **No model server is running on `steve-b70s`.** LTX's
+returning to optimization. **No resident model service is authorized on `steve-b70s`.**
+A separately identified [small-model pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
+is now admitted for one bounded server attempt; its live process/fault/shutdown
+receipts belong under `/home/steve/worker-small-model-pilot-20261007/server/`.
+Do not borrow that endpoint or infer it is ready from this note. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving
 the evidence and checking passive GPU idleness, one SIGINT stopped the application;
 port 8188 closed, no render-node holders remained, and no kernel GPU fault appeared.
@@ -60,6 +64,13 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   two coding tasks, one attempt each, and judge reviewed patches rather than
   token speed. The worker can now mount a separate read-only acceptance folder
   and record/check its hashes. This does not qualify a model or serving package.
+  Pinned worker dependencies and the CPU image are now installed; all 107 worker
+  tests pass. Both initial tasks also passed their real full-snapshot Docker
+  controls (four baseline/fixed checks), using disposable `/dev/shm` snapshots.
+  Snapshot receipts are preserved at `/home/steve/worker-container-controls-20261007/`.
+  Two hash-identical 0.8B weight-cache copies were consolidated into one read-only
+  inode, preserving both model paths and recovering 1.63 GiB. The separate 0.8B
+  pilot is a workflow test; the planned 27B trial remains pending.
 - **Next:** run that small trial when the intended qualified runtime, host
   ownership and full snapshot storage budget are available. Do not use the
   protected two-card endpoint or start a large replacement download here.
