@@ -113,8 +113,8 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 04:23 UTC**. Revision 3 finished and the
-GPUs are released. Revision 4 is being prepared; no new GPU run is active yet.
+Latest two-card review: **2026-10-07 04:27 UTC**. Revision 3 finished and the
+GPUs are released. Revision 4 is prepared for one cold-profile run.
 
 ## 2026-10-07, two-B70 host: reasoning improved answers; cold confirmation next
 
@@ -135,8 +135,11 @@ A single cold-server result remains descriptive until fresh-server replication.
 
 Designated next output: `/mnt/fast-ai/bench-results/context-durable-r4-20261007`;
 owned unit: `ctx-durable-r4.service`. Preserve frozen r2/r3 sources and outcomes.
-The owner explicitly asked work to continue; implementation and CPU validation
-of r4 are in progress while the GPUs are idle.
+The owner explicitly asked work to continue. R4 implementation and independent
+review are complete: 102 harness and 33 lifecycle CPU tests passed. Passive
+preparation verified prior cleanup and idle ownership. The designated unit will
+perform strict qualification before any development trial; live status overrides
+this preparation snapshot.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 
