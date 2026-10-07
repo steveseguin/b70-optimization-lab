@@ -7,7 +7,10 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **No model server is running.** The first
+local-worker tuning remain parked. **One finite corrected 640×384 reference
+application is starting (16:16 UTC).** Packet101b retains original native FP32
+constructor state explicitly; all14 CPU suites and independent review pass.
+No reference quality or speed result is established yet. The first
 640×384 setup stopped cleanly at 16:05 UTC after its new dtype guard rejected
 a native FP32 text-encoder scalar. The encoder check passed; no reference clip
 was generated. All four cards passed postflight with no kernel fault. The guard
