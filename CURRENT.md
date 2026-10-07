@@ -39,8 +39,11 @@ preserved. The qualified packet manifest is
 [Original failure](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md),
 [compatibility plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
 
-Next: correct the named-layout ownership check while preserving the failed
-packet and its evidence, then test the intended 20/28 sampler placement. The
+The corrected ownership candidate is now sealed and independently reviewed;
+22 CPU checks and the inactive launch check pass. Its actual consuming function
+regression reproduces the old failure and validates the correction.
+Next: run the corrected 20/28 candidate against the accepted baseline.
+[Corrected test plan](experiments/ltx25-b70/data/resume-20261007/runtime100b-preregistration.json). The
 qualified 99b control remains the comparison and memory basis. The failed run
 is not a performance or quality verdict on 20/28. Each new experiment needs a
 fresh 4 GiB output/cache allowance and the 50 GiB disk reserve. No projected gain
