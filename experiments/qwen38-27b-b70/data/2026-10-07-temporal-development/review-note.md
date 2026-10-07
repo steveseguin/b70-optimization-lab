@@ -43,3 +43,23 @@ does not establish model quality. No live study is admitted by this packet;
 execution requires a separate prospective plan, frozen wrapper, CPU checks and
 the usual host admission. The original [authoring note](authoring-note.md)
 preserves the source-delivery state before annotation.
+
+The [CPU feasibility receipt](budget-feasibility.json) covers 48 explicit oracle
+fixtures across both frozen engines, both bookkeeping methods, source-only/history
+access where supported, and empty/full ASCII memory. The parent reran the
+[supporting script](check_budget_feasibility.py) and reproduced the receipt exactly.
+History mode fetched twelve original batches and nine earlier states: 21 of 24
+retrievals and 22 of 32 answer calls including submission. The largest serialized
+prompt was 29,306 of 32,768 bytes, with no evidence eviction. The largest reference
+ingestion response was 1,216 tokens; the reference final response was 371 tokens.
+
+```sh
+/mnt/fast-ai/venvs/clm/bin/python3 -B experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/check_budget_feasibility.py --out /tmp/temporal-budget-feasibility.json
+```
+
+These are scripted reference responses, not model outputs. The full-memory fixture
+uses repeated ASCII characters, not every possible model-written string. Final
+reference token counts exclude reasoning and cannot guarantee completion within
+the model's shared 8,192-token answer allowance. The script verifies the public
+prompt field allowlist and binds source, adjudication, annotation sources, engines,
+tokenizer and script hashes. It does not admit a live study.
