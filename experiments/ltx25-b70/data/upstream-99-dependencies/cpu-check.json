@@ -1,0 +1,74 @@
+{
+  "availability_calls_short_circuited": 3,
+  "checker_sha256": "e799f10551b0a7f45875d006bc3eaab7b151f10d10b9b91d861dd00d4ef4d28c",
+  "checks": [
+    "all 12 exact metadata versions",
+    "complete overlay hashes unchanged",
+    "all direct app imports from overlay",
+    "kitchen new API callables",
+    "XPU/CUDA discovery short-circuited",
+    "aimdo init never called",
+    "source99 comfy.storage imports under --cpu",
+    "accepted eager NA exact hash and registry",
+    "Ed25519 CPU sign and verify",
+    "baseline runtime bytes unchanged"
+  ],
+  "gpu_initialized": false,
+  "limitation": "CPU import/API evidence only; does not establish native runtime or model output equivalence",
+  "module_paths": {
+    "cffi": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/cffi/__init__.py"
+    ],
+    "comfy.storage": [
+      "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99-source/source/comfy/storage.py"
+    ],
+    "comfy_aimdo.control": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_aimdo/control.py"
+    ],
+    "comfy_aimdo.host_buffer": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_aimdo/host_buffer.py"
+    ],
+    "comfy_aimdo.storage": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_aimdo/storage.py"
+    ],
+    "comfy_kitchen": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_kitchen/__init__.py"
+    ],
+    "comfyui_embedded_docs": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/comfyui_embedded_docs/__init__.py"
+    ],
+    "comfyui_frontend_package": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/comfyui_frontend_package/__init__.py"
+    ],
+    "comfyui_workflow_templates": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/comfyui_workflow_templates/__init__.py"
+    ],
+    "cryptography": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/cryptography/__init__.py"
+    ],
+    "pycparser": [
+      "/home/steve/ltx25-upstream99-dependencies/site-packages/pycparser/__init__.py"
+    ]
+  },
+  "overlay_root": "/home/steve/ltx25-upstream99-dependencies/site-packages",
+  "receipt_sha256": "626dd5e9d840c6bfa56f6da23f326e2a434aae46c73b3662c5a08a3d50970e09",
+  "runtime_qualified": false,
+  "schema": "ltx.upstream99.dependencies.cpu-check.v1",
+  "status": "passed",
+  "torch_path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py",
+  "torch_version": "2.14.0+xpu",
+  "versions": {
+    "cffi": "2.1.1",
+    "comfy-aimdo": "0.5.5",
+    "comfy-kitchen": "0.2.37",
+    "comfyui-embedded-docs": "0.5.13",
+    "comfyui-frontend-package": "1.55.14",
+    "comfyui-workflow-templates": "0.11.77",
+    "comfyui-workflow-templates-core": "0.3.368",
+    "comfyui-workflow-templates-json": "0.1.103",
+    "comfyui-workflow-templates-media-assets-01": "0.1.48",
+    "comfyui-workflow-templates-media-assets-02": "0.1.10",
+    "cryptography": "50.0.2",
+    "pycparser": "3.0"
+  }
+}

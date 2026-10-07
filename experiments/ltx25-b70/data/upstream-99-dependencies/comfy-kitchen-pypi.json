@@ -1,0 +1,332 @@
+{
+  "info": {
+    "author": null,
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 3 - Alpha",
+      "License :: OSI Approved :: Apache Software License",
+      "Programming Language :: C++",
+      "Programming Language :: Python :: 3"
+    ],
+    "description": "# Comfy Kitchen\n\nFast kernel library for Diffusion inference with multiple compute backends.\n\n## Backend Capabilities Matrix\n\n| Function                    | eager | cuda | triton | hip | ascend |\n|-----------------------------|-------|------|--------|-----|-----|\n| `quantize_per_tensor_fp8`   | \u2713     | \u2713    | \u2713      | \u2713   |     |\n| `dequantize_per_tensor_fp8` | \u2713     | \u2713    | \u2713      | \u2713   |     |\n| `stochastic_rounding_fp8`   | \u2713     | \u2713    |        | \u2713   |     |\n| `quantize_nvfp4`            | \u2713     | \u2713    | \u2713      |     |     |\n| `dequantize_nvfp4`          | \u2713     | \u2713    | \u2713      |     |     |\n| `scaled_mm_nvfp4`           | \u2713     | \u2713    |        |     |     |\n| `quantize_mxfp8`            | \u2713     | \u2713    | \u2713      |     |     |\n| `dequantize_mxfp8`          | \u2713     |      |        |     |     |\n| `scaled_mm_mxfp8`           | \u2713     |      |        |     |     |\n| `adaln`                     | \u2713     | \u2713    | \u2713      | \u2713   |     |\n| `rms_adaln`                 | \u2713     | \u2713    | \u2713      | \u2713   |     |\n| `na3d`                      | \u2713     | \u2713    | \u2713      | \u2713   |     |\n| `na2d`                      | \u2713     | \u2713    | \u2713      | \u2713   |     |\n| `sol_attn`                  | \u2713     | \u2713    |        | \u2713   |     |\n| `int8_attention`            |       | \u2713    |        | \u2713   |     |\n| `apply_rope`                | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `apply_rope1`               | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `apply_rope_split_half`     | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `apply_rope_split_half1`    | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `rms_rope`                  | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `rms_rope1`                 | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `rms_rope_split_half`       | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `rms_rope_split_half1`      | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `quantize_int8_rowwise`     | \u2713     | \u2713    | \u2713      | \u2713   | \u2713   |\n| `quantize_int8_tensorwise`  | \u2713     | \u2713    |        | \u2713   | \u2713   |\n| `quantize_and_rotate_rowwise` | \u2713   | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `quantize_int8_convrot_weight` | \u2713  | \u2713    |        | \u2713   |     |\n| `dequantize_int8_simple`    | \u2713     | \u2713    |        | \u2713   | \u2713   |\n| `dequantize_int8_simple_dtype` | \u2713  | \u2713    |        | \u2713   | \u2713   |\n| `dequantize_int8_convrot_weight_dtype` | \u2713 | \u2713 |    | \u2713   |     |\n| `int8_linear`               | \u2713     | \u2713    | \u2713      | \u2713   | \u2713*  |\n| `gemv_awq_w4a16`            | \u2713     | \u2713    |        | \u2713   |     |\n| `quantize_svdquant_w4a4`    | \u2713     | \u2713    |        | \u2713   |     |\n| `scaled_mm_svdquant_w4a4`   | \u2713     | \u2713    |        | \u2713   |     |\n| `convrot_w4a4_linear`       | \u2713     | \u2713    |        | \u2713   | \u2713*  |\n| `quantize_convrot_w4a4_weight` | \u2713  | \u2713    |        | \u2713   |     |\n| `dequantize_convrot_w4a4_weight` | \u2713 | \u2713   |        | \u2713   |     |\n\nEach of the eight rope entries also has an in-place form (`apply_rope_`,\n`rms_rope_split_half1_`, ...) with the same backend coverage as the row above.\n\n\\* Ascend RoPE support requires a `torch_npu.npu_rotary_mul` schema with\n`rotary_mode`; RMS-RoPE additionally requires `torch_npu.npu_rms_norm`.\nAscend support for `quantize_and_rotate_rowwise` requires\n`torch_npu.npu_rotate_quant`; `int8_linear` requires\n`torch_npu.npu_dynamic_quant` and `torch_npu.npu_quant_matmul`, while\n`convrot_w4a4_linear` requires only `torch_npu.npu_quant_matmul`.\nThese capabilities are registered only when the\ncorresponding operator is available.\n\n## Huawei Ascend backend\n\nAscend `convrot_w4a4_linear` requires `npu_quant_matmul`, not RotateQuant.\nIt preserves the caller's FP32/FP16/BF16 precision during rotation and signed\nINT4 quantization. Activation codes stay in INT8 storage without an intermediate\npack/unpack; packed weights are unpacked to INT8 for NPU INT32 accumulation.\nThe result is then cast and scaled in eager's order. This is not a zero-copy\npacked A4W4 kernel: unpacking has a memory/runtime cost. It avoids silently\nrounding FP32 inputs to BF16 or narrowing FP32/BF16 results through FP16.\nIt retains eager's intermediate arithmetic, including FP16 range limitations;\nit does not promise higher precision than the reference. Unsupported calls\ncontinue to use the existing eager fallback.\n\nThe optional `ascend` backend uses torch-npu operators on Huawei Ascend NPU\nhardware. It is registered only when torch-npu and an Ascend device are\navailable, so comfy-kitchen keeps importing normally on CPU, CUDA, HIP, and XPU\ninstallations. The PyTorch device type remains `npu`, as defined by torch-npu.\n\nThe backend supports:\n\n- `quantize_int8_rowwise` through `torch_npu.npu_dynamic_quant`\n- `quantize_int8_tensorwise` through Ascend reduction operators and\n  `torch_npu.npu_quantize`\n- `dequantize_int8_simple` and `dequantize_int8_simple_dtype` on device\n- `quantize_and_rotate_rowwise` through `torch_npu.npu_rotate_quant`, when\n  available\n- `int8_linear` through `torch_npu.npu_dynamic_quant` and\n  `torch_npu.npu_quant_matmul`, when available; ConvRot\n  uses `torch_npu.npu_rotate_quant` when supported and otherwise keeps the\n  separate rotation and dynamic-quantization path\n- interleaved and split-half RoPE through `torch_npu.npu_rotary_mul`\n- RMS-RoPE through `torch_npu.npu_rms_norm` followed by\n  `torch_npu.npu_rotary_mul`\n\nUnsupported dtypes and stochastic rounding continue through another capable\nbackend instead of copying tensors to the CPU.\n\nThe RoPE implementations support four-dimensional BNSD and BSND tensors,\nincluding packed-QKV views whose final dimension is contiguous. Unsupported\nbroadcast patterns and layouts continue through another capable backend.\n\nRoPE capability detection is independent of quantization: it requires a\n`npu_rotary_mul` schema with `rotary_mode`; RMS-RoPE additionally requires\n`npu_rms_norm`. The quantization capability checks for `npu_quantize` with\n`div_mode`. Missing optional operators do not disable unrelated capabilities.\nINT8 linear accepts the current input RMSNorm and residual arguments through\nthe shared device-side helpers; those operations are not fused into its GEMM.\n\n## HIP backend (AMD RDNA2 / RDNA3 / RDNA3.5 / RDNA4)\n\nThe `hip` backend implements the quantized paths with its own kernels: WMMA\nmatrix-core GEMMs on RDNA3/RDNA3.5/RDNA4, and non-WMMA kernels (quantizers,\nINT8 dequantizers, RoPE and the fused RMSNorm+RoPE, AdaLN and RMS-AdaLN, the AWQ\nGEMV) that also run on RDNA2. It does not link or call hipBLAS/hipBLASLt; every\nmatmul is compiled from the sources in `comfy_kitchen/backends/hip/`.\n\nBoth rope kernels address their inputs through the tensor's own strides, so a q/k\npair permuted or sliced out of a packed qkv is read where it lies rather than\ncopied contiguous first. The in-place entries (`apply_rope_`, `rms_rope_` and\ntheir split-half and single-tensor siblings) rotate a strided view in place for\nthe same reason: each thread owns one element pair and loads both before storing\neither.\n\n`int8_linear(input_act=...)` folds the activation into the fused ConvRot\nquantizer's load, so an MLP's `linear(act(proj(x)))` never writes act's output to\nHBM just to read it straight back.\n\nWhat a GPU gets depends on whether it has matrix cores:\n\n| Generation | gfx targets                 | Matrix cores | What runs                               |\n|------------|-----------------------------|--------------|-----------------------------------------|\n| RDNA4      | `gfx1200`, `gfx1201`        | WMMA + fp8   | All HIP-supported kernels, fp8 native   |\n| RDNA3.5    | `gfx1150`-`gfx1153`         | WMMA, no fp8 | All HIP-supported kernels; fp8 widened  |\n| RDNA3      | `gfx1100`-`gfx1103`         | WMMA, no fp8 | All HIP-supported kernels; fp8 widened  |\n| RDNA2      | `gfx1030`-`gfx1036`         | none         | Non-WMMA kernels incl. AWQ GEMV; WMMA GEMMs decline |\n\nfp8, int8 and int4 share one byte-addressed tile kernel (`gemm_wmma.h`). RDNA3\nand RDNA4 spread a WMMA operand across the wave differently and RDNA3 has no fp8\nWMMA (it widens to bf16, which is exact), so each has its own set of `Mma`\npolicies in `mma.h`; the tile kernel itself is shared.\n\nRDNA2 has no matrix cores. It runs the kernels that do not need them (RoPE,\nAdaLN and RMS-AdaLN, the quantizers, stochastic rounding, the AWQ GEMV) and does\nnot advertise the GEMMs, which fall through to triton/eager. In a process with a\nmix of GPUs the capability set is the intersection, since kernels launch on the\ntensor's own device.\n\nA request outside a kernel's domain (swizzled operands, scaling other than\ntensor-wise, a K that is not a multiple of 16) falls back to torch or eager.\nNVFP4 and MXFP8 stay on eager everywhere: RDNA has neither fp4 WMMA nor\nmicroscaling hardware. Set `COMFY_KITCHEN_DISABLE_HIP=1` to remove the backend\nfrom dispatch.\n\n### Building\n\nOn a ROCm-only host, the backend is selected automatically when CUDA's `nvcc`\nis absent. Both a system ROCm install and the pip `rocm-sdk` layout (which a\nROCm PyTorch build already pulls in) are detected, so on Linux and Windows alike\nthe usual build is:\n\n```bash\npip install .\n```\n\nNo environment variables, `CC`/`CXX` override or Visual Studio developer shell\nare needed: the ROCm clang builds C, C++ and HIP alike and locates the MSVC\ntoolchain itself. CMake >= 3.26 and Ninja are required (Windows only ships a\nVisual Studio generator, which has no HIP language support). On Windows the\nMicrosoft C++ build tools and Windows SDK must be installed, since clang links\nagainst them and CMake compiles a resource file with the SDK's `rc.exe`, which\nthe build locates itself rather than expecting on `PATH`. Use the Visual Studio\n2022 v143 toolset; newer MSVC toolsets are not yet reliable with ROCm.\n\nWhen CUDA and ROCm toolchains are both installed, the source build defaults to\nCUDA only. This avoids compiling an unused multi-architecture HIP binary on an\nNVIDIA workstation. Request a combined build explicitly:\n\n```bash\nCOMFY_KITCHEN_BUILD_HIP=1 pip install .\n```\n\nArchitectures default to the validated GPUs the build machine can see, or to\nevery target in the backend's architecture manifest when it can see none (a CI\nbox), which is what the wheels carry. Detection reads the visible devices\nthrough PyTorch, so under PEP 517 build isolation (a plain `pip install .`) it\nsees nothing and falls back to the full target list; set `COMFY_HIP_ARCHS`, or\npass `--no-build-isolation`, to build for the local GPU instead. Building for\none target is much faster:\n\n```bash\nCOMFY_HIP_ARCHS=gfx1201 pip install .\n```\n\n```powershell\n$env:COMFY_HIP_ARCHS = \"gfx1201\"; pip install .\n```\n\n`PYTORCH_ROCM_ARCH` and `GPU_ARCHS` are honoured too. When the build machine sees\nAMD GPUs but none is RDNA2/3/3.5/4 (CDNA has MFMA, not WMMA), the extension is\nskipped rather than built (seeing no GPU at all falls back to the full target list\nabove instead);\n`COMFY_KITCHEN_BUILD_HIP=1` requests HIP explicitly (and makes an unsupported\nvisible AMD GPU a hard error), while `COMFY_KITCHEN_BUILD_NO_HIP=1` suppresses\nthe backend entirely.\n\nArchitecture overrides are exact and fail closed. A compiler-recognized target\nthat is not in the manifest is rejected until its device and WMMA policies have\nbeen reviewed and added.\n\nBoth extensions are built against the Python limited API on 3.12+, so a wheel\ncarrying CUDA and HIP side by side keeps its `abi3` tag. At runtime only the\nextension matching PyTorch's CUDA or ROCm runtime is loaded.\n\n\n## Quantized Tensors\n\nThe library provides `QuantizedTensor`, a `torch.Tensor` subclass that transparently intercepts PyTorch operations and dispatches them to optimized quantized kernels when available.\n\n| Layout                 | Format       | HW Requirement  | Description                             |\n|------------------------|--------------|-----------------|----------------------------------------|\n| `TensorCoreFP8Layout`  | FP8 E4M3     | SM \u2265 8.9 (Ada)  | Per-tensor scaling, 1:1 element mapping |\n| `TensorCoreNVFP4Layout`| NVFP4 E2M1   | SM \u2265 10.0 (Blackwell) | Block quantization with 16-element blocks |\n| `TensorCoreMXFP8Layout`| MXFP8 E4M3   | SM \u2265 10.0 (Blackwell) | Block quantization with 32-element blocks, E8M0 scales |\n\n```python\nfrom comfy_kitchen.tensor import QuantizedTensor, TensorCoreFP8Layout, TensorCoreNVFP4Layout\n\n# Quantize a tensor\nx = torch.randn(128, 256, device=\"cuda\", dtype=torch.bfloat16)\nqt = QuantizedTensor.from_float(x, TensorCoreFP8Layout)\n\n# Operations dispatch to optimized kernels automatically\noutput = torch.nn.functional.linear(qt, weight_qt)\n\n# Dequantize back to float\ndq = qt.dequantize()\n```\n\n\n## Installation\n\n### From PyPI\n\n```bash\n# Install default (Linux/Windows/MacOS)\npip install comfy-kitchen\n\n# Install with CUBLAS for NVFP4 (+Blackwell)\npip install comfy-kitchen[cublas]\n```\n\n### Package Variants\n\n- **CUDA wheels**: Linux x86_64 and Windows x64\n- **Pure Python wheel**: Any platform, eager and triton backends only\n\nWheels are built for Python 3.10, 3.11, and 3.12+ (using Stable ABI for 3.12+).\n\n### From Source\n\n```bash\n# Standard installation with CUDA support\npip install .\n\n# Development installation\npip install -e \".[dev]\"\n\n# For faster rebuilds during development (skip build isolation)\npip install -e . --no-build-isolation -v\n```\n\n#### Build Options\n\nThese options require using `setup.py` directly (not `pip install`):\n\n| Option | Command | Description | Default                                                                     |\n|--------|---------|-------------|-----------------------------------------------------------------------------|\n| `--no-cuda` | `python setup.py bdist_wheel --no-cuda` | Disable CUDA; without `--hip`, build a CPU-only wheel | Enabled (build with CUDA)                                                   |\n| `--hip` | `python setup.py bdist_wheel --hip` | Add HIP explicitly (including to a CUDA build) | Auto only when CUDA is unavailable                                          |\n| `--no-hip` | `python setup.py bdist_wheel --no-hip` | Disable HIP | Disabled                                                                    |\n| `--hip-archs=...` | `python setup.py build_ext --hip-archs=\"gfx1200;gfx1201\"` | HIP architectures to build for | Visible supported AMD GPUs, otherwise all supported targets                 |\n| `--cuda-archs=...` | `python setup.py build_ext --cuda-archs=\"80;89\"` | CUDA architectures to build for | `75-virtual;80;89;90a;100f;120f` (Linux), `75-virtual;80;89;120f` (Windows) |\n| `--debug-build` | `python setup.py build_ext --debug-build` | Build in debug mode with symbols | Disabled (Release)                                                          |\n| `--lineinfo` | `python setup.py build_ext --lineinfo` | Enable NVCC line info for profiling | Disabled                                                                    |\n\n```bash\n# Build CPU-only wheel (pure Python, no CUDA required)\npython setup.py bdist_wheel --no-cuda\n\n# Build with custom CUDA architectures\npython setup.py build_ext --cuda-archs=\"80;89\" bdist_wheel\n\n# Debug build with line info for profiling\npython setup.py build_ext --debug-build --lineinfo bdist_wheel\n```\n\n\n\n### Requirements\n\n- **Python**: \u22653.10\n- **PyTorch**: \u22652.7.0\n- **CUDA Runtime** (for CUDA wheels): \u226513.0\n  - Pre-built wheels require NVIDIA Driver r580+\n  - Building from source requires CUDA Toolkit \u226512.8 and `CUDA_HOME` environment variable\n- **nanobind**: \u22652.0.0 (for building from source)\n- **CMake**: \u22653.26 (for building from source; the abi3 modules need FindPython's `Development.SABIModule`)\n\n## Quick Start\n\n```python\nimport comfy_kitchen as ck\nimport torch\n\n# Automatic backend selection (hip -> cuda -> triton -> eager)\nx = torch.randn(100, 100, device=\"cuda\")\nscale = torch.tensor([1.0], device=\"cuda\")\nresult = ck.quantize_per_tensor_fp8(x, scale)\n\n# Check which backends are available\nprint(ck.list_backends())\n\n# Force a specific backend\nresult = ck.quantize_per_tensor_fp8(x, scale, backend=\"eager\")\n\n# Temporarily use a different backend\nwith ck.use_backend(\"triton\"):\n    result = ck.quantize_per_tensor_fp8(x, scale)\n```\n\n## Backend System\n\nThe library supports multiple backends:\n- **eager**: Pure PyTorch implementation\n- **cuda**: Custom CUDA C kernels (CUDA only)\n- **hip**: Custom HIP kernels (WMMA GEMMs on RDNA3/3.5/4; non-WMMA kernels also on RDNA2)\n- **triton**: Triton JIT-compiled kernels\n\n### Automatic Backend Selection\n\nWhen you call a function, the registry selects the best backend by checking **constraints** in priority order (`hip` \u2192 `cuda` \u2192 `triton` \u2192 `eager`):\n\n```python\n# Backend is selected automatically based on input constraints\nresult = ck.quantize_per_tensor_fp8(x, scale)\n\n# On CPU tensors \u2192 falls back to eager (only backend supporting CPU)\n# On CUDA tensors \u2192 uses cuda or triton (higher priority)\n```\n\n### Constraint System\n\nEach backend declares constraints for its functions:\n\n| Constraint | Description |\n|------------|-------------|\n| **Device** | Which device types are supported |\n| **Dtype** | Allowed input/output dtypes per parameter |\n| **Shape** | Shape requirements (e.g., 2D tensors, dimensions divisible by 16) |\n| **Compute Capability** | Minimum GPU architecture (e.g., SM 8.0 for FP8, SM 10.0 for NVFP4) |\n\nThe registry validates inputs against these constraints **before** calling the backend\u2014no try/except fallback patterns. If no backend can handle the inputs, a `NoCapableBackendError` is raised with details.\n\n```python\n# Debug logging to see backend selection\nimport logging\nlogging.getLogger(\"comfy_kitchen.dispatch\").setLevel(logging.DEBUG)\n```\n\n\n## Testing\n\nRun the test suite with pytest:\n\n```bash\n# Run all tests\npytest\n\n# Run specific test file\npytest tests/test_backends.py\n\n# Run with verbose output\npytest -v\n\n# Run specific test\npytest tests/test_backends.py::TestBackendSystem::test_list_backends\n```\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "pytorch, cuda, quantization, kernels, diffusion",
+    "license": "Apache-2.0",
+    "license_expression": null,
+    "license_files": [
+      "LICENSE",
+      "NOTICE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "comfy-kitchen",
+    "package_url": "https://pypi.org/project/comfy-kitchen/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/comfy-kitchen/",
+    "project_urls": {
+      "Homepage": "https://github.com/Comfy-Org/comfy-kitchen"
+    },
+    "provides_extra": [
+      "cublas",
+      "dev",
+      "build"
+    ],
+    "release_url": "https://pypi.org/project/comfy-kitchen/0.2.37/",
+    "requires_dist": [
+      "nvidia-cublas>=13.0.0; extra == \"cublas\"",
+      "pytest>=7.0.0; extra == \"dev\"",
+      "pytest-benchmark>=4.0.0; extra == \"dev\"",
+      "ruff>=0.1.0; extra == \"dev\"",
+      "nanobind>=2.0.0; extra == \"build\""
+    ],
+    "requires_python": ">=3.10",
+    "summary": "Fast Kernel Library for ComfyUI with multiple compute backends",
+    "version": "0.2.37",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 41744276,
+  "ownership": {
+    "organization": "Comfy-Org",
+    "roles": []
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5c640620f70c7d622207d540234bc8f46d9e715094311d185e0bbb7db7289c69"
+      },
+      "digests": {
+        "blake2b_256": "ac65c9087ba84e496e3ae290e3fc1e6b7e70583eeaff63e129dc0fdfb17864ae",
+        "md5": "2d6e280b6a05e6dac7b689a780766176",
+        "sha256": "ff4dc3aea749984e68311dd5f4d80cc9e5dad89cf72e7d383b3e6f6c1ea4f8c7"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp310-cp310-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+      "has_sig": false,
+      "md5_digest": "2d6e280b6a05e6dac7b689a780766176",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.10",
+      "size": 33283096,
+      "upload_time": "2026-10-02T18:14:49",
+      "upload_time_iso_8601": "2026-10-02T18:14:49.628795Z",
+      "url": "https://files.pythonhosted.org/packages/ac/65/c9087ba84e496e3ae290e3fc1e6b7e70583eeaff63e129dc0fdfb17864ae/comfy_kitchen-0.2.37-cp310-cp310-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5c640620f70c7d622207d540234bc8f46d9e715094311d185e0bbb7db7289c69"
+      },
+      "digests": {
+        "blake2b_256": "7934efa0202ae45acff2601294708ff76fe71598f0eef0a1e30d8f8c275baba5",
+        "md5": "f3adf23e3ccd88eb01df65f4de1f3029",
+        "sha256": "6380337f77ac86584d27f39ddf169d454df9b78650f9f7f1834ae898adeca7bb"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "f3adf23e3ccd88eb01df65f4de1f3029",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.10",
+      "size": 59244969,
+      "upload_time": "2026-10-02T18:14:52",
+      "upload_time_iso_8601": "2026-10-02T18:14:52.725786Z",
+      "url": "https://files.pythonhosted.org/packages/79/34/efa0202ae45acff2601294708ff76fe71598f0eef0a1e30d8f8c275baba5/comfy_kitchen-0.2.37-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "eee8d31f554e5577e0b80d0822c94479c90618cae586d4c64e9b8e6fe91a0c5b"
+      },
+      "digests": {
+        "blake2b_256": "eb8d437e821b7a97b47865a31e57255b461450037f1031565246fd519076f0cb",
+        "md5": "8629b100a249a4a62aa84af87aabbcea",
+        "sha256": "4426b19ac653254f72f45fac0bca1618d45f37622c11bd93a236fd7236dbbb76"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp310-cp310-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "8629b100a249a4a62aa84af87aabbcea",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp310",
+      "requires_python": ">=3.10",
+      "size": 48757611,
+      "upload_time": "2026-10-02T18:14:55",
+      "upload_time_iso_8601": "2026-10-02T18:14:55.408354Z",
+      "url": "https://files.pythonhosted.org/packages/eb/8d/437e821b7a97b47865a31e57255b461450037f1031565246fd519076f0cb/comfy_kitchen-0.2.37-cp310-cp310-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5c640620f70c7d622207d540234bc8f46d9e715094311d185e0bbb7db7289c69"
+      },
+      "digests": {
+        "blake2b_256": "07496f4f217dde55e2e0369e01f33308e7ba972caa56a8d2a17432070a2fab89",
+        "md5": "8003d6513e5e3f2db8f1fb1cfc6935d3",
+        "sha256": "338088860a157651677125f6e33cacc24d72821ad373b7d2c5241b180ef78acd"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp311-cp311-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+      "has_sig": false,
+      "md5_digest": "8003d6513e5e3f2db8f1fb1cfc6935d3",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp311",
+      "requires_python": ">=3.10",
+      "size": 33282853,
+      "upload_time": "2026-10-02T18:14:58",
+      "upload_time_iso_8601": "2026-10-02T18:14:58.408742Z",
+      "url": "https://files.pythonhosted.org/packages/07/49/6f4f217dde55e2e0369e01f33308e7ba972caa56a8d2a17432070a2fab89/comfy_kitchen-0.2.37-cp311-cp311-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5c640620f70c7d622207d540234bc8f46d9e715094311d185e0bbb7db7289c69"
+      },
+      "digests": {
+        "blake2b_256": "ac84e8abee230b332fd0f2d06e5220ff73e4bb692b88a5d187b6ddd8e1413a2b",
+        "md5": "1e2f9736d21cbd4f8bf9abd15915d21c",
+        "sha256": "81ba7111ae127e5f629dd32b6a04050fce4d5499d0d3a8a71bf5f7b33c2b5899"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "1e2f9736d21cbd4f8bf9abd15915d21c",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp311",
+      "requires_python": ">=3.10",
+      "size": 59244350,
+      "upload_time": "2026-10-02T18:23:02",
+      "upload_time_iso_8601": "2026-10-02T18:23:02.552977Z",
+      "url": "https://files.pythonhosted.org/packages/ac/84/e8abee230b332fd0f2d06e5220ff73e4bb692b88a5d187b6ddd8e1413a2b/comfy_kitchen-0.2.37-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "eee8d31f554e5577e0b80d0822c94479c90618cae586d4c64e9b8e6fe91a0c5b"
+      },
+      "digests": {
+        "blake2b_256": "39d50a5975ffe14f7a5fb50d079f3c3a6bf658253160d7331a6c39eb4f71cd56",
+        "md5": "2d64b0d3827685272a0841ee7c7c4af0",
+        "sha256": "85852c7630584b2384cbab02897dc3e310e420991274601d6c77bab995dfeaf5"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp311-cp311-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "2d64b0d3827685272a0841ee7c7c4af0",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp311",
+      "requires_python": ">=3.10",
+      "size": 48757649,
+      "upload_time": "2026-10-02T18:26:43",
+      "upload_time_iso_8601": "2026-10-02T18:26:43.263808Z",
+      "url": "https://files.pythonhosted.org/packages/39/d5/0a5975ffe14f7a5fb50d079f3c3a6bf658253160d7331a6c39eb4f71cd56/comfy_kitchen-0.2.37-cp311-cp311-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5c640620f70c7d622207d540234bc8f46d9e715094311d185e0bbb7db7289c69"
+      },
+      "digests": {
+        "blake2b_256": "ab3b77e68e596cb8097e10753b8095164d07b79b976208da8bde3371ecbfc558",
+        "md5": "f947dd4ec04bd445d00065220cd40190",
+        "sha256": "0f872625af6b3d1f96f18c54b4ef11129df2d9178d28946e1f3d737b8252416d"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp312-abi3-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+      "has_sig": false,
+      "md5_digest": "f947dd4ec04bd445d00065220cd40190",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp312",
+      "requires_python": ">=3.10",
+      "size": 33278965,
+      "upload_time": "2026-10-02T18:26:46",
+      "upload_time_iso_8601": "2026-10-02T18:26:46.383894Z",
+      "url": "https://files.pythonhosted.org/packages/ab/3b/77e68e596cb8097e10753b8095164d07b79b976208da8bde3371ecbfc558/comfy_kitchen-0.2.37-cp312-abi3-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5c640620f70c7d622207d540234bc8f46d9e715094311d185e0bbb7db7289c69"
+      },
+      "digests": {
+        "blake2b_256": "1904d24939d30b077679bfc8bf4a53c7392f9d8650df7ce69164238a673753a1",
+        "md5": "85f406d1fd0f9b015d8bc067d350d0b3",
+        "sha256": "03cca0d10c314aaa13bff8f9422d03974221a344162b23d4f10d27eb2a35d0e8"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "85f406d1fd0f9b015d8bc067d350d0b3",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp312",
+      "requires_python": ">=3.10",
+      "size": 59238324,
+      "upload_time": "2026-10-02T18:26:49",
+      "upload_time_iso_8601": "2026-10-02T18:26:49.471698Z",
+      "url": "https://files.pythonhosted.org/packages/19/04/d24939d30b077679bfc8bf4a53c7392f9d8650df7ce69164238a673753a1/comfy_kitchen-0.2.37-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "86a0f9c4bd443a3eca8a844de3613ba73fc15c1b1a2fe855ce648865ce5cebf0"
+      },
+      "digests": {
+        "blake2b_256": "bf0a96c1141180bdc4dce2664cd9316390069c66c6f03e79963a17f252b4b730",
+        "md5": "49360eaf905c85078b0bbc4362da8fdd",
+        "sha256": "31e1b59351d10374b6351f62a9130712e0cb06c90f059c25522ac1f79249fdb8"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp312-abi3-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "49360eaf905c85078b0bbc4362da8fdd",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp312",
+      "requires_python": ">=3.10",
+      "size": 48759733,
+      "upload_time": "2026-10-02T18:26:52",
+      "upload_time_iso_8601": "2026-10-02T18:26:52.869815Z",
+      "url": "https://files.pythonhosted.org/packages/bf/0a/96c1141180bdc4dce2664cd9316390069c66c6f03e79963a17f252b4b730/comfy_kitchen-0.2.37-cp312-abi3-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "86a0f9c4bd443a3eca8a844de3613ba73fc15c1b1a2fe855ce648865ce5cebf0"
+      },
+      "digests": {
+        "blake2b_256": "3fe8cc4ccd684eb3c81ce3bc816ec31d414781c35f020e9811560b8bb79d2b10",
+        "md5": "4585a05717f76728e8507ade66151264",
+        "sha256": "25445cedef6aff9b7d3dea3514dc77ab5b757e729d952dea94f7108a3a70c888"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-cp312-abi3-win_arm64.whl",
+      "has_sig": false,
+      "md5_digest": "4585a05717f76728e8507ade66151264",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp312",
+      "requires_python": ">=3.10",
+      "size": 7666973,
+      "upload_time": "2026-10-02T18:26:55",
+      "upload_time_iso_8601": "2026-10-02T18:26:55.460178Z",
+      "url": "https://files.pythonhosted.org/packages/3f/e8/cc4ccd684eb3c81ce3bc816ec31d414781c35f020e9811560b8bb79d2b10/comfy_kitchen-0.2.37-cp312-abi3-win_arm64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "5c640620f70c7d622207d540234bc8f46d9e715094311d185e0bbb7db7289c69"
+      },
+      "digests": {
+        "blake2b_256": "9e080a904ae1a1b82f57e7990eee8d93d48466a185934aa585cc625cdb27761e",
+        "md5": "d8f5fed397f8eb86d52b369ebf345fad",
+        "sha256": "b626bd51ff45937f1446accf078ccea9d11c3686ffa0c89b0c1305d66d765afe"
+      },
+      "downloads": -1,
+      "filename": "comfy_kitchen-0.2.37-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "d8f5fed397f8eb86d52b369ebf345fad",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.10",
+      "size": 232534,
+      "upload_time": "2026-10-02T18:26:57",
+      "upload_time_iso_8601": "2026-10-02T18:26:57.259540Z",
+      "url": "https://files.pythonhosted.org/packages/9e/08/0a904ae1a1b82f57e7990eee8d93d48466a185934aa585cc625cdb27761e/comfy_kitchen-0.2.37-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

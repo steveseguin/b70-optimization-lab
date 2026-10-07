@@ -40,8 +40,12 @@ After shutdown, 106 newly generated raw tensor archives were freshly verified
 identical to retained references and retired, reclaiming 1.99 GiB. Ten timed
 samples (one per fixture), all references, metadata, previews, setup captures
 and failures remain. The previous 116-file duplicate cleanup recovered 2.18 GiB.
-The next experiment must retain the 50 GiB root reserve and obtain a fresh
-output/cache budget; the previous 4 GiB allowance is not a continuing reservation.
+A further 583 duplicate tensors from the completed historical batch-2 run were
+freshly verified and retired, preserving its ten reference samples and all
+metadata; this recovered 10.96 GiB and left about 65 GiB free. Its batch-specific
+quality remains separate from the accepted batch-1 objective. The next experiment
+must retain the 50 GiB root reserve and obtain a fresh output/cache budget; the
+previous 4 GiB allowance is not a continuing reservation.
 
 Current-upstream ComfyUI source `b00c6e95279053474955540ba4f551646722b9aa`
 is prepared separately with all five native and 63 added lab overlays accounted

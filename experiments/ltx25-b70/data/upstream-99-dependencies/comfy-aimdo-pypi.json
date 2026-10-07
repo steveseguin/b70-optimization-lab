@@ -1,0 +1,172 @@
+{
+  "info": {
+    "author": "rattus",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [],
+    "description": "# AI Model Dynamic Offloader\n\nThis project is a pytorch VRAM allocator that implements on-demand offloading of model weights when the primary pytorch VRAM allocator comes under pressure.\n\n## Support:\n\n* **Nvidia GPUs** (CUDA) **and AMD GPUs** (ROCm/HIP)\n* **PyTorch 2.8+**\n* **CUDA 12.8+** (Nvidia) / **ROCm 7+** (AMD)\n* **Windows 11+** / **Linux** as per python ManyLinux support\n\n---\n\n## How it works:\n\n* The pytorch application creates a Virtual Base Address Register (**VBAR**) for a model. Creating a VBAR doesn't cost any VRAM, only GPU virtual address space (which is pretty much free).\n* The pytorch application allocates tensors for model weights within the VBAR. These tensors are initially un-allocated and will segfault if touched.\n* The pytorch application faults in the tensors using the `fault()` API at the time the tensor is needed. This is where VRAM actually gets allocated.\n\n##### If the `fault()` is successful (sufficient VRAM for this tensor):\n1.  **If the fault() resultant signature is changed or unknown:**\n    * The application uses `tensor::_copy()` to populate the weight data on the GPU.\n    * The application saves the returned signature against this weight for future comparison\n2.  The layer uses the weight tensor.\n3.  The application calls `unpin()` on the tensor to allow it to be freed under pressure later if needed.\n\n##### If the `fault()` is unsuccessful (offloaded weight):\n1.  The application allocates a temporary regular GPU tensor.\n2.  Uses `_copy` to populate weight data on the GPU.\n3.  The layer uses the temporary as the weight.\n4.  Pytorch garbage collects the temp when the layer is finished.\n\nsee examples/example.py\n\n---\n\n## Priorities:\n\n* The most recent VBARs are the highest priority and lower addresses in the VBAR take priority over higher addresses.\n* Applications should order their tensor allocations in the VBAR in load-priority order with the lowest addresses for the highest priority weights.\n* Calling `fault()` on a weight that is higher priority than other weights will cause those lower priority weights to get freed to make space.\n* Having a weight evicted sets that VBAR's watermark to that weight's level. Any weights in the same VBAR above the watermark automatically fail the `fault()` API. This avoids constantly faulting in all weights each model iteration while allowing the application to just blindly call `fault()` every layer and check the results. There is no need for the application to manage any VRAM quotas or watermarks.\n* Existing VBARs can be pushed to top priority with the `prioritize()` API. This allows use of an already loaded or partially model (e.g. using the same model twice in a complex workflow). Using `prioritize` resets the offload watermark of that model to no offloading, giving its weights priority over any other currently loaded models.\n\n---\n\n## Backend:\n\n* VBAR allocation is done with `cuMemAddressReserve()`, faulting with `cuMemCreate()` and `cuMemMap()` and all frees done with appropriate converse APIs.\n* For consistency with VBAR memory management, main pytorch allocator plugin is also implemented with `cuMemAddressReserve` -> `cuMemCreate` -> `cuMemMap`. This also behaves a lot better on Windows systems with System Memory fallback.\n\nOn AMD, the equivalent HIP APIs (`hipMemAddressReserve` -> `hipMemCreate` -> `hipMemMap`, and their converse calls) are used throughout via the same flow.\n\n## Caveats:\n\n* There is no real way for this allocator to tell the difference between high usage and bad fragmentation in the pytorch caching allocator. As we always return success to the pytorch caching allocator it experiences no pressure while weights are being offloaded which means it can run in an extremely fragmented mode. The assumption is model weight access patterns are reasonably regular over blocks or iterations and it finds a good set of sizes to cache. What you should generally do though, is completely flush the pytorch caching allocator before each new model run, which avoids completely un-used reservations from taking priority over the next models weights.\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": null,
+    "license": null,
+    "license_expression": null,
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "comfy-aimdo",
+    "package_url": "https://pypi.org/project/comfy-aimdo/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/comfy-aimdo/",
+    "project_urls": {
+      "Repository": "https://github.com/Comfy-Org/comfy-aimdo"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/comfy-aimdo/0.5.5/",
+    "requires_dist": null,
+    "requires_python": ">=3.9",
+    "summary": "AI Model Dynamic Offloader for ComfyUI",
+    "version": "0.5.5",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 41086428,
+  "ownership": {
+    "organization": "Comfy-Org",
+    "roles": []
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "d5859150786b57589755de060f9a02bff6ce7e09b8b13a285d83cadef55e134f"
+      },
+      "digests": {
+        "blake2b_256": "8c53751aae9e7635b3921647579fdca2d7f29c5bc3e8081743fef9dea1fdf36d",
+        "md5": "26bf28e55e0b4ce1aeccdd3973296ebd",
+        "sha256": "22b66419f9f1887fd9fb49f0e5ff9a88b7a8c38f6b94729e5c2e8bf936ff2d70"
+      },
+      "downloads": -1,
+      "filename": "comfy_aimdo-0.5.5-cp39-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+      "has_sig": false,
+      "md5_digest": "26bf28e55e0b4ce1aeccdd3973296ebd",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.9",
+      "size": 659352,
+      "upload_time": "2026-09-15T08:52:07",
+      "upload_time_iso_8601": "2026-09-15T08:52:07.915241Z",
+      "url": "https://files.pythonhosted.org/packages/8c/53/751aae9e7635b3921647579fdca2d7f29c5bc3e8081743fef9dea1fdf36d/comfy_aimdo-0.5.5-cp39-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "d5859150786b57589755de060f9a02bff6ce7e09b8b13a285d83cadef55e134f"
+      },
+      "digests": {
+        "blake2b_256": "5d18807dd84d80469c9620928429911b9ff04c699e8b47204423a8804ac3f09d",
+        "md5": "ff6499a756205124202b6175fabfe0c0",
+        "sha256": "7a4dc76831273a2f837f67cf49c9e507e778b19aff17e6ef8a34a6e9694fd86a"
+      },
+      "downloads": -1,
+      "filename": "comfy_aimdo-0.5.5-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "ff6499a756205124202b6175fabfe0c0",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.9",
+      "size": 432743,
+      "upload_time": "2026-09-15T08:52:09",
+      "upload_time_iso_8601": "2026-09-15T08:52:09.492012Z",
+      "url": "https://files.pythonhosted.org/packages/5d/18/807dd84d80469c9620928429911b9ff04c699e8b47204423a8804ac3f09d/comfy_aimdo-0.5.5-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "47b47cae993a53b863e5b28ce748376e43564f693050c3339d7c7cfccddeaeb5"
+      },
+      "digests": {
+        "blake2b_256": "cac483483278fefcb56d76b21c3ceab92e63426ba4a9c49227685d8049524819",
+        "md5": "33a0c28b3f0ef528cb8ea9d831b8470f",
+        "sha256": "a86906b230d067f7b7390afd7783742777d56df4ad52790c137d8a0236ab8524"
+      },
+      "downloads": -1,
+      "filename": "comfy_aimdo-0.5.5-cp39-abi3-win_amd64.whl",
+      "has_sig": false,
+      "md5_digest": "33a0c28b3f0ef528cb8ea9d831b8470f",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.9",
+      "size": 280848,
+      "upload_time": "2026-09-15T08:52:10",
+      "upload_time_iso_8601": "2026-09-15T08:52:10.988748Z",
+      "url": "https://files.pythonhosted.org/packages/ca/c4/83483278fefcb56d76b21c3ceab92e63426ba4a9c49227685d8049524819/comfy_aimdo-0.5.5-cp39-abi3-win_amd64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "47b47cae993a53b863e5b28ce748376e43564f693050c3339d7c7cfccddeaeb5"
+      },
+      "digests": {
+        "blake2b_256": "841776580317af4cd592fe01b52bdf6a5c1d68d76d23612153c4c6f12db2bf3f",
+        "md5": "e761b7af67bd08d227489b4af954f8de",
+        "sha256": "5f1ae34b2e9ba6b5f810246602a1e9ee00e2cd5145745bd2197408ebd0b04d9a"
+      },
+      "downloads": -1,
+      "filename": "comfy_aimdo-0.5.5-cp39-abi3-win_arm64.whl",
+      "has_sig": false,
+      "md5_digest": "e761b7af67bd08d227489b4af954f8de",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp39",
+      "requires_python": ">=3.9",
+      "size": 255059,
+      "upload_time": "2026-09-15T08:52:12",
+      "upload_time_iso_8601": "2026-09-15T08:52:12.268289Z",
+      "url": "https://files.pythonhosted.org/packages/84/17/76580317af4cd592fe01b52bdf6a5c1d68d76d23612153c4c6f12db2bf3f/comfy_aimdo-0.5.5-cp39-abi3-win_arm64.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "d5859150786b57589755de060f9a02bff6ce7e09b8b13a285d83cadef55e134f"
+      },
+      "digests": {
+        "blake2b_256": "be523ae1892775f0138af1c0cc27341cf073e0890731f0c68848e8831738f9c2",
+        "md5": "065d7233b8ae4963a92cd8163a5a17e0",
+        "sha256": "208b4379a080d6a78db49e6236751642b8e9e098ee270b035a1740ec21839fbd"
+      },
+      "downloads": -1,
+      "filename": "comfy_aimdo-0.5.5-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "065d7233b8ae4963a92cd8163a5a17e0",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.9",
+      "size": 25072,
+      "upload_time": "2026-09-15T08:52:13",
+      "upload_time_iso_8601": "2026-09-15T08:52:13.433345Z",
+      "url": "https://files.pythonhosted.org/packages/be/52/3ae1892775f0138af1c0cc27341cf073e0890731f0c68848e8831738f9c2/comfy_aimdo-0.5.5-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

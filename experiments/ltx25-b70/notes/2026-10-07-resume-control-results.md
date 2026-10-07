@@ -77,3 +77,22 @@ health, memory, source and quality gates. The current source API review supports
 narrow source-hash updates and a fail-closed native-attention-backend check;
 new-base exact replay remains mandatory. Do not treat successful source merging
 or dependency imports as quality or speed evidence.
+
+### Additional completed-output retirement
+
+The same strict helper subsequently verified all 593 emitted clips of the completed
+600-prompt packet-97 batch-2 repeat against its retained batch-2 references.
+It proposed 583 repeated tensor archives, keeping the first ten outputs, one per
+fixture. Parent review checked the exact names (timed 17–599), complete emission
+sequence, absent server PID and full archive hashes before applying the plan.
+**11,772,728,880 logical bytes (10.96 GiB)** reclaimed, leaving about 65 GiB free.
+All references, selected samples, requests, comparisons, metadata and previews
+remain. This only retires redundant bytes; it does not promote batch 2 as exact
+to the different accepted batch-1 outputs.
+[Plan](../data/resume-20261007/packet97-b2-retirement-plan.json),
+[receipt](../data/resume-20261007/packet97-b2-retirement-receipt.json).
+
+The isolated full pinned application dependency overlay has a 600 MiB allowance
+for exact downloaded wheels, extracted files and receipts. The baseline virtualenv,
+Torch and XPU stack remain untouched; next GPU control separately needs 4 GiB
+and the 50 GiB reserve.
