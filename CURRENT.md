@@ -9,11 +9,13 @@ The owner asked to preserve both lanes and make the existing lab dependable befo
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
 A separately identified [small-model pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
 is now admitted for one bounded server attempt; its live process/fault/shutdown
-receipts belong under `/home/steve/worker-small-model-pilot-20261007/server-r276/`.
+receipts belong under `/home/steve/worker-small-model-pilot-20261007/server-r276-devicepaths/`.
 The original `/server/` attempt failed before loading the model because the
 editable host runtime could not resolve a native library; all four cards passed
 before/after checks. The next candidate uses an existing pinned container whose
-CPU import checks passed. No native rebuild or server retry policy is involved.
+CPU import checks passed. Its first attempt exposed a missing device-metadata
+mount, now corrected after a container path check; both failed attempts are
+preserved. No native rebuild or automatic server retry policy is involved.
 Do not borrow that endpoint or infer it is ready from this note. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving
 the evidence and checking passive GPU idleness, one SIGINT stopped the application;
