@@ -129,12 +129,22 @@ The first native shape/memory barrier and both capture/decoder admissions remain
 
 **Capture cap is22, not16.** Existing guards charge every capture-bearing graph,
 including pipeline fills:6+7+7+2. Do not suppress fill evidence or change that
-accounting. Budget conservatively for16 full-output equivalents plus8 bounded
-placeholder archives, with no more than22 actual captures. At≤1MiB per placeholder
-this is about3.873GiB including1GiB cache,512MiB previews and192MiB logs; propose
-4GiB allowance. Exact placeholder shapes and byte bounds must be source-verified
-and enforced before writing. This is a proposed conditional budget, not an
+accounting. Budget conservatively for14 full-output archives(6native+3candidate+
+3timed+2setup), plus8 bounded placeholders. Each full archive is charged
+146,164,992 payload bytes plus65,544 header bytes; each placeholder is charged1MiB.
+Together with1GiB cache,512MiB previews and192MiB logs, this is3,867,555,440bytes
+=3.60194GiB, leaving427,411,856bytes within a4GiB allowance. Exact role/shape/byte
+bounds must be enforced before writing. This is a proposed conditional budget, not an
 admitted runtime. Fresh checks still precede construction and launch.
+
+The independent source check confirmed placeholders use images`[1,8,8,3]`,
+waveform`[1,2,8]`, and existing latents. Largest49-frame F32 latent shapes above
+give887,104 payload bytes; even65,544 header bytes yield952,648bytes, below1MiB.
+Pinned107b`source/scripts/pipeline_decode_node.py`lines514–518 and590–592 implement
+these placeholders(SHA`e7bdab34f213bb879192316ce6523f66758f88bde72c66d8bab6cc163eb8c825`).
+`source/scripts/capture_node.py`lines39–60 saves all four fields, including fills
+(SHA`6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da`).
+The decoder comment about skipping placeholders does not suppress capture files.
 
 After hypothetical verified107b retirement and384MiB source allowance,4GiB would
 leave about50.364GiB. No retirement/reload is authorized by these arithmetic
