@@ -30,8 +30,11 @@ to justify its buffer-lifetime risk. Long host waits overlap queued compute and
 are not removable copy latency. Next: offline audit and qualification design for
 49-frame clips at640×384, retaining BF16,8+3steps and exact video/audio gates.
 The full ten-fixture49-frame suite cannot fit the current disk reserve. A separately
-labeled three-fixture resource pilot is being prepared offline:29requests,22
-capture-bearing graphs, proposed4GiB allowance with bounded placeholder outputs.
+labeled three-fixture resource pilot is CPU-implemented and independently reviewed:
+29requests,22 capture-bearing graphs,4GiB allowance with bounded placeholder
+outputs and a mandatory first-native shape/memory barrier.285 full CPU tests plus
+focused post-change checks pass; actual-venv source/runtime preflight passes.
+The new immutable packet has not been materialized or launched.
 No longer-shape request or cleanup has occurred. Preserve all107b raw artifacts.
 [Duration audit and pilot limits](experiments/ltx25-b70/notes/2026-10-07-duration108-audit.md).
 [107b closeout](experiments/ltx25-b70/data/resume-20261007/sparse107b-closeout/summary.json),

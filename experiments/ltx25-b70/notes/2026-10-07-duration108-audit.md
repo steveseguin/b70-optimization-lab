@@ -1,7 +1,8 @@
 # Proposed49-frame qualification after107b
 
-Status: offline source audit only. No successor runtime, sealed plan,49-frame
-request or application reload exists yet.107b remains healthy and idle; its
+Status: CPU plan/runtime implementation and independent review complete. No
+materialized successor packet,49-frame request or application reload yet.
+107b remains healthy and idle; its
 consumed57-request plan and frozen25-frame pools must not be extended.
 
 The valid107b trace closes direct-static activation-copy reuse: its measured
@@ -156,3 +157,78 @@ latency and memory observation; no p95, speed-gain, record, full-suite quality o
 adoption claim. A standalone CPU plan is being prepared under
 `recovery/20261007-duration108-plan/`; runtime integration and resource admission
 remain future work. Existing25-frame proofs and guards remain unchanged.
+
+## CPU implementation and reviewed operating thresholds
+
+The standalone plan passes 27 tests. Its exact pins are:
+
+- Plan: `942407a8b46992e6887bb76ad2447f78f4ecd891ef89af91052235b8367214e2`.
+- Qualification: `8fe720a6b3a7b838b28e5e745ec0763937c9cf5cda467998f259f4675570c1cd`.
+- Schedule: `e0fbaa81c6879ddcfb20a9a2924f7534847090d4537e88e46089ec16867981a1`.
+
+The new author runtime is `recovery/20261007-duration108-runtime/`. The old 107
+author directory and sealed sources are unchanged. The builder preserves the
+qualified 99b graph-node wrapper and removes 107 tracing. Frame metadata binds
+49 across text, sampler, decode and setup receipts. Decoder qualification still
+uses ten seeded probes. Capture serialization's Python wrapper and native library
+are added to runtime identity and rechecked at launch. Shape, role and byte
+reservations precede directory creation and save.
+
+Capture order is six native, two setup, seven candidate and seven timed. Setup
+may emit exact placeholders but is charged as full. Durable reservation
+checkpoints require 6/15/22 ordered completed captures at the quality barriers.
+Bank their separate hashes in closeout; they prove storage accounting, not
+numerical equality. Each later native request rehashes the first archive,
+metadata, memory receipt and admission barrier before running. The first barrier
+checks full actual tensors, strict determinism, sample rate and memory receipt
+request/plan/runtime/phase/fault identity plus the 2 GiB floor. Full native repeats
+and optimized equality remain mandatory separate gates.
+
+Independent review selected these pre-operation allowances in GiB, card order
+0/1/2/3:
+
+| Operation | Required free memory |
+| --- | --- |
+| Each native request | 8 / 8 / 2 / 9 |
+| Either worker capture | 7 / 7 / 2 / 9 |
+| Decoder preparation/probe | 2 / 2 / 10 / 9 |
+
+Replica after-build admission rises from 5 to 8 GiB. Its internal post-probe floor
+rises from 1 to 2 GiB, matching the outer gate. Chain checking uses actual slot
+sizes plus duration-scaled scratch allowance, now with a 2 GiB pre-check margin
+instead of 0.5 GiB; fresh post-check floor and residency checks remain.
+
+These are engineering allowances, not proven 49-frame peak bounds. In 107b,
+capture0 consumed 0.507/0.431 GiB and capture1 consumed 0.423/0.353 GiB on the
+sampler cards. Retaining 7 GiB before worker1 leaves 5 GiB above the floor without
+pretending static weights scale with duration. Replica build consumed about
+1.729 GiB, then probing reduced physical headroom by another 3.387 GiB, motivating
+the stronger decode guards. Native 8 GiB can bind after the first request: the
+25-frame post-native primary reading was 8.124 GiB. A refusal requires review,
+never automatic guard reduction or model eviction.
+
+Validation: 285 full-runtime CPU tests passed in 21.306 seconds before durable
+capture checkpoints were added. The updated 42 integration controls then passed.
+Finally, 60 builder/integration controls passed in 1.997 seconds after actual-venv
+preflight caught and fixed a private adapter API assumption. The failed line was
+`BASE.runtime_fingerprints()`; qualified 99b exposes `verify_runtime`, so the
+fixed adapter uses its checked return value. The regression adapter deliberately
+lacks the private function. No model request occurred. Real LTX-venv preflight
+now verifies Torch 2.14.0+xpu, five runtime file bindings including both serializer
+files, 15 source deltas and 31 added files, without materialization.
+
+Final input-inventory SHA:
+`9dde21a8295d94ab7c9911179f0c2bf8ea006eb4adbf33567f0fc1f514a852bc`.
+Validation record: `data/resume-20261007/duration108-cpu-validation.json`.
+Independent review found no blocker, including the adapter fix. Aggregate 4 GiB
+usage remains checkpoint-observed filesystem deltas. Cache, preview and log
+estimates are not separate hard quotas; raw captures have the explicit prewrite
+shape/byte bound.
+
+The fixed stopped-107b duplicate helper is prepared in
+`recovery/20261007-post107b-retirement/`. Seventeen synthetic controls and an
+independent review passed. It maps 40 archives directly to ten 105 native keepers,
+excludes 36 protected anchors, and requires exact stopped identity, fresh complete
+sealed proof, whole-file hashes/stats and durable restoration maps before deletion.
+Helper SHA: `50570a90fa3ab460e013104ef045b9282a86a2fb581372b3840847e2d32d68da`.
+No operational plan, cleanup or stop has been performed yet.
