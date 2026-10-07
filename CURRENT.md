@@ -5,6 +5,26 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**Live update,2026-10-07 22:25UTC:** No LTX application is running.
+107b stopped cleanly once at22:18:33UTC for the reviewed49-frame pilot reload.
+All four GPUs passed postflight at22:18:46UTC, with no earlier or new faults.
+Its full quality proof was rebuilt twice, then40 whole-file duplicate archives
+were retired against10 protected105 keepers, freeing2.780GiB. Every removed path
+has a direct restoration map; models and unique research artifacts were kept.
+
+108 startup refused before GPU discovery or any model request: its extra two
+serializer hashes did not match the inherited dependency receipt's original
+three-file baseline. The failed packet is preserved. The corrected108b builder
+checks serializer bytes separately while preserving exact baseline-receipt
+verification;292 CPU tests pass, and the corrected sealed packet passed the actual CPU startup
+path including dependency activation. Next: launch it once and run its29-request
+three-fixture pilot.
+The first actual49-frame shape/memory barrier remains mandatory. This is a
+resource/capability pilot, not full-suite qualification or a speed-gain claim.
+[Operational record](experiments/ltx25-b70/notes/2026-10-07-duration108-operation.md),
+[startup refusal](experiments/ltx25-b70/data/resume-20261007/duration108-startup-refusal/summary.json).
+The following107b running state is its earlier completed campaign history.
+
 The owner resumed continuous LTX optimization on `steve-b70s`. The105 application
 completed its71-request campaign successfully at19:43:32UTC, then stopped cleanly
 at2026-10-07T20:13:39.070899+00:00 for the necessary106 application reload. All four cards passed

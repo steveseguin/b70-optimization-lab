@@ -20,8 +20,8 @@ sys.dont_write_bytecode = True
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT = ROOT / 'prepared-encoder-upstream-99b'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PACKET = ROOT / 'prepared-duration-pilot-108'
-RUN_NAME = 'encoder-server-duration-pilot-108-two-way-w2-b1-p1-dxpu2-s640x384-f49'
+PACKET = ROOT / 'prepared-duration-pilot-108b'
+RUN_NAME = 'encoder-server-duration-pilot-108b-two-way-w2-b1-p1-dxpu2-s640x384-f49'
 HERE = Path(__file__).resolve().parent
 AUTHOR = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-duration108-runtime')
 PLAN = AUTHOR.parent / '20261007-duration108-plan/candidate-plan.json'
@@ -29,7 +29,7 @@ PLAN_SHA = '942407a8b46992e6887bb76ad2447f78f4ecd891ef89af91052235b8367214e2'
 PREDECESSOR = ROOT / 'prepared-sparse-transport-107b'
 PREDECESSOR_SHA = 'fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb'
 COMMON, LAUNCHER = 'launch/encoder_runtime_common.py', 'launch/serve-encoder.py'
-STATUS = b'Packet108 three-fixture49-frame resource pilot; exact same-length output gates required; constructed from qualified99b, not GPU-qualified.\n'
+STATUS = b'Packet108b three-fixture49-frame resource pilot; exact same-length output gates required; constructed from qualified99b, not GPU-qualified.\n'
 # File names are deliberately explicit: no ambient files or caller-chosen code.
 COMPONENTS = ('geometry_overlay.py', 'native_safety.py', 'native_adapter.py',
               'session.py', 'executor_guard.py', 'runtime_observer.py', 'setup_gates.py',
@@ -93,6 +93,21 @@ def verify_runtime(expected):
     actual = runtime_fingerprints()
     require(actual == expected, 'Duration runtime identity differs')
     return actual
+
+
+def activate_dependencies(packet, manifest):
+    # The immutable99 dependency receipt binds only its original three-file
+    # Torch/Python baseline. Keep that exact comparison, while independently
+    # binding both serializer files before activation. Do not import Torch here:
+    # the inherited activation requires a clean application-module namespace.
+    baseline_manifest = copy.deepcopy(manifest)
+    for path, expected in SERIALIZER_FILES.items():
+        require(baseline_manifest['runtime']['files'].pop(path, None) == expected,
+                'Missing duration serializer identity')
+        require(sha(Path(path)) == expected, 'Duration capture serializer changed: ' + path)
+    require(baseline_manifest['runtime'] == _parent_manifest['runtime'],
+            'Dependency Torch/Python baseline differs')
+    return BASE.activate_dependencies(packet, baseline_manifest)
 
 
 def __getattr__(name):
@@ -253,7 +268,7 @@ def verify_packet(packet, expected_manifest_sha256):
     inventory = {n: filesha for n, filesha in
                  ((n, want['resolution/components/' + n]) for n in COMPONENTS)}
     inventory['candidate-plan.json'] = want['resolution/candidate-plan.json']
-    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '108',
+    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '108b',
         'parent_packet': str(PARENT), 'parent_manifest_sha256': PARENT_SHA,
         'plan_sha256': PLAN_SHA, 'input_inventory': inventory,
         'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
@@ -303,7 +318,7 @@ def build(expected_inventory_sha256, parent_stopped=False):
         write_new(PACKET / path, raw)
     files = {str(p.relative_to(PACKET)): sha(p) for p in PACKET.rglob('*')
              if p.is_file() and p.name != 'STATUS.txt'}
-    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '108', 'parent_packet': str(PARENT),
+    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '108b', 'parent_packet': str(PARENT),
         'parent_manifest_sha256': PARENT_SHA, 'plan_sha256': PLAN_SHA,
         'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
         'input_inventory': inventory, 'input_inventory_sha256': expected_inventory_sha256,

@@ -28,6 +28,35 @@ def literal(raw, name):
 
 
 class PacketControls(unittest.TestCase):
+    def test_activation_keeps_original_receipt_baseline_and_checks_serializers(self):
+        manifest = copy.deepcopy(B._parent_manifest)
+        manifest['runtime']['files'].update(B.SERIALIZER_FILES)
+        before = copy.deepcopy(manifest)
+        activate = Mock(return_value='activated')
+        adapter = SimpleNamespace(activate_dependencies=activate)
+        with patch.object(B, 'BASE', adapter), patch.object(B, 'sha', side_effect=lambda p: B.SERIALIZER_FILES[str(p)]), \
+                patch.object(B, 'verify_runtime', side_effect=AssertionError('premature Torch import')):
+            self.assertEqual(B.activate_dependencies(B.PACKET, manifest), 'activated')
+        activate.assert_called_once_with(B.PACKET, B._parent_manifest)
+        self.assertEqual(manifest, before)
+
+    def test_activation_refuses_missing_changed_extra_baseline_or_disk_identity(self):
+        good = copy.deepcopy(B._parent_manifest)
+        good['runtime']['files'].update(B.SERIALIZER_FILES)
+        serializer = next(iter(B.SERIALIZER_FILES))
+        for change in ('missing', 'changed', 'extra', 'baseline', 'disk'):
+            with self.subTest(change=change):
+                manifest = copy.deepcopy(good)
+                if change == 'missing': del manifest['runtime']['files'][serializer]
+                if change == 'changed': manifest['runtime']['files'][serializer] = '0' * 64
+                if change == 'extra': manifest['runtime']['files']['/unbound.py'] = '0' * 64
+                if change == 'baseline': manifest['runtime']['python_executable'] = '/another/python'
+                activate = Mock()
+                with patch.object(B, 'BASE', SimpleNamespace(activate_dependencies=activate)), \
+                        patch.object(B, 'sha', side_effect=lambda p: '0' * 64 if change == 'disk' else B.SERIALIZER_FILES[str(p)]):
+                    with self.assertRaises(RuntimeError): B.activate_dependencies(B.PACKET, manifest)
+                activate.assert_not_called()
+
     def test_runtime_adapter_uses_exposed_verifier_not_private_fingerprint_api(self):
         baseline = copy.deepcopy(B._parent_manifest['runtime'])
         verify = Mock(side_effect=lambda value: copy.deepcopy(value))
@@ -41,9 +70,9 @@ class PacketControls(unittest.TestCase):
         self.assertEqual(B._parent_manifest['runtime'], baseline)
 
     def test_successor_identity_explicit_in_path_status_and_transition(self):
-        self.assertEqual(B.PACKET.name, 'prepared-duration-pilot-108')
-        self.assertEqual(B.RUN_NAME, 'encoder-server-duration-pilot-108-two-way-w2-b1-p1-dxpu2-s640x384-f49')
-        self.assertIn(b'Packet108 three-fixture49-frame resource pilot', B.STATUS)
+        self.assertEqual(B.PACKET.name, 'prepared-duration-pilot-108b')
+        self.assertEqual(B.RUN_NAME, 'encoder-server-duration-pilot-108b-two-way-w2-b1-p1-dxpu2-s640x384-f49')
+        self.assertIn(b'Packet108b three-fixture49-frame resource pilot', B.STATUS)
         tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
         transitions=[]
         for node in ast.walk(tree):
@@ -51,7 +80,7 @@ class PacketControls(unittest.TestCase):
                 fields={k.value:v for k,v in zip(node.keys,node.values) if isinstance(k,ast.Constant)}
                 if 'schema' in fields and isinstance(fields['schema'],ast.Constant) and fields['schema'].value=='ltx.resolution101.transition.v1':
                     transitions.append(ast.literal_eval(fields['packet_revision']))
-        self.assertEqual(transitions,['108','108'])
+        self.assertEqual(transitions,['108b','108b'])
 
     def test_duration_guard_installed_and_all107_trace_runtime_absent(self):
         extras=B.extra_files(B.AUTHOR,B.regular(B.PLAN))

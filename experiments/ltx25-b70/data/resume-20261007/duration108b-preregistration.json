@@ -1,0 +1,118 @@
+{
+  "campaign_unit": "ltx108b-duration-campaign-20261007",
+  "claim": "49-frame three-fixture resource/capability pilot only. Six native executions must form three exact repeat pairs; three candidate and three timed clips must match all four tensors. Two timing intervals are not a gain, record, endurance or full-suite qualification claim.",
+  "environment": {
+    "EnableDeferBacking": "0",
+    "LTX_BUSY_WINDOWS": "0",
+    "LTX_DECODE_REPLICAS": "1",
+    "LTX_DECODE_REPLICA_DEVICE": "xpu:2",
+    "LTX_OUTPUT_SIZE": "640x384",
+    "LTX_SAMPLER_BATCH": "1",
+    "LTX_SAMPLER_PLACEMENT": "two-way",
+    "LTX_SAMPLER_SHARED_POOL": "1",
+    "LTX_SAMPLER_WORKERS": "2",
+    "NEOReadDebugKeys": "1"
+  },
+  "health_receipt": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-107b.json",
+  "input_inventory_sha256": "76b76f3531ba73d6bfefefdd0ff8858b94c645f728045cf72e72348b886efd02",
+  "limits": {
+    "capture_cap": 22,
+    "hard_kill": false,
+    "nofile": "65536:1048576",
+    "per_request_timeout_seconds": 1800,
+    "planned_captures": 22,
+    "requests": 29,
+    "server_restart": "no",
+    "storage_reserve_bytes": 53687091200,
+    "write_allowance_bytes": 4294967296,
+    "verification_action_timeout_seconds": 300
+  },
+  "manifest_sha256": "ef839f83eaea6526f09cc353c6996a56414a95beb41609278b4b6e2994697ad7",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108b",
+  "plan_sha256": "942407a8b46992e6887bb76ad2447f78f4ecd891ef89af91052235b8367214e2",
+  "run_name": "encoder-server-duration-pilot-108b-two-way-w2-b1-p1-dxpu2-s640x384-f49",
+  "schedule_sha256": "e0fbaa81c6879ddcfb20a9a2924f7534847090d4537e88e46089ec16867981a1",
+  "schema": "ltx.duration108b.preregistration.v1",
+  "server_unit": "ltx108b-duration-server-20261007",
+  "source_commit": "62a51ca2a678c7da5cc93bd6a2c0ae21b9331db5",
+  "utc": "2026-10-07T22:25:48.064163+00:00",
+  "lifecycle": "Retain successful application after verified quiescence. No automatic restart/retry. Failed campaign one proven-idle graceful incident stop; faults/unresolved work coordinator.",
+  "memory_admission_gib": {
+    "native": [
+      8,
+      8,
+      2,
+      9
+    ],
+    "capture0": [
+      7,
+      7,
+      2,
+      9
+    ],
+    "capture1": [
+      7,
+      7,
+      2,
+      9
+    ],
+    "decode": [
+      2,
+      2,
+      10,
+      9
+    ],
+    "replica_after_build": 8,
+    "postcapture_floor": 2,
+    "sampler_chain_margin": 2,
+    "not_proven_peak_bounds": true
+  },
+  "pilot": {
+    "frames": 49,
+    "width": 640,
+    "height": 384,
+    "playback_fps": 24,
+    "fixtures": [
+      "boat",
+      "marble",
+      "bird"
+    ],
+    "steps": [
+      8,
+      3
+    ],
+    "precision": "original BF16",
+    "first_native_barrier": "verify-first-native before second native request; actual shape/finiteness/memory evidence required",
+    "full_shapes": {
+      "images": [
+        49,
+        384,
+        640,
+        3
+      ],
+      "video_latent": [
+        1,
+        128,
+        7,
+        12,
+        20
+      ],
+      "audio_latent": [
+        1,
+        8,
+        51,
+        16
+      ],
+      "waveform": [
+        1,
+        2,
+        96480
+      ]
+    },
+    "sample_rate": 48000,
+    "trace_instrumentation": false,
+    "no_automatic_admission_relaxation": true,
+    "quality_adoption": false
+  },
+  "correction": "108 startup refused beforeGPU/modelrequests; explicit extended-runtime dependency adapter, exact unchanged baseline receipt and serializer identities.292CPUtests. Same unused pilot plan."
+}

@@ -1,0 +1,19 @@
+Oct 07 18:23:19 steve-b70s systemd[2914601]: Started ltx108-duration-server-20261007.service - /usr/bin/env --default-signal=INT EnableDeferBacking=0 LTX_BUSY_WINDOWS=0 LTX_DECODE_REPLICAS=1 LTX_DECODE_REPLICA_DEVICE=xpu:2 LTX_OUTPUT_SIZE=640x384 LTX_SAMPLER_BATCH=1 LTX_SAMPLER_PLACEMENT=two-way LTX_SAMPLER_SHARED_POOL=1 LTX_SAMPLER_WORKERS=2 NEOReadDebugKeys=1 /home/steve/.venvs/ltx25-baseline/bin/python -B /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108/launch/serve-encoder.py --packet /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108 --manifest-sha256 74aa6d47a1def06d7894e1531e0fea992df80ea0e6f9ecf22b94f68d43479cd4 --run-name encoder-server-duration-pilot-108-two-way-w2-b1-p1-dxpu2-s640x384-f49 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-107b.json.
+Oct 07 18:23:23 steve-b70s env[3377808]: Traceback (most recent call last):
+Oct 07 18:23:23 steve-b70s env[3377808]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108/launch/serve-encoder.py", line 443, in <module>
+Oct 07 18:23:23 steve-b70s env[3377808]:     launch(args.packet, args.manifest_sha256, args.run_name, args.check_only, args.health_receipt)
+Oct 07 18:23:23 steve-b70s env[3377808]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108/launch/serve-encoder.py", line 251, in launch
+Oct 07 18:23:23 steve-b70s env[3377808]:     manifest, run = prepare_start(packet, digest, run_name)
+Oct 07 18:23:23 steve-b70s env[3377808]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Oct 07 18:23:23 steve-b70s env[3377808]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108/launch/serve-encoder.py", line 236, in prepare_start
+Oct 07 18:23:23 steve-b70s env[3377808]:     common.activate_dependencies(packet, manifest)
+Oct 07 18:23:23 steve-b70s env[3377808]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/launch/encoder_runtime_common.py", line 307, in activate_dependencies
+Oct 07 18:23:23 steve-b70s env[3377808]:     verify_dependencies(raw, manifest['runtime'])
+Oct 07 18:23:23 steve-b70s env[3377808]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/launch/encoder_runtime_common.py", line 237, in verify_dependencies
+Oct 07 18:23:23 steve-b70s env[3377808]:     require(receipt.get('baseline_python') == baseline['python_executable'] and
+Oct 07 18:23:23 steve-b70s env[3377808]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/launch/encoder_runtime_common.py", line 71, in require
+Oct 07 18:23:23 steve-b70s env[3377808]:     raise RuntimeError(message)
+Oct 07 18:23:23 steve-b70s env[3377808]: RuntimeError: Torch/Python baseline identity differs
+Oct 07 18:23:23 steve-b70s systemd[2914601]: ltx108-duration-server-20261007.service: Main process exited, code=exited, status=1/FAILURE
+Oct 07 18:23:23 steve-b70s systemd[2914601]: ltx108-duration-server-20261007.service: Failed with result 'exit-code'.
+Oct 07 18:23:23 steve-b70s systemd[2914601]: ltx108-duration-server-20261007.service: Consumed 3.310s CPU time.
