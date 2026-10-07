@@ -124,9 +124,9 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 04:50 UTC**. No model server is running.
-Revision 4 stopped after a bounded answer failure; GPU release was verified at
-04:45:14 UTC. Semantic development tooling is being checked on the CPU.
+Latest two-card review: **2026-10-07 05:00 UTC**. One supervised semantic
+diagnostic is active on the two-card host. Revision 4 remains closed; its GPU
+release was verified at 04:45:14 UTC.
 
 ## 2026-10-07, two-B70 host: preserve cold result; test meaning next
 
@@ -148,8 +148,12 @@ semantic diagnostic: cancelled changes, drafts, reversals, aliases, distracting
 numbers and ownership references. Two separate assistant annotations agree on
 all 84 answers and 48 batch states; six valid alias quote-span differences are
 preserved. This is development evidence, not independent human validation or a
-new benchmark. CPU adapter checks are underway before a fresh supervised run.
-[Packet scope](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-development-plan.md).
+new benchmark. CPU checks and the full scripted rehearsal passed. The new
+`ctx-semantic-v1.service` owns startup, strict qualification, all 36 diagnostic
+trials and graceful shutdown; do not start another GPU owner. Output is
+`/mnt/fast-ai/bench-results/context-semantic-v1-20261007`.
+[Packet scope](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-development-plan.md)
+and [fixed live plan](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-live-plan.md).
 Preserve frozen r2/r3/r4 sources and outcomes. Live status overrides this snapshot.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
