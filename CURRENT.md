@@ -124,8 +124,22 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 03:52 UTC**. Revision 2 finished its six
-full development trials and stopped at the quality gate. Both GPUs are released.
+Latest two-card review: **2026-10-07 04:06 UTC**. Revision 3 is prepared for one new
+supervised run; the completed revision 2 remains preserved below.
+
+## 2026-10-07, two-B70 host: final-answer reasoning experiment prepared
+
+The owner explicitly asked to continue. The [r3 plan](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-plan.md)
+changes final answering to thinking enabled at medium effort, with an 8,192-token
+combined reasoning/answer cap. Ingestion and retrieval stay fixed. Independent
+review and 89 harness plus 26 lifecycle CPU tests passed. The same six-trial
+full-development gate still precedes untouched held-out seeds.
+
+Output: `/mnt/fast-ai/bench-results/context-durable-r3-20261007`;
+owned unit: `ctx-durable-r3.service`. Passive preparation verified prior cleanup
+and current ownership. Execution will use one qualified server and stop it on
+completion or failure, without automatic retries. Live status and unit state
+supersede this preparation snapshot. No new result is claimed yet.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 

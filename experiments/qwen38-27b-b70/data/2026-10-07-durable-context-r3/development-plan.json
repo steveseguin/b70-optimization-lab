@@ -1,0 +1,68 @@
+{
+  "schema": "durable-pilot-plan.v3",
+  "protocol": "durable-context-r3",
+  "stage": "development",
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "suite_sha256": "9c345f33eb94c21375a44bf481dbd6f83c90a5594d3a1ebba83990c414e95181",
+  "source_sha256": {
+    "pilot.py": "340dd0608b7ce20ecfe287f9573d66033d4476903a97dbd6af62439057f2cf56",
+    "campaign.py": "4e4d1bf893c42fa1d6151cb0c4239435b82b751f58ca7781fdb751ea92ea2c31",
+    "tasks.py": "ddcde99e455b0abc1734e535730da0715df42fff5bd40c267a7970b84801ad0c",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "extraction.py": "f0752decd6e36826a6231550a1ae01b29159d915e6b5c1103d2d2f00789e099e",
+    "answers.py": "508330f7ea324d9b8e83b54d2fe2b7ec2238e3a6aecee69ee3a6b8e78aa542ab"
+  },
+  "runs": [
+    {
+      "task": "report-seed7.json",
+      "task_sha256": "17a63a89d9aa45a58d30577db63cb085da24203e03e59f04cfdc2a0c87356f0a",
+      "file_sha256": "9a6907950e75a38f3ec886dd877298ec7b1a39cfac7461ce86c09071bdd5bc44",
+      "arm": "summary"
+    },
+    {
+      "task": "report-seed7.json",
+      "task_sha256": "17a63a89d9aa45a58d30577db63cb085da24203e03e59f04cfdc2a0c87356f0a",
+      "file_sha256": "9a6907950e75a38f3ec886dd877298ec7b1a39cfac7461ce86c09071bdd5bc44",
+      "arm": "archive"
+    },
+    {
+      "task": "report-seed7.json",
+      "task_sha256": "17a63a89d9aa45a58d30577db63cb085da24203e03e59f04cfdc2a0c87356f0a",
+      "file_sha256": "9a6907950e75a38f3ec886dd877298ec7b1a39cfac7461ce86c09071bdd5bc44",
+      "arm": "quoted"
+    },
+    {
+      "task": "dispatch-seed7.json",
+      "task_sha256": "8e2995865e6c7be0725db059243daf5baeb706b5348a646186a25886e265af04",
+      "file_sha256": "37e6140f7e4919badf39c9e87644562d703415c5c13cf00181aa9f043d5a6b81",
+      "arm": "archive"
+    },
+    {
+      "task": "dispatch-seed7.json",
+      "task_sha256": "8e2995865e6c7be0725db059243daf5baeb706b5348a646186a25886e265af04",
+      "file_sha256": "37e6140f7e4919badf39c9e87644562d703415c5c13cf00181aa9f043d5a6b81",
+      "arm": "quoted"
+    },
+    {
+      "task": "dispatch-seed7.json",
+      "task_sha256": "8e2995865e6c7be0725db059243daf5baeb706b5348a646186a25886e265af04",
+      "file_sha256": "37e6140f7e4919badf39c9e87644562d703415c5c13cf00181aa9f043d5a6b81",
+      "arm": "summary"
+    }
+  ],
+  "context_limit_utf8_bytes": 32768,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "calibration_gate": "100% exact events and source order on fixed development batches 1,2,3,4,8,12,16,20,24,28,32,36,40,44,47,48 of seed-7 48-batch 320-filler report and dispatch tasks at a 32768-byte budget.",
+  "quality_gate": "Every final answer correct in every planned model trial; no missing, duplicate, invalid, unfinished or failed attempts.",
+  "speed_gate": "Complete model trials and a fresh campaign attempt only. At least 10% lower median paired elapsed ratio versus archive; pilot evidence only.",
+  "promotion": "No general memory, unlimited-context, or model-quality guarantee from this synthetic pilot."
+}
