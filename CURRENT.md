@@ -13,7 +13,7 @@ remain a known limit. This is source search, not model-memory qualification.
 The [scoped worker task](experiments/local-coding-worker/scoped-task-20261007/README.md)
 selects about 203 KB of pinned source with explicit patch boundaries. All 135
 worker CPU tests pass; historical bug/fix controls pass their expected outcomes.
-One bounded local-model attempt is being prepared, using the existing historical
+One bounded local-model attempt is active, using the existing historical
 R276 runtime and a fresh RAM restore. No resident service or newer-package
 qualification is implied. Five other unused coding tasks remain untouched if
 this task is started. LTX and Flash-Next remain parked.
@@ -25,7 +25,8 @@ build is not the strict-headline build. No new measured speed is claimed.
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-**No model server is running.** The fresh [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/CLOSEOUT.md)
+**One bounded scoped-worker trial is active under `lab-worker-scoped-20261007.service`;**
+its coordinator will request graceful stop after the single attempt. The earlier fresh [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/CLOSEOUT.md)
 completed all ten answers in 176 seconds, passed strict citation compilation,
 and stopped cleanly with all four cards healthy. Independent review found all 20 citations relevant but only 12/30 criteria
 fully covered: required conditions were omitted. Its semantic gate failed.
