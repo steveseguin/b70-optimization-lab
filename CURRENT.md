@@ -23,7 +23,7 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   model, runtime and evidence. No new experiment or weight relocation is queued.
 - **Storage:** about 33 GiB of cold compiler caches were preserved in 2.64 GiB of
   verified compressed archives under `/home/steve/git-archives/cache-consolidation-20261006/`;
-  only their unpacked copies were removed. About **38 GiB is available** afterward.
+  only their unpacked copies were removed, initially freeing about 38 GiB.
   Full byte comparisons passed before removal; hashes and restore commands are in
   [the consolidation receipt](data/maintenance/consolidation-20261006/summary.json).
   A follow-up preserved eight inactive August research build trees (18.94 GiB)
@@ -31,11 +31,21 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   Complete member inventories and repeated byte comparisons passed. Original-path
   restore commands are in [the staging receipt](data/maintenance/staging-consolidation-20261007/summary.json);
   restore these trees before replaying their historical launchers.
-  These same-disk archives are preservation, not independent backups.
-  The external EX400U mounted read-only, but a vendor SMART query was followed by
-  USB command errors, a kernel-initiated USB reset and a failed read. It was cleanly
-  unmounted; do not retry, repair, write to it or treat it as a verified backup.
-  Evidence: `data/maintenance/consolidation-20261006/`.
+  The internal archives are preservation; a separate physical copy is now verified
+  below. The original SMART-command USB incident remains recorded in
+  `data/maintenance/consolidation-20261006/`; do not repeat bridge passthrough.
+- **Backup, completed October 6 21:00 EDT:** ordinary EX400U I/O passed a bounded
+  pilot, then 61.45 GiB of selected research plus Git history/tracked files were
+  preserved in a 25.63 GiB backup set at
+  `/mnt/usb-models/lab-backups/steve-b70s-20261007/`. All nine files passed full
+  SHA-256 read-back after clean unmount/read-only remount; Git restore/fsck and
+  pinned LTX file restoration passed. No new storage/GPU fault appeared. Four
+  Flash-Next run/supervisor trees (121 files) also gained verified internal copies.
+  All originals remain; this is a selected additional backup, not a whole-machine
+  backup or long-term drive certification. **EX400U is cleanly unmounted.** Keep it
+  for planned cold-backup operations, not active runtime work. Do not force a mount,
+  run filesystem repair or use the data-erasing firmware reinitialization tool.
+  [Review and restore evidence](notes/2026-10-06-ex400u-backup-review.md).
 - **Qwen 27B TP2:** a separate [correctness release candidate](experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md)
   passed 20 overlay and 14 offline-preflight CPU tests; published package pins
   remain unchanged. The preflight refuses unqualified kernels; actual serving
@@ -47,8 +57,8 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
   this does not admit a large build/download.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
-  estimated peak output/cache/build bytes. Independent backup recovery remains
-  the next storage priority; first review the saved USB incident evidence.
+  estimated peak output/cache/build bytes. A verified additional research backup
+  now exists; keep the internal sources and the documented backup-scope limits.
 - **RAM, owner decision October 6:** no replacement in 2026. Blocks 53–57
   (10 GiB) were rechecked offline and `b70-offline-bad-memory.service` enabled.
   Keep that mitigation unchanged; replacement is not an immediate work item.

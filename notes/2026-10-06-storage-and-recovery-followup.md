@@ -74,6 +74,10 @@ There is no automatic deletion policy or new background service.
 1. Obtain a dependable independent backup destination and copy the preserved
    research plus archives with read-back verification. Do not regard Git as a
    backup of model weights or untracked raw experiment artifacts.
+   **Later October 6 update:** [a selected additional EX400U backup](2026-10-06-ex400u-backup-review.md)
+   passed full read-back and restore checks; internal originals remain. This
+   closes the immediate additional-copy gap for its selected scope, while
+   long-term drive reliability and complete-machine coverage remain unqualified.
 2. Keep the existing RAM exclusion unchanged. **Owner clarification October 6:
    no RAM replacement in 2026.** Blocks 53–57 were rechecked offline and the boot
    service enabled. Hardware replacement is removed from the near-term plan;

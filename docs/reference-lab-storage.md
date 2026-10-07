@@ -13,7 +13,20 @@ where the weights happen to live.
 **For the maintainer:** this is the map of what sits where, and which storage
 has to be mounted before a lane will run.
 
-Last verified: 2026-08-30 EDT.
+Layout history last verified: 2026-08-30 EDT. Current backup update: October 6 EDT.
+
+## October 6 backup update
+
+The EX400U is **cleanly unmounted** after a successful, bounded ordinary-I/O
+backup and full read-back/restore verification. A selected research backup is at
+`/mnt/usb-models/lab-backups/steve-b70s-20261007/`: 61.45 GiB of selected source
+payload plus Git history and tracked files, stored as a 25.63 GiB set. All internal
+originals remain. It is not a full model/machine backup or long-term drive-health
+certification. The drive's earlier SMART passthrough incident and NTFS maintenance
+history remain relevant; do not repeat that passthrough or follow the old general
+mount command below without current admission. See
+[the verified backup review](../notes/2026-10-06-ex400u-backup-review.md) and
+[current storage rules](local-ops.md#october-6-consolidation-admission).
 
 ## Internal NVMe
 

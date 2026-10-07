@@ -135,10 +135,19 @@ Read-only, missing or mismatched mounts fail closed. Historical frozen launchers
 are preserved; this check must precede new work rather than changing their pinned
 bytes silently.
 
-The EX400U is currently unmounted after the October 6 read-only inspection and
-SMART passthrough produced USB command/read errors. No filesystem writes or repair
-were attempted. Preserve internal originals and see `CURRENT.md` plus
-`data/maintenance/consolidation-20261006/` before considering external archival.
+The EX400U is currently cleanly unmounted after a later October 6 ordinary-I/O
+backup review. The earlier SMART passthrough produced USB command/read errors;
+it was not repeated. A bounded read/write pilot and selected additional backup
+passed full read-back after clean unmount/read-only remount, plus Git and LTX
+restore checks. No firmware, repair, power or memory changes were made. Preserve
+all internal originals: this is additional-copy evidence, not long-term drive
+certification. See `CURRENT.md` and
+[`the backup review`](../notes/2026-10-06-ex400u-backup-review.md).
+Future planned cold-backup operations must recheck UUID, mount state, capacity
+and kernel errors, use explicit `norecover`, retain sources and verify read-back.
+Do not force a refused mount or repeat bridge passthrough. The vendor's documented
+ULFM91.0 reinitialization erases user data and was not attempted. No automatic
+mount, backup schedule or deletion policy was installed.
 The older mount/relocation instructions below are historical operational context,
 not evidence that this drive is currently safe.
 
