@@ -36,3 +36,22 @@ emitted sequence. Root owns any retirement, fresh destination/collision/disk
 admission, exclusive build and later necessary controlled application reload.
 The builder's parent-stopped assertion refers to inactive constructor99b;
 it does not claim109 is stopped or require that for separate CPU construction.
+
+## Sealed construction and fresh admission
+
+110 was built exclusively while109 remained idle. Manifest
+`bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09`.
+The actual sealed CPU startup path passed. Filename-only collision scan of475385
+entries in the LTX root found no collisions for57 names/50physical indices.
+Constructor99b PID3129897 is absent and its recorded clean shutdown is preserved;
+109 was not falsely claimed stopped for source construction.
+
+Old97 B4-r2 duplicate retirement recovered10.8553GiB after two fresh587-comparison
+proofs, without changing109.109 then received one necessary controlled SIGINT
+at its verified idle endpoint; processgoneUTC 2026-10-07T23:15:35.660027+00:00.
+No hard kill, host restart, driver reset, or power/memory setting change.
+All four cards passed postflight at 2026-10-07 23:15:46 UTC with zero
+faults this boot. Fresh launch admission observes68,142,292,992available bytes;
+after9GiB allowance58,478,616,576bytes remain, exceeding50GiB reserve.
+Preregistration and exact launch command are recorded before one application
+launch. No110 model request exists at this admission checkpoint.
