@@ -1,0 +1,673 @@
+{
+  "schema": "durable-pilot-audit.v1",
+  "run": "/mnt/fast-ai/bench-results/context-durable-v2-20261007",
+  "planned": 18,
+  "completed": 16,
+  "failed": 1,
+  "not_started": 1,
+  "quality_gate_passed": false,
+  "speed_comparison_valid": false,
+  "arms": {
+    "summary": {
+      "completed": 5,
+      "correct": 80,
+      "asked": 120,
+      "categories": {
+        "current": {
+          "correct": 22,
+          "asked": 40
+        },
+        "history": {
+          "correct": 38,
+          "asked": 40
+        },
+        "join": {
+          "correct": 20,
+          "asked": 40
+        }
+      },
+      "state_exact": 0,
+      "state_checks": 0,
+      "mixed_final_actions": 0
+    },
+    "archive": {
+      "completed": 5,
+      "correct": 48,
+      "asked": 120,
+      "categories": {
+        "current": {
+          "correct": 40,
+          "asked": 40
+        },
+        "history": {
+          "correct": 8,
+          "asked": 40
+        },
+        "join": {
+          "correct": 0,
+          "asked": 40
+        }
+      },
+      "state_exact": 240,
+      "state_checks": 240,
+      "mixed_final_actions": 3
+    },
+    "quoted": {
+      "completed": 6,
+      "correct": 53,
+      "asked": 144,
+      "categories": {
+        "current": {
+          "correct": 46,
+          "asked": 48
+        },
+        "history": {
+          "correct": 7,
+          "asked": 48
+        },
+        "join": {
+          "correct": 0,
+          "asked": 48
+        }
+      },
+      "state_exact": 287,
+      "state_checks": 288,
+      "mixed_final_actions": 5
+    }
+  },
+  "rows": [
+    {
+      "trial": "report-seed101-summary",
+      "arm": "summary",
+      "task_sha256": "209b0545bb566b20365c1ae8bde9ec3c757100f25ffd1f881799eb1f405cedb9",
+      "status": "completed",
+      "score": {
+        "correct": 17,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 3,
+            "asked": 8
+          },
+          "history": {
+            "correct": 8,
+            "asked": 8
+          },
+          "join": {
+            "correct": 6,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 0,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed101-archive",
+      "arm": "archive",
+      "task_sha256": "209b0545bb566b20365c1ae8bde9ec3c757100f25ffd1f881799eb1f405cedb9",
+      "status": "completed",
+      "score": {
+        "correct": 10,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 2,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 14,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed101-quoted",
+      "arm": "quoted",
+      "task_sha256": "209b0545bb566b20365c1ae8bde9ec3c757100f25ffd1f881799eb1f405cedb9",
+      "status": "completed",
+      "score": {
+        "correct": 10,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 2,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 14,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed101-archive",
+      "arm": "archive",
+      "task_sha256": "4c70567eeeda97202bd633883cc6ff41074ff00e249c9093d2f6ed9790499862",
+      "status": "completed",
+      "score": {
+        "correct": 9,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 1,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 15,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed101-quoted",
+      "arm": "quoted",
+      "task_sha256": "4c70567eeeda97202bd633883cc6ff41074ff00e249c9093d2f6ed9790499862",
+      "status": "completed",
+      "score": {
+        "correct": 9,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 1,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 15,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed101-summary",
+      "arm": "summary",
+      "task_sha256": "4c70567eeeda97202bd633883cc6ff41074ff00e249c9093d2f6ed9790499862",
+      "status": "completed",
+      "score": {
+        "correct": 17,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 4,
+            "asked": 8
+          },
+          "history": {
+            "correct": 8,
+            "asked": 8
+          },
+          "join": {
+            "correct": 5,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 0,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed202-quoted",
+      "arm": "quoted",
+      "task_sha256": "bf3629b6e57013463a818f30639ca1d2088ff5465c71bcc026573bcfe21614e5",
+      "status": "completed",
+      "score": {
+        "correct": 10,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 2,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 14,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed202-summary",
+      "arm": "summary",
+      "task_sha256": "bf3629b6e57013463a818f30639ca1d2088ff5465c71bcc026573bcfe21614e5",
+      "status": "completed",
+      "score": {
+        "correct": 15,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 6,
+            "asked": 8
+          },
+          "history": {
+            "correct": 8,
+            "asked": 8
+          },
+          "join": {
+            "correct": 1,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 0,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed202-archive",
+      "arm": "archive",
+      "task_sha256": "bf3629b6e57013463a818f30639ca1d2088ff5465c71bcc026573bcfe21614e5",
+      "status": "completed",
+      "score": {
+        "correct": 10,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 2,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 14,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed202-summary",
+      "arm": "summary",
+      "task_sha256": "040966d1e16e2b03c503eb967e0ab32a3f0f98642262ab1df98dc5535e2fce00",
+      "status": "completed",
+      "score": {
+        "correct": 13,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 5,
+            "asked": 8
+          },
+          "history": {
+            "correct": 6,
+            "asked": 8
+          },
+          "join": {
+            "correct": 2,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 0,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed202-archive",
+      "arm": "archive",
+      "task_sha256": "040966d1e16e2b03c503eb967e0ab32a3f0f98642262ab1df98dc5535e2fce00",
+      "status": "completed",
+      "score": {
+        "correct": 11,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 3,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 13,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed202-quoted",
+      "arm": "quoted",
+      "task_sha256": "040966d1e16e2b03c503eb967e0ab32a3f0f98642262ab1df98dc5535e2fce00",
+      "status": "completed",
+      "score": {
+        "correct": 8,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 6,
+            "asked": 8
+          },
+          "history": {
+            "correct": 2,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 14,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed303-archive",
+      "arm": "archive",
+      "task_sha256": "72d121f649022cc140b9c50ad95ec421d363c028c97b4b1585525d3cac898bbe",
+      "status": "completed",
+      "score": {
+        "correct": 8,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 0,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 16,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed303-quoted",
+      "arm": "quoted",
+      "task_sha256": "72d121f649022cc140b9c50ad95ec421d363c028c97b4b1585525d3cac898bbe",
+      "status": "completed",
+      "score": {
+        "correct": 8,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 0,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 16,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "report-seed303-summary",
+      "arm": "summary",
+      "task_sha256": "72d121f649022cc140b9c50ad95ec421d363c028c97b4b1585525d3cac898bbe",
+      "status": "completed",
+      "score": {
+        "correct": 18,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 4,
+            "asked": 8
+          },
+          "history": {
+            "correct": 8,
+            "asked": 8
+          },
+          "join": {
+            "correct": 6,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 0,
+      "mixed_final_action": false,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed303-quoted",
+      "arm": "quoted",
+      "task_sha256": "11a839d8121e964cde5ce0113f384c7c5afe8bf2160c50a280d4d9a11a3ffed9",
+      "status": "completed",
+      "score": {
+        "correct": 8,
+        "asked": 24,
+        "by_category": {
+          "current": {
+            "correct": 8,
+            "asked": 8
+          },
+          "history": {
+            "correct": 0,
+            "asked": 8
+          },
+          "join": {
+            "correct": 0,
+            "asked": 8
+          }
+        },
+        "valid": true,
+        "extra_keys": []
+      },
+      "missing_answer_keys": 16,
+      "mixed_final_action": true,
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed303-summary",
+      "arm": "summary",
+      "task_sha256": "11a839d8121e964cde5ce0113f384c7c5afe8bf2160c50a280d4d9a11a3ffed9",
+      "status": "failed",
+      "source_batches_exact": true
+    },
+    {
+      "trial": "dispatch-seed303-archive",
+      "arm": "archive",
+      "task_sha256": "11a839d8121e964cde5ce0113f384c7c5afe8bf2160c50a280d4d9a11a3ffed9",
+      "status": "not_started"
+    }
+  ],
+  "failed_retrieval_counts": {
+    "review-303-0": 1,
+    "ticket-303-0": 4,
+    "batch 2": 19
+  },
+  "limitations": [
+    "Incomplete matrix; aggregate denominators differ across arms.",
+    "Eight completed archive/quoted responses combined partial answers and a retrieval request; harness accepted them as final.",
+    "Old holdout seeds are exposed; any revised protocol must use new held-out cases."
+  ],
+  "sources": {
+    "status.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/status.json",
+      "sha256": "4d41430e817a4ee7e7c71cd474afa6b62baad97f6fb1fd73b3e75fa8dec5adbb"
+    },
+    "server-stop.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/server-stop.json",
+      "sha256": "65112930b94d497780c8742af41b818716686b796479bcc82d8e151594284d9c"
+    },
+    "cards-released.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/cards-released.json",
+      "sha256": "b0c62ff70b0a4392331ffcc881c426397e1db3f1055ef2815c3ea28e0b1dd6a5"
+    },
+    "strict-comparison.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/strict-comparison.json",
+      "sha256": "0864496f3e0efd5b9d2cbcdf01cb15b5b39148a781dd16929f85fac1a4992f7b"
+    },
+    "extraction-report/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/extraction-report/result.json",
+      "sha256": "8d9a7295d108bb0d7074e12396c3a53b249fa6a4aa1891562b75f162f237071d"
+    },
+    "extraction-dispatch/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/extraction-dispatch/result.json",
+      "sha256": "697b54e32dad4eed4a11abd8aa4c725c1eaf45c2fdbd0e90b6827b82adf3a93e"
+    },
+    "pilot/plan.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/plan.json",
+      "sha256": "b8bbd45dbe4e94e1af90c140741768a46fec0c9a5d53ff375db5bfb543d595c6"
+    },
+    "pilot/campaign-status.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/campaign-status.json",
+      "sha256": "b02f4e548d6847b27861809b6d3e141eda0eaf1ad66b8d67d5f7b6ca297e1826"
+    },
+    "pilot/campaign-attempts.jsonl": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/campaign-attempts.jsonl",
+      "sha256": "cbd72f43702cd031d1b017ce31c43d136dbd68ff8561d3fa12b37c702e3b9d74"
+    },
+    "pilot/execution-identity.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/execution-identity.json",
+      "sha256": "305db3e7404153d3432df6c5c710f01905d7941aee3482725951e5ce86d4f411"
+    },
+    "trials/report-seed101-summary/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed101-summary/result.json",
+      "sha256": "391344d6e3566aae11909019876767d304dab9740bad9ea00687464a737496e1"
+    },
+    "trials/report-seed101-archive/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed101-archive/result.json",
+      "sha256": "54ba1c91b47cadfbce47dc44059d9bdc570d379269d827578a6479fb2425fe41"
+    },
+    "trials/report-seed101-quoted/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed101-quoted/result.json",
+      "sha256": "e9e72e19bdf9e54c9bda42bdf95bca2953e92df50477e1edd445cd1873da90fb"
+    },
+    "trials/dispatch-seed101-archive/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/dispatch-seed101-archive/result.json",
+      "sha256": "de0f2353f71203f0c20d9d8e794f66de6dcdb9b01d2d067a8ae8e19a18f46b11"
+    },
+    "trials/dispatch-seed101-quoted/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/dispatch-seed101-quoted/result.json",
+      "sha256": "8cb3b9f06680eba4e03db02086f35d28096c970388c6e0edd339d24e4ed1f3ea"
+    },
+    "trials/dispatch-seed101-summary/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/dispatch-seed101-summary/result.json",
+      "sha256": "0341a1fc17d290dc06a2a4ad09ecc84845371a73f27a87c79b09301fefa26235"
+    },
+    "trials/report-seed202-quoted/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed202-quoted/result.json",
+      "sha256": "d90dcf6edbc26a937f7cb0ed8d7eaec8cee46c63c33b1eda88fcb3dd484a54d5"
+    },
+    "trials/report-seed202-summary/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed202-summary/result.json",
+      "sha256": "7f1fb5267a3909e7c6ba5a90c31a69cfffa30bd11780c7f6843fe33d16d89896"
+    },
+    "trials/report-seed202-archive/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed202-archive/result.json",
+      "sha256": "b391c9e848db83ec2a1b4afaede2cbad0907663ea36938fce7d7c402235f6593"
+    },
+    "trials/dispatch-seed202-summary/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/dispatch-seed202-summary/result.json",
+      "sha256": "c5f514450fc5ea9ea9db749e31dd872cf9896a4c1db91be210771be72d84b525"
+    },
+    "trials/dispatch-seed202-archive/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/dispatch-seed202-archive/result.json",
+      "sha256": "5efe3cb0e825345d29248c33bcdba02cfc8eeef3023f5747fbea537b32e3cb87"
+    },
+    "trials/dispatch-seed202-quoted/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/dispatch-seed202-quoted/result.json",
+      "sha256": "63e99a7ad1576939d034e3f962eacddf1d86697d409a921647f75aa01867f8c7"
+    },
+    "trials/report-seed303-archive/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed303-archive/result.json",
+      "sha256": "a8e003c72c6d06f26c2bf6016a1227db0dcebbe26a6f0a8b7bcbc94051dae156"
+    },
+    "trials/report-seed303-quoted/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed303-quoted/result.json",
+      "sha256": "08d5bff208c4851575f099f4d387d7c0cb4587bb015fc994f7a7824e503f4437"
+    },
+    "trials/report-seed303-summary/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/report-seed303-summary/result.json",
+      "sha256": "660603793b16ecc308c85475cf6138d282358eee6bd0ddecf57bb6fa2e8c5570"
+    },
+    "trials/dispatch-seed303-quoted/result.json": {
+      "original": "/mnt/fast-ai/bench-results/context-durable-v2-20261007/pilot/dispatch-seed303-quoted/result.json",
+      "sha256": "276e9d358cb509b5319ab7b1514edc9f22d4e0d044d4bef97a33a949878ef56e"
+    }
+  }
+}

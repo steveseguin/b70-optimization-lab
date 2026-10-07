@@ -1,5 +1,9 @@
 # Queued durable pilot: execution receipt
 
+**Final status:** v2 stopped after sixteen completed trials and a retrieval-cap
+failure. Its server stopped and GPU release was confirmed. No run is active.
+See the [pilot result](../../notes/2026-10-07-durable-pilot-result.md).
+
 **Update, 01:50 UTC:** v1 failed its passive port check before device work.
 [Failure records](v1-failure/status.json) remain preserved. A bounded port-release
 wait passed 20 CPU tests and independent review; the explicit

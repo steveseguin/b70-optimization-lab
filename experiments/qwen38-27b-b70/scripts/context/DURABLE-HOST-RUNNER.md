@@ -78,9 +78,10 @@ protected campaign it was waiting for.
 ## Explicit replacement of a failed handoff
 
 The first queue failed before device work because port 18196 had not yet
-released. Its evidence remains in the v1 directory. The active replacement is
+released. Its evidence remains in the v1 directory. The replacement attempt used
 `ctx-durable-pilot-v2.service`, output
-`/mnt/fast-ai/bench-results/context-durable-v2-20261007`.
+`/mnt/fast-ai/bench-results/context-durable-v2-20261007`. It has now stopped;
+see the [pilot result](../../notes/2026-10-07-durable-pilot-result.md).
 
 For a reviewed failure before any health probe or server launch, preparation
 accepts `--from-prelaunch-failure PREVIOUS_OUTPUT` with a fresh `--out` directory.

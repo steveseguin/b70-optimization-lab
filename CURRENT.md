@@ -79,8 +79,29 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 01:50 UTC**. Its protected context experiment
-continues independently; see its latest entry below.
+Latest two-card review: **2026-10-07 03:29 UTC**. The legacy campaign and durable
+pilot have stopped; the two-card GPUs are released. See the latest result below.
+
+## 2026-10-06 23:29 EDT, two-B70 host: durable pilot stopped; quality gate failed
+
+**No durable experiment is running or queued.** The pilot stopped at 02:15 UTC:
+16 trials completed, the seventeenth hit the retrieval cap, and the last did not
+start. The owned server stopped; GPU release was confirmed at 02:16:46 UTC.
+Strict qualification passed 12/12 and both extraction diagnostics passed, but
+the end-to-end quality gate failed and no speed result qualifies.
+
+Quoted events got 46/48 current values, 7/48 historical details and 0/48
+cross-references across six trials. All original batches survived exactly; state
+was correct at 287/288 quoted checkpoints. Eight quoted/archive final replies
+combined partial answers with another search request, which the harness wrongly
+treated as a finished submission. The failed summary trial repeated one search
+nineteen times. [Result and protocol findings](experiments/qwen38-27b-b70/notes/2026-10-07-durable-pilot-result.md)
+include all native evidence and unequal-subset caveats.
+
+Next: a separate development revision for unambiguous retrieval/submission,
+partial-answer preservation and complete end-to-end development checks before
+fresh held-out seeds. Preserve this failed frozen attempt. No new GPU run has
+been scheduled; larger streams and speed tuning remain deferred.
 
 ## 2026-10-06 21:50 EDT, two-B70 host: handoff repaired; durable v2 in preflight
 
