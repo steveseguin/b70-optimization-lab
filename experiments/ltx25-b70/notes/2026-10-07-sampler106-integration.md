@@ -95,3 +95,37 @@ Native qualification proceeds first. No106 quality or accounting verdict exists
 yet. Preserve one application, no request retries and no unrelated work during
 the timed block. Registered command arrays and admission receipts are tracked in
 `data/resume-20261007/sampler106-*`.
+
+## Conditional next lever: boundary activation transport
+
+A bounded read-only source audit, independently checked by root, found one
+specific copy candidate in sealed106 `source/scripts/ltx_graph_capture.py`:
+`staged_move` lines822–840 allocates a fresh destination tensor and copies the
+pinned host payload into it; `DeviceGroup.fill` lines455–473 then copies that
+activation into the captured graph's static input. Frozen replay uses this fill
+immediately before unchanged graph replay at1253–1255. Source SHA-256:
+`3a9a99954cb4877829c4407eb74306f6b409864002dfcccf3562fd0c98380400`.
+No implementation or numerical change has been made.
+
+A possible successor could carry a pending pinned payload through the routing
+step and write H2D directly into the exact existing img slot at its original fill
+position. This would remove the transient destination allocation and redundant
+D2D activation copy. It must retain source-stream D2H, the existing host wait,
+argument-transfer ordering, the destination worker stream and unchanged graph
+replay. Writing static buffers early in staged_move is not an equivalent recipe.
+
+Prerequisites: frozen existing entry and exact worker-thread/device/signature/
+component ownership; matching shape, dtype, stride and expanded-core layout;
+no source/target alias or cross-worker static/pinned sharing; pinned lifetime
+through destination consumption; no escaping output-buffer or cross-forward
+argument-cache reuse. Every fresh arrival must copy, even if a Python object is
+reused: existing fill skips when slot.sources[i] is value, so a generic mutable
+buffer cache could silently replay stale activations. Unknown signatures must
+refuse, never recapture after freeze. No added global/device synchronization.
+
+Pursue only if admitted copy-engine deltas make copying material while sampler
+compute engines have available service capacity. Counters still cannot identify
+this particular copy or prove critical-path benefit. Negligible copy activity or
+heavy sustained compute would lower its priority. Low/ambiguous activity needs
+one sparse attributed boundary trace first. Do not turn this proposal into a
+speculative implementation or claim an unmeasured speedup.
