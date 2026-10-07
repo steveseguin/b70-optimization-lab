@@ -1,0 +1,81 @@
+{
+  "schema": "lab.qwen38.tp2-state-fix-candidate.v1",
+  "status": "draft-cpu-verified",
+  "created_at": "2026-10-07T00:08:16.370275+00:00",
+  "source_commit": "1fac3b24b505385fc0b3c5e27c82c3acd5af8532",
+  "host": "steve-b70s",
+  "scope": "CPU metadata and stand-in recurrence only; no GPU/runtime/package qualification",
+  "cpu_validation": {
+    "command": "/home/steve/.venvs/vllm-xpu/bin/python test_state_width.py -v",
+    "torch_version": "2.11.0+xpu",
+    "tests": 20,
+    "passed": true,
+    "device": "cpu"
+  },
+  "historical_inputs": [
+    {
+      "path": "experiments/qwen38-27b-b70/overlays/b70-gdn-state-width/b70_gdn_state_width.py",
+      "sha256": "a35690acce5c115749333f510c57fe5ea89eb95bbcb23ca3886b0e3a2a90d99c"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/tests/test_b70_gdn_state_width.py",
+      "sha256": "6ffe9eaa6193e5c4db24587ba3a1c4a526a1cb17459be5e83ce2d42ce78ce376"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-spec-decode-exact-r313-20261004.patch",
+      "sha256": "bea6004ab2cb086779f212a2705fd5f87ba50b39ab101e3e4acc80b37ad5dc9c"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-spec-state-row-stride-r314-20261004.patch",
+      "sha256": "e5db8797c1daf28e1a856cf466a2cd1468d248add45b46be38cc48bf3d608b91"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-r314-state-stride.sh",
+      "sha256": "ac0ee11eb61a658e04ef19580d8463d53d15687b69a899a001117a866d01ebe9"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r314-state-stride",
+      "sha256": "9d6312dc2a53b40405e2ad2258c9768497c717d65f7fdba7d7aabbe4e77d1c44"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-10-04-r314/image-id.txt",
+      "sha256": "b1fc5fc1dd7cb5cbc1fdc16f8deae56ff04d46c3fce19cad82f6e3f6da58b821"
+    }
+  ],
+  "candidate_files": [
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/overlay/b70_gdn_state_width.py",
+      "sha256": "ab22cc8e7da4f6115cb61e34032a287886c59235906d5ca7dd8f9c543e97d12d"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/overlay/b70_gdn_state_width-0.1.0.dist-info/METADATA",
+      "sha256": "da19a99d5f1fa22679eec6ced88cd0a3569b3067d00f6da5e0f00299a1df5a15"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/overlay/b70_gdn_state_width-0.1.0.dist-info/entry_points.txt",
+      "sha256": "9d17c3415b89caf477dce19e8a739ed89521be9c58e4388d37ce2235d8c2f165"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/test_state_width.py",
+      "sha256": "4a3eeb9200a6b1ec556786ae989c454d99cae840ed9eda5476c74db5570aa14d"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md",
+      "sha256": "13ea732b51831b9e8c1012010785a77068b629abab87171674ff1764177cce0b"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/cpu-validation.txt",
+      "sha256": "941b1dd0fcf420383e7b922856d9f0859bda3c3337d50f9fe07339b14b2d6e7a"
+    }
+  ],
+  "pending": [
+    "actual-source plugin activation and failure propagation",
+    "candidate kernel/image identity and public source closure",
+    "real-kernel narrowing regression",
+    "package-launcher exact oracle and repeat/fresh-server qualification",
+    "long-context and context-boundary validation",
+    "performance and resource measurements",
+    "registry/artifact publication and remote hash verification",
+    "TP1 separate checkpoint-kernel port"
+  ]
+}
