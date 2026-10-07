@@ -73,3 +73,11 @@ immutability/tampering, rejected-attempt exclusion, write-after-ledger failure,
 read failures, bounded queries, shared budgets and all 24 authored-case/arm CPU
 gold wiring trials. These are implementation checks, not evidence that model
 accuracy or speed improves.
+
+The separate [snapshot auditor](../audit_history_snapshots.py) reconstructs saved
+states from raw accepted replies, checks snapshot provenance and returned
+historical evidence, and retains failed-write gaps. Run it with `--result-dir`
+and `--task`; its twelve CPU regressions include re-bound hashes and altered
+refused replies. It checks evidence integrity only: `quality_passed` remains
+unknown. Full trial quality and any study-level gate need separate native and
+reference audits.
