@@ -5,81 +5,54 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-The owner explicitly resumed continuous LTX optimization: higher generated frame
-throughput and reliability, with no degradation in quality. Work is active on
-`steve-b70s`; Flash-Next and local-worker tuning remain parked. The first control
-halted before timing: its journal monitor hit the application's 1,024-file soft
-limit during text-encoder graph setup. The failure and descriptor census are
-preserved. The queue drained, passive GPU counters stayed idle for over a minute,
-and one SIGINT stopped PID 3055231 cleanly. All four cards passed postflight,
-with no kernel GPU fault.
-[Incident closeout](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
+The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
+frame throughput and reliability without quality degradation. Flash-Next and
+local-worker tuning remain parked. **No model server is running.** The latest
+control stopped cleanly at 14:12 UTC; all four GPUs passed postflight with no
+kernel GPU fault. All five bad-memory blocks remain offline. No power, memory,
+swap, driver or reboot change was made.
 
-The corrected historical control completed and stopped cleanly at 13:07 UTC.
-The current-upstream control **failed exact output parity** for its two initial
-self-check clips and skipped the timed workload. One graceful SIGINT stopped
-PID 3123108 at 13:34 UTC. The single compatibility control is now running as
-`ltx99b-upstream-server-20261007`, PID 3129897, with the patch and file
-limits verified before its first model request. All four cards passed
-postflight with no GPU fault. Failed clips, source and dependency evidence are
-preserved. Prompts, seeds and initial latents match; the first observed difference
-is already in encoder conditioning. An upstream dependency changed split-half
-positional encoding from separate operations to `addcmul_`; this is a strong
-lead, not yet a proven full-clip cause. Work continues on a narrow arithmetic
-compatibility overlay on current upstream. The sampler rebalance must wait for
-an exact new-base control. [Failure evidence and next test](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md).
-The narrow compatibility candidate is now sealed and independently reviewed.
-Ten CPU arithmetic controls, seven runtime controls, eight runner controls and
-the inactive startup check pass. One fixed control is preregistered with a fresh
-4 GiB output/cache allowance and the 50 GiB reserve. It restores only the prior
-RoPE function in process; full GPU output parity remains unproven.
-[Compatibility test plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
+The current-upstream compatibility control passed: **126 probe/timed clips and
+two self-check clips match the accepted references exactly**, including video,
+audio, images and waveform. Sustained generation is about **1.3156 seconds per
+25-frame clip, 19.0 generated frames/s**, essentially the historical 1.3179-second
+control. This is a qualified new source base, not a new speed record. The accepted
+scope is native BF16, 256×256, 25 frames, 24 playback fps, original 8+3 schedule,
+accepted short encoder window, batch 1, two workers and the 23/25 sampler split.
+Generation throughput is distinct from playback fps and coherent long video.
+[Run summary](experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/summary.json),
+[postflight](experiments/ltx25-b70/data/resume-20261007/postflight-99b.json).
 
-All 126 historical probe/timed clips matched the accepted references
-exactly; two self-check clips also passed. Sustained generation measured
-**1.31786 seconds per 25-frame clip, about 18.97 generated frames/s**, close to
-the earlier 1.3082-second control. This is a repeated historical baseline, not
-a new speed record. All four cards passed postflight with no kernel GPU fault.
-[Control closeout](experiments/ltx25-b70/data/resume-20261007/closeout-r2.json).
+ComfyUI `b00c6e95279053474955540ba4f551646722b9aa` and the isolated dependencies
+are preserved. The first upstream attempt failed because conditioning and full
+outputs changed. A narrow process-local RoPE arithmetic compatibility patch now
+restores the accepted outputs across the tested fixtures; source/package files
+and references remain unchanged. Original failed clips and evidence remain
+preserved. The qualified packet manifest is
+`f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a`.
+[Original failure](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md),
+[compatibility plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
 
-The application used an explicit 65,536-file soft limit, verified before model
-requests. Descriptor observations peaked at 2,636, below the 16,384 alert level;
-this does not prove absence of a leak. The external observer hit an access error
-as the server exited; its raw trace is preserved. The process-local progress-lock
-fix remains separately hash-bound; installed and historical sealed source remain
-unchanged. No host/global limit or power/memory setting changed.
+Next: test the named 20/28 sampler split to reduce the busiest card's work.
+Its CPU preparation and independent review pass, and the actual qualified
+control's memory receipts admit the conservative plan. Build only after the
+control has stopped, then run one exact-output candidate with a fresh 4 GiB
+output/cache allowance and the 50 GiB disk reserve. No projected gain counts as
+a measurement. After the placement decision, screen W3 only if occupancy and
+memory support it; then qualify a useful-resolution baseline rather than keep
+chasing the small-shape benchmark.
+[Next useful workload](experiments/ltx25-b70/notes/2026-10-07-next-useful-workload.md).
 
-The accepted reference remains batch 1, native BF16, 256×256, 25 frames at 24
-playback fps, the unchanged two-stage schedule and the owner-accepted short text
-window. Playback fps is distinct from generation throughput. Batch-2/4 results
-change output and are excluded from this lossless objective; larger-size
-speed-only arms remain unqualified and are not queued.
-
-After shutdown, 106 newly generated raw tensor archives were freshly verified
-identical to retained references and retired, reclaiming 1.99 GiB. Ten timed
-samples (one per fixture), all references, metadata, previews, setup captures
-and failures remain. The previous 116-file duplicate cleanup recovered 2.18 GiB.
-A further 583 duplicate tensors from the completed historical batch-2 run were
-freshly verified and retired, preserving its ten reference samples and all
-metadata; this recovered 10.96 GiB and left about 65 GiB free. Its batch-specific
-quality remains separate from the accepted batch-1 objective. The next experiment
-must retain the 50 GiB root reserve and obtain a fresh output/cache budget; the
-previous 4 GiB allowance is not a continuing reservation.
-
-Current-upstream ComfyUI source `b00c6e95279053474955540ba4f551646722b9aa`
-is prepared separately with all five native and 63 added lab overlays accounted
-for. The separate runtime candidate and isolated application dependencies now
-pass source, CPU and inactive launch checks, including independent review.
-Its manifest is `e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736`;
-**Exact-output qualification failed; this candidate is not adopted.** The fixed
-[upstream control](experiments/ltx25-b70/data/resume-20261007/runtime99-preregistration.json)
-was preregistered with a 4 GiB allowance and about 64.45 GiB free. Its unused
-timed-output allowance is not a continuing reservation.
-First qualify its unchanged 23/25 sampler split against the accepted outputs;
-then test the planned 20/28 split to reduce the busiest card's work. No source
-port or speed estimate is a measured improvement. All five bad-memory blocks
-remain offline; no power, memory, swap, driver or reboot change is authorized.
-[Resumption results and next step](experiments/ltx25-b70/notes/2026-10-07-resume-control-results.md).
+The application-only 65,536-file soft limit prevented the original descriptor
+exhaustion. The corrected observer also exited cleanly. This is a practical
+limit/observation fix, not proof of no descriptor leak. Historical and current
+source packets, failures, references, notes and models remain protected.
+[Initial incident](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
+Verified duplicate tensor retirement recovered 2.18 GiB, 1.99 GiB and 10.96 GiB
+in three recorded batches. No model was deleted. The latest control outputs are
+retained; previous experiment write allowances do not carry over automatically.
+Batch-2/4 output-changing results and larger speed-only arms remain unqualified
+for the lossless objective.
 
 ## Four-card preceding consolidation (historical closeout)
 
