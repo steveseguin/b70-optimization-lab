@@ -7,9 +7,13 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner explicitly resumed continuous LTX optimization: higher generated frame
 throughput and reliability, with no degradation in quality. Work is active on
-`steve-b70s`; Flash-Next and local-worker tuning remain parked. No model server
-is running at this preparation checkpoint. Servers will exist only for bounded
-experiments, with one graceful stop and no automatic restart/retry policy.
+`steve-b70s`; Flash-Next and local-worker tuning remain parked. The first bounded
+LTX control started at 12:36 UTC: server PID 3055231, user unit
+`ltx98-resume-server-20261007`, with runner `ltx98-resume-campaign-20261007`.
+Its progress-lock exception fix is process-local and separately hash-bound; the
+sealed packet and installed virtualenv are unchanged. This is historical
+reference validation, not a speed improvement or current-upstream promotion.
+The runner owns one graceful stop; no automatic restart/retry policy exists.
 
 The accepted reference remains batch 1, native BF16, 256×256, 25 frames at 24 fps,
 the unchanged two-stage schedule and the owner-accepted short text window.
@@ -19,10 +23,14 @@ lossless objective. Preserve the accepted raw-reference and exact-output gates.
 Prepared packet 98's larger-size speed-only arms are not quality qualification
 and are not queued by this resumption.
 
-First revalidate the sealed baseline, integrate the progress-lock exception fix
-without changing historical packets, and admit a storage-bounded reference
-control. Then pursue exact sampler scheduling/transfer improvements. Root has
-about 53 GiB free; retain the 50 GiB floor. All five bad-memory blocks remain
+The sealed baseline and 24 guarded CPU controls passed; the exception fix passed
+18 controls and independent review. All four GPUs passed fresh health admission.
+116 old raw outputs were freshly verified identical to retained references and
+removed with a per-file ledger, recovering 2.18 GiB. All references, summaries,
+requests, previews and failure evidence remain. The fixed 120-prompt control has
+a declared 4 GiB output/cache allowance, admitted with 54.69 GiB free and a
+50 GiB floor; the allowance is not a hard cache bound. Then pursue exact sampler
+scheduling/transfer improvements. All five bad-memory blocks remain
 offline; no power, memory, swap, driver or reboot change is authorized.
 [Resumption plan](experiments/ltx25-b70/notes/2026-10-07-lossless-resume.md).
 
