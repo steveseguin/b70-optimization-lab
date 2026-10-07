@@ -1,0 +1,15 @@
+# Frozen lab-navigator retrieval evaluation
+
+Twelve new practical source-lookup questions are frozen at commit `1b9ff38fdc0918eeb2629e52f0fbf2c94ded2a1b`: six development and six held-out. The author inspected the pinned narrative sources before writing expected file/line spans and has not seen ranked retrieval output. No model request is involved. This evaluates a search tool, not model memory or answer quality, and does not rerun either original ten-question recall packet.
+
+Run each literal query from `queries.json` with one global configuration and top eight results. Freeze configuration before viewing held-out output. Never feed expected paths, hashes, spans or purpose descriptions to indexing, query rewriting or ranking. All evaluation metadata stays outside the index. Report the splits separately; an observed held-out set is consumed for subsequent tuning.
+
+The primary metric requires every expected span to be covered by the union of ranked hits at the exact path and source commit. Also report span recall, file recall, first relevant rank, and returned evidence size. File-only hits do not earn span credit. Separate, automatically included CURRENT authority context does not count as ranked retrieval. Preserve misses; alternative relevant sources can be described without rewriting the frozen key.
+
+Expected spans are coverage metadata, not model-facing answers or an exhaustive truth oracle. They were selected from real primary narrative records. The index selects whole source categories independently of these targets. No claim follows that unreturned obligations do not exist, that a historical procedure is authorized, or that a frozen CURRENT section describes live state. The old 4B closeout, for example, calls the then-future 27B trial unrun; later CURRENT and the separate 27B closeout supersede that planning state.
+
+`source-policy-review.json` records the independent policy review and proposed evidence-pack contract. Packs should preserve exact commit/blob/file hashes, original line numbers and section context; label current-snapshot versus historical context; make budget omissions visible; and leave operational authorization, live state and completeness of obligations unresolved. This allows the main agent to answer real lab questions with auditable citations using CPU retrieval alone.
+
+The twelve questions cover parked LTX and future controls, Flash-Next record limits, RAM policy, two distinct worker failures, r4 cold-cache limits, snapshot storage admission, conditional LTX batch results, pending TP2/TP1 correctness work, backup exclusions, semantic-development boundaries, the historical Qwen graph-identity mistake, and r3 cache contamination. The question wording is fresh but these research themes are already known; this is not an unseen-domain benchmark.
+
+No ranked results, performance scores or implementation qualification are included in this freeze. Any future policy/configuration change must be recorded prospectively. Do not silently replace questions or expected spans after observing retrieval.
