@@ -1,0 +1,225 @@
+{
+  "schema": "neural.download.worker.snapshot.v1",
+  "source_repo": "/home/steve/llm-optimizations",
+  "source_commit": "7324c356f00901b4d53f9ec26bda46900294ebb4",
+  "source_state": {
+    "head": "ce66f37138dd8e82412e9ce3c203d7ad3f718136",
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean": true,
+    "index_sha256": "bc2a0bd9f85f1e3d05d0fd6358b1b85c3268b151ff4c1c9ce395afc605ab1a32"
+  },
+  "source_archive_sha256": "16059b97324a45a36352c9b4079b4c49ab0a62d2562aafac6a9f109d3f9afcac",
+  "storage_admission": {
+    "schema_version": 1,
+    "admitted": true,
+    "destination": "/home/steve/worker-scoped-task-20261007/attempt",
+    "resolved_destination": "/home/steve/worker-scoped-task-20261007/attempt",
+    "checked_existing_path": "/home/steve/worker-scoped-task-20261007",
+    "required_mount": null,
+    "filesystem": {
+      "mount_id": 33,
+      "mount_point": "/",
+      "filesystem_type": "ext4",
+      "source": "/dev/nvme0n1p2"
+    },
+    "available_bytes": 56618496000,
+    "min_free_bytes": 53687091200,
+    "planned_write_bytes": 269481812,
+    "required_bytes": 53956573012,
+    "remaining_after_planned_write_bytes": 56349014188,
+    "failures": [],
+    "snapshot_estimate": {
+      "archive_bytes": 266240,
+      "each_extracted_tree_bytes": 372736,
+      "receipt_allowance_bytes": 268445524,
+      "output_directory_overhead_bytes": 24576,
+      "allocation_unit_bytes": 4096,
+      "source_files": 12,
+      "source_directories": 4,
+      "scope": "initial archive + baseline + workspace + conservative overhead/receipt allowance",
+      "reservation": false,
+      "runtime_write_quota": false
+    }
+  },
+  "source_tree_sha256": "5a301d1ec321173c3b7a2527f93f07f08460f5743f7003f0d15f021e836ce1c8",
+  "source_scope": {
+    "mode": "explicit-task-scope",
+    "evidence_class": "task-scoped; not full-repository evaluation",
+    "requested_paths": [
+      "worker/collect_overnight.py",
+      "worker/collect_results.py",
+      "worker/stream.py",
+      "worker/sandbox.py",
+      "worker/model.py",
+      "worker/run.py",
+      "worker/test_collect_overnight.py",
+      "worker/test_collect_results.py",
+      "worker/test_stream.py",
+      "experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py",
+      "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py"
+    ],
+    "allowed_new_paths": [
+      "worker/test_action_ready_latency.py"
+    ],
+    "auto_included_instruction_paths": [
+      "AGENTS.md"
+    ],
+    "selected_files": {
+      "AGENTS.md": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "c2fbd23892d281d85022bfdd233931379f230dad",
+        "bytes": 27348,
+        "sha256": "39ad4d951f8136055cafe2954b5480e7a50e2377f48619fb0f271bd63f071bce"
+      },
+      "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "2698a8031d343d889eb3c79a9a67ec7f53335b85",
+        "bytes": 11144,
+        "sha256": "e23eae66a8cd140427337336f850b2b3c31dd95d93616f40d42ec9249abbef93"
+      },
+      "experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "25084568690267ba807195875611bde6411739c4",
+        "bytes": 14603,
+        "sha256": "aa737e945a4b369af4af669d182f9097ea406ceeca8ca268270b8f81a9da627b"
+      },
+      "worker/collect_overnight.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "81dc7d11467b0869ae5efec5f8b7238d03a7ceda",
+        "bytes": 40696,
+        "sha256": "82f2ed3397fac0a821db8df21987530512095cb8e6699b7bcfbcbcc33fb0d7cc"
+      },
+      "worker/collect_results.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "046f81264378662df0c500a3b3d51b3164bca969",
+        "bytes": 22832,
+        "sha256": "3c03ed57cfaebcac66571332074a893a304755c2dc302639fc969d9158011250"
+      },
+      "worker/model.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "d1ea3f2b4be7302c7cc870805c192d91bbbad104",
+        "bytes": 8963,
+        "sha256": "8c281ca6bd9db182fe62dc3b01358841bedea400bb8ac94aea147257e7c28e22"
+      },
+      "worker/run.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "37d328daeff33f0d74d296550006b04a844cf466",
+        "bytes": 11913,
+        "sha256": "9665ee0e4fdeef7e2953d7bd02049bcaed65d28f3cc9275a359326fe9171763a"
+      },
+      "worker/sandbox.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "fe24a84db84424ef7556c73562572f6c2b0273ad",
+        "bytes": 19935,
+        "sha256": "d72da2ed454591cbc0c248c3797b1149d83d68ace6352912cd7eb32f21506cde"
+      },
+      "worker/stream.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "d048e6e1effecaa921783a775aa8fcedeee33596",
+        "bytes": 8219,
+        "sha256": "e7c3ddb73f9809acd4362d1522c4902fd6a648265a2f92fe23ba78407489b951"
+      },
+      "worker/test_collect_overnight.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "13afd29d571f14eddf8e41a9b2550c6e91372bca",
+        "bytes": 21829,
+        "sha256": "adfc7041d311fcbf3d637b6cb16242671769bd4b8ade7a194a68a3a2ddeb9e8a"
+      },
+      "worker/test_collect_results.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "5acfb42f0d4eb6050671ee795a7b001347c96e32",
+        "bytes": 8472,
+        "sha256": "c89e7361c834be76cd1e3422f96ade53cac5a349d426e34c3650f66b83579d20"
+      },
+      "worker/test_stream.py": {
+        "mode": "100644",
+        "kind": "blob",
+        "git_blob_oid": "6ddfa1e8dc363836d525b813a1f473e47a465e2b",
+        "bytes": 6685,
+        "sha256": "61ac82fa0e50dec855044a4a63bfd118c1c3fd245e42de37a9a8919498163b42"
+      }
+    },
+    "selected_file_count": 12,
+    "selected_file_bytes": 202639,
+    "full_tree_entry_count": 33004,
+    "full_tree_blob_bytes": 1632136604,
+    "excluded_entry_count": 32992,
+    "excluded_blob_bytes": 1631933965,
+    "excluded_nonregular_entries": 0,
+    "full_tree_manifest_sha256": "5a301d1ec321173c3b7a2527f93f07f08460f5743f7003f0d15f021e836ce1c8",
+    "full_tree_manifest_encoding": "git ls-tree -r -l -z at source_commit; includes all entries, modes, blob OIDs and sizes"
+  },
+  "baseline": {
+    "AGENTS.md": {
+      "sha256": "39ad4d951f8136055cafe2954b5480e7a50e2377f48619fb0f271bd63f071bce",
+      "bytes": 27348,
+      "mode": "100644"
+    },
+    "experiments/qwen38-27b-b70/scripts/bench-short-prefill.py": {
+      "sha256": "e23eae66a8cd140427337336f850b2b3c31dd95d93616f40d42ec9249abbef93",
+      "bytes": 11144,
+      "mode": "100644"
+    },
+    "experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py": {
+      "sha256": "aa737e945a4b369af4af669d182f9097ea406ceeca8ca268270b8f81a9da627b",
+      "bytes": 14603,
+      "mode": "100644"
+    },
+    "worker/run.py": {
+      "sha256": "9665ee0e4fdeef7e2953d7bd02049bcaed65d28f3cc9275a359326fe9171763a",
+      "bytes": 11913,
+      "mode": "100644"
+    },
+    "worker/stream.py": {
+      "sha256": "e7c3ddb73f9809acd4362d1522c4902fd6a648265a2f92fe23ba78407489b951",
+      "bytes": 8219,
+      "mode": "100644"
+    },
+    "worker/test_collect_results.py": {
+      "sha256": "c89e7361c834be76cd1e3422f96ade53cac5a349d426e34c3650f66b83579d20",
+      "bytes": 8472,
+      "mode": "100644"
+    },
+    "worker/collect_overnight.py": {
+      "sha256": "82f2ed3397fac0a821db8df21987530512095cb8e6699b7bcfbcbcc33fb0d7cc",
+      "bytes": 40696,
+      "mode": "100644"
+    },
+    "worker/sandbox.py": {
+      "sha256": "d72da2ed454591cbc0c248c3797b1149d83d68ace6352912cd7eb32f21506cde",
+      "bytes": 19935,
+      "mode": "100644"
+    },
+    "worker/collect_results.py": {
+      "sha256": "3c03ed57cfaebcac66571332074a893a304755c2dc302639fc969d9158011250",
+      "bytes": 22832,
+      "mode": "100644"
+    },
+    "worker/test_collect_overnight.py": {
+      "sha256": "adfc7041d311fcbf3d637b6cb16242671769bd4b8ade7a194a68a3a2ddeb9e8a",
+      "bytes": 21829,
+      "mode": "100644"
+    },
+    "worker/test_stream.py": {
+      "sha256": "61ac82fa0e50dec855044a4a63bfd118c1c3fd245e42de37a9a8919498163b42",
+      "bytes": 6685,
+      "mode": "100644"
+    },
+    "worker/model.py": {
+      "sha256": "8c281ca6bd9db182fe62dc3b01358841bedea400bb8ac94aea147257e7c28e22",
+      "bytes": 8963,
+      "mode": "100644"
+    }
+  }
+}
