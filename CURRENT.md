@@ -30,8 +30,12 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   unmounted; do not retry, repair, write to it or treat it as a verified backup.
   Evidence: `data/maintenance/consolidation-20261006/`.
 - **Qwen 27B TP2:** a separate [correctness release candidate](experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md)
-  passed 20 CPU tests; published package pins remain unchanged. TP1 needs a separate kernel
-  port. This host lacks the documented R314 build/image and FP8 model inputs.
+  passed 20 overlay and 14 offline-preflight CPU tests; published package pins
+  remain unchanged. The preflight refuses unqualified kernels; actual serving
+  integration remains pending. Local source confirms that missing/excluded plugins
+  may be ignored, so the owning runtime must verify activation inside every worker.
+  TP1 needs a separate kernel port. This host lacks the documented R314 build/image
+  and FP8 model inputs.
 - **Next:** qualify the corrected package when its exact inputs and host ownership
   are available; no large build/download is admitted by today's 50 GiB reserve.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
