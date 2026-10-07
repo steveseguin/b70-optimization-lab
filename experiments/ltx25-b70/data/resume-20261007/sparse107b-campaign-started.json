@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-07T21:31:48.975140+00:00",
+  "policy": "One finite campaign attempt; no request retries, no server restart, no passive collector.",
+  "command": [
+    "systemd-run",
+    "--user",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=KillSignal=SIGINT",
+    "--property=TimeoutStopSec=720",
+    "--property=WorkingDirectory=/home/steve/llm-optimizations",
+    "--unit=ltx107b-sparse-campaign-20261007",
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-sparse-transport-107b/resolution/components/campaign.py",
+    "--run",
+    "--contract",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-sparse-transport-107b-two-way-w2-b1-p1-dxpu2-s640x384/resolution-client-contract.json",
+    "--contract-sha256",
+    "4f0c3c01ed5b4d8c525706da33d069d61aebcd34718f8d4270547db1c1f29b7e",
+    "--manifest-sha256",
+    "fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb"
+  ]
+}

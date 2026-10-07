@@ -149,3 +149,30 @@ exports. The exact failed107 substitution is a negative test. Every previously
 validated source except the builder and its identity test is unchanged; the new
 validation binds that carried evidence and the focused tests. A fresh filename
 scan confirms the never-used107 request namespace is still clear for107b.
+
+##107b live admission
+
+Corrected source commitb9ca534ce is pushed.107b source construction passed its
+own384MiB admission and full closure, manifest
+`fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb`, inventory
+`cdb4bcfadcd69f729120ed8acbcd17d689e89d4be8639137518c235d5374a2ea`. The preserved graph custom node
+is byte-identical to qualified99b and the distinct canonical adapter is traced.
+
+107 stopped cleanly with oneSIGINT at2026-10-07T21:28:57.124406+00:00 after two
+empty standard queue/history observations5seconds apart and no client/campaign.
+Its documented status route was unavailable; no inference had been submitted.
+Four render nodes were unowned, and the postflight passed at2026-10-07 21:29:23 UTC
+with zero earlier/new kernel faults. All failed107 source/run evidence remains.
+
+Fresh107b runtime admission observed54.791GiB free,50.791GiB after4GiB. The
+single corrected-source launch owns PID3362949, ticks28246808,
+boot`10192010-9700-4915-ac6c-980d6b74afa0`. Actual graph node registration/status
+and sealed client source/schedule/identity checks passed. IdentitySHA
+`bcb2e9ad525f476d15c1bbef3c28205d7e4b1949bad85cb46167daa9ab18a0ce`; client contractSHA
+`4f0c3c01ed5b4d8c525706da33d069d61aebcd34718f8d4270547db1c1f29b7e`.
+
+The finite57-request campaign launched once at2026-10-07T21:31:48.975140+00:00,
+unit`ltx107b-sparse-campaign-20261007`. No passive collector orFD observer was
+started. First window/native setup is active; no quality/trace/speed verdict yet.
+No unrelated tests, Git operations or writes during candidate/timed blocks.
+Keep successful application, preserve all failed evidence, halt new work on faults.

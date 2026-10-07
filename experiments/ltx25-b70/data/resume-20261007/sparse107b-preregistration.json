@@ -1,0 +1,91 @@
+{
+  "campaign_unit": "ltx107b-sparse-campaign-20261007",
+  "claim": "Sparse attributed candidate sampler transport/fill trace, followed by zero-event timed screen. Exact20native/10candidate/10timed outputs required. No public speed record or utilization claim.",
+  "environment": {
+    "EnableDeferBacking": "0",
+    "LTX_BUSY_WINDOWS": "0",
+    "LTX_DECODE_REPLICAS": "1",
+    "LTX_DECODE_REPLICA_DEVICE": "xpu:2",
+    "LTX_OUTPUT_SIZE": "640x384",
+    "LTX_SAMPLER_BATCH": "1",
+    "LTX_SAMPLER_PLACEMENT": "two-way",
+    "LTX_SAMPLER_SHARED_POOL": "1",
+    "LTX_SAMPLER_WORKERS": "2",
+    "NEOReadDebugKeys": "1"
+  },
+  "health_receipt": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-107.json",
+  "input_inventory_sha256": "cdb4bcfadcd69f729120ed8acbcd17d689e89d4be8639137518c235d5374a2ea",
+  "limits": {
+    "capture_cap": 50,
+    "hard_kill": false,
+    "nofile": "65536:1048576",
+    "per_request_timeout_seconds": 1800,
+    "planned_captures": 50,
+    "requests": 57,
+    "server_restart": "no",
+    "storage_reserve_bytes": 53687091200,
+    "write_allowance_bytes": 4294967296,
+    "verification_action_timeout_seconds": 300
+  },
+  "manifest_sha256": "fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-sparse-transport-107b",
+  "plan_sha256": "b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d",
+  "run_name": "encoder-server-sparse-transport-107b-two-way-w2-b1-p1-dxpu2-s640x384",
+  "schedule_sha256": "b8d7176691e7c3a7a8470b4ec8b046c27db20f4f623b3fc1034930edbf58506b",
+  "schema": "ltx.sparse107b.preregistration.v1",
+  "server_unit": "ltx107b-sparse-server-20261007",
+  "source_commit": "b9ca534ce",
+  "utc": "2026-10-07T21:30:01.917813+00:00",
+  "lifecycle": "Retain successful application after verified quiescence. No automatic restart/retry. Failed campaign one proven-idle graceful incident stop; faults/unresolved work coordinator.",
+  "memory_admission_gib": {
+    "native": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture0": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture1": [
+      7,
+      7,
+      2,
+      7
+    ],
+    "decode": [
+      2,
+      2,
+      7,
+      7
+    ],
+    "postcapture_floor": 2,
+    "not_proven_peak_bounds": true
+  },
+  "diagnostic": {
+    "maximum_selected_jobs": 2,
+    "maximum_jobs_per_worker": 1,
+    "events_per_device_per_worker": 128,
+    "operation_records_per_worker": 128,
+    "maximum_job_audit_rows": 64,
+    "phase_receipt_cap_bytes": 1048576,
+    "observed_forward_ordinal_each_stage": 2,
+    "eligible_physical_clips": [
+      99907104,
+      99907105,
+      99907106,
+      99907107,
+      99907108,
+      99907109
+    ],
+    "candidate_closed_before_timing": true,
+    "timed_events_required": 0,
+    "dormant_cpu_hooks_remain": true,
+    "passive_collector": false,
+    "incomplete_diagnostic_does_not_waive_model_quality": true
+  },
+  "correction": "Original graph node registration preserved. Failed107 submitted zero model requests; sameunused107plan with newsource/runidentity. No retry loop."
+}

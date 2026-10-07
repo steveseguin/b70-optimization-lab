@@ -12,16 +12,25 @@ postflight at2026-10-07 20:13:55 UTC; no host restart or settings change occurre
 The **106 application stopped cleanly** at2026-10-07T21:17:16.424803+00:00 for the necessary107
 application reload. Its57-request campaign had completed at20:37:00UTC; the full
 quality proof remains preserved. All four cards passed postflight at2026-10-07 21:17:42 UTC,
-with zero kernel faults this boot. The107 application is running idle, PID3362138, but its first status admission
-failed before any model request: the builder incorrectly replaced the graph node
-registration wrapper with its helper. The sealed failed107 build and startup
-logs are preserved; standard queues/history are empty and no fault is latched.
-Do not send model requests or modify the sealed packet. Root is correcting the
-CPU builder into107b and adding an actual node-registration regression test before
-one necessary controlled application reload. The40-file106 duplicate retirement
-completed with direct105 keepers and restoration maps; fresh107 admission had
-54.897GiB free. No computer restart or host setting changed.
-[107 startup refusal](experiments/ltx25-b70/data/resume-20261007/sparse107-startup-refusal/summary.json).
+with zero kernel faults this boot. The corrected **107b application is running**, unit`ltx107b-sparse-server-20261007`,
+PID**3362949**, start ticks`28246808`, same boot
+`10192010-9700-4915-ac6c-980d6b74afa0`. Its57-request campaign started at
+2026-10-07T21:31:48.975140+00:00; initial native-validation setup is active, no fault/halt.
+No107b quality, trace or speed verdict exists yet. There is no passive collector.
+Manifest`fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb`;
+client contractSHA`4f0c3c01ed5b4d8c525706da33d069d61aebcd34718f8d4270547db1c1f29b7e`.
+
+Failed107 had zero model requests: a mistaken graph-helper/node-wrapper copy
+removed node registration. Its sealed source and startup refusal are preserved.
+107b removes that packaging error;12 builder and5 actual-registration tests pass,
+and all other292-test source bindings are unchanged.107 stopped cleanly at
+2026-10-07T21:28:57.124406+00:00; all four cards passed postflight at2026-10-07 21:29:23 UTC,
+zero earlier/new faults. No restart/retry loop, computer restart or settings change.
+The unused107 request namespace is used by107b, with a fresh collision check.
+The40-file106 duplicate retirement completed with direct105 keepers and restoration
+maps. Fresh107b admission observed54.791GiB free and50.791GiB after4GiB.
+[107 startup refusal](experiments/ltx25-b70/data/resume-20261007/sparse107-startup-refusal/summary.json),
+[107b live admission](experiments/ltx25-b70/data/resume-20261007/sparse107b-live-admission.json).
 Flash-Next and local-worker tuning remain parked.
 
 106 preserved exact video and audio outputs:20 native executions form10 exact
@@ -75,7 +84,7 @@ is now CPU-reviewed:257 author and35 helper/overlay tests pass. It records at mo
 one candidate job per actual worker, with bounded events, and independently checks
 zero timing events across all actual later timed jobs including tails. Model
 quality gates remain mandatory; dormant CPU hooks remain. 107 source construction and the single106 controlled stop are complete.
-107 startup refused model admission; the corrected107b builder is under CPU review.
+107 startup refused model admission; corrected107b is now running its first finite campaign.
 106 duplicate retirement is complete.
 [107 injection contract and next sequence](experiments/ltx25-b70/notes/2026-10-07-sparse107-integration.md).
 The fixed40-file106 duplicate helper
