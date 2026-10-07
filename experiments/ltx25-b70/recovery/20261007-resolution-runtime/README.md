@@ -1,8 +1,11 @@
 # 640×384 reference/runtime components — CPU integration reviewed
 
-These are **CPU-tested components, not a prepared or GPU-qualified runtime**.
-No larger model request has been submitted. The immutable qualified packet99b,
-model, original references and failed experiments remain unchanged.
+Packet101 passed its encoder check, then its new preparation inventory rejected
+a native FP32 metadata scalar. It stopped cleanly with healthy postflight and
+produced no reference clip. The [failure](../../notes/2026-10-07-resolution101-setup-refusal.md)
+is preserved. These authored components now target the separately named101b
+correction, which is not yet materialized or GPU-qualified. The qualified99b
+packet, original model and references remain unchanged.
 
 The reviewed [request plan](../20261007-resolution-reference/README.md) fixes
 three original fixtures, native BF16, original8+3 steps, accepted text window,

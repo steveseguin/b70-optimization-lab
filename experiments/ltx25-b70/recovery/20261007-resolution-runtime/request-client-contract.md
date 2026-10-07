@@ -50,7 +50,7 @@ object and its expected SHA-256, containing:
 
 For the complete schedule, also supply `setup_schedule_path` pointing to the
 sealed `resolution/setup-schedule.json` envelope, `setup_schedule_sha256` equal
-to `45904f98fe112740136eacc13a7e9eeb6660198cb27cf62d310d3df958931f16`, and
+to `76a9770531366fe0149ded953fb84d52231bb3079f384e836c9c8b9e3bc4f82c`, and
 `phase_observation_path` pointing to the bound run's
 `resolution-client-phase.json`. This digest is SHA-256 of the canonical inner
 `schedule` object, matching the envelope's `schedule_sha256`; it is not the

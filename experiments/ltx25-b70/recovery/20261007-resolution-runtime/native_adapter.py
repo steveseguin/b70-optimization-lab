@@ -67,6 +67,25 @@ def protect_residence(mm, xpu):
         mm.free_memory = original
 
 
+# These are constructor-owned state, not a general FP32 weight allowance.
+# Paths/hashes are from the immutable upstream-99b source inherited by 101.
+FP32_SOURCES = {
+    'sd1_clip.py': '4b7f08bea2028e73c8f68dc9a26f5cc2981ddf27f12c303a467bd8aa9939dcfa',
+    'text_encoders/gemma4.py': '6fc1b06e42e33bed5e69c208808551af839265ad319f4eb9a0aa40ecc62d179a',
+    'model_sampling.py': '8afdc665272589a567792bb652389df7d4a83f69574c2b7e5b3d533d55592990',
+}
+FP32_STATE = {
+    ('text_primary', 'parameter', 'gemma3_12b.logit_scale'):
+        ((), 'sd1_clip.py', 'SDClipModel constructor scalar'),
+    ('text_primary', 'buffer', 'gemma3_12b.transformer.model._global_inv_freq'):
+        ((256,), 'text_encoders/gemma4.py', 'Gemma4 12B global FP32 RoPE frequencies'),
+    ('text_primary', 'buffer', 'gemma3_12b.transformer.model._sliding_inv_freq'):
+        ((128,), 'text_encoders/gemma4.py', 'Gemma4 12B sliding FP32 RoPE frequencies'),
+    ('sampler_primary', 'buffer', 'model_sampling.sigmas'):
+        ((10000,), 'model_sampling.py', 'LTXAV ModelSamplingFlux scheduler table'),
+}
+
+
 class NativeAdapter:
     def __init__(self, *, torch, nodes, model_management, session, qualification_id,
                  run_name, plan_sha256, runtime_sha256, source_hashes, fault_check):
@@ -233,6 +252,23 @@ class NativeAdapter:
         return {'text_capture': summary, 'window': self.window.state(),
                 'pipeline_running': self.pipeline.running()}
 
+    def _dtype_exception(self, role, kind, name, tensor):
+        spec = FP32_STATE.get((role, kind, name))
+        if spec is None:
+            return None
+        shape, relative, rationale = spec
+        require(str(tensor.dtype) == 'torch.float32' and tuple(tensor.shape) == shape
+                and tensor.numel() == math.prod(shape) and tensor.element_size() == 4,
+                'Constructor-owned FP32 state changed: ' + role + '/' + name)
+        # Check both the packet inventory and the reviewed immutable constructor.
+        path = (Path(self.mm.__file__).resolve().parent / relative).resolve()
+        expected = FP32_SOURCES[relative]
+        require(self.source_hashes.get(str(path)) == expected,
+                'FP32 constructor absent/different in runtime inventory: ' + str(path))
+        self._pin({'__file__': str(path)})
+        return {'source_path': str(path), 'source_sha256': expected,
+                'rationale': rationale}
+
     def _rows(self, role, *, require_loaded):
         patcher = self.patchers[role]
         require(str(patcher.load_device) == ROLES[role] and not patcher.is_dynamic(),
@@ -244,7 +280,8 @@ class NativeAdapter:
                 dtype = str(tensor.dtype)
                 integral = dtype in {'torch.bool', 'torch.uint8', 'torch.int8', 'torch.int16',
                                      'torch.int32', 'torch.int64'}
-                require(dtype == 'torch.bfloat16' or (kind == 'buffer' and integral),
+                exception = self._dtype_exception(role, kind, name, tensor)
+                require(dtype == 'torch.bfloat16' or (kind == 'buffer' and integral) or exception is not None,
                         'Unexpected reference tensor dtype: ' + role + '/' + name + '/' + dtype)
                 device = str(tensor.device)
                 require(device == ROLES[role] if require_loaded else device in ('cpu', ROLES[role]),
@@ -253,7 +290,7 @@ class NativeAdapter:
                              'storage': tensor.untyped_storage().data_ptr(),
                              'shape': list(tensor.shape), 'dtype': dtype, 'device': device,
                              'bytes': tensor.numel() * tensor.element_size(),
-                             'integer_buffer_exception': integral})
+                             'integer_buffer_exception': integral, 'fp32_constructor_exception': exception})
         require(rows, 'Empty reference tensor inventory: ' + role)
         if require_loaded:
             require(any(patcher is p for p in self.mm.loaded_models()), 'Reference owner absent from loaded registry')
@@ -328,9 +365,15 @@ class NativeAdapter:
         require(all(objects[r] is self.objects[r] for r in ROLES), 'Reference objects changed')
         state = self._state(observation)
         self.objects['sampler_primary'].verify_placement()
+        checked_rows = {r: self._rows(r, require_loaded=True) for r in ROLES}
+        constructor_state = [
+            {'role': role, **{key: row[key] for key in ('kind', 'name', 'dtype', 'shape', 'device', 'bytes')},
+             **row['fp32_constructor_exception']}
+            for role, rows in checked_rows.items() for row in rows
+            if row['fp32_constructor_exception'] is not None]
         residence = {r: {'object_id': id(o), 'device': ROLES[r], 'dtype': 'torch.bfloat16',
                          'fully_resident': True,
-                         'ownership_sha256': fingerprint(self._rows(r, require_loaded=True))}
+                         'ownership_sha256': fingerprint(checked_rows[r])}
                      for r, o in self.objects.items()}
         if self.controller is not None:
             require(all(row['ownership_sha256'] == self.controller.expected_residence[r]
@@ -339,6 +382,8 @@ class NativeAdapter:
                 'phase': 'native-reference', 'fault': False,
                 'text_graphs_captured': True, 'window_qualified': True,
                 'sampler_routes': 0, 'decoder_replicas': 0, 'residence': residence,
+                'residence_dtype_semantics': 'checkpoint weights; constructor exceptions listed separately',
+                'constructor_fp32_state': constructor_state,
                 'physical_free_bytes': self._free(),
                 'peaks': {c: {'allocated': self.torch.xpu.memory_allocated(c),
                               'reserved': self.torch.xpu.memory_reserved(c),

@@ -17,11 +17,11 @@ SOURCE = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encod
 
 
 class FakeTensor:
-    def __init__(self, device, dtype='torch.bfloat16'):
-        self.device, self.dtype, self.shape = device, dtype, (4,)
+    def __init__(self, device, dtype='torch.bfloat16', shape=(4,)):
+        self.device, self.dtype, self.shape = device, dtype, shape
     def untyped_storage(self): return NS(data_ptr=lambda: id(self))
-    def numel(self): return 4
-    def element_size(self): return 2
+    def numel(self): return A.math.prod(self.shape)
+    def element_size(self): return 4 if self.dtype == 'torch.float32' else 2
 
 
 class Patcher:
@@ -278,6 +278,140 @@ class AdapterControls(unittest.TestCase):
             tree = ast.parse((SOURCE / 'scripts' / filename).read_bytes())
             cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == classname)
             self.assertTrue(any(isinstance(n, ast.FunctionDef) and n.name == method for n in cls.body))
+
+
+class ConstructorDtypeControls(unittest.TestCase):
+    def adapter(self, role, kind, name, tensor):
+        a = object.__new__(A.NativeAdapter)
+        p = Patcher(S.ROLES[role], resident=True)
+        p.model.named_parameters = lambda: [(name, tensor)] if kind == 'parameter' else [('weight', p.tensor)]
+        p.model.named_buffers = lambda: [(name, tensor)] if kind == 'buffer' else []
+        a.patchers = {role: p}
+        a.mm = NS(__file__=str(SOURCE / 'comfy/model_management.py'), loaded_models=lambda: [p])
+        a.source_hashes = {str((SOURCE / 'comfy' / name).resolve()): sha
+                           for name, sha in A.FP32_SOURCES.items()}
+        a.bound_sources = {}
+        return a
+
+    def test_exact_constructor_state_admitted_without_cast_or_cpu_exemption(self):
+        for (role, kind, name), (shape, source, _) in A.FP32_STATE.items():
+            with self.subTest(name=name):
+                t = FakeTensor(S.ROLES[role], 'torch.float32', shape)
+                a = self.adapter(role, kind, name, t)
+                row = next(r for r in a._rows(role, require_loaded=True) if r['name'] == name)
+                self.assertEqual(row['id'], id(t))
+                self.assertEqual(row['dtype'], 'torch.float32')
+                self.assertEqual(row['bytes'], A.math.prod(shape) * 4)
+                self.assertEqual(row['fp32_constructor_exception']['source_sha256'], A.FP32_SOURCES[source])
+                # FakeTensor has no casting/moving API; acceptance cannot cast.
+                t.device = 'cpu'
+                with self.assertRaisesRegex(S.SafetyRefusal, 'offloaded/misplaced'):
+                    a._rows(role, require_loaded=True)
+                a._rows(role, require_loaded=False)
+
+    def test_inspection_reports_actual_fp32_inventory(self):
+        a = self.adapter('text_primary', 'parameter', 'gemma3_12b.logit_scale',
+                         FakeTensor('xpu:2', 'torch.float32', ()))
+        for role in S.ROLES:
+            if role not in a.patchers: a.patchers[role] = Patcher(S.ROLES[role], resident=True)
+        for (role, kind, name), (shape, _, _) in A.FP32_STATE.items():
+            if kind == 'buffer':
+                a.patchers[role].buffers.append((name, FakeTensor(S.ROLES[role], 'torch.float32', shape)))
+        a.patchers['text_primary'].model.named_buffers = lambda: a.patchers['text_primary'].buffers
+        a.objects = a.patchers
+        a.mm.loaded_models = lambda: list(a.patchers.values())
+        a._state = lambda observation=False: {'synthetic': True}
+        a._free = lambda: {c: 40 * S.GIB for c in S.CARDS}
+        a.torch = NS(xpu=NS(memory_allocated=lambda c: 0, memory_reserved=lambda c: 0,
+                            max_memory_allocated=lambda c: 0))
+        a.controller = None
+        a.plan_sha256, a.runtime_sha256 = 'a' * 64, 'b' * 64
+        snap = a._inspect(a.objects)
+        self.assertEqual(len(snap['constructor_fp32_state']), 4)
+        self.assertEqual(sum(row['bytes'] for row in snap['constructor_fp32_state']), 41540)
+        self.assertIn('checkpoint weights', snap['residence_dtype_semantics'])
+        for row in snap['constructor_fp32_state']:
+            self.assertEqual(row['dtype'], 'torch.float32')
+            self.assertEqual(row['device'], S.ROLES[row['role']])
+            self.assertEqual(hashlib.sha256(Path(row['source_path']).read_bytes()).hexdigest(), row['source_sha256'])
+        self.assertTrue(all(row['dtype'] == 'torch.bfloat16' for row in snap['residence'].values()))
+
+    def test_changed_kind_role_name_shape_precision_and_width_refused(self):
+        for key, (shape, _, _) in A.FP32_STATE.items():
+            role, kind, name = key
+            for change in ('role', 'kind', 'name', 'shape', 'dtype', 'width'):
+                with self.subTest(name=name, change=change):
+                    rr = 'video_vae' if change == 'role' else role
+                    kk = ('buffer' if kind == 'parameter' else 'parameter') if change == 'kind' else kind
+                    nn = name + '.unexpected' if change == 'name' else name
+                    t = FakeTensor(S.ROLES[rr], 'torch.float64' if change == 'dtype' else 'torch.float32',
+                                   (2,) if change == 'shape' else shape)
+                    if change == 'width': t.element_size = lambda: 8
+                    a = self.adapter(rr, kk, nn, t)
+                    with self.assertRaises(S.SafetyRefusal): a._rows(rr, require_loaded=True)
+
+    def test_missing_modified_or_changed_source_identity_refused(self):
+        key = ('text_primary', 'parameter', 'gemma3_12b.logit_scale')
+        t = FakeTensor('xpu:2', 'torch.float32', ())
+        a = self.adapter(*key, t)
+        a.source_hashes.clear()
+        with self.assertRaisesRegex(S.SafetyRefusal, 'constructor absent/different'):
+            a._rows(key[0], require_loaded=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            a = self.adapter(*key, t)
+            a.mm.__file__ = str(Path(tmp) / 'model_management.py')
+            source = Path(tmp) / 'sd1_clip.py'
+            source.write_text('# changed constructor')
+            a.source_hashes[str(source)] = A.FP32_SOURCES['sd1_clip.py']
+            with self.assertRaisesRegex(S.SafetyRefusal, 'Loaded source changed'):
+                a._rows(key[0], require_loaded=True)
+
+    def test_bf16_checkpoint_rule_and_precision_preservation(self):
+        for role in S.ROLES:
+            for kind in ('parameter', 'buffer'):
+                t = FakeTensor(S.ROLES[role])
+                a = self.adapter(role, kind, 'checkpoint.weight', t)
+                a._rows(role, require_loaded=True)
+                t.dtype = 'torch.float32'
+                with self.assertRaisesRegex(S.SafetyRefusal, 'Unexpected reference tensor dtype'):
+                    a._rows(role, require_loaded=True)
+        # An unintended downcast of a known FP32 constructor is refused too.
+        t = FakeTensor('xpu:2', shape=())
+        a = self.adapter('text_primary', 'parameter', 'gemma3_12b.logit_scale', t)
+        with self.assertRaisesRegex(S.SafetyRefusal, 'Constructor-owned FP32 state changed'):
+            a._rows('text_primary', require_loaded=True)
+
+    def test_pinned_constructor_and_loader_source_rationale(self):
+        sources = {}
+        for name, sha in A.FP32_SOURCES.items():
+            raw = (SOURCE / 'comfy' / name).read_bytes()
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), sha)
+            sources[name] = ast.parse(raw)
+        def cls(tree, name): return next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == name)
+        clip = ast.unparse(cls(sources['sd1_clip.py'], 'SDClipModel'))
+        self.assertIn('self.logit_scale = torch.nn.Parameter(torch.tensor(4.6055))', clip)
+        gemma = cls(sources['text_encoders/gemma4.py'], 'Gemma4Config')
+        defaults = {n.targets[0].id: ast.literal_eval(n.value) for n in gemma.body
+                    if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name)
+                    and n.targets[0].id in ('head_dim', 'global_head_dim')}
+        self.assertEqual(defaults, {'head_dim': 256, 'global_head_dim': 512})
+        g12 = ast.unparse(cls(sources['text_encoders/gemma4.py'], 'Gemma4_12B_Config'))
+        self.assertNotIn('head_dim =', g12)
+        transformer = ast.unparse(cls(sources['text_encoders/gemma4.py'], 'Gemma4Transformer'))
+        self.assertIn("self.register_buffer('_global_inv_freq', global_inv, persistent=False)", transformer)
+        self.assertIn("self.register_buffer('_sliding_inv_freq', sliding_inv, persistent=False)", transformer)
+        self.assertIn('torch.arange(0, config.head_dim, 2).float()', transformer)
+        flux = cls(sources['model_sampling.py'], 'ModelSamplingFlux')
+        method = next(n for n in flux.body if isinstance(n, ast.FunctionDef) and n.name == 'set_parameters')
+        self.assertEqual(ast.literal_eval(method.args.defaults[-1]), 10000)
+        self.assertIn("self.register_buffer('sigmas', ts)", ast.unparse(method))
+        base = ast.parse((SOURCE / 'comfy/model_base.py').read_bytes())
+        ltx_init = next(n for n in cls(base, 'LTXAV').body if isinstance(n, ast.FunctionDef) and n.name == '__init__')
+        self.assertEqual(ast.unparse(ltx_init.args.defaults[0]), 'ModelType.FLUX')
+        shard = (SOURCE / 'scripts/ltx_text_shard.py').read_text()
+        self.assertIn('t.device != p.load_device', shard)
+        loader = (SOURCE / 'comfy/model_patcher.py').read_text()
+        self.assertIn('self.model.to(device_to)', loader)
 
 
 class RealFreeMemoryControls(unittest.TestCase):

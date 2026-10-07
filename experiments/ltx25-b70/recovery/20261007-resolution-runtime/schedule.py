@@ -10,7 +10,7 @@ PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
 PLAN_SHA = '307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745'
 QUALIFICATION_ID = '29ef0d7afecc1254cb50477649b24a36d78648c177b7de3c553b02771ada5dc1'
 PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-reference/candidate-plan.json')
-PREFIX = 'resolution-ref-20261007'
+PREFIX = 'resolution-ref101b-20261007'
 CAPTURE_INDEX = 99900030
 GRAPHS = {
  'window-probe': ('text-window-probe.json','ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0'),

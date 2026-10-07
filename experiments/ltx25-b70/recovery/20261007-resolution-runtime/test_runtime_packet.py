@@ -27,6 +27,19 @@ def literal(raw, name):
 
 
 class PacketControls(unittest.TestCase):
+    def test_successor_identity_explicit_in_path_status_and_transition(self):
+        self.assertEqual(B.PACKET.name, 'prepared-resolution-reference-101b')
+        self.assertEqual(B.RUN_NAME, 'encoder-server-resolution-reference-101b-two-way-w1-b1-p1-dxpu2-s640x384')
+        self.assertIn(b'Packet101b successor after packet101', B.STATUS)
+        tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
+        transitions=[]
+        for node in ast.walk(tree):
+            if isinstance(node,ast.Dict):
+                fields={k.value:v for k,v in zip(node.keys,node.values) if isinstance(k,ast.Constant)}
+                if 'schema' in fields and isinstance(fields['schema'],ast.Constant) and fields['schema'].value=='ltx.resolution101.transition.v1':
+                    transitions.append(ast.literal_eval(fields['packet_revision']))
+        self.assertEqual(transitions,['101b','101b'])
+
     def test_default_is_plan_only_with_no_build_or_packet_write(self):
         output = io.StringIO()
         with patch.object(sys, 'argv', ['runtime_packet.py']), patch.object(B, 'build') as build, \

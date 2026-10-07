@@ -19,9 +19,9 @@ arbitrary unreviewed graphs. `validate_schedule` reconstructs all rows, rather
 than trusting a self-updated JSON hash. CLI writes the plan to stdout only.
 
 Frozen schedule SHA:
-`45904f98fe112740136eacc13a7e9eeb6660198cb27cf62d310d3df958931f16`.
+`76a9770531366fe0149ded953fb84d52231bb3079f384e836c9c8b9e3bc4f82c`.
 
-All request names begin `resolution-ref-20261007-`:
+All seven setup request names begin `resolution-ref101b-20261007-`; the 25 unconsumed plan request names retain `resolution-ref-20261007-`:
 
 | Suffix | Phase | Operation and prerequisite |
 | --- | --- | --- |

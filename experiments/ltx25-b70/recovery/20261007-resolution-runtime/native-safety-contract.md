@@ -159,13 +159,14 @@ exactly once. It refuses dynamic patchers, clone replacement, enabled pinned
 memory, changed dtypes/placement, non-control text mode, encoder ownership
 changes or insufficient post-load headroom. No settings are changed.
 
-All registered floating tensors must be BF16; explicitly inventoried integer/
-bool buffers retain their types. In sealed99b `sd.py`, the native VAE calls
+Checkpoint weights and ordinary floating buffers must be BF16; explicitly
+inventoried integer/bool buffers retain their types. The narrowly enumerated
+constructor-owned FP32 state below retains its original dtype. In sealed99b `sd.py`, the native VAE calls
 `first_stage_model.to(vae_dtype)` before and after non-dynamic state loading.
 The video timestep buffer, audio statistics and vocoder filters/bases therefore
 follow the BF16 model conversion; inspected classes do not override `_apply`
-to retain FP32 buffers. FP32 velocity/RoPE/atan2 temporaries are not resident
-registered buffers. If actual source-bound inventory contradicts this, refuse
+to retain FP32 buffers. FP32 velocity/atan2 temporaries are not resident registered buffers; Gemma
+RoPE inverse frequencies are registered FP32 buffers and are handled below. If actual source-bound inventory contradicts this, refuse
 and review it; never cast a legitimate buffer merely to pass admission.
 Storage/tensor metadata hashes bind live ownership after preload, without
 hashing or copying tensor values. Both registry membership and full loaded
@@ -215,3 +216,70 @@ source/double-patch refusal, exact thresholds, every low card, post-request
 floors, identity/residence/phase faults, fresh synchronization, binding tampering,
 invalid byte counts, exception latching and one-way closure. They make no model,
 GPU, network or runtime-qualification claim.
+
+## Packet 101 dtype-admission correction (101b preparation)
+
+Packet 101 safely refused native preparation at
+`text_primary/gemma3_12b.logit_scale/torch.float32`; no native sampling or full
+residency preload ran. This was an overbroad guard, not evidence of a model
+precision failure. The sealed failed packet remains unchanged.
+
+The successor guard admits exactly these existing constructor identities:
+
+| Role | Kind and exact registered name | Shape | Bytes | Source |
+| --- | --- | --- | --- | --- |
+| text_primary | parameter `gemma3_12b.logit_scale` | scalar `[]` | 4 | `comfy/sd1_clip.py`, SDClipModel constructor |
+| text_primary | buffer `gemma3_12b.transformer.model._global_inv_freq` | `[256]` | 1024 | `comfy/text_encoders/gemma4.py`, Gemma4Transformer constructor |
+| text_primary | buffer `gemma3_12b.transformer.model._sliding_inv_freq` | `[128]` | 512 | same |
+| sampler_primary | buffer `model_sampling.sigmas` | `[10000]` | 40000 | `comfy/model_sampling.py`, ModelSamplingFlux.set_parameters |
+
+Every entry requires FP32, exact role/kind/name/shape/element count/four-byte
+elements, the immutable reviewed constructor SHA in `FP32_SOURCES`, and a
+matching current runtime source inventory and actual source bytes. Its row
+records source path/SHA and rationale. Unknown FP32 state still refuses, and
+an unintended BF16 downcast of these four identities also refuses. No value
+readback, cast, model mutation or device operation was added.
+
+`SDClipModel` constructs `torch.nn.Parameter(torch.tensor(4.6055))` without a
+dtype override. Gemma4 constructs inverse frequencies using `.float()` and
+registers them without casting; the 12B config inherits global/head dimensions
+512/256, giving half-width 256/128 including the global non-rotary padding.
+The actual LTXAV supported-model factory uses BaseModel's FLUX sampling type,
+not ModelSamplingAV: ModelSamplingFlux constructs 10,000 FP32 scheduler values.
+Secondary sampler/text owners contain only their moved transformer layers;
+they do not own these top-level constructor objects.
+
+There is **no CPU residence exemption**. The already-required source-pinned
+`ltx_text_shard.verify_placement` checks every primary/secondary parameter and
+buffer on its expected card. The native static patcher's full-load
+`self.model.to(device_to)` moves state without changing dtype. Thus the scalar,
+frequencies and schedule table must be on their role's target card when loaded;
+CPU is permitted only by the existing pre-load inventory, whose byte charge
+includes them. No full-residency claim is inferred from dtype acceptance alone.
+
+The bounded other-role source audit checked LTXAV/LTX transformer parameters
+(requested BF16 dtype), Gemma layer_scalar and multimodal registered buffers
+(requested dtype), latent upsampler kernel (whole-model `.to(vae_dtype)` in
+`comfy_extras/nodes_hunyuan.py`), and native video/audio/vocoder state (whole-model
+`.to(vae_dtype)` before and after static loading in `comfy/sd.py`). Video
+inference-timestep buffers, audio mean/std and vocoder filters/bases therefore
+remain subject to BF16 admission; no broad scalar or floating-buffer escape
+was introduced. This source audit reduces known false refusals, but does not
+replace the next actual complete live inventory or qualify numerical output.
+
+The adapter suite now has 21 CPU controls. New controls exercise all four exact
+identities directly through `_rows`, forbid wrong role/kind/name/shape/dtype/
+element width, forbid offloaded state when loaded, bind real constructor source
+hashes, reject missing/modified sources, preserve BF16 checkpoint requirements,
+and check actual source constructor/default/placement semantics. Synthetic
+tensors have no casting API. These controls make no GPU or quality claim.
+
+All prepared/pre-request/post-request/idle snapshots now expose
+`constructor_fp32_state`: explicit role, kind, name, dtype, shape, device, bytes,
+source path/SHA and rationale derived from the same checked tensor rows used
+for the ownership hash. The four entries total 41,540 bytes. Existing residence
+`dtype` means checkpoint weight dtype; `residence_dtype_semantics` makes that
+interpretation explicit without changing the safety controller's exact schema.
+The prepared receipt contains the snapshot, so exception evidence is not hidden
+behind an opaque ownership hash. A direct CPU inspection control verifies this
+inventory and its source hashes.

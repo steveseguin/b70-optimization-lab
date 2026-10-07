@@ -38,8 +38,23 @@ class ScheduleControls(unittest.TestCase):
 
     def test_native_prepare_only_one_trusted_node(self):
         self.assertEqual(self.rows['prepare-native']['graph'],{'490':{'class_type':'LTXResolutionPrepareNative',
-            'inputs':{'run_name':'resolution-ref-20261007-prepare-native'}}})
+            'inputs':{'run_name':'resolution-ref101b-20261007-prepare-native'}}})
         self.assertEqual(self.rows['prepare-native']['phase'],'native-setup')
+
+    def test_successor_setup_namespace_preserves_unconsumed_plan(self):
+        plan=json.loads(S.read(S.PLAN))
+        self.assertEqual(plan['plan_sha256'],S.PLAN_SHA)
+        self.assertEqual(S.sha(S.canonical(plan['plan'])),S.PLAN_SHA)
+        self.assertEqual(plan['plan']['qualification_id'],S.QUALIFICATION_ID)
+        for row in self.rows.values():
+            self.assertEqual(row['name'],'resolution-ref101b-20261007-'+row['kind'])
+            for node in row['graph'].values():
+                if 'run_name' in node['inputs']:
+                    self.assertEqual(node['inputs']['run_name'],row['name'])
+        names=[r['name'] for r in plan['plan']['requests']]
+        self.assertEqual(len(names),25)
+        self.assertTrue(all(n.startswith('resolution-ref-20261007-') for n in names))
+        self.assertFalse(set(names)&{r['name'] for r in self.rows.values()})
 
     def test_capture_delta_is_only_names_geometry_identity_and_w1_depth(self):
         before=json.loads(S.read(S.PARENT/'graphs'/S.GRAPHS['capture0'][0]));after=copy.deepcopy(self.rows['capture0']['graph'])
