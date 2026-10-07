@@ -1,0 +1,519 @@
+{
+  "schema": "lab.cited-recall-v2.independent-packet-review.v1",
+  "reviewed_at_utc": "2026-10-07T04:40:24.339315+00:00",
+  "reviewer": "independent Codex cleanup_audit agent",
+  "verdict": "approved-for-one-bounded-diagnostic-subject-to-final-inventory-and-live-admission",
+  "scope": "Packet/source/rubric/gold controls and supervisor/profile static audit; no model-quality result, GPU operation, model request or device operation.",
+  "source_commit": "a8bbae3119d9ea31d08bd8b7cec74941adabc6ac",
+  "source_provenance": {
+    "complete_files": 4,
+    "bytes": 27018,
+    "full_git_blob_and_sha256_checks": "passed via independent replay of evaluation/validate.py",
+    "no_trimming": true,
+    "source_paths_disjoint_from_original_five_documents": true
+  },
+  "question_review": [
+    {
+      "question_id": "V2Q01",
+      "answerable_from_full_corpus": true,
+      "review_note": "Bounded-experiment README reconciles historical persistent first-milestone wording; availability and client-failure conditions are explicit in PLAN.",
+      "criteria": [
+        {
+          "id": "V2Q01.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 30,
+              "end_line": 45
+            },
+            {
+              "doc_id": "S02",
+              "start_line": 15,
+              "end_line": 19
+            }
+          ]
+        },
+        {
+          "id": "V2Q01.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 15,
+              "end_line": 19
+            }
+          ]
+        },
+        {
+          "id": "V2Q01.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 15,
+              "end_line": 19
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q02",
+      "answerable_from_full_corpus": true,
+      "review_note": "Original versus held-out outcomes, distinct review levels, and unmeasured model response to CPU-tested feedback are all explicit.",
+      "criteria": [
+        {
+          "id": "V2Q02.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 7,
+              "end_line": 14
+            }
+          ]
+        },
+        {
+          "id": "V2Q02.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 133,
+              "end_line": 141
+            }
+          ]
+        },
+        {
+          "id": "V2Q02.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 7,
+              "end_line": 14
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q03",
+      "answerable_from_full_corpus": true,
+      "review_note": "Acceptance-only read-only mount and separate answer key are explicit; PLAN states complete CPU sandbox isolation and bounded resources.",
+      "criteria": [
+        {
+          "id": "V2Q03.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 47,
+              "end_line": 50
+            }
+          ]
+        },
+        {
+          "id": "V2Q03.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 20,
+              "end_line": 26
+            }
+          ]
+        },
+        {
+          "id": "V2Q03.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 20,
+              "end_line": 26
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q04",
+      "answerable_from_full_corpus": true,
+      "review_note": "Question explicitly asks original service/profile, avoiding confusion with this trial: 33024 total, 28000 input, 2048 original output, 4096 scheduling.",
+      "criteria": [
+        {
+          "id": "V2Q04.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 63,
+              "end_line": 70
+            },
+            {
+              "doc_id": "S01",
+              "start_line": 80,
+              "end_line": 90
+            }
+          ]
+        },
+        {
+          "id": "V2Q04.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 63,
+              "end_line": 70
+            }
+          ]
+        },
+        {
+          "id": "V2Q04.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 80,
+              "end_line": 90
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q05",
+      "answerable_from_full_corpus": true,
+      "review_note": "Patch review, workload-dependent timing, public closure versus quality gates, and separate clean replay certification are supported.",
+      "criteria": [
+        {
+          "id": "V2Q05.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 47,
+              "end_line": 52
+            }
+          ]
+        },
+        {
+          "id": "V2Q05.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 47,
+              "end_line": 52
+            }
+          ]
+        },
+        {
+          "id": "V2Q05.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 60,
+              "end_line": 78
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q06",
+      "answerable_from_full_corpus": true,
+      "review_note": "Incomplete classifications and public pristine dependencies/immutable registry or closed parent-chain requirements are explicit.",
+      "criteria": [
+        {
+          "id": "V2Q06.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 3,
+              "end_line": 11
+            }
+          ]
+        },
+        {
+          "id": "V2Q06.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 47,
+              "end_line": 59
+            }
+          ]
+        },
+        {
+          "id": "V2Q06.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 47,
+              "end_line": 59
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q07",
+      "answerable_from_full_corpus": true,
+      "review_note": "Corrected authored control now names every C2 binary verification step; drift/status, immutable identity and continuing CI are directly supported.",
+      "criteria": [
+        {
+          "id": "V2Q07.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 80,
+              "end_line": 96
+            }
+          ]
+        },
+        {
+          "id": "V2Q07.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 60,
+              "end_line": 67
+            }
+          ]
+        },
+        {
+          "id": "V2Q07.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 80,
+              "end_line": 96
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q08",
+      "answerable_from_full_corpus": true,
+      "review_note": "Both spans support peak writes/reserve/admission timing and preservation/USB caveats. Conceptual overlap with original Q02/Q03/Q10 is a limitation, not hidden novelty.",
+      "criteria": [
+        {
+          "id": "V2Q08.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 123,
+              "end_line": 136
+            }
+          ]
+        },
+        {
+          "id": "V2Q08.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 123,
+              "end_line": 136
+            },
+            {
+              "doc_id": "S04",
+              "start_line": 138,
+              "end_line": 152
+            }
+          ]
+        },
+        {
+          "id": "V2Q08.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 138,
+              "end_line": 152
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q09",
+      "answerable_from_full_corpus": true,
+      "review_note": "New-run admission versus boot provenance, failed-postflight blocking and bounded passive-first fault response are supported; question does not ask to execute recovery commands.",
+      "criteria": [
+        {
+          "id": "V2Q09.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 57,
+              "end_line": 66
+            }
+          ]
+        },
+        {
+          "id": "V2Q09.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 57,
+              "end_line": 66
+            }
+          ]
+        },
+        {
+          "id": "V2Q09.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 68,
+              "end_line": 80
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    },
+    {
+      "question_id": "V2Q10",
+      "answerable_from_full_corpus": true,
+      "review_note": "Artifact roles, pending review status and distinct timing scopes are explicit; no automatic merge or fixed-workload speed interpretation is justified.",
+      "criteria": [
+        {
+          "id": "V2Q10.C1",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 118,
+              "end_line": 131
+            }
+          ]
+        },
+        {
+          "id": "V2Q10.C2",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 118,
+              "end_line": 131
+            }
+          ]
+        },
+        {
+          "id": "V2Q10.C3",
+          "support_verdict": "supported",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 152,
+              "end_line": 155
+            }
+          ]
+        }
+      ],
+      "authored_control_support": "supported after V2Q07 clarification"
+    }
+  ],
+  "freshness": {
+    "question_count": 10,
+    "semantic_criteria": 30,
+    "new_wording_and_ids": true,
+    "original_question_file_reviewed": "experiments/local-coding-worker/evaluation-20261007/memory/questions.json",
+    "exact_original_questions_repeated": false,
+    "wholly_unseen_concepts_claim": false,
+    "material_overlap": "V2Q08 shares point-in-time storage admission and backup-versus-reliability concepts with original Q02/Q03/Q10; other lab governance themes may overlap. Different source files and combined questions do not establish concept-level disjointness.",
+    "controlled_before_after_comparison": false
+  },
+  "gold_controls": {
+    "compiler_replay": "passed",
+    "unchanged_original_validator": "passed",
+    "all_30_criteria_have_direct_support": true,
+    "authored_not_model_generated": true,
+    "semantic_review_of_reference_answers": "reviewed for support and coverage; not a model grade",
+    "all_answers_fit_one_or_two_citations": true,
+    "output_token_feasibility": "No independent tokenizer estimate of gold output; 3072 is a preregistered trial bound, not a completion guarantee."
+  },
+  "issues_resolved_before_freeze": [
+    "V2Q07 gold C2 expanded to explicit ELF sections, RUNPATH, wheel-embedded binaries and checksum reconciliation; questions and rubric unchanged.",
+    "Packet documents conceptual overlap and excludes wholly-unseen or controlled-improvement claims.",
+    "Runner now uses exact instructions.txt bytes as SYSTEM, renders full documents before questions, and binds instructions and final rendered-message hashes."
+  ],
+  "prompt_binding": {
+    "exact_instructions_file": true,
+    "complete_documents_before_questions": true,
+    "messages_sha256": "a188482058663bde6c9348363114455bd6fe19ce835fcee1bd3a9be387a5ded6",
+    "expected_input_tokens_from_root_cpu_receipt": 10135,
+    "token_count_independently_recomputed_by_this_review": false,
+    "all_ten_trial_component_hashes_match_current_files": true
+  },
+  "supervisor_review": {
+    "prior": "experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/serve_r276_once.py",
+    "allowed_changes_only": [
+      "Fresh restore receipt gate and saved admission before GPU work",
+      "Served-model alias",
+      "Unique container name prefix",
+      "Graceful stop trigger reduced from3600to1200seconds"
+    ],
+    "same_model_manifest_communication_receipt_and_pidfd_probe": true,
+    "publisher_rehash_before_gpu_probe": true,
+    "requires_external_drive_unmounted": true,
+    "exclusive_host_and_four_card_locks_retained": true,
+    "existing_RAM53_through57_offline_guard_retained": true,
+    "disk_and_memory_admission_retained": true,
+    "runtime": "Same pinned R276 image, TP2, affinity0,1,FP8 weights,float16 model,auto/full16bitKV,2GiBKVperGPU,33024context,eager,target-only,no prefixcache",
+    "one_start_no_retry_or_hard_kill": true,
+    "single_SIGINT_and_lock_retention_until_idle": true,
+    "four_card_preflight_postflight_and_journal_guards_retained": true,
+    "lifetime_limit_scope": "1200seconds triggers graceful stop; cleanup may retain locks while waiting for safe exit and does not introduce forced killing.",
+    "boundary_checker_diff": "Only profile filename changes to request-profile.json; profile hash agrees with boundary protocol and eight original finite cases.",
+    "finite_diagnostics_not_general_qualification": true
+  },
+  "bindings": {
+    "evaluation/model-input/instructions.txt": "20dacc5cc3287e1290bc5128d5fd251d5e2158901aa657814c6c76f3a1a4c1c5",
+    "evaluation/model-input/source-bundle.json": "a337a8b2066e8af725aae1ad7812f32ff544182a6326076b80719fc3ead6d0a9",
+    "evaluation/protocol.json": "7717ad751d8cf61f79e3a85813a64b8d3d1bd44939d1b979957effbf2589d96d",
+    "evaluation/review-only/answer-key.json": "32423350fbff7368de6b323c20ab5254ca95043b768772aacce93e8d9cad57b5",
+    "evaluation/review-only/gold-refs.json": "965a10528a3b9bda14db6e3a77c4c182dc387f03ad2e297a0ccf9a5d676c4019",
+    "evaluation/review-only/gold-compiled.json": "e6dee4421a58c0f383f409bce5937c4fae619c842586a2ec6196424361678dc8",
+    "serve_r276_once.py": "f3ec4194460c1a0f65c5af271c268ae779e1fa7605c9b7c5b53e28535aaeb0e9",
+    "request-profile.json": "a814a413180bb9c639c2e865804783109b102e97a8a7a34347ea12de35075c2b",
+    "check_boundaries.py": "d9a3fccd9dbfc5b1c0402a711a15e96933c8dd31f3bd8d1d68e0f3376c568c32",
+    "boundary-protocol.json": "461257501a08b1b3bcb97317c87e3630c9ef6edb0b34729eb210de78227de440",
+    "run_recall.py": "f093f07953d187322bb34b256a314974a87e527a348a6fd071aac35d1f52aa3e",
+    "trial-protocol.json": "bcad61539e2d9fffc9c867d5b577197e688172543a4f437937452e2f2aeed659"
+  },
+  "remaining_conditions": [
+    "Packet owner must incorporate this file into exhaustive manifest and replay validate.py before launch.",
+    "Main must retain fresh identity/headroom/host ownership/model hashes, pass finite runtime gates, and require exact CPU/server prompt token agreement.",
+    "Independent harness reviewer owns SIGTERM/control-path tests; this review does not claim those tests as its own.",
+    "All30semantic criteria still require independent review of the actual single response; no repair, retry, or partial-answer promotion."
+  ],
+  "model_requests_performed": 0,
+  "gpu_operations": false,
+  "model_quality_result": false
+}

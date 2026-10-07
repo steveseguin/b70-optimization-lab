@@ -7,9 +7,10 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-The earlier coding/recall trials are closed and **no model server is running**.
-One fresh, bounded [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/TRIAL.md)
-is being prepared; this does not authorize a resident service.
+The earlier coding/recall trials are closed. **One bounded recall supervisor is active**
+on the four-card host; it owns startup, requests and graceful shutdown for a fresh [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/TRIAL.md)
+The run uses cards 0/1 and reserves all four for health checks; do not start a
+competing device owner. This does not authorize a resident service.
 The [4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
 and separate [27B trial](experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md)
 each completed zero of two coding repairs under different runtime/budget profiles.

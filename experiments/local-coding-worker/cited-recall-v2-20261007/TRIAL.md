@@ -1,11 +1,12 @@
 # One fresh references-only recall trial
 
-Status: prepared, not yet run. This is a usefulness diagnostic, not model,
+Status: supervisor started 2026-10-07 04:41 UTC; results pending. This is a usefulness diagnostic, not model,
 package, benchmark or unattended-agent qualification. The earlier ten-question
 failure remains unchanged and is not rerun or repaired.
 
 The test asks ten new questions against four complete documents at source commit
-`a8bbae3119d9ea31d08bd8b7cec74941adabc6ac`. Its thirty semantic criteria are
+`a8bbae3119d9ea31d08bd8b7cec74941adabc6ac`, preserved by pushed tag
+`lab-source/cited-recall-v2-20261007` across main rebases. Its thirty semantic criteria are
 frozen separately from model inputs. Themes can overlap earlier operations
 questions; corpus and question changes prevent a controlled causal comparison.
 
