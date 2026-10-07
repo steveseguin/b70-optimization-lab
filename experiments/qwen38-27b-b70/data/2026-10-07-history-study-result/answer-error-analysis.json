@@ -1,0 +1,1263 @@
+{
+  "schema": "history-study-answer-error-analysis.v1",
+  "source_output": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007",
+  "scope": "Post-hoc diagnostic, not a new gate. Matching wrong-owner balance is an observed correspondence; causal claims require raw source/retrieval review.",
+  "completed_native_rows": 8,
+  "rows": [
+    {
+      "case_id": "t01-clinic",
+      "condition": "AS",
+      "native_result_sha256": "b42deb58f5d458c195d678dfc1d3d285d9f87ba1811711bf26433d4dfa3778b5",
+      "calls_sha256": "9d2f918a1f5485878da0ff529815079605e9b924e7cd896f42e4f4c47afc72ac",
+      "task_sha256": "ee6eb291cbc0d19880b1c5008a7f82e83b89c41323016d27002294df21fcbf42",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "fetch",
+          "batch_id": 2
+        },
+        {
+          "action": "fetch",
+          "batch_id": 3
+        },
+        {
+          "action": "fetch",
+          "batch_id": 4
+        },
+        {
+          "action": "fetch",
+          "batch_id": 5
+        },
+        {
+          "action": "fetch",
+          "batch_id": 6
+        },
+        {
+          "action": "fetch",
+          "batch_id": 7
+        },
+        {
+          "action": "fetch",
+          "batch_id": 8
+        },
+        {
+          "action": "fetch",
+          "batch_id": 9
+        },
+        {
+          "action": "fetch",
+          "batch_id": 10
+        },
+        {
+          "action": "fetch",
+          "batch_id": 11
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case_id": "t01-clinic",
+      "condition": "QH",
+      "native_result_sha256": "cf42dd47719175481123e747530599fae5f0bd730f470f4755605b345daa7c2b",
+      "calls_sha256": "3db3fb487f8e4cb681eab63e235547079a24cc4314d0123d04274290655c307a",
+      "task_sha256": "ee6eb291cbc0d19880b1c5008a7f82e83b89c41323016d27002294df21fcbf42",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 19,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 3
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 19
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "state_at",
+          "batch_id": 2,
+          "counters": [
+            "amber10",
+            "birch11",
+            "cedar12",
+            "dune13",
+            "elm14",
+            "frost15",
+            "grove16",
+            "heath17"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 3,
+          "counters": [
+            "frost15",
+            "elm14",
+            "birch11",
+            "cedar12",
+            "dune13",
+            "grove16",
+            "heath17",
+            "amber10"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 4,
+          "counters": [
+            "cedar12",
+            "amber10"
+          ]
+        },
+        {
+          "action": "fetch",
+          "batch_id": 5
+        },
+        {
+          "action": "state_at",
+          "batch_id": 5,
+          "counters": [
+            "amber10",
+            "birch11",
+            "cedar12",
+            "dune13",
+            "elm14",
+            "frost15",
+            "grove16",
+            "heath17"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 6,
+          "counters": [
+            "grove16",
+            "heath17"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 7,
+          "counters": [
+            "dune13",
+            "birch11"
+          ]
+        },
+        {
+          "action": "fetch",
+          "batch_id": 6
+        },
+        {
+          "action": "state_at",
+          "batch_id": 8,
+          "counters": [
+            "heath17",
+            "grove16"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 9,
+          "counters": [
+            "elm14",
+            "dune13"
+          ]
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": [
+        {
+          "question_id": "t01-clinic-join-2",
+          "category": "join",
+          "question": "Follow review-clinic-2 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?",
+          "predicted": 64,
+          "expected": 66,
+          "ticket": "ticket-clinic-a",
+          "target_batch": 4,
+          "correct_owner": "birch11",
+          "initial_owner": "amber10",
+          "final_owner": "birch11",
+          "initial_owner_balance": 64,
+          "final_owner_balance": 66,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 3,
+              "text": "ticket-clinic-a was transferred to birch11, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-3",
+          "category": "join",
+          "question": "Follow review-clinic-3 to its ticket. Using the owner of that ticket at the end of batch 8, what was that counter's balance at the end of batch 8?",
+          "predicted": 136,
+          "expected": 109,
+          "ticket": "ticket-clinic-g",
+          "target_batch": 8,
+          "correct_owner": "dune13",
+          "initial_owner": "grove16",
+          "final_owner": "dune13",
+          "initial_owner_balance": 136,
+          "final_owner_balance": 109,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 7,
+              "text": "ticket-clinic-g was transferred to dune13, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-4",
+          "category": "join",
+          "question": "Follow review-clinic-4 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?",
+          "predicted": 130,
+          "expected": 171,
+          "ticket": "ticket-clinic-f",
+          "target_batch": 3,
+          "correct_owner": "heath17",
+          "initial_owner": "frost15",
+          "final_owner": "heath17",
+          "initial_owner_balance": 130,
+          "final_owner_balance": 171,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 3,
+              "text": "ticket-clinic-f was transferred to heath17, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-5",
+          "category": "join",
+          "question": "Follow review-clinic-5 to its ticket. Using the owner of that ticket at the end of batch 7, what was that counter's balance at the end of batch 7?",
+          "predicted": 85,
+          "expected": 134,
+          "ticket": "ticket-clinic-b",
+          "target_batch": 7,
+          "correct_owner": "frost15",
+          "initial_owner": "birch11",
+          "final_owner": "frost15",
+          "initial_owner_balance": 85,
+          "final_owner_balance": 134,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 7,
+              "text": "ticket-clinic-b was transferred to frost15, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-7",
+          "category": "join",
+          "question": "Follow review-clinic-7 to its ticket. Using the owner of that ticket at the end of batch 9, what was that counter's balance at the end of batch 9?",
+          "predicted": 125,
+          "expected": 97,
+          "ticket": "ticket-clinic-d",
+          "target_batch": 9,
+          "correct_owner": "cedar12",
+          "initial_owner": "dune13",
+          "final_owner": "cedar12",
+          "initial_owner_balance": 125,
+          "final_owner_balance": 97,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 9,
+              "text": "ticket-clinic-d was transferred to cedar12, effective before this batch ended."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "t01-clinic",
+      "condition": "QS",
+      "native_result_sha256": "1202b8ae25c3768be9af8da5df4c9b40a310abad36ddc7a8f5ce532f1c2e5760",
+      "calls_sha256": "0b1217611dd98c76a648ca961e055b0138ffd57505ad3d952957ec698b566d1a",
+      "task_sha256": "ee6eb291cbc0d19880b1c5008a7f82e83b89c41323016d27002294df21fcbf42",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "fetch",
+          "batch_id": 2
+        },
+        {
+          "action": "fetch",
+          "batch_id": 3
+        },
+        {
+          "action": "fetch",
+          "batch_id": 4
+        },
+        {
+          "action": "fetch",
+          "batch_id": 5
+        },
+        {
+          "action": "fetch",
+          "batch_id": 6
+        },
+        {
+          "action": "fetch",
+          "batch_id": 7
+        },
+        {
+          "action": "fetch",
+          "batch_id": 8
+        },
+        {
+          "action": "fetch",
+          "batch_id": 9
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case_id": "t01-clinic",
+      "condition": "AH",
+      "native_result_sha256": "b894cf529e4321a12deeee8782d29a12c3039197a5f3f7eaf91e829ecb4a1892",
+      "calls_sha256": "c90a0f91d1e0042f973d24ae7d0c0e4451b442936949a8f112f052068669ad64",
+      "task_sha256": "ee6eb291cbc0d19880b1c5008a7f82e83b89c41323016d27002294df21fcbf42",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 19,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 3
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 19
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "state_at",
+          "batch_id": 2,
+          "counters": [
+            "amber10",
+            "birch11",
+            "cedar12",
+            "dune13",
+            "elm14",
+            "frost15",
+            "grove16",
+            "heath17"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 3,
+          "counters": [
+            "frost15",
+            "amber10",
+            "birch11",
+            "cedar12",
+            "dune13",
+            "elm14",
+            "grove16",
+            "heath17"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 4,
+          "counters": [
+            "cedar12",
+            "birch11",
+            "grove16",
+            "dune13",
+            "heath17",
+            "elm14",
+            "frost15",
+            "amber10"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 5,
+          "counters": [
+            "birch11",
+            "cedar12",
+            "dune13",
+            "elm14",
+            "frost15",
+            "grove16",
+            "heath17",
+            "amber10"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 6,
+          "counters": [
+            "grove16",
+            "heath17",
+            "birch11",
+            "dune13",
+            "elm14",
+            "amber10",
+            "cedar12",
+            "frost15"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 7,
+          "counters": [
+            "dune13",
+            "birch11",
+            "heath17",
+            "elm14",
+            "grove16",
+            "frost15",
+            "amber10",
+            "cedar12"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 8,
+          "counters": [
+            "heath17",
+            "dune13",
+            "elm14",
+            "birch11",
+            "amber10",
+            "cedar12",
+            "frost15",
+            "grove16"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 9,
+          "counters": [
+            "elm14",
+            "dune13"
+          ]
+        },
+        {
+          "action": "search",
+          "query": "review-clinic-1"
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": [
+        {
+          "question_id": "t01-clinic-join-2",
+          "category": "join",
+          "question": "Follow review-clinic-2 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?",
+          "predicted": 64,
+          "expected": 66,
+          "ticket": "ticket-clinic-a",
+          "target_batch": 4,
+          "correct_owner": "birch11",
+          "initial_owner": "amber10",
+          "final_owner": "birch11",
+          "initial_owner_balance": 64,
+          "final_owner_balance": 66,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 3,
+              "text": "ticket-clinic-a was transferred to birch11, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-3",
+          "category": "join",
+          "question": "Follow review-clinic-3 to its ticket. Using the owner of that ticket at the end of batch 8, what was that counter's balance at the end of batch 8?",
+          "predicted": 136,
+          "expected": 109,
+          "ticket": "ticket-clinic-g",
+          "target_batch": 8,
+          "correct_owner": "dune13",
+          "initial_owner": "grove16",
+          "final_owner": "dune13",
+          "initial_owner_balance": 136,
+          "final_owner_balance": 109,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 7,
+              "text": "ticket-clinic-g was transferred to dune13, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-4",
+          "category": "join",
+          "question": "Follow review-clinic-4 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?",
+          "predicted": 130,
+          "expected": 171,
+          "ticket": "ticket-clinic-f",
+          "target_batch": 3,
+          "correct_owner": "heath17",
+          "initial_owner": "frost15",
+          "final_owner": "heath17",
+          "initial_owner_balance": 130,
+          "final_owner_balance": 171,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 3,
+              "text": "ticket-clinic-f was transferred to heath17, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-5",
+          "category": "join",
+          "question": "Follow review-clinic-5 to its ticket. Using the owner of that ticket at the end of batch 7, what was that counter's balance at the end of batch 7?",
+          "predicted": 85,
+          "expected": 134,
+          "ticket": "ticket-clinic-b",
+          "target_batch": 7,
+          "correct_owner": "frost15",
+          "initial_owner": "birch11",
+          "final_owner": "frost15",
+          "initial_owner_balance": 85,
+          "final_owner_balance": 134,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 7,
+              "text": "ticket-clinic-b was transferred to frost15, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t01-clinic-join-7",
+          "category": "join",
+          "question": "Follow review-clinic-7 to its ticket. Using the owner of that ticket at the end of batch 9, what was that counter's balance at the end of batch 9?",
+          "predicted": 125,
+          "expected": 97,
+          "ticket": "ticket-clinic-d",
+          "target_batch": 9,
+          "correct_owner": "cedar12",
+          "initial_owner": "dune13",
+          "final_owner": "cedar12",
+          "initial_owner_balance": 125,
+          "final_owner_balance": 97,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 9,
+              "text": "ticket-clinic-d was transferred to cedar12, effective before this batch ended."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "t02-theatre",
+      "condition": "AH",
+      "native_result_sha256": "3c5b796392759c215654db51511e0e959e20d9337575126470719da3315ea435",
+      "calls_sha256": "4c1b4513bb4bcb1eb315fdc130efc283366021c1d42742ed62f9873d5fe6cba6",
+      "task_sha256": "8a4a26b9bfa4e4e16b7d778294dd0e94b9aaf25a974f29662640f2cadc81abf8",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 19,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 3
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 19
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "state_at",
+          "batch_id": 2
+        },
+        {
+          "action": "state_at",
+          "batch_id": 3,
+          "counters": [
+            "oak26",
+            "iris20",
+            "jade21",
+            "kelp22",
+            "lilac23",
+            "moss24",
+            "nettle25",
+            "pine27"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 5,
+          "counters": [
+            "moss24"
+          ]
+        },
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "state_at",
+          "batch_id": 4,
+          "counters": [
+            "iris20",
+            "kelp22"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 6,
+          "counters": [
+            "iris20",
+            "pine27"
+          ]
+        },
+        {
+          "action": "update"
+        },
+        {
+          "action": "state_at",
+          "batch_id": 7,
+          "counters": [
+            "kelp22",
+            "lilac23"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 8,
+          "counters": [
+            "nettle25",
+            "lilac23"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 9,
+          "counters": [
+            "nettle25",
+            "moss24"
+          ]
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": [
+        {
+          "question_id": "t02-theatre-join-2",
+          "category": "join",
+          "question": "Follow review-theatre-2 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?",
+          "predicted": 88,
+          "expected": 163,
+          "ticket": "ticket-theatre-c",
+          "target_batch": 4,
+          "correct_owner": "pine27",
+          "initial_owner": "kelp22",
+          "final_owner": "pine27",
+          "initial_owner_balance": 88,
+          "final_owner_balance": 163,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 4,
+              "text": "ticket-theatre-c was transferred to pine27, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t02-theatre-join-3",
+          "category": "join",
+          "question": "Follow review-theatre-3 to its ticket. Using the owner of that ticket at the end of batch 6, what was that counter's balance at the end of batch 6?",
+          "predicted": 56,
+          "expected": 103,
+          "ticket": "ticket-theatre-a",
+          "target_batch": 6,
+          "correct_owner": "lilac23",
+          "initial_owner": "iris20",
+          "final_owner": "lilac23",
+          "initial_owner_balance": 56,
+          "final_owner_balance": 103,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 5,
+              "text": "ticket-theatre-a was transferred to lilac23, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t02-theatre-join-4",
+          "category": "join",
+          "question": "Follow review-theatre-4 to its ticket. Using the owner of that ticket at the end of batch 8, what was that counter's balance at the end of batch 8?",
+          "predicted": 125,
+          "expected": 136,
+          "ticket": "ticket-theatre-f",
+          "target_batch": 8,
+          "correct_owner": "oak26",
+          "initial_owner": "nettle25",
+          "final_owner": "oak26",
+          "initial_owner_balance": 125,
+          "final_owner_balance": 136,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 6,
+              "text": "ticket-theatre-f was transferred to oak26, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t02-theatre-join-5",
+          "category": "join",
+          "question": "Follow review-theatre-5 to its ticket. Using the owner of that ticket at the end of batch 7, what was that counter's balance at the end of batch 7?",
+          "predicted": 105,
+          "expected": 56,
+          "ticket": "ticket-theatre-d",
+          "target_batch": 7,
+          "correct_owner": "iris20",
+          "initial_owner": "lilac23",
+          "final_owner": "iris20",
+          "initial_owner_balance": 105,
+          "final_owner_balance": 56,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 6,
+              "text": "ticket-theatre-d was transferred to iris20, effective before this batch ended."
+            }
+          ]
+        },
+        {
+          "question_id": "t02-theatre-join-6",
+          "category": "join",
+          "question": "Follow review-theatre-6 to its ticket. Using the owner of that ticket at the end of batch 9, what was that counter's balance at the end of batch 9?",
+          "predicted": 123,
+          "expected": 70,
+          "ticket": "ticket-theatre-e",
+          "target_batch": 9,
+          "correct_owner": "jade21",
+          "initial_owner": "moss24",
+          "final_owner": "jade21",
+          "initial_owner_balance": 123,
+          "final_owner_balance": 70,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 9,
+              "text": "ticket-theatre-e was transferred to jade21, effective before this batch ended."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "t02-theatre",
+      "condition": "QS",
+      "native_result_sha256": "9668314d8ecb0b873ba8537b7343d02002c74599b481a2b8107095d1f78f1061",
+      "calls_sha256": "e4ebb0eae86088e8f7d852bf1393af80851c3eba99a0733d9792a2bd475b73bb",
+      "task_sha256": "8a4a26b9bfa4e4e16b7d778294dd0e94b9aaf25a974f29662640f2cadc81abf8",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "fetch",
+          "batch_id": 2
+        },
+        {
+          "action": "fetch",
+          "batch_id": 3
+        },
+        {
+          "action": "fetch",
+          "batch_id": 4
+        },
+        {
+          "action": "fetch",
+          "batch_id": 5
+        },
+        {
+          "action": "fetch",
+          "batch_id": 6
+        },
+        {
+          "action": "fetch",
+          "batch_id": 7
+        },
+        {
+          "action": "fetch",
+          "batch_id": 8
+        },
+        {
+          "action": "fetch",
+          "batch_id": 9
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case_id": "t02-theatre",
+      "condition": "QH",
+      "native_result_sha256": "2df1df917d72e05e063b126c6f473e64b63ecfe02390aa9d8764d872c77b7dff",
+      "calls_sha256": "38d77e3b6e1279276f0de3c4f476e6d1db780d99dd65d11ea129282af2a16044",
+      "task_sha256": "8a4a26b9bfa4e4e16b7d778294dd0e94b9aaf25a974f29662640f2cadc81abf8",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 23,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 7
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 23
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "update"
+        },
+        {
+          "action": "state_at",
+          "batch_id": 2,
+          "counters": [
+            "iris20",
+            "jade21",
+            "kelp22",
+            "lilac23",
+            "moss24",
+            "nettle25",
+            "oak26",
+            "pine27"
+          ]
+        },
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "state_at",
+          "batch_id": 3,
+          "counters": [
+            "oak26",
+            "jade21",
+            "kelp22",
+            "lilac23",
+            "moss24",
+            "nettle25",
+            "iris20",
+            "pine27"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 4,
+          "counters": [
+            "iris20",
+            "kelp22"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 5,
+          "counters": [
+            "moss24"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 6,
+          "counters": [
+            "pine27",
+            "lilac23"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 7,
+          "counters": [
+            "kelp22",
+            "iris20"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 8,
+          "counters": [
+            "lilac23",
+            "nettle25"
+          ]
+        },
+        {
+          "action": "fetch",
+          "batch_id": 8
+        },
+        {
+          "action": "state_at",
+          "batch_id": 9,
+          "counters": [
+            "nettle25"
+          ]
+        },
+        {
+          "action": "search",
+          "query": "ticket-theatre-e"
+        },
+        {
+          "action": "search",
+          "query": "ticket-theatre-f"
+        },
+        {
+          "action": "state_at",
+          "batch_id": 8,
+          "counters": [
+            "oak26"
+          ]
+        },
+        {
+          "action": "state_at",
+          "batch_id": 9,
+          "counters": [
+            "jade21"
+          ]
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": [
+        {
+          "question_id": "t02-theatre-join-2",
+          "category": "join",
+          "question": "Follow review-theatre-2 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?",
+          "predicted": 88,
+          "expected": 163,
+          "ticket": "ticket-theatre-c",
+          "target_batch": 4,
+          "correct_owner": "pine27",
+          "initial_owner": "kelp22",
+          "final_owner": "pine27",
+          "initial_owner_balance": 88,
+          "final_owner_balance": 163,
+          "matches_initial_owner_balance": true,
+          "matches_final_owner_balance": false,
+          "ownership_transfers": [
+            {
+              "batch": 4,
+              "text": "ticket-theatre-c was transferred to pine27, effective before this batch ended."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "t02-theatre",
+      "condition": "AS",
+      "native_result_sha256": "0aa049a0f09041f84ea06a7ae3d73fe52b9a4f480ddb085a1f0efc3733803532",
+      "calls_sha256": "fe2966a0fd1237bfbed6030f4f29071aac9c4e61e9832f51ad605b878fefe1c9",
+      "task_sha256": "8a4a26b9bfa4e4e16b7d778294dd0e94b9aaf25a974f29662640f2cadc81abf8",
+      "status": "completed",
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "checkpoints_exact": true,
+      "actions": [
+        {
+          "action": "fetch",
+          "batch_id": 1
+        },
+        {
+          "action": "fetch",
+          "batch_id": 2
+        },
+        {
+          "action": "fetch",
+          "batch_id": 3
+        },
+        {
+          "action": "fetch",
+          "batch_id": 4
+        },
+        {
+          "action": "fetch",
+          "batch_id": 5
+        },
+        {
+          "action": "fetch",
+          "batch_id": 6
+        },
+        {
+          "action": "fetch",
+          "batch_id": 7
+        },
+        {
+          "action": "fetch",
+          "batch_id": 8
+        },
+        {
+          "action": "fetch",
+          "batch_id": 9
+        },
+        {
+          "action": "submit"
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

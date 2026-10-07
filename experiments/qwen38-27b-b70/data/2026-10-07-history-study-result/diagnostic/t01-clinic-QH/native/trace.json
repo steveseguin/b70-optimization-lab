@@ -1,0 +1,1163 @@
+{
+  "schema": "history-live-attempt-trace.v1",
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "set",
+                "amount": 60,
+                "quote": "The balance of amber10 is now 60."
+              },
+              {
+                "counter": "birch11",
+                "op": "set",
+                "amount": 75,
+                "quote": "The balance of birch11 is now 75."
+              },
+              {
+                "counter": "cedar12",
+                "op": "set",
+                "amount": 90,
+                "quote": "The balance of cedar12 is now 90."
+              },
+              {
+                "counter": "dune13",
+                "op": "set",
+                "amount": 105,
+                "quote": "The balance of dune13 is now 105."
+              },
+              {
+                "counter": "elm14",
+                "op": "set",
+                "amount": 120,
+                "quote": "The balance of elm14 is now 120."
+              },
+              {
+                "counter": "frost15",
+                "op": "set",
+                "amount": 135,
+                "quote": "The balance of frost15 is now 135."
+              },
+              {
+                "counter": "grove16",
+                "op": "set",
+                "amount": 150,
+                "quote": "The balance of grove16 is now 150."
+              },
+              {
+                "counter": "heath17",
+                "op": "set",
+                "amount": 165,
+                "quote": "The balance of heath17 is now 165."
+              }
+            ],
+            "memory": "B1: amber10=60, birch11=75, cedar12=90, dune13=105, elm14=120, frost15=135, grove16=150, heath17=165. Tickets a-h map to amber10-heath17 respectively."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 8,
+            "predicted": 8,
+            "matched": 8,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 1,
+            "delivery_sha256": "f33cd6f62192ad6aee6814e7658148209381c9d4e7fef156d1a2d78a1bff7957",
+            "events_sha256": "8f01a33409be76ec3b1227afc4dbce0ff56b66cf12f7ccf4bf03786d7b7575eb",
+            "events_applied": 8,
+            "state_sha256": "8ed3cade03d38493660ebd38ebe352d4fd40e96989b1f45a8dd681a747c19f9e",
+            "applied_at": "2026-10-07T07:09:32.646496+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 1,
+            "arm": "quoted",
+            "source_text_sha256": "f33cd6f62192ad6aee6814e7658148209381c9d4e7fef156d1a2d78a1bff7957",
+            "raw_response_sha256": "43e0b9dc86999db9df8dc5845708aa0dc3ba56657a5b28b1743e2eef2695c002",
+            "state_sha256": "8ed3cade03d38493660ebd38ebe352d4fd40e96989b1f45a8dd681a747c19f9e",
+            "previous_snapshot_sha256": null,
+            "snapshot_sha256": "eef253bf24977f003d39542a110990c482e30b9343e77055b18cb2918b3273c5"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 60,
+        "birch11": 75,
+        "cedar12": 90,
+        "dune13": 105,
+        "elm14": 120,
+        "frost15": 135,
+        "grove16": 150,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "add",
+                "amount": 7,
+                "quote": "The balance of amber10 increased by 7."
+              },
+              {
+                "counter": "cedar12",
+                "op": "sub",
+                "amount": 4,
+                "quote": "The balance of cedar12 decreased by 4."
+              },
+              {
+                "counter": "elm14",
+                "op": "add",
+                "amount": 11,
+                "quote": "The balance of elm14 increased by 11."
+              },
+              {
+                "counter": "grove16",
+                "op": "sub",
+                "amount": 6,
+                "quote": "The balance of grove16 decreased by 6."
+              }
+            ],
+            "memory": "B2: amber10=67, birch11=75, cedar12=86, dune13=105, elm14=131, frost15=135, grove16=144, heath17=165. Tickets a-h map to amber10-heath17 respectively."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 2,
+            "delivery_sha256": "da0ea508270e963da80b96597b59bd46b1a162d91db3ab8709cfe4229a4159a0",
+            "events_sha256": "d4aef83d626cf20698f556f35d5fadab0f6e5678182aa953e00fccd4108bf3c9",
+            "events_applied": 4,
+            "state_sha256": "8ebcccda63ecd15c6ff53423ce62328a758bbe903286380f490023e275dbf1b6",
+            "applied_at": "2026-10-07T07:09:34.793364+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 2,
+            "arm": "quoted",
+            "source_text_sha256": "da0ea508270e963da80b96597b59bd46b1a162d91db3ab8709cfe4229a4159a0",
+            "raw_response_sha256": "17b89f4f27a350c80acb7dd0afda6a8f08ef8671a0e3927b846ef4850ff86576",
+            "state_sha256": "8ebcccda63ecd15c6ff53423ce62328a758bbe903286380f490023e275dbf1b6",
+            "previous_snapshot_sha256": "eef253bf24977f003d39542a110990c482e30b9343e77055b18cb2918b3273c5",
+            "snapshot_sha256": "63e2afec76b9677eeef18b278eb24835e8476f30988134f6169c3c0d84f68647"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 67,
+        "birch11": 75,
+        "cedar12": 86,
+        "dune13": 105,
+        "elm14": 131,
+        "frost15": 135,
+        "grove16": 144,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "birch11",
+                "op": "sub",
+                "amount": 9,
+                "quote": "The balance of birch11 decreased by 9."
+              },
+              {
+                "counter": "dune13",
+                "op": "add",
+                "amount": 8,
+                "quote": "The balance of dune13 increased by 8."
+              },
+              {
+                "counter": "frost15",
+                "op": "sub",
+                "amount": 5,
+                "quote": "The balance of frost15 decreased by 5."
+              },
+              {
+                "counter": "heath17",
+                "op": "add",
+                "amount": 6,
+                "quote": "The balance of heath17 increased by 6."
+              }
+            ],
+            "memory": "B3: amber10=67, birch11=66, cedar12=86, dune13=113, elm14=131, frost15=130, grove16=144, heath17=171. Tickets: a->birch11, f->heath17."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 3,
+            "delivery_sha256": "fe615b17326784a162a3ee4a8fc1c932cc94cae0e83040b6eccfa823bbfdab2b",
+            "events_sha256": "7f66ec299d45bc487ac3f5c831c8071778037b809fd04c2ddcc45d3129e79c14",
+            "events_applied": 4,
+            "state_sha256": "3c38b35a6bea6c48f34d4117f277bf101445dae123383768f119bcbc7e853a36",
+            "applied_at": "2026-10-07T07:09:36.980764+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 3,
+            "arm": "quoted",
+            "source_text_sha256": "fe615b17326784a162a3ee4a8fc1c932cc94cae0e83040b6eccfa823bbfdab2b",
+            "raw_response_sha256": "11a99cd243b2cfc574d5f89e900f64def1303e82acd12238fd8d2ce0df438cde",
+            "state_sha256": "3c38b35a6bea6c48f34d4117f277bf101445dae123383768f119bcbc7e853a36",
+            "previous_snapshot_sha256": "63e2afec76b9677eeef18b278eb24835e8476f30988134f6169c3c0d84f68647",
+            "snapshot_sha256": "4a84dff8c108883e6f6e3583cef02a1fde9d6104ebe22e6d1219dec244b59d6a"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 67,
+        "birch11": 66,
+        "cedar12": 86,
+        "dune13": 113,
+        "elm14": 131,
+        "frost15": 130,
+        "grove16": 144,
+        "heath17": 171
+      }
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "cedar12",
+                "op": "set",
+                "amount": 83,
+                "quote": "The balance of cedar12 is now 83."
+              },
+              {
+                "counter": "amber10",
+                "op": "sub",
+                "amount": 3,
+                "quote": "The balance of amber10 decreased by 3."
+              },
+              {
+                "counter": "frost15",
+                "op": "add",
+                "amount": 12,
+                "quote": "The balance of frost15 increased by 12."
+              },
+              {
+                "counter": "grove16",
+                "op": "add",
+                "amount": 5,
+                "quote": "The balance of grove16 increased by 5."
+              }
+            ],
+            "memory": "B4: amber10=64, birch11=66, cedar12=83, dune13=113, elm14=131, frost15=142, grove16=149, heath17=171. Tickets: a->birch11, f->heath17."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 4,
+            "delivery_sha256": "027e959f48ca7d7b5794e8f73e36005aff11bb8b6cf618f9c3cbd795d2492794",
+            "events_sha256": "bf94627e7281038485c728c792c12c19d3931a5ca369cefb0f6acf06be8d0f60",
+            "events_applied": 4,
+            "state_sha256": "4f86ee321cc2fa53c0c49c32ffa756b21439d8c9afe604a2c17e1e1d9028932a",
+            "applied_at": "2026-10-07T07:09:39.117305+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 4,
+            "arm": "quoted",
+            "source_text_sha256": "027e959f48ca7d7b5794e8f73e36005aff11bb8b6cf618f9c3cbd795d2492794",
+            "raw_response_sha256": "17e882e3b180543b60f05a9249026b06b702d567bc652ed44efd226d69092e76",
+            "state_sha256": "4f86ee321cc2fa53c0c49c32ffa756b21439d8c9afe604a2c17e1e1d9028932a",
+            "previous_snapshot_sha256": "4a84dff8c108883e6f6e3583cef02a1fde9d6104ebe22e6d1219dec244b59d6a",
+            "snapshot_sha256": "64d2e7e1cf6d0b4d4da4c42a25c4a4ea34d282b41b09150b0f871fcc49acd09e"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 64,
+        "birch11": 66,
+        "cedar12": 83,
+        "dune13": 113,
+        "elm14": 131,
+        "frost15": 142,
+        "grove16": 149,
+        "heath17": 171
+      }
+    },
+    {
+      "batch_id": 5,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "dune13",
+                "op": "sub",
+                "amount": 7,
+                "quote": "The balance of dune13 decreased by 7."
+              },
+              {
+                "counter": "elm14",
+                "op": "sub",
+                "amount": 13,
+                "quote": "The balance of elm14 decreased by 13."
+              },
+              {
+                "counter": "birch11",
+                "op": "add",
+                "amount": 4,
+                "quote": "The balance of birch11 increased by 4."
+              },
+              {
+                "counter": "heath17",
+                "op": "sub",
+                "amount": 2,
+                "quote": "The balance of heath17 decreased by 2."
+              }
+            ],
+            "memory": "B5: amber10=64, birch11=70, cedar12=83, dune13=106, elm14=118, frost15=142, grove16=149, heath17=169. Tickets: a->birch11, f->heath17, c->elm14."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 5,
+            "delivery_sha256": "b4bce98d909568299bff6a9deb485254e40763b1e81cecea629046e3a6c2399e",
+            "events_sha256": "4fe4fe07a1776d31620c74b4e3e229b43b760ef841030b0ff47afaf24ed3b28e",
+            "events_applied": 4,
+            "state_sha256": "4d2b2fbc9ebcbce38d6b1ec2ee3a152c4a6da6f4b46b48c31fd7ca8351fcd840",
+            "applied_at": "2026-10-07T07:09:41.423761+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 5,
+            "arm": "quoted",
+            "source_text_sha256": "b4bce98d909568299bff6a9deb485254e40763b1e81cecea629046e3a6c2399e",
+            "raw_response_sha256": "512076b9fc5c16b927b708f5fe980720812393e877e015af7d4ee4b517fd024f",
+            "state_sha256": "4d2b2fbc9ebcbce38d6b1ec2ee3a152c4a6da6f4b46b48c31fd7ca8351fcd840",
+            "previous_snapshot_sha256": "64d2e7e1cf6d0b4d4da4c42a25c4a4ea34d282b41b09150b0f871fcc49acd09e",
+            "snapshot_sha256": "74e21ca94893dac9f88672b4668835c3728b14805ac87a8c56e489d1b1efdab8"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 64,
+        "birch11": 70,
+        "cedar12": 83,
+        "dune13": 106,
+        "elm14": 118,
+        "frost15": 142,
+        "grove16": 149,
+        "heath17": 169
+      }
+    },
+    {
+      "batch_id": 6,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "sub",
+                "amount": 7,
+                "quote": "The balance of amber10 decreased by 7."
+              },
+              {
+                "counter": "cedar12",
+                "op": "add",
+                "amount": 10,
+                "quote": "The balance of cedar12 increased by 10."
+              },
+              {
+                "counter": "grove16",
+                "op": "set",
+                "amount": 148,
+                "quote": "The balance of grove16 is now 148."
+              },
+              {
+                "counter": "frost15",
+                "op": "sub",
+                "amount": 8,
+                "quote": "The balance of frost15 decreased by 8."
+              }
+            ],
+            "memory": "B6: amber10=57, birch11=70, cedar12=93, dune13=106, elm14=118, frost15=134, grove16=148, heath17=169. Tickets: a->birch11, f->heath17, c->elm14."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 6,
+            "delivery_sha256": "2b0c1699cc555d1782d274abaf73884a7a906dcffcdea1a468dd00ab1a6ab8e9",
+            "events_sha256": "c76b93748d9ae15ca5c0b2d039dc0344b709184d23504141e6fd15214f116e5a",
+            "events_applied": 4,
+            "state_sha256": "28003eadcf70f15cffecbcf0ae8d2395fa9ba1645521cdde1d0d81ada54bb2f9",
+            "applied_at": "2026-10-07T07:09:43.646171+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 6,
+            "arm": "quoted",
+            "source_text_sha256": "2b0c1699cc555d1782d274abaf73884a7a906dcffcdea1a468dd00ab1a6ab8e9",
+            "raw_response_sha256": "6405f544ad89de6834c6d5568dcfde6c186cbbd9c93076f449a4c52e949fbf86",
+            "state_sha256": "28003eadcf70f15cffecbcf0ae8d2395fa9ba1645521cdde1d0d81ada54bb2f9",
+            "previous_snapshot_sha256": "74e21ca94893dac9f88672b4668835c3728b14805ac87a8c56e489d1b1efdab8",
+            "snapshot_sha256": "dee5335e17f3b3773fefe54b5f5c5bfbc147f8745b3c6a9417e46b89d1e386b2"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 57,
+        "birch11": 70,
+        "cedar12": 93,
+        "dune13": 106,
+        "elm14": 118,
+        "frost15": 134,
+        "grove16": 148,
+        "heath17": 169
+      }
+    },
+    {
+      "batch_id": 7,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "birch11",
+                "op": "add",
+                "amount": 15,
+                "quote": "The balance of birch11 increased by 15."
+              },
+              {
+                "counter": "elm14",
+                "op": "add",
+                "amount": 6,
+                "quote": "The balance of elm14 increased by 6."
+              },
+              {
+                "counter": "heath17",
+                "op": "sub",
+                "amount": 9,
+                "quote": "The balance of heath17 decreased by 9."
+              },
+              {
+                "counter": "dune13",
+                "op": "add",
+                "amount": 3,
+                "quote": "The balance of dune13 increased by 3."
+              }
+            ],
+            "memory": "B7: amber10=57, birch11=85, cedar12=93, dune13=109, elm12=124, frost15=134, grove16=148, heath17=160. Tickets: a->birch11, f->heath17, c->elm14, b->frost15, g->dune13."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 7,
+            "delivery_sha256": "f38433e2e57d3540147cc1ecba269536742eed6ab73f7c0628ce139e27cf6d1f",
+            "events_sha256": "35ef214a1f835b6ed88b0d5b25cbaa8406ac00287f832b51b1ec60246b6beca3",
+            "events_applied": 4,
+            "state_sha256": "ddce74decf4bac0e6f64d26e2c018c2b2dac1282a435cfe76fd6fcff7c31b9a6",
+            "applied_at": "2026-10-07T07:09:46.092560+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 7,
+            "arm": "quoted",
+            "source_text_sha256": "f38433e2e57d3540147cc1ecba269536742eed6ab73f7c0628ce139e27cf6d1f",
+            "raw_response_sha256": "2e09e1478487f94c6ba4d6ae5e81e297534056f8248018cb2304a0e2d041c44d",
+            "state_sha256": "ddce74decf4bac0e6f64d26e2c018c2b2dac1282a435cfe76fd6fcff7c31b9a6",
+            "previous_snapshot_sha256": "dee5335e17f3b3773fefe54b5f5c5bfbc147f8745b3c6a9417e46b89d1e386b2",
+            "snapshot_sha256": "56cd64627e3071d71665da7ba3172044abdab0ed212580cee4008240ad8470f8"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 57,
+        "birch11": 85,
+        "cedar12": 93,
+        "dune13": 109,
+        "elm14": 124,
+        "frost15": 134,
+        "grove16": 148,
+        "heath17": 160
+      }
+    },
+    {
+      "batch_id": 8,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "cedar12",
+                "op": "set",
+                "amount": 97,
+                "quote": "The balance of cedar12 is now 97."
+              },
+              {
+                "counter": "amber10",
+                "op": "add",
+                "amount": 14,
+                "quote": "The balance of amber10 increased by 14."
+              },
+              {
+                "counter": "grove16",
+                "op": "sub",
+                "amount": 12,
+                "quote": "The balance of grove16 decreased by 12."
+              },
+              {
+                "counter": "frost15",
+                "op": "add",
+                "amount": 9,
+                "quote": "The balance of frost15 increased by 9."
+              }
+            ],
+            "memory": "B8: amber10=71, birch11=85, cedar12=97, dune13=109, elm14=124, frost15=143, grove16=136, heath17=160. Tickets: a->birch11, f->heath17, c->elm14, b->frost15, g->dune13."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 8,
+            "delivery_sha256": "8c6f680e65ad3a15274a39d48ef8c3d1d9472273a5ecea2c7ab7d177217e8f83",
+            "events_sha256": "f5bf5765059433f43b858b7d350064859f91f28a2e8ad1ece6ba41d738a9b379",
+            "events_applied": 4,
+            "state_sha256": "fbbbbd85d54305c41e9e67481e51f275eea923d78967315e7db02913585c74fe",
+            "applied_at": "2026-10-07T07:09:48.438592+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 8,
+            "arm": "quoted",
+            "source_text_sha256": "8c6f680e65ad3a15274a39d48ef8c3d1d9472273a5ecea2c7ab7d177217e8f83",
+            "raw_response_sha256": "b56c866d78dd9efa8614374773a3eecd8ebfcbff78a6ee09e20a4dfa223440fa",
+            "state_sha256": "fbbbbd85d54305c41e9e67481e51f275eea923d78967315e7db02913585c74fe",
+            "previous_snapshot_sha256": "56cd64627e3071d71665da7ba3172044abdab0ed212580cee4008240ad8470f8",
+            "snapshot_sha256": "ebfe009b1fa8b8c3a345a265483afb607ac3978c3ad08012d156d379f7676532"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 71,
+        "birch11": 85,
+        "cedar12": 97,
+        "dune13": 109,
+        "elm14": 124,
+        "frost15": 143,
+        "grove16": 136,
+        "heath17": 160
+      }
+    },
+    {
+      "batch_id": 9,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "dune13",
+                "op": "add",
+                "amount": 16,
+                "quote": "The balance of dune13 increased by 16."
+              },
+              {
+                "counter": "elm14",
+                "op": "sub",
+                "amount": 4,
+                "quote": "The balance of elm14 decreased by 4."
+              },
+              {
+                "counter": "birch11",
+                "op": "sub",
+                "amount": 6,
+                "quote": "The balance of birch11 decreased by 6."
+              },
+              {
+                "counter": "heath17",
+                "op": "add",
+                "amount": 5,
+                "quote": "The balance of heath17 increased by 5."
+              }
+            ],
+            "memory": "B9: amber10=71, birch11=79, cedar12=97, dune13=125, elm14=120, frost15=143, grove16=136, heath17=165. Tickets: a->birch11, f->heath17, c->elm14, b->frost15, g->dune13, d->cedar12."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 9,
+            "delivery_sha256": "5bcdc9e5184d17d24f0036e0c8b78014bbb0c1889c68ac60b77056c6c5097063",
+            "events_sha256": "92943ae080431f649bd3105f65f45af32e8ee7563eab41cb9078d2869ca17c80",
+            "events_applied": 4,
+            "state_sha256": "e54850cdca67fd6ad2c109ec322db6d9e8fcaad8fb02e06a4fb7f590d540f593",
+            "applied_at": "2026-10-07T07:09:50.852901+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 9,
+            "arm": "quoted",
+            "source_text_sha256": "5bcdc9e5184d17d24f0036e0c8b78014bbb0c1889c68ac60b77056c6c5097063",
+            "raw_response_sha256": "0b90138efefc9363f9cb0aa1b0fc815a574a6e53c76d937ff71340aff9cae988",
+            "state_sha256": "e54850cdca67fd6ad2c109ec322db6d9e8fcaad8fb02e06a4fb7f590d540f593",
+            "previous_snapshot_sha256": "ebfe009b1fa8b8c3a345a265483afb607ac3978c3ad08012d156d379f7676532",
+            "snapshot_sha256": "9f364b1510fe5625d88829a923c2cfcdbebb637bbb9990bac16e70515bf2954e"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 71,
+        "birch11": 79,
+        "cedar12": 97,
+        "dune13": 125,
+        "elm14": 120,
+        "frost15": 143,
+        "grove16": 136,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 10,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "add",
+                "amount": 41,
+                "quote": "The balance of amber10 increased by 41."
+              },
+              {
+                "counter": "birch11",
+                "op": "add",
+                "amount": 32,
+                "quote": "The balance of birch11 increased by 32."
+              },
+              {
+                "counter": "cedar12",
+                "op": "add",
+                "amount": 28,
+                "quote": "The balance of cedar12 increased by 28."
+              },
+              {
+                "counter": "dune13",
+                "op": "add",
+                "amount": 37,
+                "quote": "The balance of dune13 increased by 37."
+              }
+            ],
+            "memory": "B10: amber10=112, birch11=111, cedar12=125, dune13=162, elm14=120, frost15=143, grove16=136, heath17=165. Tickets: a->birch11, f->heath17, c->elm14, b->frost15, g->dune13, d->cedar12."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 10,
+            "delivery_sha256": "3cff0e0c8636d46f99860b316c6c920da422a9fee0867fb1c3eff91470f1eca3",
+            "events_sha256": "9e707654bf591a0aa8792c8c5cfbe3005c36b6e6c029683528702cc3538f7d5a",
+            "events_applied": 4,
+            "state_sha256": "df9d7a5e8999cf2d4a027f64e86ad85ba45864f06fe052b0ca3e56fe58bd5f2a",
+            "applied_at": "2026-10-07T07:09:53.316250+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 10,
+            "arm": "quoted",
+            "source_text_sha256": "3cff0e0c8636d46f99860b316c6c920da422a9fee0867fb1c3eff91470f1eca3",
+            "raw_response_sha256": "ffe991ef523ca87f9dfa163de5bcd5616fcc176c6a5b794723c6d5b4942bf63b",
+            "state_sha256": "df9d7a5e8999cf2d4a027f64e86ad85ba45864f06fe052b0ca3e56fe58bd5f2a",
+            "previous_snapshot_sha256": "9f364b1510fe5625d88829a923c2cfcdbebb637bbb9990bac16e70515bf2954e",
+            "snapshot_sha256": "424b482b0f689a7654e0d4210632e1cdb65e7599565ecb44606219780ebc8e6a"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 112,
+        "birch11": 111,
+        "cedar12": 125,
+        "dune13": 162,
+        "elm14": 120,
+        "frost15": 143,
+        "grove16": 136,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 11,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "elm14",
+                "op": "add",
+                "amount": 44,
+                "quote": "The balance of elm14 increased by 44."
+              },
+              {
+                "counter": "frost15",
+                "op": "add",
+                "amount": 35,
+                "quote": "The balance of frost15 increased by 35."
+              },
+              {
+                "counter": "grove16",
+                "op": "add",
+                "amount": 46,
+                "quote": "The balance of grove16 increased by 46."
+              },
+              {
+                "counter": "heath17",
+                "op": "add",
+                "amount": 39,
+                "quote": "The balance of heath17 increased by 39."
+              }
+            ],
+            "memory": "B11: amber10=112, birch11=111, cedar12=125, dune13=162, elm14=164, frost15=178, grove16=182, heath17=204. Tickets: a->birch11, f->heath17, c->elm14, b->frost15, g->dune13, d->cedar12. Reviews: clinic-1->c, clinic-2->a, clinic-3->g, clinic-4->f."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 11,
+            "delivery_sha256": "c88927b770bfea9be2f85dc6a4f3113322221d215c2bbaa37488d2f6ae064d10",
+            "events_sha256": "cd9cbdbd45a288316b0f5ee2f51ef51502b96190a9c4a58c06e226782f162ebc",
+            "events_applied": 4,
+            "state_sha256": "f44b11e26a8fe5bf52a1ba3723b2b7f4553da2e19f50ed9e000d9c151e1ab86e",
+            "applied_at": "2026-10-07T07:09:55.942644+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 11,
+            "arm": "quoted",
+            "source_text_sha256": "c88927b770bfea9be2f85dc6a4f3113322221d215c2bbaa37488d2f6ae064d10",
+            "raw_response_sha256": "22e07463db76b1e2fae2633df31a904b33331d4edfbb84c90668fa7ddd0a5d80",
+            "state_sha256": "f44b11e26a8fe5bf52a1ba3723b2b7f4553da2e19f50ed9e000d9c151e1ab86e",
+            "previous_snapshot_sha256": "424b482b0f689a7654e0d4210632e1cdb65e7599565ecb44606219780ebc8e6a",
+            "snapshot_sha256": "9ffc5de60f9bfd68da9886b9361c1a31c110746b0008fecf2dab95dfc0b5a4a2"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 112,
+        "birch11": 111,
+        "cedar12": 125,
+        "dune13": 162,
+        "elm14": 164,
+        "frost15": 178,
+        "grove16": 182,
+        "heath17": 204
+      }
+    },
+    {
+      "batch_id": 12,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "sub",
+                "amount": 2,
+                "quote": "The balance of amber10 decreased by 2."
+              },
+              {
+                "counter": "elm14",
+                "op": "add",
+                "amount": 3,
+                "quote": "The balance of elm14 increased by 3."
+              },
+              {
+                "counter": "heath17",
+                "op": "sub",
+                "amount": 4,
+                "quote": "The balance of heath17 decreased by 4."
+              }
+            ],
+            "memory": "B12: amber10=110, birch11=111, cedar12=125, dune13=162, elm14=167, frost15=178, grove16=182, heath17=200. Tickets: a->birch11, f->heath17, c->elm14, b->frost15, g->dune13, d->cedar12. Reviews: clinic-1->c, clinic-2->a, clinic-3->g, clinic-4->f, clinic-5->b, clinic-6->h, clinic-7->d, clinic-8->e."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 12,
+            "delivery_sha256": "af37c567ad0a4db6dc6b1e2b5e9717d44c856a68b19637c36143ab351c2e8daf",
+            "events_sha256": "2f741486434b8a69b8b4221f990e8c7225682dc4c7cb38d60714baadcdeec0ca",
+            "events_applied": 3,
+            "state_sha256": "12935df531deb2dd97b6480efc566286df7d82608689df2da8feb3f5d2b4d78f",
+            "applied_at": "2026-10-07T07:09:58.421413+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 12,
+            "arm": "quoted",
+            "source_text_sha256": "af37c567ad0a4db6dc6b1e2b5e9717d44c856a68b19637c36143ab351c2e8daf",
+            "raw_response_sha256": "fd3e93d4bee3eb4fcb6e12858da0ba53bd50cad8af8fde363af091ba341e7fbb",
+            "state_sha256": "12935df531deb2dd97b6480efc566286df7d82608689df2da8feb3f5d2b4d78f",
+            "previous_snapshot_sha256": "9ffc5de60f9bfd68da9886b9361c1a31c110746b0008fecf2dab95dfc0b5a4a2",
+            "snapshot_sha256": "6fe1432532498755ffb9d3c9f247c169127172eb01d922b405fd448fbf0561d4"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 110,
+        "birch11": 111,
+        "cedar12": 125,
+        "dune13": 162,
+        "elm14": 167,
+        "frost15": 178,
+        "grove16": 182,
+        "heath17": 200
+      }
+    }
+  ]
+}

@@ -24,15 +24,15 @@ experiments, so pooled scores or direct timing comparisons would be misleading.
 | [Semantic development](semantic_v1/README.md) | All 36 trials complete: quoted and summary 84/84, archive 82/84. [Audited result](../../notes/2026-10-07-context-semantic-result.md); short authored pairs, not external validation. |
 | [Sparse-state development](sparse_v1/README.md) | Four trials complete. At 128 counters both methods are exact; quoted uses 21.7% less elapsed time on one server. [Result and limits](../../notes/2026-10-07-sparse-state-result.md); [replication plan](../../notes/2026-10-07-sparse-state-replication-plan.md). |
 | [Sparse replication and transfer](sparse_replication_v1/README.md) | Four trials complete, all final answers 24/24. Original task repeats its exact 21.6% elapsed signal; dispatch archive fails seven early checkpoints. [Audited result](../../notes/2026-10-07-sparse-state-replication-result.md). |
-| [Historical state retrieval](history_v1/README.md) | Frozen engine used by the active study below: each method saves its own accepted states; source-only/history modes isolate lookup access. Engine wiring and snapshot integrity alone do not establish model quality. |
-| [Historical-state study](history_study_v1/README.md) | Active supervised eight-trial comparison on two temporal documents, crossing bookkeeping and source-only/history access. CPU preparation and host preflight passed. [Prospective plan](../../notes/2026-10-07-history-state-study-plan.md). |
+| [Historical state retrieval](history_v1/README.md) | Frozen engine used by the completed study below: each method saves its own accepted states; source-only/history modes isolate lookup access. Engine wiring and snapshot integrity alone do not establish model quality. |
+| [Historical-state study](history_study_v1/README.md) | All eight trials complete: source-only always 24/24; history access 19/24, 19/24, 19/24 and 23/24 despite all 96 checkpoints exact. [Complete negative result](../../notes/2026-10-07-history-state-study-result.md); no extension admitted. |
 | [Direct full-source screen](full_source_v1/README.md) | Two fixed single-request final-answer trials prepared and CPU-audited. No intermediate-state guarantee or model result yet. Separate admission requires the completed, preserved history study and its negative continuation decision. |
 
 The [temporal source packet](../../data/2026-10-07-temporal-development/authoring-note.md)
 is separate CPU preparation: four short narratives with earlier-value questions.
 Its [two independent assistant annotations and source replay](../../data/2026-10-07-temporal-development/review-note.md)
 agree on all 96 answers and 48 closing states. Its first two documents feed the
-active study above; the other two remain unused development cases. All use a
+completed study above; the other two remain unused development cases. All use a
 shared controlled posting grammar.
 
 Each temporal document fits within the prompt limit with all its batches supplied
@@ -44,7 +44,7 @@ fits, and separately test realistic streams longer than the available context.
 The [CPU full-source fit receipt](../../data/2026-10-07-full-source-feasibility/README.md)
 reproduces exact candidate requests. The [research priorities](../../notes/2026-10-07-context-research-priorities.md)
 and [separate two-call screen plan](../../notes/2026-10-07-full-source-screen-plan.md)
-make that next check explicit; they do not change the active experiment.
+make that next check explicit; they do not change the completed experiment.
 
 The revision 2, 3 and 4 holdouts remain unused. Frozen versions and negative outcomes are
 preserved; new experiments do not retrospectively complete or repair them.

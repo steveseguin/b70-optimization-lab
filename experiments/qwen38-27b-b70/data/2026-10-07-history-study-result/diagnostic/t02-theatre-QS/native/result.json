@@ -1,0 +1,1437 @@
+{
+  "schema": "history-live-trial.v1",
+  "protocol": "historical-state-development-v1",
+  "document_id": "t02-theatre",
+  "case_id": "t02-theatre",
+  "pair_id": null,
+  "variant": "authored-temporal",
+  "arm": "quoted",
+  "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+  "source_sha256": "45ae96b4c80dca9a14defddf1bf33ae895e47fed9848101dbdc9ae2cb2be666f",
+  "adjudication_sha256": "e8bee704ebcdf69635205eefe949884bbb096d724fbb01646e046c836b461b1f",
+  "source_code_sha256": {
+    "diagnostics.py": "6bab40287c483b9cfc41d8c042e88c27989144cb5e36de834747a4eb8b8181d6",
+    "tasks.py": "e15dd0f9e64521b6b143bc872ea17e1f08b27ef5530932b929f9e46d4ec6433f",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "snapshots.py": "73eeb45e3af863bc8a47b5c4e56f930f57db5955cbb2dcb05b12aa7acf6f0aeb",
+    "live.py": "cf2530192e084eb51101ec69a4f918f787dacea0e5b96fd96be459e390a3215a",
+    "answers.py": "bc77826918033f59c29add697a3ae8be2491eb4ed59694040d432ebfb382f0fe"
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "e9d0d11a2f17640f9877c1d2e567528d8ced2226340a03b10f3e45842fd8e4d1"
+  },
+  "resumed": false,
+  "retrieval_mode": "source-only",
+  "context_limit_utf8_bytes": 32768,
+  "memory_limit_utf8_bytes": 6553,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "max_ingestion_attempts": 3,
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "history_policy": "Immutable actual accepted state after each batch; no oracle correction",
+  "status": "completed",
+  "failure": null,
+  "failure_kind": null,
+  "processed_batches": 12,
+  "ingestion_complete": true,
+  "final_answer_complete": true,
+  "protocol_complete": true,
+  "score": {
+    "asked": 24,
+    "correct": 24,
+    "valid": true,
+    "answer_types_valid": true,
+    "exact_question_coverage": true,
+    "invalid_type_ids": [],
+    "missing_ids": [],
+    "unknown_ids": [],
+    "by_category": {
+      "current": {
+        "asked": 8,
+        "correct": 8
+      },
+      "history": {
+        "asked": 8,
+        "correct": 8
+      },
+      "join": {
+        "asked": 8,
+        "correct": 8
+      }
+    },
+    "by_answer_type": {
+      "int": {
+        "asked": 24,
+        "correct": 24
+      }
+    }
+  },
+  "answers": {
+    "t02-theatre-current-1": 88,
+    "t02-theatre-current-2": 111,
+    "t02-theatre-current-3": 136,
+    "t02-theatre-current-4": 145,
+    "t02-theatre-current-5": 161,
+    "t02-theatre-current-6": 192,
+    "t02-theatre-current-7": 168,
+    "t02-theatre-current-8": 204,
+    "t02-theatre-join-8": 64,
+    "t02-theatre-history-2": 76,
+    "t02-theatre-history-1": 144,
+    "t02-theatre-history-3": 118,
+    "t02-theatre-history-4": 43,
+    "t02-theatre-join-1": 152,
+    "t02-theatre-join-2": 163,
+    "t02-theatre-join-7": 144,
+    "t02-theatre-history-5": 163,
+    "t02-theatre-join-3": 103,
+    "t02-theatre-history-6": 100,
+    "t02-theatre-join-5": 56,
+    "t02-theatre-history-8": 100,
+    "t02-theatre-join-4": 136,
+    "t02-theatre-history-7": 141,
+    "t02-theatre-join-6": 70
+  },
+  "answer_protocol": {
+    "answers": {
+      "t02-theatre-current-1": 88,
+      "t02-theatre-current-2": 111,
+      "t02-theatre-current-3": 136,
+      "t02-theatre-current-4": 145,
+      "t02-theatre-current-5": 161,
+      "t02-theatre-current-6": 192,
+      "t02-theatre-current-7": 168,
+      "t02-theatre-current-8": 204,
+      "t02-theatre-join-8": 64,
+      "t02-theatre-history-2": 76,
+      "t02-theatre-history-1": 144,
+      "t02-theatre-history-3": 118,
+      "t02-theatre-history-4": 43,
+      "t02-theatre-join-1": 152,
+      "t02-theatre-join-2": 163,
+      "t02-theatre-join-7": 144,
+      "t02-theatre-history-5": 163,
+      "t02-theatre-join-3": 103,
+      "t02-theatre-history-6": 100,
+      "t02-theatre-join-5": 56,
+      "t02-theatre-history-8": 100,
+      "t02-theatre-join-4": 136,
+      "t02-theatre-history-7": 141,
+      "t02-theatre-join-6": 70
+    },
+    "calls": 10,
+    "retrievals": 9,
+    "cache": {
+      "fetch:1": {
+        "batch_id": 1,
+        "text": "The theatre reservation office opened eight integer credit balances for its venue accounts. Credits measure booking capacity in this report; seat numbers and performance dates are separate identifiers. The opening account book and ticket responsibility register were signed together.\nThe balance of iris20 is now 48.\nThe balance of jade21 is now 64.\nThe balance of kelp22 is now 80.\nThe balance of lilac23 is now 96.\nThe balance of moss24 is now 112.\nThe balance of nettle25 is now 128.\nThe balance of oak26 is now 144.\nThe balance of pine27 is now 160.\nticket-theatre-a belongs to counter iris20.\nticket-theatre-b belongs to counter jade21.\nticket-theatre-c belongs to counter kelp22.\nticket-theatre-d belongs to counter lilac23.\nticket-theatre-e belongs to counter moss24.\nticket-theatre-f belongs to counter nettle25.\nticket-theatre-g belongs to counter oak26.\nticket-theatre-h belongs to counter pine27.",
+        "truncated": false
+      },
+      "fetch:2": {
+        "batch_id": 2,
+        "text": "The matinee office posted a set of adjustments after reconciling returned vouchers. A draft suggested adding 30 to nettle25 for a possible extra show, but that show was not approved and the draft was not posted.\nThe balance of jade21 increased by 12.\nThe balance of lilac23 decreased by 6.\nThe balance of nettle25 increased by 9.\nThe balance of pine27 decreased by 8.",
+        "truncated": false
+      },
+      "fetch:3": {
+        "batch_id": 3,
+        "text": "The rehearsal booking was settled and the supervisor accepted four entries. A proposal to debit jade21 by 22 was cancelled before posting because the rehearsal room was released. The cancellation adds no new entry and reverses no earlier entry.\nThe balance of jade21 decreased by 4.\nThe balance of lilac23 increased by 13.\nThe balance of nettle25 decreased by 3.\nThe balance of pine27 increased by 11.",
+        "truncated": false
+      },
+      "fetch:4": {
+        "batch_id": 4,
+        "text": "A licensing adjustment replaced the oak26 balance. Two responsibilities also moved before the close; these changes did not transfer any credit between accounts. The programme designer's note about page 24 is unrelated to the postings.\nticket-theatre-c was transferred to pine27, effective before this batch ended.\nticket-theatre-h was transferred to kelp22, effective before this batch ended.\nThe balance of oak26 is now 139.\nThe balance of iris20 decreased by 5.\nThe balance of kelp22 increased by 8.\nThe balance of moss24 decreased by 7.",
+        "truncated": false
+      },
+      "fetch:5": {
+        "batch_id": 5,
+        "text": "The office posted a new moss24 setting after counting the valid vouchers. The prior balance remains relevant to earlier closes. A signed handover reassigned ticket-theatre-a; the box-office staff list itself is not an ownership register.\nticket-theatre-a was transferred to lilac23, effective before this batch ended.\nThe balance of moss24 is now 118.\nThe balance of iris20 increased by 10.\nThe balance of kelp22 decreased by 2.\nThe balance of oak26 increased by 7.",
+        "truncated": false
+      },
+      "fetch:6": {
+        "batch_id": 6,
+        "text": "The touring-company settlement changed three balances. Two ticket handovers were separately approved before closing. A memo proposing a transfer of ticket-theatre-b to oak26 was held for signature and did not take effect.\nticket-theatre-d was transferred to iris20, effective before this batch ended.\nticket-theatre-f was transferred to oak26, effective before this batch ended.\nThe balance of iris20 increased by 3.\nThe balance of kelp22 increased by 14.\nThe balance of oak26 decreased by 10.",
+        "truncated": false
+      },
+      "fetch:7": {
+        "batch_id": 7,
+        "text": "A reconciled moss24 setting superseded the number entered in batch 5, from this batch onward. The voucher desk then posted three ordinary adjustments. The 55 written on a seating diagram identifies a seat and is not another credit amount.\nThe balance of moss24 is now 123.\nThe balance of jade21 decreased by 8.\nThe balance of lilac23 increased by 2.\nThe balance of pine27 decreased by 5.",
+        "truncated": false
+      },
+      "fetch:8": {
+        "batch_id": 8,
+        "text": "The extra rehearsal allocation credited to nettle25 in batch 2 was withdrawn. The 9-unit debit is posted now as its reversal, leaving all earlier batch records intact. The possible extra show remained only a draft throughout.\nThe balance of nettle25 decreased by 9.\nThe balance of jade21 increased by 6.\nThe balance of lilac23 decreased by 5.\nThe balance of pine27 increased by 4.",
+        "truncated": false
+      },
+      "fetch:9": {
+        "batch_id": 9,
+        "text": "The final rehearsal ticket changed hands before the curtain-call account close. A forecast that nettle25 might rise by 60 tomorrow was neither signed nor posted. Only the four completed entries below affect this batch's balances.\nticket-theatre-e was transferred to jade21, effective before this batch ended.\nThe balance of nettle25 increased by 16.\nThe balance of iris20 decreased by 4.\nThe balance of kelp22 increased by 5.\nThe balance of oak26 decreased by 3.",
+        "truncated": false
+      }
+    },
+    "recent": [
+      "fetch:1",
+      "fetch:2",
+      "fetch:3",
+      "fetch:4",
+      "fetch:5",
+      "fetch:6",
+      "fetch:7",
+      "fetch:8",
+      "fetch:9"
+    ],
+    "feedback": "Submitted.",
+    "completed": true
+  },
+  "trace_format": "history-live-attempt-trace.v1; enriched native evidence, not CPU replay input",
+  "calls": 22,
+  "cache_usage": {
+    "complete": true,
+    "cached_tokens": 0,
+    "calls": 22
+  },
+  "cold_cache_known": true,
+  "wall_seconds": 199.75352706899866,
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "iris20",
+                "op": "set",
+                "amount": 48,
+                "quote": "The balance of iris20 is now 48."
+              },
+              {
+                "counter": "jade21",
+                "op": "set",
+                "amount": 64,
+                "quote": "The balance of jade21 is now 64."
+              },
+              {
+                "counter": "kelp22",
+                "op": "set",
+                "amount": 80,
+                "quote": "The balance of kelp22 is now 80."
+              },
+              {
+                "counter": "lilac23",
+                "op": "set",
+                "amount": 96,
+                "quote": "The balance of lilac23 is now 96."
+              },
+              {
+                "counter": "moss24",
+                "op": "set",
+                "amount": 112,
+                "quote": "The balance of moss24 is now 112."
+              },
+              {
+                "counter": "nettle25",
+                "op": "set",
+                "amount": 128,
+                "quote": "The balance of nettle25 is now 128."
+              },
+              {
+                "counter": "oak26",
+                "op": "set",
+                "amount": 144,
+                "quote": "The balance of oak26 is now 144."
+              },
+              {
+                "counter": "pine27",
+                "op": "set",
+                "amount": 160,
+                "quote": "The balance of pine27 is now 160."
+              }
+            ],
+            "memory": "B1: iris20=48, jade21=64, kelp22=80, lilac23=96, moss24=112, nettle25=128, oak26=144, pine27=160. Tickets a-h owned by respective counters."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 8,
+            "predicted": 8,
+            "matched": 8,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 1,
+            "delivery_sha256": "ea2bdf48eb052cb8bab0010cb2bcab9232ed2705ab7610d0e5bf4091768718ce",
+            "events_sha256": "15d37078e45403808891281b4335e124b6e8f8ffd67a383f3702eac8322d953a",
+            "events_applied": 8,
+            "state_sha256": "73569dda06952cdef94ad34447b842c2a1d7cc49a0c3837c77ebb0c7f7d1b053",
+            "applied_at": "2026-10-07T07:23:29.607624+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 1,
+            "arm": "quoted",
+            "source_text_sha256": "ea2bdf48eb052cb8bab0010cb2bcab9232ed2705ab7610d0e5bf4091768718ce",
+            "raw_response_sha256": "c247f72ced25522d463d034a7ef41b1a39009d000353822341b94a41f54bad4a",
+            "state_sha256": "73569dda06952cdef94ad34447b842c2a1d7cc49a0c3837c77ebb0c7f7d1b053",
+            "previous_snapshot_sha256": null,
+            "snapshot_sha256": "46cdad371e3ebb6c2b51a59b379a9c7b635689ebe67e8258e8920a15392024f0"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 48,
+        "jade21": 64,
+        "kelp22": 80,
+        "lilac23": 96,
+        "moss24": 112,
+        "nettle25": 128,
+        "oak26": 144,
+        "pine27": 160
+      }
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "jade21",
+                "op": "add",
+                "amount": 12,
+                "quote": "The balance of jade21 increased by 12."
+              },
+              {
+                "counter": "lilac23",
+                "op": "sub",
+                "amount": 6,
+                "quote": "The balance of lilac23 decreased by 6."
+              },
+              {
+                "counter": "nettle25",
+                "op": "add",
+                "amount": 9,
+                "quote": "The balance of nettle25 increased by 9."
+              },
+              {
+                "counter": "pine27",
+                "op": "sub",
+                "amount": 8,
+                "quote": "The balance of pine27 decreased by 8."
+              }
+            ],
+            "memory": "B2: iris20=48, jade21=76, kelp22=80, lilac23=90, moss24=112, nettle25=137, oak26=144, pine27=152. Tickets a-h owned by respective counters."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 2,
+            "delivery_sha256": "fd00fa5b4ad89f0531589cab40db0543a49fff114285d01148e9a838305e6e2a",
+            "events_sha256": "fc34ce579f578a657524b994ca7d9d5fe495610734e12a3a810e2ec72be0cfa8",
+            "events_applied": 4,
+            "state_sha256": "78cb5db7491403ff274a939cc1bbc51799c87bba0854425471f177d8fc429d39",
+            "applied_at": "2026-10-07T07:23:31.788735+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 2,
+            "arm": "quoted",
+            "source_text_sha256": "fd00fa5b4ad89f0531589cab40db0543a49fff114285d01148e9a838305e6e2a",
+            "raw_response_sha256": "5ab8caf70d8c647a334701668433bb5e43759ecdf9d2a9c1c77fca762a11f8fb",
+            "state_sha256": "78cb5db7491403ff274a939cc1bbc51799c87bba0854425471f177d8fc429d39",
+            "previous_snapshot_sha256": "46cdad371e3ebb6c2b51a59b379a9c7b635689ebe67e8258e8920a15392024f0",
+            "snapshot_sha256": "e8e3bc42a76a54673c8581d51edf7a13a1e80dfd46dfb9792777b1be92c267e2"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 48,
+        "jade21": 76,
+        "kelp22": 80,
+        "lilac23": 90,
+        "moss24": 112,
+        "nettle25": 137,
+        "oak26": 144,
+        "pine27": 152
+      }
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "jade21",
+                "op": "sub",
+                "amount": 4,
+                "quote": "The balance of jade21 decreased by 4."
+              },
+              {
+                "counter": "lilac23",
+                "op": "add",
+                "amount": 13,
+                "quote": "The balance of lilac23 increased by 13."
+              },
+              {
+                "counter": "nettle25",
+                "op": "sub",
+                "amount": 3,
+                "quote": "The balance of nettle25 decreased by 3."
+              },
+              {
+                "counter": "pine27",
+                "op": "add",
+                "amount": 11,
+                "quote": "The balance of pine27 increased by 11."
+              }
+            ],
+            "memory": "B3: iris20=48, jade21=72, kelp22=80, lilac23=103, moss24=112, nettle25=134, oak26=144, pine27=163. Tickets a-h owned by respective counters."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 3,
+            "delivery_sha256": "d1a14a355a0ffde47691fe9fe52d3e7f07bd00d401ed6865a83efbda31665091",
+            "events_sha256": "3f58f572f5ba42c0fa16eaaa895d221591d290725f9457043115fe8d7eddf95f",
+            "events_applied": 4,
+            "state_sha256": "a424f0647b01ca82bede44d55d4eac8b3be8a2e4e108b0a96ec443095c04cf97",
+            "applied_at": "2026-10-07T07:23:33.970541+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 3,
+            "arm": "quoted",
+            "source_text_sha256": "d1a14a355a0ffde47691fe9fe52d3e7f07bd00d401ed6865a83efbda31665091",
+            "raw_response_sha256": "80af75441557fc52e765d14b3f1776233b29196a0cd43586ad116af86365a091",
+            "state_sha256": "a424f0647b01ca82bede44d55d4eac8b3be8a2e4e108b0a96ec443095c04cf97",
+            "previous_snapshot_sha256": "e8e3bc42a76a54673c8581d51edf7a13a1e80dfd46dfb9792777b1be92c267e2",
+            "snapshot_sha256": "0e6b7bea37f1aba1c4871da351b7f50224950ab0e40af7ffe1cc4b0fd6bd864a"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 48,
+        "jade21": 72,
+        "kelp22": 80,
+        "lilac23": 103,
+        "moss24": 112,
+        "nettle25": 134,
+        "oak26": 144,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "oak26",
+                "op": "set",
+                "amount": 139,
+                "quote": "The balance of oak26 is now 139."
+              },
+              {
+                "counter": "iris20",
+                "op": "sub",
+                "amount": 5,
+                "quote": "The balance of iris20 decreased by 5."
+              },
+              {
+                "counter": "kelp22",
+                "op": "add",
+                "amount": 8,
+                "quote": "The balance of kelp22 increased by 8."
+              },
+              {
+                "counter": "moss24",
+                "op": "sub",
+                "amount": 7,
+                "quote": "The balance of moss24 decreased by 7."
+              }
+            ],
+            "memory": "B4: iris20=43, jade21=72, kelp22=88, lilac23=103, moss24=105, nettle25=134, oak26=139, pine27=163. Tickets: c->pine27, h->kelp22."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 4,
+            "delivery_sha256": "89d1f0b1623fdc0b27a26ad15b0a21be0a13b5fe988116f93331d1be726f15a8",
+            "events_sha256": "695f30c9f8109995ca5b68dd94a45caf7f9bad6606fc3bca30137f597b131654",
+            "events_applied": 4,
+            "state_sha256": "19e9242c142abc41ae8c007cad610ef808e52fdd6bb21ada2da67c475b255995",
+            "applied_at": "2026-10-07T07:23:36.195343+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 4,
+            "arm": "quoted",
+            "source_text_sha256": "89d1f0b1623fdc0b27a26ad15b0a21be0a13b5fe988116f93331d1be726f15a8",
+            "raw_response_sha256": "40203ef816004d0c4198623682b4d8feab326f63f19720d99c97c1b0445c7c70",
+            "state_sha256": "19e9242c142abc41ae8c007cad610ef808e52fdd6bb21ada2da67c475b255995",
+            "previous_snapshot_sha256": "0e6b7bea37f1aba1c4871da351b7f50224950ab0e40af7ffe1cc4b0fd6bd864a",
+            "snapshot_sha256": "8cc782af785e93619d959a95100443ecaba487e926b62cd9a881b9a63ed19f05"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 43,
+        "jade21": 72,
+        "kelp22": 88,
+        "lilac23": 103,
+        "moss24": 105,
+        "nettle25": 134,
+        "oak26": 139,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 5,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "moss24",
+                "op": "set",
+                "amount": 118,
+                "quote": "The balance of moss24 is now 118."
+              },
+              {
+                "counter": "iris20",
+                "op": "add",
+                "amount": 10,
+                "quote": "The balance of iris20 increased by 10."
+              },
+              {
+                "counter": "kelp22",
+                "op": "sub",
+                "amount": 2,
+                "quote": "The balance of kelp22 decreased by 2."
+              },
+              {
+                "counter": "oak26",
+                "op": "add",
+                "amount": 7,
+                "quote": "The balance of oak26 increased by 7."
+              }
+            ],
+            "memory": "B5: iris20=53, jade21=72, kelp22=86, lilac23=103, moss24=118, nettle25=134, oak26=146, pine27=163. Tickets: c->pine27, h->kelp22, a->lilac23."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 5,
+            "delivery_sha256": "40f4dd71074b08bcf14a5e3b9b1358e0a1a2296d8b0c714b4b8f9cbe3a8abed7",
+            "events_sha256": "b133493467faeab57b4220639eaef42e98e4a51298a5296d1e21fb8d07c420ac",
+            "events_applied": 4,
+            "state_sha256": "60b3acc29d34040ebe3d4cf71befaa3f6b6aee7ce1f436b633357c1a39b1d47f",
+            "applied_at": "2026-10-07T07:23:38.543364+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 5,
+            "arm": "quoted",
+            "source_text_sha256": "40f4dd71074b08bcf14a5e3b9b1358e0a1a2296d8b0c714b4b8f9cbe3a8abed7",
+            "raw_response_sha256": "6ae1e8ea44430a54549e493884c3897f354022ad6a1f4f8017738bece6a9f909",
+            "state_sha256": "60b3acc29d34040ebe3d4cf71befaa3f6b6aee7ce1f436b633357c1a39b1d47f",
+            "previous_snapshot_sha256": "8cc782af785e93619d959a95100443ecaba487e926b62cd9a881b9a63ed19f05",
+            "snapshot_sha256": "aaa3d52585799efaa35a76b95488ee163cbb283332fb6cdd4b9b821374a05214"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 53,
+        "jade21": 72,
+        "kelp22": 86,
+        "lilac23": 103,
+        "moss24": 118,
+        "nettle25": 134,
+        "oak26": 146,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 6,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "iris20",
+                "op": "add",
+                "amount": 3,
+                "quote": "The balance of iris20 increased by 3."
+              },
+              {
+                "counter": "kelp22",
+                "op": "add",
+                "amount": 14,
+                "quote": "The balance of kelp22 increased by 14."
+              },
+              {
+                "counter": "oak26",
+                "op": "sub",
+                "amount": 10,
+                "quote": "The balance of oak26 decreased by 10."
+              }
+            ],
+            "memory": "B6: iris20=56, jade21=72, kelp22=100, lilac23=103, moss24=118, nettle25=134, oak26=136, pine27=163. Tickets: c->pine27, h->kelp22, a->lilac23, d->iris20, f->oak26."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 6,
+            "delivery_sha256": "c535f6c1e25297a4de8c19052de5fe8d95985fa7bde83e202eca06133af33367",
+            "events_sha256": "f08d0477c52dc568f61aac5df4310c37178ddf3ca6977e5936665d50e47019e4",
+            "events_applied": 3,
+            "state_sha256": "9005b44d3f17c84da150085ef822a19b7b76e0cc8e6c9d961f3c90eeb7e7316b",
+            "applied_at": "2026-10-07T07:23:40.652281+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 6,
+            "arm": "quoted",
+            "source_text_sha256": "c535f6c1e25297a4de8c19052de5fe8d95985fa7bde83e202eca06133af33367",
+            "raw_response_sha256": "532b9a9583b57874f8912c2016dfd2bd8f9af3f160fd890d68210295368c2397",
+            "state_sha256": "9005b44d3f17c84da150085ef822a19b7b76e0cc8e6c9d961f3c90eeb7e7316b",
+            "previous_snapshot_sha256": "aaa3d52585799efaa35a76b95488ee163cbb283332fb6cdd4b9b821374a05214",
+            "snapshot_sha256": "1d8010b6929de1e84ad8403dd1f3d6380f14edcebcdf550a41600ba944a1ed82"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 56,
+        "jade21": 72,
+        "kelp22": 100,
+        "lilac23": 103,
+        "moss24": 118,
+        "nettle25": 134,
+        "oak26": 136,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 7,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "moss24",
+                "op": "set",
+                "amount": 123,
+                "quote": "The balance of moss24 is now 123."
+              },
+              {
+                "counter": "jade21",
+                "op": "sub",
+                "amount": 8,
+                "quote": "The balance of jade21 decreased by 8."
+              },
+              {
+                "counter": "lilac23",
+                "op": "add",
+                "amount": 2,
+                "quote": "The balance of lilac23 increased by 2."
+              },
+              {
+                "counter": "pine27",
+                "op": "sub",
+                "amount": 5,
+                "quote": "The balance of pine27 decreased by 5."
+              }
+            ],
+            "memory": "B7: iris20=56, jade21=64, kelp22=100, lilac23=105, moss24=123, nettle25=134, oak26=136, pine27=158. Tickets: c->pine27, h->kelp22, a->lilac23, d->iris20, f->oak26."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 7,
+            "delivery_sha256": "2560d1e63e34d9c86df1fdc7c9b022bc7521788f3599c460ab3c65f47976a41b",
+            "events_sha256": "02b87678a0635cf978670e36d0efb8fb18c1231de65dfb36ee3cc6185dc0e16b",
+            "events_applied": 4,
+            "state_sha256": "26f7f330fe27bc8f92bf9bc2806b06eb82fb4a15199e41da125ef03a9e1df65b",
+            "applied_at": "2026-10-07T07:23:43.033162+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 7,
+            "arm": "quoted",
+            "source_text_sha256": "2560d1e63e34d9c86df1fdc7c9b022bc7521788f3599c460ab3c65f47976a41b",
+            "raw_response_sha256": "66367c9345a61dea442ace2ab3476b4ccb23c22433b4a70e8dd1659e3c9067d7",
+            "state_sha256": "26f7f330fe27bc8f92bf9bc2806b06eb82fb4a15199e41da125ef03a9e1df65b",
+            "previous_snapshot_sha256": "1d8010b6929de1e84ad8403dd1f3d6380f14edcebcdf550a41600ba944a1ed82",
+            "snapshot_sha256": "9d8305e9e0bdc6b7bf72fbf5001f2e0134b567e0fc97e5751c82d893fa4d08f9"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 56,
+        "jade21": 64,
+        "kelp22": 100,
+        "lilac23": 105,
+        "moss24": 123,
+        "nettle25": 134,
+        "oak26": 136,
+        "pine27": 158
+      }
+    },
+    {
+      "batch_id": 8,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "nettle25",
+                "op": "sub",
+                "amount": 9,
+                "quote": "The balance of nettle25 decreased by 9."
+              },
+              {
+                "counter": "jade21",
+                "op": "add",
+                "amount": 6,
+                "quote": "The balance of jade21 increased by 6."
+              },
+              {
+                "counter": "lilac23",
+                "op": "sub",
+                "amount": 5,
+                "quote": "The balance of lilac23 decreased by 5."
+              },
+              {
+                "counter": "pine27",
+                "op": "add",
+                "amount": 4,
+                "quote": "The balance of pine27 increased by 4."
+              }
+            ],
+            "memory": "B8: iris20=56, jade21=70, kelp22=100, lilac23=100, moss24=123, nettle25=125, oak26=136, pine27=162. Tickets: c->pine27, h->kelp22, a->lilac23, d->iris20, f->oak26."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 8,
+            "delivery_sha256": "1672260d2908a1a5cd1b89fa8543107dc4dae2dd7205b0ad6e077c7fc3fe213c",
+            "events_sha256": "568f424d888bc98c158855c39fd2d744d9fa8d1951e0fdb6ac3b95bad63a8bc4",
+            "events_applied": 4,
+            "state_sha256": "8e7365a429ff4d166d6eaf1a0428e0b1ce3a95178b595167325bdbf6d3bb8f90",
+            "applied_at": "2026-10-07T07:23:45.445806+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 8,
+            "arm": "quoted",
+            "source_text_sha256": "1672260d2908a1a5cd1b89fa8543107dc4dae2dd7205b0ad6e077c7fc3fe213c",
+            "raw_response_sha256": "65737a57671c2483f1707d9f131adbe63eed1e41296037e5f4822a8eebc30aad",
+            "state_sha256": "8e7365a429ff4d166d6eaf1a0428e0b1ce3a95178b595167325bdbf6d3bb8f90",
+            "previous_snapshot_sha256": "9d8305e9e0bdc6b7bf72fbf5001f2e0134b567e0fc97e5751c82d893fa4d08f9",
+            "snapshot_sha256": "aba8b6487024e02bfc49d84be709071ba128cbeab6bb69572d45ef6da299ea82"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 56,
+        "jade21": 70,
+        "kelp22": 100,
+        "lilac23": 100,
+        "moss24": 123,
+        "nettle25": 125,
+        "oak26": 136,
+        "pine27": 162
+      }
+    },
+    {
+      "batch_id": 9,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "nettle25",
+                "op": "add",
+                "amount": 16,
+                "quote": "The balance of nettle25 increased by 16."
+              },
+              {
+                "counter": "iris20",
+                "op": "sub",
+                "amount": 4,
+                "quote": "The balance of iris20 decreased by 4."
+              },
+              {
+                "counter": "kelp22",
+                "op": "add",
+                "amount": 5,
+                "quote": "The balance of kelp22 increased by 5."
+              },
+              {
+                "counter": "oak26",
+                "op": "sub",
+                "amount": 3,
+                "quote": "The balance of oak26 decreased by 3."
+              }
+            ],
+            "memory": "B9: iris20=52, jade21=70, kelp22=105, lilac23=100, moss24=123, nettle25=141, oak26=133, pine27=162. Tickets: c->pine27, h->kelp22, a->lilac23, d->iris20, f->oak26, e->jade21."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 9,
+            "delivery_sha256": "4b04142b814255c9701fa4d0d68a27e32b5efbf1a9d5ac701d3863ada7ce1042",
+            "events_sha256": "5e21c1adb38eb729cc4a70bd79c40bd924ff8913a981c0fcceb56f975afb66ae",
+            "events_applied": 4,
+            "state_sha256": "e45f1ced54dd6e1e43e4a3fb8e8ae46ce8009522b4c953fdcb8dc051d866c1ec",
+            "applied_at": "2026-10-07T07:23:47.901582+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 9,
+            "arm": "quoted",
+            "source_text_sha256": "4b04142b814255c9701fa4d0d68a27e32b5efbf1a9d5ac701d3863ada7ce1042",
+            "raw_response_sha256": "33b2253a3785f8cc0e9d632fa8817da49029e029a20cc8757aeb9ea44976ebf4",
+            "state_sha256": "e45f1ced54dd6e1e43e4a3fb8e8ae46ce8009522b4c953fdcb8dc051d866c1ec",
+            "previous_snapshot_sha256": "aba8b6487024e02bfc49d84be709071ba128cbeab6bb69572d45ef6da299ea82",
+            "snapshot_sha256": "12ea1e6b925707aec0bb41e8da5ca588e7eb843e47e9abb24bae039fe81c2c6b"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 52,
+        "jade21": 70,
+        "kelp22": 105,
+        "lilac23": 100,
+        "moss24": 123,
+        "nettle25": 141,
+        "oak26": 133,
+        "pine27": 162
+      }
+    },
+    {
+      "batch_id": 10,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "iris20",
+                "op": "add",
+                "amount": 36,
+                "quote": "The balance of iris20 increased by 36."
+              },
+              {
+                "counter": "jade21",
+                "op": "add",
+                "amount": 43,
+                "quote": "The balance of jade21 increased by 43."
+              },
+              {
+                "counter": "kelp22",
+                "op": "add",
+                "amount": 31,
+                "quote": "The balance of kelp22 increased by 31."
+              },
+              {
+                "counter": "lilac23",
+                "op": "add",
+                "amount": 45,
+                "quote": "The balance of lilac23 increased by 45."
+              }
+            ],
+            "memory": "B10: iris20=88, jade21=113, kelp22=136, lilac23=145, moss24=123, nettle25=141, oak26=133, pine27=162. Tickets: c->pine27, h->kelp22, a->lilac23, d->iris20, f->oak26, e->jade21."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 10,
+            "delivery_sha256": "3d52113e632f4fee4982a52e8829995ed35c471c6179d92cd65d0db549878e2c",
+            "events_sha256": "061e75de1e98bf41fb94f985a2848e3699a6e87e19a29a7dcc8f2ad68fba6f8e",
+            "events_applied": 4,
+            "state_sha256": "97c692718f6f2d22d9df117f2d582761777ce3ab52873e1d89880afa2f991f40",
+            "applied_at": "2026-10-07T07:23:50.438033+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 10,
+            "arm": "quoted",
+            "source_text_sha256": "3d52113e632f4fee4982a52e8829995ed35c471c6179d92cd65d0db549878e2c",
+            "raw_response_sha256": "239d05cc08b356020697d78c4fd1ae0b8f572a4c020e1a64d31966cd7c1ce64a",
+            "state_sha256": "97c692718f6f2d22d9df117f2d582761777ce3ab52873e1d89880afa2f991f40",
+            "previous_snapshot_sha256": "12ea1e6b925707aec0bb41e8da5ca588e7eb843e47e9abb24bae039fe81c2c6b",
+            "snapshot_sha256": "eed928bd1ddb791c5c7e74cb0eafdbdc99f46f05578be4d2f7d624db1083ebda"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 88,
+        "jade21": 113,
+        "kelp22": 136,
+        "lilac23": 145,
+        "moss24": 123,
+        "nettle25": 141,
+        "oak26": 133,
+        "pine27": 162
+      }
+    },
+    {
+      "batch_id": 11,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "moss24",
+                "op": "add",
+                "amount": 38,
+                "quote": "The balance of moss24 increased by 38."
+              },
+              {
+                "counter": "nettle25",
+                "op": "add",
+                "amount": 47,
+                "quote": "The balance of nettle25 increased by 47."
+              },
+              {
+                "counter": "oak26",
+                "op": "add",
+                "amount": 34,
+                "quote": "The balance of oak26 increased by 34."
+              },
+              {
+                "counter": "pine27",
+                "op": "add",
+                "amount": 42,
+                "quote": "The balance of pine27 increased by 42."
+              }
+            ],
+            "memory": "B11: iris20=88, jade21=113, kelp22=136, lilac23=145, moss24=161, nettle25=188, oak26=167, pine27=204. Tickets: c->pine27, h->kelp22, a->lilac23, d->iris20, f->oak26, e->jade21. Reviews: t1->h, t2->c, t3->a, t4->f."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 11,
+            "delivery_sha256": "1d004a6003bae40159c7c10ef608e46b81d492c70ae28ab3cf3a625fefea8f08",
+            "events_sha256": "dae69b9a6babdb3021a795c29f246eb7ffa5ffabf793c9306d9c890081b1ffb0",
+            "events_applied": 4,
+            "state_sha256": "0f7f1ed62567af2b5619a371e92c248b443fb47c3e8e3bc03882646ea0a8d196",
+            "applied_at": "2026-10-07T07:23:53.104263+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 11,
+            "arm": "quoted",
+            "source_text_sha256": "1d004a6003bae40159c7c10ef608e46b81d492c70ae28ab3cf3a625fefea8f08",
+            "raw_response_sha256": "d0205c7a04fdcc0499cb855b0ea568a7c3dee9ed21cce56eb10054d39f6f4ac0",
+            "state_sha256": "0f7f1ed62567af2b5619a371e92c248b443fb47c3e8e3bc03882646ea0a8d196",
+            "previous_snapshot_sha256": "eed928bd1ddb791c5c7e74cb0eafdbdc99f46f05578be4d2f7d624db1083ebda",
+            "snapshot_sha256": "79e6d5579b3d2f94e6aabac6a3585c26c818d708b17616dd8e059d0b3733a8ed"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 88,
+        "jade21": 113,
+        "kelp22": 136,
+        "lilac23": 145,
+        "moss24": 161,
+        "nettle25": 188,
+        "oak26": 167,
+        "pine27": 204
+      }
+    },
+    {
+      "batch_id": 12,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "jade21",
+                "op": "sub",
+                "amount": 2,
+                "quote": "The balance of jade21 decreased by 2."
+              },
+              {
+                "counter": "nettle25",
+                "op": "add",
+                "amount": 4,
+                "quote": "The balance of nettle25 increased by 4."
+              },
+              {
+                "counter": "oak26",
+                "op": "add",
+                "amount": 1,
+                "quote": "The balance of oak26 increased by 1."
+              }
+            ],
+            "memory": "B12: iris20=88, jade21=111, kelp22=136, lilac23=145, moss24=161, nettle25=192, oak26=168, pine27=204. Tickets: c->pine27, h->kelp22, a->lilac23, d->iris20, f->oak26, e->jade21. Reviews: t1->h, t2->c, t3->a, t4->f, t5->d, t6->e, t7->g, t8->b."
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 12,
+            "delivery_sha256": "fd62258b411b478d7df5bf3fe32b56c8b2b8e9bef333908e7683377d06af6f74",
+            "events_sha256": "a445811bc200798b3d43b3ae96a6a5ae1fc3835ae52e25cf9b9e83b825dc36fd",
+            "events_applied": 3,
+            "state_sha256": "f851ca1cdad63fa565735fd3aa902d118a99d660ca04ccf4d37b1d6bebc8d52c",
+            "applied_at": "2026-10-07T07:23:55.623925+00:00",
+            "replayed": false
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 12,
+            "arm": "quoted",
+            "source_text_sha256": "fd62258b411b478d7df5bf3fe32b56c8b2b8e9bef333908e7683377d06af6f74",
+            "raw_response_sha256": "90f74c63f74338dea8841fe7840315e0947051d8640e23b4376cbd3cd1a739d8",
+            "state_sha256": "f851ca1cdad63fa565735fd3aa902d118a99d660ca04ccf4d37b1d6bebc8d52c",
+            "previous_snapshot_sha256": "79e6d5579b3d2f94e6aabac6a3585c26c818d708b17616dd8e059d0b3733a8ed",
+            "snapshot_sha256": "46ea81d26b0922c505b20fb72ea7cec2f8eb03c879b910ff0ade27a30631cef9"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 88,
+        "jade21": 111,
+        "kelp22": 136,
+        "lilac23": 145,
+        "moss24": 161,
+        "nettle25": 192,
+        "oak26": 168,
+        "pine27": 204
+      }
+    }
+  ],
+  "refusals": [],
+  "checkpoint_metrics_complete": true,
+  "all_checkpoint_states_exact": true,
+  "final_state_exact": true,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Historical-state retrieval development engine; task retains its own authored/generated provenance; no speed claim.",
+  "artifacts": {
+    "calls.jsonl": {
+      "path": "calls.jsonl",
+      "sha256": "e4ebb0eae86088e8f7d852bf1393af80851c3eba99a0733d9792a2bd475b73bb"
+    },
+    "trace.json": {
+      "path": "trace.json",
+      "sha256": "10bf46dce29fe68ac26008491e36df17d6bebd65432d01a9b53dea559ce78ec7"
+    },
+    "checkpoint.json": {
+      "path": "checkpoint.json",
+      "sha256": "9f7bc27532b3a647f50d6404a7b82b579a01264046322aaca5d2680d9c3bfced"
+    },
+    "answer-session.json": {
+      "path": "answer-session.json",
+      "sha256": "95829e2ace87fb353c26f0f61885a99a6a7b9caab0eb48ac2932af08370262fe"
+    },
+    "retrieval.jsonl": {
+      "path": "retrieval.jsonl",
+      "sha256": "b3c22dcd2c8154ea3b333f544a060f9fbb151fc6d23bb29991bdfab6b60703d2"
+    },
+    "snapshots/batch-1.json": {
+      "path": "snapshots/batch-1.json",
+      "sha256": "46cdad371e3ebb6c2b51a59b379a9c7b635689ebe67e8258e8920a15392024f0"
+    },
+    "snapshots/batch-10.json": {
+      "path": "snapshots/batch-10.json",
+      "sha256": "eed928bd1ddb791c5c7e74cb0eafdbdc99f46f05578be4d2f7d624db1083ebda"
+    },
+    "snapshots/batch-11.json": {
+      "path": "snapshots/batch-11.json",
+      "sha256": "79e6d5579b3d2f94e6aabac6a3585c26c818d708b17616dd8e059d0b3733a8ed"
+    },
+    "snapshots/batch-12.json": {
+      "path": "snapshots/batch-12.json",
+      "sha256": "46ea81d26b0922c505b20fb72ea7cec2f8eb03c879b910ff0ade27a30631cef9"
+    },
+    "snapshots/batch-2.json": {
+      "path": "snapshots/batch-2.json",
+      "sha256": "e8e3bc42a76a54673c8581d51edf7a13a1e80dfd46dfb9792777b1be92c267e2"
+    },
+    "snapshots/batch-3.json": {
+      "path": "snapshots/batch-3.json",
+      "sha256": "0e6b7bea37f1aba1c4871da351b7f50224950ab0e40af7ffe1cc4b0fd6bd864a"
+    },
+    "snapshots/batch-4.json": {
+      "path": "snapshots/batch-4.json",
+      "sha256": "8cc782af785e93619d959a95100443ecaba487e926b62cd9a881b9a63ed19f05"
+    },
+    "snapshots/batch-5.json": {
+      "path": "snapshots/batch-5.json",
+      "sha256": "aaa3d52585799efaa35a76b95488ee163cbb283332fb6cdd4b9b821374a05214"
+    },
+    "snapshots/batch-6.json": {
+      "path": "snapshots/batch-6.json",
+      "sha256": "1d8010b6929de1e84ad8403dd1f3d6380f14edcebcdf550a41600ba944a1ed82"
+    },
+    "snapshots/batch-7.json": {
+      "path": "snapshots/batch-7.json",
+      "sha256": "9d8305e9e0bdc6b7bf72fbf5001f2e0134b567e0fc97e5751c82d893fa4d08f9"
+    },
+    "snapshots/batch-8.json": {
+      "path": "snapshots/batch-8.json",
+      "sha256": "aba8b6487024e02bfc49d84be709071ba128cbeab6bb69572d45ef6da299ea82"
+    },
+    "snapshots/batch-9.json": {
+      "path": "snapshots/batch-9.json",
+      "sha256": "12ea1e6b925707aec0bb41e8da5ca588e7eb843e47e9abb24bae039fe81c2c6b"
+    }
+  },
+  "snapshot_count": 12
+}

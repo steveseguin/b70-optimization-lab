@@ -1,0 +1,1004 @@
+{
+  "schema": "history-live-trial.v1",
+  "protocol": "historical-state-development-v1",
+  "document_id": "t02-theatre",
+  "case_id": "t02-theatre",
+  "pair_id": null,
+  "variant": "authored-temporal",
+  "arm": "archive",
+  "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+  "source_sha256": "45ae96b4c80dca9a14defddf1bf33ae895e47fed9848101dbdc9ae2cb2be666f",
+  "adjudication_sha256": "e8bee704ebcdf69635205eefe949884bbb096d724fbb01646e046c836b461b1f",
+  "source_code_sha256": {
+    "diagnostics.py": "6bab40287c483b9cfc41d8c042e88c27989144cb5e36de834747a4eb8b8181d6",
+    "tasks.py": "e15dd0f9e64521b6b143bc872ea17e1f08b27ef5530932b929f9e46d4ec6433f",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "snapshots.py": "73eeb45e3af863bc8a47b5c4e56f930f57db5955cbb2dcb05b12aa7acf6f0aeb",
+    "live.py": "cf2530192e084eb51101ec69a4f918f787dacea0e5b96fd96be459e390a3215a",
+    "answers.py": "bc77826918033f59c29add697a3ae8be2491eb4ed59694040d432ebfb382f0fe"
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "e9d0d11a2f17640f9877c1d2e567528d8ced2226340a03b10f3e45842fd8e4d1"
+  },
+  "resumed": false,
+  "retrieval_mode": "history",
+  "context_limit_utf8_bytes": 32768,
+  "memory_limit_utf8_bytes": 6553,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "max_ingestion_attempts": 3,
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "history_policy": "Immutable actual accepted state after each batch; no oracle correction",
+  "status": "completed",
+  "failure": null,
+  "failure_kind": null,
+  "processed_batches": 12,
+  "ingestion_complete": true,
+  "final_answer_complete": true,
+  "protocol_complete": true,
+  "score": {
+    "asked": 24,
+    "correct": 19,
+    "valid": true,
+    "answer_types_valid": true,
+    "exact_question_coverage": true,
+    "invalid_type_ids": [],
+    "missing_ids": [],
+    "unknown_ids": [],
+    "by_category": {
+      "current": {
+        "asked": 8,
+        "correct": 8
+      },
+      "history": {
+        "asked": 8,
+        "correct": 8
+      },
+      "join": {
+        "asked": 8,
+        "correct": 3
+      }
+    },
+    "by_answer_type": {
+      "int": {
+        "asked": 24,
+        "correct": 19
+      }
+    }
+  },
+  "answers": {
+    "t02-theatre-current-1": 88,
+    "t02-theatre-current-2": 111,
+    "t02-theatre-current-3": 136,
+    "t02-theatre-current-4": 145,
+    "t02-theatre-current-5": 161,
+    "t02-theatre-current-6": 192,
+    "t02-theatre-current-7": 168,
+    "t02-theatre-current-8": 204,
+    "t02-theatre-history-2": 76,
+    "t02-theatre-history-1": 144,
+    "t02-theatre-history-3": 118,
+    "t02-theatre-join-1": 152,
+    "t02-theatre-join-7": 144,
+    "t02-theatre-join-8": 64,
+    "t02-theatre-history-4": 43,
+    "t02-theatre-join-2": 88,
+    "t02-theatre-history-5": 163,
+    "t02-theatre-join-3": 56,
+    "t02-theatre-history-6": 100,
+    "t02-theatre-history-7": 141,
+    "t02-theatre-history-8": 100,
+    "t02-theatre-join-4": 125,
+    "t02-theatre-join-5": 105,
+    "t02-theatre-join-6": 123
+  },
+  "answer_protocol": {
+    "answers": {
+      "t02-theatre-current-1": 88,
+      "t02-theatre-current-2": 111,
+      "t02-theatre-current-3": 136,
+      "t02-theatre-current-4": 145,
+      "t02-theatre-current-5": 161,
+      "t02-theatre-current-6": 192,
+      "t02-theatre-current-7": 168,
+      "t02-theatre-current-8": 204,
+      "t02-theatre-history-2": 76,
+      "t02-theatre-history-1": 144,
+      "t02-theatre-history-3": 118,
+      "t02-theatre-join-1": 152,
+      "t02-theatre-join-7": 144,
+      "t02-theatre-join-8": 64,
+      "t02-theatre-history-4": 43,
+      "t02-theatre-join-2": 88,
+      "t02-theatre-history-5": 163,
+      "t02-theatre-join-3": 56,
+      "t02-theatre-history-6": 100,
+      "t02-theatre-history-7": 141,
+      "t02-theatre-history-8": 100,
+      "t02-theatre-join-4": 125,
+      "t02-theatre-join-5": 105,
+      "t02-theatre-join-6": 123
+    },
+    "calls": 11,
+    "retrievals": 9,
+    "cache": {
+      "state_at:{\"batch_id\":2,\"counters\":null}": {
+        "action": "state_at",
+        "batch_id": 2,
+        "state": {
+          "iris20": 48,
+          "jade21": 76,
+          "kelp22": 80,
+          "lilac23": 90,
+          "moss24": 112,
+          "nettle25": 137,
+          "oak26": 144,
+          "pine27": 152
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 2,
+          "previous_snapshot_sha256": "aa00c9ddda04b6e40083160c228bd2c0d38f004aee155a845aeb9010f2d9e9f6",
+          "raw_response_sha256": "1246e258487226d9862698cf356586d03fb47a85d189be3c9631061d64269695",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "fd00fa5b4ad89f0531589cab40db0543a49fff114285d01148e9a838305e6e2a",
+          "state_sha256": "78cb5db7491403ff274a939cc1bbc51799c87bba0854425471f177d8fc429d39",
+          "snapshot_sha256": "98016beefd5e547858878b3628c7cda7ec47e0545bdf868048d5246452955c0f"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      },
+      "state_at:{\"batch_id\":3,\"counters\":[\"iris20\",\"jade21\",\"kelp22\",\"lilac23\",\"moss24\",\"nettle25\",\"oak26\",\"pine27\"]}": {
+        "action": "state_at",
+        "batch_id": 3,
+        "state": {
+          "iris20": 48,
+          "jade21": 72,
+          "kelp22": 80,
+          "lilac23": 103,
+          "moss24": 112,
+          "nettle25": 134,
+          "oak26": 144,
+          "pine27": 163
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 3,
+          "previous_snapshot_sha256": "98016beefd5e547858878b3628c7cda7ec47e0545bdf868048d5246452955c0f",
+          "raw_response_sha256": "641fee2ba15a2ba309561ac92f6bf7831ecc02eb4d7314a2959be3865d362539",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "d1a14a355a0ffde47691fe9fe52d3e7f07bd00d401ed6865a83efbda31665091",
+          "state_sha256": "a424f0647b01ca82bede44d55d4eac8b3be8a2e4e108b0a96ec443095c04cf97",
+          "snapshot_sha256": "afa84b291208f8cbc2b5c5d83369c109520400b3103de71e756d315d29c5c67f"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      },
+      "state_at:{\"batch_id\":5,\"counters\":[\"moss24\"]}": {
+        "action": "state_at",
+        "batch_id": 5,
+        "state": {
+          "moss24": 118
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 5,
+          "previous_snapshot_sha256": "1b2fb413b3484fd2394df060d52980608875e44d7cb9e79a6765cd7bfe2abd0a",
+          "raw_response_sha256": "f8649704a038be6056981fa0192cad52f518fe1409d34654c0d5c9e1ee133927",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "40f4dd71074b08bcf14a5e3b9b1358e0a1a2296d8b0c714b4b8f9cbe3a8abed7",
+          "state_sha256": "60b3acc29d34040ebe3d4cf71befaa3f6b6aee7ce1f436b633357c1a39b1d47f",
+          "snapshot_sha256": "951f4f5e1b7f447e4ed302e1a0565fb856a2a468f5dc93ba45800ab1d951cbfd"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      },
+      "fetch:1": {
+        "batch_id": 1,
+        "text": "The theatre reservation office opened eight integer credit balances for its venue accounts. Credits measure booking capacity in this report; seat numbers and performance dates are separate identifiers. The opening account book and ticket responsibility register were signed together.\nThe balance of iris20 is now 48.\nThe balance of jade21 is now 64.\nThe balance of kelp22 is now 80.\nThe balance of lilac23 is now 96.\nThe balance of moss24 is now 112.\nThe balance of nettle25 is now 128.\nThe balance of oak26 is now 144.\nThe balance of pine27 is now 160.\nticket-theatre-a belongs to counter iris20.\nticket-theatre-b belongs to counter jade21.\nticket-theatre-c belongs to counter kelp22.\nticket-theatre-d belongs to counter lilac23.\nticket-theatre-e belongs to counter moss24.\nticket-theatre-f belongs to counter nettle25.\nticket-theatre-g belongs to counter oak26.\nticket-theatre-h belongs to counter pine27.",
+        "truncated": false
+      },
+      "state_at:{\"batch_id\":4,\"counters\":[\"iris20\",\"kelp22\"]}": {
+        "action": "state_at",
+        "batch_id": 4,
+        "state": {
+          "iris20": 43,
+          "kelp22": 88
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 4,
+          "previous_snapshot_sha256": "afa84b291208f8cbc2b5c5d83369c109520400b3103de71e756d315d29c5c67f",
+          "raw_response_sha256": "a75aa7d2778a2d658479862382f3eb9415e9aa67d0455f6da40d913683894037",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "89d1f0b1623fdc0b27a26ad15b0a21be0a13b5fe988116f93331d1be726f15a8",
+          "state_sha256": "19e9242c142abc41ae8c007cad610ef808e52fdd6bb21ada2da67c475b255995",
+          "snapshot_sha256": "1b2fb413b3484fd2394df060d52980608875e44d7cb9e79a6765cd7bfe2abd0a"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      },
+      "state_at:{\"batch_id\":6,\"counters\":[\"iris20\",\"pine27\"]}": {
+        "action": "state_at",
+        "batch_id": 6,
+        "state": {
+          "iris20": 56,
+          "pine27": 163
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 6,
+          "previous_snapshot_sha256": "951f4f5e1b7f447e4ed302e1a0565fb856a2a468f5dc93ba45800ab1d951cbfd",
+          "raw_response_sha256": "e4b6bf05622ab7b548ab264a9c2bb9b52ec4e4efe704d8942d1e9429d742b518",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "c535f6c1e25297a4de8c19052de5fe8d95985fa7bde83e202eca06133af33367",
+          "state_sha256": "9005b44d3f17c84da150085ef822a19b7b76e0cc8e6c9d961f3c90eeb7e7316b",
+          "snapshot_sha256": "b677fc08c833216428ee090b42d20a255086fcdfc32096d853d735e7c9e8564c"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      },
+      "state_at:{\"batch_id\":7,\"counters\":[\"kelp22\",\"lilac23\"]}": {
+        "action": "state_at",
+        "batch_id": 7,
+        "state": {
+          "kelp22": 100,
+          "lilac23": 105
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 7,
+          "previous_snapshot_sha256": "b677fc08c833216428ee090b42d20a255086fcdfc32096d853d735e7c9e8564c",
+          "raw_response_sha256": "6f9c8854a5705e6da0035b3865d1f59359f189ed9d9d6fab9eea65e1da566e0a",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "2560d1e63e34d9c86df1fdc7c9b022bc7521788f3599c460ab3c65f47976a41b",
+          "state_sha256": "26f7f330fe27bc8f92bf9bc2806b06eb82fb4a15199e41da125ef03a9e1df65b",
+          "snapshot_sha256": "7c66b907143f3d1db1a8326f64b5c922577d5fb811f93e42e0278eb4095e9660"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      },
+      "state_at:{\"batch_id\":8,\"counters\":[\"lilac23\",\"nettle25\"]}": {
+        "action": "state_at",
+        "batch_id": 8,
+        "state": {
+          "lilac23": 100,
+          "nettle25": 125
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 8,
+          "previous_snapshot_sha256": "7c66b907143f3d1db1a8326f64b5c922577d5fb811f93e42e0278eb4095e9660",
+          "raw_response_sha256": "7c3dedc1611467578e1389d7ec257aed60dc7ba95f6114b4a8a657e8bef98378",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "1672260d2908a1a5cd1b89fa8543107dc4dae2dd7205b0ad6e077c7fc3fe213c",
+          "state_sha256": "8e7365a429ff4d166d6eaf1a0428e0b1ce3a95178b595167325bdbf6d3bb8f90",
+          "snapshot_sha256": "c84360cc3a81bc7ba86f4c6a3a787a1afd94f35927d8845930d80b4d6d2555cf"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      },
+      "state_at:{\"batch_id\":9,\"counters\":[\"moss24\",\"nettle25\"]}": {
+        "action": "state_at",
+        "batch_id": 9,
+        "state": {
+          "moss24": 123,
+          "nettle25": 141
+        },
+        "missing_counters": [],
+        "receipt": {
+          "arm": "archive",
+          "batch_id": 9,
+          "previous_snapshot_sha256": "c84360cc3a81bc7ba86f4c6a3a787a1afd94f35927d8845930d80b4d6d2555cf",
+          "raw_response_sha256": "fc1ff3c5efe7550f9f75b67e0dfcea0b9b894490b30e24672e7f31f40e81b042",
+          "schema": "history-state-receipt.v1",
+          "source_text_sha256": "4b04142b814255c9701fa4d0d68a27e32b5efbf1a9d5ac701d3863ada7ce1042",
+          "state_sha256": "e45f1ced54dd6e1e43e4a3fb8e8ae46ce8009522b4c953fdcb8dc051d866c1ec",
+          "snapshot_sha256": "b8c372dea6d41a50ec71ee07af6e48541e8180e7b3e6afbec4afd9fb8c17ffa0"
+        },
+        "scope": "Actual accepted state at the end of this batch; may contain model errors."
+      }
+    },
+    "recent": [
+      "state_at:{\"batch_id\":2,\"counters\":null}",
+      "state_at:{\"batch_id\":3,\"counters\":[\"iris20\",\"jade21\",\"kelp22\",\"lilac23\",\"moss24\",\"nettle25\",\"oak26\",\"pine27\"]}",
+      "state_at:{\"batch_id\":5,\"counters\":[\"moss24\"]}",
+      "fetch:1",
+      "state_at:{\"batch_id\":4,\"counters\":[\"iris20\",\"kelp22\"]}",
+      "state_at:{\"batch_id\":6,\"counters\":[\"iris20\",\"pine27\"]}",
+      "state_at:{\"batch_id\":7,\"counters\":[\"kelp22\",\"lilac23\"]}",
+      "state_at:{\"batch_id\":8,\"counters\":[\"lilac23\",\"nettle25\"]}",
+      "state_at:{\"batch_id\":9,\"counters\":[\"moss24\",\"nettle25\"]}"
+    ],
+    "feedback": "Submitted.",
+    "completed": true
+  },
+  "trace_format": "history-live-attempt-trace.v1; enriched native evidence, not CPU replay input",
+  "calls": 23,
+  "cache_usage": {
+    "complete": true,
+    "cached_tokens": 0,
+    "calls": 23
+  },
+  "cold_cache_known": true,
+  "wall_seconds": 179.67522981204093,
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 48,
+              "jade21": 64,
+              "kelp22": 80,
+              "lilac23": 96,
+              "moss24": 112,
+              "nettle25": 128,
+              "oak26": 144,
+              "pine27": 160
+            },
+            "memory": "B1: 8 accounts opened. iris20=48, jade21=64, kelp22=80, lilac23=96, moss24=112, nettle25=128, oak26=144, pine27=160. Tickets a-h assigned to iris20-pine27 respectively."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 1,
+            "arm": "archive",
+            "source_text_sha256": "ea2bdf48eb052cb8bab0010cb2bcab9232ed2705ab7610d0e5bf4091768718ce",
+            "raw_response_sha256": "9f9f0e490a6b2bf01391e952cbe70912ad914896df8536f556ff7d101f93b48b",
+            "state_sha256": "73569dda06952cdef94ad34447b842c2a1d7cc49a0c3837c77ebb0c7f7d1b053",
+            "previous_snapshot_sha256": null,
+            "snapshot_sha256": "aa00c9ddda04b6e40083160c228bd2c0d38f004aee155a845aeb9010f2d9e9f6"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 48,
+        "jade21": 64,
+        "kelp22": 80,
+        "lilac23": 96,
+        "moss24": 112,
+        "nettle25": 128,
+        "oak26": 144,
+        "pine27": 160
+      }
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 48,
+              "jade21": 76,
+              "kelp22": 80,
+              "lilac23": 90,
+              "moss24": 112,
+              "nettle25": 137,
+              "oak26": 144,
+              "pine27": 152
+            },
+            "memory": "B2: Draft +30 nettle25 unposted. jade21+12=76, lilac23-6=90, nettle25+9=137, pine27-8=152. Others unchanged."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 2,
+            "arm": "archive",
+            "source_text_sha256": "fd00fa5b4ad89f0531589cab40db0543a49fff114285d01148e9a838305e6e2a",
+            "raw_response_sha256": "1246e258487226d9862698cf356586d03fb47a85d189be3c9631061d64269695",
+            "state_sha256": "78cb5db7491403ff274a939cc1bbc51799c87bba0854425471f177d8fc429d39",
+            "previous_snapshot_sha256": "aa00c9ddda04b6e40083160c228bd2c0d38f004aee155a845aeb9010f2d9e9f6",
+            "snapshot_sha256": "98016beefd5e547858878b3628c7cda7ec47e0545bdf868048d5246452955c0f"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 48,
+        "jade21": 76,
+        "kelp22": 80,
+        "lilac23": 90,
+        "moss24": 112,
+        "nettle25": 137,
+        "oak26": 144,
+        "pine27": 152
+      }
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 48,
+              "jade21": 72,
+              "kelp22": 80,
+              "lilac23": 103,
+              "moss24": 112,
+              "nettle25": 134,
+              "oak26": 144,
+              "pine27": 163
+            },
+            "memory": "B3: jade21-4=72, lilac23+13=103, nettle25-3=134, pine27+11=163. Cancelled debit ignored."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 3,
+            "arm": "archive",
+            "source_text_sha256": "d1a14a355a0ffde47691fe9fe52d3e7f07bd00d401ed6865a83efbda31665091",
+            "raw_response_sha256": "641fee2ba15a2ba309561ac92f6bf7831ecc02eb4d7314a2959be3865d362539",
+            "state_sha256": "a424f0647b01ca82bede44d55d4eac8b3be8a2e4e108b0a96ec443095c04cf97",
+            "previous_snapshot_sha256": "98016beefd5e547858878b3628c7cda7ec47e0545bdf868048d5246452955c0f",
+            "snapshot_sha256": "afa84b291208f8cbc2b5c5d83369c109520400b3103de71e756d315d29c5c67f"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 48,
+        "jade21": 72,
+        "kelp22": 80,
+        "lilac23": 103,
+        "moss24": 112,
+        "nettle25": 134,
+        "oak26": 144,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 43,
+              "jade21": 72,
+              "kelp22": 88,
+              "lilac23": 103,
+              "moss24": 105,
+              "nettle25": 134,
+              "oak26": 139,
+              "pine27": 163
+            },
+            "memory": "B4: oak26=139 (set), iris20-5=43, kelp22+8=88, moss24-7=105. Transfers: c->pine27, h->kelp22."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 4,
+            "arm": "archive",
+            "source_text_sha256": "89d1f0b1623fdc0b27a26ad15b0a21be0a13b5fe988116f93331d1be726f15a8",
+            "raw_response_sha256": "a75aa7d2778a2d658479862382f3eb9415e9aa67d0455f6da40d913683894037",
+            "state_sha256": "19e9242c142abc41ae8c007cad610ef808e52fdd6bb21ada2da67c475b255995",
+            "previous_snapshot_sha256": "afa84b291208f8cbc2b5c5d83369c109520400b3103de71e756d315d29c5c67f",
+            "snapshot_sha256": "1b2fb413b3484fd2394df060d52980608875e44d7cb9e79a6765cd7bfe2abd0a"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 43,
+        "jade21": 72,
+        "kelp22": 88,
+        "lilac23": 103,
+        "moss24": 105,
+        "nettle25": 134,
+        "oak26": 139,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 5,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 53,
+              "jade21": 72,
+              "kelp22": 86,
+              "lilac23": 103,
+              "moss24": 118,
+              "nettle25": 134,
+              "oak26": 146,
+              "pine27": 163
+            },
+            "memory": "B5: moss24=118 (set), iris20+10=53, kelp22-2=86, oak26+7=146. Transfer: ticket-theatre-a -> lilac23."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 5,
+            "arm": "archive",
+            "source_text_sha256": "40f4dd71074b08bcf14a5e3b9b1358e0a1a2296d8b0c714b4b8f9cbe3a8abed7",
+            "raw_response_sha256": "f8649704a038be6056981fa0192cad52f518fe1409d34654c0d5c9e1ee133927",
+            "state_sha256": "60b3acc29d34040ebe3d4cf71befaa3f6b6aee7ce1f436b633357c1a39b1d47f",
+            "previous_snapshot_sha256": "1b2fb413b3484fd2394df060d52980608875e44d7cb9e79a6765cd7bfe2abd0a",
+            "snapshot_sha256": "951f4f5e1b7f447e4ed302e1a0565fb856a2a468f5dc93ba45800ab1d951cbfd"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 53,
+        "jade21": 72,
+        "kelp22": 86,
+        "lilac23": 103,
+        "moss24": 118,
+        "nettle25": 134,
+        "oak26": 146,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 6,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 56,
+              "jade21": 72,
+              "kelp22": 100,
+              "lilac23": 103,
+              "moss24": 118,
+              "nettle25": 134,
+              "oak26": 136,
+              "pine27": 163
+            },
+            "memory": "B6: iris20+3=56, kelp22+14=100, oak26-10=136. Transfers: d->iris20, f->oak26. Memo b->oak26 unposted."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 6,
+            "arm": "archive",
+            "source_text_sha256": "c535f6c1e25297a4de8c19052de5fe8d95985fa7bde83e202eca06133af33367",
+            "raw_response_sha256": "e4b6bf05622ab7b548ab264a9c2bb9b52ec4e4efe704d8942d1e9429d742b518",
+            "state_sha256": "9005b44d3f17c84da150085ef822a19b7b76e0cc8e6c9d961f3c90eeb7e7316b",
+            "previous_snapshot_sha256": "951f4f5e1b7f447e4ed302e1a0565fb856a2a468f5dc93ba45800ab1d951cbfd",
+            "snapshot_sha256": "b677fc08c833216428ee090b42d20a255086fcdfc32096d853d735e7c9e8564c"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 56,
+        "jade21": 72,
+        "kelp22": 100,
+        "lilac23": 103,
+        "moss24": 118,
+        "nettle25": 134,
+        "oak26": 136,
+        "pine27": 163
+      }
+    },
+    {
+      "batch_id": 7,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 56,
+              "jade21": 64,
+              "kelp22": 100,
+              "lilac23": 105,
+              "moss24": 123,
+              "nettle25": 134,
+              "oak26": 136,
+              "pine27": 158
+            },
+            "memory": "B7: moss24=123 (setting). jade21-8=64, lilac23+2=105, pine27-5=158. B6: iris20=56, kelp22=100, oak26=136. Transfers: d->iris20, f->oak26."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 7,
+            "arm": "archive",
+            "source_text_sha256": "2560d1e63e34d9c86df1fdc7c9b022bc7521788f3599c460ab3c65f47976a41b",
+            "raw_response_sha256": "6f9c8854a5705e6da0035b3865d1f59359f189ed9d9d6fab9eea65e1da566e0a",
+            "state_sha256": "26f7f330fe27bc8f92bf9bc2806b06eb82fb4a15199e41da125ef03a9e1df65b",
+            "previous_snapshot_sha256": "b677fc08c833216428ee090b42d20a255086fcdfc32096d853d735e7c9e8564c",
+            "snapshot_sha256": "7c66b907143f3d1db1a8326f64b5c922577d5fb811f93e42e0278eb4095e9660"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 56,
+        "jade21": 64,
+        "kelp22": 100,
+        "lilac23": 105,
+        "moss24": 123,
+        "nettle25": 134,
+        "oak26": 136,
+        "pine27": 158
+      }
+    },
+    {
+      "batch_id": 8,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 56,
+              "jade21": 70,
+              "kelp22": 100,
+              "lilac23": 100,
+              "moss24": 123,
+              "nettle25": 125,
+              "oak26": 136,
+              "pine27": 162
+            },
+            "memory": "B8: nettle25-9=125, jade21+6=70, lilac23-5=100, pine27+4=162. B7: moss24=123. B6: iris20=56, kelp22=100, oak26=136."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 8,
+            "arm": "archive",
+            "source_text_sha256": "1672260d2908a1a5cd1b89fa8543107dc4dae2dd7205b0ad6e077c7fc3fe213c",
+            "raw_response_sha256": "7c3dedc1611467578e1389d7ec257aed60dc7ba95f6114b4a8a657e8bef98378",
+            "state_sha256": "8e7365a429ff4d166d6eaf1a0428e0b1ce3a95178b595167325bdbf6d3bb8f90",
+            "previous_snapshot_sha256": "7c66b907143f3d1db1a8326f64b5c922577d5fb811f93e42e0278eb4095e9660",
+            "snapshot_sha256": "c84360cc3a81bc7ba86f4c6a3a787a1afd94f35927d8845930d80b4d6d2555cf"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 56,
+        "jade21": 70,
+        "kelp22": 100,
+        "lilac23": 100,
+        "moss24": 123,
+        "nettle25": 125,
+        "oak26": 136,
+        "pine27": 162
+      }
+    },
+    {
+      "batch_id": 9,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 52,
+              "jade21": 70,
+              "kelp22": 105,
+              "lilac23": 100,
+              "moss24": 123,
+              "nettle25": 141,
+              "oak26": 133,
+              "pine27": 162
+            },
+            "memory": "B9: nettle25+16=141, iris20-4=52, kelp22+5=105, oak26-3=133. ticket-theatre-e->jade21. B8: jade21=70, lilac23=100, pine27=162, moss24=123."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 9,
+            "arm": "archive",
+            "source_text_sha256": "4b04142b814255c9701fa4d0d68a27e32b5efbf1a9d5ac701d3863ada7ce1042",
+            "raw_response_sha256": "fc1ff3c5efe7550f9f75b67e0dfcea0b9b894490b30e24672e7f31f40e81b042",
+            "state_sha256": "e45f1ced54dd6e1e43e4a3fb8e8ae46ce8009522b4c953fdcb8dc051d866c1ec",
+            "previous_snapshot_sha256": "c84360cc3a81bc7ba86f4c6a3a787a1afd94f35927d8845930d80b4d6d2555cf",
+            "snapshot_sha256": "b8c372dea6d41a50ec71ee07af6e48541e8180e7b3e6afbec4afd9fb8c17ffa0"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 52,
+        "jade21": 70,
+        "kelp22": 105,
+        "lilac23": 100,
+        "moss24": 123,
+        "nettle25": 141,
+        "oak26": 133,
+        "pine27": 162
+      }
+    },
+    {
+      "batch_id": 10,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 88,
+              "jade21": 113,
+              "kelp22": 136,
+              "lilac23": 145,
+              "moss24": 123,
+              "nettle25": 141,
+              "oak26": 133,
+              "pine27": 162
+            },
+            "memory": "B10: iris20+36=88, jade21+43=113, kelp22+31=136, lilac23+45=145. B9: nettle25=141, oak26=133. B8: moss24=123, pine27=162."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 10,
+            "arm": "archive",
+            "source_text_sha256": "3d52113e632f4fee4982a52e8829995ed35c471c6179d92cd65d0db549878e2c",
+            "raw_response_sha256": "ffe283116bed7ca874d694cad6202de27e471120b3c01c9bd9e38ff50308cd1d",
+            "state_sha256": "97c692718f6f2d22d9df117f2d582761777ce3ab52873e1d89880afa2f991f40",
+            "previous_snapshot_sha256": "b8c372dea6d41a50ec71ee07af6e48541e8180e7b3e6afbec4afd9fb8c17ffa0",
+            "snapshot_sha256": "b93a0545968555ab1413381c274c7d72c94c97bf929b89d79c8f134a0812f81c"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 88,
+        "jade21": 113,
+        "kelp22": 136,
+        "lilac23": 145,
+        "moss24": 123,
+        "nettle25": 141,
+        "oak26": 133,
+        "pine27": 162
+      }
+    },
+    {
+      "batch_id": 11,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 88,
+              "jade21": 113,
+              "kelp22": 136,
+              "lilac23": 145,
+              "moss24": 161,
+              "nettle25": 188,
+              "oak26": 167,
+              "pine27": 204
+            },
+            "memory": "B11: moss24+38=161, nettle25+47=188, oak26+34=167, pine27+42=204. Reviews: t1->h, t2->c, t3->a, t4->f."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 11,
+            "arm": "archive",
+            "source_text_sha256": "1d004a6003bae40159c7c10ef608e46b81d492c70ae28ab3cf3a625fefea8f08",
+            "raw_response_sha256": "61b2990a5780f8ea9418464cc42d316832461d4c3e6626d29c24d3365496482b",
+            "state_sha256": "0f7f1ed62567af2b5619a371e92c248b443fb47c3e8e3bc03882646ea0a8d196",
+            "previous_snapshot_sha256": "b93a0545968555ab1413381c274c7d72c94c97bf929b89d79c8f134a0812f81c",
+            "snapshot_sha256": "25cb94808412d88b93de7c36bdfce2f2a20021c3d1fc74869dac398a8a05e21f"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 88,
+        "jade21": 113,
+        "kelp22": 136,
+        "lilac23": 145,
+        "moss24": 161,
+        "nettle25": 188,
+        "oak26": 167,
+        "pine27": 204
+      }
+    },
+    {
+      "batch_id": 12,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "iris20": 88,
+              "jade21": 111,
+              "kelp22": 136,
+              "lilac23": 145,
+              "moss24": 161,
+              "nettle25": 192,
+              "oak26": 168,
+              "pine27": 204
+            },
+            "memory": "B12: jade21-2=111, nettle25+4=192, oak26+1=168. Unsigned oak26=200 rejected. Reviews: t5->d, t6->e, t7->g, t8->b. Prev: B11 moss24=161, nettle25=188, oak26=167, pine27=204. Reviews t1->h, t2->c, t3->a, t4->f."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 12,
+            "arm": "archive",
+            "source_text_sha256": "fd62258b411b478d7df5bf3fe32b56c8b2b8e9bef333908e7683377d06af6f74",
+            "raw_response_sha256": "62621a142ec6e2efdfdde9cd9a9cc76598554e7b8f4b2c634cb6cfcbde73c9f6",
+            "state_sha256": "f851ca1cdad63fa565735fd3aa902d118a99d660ca04ccf4d37b1d6bebc8d52c",
+            "previous_snapshot_sha256": "25cb94808412d88b93de7c36bdfce2f2a20021c3d1fc74869dac398a8a05e21f",
+            "snapshot_sha256": "336efb8f58f4bf073c76249bee78e064441dd21c9028886d7b82a1d38f3f0bd2"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "iris20": 88,
+        "jade21": 111,
+        "kelp22": 136,
+        "lilac23": 145,
+        "moss24": 161,
+        "nettle25": 192,
+        "oak26": 168,
+        "pine27": 204
+      }
+    }
+  ],
+  "refusals": [],
+  "checkpoint_metrics_complete": true,
+  "all_checkpoint_states_exact": true,
+  "final_state_exact": true,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Historical-state retrieval development engine; task retains its own authored/generated provenance; no speed claim.",
+  "artifacts": {
+    "calls.jsonl": {
+      "path": "calls.jsonl",
+      "sha256": "4c1b4513bb4bcb1eb315fdc130efc283366021c1d42742ed62f9873d5fe6cba6"
+    },
+    "trace.json": {
+      "path": "trace.json",
+      "sha256": "c39d559ae8f1b1023a0ca8fec5e30bb228a1ae56463d0ee93c2b362407e66d30"
+    },
+    "checkpoint.json": {
+      "path": "checkpoint.json",
+      "sha256": "c69d6513177b1a70fd8255d8bedc818ad994fc8770f0e2161131cbe59544e455"
+    },
+    "answer-session.json": {
+      "path": "answer-session.json",
+      "sha256": "aa99e8bc1ee104d9c137f570c4ddfb5a90125b978946dda0e1cbbe3573416df3"
+    },
+    "retrieval.jsonl": {
+      "path": "retrieval.jsonl",
+      "sha256": "510f1ce750c156854c07508d2d51a85eb212ec5afcc70465ca1f66713bbf377b"
+    },
+    "snapshots/batch-1.json": {
+      "path": "snapshots/batch-1.json",
+      "sha256": "aa00c9ddda04b6e40083160c228bd2c0d38f004aee155a845aeb9010f2d9e9f6"
+    },
+    "snapshots/batch-10.json": {
+      "path": "snapshots/batch-10.json",
+      "sha256": "b93a0545968555ab1413381c274c7d72c94c97bf929b89d79c8f134a0812f81c"
+    },
+    "snapshots/batch-11.json": {
+      "path": "snapshots/batch-11.json",
+      "sha256": "25cb94808412d88b93de7c36bdfce2f2a20021c3d1fc74869dac398a8a05e21f"
+    },
+    "snapshots/batch-12.json": {
+      "path": "snapshots/batch-12.json",
+      "sha256": "336efb8f58f4bf073c76249bee78e064441dd21c9028886d7b82a1d38f3f0bd2"
+    },
+    "snapshots/batch-2.json": {
+      "path": "snapshots/batch-2.json",
+      "sha256": "98016beefd5e547858878b3628c7cda7ec47e0545bdf868048d5246452955c0f"
+    },
+    "snapshots/batch-3.json": {
+      "path": "snapshots/batch-3.json",
+      "sha256": "afa84b291208f8cbc2b5c5d83369c109520400b3103de71e756d315d29c5c67f"
+    },
+    "snapshots/batch-4.json": {
+      "path": "snapshots/batch-4.json",
+      "sha256": "1b2fb413b3484fd2394df060d52980608875e44d7cb9e79a6765cd7bfe2abd0a"
+    },
+    "snapshots/batch-5.json": {
+      "path": "snapshots/batch-5.json",
+      "sha256": "951f4f5e1b7f447e4ed302e1a0565fb856a2a468f5dc93ba45800ab1d951cbfd"
+    },
+    "snapshots/batch-6.json": {
+      "path": "snapshots/batch-6.json",
+      "sha256": "b677fc08c833216428ee090b42d20a255086fcdfc32096d853d735e7c9e8564c"
+    },
+    "snapshots/batch-7.json": {
+      "path": "snapshots/batch-7.json",
+      "sha256": "7c66b907143f3d1db1a8326f64b5c922577d5fb811f93e42e0278eb4095e9660"
+    },
+    "snapshots/batch-8.json": {
+      "path": "snapshots/batch-8.json",
+      "sha256": "c84360cc3a81bc7ba86f4c6a3a787a1afd94f35927d8845930d80b4d6d2555cf"
+    },
+    "snapshots/batch-9.json": {
+      "path": "snapshots/batch-9.json",
+      "sha256": "b8c372dea6d41a50ec71ee07af6e48541e8180e7b3e6afbec4afd9fb8c17ffa0"
+    }
+  },
+  "snapshot_count": 12
+}

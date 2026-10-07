@@ -1,0 +1,2220 @@
+{
+  "schema": "history-study-native-audit.v1",
+  "output": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007",
+  "measurement_kind": "model",
+  "packet_plan_sha256": "8c759e9d02ebc78c0a675196c1524aeb26a119ef88a2972a921680b9175c311e",
+  "planned_trials": 8,
+  "completed_trials": 8,
+  "failed_trials": 0,
+  "incomplete_trials": 0,
+  "unstarted_trials": 0,
+  "infrastructure_abort": false,
+  "trials": [
+    {
+      "arm": "archive",
+      "case_id": "t01-clinic",
+      "condition": "AS",
+      "counter_count": 8,
+      "document_path": "t01-clinic-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t01-clinic-AS/native/result.json",
+      "question_sha256": "b1c42d71054f040d6847c66710eb5bd6f38648959393003c2b365994394e455a",
+      "result_path": "t01-clinic-AS/result.json",
+      "retrieval_mode": "source-only",
+      "task_path": "t01-clinic-task.json",
+      "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": true,
+      "quality_passed": true,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 8
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 1.642412975023035,
+          "prompt_bytes": 2615,
+          "prompt_tokens": 580,
+          "completion_tokens": 204,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 14.997974007914308,
+          "prompt_bytes": 27122,
+          "prompt_tokens": 6464,
+          "completion_tokens": 1877,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 12,
+          "client_call_seconds": 208.36042013415135,
+          "prompt_bytes": 133553,
+          "prompt_tokens": 36018,
+          "completion_tokens": 26472,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 24,
+          "client_call_seconds": 225.0008071170887,
+          "prompt_bytes": 163290,
+          "prompt_tokens": 43062,
+          "completion_tokens": 28553,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 0,
+          "fetch": 11,
+          "state_at": 0,
+          "update": 0,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 0,
+          "fetch": 11,
+          "state_at": 0
+        },
+        "successful_retrieval_responses": {
+          "search": 0,
+          "fetch": 11,
+          "state_at": 0
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 12,
+        "answer_call_slots_used": 12,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 225.46056203497574,
+      "non_call_overhead_seconds": 0.4597549178870395,
+      "native_audit": {
+        "document_id": "t01-clinic",
+        "arm": "archive",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 24,
+        "asked": 24,
+        "failure": null,
+        "calls": 24,
+        "cached_tokens": 0,
+        "prompt_tokens": 43062,
+        "completion_tokens": 28553,
+        "reasoning_tokens": 25725,
+        "usage_known_calls": {
+          "cached_tokens": 24,
+          "prompt_tokens": 24,
+          "completion_tokens": 24,
+          "reasoning_tokens": 24
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [],
+        "accepted_events": null,
+        "all_accepted_events_exact": null,
+        "refusals": 0,
+        "result_sha256": "b42deb58f5d458c195d678dfc1d3d285d9f87ba1811711bf26433d4dfa3778b5",
+        "calls_sha256": "9d2f918a1f5485878da0ff529815079605e9b924e7cd896f42e4f4c47afc72ac"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t01-clinic-AS/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "archive",
+        "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+        "result_sha256": "b42deb58f5d458c195d678dfc1d3d285d9f87ba1811711bf26433d4dfa3778b5"
+      },
+      "audit_errors": [],
+      "native_sha256": "b42deb58f5d458c195d678dfc1d3d285d9f87ba1811711bf26433d4dfa3778b5",
+      "calls_sha256": "9d2f918a1f5485878da0ff529815079605e9b924e7cd896f42e4f4c47afc72ac",
+      "outer_sha256": "f0cf945190592df1e8443b138d9ca43be923e10f8755834a1f3807f4a5785221"
+    },
+    {
+      "arm": "quoted",
+      "case_id": "t01-clinic",
+      "condition": "QH",
+      "counter_count": 8,
+      "document_path": "t01-clinic-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t01-clinic-QH/native/result.json",
+      "question_sha256": "b1c42d71054f040d6847c66710eb5bd6f38648959393003c2b365994394e455a",
+      "result_path": "t01-clinic-QH/result.json",
+      "retrieval_mode": "history",
+      "task_path": "t01-clinic-task.json",
+      "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": false,
+      "quality_passed": false,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 3
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 19,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 3
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 19
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 3.6401327369967476,
+          "prompt_bytes": 2780,
+          "prompt_tokens": 611,
+          "completion_tokens": 529,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 25.52340555412229,
+          "prompt_bytes": 29481,
+          "prompt_tokens": 7273,
+          "completion_tokens": 3578,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 12,
+          "client_call_seconds": 234.09834095294354,
+          "prompt_bytes": 157894,
+          "prompt_tokens": 54085,
+          "completion_tokens": 26720,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 24,
+          "client_call_seconds": 263.2618792440626,
+          "prompt_bytes": 190155,
+          "prompt_tokens": 61969,
+          "completion_tokens": 30827,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 0,
+          "fetch": 3,
+          "state_at": 8,
+          "update": 0,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 0,
+          "fetch": 3,
+          "state_at": 8
+        },
+        "successful_retrieval_responses": {
+          "search": 0,
+          "fetch": 3,
+          "state_at": 8
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 12,
+        "answer_call_slots_used": 12,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 263.7741856810171,
+      "non_call_overhead_seconds": 0.5123064369545318,
+      "native_audit": {
+        "document_id": "t01-clinic",
+        "arm": "quoted",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 19,
+        "asked": 24,
+        "failure": null,
+        "calls": 24,
+        "cached_tokens": 0,
+        "prompt_tokens": 61969,
+        "completion_tokens": 30827,
+        "reasoning_tokens": 25752,
+        "usage_known_calls": {
+          "cached_tokens": 24,
+          "prompt_tokens": 24,
+          "completion_tokens": 24,
+          "reasoning_tokens": 24
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [
+          {
+            "batch_id": 1,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 8,
+            "predicted": 8,
+            "matched": 8,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 2,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 3,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 4,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 5,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 6,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 7,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 8,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 9,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 10,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 11,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 12,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          }
+        ],
+        "accepted_events": {
+          "batches": 12,
+          "expected": 51,
+          "predicted": 51,
+          "matched": 51,
+          "missed_events": 0,
+          "extra_events": 0,
+          "malformed": 0
+        },
+        "all_accepted_events_exact": true,
+        "refusals": 0,
+        "result_sha256": "cf42dd47719175481123e747530599fae5f0bd730f470f4755605b345daa7c2b",
+        "calls_sha256": "3db3fb487f8e4cb681eab63e235547079a24cc4314d0123d04274290655c307a"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t01-clinic-QH/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "quoted",
+        "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+        "result_sha256": "cf42dd47719175481123e747530599fae5f0bd730f470f4755605b345daa7c2b"
+      },
+      "audit_errors": [],
+      "native_sha256": "cf42dd47719175481123e747530599fae5f0bd730f470f4755605b345daa7c2b",
+      "calls_sha256": "3db3fb487f8e4cb681eab63e235547079a24cc4314d0123d04274290655c307a",
+      "outer_sha256": "2c0b6a4e65142e73a07dde11155035a07cd26504563589580a418ec71c08fa08"
+    },
+    {
+      "arm": "quoted",
+      "case_id": "t01-clinic",
+      "condition": "QS",
+      "counter_count": 8,
+      "document_path": "t01-clinic-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t01-clinic-QS/native/result.json",
+      "question_sha256": "b1c42d71054f040d6847c66710eb5bd6f38648959393003c2b365994394e455a",
+      "result_path": "t01-clinic-QS/result.json",
+      "retrieval_mode": "source-only",
+      "task_path": "t01-clinic-task.json",
+      "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": true,
+      "quality_passed": true,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 8
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 3.6487240199930966,
+          "prompt_bytes": 2780,
+          "prompt_tokens": 611,
+          "completion_tokens": 529,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 25.527152326132637,
+          "prompt_bytes": 29481,
+          "prompt_tokens": 7273,
+          "completion_tokens": 3578,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 10,
+          "client_call_seconds": 169.00146231689723,
+          "prompt_bytes": 108306,
+          "prompt_tokens": 30029,
+          "completion_tokens": 21294,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 22,
+          "client_call_seconds": 198.17733866302297,
+          "prompt_bytes": 140567,
+          "prompt_tokens": 37913,
+          "completion_tokens": 25401,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0,
+          "update": 0,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0
+        },
+        "successful_retrieval_responses": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 10,
+        "answer_call_slots_used": 10,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 198.6728347740136,
+      "non_call_overhead_seconds": 0.4954961109906435,
+      "native_audit": {
+        "document_id": "t01-clinic",
+        "arm": "quoted",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 24,
+        "asked": 24,
+        "failure": null,
+        "calls": 22,
+        "cached_tokens": 0,
+        "prompt_tokens": 37913,
+        "completion_tokens": 25401,
+        "reasoning_tokens": 20547,
+        "usage_known_calls": {
+          "cached_tokens": 22,
+          "prompt_tokens": 22,
+          "completion_tokens": 22,
+          "reasoning_tokens": 22
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [
+          {
+            "batch_id": 1,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 8,
+            "predicted": 8,
+            "matched": 8,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 2,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 3,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 4,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 5,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 6,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 7,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 8,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 9,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 10,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 11,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 12,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          }
+        ],
+        "accepted_events": {
+          "batches": 12,
+          "expected": 51,
+          "predicted": 51,
+          "matched": 51,
+          "missed_events": 0,
+          "extra_events": 0,
+          "malformed": 0
+        },
+        "all_accepted_events_exact": true,
+        "refusals": 0,
+        "result_sha256": "1202b8ae25c3768be9af8da5df4c9b40a310abad36ddc7a8f5ce532f1c2e5760",
+        "calls_sha256": "0b1217611dd98c76a648ca961e055b0138ffd57505ad3d952957ec698b566d1a"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t01-clinic-QS/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "quoted",
+        "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+        "result_sha256": "1202b8ae25c3768be9af8da5df4c9b40a310abad36ddc7a8f5ce532f1c2e5760"
+      },
+      "audit_errors": [],
+      "native_sha256": "1202b8ae25c3768be9af8da5df4c9b40a310abad36ddc7a8f5ce532f1c2e5760",
+      "calls_sha256": "0b1217611dd98c76a648ca961e055b0138ffd57505ad3d952957ec698b566d1a",
+      "outer_sha256": "db313d8981a971422054f6b2a86c741a7d3035502ca4b73eeb38bfb40567a70e"
+    },
+    {
+      "arm": "archive",
+      "case_id": "t01-clinic",
+      "condition": "AH",
+      "counter_count": 8,
+      "document_path": "t01-clinic-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t01-clinic-AH/native/result.json",
+      "question_sha256": "b1c42d71054f040d6847c66710eb5bd6f38648959393003c2b365994394e455a",
+      "result_path": "t01-clinic-AH/result.json",
+      "retrieval_mode": "history",
+      "task_path": "t01-clinic-task.json",
+      "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": false,
+      "quality_passed": false,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 3
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 19,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 3
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 19
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 1.6378623399650678,
+          "prompt_bytes": 2615,
+          "prompt_tokens": 580,
+          "completion_tokens": 204,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 14.983324820059352,
+          "prompt_bytes": 27122,
+          "prompt_tokens": 6464,
+          "completion_tokens": 1877,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 11,
+          "client_call_seconds": 176.95017621904844,
+          "prompt_bytes": 142020,
+          "prompt_tokens": 49177,
+          "completion_tokens": 19909,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 23,
+          "client_call_seconds": 193.57136337907286,
+          "prompt_bytes": 171757,
+          "prompt_tokens": 56221,
+          "completion_tokens": 21990,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 1,
+          "fetch": 1,
+          "state_at": 8,
+          "update": 0,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 1,
+          "fetch": 1,
+          "state_at": 8
+        },
+        "successful_retrieval_responses": {
+          "search": 1,
+          "fetch": 1,
+          "state_at": 8
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 11,
+        "answer_call_slots_used": 11,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 194.0275856910157,
+      "non_call_overhead_seconds": 0.45622231194283813,
+      "native_audit": {
+        "document_id": "t01-clinic",
+        "arm": "archive",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 19,
+        "asked": 24,
+        "failure": null,
+        "calls": 23,
+        "cached_tokens": 0,
+        "prompt_tokens": 56221,
+        "completion_tokens": 21990,
+        "reasoning_tokens": 18854,
+        "usage_known_calls": {
+          "cached_tokens": 23,
+          "prompt_tokens": 23,
+          "completion_tokens": 23,
+          "reasoning_tokens": 23
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [],
+        "accepted_events": null,
+        "all_accepted_events_exact": null,
+        "refusals": 0,
+        "result_sha256": "b894cf529e4321a12deeee8782d29a12c3039197a5f3f7eaf91e829ecb4a1892",
+        "calls_sha256": "c90a0f91d1e0042f973d24ae7d0c0e4451b442936949a8f112f052068669ad64"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t01-clinic-AH/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "archive",
+        "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+        "result_sha256": "b894cf529e4321a12deeee8782d29a12c3039197a5f3f7eaf91e829ecb4a1892"
+      },
+      "audit_errors": [],
+      "native_sha256": "b894cf529e4321a12deeee8782d29a12c3039197a5f3f7eaf91e829ecb4a1892",
+      "calls_sha256": "c90a0f91d1e0042f973d24ae7d0c0e4451b442936949a8f112f052068669ad64",
+      "outer_sha256": "34176560c8d709c111b2ed534c04350b1007f9e80a52b041acf8065ed2ce105c"
+    },
+    {
+      "arm": "archive",
+      "case_id": "t02-theatre",
+      "condition": "AH",
+      "counter_count": 8,
+      "document_path": "t02-theatre-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t02-theatre-AH/native/result.json",
+      "question_sha256": "b2d75e3107dd41c501636835a1a6507c4ac0f72d0a486922c9b4a205773d4d69",
+      "result_path": "t02-theatre-AH/result.json",
+      "retrieval_mode": "history",
+      "task_path": "t02-theatre-task.json",
+      "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": false,
+      "quality_passed": false,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 3
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 19,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 3
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 19
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 1.6040069090086035,
+          "prompt_bytes": 2685,
+          "prompt_tokens": 583,
+          "completion_tokens": 201,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 17.114495165937115,
+          "prompt_bytes": 27066,
+          "prompt_tokens": 6609,
+          "completion_tokens": 2121,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 11,
+          "client_call_seconds": 160.48093099100515,
+          "prompt_bytes": 139265,
+          "prompt_tokens": 48438,
+          "completion_tokens": 18313,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 23,
+          "client_call_seconds": 179.19943306595087,
+          "prompt_bytes": 169016,
+          "prompt_tokens": 55630,
+          "completion_tokens": 20635,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 0,
+          "fetch": 1,
+          "state_at": 8,
+          "update": 1,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 0,
+          "fetch": 1,
+          "state_at": 8
+        },
+        "successful_retrieval_responses": {
+          "search": 0,
+          "fetch": 1,
+          "state_at": 8
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 11,
+        "answer_call_slots_used": 11,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 179.67522981204093,
+      "non_call_overhead_seconds": 0.4757967460900545,
+      "native_audit": {
+        "document_id": "t02-theatre",
+        "arm": "archive",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 19,
+        "asked": 24,
+        "failure": null,
+        "calls": 23,
+        "cached_tokens": 0,
+        "prompt_tokens": 55630,
+        "completion_tokens": 20635,
+        "reasoning_tokens": 17367,
+        "usage_known_calls": {
+          "cached_tokens": 23,
+          "prompt_tokens": 23,
+          "completion_tokens": 23,
+          "reasoning_tokens": 23
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [],
+        "accepted_events": null,
+        "all_accepted_events_exact": null,
+        "refusals": 0,
+        "result_sha256": "3c5b796392759c215654db51511e0e959e20d9337575126470719da3315ea435",
+        "calls_sha256": "4c1b4513bb4bcb1eb315fdc130efc283366021c1d42742ed62f9873d5fe6cba6"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t02-theatre-AH/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "archive",
+        "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+        "result_sha256": "3c5b796392759c215654db51511e0e959e20d9337575126470719da3315ea435"
+      },
+      "audit_errors": [],
+      "native_sha256": "3c5b796392759c215654db51511e0e959e20d9337575126470719da3315ea435",
+      "calls_sha256": "4c1b4513bb4bcb1eb315fdc130efc283366021c1d42742ed62f9873d5fe6cba6",
+      "outer_sha256": "2ae88ad4e9a9233f87a5083d8e0c16a7f44a3b5ea673a42d19bea10b94510c9d"
+    },
+    {
+      "arm": "quoted",
+      "case_id": "t02-theatre",
+      "condition": "QS",
+      "counter_count": 8,
+      "document_path": "t02-theatre-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t02-theatre-QS/native/result.json",
+      "question_sha256": "b2d75e3107dd41c501636835a1a6507c4ac0f72d0a486922c9b4a205773d4d69",
+      "result_path": "t02-theatre-QS/result.json",
+      "retrieval_mode": "source-only",
+      "task_path": "t02-theatre-task.json",
+      "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": true,
+      "quality_passed": true,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 8
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 3.7189936350332573,
+          "prompt_bytes": 2850,
+          "prompt_tokens": 614,
+          "completion_tokens": 518,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 25.752784150943626,
+          "prompt_bytes": 29350,
+          "prompt_tokens": 7229,
+          "completion_tokens": 3499,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 10,
+          "client_call_seconds": 169.7867334568873,
+          "prompt_bytes": 108266,
+          "prompt_tokens": 29762,
+          "completion_tokens": 20812,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 22,
+          "client_call_seconds": 199.2585112428642,
+          "prompt_bytes": 140466,
+          "prompt_tokens": 37605,
+          "completion_tokens": 24829,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0,
+          "update": 0,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0
+        },
+        "successful_retrieval_responses": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 10,
+        "answer_call_slots_used": 10,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 199.75352706899866,
+      "non_call_overhead_seconds": 0.4950158261344768,
+      "native_audit": {
+        "document_id": "t02-theatre",
+        "arm": "quoted",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 24,
+        "asked": 24,
+        "failure": null,
+        "calls": 22,
+        "cached_tokens": 0,
+        "prompt_tokens": 37605,
+        "completion_tokens": 24829,
+        "reasoning_tokens": 20067,
+        "usage_known_calls": {
+          "cached_tokens": 22,
+          "prompt_tokens": 22,
+          "completion_tokens": 22,
+          "reasoning_tokens": 22
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [
+          {
+            "batch_id": 1,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 8,
+            "predicted": 8,
+            "matched": 8,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 2,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 3,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 4,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 5,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 6,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 7,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 8,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 9,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 10,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 11,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 12,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          }
+        ],
+        "accepted_events": {
+          "batches": 12,
+          "expected": 50,
+          "predicted": 50,
+          "matched": 50,
+          "missed_events": 0,
+          "extra_events": 0,
+          "malformed": 0
+        },
+        "all_accepted_events_exact": true,
+        "refusals": 0,
+        "result_sha256": "9668314d8ecb0b873ba8537b7343d02002c74599b481a2b8107095d1f78f1061",
+        "calls_sha256": "e4ebb0eae86088e8f7d852bf1393af80851c3eba99a0733d9792a2bd475b73bb"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t02-theatre-QS/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "quoted",
+        "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+        "result_sha256": "9668314d8ecb0b873ba8537b7343d02002c74599b481a2b8107095d1f78f1061"
+      },
+      "audit_errors": [],
+      "native_sha256": "9668314d8ecb0b873ba8537b7343d02002c74599b481a2b8107095d1f78f1061",
+      "calls_sha256": "e4ebb0eae86088e8f7d852bf1393af80851c3eba99a0733d9792a2bd475b73bb",
+      "outer_sha256": "a2afe3590b2df9aba9e8ef305d7baf3876e9d5953e8feb56875c27e826321b88"
+    },
+    {
+      "arm": "quoted",
+      "case_id": "t02-theatre",
+      "condition": "QH",
+      "counter_count": 8,
+      "document_path": "t02-theatre-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t02-theatre-QH/native/result.json",
+      "question_sha256": "b2d75e3107dd41c501636835a1a6507c4ac0f72d0a486922c9b4a205773d4d69",
+      "result_path": "t02-theatre-QH/result.json",
+      "retrieval_mode": "history",
+      "task_path": "t02-theatre-task.json",
+      "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": false,
+      "quality_passed": false,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 7
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 23,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 7
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 23
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 3.7167378229787573,
+          "prompt_bytes": 2850,
+          "prompt_tokens": 614,
+          "completion_tokens": 518,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 25.761107372061815,
+          "prompt_bytes": 29350,
+          "prompt_tokens": 7229,
+          "completion_tokens": 3499,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 16,
+          "client_call_seconds": 268.50202600011835,
+          "prompt_bytes": 227205,
+          "prompt_tokens": 80401,
+          "completion_tokens": 28462,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 28,
+          "client_call_seconds": 297.9798711951589,
+          "prompt_bytes": 259405,
+          "prompt_tokens": 88244,
+          "completion_tokens": 32479,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 2,
+          "fetch": 2,
+          "state_at": 10,
+          "update": 1,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 2,
+          "fetch": 2,
+          "state_at": 10
+        },
+        "successful_retrieval_responses": {
+          "search": 2,
+          "fetch": 2,
+          "state_at": 10
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 16,
+        "answer_call_slots_used": 16,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 298.59924500394845,
+      "non_call_overhead_seconds": 0.6193738087895326,
+      "native_audit": {
+        "document_id": "t02-theatre",
+        "arm": "quoted",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 23,
+        "asked": 24,
+        "failure": null,
+        "calls": 28,
+        "cached_tokens": 0,
+        "prompt_tokens": 88244,
+        "completion_tokens": 32479,
+        "reasoning_tokens": 27291,
+        "usage_known_calls": {
+          "cached_tokens": 28,
+          "prompt_tokens": 28,
+          "completion_tokens": 28,
+          "reasoning_tokens": 28
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [
+          {
+            "batch_id": 1,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 8,
+            "predicted": 8,
+            "matched": 8,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 2,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 3,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 4,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 5,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 6,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 7,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 8,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 9,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 10,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 11,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 4,
+            "predicted": 4,
+            "matched": 4,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          },
+          {
+            "batch_id": 12,
+            "attempt": 1,
+            "accepted": true,
+            "response_parsed": true,
+            "valid_format": true,
+            "expected": 3,
+            "predicted": 3,
+            "matched": 3,
+            "missed_events": 0,
+            "extra_events": 0,
+            "malformed": 0,
+            "exact_order": true
+          }
+        ],
+        "accepted_events": {
+          "batches": 12,
+          "expected": 50,
+          "predicted": 50,
+          "matched": 50,
+          "missed_events": 0,
+          "extra_events": 0,
+          "malformed": 0
+        },
+        "all_accepted_events_exact": true,
+        "refusals": 0,
+        "result_sha256": "2df1df917d72e05e063b126c6f473e64b63ecfe02390aa9d8764d872c77b7dff",
+        "calls_sha256": "38d77e3b6e1279276f0de3c4f476e6d1db780d99dd65d11ea129282af2a16044"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t02-theatre-QH/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "quoted",
+        "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+        "result_sha256": "2df1df917d72e05e063b126c6f473e64b63ecfe02390aa9d8764d872c77b7dff"
+      },
+      "audit_errors": [],
+      "native_sha256": "2df1df917d72e05e063b126c6f473e64b63ecfe02390aa9d8764d872c77b7dff",
+      "calls_sha256": "38d77e3b6e1279276f0de3c4f476e6d1db780d99dd65d11ea129282af2a16044",
+      "outer_sha256": "aab72e2f928a26f4b32cd3a7268007741ced7c94716ea5384d14aa5b0dda476d"
+    },
+    {
+      "arm": "archive",
+      "case_id": "t02-theatre",
+      "condition": "AS",
+      "counter_count": 8,
+      "document_path": "t02-theatre-document.json",
+      "initialization_batches": 1,
+      "native_result_path": "t02-theatre-AS/native/result.json",
+      "question_sha256": "b2d75e3107dd41c501636835a1a6507c4ac0f72d0a486922c9b4a205773d4d69",
+      "result_path": "t02-theatre-AS/result.json",
+      "retrieval_mode": "source-only",
+      "task_path": "t02-theatre-task.json",
+      "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+      "status": "completed",
+      "failure_kind": null,
+      "integrity_passed": true,
+      "reference_checks_passed": true,
+      "quality_passed": true,
+      "cold_cost_interpretation": true,
+      "answer_categories": {
+        "current": {
+          "asked": 8,
+          "correct": 8
+        },
+        "history": {
+          "asked": 8,
+          "correct": 8
+        },
+        "join": {
+          "asked": 8,
+          "correct": 8
+        }
+      },
+      "score": {
+        "asked": 24,
+        "correct": 24,
+        "valid": true,
+        "answer_types_valid": true,
+        "exact_question_coverage": true,
+        "invalid_type_ids": [],
+        "missing_ids": [],
+        "unknown_ids": [],
+        "by_category": {
+          "current": {
+            "asked": 8,
+            "correct": 8
+          },
+          "history": {
+            "asked": 8,
+            "correct": 8
+          },
+          "join": {
+            "asked": 8,
+            "correct": 8
+          }
+        },
+        "by_answer_type": {
+          "int": {
+            "asked": 24,
+            "correct": 24
+          }
+        }
+      },
+      "phase_costs": {
+        "initialization": {
+          "calls": 1,
+          "client_call_seconds": 1.6010243280325085,
+          "prompt_bytes": 2685,
+          "prompt_tokens": 583,
+          "completion_tokens": 201,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "steady": {
+          "calls": 11,
+          "client_call_seconds": 17.10474804491969,
+          "prompt_bytes": 27066,
+          "prompt_tokens": 6609,
+          "completion_tokens": 2121,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "answer": {
+          "calls": 10,
+          "client_call_seconds": 186.77188503509387,
+          "prompt_bytes": 108054,
+          "prompt_tokens": 29544,
+          "completion_tokens": 23041,
+          "cache_complete": true,
+          "cached_tokens": 0
+        },
+        "total": {
+          "calls": 22,
+          "client_call_seconds": 205.47765740804607,
+          "prompt_bytes": 137805,
+          "prompt_tokens": 36736,
+          "completion_tokens": 25363,
+          "cache_complete": true,
+          "cached_tokens": 0
+        }
+      },
+      "action_counts": {
+        "requested_actions": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0,
+          "update": 0,
+          "submit": 1,
+          "invalid": 0
+        },
+        "successful_distinct_retrievals": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0
+        },
+        "successful_retrieval_responses": {
+          "search": 0,
+          "fetch": 9,
+          "state_at": 0
+        },
+        "repeated_retrieval_responses": {
+          "search": 0,
+          "fetch": 0,
+          "state_at": 0
+        },
+        "retrieval_error_responses": 0,
+        "answer_calls_logged": 10,
+        "answer_call_slots_used": 10,
+        "answer_call_exhausted": false
+      },
+      "total_trial_wall_seconds": 205.92622781696264,
+      "non_call_overhead_seconds": 0.4485704089165665,
+      "native_audit": {
+        "document_id": "t02-theatre",
+        "arm": "archive",
+        "status": "completed",
+        "measurement_kind": "model",
+        "correct": 24,
+        "asked": 24,
+        "failure": null,
+        "calls": 22,
+        "cached_tokens": 0,
+        "prompt_tokens": 36736,
+        "completion_tokens": 25363,
+        "reasoning_tokens": 22294,
+        "usage_known_calls": {
+          "cached_tokens": 22,
+          "prompt_tokens": 22,
+          "completion_tokens": 22,
+          "reasoning_tokens": 22
+        },
+        "cold_cache_known": true,
+        "delivered_batches": 12,
+        "delivered_text_exact": true,
+        "source_delivery_complete": true,
+        "checkpoints_checked": 12,
+        "checkpoints_exact": 12,
+        "event_attempts": [],
+        "accepted_events": null,
+        "all_accepted_events_exact": null,
+        "refusals": 0,
+        "result_sha256": "0aa049a0f09041f84ea06a7ae3d73fe52b9a4f480ddb085a1f0efc3733803532",
+        "calls_sha256": "fe2966a0fd1237bfbed6030f4f29071aac9c4e61e9832f51ad605b878fefe1c9"
+      },
+      "snapshot_audit": {
+        "schema": "history-snapshot-audit.v1",
+        "directory": "/mnt/fast-ai/bench-results/context-history-study-v1-20261007/diagnostic/t02-theatre-AS/native",
+        "integrity_passed": true,
+        "complete_snapshot_evidence": true,
+        "quality_passed": null,
+        "speed_gate_passed": false,
+        "issues": [],
+        "snapshot_write_gaps": [],
+        "audited_snapshots": 12,
+        "status": "completed",
+        "failure_kind": null,
+        "arm": "archive",
+        "task_sha256": "1adbe6c7c9cd7edf302aebeab7a1b0c24398a78846afab6beebbc16d6c95b0f5",
+        "result_sha256": "0aa049a0f09041f84ea06a7ae3d73fe52b9a4f480ddb085a1f0efc3733803532"
+      },
+      "audit_errors": [],
+      "native_sha256": "0aa049a0f09041f84ea06a7ae3d73fe52b9a4f480ddb085a1f0efc3733803532",
+      "calls_sha256": "fe2966a0fd1237bfbed6030f4f29071aac9c4e61e9832f51ad605b878fefe1c9",
+      "outer_sha256": "0b6163d8d081a86de6735d013d1670c00b61126e56f66692938b5c253509de7c"
+    }
+  ],
+  "continuation": {
+    "evidence_complete": true,
+    "history_all_exact": false,
+    "no_accuracy_regression": false,
+    "temporal_answer_gain": false,
+    "cost_signal_by_arm": {
+      "archive": false,
+      "quoted": false
+    },
+    "continuation_signal": false,
+    "extension_admitted": false,
+    "speed_gate_passed": false,
+    "holdout_admitted": false
+  },
+  "extension_admitted": false,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Fixed authored temporal development comparison. Actual-state integrity and reference quality audited separately; no automatic extension or general performance claim."
+}

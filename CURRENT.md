@@ -144,56 +144,46 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 07:22 UTC**. One supervised historical-state
-study is active. Admission, health preflight and 12/12 strict reference checks
-passed; its eight fixed trials started at 07:05:38 UTC. Four clinic rows are complete:
-source-only archive and quoted each 24/24; history-access archive and quoted each
-19/24, with the same five wrong ownership joins despite exact numeric snapshots.
-The four theatre rows continue unchanged. The prior replication stopped cleanly,
-released both cards at 06:44:55 UTC, and passed final health at 06:45:05.
+Latest two-card review: **2026-10-07 07:38 UTC**. The eight-trial historical-state
+study completed and stopped cleanly. Both cards were released at 07:36:13 UTC;
+healthy completion followed at 07:36:23. No GPU owner is active at this update.
 
-## 2026-10-07, two-B70 host: replication preserved; history comparison active
+## 2026-10-07, two-B70 host: history result preserved; direct-source screen ready
 
-The [replication result](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-replication-result.md)
-is mixed. On the original generated task, both methods have 24/24 final answers
-and every saved table is correct. Quoted events took 397.1 seconds versus archive's
-506.6 seconds: 21.6% less time, following 21.7% in the first run. All inputs and
-full responses matched the earlier run on all 40 calls per method. This supports
-repeatability on that task, not a general speed claim.
+The [complete history study](experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md)
+is negative. Source-only archive and quoted bookkeeping both scored 24/24 on both
+documents. History access scored 19/24 in three conditions and 23/24 in the fourth.
+All 96 numeric checkpoints and all 202 quoted postings were exact. Every one of
+the sixteen answer errors used an initial ticket owner's balance after ownership
+had transferred. Within each bookkeeping/document pair, ingestion prompts and
+replies were identical across access modes; the divergence occurred while answering.
 
-The new dispatch task also produced 24/24 final answers for both methods. Quoted
-had all 24 saved tables correct; archive had 17. It assigned zero to a counter
-mentioned only as a ticket owner, seven batches before the counter's first posted
-balance. The later posting corrected the table, and the questions never asked
-about those early values. The prewritten checkpoint gate therefore fails even
-though final answers pass. No failed trial was replaced or budget increased.
+All 188 calls were cold. All eight trials completed without infrastructure or
+protocol aborts. The [preserved evidence](experiments/qwen38-27b-b70/data/2026-10-07-history-study-result/inventory.json)
+binds 194 files and all eight archived databases. Byte comparisons passed, and
+the independent audit reproduced from a separate restored copy. The frozen
+continuation signal fails; t03/t04 remain unused and no holdout is admitted.
 
-All 155 calls report zero cache reuse, all 96 source batches survived exactly,
-and all 352 quoted events match the references. The evidence and four databases
-are preserved; the independent audit replayed exactly from a restored copy.
-The supervisor stopped cleanly and completed health checks. Preserve all older
-frozen sources, packets and outcomes.
+The separately preregistered [direct full-source screen](experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-plan.md)
+is implemented, reviewed and frozen in `18ebff28e`. Exactly two requests will
+supply the entire clinic/theatre sources and their questions, with the unchanged
+8,192-token answer cap. It measures final answers only; intermediate state quality
+is not applicable. All 58 new CPU tests pass, the two-stub independent replay is
+exact after relocation, and all 35 guide workflow checks pass. Admission still
+requires the completed history preservation and a newly qualified supervised
+server. No direct-source model request has run at this update.
 
-The previously fixed [decision tree](experiments/qwen38-27b-b70/notes/2026-10-07-context-next-study-decision.md)
-selects the [history study](experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-plan.md):
-eight fresh trials crossing archive/quoted bookkeeping with source-only/history
-access on two fixed temporal documents. Both access modes save each method's
-actual accepted tables, including mistakes. The new client, independent auditor
-and supervised host wrapper have passed 74 CPU tests and a complete eight-trial
-stub replay checked independently. The prepared packet fits the unchanged limits;
-the host binds all 14 packet files and 97 dependencies. Passive preparation passed
-at 07:00:43 UTC; `ctx-history-study-v1.service` owns this one campaign, its eight
-fixed trials and graceful cleanup. Output:
-`/mnt/fast-ai/bench-results/context-history-study-v1-20261007`.
-[Start receipts](experiments/qwen38-27b-b70/data/2026-10-07-history-study-live/queue.json).
-Do not edit its frozen engine, client, host, auditors, source/reference packet or
-plans, and do not start another GPU owner. The entire temporal source directory
-is included in the dependency inventory; use separate paths for new CPU work.
-No holdout has been admitted. The [independent four-row partial audit](experiments/qwen38-27b-b70/data/2026-10-07-history-study-live/partial-audit-0722.json)
-confirms all 48 clinic checkpoints and 102 quoted postings exact. These failures
-prevent the registered history extension; finish and preserve all eight rows first.
-A separate [two-call full-source screen](experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-plan.md)
-is being prepared, with no additional live calls yet.
+The [research review](experiments/qwen38-27b-b70/notes/2026-10-07-context-research-priorities.md)
+now distinguishes a useful numeric bookkeeping optimization from general memory.
+Each temporal document fits in one prompt; bounded prompt bytes do not imply
+bounded total memory. The [CPU reviews](experiments/qwen38-27b-b70/data/2026-10-07-context-cpu-review/inventory.json)
+preserve full-source sizing, retrieval costs, representation limits and storage.
+
+The earlier [sparse replication](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-replication-result.md)
+repeated the original exact/cold task's 21.6% elapsed reduction, but the new dispatch
+archive invented zero at seven early checkpoints despite 24/24 final answers.
+That pair is not a qualifying speed comparison. Its evidence and negative gate
+remain preserved separately; no budget was increased or failed trial replaced.
 
 The [temporal reference packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md)
 has two independent assistant annotations agreeing on 201 events, 48 tables and

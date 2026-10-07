@@ -1,0 +1,885 @@
+{
+  "schema": "history-live-trial.v1",
+  "protocol": "historical-state-development-v1",
+  "document_id": "t01-clinic",
+  "case_id": "t01-clinic",
+  "pair_id": null,
+  "variant": "authored-temporal",
+  "arm": "archive",
+  "task_sha256": "f9e25735ca2270e129230d3093ce86bdb29022ff4243b191752b149041cc094d",
+  "source_sha256": "45ae96b4c80dca9a14defddf1bf33ae895e47fed9848101dbdc9ae2cb2be666f",
+  "adjudication_sha256": "e8bee704ebcdf69635205eefe949884bbb096d724fbb01646e046c836b461b1f",
+  "source_code_sha256": {
+    "diagnostics.py": "6bab40287c483b9cfc41d8c042e88c27989144cb5e36de834747a4eb8b8181d6",
+    "tasks.py": "e15dd0f9e64521b6b143bc872ea17e1f08b27ef5530932b929f9e46d4ec6433f",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "snapshots.py": "73eeb45e3af863bc8a47b5c4e56f930f57db5955cbb2dcb05b12aa7acf6f0aeb",
+    "live.py": "cf2530192e084eb51101ec69a4f918f787dacea0e5b96fd96be459e390a3215a",
+    "answers.py": "bc77826918033f59c29add697a3ae8be2491eb4ed59694040d432ebfb382f0fe"
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "e9d0d11a2f17640f9877c1d2e567528d8ced2226340a03b10f3e45842fd8e4d1"
+  },
+  "resumed": false,
+  "retrieval_mode": "source-only",
+  "context_limit_utf8_bytes": 32768,
+  "memory_limit_utf8_bytes": 6553,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "max_ingestion_attempts": 3,
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "history_policy": "Immutable actual accepted state after each batch; no oracle correction",
+  "status": "completed",
+  "failure": null,
+  "failure_kind": null,
+  "processed_batches": 12,
+  "ingestion_complete": true,
+  "final_answer_complete": true,
+  "protocol_complete": true,
+  "score": {
+    "asked": 24,
+    "correct": 24,
+    "valid": true,
+    "answer_types_valid": true,
+    "exact_question_coverage": true,
+    "invalid_type_ids": [],
+    "missing_ids": [],
+    "unknown_ids": [],
+    "by_category": {
+      "current": {
+        "asked": 8,
+        "correct": 8
+      },
+      "history": {
+        "asked": 8,
+        "correct": 8
+      },
+      "join": {
+        "asked": 8,
+        "correct": 8
+      }
+    },
+    "by_answer_type": {
+      "int": {
+        "asked": 24,
+        "correct": 24
+      }
+    }
+  },
+  "answers": {
+    "t01-clinic-current-1": 110,
+    "t01-clinic-current-2": 111,
+    "t01-clinic-current-3": 125,
+    "t01-clinic-current-4": 162,
+    "t01-clinic-current-5": 167,
+    "t01-clinic-current-6": 178,
+    "t01-clinic-current-7": 182,
+    "t01-clinic-current-8": 200,
+    "t01-clinic-history-1": 67,
+    "t01-clinic-join-8": 120,
+    "t01-clinic-history-3": 130,
+    "t01-clinic-history-2": 83,
+    "t01-clinic-history-4": 70,
+    "t01-clinic-history-5": 148,
+    "t01-clinic-history-6": 109,
+    "t01-clinic-history-7": 160,
+    "t01-clinic-history-8": 120,
+    "t01-clinic-join-5": 134,
+    "t01-clinic-join-6": 169,
+    "t01-clinic-join-7": 97,
+    "t01-clinic-join-1": 86,
+    "t01-clinic-join-2": 66,
+    "t01-clinic-join-3": 109,
+    "t01-clinic-join-4": 171
+  },
+  "answer_protocol": {
+    "answers": {
+      "t01-clinic-current-1": 110,
+      "t01-clinic-current-2": 111,
+      "t01-clinic-current-3": 125,
+      "t01-clinic-current-4": 162,
+      "t01-clinic-current-5": 167,
+      "t01-clinic-current-6": 178,
+      "t01-clinic-current-7": 182,
+      "t01-clinic-current-8": 200,
+      "t01-clinic-history-1": 67,
+      "t01-clinic-join-8": 120,
+      "t01-clinic-history-3": 130,
+      "t01-clinic-history-2": 83,
+      "t01-clinic-history-4": 70,
+      "t01-clinic-history-5": 148,
+      "t01-clinic-history-6": 109,
+      "t01-clinic-history-7": 160,
+      "t01-clinic-history-8": 120,
+      "t01-clinic-join-5": 134,
+      "t01-clinic-join-6": 169,
+      "t01-clinic-join-7": 97,
+      "t01-clinic-join-1": 86,
+      "t01-clinic-join-2": 66,
+      "t01-clinic-join-3": 109,
+      "t01-clinic-join-4": 171
+    },
+    "calls": 12,
+    "retrievals": 11,
+    "cache": {
+      "fetch:1": {
+        "batch_id": 1,
+        "text": "The clinic packing desk opened eight balance accounts for sealed supply kits. These are bookkeeping units, not patient counts. Shelf cards with delivery estimates were filed separately from the posted account book.\nThe balance of amber10 is now 60.\nThe balance of birch11 is now 75.\nThe balance of cedar12 is now 90.\nThe balance of dune13 is now 105.\nThe balance of elm14 is now 120.\nThe balance of frost15 is now 135.\nThe balance of grove16 is now 150.\nThe balance of heath17 is now 165.\nticket-clinic-a belongs to counter amber10.\nticket-clinic-b belongs to counter birch11.\nticket-clinic-c belongs to counter cedar12.\nticket-clinic-d belongs to counter dune13.\nticket-clinic-e belongs to counter elm14.\nticket-clinic-f belongs to counter frost15.\nticket-clinic-g belongs to counter grove16.\nticket-clinic-h belongs to counter heath17.",
+        "truncated": false
+      },
+      "fetch:2": {
+        "batch_id": 2,
+        "text": "A courier brought back a small sealed parcel. The supervisor posted its credit after checking the seal. A pencilled proposal for a further 40-unit amber10 credit remained unapproved and was not posted; the pencilled figure is not part of the balance book.\nThe balance of amber10 increased by 7.\nThe balance of cedar12 decreased by 4.\nThe balance of elm14 increased by 11.\nThe balance of grove16 decreased by 6.",
+        "truncated": false
+      },
+      "fetch:3": {
+        "batch_id": 3,
+        "text": "An afternoon handover moved two ticket responsibilities. These transfers affect ownership only, without moving balances. The loading report also listed 18 empty carriers, which are outside the account book.\nticket-clinic-a was transferred to birch11, effective before this batch ended.\nticket-clinic-f was transferred to heath17, effective before this batch ended.\nThe balance of birch11 decreased by 9.\nThe balance of dune13 increased by 8.\nThe balance of frost15 decreased by 5.\nThe balance of heath17 increased by 6.",
+        "truncated": false
+      },
+      "fetch:4": {
+        "batch_id": 4,
+        "text": "The second cabinet count replaced one provisional balance. That replacement was posted immediately; later counts must not erase this closing record. Staff discussed moving ticket-clinic-c to elm14, but no transfer was authorized or recorded.\nThe balance of cedar12 is now 83.\nThe balance of amber10 decreased by 3.\nThe balance of frost15 increased by 12.\nThe balance of grove16 increased by 5.",
+        "truncated": false
+      },
+      "fetch:5": {
+        "batch_id": 5,
+        "text": "The clinic desk closed the collection round before the van departed. The requisition for 25 additional dune13 units was cancelled before any posting. A signed ownership form, separate from that requisition, took effect at the close.\nticket-clinic-c was transferred to elm14, effective before this batch ended.\nThe balance of dune13 decreased by 7.\nThe balance of elm14 decreased by 13.\nThe balance of birch11 increased by 4.\nThe balance of heath17 decreased by 2.",
+        "truncated": false
+      },
+      "fetch:6": {
+        "batch_id": 6,
+        "text": "The parcel credited in batch 2 was sent back out. The amber10 debit below reverses that earlier 7-unit credit as a new posting in this batch; it does not revise the old closing balance. The auditor retained both courier receipts.\nThe balance of amber10 decreased by 7.\nThe balance of cedar12 increased by 10.\nThe balance of grove16 is now 148.\nThe balance of frost15 decreased by 8.",
+        "truncated": false
+      },
+      "fetch:7": {
+        "batch_id": 7,
+        "text": "The desk rotated collection duties between teams. The posted balance changes and the two signed ticket transfers all took effect before this close. A telephone forecast of 70 kits was a delivery estimate, not a balance setting.\nticket-clinic-b was transferred to frost15, effective before this batch ended.\nticket-clinic-g was transferred to dune13, effective before this batch ended.\nThe balance of birch11 increased by 15.\nThe balance of elm14 increased by 6.\nThe balance of heath17 decreased by 9.\nThe balance of dune13 increased by 3.",
+        "truncated": false
+      },
+      "fetch:8": {
+        "batch_id": 8,
+        "text": "A shelf recount superseded the cedar12 setting recorded in batch 4, starting now. The earlier setting remains the value that was posted at that earlier close. No balance was changed merely because the recount form carried three signatures.\nThe balance of cedar12 is now 97.\nThe balance of amber10 increased by 14.\nThe balance of grove16 decreased by 12.\nThe balance of frost15 increased by 9.",
+        "truncated": false
+      },
+      "fetch:9": {
+        "batch_id": 9,
+        "text": "The final collection roster used a new owner for one ticket. A draft said ticket-clinic-h might also move to amber10 next week; it was not signed, so ownership of that ticket did not change here.\nticket-clinic-d was transferred to cedar12, effective before this batch ended.\nThe balance of dune13 increased by 16.\nThe balance of elm14 decreased by 4.\nThe balance of birch11 decreased by 6.\nThe balance of heath17 increased by 5.",
+        "truncated": false
+      },
+      "fetch:10": {
+        "batch_id": 10,
+        "text": "The accounts received a posted transfer-in from an external reserve that is not one of these eight counters. This receipt did not change ticket ownership. A driver wrote route number 31 on the envelope; the route number is not an account amount.\nThe balance of amber10 increased by 41.\nThe balance of birch11 increased by 32.\nThe balance of cedar12 increased by 28.\nThe balance of dune13 increased by 37.",
+        "truncated": false
+      },
+      "fetch:11": {
+        "batch_id": 11,
+        "text": "The desk filed the first half of the review register while applying the remaining external allocations. Each review points to a ticket, whose owner must still be read at the time requested; the register does not replace older ownership records.\nThe balance of elm14 increased by 44.\nThe balance of frost15 increased by 35.\nThe balance of grove16 increased by 46.\nThe balance of heath17 increased by 39.\nreview-clinic-1 concerns ticket-clinic-c.\nreview-clinic-2 concerns ticket-clinic-a.\nreview-clinic-3 concerns ticket-clinic-g.\nreview-clinic-4 concerns ticket-clinic-f.",
+        "truncated": false
+      }
+    },
+    "recent": [
+      "fetch:1",
+      "fetch:2",
+      "fetch:3",
+      "fetch:4",
+      "fetch:5",
+      "fetch:6",
+      "fetch:7",
+      "fetch:8",
+      "fetch:9",
+      "fetch:10",
+      "fetch:11"
+    ],
+    "feedback": "Submitted.",
+    "completed": true
+  },
+  "trace_format": "history-live-attempt-trace.v1; enriched native evidence, not CPU replay input",
+  "calls": 24,
+  "cache_usage": {
+    "complete": true,
+    "cached_tokens": 0,
+    "calls": 24
+  },
+  "cold_cache_known": true,
+  "wall_seconds": 225.46056203497574,
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 60,
+              "birch11": 75,
+              "cedar12": 90,
+              "dune13": 105,
+              "elm14": 120,
+              "frost15": 135,
+              "grove16": 150,
+              "heath17": 165
+            },
+            "memory": "B1: 8 accounts set. amber10=60, birch11=75, cedar12=90, dune13=105, elm14=120, frost15=135, grove16=150, heath17=165. Tickets a-h map to amber10-heath17 respectively."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 1,
+            "arm": "archive",
+            "source_text_sha256": "f33cd6f62192ad6aee6814e7658148209381c9d4e7fef156d1a2d78a1bff7957",
+            "raw_response_sha256": "464539c1f19165b207b063fef0fdac87450811e57d53710cc2239619711b96c8",
+            "state_sha256": "8ed3cade03d38493660ebd38ebe352d4fd40e96989b1f45a8dd681a747c19f9e",
+            "previous_snapshot_sha256": null,
+            "snapshot_sha256": "e59ee6da3da13a3a85dd802c5e57d844631113fa25e3905108622621c05712b5"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 60,
+        "birch11": 75,
+        "cedar12": 90,
+        "dune13": 105,
+        "elm14": 120,
+        "frost15": 135,
+        "grove16": 150,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 67,
+              "birch11": 75,
+              "cedar12": 86,
+              "dune13": 105,
+              "elm14": 131,
+              "frost15": 135,
+              "grove16": 144,
+              "heath17": 165
+            },
+            "memory": "B2: amber10+7, cedar12-4, elm14+11, grove16-6. Unposted 40 amber10 ignored. B1: 8 accounts set. Tickets a-h map to amber10-heath17."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 2,
+            "arm": "archive",
+            "source_text_sha256": "da0ea508270e963da80b96597b59bd46b1a162d91db3ab8709cfe4229a4159a0",
+            "raw_response_sha256": "5994c1381bd4297842ffdd4eb222c92dcbaae69a2ed73098f0061c46806c3207",
+            "state_sha256": "8ebcccda63ecd15c6ff53423ce62328a758bbe903286380f490023e275dbf1b6",
+            "previous_snapshot_sha256": "e59ee6da3da13a3a85dd802c5e57d844631113fa25e3905108622621c05712b5",
+            "snapshot_sha256": "f7b3f7df3f75f05fc2c2dcfebe2389ced80828d725f4b625f4eb3cb76fed4e9c"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 67,
+        "birch11": 75,
+        "cedar12": 86,
+        "dune13": 105,
+        "elm14": 131,
+        "frost15": 135,
+        "grove16": 144,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 67,
+              "birch11": 66,
+              "cedar12": 86,
+              "dune13": 113,
+              "elm14": 131,
+              "frost15": 130,
+              "grove16": 144,
+              "heath17": 171
+            },
+            "memory": "B3: birch11-9, dune13+8, frost15-5, heath17+6. Transfers: clinic-a->birch11, clinic-f->heath17. 18 empty carriers ignored."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 3,
+            "arm": "archive",
+            "source_text_sha256": "fe615b17326784a162a3ee4a8fc1c932cc94cae0e83040b6eccfa823bbfdab2b",
+            "raw_response_sha256": "138c154ec905af692e0180ab100a3debd2c76a890376d0a747a74ca8990e4308",
+            "state_sha256": "3c38b35a6bea6c48f34d4117f277bf101445dae123383768f119bcbc7e853a36",
+            "previous_snapshot_sha256": "f7b3f7df3f75f05fc2c2dcfebe2389ced80828d725f4b625f4eb3cb76fed4e9c",
+            "snapshot_sha256": "15ec8ea3d8f9bbe02fc025b2c386b4cbd629a8812468b8a0a9276062579ca8ff"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 67,
+        "birch11": 66,
+        "cedar12": 86,
+        "dune13": 113,
+        "elm14": 131,
+        "frost15": 130,
+        "grove16": 144,
+        "heath17": 171
+      }
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 64,
+              "birch11": 66,
+              "cedar12": 83,
+              "dune13": 113,
+              "elm14": 131,
+              "frost15": 142,
+              "grove16": 149,
+              "heath17": 171
+            },
+            "memory": "B4: cedar12=83, amber10-3, frost15+12, grove16+5. No transfer clinic-c->elm14."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 4,
+            "arm": "archive",
+            "source_text_sha256": "027e959f48ca7d7b5794e8f73e36005aff11bb8b6cf618f9c3cbd795d2492794",
+            "raw_response_sha256": "b2db2089be34189f4fc286332b6f346876dca4be79cf405668958ffa18e78edd",
+            "state_sha256": "4f86ee321cc2fa53c0c49c32ffa756b21439d8c9afe604a2c17e1e1d9028932a",
+            "previous_snapshot_sha256": "15ec8ea3d8f9bbe02fc025b2c386b4cbd629a8812468b8a0a9276062579ca8ff",
+            "snapshot_sha256": "1ee60493f0d7b62e12e5db83bfc0ca4f11d3456c1b9a1b51e71eab8babd589eb"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 64,
+        "birch11": 66,
+        "cedar12": 83,
+        "dune13": 113,
+        "elm14": 131,
+        "frost15": 142,
+        "grove16": 149,
+        "heath17": 171
+      }
+    },
+    {
+      "batch_id": 5,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 64,
+              "birch11": 70,
+              "cedar12": 83,
+              "dune13": 106,
+              "elm14": 118,
+              "frost15": 142,
+              "grove16": 149,
+              "heath17": 169
+            },
+            "memory": "B5: dune13-7, elm14-13, birch11+4, heath17-2. clinic-c->elm14. Requisition cancelled."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 5,
+            "arm": "archive",
+            "source_text_sha256": "b4bce98d909568299bff6a9deb485254e40763b1e81cecea629046e3a6c2399e",
+            "raw_response_sha256": "4971cf28dad4a767019b3a20faa21813c7ab46ea13f05114350380f852dc8e67",
+            "state_sha256": "4d2b2fbc9ebcbce38d6b1ec2ee3a152c4a6da6f4b46b48c31fd7ca8351fcd840",
+            "previous_snapshot_sha256": "1ee60493f0d7b62e12e5db83bfc0ca4f11d3456c1b9a1b51e71eab8babd589eb",
+            "snapshot_sha256": "efcb2d28346d1b76fce1f0eecd19c03383cd1ee806b5fab7292847d2c8f65797"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 64,
+        "birch11": 70,
+        "cedar12": 83,
+        "dune13": 106,
+        "elm14": 118,
+        "frost15": 142,
+        "grove16": 149,
+        "heath17": 169
+      }
+    },
+    {
+      "batch_id": 6,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 57,
+              "birch11": 70,
+              "cedar12": 93,
+              "dune13": 106,
+              "elm14": 118,
+              "frost15": 134,
+              "grove16": 148,
+              "heath17": 169
+            },
+            "memory": "B6: amber10-7, cedar12+10, grove16=148, frost15-8. Reversal of B2 credit."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 6,
+            "arm": "archive",
+            "source_text_sha256": "2b0c1699cc555d1782d274abaf73884a7a906dcffcdea1a468dd00ab1a6ab8e9",
+            "raw_response_sha256": "5da79e16635c32525d7d9ea654d0ba9e13ff7bde72b6c5ec54833c5162109abe",
+            "state_sha256": "28003eadcf70f15cffecbcf0ae8d2395fa9ba1645521cdde1d0d81ada54bb2f9",
+            "previous_snapshot_sha256": "efcb2d28346d1b76fce1f0eecd19c03383cd1ee806b5fab7292847d2c8f65797",
+            "snapshot_sha256": "b16b717a3e5a54d3167fa0b915ebae212a7a33f90498b2ed56d92d0c1053ce8f"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 57,
+        "birch11": 70,
+        "cedar12": 93,
+        "dune13": 106,
+        "elm14": 118,
+        "frost15": 134,
+        "grove16": 148,
+        "heath17": 169
+      }
+    },
+    {
+      "batch_id": 7,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 57,
+              "birch11": 85,
+              "cedar12": 93,
+              "dune13": 109,
+              "elm14": 124,
+              "frost15": 134,
+              "grove16": 148,
+              "heath17": 160
+            },
+            "memory": "B7: birch11+15, elm14+6, heath17-9, dune13+3. Transfers: clinic-b->frost15, clinic-g->dune13. Forecast 70 ignored."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 7,
+            "arm": "archive",
+            "source_text_sha256": "f38433e2e57d3540147cc1ecba269536742eed6ab73f7c0628ce139e27cf6d1f",
+            "raw_response_sha256": "14c33d4fc86d47cffca46093fe83fe9d9e0f66c0242dc8f5b3beb08fe3d32dd0",
+            "state_sha256": "ddce74decf4bac0e6f64d26e2c018c2b2dac1282a435cfe76fd6fcff7c31b9a6",
+            "previous_snapshot_sha256": "b16b717a3e5a54d3167fa0b915ebae212a7a33f90498b2ed56d92d0c1053ce8f",
+            "snapshot_sha256": "074ecb467fff500631de392518e6166a888758fa185efbee0c56c77f3f2bfbcc"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 57,
+        "birch11": 85,
+        "cedar12": 93,
+        "dune13": 109,
+        "elm14": 124,
+        "frost15": 134,
+        "grove16": 148,
+        "heath17": 160
+      }
+    },
+    {
+      "batch_id": 8,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 71,
+              "birch11": 85,
+              "cedar12": 97,
+              "dune13": 109,
+              "elm14": 124,
+              "frost15": 143,
+              "grove16": 136,
+              "heath17": 160
+            },
+            "memory": "B8: cedar12=97, amber10+14, grove16-12, frost15+9. B7: birch11+15, elm14+6, heath17-9, dune13+3. Transfers: clinic-b->frost15, clinic-g->dune13."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 8,
+            "arm": "archive",
+            "source_text_sha256": "8c6f680e65ad3a15274a39d48ef8c3d1d9472273a5ecea2c7ab7d177217e8f83",
+            "raw_response_sha256": "827d16fee0fd332e337d247a5992e2b0a21112fcf255d9614d7314bbc572b93f",
+            "state_sha256": "fbbbbd85d54305c41e9e67481e51f275eea923d78967315e7db02913585c74fe",
+            "previous_snapshot_sha256": "074ecb467fff500631de392518e6166a888758fa185efbee0c56c77f3f2bfbcc",
+            "snapshot_sha256": "2f17648d18d9909ae5820c011fb70893a5fbb4d8702774ee359905526dd33b61"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 71,
+        "birch11": 85,
+        "cedar12": 97,
+        "dune13": 109,
+        "elm14": 124,
+        "frost15": 143,
+        "grove16": 136,
+        "heath17": 160
+      }
+    },
+    {
+      "batch_id": 9,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 71,
+              "birch11": 79,
+              "cedar12": 97,
+              "dune13": 125,
+              "elm14": 120,
+              "frost15": 143,
+              "grove16": 136,
+              "heath17": 165
+            },
+            "memory": "B9: dune13+16, elm14-4, birch11-6, heath17+5. Transfer: clinic-d->cedar12. Draft clinic-h->amber10 ignored."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 9,
+            "arm": "archive",
+            "source_text_sha256": "5bcdc9e5184d17d24f0036e0c8b78014bbb0c1889c68ac60b77056c6c5097063",
+            "raw_response_sha256": "d3bf611ff0e32499281d3bf8e14cfe5c6964d934bba1133d0484b98dac699ef8",
+            "state_sha256": "e54850cdca67fd6ad2c109ec322db6d9e8fcaad8fb02e06a4fb7f590d540f593",
+            "previous_snapshot_sha256": "2f17648d18d9909ae5820c011fb70893a5fbb4d8702774ee359905526dd33b61",
+            "snapshot_sha256": "5c9ed87e94eb9fd6b94c21d535f8a47de0683ddadca24197b36b86003a1c2e50"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 71,
+        "birch11": 79,
+        "cedar12": 97,
+        "dune13": 125,
+        "elm14": 120,
+        "frost15": 143,
+        "grove16": 136,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 10,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 112,
+              "birch11": 111,
+              "cedar12": 125,
+              "dune13": 162,
+              "elm14": 120,
+              "frost15": 143,
+              "grove16": 136,
+              "heath17": 165
+            },
+            "memory": "B10: amber10+41, birch11+32, cedar12+28, dune13+37. External reserve transfer-in (no ownership change). Route 31 ignored."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 10,
+            "arm": "archive",
+            "source_text_sha256": "3cff0e0c8636d46f99860b316c6c920da422a9fee0867fb1c3eff91470f1eca3",
+            "raw_response_sha256": "b7a6f5e1058bfb3d28881d0a25f9afbd6f81f78eb8fcc5faf20075bf414efc68",
+            "state_sha256": "df9d7a5e8999cf2d4a027f64e86ad85ba45864f06fe052b0ca3e56fe58bd5f2a",
+            "previous_snapshot_sha256": "5c9ed87e94eb9fd6b94c21d535f8a47de0683ddadca24197b36b86003a1c2e50",
+            "snapshot_sha256": "252f060d33953d4a4632208c88e4f64877bb8645bdae5d643679531e5ba5e746"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 112,
+        "birch11": 111,
+        "cedar12": 125,
+        "dune13": 162,
+        "elm14": 120,
+        "frost15": 143,
+        "grove16": 136,
+        "heath17": 165
+      }
+    },
+    {
+      "batch_id": 11,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 112,
+              "birch11": 111,
+              "cedar12": 125,
+              "dune13": 162,
+              "elm14": 164,
+              "frost15": 178,
+              "grove16": 182,
+              "heath17": 204
+            },
+            "memory": "B11: elm14+44, frost15+35, grove16+46, heath17+39. Reviews: clinic-1->c, clinic-2->a, clinic-3->g, clinic-4->f."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 11,
+            "arm": "archive",
+            "source_text_sha256": "c88927b770bfea9be2f85dc6a4f3113322221d215c2bbaa37488d2f6ae064d10",
+            "raw_response_sha256": "e4b6eafc7b438f929e667c192cb4e49d540b99a236a49b9b7f336a272aa8b499",
+            "state_sha256": "f44b11e26a8fe5bf52a1ba3723b2b7f4553da2e19f50ed9e000d9c151e1ab86e",
+            "previous_snapshot_sha256": "252f060d33953d4a4632208c88e4f64877bb8645bdae5d643679531e5ba5e746",
+            "snapshot_sha256": "3f19c4ee11d0759c0900e952a8d32cb920a08cd1ec91a962207b34b4445537ca"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 112,
+        "birch11": 111,
+        "cedar12": 125,
+        "dune13": 162,
+        "elm14": 164,
+        "frost15": 178,
+        "grove16": 182,
+        "heath17": 204
+      }
+    },
+    {
+      "batch_id": 12,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 110,
+              "birch11": 111,
+              "cedar12": 125,
+              "dune13": 162,
+              "elm14": 167,
+              "frost15": 178,
+              "grove16": 182,
+              "heath17": 200
+            },
+            "memory": "B12: amber10-2, elm14+3, heath17-4. Reviews: clinic-5->b, clinic-6->h, clinic-7->d, clinic-8->e."
+          },
+          "snapshot_receipt": {
+            "schema": "history-state-receipt.v1",
+            "batch_id": 12,
+            "arm": "archive",
+            "source_text_sha256": "af37c567ad0a4db6dc6b1e2b5e9717d44c856a68b19637c36143ab351c2e8daf",
+            "raw_response_sha256": "7a80654e8e738a60f9ed2c332c7c3d1ee78993cb9b6c92113e541e06bd83f2b7",
+            "state_sha256": "12935df531deb2dd97b6480efc566286df7d82608689df2da8feb3f5d2b4d78f",
+            "previous_snapshot_sha256": "3f19c4ee11d0759c0900e952a8d32cb920a08cd1ec91a962207b34b4445537ca",
+            "snapshot_sha256": "e9ec67f252fec5bdbb88ba51b3ed9652f2752e23b45625d4b6f98a56b01aa385"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 8,
+        "asked": 8
+      },
+      "observed_state": {
+        "amber10": 110,
+        "birch11": 111,
+        "cedar12": 125,
+        "dune13": 162,
+        "elm14": 167,
+        "frost15": 178,
+        "grove16": 182,
+        "heath17": 200
+      }
+    }
+  ],
+  "refusals": [],
+  "checkpoint_metrics_complete": true,
+  "all_checkpoint_states_exact": true,
+  "final_state_exact": true,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Historical-state retrieval development engine; task retains its own authored/generated provenance; no speed claim.",
+  "artifacts": {
+    "calls.jsonl": {
+      "path": "calls.jsonl",
+      "sha256": "9d2f918a1f5485878da0ff529815079605e9b924e7cd896f42e4f4c47afc72ac"
+    },
+    "trace.json": {
+      "path": "trace.json",
+      "sha256": "4310f36a1027e0e4a05e57aed00319bd7af381103467c84eb5d60d523bea4aa7"
+    },
+    "checkpoint.json": {
+      "path": "checkpoint.json",
+      "sha256": "3300de3a117e403681125fa2131e4ef7adea8a51c2bdfc63404464d825f47bcd"
+    },
+    "answer-session.json": {
+      "path": "answer-session.json",
+      "sha256": "39691813359f94cd7550776d9f376061f9299cbe69dde9f37da9e20e093802c5"
+    },
+    "retrieval.jsonl": {
+      "path": "retrieval.jsonl",
+      "sha256": "ad6746ec9e58706ca5b4a064f0427e8eb16df260eb9271ce1ec4d9828e984248"
+    },
+    "snapshots/batch-1.json": {
+      "path": "snapshots/batch-1.json",
+      "sha256": "e59ee6da3da13a3a85dd802c5e57d844631113fa25e3905108622621c05712b5"
+    },
+    "snapshots/batch-10.json": {
+      "path": "snapshots/batch-10.json",
+      "sha256": "252f060d33953d4a4632208c88e4f64877bb8645bdae5d643679531e5ba5e746"
+    },
+    "snapshots/batch-11.json": {
+      "path": "snapshots/batch-11.json",
+      "sha256": "3f19c4ee11d0759c0900e952a8d32cb920a08cd1ec91a962207b34b4445537ca"
+    },
+    "snapshots/batch-12.json": {
+      "path": "snapshots/batch-12.json",
+      "sha256": "e9ec67f252fec5bdbb88ba51b3ed9652f2752e23b45625d4b6f98a56b01aa385"
+    },
+    "snapshots/batch-2.json": {
+      "path": "snapshots/batch-2.json",
+      "sha256": "f7b3f7df3f75f05fc2c2dcfebe2389ced80828d725f4b625f4eb3cb76fed4e9c"
+    },
+    "snapshots/batch-3.json": {
+      "path": "snapshots/batch-3.json",
+      "sha256": "15ec8ea3d8f9bbe02fc025b2c386b4cbd629a8812468b8a0a9276062579ca8ff"
+    },
+    "snapshots/batch-4.json": {
+      "path": "snapshots/batch-4.json",
+      "sha256": "1ee60493f0d7b62e12e5db83bfc0ca4f11d3456c1b9a1b51e71eab8babd589eb"
+    },
+    "snapshots/batch-5.json": {
+      "path": "snapshots/batch-5.json",
+      "sha256": "efcb2d28346d1b76fce1f0eecd19c03383cd1ee806b5fab7292847d2c8f65797"
+    },
+    "snapshots/batch-6.json": {
+      "path": "snapshots/batch-6.json",
+      "sha256": "b16b717a3e5a54d3167fa0b915ebae212a7a33f90498b2ed56d92d0c1053ce8f"
+    },
+    "snapshots/batch-7.json": {
+      "path": "snapshots/batch-7.json",
+      "sha256": "074ecb467fff500631de392518e6166a888758fa185efbee0c56c77f3f2bfbcc"
+    },
+    "snapshots/batch-8.json": {
+      "path": "snapshots/batch-8.json",
+      "sha256": "2f17648d18d9909ae5820c011fb70893a5fbb4d8702774ee359905526dd33b61"
+    },
+    "snapshots/batch-9.json": {
+      "path": "snapshots/batch-9.json",
+      "sha256": "5c9ed87e94eb9fd6b94c21d535f8a47de0683ddadca24197b36b86003a1c2e50"
+    }
+  },
+  "snapshot_count": 12
+}
