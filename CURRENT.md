@@ -49,8 +49,12 @@ previous 4 GiB allowance is not a continuing reservation.
 
 Current-upstream ComfyUI source `b00c6e95279053474955540ba4f551646722b9aa`
 is prepared separately with all five native and 63 added lab overlays accounted
-for. Independent source checks passed; it is **unsealed and not runtime-qualified**.
-The runtime port and isolated application dependency update are in progress.
+for. The separate runtime candidate and isolated application dependencies now
+pass source, CPU and inactive launch checks, including independent review.
+Its manifest is `e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736`;
+**GPU execution and exact-output qualification remain pending.** The fixed
+[upstream control](experiments/ltx25-b70/data/resume-20261007/runtime99-preregistration.json)
+is preregistered with a fresh 4 GiB allowance and about 64.45 GiB free.
 First qualify its unchanged 23/25 sampler split against the accepted outputs;
 then test the planned 20/28 split to reduce the busiest card's work. No source
 port or speed estimate is a measured improvement. All five bad-memory blocks

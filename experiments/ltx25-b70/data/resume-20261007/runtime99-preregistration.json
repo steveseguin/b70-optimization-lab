@@ -1,0 +1,67 @@
+{
+  "schema": "ltx.upstream99.control-preregistration.v1",
+  "created_at_utc": "2026-10-07T13:24:14.802486+00:00",
+  "status": "preregistered; check-only and independent reviews required before single start",
+  "kind": "newest-upstream same-configuration quality control; not sampler rebalance",
+  "source_commit": "b00c6e95279053474955540ba4f551646722b9aa",
+  "packet_manifest_sha256": "e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736",
+  "run_name": "encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256",
+  "campaign_args": [
+    "two-way",
+    "2",
+    "1",
+    "1",
+    "xpu:2",
+    "256x256",
+    "1",
+    "120"
+  ],
+  "timed_prompt_count": 120,
+  "layout": "two-way",
+  "sampler_workers": 2,
+  "batch": 1,
+  "shared_pool": true,
+  "decode_replica": "xpu:2",
+  "output_size": [
+    256,
+    256
+  ],
+  "frame_count": 25,
+  "playback_fps": 24,
+  "reference": "stability-01-w93c-* (original ten fixed prompt/seed fixtures)",
+  "quality_gate": "All four output tensors exactly match accepted references; unchanged finite/determinism/context-sentry/replay/decode-placement gates. No new oracle.",
+  "measurement": "Existing complete runner reports distinct-clip intervals; first warmup stages excluded by unchanged definitions. Report end-to-end latency separately if measured. One control is not a speed verdict.",
+  "overlay": "Five accepted native overlays +63labadditions transplanted; explicit source-pin updates and attention-backend refusal guard. Integrated tested progress-lock fix, explicit process NOFILE limit, isolated12package dependency overlay. No numerical or sampling change intended.",
+  "planned_write_bytes": 4294967296,
+  "min_free_bytes": 53687091200,
+  "admission_limitation": "Declared conservative output/cache allowance, not an enforced reservation or absolute cache bound. Observe actual free space while running; no concurrent local write/build/model jobs.",
+  "lifecycle": "One server start, fixed control stages, one proven-quiescence SIGINT stop, then four-card/journal postflight. Failed request never cycles server. Fault halts submissions and triggers evidence review; no hardkill/reboot/reset or host-setting change.",
+  "dependencies": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-99.sh": "1f9f405b75fc7212ec742af36198e4eeffcc894babf788d89ae822a333fa41bf",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/build-runtime-99.py": "a446c8916d687f3e2132ff6c9a0db3ee6472d80511e4e027b2020c71b777753e",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/check-runtime-99.py": "701020b63c57c2ef2c0d47433c66a96695dd1e5d5dbfc60383a12195d06ba333",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-throughput-fixtures-98.py": "ee8e5b6f9a6117aef60460e6c9d5fcc251de359df142576306070b6d5b51becf",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/worker-headroom-98.py": "8dee8c4748a026ce1f4d1125ca50b67431a1d44921d33121addf6a4aa7d37944",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/observe-process-fds-99.py": "b374b2c34414a95c64784db5b22d66c3be70b206f8bb6de6839bbeee35819db0",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/stability-01-window-prereg.json": "9c188d9b96805ec1cfc3e6c694f952550ebfd8166a9a11c23044cb14834abb17",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-r2.json": "9f9b2e188d2b7139388ff818faf8b6d507c2a745c70b833c4f02616855c102dd",
+    "/home/steve/ltx25-upstream99-dependencies/receipt.json": "626dd5e9d840c6bfa56f6da23f326e2a434aae46c73b3662c5a08a3d50970e09"
+  },
+  "larger_or_batch_changed_arms_queued": false,
+  "application_file_limits": {
+    "soft": 65536,
+    "hard": 1048576,
+    "scope": "new transient LTX unit only",
+    "verify_before_first_model_request": true
+  },
+  "health_receipt": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-r2.json",
+  "fd_observation": {
+    "helper": "experiments/ltx25-b70/scripts/observe-process-fds-99.py",
+    "interval_seconds": 2,
+    "bound_seconds": 3600,
+    "alert_descriptors": 16384,
+    "enforcement": "external read-only observer; coordinator halts submissions on alert, not an automatic cap",
+    "leak_fixed_claim": false
+  },
+  "available_bytes_at_preregistration": 69207539712
+}

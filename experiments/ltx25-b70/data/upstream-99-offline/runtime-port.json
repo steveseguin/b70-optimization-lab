@@ -1,0 +1,49 @@
+{
+  "historical_manifest_sha256": "918b47a5530b4dc97fe8fc8f4ec77fd64521ec6846217c54f5fba589e0e8377f",
+  "input": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99-source",
+  "launch_gates": [
+    "all historical packet gates on preserved historical packet",
+    "source99 independent input check plus exact runtime port edits",
+    "frozen B1/W2/23-25/shared-pool/card2/256x256 control",
+    "matched isolated application dependencies (pending)",
+    "actual application NOFILE soft>=65536 hard1048576",
+    "50GiB reserve plus4GiB declared write allowance",
+    "mandatory fresh four-card health receipt and unchanged ownership/journal gates",
+    "process-local CPU-tested progress display lock cleanup"
+  ],
+  "model_requests": 0,
+  "non_source_dependencies": 247,
+  "output": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99",
+  "qualification": false,
+  "runtime_source_overlays": {
+    "custom_nodes/ltx_host_embedding_lab/__init__.py": {
+      "after_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44",
+      "before_sha256": "07dab8b80c3ddfe69f70b0fca9d69a93cfa487ec7c88f1ad664afb4842eb8750",
+      "diff": "--- source99/custom_nodes/ltx_host_embedding_lab/__init__.py\n+++ runtime99/custom_nodes/ltx_host_embedding_lab/__init__.py\n@@ -164,6 +164,12 @@\n                 phase = 'load-diffusion'\n                 model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]\n                 _pending.append(model)\n+                # Packet99: preserve native BF16 attention; reject checkpoint-selected backends.\n+                from comfy.ldm.modules.attention import ComfyAttention\n+                attention_modules = [m for m in model.model.diffusion_model.modules()\n+                                     if isinstance(m, ComfyAttention)]\n+                require(attention_modules and all(m.config is None and m.function is None\n+                        for m in attention_modules), 'Packet99 requires unconfigured native attention')\n             else:\n                 model, video, audio, upscaler = _shared\n                 vaes = [video, audio]\n"
+    },
+    "custom_nodes/ltx_na_axis_decode_lab/__init__.py": {
+      "after_sha256": "05a99e8cef5bed07aadee45459633b148090fb754f9489fcabf0ea31b58316ba",
+      "before_sha256": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+      "diff": "--- source99/custom_nodes/ltx_na_axis_decode_lab/__init__.py\n+++ runtime99/custom_nodes/ltx_na_axis_decode_lab/__init__.py\n@@ -14,8 +14,8 @@\n \n ROUTER_SHA = '1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7'\n CANDIDATE_SHA = 'd2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a'\n-NODES_SHA = 'dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e'\n-SD_SHA = '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0'\n+NODES_SHA = 'e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96'\n+SD_SHA = '2917a7982d08640ebe297ebc5cb5ad873567099c2e66688dcaff3650464dc694'\n DECODER_SHA = '7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21'\n NODE_CLASS_MAPPINGS = {}\n \n"
+    },
+    "scripts/host_embedding_resident_node.py": {
+      "after_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44",
+      "before_sha256": "07dab8b80c3ddfe69f70b0fca9d69a93cfa487ec7c88f1ad664afb4842eb8750",
+      "diff": "--- source99/scripts/host_embedding_resident_node.py\n+++ runtime99/scripts/host_embedding_resident_node.py\n@@ -164,6 +164,12 @@\n                 phase = 'load-diffusion'\n                 model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]\n                 _pending.append(model)\n+                # Packet99: preserve native BF16 attention; reject checkpoint-selected backends.\n+                from comfy.ldm.modules.attention import ComfyAttention\n+                attention_modules = [m for m in model.model.diffusion_model.modules()\n+                                     if isinstance(m, ComfyAttention)]\n+                require(attention_modules and all(m.config is None and m.function is None\n+                        for m in attention_modules), 'Packet99 requires unconfigured native attention')\n             else:\n                 model, video, audio, upscaler = _shared\n                 vaes = [video, audio]\n"
+    },
+    "scripts/ltx_graph_text_encoder.py": {
+      "after_sha256": "079d2965d3849acf83a351bb459fc5a079e727d7a976940f7e76ce8a58a3ca10",
+      "before_sha256": "b488e89d16053eb517e99cec8922a6e97af3c8bed6a65943191f2fbc2e153e6d",
+      "diff": "--- source99/scripts/ltx_graph_text_encoder.py\n+++ runtime99/scripts/ltx_graph_text_encoder.py\n@@ -85,7 +85,7 @@\n     if stream is None:\n         stream = _STREAMS[key] = torch.xpu.Stream(device=device)\n     return stream\n-GEMMA_SOURCE_SHA256 = 'a0bec322e45e94e5c938c2b8bde0112d23805166a533612077915d594d18dbbc'\n+GEMMA_SOURCE_SHA256 = '6fc1b06e42e33bed5e69c208808551af839265ad319f4eb9a0aa40ecc62d179a'\n LAYER_CLASS = 'TransformerBlockGemma4'\n STACK_CLASS = 'Gemma4Transformer'\n LAYERS = 48\n"
+    },
+    "scripts/na_axis_decode_node.py": {
+      "after_sha256": "05a99e8cef5bed07aadee45459633b148090fb754f9489fcabf0ea31b58316ba",
+      "before_sha256": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+      "diff": "--- source99/scripts/na_axis_decode_node.py\n+++ runtime99/scripts/na_axis_decode_node.py\n@@ -14,8 +14,8 @@\n \n ROUTER_SHA = '1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7'\n CANDIDATE_SHA = 'd2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a'\n-NODES_SHA = 'dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e'\n-SD_SHA = '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0'\n+NODES_SHA = 'e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96'\n+SD_SHA = '2917a7982d08640ebe297ebc5cb5ad873567099c2e66688dcaff3650464dc694'\n DECODER_SHA = '7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21'\n NODE_CLASS_MAPPINGS = {}\n \n"
+    }
+  },
+  "source_bytes": 49785325,
+  "source_files": 1333,
+  "status": "runtime99-build-plan-not-materialized-not-qualified",
+  "upstream_commit": "b00c6e95279053474955540ba4f551646722b9aa"
+}
