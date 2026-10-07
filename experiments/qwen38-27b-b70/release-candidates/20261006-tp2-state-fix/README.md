@@ -76,6 +76,74 @@ launcher must independently enforce the R314 kernel/library identity.
 Their float64 recurrence is a stand-in. They do not establish GPU arithmetic,
 engine integration, numerical parity, speed, or package safety.
 
+## Offline preflight and loader evidence
+
+`preflight.py` accepts an explicit runtime manifest and **cannot launch a
+process**. Its reviewed-runtime allowlist is deliberately empty. The included
+manifest validates as pending and is then refused, even before artifact reads:
+
+```bash
+python preflight.py --manifest runtime-manifest.pending.json
+```
+
+Expected exit status: **2**, `status=refused`, `serving_authorized=false`.
+Filling in hashes or changing a manifest's status to `qualified` does not add
+it to the code-owned allowlist. There is no trust override or launch flag.
+The validator requires every kernel/library/source/plugin artifact, the plugin
+distribution/version/entrypoint, and an activation receipt bound to the
+independently reviewed qualification file. Even an eventual offline consistency
+pass reports `serving_authorized=false`: it cannot prove what another process
+actually loaded. The 14 standard-library tests cover wrong kernel bytes, changing
+their supplied digest, ignored/duplicate plugins, missing markers, source-contract
+mismatch and unbound activation. Their synthetic allowlist exists only within
+test mocks; it is not qualifying evidence. Run `python test_preflight.py -v`.
+
+The local editable vLLM checkout is commit
+`44fc8fde09fc311d3099dab10366b672d9142ea4`, with older venv metadata
+`0.20.2rc1.dev2+gc51df4300.d20260523.xpu`. It is **not** R314's v0.29 runtime.
+The inspected [loader snapshot](source-evidence/local-vllm-plugins.py) and
+[source probe receipt](source-evidence/loader-probe.json) establish only that
+source's behavior: `entrypoint.load()` failures are caught and logged; an
+excluded plugin is silently skipped; exceptions in the subsequently invoked
+`register()` propagate. Therefore a register-time exception alone does not
+protect against an ignored or unimportable plugin.
+
+`probe_plugin_loader.py --source <inspected-loader-file>` executes only the two
+loader function definitions using fake entrypoints and fake environment state,
+without importing vLLM or invoking a runtime plugin. Use only inspected trusted
+source: function bodies still execute. This probe intentionally does not claim
+R314 runtime qualification. The source file's license header is preserved, and
+the upstream [Apache 2.0 license](source-evidence/LICENSE.vllm) is included.
+No `NOTICE` file exists in the inspected checkout or its recorded HEAD tree.
+
+Receipt marker names map to actual candidate objects as follows:
+
+| Receipt field | Object attribute to collect after actual plugin loading |
+| --- | --- |
+| `module_marker` | `b70_gdn_state_width.CANDIDATE` |
+| `builder_marker` | `GDNAttentionMetadataBuilder._b70_state_width_candidate` |
+| `group_marker` | `_xpu_ops._gdn_attention_core_xpu_impl._b70_state_width_candidate` |
+
+All three must equal `20261006-tp2-state-fix`. The builder marker is on the
+**class**, not the wrapped `build` method; the older boolean
+`_b70_gdn_state_width` alone does not identify this candidate. CPU registration
+tests assert these actual candidate attributes on fake runtime objects. The
+real-process collector remains pending; `preflight.py` validates recorded
+values and their evidence binding, not live Python objects.
+
+Before a real launcher can open an endpoint or construct the model, the owning
+host must supply the exact R314 `_xpu_C` hash (currently absent from the tracked
+R314 receipt), its retained GDN library, loader/builder/XPU source bytes, plugin
+metadata, and qualification evidence. In an isolated, no-weight runtime probe,
+check discovery and source hashes, run the actual plugin loader, and require
+the candidate module, builder and grouped-path markers even if the loader
+returned normally. Deliberately exclude/break the plugin and verify refusal.
+Repeat the guard **inside the serving interpreter and every worker**, before
+model construction or listening, checking actual imported module/library paths;
+a passing side-process receipt is insufficient. Verify those imports do not
+initialize a device before treating the probe as CPU-only. Actual no-weight
+runtime probes and this integration remain pending; no launcher is included.
+
 ## Build dependency and resource gate
 
 No build was attempted. Exact metadata checks on this four-card host found none

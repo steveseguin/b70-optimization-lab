@@ -183,6 +183,9 @@ class StateWidthTest(unittest.TestCase):
     def test_register_gated_and_idempotent(self):
         self.assertTrue(getattr(self.cls, '_b70_gdn_state_width', False))
         self.assertTrue(self.xpu_ops._gdn_attention_core_xpu_impl._b70_gdn_state_width)
+        self.assertEqual(ov.CANDIDATE, '20261006-tp2-state-fix')
+        self.assertEqual(self.cls._b70_state_width_candidate, ov.CANDIDATE)
+        self.assertEqual(self.xpu_ops._gdn_attention_core_xpu_impl._b70_state_width_candidate, ov.CANDIDATE)
         wrapped = self.cls.build
         with mock.patch.dict(sys.modules, self.mods), mock.patch.dict(os.environ, {'B70_GDN_STATE_WIDTH': '1'}):
             ov.register()

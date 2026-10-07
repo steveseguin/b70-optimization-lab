@@ -1,0 +1,194 @@
+{
+  "schema": "lab.cold-staging-readonly-audit.v1",
+  "recorded_at_utc": "2026-10-07T00:21:42.193476+00:00",
+  "host": "steve-b70s",
+  "scope": "Read-only audit of eight explicitly selected staging directories; no source mutation or archival/removal performed by auditor.",
+  "paths": [
+    {
+      "path": "/home/steve/staged-xpu-commitfix-20260820",
+      "allocated_bytes": 1626468352,
+      "regular_files": 23,
+      "newest_regular_file_mtime_utc": "2026-08-20T06:34:24.040292+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    },
+    {
+      "path": "/home/steve/staged-xpu-commitfix-graphfa-composite-20260820",
+      "allocated_bytes": 3438940160,
+      "regular_files": 20,
+      "newest_regular_file_mtime_utc": "2026-08-20T06:34:24.040292+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    },
+    {
+      "path": "/home/steve/qwen38-gdn-poison-stage-20260822",
+      "allocated_bytes": 3569475584,
+      "regular_files": 20,
+      "newest_regular_file_mtime_utc": "2026-08-22T07:20:31.870434+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    },
+    {
+      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r1",
+      "allocated_bytes": 498987008,
+      "regular_files": 10827,
+      "newest_regular_file_mtime_utc": "2026-08-21T04:48:08.716295+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    },
+    {
+      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2",
+      "allocated_bytes": 2422386688,
+      "regular_files": 10853,
+      "newest_regular_file_mtime_utc": "2026-08-21T05:04:56.287175+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    },
+    {
+      "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r3",
+      "allocated_bytes": 2417606656,
+      "regular_files": 11475,
+      "newest_regular_file_mtime_utc": "2026-08-22T02:14:23.168158+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    },
+    {
+      "path": "/home/steve/qwen38-m6-head256-q8k64-attn-override-20260820-r3",
+      "allocated_bytes": 3939819520,
+      "regular_files": 10849,
+      "newest_regular_file_mtime_utc": "2026-08-21T03:55:41.024656+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    },
+    {
+      "path": "/home/steve/qwen38-m6-head256-q8k64-attn-override-20260820-r4",
+      "allocated_bytes": 2422501376,
+      "regular_files": 10853,
+      "newest_regular_file_mtime_utc": "2026-08-21T04:03:28.404432+00:00",
+      "entry_owner_uids": [
+        1000
+      ],
+      "internal_symlinks": 0,
+      "hardlinked_regular_files": 0,
+      "special_files": 0,
+      "traversal_errors": 0
+    }
+  ],
+  "allocated_bytes_total": 20336185344,
+  "size_method": "du -sx -B1 on each exact directory, including allocated directory blocks; metadata walk used lstat without following links.",
+  "classification": {
+    "model_weights_found": false,
+    "contents": [
+      "compiled runtime shared libraries",
+      "Python kernel package source",
+      "kernel and dependency source trees",
+      "dependency Git packs",
+      "build metadata",
+      "candidate-stage receipts and source/hash manifests"
+    ],
+    "distinction": "These are preserved experiment/runtime packets, not disposable compiler caches. Complete archive preservation is required."
+  },
+  "process_reference_check": {
+    "effective_uid": 0,
+    "processes_scanned": 479,
+    "fields": [
+      "cmdline",
+      "environ",
+      "maps",
+      "cwd",
+      "exe",
+      "fd"
+    ],
+    "matches": [],
+    "permission_denied_counts": {},
+    "excluded": "The auditor process and its ancestor chain, whose command text includes the scoped paths.",
+    "method": "Read /proc metadata and check exact scoped path references; only matching paths/counts emitted, no environment values or credentials emitted.",
+    "limitation": "Point-in-time check before archival; rerun before removal. Does not prove absence of future configured use."
+  },
+  "inbound_symlink_check": {
+    "scope": [
+      "top-level entries under /home/steve",
+      "Git-tracked repository symlinks"
+    ],
+    "matches": [],
+    "limitations": "Not a full-system inbound-symlink scan; paths outside these scopes were not traversed."
+  },
+  "repository_reference_check": {
+    "no_direct_matches_in": [
+      "CURRENT.md",
+      "AGENTS.md",
+      "docs/current-reproducibility-map.md",
+      "docs/local-ops.md",
+      "results/scoreboard.md",
+      "repro/qwen38-27b-autoround-int4-b70/README.md"
+    ],
+    "historical_references_present": true,
+    "examples": [
+      "experiments/qwen38-27b-b70/scripts/run-20260821-qwen38-mtp5-q64k32-endpoint-abba.sh",
+      "experiments/qwen38-27b-b70/scripts/run-20260822-qwen38-chunk-poison-diag.sh",
+      "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md",
+      "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-prereg.md"
+    ],
+    "consequence": "Historical launchers retain original path references and will require exact-path restoration before replay."
+  },
+  "protected_historical_packet": {
+    "path": "/home/steve/qwen38-m6-head256-q64k32-attn-override-20260821-r2",
+    "classification": "Immutable sealed r2 research build.",
+    "evidence": [
+      "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-operator-result.md",
+      "experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp5-m6-fa-q64k32-abba-r3-prereg.md"
+    ],
+    "requirement": "Preserve complete byte-for-byte source, runtime, dependency Git data and identity receipts in a verified archive; retain original-path restore instructions. Do not substitute a rebuild or omit failed/partial historical work."
+  },
+  "recommendation": {
+    "eligible_paths": "All eight, conditional on full verified archives and repeated idle-use check.",
+    "conditions": [
+      "Archive full trees including dotfiles, source/dependency Git packs, receipts, modes and relevant metadata.",
+      "Verify archive against unchanged originals before removal.",
+      "Record archive checksum and exact original-path restore command.",
+      "Keep historical source and results durable; no model/notes deletion."
+    ],
+    "priority": "Three runtime-only trees and q8k64-r3 first; smallest q64k32-r1 last.",
+    "not_claimed": [
+      "backup on an independent device",
+      "public build reproducibility",
+      "safe execution of historical launchers",
+      "compression ratio or reclaimed bytes before actual archival"
+    ]
+  }
+}

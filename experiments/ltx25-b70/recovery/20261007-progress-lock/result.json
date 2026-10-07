@@ -1,0 +1,53 @@
+{
+  "schema": "ltx.progress-lock-cpu-result.v1",
+  "at_utc": "2026-10-07T00:20:24.710140+00:00",
+  "command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "experiments/ltx25-b70/recovery/20261007-progress-lock/test_progress_lock.py"
+  ],
+  "timeout_seconds": 15,
+  "returncode": 0,
+  "tests": 10,
+  "installed_source_unchanged": true,
+  "gpu_or_service_used": false,
+  "baseline_enospc_lock_leak_reproduced": true,
+  "candidate_releases_lock_and_rerenders": true,
+  "actual_tqdm_normal_rendering_identical": true,
+  "initial_test_attempt": {
+    "returncode": 1,
+    "passed": 9,
+    "failed": 1,
+    "reason": "AST comparison included docstring indentation changed by standalone method dedent; source-binding test now compares consistently dedented exact text. No candidate patch change was needed."
+  },
+  "files": {
+    "identity.json": {
+      "bytes": 927,
+      "sha256": "04d4d22084a6e4103467214ec2fd48ea23bf876c49a35cd3af25641eda4a1a35"
+    },
+    "progress-lock.patch": {
+      "bytes": 405,
+      "sha256": "74482c21bc29f5dbe40d6b9de2fdbd27fbe68b9c762edf8a90562491e6013463"
+    },
+    "refresh.candidate.py": {
+      "bytes": 746,
+      "sha256": "1dc1fb8c669aed183eb45ac67a579838e45389c3d5d77cb59ff44b4c7c8ffd56"
+    },
+    "refresh.original.py": {
+      "bytes": 712,
+      "sha256": "331cd792515f2f7f1b1b283a725f278c2e37c647011d1c5afc724d58f016f03d"
+    },
+    "std.py.original": {
+      "bytes": 58047,
+      "sha256": "dd76d965de52c590819dec376644220cb35dc4831e40efb4c30944884fc57d86"
+    },
+    "test_progress_lock.py": {
+      "bytes": 8304,
+      "sha256": "fe96cb5932eb4e5ced93b9f03dc065edad41d49cf3bc7989824d7ca85271c9ec"
+    },
+    "tests.log": {
+      "bytes": 1389,
+      "sha256": "3a24d6e4b642b3c66c019b000edcfdb79ab089fb280d65845a2ae069c039aedd"
+    }
+  }
+}

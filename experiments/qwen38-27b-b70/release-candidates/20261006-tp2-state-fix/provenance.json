@@ -44,8 +44,12 @@
   ],
   "candidate_files": [
     {
-      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/overlay/b70_gdn_state_width.py",
-      "sha256": "ab22cc8e7da4f6115cb61e34032a287886c59235906d5ca7dd8f9c543e97d12d"
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md",
+      "sha256": "5c04fe0af5f0734dabf65f6ab928cf045bfaa435a45de438a72f412116bf5871"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/cpu-validation.txt",
+      "sha256": "d8d9cadcef22eb288fb751fc247d9965a4ca9e187693687a5533863a946771b2"
     },
     {
       "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/overlay/b70_gdn_state_width-0.1.0.dist-info/METADATA",
@@ -56,16 +60,44 @@
       "sha256": "9d17c3415b89caf477dce19e8a739ed89521be9c58e4388d37ce2235d8c2f165"
     },
     {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/overlay/b70_gdn_state_width.py",
+      "sha256": "ab22cc8e7da4f6115cb61e34032a287886c59235906d5ca7dd8f9c543e97d12d"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/preflight-validation.txt",
+      "sha256": "9d8ab3037b1e02937e5fd99e280aaa2ec316a4b54b03cbc997fc0c374a298de3"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/preflight.py",
+      "sha256": "e045ed125325731e17e667a4429b432a5350b1f881de544615bb46335a2069cf"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/probe_plugin_loader.py",
+      "sha256": "f004be7fa55cdce7a7ef08ade93662ed990a0e7a3a4ea98b13e481e21a00176c"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/runtime-manifest.pending.json",
+      "sha256": "406775cb54f15e68668ae1f43ab9a0cde93c40bdc9952386a3561ef77644062b"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/source-evidence/LICENSE.vllm",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/source-evidence/loader-probe.json",
+      "sha256": "6067fdfe2cfd7315e5fa8ba2db1d34adb5287dd213b2f2efd46b98e88f005140"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/source-evidence/local-vllm-plugins.py",
+      "sha256": "4be66190ceaee9d0465f62ade801a8e94a907d7ab9fdb0a67fa14ce87448ae9f"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/test_preflight.py",
+      "sha256": "f7052fb508e691a808b382e533bb136b105b992f177945b8fac515d68cbf07cf"
+    },
+    {
       "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/test_state_width.py",
-      "sha256": "4a3eeb9200a6b1ec556786ae989c454d99cae840ed9eda5476c74db5570aa14d"
-    },
-    {
-      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md",
-      "sha256": "13ea732b51831b9e8c1012010785a77068b629abab87171674ff1764177cce0b"
-    },
-    {
-      "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/cpu-validation.txt",
-      "sha256": "941b1dd0fcf420383e7b922856d9f0859bda3c3337d50f9fe07339b14b2d6e7a"
+      "sha256": "9ec688edcc32938ecb87c53766bd22f5f64a9ed07f9a51fa7b8ebf5eef553d8b"
     }
   ],
   "pending": [
@@ -77,5 +109,12 @@
     "performance and resource measurements",
     "registry/artifact publication and remote hash verification",
     "TP1 separate checkpoint-kernel port"
-  ]
+  ],
+  "updated_at": "2026-10-07T00:23:14.910598+00:00",
+  "preflight_validation": {
+    "command": "python3 test_preflight.py -v",
+    "tests": 14,
+    "passed": true,
+    "scope": "stdlib source probe and offline receipt rejection; no runtime imports or device access"
+  }
 }
