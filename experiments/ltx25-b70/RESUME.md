@@ -76,6 +76,12 @@ Baseline adoption and clip-to-clip continuation remain separate decisions.
 
 ## Consolidation and incomplete-run evidence
 
+An isolated [progress-lock recovery candidate](recovery/20261007-progress-lock/README.md)
+now reproduces the installed progress bar's ENOSPC lock leak and fixes exception
+cleanup, with ten passing CPU tests. It has not been installed or added to a
+sealed packet. Review it for a successor runtime when resuming; it does not
+repair the incomplete outputs or establish GPU correctness.
+
 The October 6 disk-full cleanup revealed an empty source helper and an
 unfinished packet-97 repeat. The recovery inventory and guarded CPU test are
 recorded in [`data/consolidation-20261006.json`](data/consolidation-20261006.json).

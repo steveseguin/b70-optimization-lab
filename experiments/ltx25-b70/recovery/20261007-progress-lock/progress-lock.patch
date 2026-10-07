@@ -1,0 +1,17 @@
+--- a/tqdm/std.py
++++ b/tqdm/std.py
+@@ -1351,9 +1351,11 @@
+                     return False
+             else:
+                 self._lock.acquire()
+-        self.display()
+-        if not nolock:
+-            self._lock.release()
++        try:
++            self.display()
++        finally:
++            if not nolock:
++                self._lock.release()
+         return True
+ 
+     def unpause(self):

@@ -16,6 +16,8 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   remains conditional on accepting its different outputs. Packet 98 is prepared,
   CPU-tested and unmeasured on GPUs. A zero-byte helper was recovered from its
   hash-verified sealed copy; incomplete run evidence remains unmodified.
+  A separate [progress-lock fix](experiments/ltx25-b70/recovery/20261007-progress-lock/README.md)
+  reproduces the ENOSPC lock leak and passes ten CPU tests; it is not installed.
   [Resume handoff](experiments/ltx25-b70/RESUME.md).
 - **Flash-Next:** preserve the [46.854 tok/s closeout](results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md),
   model, runtime and evidence. No new experiment or weight relocation is queued.
