@@ -1,0 +1,163 @@
+{
+  "102_chain_budget_bytes": {
+    "xpu:0": 1198784632,
+    "xpu:1": 1198784632
+  },
+  "102_chain_checked_and_passed": 4,
+  "102_free_bytes_before_chain": {
+    "xpu:0": 7742373888,
+    "xpu:1": 12878749696,
+    "xpu:2": 10459197440,
+    "xpu:3": 15826804736
+  },
+  "102_presecondcapture_margin_bytes": {
+    "xpu:0": 663195648,
+    "xpu:1": 5645176832,
+    "xpu:2": 10562088960,
+    "xpu:3": 8310640640
+  },
+  "freeze_comparison": {
+    "xpu:0": {
+      "101c_free_bytes": 8190889984,
+      "101c_reserved_gib_reported": 23.037,
+      "102_free_bytes": 7735029760,
+      "102_margin_above2GiB_bytes": 5587546112,
+      "102_minus101c_net_used_bytes": 455860224,
+      "102_reserved_gib_reported": 23.406,
+      "reserved_gib_change_rounded": 0.369
+    },
+    "xpu:1": {
+      "101c_free_bytes": 13254524928,
+      "101c_reserved_gib_reported": 18.891,
+      "102_free_bytes": 12873371648,
+      "102_margin_above2GiB_bytes": 10725888000,
+      "102_minus101c_net_used_bytes": 381153280,
+      "102_reserved_gib_reported": 19.186,
+      "reserved_gib_change_rounded": 0.295
+    },
+    "xpu:2": {
+      "101c_free_bytes": 10459189248,
+      "101c_reserved_gib_reported": 20.598,
+      "102_free_bytes": 10459197440,
+      "102_margin_above2GiB_bytes": 8311713792,
+      "102_minus101c_net_used_bytes": -8192,
+      "102_reserved_gib_reported": 20.598,
+      "reserved_gib_change_rounded": 0.0
+    },
+    "xpu:3": {
+      "101c_free_bytes": 15826788352,
+      "101c_reserved_gib_reported": 15.859,
+      "102_free_bytes": 15826804736,
+      "102_margin_above2GiB_bytes": 13679321088,
+      "102_minus101c_net_used_bytes": -16384,
+      "102_reserved_gib_reported": 15.859,
+      "reserved_gib_change_rounded": 0.0
+    }
+  },
+  "identities": {
+    "101c": {
+      "control": {
+        "batch": 1,
+        "decode_replica": "xpu:2",
+        "layout": "two-way",
+        "shared_pool": 1,
+        "size": "640x384",
+        "workers": 1
+      },
+      "manifest_sha256": "236637003cf90e2146a8e5bd8fef6aca0a280a1d580c192f5666ae2476f0a966",
+      "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384",
+      "server_identity_sha256": "b247e96cc485f8abe96928876167c1a92f2a0406be73c635ba68c5052110c703"
+    },
+    "102": {
+      "control": {
+        "batch": 1,
+        "decode_replica": "xpu:2",
+        "layout": "two-way",
+        "shared_pool": 1,
+        "size": "640x384",
+        "workers": 2
+      },
+      "manifest_sha256": "25761564f8e6790d25cbc4495662b2be19dfe2001401c5b8966e0a9c09264db4",
+      "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384",
+      "server_identity_sha256": "9d6948936f87d9b885c3592fa46e92ca2461631198288ee5b5775f54ffcbec5a"
+    }
+  },
+  "inherited_rope_and_runtime_equal": true,
+  "input_bindings": {
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/resolution-admit-capture.json": {
+      "bytes": 275,
+      "sha256": "1cea1c9985035401e045d60b98f76ca2dbaa2e6909fa9f9e037bddaac69d5a86"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/resolution-admit-decode.json": {
+      "bytes": 275,
+      "sha256": "8f1131eecfbd2ede5d0238c91b45432138d7233226b7b2550b8e3ca853e05eb1"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/sampler-capture-freeze-resolution-ref101c-20261007-freeze.json": {
+      "bytes": 5764,
+      "sha256": "00f1341128f0c384f69e9b4ecdde65a80855efe078740c30c334b45937cc9b92"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/server-identity.json": {
+      "bytes": 29720,
+      "sha256": "b247e96cc485f8abe96928876167c1a92f2a0406be73c635ba68c5052110c703"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384/resolution-admit-capture0.json": {
+      "bytes": 275,
+      "sha256": "28e14eef2f43e017dabecd97e1ab7c574ab9f3b0543c7c404a051e235d8ca26f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384/resolution-admit-capture1.json": {
+      "bytes": 275,
+      "sha256": "02f52aa1c827dec436ba188adf68b6c2de556b0e42a253746d99e195b0f786e8"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384/resolution-admit-decode.json": {
+      "bytes": 275,
+      "sha256": "0dace9e1880c429659d1563bf66a006cdbc3d4e2156eaddcd364f970978bf80f"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384/sampler-capture-freeze-resolution-w2-20261007-freeze.json": {
+      "bytes": 8063,
+      "sha256": "8e3150daf895115af4e7b58aa86adc846e18bc80b1c46b83a38f301c83aea17d"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384/server-identity.json": {
+      "bytes": 29897,
+      "sha256": "9d6948936f87d9b885c3592fa46e92ca2461631198288ee5b5775f54ffcbec5a"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/manifest.json": {
+      "bytes": 265851,
+      "sha256": "236637003cf90e2146a8e5bd8fef6aca0a280a1d580c192f5666ae2476f0a966"
+    },
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-w2-102/manifest.json": {
+      "bytes": 266193,
+      "sha256": "25761564f8e6790d25cbc4495662b2be19dfe2001401c5b8966e0a9c09264db4"
+    }
+  },
+  "limits": [
+    "Net physical-memory deltas include allocator/driver bookkeeping; they are not measured allocation peaks or bounds.",
+    "reserved_gib in freeze receipts is rounded to three decimals; differences are approximate and must not be treated as exact bytes.",
+    "Sampler capture requests submit asynchronous work, so their graph-capture memory_before/after fields cannot substitute for quiescent post-capture observations.",
+    "A passing freeze and4exact graph chains do not establish candidate/timed parity, endurance, or throughput; coordinator owns those conclusions."
+  ],
+  "observed_utc": "2026-10-07T17:23:27.924574+00:00",
+  "resident_models_equal": true,
+  "same_model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "schema": "ltx.resolution102.memory-audit.v1",
+  "scope": "Immutable file receipt comparison through freeze; no endpoint/device calls; no final timing qualification claim",
+  "stage_net_physical_used_bytes_102": {
+    "both_workers_before_decode": {
+      "xpu:0": 997720064,
+      "xpu:1": 938594304,
+      "xpu:2": 40960,
+      "xpu:3": 53248
+    },
+    "worker0_capture_and_retirement": {
+      "xpu:0": 543936512,
+      "xpu:1": 559513600,
+      "xpu:2": 12288,
+      "xpu:3": 36864
+    },
+    "worker1_capture_and_retirement": {
+      "xpu:0": 453783552,
+      "xpu:1": 379080704,
+      "xpu:2": 28672,
+      "xpu:3": 16384
+    }
+  }
+}

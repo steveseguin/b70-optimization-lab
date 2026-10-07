@@ -7,33 +7,42 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **One LTX application is running now** for the 640×384 W2 screen, PID 3277317,
-unit `ltx102-resolution-server-20261007`, loopback port 8188. The sealed manifest is
+local-worker tuning remain parked. **One LTX application remains running and idle** after the successful 640×384
+W2 screen, PID 3277317, unit `ltx102-resolution-server-20261007`, loopback port8188.
+Its sealed manifest is
 `25761564f8e6790d25cbc4495662b2be19dfe2001401c5b8966e0a9c09264db4`.
-The campaign uses new registered requests; no other GPU work is authorized
-alongside it. It retains the application on success.
-[Preregistration](experiments/ltx25-b70/data/resume-20261007/resolution102-preregistration.json).
-The prior W1 screen stopped cleanly at 16:44 UTC; all four GPUs passed postflight
-at 16:45 UTC with no kernel GPU fault.
+All 36 registered requests completed. Its finite request plan is consumed; do not
+send invented requests or bypass its admission guards. No other GPU work should
+run alongside the resident application.
 
-At640×384, 25 frames, native BF16 weights, original 8+3 steps, accepted encoder
-window 64 and one sampler worker, all three native repeat pairs and all 13 scored
-optimized clips matched exactly across video, audio, images and waveform.
-The short serial-client screen averaged **2.8702 seconds per clip, 8.710 generated
-frames/s** across nine completion intervals. This cycles three fixtures; it is
-not a full-suite/endurance result, an optimized fresh-server repeat, or a record.
-The unchanged sealed verifier reconstructed the saved proof after shutdown.
-[Result and evidence inventory](experiments/ltx25-b70/data/resume-20261007/resolution101c-closeout/summary.json),
-[post-shutdown proof](experiments/ltx25-b70/data/resume-20261007/resolution101c-post-closeout-proof.json),
-[postflight](experiments/ltx25-b70/data/resume-20261007/postflight-101c.json).
+The short matched screen improved from **8.710 to 12.282 generated frames/s**
+(about **41% higher throughput**) at 640×384. Mean completion interval fell from
+2.8702 to 2.0356 seconds per 25-frame clip. The six native executions repeat
+exactly, and all 13 scored optimized clips match all four native tensors exactly.
+This cycles three fixtures: it is not full-suite qualification, endurance, a
+fresh optimized repeat, or a public record. The unchanged sealed verifier rebuilt
+the proof after completion. No fault is latched; application queues and previews
+are empty. Post-freeze free memory is about7.20/11.99/9.74/14.74GiB.
+[Closeout](experiments/ltx25-b70/data/resume-20261007/resolution102-closeout/summary.json),
+[proof](experiments/ltx25-b70/data/resume-20261007/resolution102-post-completion-proof.json),
+[performance](experiments/ltx25-b70/notes/2026-10-07-resolution102-performance.md),
+[memory](experiments/ltx25-b70/notes/2026-10-07-resolution102-memory.md).
 
-The W2 successor is measuring two overlapping batch-one sampler jobs
-at the same resolution, subject to fresh memory admission. The CPU plan fixes
-36 attempts and 29 captures; model arithmetic and the exact-output gate remain
-unchanged. [Plan](experiments/ltx25-b70/recovery/20261007-resolution-w2-102/README.md). Sampling takes about 2.8 seconds per clip;
-post-freeze physical free memory was about 7.63/12.34/9.74/14.74 GiB. These are
-observations, not a promised W2 speed or safe peak bound. Keep all numeric and
-quality settings fixed and compare using the same serial client first.
+Next in CPU preparation: all ten original fixtures, twenty native references,
+ten scored candidate clips, ten initial timed clips and thirty additional
+continuity clips. The timing blocks remain separate. The proposed immutable plan
+needs87 attempts and80 captures, with a fresh7GiB write allowance and50GiB reserve.
+The current successful application remains available while this successor is
+prepared; a controlled reload is necessary because its sealed plan cannot admit
+new native fixtures. This is not an automatic restart chain.
+[Expanded plan](experiments/ltx25-b70/recovery/20261007-resolution-full-103/README.md).
+Client event-processing delay is a promising subsequent speed lever; it has not
+been changed for this broader quality test.
+
+The previous W1 screen stopped cleanly at16:44UTC, before the replacement lifecycle
+instructions. All four GPUs passed its postflight at16:45UTC with no kernel fault.
+No new health probe has been run alongside the retained W2 application.
+
 The latest owner-provided instructions prefer one continuously running application
 and endpoint reuse. Future work must not carry forward automatic stop-on-success
 or restart-chain behavior; a necessary controlled application reload remains
