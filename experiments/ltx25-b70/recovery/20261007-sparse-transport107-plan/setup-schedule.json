@@ -1,0 +1,987 @@
+{
+  "schedule": {
+    "boundary_dependencies": {
+      "barrier:candidate_verified": [
+        "resolution-sparse-transport-20261007-candidate-check-00",
+        "resolution-sparse-transport-20261007-candidate-check-01",
+        "resolution-sparse-transport-20261007-candidate-check-02",
+        "resolution-sparse-transport-20261007-candidate-check-03",
+        "resolution-sparse-transport-20261007-candidate-check-04",
+        "resolution-sparse-transport-20261007-candidate-check-05",
+        "resolution-sparse-transport-20261007-candidate-check-06",
+        "resolution-sparse-transport-20261007-candidate-check-07",
+        "resolution-sparse-transport-20261007-candidate-check-08",
+        "resolution-sparse-transport-20261007-candidate-check-09",
+        "resolution-sparse-transport-20261007-candidate-check-10",
+        "resolution-sparse-transport-20261007-candidate-check-11",
+        "resolution-sparse-transport-20261007-candidate-check-12",
+        "resolution-sparse-transport-20261007-candidate-check-13"
+      ],
+      "barrier:fast_verified": [
+        "resolution-sparse-transport-20261007-timed-fast-00",
+        "resolution-sparse-transport-20261007-timed-fast-01",
+        "resolution-sparse-transport-20261007-timed-fast-02",
+        "resolution-sparse-transport-20261007-timed-fast-03",
+        "resolution-sparse-transport-20261007-timed-fast-04",
+        "resolution-sparse-transport-20261007-timed-fast-05",
+        "resolution-sparse-transport-20261007-timed-fast-06",
+        "resolution-sparse-transport-20261007-timed-fast-07",
+        "resolution-sparse-transport-20261007-timed-fast-08",
+        "resolution-sparse-transport-20261007-timed-fast-09",
+        "resolution-sparse-transport-20261007-timed-fast-10",
+        "resolution-sparse-transport-20261007-timed-fast-11",
+        "resolution-sparse-transport-20261007-timed-fast-12",
+        "resolution-sparse-transport-20261007-timed-fast-13"
+      ],
+      "barrier:optimized_preparation": [
+        "barrier:reference_verified"
+      ],
+      "barrier:reference_verified": [
+        "resolution-sparse-transport-20261007-native-p1-boat",
+        "resolution-sparse-transport-20261007-native-p1-marble",
+        "resolution-sparse-transport-20261007-native-p1-bird",
+        "resolution-sparse-transport-20261007-native-p1-pendulum",
+        "resolution-sparse-transport-20261007-native-p1-rain",
+        "resolution-sparse-transport-20261007-native-p1-paper",
+        "resolution-sparse-transport-20261007-native-p1-candle",
+        "resolution-sparse-transport-20261007-native-p1-pour",
+        "resolution-sparse-transport-20261007-native-p1-fabric",
+        "resolution-sparse-transport-20261007-native-p1-wheel",
+        "resolution-sparse-transport-20261007-native-p2-boat",
+        "resolution-sparse-transport-20261007-native-p2-marble",
+        "resolution-sparse-transport-20261007-native-p2-bird",
+        "resolution-sparse-transport-20261007-native-p2-pendulum",
+        "resolution-sparse-transport-20261007-native-p2-rain",
+        "resolution-sparse-transport-20261007-native-p2-paper",
+        "resolution-sparse-transport-20261007-native-p2-candle",
+        "resolution-sparse-transport-20261007-native-p2-pour",
+        "resolution-sparse-transport-20261007-native-p2-fabric",
+        "resolution-sparse-transport-20261007-native-p2-wheel"
+      ],
+      "barrier:timing": [
+        "barrier:candidate_verified"
+      ],
+      "resolution-sparse-transport-20261007-candidate-check-00": [
+        "resolution-sparse-transport-20261007-freeze"
+      ],
+      "resolution-sparse-transport-20261007-native-p1-boat": [
+        "resolution-sparse-transport-20261007-prepare-native"
+      ],
+      "resolution-sparse-transport-20261007-timed-fast-00": [
+        "barrier:timing"
+      ]
+    },
+    "candidate_compared_clips": 10,
+    "capture_cap": 50,
+    "final_verification_action": "verify-fast-timed",
+    "native_reference_captures": 20,
+    "obligations": [
+      "Exact registered setup order and per-kind verdict checks in trusted executor adapter",
+      "Quiescence plus durable completed-tail retirement at explicit barriers; no clear/recompute",
+      "Native proof verified before any sampler route/sentry/replica installation",
+      "Actual memory/storage admission and pending-tail observation; no automatic extra captures"
+    ],
+    "parent_manifest_sha256": "f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a",
+    "plan_sha256": "b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d",
+    "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+    "raw_capture_requests": 50,
+    "retry_or_extra_fill_requests": 0,
+    "rows": [
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [],
+        "graph": {
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "resolution-sparse-transport-20261007-window-probe"
+            }
+          },
+          "470": {
+            "class_type": "LTXTextWindowProbe",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-window-probe"
+            }
+          }
+        },
+        "graph_sha256": "2d05cc1fe452b7b578e5a53371ee4574cf9716f3f4f1f7665f4bdaa64dee9a9d",
+        "kind": "window-probe",
+        "name": "resolution-sparse-transport-20261007-window-probe",
+        "phase": "native-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-sparse-transport-20261007-window-probe"
+        ],
+        "graph": {
+          "490": {
+            "class_type": "LTXResolutionPrepareNative",
+            "inputs": {
+              "run_name": "resolution-sparse-transport-20261007-prepare-native"
+            }
+          }
+        },
+        "graph_sha256": "b82faf9cc8afc49c1eb1b72eb6bff358ebcdf67e948b4f27d84a69f35ff39f4f",
+        "kind": "prepare-native",
+        "name": "resolution-sparse-transport-20261007-prepare-native",
+        "phase": "native-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "barrier:optimized_preparation"
+        ],
+        "graph": {
+          "483": {
+            "class_type": "LTXSamplerPin",
+            "inputs": {
+              "run_name": "resolution-sparse-transport-20261007-pin0",
+              "worker": 0
+            }
+          }
+        },
+        "graph_sha256": "59885ec461d281f20f47475045692f0e61beb36cb0a76264fd1083905e636935",
+        "kind": "pin0",
+        "name": "resolution-sparse-transport-20261007-pin0",
+        "phase": "optimized-setup"
+      },
+      {
+        "admission_action": "admit-capture0",
+        "client_checkpoint_policy": "always",
+        "clip_index": 99907030,
+        "depends_on": [
+          "resolution-sparse-transport-20261007-pin0"
+        ],
+        "expected_emitted_index": null,
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 25,
+              "width": 320
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99907030,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 25
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "426",
+                1
+              ],
+              "audio_latent": [
+                "426",
+                3
+              ],
+              "images": [
+                "426",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "video_latent": [
+                "426",
+                2
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "422": {
+            "class_type": "LTXGraphCaptureGate",
+            "inputs": {
+              "chain": "1",
+              "mode": "graph",
+              "model": [
+                "427",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "selection": "all48"
+            }
+          },
+          "423": {
+            "class_type": "LTXVAEGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "424": {
+            "class_type": "LTXFusionGate",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "431",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture0"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "resolution-sparse-transport-20261007-capture0"
+            }
+          },
+          "426": {
+            "class_type": "LTXPipelineDecode",
+            "inputs": {
+              "audio_latent": [
+                "428",
+                1
+              ],
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "clip_index": [
+                "428",
+                2
+              ],
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "mode": "pipeline-save",
+              "output_size": "640x384",
+              "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "speed_only": false,
+              "upstream_depth": 0,
+              "vae": [
+                "423",
+                0
+              ],
+              "video_latent": [
+                "428",
+                0
+              ]
+            }
+          },
+          "427": {
+            "class_type": "LTXConcurrentCFG",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "424",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture0"
+            }
+          },
+          "428": {
+            "class_type": "LTXPipelineSampler",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "clip_index": 99907030,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "guider_a": [
+                "388",
+                0
+              ],
+              "guider_b": [
+                "391",
+                0
+              ],
+              "mode": "pipeline",
+              "noise_a": [
+                "339",
+                0
+              ],
+              "noise_b": [
+                "338",
+                0
+              ],
+              "output_size": "640x384",
+              "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "sampler_a": [
+                "352",
+                0
+              ],
+              "sampler_b": [
+                "341",
+                0
+              ],
+              "sigmas_a": [
+                "404",
+                0
+              ],
+              "sigmas_b": [
+                "395",
+                0
+              ],
+              "speed_only": false,
+              "upscale_model": [
+                "429",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ],
+              "video_latent": [
+                "356",
+                0
+              ]
+            }
+          },
+          "429": {
+            "class_type": "LTXUpsamplerGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "upscale_model": [
+                "420",
+                4
+              ]
+            }
+          },
+          "430": {
+            "class_type": "LTXPipelineSaveRecord",
+            "inputs": {
+              "run_name": "resolution-sparse-transport-20261007-capture0",
+              "saved_file": [
+                "426",
+                4
+              ]
+            }
+          },
+          "431": {
+            "class_type": "LTXResidentFastPath",
+            "inputs": {
+              "mode": "fast",
+              "model": [
+                "420",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture0"
+            }
+          }
+        },
+        "graph_sha256": "a02bc30c6a7d61ac74db318a672508f4b0f2460812d9bfc7016f6b765af12fb3",
+        "kind": "capture0",
+        "name": "resolution-sparse-transport-20261007-capture0",
+        "output_role": "unscored fill placeholder; no native-reference or candidate parity",
+        "phase": "optimized-setup",
+        "postcondition": "sample99907030 finished finite on pinned worker; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail",
+        "retirement_action": "retire-capture0-tails",
+        "worker": 0
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-sparse-transport-20261007-capture0"
+        ],
+        "graph": {
+          "483": {
+            "class_type": "LTXSamplerPin",
+            "inputs": {
+              "run_name": "resolution-sparse-transport-20261007-pin1",
+              "worker": 1
+            }
+          }
+        },
+        "graph_sha256": "dc40e594d48d3fa2ac9f61762e39da50a3a01f194399ececcec33d6f37731cd2",
+        "kind": "pin1",
+        "name": "resolution-sparse-transport-20261007-pin1",
+        "phase": "optimized-setup"
+      },
+      {
+        "admission_action": "admit-capture1",
+        "client_checkpoint_policy": "always",
+        "clip_index": 99907041,
+        "depends_on": [
+          "resolution-sparse-transport-20261007-pin1"
+        ],
+        "expected_emitted_index": null,
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 25,
+              "width": 320
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99907041,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 25
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "426",
+                1
+              ],
+              "audio_latent": [
+                "426",
+                3
+              ],
+              "images": [
+                "426",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "video_latent": [
+                "426",
+                2
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "422": {
+            "class_type": "LTXGraphCaptureGate",
+            "inputs": {
+              "chain": "1",
+              "mode": "graph",
+              "model": [
+                "427",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "selection": "all48"
+            }
+          },
+          "423": {
+            "class_type": "LTXVAEGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "424": {
+            "class_type": "LTXFusionGate",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "431",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture1"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "resolution-sparse-transport-20261007-capture1"
+            }
+          },
+          "426": {
+            "class_type": "LTXPipelineDecode",
+            "inputs": {
+              "audio_latent": [
+                "428",
+                1
+              ],
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "clip_index": [
+                "428",
+                2
+              ],
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "mode": "pipeline-save",
+              "output_size": "640x384",
+              "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "speed_only": false,
+              "upstream_depth": 0,
+              "vae": [
+                "423",
+                0
+              ],
+              "video_latent": [
+                "428",
+                0
+              ]
+            }
+          },
+          "427": {
+            "class_type": "LTXConcurrentCFG",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "424",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture1"
+            }
+          },
+          "428": {
+            "class_type": "LTXPipelineSampler",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "clip_index": 99907041,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "guider_a": [
+                "388",
+                0
+              ],
+              "guider_b": [
+                "391",
+                0
+              ],
+              "mode": "pipeline",
+              "noise_a": [
+                "339",
+                0
+              ],
+              "noise_b": [
+                "338",
+                0
+              ],
+              "output_size": "640x384",
+              "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "sampler_a": [
+                "352",
+                0
+              ],
+              "sampler_b": [
+                "341",
+                0
+              ],
+              "sigmas_a": [
+                "404",
+                0
+              ],
+              "sigmas_b": [
+                "395",
+                0
+              ],
+              "speed_only": false,
+              "upscale_model": [
+                "429",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ],
+              "video_latent": [
+                "356",
+                0
+              ]
+            }
+          },
+          "429": {
+            "class_type": "LTXUpsamplerGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "upscale_model": [
+                "420",
+                4
+              ]
+            }
+          },
+          "430": {
+            "class_type": "LTXPipelineSaveRecord",
+            "inputs": {
+              "run_name": "resolution-sparse-transport-20261007-capture1",
+              "saved_file": [
+                "426",
+                4
+              ]
+            }
+          },
+          "431": {
+            "class_type": "LTXResidentFastPath",
+            "inputs": {
+              "mode": "fast",
+              "model": [
+                "420",
+                0
+              ],
+              "run_name": "resolution-sparse-transport-20261007-capture1"
+            }
+          }
+        },
+        "graph_sha256": "a1813b946567ac3821bc41d839f9d12a68a4fdeceb541e510ee41943462a3456",
+        "kind": "capture1",
+        "name": "resolution-sparse-transport-20261007-capture1",
+        "output_role": "unscored fill placeholder; no native-reference or candidate parity",
+        "phase": "optimized-setup",
+        "postcondition": "sample99907041 finished finite on pinned worker; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail",
+        "retirement_action": "retire-capture1-tails",
+        "worker": 1
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-sparse-transport-20261007-capture1"
+        ],
+        "graph": {
+          "481": {
+            "class_type": "LTXSamplerCaptureCoverage",
+            "inputs": {
+              "run_name": "resolution-sparse-transport-20261007-coverage"
+            }
+          }
+        },
+        "graph_sha256": "12dd151181fa2a82ee1994397173d9e33f786cc02259cae145fdc54f479d944c",
+        "kind": "coverage",
+        "name": "resolution-sparse-transport-20261007-coverage",
+        "phase": "optimized-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-sparse-transport-20261007-coverage"
+        ],
+        "graph": {
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "440": {
+            "class_type": "LTXDecodeReplicaProbe",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "run_name": "resolution-sparse-transport-20261007-decode-probe",
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          }
+        },
+        "graph_sha256": "194d53e8636d01cb3c893cd7091a4a32949c5b26f060071ccc11a0aafacbabf9",
+        "kind": "decode-probe",
+        "name": "resolution-sparse-transport-20261007-decode-probe",
+        "phase": "optimized-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-sparse-transport-20261007-decode-probe"
+        ],
+        "graph": {
+          "480": {
+            "class_type": "LTXSamplerCaptureFreeze",
+            "inputs": {
+              "run_name": "resolution-sparse-transport-20261007-freeze"
+            }
+          }
+        },
+        "graph_sha256": "e1762d6b5820af55efea0700e00334d0871a037b03fabd449c050dee0e9655f0",
+        "kind": "freeze",
+        "name": "resolution-sparse-transport-20261007-freeze",
+        "phase": "optimized-setup"
+      }
+    ],
+    "schema": "ltx.resolution-setup-schedule.v1",
+    "source_graph_sha256": {
+      "graphs/decode-replica-probe.json": "c14a72eb97855140b728e62f189fddcb1c8cf2d281e42e276d825c6bc6d484ef",
+      "graphs/graph-capture-all48-pipe-samp2-tsh-win.json": "181b2fe7e9daed17f516a38f0dd93d5b4e7d9f26b7c8673a419b0dd1fc0385bd",
+      "graphs/sampler-capture-coverage.json": "268ca20b91158e6d8487a4b7ceb6d43ed67c0264550b60eff631dc0d94af0579",
+      "graphs/sampler-capture-freeze.json": "a7740efa3829edc15bf99d6c4e03d974a2c909f3041d358c517345c007c7a161",
+      "graphs/sampler-pin.json": "fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005",
+      "graphs/text-window-probe.json": "ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0"
+    },
+    "status": "CPU-plan-only-not-runtime-qualified",
+    "submitted_requests": 57,
+    "timed_compared_clips": 10,
+    "timed_control_compared_clips": 0,
+    "timed_fast_compared_clips": 10,
+    "trace_admission": "candidate-only descriptor pending frozen injection contract; timed-fast trace disabled; no passive collector"
+  },
+  "schedule_sha256": "b8d7176691e7c3a7a8470b4ec8b046c27db20f4f623b3fc1034930edbf58506b"
+}

@@ -1,0 +1,54 @@
+{
+  "arithmetic_change": false,
+  "claim": "Candidate trace only; no event caps or live admission are established by this pending descriptor.",
+  "eligible_physical_clip_ids": [
+    99907104,
+    99907105,
+    99907106,
+    99907107,
+    99907108,
+    99907109
+  ],
+  "forward_selection": {
+    "counter_scope": "selected actual sampler job and stage; count observed forwards, not scheduler steps or request parity",
+    "observed_forward_ordinal_each_stage": 2,
+    "stages": [
+      "a",
+      "b"
+    ]
+  },
+  "passive_collector": false,
+  "plan_sha256": "b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d",
+  "predecessor_manifest_sha256": "59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2",
+  "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+  "required_before_runtime": [
+    "source-bound immutable injection contract and bounded event/output budget reviewed separately",
+    "exact native/candidate/timed four-tensor gates unchanged",
+    "zero trace markers/events in every timed-fast job, including fills and asynchronous tails",
+    "missing or wrong actual job/worker/forward identity or absent coverage of either registered worker makes trace incomplete; no substitute job or extra request",
+    "no new synchronization, replay reordering, altered tensors, request retry, or application lifecycle action"
+  ],
+  "runtime_implemented": false,
+  "schema": "ltx.sparse-transport107.pending-descriptor.v1",
+  "selection": {
+    "both_workers_required_for_complete_trace": true,
+    "maximum_selected_actual_jobs": 2,
+    "maximum_selected_actual_jobs_per_worker": 1,
+    "maximum_selected_actual_worker_threads": 2,
+    "method": "each registered sampler worker atomically claims at most one eligible actual sampler job; bind physical clip index to registered worker index and actual owning thread identity",
+    "missing_worker_behavior": "trace incomplete; no substitute job, extra request or retry",
+    "request_parity_selection": false,
+    "required_registered_worker_indexes": [
+      0,
+      1
+    ]
+  },
+  "status": "pending-frozen-injection-contract",
+  "timed_phase": {
+    "phase": "timed-fast",
+    "request_count": 14,
+    "scope": "uninstrumented-after-sparse-transport",
+    "trace_enabled": false
+  },
+  "trace_phase": "candidate-check"
+}

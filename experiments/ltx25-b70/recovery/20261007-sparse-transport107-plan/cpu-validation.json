@@ -1,0 +1,55 @@
+{
+  "constructor_manifest_sha256": "f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a",
+  "model_requests": 0,
+  "passed": true,
+  "plan_reconstruction": {
+    "model_requests": 0,
+    "plan_sha256": "b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d",
+    "requests_planned": 48,
+    "status": "CPU-plan-valid-runtime-pending"
+  },
+  "plan_sha256": "b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d",
+  "predecessor_manifest_sha256": "59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2",
+  "qualification_id": "1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923",
+  "root_revalidation": {
+    "after_scope_correction": true,
+    "exit_code": 0,
+    "seconds": 0.357,
+    "tests": 32
+  },
+  "root_review_correction": {
+    "corrected_scope": "At most one eligible actual job per each of the two registered sampler workers; maximum two jobs/two workers, actual worker index/thread binding, incomplete if either worker missing, no extra requests.",
+    "issue": "Initial pending descriptor/README mistakenly limited selection to one job and worker globally. Root review caught the scope error.",
+    "semantic_plan_qualification_schedule_changed": false,
+    "tests_after_correction": 32
+  },
+  "runtime_injection_contract": "pending",
+  "runtime_qualified": false,
+  "schedule_sha256": "b8d7176691e7c3a7a8470b4ec8b046c27db20f4f623b3fc1034930edbf58506b",
+  "schema": "ltx.sparse-transport107.cpu-validation.v1",
+  "semantic_checks": [
+    "all48 model request numerical graphs match106 after removing names/indices/qualification identifiers",
+    "full original ordered ten-fixture suite and all four tensors retained",
+    "57attempts50captures4GiBwrite50GiBreserve",
+    "no timed control and no passive accounting",
+    "all14 timed-fast requests explicitly trace-disabled",
+    "eligible actual candidate physical jobs104..109 map to emissions in requests08..13",
+    "names/indices disjoint from sealed101/101b/101c/102/103/104/105/106",
+    "pending descriptor requires both registered sampler workers, at most one eligible actual job each, actual thread ownership; missing worker means incomplete without extra requests"
+  ],
+  "source_artifact_sha256": {
+    "README.md": "120430c7054e31a844318b5d08e11e4839b16c272e7b14ab8c8ae8d5b135383d",
+    "candidate-plan.json": "58e31bae280eb9f04a638959e7055a673a24b9c29bcf7a6faf4f457d69f8cb7b",
+    "diagnostic-descriptor.json": "6247dc126c073a8d7691cf28edd5cc399a56e21b6e6042906703c2f229b48efa",
+    "plan_reference.py": "98bf95eec8efb82024afe66b06fd96e7f879fba7f4296a94d3fb25430771f085",
+    "schedule.py": "6a092bf15a08ba586e6c230debb770569cda7420354e1b23e69a5f2d5b344424",
+    "setup-schedule.json": "8481ae46c0b700f8e2ce72ab73fb4fed1de34d0144fcec0c8c1218949b4d551d",
+    "test_plan_reference.py": "bd86ca4b7c62c0ce5dfb2950bfdb06f67d1a7f3e43c395151781fa571e707b82",
+    "test_schedule.py": "1e6010c1a61cb35efdef089539b9080f6ae1d1ece93d41ff42d459123dd908d6"
+  },
+  "tests": {
+    "command": "python3 -B -m unittest -q test_plan_reference.py test_schedule.py",
+    "passed": 32
+  },
+  "utc": "2026-10-07T20:55:20.385757+00:00"
+}

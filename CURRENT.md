@@ -60,6 +60,12 @@ review before launch. Its57 requests and50-capture cap used a fresh4GiB runtime
 allowance above50GiB; source construction had its separate384MiB admission.
 Sealed106 manifest:
 `59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2`.
+The standalone107 sparse-trace plan passes32 CPU tests. It retains57requests,
+50captures and4GiB, with at most one candidate job on each of the two actual
+sampler workers; every later timed request is trace-disabled. Runtime injection
+and its event budget remain pending review. The fixed40-file106 duplicate helper
+passes17 synthetic safety tests and independent review; no real106 retirement
+plan, deletion or restore has run. All106 live outputs remain protected.
 Sampler A/B timings describe denoising stages, not individual GPU utilization;
 they do not justify a blind placement or worker-count sweep.
 

@@ -197,3 +197,34 @@ Runtime/source admission must then be checked afresh. This is a hypothesis only.
 Stopped104/105 and live106 inductor caches are empty. Older compiler caches carry
 negative-result source evidence and are protected. Pip cache is only36KiB and uv
 cache is absent, so package-cache deletion provides no meaningful headroom.
+
+## 107 standalone preparation
+
+The standalone `recovery/20261007-sparse-transport107-plan/` passes32 CPU controls,
+including numerical equivalence to106 and namespace/index collision checks.
+Plan SHA`b4590ffc14a7a4a2c0c3e59d6785cfbfc85df1d3080687f05bfd12ffd390002d`,
+qualification`1979c71925283fd715e9983baba81f7d0c2cd7dc4534a1514c016ededa4e4923`,
+schedule`b8d7176691e7c3a7a8470b4ec8b046c27db20f4f623b3fc1034930edbf58506b`.
+Root caught an initial descriptor error selecting only one worker globally;
+it now selects at most one eligible actual job on EACH worker0/1, maximumtwo
+jobs, with actual index/thread ownership and incomplete status if either is
+missing. No substitute requests. Descriptor SHA
+`6247dc126c073a8d7691cf28edd5cc399a56e21b6e6042906703c2f229b48efa`.
+Eligible physicalcandidate IDs99907104–99907109 emit via requests08–13.
+All14 timed-fast requests explicitly disable tracing. The injection contract,
+event budget, runtime and actual filename reservation remain unimplemented.
+
+The proposed fixed40-file retirement helper in `recovery/20261007-post106-retirement/`
+passes17 root synthetic tests in5.667seconds and independent source review.
+It requires stopped106 plus full fresh sealed proof, exact keeper provenance and
+direct ordinary restoration copies. No actual106 plan/apply/restore occurred.
+Helper SHA`f84c78426081e503656e0a0faba124e5106829fec1aceeb68bd886b5823ed215`.
+It is not a filesystem-wide atomic transaction: coordinator-exclusive ownership
+must continue throughout every future operation.
+
+Historical contiguous capture and native multiblock compiler results were reviewed
+before proceeding. `notes/contiguous-capture-retired.md` closed whole-shard
+chaining based on the older small-shape service measurements; compiler screen01
+found no speed win and an all48 regression. Those are separate historical
+workloads, but provide no reason for a blind new chaining sweep. Keep that lever
+closed unless the sparse current-shape trace provides materially new evidence.
