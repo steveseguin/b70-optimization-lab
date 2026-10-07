@@ -26,6 +26,13 @@ positional encoding from separate operations to `addcmul_`; this is a strong
 lead, not yet a proven full-clip cause. Work continues on a narrow arithmetic
 compatibility overlay on current upstream. The sampler rebalance must wait for
 an exact new-base control. [Failure evidence and next test](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md).
+The narrow compatibility candidate is now sealed and independently reviewed.
+Ten CPU arithmetic controls, seven runtime controls, eight runner controls and
+the inactive startup check pass. One fixed control is preregistered with a fresh
+4 GiB output/cache allowance and the 50 GiB reserve. It restores only the prior
+RoPE function in process; full GPU output parity remains unproven.
+[Compatibility test plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
+
 All 126 historical probe/timed clips matched the accepted references
 exactly; two self-check clips also passed. Sustained generation measured
 **1.31786 seconds per 25-frame clip, about 18.97 generated frames/s**, close to

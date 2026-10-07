@@ -1,0 +1,108 @@
+{
+  "status": "passed",
+  "cases": [
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        64,
+        256
+      ],
+      "strides": [
+        262144,
+        16384,
+        256,
+        1
+      ],
+      "old_new_different_bytes": 9,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        64,
+        256
+      ],
+      "strides": [
+        262144,
+        256,
+        4096,
+        1
+      ],
+      "old_new_different_bytes": 9,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.float32",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        64,
+        128
+      ],
+      "strides": [
+        131072,
+        8192,
+        128,
+        1
+      ],
+      "old_new_different_bytes": 31266,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.bfloat16",
+      "shape": [
+        1,
+        16,
+        64,
+        128
+      ],
+      "strides": [
+        131072,
+        8192,
+        128,
+        1
+      ],
+      "old_new_different_bytes": 29804,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        128,
+        256
+      ],
+      "strides": [
+        524288,
+        32768,
+        256,
+        1
+      ],
+      "old_new_different_bytes": 16,
+      "restored_exact": true
+    }
+  ],
+  "tests": 10,
+  "gpu_initialized": false,
+  "scope": "CPU synthetic arithmetic and real package dispatch with simulated quant_ops routing; no model qualification",
+  "command": "/home/steve/.venvs/ltx25-baseline/bin/python -B experiments/ltx25-b70/recovery/20261007-rope-compat/test_rope_compat.py",
+  "files": {
+    "install_rope_compat.py": "99e6bc916789b8d4443a869000af524462ce66eef4757f000280b8a80366c570",
+    "test_rope_compat.py": "31957485c4c39812dbb068005ac02fd16d14871e6fb6994075167df86f2a14e6",
+    "cpu-controls.log": "add31358cfb4f069401a4dffba291687ddcf790e3fd26bf5b800ba688105ee74"
+  },
+  "development_control_failures": [
+    "Isolated AST compilation differed from full-module Python import bytecode; expectedcode now fullsource compiled without module execution.",
+    "FP64 registry dispatch correctly rejected unsupported matrix; now explicit rejection control."
+  ]
+}

@@ -1,0 +1,113 @@
+test_float64_dispatch_still_refused (__main__.Controls.test_float64_dispatch_still_refused) ... ok
+test_foreign_alias_refused (__main__.Controls.test_foreign_alias_refused) ... ok
+test_foreign_torch_binding_refused (__main__.Controls.test_foreign_torch_binding_refused) ... ok
+test_loaded_bytecode_drift_refused (__main__.Controls.test_loaded_bytecode_drift_refused) ... ok
+test_missing_quant_ops_and_override_refused (__main__.Controls.test_missing_quant_ops_and_override_refused) ... ok
+test_old_new_rounding_diff_and_restoration (__main__.Controls.test_old_new_rounding_diff_and_restoration) ... ok
+test_repeat_refused (__main__.Controls.test_repeat_refused) ... ok
+test_source_drift_refused_before_mutation (__main__.Controls.test_source_drift_refused_before_mutation) ... ok
+test_tensor_exception_propagates (__main__.Controls.test_tensor_exception_propagates) ... ok
+test_wrong_routing_and_foreign_registry_refused (__main__.Controls.test_wrong_routing_and_foreign_registry_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.106s
+
+OK
+{
+  "status": "passed",
+  "cases": [
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        64,
+        256
+      ],
+      "strides": [
+        262144,
+        16384,
+        256,
+        1
+      ],
+      "old_new_different_bytes": 9,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        64,
+        256
+      ],
+      "strides": [
+        262144,
+        256,
+        4096,
+        1
+      ],
+      "old_new_different_bytes": 9,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.float32",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        64,
+        128
+      ],
+      "strides": [
+        131072,
+        8192,
+        128,
+        1
+      ],
+      "old_new_different_bytes": 31266,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.bfloat16",
+      "shape": [
+        1,
+        16,
+        64,
+        128
+      ],
+      "strides": [
+        131072,
+        8192,
+        128,
+        1
+      ],
+      "old_new_different_bytes": 29804,
+      "restored_exact": true
+    },
+    {
+      "dtype": "torch.bfloat16",
+      "frequency_dtype": "torch.float32",
+      "shape": [
+        1,
+        16,
+        128,
+        256
+      ],
+      "strides": [
+        524288,
+        32768,
+        256,
+        1
+      ],
+      "old_new_different_bytes": 16,
+      "restored_exact": true
+    }
+  ],
+  "tests": 10,
+  "gpu_initialized": false,
+  "scope": "CPU synthetic arithmetic and real package dispatch with simulated quant_ops routing; no model qualification"
+}
