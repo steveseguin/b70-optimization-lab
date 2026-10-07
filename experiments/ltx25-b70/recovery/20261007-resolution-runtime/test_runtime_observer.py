@@ -2,6 +2,7 @@ import functools
 import importlib.util
 from pathlib import Path
 import sys
+import queue
 import threading
 import types
 import unittest
@@ -52,14 +53,16 @@ class ObserverControls(unittest.TestCase):
 
     def test_actual_routes_and_node_installation_both_prevent_native_claim(self):
         graph, gs = owner('LTXGraphCaptureGate', '_apply', _installed=None)
-        decode, ds = owner('LTXPipelineDecode', 'apply', _REPLICA_SETS={'replica': {}})
+        writer = types.SimpleNamespace(queue=queue.Queue())
+        decode, ds = owner('LTXPipelineDecode', 'apply', _REPLICA_SETS={'replica': {}},
+                           _WRITER=writer, SAVE_FAILURES=[])
         registry = {'LTXGraphCaptureGate': graph, 'LTXPipelineDecode': decode}
-        queue = types.SimpleNamespace(get_current_queue=lambda: ([], []))
+        prompt_queue = types.SimpleNamespace(get_current_queue=lambda: ([], []))
         pipeline = types.SimpleNamespace(_LOCK=threading.Lock(), _RUNNING=[0], _STAGES={})
         capture = types.SimpleNamespace(_ROUTES=[], CAPTURES_FROZEN=[False], LOADS_FROZEN=[False])
         lean = types.SimpleNamespace(_MEMO_INSTALLED={}, _SENTRY_INSTALLED={})
         def snapshot():
-            return O.observe(registry, queue, pipeline, capture, lean)
+            return O.observe(registry, prompt_queue, pipeline, capture, lean)
         self.assertEqual(snapshot()['sampler_routes'], 0)
         capture._ROUTES.append(object())
         self.assertEqual(snapshot()['sampler_routes'], 1)
@@ -70,6 +73,10 @@ class ObserverControls(unittest.TestCase):
         lean._MEMO_INSTALLED[1] = object()
         self.assertEqual(snapshot()['decode_replicas'], 1)
         self.assertEqual(snapshot()['lean_state'], 1)
+        writer.queue.put('unfinished-preview')
+        self.assertEqual(snapshot()['preview_pending'], 1)
+        ds['SAVE_FAILURES'].append({'error': 'preview failure'})
+        self.assertTrue(snapshot()['fault'])
 
 
 if __name__ == '__main__':

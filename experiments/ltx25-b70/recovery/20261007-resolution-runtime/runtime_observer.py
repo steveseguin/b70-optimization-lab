@@ -31,10 +31,15 @@ def observe(registry, prompt_queue, pipeline, capture, lean, *, fault=False):
         routes = max(routes, len(installed[1]), 1)
     replicas = sum(len(values) for values in decode['_REPLICA_SETS'].values())
     lean_count = len(lean._MEMO_INSTALLED) + len(lean._SENTRY_INSTALLED)
+    writer = decode['_WRITER']
+    with writer.queue.mutex:
+        preview_pending = writer.queue.unfinished_tasks
+    preview_failures = len(decode['SAVE_FAILURES'])
     return {'queue_running': len(running), 'queue_pending': len(pending),
             'queue_running_ids': [row[1] for row in running],
             'queue_pending_ids': [row[1] for row in pending],
-            'pipeline': pipe, 'fault': bool(fault),
+            'pipeline': pipe, 'fault': bool(fault or preview_failures),
+            'preview_pending': preview_pending, 'preview_failures': preview_failures,
             'sampler_routes': routes, 'lean_state': lean_count,
             'decode_replicas': replicas,
             'captures_frozen': capture.CAPTURES_FROZEN[0],

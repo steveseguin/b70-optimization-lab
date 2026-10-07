@@ -60,6 +60,8 @@ rate is 48000. Determinism must be enabled and warn-only disabled. A changed
 candidate graph, reordered/missing/duplicate execution, altered source/runtime,
 bad shape/hash/nonfinite tensor, cached execution, or failed repeat prevents
 receipt creation. All evidence files are reread again immediately before writing.
+Root `FAULT.json` and the actual server `resolution-halt.json` failure latch
+refuse validation, including a halt appearing during the final evidence recheck.
 Symlinks, nonregular files, hard-linked evidence, oversized inputs and duplicate
 JSON keys refuse. No reference tensor may be retired before later verification.
 

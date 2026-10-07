@@ -86,6 +86,8 @@ def pipeline_snapshot(pipeline):
 
 
 def require_quiescent(snapshot, no_tails=False):
+    require(snapshot.get('preview_pending', 0) == 0 and snapshot.get('preview_failures', 0) == 0,
+            'Preview work pending or failed')
     require(snapshot['queue_pending'] == 0 and snapshot['queue_running'] == 0,
             'Prompt queue is not empty')
     pipe = snapshot['pipeline']

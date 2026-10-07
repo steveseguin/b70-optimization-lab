@@ -1,4 +1,4 @@
-# 640×384 reference/runtime components — integration in progress
+# 640×384 reference/runtime components — CPU integration reviewed
 
 These are **CPU-tested components, not a prepared or GPU-qualified runtime**.
 No larger model request has been submitted. The immutable qualified packet99b,
@@ -36,13 +36,30 @@ Implemented components:
   result. Seeded native/replica decoder consistency remains distinct from real
   reference-clip equality; the old internal speed-only labels are preserved.
 
-`native_safety.py` and its concrete adapter, finite client, and candidate parity
-gate are being integrated separately. Required work before device execution:
-complete source/launcher closure; real resident-object/memory observations;
-guard installation before any native request; exact setup schedule and phase
-transitions; reference/candidate receipt wiring; bounded writes/captures and
-fresh name/index reservation; one finite server lifecycle with fault halt,
-graceful shutdown and postflight. A component test is not a launch admission.
+`native_safety.py` and its concrete `native_adapter.py` now check actual
+registered node owners, unchanged resident tensor identities and fresh device
+memory. The narrow loader wrapper protects loaded owners from eviction; ordinary
+Comfy allocator bookkeeping is retained. `candidate_gate.py` verifies real
+emissions against the three native references and excludes fills. The complete
+`request_client.py` accepts only the32 exact scheduled requests and reads fresh
+server phase observations; `schedule.py` binds the seven setup graphs.
+
+`integration.py` connects setup-result checks, native safety, source identity and
+phase proofs. It also observes the separate preview writer queue, so unfinished
+tail previews cannot cross phase boundaries. `runtime_packet.py` prepares a new
+source packet only with an explicit reviewed input-inventory hash; its default
+is read-only. `campaign.py` operates one already-owned application, submits each
+request once, and attempts a single graceful stop only after actual quiescence.
+It does not start or restart a server. The initial timing screen uses a serial
+client feeding asynchronous pipeline stages, not a fully queued throughput run.
+
+All14 CPU suites pass, including independent [source/lifecycle review](runtime-build-review.md).
+Required before device execution: immutable materialization and launch checks,
+fresh actual host/storage admission, then
+real resident-object/memory observations. All32 names and26 clip indices were
+reserved separately; no prior canonical request used the selected interval.
+The one finite application must end with graceful shutdown and health postflight.
+A component test or reservation is not a launch admission.
 
 The failure guard must prevent estimated/actual native VAE OOM from reaching
 automatic tiled decoding or its cache-flush fallback. Pre-native physical free

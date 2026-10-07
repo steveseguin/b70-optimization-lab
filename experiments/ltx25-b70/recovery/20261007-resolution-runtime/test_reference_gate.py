@@ -199,6 +199,22 @@ class GateTests(unittest.TestCase):
         self.refuse()
         with self.assertRaisesRegex(ValueError,'Duplicate'):G.strict_json('{"x":1,"x":2}')
 
+    def test_session_halt_refuses_otherwise_complete_native_evidence(self):
+        (self.server / 'resolution-halt.json').write_text('{"reason":"postcheck failed"}')
+        with self.assertRaisesRegex(ValueError, 'session halted'):
+            self.run_gate()
+        self.assertFalse(self.output.exists())
+
+    def test_session_halt_appearing_at_final_recheck_prevents_receipt(self):
+        original = G.Evidence.recheck
+        def stop_after_read(evidence):
+            original(evidence)
+            (self.server / 'resolution-halt.json').write_text('{}')
+        with patch.object(G.Evidence, 'recheck', stop_after_read):
+            with self.assertRaisesRegex(ValueError, 'session halt before'):
+                self.run_gate()
+        self.assertFalse(self.output.exists())
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

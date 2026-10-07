@@ -1,0 +1,388 @@
+"""Sealed experiment integration; activated once by launcher, never at import.
+
+Finite loopback-only actions use fixed evidence paths and pinned requests. No
+action starts/stops/restarts a process or changes host/device settings.
+"""
+import asyncio
+import json
+import os
+from pathlib import Path
+import shutil
+import threading
+import time
+
+_CTX = None
+
+
+class Runtime:
+    def __init__(self, packet, manifest, manifest_sha, run):
+        import ltx_resolution_session as session
+        import schedule
+        import reference_gate
+        import candidate_gate
+        self.session = session
+        self.packet, self.run, self.manifest = Path(packet), Path(run), manifest
+        self.root = self.run.parent
+        self.manifest_sha = manifest_sha
+        self.identity_sha = session.digest(session.read_regular(self.run / 'server-identity.json'))
+        self.plan_path = self.packet / 'resolution/candidate-plan.json'
+        self.schedule = schedule.build_schedule(plan_path=self.plan_path)['schedule']
+        self.setup = {r['name']: r for r in self.schedule['rows']}
+        self.lock = threading.RLock()
+        self.action_busy = False
+        self.actions_done = set()
+        self.adapter = None
+        self.reference_receipt = self.run / 'same-size-native-references.json'
+        self.candidate_receipt = self.run / 'same-size-candidate-check.json'
+        self.timed_receipt = self.run / 'same-size-timed.json'
+        self.authority = session.configure(self.plan_path, manifest_sha, self.identity_sha,
+            self.run, self.inspect_state,
+            {'reference_verified': reference_gate.verify_receipt,
+             'candidate_verified': candidate_gate.verify_candidate_receipt}, self.schedule['rows'])
+        self.initial_free = shutil.disk_usage(self.root).free
+        self.previous_free = self.initial_free
+        self.consumed = 0
+        self.storage_check()
+
+    def fault(self):
+        return (self.root / 'FAULT.json').exists() or (self.run / 'resolution-halt.json').exists()
+
+    def inspect_state(self):
+        import runtime_observer
+        return runtime_observer.actual_state(fault=self.fault())
+
+    def storage_check(self):
+        free = shutil.disk_usage(self.root).free
+        self.consumed += max(0, self.previous_free-free)
+        self.previous_free = free
+        self.session.require(self.consumed <= 4*2**30 and free >= 50*2**30 + (4*2**30-self.consumed),
+                             'Resolution experiment storage allowance exhausted')
+
+    def write(self, name, value):
+        self.session.write_exclusive(self.run / name, value)
+
+    def receipt(self, prefix, name):
+        return self.session.strict_json(self.session.read_regular(self.run / (prefix + name + '.json')))
+
+    def require_dependencies(self, row):
+        dependencies = list(row.get('depends_on', []))
+        dependencies += self.schedule['boundary_dependencies'].get(row['name'], [])
+        for dep in dependencies:
+            if dep.startswith('barrier:'):
+                self.session.require((self.run / ('resolution-phase-' + dep.split(':')[1] + '.json')).is_file(),
+                                     'Required phase barrier missing')
+            else:
+                self.session.require(dep in self.authority.completed, 'Required setup request incomplete: ' + dep)
+
+    def before_request(self, row, prompt_id):
+        self.storage_check()
+        self.session.require(not self.action_busy, 'Phase barrier active')
+        self.require_dependencies(row)
+        if row.get('kind') in ('capture0', 'decode-probe'):
+            needed = 'admit-capture' if row['kind'] == 'capture0' else 'admit-decode'
+            self.session.require(needed in self.actions_done, 'Fresh optimized memory admission required')
+        if row['phase'] in ('native-reference', 'native-repeat'):
+            self.session.require('before-native' in self.actions_done and self.adapter is not None,
+                                 'Native phase observation/preparation missing')
+            value = self.adapter.before_request(row['name'])
+            self.write('native-memory-before-' + row['name'] + '.json', value)
+        if row['phase'] in ('candidate-check', 'timed'):
+            name = 'resolution-ref-20261007-freeze'
+            self.session.require(name in self.authority.completed, 'Passed freeze required before candidate/timing')
+            state = self.inspect_state()
+            self.session.require(state['captures_frozen'] is True and state['loads_frozen'] is True,
+                                 'Actual optimized runtime is not frozen')
+
+    def after_request(self, row, prompt_id):
+        import setup_gates
+        if row['phase'] in ('native-reference', 'native-repeat'):
+            value = self.adapter.after_request(row['name'])
+            self.write('native-memory-after-' + row['name'] + '.json', value)
+        kind, name = row.get('kind'), row['name']
+        gates = {'window-probe': ('text-window-probe-', setup_gates.validate_window),
+                 'coverage': ('sampler-capture-coverage-', setup_gates.validate_coverage),
+                 'decode-probe': ('decode-probe-', setup_gates.validate_decode),
+                 'freeze': ('sampler-capture-freeze-', setup_gates.validate_freeze)}
+        if kind in gates:
+            prefix, gate = gates[kind]
+            checked = gate(self.receipt(prefix, name), name, self.identity_sha)
+            self.write('resolution-setup-accepted-' + name + '.json', checked)
+        elif kind == 'prepare-native':
+            self.session.require(self.adapter is not None and self.adapter.ready and self.adapter.failed is None,
+                                 'Native residence preparation did not pass')
+        elif kind == 'pin0':
+            receipt = self.receipt('sampler-pin-', name)
+            self.session.require(receipt['server_identity_sha256'] == self.identity_sha and
+                receipt['outcome'] == 'pinned' and receipt['worker'] == 0 and
+                receipt['worker_name'] == 'ltx-sample-0' and receipt['sampler_workers'] == 1 and
+                receipt['sampler_batch'] == 1 and receipt['output_size'] == '640x384',
+                'Worker pin did not pass')
+        self.storage_check()
+
+    def on_failure(self, row, prompt_id, error):
+        if row['phase'] in ('native-reference', 'native-repeat') and self.adapter is not None:
+            try:
+                self.adapter.abort_request(error)
+            finally:
+                self.write('native-failure-' + row['name'] + '.json', {'error': str(error),
+                    'adapter_receipts': self.adapter.receipts,
+                    'controller_receipts': self.adapter.controller.receipts if self.adapter.controller else []})
+
+    def prepare_native(self, name):
+        import torch
+        import nodes
+        import comfy.model_management as mm
+        from native_adapter import NativeAdapter
+        self.session.require(name == 'resolution-ref-20261007-prepare-native' and self.adapter is None,
+                             'Unexpected/repeated native preparation')
+        self.session.require_phase('native', self.authority.plan['qualification_id'], name)
+        hashes = {str(self.packet / path): sha for path, sha in self.manifest['files'].items()
+                  if path.startswith('source/')}
+        hashes.update(self.manifest['runtime']['files'])
+        self.adapter = NativeAdapter(torch=torch, nodes=nodes, model_management=mm,
+            session=self.session, qualification_id=self.authority.plan['qualification_id'], run_name=name,
+            plan_sha256=self.session.PLAN_SHA256, runtime_sha256=self.manifest_sha,
+            source_hashes=hashes, fault_check=self.fault)
+        snapshot = self.adapter.prepare()
+        self.write('native-preparation.json', {'snapshot': snapshot, 'receipts': self.adapter.receipts})
+        return snapshot
+
+    def quiescent(self, no_tails=True):
+        self.authority.healthy()
+        self.session.require(self.authority.active is None, 'Active prompt at phase barrier')
+        state = self.inspect_state()
+        self.session.require(state['fault'] is False, 'Fault at phase barrier')
+        self.session.require_quiescent(state, no_tails=no_tails)
+        return state
+
+    def native_observation(self, name):
+        state = self.quiescent()
+        snapshot = self.adapter.native_state()
+        controller = self.adapter.controller
+        self.session.require(controller.failed is None and self.adapter.failed is None,
+                             'Native safety failed before observation')
+        from native_safety import ATTRIBUTE
+        self.session.require(all(getattr(self.adapter.objects[r], ATTRIBUTE, None) is controller
+                                 for r in ('video_vae', 'audio_vae')), 'Native OOM refusal not attached')
+        observation = {'schema': 'ltx.native-reference-state.v1', 'phase': 'native_reference',
+            'server_identity_sha256': self.identity_sha,
+            'qualification_id': self.authority.plan['qualification_id'], 'timestamp_ms': time.time_ns()//1000000,
+            'sampler_routes': state['sampler_routes'], 'lean_sampler_installs': state['lean_state'],
+            'decode_replicas': state['decode_replicas'], 'oom_fallback_attempts': 0,
+            'queue_running': state['queue_running_ids'], 'queue_pending': state['queue_pending_ids'],
+            **{'pending_' + s: [j['index'] for j in state['pipeline']['stages'].get(s, {}).get('jobs', [])]
+               for s in ('encode', 'sample', 'decode', 'save')},
+            'native_residency_admitted': True, 'no_owner_eviction': True,
+            'oom_to_tiled_refusal_installed': True, 'safety_observation': snapshot}
+        self.write('native-' + name + '.json', observation)
+        return observation
+
+    def retire_tails(self, name):
+        self.quiescent(no_tails=False)
+        import ltx_pipeline
+        def empty():
+            state = self.inspect_state()
+            return state['queue_running'] == state['queue_pending'] == 0 and self.authority.active is None
+        self.session.retire_completed_tails(ltx_pipeline, self.run / ('resolution-tails-' + name + '.json'), empty)
+        self.quiescent()
+
+    def action(self, name):
+        import reference_gate
+        import candidate_gate
+        with self.lock:
+            self.authority.healthy()
+            self.session.require(name not in self.actions_done, 'Phase action already performed')
+            self.storage_check()
+            if name == 'before-native':
+                self.session.require('resolution-ref-20261007-prepare-native' in self.authority.completed,
+                                     'Native preparation incomplete')
+                self.native_observation('before')
+            elif name == 'verify-native':
+                self.session.require('before-native' in self.actions_done and
+                    all(r['name'] in self.authority.completed for r in self.authority.plan['requests'][:6]),
+                    'Six native requests required')
+                self.native_observation('after')
+                evidence = {str(self.packet / 'manifest.json'): self.manifest_sha,
+                            str(self.run / 'native-preparation.json'): self.session.digest(
+                                self.session.read_regular(self.run / 'native-preparation.json'))}
+                for path in self.run.glob('native-memory-*.json'):
+                    evidence[str(path)] = self.session.digest(self.session.read_regular(path))
+                contract = {'schema': 'ltx.native-reference-runtime-contract.v1',
+                    'plan_sha256': self.session.PLAN_SHA256,
+                    'parent_manifest_sha256': self.manifest['resolution101']['parent_manifest_sha256'],
+                    'server_run': str(self.run), 'server_identity_sha256': self.identity_sha,
+                    'successor_manifest_sha256': self.manifest_sha,
+                    'model_verification_sha256': self.manifest['model_verification_sha256'],
+                    'request_names': [r['name'] for r in self.authority.plan['requests'][:6]],
+                    'runtime_evidence': evidence}
+                for key, suffix in (('before_native','before'), ('after_native','after')):
+                    path = self.run / ('native-' + suffix + '.json')
+                    contract[key] = {'path': str(path), 'sha256': self.session.digest(self.session.read_regular(path))}
+                contract_path = self.run / 'native-runtime-contract.json'
+                self.write(contract_path.name, contract)
+                reference_gate.verify_references(self.root, self.plan_path, contract_path,
+                    self.session.digest(self.session.read_regular(contract_path)), self.reference_receipt)
+                self.authority.advance('reference_verified', self.reference_receipt,
+                                       self.session.digest(self.session.read_regular(self.reference_receipt)))
+                self.adapter.close()
+            elif name == 'start-optimized':
+                self.session.require('verify-native' in self.actions_done, 'Native proof not verified')
+                self.authority.advance('optimized_preparation')
+            elif name in ('admit-capture', 'admit-decode'):
+                self.quiescent()
+                self.session.require(self.authority.phase == 'optimized_preparation',
+                                     'Optimized preparation phase required')
+                before = 'pin0' if name == 'admit-capture' else 'coverage'
+                after = 'capture0' if name == 'admit-capture' else 'decode-probe'
+                self.session.require('resolution-ref-20261007-' + before in self.authority.completed and
+                                     'resolution-ref-20261007-' + after not in self.authority.completed,
+                                     'Memory admission must immediately precede its setup stage')
+                if name == 'admit-decode':
+                    self.session.require('retire-capture-tails' in self.actions_done,
+                                         'Capture tails must be retired before decoder admission')
+                import torch
+                thresholds = (6,6,2,7) if name == 'admit-capture' else (2,2,7,7)
+                free = {}
+                for i in range(4):
+                    torch.xpu.synchronize(i)
+                    free['xpu:%d' % i] = int(torch.xpu.mem_get_info(i)[0])
+                for role, expected in self.adapter.controller.expected_residence.items():
+                    from native_adapter import fingerprint
+                    self.session.require(fingerprint(self.adapter._rows(role, require_loaded=True)) == expected,
+                                         'Optimized preparation resident owner changed: ' + role)
+                self.write('resolution-' + name + '.json', {'physical_free_bytes': free,
+                    'required_bytes': {'xpu:%d' % i: n*2**30 for i,n in enumerate(thresholds)},
+                    'allowances_are_not_proven_peak_bounds': True, 'time_ns': time.time_ns()})
+                self.session.require(all(free['xpu:%d' % i] >= n*2**30 for i,n in enumerate(thresholds)),
+                                     'Actual optimized preparation memory admission refused')
+            elif name == 'retire-capture-tails':
+                self.session.require('resolution-ref-20261007-capture0' in self.authority.completed,
+                                     'Capture request incomplete')
+                # A tail that silently failed must never be mistaken for a successful capture.
+                done = self.receipt('pipeline-done-sample-', str(99900030))
+                observation = done.get('session_observation', {})
+                self.session.require(observation.get('server_identity_sha256') == self.identity_sha and
+                    observation.get('runtime_manifest_sha256') == self.manifest_sha and
+                    observation.get('plan_sha256') == self.session.PLAN_SHA256 and
+                    observation.get('phase') == 'optimized_preparation' and
+                    observation.get('reference_receipt_sha256') == self.authority.references_sha and
+                    done.get('stage') == 'sample' and done.get('index') == 99900030 and done['finite'] is True,
+                                     'Capture sample did not finish finite')
+                self.retire_tails(name)
+            elif name == 'verify-candidate':
+                self.retire_tails(name)
+                candidate_gate.verify_outputs(self.root, self.plan_path, self.reference_receipt,
+                    self.authority.references_sha, 'candidate-check', self.candidate_receipt)
+                self.authority.advance('candidate_verified', self.candidate_receipt,
+                                       self.session.digest(self.session.read_regular(self.candidate_receipt)))
+            elif name == 'start-timing':
+                self.session.require('verify-candidate' in self.actions_done, 'Candidate proof not verified')
+                self.authority.advance('timing')
+            elif name == 'verify-timed':
+                self.retire_tails(name)
+                candidate_gate.verify_outputs(self.root, self.plan_path, self.reference_receipt,
+                    self.authority.references_sha, 'timed', self.timed_receipt,
+                    self.candidate_receipt, self.authority.candidate_sha)
+            else:
+                raise RuntimeError('Unknown finite resolution action')
+            self.actions_done.add(name)
+            self.storage_check()
+            return {'passed': True, 'action': name, 'phase': self.authority.phase}
+
+
+class LTXResolutionPrepareNative:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'run_name': ('STRING', {'default': 'assign-unique-request-name'})}}
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = 'apply'
+    CATEGORY = 'lab/validation'
+
+    def apply(self, run_name):
+        if _CTX is None:
+            raise RuntimeError('Resolution runtime not initialized')
+        _CTX.prepare_native(run_name)
+        return {'ui': {'text': ['native residence admitted']}}
+
+
+NODE_CLASS_MAPPINGS = {'LTXResolutionPrepareNative': LTXResolutionPrepareNative}
+
+
+def install(packet, manifest, manifest_sha, run):
+    global _CTX
+    if _CTX is not None:
+        raise RuntimeError('Resolution integration may only install once')
+    import execution
+    import executor_guard
+    _CTX = Runtime(packet, manifest, manifest_sha, run)
+    result = executor_guard.install(execution.PromptExecutor, _CTX.authority,
+        _CTX.before_request, _CTX.after_request, _CTX.on_failure)
+    _CTX.write('resolution-executor-guard.json', result)
+
+
+def install_routes():
+    from aiohttp import web
+    from server import PromptServer
+    if _CTX is None:
+        raise RuntimeError('Resolution routes require sealed launcher installation')
+
+    @web.middleware
+    async def admission(request, handler):
+        if request.method == 'POST' and request.path == '/prompt':
+            if _CTX.action_busy or _CTX.authority.failed is not None or _CTX.fault():
+                return web.json_response({'error': 'resolution phase closed or halted'}, status=503)
+        return await handler(request)
+    PromptServer.instance.app.middlewares.append(admission)
+
+    @PromptServer.instance.routes.get('/ltx-resolution/status')
+    async def status(request):
+        with _CTX.authority.lock:
+            state = _CTX.inspect_state()
+            observation = {'schema': 'ltx.resolution-client-phase.v1', 'phase': _CTX.authority.phase,
+                'plan_sha256': _CTX.session.PLAN_SHA256,
+                'runtime_manifest_sha256': _CTX.manifest_sha,
+                'server_identity_sha256': _CTX.identity_sha,
+                'qualification_id': _CTX.authority.plan['qualification_id'],
+                'reference_receipt_sha256': _CTX.authority.references_sha,
+                'candidate_receipt_sha256': _CTX.authority.candidate_sha,
+                'active_request': _CTX.authority.active,
+                'fault': _CTX.fault() or _CTX.authority.failed is not None,
+                'observed_at_ms': time.time_ns()//1000000,
+                'queue_running': state['queue_running'], 'queue_pending': state['queue_pending']}
+            # This is explicitly the latest observation, not a qualification
+            # receipt. Atomic replacement keeps readers from seeing partial JSON.
+            temporary = _CTX.run / 'resolution-client-phase.json.next'
+            _CTX.session.write_exclusive(temporary, observation)
+            os.replace(temporary, _CTX.run / 'resolution-client-phase.json')
+            directory = os.open(_CTX.run, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        return web.json_response({'phase': _CTX.authority.phase, 'halted': _CTX.authority.failed,
+            'active': _CTX.authority.active, 'completed': list(_CTX.authority.completed),
+            'actions': sorted(_CTX.actions_done), 'state': state,
+            'server_identity_sha256': _CTX.identity_sha, 'runtime_manifest_sha256': _CTX.manifest_sha})
+
+    @PromptServer.instance.routes.post('/ltx-resolution/action')
+    async def action(request):
+        if _CTX.action_busy:
+            return web.json_response({'error': 'resolution action already active'}, status=409)
+        body = await request.json()
+        if set(body) != {'action'} or not isinstance(body['action'], str):
+            return web.json_response({'error': 'one named action required'}, status=400)
+        if _CTX.action_busy:
+            return web.json_response({'error': 'resolution action already active'}, status=409)
+        _CTX.action_busy = True
+        try:
+            result = await asyncio.to_thread(_CTX.action, body['action'])
+            return web.json_response(result)
+        except Exception as error:
+            try:
+                _CTX.authority.halt(error)
+            except Exception:
+                pass
+            return web.json_response({'error': str(error), 'halted': True}, status=409)
+        finally:
+            _CTX.action_busy = False

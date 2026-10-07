@@ -103,6 +103,25 @@ class GuardControls(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'twice'):
             G.install(type(e), a, None, None)
 
+    def test_failure_restores_adapter_scope_without_clearing_latch(self):
+        calls = []
+        class Authority:
+            def begin(self, *args): return {'name': 'clip-1'}
+            def halt(self, error): calls.append('latched')
+        class Executor:
+            def __init__(self): self.server = types.SimpleNamespace(client_id=None)
+            def add_message(self, *args): self.status_messages.append(args[:2])
+            async def execute_async(self, *args): raise RuntimeError('native failed')
+        def cleanup(*args):
+            calls.append('restore scoped loader')
+            raise RuntimeError('native adapter latched after restore')
+        G.install(Executor, Authority(), lambda *a: None, lambda *a: None, cleanup)
+        e = Executor()
+        self.run_one(e)
+        self.assertEqual(calls, ['restore scoped loader', 'latched'])
+        self.assertFalse(e.success)
+        self.assertIn('latched after restore', e.status_messages[-1][1]['failure_cleanup_error'])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

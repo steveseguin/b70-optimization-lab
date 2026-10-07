@@ -164,6 +164,7 @@ def _verify_references(root, plan_path, runtime_contract_path, runtime_contract_
             contract.get('plan_sha256') == PLAN_SHA and contract.get('parent_manifest_sha256') == PARENT_SHA,
             'Runtime contract basis differs')
     server_dir = safe_path(contract['server_run'])
+    require(not (server_dir / 'resolution-halt.json').exists(), 'Native session halted')
     identity_raw = evidence.raw(server_dir / 'server-identity.json')
     identity_hash = sha(identity_raw)
     require(identity_hash == digest(contract['server_identity_sha256']), 'Runtime server identity differs')
@@ -256,7 +257,8 @@ def _verify_references(root, plan_path, runtime_contract_path, runtime_contract_
         require(first['fixture'] == repeat['fixture'] and first['tensors'] == repeat['tensors'] and
                 first['conditioning_sha256'] == repeat['conditioning_sha256'], 'Native repeat differs')
     evidence.recheck()
-    require(not (root / 'FAULT.json').exists(), 'Fault before reference receipt')
+    require(not (root / 'FAULT.json').exists() and not (server_dir / 'resolution-halt.json').exists(),
+            'Fault/session halt before reference receipt')
     receipt = {'schema': 'ltx.same-size-native-reference.v1', 'status': 'reference_verified',
                'plan_sha256': PLAN_SHA, 'qualification_id': QUALIFICATION_ID,
                'parent_manifest_sha256': PARENT_SHA, 'server_identity_sha256': identity_hash,

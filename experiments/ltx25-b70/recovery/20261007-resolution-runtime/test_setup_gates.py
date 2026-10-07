@@ -40,6 +40,7 @@ class GateControls(unittest.TestCase):
         d = fixture('decode-probe-*.json')
         d['references'] = 'none (speed only)'
         d['rows'] = [{'seed': 980000+i, 'output_size': '640x384',
+                      'references': 'none (speed only)',
                       'video_latent_shape': [1,128,4,12,20], 'passed': True,
                       'cards_bytewise_equal': True, 'replica_matches_native': True,
                       'native': {'images_sha256': 'b'*64, 'waveform_sha256': 'c'*64},
@@ -109,6 +110,12 @@ class GateControls(unittest.TestCase):
         d = self.decode()
         d['xpu:2_free_after_probe'][0] = G.GIB
         with self.assertRaisesRegex(RuntimeError, 'memory not admitted'):
+            self.check('decode', d)
+
+    def test_decode_equal_empty_objects_are_not_tensor_evidence(self):
+        d = self.decode()
+        d['rows'][0]['native'] = d['rows'][0]['replica'] = {}
+        with self.assertRaisesRegex(RuntimeError, 'Missing decoder tensor hashes'):
             self.check('decode', d)
 
 

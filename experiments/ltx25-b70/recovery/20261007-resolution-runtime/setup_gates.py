@@ -4,6 +4,7 @@ All functions are CPU-only and consume newly written source-bound receipts.
 These internal checks do not substitute for native/candidate four-tensor parity.
 """
 import math
+import re
 
 MODEL_SHA = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 GIB = 2**30
@@ -114,9 +115,13 @@ def validate_decode(report, name, identity_sha):
             'Seeded decoder workload differs')
     for row in rows:
         require(row['output_size'] == '640x384' and row['video_latent_shape'] == [1,128,4,12,20] and
+                row['references'] == 'none (speed only)' and
                 row['passed'] is True and row['cards_bytewise_equal'] is True and
                 row['replica_matches_native'] is True and row['native'] == row['replica'],
                 'Seeded decoder tensors differ')
+        require(set(row['native']) == {'images_sha256', 'waveform_sha256'} and
+                all(isinstance(h, str) and re.fullmatch('[0-9a-f]{64}', h)
+                    for h in row['native'].values()), 'Missing decoder tensor hashes')
     for suffix, minimum in (('after_build', 5*GIB), ('after_probe', 2*GIB)):
         free, method = report['xpu:2_free_' + suffix]
         require(type(free) is int and free >= minimum and method == 'mem_get_info',

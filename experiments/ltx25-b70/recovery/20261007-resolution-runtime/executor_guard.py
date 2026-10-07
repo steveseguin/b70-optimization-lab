@@ -16,7 +16,7 @@ def request_name(prompt):
     return names.pop()
 
 
-def install(executor_class, authority, before_request, after_request):
+def install(executor_class, authority, before_request, after_request, on_failure=None):
     if getattr(executor_class, '_resolution_guard_installed', False):
         raise RuntimeError('Resolution executor guard cannot be installed twice')
     original = executor_class.execute_async
@@ -62,6 +62,14 @@ def install(executor_class, authority, before_request, after_request):
         except Exception as error:
             self.success = False
             halt_receipt_error = None
+            failure_cleanup_error = None
+            if began and on_failure is not None:
+                try:
+                    # Release a scoped native no-eviction wrapper after a failed
+                    # numerical request; its failure latch remains permanent.
+                    on_failure(row, prompt_id, error)
+                except Exception as cleanup_error:
+                    failure_cleanup_error = repr(cleanup_error)
             try:
                 # Authority sets its permanent in-memory latch before any write.
                 # A full disk must not turn a failed prompt into a dead worker.
@@ -76,6 +84,7 @@ def install(executor_class, authority, before_request, after_request):
                 'current_inputs': {}, 'current_outputs': list(self.history_result.get('outputs', {})),
                 'resolution_execution_began': began,
                 'halt_receipt_error': halt_receipt_error,
+                'failure_cleanup_error': failure_cleanup_error,
             }, False)
         finally:
             if had_instance_message:
