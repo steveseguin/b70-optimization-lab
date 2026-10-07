@@ -175,10 +175,39 @@ def _snapshot_storage_admission(run_dir, files, min_free_bytes, require_mount):
     return report
 
 
-def prepare_snapshot(repo, commit, run_dir, *,
-                     storage_min_free_bytes=DEFAULT_STORAGE_MIN_FREE_BYTES,
-                     storage_require_mount=None):
-    """Create a source snapshot from an exact commit in a clean repository."""
+_UNSPECIFIED = object()
+
+
+def _exact_scope_paths(value, label):
+    if not isinstance(value, list) or not value:
+        raise SandboxError(label + " must be a nonempty list of exact file paths")
+    seen = set()
+    for name in value:
+        if (not isinstance(name, str) or not name or name.startswith(('/', '-', ':'))
+                or any(c in name for c in "\\*?[]") or any(ord(c) < 32 or ord(c) == 127 for c in name)
+                or any(part in ('', '.', '..', '.git') for part in name.split('/'))):
+            raise SandboxError(label + " contains an unsafe or ambiguous path")
+        try:
+            name.encode('utf-8')
+        except UnicodeError as error:
+            raise SandboxError(label + " requires UTF-8 paths") from error
+        if name in seen:
+            raise SandboxError(label + " contains duplicate paths")
+        seen.add(name)
+    return list(value)
+
+
+def plan_snapshot(repo, commit, run_dir, *, source_paths=_UNSPECIFIED,
+                  allowed_new_paths=_UNSPECIFIED,
+                  storage_min_free_bytes=DEFAULT_STORAGE_MIN_FREE_BYTES,
+                  storage_require_mount=None):
+    """Read-only exact-commit source selection and storage admission; creates nothing.
+
+    Omit source_paths for the historical full-repository snapshot. An explicit
+    nonempty list selects exact regular files plus pinned ancestor AGENTS.md.
+    Scoped new paths require an explicit allowed_new_paths list (default empty).
+    This is a visibly narrower task/evidence class, never an implicit filter.
+    """
     repo, run_dir = Path(repo).resolve(), Path(run_dir).absolute()
     for ancestor in (run_dir, *run_dir.parents):
         if ancestor.is_symlink():
@@ -197,43 +226,140 @@ def prepare_snapshot(repo, commit, run_dir, *,
     actual = _run(["git", "-C", str(repo), "rev-parse", "--verify", commit + "^{commit}"]).stdout.decode().strip()
     if actual != commit:
         raise SandboxError("source commit did not resolve exactly")
-    # Check blob types/sizes before writing an archive; reject submodules too.
     tree = _run(["git", "-C", str(repo), "ls-tree", "-r", "-l", "-z", commit]).stdout
-    total = count = 0
-    files = []
+    entries = {}
     for entry in tree.split(b"\0"):
-        if not entry:
-            continue
-        info, name = entry.split(b"\t", 1)
-        mode, kind, _, size = info.split()
-        if mode not in (b"100644", b"100755") or kind != b"blob":
-            raise SandboxError("source snapshot cannot contain symlinks or submodules")
-        count += 1
-        total += int(size)
-        files.append((name, int(size)))
-    if count > MAX_FILES or total > MAX_SOURCE_BYTES:
+        if entry:
+            info, name = entry.split(b"\t", 1)
+            mode, kind, oid, size = info.split()
+            entries[os.fsdecode(name)] = {"mode": mode.decode(), "kind": kind.decode(),
+                "git_blob_oid": oid.decode(), "bytes": int(size) if size != b'-' else 0}
+    scoped = source_paths is not _UNSPECIFIED
+    requested = _exact_scope_paths(source_paths, 'source_paths') if scoped else []
+    if allowed_new_paths is _UNSPECIFIED:
+        new_paths = []
+    elif not scoped:
+        raise SandboxError("allowed_new_paths requires explicit source_paths")
+    elif allowed_new_paths == [] and isinstance(allowed_new_paths, list):
+        new_paths = []
+    else:
+        new_paths = _exact_scope_paths(allowed_new_paths, 'allowed_new_paths')
+    selected = set(requested) if scoped else set(entries)
+    if scoped:
+        for name in requested:
+            if name not in entries:
+                raise SandboxError("selected source file does not exist at pinned commit: " + name)
+        for name in new_paths:
+            if name in entries or any(other.startswith(name + '/') for other in entries):
+                raise SandboxError("allowed new path already exists at pinned commit: " + name)
+        for name in requested + new_paths:
+            for parent in Path(name).parents:
+                if parent != Path('.') and parent.as_posix() in entries:
+                    raise SandboxError("scope path has a file, symlink or submodule ancestor: " + name)
+                instructions = (parent / 'AGENTS.md').as_posix()
+                if instructions in entries:
+                    selected.add(instructions)
+    for name in selected:
+        entry = entries[name]
+        if entry['mode'] not in ('100644', '100755') or entry['kind'] != 'blob':
+            raise SandboxError("source snapshot cannot contain symlinks or submodules: " + name)
+    files = [(os.fsencode(name), entries[name]['bytes']) for name in sorted(selected)]
+    total = sum(size for name, size in files)
+    if len(files) > MAX_FILES or total > MAX_SOURCE_BYTES:
         raise SandboxError("source snapshot exceeds size or file-count limit")
-    storage_admission = _snapshot_storage_admission(
-        run_dir, files, storage_min_free_bytes, storage_require_mount)
+    admission = _snapshot_storage_admission(run_dir, files, storage_min_free_bytes, storage_require_mount)
+    scope = {"mode": "explicit-task-scope" if scoped else "full-repository",
+        "evidence_class": "task-scoped; not full-repository evaluation" if scoped else "full-repository snapshot",
+        "requested_paths": requested, "allowed_new_paths": new_paths,
+        "auto_included_instruction_paths": sorted(selected - set(requested)) if scoped else [],
+        "selected_files": {name: entries[name] for name in sorted(selected)},
+        "selected_file_count": len(files), "selected_file_bytes": total,
+        "full_tree_entry_count": len(entries), "full_tree_blob_bytes": sum(e['bytes'] for e in entries.values()),
+        "excluded_entry_count": len(entries) - len(files),
+        "excluded_blob_bytes": sum(e['bytes'] for name, e in entries.items() if name not in selected),
+        "excluded_nonregular_entries": sum(e['mode'] not in ('100644', '100755') for name, e in entries.items() if name not in selected),
+        "full_tree_manifest_sha256": hashlib.sha256(tree).hexdigest(),
+        "full_tree_manifest_encoding": "git ls-tree -r -l -z at source_commit; includes all entries, modes, blob OIDs and sizes"}
+    return {"schema": "neural.download.worker.snapshot-plan.v1", "source_repo": str(repo),
+        "source_commit": commit, "source_state": source, "run_directory": str(run_dir),
+        "source_tree_sha256": hashlib.sha256(tree).hexdigest(), "source_scope": scope,
+        "storage_admission": admission}
+
+
+def _archive_selected_blobs(repo, entries, destination):
+    """Stream literal pinned blob objects; no pathspecs, filters or attributes."""
+    digests = {}
+    with tarfile.open(destination, 'x', format=tarfile.PAX_FORMAT) as archive:
+        for name, entry in entries.items():
+            size = entry['bytes']
+            sha = hashlib.sha256()
+            git_sha = hashlib.sha1(b'blob ' + str(size).encode() + b'\0')
+            child = subprocess.Popen(['git', '-C', str(repo), 'cat-file', 'blob', entry['git_blob_oid']],
+                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=CHILD_ENV)
+            class Reader:
+                def read(self, amount):
+                    data = child.stdout.read(amount)
+                    sha.update(data); git_sha.update(data)
+                    return data
+            try:
+                member = tarfile.TarInfo(name)
+                member.size = size
+                member.mode = 0o755 if entry['mode'] == '100755' else 0o644
+                archive.addfile(member, Reader())
+                remaining, error = child.communicate(timeout=120)
+                if child.returncode or remaining or git_sha.hexdigest() != entry['git_blob_oid']:
+                    raise SandboxError('pinned blob stream identity failed: ' + name)
+                digests[name] = {'sha256': sha.hexdigest(), 'bytes': size, 'mode': entry['mode']}
+            finally:
+                if child.poll() is None:
+                    child.kill()  # Only this owned CPU git object reader, never a sandbox/GPU process.
+                    child.wait()
+                child.stdout.close(); child.stderr.close()
+    return digests
+
+
+def prepare_snapshot(repo, commit, run_dir, *, source_paths=_UNSPECIFIED,
+                     allowed_new_paths=_UNSPECIFIED,
+                     storage_min_free_bytes=DEFAULT_STORAGE_MIN_FREE_BYTES,
+                     storage_require_mount=None):
+    """Create an admitted source snapshot; full repository unless explicitly scoped."""
+    plan = plan_snapshot(repo, commit, run_dir, source_paths=source_paths,
+        allowed_new_paths=allowed_new_paths, storage_min_free_bytes=storage_min_free_bytes,
+        storage_require_mount=storage_require_mount)
+    repo, run_dir = Path(plan['source_repo']), Path(plan['run_directory'])
     run_dir.mkdir(parents=True, exist_ok=False)
     archive = run_dir / "source.tar"
-    with archive.open("xb") as output:
-        subprocess.run(["git", "-C", str(repo), "archive", "--format=tar", commit],
-                       stdout=output, stderr=subprocess.PIPE, env=CHILD_ENV, timeout=120, check=True)
+    expected = None
+    if plan['source_scope']['mode'] == 'explicit-task-scope':
+        expected = _archive_selected_blobs(repo, plan['source_scope']['selected_files'], archive)
+    else:
+        with archive.open("xb") as output:
+            subprocess.run(["git", "-C", str(repo), "archive", "--format=tar", commit],
+                           stdout=output, stderr=subprocess.PIPE, env=CHILD_ENV, timeout=120, check=True)
     digest = hashlib.sha256()
     with archive.open("rb") as file:
         for block in iter(lambda: file.read(1024 * 1024), b""):
             digest.update(block)
-    archive_sha = digest.hexdigest()
     safe_extract(archive, run_dir / "baseline")
+    baseline = _regular_tree(run_dir / "baseline")
+    if expected is not None:
+        with tarfile.open(archive, 'r:') as frozen:
+            members = frozen.getmembers()
+        if (len(members) != len(expected) or any(not m.isfile() for m in members)
+                or {m.name for m in members} != set(expected) or baseline != expected):
+            raise SandboxError('scoped archive membership or pinned blob hashes changed')
+        for name, identity in expected.items():
+            plan['source_scope']['selected_files'][name]['sha256'] = identity['sha256']
     shutil.copytree(run_dir / "baseline", run_dir / "workspace", symlinks=False)
+    if expected is not None and _regular_tree(run_dir / 'workspace') != expected:
+        raise SandboxError('scoped workspace differs from pinned selected source')
     metadata = {"schema": "neural.download.worker.snapshot.v1", "source_repo": str(repo),
-                "source_commit": commit, "source_state": source,
-                "source_archive_sha256": archive_sha,
-                "storage_admission": storage_admission,
-                "source_tree_sha256": hashlib.sha256(tree).hexdigest(),
-                "baseline": _regular_tree(run_dir / "baseline")}
-    if _source_state(repo) != source:
+                "source_commit": commit, "source_state": plan['source_state'],
+                "source_archive_sha256": digest.hexdigest(),
+                "storage_admission": plan['storage_admission'],
+                "source_tree_sha256": plan['source_tree_sha256'],
+                "source_scope": plan['source_scope'], "baseline": baseline}
+    if _source_state(repo) != plan['source_state']:
         raise SandboxError("source repository changed while snapshotting")
     _json_write(run_dir / "snapshot.json", metadata)
     return metadata
@@ -265,6 +391,14 @@ def export_patch(run_dir):
     if baseline != metadata["baseline"]:
         raise SandboxError("baseline was changed")
     workspace = _regular_tree(run_dir / "workspace")
+    scope = metadata.get("source_scope", {"mode": "full-repository"})
+    if scope["mode"] == "explicit-task-scope":
+        selected = set(scope["selected_files"])
+        if set(baseline) != selected:
+            raise SandboxError("scoped baseline membership differs from source scope")
+        unexpected = set(workspace) - selected - set(scope["allowed_new_paths"])
+        if unexpected:
+            raise SandboxError("scoped workspace contains undeclared new paths: " + ", ".join(sorted(unexpected)))
     if _source_state(metadata["source_repo"]) != metadata["source_state"]:
         raise SandboxError("original source repository changed")
     changed, patches = [], []
@@ -299,6 +433,8 @@ def export_patch(run_dir):
     receipt = {"source_commit": metadata["source_commit"], "source_archive_sha256": metadata["source_archive_sha256"],
                "source_repo_unchanged": True, "baseline_unchanged": True,
                "patch_sha256": hashlib.sha256(patch).hexdigest(), "changed_files": changed}
+    if scope["mode"] == "explicit-task-scope":
+        receipt["source_scope"] = scope
     _json_write(run_dir / "changes.json", receipt)
     return receipt
 

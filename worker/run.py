@@ -16,6 +16,23 @@ from model import LocalModel
 from sandbox import DockerSandbox,prepare_snapshot,_regular_tree
 
 FINISH='echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT'
+INSTANCE_TEMPLATE='Issue: {{task}}\n\nAcceptance command: {{acceptance_command}}\nRead relevant project instructions, fix the issue, and add an appropriate regression test.'
+
+
+def instance_prompt(snapshot):
+    """Expose explicit task scope without changing the full-repository prompt."""
+    scope=snapshot.get('source_scope',{'mode':'full-repository'})
+    if scope['mode']!='explicit-task-scope':return INSTANCE_TEMPLATE,{}
+    notice=('This is an explicitly scoped snapshot, not the full repository. '
+            'Only the listed pinned source files and ancestor instructions are present. '
+            'Edit existing listed files; new files may be created only at the exact permitted paths below. '
+            'An empty permitted list means add regression coverage to an existing test file. '
+            'Any undeclared new file causes patch export to fail; do not recreate excluded repository files.\n'
+            +json.dumps({'selected_source_paths':list(scope['selected_files']),
+                         'allowed_new_paths':scope['allowed_new_paths']},ensure_ascii=False))
+    return INSTANCE_TEMPLATE+'\n\n{{source_scope_notice}}',{'source_scope_notice':notice}
+
+
 SYSTEM='''You are a software engineering worker. Complete the user's issue in /workspace.
 Inspect the relevant code, implement a focused fix, and run tests.
 Keep investigation proportional: start with the named implementation and one nearby test.
@@ -158,7 +175,8 @@ def main():
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         snapshot=prepare_snapshot(repo,commit,out,
             storage_min_free_bytes=config.get('storage_min_free_bytes',50*1024**3),
-            storage_require_mount=config.get('storage_require_mount'))
+            storage_require_mount=config.get('storage_require_mount'),
+            **{key:task[key] for key in ('source_paths','allowed_new_paths') if key in task})
         # mini must not load the user's unrelated dotenv/provider configuration.
         os.environ['MSWEA_GLOBAL_CONFIG_DIR']=str(out/'mini-config');os.environ['MSWEA_SILENT_STARTUP']='1'
         from minisweagent.agents.default import DefaultAgent
@@ -174,8 +192,9 @@ def main():
             verify_acceptance_identity(acceptance)
             model=LocalModel(config['base_url'],config['model'],out/'requests',config['max_input_tokens'],config['max_output_tokens'],generation=config.get('generation'),observation_format=config.get('observation_format','json'))
             env=CheckedEnvironment(sandbox,command,out,config['validation_attempts'])
-            agent=DefaultAgent(model,env,system_template=SYSTEM,instance_template='Issue: {{task}}\n\nAcceptance command: {{acceptance_command}}\nRead relevant project instructions, fix the issue, and add an appropriate regression test.',step_limit=config['step_limit'],cost_limit=0,wall_time_limit_seconds=config['wall_time_limit_seconds'],max_consecutive_format_errors=2,output_path=out/'trajectory.json')
-            agent_result=agent.run(task['issue'],acceptance_command=command)
+            instance_template,scope_variables=instance_prompt(snapshot)
+            agent=DefaultAgent(model,env,system_template=SYSTEM,instance_template=instance_template,step_limit=config['step_limit'],cost_limit=0,wall_time_limit_seconds=config['wall_time_limit_seconds'],max_consecutive_format_errors=2,output_path=out/'trajectory.json')
+            agent_result=agent.run(task['issue'],acceptance_command=command,**scope_variables)
         except KeyboardInterrupt:
             error='Interrupted by operator; task remains incomplete'
         except Exception as exc:
@@ -194,6 +213,8 @@ def main():
                           final_workspace_matches_acceptance=final_tree_matches,
                           repeated_command_warnings=env.loop_warnings if env else 0,
                           two_command_cycle_warnings=env.two_command_cycle.warnings if env else 0)
+            result['source_scope_mode']=snapshot['source_scope']['mode']
+            result['source_scope_evidence_class']=snapshot['source_scope']['evidence_class']
             save(out/'result.json',result)
             print(json.dumps({'status':result['status'],'task':task['id'],'model_requests':result['model_requests'],'elapsed_seconds':round(result['elapsed_seconds'],1),'result':str(out/'result.json')}),flush=True)
     return 0 if passed else 1
