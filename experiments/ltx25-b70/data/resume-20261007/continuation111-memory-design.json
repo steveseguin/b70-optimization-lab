@@ -1,0 +1,61 @@
+{
+  "admission_conclusion": "Plausible bounded first conditioned request with unchanged guards after CPU/runtime-source review and fresh actual readings, not a proven peak bound or live authorization.",
+  "basis_manifest_sha256": "bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09",
+  "conditioning_calls_per_conditioned_chunk": 2,
+  "created_utc": "2026-10-07T23:46:45.103870+00:00",
+  "critical_required_change": "Source-pinned reject_oom callback in VAE.encode OOM handler after raise_non_oom, before warning/do_tile assignment; no tiled retry or soft_empty_cache on refused OOM. Retain existing VAE.decode hook.",
+  "native_vae_device": "xpu:3",
+  "native_vae_disable_offload": true,
+  "new_model_copy_required": false,
+  "postoperation_floor_bytes": 2147483648,
+  "preoperation_floor_bytes": {
+    "xpu:0": 8589934592,
+    "xpu:1": 8589934592,
+    "xpu:2": 2147483648,
+    "xpu:3": 9663676416
+  },
+  "schema": "ltx.continuation111.native-memory-design.v1",
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/duration110-resource-audit.json": "de50b08186d80939a57b980e5c4747006387429129f9e4e5aec3476c27c8552b",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/notes/2026-10-07-after110-continuation-priority.md": "715b31a60592b460f9f4f7423b9ff2c583262a2bc7c3e895ab4bed27b96b303e",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/launch/serve-encoder.py": "ea8025de915fed5d4a9961a53226c025006cb37fb731b633dd7c86550d3dc5e8",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/manifest.json": "bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/comfy/ldm/lightricks/vae/causal_video_autoencoder.py": "42010d800e6e49bdc69ae24587910b55b2418e26a1140bec7159a873276c45c2",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/comfy/ldm/lightricks/vae/na_diffusion_decoder.py": "7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/comfy/model_management.py": "045ab96003386a43e647c8ab96f22fbf3be6c577e2fc578ea31c6faa22facbd5",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/comfy/sd.py": "d1c63b66a6d0cf467ecb084d7ec5fb73d20b0fac43181668124a8ded06aa7604",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/comfy_extras/nodes_lt.py": "09ddb30d42244d64ae72e9c64261d1a6b4c512afe0570372222c43dbebd64243",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/comfy_extras/nodes_lt_upsampler.py": "c9f225e4c54f19f31452016fd4e546119d69e9dec37b60a9dc4ddf133848a892",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/scripts/integration.py": "63dd416b478a4ccb1dd2ce3bbc6eae8b58de4ebdf5466504fd33a7ae4ce78e3a",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/scripts/native_adapter.py": "f39420afe2907dab4075d05419be1cd1740cfd8e12732c558fae9b2dc91666e8",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/source/scripts/native_safety.py": "8a98f462417c4e5b630bbeb023666acc3829f8248361fb3b8ce0f73fa998fa0c"
+  },
+  "source_workspace_estimates_not_measured_peaks": {
+    "formula": "80*max(T,7)*H*W*dtype_size(BF16)",
+    "fully_resident_loader_demand_inference": "max(2.8GiB, encode_estimate+2GiB)=2.8GiB both stages; actual loader checks remain authoritative",
+    "loader_minimum_inference_bytes": 3006477107.2,
+    "loader_reserve_bytes": 2147483648,
+    "stage_a": {
+      "bytes": 68812800,
+      "encode_input_shape": [
+        1,
+        3,
+        1,
+        192,
+        320
+      ]
+    },
+    "stage_b": {
+      "bytes": 275251200,
+      "encode_input_shape": [
+        1,
+        3,
+        1,
+        384,
+        640
+      ]
+    }
+  },
+  "status": "source-design-only-unimplemented-unmeasured",
+  "temporal_cache_lifetime": "Encoder.forward finally removes calling-thread temporal_cache_state entries even on exception; no reuse between conditioning stages/chunks permitted."
+}

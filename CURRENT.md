@@ -32,6 +32,13 @@ not an admitted GPU workload or adopted quality mode. Additional VAE encoding
 needs separate memory admission; exact replay and visual seam quality are separate
 gates. Raw audio remains unchanged and separate until its timeline is resolved.
 [Continuation design](experiments/ltx25-b70/notes/2026-10-07-after110-continuation-priority.md).
+The inactive frame/graph prototype passes 16 CPU tests and independent review.
+The source-pinned encoder OOM refusal passes six tests; it preserves successful
+encoding and the existing decoder path. Fresh per-stage memory guards are being
+implemented before the concrete eight-request native-only plan/runtime. Nothing
+has been registered, built or launched for continuation.
+[Integration design](experiments/ltx25-b70/notes/2026-10-07-continuation111-integration-design.md),
+[memory design](experiments/ltx25-b70/notes/2026-10-07-continuation111-memory-design.md).
 
 The preceding49-frame109 pilot completed successfully at
 22:56:44 UTC. Its application stopped cleanly once at2026-10-07T23:15:35.660027+00:00
