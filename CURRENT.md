@@ -18,7 +18,9 @@ with no kernel GPU fault.
 The corrected historical control completed and stopped cleanly at 13:07 UTC.
 The current-upstream control **failed exact output parity** for its two initial
 self-check clips and skipped the timed workload. One graceful SIGINT stopped
-PID 3123108 at 13:34 UTC; **no model server is running**. All four cards passed
+PID 3123108 at 13:34 UTC. The single compatibility control is now running as
+`ltx99b-upstream-server-20261007`, PID 3129897, with the patch and file
+limits verified before its first model request. All four cards passed
 postflight with no GPU fault. Failed clips, source and dependency evidence are
 preserved. Prompts, seeds and initial latents match; the first observed difference
 is already in encoder conditioning. An upstream dependency changed split-half
