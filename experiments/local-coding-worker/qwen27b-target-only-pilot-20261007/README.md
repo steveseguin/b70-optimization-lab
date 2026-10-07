@@ -1,6 +1,8 @@
 # Target-only 27B worker trial, October 7 UTC
 
-**Preregistered; model intake is running, no server or model request has run.**
+**Model intake and cold preservation verified; no server or model request has run.**
+All 80 publisher identities and post-remount cold-copy hashes passed; EX400U is
+cleanly unmounted. See the [preservation receipt](model-preservation/summary.json).
 This separately identified trial evaluates practical coding and source recall
 with the intended 27B model. It does not qualify the published speculative
 package, repair R314, or produce a performance headline. The two-card host's
