@@ -1,13 +1,15 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-07 00:20 EDT**. The dated two-card entries
+Latest four-card review: **2026-10-07, cited-recall v2 preparation**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-All bounded worker trials are closed and **no model server is running**.
+The earlier coding/recall trials are closed and **no model server is running**.
+One fresh, bounded [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/TRIAL.md)
+is being prepared; this does not authorize a resident service.
 The [4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
 and separate [27B trial](experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md)
 each completed zero of two coding repairs under different runtime/budget profiles.
@@ -20,10 +22,11 @@ A smaller full-precision application cache restored about 15 GiB of host RAM
 headroom while keeping the same context limit; both finite runtime checks passed.
 The server stopped cleanly, all four cards passed final checks, and no OOM or
 new kernel fault appeared. Coding evidence is archived and verified. Disposable
-source snapshots and the temporary 27B RAM model copy are released; all 80 model
-files remain in the verified cold copy. EX400U is cleanly unmounted. The next
-recall improvement is offline: let code copy exact quotations from document line
-ranges, with meaning and relevance still reviewed separately.
+source snapshots were released; all 80 model files remain in the verified cold
+copy. A newly verified temporary RAM copy is staged for the fresh recall trial.
+EX400U is cleanly unmounted. The citation compiler passed 13 CPU tests; meaning
+and relevance still require separate review. The new packet uses four complete
+source documents and ten newly worded questions, with some shared themes.
 
 LTX's earlier disk-full incident left a progress-bar lock stuck. Its evidence
 was preserved and one SIGINT stopped the application cleanly. LTX and Flash-Next
@@ -93,8 +96,8 @@ setting was changed.
   `/mnt/usb-models/worker-models/qwen38-27b-fp8-20261007/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/`.
   Only the temporary RAM copy was removed after another full hash check and clean
   server stop. [Preservation receipt](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/model-preservation/summary.json).
-  Restore into an admitted location before any later trial; no serving copy is
-  currently staged. The downloader now resumes preallocated aria2 partials
+  A fresh fully verified RAM restore is staged for the references-only trial;
+  its receipt and one-shot limits are recorded in the linked trial plan. The downloader now resumes preallocated aria2 partials
   correctly. The separate R276 trials and failed usefulness outcomes are
   preserved; they do not qualify the newer speculative package.
   Qualify the corrected package when its exact inputs and host ownership

@@ -6,13 +6,13 @@ meaning, call a model, or perform external actions. There is no new recall
 quality result. The original ten-question trial and its failed answer remain
 unchanged: **do not rerun, repair, or regrade that trial through this compiler.**
 
-Before any future qualification, create and independently review **fresh
-questions** and a frozen source bundle. Preregister the model, prompt, output
-budget, deadline, completeness gate and semantic rubric before inference. The
-synthetic fixtures in the tests are implementation controls, not unseen
-evaluation questions. A future harness must isolate its answer key and keep
-source selection under trusted caller control; this directory does not build
-that harness or establish contamination-free evaluation.
+A fresh ten-question [evaluation packet](evaluation/README.md) and one-shot
+harness are now prepared for a bounded trial. The four complete pinned source
+files differ from the original corpus; question wording is new, while some
+operational themes overlap. This is not a controlled before/after comparison
+or evidence of completely unseen concepts. The review-only answer key is never
+read by the request harness. See [the trial plan](TRIAL.md) for frozen limits,
+runtime identity, preparation and outcome locations.
 
 The trusted source bundle is UTF-8 JSON with exactly these fields:
 

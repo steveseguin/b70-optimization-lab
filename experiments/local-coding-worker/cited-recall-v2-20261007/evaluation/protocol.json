@@ -1,0 +1,63 @@
+{
+  "schema": "lab.cited-recall-v2.fresh-evaluation.v1",
+  "status": "unrun; pending independent review and preregistration",
+  "source_commit": "a8bbae3119d9ea31d08bd8b7cec74941adabc6ac",
+  "model_visible_files": [
+    "model-input/instructions.txt",
+    "model-input/source-bundle.json"
+  ],
+  "source_rendering": "Complete corpus only, each document rendered with one-based line numbers from str.splitlines(); no selected excerpts, followed by all ten questions in supplied order. Do not include review-only files or provenance/rubric.",
+  "question_count": 10,
+  "model_calls": 1,
+  "automatic_retries": 0,
+  "all_questions_one_query": true,
+  "answer_sentences": "1-2 concise sentences per question",
+  "citations_per_answer": {
+    "min": 1,
+    "max": 2,
+    "max_lines_each": 20
+  },
+  "citation_fields": [
+    "doc_id",
+    "start_line",
+    "end_line"
+  ],
+  "model_supplied_quotes": false,
+  "input_token_limit": 28000,
+  "context_token_limit": 33024,
+  "output_token_limit": 3072,
+  "outer_deadline_seconds": 420,
+  "wire_timeout_seconds": 420,
+  "thinking": false,
+  "temperature": 0,
+  "seed": 42,
+  "runtime": {
+    "image_id": "sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model": "Qwen3.8-27B-FP8",
+    "tp": 2,
+    "affinity": "0,1",
+    "dtype": "float16",
+    "quantization": "fp8",
+    "kv_dtype": "auto/full16bit",
+    "kv_cache_memory_bytes_per_gpu": 2147483648,
+    "max_model_len": 33024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.8,
+    "enforce_eager": true,
+    "prefix_caching": false,
+    "mtp": false,
+    "row_chunk": 32,
+    "block_w8a16": true,
+    "gdn_native_fallback": true,
+    "identity_authority": "experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/serve_r276_once.py; main binds actual complete launch identity before trial"
+  },
+  "admission": "Exact rendered request must tokenize within input limit and input plus max output within context; no truncation or omission. Main owns admission and server lifecycle.",
+  "mechanical_gate": "Complete strict ordered response; compiler validation; at most two citations per answer; unchanged original exact-quote validator after compilation. Preserve raw response, including incomplete/invalid output; no repair.",
+  "semantic_gate": "Human or independent review of all 30 rubric criteria and disqualifiers; mechanical quotation is not semantic correctness.",
+  "model_requests_performed": 0,
+  "original_trial_policy": "Never rerun, repair, regrade or overwrite original ten-question trial; fresh source files and fresh questions, no comparative quality claim from changed packets.",
+  "conceptual_exposure": "Fresh question wording and complete source files, but operational themes overlap original questions; especially V2Q08 storage admission/preservation/backup qualification. Not wholly unseen concepts or a controlled A/B quality comparison."
+}
