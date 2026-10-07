@@ -59,3 +59,11 @@ implemented adapter. The sealed108b actual `--check-only` startup passed in the
 real venv, including dependency activation, runtime hashes and disk admission.
 A fresh472,628-entry filename scan found no collisions in the unchanged plan.
 108b manifest: `ef839f83eaea6526f09cc353c6996a56414a95beb41609278b4b6e2994697ad7`.
+
+108b launched once at22:26:13UTC, registered nodes and the idle endpoint passed,
+and the finite campaign began at2026-10-07T22:27:32.755555+00:00. PID3378223/start28580521;
+identitySHA`d5862109aaf65c3d329fab06a4491b7c7f517b3fc4da561224249801f6f10d96`,
+client contractSHA`699c857274dc4687374a8dbeb157b28f612940712b7aad9867976ff600f084cd`.
+The preregistration retains its pre-correction base commit; corrected source
+commit `c5ca40ace` is recorded in the actual launch result and all final source
+bytes are bound by the sealed manifest.
