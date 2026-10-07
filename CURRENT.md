@@ -26,6 +26,11 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   only their unpacked copies were removed. About **38 GiB is available** afterward.
   Full byte comparisons passed before removal; hashes and restore commands are in
   [the consolidation receipt](data/maintenance/consolidation-20261006/summary.json).
+  A follow-up preserved eight inactive August research build trees (18.94 GiB)
+  in 2.49 GiB of verified archives, bringing available space to about **54 GiB**.
+  Complete member inventories and repeated byte comparisons passed. Original-path
+  restore commands are in [the staging receipt](data/maintenance/staging-consolidation-20261007/summary.json);
+  restore these trees before replaying their historical launchers.
   These same-disk archives are preservation, not independent backups.
   The external EX400U mounted read-only, but a vendor SMART query was followed by
   USB command errors, a kernel-initiated USB reset and a failed read. It was cleanly
@@ -39,10 +44,14 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   TP1 needs a separate kernel port. This host lacks the documented R314 build/image
   and FP8 model inputs.
 - **Next:** qualify the corrected package when its exact inputs and host ownership
-  are available; no large build/download is admitted by today's 50 GiB reserve.
+  are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
+  this does not admit a large build/download.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
   estimated peak output/cache/build bytes. Independent backup recovery and the
   known faulty memory's permanent repair remain open.
+
+[Follow-up decisions and recovery checks](notes/2026-10-06-storage-and-recovery-followup.md)
+record the archive restore rehearsal, isolated CPU fixes and remaining priorities.
 
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
