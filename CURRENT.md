@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-07, scoped workflow preparation**. The dated two-card entries
+Latest four-card review: **2026-10-07, scoped workflow closeout**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
@@ -13,10 +13,13 @@ remain a known limit. This is source search, not model-memory qualification.
 The [scoped worker task](experiments/local-coding-worker/scoped-task-20261007/README.md)
 selects about 203 KB of pinned source with explicit patch boundaries. All 135
 worker CPU tests pass; historical bug/fix controls pass their expected outcomes.
-One bounded local-model attempt is active, using the existing historical
-R276 runtime and a fresh RAM restore. No resident service or newer-package
-qualification is implied. Five other unused coding tasks remain untouched if
-this task is started. LTX and Flash-Next remain parked.
+The single [scoped coding attempt](experiments/local-coding-worker/scoped-task-20261007/CLOSEOUT.md)
+closed at 12 steps after 114.54 seconds, with no edits and no acceptance submission.
+The historical R276 server stopped cleanly; all four cards passed postflight.
+All 80 temporary RAM model files were rehashed and released; the cold model is
+retained and EX400U is unmounted.
+Park further local-worker tuning and memory integration on this evidence. No resident service or newer-package
+qualification is implied. Five other unused coding tasks remain untouched. LTX and Flash-Next remain parked.
 
 [LFM source preparation](repro/lfm25-26b-q8-b70/README.md) now verifies the exact
 public archive and every extracted file. Full strict-headline toolchain identity,
@@ -25,8 +28,7 @@ build is not the strict-headline build. No new measured speed is claimed.
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-**One bounded scoped-worker trial is active under `lab-worker-scoped-20261007.service`;**
-its coordinator will request graceful stop after the single attempt. The earlier fresh [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/CLOSEOUT.md)
+**No model server is running.** The earlier fresh [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/CLOSEOUT.md)
 completed all ten answers in 176 seconds, passed strict citation compilation,
 and stopped cleanly with all four cards healthy. Independent review found all 20 citations relevant but only 12/30 criteria
 fully covered: required conditions were omitted. Its semantic gate failed.
@@ -36,8 +38,7 @@ and separate [27B trial](experiments/local-coding-worker/qwen27b-target-only-sma
 each completed zero of two coding repairs under different runtime/budget profiles.
 The 27B source-recall request reached its seven-minute limit before finishing;
 partial answers are preserved without a quality score. Do not connect these
-components or leave them serving on this evidence. The six unused coding cases
-remain available for a separately defined future trial.
+components or leave them serving on this evidence. Five unused coding cases remain after the separate scoped attempt described above.
 
 A smaller full-precision application cache restored about 15 GiB of host RAM
 headroom while keeping the same context limit; both finite runtime checks passed.

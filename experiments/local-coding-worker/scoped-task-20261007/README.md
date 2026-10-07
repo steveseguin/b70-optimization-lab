@@ -1,5 +1,8 @@
 # One explicitly scoped worker task
 
+**Closed: 0/1 completed repairs, empty patch after 12 steps.** See [closeout](CLOSEOUT.md).
+The following records preparation before that attempt.
+
 This packet preserves the unused `lab-worker-action-ready-latency` issue and its
 exact pinned bug commit unchanged. It adds an explicit dependency projection in
 `task.source_paths` and one permitted new regression file,
@@ -10,7 +13,7 @@ automatically; no source snippets are edited or selected around a proposed fix.
 This is a new, narrowed protocol with coordinator-supplied file locations and
 smaller source exposure. It is not the original full-repository held-out evidence
 class and cannot establish a controlled quality improvement over earlier failed
-tasks. No model attempt or GPU action has occurred. The authorized pinned CPU
+tasks. At preparation time no model attempt or GPU action had occurred. The authorized pinned CPU
 container controls passed on both scoped snapshots and both containers stopped;
 see `preparation.json` for the receipts and isolation checks.
 

@@ -1,0 +1,38 @@
+Model step 1: 486 input tokens
+{
+  "schema": "lab.worker-transport.v1",
+  "no_commands_executed": true,
+  "status": "passed",
+  "model": "qwen38-27b-fp8-scoped-worker",
+  "system_sha256": "c5d10c748c304c6d764530469de330a59d65e0657819a98cd2a9e42ade7e601b",
+  "profile_sha256": "ceb4f81263a5cf067d101feb039fbc7aa4fc53206d668a3519a03319f545198a",
+  "messages_sha256": "17d1ad587e77c694cefa8c417107c5a413855c93d4a2c33b832b3bb7924ce0f2",
+  "proposed_message": {
+    "role": "assistant",
+    "content": "```bash\nprintf \"%s\\n\" pilot-ok\n```",
+    "extra": {
+      "cost": 0.0,
+      "timestamp": 1791350935.401615,
+      "evidence": "/home/steve/worker-scoped-task-20261007/transport-canary/requests/001",
+      "actions": [
+        {
+          "command": "printf \"%s\\n\" pilot-ok"
+        }
+      ]
+    }
+  },
+  "model_requests": 1,
+  "requests": [
+    {
+      "directory": "001",
+      "status": "completed",
+      "prompt_tokens": 486,
+      "completion_tokens": 13,
+      "http_ttft_s": 0.25354153002263047,
+      "server_prefill_s": 0.24750951200257987,
+      "server_prefill_tokens_s": 1963.5608994087236,
+      "decode_stream_proxy_tokens_s": 10.567617105668463,
+      "elapsed_s": 1.3891581750067417
+    }
+  ]
+}
