@@ -199,3 +199,79 @@ sampling policy, eager/capture replay checks, all ten accepted `w93c` fixtures,
 per-clip context and emitted-index checks, complete sustained timing including
 tail gaps, and the existing fault-halt/graceful-stop rules. No new endpoint call
 is authorized by this note itself; the parent owns the resumed experiment plan.
+
+## Follow-up: complete source census and packet-99 transplant
+
+The bounded census subsequently compared SHA-256 of all 1,191 frozen upstream
+Git blobs against packet 98's manifest. Its 1,254 source files contain all 1,191
+upstream files plus 63 lab additions. Exactly five native files differ:
+`comfy/model_patcher.py`, `comfy/sd.py`, `comfy/sd1_clip.py`,
+`comfy/text_encoders/lt.py`, and `comfy/ldm/lightricks/av_model.py`.
+There are no omitted old-upstream files and no collisions between the 63 lab
+additions and the new upstream tree. New upstream adds 81 files and removes
+`comfy_api_nodes/nodes_sora.py` and
+`tests-unit/comfy_test/seedvr_vae_forward_test.py`. Preserve these deletions in
+the new live source tree; their historical identity remains in packet 98.
+
+Four native overlays merge cleanly using actual `git merge-file -p` with
+process-local memfd inputs and no checkout/build writes. The sole textual
+conflict is `comfy/sd.py`: latest upstream adds
+`fast_disk=comfy.storage.state_dict_fast_disk(state_dict)` to the CLIP
+ModelPatcher constructor, while the overlay inserts the small-state option guard
+and propagation immediately after that constructor. The explicit resolution is
+the **new constructor followed by the unchanged overlay guard/propagation**.
+Clean textual merging does not prove semantic compatibility: the new
+ModelPatcher fast-disk constructor/clone behavior, attention dispatch and
+residency changes still need their source contracts and CPU gates reviewed.
+
+Source-only output would have 1,333 files: 1,270 new upstream plus 63 additions,
+with five native overlay merges replacing their upstream versions. The remaining
+247 files of packet 98's 1,501-file closure are graphs, launchers, patches,
+provenance and parent manifests. They remain explicitly historical dependencies;
+a source-only preparation must not claim to preserve their current launchability.
+Its transition inventory must account for every old path, including native
+upstream updates and removals. Do not copy 1,254 old source files over a new
+archive, which would silently restore obsolete upstream files and code.
+
+The old checker (`launch/encoder_runtime_common.py:261,295–298,397–410`) pins
+the old commit, requires parent/runtime identity equality, requires inherited
+file equality and enforces an exact parent-plus-additions inventory. A new
+transition-aware checker is necessary; changing `PIN` or refreshing all hashes
+would erase the meaning of those checks. Preserve old manifests byte-for-byte
+as history, validate the new source against its actual Git tree plus declared
+overlay transformations, and retain the existing model, graph, mirror,
+source-tripwire, admission and runtime-identity checks under a new schema.
+
+The parent selected a possible later **20/28** sampler split, after a distinct
+new-base control. The source transplant must retain **23/25**, so upstream
+refresh and topology changes cannot be conflated. No new-base source tree or
+model execution was created by the in-memory census/merge review.
+
+### Source-only preparer readiness
+
+[`prepare-upstream-99.py`](../scripts/prepare-upstream-99.py) now implements this
+bounded transplant. Default `--plan` reads Git objects and the named small packet
+files, verifies the fixed census and produces a complete source/old-file
+disposition JSON without creating a source tree. `--prepare --out ABSOLUTE_NEW_PATH`
+is a separate, explicit action; it has **not been run**. It requires a new path
+outside the historical packet and checkout, and a 50 GiB free-space reserve plus
+384 MiB allowance. It exports the actual new Git archive, verifies every archive
+member against the Git tree (including omitted/substituted export detection),
+applies only the five reviewed native transformations, retains all 63 lab
+additions and writes `UNSEALED-NOT-LAUNCHABLE`. Final source size is planned at
+49,785,325 bytes. It provides no launcher or runtime checker.
+
+Repeatable read-only controls:
+
+```bash
+python3 -B experiments/ltx25-b70/scripts/prepare-upstream-99.py --self-test
+python3 -B experiments/ltx25-b70/scripts/prepare-upstream-99.py --plan
+```
+
+All five self-test controls passed: independent edits merge with exact expected
+bytes; unknown conflicts refuse, including an unexpected conflict in `sd.py`;
+an incorrect historical manifest digest refuses; the actual pinned source plan
+covers all 1,501 historical paths and recognizes the sole permitted conflict.
+An additional CLI refusal check confirmed `--plan --out ...` cannot prepare a
+directory. These controls do not exercise materialization, dependency imports,
+GPU behavior, runtime sealing or the eventual new-base quality gate.

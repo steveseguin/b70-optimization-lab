@@ -12,12 +12,13 @@ halted before timing: its journal monitor hit the application's 1,024-file soft
 limit during text-encoder graph setup. The failure and descriptor census are
 preserved. The queue drained, passive GPU counters stayed idle for over a minute,
 and one SIGINT stopped PID 3055231 cleanly. All four cards passed postflight,
-with no kernel GPU fault. No model server is running at this checkpoint.
+with no kernel GPU fault.
 [Incident closeout](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
 
-A separately preregistered corrected control will set the new LTX unit's open-file
-soft limit to 65,536 (existing hard limit 1,048,576), verify it before requests,
-and observe descriptor counts. No host/global limit or power/memory setting is
+A separately preregistered corrected control started at 12:50 UTC: PID 3057550,
+`ltx98-resume-server-r2-20261007`, with runner `ltx98-resume-campaign-r2-20261007`.
+Its open-file soft limit is 65,536 (existing hard limit 1,048,576), verified before
+requests; an external observer records descriptor counts. No host/global limit or power/memory setting is
 changed. This is a controlled application correction, not an automatic retry.
 The process-local progress-lock fix stays separately hash-bound; installed and
 sealed source remain unchanged. No speed or descriptor-leak fix is claimed.
