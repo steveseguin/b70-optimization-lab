@@ -1,6 +1,8 @@
 # Qwen3.5 4B worker pilot, October 7 UTC
 
-Preregistered, not yet run. This separate pilot tests whether a small local
+**Completed: zero of two coding tasks produced a patch; recall refused before
+generation for context size.** See [the closeout](CLOSEOUT.md). The preregistration
+below is retained as the tested protocol. This separate pilot tests whether a small local
 model can complete two frozen coding tasks. It is not evidence for the 27B
 candidate, a new benchmark record, or an unseen-task quality estimate. The 0.8B pilot never reached either coding task; its minimal-prompt
 format gate failed before any task was sent.

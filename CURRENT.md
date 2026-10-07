@@ -7,15 +7,17 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-The [0.8B pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
-is closed: transport/accounting worked, but its one canary failed command format.
-No coding task ran. Its server stopped gracefully and all four cards passed
-postflight without a new kernel fault. A separate pinned 4B worker pilot is being
-admitted, using existing RAM-backed scratch and a verified cold-storage copy.
-All twelve model files passed full hash checks before and after a clean external
-drive remount; the drive is unmounted. One bounded server attempt is next. Live receipts for that new attempt belong
-under `/home/steve/worker-qwen4b-pilot-20261007/server/`.
-Do not borrow that endpoint or infer it is ready from this note. LTX's
+Both small-worker pilots are closed and **no model server is running**. The
+[0.8B pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
+failed its minimal-prompt format gate. The separate
+[4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
+passed transport but completed zero of two coding tasks: both exhausted their
+20 steps without a patch. Recall needed 14,008 input tokens and was refused
+before generation by its context budget. All four cards passed final checks;
+no new kernel fault appeared. Task evidence is archived and verified, disposable
+RAM snapshots are released, and all twelve 4B model files remain in the verified
+cold copy. The external drive is unmounted.
+The intended 27B worker remains unqualified here. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving
 the evidence and checking passive GPU idleness, one SIGINT stopped the application;
 port 8188 closed, no render-node holders remained, and no kernel GPU fault appeared.
@@ -65,9 +67,9 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
 - **Coding worker and lab memory:** the owner chose a bounded usefulness trial
   before connecting these projects. The [new evaluation packet](experiments/local-coding-worker/evaluation-20261007/README.md)
   contains eight historical coding repairs and ten source-backed research
-  questions. CPU controls are verified; **no model trials have run**. Begin with
-  two coding tasks, one attempt each, and judge reviewed patches rather than
-  token speed. The worker can now mount a separate read-only acceptance folder
+  questions. CPU controls are verified; the separate 4B trial produced **zero
+  completed patches in two attempts**. Judge reviewed patches rather than token
+  speed; do not present that small-model result as a 27B evaluation. The worker can now mount a separate read-only acceptance folder
   and record/check its hashes. This does not qualify a model or serving package.
   Pinned worker dependencies and the CPU image are now installed; all 107 worker
   tests pass. Both initial tasks also passed their real full-snapshot Docker
@@ -76,9 +78,11 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   Two hash-identical 0.8B weight-cache copies were consolidated into one read-only
   inode, preserving both model paths and recovering 1.63 GiB. The separate 0.8B
   workflow pilot closed at its format gate; the planned 27B trial remains pending.
-- **Next:** run the separately identified 4B trial on the two frozen coding tasks,
-  one attempt each. Preserve its model in cold storage before the GPU trial,
-  keep the 50 GiB root reserve, and leave the protected two-card endpoint alone.
+- **Next:** close the intended 27B model-intake and runtime gaps. A read-only
+  audit found that its weight manifest omits configuration/tokenizer inputs;
+  fix that complete-download contract before admitting model intake. Investigate
+  a separately identified target-only path without borrowing speculative-kernel
+  qualification. Leave the protected two-card endpoint alone.
   Qualify the corrected package when its exact inputs and host ownership
   are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
   this does not admit a large build/download.
