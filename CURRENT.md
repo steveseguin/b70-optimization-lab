@@ -29,7 +29,11 @@ allocation takes0.100–0.158ms and the whole boundary fill0.374–1.182ms, too 
 to justify its buffer-lifetime risk. Long host waits overlap queued compute and
 are not removable copy latency. Next: offline audit and qualification design for
 49-frame clips at640×384, retaining BF16,8+3steps and exact video/audio gates.
-No longer-shape request has been launched. Preserve all107b raw artifacts.
+The full ten-fixture49-frame suite cannot fit the current disk reserve. A separately
+labeled three-fixture resource pilot is being prepared offline:29requests,22
+capture-bearing graphs, proposed4GiB allowance with bounded placeholder outputs.
+No longer-shape request or cleanup has occurred. Preserve all107b raw artifacts.
+[Duration audit and pilot limits](experiments/ltx25-b70/notes/2026-10-07-duration108-audit.md).
 [107b closeout](experiments/ltx25-b70/data/resume-20261007/sparse107b-closeout/summary.json),
 [trace interpretation](experiments/ltx25-b70/data/resume-20261007/sparse107b-interpretation.json).
 Manifest`fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb`;
