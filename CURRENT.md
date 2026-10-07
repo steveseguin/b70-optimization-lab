@@ -5,57 +5,62 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-The owner resumed continuous LTX optimization on `steve-b70s`. **The104 application stopped cleanly at19:14:56UTC for a controlled105 reload**.
-PID3311653 is gone, its service reports success, all render nodes are unowned
-and no fault is latched. The105 successor is sealed, manifest
-`1ff7bd5ab281dad1a19f8d01aaf8899505168f0606689ba43ccb23cc05311fad`;
-all four cards passed postflight at19:15:32UTC. The52-file duplicate retirement
-completed and fresh5GiB+50GiB storage admission passed.105 launched once at19:26:58UTC;
-PID3329528, start ticks27505015. Endpoint/source-bound client admission passed;
-its finite71-request campaign is running with fast policy first, control second.
-The same passive descriptor observer is running.
-The completed104 manifest is `49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`.
-The campaign completed all71 registered requests successfully at18:54:45UTC.
-Its finite plan is consumed: do not invent requests or run other GPU work beside it.
-Flash-Next and local-worker tuning remain parked.
+The owner resumed continuous LTX optimization on `steve-b70s`. The **105 application
+is retained and idle**, PID `3329528`, start ticks `27505015`, boot
+`10192010-9700-4915-ac6c-980d6b74afa0`. Its 71-request campaign completed successfully
+at **19:43:32 UTC**. Queues, pipeline tails and previews are empty, with no fault
+or halt. Its finite plan is consumed; do not invent requests or change the sealed
+runtime. Flash-Next and local-worker tuning remain parked.
 
-Skipping redundant unchanged storage-ledger writes measured **12.786 generated
-frames/s**, versus **12.040** for the control: **6.20% higher throughput** in one
-quiet control-first pair. Both ten-scene timing blocks matched their native
-references exactly in video, audio, images and waveform. Twenty native executions
-formed ten exact repeat pairs, and ten candidate clips also passed. No fault or
-halt is latched; queues, pipeline tails and preview work are empty. The unchanged
-sealed verifier rebuilt the complete proof after completion at18:59:58UTC.
-[Closeout](experiments/ltx25-b70/data/resume-20261007/client104-closeout/summary.json),
-[proof](experiments/ltx25-b70/data/resume-20261007/client104-post-completion-proof.json),
-[performance](experiments/ltx25-b70/notes/2026-10-07-client104-performance.md).
+The reduced-write client policy improved generation throughput in both tested
+orders while preserving exact video and audio outputs:
 
-The candidate skipped724 of1392 checkpoint ledger saves. All source/process/fault
-and storage checks, changed-state saves and event-log fsyncs remained. Between-
-request gaps fell sharply, exposing sampler waiting; worker computation did not
-become faster. This is a short repeated-workload screen with order effects still
-possible, not a cold-input, endurance or public-record claim. Both timed blocks
-ran without unrelated root/agent tests, Git activity or file writes. Descriptor
-observations peaked at2662 with no alert; that is not proof of leak freedom.
+| Test order | Control | Reduced writes | Throughput gain |
+| --- | ---: | ---: | ---: |
+| 104: control first | 12.040 generated frames/s | 12.786 | 6.20% |
+| 105: reduced writes first | 12.098 | 12.617 | 4.29% |
 
-Next is one quiet reverse-order confirmation, fast policy first and control
-second, then sampler service/overlap work. The standalone105 plan preserves all
-numerics and ten original scenes, with71 requests,64 captures and a fresh5GiB
-allowance above50GiB reserve. Runtime integration and independent review are complete; all fifteen CPU suites
-passed and its71 request names/64 capture indices are reserved without collisions.
-105 is running its registered setup and exact-output gates before timing. Current sampler phase A/B timings describe
-denoising stages, not per-card utilization, and cannot justify a blind partition
-or worker-count sweep.
-[Next priorities](experiments/ltx25-b70/notes/2026-10-07-after104-priorities.md),
-[reverse plan](experiments/ltx25-b70/recovery/20261007-client-reverse-105/README.md).
+Each application completed twenty native executions forming ten exact repeat
+pairs, ten exact candidate clips, and two ten-clip exact timing blocks. All four
+captured tensors matched: video latent, audio latent, images and waveform.
+These are short repeated-workload screens, not cold-input, endurance or public
+record claims. No unrelated tests, Git activity or file writes overlapped either
+105 timing block; preparation stopped before 19:36 UTC. The reduced-write policy
+keeps all fault/source/storage checks, changed-state saves and event-log fsyncs.
+105 skipped 705 unchanged saves and retained 667, versus 1,282 control saves.
+The full unmodified sealed proof was independently reconstructed at 19:46:02 UTC.
 
-About55.95GiB is free after the105 source build and completed52-archive duplicate
-retirement across101c,102 and104. It reclaimed3.614GiB after all three applications
-were stopped and their full sealed proofs reconstructed twice. All103 restoration
-anchors remain. Restore the mapped ordinary copies before replaying the affected
-full proofs; the original stored bindings describe their pre-retirement state. Models, references, previews, metadata, patches
-and failed experiments remain protected.
-[Storage options](experiments/ltx25-b70/notes/2026-10-07-after104-storage-options.md).
+Keep the reduced-write policy and **close the client comparison lever**. The next
+work is bounded GPU activity accounting to locate sampler computation or waiting,
+then one measured optimization. Do not start another client confirmation campaign.
+A read-only collector prototype is under review and has never observed a live
+server. The proposed 106 diagnostic retains the ten scenes and numerics with
+57 requests / 50 capture allowance, and needs fresh 4 GiB runtime plus 384 MiB
+source admission above the 50 GiB reserve. Its plan/runtime is not prepared yet.
+Sampler A/B timings describe denoising stages, not individual GPU utilization;
+they do not justify a blind placement or worker-count sweep.
+
+105 sealed manifest:
+`1ff7bd5ab281dad1a19f8d01aaf8899505168f0606689ba43ccb23cc05311fad`.
+[105 closeout](experiments/ltx25-b70/data/resume-20261007/client105-closeout/summary.json),
+[independent proof](experiments/ltx25-b70/data/resume-20261007/client105-post-completion-proof.json),
+[105 measurements](experiments/ltx25-b70/notes/2026-10-07-client105-performance.md),
+[104 measurements](experiments/ltx25-b70/notes/2026-10-07-client104-performance.md),
+[sampler investigation](experiments/ltx25-b70/notes/2026-10-07-sampler-after105-audit.md).
+
+About 52.41 GiB is free after 105. Its raw outputs remain protected while the
+application is retained. A conditional 40-file duplicate subset could provide
+106 admission after a necessary controlled reload and fresh full proof, but no
+105 cleanup is authorized by a metadata estimate alone. Models, references,
+previews, metadata, patches and failed experiments remain protected.
+
+104 stopped cleanly at 19:14:56 UTC for the controlled 105 reload, and all four
+cards passed postflight at 19:15:32 UTC. Then 52 verified whole-file duplicates
+from stopped 101c, 102 and 104 were retired, reclaiming 3.614 GiB after all three
+full sealed proofs were reconstructed twice. All 103 restoration anchors remain.
+Restore the mapped ordinary copies before replaying affected full proofs; stored
+bindings describe their pre-retirement state.
+[Completed cleanup and restoration](experiments/ltx25-b70/notes/2026-10-07-after104-storage-options.md).
 
 103 previously passed all ten fixtures and50 scored optimized clips, measuring
 12.00FPS initially and11.03FPS in thirty continuity clips. Concurrent repository

@@ -7,7 +7,7 @@ windows total GPU utilization. Do not choose W3 or a new block split from the
 stage-A/stage-B elapsed times: both denoising stages use both sampler cards.
 
 This is an offline source audit and probe proposal. No instrumentation was
-enabled, no endpoint or GPU was accessed, and no runtime code changed. The
+enabled, no endpoint was accessed or GPU work submitted, and no runtime code changed. The
 consumed 104 plan and preparing 105 comparison remain sealed. A later diagnostic
 needs its own reviewed, finite admission; this note does not authorize extra
 requests against either plan or a reload chain.
@@ -172,3 +172,28 @@ Existing fdinfo helper:
 `3a1f1d450f35e1d2d536f012b95fe77da7f3c4bad398f4f1453fe1055ee68d2d`.
 The helper is a research starting point, not an endorsed runnable measurement
 recipe until its bounded identity and counter-accounting requirements are met.
+
+## Follow-up after105 completed
+
+105 passed the reverse comparison and its full sealed proof was independently
+reconstructed. The client lever is closed; preparation now targets the bounded
+raw-counter diagnostic described above. The reviewed collector is being developed
+in `recovery/20261007-driver-accounting106/`; it has not observed a live process.
+
+The [generic kernel counter specification](https://docs.kernel.org/gpu/drm-usage-stats.html)
+clarifies that missing engine capacity means one, while zero is invalid. Busy
+counts may temporarily regress; keep a high watermark and mark affected intervals
+incomplete until they recover. This is not by itself a hardware fault. Each
+engine supplies its own total-cycle timestamp, and duplicate client descriptors
+must not be counted twice. The [Xe documentation](https://docs.kernel.org/gpu/xe/xe-drm-usage-stats.html)
+states conformance. These current specifications support collector design, but
+do not establish the exact installed driver's implementation or remove the need
+for raw counters, coverage checks and separate compute/copy interpretation.
+
+A passive read of105's process maps identifies installed
+`/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38308`, from package
+`libze-intel-gpu1` version `26.18.38308.1-0`. Its recorded XPU properties carry
+UUIDs with bus fields23,27,43,47 for ordinals0–3. The local compute-runtime
+checkout documents this PCI-derived layout, but is not yet proven identical to
+the installed package. Do not substitute ordinal assumptions for reviewed mapping
+evidence in the future observer contract.
