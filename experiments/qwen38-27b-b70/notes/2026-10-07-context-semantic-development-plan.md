@@ -1,8 +1,14 @@
 # Authored semantic development packet
 
-Date: 2026-10-07. Status: document authoring only. No model evaluation, answer
-key, task adapter, or admission into a frozen campaign accompanies this packet.
-The active r4 campaign and its evidence remain unchanged.
+Date: 2026-10-07. Original scope: document authoring only. The authoring
+requirements below preceded independent annotation and adapter implementation.
+R4 subsequently closed with its recorded failure; its evidence remains unchanged.
+
+Follow-up: two separate assistant annotations now agree on all 84 answers and
+48 states. Six valid alias quote-span differences are preserved in the
+[adjudicated reference](../data/2026-10-07-context-semantic-development/adjudicated.json).
+The [separate prospective live plan](2026-10-07-context-semantic-live-plan.md)
+defines a new development diagnostic; this packet does not enter frozen r4.
 
 The [document packet](../data/2026-10-07-context-semantic-development/documents.json)
 contains six manually specified cases, each with a stress version and a

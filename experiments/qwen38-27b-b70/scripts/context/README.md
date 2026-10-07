@@ -1,12 +1,32 @@
 # Context Language Models (CLM) harness against our local server
 
-Prepared 2026-10-05. Nothing here starts a server or touches a GPU.
+The original Harbor harness below was prepared on 2026-10-05. Its clients do
+not start a server. The later, explicitly invoked `*_host_runner.py` coordinators
+own bounded GPU experiments and graceful cleanup; consult [CURRENT.md](../../../../CURRENT.md)
+for host ownership before any live action.
 
 [Follow-up experiment ideas](../../notes/2026-10-05-context-followup-ideas.md): verify every delivered update, test historical recall, separate file I/O from decode speed, validate cache save/restore, and measure when prefix reuse pays off. These proposals build on the current queued runs; they do not launch additional work.
 
-## Reviewed evidence and next pilot
+## Evidence and experiment index
 
-The [canonical trial exporter](evidence/README.md) generates the historical manifest and tables from verified grader records. The [durable context pilot](durable/README.md) is a separate three-arm harness with a persistent source archive, transactional event application and a frozen evaluation protocol. Its CPU/stub checks are software validation, not model results. Neither changes the protected Harbor campaign.
+The [canonical trial exporter](evidence/README.md) generates historical tables
+from native grader records. The later durable experiments use a separate
+persistent source archive and transactional event application. Keep their
+versions distinct: prompt, retry, answer and cache policies changed between
+experiments, so pooled scores or direct timing comparisons would be misleading.
+
+| Version | Evidence and scope |
+| --- | --- |
+| [Original durable pilot](durable/README.md) | Preserved initial harness and protocol; CPU/stub checks are software validation. |
+| [Revision 2](durable_v2/README.md) | Answer/retrieval protocol repair; six development trials completed but its quality gate failed. |
+| [Revision 3](durable_v3/README.md) | Final-answer reasoning enabled; structured methods exact, summary inaccurate. [Result](../../notes/2026-10-07-durable-context-r3-result.md). |
+| [Revision 4](durable_v4/README.md) | Cache-disabled prospective comparison; five trials completed, one capped, six unstarted. [Result](../../notes/2026-10-07-durable-context-r4-result.md). |
+| [Semantic development](semantic_v1/README.md) | Short authored stress/control pairs distinguish interpretation errors from valid quotations. [Prospective live plan](../../notes/2026-10-07-context-semantic-live-plan.md). |
+
+The revision 2, 3 and 4 holdouts remain unused. Frozen versions and negative outcomes are
+preserved; new experiments do not retrospectively complete or repair them.
+The remainder of this document describes the original Harbor integration,
+not the current host status or a statement that its queued jobs remain active.
 
 ## What is where
 
