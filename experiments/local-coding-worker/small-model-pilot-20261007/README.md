@@ -43,3 +43,15 @@ and four-card health checks, watches new kernel faults, starts once and sends
 at most one SIGINT to its own server on completion/fault/deadline. It never
 resets a driver, changes settings or escalates to a hard kill. Review receipts
 before any subsequent experiment.
+
+## Closed: transport works; command format failed
+
+The final R276 canary completed token accounting, stream identities and zero-cache
+checks, but returned an unfenced shell script. The actual worker parser rejected
+it with FormatError. No proposed command was executed and neither coding task
+ran. This is one failed minimal-prompt format gate, not a coding benchmark.
+The server stopped gracefully, exited zero, left all render nodes idle, and all
+four postflight card checks passed without a new kernel fault. Complete canary
+and shutdown evidence is in [format-gate-closeout](format-gate-closeout/).
+Do not tune or retry this 0.8B pilot against its observed response. A separately
+preregistered pinned 4B W4A16 pilot will test practical coding usefulness.
