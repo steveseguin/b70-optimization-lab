@@ -1,9 +1,32 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-07, source-backed decision review**. The dated two-card entries
+Latest four-card review: **2026-10-07, LTX optimization resumed by the owner**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
-## Four-card host now: consolidation; LTX and Flash-Next parked
+## Four-card host now: LTX speed and reliability, unchanged quality
+
+The owner explicitly resumed continuous LTX optimization: higher generated frame
+throughput and reliability, with no degradation in quality. Work is active on
+`steve-b70s`; Flash-Next and local-worker tuning remain parked. No model server
+is running at this preparation checkpoint. Servers will exist only for bounded
+experiments, with one graceful stop and no automatic restart/retry policy.
+
+The accepted reference remains batch 1, native BF16, 256×256, 25 frames at 24 fps,
+the unchanged two-stage schedule and the owner-accepted short text window.
+The completed 1.308 s/clip result is about 19.1 generated frames/s; playback fps
+is a separate setting. Batch-2/4 results change output and are excluded from this
+lossless objective. Preserve the accepted raw-reference and exact-output gates.
+Prepared packet 98's larger-size speed-only arms are not quality qualification
+and are not queued by this resumption.
+
+First revalidate the sealed baseline, integrate the progress-lock exception fix
+without changing historical packets, and admit a storage-bounded reference
+control. Then pursue exact sampler scheduling/transfer improvements. Root has
+about 53 GiB free; retain the 50 GiB floor. All five bad-memory blocks remain
+offline; no power, memory, swap, driver or reboot change is authorized.
+[Resumption plan](experiments/ltx25-b70/notes/2026-10-07-lossless-resume.md).
+
+## Four-card preceding consolidation (historical closeout)
 
 The owner authorized the five follow-up priorities. The CPU-only
 [lab navigator](experiments/lab-navigator-20261007/README.md) now indexes exact

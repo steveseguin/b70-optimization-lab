@@ -1,5 +1,12 @@
 # LTX resume handoff — October 6, 2026
 
+**October 7 update: the owner explicitly resumed continuous LTX optimization.**
+Higher generation throughput and reliability must preserve output quality.
+The [current resumption plan](notes/2026-10-07-lossless-resume.md) supersedes the
+pause below. Batch 1 against the accepted w93c references remains the quality
+baseline; batch-2/4 and larger-size speed-only arms are not admitted as lossless
+improvements. Historical packet and incident evidence below remains preserved.
+
 The owner paused the four-card LTX lane for consolidation. New experiment
 submissions are stopped and the packet-97 process has exited after **exactly
 one graceful SIGINT**, with no new server started. The process had reached a
