@@ -10,7 +10,9 @@ automatically; no source snippets are edited or selected around a proposed fix.
 This is a new, narrowed protocol with coordinator-supplied file locations and
 smaller source exposure. It is not the original full-repository held-out evidence
 class and cannot establish a controlled quality improvement over earlier failed
-tasks. No model attempt, GPU action or container launch has occurred here.
+tasks. No model attempt or GPU action has occurred. The authorized pinned CPU
+container controls passed on both scoped snapshots and both containers stopped;
+see `preparation.json` for the receipts and isolation checks.
 
 The original acceptance command remains unchanged. Only its exact acceptance
 script may be mounted at `/acceptance`; never mount the original evaluation

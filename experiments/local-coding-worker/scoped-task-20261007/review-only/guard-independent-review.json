@@ -1,0 +1,26 @@
+{
+  "schema": "lab.scoped-worker.per-request-guard-independent-review.v1",
+  "status": "passed-focused-CPU-review",
+  "guard_sha256": "443a03eb0ec154ae2382e618db4e38f9e85988305e7f4469637e7c6365a34a3b",
+  "test_sha256": "979d4870e61325054052da38f8f7162d32ce54eeed226b300f6a77af5f451cdc",
+  "tests_passed": 3,
+  "reviewer": "storage_admission; independent of guard author review_research",
+  "source_review": [
+    "STOP/FAULT/shutdown checked before model query, opener/network, generation and CPU sandbox command; live supervisor PID/boot/start-tick identity retained.",
+    "Explicit >300 input and context budget checks before generation.",
+    "Complete original response saved before trial-specific refusal; strict natural stop, explicit cached_tokens0 and complete token-ID accounting; no automatic retry.",
+    "SIGTERM maps to KeyboardInterrupt for shared-worker cleanup; wrapper finally requests graceful server STOP without restarting.",
+    "Controller independently validates expected supervisor command/path, pre/post clean-source identity and code bindings; guard complements its in-flight monitoring."
+  ],
+  "synthetic_controls": [
+    "preexisting STOP blocks query, opener and generation with zero requests",
+    "cached response retained and refused after exactly one mocked generation",
+    "truncation retained/refused; separate natural-stop control accepted"
+  ],
+  "limits": [
+    "No actual model, endpoint, Docker or GPU operations in this review.",
+    "Final runtime plan must bind this guard/test/controller and all launched inputs.",
+    "Signal/ownership checks are point-in-time; controller retains responsibility for monitoring and waiting for owned client."
+  ],
+  "unresolved_blockers": []
+}

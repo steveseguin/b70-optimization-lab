@@ -1,6 +1,6 @@
 {
   "schema": "lab.worker.explicit-task-source-scope.v1",
-  "status": "metadata-inventory-complete; actual plan_snapshot admission pending clean shared repository",
+  "status": "exact scoped source created and CPU closure controls passed; no model result",
   "source_commit": "7324c356f00901b4d53f9ec26bda46900294ebb4",
   "mode": "explicit-task-scope",
   "requested_paths": [
@@ -141,5 +141,44 @@
     "unrelated campaign artifacts/models",
     "full repository source"
   ],
-  "evidence_class": "Explicit coordinator-selected dependency projection; new protocol, not equivalent to full-repository held-out task evaluation."
+  "evidence_class": "Explicit coordinator-selected dependency projection; new protocol, not equivalent to full-repository held-out task evaluation.",
+  "storage_admission": {
+    "schema_version": 1,
+    "admitted": true,
+    "destination": "/home/steve/worker-scoped-task-preparation-20261007/baseline",
+    "resolved_destination": "/home/steve/worker-scoped-task-preparation-20261007/baseline",
+    "checked_existing_path": "/home/steve/worker-scoped-task-preparation-20261007",
+    "required_mount": null,
+    "filesystem": {
+      "mount_id": 33,
+      "mount_point": "/",
+      "filesystem_type": "ext4",
+      "source": "/dev/nvme0n1p2"
+    },
+    "available_bytes": 56840691712,
+    "min_free_bytes": 53687091200,
+    "planned_write_bytes": 269481812,
+    "required_bytes": 53956573012,
+    "remaining_after_planned_write_bytes": 56571209900,
+    "failures": [],
+    "snapshot_estimate": {
+      "archive_bytes": 266240,
+      "each_extracted_tree_bytes": 372736,
+      "receipt_allowance_bytes": 268445524,
+      "output_directory_overhead_bytes": 24576,
+      "allocation_unit_bytes": 4096,
+      "source_files": 12,
+      "source_directories": 4,
+      "scope": "initial archive + baseline + workspace + conservative overhead/receipt allowance",
+      "reservation": false,
+      "runtime_write_quota": false
+    }
+  },
+  "planner": {
+    "helper": "worker.sandbox.plan_snapshot",
+    "source_checkout_head": "cce81fdae24459d243ac14b788952e355a55bcd2",
+    "sandbox_sha256": "d8d525c807a6d52ae7fd50ec10105e67a68749bc7011947d0bc67a0e20f9681e",
+    "clean_source_state_verified": true,
+    "output_created_by_planner": false
+  }
 }

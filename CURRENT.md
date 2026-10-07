@@ -1,9 +1,27 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-07, cited-recall v2 closeout**. The dated two-card entries
+Latest four-card review: **2026-10-07, scoped workflow preparation**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
+
+The owner authorized the five follow-up priorities. The CPU-only
+[lab navigator](experiments/lab-navigator-20261007/README.md) now indexes exact
+source commits and exports verified passages. Frozen retrieval covered all
+required spans for 4/6 development and 4/6 held-out questions; missing conditions
+remain a known limit. This is source search, not model-memory qualification.
+The [scoped worker task](experiments/local-coding-worker/scoped-task-20261007/README.md)
+selects about 203 KB of pinned source with explicit patch boundaries. All 135
+worker CPU tests pass; historical bug/fix controls pass their expected outcomes.
+One bounded local-model attempt is being prepared, using the existing historical
+R276 runtime and a fresh RAM restore. No resident service or newer-package
+qualification is implied. Five other unused coding tasks remain untouched if
+this task is started. LTX and Flash-Next remain parked.
+
+[LFM source preparation](repro/lfm25-26b-q8-b70/README.md) now verifies the exact
+public archive and every extracted file. Full strict-headline toolchain identity,
+public runtime rebuild and clean-host replay remain pending; the older local
+build is not the strict-headline build. No new measured speed is claimed.
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
