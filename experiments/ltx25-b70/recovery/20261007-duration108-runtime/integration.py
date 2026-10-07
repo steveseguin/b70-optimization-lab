@@ -179,13 +179,27 @@ class Runtime:
         self.storage_check()
 
     def on_failure(self, row, prompt_id, error):
-        if row['phase'] in ('native-reference', 'native-repeat') and self.adapter is not None:
-            try:
-                self.adapter.abort_request(error)
-            finally:
-                self.write('native-failure-' + row['name'] + '.json', {'error': str(error),
-                    'adapter_receipts': self.adapter.receipts,
-                    'controller_receipts': self.adapter.controller.receipts if self.adapter.controller else []})
+        if row['phase'] not in ('native-setup', 'native-reference', 'native-repeat'):
+            return
+        adapter = self.adapter
+        controller = adapter.controller if adapter is not None else None
+        try:
+            # prepare() may refuse its pre-load admission before a controller
+            # exists. Its collected evidence is sufficient; never query devices
+            # or invoke uninitialized cleanup while recording that refusal.
+            if adapter is not None and (row['phase'] != 'native-setup' or controller is not None):
+                adapter.abort_request(error)
+        finally:
+            self.write('native-failure-' + row['name'] + '.json', {
+                'schema': 'ltx.native-request-failure.v1',
+                'name': row['name'], 'phase': row['phase'], 'prompt_id': prompt_id,
+                'plan_sha256': self.session.PLAN_SHA256,
+                'runtime_manifest_sha256': self.manifest_sha,
+                'server_identity_sha256': self.identity_sha,
+                'error': str(error), 'adapter_initialized': adapter is not None,
+                'controller_initialized': controller is not None,
+                'adapter_receipts': adapter.receipts if adapter is not None else [],
+                'controller_receipts': controller.receipts if controller is not None else []})
 
     def prepare_native(self, name):
         import torch

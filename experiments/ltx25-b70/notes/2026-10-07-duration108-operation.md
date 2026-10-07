@@ -67,3 +67,33 @@ client contractSHA`699c857274dc4687374a8dbeb157b28f612940712b7aad9867976ff600f08
 The preregistration retains its pre-correction base commit; corrected source
 commit `c5ca40ace` is recorded in the actual launch result and all final source
 bytes are bound by the sealed manifest.
+
+##108b safe resource refusal
+
+The window probe succeeded at22:32:58UTC after325.16server seconds. The second
+setup request `prepare-native` then refused `Insufficient space before native
+full residency` at native_adapter.py335, before the full-load call. The campaign
+stopped new requests and performed one graceful SIGINT stop; by22:33:11UTC the
+application and campaign PIDs were gone. No kernel entry appeared since launch,
+no FAULT.json was latched, and no49-frame native/candidate/timed output exists.
+[Closeout and46-file inventory](../data/resume-20261007/duration108b-closeout/summary.json).
+
+This is not an OOM and does not measure49-frame peaks or quality. The adapter
+computed `ceil(1.1*missing_tensor_bytes)+max(PRE_BYTES,loader_reserve)` before
+loading. Its free/missing/required rows were held in memory, but the durable
+failure hook only covered native-reference/native-repeat and omitted native-setup.
+Those precise108b readings are unavailable; do not label historical calculations
+as this run's measured card-specific cause. Preserve all failed source and logs.
+Next: fix future setup-failure evidence onCPU and audit a source-backed placement
+change with the existing8/8/2/9GiB native guards preserved, without immediate rerun.
+
+### Future failure-evidence fix
+
+The author integration now records native-setup failures, including already
+collected free/missing/required memory rows. No device query occurs in error
+handling. Uninitialized controllers are not aborted; initialized and generation
+abort behavior is retained. Receipts carry request and source identities and use
+the existing exclusive fsynced writer.46 integration controls passed, including
+real executor dispatch of a fake pre-load refusal and constructor failure.
+[Fix validation](../data/resume-20261007/duration108-setup-failure-evidence-fix.json).
+The sealed108/108b sources remain unchanged; no corrected successor is built.

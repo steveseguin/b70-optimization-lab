@@ -1,0 +1,18 @@
+{
+  "schema": "ltx.native-setup-failure-evidence-fix.v1",
+  "utc": "2026-10-07T22:36:08.208170+00:00",
+  "basis": "experiments/ltx25-b70/data/resume-20261007/duration108b-closeout/summary.json",
+  "scope": "Future unbuilt successor only; sealed108/108b unchanged",
+  "files": {
+    "experiments/ltx25-b70/recovery/20261007-duration108-runtime/integration.py": "f94e74ab6188008f63f59acbcb09bb7eef789d9a4b31774d56a710fa50787be5",
+    "experiments/ltx25-b70/recovery/20261007-duration108-runtime/test_integration.py": "d120a6f5755e2f481bace32390167d4d18017d412ea3bb57d65adea562d22f3d"
+  },
+  "tests": {
+    "count": 46,
+    "seconds": 1.746,
+    "passed": true,
+    "runner": "storage_admission independent implementation task"
+  },
+  "review": "Root inspected code and integration tests; failure-path only, no device query, no guard/numerical change",
+  "new_behavior": "Native-setup failures persist already-collected admission receipts and request/source identities even before a controller exists; preserve existing initialized/native abort behavior and exclusive fsync writes."
+}

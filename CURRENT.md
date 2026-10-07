@@ -5,14 +5,20 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-**Live update,2026-10-07:** The corrected108b LTX application is running,
-PID3378223, start ticks28580521, unit`ltx108b-duration-server-20261007`, on the
-same boot. Its29-request three-fixture49-frame resource pilot started at
-2026-10-07T22:27:32.755555+00:00. Actual idle endpoint, node registration, sealed
-client contract and fixed source checks passed before requests. The first actual
-49-frame shape/memory barrier is mandatory; native repeats and exact optimized
-video/audio gates precede timing. No observer is running. This pilot is not a
-full-suite qualification, endurance, speed-gain or public record claim.
+**Live update,2026-10-07 22:33UTC:** No LTX application is running.
+108b completed its text-window check, then the native full-residency memory guard
+refused preparation. The campaign halted submissions and stopped the application
+once gracefully; both PIDs are gone and the launch-to-stop kernel log is empty.
+There were two setup attempts, one success, and **zero49-frame generations**.
+No native repeat, optimized quality or timing gate was reached. This is a safe
+resource refusal, not an OOM or proof that49-frame generation is impossible.
+
+The exact failed free/required memory readings were not saved: the existing
+failure hook covered native generation but omitted its setup phase. That gap is
+fixed in the future author source;46 integration tests pass. Source and historical
+residency evidence are being reviewed for a targeted memory-placement change.
+The admission guard stays intact; no immediate rerun or blanket split sweep.
+[108b refusal and46-file evidence inventory](experiments/ltx25-b70/data/resume-20261007/duration108b-closeout/summary.json).
 
 107b stopped cleanly once at22:18:33UTC; all four GPUs passed postflight with no
 faults. After two fresh full quality-proof reconstructions,40 whole-file duplicate

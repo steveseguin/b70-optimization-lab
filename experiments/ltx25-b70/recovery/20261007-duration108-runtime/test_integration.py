@@ -146,6 +146,97 @@ class IntegrationControls(unittest.TestCase):
         self.assertEqual(captured['source_hashes'][str(self.packet/path)],self.manifest['files'][path])
         self.assertEqual(captured['runtime_sha256'],'a'*64)
 
+    def test_native_setup_preload_refusal_preserves_evidence_without_controller_or_queries(self):
+        admission = {'event': 'preload-admission',
+                     'free': {'xpu:0': 8*2**30, 'xpu:1': 7*2**30},
+                     'missing_tensor_bytes': {'xpu:0': 1024, 'xpu:1': 2048},
+                     'required': {'xpu:0': 8*2**30+1127, 'xpu:1': 8*2**30+2253},
+                     'state': {'sampler_routes': 0}}
+        reason = 'Insufficient space before native full residency'
+        class Adapter:
+            def __init__(self, **kwargs):
+                self.controller = None
+                self.receipts = []
+            def prepare(this):
+                this.receipts.extend([copy.deepcopy(admission), {'event':'adapter-failure','reason':reason}])
+                raise RuntimeError(reason)
+            def abort_request(this, error):
+                raise AssertionError('Uninitialized controller cleanup must not run')
+            def _inspect(this, *args):
+                raise AssertionError('No fresh device inspection during failure handling')
+        row = self.setup_row('prepare-native')
+        self.r.authority.completed.append(self.setup_row('window-probe')['name'])
+        runtime = self.r
+        class Executor:
+            def __init__(self):self.server=types.SimpleNamespace(client_id=None)
+            def add_message(self,event,data,broadcast):self.status_messages.append((event,data))
+            async def execute_async(this,prompt,pid,extra,outputs):
+                this.add_message('execution_start', {'prompt_id':pid}, False)
+                runtime.prepare_native(row['name'])
+        GUARD.install(Executor,self.r.authority,self.r.before_request,self.r.after_request,self.r.on_failure)
+        mm=types.ModuleType('comfy.model_management');comfy=types.ModuleType('comfy');comfy.model_management=mm
+        # The fake torch has no device API; receipt serialization uses already
+        # collected rows only. Real executor dispatch must latch the failure.
+        with patch.dict('sys.modules', {'torch':types.ModuleType('torch'),'nodes':types.ModuleType('nodes'),
+                'comfy':comfy,'comfy.model_management':mm,'native_adapter':types.SimpleNamespace(NativeAdapter=Adapter)}):
+            executor=Executor()
+            asyncio.run(executor.execute_async(row['graph'],'cpu-prepare-refused'))
+        self.assertFalse(executor.success)
+        self.assertNotIn(row['name'],self.r.authority.completed)
+        self.assertTrue((self.run/'resolution-halt.json').is_file())
+        self.assertFalse((self.run/'native-preparation.json').exists())
+        receipt=json.loads((self.run/('native-failure-'+row['name']+'.json')).read_text())
+        self.assertEqual(receipt['adapter_receipts'],[admission,{'event':'adapter-failure','reason':reason}])
+        self.assertEqual(receipt['controller_receipts'],[])
+        self.assertFalse(receipt['controller_initialized'])
+        self.assertTrue(receipt['adapter_initialized'])
+        self.assertEqual(receipt['error'],reason)
+        self.assertEqual(receipt['prompt_id'],'cpu-prepare-refused')
+        self.assertEqual(receipt['phase'],'native-setup')
+        self.assertEqual(receipt['plan_sha256'],self.session.PLAN_SHA256)
+        self.assertEqual(receipt['runtime_manifest_sha256'],'a'*64)
+        self.assertEqual(receipt['server_identity_sha256'],self.r.identity_sha)
+        errors=[data for event,data in executor.status_messages if event=='execution_error']
+        self.assertEqual(len(errors),1)
+        self.assertIsNone(errors[0]['failure_cleanup_error'])
+
+    def test_native_setup_failure_before_adapter_exists_is_durable_and_exclusive(self):
+        row=self.setup_row('prepare-native')
+        fsync=self.session.os.fsync
+        with patch.object(self.session.os,'fsync',wraps=fsync) as synced:
+            self.r.on_failure(row,'cpu-constructor-refused',RuntimeError('source identity refused'))
+        self.assertEqual(synced.call_count,2)  # file and containing directory
+        path=self.run/('native-failure-'+row['name']+'.json')
+        original=path.read_bytes();receipt=json.loads(original)
+        self.assertFalse(receipt['adapter_initialized'])
+        self.assertFalse(receipt['controller_initialized'])
+        self.assertEqual(receipt['adapter_receipts'],[])
+        self.assertEqual(receipt['controller_receipts'],[])
+        with self.assertRaises(FileExistsError):
+            self.r.on_failure(row,'cpu-retry-not-allowed',RuntimeError('later refusal'))
+        self.assertEqual(path.read_bytes(),original)
+
+    def test_native_setup_initialized_controller_abort_still_preserves_receipts(self):
+        adapter,seen=self.adapter();row=self.setup_row('prepare-native')
+        def abort(error):
+            seen.append(('abort',str(error)))
+            adapter.controller.receipts.append({'event':'latched','reason':str(error)})
+            raise RuntimeError('controller permanently latched')
+        adapter.abort_request=abort
+        with self.assertRaisesRegex(RuntimeError,'permanently latched'):
+            self.r.on_failure(row,'cpu-postload-refused',RuntimeError('postload memory refused'))
+        receipt=json.loads((self.run/('native-failure-'+row['name']+'.json')).read_text())
+        self.assertTrue(receipt['controller_initialized'])
+        self.assertEqual(receipt['controller_receipts'],[{'event':'latched','reason':'postload memory refused'}])
+        self.assertEqual(seen,[('abort','postload memory refused')])
+
+    def test_failure_receipt_does_not_expand_to_optimized_phases(self):
+        adapter,seen=self.adapter()
+        row=next(row for row in self.rows if row['phase']=='candidate-check')
+        self.r.on_failure(row,'cpu-candidate',RuntimeError('candidate refused'))
+        self.assertEqual(seen,[])
+        self.assertFalse((self.run/('native-failure-'+row['name']+'.json')).exists())
+
     def capture_evidence(self, worker=0):
         row=self.setup_row('capture%d'%worker);index=row['clip_index']
         self.r.authority.completed.append(row['name'])
