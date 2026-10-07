@@ -204,7 +204,10 @@ is CPU-only preparation. Both methods save their own accepted tables, including
 mistakes; source-only/history modes isolate model access to those tables.
 Nineteen CPU tests pass, and independent review caught and fixed missing final
 snapshot verification. A separate snapshot auditor passes twelve CPU tests.
-This lookup remains unmeasured while the registered replication is prepared.
+This lookup remains unmeasured while the registered replication runs.
+A separate [temporal source packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/authoring-note.md)
+is frozen for two independent assistant annotations. It targets earlier values
+and changing ownership in four short narratives; no model trial is admitted.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 

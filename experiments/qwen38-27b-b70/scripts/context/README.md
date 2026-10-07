@@ -26,6 +26,11 @@ experiments, so pooled scores or direct timing comparisons would be misleading.
 | [Sparse replication and transfer](sparse_replication_v1/README.md) | Prepared four-trial fresh-server campaign: unchanged seed-83 report plus fixed seed-97 dispatch. [Prospective plan](../../notes/2026-10-07-sparse-state-replication-plan.md). |
 | [Historical state retrieval](history_v1/README.md) | CPU-only preparation: each method saves its own accepted states; explicit source-only/history modes isolate lookup access. No live result or study admission yet. |
 
+The [temporal source packet](../../data/2026-10-07-temporal-development/authoring-note.md)
+is separate CPU preparation: four short narratives with earlier-value questions.
+Its source text is frozen for two independent assistant annotations. It has no
+model result or execution admission, and uses a shared controlled posting grammar.
+
 The revision 2, 3 and 4 holdouts remain unused. Frozen versions and negative outcomes are
 preserved; new experiments do not retrospectively complete or repair them.
 The remainder of this document describes the original Harbor integration,
