@@ -47,7 +47,7 @@ def sha(raw):
 
 
 def git(repo, *args):
-    return subprocess.check_output(['git', '-C', str(repo), *args], timeout=120)
+    return subprocess.check_output(['git', '--no-replace-objects', '-C', str(repo), *args], timeout=120)
 
 
 def tree(repo, commit):
@@ -70,7 +70,7 @@ def tree(repo, commit):
 
 def blobs(repo, rows):
     """Stream Git blobs; retain no complete source-tree copy in memory."""
-    proc = subprocess.Popen(['git', '-C', str(repo), 'cat-file', '--batch'],
+    proc = subprocess.Popen(['git', '--no-replace-objects', '-C', str(repo), 'cat-file', '--batch'],
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     try:
         for path, item in rows.items():
@@ -199,6 +199,19 @@ def write_new(path, raw):
         stream.write(raw); stream.flush(); os.fsync(stream.fileno())
 
 
+def write_archive(repo, commit, stream):
+    # Per-command configuration only: archive modes must match Git 0644/0755.
+    subprocess.run(['git', '--no-replace-objects', '-c', 'tar.umask=0022', '-C', str(repo),
+                    'archive', '--format=tar', commit], stdout=stream, check=True, timeout=120)
+
+
+def verify_archive_member(member, raw, row):
+    require(member.mode == (int(row['mode'], 8) & 0o777), 'Archive file mode differs from Git tree')
+    require(len(raw) == row['bytes'] and
+            hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() == row['blob'],
+            'Archive changed Git blob bytes (including export substitution)')
+
+
 def prepare(output, repo, packet):
     """Explicit source-only materialization; never called by --plan."""
     require(output.is_absolute() and not output.exists() and not output.is_symlink(), 'Output must be new and absolute')
@@ -215,7 +228,7 @@ def prepare(output, repo, packet):
     write_new(provenance / 'packet98-manifest.json', manifest_raw)
     archive = provenance / 'upstream-source.tar'
     with archive.open('xb') as stream:
-        subprocess.run(['git', '-C', str(repo), 'archive', '--format=tar', NEW], stdout=stream, check=True, timeout=120)
+        write_archive(repo, NEW, stream)
         stream.flush(); os.fsync(stream.fileno())
     require(archive.stat().st_size <= MAX_SOURCE_BYTES * 2, 'Archive exceeds bound')
     source = output / 'source'; source.mkdir()
@@ -227,9 +240,7 @@ def prepare(output, repo, packet):
             require(member.isfile() and member.name in upstream and member.name not in seen, 'Unexpected/duplicate archive member')
             raw = tar.extractfile(member).read()
             row = upstream[member.name]
-            require(len(raw) == row['bytes'] and
-                    hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() == row['blob'],
-                    'Archive changed Git blob bytes (including export substitution)')
+            verify_archive_member(member, raw, row)
             dest = source / member.name; dest.parent.mkdir(parents=True, exist_ok=True)
             write_new(dest, merged.get(member.name, raw)); dest.chmod(int(row['mode'], 8) & 0o777)
             seen.add(member.name)

@@ -5,8 +5,52 @@ import collections
 import datetime
 import json
 import os
+import sys
 from pathlib import Path
 import time
+
+
+def process_identity(proc, boot_id, start_ticks):
+    """Read identity/state without opening descriptors or contacting the process."""
+    boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    if boot != boot_id:
+        raise RuntimeError('Boot identity changed')
+    fields = proc.joinpath('stat').read_text().rsplit(') ', 1)[1].split()
+    if fields[19] != start_ticks:
+        raise RuntimeError('Process identity changed')
+    return {'boot_id': boot, 'start_ticks': fields[19], 'state': fields[0]}
+
+
+def terminal_after_error(proc, boot_id, start_ticks, error):
+    """One identity/state recheck, never a retry of the failed observation."""
+    row = {'status': 'observation-lost', 'pid': int(proc.name),
+           'start_ticks': start_ticks, 'expected_boot_id': boot_id,
+           'at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+           'error': {'type': type(error).__name__, 'message': str(error)}}
+    try:
+        identity = process_identity(proc, boot_id, start_ticks)
+        row['observed_identity'] = identity
+        if identity['state'] in ('Z', 'X'):
+            row.update(status='process-exited', reason='matching-zombie-or-dead-state')
+            return row, 0
+    except FileNotFoundError as recheck_error:
+        # A missing fd/stat entry alone is not proof of exit. Confirm the PID
+        # directory itself disappeared, with the same boot still observable.
+        try:
+            boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+            try:
+                proc.stat()
+            except FileNotFoundError:
+                if boot == boot_id:
+                    row.update(status='process-exited', reason='process-directory-absent',
+                               observed_boot_id=boot)
+                    return row, 0
+            row['recheck_error'] = {'type': type(recheck_error).__name__, 'message': str(recheck_error)}
+        except Exception as final_error:
+            row['recheck_error'] = {'type': type(final_error).__name__, 'message': str(final_error)}
+    except Exception as recheck_error:
+        row['recheck_error'] = {'type': type(recheck_error).__name__, 'message': str(recheck_error)}
+    return row, 3
 
 
 def main():
@@ -22,9 +66,12 @@ def main():
     deadline = time.monotonic() + a.seconds
     while time.monotonic() < deadline:
         try:
-            if (Path('/proc/sys/kernel/random/boot_id').read_text().strip() != a.boot_id
-                    or proc.joinpath('stat').read_text().split(') ')[1].split()[19] != a.start_ticks):
-                raise RuntimeError('Process identity changed')
+            identity = process_identity(proc, a.boot_id, a.start_ticks)
+            if identity['state'] in ('Z', 'X'):
+                print(json.dumps({'status': 'process-exited', 'pid': a.pid,
+                                  'reason': 'matching-zombie-or-dead-state',
+                                  'observed_identity': identity}), flush=True)
+                return 0
             fds = list(proc.joinpath('fd').iterdir())
             categories = collections.Counter()
             vanished = 0
@@ -45,12 +92,14 @@ def main():
                    'limits': limits, 'requires_owner_intervention': len(fds) >= 16384,
                    'limits_note': 'read-only observation; 16384 alert is not an enforced cap'}
             print(json.dumps(row), flush=True)
-        except FileNotFoundError:
-            print(json.dumps({'status': 'process-gone', 'pid': a.pid}), flush=True)
-            return
+        except Exception as error:
+            row, exit_code = terminal_after_error(proc, a.boot_id, a.start_ticks, error)
+            print(json.dumps(row), flush=True)
+            return exit_code
         time.sleep(2)
     print(json.dumps({'status': 'observation-bound-ended', 'pid': a.pid}), flush=True)
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

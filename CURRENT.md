@@ -15,32 +15,43 @@ and one SIGINT stopped PID 3055231 cleanly. All four cards passed postflight,
 with no kernel GPU fault.
 [Incident closeout](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
 
-A separately preregistered corrected control started at 12:50 UTC: PID 3057550,
-`ltx98-resume-server-r2-20261007`, with runner `ltx98-resume-campaign-r2-20261007`.
-Its open-file soft limit is 65,536 (existing hard limit 1,048,576), verified before
-requests; an external observer records descriptor counts. No host/global limit or power/memory setting is
-changed. This is a controlled application correction, not an automatic retry.
-The process-local progress-lock fix stays separately hash-bound; installed and
-sealed source remain unchanged. No speed or descriptor-leak fix is claimed.
+The corrected control completed and stopped cleanly at 13:07 UTC. **No model
+server is running.** All 126 probe/timed clips matched the accepted references
+exactly; two self-check clips also passed. Sustained generation measured
+**1.31786 seconds per 25-frame clip, about 18.97 generated frames/s**, close to
+the earlier 1.3082-second control. This is a repeated historical baseline, not
+a new speed record. All four cards passed postflight with no kernel GPU fault.
+[Control closeout](experiments/ltx25-b70/data/resume-20261007/closeout-r2.json).
 
-The accepted reference remains batch 1, native BF16, 256×256, 25 frames at 24 fps,
-the unchanged two-stage schedule and the owner-accepted short text window.
-The completed 1.308 s/clip result is about 19.1 generated frames/s; playback fps
-is a separate setting. Batch-2/4 results change output and are excluded from this
-lossless objective. Preserve the accepted raw-reference and exact-output gates.
-Prepared packet 98's larger-size speed-only arms are not quality qualification
-and are not queued by this resumption.
+The application used an explicit 65,536-file soft limit, verified before model
+requests. Descriptor observations peaked at 2,636, below the 16,384 alert level;
+this does not prove absence of a leak. The external observer hit an access error
+as the server exited; its raw trace is preserved. The process-local progress-lock
+fix remains separately hash-bound; installed and historical sealed source remain
+unchanged. No host/global limit or power/memory setting changed.
 
-The sealed baseline and 24 guarded CPU controls passed; the exception fix passed
-18 controls and independent review. All four GPUs passed fresh health admission.
-116 old raw outputs were freshly verified identical to retained references and
-removed with a per-file ledger, recovering 2.18 GiB. All references, summaries,
-requests, previews and failure evidence remain. The fixed 120-prompt control has
-a declared 4 GiB output/cache allowance, admitted with 54.69 GiB free and a
-50 GiB floor; the allowance is not a hard cache bound. Then pursue exact sampler
-scheduling/transfer improvements. All five bad-memory blocks remain
-offline; no power, memory, swap, driver or reboot change is authorized.
-[Resumption plan](experiments/ltx25-b70/notes/2026-10-07-lossless-resume.md).
+The accepted reference remains batch 1, native BF16, 256×256, 25 frames at 24
+playback fps, the unchanged two-stage schedule and the owner-accepted short text
+window. Playback fps is distinct from generation throughput. Batch-2/4 results
+change output and are excluded from this lossless objective; larger-size
+speed-only arms remain unqualified and are not queued.
+
+After shutdown, 106 newly generated raw tensor archives were freshly verified
+identical to retained references and retired, reclaiming 1.99 GiB. Ten timed
+samples (one per fixture), all references, metadata, previews, setup captures
+and failures remain. The previous 116-file duplicate cleanup recovered 2.18 GiB.
+The next experiment must retain the 50 GiB root reserve and obtain a fresh
+output/cache budget; the previous 4 GiB allowance is not a continuing reservation.
+
+Current-upstream ComfyUI source `b00c6e95279053474955540ba4f551646722b9aa`
+is prepared separately with all five native and 63 added lab overlays accounted
+for. Independent source checks passed; it is **unsealed and not runtime-qualified**.
+The runtime port and isolated application dependency update are in progress.
+First qualify its unchanged 23/25 sampler split against the accepted outputs;
+then test the planned 20/28 split to reduce the busiest card's work. No source
+port or speed estimate is a measured improvement. All five bad-memory blocks
+remain offline; no power, memory, swap, driver or reboot change is authorized.
+[Resumption results and next step](experiments/ltx25-b70/notes/2026-10-07-resume-control-results.md).
 
 ## Four-card preceding consolidation (historical closeout)
 
