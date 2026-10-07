@@ -7,8 +7,10 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-Both small-worker pilots and the first 27B runtime arm are closed;
-**no model server is running**. The
+Both small-worker pilots and the first 27B runtime arm are closed. The
+**27B smaller-cache experiment is running on two of this host's four cards**,
+loopback port 18125, under one 60-minute supervisor. It is not a resident service.
+The
 [0.8B pilot](experiments/local-coding-worker/small-model-pilot-20261007/README.md)
 failed its minimal-prompt format gate. The separate
 [4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
@@ -21,8 +23,11 @@ cold copy. The external drive is unmounted.
 The 27B runtime passed eight boundary checks and the actual worker-format canary.
 Its automatically sized cache left about 23.5 GiB host RAM available, just below
 the unchanged 24 GiB task admission. No coding task ran. The application stopped
-cleanly and all four cards passed postflight. The next separately recorded arm
+cleanly and all four cards passed postflight. The separately recorded arm now
 uses a 2 GiB full-precision cache per GPU for the same 33,024-token trial.
+It reports 59,904-token capacity and about 39 GiB available host RAM. Its eight
+boundary checks and unchanged worker-format canary passed; the two coding tasks
+and full-corpus recall are next. No task result or quality score exists yet.
 The intended 27B worker remains unqualified here. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving
 the evidence and checking passive GPU idleness, one SIGINT stopped the application;
@@ -99,7 +104,7 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   checks. Coding admission refused that arm's host RAM headroom; its clean
   shutdown and all results are preserved. A separate
   [smaller-cache arm](experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/README.md)
-  is next, with identical precision/context/tasks and unchanged memory reserves.
+  is running, with identical precision/context/tasks and unchanged memory reserves.
   Known one-token-prefill limitations
   are explicitly restricted and prefill-boundary diagnostics precede useful tasks.
   CPU tokenization confirms the full recall prompt fits its 33,024-token profile.

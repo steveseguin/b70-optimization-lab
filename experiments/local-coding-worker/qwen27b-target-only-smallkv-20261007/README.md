@@ -1,5 +1,10 @@
 # 27B worker trial with an explicit full-precision cache budget
 
+**Active:** startup reports 59,904-token cache capacity and about 39 GiB available
+host RAM. Eight boundary diagnostics and the unchanged worker-format canary
+passed. Coding and recall results remain pending. The supervised server must
+stop after this bounded trial.
+
 Preregistered follow-up to the [first target-only arm](../qwen27b-target-only-pilot-20261007/README.md),
 which passed its runtime gates but missed the fixed coding RAM admission. The
 first application stopped cleanly and all four cards passed postflight.
