@@ -124,22 +124,30 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 04:06 UTC**. Revision 3 is active in one new
-supervised run; the completed revision 2 remains preserved below.
+Latest two-card review: **2026-10-07 04:23 UTC**. Revision 3 finished and the
+GPUs are released. Revision 4 is being prepared; no new GPU run is active yet.
 
-## 2026-10-07, two-B70 host: final-answer reasoning experiment running
+## 2026-10-07, two-B70 host: reasoning improved answers; cold confirmation next
 
-The owner explicitly asked to continue. The [r3 plan](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-plan.md)
-changes final answering to thinking enabled at medium effort, with an 8,192-token
-combined reasoning/answer cap. Ingestion and retrieval stay fixed. Independent
-review and 89 harness plus 26 lifecycle CPU tests passed. The same six-trial
-full-development gate still precedes untouched held-out seeds.
+Revision 3 completed all six development trials: archive 48/48, quoted events
+48/48, summary 44/48. Its original all-methods gate failed, so held-out cases
+remain unused. All source batches and structured tables were exact; the remaining
+summary errors were wrong totals in its own notes. The server stopped cleanly;
+GPU release was verified at 04:22:53 UTC. [Full r3 findings](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-result.md).
 
-Output: `/mnt/fast-ai/bench-results/context-durable-r3-20261007`;
-owned unit: `ctx-durable-r3.service`. Passive preparation verified prior cleanup
-and current ownership. **The unit is active**, started after preparation. It uses one qualified server
-and stops it on completion or failure, without automatic retries. Live status
-and unit state supersede this snapshot. Do not start another GPU owner. No new result is claimed yet.
+The timing audit found cache reuse in quoted-event answer calls, so old elapsed
+comparisons cannot support a cold-request speed claim. No speed claim was made.
+The [separate r4 plan](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-plan.md)
+uses a cache-disabled profile and new development seeds 17/29. It prospectively
+compares archive and quoted events as the primary pair, keeping every summary
+trial as a diagnostic. All primary answers must be correct, every trial must
+complete cleanly, and raw cache counts must be verified zero before any holdout.
+A single cold-server result remains descriptive until fresh-server replication.
+
+Designated next output: `/mnt/fast-ai/bench-results/context-durable-r4-20261007`;
+owned unit: `ctx-durable-r4.service`. Preserve frozen r2/r3 sources and outcomes.
+The owner explicitly asked work to continue; implementation and CPU validation
+of r4 are in progress while the GPUs are idle.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 

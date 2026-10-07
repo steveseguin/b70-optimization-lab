@@ -1,0 +1,32 @@
+{
+  "schema": "durable-pilot-execution.v3",
+  "protocol": "durable-context-r3",
+  "stage": "development",
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "d83a5d7e4358e80a7611b6616815d66715ba2e9f68ba1e8d21ba1bc38ad6bee8"
+  },
+  "calibration": [
+    {
+      "path": "/mnt/fast-ai/bench-results/context-durable-r3-20261007/extraction-report/result.json",
+      "sha256": "7b2c46ebb1cf03d3966d4342dec4313fa8fbb4e45c86064acca3a08ef1189918"
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/context-durable-r3-20261007/extraction-dispatch/result.json",
+      "sha256": "b5b9612495284a759f31c2e96bd8dced8631101e77565523349cfb1e10e9f618"
+    }
+  ],
+  "development": [],
+  "plan_sha256": "752139ccce0c34a7de2ea0b9a05a2fe9f57476f204c79cc718151efb6854e17a"
+}
