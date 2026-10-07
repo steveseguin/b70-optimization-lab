@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/context-evidence.yml'
       - 'experiments/qwen38-27b-b70/scripts/context/durable/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/durable_v2/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/*durable_v2_host_runner.py'
+      - 'experiments/qwen38-27b-b70/data/2026-10-07-durable-context-r2/**'
       - 'experiments/qwen38-27b-b70/scripts/context/evidence/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*durable_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-06-durable-context/**'
@@ -13,6 +16,9 @@ on:
     paths:
       - '.github/workflows/context-evidence.yml'
       - 'experiments/qwen38-27b-b70/scripts/context/durable/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/durable_v2/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/*durable_v2_host_runner.py'
+      - 'experiments/qwen38-27b-b70/data/2026-10-07-durable-context-r2/**'
       - 'experiments/qwen38-27b-b70/scripts/context/evidence/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*durable_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-06-durable-context/**'
@@ -28,6 +34,14 @@ jobs:
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context/durable -p 'test_*.py'
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context/evidence -p 'test_*.py'
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context -p 'test_durable_host_runner.py'
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context/durable_v2 -p 'test_*.py'
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context -p 'test_durable_v2_host_runner.py'
+      - name: Verify revision 2 frozen plans without model requests
+        run: |
+          for stage in development holdout; do
+            python3 experiments/qwen38-27b-b70/scripts/context/durable_v2/campaign.py --stage "$stage" --suite "experiments/qwen38-27b-b70/data/2026-10-07-durable-context-r2/$stage/suite.json" --out "$RUNNER_TEMP/context-r2-$stage"
+            python3 -c 'import json,sys; from pathlib import Path; assert json.loads(Path(sys.argv[1]).read_text()) == json.loads(Path(sys.argv[2]).read_text())' "$RUNNER_TEMP/context-r2-$stage/plan.json" "experiments/qwen38-27b-b70/data/2026-10-07-durable-context-r2/$stage-plan.json"
+          done
       - name: Verify frozen plan without model requests
         run: |
           python3 experiments/qwen38-27b-b70/scripts/context/durable/campaign.py --suite experiments/qwen38-27b-b70/data/2026-10-06-durable-context/holdout/suite.json --out "$RUNNER_TEMP/context-plan"

@@ -106,8 +106,22 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 03:29 UTC**. The legacy campaign and durable
-pilot have stopped; the two-card GPUs are released. See the latest result below.
+Latest two-card review: **2026-10-07 03:39 UTC**. The GPUs are released while
+revision 2 is prepared; the failed first pilot remains preserved below.
+
+## 2026-10-06 23:39 EDT, two-B70 host: durable protocol repaired; development next
+
+The [revision 2 plan](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r2-plan.md)
+is implemented separately from the first pilot. Partial answers now survive
+retrieval and restarts, submission is explicit, exact batch lookup is available,
+and repeated searches use a bounded action budget. CPU checks and independent
+reviews passed. Full development now requires six correct, clean model trials
+before any fresh held-out seed is used. No speed result is claimed.
+
+Designated output: `/mnt/fast-ai/bench-results/context-durable-r2-20261007`;
+owned unit: `ctx-durable-r2.service`. Preparation is passive; live `status.json`
+and the actual unit determine whether execution has started. One qualified
+server will be stopped on completion or failure, with no automatic retry.
 
 ## 2026-10-06 23:29 EDT, two-B70 host: durable pilot stopped; quality gate failed
 
