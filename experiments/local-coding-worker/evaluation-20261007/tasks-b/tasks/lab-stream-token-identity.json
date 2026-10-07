@@ -1,0 +1,9 @@
+{
+  "id": "lab-stream-token-identity",
+  "repository": "lab",
+  "source_commit": "6f8d1730a2ff84a47566404ab03e292d0db4f8d3",
+  "issue": "The long-context benchmark counts streamed token IDs but discards their values, so equal response text cannot establish equal token sequences. Retain ordered token_ids in each stream_chat result, report token_ids_complete only when a positive completion-token count matches the collected IDs, and emit token_ids_sha256 over their compact JSON representation (null when none were received). Different chunk boundaries must not change the digest. Preserve existing text, timing and usage information; missing or partial token-ID streams must remain explicitly incomplete. Add offline streaming regression tests.",
+  "validation_command": "python3 /acceptance/lab_stream_token_identity.py",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "STREAM_TOKEN_IDENTITY"
+}

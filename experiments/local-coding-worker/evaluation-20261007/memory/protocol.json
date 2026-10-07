@@ -1,0 +1,39 @@
+{
+  "schema": "lab.memory.protocol.v1",
+  "purpose": "Source-grounded lab-memory evaluation for future local-worker harness integration.",
+  "status": "unrun-packet-not-heldout-model-quality-evidence",
+  "source_snapshot": "76f3ebd23f3f9b378e6088678967addd0b617951",
+  "model_calls_performed": 0,
+  "novelty": "New to this harness only. Authored from known lab evidence; not a held-out task set, contamination-free benchmark, or model-quality result.",
+  "model_visible_files": [
+    "questions.json",
+    "corpus/D01.txt",
+    "corpus/D02.txt",
+    "corpus/D03.txt",
+    "corpus/D04.txt",
+    "corpus/D05.txt"
+  ],
+  "grader_only_files": [
+    "answer-key.json",
+    "manifest.json",
+    "protocol.json",
+    "validate.py"
+  ],
+  "isolation_requirement": "Harness must expose only model_visible_files in a separate read-only input area. Do not give the worker this repository or directory containing the answer key. This packet does not implement that isolation.",
+  "semantic_grading": "human-or-independent-review-required",
+  "validation_command": "python3 experiments/local-coding-worker/evaluation-20261007/memory/validate.py --self-test",
+  "response_validation_command": "python3 experiments/local-coding-worker/evaluation-20261007/memory/validate.py --responses ANSWERS.json",
+  "validation_scope": "Standard-library CPU checks of frozen Git provenance, hashes, question/key alignment and exact quoted line ranges. Response checks are structural only and never assign semantic points.",
+  "safe_run_contract": "Read-only corpus/question access, no device/model/host actions from this packet; actual future inference ownership/resource admission remains the orchestrator responsibility.",
+  "untouched_lanes": [
+    "existing context/durable pilot",
+    "existing held-out tasks"
+  ],
+  "limitations": [
+    "Five curated documents are a bounded reading test, not arbitrary whole-lab retrieval.",
+    "Questions were authored using these documents; do not claim blind generalization.",
+    "Corpus relative links remain historical source text, not extra exposed files.",
+    "Semantic support, contradiction handling, factual scope and relevance require reviewer judgment.",
+    "No observed model answers, task success rates or speed results are recorded."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "lab-context-number-boundaries",
+  "baseline_commit": "ecd9d94560ec50d0119fd9ae6d5b05195e21a806",
+  "fixed_commit": "9b0c95dea13ec47dbd9635e0c78c55105e879561",
+  "validation_paths": [
+    "experiments/qwen38-27b-b70/scripts/context/ctxfold.py"
+  ],
+  "acceptance_file": "context_number_boundaries.py",
+  "expected_baseline_error": "NUMBER_BOUNDARY_FAILURE",
+  "runs": {
+    "baseline": {
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/context_number_boundaries.py\", line 20, in <module>\n    assert actual == expected, f'NUMBER_BOUNDARY_FAILURE: {text!r}: expected {expected}, got {actual}'\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: NUMBER_BOUNDARY_FAILURE: 'Stock fell by eighty-three. Two packers checked it.': expected [83, 2], got [85]\n",
+      "archive_sha256": "f3af75a958b565b4db95fa30a087d757083dad52323797db543760f83a3052ab"
+    },
+    "fixed": {
+      "returncode": 0,
+      "stdout": "PASS: narrative number boundaries, identifiers, compounds and signs\n",
+      "stderr": "",
+      "archive_sha256": "486b3b6ae070b2586f78854370c5a3feaa24c8d567db1eb2646eb6e4104d4bb4"
+    }
+  },
+  "schema": "lab.worker-heldout-task-validation.v1",
+  "validated_at": "2026-10-07T01:37:38.314523+00:00",
+  "repository": "lab",
+  "scope": "Historical real parent/fix snapshots; CPU validation only; no model attempt; targeted git-archive source projection",
+  "acceptance_sha256": "bc8f2719f2241e8f16191efdda4b1a1675484085685512b2fccb66da3d251f88",
+  "task_sha256": "8fcbe66351cce5db38eed8f9ad5b423bf7b708e8b1332b29a0cf2105c62ad69f",
+  "gold_patch_sha256": "d74c8b91846f098c7e15db07994f00c80b1c05538ebf8f8a40ecceb099ca38d7",
+  "validation_environment": {
+    "python": "Python 3.12.3",
+    "node": "v18.19.1",
+    "container_replay": "not run; checks use only standard libraries compatible with worker Python 3.11 / Node 22"
+  }
+}

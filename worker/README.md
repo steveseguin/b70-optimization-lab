@@ -13,6 +13,11 @@ both new held-out issues. It remains an experimental coding assistant.
 Read the [trial results and patches](../experiments/local-coding-worker/README.md).
 Automatic tests, independent agent review, and human approval are reported separately.
 
+The [October evaluation packet](../experiments/local-coding-worker/evaluation-20261007/README.md)
+adds historical bug-fix controls and source-backed lab-memory questions. Model
+trials on that packet have not run. Consult `CURRENT.md` for host ownership;
+an old worker profile is not evidence that its endpoint is available.
+
 ## Install
 
 You need the FP8 package's working GPU/Docker setup, Python 3.11 or newer with
@@ -29,7 +34,8 @@ or restart a model server. Set `NEURAL_WORKER_VENV` to use a different environme
 ## Start the model once
 
 Follow the [FP8 quickstart](../packages/qwen38-27b-fp8-tp2-b70/README.md) to pull
-its pinned image and verify/download the model. Then leave one server running:
+its pinned image and verify/download the model. During an authorized, bounded
+experiment, use one server for its tasks and stop it gracefully afterward:
 
 ```bash
 python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/new-worker-server --port 18124
@@ -37,6 +43,11 @@ python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /abso
 
 Wait for `Ready`. The worker defaults to `http://127.0.0.1:18124` and model
 `qwen38-27b-fp8`. Keep other requests off this endpoint while a task is running.
+
+For an external task packet, pass `--acceptance-dir /absolute/path/to/acceptance`.
+Only that directory is mounted read-only at `/acceptance`; keep answer keys and
+fixed-commit receipts outside it. The run records the checks' hashes in
+`acceptance-identity.json`. Omitting the flag retains the original checks.
 
 ## API and capacity
 

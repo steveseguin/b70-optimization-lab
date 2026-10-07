@@ -1,0 +1,9 @@
+{
+  "id": "lab-release-query-failure",
+  "repository": "lab",
+  "source_commit": "ec5c21a4a7e029d3dd3717b83579a38b98c8b035",
+  "issue": "The public-closure audit reports every release asset as missing when GitHub CLI is unavailable or the release query fails. Represent an unavailable release_assets lookup as None rather than the empty set reserved for a successful empty query, cache that outcome within an audit, and issue a useful warning identifying the release. Package reports must expose release_assets_unavailable and warnings without fabricating missing_release_asset findings, while a successful empty release still identifies genuinely absent assets. Preserve successful lookup behavior and add focused offline tests; do not query the network.",
+  "validation_command": "python3 /acceptance/lab_release_query_failure.py",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "RELEASE_UNKNOWN"
+}

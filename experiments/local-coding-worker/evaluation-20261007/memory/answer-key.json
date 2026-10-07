@@ -1,0 +1,542 @@
+{
+  "schema": "lab.memory.answer-key.v1",
+  "grader_only": true,
+  "source_snapshot": "76f3ebd23f3f9b378e6088678967addd0b617951",
+  "scoring": {
+    "semantic_review_required": true,
+    "automatic_keyword_scoring_prohibited": true,
+    "per_question": {
+      "2": "Every required claim is substantively correct, properly scoped and supported by relevant exact citations; no disqualifying error or materially unsupported assertion.",
+      "1": "Some supported substantive content, but an omission, citation-support gap or non-disqualifying error prevents full credit; no disqualifying error.",
+      "0": "Any disqualifying error, materially false conclusion, absent answer, or no meaningful supported content."
+    },
+    "total_possible": 20,
+    "exact_artifact_rule": "Q06 requires the exact directory and both hashes; no tolerance for near-match identifiers.",
+    "citation_rule": "Reviewer maps claims to their supporting passages. Merely citing a real passage, repeating keywords, or matching an answer-key phrase is insufficient.",
+    "temporal_rule": "Judge as of the supplied snapshot. Prefer the explicit later updates over earlier superseded operational status without extending them into broader claims.",
+    "review_record_required": [
+      "question_id",
+      "score",
+      "criterion_by_criterion supported/missing/incorrect judgement",
+      "citation relevance judgement",
+      "disqualifying errors if any",
+      "reviewer identity",
+      "written rationale"
+    ],
+    "result_reporting": "Report semantic scores only after independent/human review, alongside elapsed time/tool calls and citation-validity counts. No model result exists in this packet."
+  },
+  "answers": [
+    {
+      "question_id": "Q01",
+      "category": "source-backed-current-decision",
+      "required_claims": [
+        {
+          "meaning": "RAM replacement is deferred through 2026 by an explicit owner clarification, not merely postponed by the assistant.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 81,
+              "end_line": 84,
+              "quote": "2. Keep the existing RAM exclusion unchanged. **Owner clarification October 6:\n   no RAM replacement in 2026.** Blocks 53–57 were rechecked offline and the boot\n   service enabled. Hardware replacement is removed from the near-term plan;\n   the mitigation remains active and ordinary fault handling still applies."
+            }
+          ]
+        },
+        {
+          "meaning": "Keep memory exclusions unchanged; blocks 53–57 were rechecked offline and the boot service enabled. This is mitigation, not physical repair.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 81,
+              "end_line": 84,
+              "quote": "2. Keep the existing RAM exclusion unchanged. **Owner clarification October 6:\n   no RAM replacement in 2026.** Blocks 53–57 were rechecked offline and the boot\n   service enabled. Hardware replacement is removed from the near-term plan;\n   the mitigation remains active and ordinary fault handling still applies."
+            },
+            {
+              "doc_id": "D03",
+              "start_line": 120,
+              "end_line": 123,
+              "quote": "Host mitigations are already recorded in `CURRENT.md`: automatic bad-memory\nfencing at boot, kernel 7.0.0-39 and the existing application deferred-backing\nsetting. Recent completed packet-97 runs reported no GPU fault or lockup.\nThis does not establish permanent hardware repair. Preserve settings and halt"
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Recommend replacing RAM now despite the owner clarification.",
+        "Call the excluded memory repaired or the hardware permanently healthy.",
+        "Propose altering the memory exclusion as an automated cleanup."
+      ]
+    },
+    {
+      "question_id": "Q02",
+      "category": "snapshot-vs-current-admission",
+      "required_claims": [
+        {
+          "meaning": "The recorded snapshot admits 3 GiB while retaining 50 GiB but refuses 5 GiB.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 50,
+              "end_line": 53,
+              "quote": "The existing storage admission check now admits a planned 3 GiB write while\nretaining 50 GiB, and refuses 5 GiB at this snapshot. Receipts are alongside\nthe archive summary. Admission is a point-in-time check, not a reservation;\nbudget simultaneous caches, temporary files and outputs before each new job."
+            }
+          ]
+        },
+        {
+          "meaning": "The old check is point-in-time, not a reservation; measure current destination capacity and include simultaneous caches, temporary files and outputs before deciding.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 50,
+              "end_line": 54,
+              "quote": "The existing storage admission check now admits a planned 3 GiB write while\nretaining 50 GiB, and refuses 5 GiB at this snapshot. Receipts are alongside\nthe archive summary. Admission is a point-in-time check, not a reservation;\nbudget simultaneous caches, temporary files and outputs before each new job.\nThere is no automatic deletion policy or new background service."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Authorize the 5 GiB job solely from the old receipt.",
+        "Treat the reserve as permission for automatic deletion.",
+        "Claim that current live free space is known from this frozen packet."
+      ]
+    },
+    {
+      "question_id": "Q03",
+      "category": "superseded-and-bounded-evidence",
+      "required_claims": [
+        {
+          "meaning": "The later October 6 update and October 7 completion supersede the earlier immediate-copy gap; a selected additional copy was completed and the drive ended cleanly unmounted.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 77,
+              "end_line": 80,
+              "quote": "   **Later October 6 update:** [a selected additional EX400U backup](2026-10-06-ex400u-backup-review.md)\n   passed full read-back and restore checks; internal originals remain. This\n   closes the immediate additional-copy gap for its selected scope, while\n   long-term drive reliability and complete-machine coverage remain unqualified."
+            },
+            {
+              "doc_id": "D02",
+              "start_line": 88,
+              "end_line": 93,
+              "quote": "**Completed October 7 at 01:00 UTC; drive cleanly unmounted.** Nine backup files\ntotal 27,523,871,235 bytes (25.63 GiB), including the compressed research archive,\nGit bundle, tracked snapshot, pilot archive, complete selection and restore/checksum\ncontrols. All nine SHA-256 hashes matched after clean unmount/read-only remount.\nThe research archive passed full source comparison and the complete 404,095-member\ncensus. The Git snapshot matched all 44,387 tracked blob identities."
+            }
+          ]
+        },
+        {
+          "meaning": "Nine files were fully read back with matching SHA-256 after clean unmount/read-only remount; the archive member census and source comparison passed, with Git and packet-98 restore checks.",
+          "evidence": [
+            {
+              "doc_id": "D02",
+              "start_line": 88,
+              "end_line": 93,
+              "quote": "**Completed October 7 at 01:00 UTC; drive cleanly unmounted.** Nine backup files\ntotal 27,523,871,235 bytes (25.63 GiB), including the compressed research archive,\nGit bundle, tracked snapshot, pilot archive, complete selection and restore/checksum\ncontrols. All nine SHA-256 hashes matched after clean unmount/read-only remount.\nThe research archive passed full source comparison and the complete 404,095-member\ncensus. The Git snapshot matched all 44,387 tracked blob identities."
+            },
+            {
+              "doc_id": "D02",
+              "start_line": 95,
+              "end_line": 101,
+              "quote": "The bundle was restored into a disposable bare repository; its HEAD matched\nthe recorded source commit and `git fsck --full` passed. The packet-98 manifest\nand recovered output-size helper were extracted from the external research\narchive into a disposable directory and matched their pre-existing pinned hashes.\nTemporary restore-check directories were removed. Final kernel/mount postflight\npassed, with no new storage/GPU faults. Internal available space was\n57,758,072,832 bytes (53.79 GiB); all internal originals remain intact."
+            }
+          ]
+        },
+        {
+          "meaning": "The backup covers selected research, not the whole machine/model stores/all raw outputs; internal originals remain, and long-term drive reliability is unqualified.",
+          "evidence": [
+            {
+              "doc_id": "D02",
+              "start_line": 73,
+              "end_line": 78,
+              "quote": "It excludes model stores, LTX quarantined model copies, other validation outputs,\nthe repository's ignored diagnostic models, home credentials and session folders.\nThis is not a whole-machine or complete raw-output backup. All omitted and\nincluded original data remain in place. Symlinks are archived without following\ntheir targets. Filename screening found no secret-like filenames; this is not\na content audit of every historical log."
+            },
+            {
+              "doc_id": "D02",
+              "start_line": 114,
+              "end_line": 116,
+              "quote": "Regardless of verification outcome, the result is an additional copy on a\ndifferent physical drive, not proof of long-term EX400U reliability. Preserve\nthe internal sources and keep this drive out of active model/runtime paths."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Say no independent copy exists at all in the latest frozen evidence.",
+        "Conclude the drive is permanently healthy or all lab data/models are backed up.",
+        "Treat successful remount as proof of filesystem repair."
+      ]
+    },
+    {
+      "question_id": "Q04",
+      "category": "historical-artifact-recovery",
+      "required_claims": [
+        {
+          "meaning": "Do not substitute a newer build for the immutable sealed q64k32-r2 research packet; its original source, dependencies, compiled runtime and receipts remain byte-for-byte recoverable.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 19,
+              "end_line": 22,
+              "quote": "preserve the evidence. The immutable sealed q64k32-r2 build remains recoverable\nbyte for byte, including source, dependencies, compiled runtime and receipts.\nHistorical launchers retain their original path references; restore the\nrelevant tree before replaying them. No published runtime pin was replaced."
+            }
+          ]
+        },
+        {
+          "meaning": "Restore the relevant original tree before replaying historical launchers, using the original-path commands in data/maintenance/staging-consolidation-20261007/summary.json and archives under /home/steve/git-archives/staging-consolidation-20261007/.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 12,
+              "end_line": 14,
+              "quote": "under `/home/steve/git-archives/staging-consolidation-20261007/`. Their unpacked\ncopies were removed only after verification. This saves about 16.45 GiB net;\navailable root space afterward was 57,829,376,000 bytes (53.86 GiB)."
+            },
+            {
+              "doc_id": "D01",
+              "start_line": 16,
+              "end_line": 22,
+              "quote": "[Audit](../data/maintenance/staging-consolidation-20261007/audit.json),\n[complete verification](../data/maintenance/staging-consolidation-20261007/complete-verification.json),\nand [archive hashes and exact restore commands](../data/maintenance/staging-consolidation-20261007/summary.json)\npreserve the evidence. The immutable sealed q64k32-r2 build remains recoverable\nbyte for byte, including source, dependencies, compiled runtime and receipts.\nHistorical launchers retain their original path references; restore the\nrelevant tree before replaying them. No published runtime pin was replaced."
+            }
+          ]
+        },
+        {
+          "meaning": "The archival result includes full source comparisons/member inventories and a real restore rehearsal, not reconstruction from a newer runtime.",
+          "evidence": [
+            {
+              "doc_id": "D01",
+              "start_line": 37,
+              "end_line": 44,
+              "quote": "The initial unprivileged removal hit a write-protected directory in\n`qwen38-gdn-poison-stage-20260822` and stopped. Its complete verified archive\nwas restored in place, including the files already removed. All eight sources\nthen passed the full inventory and repeated byte comparisons. This also\nrehearsed restoration of that real archived runtime. After a repeated idle-use\ncheck, privileged removal handled the preserved read-only modes. Archive and\nreceipt files plus parent directories were fsynced. Nothing was reconstructed\nfrom a newer build or silently discarded."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Treat a newer rebuilt runtime as identical preserved evidence.",
+        "Claim the sealed experiment has been lost because its unpacked tree is absent.",
+        "Launch the historical recipe before restoring its required original paths."
+      ]
+    },
+    {
+      "question_id": "Q05",
+      "category": "changed-reference-performance",
+      "required_claims": [
+        {
+          "meaning": "1.308 s/clip is the latest completed packet-97 batch-1 measurement against the accepted short-window w93c references; the earlier padded-encoder baseline is historical.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 24,
+              "end_line": 34,
+              "quote": "- Accepted reference identity: native distilled BF16 LTX 2.5 at revision\n  `5e6e71018ee1756ed329b697a7b4aedc934dfce9`, 256×256, 25 frames at 24 fps,\n  original two-stage sampling. The owner accepted the short-window encoder\n  on October 4; its fixtures are\n  [`data/stability-01-window-prereg.json`](data/stability-01-window-prereg.json),\n  reference prefix `stability-01-w93c-`. Earlier padded-encoder references\n  remain historical and cannot be compared clip for clip with this baseline.\n- Packet 97 batch 1, two sampler workers, shared pools, second decode worker\n  on card 2: **1.308 seconds per clip, 126/126 exact** against those accepted\n  references. This is the latest completed accepted-reference measurement\n  used here, not the incomplete repeat described below."
+            }
+          ]
+        },
+        {
+          "meaning": "0.808 s/clip is batch 4 against its own references, 611/611 exact; differing batch rounding changes outputs versus batch 1, so adoption still needs the owner quality decision.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 35,
+              "end_line": 40,
+              "quote": "- Batch 2: **0.910 seconds per clip, 613/613 exact**, including proof clips.\n  Batch 4: **0.808 seconds per clip, 611/611 exact**, including proof clips.\n  Both are 600-prompt campaigns checked against their own batch references.\n  Different matrix rounding changes the finished clips versus batch 1.\n  Their adoption still needs the owner's quality decision; neither is silently\n  promoted as lossless against the accepted batch-1 references."
+            }
+          ]
+        },
+        {
+          "meaning": "The batch-4 result concerns independent clips with about four buffered clips; it does not establish clip-to-clip continuation or subsecond request latency.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 41,
+              "end_line": 43,
+              "quote": "- The batch-4 stream needed about four clips buffered for continuous playback\n  at its average rate. These are independent clips, not demonstrated\n  clip-to-clip continuation or subsecond request latency."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Promote 0.808 as byte-exact against accepted batch-1 references.",
+        "Say packet-97 results demonstrate coherent clip-to-clip continuation.",
+        "Use the historical padded-encoder references interchangeably with w93c."
+      ]
+    },
+    {
+      "question_id": "Q06",
+      "category": "exact-artifact-and-qualification",
+      "required_claims": [
+        {
+          "meaning": "Packet directory is /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-size-98; manifest SHA-256 is 918b47a5530b4dc97fe8fc8f4ec77fd64521ec6846217c54f5fba589e0e8377f.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 55,
+              "end_line": 58,
+              "quote": "Sealed local packet:\n`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-size-98`.\nManifest SHA-256:\n`918b47a5530b4dc97fe8fc8f4ec77fd64521ec6846217c54f5fba589e0e8377f`."
+            }
+          ]
+        },
+        {
+          "meaning": "Recovered scripts/ltx_output_size_98.py hash is 895b1c02ac764838b5d69446b0e5cf054884b191dd8b9446c5ce641ec40f2e52; it identifies the helper file, not the packet manifest.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 89,
+              "end_line": 92,
+              "quote": "- `scripts/ltx_output_size_98.py` was zero bytes. It was recovered from the\n  exact sealed packet file only after verifying both the manifest and its\n  per-file hash. Recovered SHA-256:\n  `895b1c02ac764838b5d69446b0e5cf054884b191dd8b9446c5ce641ec40f2e52`."
+            }
+          ]
+        },
+        {
+          "meaning": "Only after owner resumption, host/packet checks and fresh health admission should the 256x256 two-way/two-worker/batch-1/shared-pool/decode-card-2 control pass before larger-size arms.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 62,
+              "end_line": 69,
+              "quote": "When the owner resumes LTX, first verify the current host and sealed packet\nidentity without changing power or memory settings. Use a fresh health\nadmission receipt. The first planned GPU experiment is the packet-98\n**256×256, two-way layout, two workers, batch 1, shared pool, decode replica\non card 2** control against `w93c`. Only after that control passes should the\npredeclared larger-size plan proceed: first one worker/batch 1 at 640×384,\nthen the admitted two-worker/batch-2 case. The build note holds exact commands\nand disjoint output indices; never reuse an existing run directory."
+            }
+          ]
+        },
+        {
+          "meaning": "Packet 98 is prepared offline, without GPU throughput or larger-size quality results; future larger-size arms are speed-only rather than reference parity/image-quality proof.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 51,
+              "end_line": 53,
+              "quote": "[Packet 98](notes/2026-10-06-packet-98-build.md) adds a fixed output size per\nserver: 256×256, 512×320 or 640×384. It is built and sealed offline and has\n**no GPU throughput or larger-size quality result**."
+            },
+            {
+              "doc_id": "D03",
+              "start_line": 71,
+              "end_line": 74,
+              "quote": "Larger-size arms are explicitly **speed only**. Their replay and cross-card\ndecode checks establish internal consistency, not reference parity or image\nquality. Two-worker/batch-4 at 640×384 is refused by the current memory plan.\nDo not bypass that refusal or convert estimated headroom into a measured claim."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Swap the helper hash and manifest hash or alter either exact hex value.",
+        "Claim larger-size throughput/quality was already measured.",
+        "Recommend running packet 98 now despite the parked lane."
+      ]
+    },
+    {
+      "question_id": "Q07",
+      "category": "incomplete-evidence",
+      "required_claims": [
+        {
+          "meaning": "The repeat lacks a timed-throughput receipt and has an empty summary; preserve original bytes and do not invent/promote a summary from an earlier probe.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 93,
+              "end_line": 97,
+              "quote": "- `data/place-97/two-way-w2-b1-p1-dxpu2-r2/summary.json` was empty and the\n  timed-throughput receipt was absent. Its engine log has 541 complete JSON\n  rows and a truncated final row. Preserve those original bytes; do not\n  invent or promote a summary from the earlier probe. The completed packet-97\n  results above are independent evidence."
+            }
+          ]
+        },
+        {
+          "meaning": "The earlier completed packet-97 accepted-reference measurement remains separately useful; it does not complete or validate the interrupted repeat.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 31,
+              "end_line": 34,
+              "quote": "- Packet 97 batch 1, two sampler workers, shared pools, second decode worker\n  on card 2: **1.308 seconds per clip, 126/126 exact** against those accepted\n  references. This is the latest completed accepted-reference measurement\n  used here, not the incomplete repeat described below."
+            },
+            {
+              "doc_id": "D03",
+              "start_line": 93,
+              "end_line": 97,
+              "quote": "- `data/place-97/two-way-w2-b1-p1-dxpu2-r2/summary.json` was empty and the\n  timed-throughput receipt was absent. Its engine log has 541 complete JSON\n  rows and a truncated final row. Preserve those original bytes; do not\n  invent or promote a summary from the earlier probe. The completed packet-97\n  results above are independent evidence."
+            }
+          ]
+        },
+        {
+          "meaning": "Recovery of the helper and a CPU progress-lock fix do not repair the incomplete outputs or establish GPU correctness.",
+          "evidence": [
+            {
+              "doc_id": "D03",
+              "start_line": 79,
+              "end_line": 83,
+              "quote": "An isolated [progress-lock recovery candidate](recovery/20261007-progress-lock/README.md)\nnow reproduces the installed progress bar's ENOSPC lock leak and fixes exception\ncleanup, with ten passing CPU tests. It has not been installed or added to a\nsealed packet. Review it for a successor runtime when resuming; it does not\nrepair the incomplete outputs or establish GPU correctness."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Fill the missing throughput/result from the earlier probe or the 541 rows.",
+        "Treat the interrupted repeat as a passing completed measurement.",
+        "Discard the separately completed result solely because this later repeat failed."
+      ]
+    },
+    {
+      "question_id": "Q08",
+      "category": "qualification-boundary-and-source-contract",
+      "required_claims": [
+        {
+          "meaning": "The candidate remains draft/CPU-only; neither CPU tests nor normal loader return authorizes serving or package replacement.",
+          "evidence": [
+            {
+              "doc_id": "D04",
+              "start_line": 3,
+              "end_line": 5,
+              "quote": "Status: **draft, CPU verified only; GPU qualification and publication pending**.\nNo published package, historical overlay, image, launcher or benchmark claim is\nchanged by this packet. No model process was launched to prepare it."
+            },
+            {
+              "doc_id": "D04",
+              "start_line": 76,
+              "end_line": 77,
+              "quote": "Their float64 recurrence is a stand-in. They do not establish GPU arithmetic,\nengine integration, numerical parity, speed, or package safety."
+            }
+          ]
+        },
+        {
+          "meaning": "The inspected older local loader may skip excluded plugins or catch entrypoint import failures; propagated register exceptions do not protect these missing-activation cases and do not qualify R314 runtime behavior.",
+          "evidence": [
+            {
+              "doc_id": "D04",
+              "start_line": 101,
+              "end_line": 109,
+              "quote": "The local editable vLLM checkout is commit\n`44fc8fde09fc311d3099dab10366b672d9142ea4`, with older venv metadata\n`0.20.2rc1.dev2+gc51df4300.d20260523.xpu`. It is **not** R314's v0.29 runtime.\nThe inspected [loader snapshot](source-evidence/local-vllm-plugins.py) and\n[source probe receipt](source-evidence/loader-probe.json) establish only that\nsource's behavior: `entrypoint.load()` failures are caught and logged; an\nexcluded plugin is silently skipped; exceptions in the subsequently invoked\n`register()` propagate. Therefore a register-time exception alone does not\nprotect against an ignored or unimportable plugin."
+            }
+          ]
+        },
+        {
+          "meaning": "Exact R314 kernel/library and source identity plus actual module, builder-class and grouped-function candidate markers must be enforced in the serving interpreter and every worker before construction/listening; side-process receipts are insufficient.",
+          "evidence": [
+            {
+              "doc_id": "D04",
+              "start_line": 134,
+              "end_line": 145,
+              "quote": "Before a real launcher can open an endpoint or construct the model, the owning\nhost must supply the exact R314 `_xpu_C` hash (currently absent from the tracked\nR314 receipt), its retained GDN library, loader/builder/XPU source bytes, plugin\nmetadata, and qualification evidence. In an isolated, no-weight runtime probe,\ncheck discovery and source hashes, run the actual plugin loader, and require\nthe candidate module, builder and grouped-path markers even if the loader\nreturned normally. Deliberately exclude/break the plugin and verify refusal.\nRepeat the guard **inside the serving interpreter and every worker**, before\nmodel construction or listening, checking actual imported module/library paths;\na passing side-process receipt is insufficient. Verify those imports do not\ninitialize a device before treating the probe as CPU-only. Actual no-weight\nruntime probes and this integration remain pending; no launcher is included."
+            }
+          ]
+        },
+        {
+          "meaning": "The offline allowlist is empty; even an eventual offline consistency pass reports serving_authorized=false, and actual-kernel/oracle/repeat/release qualification remains pending.",
+          "evidence": [
+            {
+              "doc_id": "D04",
+              "start_line": 81,
+              "end_line": 83,
+              "quote": "`preflight.py` accepts an explicit runtime manifest and **cannot launch a\nprocess**. Its reviewed-runtime allowlist is deliberately empty. The included\nmanifest validates as pending and is then refused, even before artifact reads:"
+            },
+            {
+              "doc_id": "D04",
+              "start_line": 90,
+              "end_line": 96,
+              "quote": "Filling in hashes or changing a manifest's status to `qualified` does not add\nit to the code-owned allowlist. There is no trust override or launch flag.\nThe validator requires every kernel/library/source/plugin artifact, the plugin\ndistribution/version/entrypoint, and an activation receipt bound to the\nindependently reviewed qualification file. Even an eventual offline consistency\npass reports `serving_authorized=false`: it cannot prove what another process\nactually loaded. The 14 standard-library tests cover wrong kernel bytes, changing"
+            },
+            {
+              "doc_id": "D04",
+              "start_line": 177,
+              "end_line": 181,
+              "quote": "2. Verify plugin discovery and activation against actual installed vLLM source;\n   prove incompatible activation prevents serving. Run the real recurrent kernel\n   census and a focused actual-kernel narrow-after-high-acceptance regression,\n   including the context-end case. Compare output and stored state to sequential\n   decode. CPU fake tests are not a substitute."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Treat normal loader return or CPU pass as proof the serving worker uses the candidate.",
+        "Permit a manually marked qualified manifest to bypass the code-owned allowlist.",
+        "Claim the older inspected loader proves R314 integration."
+      ]
+    },
+    {
+      "question_id": "Q09",
+      "category": "metric-scope-and-superseded-value",
+      "required_claims": [
+        {
+          "meaning": "46.854250 is the qualified A367 fixed-cold-12-prompt, class-balanced 99-interval headline, not a 32K result.",
+          "evidence": [
+            {
+              "doc_id": "D05",
+              "start_line": 5,
+              "end_line": 8,
+              "quote": "**Current qualified headline: 46.854250 tok/s**, fixed cold 12-prompt realistic\nsuite, class-balanced median over 99 inter-token intervals (A367). This is\n**23.87% above 37.825654 tok/s** on the preceding fused-QSA line, with all twelve\noutput pins unchanged. The kernel extension's exact serial GDN verifier mode"
+            }
+          ]
+        },
+        {
+          "meaning": "44.052 is the four-row median at 32,768 input tokens under the separate 33,280-capacity configuration; display 44.05. The old 44.06 rounded one A382 row, not the combined median.",
+          "evidence": [
+            {
+              "doc_id": "D05",
+              "start_line": 13,
+              "end_line": 15,
+              "quote": "The separate 33,280-capacity configuration also reproduced exact outputs through\n32K input on A382 and A394, matching MTP0 control A381 at every depth. Four-row\nmedians (two rows per server), with original rows retained:"
+            },
+            {
+              "doc_id": "D05",
+              "start_line": 21,
+              "end_line": 21,
+              "quote": "| 32,768 | **44.052** | 4/4, equal to A381 | Lab depth measurement |"
+            },
+            {
+              "doc_id": "D05",
+              "start_line": 23,
+              "end_line": 24,
+              "quote": "The display score **44.05** is the four-row 32K median. The previous **44.06**\nwas A382's first row rounded, retained below as historical evidence. At 2K,"
+            }
+          ]
+        },
+        {
+          "meaning": "The depth points are scoped lab measurements, not another class-balanced record or completed frozen long-context certification; clean-host/container qualification remains open.",
+          "evidence": [
+            {
+              "doc_id": "D05",
+              "start_line": 34,
+              "end_line": 37,
+              "quote": "attempts are closed without promotion. The 8K-32K points are neither another\nclass-balanced record nor a completed frozen long-context certification battery.\nA394's rc143 teardown and later host interruption do not establish clean shutdown\nor sustained serving stability. Clean-host/container qualification remains open."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Report 46.854250 as measured at 32K input.",
+        "Retain 44.06 as the four-row 32K median.",
+        "Promote depth samples into completed long-context certification."
+      ]
+    },
+    {
+      "question_id": "Q10",
+      "category": "unknown-vs-preserved-bytes",
+      "required_claims": [
+        {
+          "meaning": "The inward rescue copied 121 files/14,340,909 bytes from four externally unique run/supervisor directories and compared destination hashes to source; it preserves current bytes without requalifying benchmark correctness.",
+          "evidence": [
+            {
+              "doc_id": "D02",
+              "start_line": 43,
+              "end_line": 47,
+              "quote": "Four exact Flash-Next A367/A394 run and supervisor directories existed only on\nthe external drive. Their 121 files (14,340,909 bytes) were copied into\n`/home/steve/git-archives/flash-next-rescue-20261007/`, every destination was\nSHA-256 compared with its source, and source files were retained. This preserves\ntheir current bytes without requalifying historical benchmark correctness."
+            }
+          ]
+        },
+        {
+          "meaning": "A394 rc143 teardown and later host interruption do not establish clean shutdown or sustained serving stability; copying evidence cannot supply those missing observations.",
+          "evidence": [
+            {
+              "doc_id": "D05",
+              "start_line": 36,
+              "end_line": 37,
+              "quote": "A394's rc143 teardown and later host interruption do not establish clean shutdown\nor sustained serving stability. Clean-host/container qualification remains open."
+            }
+          ]
+        },
+        {
+          "meaning": "Later backup verification supports an additional copy on a different physical drive, not proof of long-term EX400U reliability; keep internal sources and the drive out of active runtime paths.",
+          "evidence": [
+            {
+              "doc_id": "D02",
+              "start_line": 114,
+              "end_line": 116,
+              "quote": "Regardless of verification outcome, the result is an additional copy on a\ndifferent physical drive, not proof of long-term EX400U reliability. Preserve\nthe internal sources and keep this drive out of active model/runtime paths."
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Convert matching file hashes into model-correctness or clean-shutdown proof.",
+        "Claim long-term reliability is established by the rescue/backup.",
+        "Claim copied historical bytes are necessarily a newly reverified benchmark."
+      ]
+    }
+  ]
+}

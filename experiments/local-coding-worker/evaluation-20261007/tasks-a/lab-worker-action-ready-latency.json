@@ -1,0 +1,9 @@
+{
+  "id": "lab-worker-action-ready-latency",
+  "repository": "lab",
+  "source_commit": "7324c356f00901b4d53f9ec26bda46900294ebb4",
+  "issue": "The overnight worker evidence collector currently accepts impossible valid-action timing records: an action can be reported ready before the complete response, or a malformed action can carry a readiness time. In worker/collect_overnight.py, enforce a boolean action-format result for completed replies. For a valid action require a finite nonnegative readiness time at or after response completion; for an invalid action forbid a readiness field. Keep valid boundary times accepted and preserve the existing token-arrival and throughput consistency checks. Add focused offline acceptance/regression coverage; do not change recorded campaign evidence or loosen other integrity checks.",
+  "validation_command": "python3 /acceptance/worker_action_latency.py",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "ACTION_LATENCY_FAILURE"
+}

@@ -1,0 +1,175 @@
+{
+  "schema": "coding-evaluation.historical-controls.v1",
+  "all_controls_passed": true,
+  "scope": "selected exact Git archive paths; no .git; CPU-only, transport mocked",
+  "model_trials_run": false,
+  "results": [
+    {
+      "task": "lab-oracle-request-ids",
+      "role": "baseline",
+      "commit": "90518687759a42bd7f098f2adb2e1f92f39777f8",
+      "snapshot_scope": [
+        "scripts/bench-openai-concurrency-oracle.py",
+        "scripts/bench-openai-realistic-suite.py"
+      ],
+      "archive_bytes": 51200,
+      "archive_sha256": "d46de086634bf597c8203489d6c6c9b944aa235f11419cd8464b2af7de2d7f99",
+      "files": {
+        "scripts/bench-openai-realistic-suite.py": "911fcd172cb3b4d2a319e34cc6ba6ca41ee7c352fcd269e93008371e45cc4fb2",
+        "scripts/bench-openai-concurrency-oracle.py": "5860b8e75224d20f3a880b7a970cb07f00697562090e5489549c88b049a4eac2"
+      },
+      "returncode": 1,
+      "control_passed": true,
+      "expected_baseline_marker": "RUN_ID_ISOLATION",
+      "stdout": "lab-oracle-request-ids.baseline.stdout",
+      "stderr": "lab-oracle-request-ids.baseline.stderr",
+      "git_metadata_present": false
+    },
+    {
+      "task": "lab-oracle-request-ids",
+      "role": "fixed",
+      "commit": "a54e2521c55d95bbd13244df2cd943d10a9863df",
+      "snapshot_scope": [
+        "scripts/bench-openai-concurrency-oracle.py",
+        "scripts/bench-openai-realistic-suite.py"
+      ],
+      "archive_bytes": 51200,
+      "archive_sha256": "eb4ba6d77339910b6892e82202acc131a9a513a72f965e96b6f458c48a050397",
+      "files": {
+        "scripts/bench-openai-realistic-suite.py": "911fcd172cb3b4d2a319e34cc6ba6ca41ee7c352fcd269e93008371e45cc4fb2",
+        "scripts/bench-openai-concurrency-oracle.py": "ad8b10e74d3d3009a4e28939782835d93d70d29e596611b30cb663d6242cb54b"
+      },
+      "returncode": 0,
+      "control_passed": true,
+      "expected_baseline_marker": "RUN_ID_ISOLATION",
+      "stdout": "lab-oracle-request-ids.fixed.stdout",
+      "stderr": "lab-oracle-request-ids.fixed.stderr",
+      "git_metadata_present": false
+    },
+    {
+      "task": "lab-oracle-pinned-subset",
+      "role": "baseline",
+      "commit": "c22122410a67901d6d777e772c7c8d90b7b9a037",
+      "snapshot_scope": [
+        "scripts/bench-openai-concurrency-oracle.py",
+        "scripts/bench-openai-realistic-suite.py"
+      ],
+      "archive_bytes": 51200,
+      "archive_sha256": "2637a208dfc9f43944053f97f766c40be16e635c3df2f72ca60ee2b13559dc06",
+      "files": {
+        "scripts/bench-openai-realistic-suite.py": "ee0d3998adaac33405e3b5536bf6d7b7b04a014e37eedbd628b6968a23895f52",
+        "scripts/bench-openai-concurrency-oracle.py": "ad8b10e74d3d3009a4e28939782835d93d70d29e596611b30cb663d6242cb54b"
+      },
+      "returncode": 1,
+      "control_passed": true,
+      "expected_baseline_marker": "PINNED_SUBSET",
+      "stdout": "lab-oracle-pinned-subset.baseline.stdout",
+      "stderr": "lab-oracle-pinned-subset.baseline.stderr",
+      "git_metadata_present": false
+    },
+    {
+      "task": "lab-oracle-pinned-subset",
+      "role": "fixed",
+      "commit": "7f85cc78af6c1bdd770345d9fc70d69cb249b26a",
+      "snapshot_scope": [
+        "scripts/bench-openai-concurrency-oracle.py",
+        "scripts/bench-openai-realistic-suite.py"
+      ],
+      "archive_bytes": 61440,
+      "archive_sha256": "2d37943007d598527cc0eea90f33e728a97b2082f6989b324706cee33bbdcbf2",
+      "files": {
+        "scripts/bench-openai-realistic-suite.py": "ee0d3998adaac33405e3b5536bf6d7b7b04a014e37eedbd628b6968a23895f52",
+        "scripts/bench-openai-concurrency-oracle.py": "1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2"
+      },
+      "returncode": 0,
+      "control_passed": true,
+      "expected_baseline_marker": "PINNED_SUBSET",
+      "stdout": "lab-oracle-pinned-subset.fixed.stdout",
+      "stderr": "lab-oracle-pinned-subset.fixed.stderr",
+      "git_metadata_present": false
+    },
+    {
+      "task": "lab-stream-token-identity",
+      "role": "baseline",
+      "commit": "6f8d1730a2ff84a47566404ab03e292d0db4f8d3",
+      "snapshot_scope": [
+        "scripts/bench-openai-long-context-suite.py"
+      ],
+      "archive_bytes": 20480,
+      "archive_sha256": "12a07ddc885d458766e9f9a19324944faa33dc7f8bb50cae6e9edf10fb879dac",
+      "files": {
+        "scripts/bench-openai-long-context-suite.py": "2286c9fd1ef59136a92a857be2992b31e0ff3bc844c7489239ab8f76f515cf72"
+      },
+      "returncode": 1,
+      "control_passed": true,
+      "expected_baseline_marker": "STREAM_TOKEN_IDENTITY",
+      "stdout": "lab-stream-token-identity.baseline.stdout",
+      "stderr": "lab-stream-token-identity.baseline.stderr",
+      "git_metadata_present": false
+    },
+    {
+      "task": "lab-stream-token-identity",
+      "role": "fixed",
+      "commit": "94efcf2e558958014e7f23b529a99a8e8bbd3a36",
+      "snapshot_scope": [
+        "scripts/bench-openai-long-context-suite.py"
+      ],
+      "archive_bytes": 20480,
+      "archive_sha256": "fda4fc752d5a8a8cf59be25b27c551cebd317162cc59d5e53ba42b55bb00b98e",
+      "files": {
+        "scripts/bench-openai-long-context-suite.py": "f3bbf3369152a55aa0c9acc8bbad7ff15db2d4d694f03cb5ed275efde7f99459"
+      },
+      "returncode": 0,
+      "control_passed": true,
+      "expected_baseline_marker": "STREAM_TOKEN_IDENTITY",
+      "stdout": "lab-stream-token-identity.fixed.stdout",
+      "stderr": "lab-stream-token-identity.fixed.stderr",
+      "git_metadata_present": false
+    },
+    {
+      "task": "lab-release-query-failure",
+      "role": "baseline",
+      "commit": "ec5c21a4a7e029d3dd3717b83579a38b98c8b035",
+      "snapshot_scope": [
+        "tools/public-closure-scanner.py"
+      ],
+      "archive_bytes": 20480,
+      "archive_sha256": "be113ead0c70840eba4e23d9ed3b4209106d0e0e5f200a859e0f01c66d4c9dd9",
+      "files": {
+        "tools/public-closure-scanner.py": "9d324c49c422cd533f29e655540afbbf37cf40270e7c97cc01c0f45c697e72be"
+      },
+      "returncode": 1,
+      "control_passed": true,
+      "expected_baseline_marker": "RELEASE_UNKNOWN",
+      "stdout": "lab-release-query-failure.baseline.stdout",
+      "stderr": "lab-release-query-failure.baseline.stderr",
+      "git_metadata_present": false
+    },
+    {
+      "task": "lab-release-query-failure",
+      "role": "fixed",
+      "commit": "15327a5f34ecadf2ba005ea028f89f5cfb421372",
+      "snapshot_scope": [
+        "tools/public-closure-scanner.py"
+      ],
+      "archive_bytes": 30720,
+      "archive_sha256": "16f51d252ba1ca055060b21974ba3732cb274daf6bebdfc44b66621c20a71b50",
+      "files": {
+        "tools/public-closure-scanner.py": "6763a34935844694f6c1b9f1d624bab8caec8090090f2562789df64c4a8a2bfa"
+      },
+      "returncode": 0,
+      "control_passed": true,
+      "expected_baseline_marker": "RELEASE_UNKNOWN",
+      "stdout": "lab-release-query-failure.fixed.stdout",
+      "stderr": "lab-release-query-failure.fixed.stderr",
+      "git_metadata_present": false
+    }
+  ],
+  "acceptance_sha256": {
+    "lab_release_query_failure.py": "d7f1988c3b6ab6fddd982d3278cee52b98db7ce42d356cd35a0f7d7124d775ba",
+    "lab_stream_token_identity.py": "34fd7a0ff845ffd0ba98304125694da413789629064f8bedd0fa2aa8d2d488e8",
+    "lab_oracle_subset.py": "fee6138c005a11225f483e2af61dc9fdd39cf46ef8230d41280979f1e34d458f",
+    "lab_oracle_request_ids.py": "c85737bf0a77d505825ee531e939c64a0d7130bf467616734db6246552e195d2",
+    "oracle_fixture.py": "1b866eb1cebb331c5ddaad5022aa5c5de2807d9f7973b68f653849ecdfee59d6"
+  }
+}
