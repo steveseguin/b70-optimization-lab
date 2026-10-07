@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Finite packet101 campaign on one already-owned server. Never starts or retries it.
+"""Bounded packet102 campaign on one already-owned server. Never starts or retries it.
 
 Default prints the CPU schedule. --run requires a pinned client contract and
-manifest. Completion/failure attempts one proven-idle graceful stop; a GPU fault
-or unresolved running work leaves the process for the incident coordinator.
+manifest. Success keeps the application available. Failure attempts one proven-idle
+graceful incident stop; faults or unresolved work require the coordinator.
 """
 import argparse
 import asyncio
@@ -121,7 +121,7 @@ class Campaign:
         request_client.write_new(self.run / 'resolution-campaign-started.json', {
             'schema': 'ltx.resolution-campaign-start.v1', 'started_unix': self.started,
             'client_contract_sha256': self.client.contract_sha, 'manifest_sha256': self.manifest_sha,
-            'policy': '32 attempts maximum; one owned application; no restart/retry'})
+            'policy': '36 attempts maximum; one owned application; no restart/retry'})
         self.owns_campaign = True
         self.wait_idle()
         setup = schedule.build_schedule(plan_path=Path(self.client.contract['plan_path']))['schedule']['rows']
@@ -134,27 +134,27 @@ class Campaign:
         self.action('verify-native')
         self.action('start-optimized')
         for row in setup[2:]:
-            if row['kind'] == 'capture0':
+            if row['kind'] in ('capture0', 'capture1'):
                 # Explicit capture admission uses actual post-native residency and
                 # the same conservative4GiB sampler transient allowance; no claim
                 # that the historical256 graph pool predicts the new pool peak.
-                self.action('admit-capture')
+                self.action(row['admission_action'])
             elif row['kind'] == 'decode-probe':
                 self.action('admit-decode')
             await self.request(row)
             self.wait_idle()
-            if row['kind'] == 'capture0':
-                self.action('retire-capture-tails')
-        for row in self.client.plan['requests'][6:12]:
+            if row['kind'] in ('capture0', 'capture1'):
+                self.action(row['retirement_action'])
+        for row in [r for r in self.client.plan['requests'] if r['phase'] == 'candidate-check']:
             await self.request(row)
         self.action('verify-candidate')
         self.action('start-timing')
-        for row in self.client.plan['requests'][12:]:
+        for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed']:
             await self.request(row)
         self.action('verify-timed')
         return {'passed': True, 'requests': self.requests, 'actions': self.actions,
                 'timed_receipt': str(self.run / 'same-size-timed.json'),
-                'claim': 'Preliminary serial-client W1 completion intervals cycling three native-qualified fixtures; no record claim.'}
+                'claim': 'Preliminary serial-client W2 completion intervals cycling three native-qualified fixtures; no record claim.'}
 
     def graceful_stop(self):
         gate.require(self.owns_campaign and self.lock_fd is not None,
@@ -193,7 +193,7 @@ def main():
     if not args.run:
         value = schedule.build_schedule()
         print(json.dumps({'status': 'plan-only', 'schedule_sha256': value['schedule_sha256'],
-                          'requests': 32, 'model_requests': 0, 'server_actions': 0}))
+                          'requests': 36, 'model_requests': 0, 'server_actions': 0}))
         return
     campaign = Campaign(args.contract, args.contract_sha256, args.manifest_sha256)
     signal_received = []
@@ -215,7 +215,17 @@ def main():
         emit('campaign halted: ' + str(error))
     finally:
         closing[0] = True
-        if campaign.owns_campaign:
+        if campaign.owns_campaign and result['passed'] is True:
+            try:
+                state = campaign.wait_idle()
+                result['application'] = {'running': True, 'available_for_reuse': True,
+                                         'final_status': state}
+                result['stop'] = {'stopped': False, 'reason': 'successful application retained'}
+            except Exception as error:
+                result['passed'] = False
+                result['application'] = {'requires_coordinator': True, 'error': repr(error)}
+                result['stop'] = {'stopped': False, 'reason': 'final observation refused'}
+        elif campaign.owns_campaign:
             try:
                 result['stop'] = campaign.graceful_stop()
             except Exception as error:
@@ -228,7 +238,7 @@ def main():
         if campaign.lock_fd is not None:
             os.close(campaign.lock_fd)
     print(json.dumps(result, indent=2))
-    if result['passed'] is not True or result['stop'].get('stopped') is not True:
+    if result['passed'] is not True:
         raise SystemExit(1)
 
 

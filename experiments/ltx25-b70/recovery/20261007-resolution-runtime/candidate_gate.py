@@ -85,8 +85,8 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
     else:
         require(candidate_receipt_path is None and candidate_sha256 is None, 'Unexpected candidate input')
     rows = [r for r in plan['requests'] if r['phase'] == phase]
-    require(len(rows) == (6 if phase == 'candidate-check' else 13), 'Request count differs')
-    base = rows[0]['clip_index']; expected_count = len(rows) - 3
+    require(len(rows) == (7 if phase == 'candidate-check' else 14), 'Request count differs')
+    base = rows[0]['clip_index']; expected_count = len(rows) - 4
     references = {r['name']: r for r in reference['executions'][:3]}
     seen = {r['prompt_id'] for r in reference['executions']}
     if candidate:
@@ -114,18 +114,18 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
                 text['detail'].get('speculation_miss') is False and
                 text['detail']['window_encode']['window'] == 64 and
                 text['detail']['window_encode']['clip_index'] == row['clip_index'], 'Conditioning provenance differs')
-        sample_index = -1 if i == 0 else row['clip_index'] - 1
-        emit_index = -1 if i < 3 else base + row['expected_emitted_index']
+        sample_index = -1 if i < 2 else row['clip_index'] - 2
+        emit_index = -1 if i < 4 else base + row['expected_emitted_index']
         require(sampler['clip_index'] == row['clip_index'] and sampler['mode'] == 'pipeline-lean' and
-                sampler['depth'] == 1 and sampler['sampler_batch'] == 1 and sampler['sampler_workers'] == 1 and
+                sampler['depth'] == 2 and sampler['sampler_batch'] == 1 and sampler['sampler_workers'] == 2 and
                 sampler['detail']['emitted_index'] == sample_index, 'Sampler emission differs')
         require(decode['clip_index'] == sample_index and decode['mode'] == 'pipeline-replica' and
                 decode['depth'] == 2 and decode['upstream_depth'] == 0 and
                 decode['detail']['emitted_index'] == emit_index and not decode.get('save_failures'), 'Decode emission/failure differs')
         record = {'name': name, 'prompt_id': pid, 'start_ms': start, 'success_ms': end,
-                  'graph_sha256': row['graph_sha256'], 'fill': i < 3,
-                  'emitted_index': None if i < 3 else row['expected_emitted_index']}
-        if i < 3:
+                  'graph_sha256': row['graph_sha256'], 'fill': i < 4,
+                  'emitted_index': None if i < 4 else row['expected_emitted_index']}
+        if i < 4:
             require(row['reference'] is None and row['expected_emitted_fixture'] is None, 'Fill cannot have oracle')
             record['parity_status'] = 'not-scored-fill'
         else:
@@ -149,9 +149,9 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
                 if stage == 'save': saved = done.get('saved')
             require(times['sample'] <= times['decode'] <= times['save'] and times['decode'] <= end / 1000,
                     'Worker completion ordering differs')
-            # A decode was queued one prompt after its sampler input. The current
-            # emitting prompt is three later; its raw capture still holds that clip.
-            prefix = rows[row['expected_emitted_index'] + 1]['name'] + '/preview'
+            # W2 samples run two prompts behind; the decode is queued on producer+2.
+            # The current emitting prompt is producer+4; raw capture holds that clip.
+            prefix = rows[row['expected_emitted_index'] + 2]['name'] + '/preview'
             save = e.json(server / ('pipeline-save-' + name + '.json'))
             require(save.get('schema') == 'ltx.pipeline-save-record.v2' and save.get('run_name') == name and
                     save.get('status') == 'queued-to-writer' and save.get('prefix') == prefix and
@@ -172,7 +172,7 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
               'runtime_manifest_sha256': reference['runtime_manifest_sha256'],
               'server_identity_sha256': reference['server_identity_sha256'],
               'reference_receipt_sha256': reference_sha256, 'candidate_receipt_sha256': candidate_sha256,
-              'four_tensor_exact_clips': expected_count, 'distinct_fixtures': 3, 'fills_not_scored': 3,
+              'four_tensor_exact_clips': expected_count, 'distinct_fixtures': 3, 'fills_not_scored': 4,
               'executions': executions, 'evidence_sha256': e.hashes,
               'inputs': {'root': str(root), 'plan_path': str(plan_path), 'reference_receipt_path': str(reference_receipt_path),
                          'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None},

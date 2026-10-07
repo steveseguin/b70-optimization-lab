@@ -14,7 +14,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('reference_gate', HERE / 'reference_gate.py')
 G = importlib.util.module_from_spec(spec); spec.loader.exec_module(G)
-PLAN = HERE.parent / '20261007-resolution-reference-101c/candidate-plan.json'
+PLAN = HERE.parent / '20261007-resolution-w2-102/candidate-plan.json'
 
 
 class GateTests(unittest.TestCase):

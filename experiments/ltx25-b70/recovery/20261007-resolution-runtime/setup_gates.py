@@ -57,14 +57,16 @@ def validate_coverage(report, name, identity_sha):
     bound(report, name, identity_sha)
     require(report['schema'] == 'ltx.sampler-capture-coverage.v2' and report['outcome'] == 'covered',
             'Sampler capture did not cover every route')
-    require(report['sampler_workers'] == report['sampler_batch'] == report['sampler_shared_pool'] == 1 and
+    require(report['sampler_workers'] == 2 and report['sampler_batch'] == report['sampler_shared_pool'] == 1 and
             report['signature_batches'] == [1] and report['open_batch_group'] == [] and
             report['pipeline_busy'] == report['pipeline_running'] == 0,
             'Capture worker/batch/quiescence differs')
+    require(sorted(report['worker_names']) == ['ltx-sample-0', 'ltx-sample-1'],
+            'Capture worker names differ')
     coverage = report['coverage']
-    require(coverage['routes'] == 48 and coverage['workers'] == 1 and
+    require(coverage['routes'] == 48 and coverage['workers'] == 2 and
             coverage['signatures_per_route_min'] == 2 and coverage['incomplete_routes'] == [],
-            'Incomplete two-stage W1 graph coverage')
+            'Incomplete two-stage W2 graph coverage')
     return {'passed': True, 'kind': 'capture-coverage', 'output_parity_claimed': False}
 
 
@@ -73,11 +75,11 @@ def validate_freeze(report, name, identity_sha):
     require(report['schema'] == 'ltx.sampler-capture-freeze.v2' and report['outcome'] == 'frozen' and
             report['frozen'] is True and report['loads_frozen'] is True,
             'Sampler/model loads were not frozen')
-    require(report['placement'] == 'two-way' and report['sampler_workers'] == 1 and
+    require(report['placement'] == 'two-way' and report['sampler_workers'] == 2 and
             report['sampler_batch'] == 1 and report['sampler_shared_pool'] == 1 and
             report['signature_batches'] == [1] and report['residents_missing'] == [] and
             report['segment_devices'] == ['xpu:0', 'xpu:1'], 'Freeze configuration or residence differs')
-    require(report['coverage'] == {'routes': 48, 'workers': 1, 'signatures_per_route_min': 2,
+    require(report['coverage'] == {'routes': 48, 'workers': 2, 'signatures_per_route_min': 2,
                                    'incomplete_routes': []}, 'Freeze coverage incomplete')
     free = report['free_bytes']
     require(set(free) == {'xpu:%d' % i for i in range(4)} and
@@ -86,10 +88,13 @@ def validate_freeze(report, name, identity_sha):
     require(report['floor_judged_on'] == 'the reading after the chain check released its memory',
             'Freeze used pre-chain memory only')
     chain = report['chain_check']
-    require(chain['chains_checked'] == chain['chains_passed'] == 2 and chain['expected_shapes'] == 2 and
-            chain['shared_pool'] == 1 and len(chain['rows']) == 2, 'Whole-chain replay incomplete')
-    require({r['device'] for r in chain['rows']} == {'xpu:0', 'xpu:1'} and
-            len({r['thread'] for r in chain['rows']}) == 1, 'Whole-chain worker/device set differs')
+    require(chain['chains_checked'] == chain['chains_passed'] == 4 and chain['expected_shapes'] == 2 and
+            chain['shared_pool'] == 1 and len(chain['rows']) == 4, 'Whole-chain replay incomplete')
+    threads = {r['thread'] for r in chain['rows']}
+    pairs = {(r['device'], r['thread']) for r in chain['rows']}
+    require(len(threads) == 2 and all(type(t) is int and t > 0 for t in threads) and
+            pairs == {(device, thread) for device in ('xpu:0', 'xpu:1') for thread in threads} and
+            len(pairs) == len(chain['rows']), 'Whole-chain worker/device set differs')
     for row in chain['rows']:
         expected_blocks = list(range(0,23)) if row['device'] == 'xpu:0' else list(range(23,48))
         shapes = sorted(row['shapes'], key=lambda s: s[0][1])

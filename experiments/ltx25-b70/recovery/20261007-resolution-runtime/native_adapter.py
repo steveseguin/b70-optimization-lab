@@ -232,8 +232,8 @@ class NativeAdapter:
                 and not self.capture.LOADS_FROZEN[0], 'Actual sampler graph/freeze state is not native')
         require(not self.lean._MEMO_INSTALLED and not self.lean._SENTRY_INSTALLED,
                 'Lean conditioning installed before native reference')
-        require(not self.sampler_pipeline['_failed'] and self.sampler_pipeline['SAMPLER_WORKERS'] == 1
-                and self.sampler_pipeline['SAMPLER_BATCH'] == 1, 'Native successor is not healthy W1 B1')
+        require(not self.sampler_pipeline['_failed'] and self.sampler_pipeline['SAMPLER_WORKERS'] == 2
+                and self.sampler_pipeline['SAMPLER_BATCH'] == 1, 'Native successor is not healthy W2 B1')
         require(not self.decode['_REPLICAS'] and
                 all(not v for v in self.decode['_REPLICA_SETS'].values()) and not self.decode['_failed'],
                 'Decoder replica exists before native reference')

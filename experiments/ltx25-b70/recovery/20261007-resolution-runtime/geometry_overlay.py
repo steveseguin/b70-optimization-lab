@@ -4,8 +4,8 @@ import ast
 import hashlib
 
 PARENT_MANIFEST_SHA256 = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA256 = '3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2'
-QUALIFICATION_ID = '29ef0d7afecc1254cb50477649b24a36d78648c177b7de3c553b02771ada5dc1'
+PLAN_SHA256 = '5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd'
+QUALIFICATION_ID = '007ffea2b24009bb6ae84f03cac7372a708e2dc193da0661562ffb1ddedca534'
 GEOMETRY_PATH = 'source/scripts/ltx_output_size_98.py'
 SPECS = {
     'pipeline_node.py': ('text', '3c170dc810c95ad00aebd721c7031c1a9220b152b52a779925ef672e0e89b690', 'ltx_pipeline_lab'),
@@ -43,11 +43,11 @@ def _resolution_authorize(role, fields):
     _resolution_require(role in ('text', 'sampler', 'decode'), 'Unknown same-size role')
     _resolution_require(OUTPUT_SIZE == fields.get('output_size') == '640x384' and
                         fields.get('speed_only') is False, 'Same-size mode requires640x384 and explicit non-speed comparison')
-    env = {'LTX_SAMPLER_PLACEMENT': 'two-way', 'LTX_SAMPLER_WORKERS': '1',
+    env = {'LTX_SAMPLER_PLACEMENT': 'two-way', 'LTX_SAMPLER_WORKERS': '2',
            'LTX_SAMPLER_BATCH': '1', 'LTX_SAMPLER_SHARED_POOL': '1',
            'LTX_DECODE_REPLICA_DEVICE': 'xpu:2', 'LTX_DECODE_REPLICAS': '1'}
     _resolution_require(all(os.environ.get(k) == v for k, v in env.items()),
-                        'Same-size mode requires exact23/25 W1 B1 shared-pool configuration')
+                        'Same-size mode requires exact23/25 W2 B1 shared-pool configuration')
     _resolution_require(_RESOLUTION_CONTEXT.get() is None, 'Nested same-size authorization refused')
     run_name = fields.get('run_name')
     _resolution_require(isinstance(run_name, str) and re.fullmatch('[a-z0-9][a-z0-9-]{0,119}', run_name),

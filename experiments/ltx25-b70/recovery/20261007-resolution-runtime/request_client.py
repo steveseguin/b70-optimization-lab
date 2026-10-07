@@ -17,8 +17,9 @@ G = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(G)
 MIN_FREE = 50 * 1024**3
 WRITE_ALLOWANCE = 4 * 1024**3
 CAPTURE_CAP = 32
+ATTEMPT_CAP = 36
 MODEL_SHA = G.MODEL_VERIFICATION_SHA256
-SCHEDULE_SHA = '9f79ee01c507d46c106f9e0037eda772a20a717a49d3de03a2aca06785517441'
+SCHEDULE_SHA = 'e3953da6514bce5bc86e83dbf149a3ad7850894e57c4496c028039f357fc449f'
 
 
 def write_new(path, value):
@@ -96,7 +97,8 @@ class Client:
         G.require(c.get('schema') == 'ltx.resolution-request-client.v1' and c.get('plan_sha256') == G.PLAN_SHA and
                   c.get('parent_manifest_sha256') == G.PARENT_SHA, 'Client contract basis differs')
         G.require(c.get('min_free_bytes') == MIN_FREE and c.get('planned_write_bytes') == WRITE_ALLOWANCE and
-                  c.get('max_captures') == CAPTURE_CAP, 'Client budget contract differs')
+                  type(c.get('max_captures')) is int and c['max_captures'] == CAPTURE_CAP and
+                  type(c.get('max_attempts')) is int and c['max_attempts'] == ATTEMPT_CAP, 'Client budget contract differs')
         G.require(type(c.get('request_timeout_seconds')) is int and 1 <= c['request_timeout_seconds'] <= 1800,
                   'Unbounded request timeout')
         self.root = G.safe_path(c['root']); self.run = G.safe_path(c['server_run'])
@@ -114,7 +116,12 @@ class Client:
         self.evidence = G.Evidence(); self.plan = G.load_plan(G.safe_path(c['plan_path']), self.evidence)
         self.rows = {r['name']: r for r in self.plan['requests']}
         self.full_schedule = 'setup_schedule_path' in c
-        self.ordered_names = [r['name'] for r in self.plan['requests'][:6]]
+        native_rows = [r for r in self.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')]
+        candidate_rows = [r for r in self.plan['requests'] if r['phase'] == 'candidate-check']
+        timed_rows = [r for r in self.plan['requests'] if r['phase'] == 'timed']
+        G.require((len(native_rows), len(candidate_rows), len(timed_rows)) == (6, 7, 14),
+                  'W2 plan phase counts differ')
+        self.ordered_names = [r['name'] for r in native_rows]
         self.identity_raw = G.read_file(self.run / 'server-identity.json'); self.identity = G.strict_json(self.identity_raw)
         G.require(G.sha(self.identity_raw) == G.digest(c['server_identity_sha256']) and
                   self.identity['source_packet_manifest_sha256'] == G.digest(c['runtime_manifest_sha256']) and
@@ -143,11 +150,10 @@ class Client:
             for row in setup:
                 G.require(row['name'] not in self.rows, 'Duplicate setup/plan name')
                 self.rows[row['name']] = row
-            groups = [[r for r in setup if r['phase'] == 'native-setup'], self.plan['requests'][:6],
-                      [r for r in setup if r['phase'] == 'optimized-setup'], self.plan['requests'][6:12],
-                      self.plan['requests'][12:]]
+            groups = [[r for r in setup if r['phase'] == 'native-setup'], native_rows,
+                      [r for r in setup if r['phase'] == 'optimized-setup'], candidate_rows, timed_rows]
             self.ordered_names = [r['name'] for group in groups for r in group]
-            G.require(len(self.ordered_names) == 32 and len(set(self.ordered_names)) == 32,
+            G.require(len(self.ordered_names) == ATTEMPT_CAP and len(set(self.ordered_names)) == ATTEMPT_CAP,
                       'Complete schedule request count differs')
             G.require(G.safe_path(c['phase_observation_path']).parent == self.run,
                       'Phase observation must be in the bound server run')
@@ -232,7 +238,7 @@ class Client:
             G.require(name in self.ordered_names and self.state['completed'] == self.ordered_names[:self.ordered_names.index(name)],
                       'Sealed request sequence/order differs')
             self.phase_observation(row)
-            G.require(len(self.state['attempts']) < CAPTURE_CAP, 'Client attempt cap exhausted')
+            G.require(len(self.state['attempts']) < ATTEMPT_CAP, 'Client attempt cap exhausted')
             self.state['attempts'].append(name); self.save_state()
             destination = self.root / 'requests' / name
             G.safe_path(destination); destination.mkdir(parents=False, exist_ok=False)
@@ -337,7 +343,7 @@ class Client:
 
 async def execute_native_sequence(client, transport_factory=AioTransport):
     results = []
-    for row in client.plan['requests'][:6]:
+    for row in (r for r in client.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')):
         results.append(await client.execute(row['name'], transport_factory()))
     return results
 

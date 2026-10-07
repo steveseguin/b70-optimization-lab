@@ -12,7 +12,7 @@ import re
 import threading
 import time
 
-PLAN_SHA256 = '3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2'
+PLAN_SHA256 = '5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd'
 MODE = 'same-size-native-v1'
 PHASES = ('native_reference', 'reference_verified', 'optimized_preparation',
           'candidate_verified', 'timing')

@@ -1,4 +1,4 @@
-"""Pure CPU construction of the seven reviewed resolution setup graphs; never submit."""
+"""Pure CPU construction of the nine reviewed resolution setup graphs; never submit."""
 import copy
 import hashlib
 import json
@@ -7,15 +7,17 @@ import stat
 
 PARENT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA = '3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2'
-QUALIFICATION_ID = '29ef0d7afecc1254cb50477649b24a36d78648c177b7de3c553b02771ada5dc1'
-PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-reference-101c/candidate-plan.json')
-PREFIX = 'resolution-ref101c-20261007'
-CAPTURE_INDEX = 99901030
+PLAN_SHA = '5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd'
+QUALIFICATION_ID = '007ffea2b24009bb6ae84f03cac7372a708e2dc193da0661562ffb1ddedca534'
+PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-w2-102/candidate-plan.json')
+PREFIX = 'resolution-w2-20261007'
+CAPTURE_INDICES = {'capture0': 99902030, 'capture1': 99902041}
 GRAPHS = {
  'window-probe': ('text-window-probe.json','ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0'),
  'pin0': ('sampler-pin.json','fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005'),
  'capture0': ('graph-capture-all48-pipe-samp2-tsh-win.json','181b2fe7e9daed17f516a38f0dd93d5b4e7d9f26b7c8673a419b0dd1fc0385bd'),
+ 'pin1': ('sampler-pin.json','fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005'),
+ 'capture1': ('graph-capture-all48-pipe-samp2-tsh-win.json','181b2fe7e9daed17f516a38f0dd93d5b4e7d9f26b7c8673a419b0dd1fc0385bd'),
  'coverage': ('sampler-capture-coverage.json','268ca20b91158e6d8487a4b7ceb6d43ed67c0264550b60eff631dc0d94af0579'),
  'decode-probe': ('decode-replica-probe.json','c14a72eb97855140b728e62f189fddcb1c8cf2d281e42e276d825c6bc6d484ef'),
  'freeze': ('sampler-capture-freeze.json','a7740efa3829edc15bf99d6c4e03d974a2c909f3041d358c517345c007c7a161'),
@@ -80,13 +82,16 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
         require(sha(raw)==expected==manifest['files'][path],'Pinned setup graph changed: '+kind)
         graphs[kind]=strict_json(raw);sources[path]=expected
     rows=[];previous=None
-    for kind in ('window-probe','prepare-native','pin0','capture0','coverage','decode-probe','freeze'):
+    for kind in ('window-probe','prepare-native','pin0','capture0','pin1','capture1','coverage','decode-probe','freeze'):
         name=PREFIX+'-'+kind
         graph=({'490':{'class_type':'LTXResolutionPrepareNative','inputs':{'run_name':name}}}
                if kind=='prepare-native' else copy.deepcopy(graphs[kind]))
         for node in graph.values():
             if 'run_name' in node['inputs']:node['inputs']['run_name']=name
-        if kind=='capture0':
+        if kind in ('pin0','pin1'):
+            for node in graph.values():
+                if node['class_type']=='LTXSamplerPin':node['inputs']['worker']=int(kind[-1])
+        if kind in CAPTURE_INDICES:
             # Fixture metadata derives from the already pinned native boat graph.
             native=plan['requests'][0]['graph']
             require(plan['requests'][0]['fixture']=='boat','Native fixture ordering differs')
@@ -94,7 +99,7 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
             graph['364']['inputs']['text']=native['364']['inputs']['text']
             graph['356']['inputs'].update(width=320,height=192,length=25,batch_size=1)
             for node in ('364','428'):
-                graph[node]['inputs']['clip_index']=CAPTURE_INDEX
+                graph[node]['inputs']['clip_index']=CAPTURE_INDICES[kind]
             graph['428']['inputs']['depth']=1
             for node in ('364','428','426'):
                 graph[node]['inputs'].update(output_size='640x384',speed_only=False,
@@ -107,15 +112,19 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
         if kind=='pin0':depends=['barrier:optimized_preparation']
         row={'name':name,'phase':'native-setup' if kind in ('window-probe','prepare-native') else 'optimized-setup',
              'kind':kind,'graph':graph,'graph_sha256':sha(canonical(graph)),'depends_on':depends}
-        if kind=='capture0':
-            row.update(clip_index=CAPTURE_INDEX,expected_emitted_index=None,
-                       postcondition='sample99901030 finished finite; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail',
+        if kind in CAPTURE_INDICES:
+            row.update(clip_index=CAPTURE_INDICES[kind],expected_emitted_index=None,
+                       worker=int(kind[-1]),
+                       admission_action='admit-'+kind, retirement_action='retire-'+kind+'-tails',
+                       postcondition='sample%d finished finite on pinned worker; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail' % CAPTURE_INDICES[kind],
                        output_role='unscored fill placeholder; no native-reference or candidate parity')
         rows.append(row);previous=name
     indices={r['clip_index'] for r in plan['requests']}
-    require(CAPTURE_INDEX not in indices and max(r['clip_index'] for r in plan['requests'][:6])<CAPTURE_INDEX<min(r['clip_index'] for r in plan['requests'][6:]),'Capture index collision')
+    require(len(set(CAPTURE_INDICES.values()))==2 and all(i not in indices and
+        max(r['clip_index'] for r in plan['requests'][:6])<i<min(r['clip_index'] for r in plan['requests'][6:])
+        for i in CAPTURE_INDICES.values()),'Capture index collision')
     captures=sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave') for n in r['graph'].values()) for r in [*plan['requests'],*rows])
-    require(captures==26 and captures<=32,'Capture budget differs')
+    require(captures==29 and captures<=32,'Capture budget differs')
     result={'schema':'ltx.resolution-setup-schedule.v1','status':'CPU-plan-only-not-runtime-qualified',
             'parent_manifest_sha256':PARENT_SHA,'plan_sha256':PLAN_SHA,'qualification_id':QUALIFICATION_ID,
             'source_graph_sha256':sources,'rows':rows,
@@ -124,7 +133,7 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
                 'barrier:reference_verified':[r['name'] for r in plan['requests'][:6]],
                 'barrier:optimized_preparation':['barrier:reference_verified'],
                 plan['requests'][6]['name']:[PREFIX+'-freeze'],
-                'barrier:candidate_verified':[r['name'] for r in plan['requests'][6:12]],
+                'barrier:candidate_verified':[r['name'] for r in plan['requests'][6:13]],
                 'barrier:timing':['barrier:candidate_verified']},
             'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':32,
             'retry_or_extra_fill_requests':0,'native_reference_captures':6,'candidate_compared_clips':3,'timed_compared_clips':10,

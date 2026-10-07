@@ -26,11 +26,9 @@ class GateControls(unittest.TestCase):
 
     def freeze(self):
         d = fixture('sampler-capture-freeze-*.json')
-        d['sampler_workers'] = d['coverage']['workers'] = 1
+        d['sampler_workers'] = d['coverage']['workers'] = 2
         c = d['chain_check']
-        thread = c['rows'][0]['thread']
-        c['rows'] = [r for r in c['rows'] if r['thread'] == thread]
-        c['chains_checked'] = c['chains_passed'] = 2
+        c['chains_checked'] = c['chains_passed'] = 4
         for row in c['rows']:
             for shape in row['shapes']:
                 shape[0][1] = {64:240, 256:960}[shape[0][1]]
@@ -66,7 +64,7 @@ class GateControls(unittest.TestCase):
 
     def test_coverage_worker_and_unfinished_pipeline(self):
         d = fixture('sampler-capture-coverage-*-cover.json')
-        d['sampler_workers'] = d['coverage']['workers'] = 1
+        d['sampler_workers'] = d['coverage']['workers'] = 2
         self.assertTrue(self.check('coverage', d)['passed'])
         d['pipeline_running'] = 1
         with self.assertRaisesRegex(RuntimeError, 'quiescence'):
@@ -81,6 +79,39 @@ class GateControls(unittest.TestCase):
             changed['chain_check']['rows'][0][field] = bad
             with self.assertRaisesRegex(RuntimeError, 'stage chain'):
                 self.check('freeze', changed)
+
+    def test_coverage_rejects_wrong_worker_names_count_and_routes(self):
+        good = fixture('sampler-capture-coverage-*-cover.json')
+        for mutate in (
+                lambda d: d.update(worker_names=['ltx-sample-0', 'ltx-sample-0']),
+                lambda d: d.update(sampler_workers=1),
+                lambda d: d['coverage'].update(workers=1),
+                lambda d: d['coverage'].update(routes=47),
+                lambda d: d['coverage'].update(incomplete_routes=['missing-worker-1'])):
+            d = copy.deepcopy(good)
+            mutate(d)
+            with self.assertRaises(RuntimeError):
+                self.check('coverage', d)
+
+    def test_freeze_requires_four_distinct_worker_device_chains(self):
+        good = self.freeze()
+        self.assertTrue(self.check('freeze', good)['passed'])
+        # Retaining aggregate counts cannot hide one missing chain.
+        d = copy.deepcopy(good)
+        d['chain_check']['rows'].pop()
+        with self.assertRaisesRegex(RuntimeError, 'replay incomplete'):
+            self.check('freeze', d)
+        # Two threads and two devices are insufficient if one pair is duplicated.
+        d = copy.deepcopy(good)
+        d['chain_check']['rows'][1] = copy.deepcopy(d['chain_check']['rows'][0])
+        with self.assertRaisesRegex(RuntimeError, 'worker/device set'):
+            self.check('freeze', d)
+        # Each worker must cover both cards, not two unrelated device workers.
+        d = copy.deepcopy(good)
+        for i, row in enumerate(d['chain_check']['rows']):
+            row['thread'] = 100+i
+        with self.assertRaisesRegex(RuntimeError, 'worker/device set'):
+            self.check('freeze', d)
 
     def test_freeze_requires_fresh_floor_and_no_missing_residents(self):
         d = self.freeze()

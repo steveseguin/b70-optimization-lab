@@ -23,8 +23,10 @@ The unchanged sealed verifier reconstructed the saved proof after shutdown.
 [post-shutdown proof](experiments/ltx25-b70/data/resume-20261007/resolution101c-post-closeout-proof.json),
 [postflight](experiments/ltx25-b70/data/resume-20261007/postflight-101c.json).
 
-Next: test two overlapping batch-one sampler jobs at the same resolution if
-fresh memory admission supports it. Sampling takes about 2.8 seconds per clip;
+The W2 successor is being prepared for two overlapping batch-one sampler jobs
+at the same resolution, subject to fresh memory admission. The CPU plan fixes
+36 attempts and 29 captures; model arithmetic and the exact-output gate remain
+unchanged. [Plan](experiments/ltx25-b70/recovery/20261007-resolution-w2-102/README.md). Sampling takes about 2.8 seconds per clip;
 post-freeze physical free memory was about 7.63/12.34/9.74/14.74 GiB. These are
 observations, not a promised W2 speed or safe peak bound. Keep all numeric and
 quality settings fixed and compare using the same serial client first.

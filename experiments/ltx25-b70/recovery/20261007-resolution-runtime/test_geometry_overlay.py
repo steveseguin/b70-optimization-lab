@@ -15,7 +15,7 @@ sys.dont_write_bytecode = True
 spec=importlib.util.spec_from_file_location('geometry_overlay',Path(__file__).with_name('geometry_overlay.py'))
 G=importlib.util.module_from_spec(spec);spec.loader.exec_module(G)
 PARENT=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
-ENV={'LTX_OUTPUT_SIZE':'640x384','LTX_SAMPLER_PLACEMENT':'two-way','LTX_SAMPLER_WORKERS':'1',
+ENV={'LTX_OUTPUT_SIZE':'640x384','LTX_SAMPLER_PLACEMENT':'two-way','LTX_SAMPLER_WORKERS':'2',
      'LTX_SAMPLER_BATCH':'1','LTX_SAMPLER_SHARED_POOL':'1','LTX_DECODE_REPLICA_DEVICE':'xpu:2','LTX_DECODE_REPLICAS':'1'}
 
 
@@ -49,7 +49,7 @@ def entry(m,role='text',body=None):
 class GeometryControls(unittest.TestCase):
     def setUp(self):
         self.m=module();self.env=patch.dict(os.environ,ENV,clear=True);self.env.start();self.addCleanup(self.env.stop)
-        self.kw=dict(run_name='resolution-ref101c-20261007-native-p1-boat',output_size='640x384',
+        self.kw=dict(run_name='resolution-w2-20261007-native-p1-boat',output_size='640x384',
                      speed_only=False,comparison_mode='same-size-native-v1',qualification_id=G.QUALIFICATION_ID)
 
     def test_historical_geometry_and_guards_unchanged(self):
@@ -98,7 +98,7 @@ class GeometryControls(unittest.TestCase):
         with self.assertRaises(RuntimeError):entry(self.m)(**dict(self.kw,comparison_mode='historical'))
 
     def test_configuration_changes_refuse_before_authority(self):
-        for key,value in [('LTX_SAMPLER_WORKERS','2'),('LTX_SAMPLER_BATCH','2'),('LTX_SAMPLER_PLACEMENT','two-way20-28'),('LTX_DECODE_REPLICA_DEVICE','xpu:1')]:
+        for key,value in [('LTX_SAMPLER_WORKERS','1'),('LTX_SAMPLER_WORKERS','3'),('LTX_SAMPLER_BATCH','2'),('LTX_SAMPLER_PLACEMENT','two-way20-28'),('LTX_DECODE_REPLICA_DEVICE','xpu:1')]:
             auth,calls=authority()
             with patch.dict(os.environ,{key:value}),patch.dict(sys.modules,{'ltx_resolution_session':auth}),self.assertRaises(RuntimeError):entry(self.m)(**self.kw)
             self.assertEqual(calls,[])
@@ -135,7 +135,7 @@ class GeometryControls(unittest.TestCase):
     def test_actual_session_authority_integration(self):
         spec=importlib.util.spec_from_file_location('geometry_real_session',Path(__file__).with_name('session.py'))
         session=importlib.util.module_from_spec(spec);spec.loader.exec_module(session)
-        plan=Path(__file__).resolve().parent.parent/'20261007-resolution-reference-101c/candidate-plan.json'
+        plan=Path(__file__).resolve().parent.parent/'20261007-resolution-w2-102/candidate-plan.json'
         state={'queue_pending':0,'queue_running':0,'pipeline':{'running':0,'stages':{}},
                'fault':False,'sampler_routes':0,'lean_state':0,'decode_replicas':0}
         with tempfile.TemporaryDirectory() as td:

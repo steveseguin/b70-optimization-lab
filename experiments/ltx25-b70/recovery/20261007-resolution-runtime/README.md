@@ -1,4 +1,4 @@
-# 640×384 reference/runtime components — CPU integration reviewed
+# 640×384 reference/runtime components — W2 successor in preparation
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -12,18 +12,24 @@ after graceful shutdown; all four GPUs passed postflight.
 [Measured closeout](../../data/resume-20261007/resolution101c-closeout/summary.json).
 This is scoped workload qualification, not a speed record or endurance result.
 
-The campaign's automatic stop-on-success is historical behavior: the owner has
-since supplied replacement instructions preferring application reuse. Change that
-lifecycle for subsequent work; retain all no-retry/fault-halt/source-quality guards.
-The original model, qualified 99b and both failed packets remain unchanged.
+The current authored successor tests W2/B1 at the same geometry. The model,
+steps, precision and encoder window remain unchanged. The
+[102 request plan](../20261007-resolution-w2-102/README.md) fixes six native
+requests, seven candidate requests and fourteen timed requests; nine setup
+requests bring the total to 36 attempts and 29 raw captures. Captures remain
+capped at 32. Both workers are pinned, admitted and checked independently.
 
-The reviewed [request plan](../20261007-resolution-reference-101c/README.md) fixes
-three original fixtures, native BF16, original 8+3 steps, accepted text window,
-23/25 placement,25frames and640×384. Its plan hash is
-`3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2`.
-W1 is the first optimized scheduling configuration. Native sampling/decoding
-must run before optimized sampler capture, with independent repeats; the
-accepted text encoder remains graph-sharded. This is not an all-eager oracle.
+The owner has supplied replacement instructions preferring application reuse.
+The runner now retains a successful application after verifying quiescence.
+A failed campaign may attempt one bounded graceful incident stop; faults or
+unresolved work remain for the coordinator. No automatic restart or request retry
+is allowed. Retaining the application does not authorize bypassing its consumed
+request plan; follow-up work needs its own registered admission.
+
+101c is the reviewed W1 predecessor; 99b remains the constructor source. Sealed
+historical packets and plans are unchanged. New native references must precede
+optimized capture. The accepted text encoder remains graph-sharded, so this is
+not an all-eager oracle. The new W2 result is not yet GPU-qualified.
 
 Implemented components:
 
@@ -54,30 +60,32 @@ registered node owners, unchanged resident tensor identities and fresh device
 memory. The narrow loader wrapper protects loaded owners from eviction; ordinary
 Comfy allocator bookkeeping is retained. `candidate_gate.py` verifies real
 emissions against the three native references and excludes fills. The complete
-`request_client.py` accepts only the32 exact scheduled requests and reads fresh
-server phase observations; `schedule.py` binds the seven setup graphs.
+`request_client.py` accepts only the 36 exact scheduled requests and reads fresh
+server phase observations; `schedule.py` binds the nine setup graphs.
 
 `integration.py` connects setup-result checks, native safety, source identity and
 phase proofs. It also observes the separate preview writer queue, so unfinished
 tail previews cannot cross phase boundaries. `runtime_packet.py` prepares a new
 source packet only with an explicit reviewed input-inventory hash; its default
 is read-only. `campaign.py` operates one already-owned application, submits each
-request once, and attempts a single graceful stop only after actual quiescence.
+request once, retains a successful application, and attempts a single incident
+stop on failure only after actual quiescence.
 It does not start or restart a server. The initial timing screen uses a serial
 client feeding asynchronous pipeline stages, not a fully queued throughput run.
 
-All14 CPU suites pass, including independent [source/lifecycle review](runtime-build-review.md).
-Required before device execution: immutable materialization and launch checks,
-fresh actual host/storage admission, then
-real resident-object/memory observations. All32 names and26 clip indices were
-reserved separately; no prior canonical request used the selected interval.
-The one finite application must end with graceful shutdown and health postflight.
-A component test or reservation is not a launch admission.
+CPU suites are adjacent `test_*.py` scripts; validation results are recorded
+before sealing. Required before device execution: source closure checks, fresh
+actual host/storage admission, namespace collision checks, and actual resident
+object/memory observations. A component test is not a launch admission.
 
 The failure guard must prevent estimated/actual native VAE OOM from reaching
 automatic tiled decoding or its cache-flush fallback. Pre-native physical free
 thresholds6/6/2/7GiB include provisional allowances, not proven full-model peak
-bounds. Actual resident weights and encoder graphs must already be present.
+bounds. Capture 0 requires 6/6/2/7 GiB free; capture 1 requires 7/7/2/7 GiB.
+The latter keeps a provisional 4 GiB transient allowance, 1 GiB rounded pool
+allowance and 2 GiB floor on the sampler cards. Neither is a measured peak bound.
+Both captures record fresh post-capture memory and enforce the 2 GiB floor.
+Actual resident weights and encoder graphs must already be present.
 Keep the50GiB disk reserve, fresh4GiB write allowance and32-capture bound.
 
 Tests are adjacent `test_*.py` scripts, run with `python3 -B` individually.

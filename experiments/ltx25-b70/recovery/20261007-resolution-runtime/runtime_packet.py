@@ -20,14 +20,16 @@ sys.dont_write_bytecode = True
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT = ROOT / 'prepared-encoder-upstream-99b'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PACKET = ROOT / 'prepared-resolution-reference-101c'
-RUN_NAME = 'encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384'
+PACKET = ROOT / 'prepared-resolution-w2-102'
+RUN_NAME = 'encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384'
 HERE = Path(__file__).resolve().parent
 AUTHOR = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-runtime')
-PLAN = AUTHOR.parent / '20261007-resolution-reference-101c/candidate-plan.json'
-PLAN_SHA = '3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2'
+PLAN = AUTHOR.parent / '20261007-resolution-w2-102/candidate-plan.json'
+PLAN_SHA = '5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd'
+PREDECESSOR = ROOT / 'prepared-resolution-reference-101c'
+PREDECESSOR_SHA = '236637003cf90e2146a8e5bd8fef6aca0a280a1d580c192f5666ae2476f0a966'
 COMMON, LAUNCHER = 'launch/encoder_runtime_common.py', 'launch/serve-encoder.py'
-STATUS = b'Packet101c successor after packet101b reference-gate convention refusal; same-size native reference candidate, not GPU-qualified.\n'
+STATUS = b'Packet102 W2 candidate after successful W1 packet101c; constructed from qualified99b, not GPU-qualified.\n'
 # File names are deliberately explicit: no ambient files or caller-chosen code.
 COMPONENTS = ('geometry_overlay.py', 'native_safety.py', 'native_adapter.py',
               'session.py', 'executor_guard.py', 'runtime_observer.py', 'setup_gates.py',
@@ -77,7 +79,7 @@ def replace_once(text, old, new):
 
 def check_control_environment():
     expected = {'LTX_OUTPUT_SIZE': '640x384', 'LTX_BUSY_WINDOWS': '0',
-                'LTX_SAMPLER_PLACEMENT': 'two-way', 'LTX_SAMPLER_WORKERS': '1',
+                'LTX_SAMPLER_PLACEMENT': 'two-way', 'LTX_SAMPLER_WORKERS': '2',
                 'LTX_SAMPLER_BATCH': '1', 'LTX_SAMPLER_SHARED_POOL': '1',
                 'LTX_DECODE_REPLICA_DEVICE': 'xpu:2', 'LTX_DECODE_REPLICAS': '1',
                 'NEOReadDebugKeys': '1', 'EnableDeferBacking': '0'}
@@ -90,7 +92,7 @@ def launcher_source(raw):
         "re.fullmatch(r'encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256(?:-r[2-5])?', run_name)",
         "run_name == " + repr(RUN_NAME))
     text = replace_once(text, 'Packet99b admits only the frozen batch-one compatibility control',
-                        'Packet101 admits only the reviewed W1 same-size reference experiment')
+                        'Packet101 admits only the reviewed W2 same-size reference experiment')
     text = replace_once(text, "    identity = {'runtime99b_transition': manifest['rope99b'],",
                         "    identity = {'resolution101_transition': manifest['resolution101'],\n"
                         "                'runtime99b_transition': manifest['rope99b'],")
@@ -136,7 +138,10 @@ def input_inventory():
 
 def extra_files(component_dir, plan_raw, plan_path=PLAN):
     result = {'provenance/packet99b-manifest.json': regular(PARENT / 'manifest.json'),
-              'resolution/candidate-plan.json': plan_raw}
+              'resolution/candidate-plan.json': plan_raw,
+              'provenance/reviewed-predecessor101c-manifest.json': regular(PREDECESSOR / 'manifest.json')}
+    require(digest(result['provenance/reviewed-predecessor101c-manifest.json']) == PREDECESSOR_SHA,
+            'Reviewed W1 predecessor manifest changed')
     for name in COMPONENTS:
         raw = regular(component_dir / name)
         result['resolution/components/' + name] = raw
@@ -208,13 +213,14 @@ def verify_packet(packet, expected_manifest_sha256):
     inventory = {n: filesha for n, filesha in
                  ((n, want['resolution/components/' + n]) for n in COMPONENTS)}
     inventory['candidate-plan.json'] = want['resolution/candidate-plan.json']
-    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '101c',
+    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '102',
         'parent_packet': str(PARENT), 'parent_manifest_sha256': PARENT_SHA,
         'plan_sha256': PLAN_SHA, 'input_inventory': inventory,
+        'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
         'input_inventory_sha256': digest(canonical(inventory)),
         'source_delta': {p: {'before_sha256': parent['files'][p], 'after_sha256': digest(raw)}
                          for p, raw in delta.items()},
-        'control': {'size': '640x384', 'batch': 1, 'workers': 1, 'layout': 'two-way',
+        'control': {'size': '640x384', 'batch': 1, 'workers': 2, 'layout': 'two-way',
                     'shared_pool': 1, 'decode_replica': 'xpu:2'},
         'storage_admission': transition['storage_admission'], 'qualification': False, 'model_requests': 0}
     require(transition == expected_transition and transition['storage_admission']['admitted'] is True,
@@ -257,12 +263,13 @@ def build(expected_inventory_sha256, parent_stopped=False):
         write_new(PACKET / path, raw)
     files = {str(p.relative_to(PACKET)): sha(p) for p in PACKET.rglob('*')
              if p.is_file() and p.name != 'STATUS.txt'}
-    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '101c', 'parent_packet': str(PARENT),
+    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '102', 'parent_packet': str(PARENT),
         'parent_manifest_sha256': PARENT_SHA, 'plan_sha256': PLAN_SHA,
+        'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
         'input_inventory': inventory, 'input_inventory_sha256': expected_inventory_sha256,
         'source_delta': {p: {'before_sha256': parent['files'][p], 'after_sha256': digest(raw)}
                          for p, raw in delta.items()},
-        'control': {'size': '640x384', 'batch': 1, 'workers': 1, 'layout': 'two-way',
+        'control': {'size': '640x384', 'batch': 1, 'workers': 2, 'layout': 'two-way',
                     'shared_pool': 1, 'decode_replica': 'xpu:2'},
         'storage_admission': admission, 'qualification': False, 'model_requests': 0}
     manifest = semantic_manifest(parent, files, transition)

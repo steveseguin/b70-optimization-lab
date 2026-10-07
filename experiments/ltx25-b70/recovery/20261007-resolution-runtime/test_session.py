@@ -12,7 +12,7 @@ HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('resolution_session_tested', HERE / 'session.py')
 S = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(S)
-PLAN = HERE.parent / '20261007-resolution-reference-101c/candidate-plan.json'
+PLAN = HERE.parent / '20261007-resolution-w2-102/candidate-plan.json'
 
 
 def empty_state():
@@ -52,6 +52,30 @@ class SessionControls(unittest.TestCase):
         self.assertEqual(len(self.a.completed), 6)
         self.assertEqual(len(self.a.prompt_ids), 6)
         self.assertEqual(self.a.capture_count, 6)
+
+    def test_capture_cap32_preserved_despite36_request_plan(self):
+        self.assertEqual(len(self.rows),27)
+        self.a.capture_count=31
+        self.run_row(self.rows[0])
+        self.assertEqual(self.a.capture_count,32)
+        with self.assertRaisesRegex(RuntimeError,'capture allowance exhausted'):
+            self.run_row(self.rows[1])
+        self.assertEqual(self.a.capture_count,32)
+        self.assertIsNotNone(self.a.failed)
+
+    def test_noncapturing_setup_does_not_consume_capture_allowance(self):
+        spec=importlib.util.spec_from_file_location('w2_test_schedule',HERE/'schedule.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        setup=module.build_schedule()['schedule']['rows']
+        self.assertEqual(len(setup),9)
+        self.assertEqual(sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave')
+                                 for n in r['graph'].values()) for r in [*self.rows,*setup]),29)
+        self.a=S.Authority(PLAN,'a'*64,'b'*64,self.root,lambda:copy.deepcopy(self.state),{},setup)
+        self.a.capture_count=32
+        row=setup[0]
+        self.a.begin(row['name'],row['graph'],'setup-pid')
+        self.a.finish([('execution_success',{'prompt_id':'setup-pid'})])
+        self.assertEqual(self.a.capture_count,32)
 
     def test_forged_graph_fails_before_authorization_and_latches(self):
         row = self.rows[0]

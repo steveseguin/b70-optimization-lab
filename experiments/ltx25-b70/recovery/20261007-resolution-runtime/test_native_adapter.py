@@ -97,7 +97,7 @@ class Fixture:
         self.capture = self.module('capture', _ROUTES=[], CAPTURES_FROZEN=[False], LOADS_FROZEN=[False])
         self.lean = self.module('lean', _MEMO_INSTALLED={}, _SENTRY_INSTALLED={})
         self.sampler = self.namespace('sampler', _installed=None, _failed=False, adapter=self.capture)
-        self.samplerpipe = self.namespace('samplerpipe', _failed=False, SAMPLER_WORKERS=1, SAMPLER_BATCH=1, lean=self.lean)
+        self.samplerpipe = self.namespace('samplerpipe', _failed=False, SAMPLER_WORKERS=2, SAMPLER_BATCH=1, lean=self.lean)
         self.decode = self.namespace('decode', _REPLICAS={}, _REPLICA_SETS={'replica': {}}, _failed=False)
         self.textpipe = self.namespace('textpipe', window=self.window, pipeline=self.pipeline, _failed=False)
         def node(name, method, namespace):
@@ -169,6 +169,15 @@ class AdapterControls(unittest.TestCase):
         self.assertIs(self.f.mm.free_memory, self.f.original_free)
         a.close()
         with self.assertRaises(S.SafetyRefusal): a.prepare()
+
+    def test_w1_or_w3_source_configuration_refuses_before_any_preload(self):
+        for workers in (1,3):
+            with self.subTest(workers=workers):
+                self.f.samplerpipe['SAMPLER_WORKERS']=workers
+                a=self.f.make()
+                with self.assertRaisesRegex(S.SafetyRefusal,'healthy W2 B1'):a.prepare()
+                self.assertFalse(any(e[0]=='load' for e in self.f.events))
+                self.assertIsNotNone(a.failed)
 
     def test_preload_insufficient_space_never_loads_or_retries(self):
         self.f.free['xpu:0'] = 6 * S.GIB

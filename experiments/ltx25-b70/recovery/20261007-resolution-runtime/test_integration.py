@@ -63,9 +63,9 @@ class IntegrationControls(unittest.TestCase):
         self.r.adapter=a;return a,seen
 
     def test_actual_pinned_schedule_registered_and_init_no_models(self):
-        self.assertEqual(len(self.r.authority.requests),32)
+        self.assertEqual(len(self.r.authority.requests),36)
         self.assertEqual(self.r.authority.phase,'native_reference')
-        self.assertEqual(self.r.schedule['raw_capture_requests'],26)
+        self.assertEqual(self.r.schedule['raw_capture_requests'],29)
         self.assertIsNone(self.r.adapter)
 
     def test_dependencies_cannot_be_bypassed_or_mutated(self):
@@ -140,20 +140,78 @@ class IntegrationControls(unittest.TestCase):
         self.assertEqual(captured['source_hashes'][str(self.packet/path)],self.manifest['files'][path])
         self.assertEqual(captured['runtime_sha256'],'a'*64)
 
-    def test_capture_tail_actual_done_marker_schema(self):
-        row=self.setup_row('capture0');self.r.authority.completed.append(row['name'])
-        done={'stage':'sample','index':99901030,'finished_unix':10.,'finite':True,
-              'output_size':'640x384','speed_only':False,'output_parity_claimed':False,
-              'session_observation':{'role':'auxiliary','run_name':None,'phase':'optimized_preparation',
-                  'plan_sha256':SCHEDULE.PLAN_SHA,'qualification_id':SCHEDULE.QUALIFICATION_ID,
-                  'comparison_mode':'same-size-native-v1','runtime_manifest_sha256':'a'*64,
-                  'server_identity_sha256':self.r.identity_sha,'reference_receipt_sha256':'c'*64}}
+    def capture_evidence(self, worker=0):
+        row=self.setup_row('capture%d'%worker);index=row['clip_index']
+        self.r.authority.completed.append(row['name'])
         self.r.authority.phase='optimized_preparation';self.r.authority.references_sha='c'*64
-        (self.run/'pipeline-done-sample-99901030.json').write_text(json.dumps(done))
-        retired=[]
-        with patch.object(self.r,'retire_tails',side_effect=lambda name:retired.append(name)):
-            self.r.action('retire-capture-tails')
-        self.assertEqual(retired,['retire-capture-tails'])
+        observation={'role':'auxiliary','run_name':None,'phase':'optimized_preparation',
+            'plan_sha256':SCHEDULE.PLAN_SHA,'qualification_id':SCHEDULE.QUALIFICATION_ID,
+            'comparison_mode':'same-size-native-v1','runtime_manifest_sha256':'a'*64,
+            'server_identity_sha256':self.r.identity_sha,'reference_receipt_sha256':'c'*64}
+        done={'stage':'sample','index':index,'finished_unix':10.,'finite':True,
+              'output_size':'640x384','speed_only':False,'output_parity_claimed':False,
+              'session_observation':observation}
+        (self.run/('pipeline-done-sample-%d.json'%index)).write_text(json.dumps(done))
+        request={'schema':'ltx.pipeline-sampler-request.v1','run_name':row['name'],
+            'server_identity_sha256':self.r.identity_sha,'clip_index':index,
+            'pinned_worker':'ltx-sample-%d'%worker,'sampler_workers':2,'sampler_batch':1,
+            'mode':'pipeline','depth':1,'detail':{'emitted_index':-1,'fill':True},
+            'phase_authorization':dict(observation,role='sampler',run_name=row['name'])}
+        path=self.run/('pipeline-sampler-'+row['name']+'.json');path.write_text(json.dumps(request))
+        self.state['pipeline']={'running':0,'stages':{'sample':{'queued_indices':[],
+            'jobs':[{'index':index,'target':'ltx-sample-%d'%worker,'done':True,'error':None}]}}}
+        return row,path,request
+
+    def torch_stub(self,free=(8,12,10,14)):
+        seen=[]
+        xpu=types.SimpleNamespace(synchronize=lambda i:seen.append(i),
+            mem_get_info=lambda i:(free[i]*2**30,32*2**30))
+        return types.SimpleNamespace(xpu=xpu),seen
+
+    def test_capture_tail_actual_done_and_request_schemas_both_workers(self):
+        for worker in (0,1):
+            with self.subTest(worker=worker):
+                row,path,request=self.capture_evidence(worker)
+                retired=[];torch,seen=self.torch_stub()
+                with patch.object(self.r,'retire_tails',side_effect=lambda name:retired.append(name)), \
+                     patch.dict('sys.modules',{'torch':torch}):
+                    self.r.action(row['retirement_action'])
+                self.assertEqual(retired,[row['retirement_action']])
+                self.assertEqual(seen,list(range(4)))
+                memory=json.loads((self.run/('resolution-memory-after-'+row['kind']+'.json')).read_text())
+                self.assertEqual(memory['minimum_bytes'],2*2**30)
+
+    def test_wrong_capture_worker_receipt_or_live_target_cannot_retire(self):
+        row,path,request=self.capture_evidence(1)
+        request['pinned_worker']='ltx-sample-0';path.write_text(json.dumps(request))
+        with patch.object(self.r,'retire_tails') as retire:
+            with self.assertRaisesRegex(RuntimeError,'worker or phase'):self.r.action(row['retirement_action'])
+            retire.assert_not_called()
+            request['pinned_worker']='ltx-sample-1';path.write_text(json.dumps(request))
+            self.state['pipeline']['stages']['sample']['jobs'][0]['target']='ltx-sample-0'
+            with self.assertRaisesRegex(RuntimeError,'live job'):self.r.action(row['retirement_action'])
+            retire.assert_not_called()
+        self.assertNotIn(row['retirement_action'],self.r.actions_done)
+
+    def test_capture_postflight_memory_floor_refuses_before_retirement(self):
+        row,path,request=self.capture_evidence(0);torch,seen=self.torch_stub((8,12,1,14))
+        with patch.object(self.r,'retire_tails') as retire,patch.dict('sys.modules',{'torch':torch}):
+            with self.assertRaisesRegex(RuntimeError,'Post-capture physical'):self.r.action(row['retirement_action'])
+            retire.assert_not_called()
+        self.assertEqual(seen,list(range(4)))
+        self.assertTrue((self.run/'resolution-memory-after-capture0.json').exists())
+        self.assertNotIn(row['retirement_action'],self.r.actions_done)
+
+    def test_pin_receipts_use_pinned_graph_worker_identity(self):
+        for worker in (0,1):
+            row=self.setup_row('pin%d'%worker)
+            receipt={'server_identity_sha256':self.r.identity_sha,'outcome':'pinned',
+                'worker':worker,'worker_name':'ltx-sample-%d'%worker,'sampler_workers':2,
+                'sampler_batch':1,'output_size':'640x384'}
+            path=self.run/('sampler-pin-'+row['name']+'.json');path.write_text(json.dumps(receipt))
+            self.r.after_request(row,'cpu')
+            receipt['worker']=1-worker;path.write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(RuntimeError,'Worker pin'):self.r.after_request(row,'cpu')
 
     def test_unfinished_tail_not_retired(self):
         self.state['pipeline']={'running':1,'stages':{}}
@@ -191,7 +249,7 @@ class IntegrationControls(unittest.TestCase):
         handlers=self.routes()
         with patch.object(I,'_CTX',self.r):
             for phase,row in [('native_reference',self.setup_row('window-probe')),
-                              ('optimized_preparation',self.setup_row('pin0')),('timing',self.rows[12])]:
+                              ('optimized_preparation',self.setup_row('pin0')),('timing',self.rows[13])]:
                 self.r.authority.phase=phase
                 self.r.authority.references_sha=None if phase=='native_reference' else 'c'*64
                 self.r.authority.candidate_sha='d'*64 if phase=='timing' else None
@@ -228,12 +286,55 @@ class IntegrationControls(unittest.TestCase):
         xpu=types.SimpleNamespace(synchronize=lambda i:seen.append(('sync',i)),
             mem_get_info=lambda i:(free[i]*2**30,32*2**30))
         with patch.dict('sys.modules',{'torch':types.SimpleNamespace(xpu=xpu),'native_adapter':adapter_module}):
-            self.r.action('admit-capture')
+            self.r.action('admit-capture0')
         self.assertEqual(seen,[('sync',i) for i in range(4)])
-        self.assertIn('admit-capture',self.r.actions_done)
-        evidence=json.loads((self.run/'resolution-admit-capture.json').read_text())
+        self.assertIn('admit-capture0',self.r.actions_done)
+        evidence=json.loads((self.run/'resolution-admit-capture0.json').read_text())
         self.assertTrue(evidence['allowances_are_not_proven_peak_bounds'])
         self.assertEqual(evidence['physical_free_bytes'],{'xpu:%d'%i:v*2**30 for i,v in enumerate(free)})
+
+    def test_second_capture_requires_first_retirement_and_seven_gib_sampler_floor(self):
+        self.r.authority.phase='optimized_preparation'
+        self.r.authority.completed.append(self.setup_row('pin1')['name'])
+        with self.assertRaisesRegex(RuntimeError,'tails must be retired'):
+            self.r.action('admit-capture1')
+        self.r.actions_done.add('retire-capture0-tails')
+        adapter_module=load('integration_memory_adapter','native_adapter.py')
+        rows={role:[{'role':role}] for role in SAFETY.ROLES}
+        self.r.adapter=types.SimpleNamespace(controller=types.SimpleNamespace(
+            expected_residence={role:adapter_module.fingerprint(value) for role,value in rows.items()}),
+            _rows=lambda role,require_loaded:rows[role])
+        torch,seen=self.torch_stub((6,7,2,7))
+        with patch.dict('sys.modules',{'torch':torch,'native_adapter':adapter_module}):
+            with self.assertRaisesRegex(RuntimeError,'memory admission refused'):
+                self.r.action('admit-capture1')
+        self.assertEqual(seen,list(range(4)))
+        receipt=json.loads((self.run/'resolution-admit-capture1.json').read_text())
+        self.assertEqual(receipt['required_bytes']['xpu:0'],7*2**30)
+        self.assertEqual(receipt['required_bytes']['xpu:1'],7*2**30)
+        self.assertNotIn('admit-capture1',self.r.actions_done)
+
+    def test_second_capture_exact_seven_gib_threshold_is_admitted(self):
+        self.r.authority.phase='optimized_preparation'
+        self.r.authority.completed.append(self.setup_row('pin1')['name'])
+        self.r.actions_done.add('retire-capture0-tails')
+        adapter_module=load('integration_memory_adapter_at_floor','native_adapter.py')
+        rows={role:[{'role':role}] for role in SAFETY.ROLES}
+        self.r.adapter=types.SimpleNamespace(controller=types.SimpleNamespace(
+            expected_residence={role:adapter_module.fingerprint(value) for role,value in rows.items()}),
+            _rows=lambda role,require_loaded:rows[role])
+        torch,seen=self.torch_stub((7,7,2,7))
+        with patch.dict('sys.modules',{'torch':torch,'native_adapter':adapter_module}):
+            self.r.action('admit-capture1')
+        self.assertEqual(seen,list(range(4)))
+        self.assertIn('admit-capture1',self.r.actions_done)
+
+    def test_decode_admission_requires_both_retirement_actions(self):
+        self.r.authority.phase='optimized_preparation'
+        self.r.authority.completed.append(self.setup_row('coverage')['name'])
+        self.r.actions_done.add('retire-capture0-tails')
+        with self.assertRaisesRegex(RuntimeError,'tails must be retired'):
+            self.r.action('admit-decode')
 
     def test_memory_admission_cannot_precede_its_setup_dependency(self):
         self.r.authority.phase='optimized_preparation'
@@ -241,10 +342,10 @@ class IntegrationControls(unittest.TestCase):
         def forbidden(*args):raise AssertionError('Device API reached before setup dependency')
         with patch.dict('sys.modules',{'torch':types.SimpleNamespace(xpu=types.SimpleNamespace(synchronize=forbidden))}):
             with self.assertRaisesRegex(RuntimeError,'(?i)(pin|setup|dependency|incomplete)'):
-                self.r.action('admit-capture')
+                self.r.action('admit-capture0')
             with self.assertRaisesRegex(RuntimeError,'(?i)(coverage|setup|dependency|incomplete)'):
                 self.r.action('admit-decode')
-        self.assertFalse((self.run/'resolution-admit-capture.json').exists())
+        self.assertFalse((self.run/'resolution-admit-capture0.json').exists())
 
     def test_phase_actions_need_actual_native_completion(self):
         with self.assertRaisesRegex(RuntimeError,'Six native requests'):self.r.action('verify-native')

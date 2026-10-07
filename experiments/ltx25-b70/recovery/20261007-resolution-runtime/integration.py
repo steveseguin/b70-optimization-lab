@@ -78,8 +78,8 @@ class Runtime:
         self.storage_check()
         self.session.require(not self.action_busy, 'Phase barrier active')
         self.require_dependencies(row)
-        if row.get('kind') in ('capture0', 'decode-probe'):
-            needed = 'admit-capture' if row['kind'] == 'capture0' else 'admit-decode'
+        if row.get('kind') in ('capture0', 'capture1', 'decode-probe'):
+            needed = row.get('admission_action', 'admit-decode')
             self.session.require(needed in self.actions_done, 'Fresh optimized memory admission required')
         if row['phase'] in ('native-reference', 'native-repeat'):
             self.session.require('before-native' in self.actions_done and self.adapter is not None,
@@ -87,7 +87,7 @@ class Runtime:
             value = self.adapter.before_request(row['name'])
             self.write('native-memory-before-' + row['name'] + '.json', value)
         if row['phase'] in ('candidate-check', 'timed'):
-            name = 'resolution-ref101c-20261007-freeze'
+            name = 'resolution-w2-20261007-freeze'
             self.session.require(name in self.authority.completed, 'Passed freeze required before candidate/timing')
             state = self.inspect_state()
             self.session.require(state['captures_frozen'] is True and state['loads_frozen'] is True,
@@ -110,11 +110,12 @@ class Runtime:
         elif kind == 'prepare-native':
             self.session.require(self.adapter is not None and self.adapter.ready and self.adapter.failed is None,
                                  'Native residence preparation did not pass')
-        elif kind == 'pin0':
+        elif kind in ('pin0', 'pin1'):
+            worker = row['graph']['483']['inputs']['worker']
             receipt = self.receipt('sampler-pin-', name)
             self.session.require(receipt['server_identity_sha256'] == self.identity_sha and
-                receipt['outcome'] == 'pinned' and receipt['worker'] == 0 and
-                receipt['worker_name'] == 'ltx-sample-0' and receipt['sampler_workers'] == 1 and
+                receipt['outcome'] == 'pinned' and receipt['worker'] == worker and
+                receipt['worker_name'] == 'ltx-sample-%d' % worker and receipt['sampler_workers'] == 2 and
                 receipt['sampler_batch'] == 1 and receipt['output_size'] == '640x384',
                 'Worker pin did not pass')
         self.storage_check()
@@ -133,7 +134,7 @@ class Runtime:
         import nodes
         import comfy.model_management as mm
         from native_adapter import NativeAdapter
-        self.session.require(name == 'resolution-ref101c-20261007-prepare-native' and self.adapter is None,
+        self.session.require(name == 'resolution-w2-20261007-prepare-native' and self.adapter is None,
                              'Unexpected/repeated native preparation')
         self.session.require_phase('native', self.authority.plan['qualification_id'], name)
         hashes = {str(self.packet / path): sha for path, sha in self.manifest['files'].items()
@@ -194,7 +195,7 @@ class Runtime:
             self.session.require(name not in self.actions_done, 'Phase action already performed')
             self.storage_check()
             if name == 'before-native':
-                self.session.require('resolution-ref101c-20261007-prepare-native' in self.authority.completed,
+                self.session.require('resolution-w2-20261007-prepare-native' in self.authority.completed,
                                      'Native preparation incomplete')
                 self.native_observation('before')
             elif name == 'verify-native':
@@ -228,20 +229,26 @@ class Runtime:
             elif name == 'start-optimized':
                 self.session.require('verify-native' in self.actions_done, 'Native proof not verified')
                 self.authority.advance('optimized_preparation')
-            elif name in ('admit-capture', 'admit-decode'):
+            elif name in ('admit-capture0', 'admit-capture1', 'admit-decode'):
                 self.quiescent()
                 self.session.require(self.authority.phase == 'optimized_preparation',
                                      'Optimized preparation phase required')
-                before = 'pin0' if name == 'admit-capture' else 'coverage'
-                after = 'capture0' if name == 'admit-capture' else 'decode-probe'
-                self.session.require('resolution-ref101c-20261007-' + before in self.authority.completed and
-                                     'resolution-ref101c-20261007-' + after not in self.authority.completed,
+                before, after = {'admit-capture0': ('pin0', 'capture0'),
+                                 'admit-capture1': ('pin1', 'capture1'),
+                                 'admit-decode': ('coverage', 'decode-probe')}[name]
+                self.session.require('resolution-w2-20261007-' + before in self.authority.completed and
+                                     'resolution-w2-20261007-' + after not in self.authority.completed,
                                      'Memory admission must immediately precede its setup stage')
-                if name == 'admit-decode':
-                    self.session.require('retire-capture-tails' in self.actions_done,
-                                         'Capture tails must be retired before decoder admission')
+                if name in ('admit-capture1', 'admit-decode'):
+                    needed = ['retire-capture0-tails']
+                    if name == 'admit-decode':
+                        needed.append('retire-capture1-tails')
+                    self.session.require(all(action in self.actions_done for action in needed),
+                                         'Previous capture tails must be retired before admission')
                 import torch
-                thresholds = (6,6,2,7) if name == 'admit-capture' else (2,2,7,7)
+                thresholds = {'admit-capture0': (6,6,2,7),
+                              'admit-capture1': (7,7,2,7),
+                              'admit-decode': (2,2,7,7)}[name]
                 free = {}
                 for i in range(4):
                     torch.xpu.synchronize(i)
@@ -255,19 +262,52 @@ class Runtime:
                     'allowances_are_not_proven_peak_bounds': True, 'time_ns': time.time_ns()})
                 self.session.require(all(free['xpu:%d' % i] >= n*2**30 for i,n in enumerate(thresholds)),
                                      'Actual optimized preparation memory admission refused')
-            elif name == 'retire-capture-tails':
-                self.session.require('resolution-ref101c-20261007-capture0' in self.authority.completed,
+            elif name in ('retire-capture0-tails', 'retire-capture1-tails'):
+                row = next(r for r in self.setup.values() if r.get('retirement_action') == name)
+                index = row['clip_index']
+                self.session.require(row['name'] in self.authority.completed,
                                      'Capture request incomplete')
                 # A tail that silently failed must never be mistaken for a successful capture.
-                done = self.receipt('pipeline-done-sample-', str(99901030))
+                done = self.receipt('pipeline-done-sample-', str(index))
                 observation = done.get('session_observation', {})
                 self.session.require(observation.get('server_identity_sha256') == self.identity_sha and
                     observation.get('runtime_manifest_sha256') == self.manifest_sha and
                     observation.get('plan_sha256') == self.session.PLAN_SHA256 and
                     observation.get('phase') == 'optimized_preparation' and
                     observation.get('reference_receipt_sha256') == self.authority.references_sha and
-                    done.get('stage') == 'sample' and done.get('index') == 99901030 and done['finite'] is True,
+                    done.get('stage') == 'sample' and done.get('index') == index and done['finite'] is True,
                                      'Capture sample did not finish finite')
+                capture = self.receipt('pipeline-sampler-', row['name'])
+                authorization = capture.get('phase_authorization', {})
+                target = 'ltx-sample-%d' % row['worker']
+                self.session.require(capture.get('pinned_worker') == target and
+                    capture.get('clip_index') == index and capture.get('run_name') == row['name'] and
+                    capture.get('server_identity_sha256') == self.identity_sha and
+                    capture.get('sampler_workers') == 2 and capture.get('sampler_batch') == 1 and
+                    capture.get('mode') == 'pipeline' and capture.get('depth') == 1 and
+                    capture.get('detail', {}).get('emitted_index') == -1 and
+                    capture.get('detail', {}).get('fill') is True and
+                    authorization.get('phase') == 'optimized_preparation' and
+                    authorization.get('plan_sha256') == self.session.PLAN_SHA256 and
+                    authorization.get('qualification_id') == self.authority.plan['qualification_id'] and
+                    authorization.get('runtime_manifest_sha256') == self.manifest_sha and
+                    authorization.get('server_identity_sha256') == self.identity_sha and
+                    authorization.get('reference_receipt_sha256') == self.authority.references_sha,
+                    'Capture request worker or phase binding differs')
+                state = self.quiescent(no_tails=False)
+                jobs = state['pipeline']['stages'].get('sample', {}).get('jobs', [])
+                self.session.require(len(jobs) == 1 and jobs[0]['index'] == index and
+                    jobs[0].get('target') == target and jobs[0]['done'] is True and jobs[0]['error'] is None,
+                    'Capture live job does not match its pinned worker')
+                import torch
+                free = {}
+                for device in range(4):
+                    torch.xpu.synchronize(device)
+                    free['xpu:%d' % device] = int(torch.xpu.mem_get_info(device)[0])
+                self.write('resolution-memory-after-' + row['kind'] + '.json',
+                    {'physical_free_bytes': free, 'minimum_bytes': 2*2**30, 'time_ns': time.time_ns()})
+                self.session.require(all(value >= 2*2**30 for value in free.values()),
+                                     'Post-capture physical memory floor refused')
                 self.retire_tails(name)
             elif name == 'verify-candidate':
                 self.retire_tails(name)

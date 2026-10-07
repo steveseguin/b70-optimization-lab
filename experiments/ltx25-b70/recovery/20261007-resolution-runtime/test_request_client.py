@@ -12,7 +12,7 @@ import unittest
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('request_client_tested', HERE/'request_client.py')
 C = importlib.util.module_from_spec(spec); spec.loader.exec_module(C)
-PLAN = HERE.parent/'20261007-resolution-reference-101c/candidate-plan.json'
+PLAN = HERE.parent/'20261007-resolution-w2-102/candidate-plan.json'
 
 
 class Transport:
@@ -72,7 +72,7 @@ class ClientControls(unittest.TestCase):
                        'parent_manifest_sha256':C.G.PARENT_SHA,'root':str(self.root),'server_run':str(self.run),
                        'client_dir':str(self.client_dir),'plan_path':str(PLAN),'runtime_manifest_sha256':'a'*64,
                        'server_identity_sha256':C.G.sha((self.run/'server-identity.json').read_bytes()),
-                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':32,
+                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':32,'max_attempts':36,
                        'request_timeout_seconds':10,'capture_guard_path':str(guard),
                        'source_bindings':{str(p.resolve()):C.G.sha(p.read_bytes()) for p in
                                           [guard, HERE/'request_client.py', HERE/'reference_gate.py']}}
@@ -182,12 +182,37 @@ class ClientControls(unittest.TestCase):
         t=Transport();self.refused(t);self.assertEqual(t.posts,0)
         self.assertEqual(sorted(x.name for x in p.iterdir()),['original'])
 
-    def test_exact_full_schedule32_serial_requests_with_external_phase_observations(self):
+    def test_exact_full_schedule36_serial_requests_with_external_phase_observations(self):
         self.full_client();posts=0
         for name in self.client.ordered_names:
             row=self.client.rows[name];self.phase(row);t=Transport();self.execute(t,name);posts+=t.posts
-        self.assertEqual(posts,32)
+        self.assertEqual(posts,36)
+        self.assertEqual(C.CAPTURE_CAP,32)
+        self.assertEqual(sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave')
+                                 for n in r['graph'].values()) for r in self.client.rows.values()),29)
+        for phase,count in (('candidate-check',7),('timed',14)):
+            self.assertEqual(sum(self.client.rows[n]['phase']==phase for n in self.client.ordered_names),count)
         self.assertEqual(self.client.state['completed'],self.client.ordered_names)
+
+    def test_attempt_limit_separate_from_capture_limit_and_contract_strict(self):
+        for key, value in [('max_attempts',32),('max_attempts',36.0),('max_attempts',True),
+                           ('max_attempts',None),('max_captures',36),('max_captures',32.0)]:
+            original=self.contract[key]
+            self.contract[key]=value
+            with self.subTest(key=key,value=value),self.assertRaisesRegex(ValueError,'budget contract'):
+                self.make_client()
+            self.contract[key]=original
+
+    def test_exhausted36_attempts_refuses_before_transport_or_output(self):
+        self.client.acquire()
+        try:
+            self.client.state['attempts']=['prior-attempt-%d'%i for i in range(C.ATTEMPT_CAP)]
+            self.client.save_state()
+        finally:self.client.release()
+        t=Transport()
+        with self.assertRaisesRegex(ValueError,'attempt cap exhausted'):self.execute(t)
+        self.assertEqual(t.posts,0)
+        self.assertFalse((self.root/'requests'/self.name).exists())
 
     def test_full_schedule_does_not_advance_phase_from_completed_request_count(self):
         self.full_client()
@@ -199,11 +224,12 @@ class ClientControls(unittest.TestCase):
 
     def test_timing_needs_candidate_receipt_in_actual_phase_observation(self):
         self.full_client();self.client.acquire()
+        first_timed = next(i for i,n in enumerate(self.client.ordered_names) if self.client.rows[n]['phase']=='timed')
         try:
-            self.client.state['completed']=self.client.ordered_names[:19]
-            self.client.state['attempts']=self.client.ordered_names[:19];self.client.save_state()
+            self.client.state['completed']=self.client.ordered_names[:first_timed]
+            self.client.state['attempts']=self.client.ordered_names[:first_timed];self.client.save_state()
         finally:self.client.release()
-        name=self.client.ordered_names[19];self.assertEqual(self.client.rows[name]['phase'],'timed')
+        name=self.client.ordered_names[first_timed];self.assertEqual(self.client.rows[name]['phase'],'timed')
         self.phase(self.client.rows[name],candidate_receipt_sha256=None)
         t=Transport();self.refused(t,name);self.assertEqual(t.posts,0)
 

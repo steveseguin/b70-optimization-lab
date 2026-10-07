@@ -28,9 +28,9 @@ def literal(raw, name):
 
 class PacketControls(unittest.TestCase):
     def test_successor_identity_explicit_in_path_status_and_transition(self):
-        self.assertEqual(B.PACKET.name, 'prepared-resolution-reference-101c')
-        self.assertEqual(B.RUN_NAME, 'encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384')
-        self.assertIn(b'Packet101c successor after packet101b', B.STATUS)
+        self.assertEqual(B.PACKET.name, 'prepared-resolution-w2-102')
+        self.assertEqual(B.RUN_NAME, 'encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384')
+        self.assertIn(b'Packet102 W2 candidate after successful W1 packet101c', B.STATUS)
         tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
         transitions=[]
         for node in ast.walk(tree):
@@ -38,7 +38,38 @@ class PacketControls(unittest.TestCase):
                 fields={k.value:v for k,v in zip(node.keys,node.values) if isinstance(k,ast.Constant)}
                 if 'schema' in fields and isinstance(fields['schema'],ast.Constant) and fields['schema'].value=='ltx.resolution101.transition.v1':
                     transitions.append(ast.literal_eval(fields['packet_revision']))
-        self.assertEqual(transitions,['101c','101c'])
+        self.assertEqual(transitions,['102','102'])
+
+    def test_constructor99b_and_reviewed101c_provenance_are_distinct_and_bound(self):
+        self.assertEqual(B.PARENT.name,'prepared-encoder-upstream-99b')
+        self.assertEqual(B.PREDECESSOR.name,'prepared-resolution-reference-101c')
+        extras=B.extra_files(B.AUTHOR,B.regular(B.PLAN))
+        self.assertEqual(B.digest(extras['provenance/packet99b-manifest.json']),B.PARENT_SHA)
+        self.assertEqual(B.digest(extras['provenance/reviewed-predecessor101c-manifest.json']),B.PREDECESSOR_SHA)
+        prior=json.loads(extras['provenance/reviewed-predecessor101c-manifest.json'])
+        self.assertEqual(prior['resolution101']['packet_revision'],'101c')
+        self.assertEqual(prior['resolution101']['parent_manifest_sha256'],B.PARENT_SHA)
+        self.assertEqual(prior['resolution101']['control']['workers'],1)
+        self.assertEqual(prior['rope99b'],B._parent_manifest['rope99b'])
+        schedule=json.loads(extras['resolution/setup-schedule.json'])['schedule']
+        self.assertEqual(schedule['submitted_requests'],36)
+        self.assertEqual(schedule['raw_capture_requests'],29)
+        self.assertEqual(schedule['capture_cap'],32)
+        tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
+        transitions=[]
+        for node in ast.walk(tree):
+            if isinstance(node,ast.Dict):
+                fields={k.value:v for k,v in zip(node.keys,node.values) if isinstance(k,ast.Constant)}
+                if 'schema' in fields and isinstance(fields['schema'],ast.Constant) and fields['schema'].value=='ltx.resolution101.transition.v1':
+                    self.assertEqual(ast.literal_eval(fields['control'])['workers'],2)
+                    transitions.append(ast.unparse(fields['reviewed_predecessor']))
+        self.assertEqual(len(transitions),2)
+        self.assertEqual(transitions[0],transitions[1])
+        with tempfile.TemporaryDirectory() as tmp:
+            predecessor=Path(tmp);(predecessor/'manifest.json').write_text('{}')
+            with patch.object(B,'PREDECESSOR',predecessor):
+                with self.assertRaisesRegex(RuntimeError,'predecessor manifest changed'):
+                    B.extra_files(B.AUTHOR,B.regular(B.PLAN))
 
     def test_default_is_plan_only_with_no_build_or_packet_write(self):
         output = io.StringIO()
@@ -101,12 +132,12 @@ class PacketControls(unittest.TestCase):
 
     def test_explicit_environment_refuses_historical_configuration(self):
         good = {'LTX_OUTPUT_SIZE': '640x384', 'LTX_BUSY_WINDOWS': '0',
-                'LTX_SAMPLER_PLACEMENT': 'two-way', 'LTX_SAMPLER_WORKERS': '1',
+                'LTX_SAMPLER_PLACEMENT': 'two-way', 'LTX_SAMPLER_WORKERS': '2',
                 'LTX_SAMPLER_BATCH': '1', 'LTX_SAMPLER_SHARED_POOL': '1',
                 'LTX_DECODE_REPLICA_DEVICE': 'xpu:2', 'LTX_DECODE_REPLICAS': '1',
                 'NEOReadDebugKeys': '1', 'EnableDeferBacking': '0'}
         with patch.dict(B.os.environ, good, clear=True): B.check_control_environment()
-        for field, value in [('LTX_SAMPLER_WORKERS', '2'), ('LTX_OUTPUT_SIZE', '256x256'),
+        for field, value in [('LTX_SAMPLER_WORKERS', '1'), ('LTX_SAMPLER_WORKERS', '3'), ('LTX_OUTPUT_SIZE', '256x256'),
                              ('LTX_SAMPLER_PLACEMENT', 'two-way20-28')]:
             with patch.dict(B.os.environ, dict(good, **{field: value}), clear=True):
                 with self.assertRaises(RuntimeError): B.check_control_environment()

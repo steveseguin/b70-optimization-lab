@@ -68,19 +68,19 @@ class CandidateControls(unittest.TestCase):
             text = dict(common,clip_index=row['clip_index'],mode='pipeline-window',depth=2,
                         detail={'text_sha256':textsha,'tag':textsha,'speculation_miss':False,
                                 'window_encode':{'window':64,'clip_index':row['clip_index']}})
-            si = -1 if i == 0 else row['clip_index']-1
-            di = -1 if i < 3 else rows[0]['clip_index']+row['expected_emitted_index']
+            si = -1 if i < 2 else row['clip_index']-2
+            di = -1 if i < 4 else rows[0]['clip_index']+row['expected_emitted_index']
             sample = dict(common,schema='ltx.pipeline-sampler-request.v1',clip_index=row['clip_index'],mode='pipeline-lean',
-                          depth=1,sampler_batch=1,sampler_workers=1,detail={'emitted_index':si})
+                          depth=2,sampler_batch=1,sampler_workers=2,detail={'emitted_index':si})
             decode = dict(common,schema='ltx.pipeline-decode-request.v1',clip_index=si,mode='pipeline-replica',
                           depth=2,upstream_depth=0,detail={'emitted_index':di},save_failures=[])
             for stem, role, val in [('pipeline-','text',text),('pipeline-sampler-','sampler',sample),('pipeline-decode-','decode',decode)]:
                 self.f.write(self.server/(stem+name+'.json'),self.label(val,role,name,phase,candidate_sha))
-            if i < 3: continue
+            if i < 4: continue
             original = self.root/'output/validation'/row['reference']; out = original.parent/name
             shutil.copytree(original,out)
             self.f.mutate(out/'summary.json',lambda v:v.update(run_name=name))
-            prefix = rows[row['expected_emitted_index']+1]['name']+'/preview'
+            prefix = rows[row['expected_emitted_index']+2]['name']+'/preview'
             saved = prefix+'_00001_.mp4'; preview=self.root/'output'/saved; preview.parent.mkdir(parents=True,exist_ok=True);preview.write_bytes(b'synthetic-preview')
             self.f.write(self.server/('pipeline-save-'+name+'.json'), {'schema':'ltx.pipeline-save-record.v2','run_name':name,
                          'status':'queued-to-writer','prefix':prefix,'saved_file':None})
@@ -96,7 +96,11 @@ class CandidateControls(unittest.TestCase):
         with self.assertRaises((ValueError,KeyError,FileNotFoundError)):self.run_gate()
         self.assertFalse(self.output.exists())
 
-    def row(self,index=9):return self.f.plan['requests'][index]
+    def row(self,index=10):return self.f.plan['requests'][index]
+
+    def marker(self, stage, emitted=0):
+        base = self.row(6)['clip_index']
+        return self.server / ('pipeline-done-%s-%d.json' % (stage, base+emitted))
 
     def test_complete_candidate_reconstruction_and_timing(self):
         result=self.run_gate();self.assertEqual(result['four_tensor_exact_clips'],3)
@@ -108,8 +112,10 @@ class CandidateControls(unittest.TestCase):
         self.assertNotIn('torch',sys.modules)
 
     def test_fill_capture_is_never_parity(self):
-        folder=self.root/'output/validation'/self.row(6)['name'];folder.mkdir();(folder/'tensors.safetensors').write_bytes(b'placeholder')
-        result=self.run_gate();self.assertEqual([r['parity_status'] for r in result['executions'][:3]],['not-scored-fill']*3)
+        for index in (6, 9):  # First and fourth fills are not scored tensor captures.
+            folder=self.root/'output/validation'/self.row(index)['name']
+            folder.mkdir();(folder/'tensors.safetensors').write_bytes(b'placeholder')
+        result=self.run_gate();self.assertEqual([r['parity_status'] for r in result['executions'][:4]],['not-scored-fill']*4)
 
     def test_conditioning_tags_match_pinned_producer_for_candidate_and_timing(self):
         parent=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
@@ -140,16 +146,45 @@ class CandidateControls(unittest.TestCase):
 
     def test_wrong_emitted_index_and_missing_worker_marker(self):
         name=self.row()['name'];p=self.server/('pipeline-decode-'+name+'.json')
-        self.f.mutate(p,lambda v:v['detail'].update(emitted_index=99901101));self.refuse()
+        self.f.mutate(p,lambda v:v['detail'].update(emitted_index=self.row(6)['clip_index']+1));self.refuse()
+
+    def test_wrong_sampler_worker_or_depth_refused(self):
+        p = self.server / ('pipeline-sampler-' + self.row()['name'] + '.json')
+        original = json.loads(p.read_text())
+        for field, value in [('sampler_workers', 1), ('depth', 1), ('sampler_batch', 2)]:
+            changed = copy.deepcopy(original)
+            changed[field] = value
+            self.f.write(p, changed)
+            with self.assertRaisesRegex(ValueError, 'Sampler emission differs'):
+                self.run_gate()
+            self.assertFalse(self.output.exists())
+        self.f.write(p, original)
+
+    def test_fourth_fill_and_two_prompt_sampler_delay_are_required(self):
+        row = self.row(7)  # second candidate request must still be sampler fill
+        p = self.server / ('pipeline-sampler-' + row['name'] + '.json')
+        self.f.mutate(p, lambda v: v['detail'].update(emitted_index=row['clip_index']-1))
+        with self.assertRaisesRegex(ValueError, 'Sampler emission differs'):
+            self.run_gate()
+        self.assertFalse(self.output.exists())
+
+    def test_preview_must_use_two_prompt_producer_offset(self):
+        row = self.row()
+        p = self.server / ('pipeline-save-' + row['name'] + '.json')
+        wrong = self.row(7)['name'] + '/preview'
+        self.f.mutate(p, lambda v: v.update(prefix=wrong))
+        with self.assertRaisesRegex(ValueError, 'Preview completion/prefix differs'):
+            self.run_gate()
+        self.assertFalse(self.output.exists())
 
     def test_missing_done_marker(self):
-        (self.server/'pipeline-done-save-99901100.json').unlink();self.refuse()
+        self.marker('save').unlink();self.refuse()
 
     def test_wrong_deterministic_decode_slot_refused(self):
-        self.f.mutate(self.server/'pipeline-done-decode-99901101.json',lambda v:v.update(slot='native'));self.refuse()
+        self.f.mutate(self.marker('decode', 1),lambda v:v.update(slot='native'));self.refuse()
 
     def test_preview_failure_refused(self):
-        self.f.mutate(self.server/'pipeline-done-save-99901100.json',lambda v:v.update(saved='save-failed:RuntimeError'));self.refuse()
+        self.f.mutate(self.marker('save'),lambda v:v.update(saved='save-failed:RuntimeError'));self.refuse()
 
     def test_coherent_tensor_change_still_rejected_by_native_bytes(self):
         folder=self.root/'output/validation'/self.row()['name'];p=folder/'tensors.safetensors'

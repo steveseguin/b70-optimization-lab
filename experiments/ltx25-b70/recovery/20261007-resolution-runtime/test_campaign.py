@@ -37,7 +37,7 @@ class CampaignControls(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         self.run = self.root / 'server'; self.run.mkdir()
-        plan_path = HERE.parent / '20261007-resolution-reference-101c/candidate-plan.json'
+        plan_path = HERE.parent / '20261007-resolution-w2-102/candidate-plan.json'
         self.plan = json.loads(plan_path.read_text())['plan']
         self.fake_client = NS(run=self.run, root=self.root, full_schedule=True,
             contract={'runtime_manifest_sha256': 'b' * 64, 'plan_path': str(plan_path),
@@ -72,7 +72,7 @@ class CampaignControls(unittest.TestCase):
         self.assertEqual((result['status'], result['model_requests'], result['server_actions']), ('plan-only', 0, 0))
         cls.assert_not_called(); C.call.assert_not_called(); C.os.kill.assert_not_called()
 
-    def test_exact_32_requests_and_memory_phase_barriers(self):
+    def test_exact_36_requests_and_memory_phase_barriers(self):
         self.c.wait_idle = Mock(return_value=self.status())
         self.c.status = Mock(return_value=self.status())
         self.c.check_identity = Mock()
@@ -87,9 +87,20 @@ class CampaignControls(unittest.TestCase):
         expected = [r['name'] for r in setup[:2]] + [r['name'] for r in self.plan['requests'][:6]]
         expected += [r['name'] for r in setup[2:]] + [r['name'] for r in self.plan['requests'][6:]]
         self.assertEqual(result['requests'], expected)
-        self.assertEqual(len(expected), 32); self.assertEqual(len(set(expected)), 32)
-        self.assertEqual(log[log.index(('action', 'admit-capture')) + 1], ('request', setup[3]['name']))
-        self.assertEqual(log[log.index(('action', 'admit-decode')) + 1], ('request', setup[5]['name']))
+        self.assertEqual(len(expected), 36); self.assertEqual(len(set(expected)), 36)
+        for capture_index in (3, 5):
+            row = setup[capture_index]
+            self.assertEqual(log[log.index(('action', row['admission_action'])) + 1], ('request', row['name']))
+            self.assertEqual(log[log.index(('request', row['name'])) + 1], ('action', row['retirement_action']))
+        self.assertEqual(log[log.index(('action', 'admit-decode')) + 1], ('request', setup[7]['name']))
+        candidate_names = [r['name'] for r in self.plan['requests'][6:13]]
+        candidate_begin = log.index(('request', candidate_names[0]))
+        self.assertEqual(log[candidate_begin:candidate_begin+7], [('request', n) for n in candidate_names])
+        self.assertEqual(log[candidate_begin+7], ('action', 'verify-candidate'))
+        self.assertEqual(result['actions'], ['before-native', 'verify-native', 'start-optimized',
+                         'admit-capture0', 'retire-capture0-tails', 'admit-capture1',
+                         'retire-capture1-tails', 'admit-decode', 'verify-candidate',
+                         'start-timing', 'verify-timed'])
         self.assertLess(log.index(('action', 'verify-native')), log.index(('action', 'start-optimized')))
         self.assertLess(log.index(('action', 'verify-candidate')), log.index(('action', 'start-timing')))
         C.os.kill.assert_not_called()
@@ -165,12 +176,53 @@ class CampaignControls(unittest.TestCase):
         self.assertGreaterEqual(self.clock.now, 185)
         self.assertFalse((self.run / 'resolution-stopped.json').exists())
 
-    def test_first_sigterm_during_closeout_does_not_interrupt_existing_stop(self):
+    def test_main_success_retains_quiescent_application_without_stop_or_signal(self):
+        async def execute():
+            self.c.owns_campaign = True
+            return {'passed': True, 'requests': ['completed-screen']}
+        self.c.execute = execute
+        self.c.wait_idle = Mock(return_value=self.status())
+        self.c.graceful_stop = Mock(side_effect=AssertionError('Successful app must remain running'))
+        with patch.object(C, 'Campaign', return_value=self.c), \
+                patch.object(sys, 'argv', ['campaign.py', '--run']), \
+                patch.object(C.signal, 'signal'), contextlib.redirect_stdout(self.output):
+            C.main()
+        result = json.loads((self.run / 'resolution-campaign-result.json').read_text())
+        self.assertTrue(result['passed'])
+        self.assertEqual(result['application'], {'running': True, 'available_for_reuse': True,
+                                                'final_status': self.status()})
+        self.assertFalse(result['stop']['stopped'])
+        self.c.wait_idle.assert_called_once_with()
+        self.c.graceful_stop.assert_not_called()
+        C.os.kill.assert_not_called()
+        self.assertFalse((self.run / 'resolution-stop-intent.json').exists())
+        self.assertFalse((self.run / 'resolution-stopped.json').exists())
+
+    def test_failed_final_observation_preserves_application_for_coordinator(self):
+        async def execute():
+            self.c.owns_campaign = True
+            return {'passed': True}
+        self.c.execute = execute
+        self.c.wait_idle = Mock(side_effect=RuntimeError('final state unavailable'))
+        self.c.graceful_stop = Mock(side_effect=AssertionError('Unproven state must not signal'))
+        with patch.object(C, 'Campaign', return_value=self.c), \
+                patch.object(sys, 'argv', ['campaign.py', '--run']), \
+                patch.object(C.signal, 'signal'), contextlib.redirect_stdout(self.output):
+            with self.assertRaises(SystemExit):
+                C.main()
+        result = json.loads((self.run / 'resolution-campaign-result.json').read_text())
+        self.assertFalse(result['passed'])
+        self.assertTrue(result['application']['requires_coordinator'])
+        self.assertFalse(result['stop']['stopped'])
+        self.c.graceful_stop.assert_not_called()
+        C.os.kill.assert_not_called()
+
+    def test_first_sigterm_during_failure_closeout_does_not_interrupt_existing_stop(self):
         handlers = {}
         def register(sig, fn): handlers[sig] = fn
         async def execute():
             self.c.owns_campaign = True
-            return {'passed': True}
+            raise RuntimeError('failed request')
         self.c.execute = execute
         def stop():
             handlers[C.signal.SIGTERM](C.signal.SIGTERM, None)
@@ -180,7 +232,9 @@ class CampaignControls(unittest.TestCase):
                 patch.object(sys, 'argv', ['campaign.py', '--run']), \
                 patch.object(C.signal, 'signal', side_effect=register), \
                 contextlib.redirect_stdout(self.output):
-            C.main()
+            with self.assertRaises(SystemExit) as raised:
+                C.main()
+            self.assertEqual(raised.exception.code, 1)
         self.c.graceful_stop.assert_called_once()
         self.assertTrue((self.run / 'resolution-campaign-result.json').exists())
         C.os.kill.assert_not_called()
