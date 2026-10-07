@@ -1,0 +1,45 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "local/sparse-memory-t1000k-s0"
+description = "sparse prose ledger (w, density 3.0), memory, ~999361 tokens, seed 0"
+authors = []
+keywords = ["context", "sparse"]
+
+[metadata]
+seed = 0
+target_tokens = 1000000
+stream_tokens = 999361
+token_counter = "tokenizer"
+batch_tokens = 1702
+density = 3.0
+setting = "w"
+n_get = 24
+n_counters = 60
+n_deleted_queried = 3
+n_surprise = 0
+n_items = 588
+n_batches = 587
+mode = "memory"
+kind = "sparse"
+max_item_chars = 8117
+
+[verifier]
+timeout_sec = 300.0
+collect = []
+
+[verifier.env]
+
+[agent]
+timeout_sec = 529200.0
+
+[environment]
+network_mode = "public"  # "no-network" needs Harbor's egress sidecar, built with docker buildx (not installed here)
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

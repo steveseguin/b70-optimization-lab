@@ -29,6 +29,9 @@ the final item (the harness must refuse it).
 FAKE_GUARDS=1 (with improved-read): after the first drop, repeats its last command and then deletes a
 STATE.txt line with no item in context (the harness must refuse / restore). FAKE_TEXTCALL=1: `next` is
 written as text (`bash {"command": "next"}`) instead of a tool call (the harness must recover it).
+FAKE_PLAN=improved-quoted (+ FAKE_REFERENCE): quoted-events agent (arm B32iq): sends `ctxfold --events`
+lines built from the reference ops, quoting the batch sentence; the first list for item 1 carries a
+fabricated quote (ctxfold must refuse it and apply nothing).
 FAKE_PLAN=improved-ctxfold: writes a buggy /tmp/.live_ctx/FOLD.py first (ctxfold must refuse it),
 then a correct one, and folds every item with `ctxfold`. Without tools (e.g. a summary request) it
 returns fixed text. /v1/completions returns fixed text. Usage numbers are rough
@@ -221,6 +224,54 @@ def plan_read(msgs):
             + ")\nPYEOF\nctxfold --drop")
 
 
+def plan_quoted(msgs):
+    """Scripted quoted-events agent (FAKE_PLAN=improved-quoted, FAKE_REFERENCE=<task>/tests/reference.json;
+    arm B32iq). Per batch it sends `ctxfold --events` lines built from the reference's ops, each quoting
+    the sentence of the batch that names the counter. For item 1 the first list carries a fabricated
+    quote: ctxfold must refuse it (bad quote) and apply nothing; then it sends the correct list."""
+    refj = json.load(open(os.environ["FAKE_REFERENCE"]))
+    ref = refj["after_batch"]
+    tools = [str(m.get("content") or "") for m in msgs if m.get("role") == "tool"]
+    last = tools[-1] if tools else ""
+    alltext = "\n".join(str(m.get("content") or "") for m in msgs[2:] if m.get("role") in ("tool", "user"))
+    if "answers.json written" in last:
+        return "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
+    items = [(int(n), t) for t in tools for n in re.findall(r"(?m)^ITEM (\d+)/\d+ \(UPDATE\)", t)]
+    if "This was the last item" in alltext and not items:
+        ans = {q: ref[-1]["state"].get(q) for q in re.findall(r"(?m)^QUERY (\S+)$", alltext)}
+        sur = refj.get("surprise") or {}
+        for k in re.findall(r"(?m)^ASK (\S+?):", alltext):
+            ans[k] = (sur.get(k) or {}).get("a")
+        return "cat > /app/answers.json <<'EOF'\n" + json.dumps(ans) + "\nEOF\necho answers.json written"
+    if not items:
+        return "next"
+    n, body = max(items)
+    body = body.split("\n\n(exit_code=")[0]
+    live = set(ref[n - 2]["state"]) if n > 1 else set()
+    used: dict = {}
+    lines = []
+    for nm, op, arg, _after, *_ in ref[n - 1]["ops"]:
+        sents = re.findall(r"[^.\n]*\b" + re.escape(nm) + r"\b[^.\n]*\.", body)
+        if op != "del":  # prefer the sentences that carry the amount (digits: the stub task has no --words)
+            sents = [s for s in sents if re.search(r"(?<![\d-])" + re.escape(str(abs(arg) if op == "add" else arg))
+                                                   + r"(?!\d)", s)] or sents
+        k = used.get((nm, op, arg), 0)
+        used[(nm, op, arg)] = k + 1
+        q = sents[min(k, len(sents) - 1)].strip() if sents else nm
+        if op in ("set", "correct"):
+            lines.append(f'{nm} | {"set" if nm in live else "reopen"} | {arg} | "{q}"')
+            live.add(nm)
+        elif op == "add":
+            lines.append(f'{nm} | {"add" if arg >= 0 else "sub"} | {abs(arg)} | "{q}"')
+        elif op == "del":
+            lines.append(f'{nm} | remove | | "{q}"')
+            live.discard(nm)
+    if n == 1 and "REFUSED (bad quote)" not in alltext and lines:
+        nm0 = lines[0].split(" |")[0]
+        lines[0] = lines[0].rsplit("|", 1)[0] + f'| "{nm0} was audited and found to hold exactly what was reported."'
+    return "ctxfold --events <<'EOF'\n" + ("\n".join(lines) or "none") + "\nEOF"
+
+
 def plan(msgs):
     """Scripted agent. FAKE_PLAN: honest (default) | violate | inline (see module doc)."""
     seen = [str(m.get("content") or "") for m in msgs if m.get("role") in ("tool", "user")
@@ -229,6 +280,8 @@ def plan(msgs):
     mode = os.environ.get("FAKE_PLAN", "honest")
     if mode == "improved-ctxfold":
         return plan_ctxfold(msgs)
+    if mode == "improved-quoted":
+        return plan_quoted(msgs)
     if mode == "improved-read":
         return plan_read(msgs)
     if mode.startswith("improved"):

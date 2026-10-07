@@ -1,0 +1,8 @@
+arm	kind	mode	size	seed	budget	reward	lm_calls	real_edits	summaries	summary_failed	peak_sent_ctx	prompt_tokens	cached_tokens	think_share	completion_tokens	think_tok_est	other_tok_est	thinking_off_calls	prefix_stable_share	wall_s	items_lost	ended_by	rule
+B32ir	sparse	memory	119172	1	32768	0.000	142	70	0	0	18632	1733740	1399424	0.000	11736	82	11653	140	0.504	303	0	submit	VOID
+
+# diagnostics
+arm	kind	mode	size	seed	correct	blank	stale	wrong	lost_never	lost_dropped	lost_copy	stored_frac	items	delivered	seen_whole	items_lost	cut	gate_refusals	protected_rollbacks	state_rejected	think_cap_cont	loop_guard	ctxfold_calls	ctxfold_refused	prefix_unstable_no_edit	broken_pipe	to_file	tee	refused	hit_max_tokens	rollbacks	nudges	suspect_cmds	score_raw
+B32ir	sparse	memory	119172	1	18	0	0	0					71	70	70	0	0	0	0	0	0	0	70	0	0	0	0	0	0	0	0	12	0	1.000
+# trials=1 mean_reward=0.0000 prompt_tokens=1733740 cached_tokens=1399424 completion_tokens=11736 lm_calls=142
+!!! B32ir__sparse-memory-t120k-s1/sparse-memory-t120k-s1__UithpWj: ended_by=submit rule=VOID violations=[{'path': '/app/answers.json', 'reason': '14 keys beyond the queried ones'}]  -> this trial does not count; fix and re-run it

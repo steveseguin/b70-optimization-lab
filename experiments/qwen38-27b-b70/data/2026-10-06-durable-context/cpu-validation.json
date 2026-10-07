@@ -1,0 +1,127 @@
+{
+  "schema": "durable-cpu-validation.v1",
+  "measurement_kind": "stub",
+  "model_requests_sent": 0,
+  "raw_artifacts": "/home/steve/.codex/artifacts/context-durable-20261006",
+  "commands": [
+    [
+      "python3",
+      "experiments/qwen38-27b-b70/scripts/context/durable/campaign.py",
+      "--suite",
+      "experiments/qwen38-27b-b70/data/2026-10-06-durable-context/development/suite.json",
+      "--out",
+      "/home/steve/.codex/artifacts/context-durable-20261006/stub-campaign",
+      "--stub"
+    ],
+    [
+      "python3",
+      "experiments/qwen38-27b-b70/scripts/context/durable/extraction.py",
+      "--task",
+      "experiments/qwen38-27b-b70/data/2026-10-06-durable-context/development/report-seed7.json",
+      "--out",
+      "/home/steve/.codex/artifacts/context-durable-20261006/extraction-report-stub",
+      "--stub"
+    ],
+    [
+      "python3",
+      "experiments/qwen38-27b-b70/scripts/context/durable/extraction.py",
+      "--task",
+      "experiments/qwen38-27b-b70/data/2026-10-06-durable-context/development/dispatch-seed7.json",
+      "--out",
+      "/home/steve/.codex/artifacts/context-durable-20261006/extraction-dispatch-stub",
+      "--stub"
+    ]
+  ],
+  "source_sha256": {
+    "pilot.py": "a49dc7807603dadcc457f03210cc57378469bf3a2eaca2dbde8063f3f69142d1",
+    "campaign.py": "33e952e2ec86ba15b9c853f0230b520422996c4c7a810685f351fb07681e6b4c",
+    "tasks.py": "ddcde99e455b0abc1734e535730da0715df42fff5bd40c267a7970b84801ad0c",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "extraction.py": "01baeca3d54bb5eab149793d76fe0c56cfca38100acdcdea7c1c4d49d2b88c32"
+  },
+  "campaign_summary": {
+    "arms": {
+      "summary": {
+        "completed": 2,
+        "asked": 48,
+        "correct": 48,
+        "all_valid": true,
+        "model_timing": false
+      },
+      "archive": {
+        "completed": 2,
+        "asked": 48,
+        "correct": 48,
+        "all_valid": true,
+        "model_timing": false
+      },
+      "quoted": {
+        "completed": 2,
+        "asked": 48,
+        "correct": 48,
+        "all_valid": true,
+        "model_timing": false
+      }
+    },
+    "complete_planned_matrix": true,
+    "campaign_clean": true,
+    "expected_trials": 6,
+    "observed_trials": 6,
+    "quality_gate_passed": false,
+    "median_quoted_over_archive_elapsed_ratio": null,
+    "speed_gate_passed": false,
+    "scope": "Synthetic pilot only; stub, partial, resumed or failed campaigns never qualify.",
+    "status": "completed"
+  },
+  "extraction": {
+    "report": {
+      "measurement_kind": "stub",
+      "indices": [
+        1,
+        2,
+        3,
+        4,
+        8,
+        12,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36,
+        40,
+        44,
+        47,
+        48
+      ],
+      "event_precision": 1.0,
+      "event_recall": 1.0,
+      "gate_passed": false
+    },
+    "dispatch": {
+      "measurement_kind": "stub",
+      "indices": [
+        1,
+        2,
+        3,
+        4,
+        8,
+        12,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36,
+        40,
+        44,
+        47,
+        48
+      ],
+      "event_precision": 1.0,
+      "event_recall": 1.0,
+      "gate_passed": false
+    }
+  },
+  "limits": "Oracle-fed CPU wiring checks only. No model quality or speed measurement; holdout has no model runs."
+}

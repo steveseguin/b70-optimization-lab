@@ -27,6 +27,9 @@
 #   Ar     keep everything + SHOW_WINDOW (reading-task baseline);  E32r: files allowed, plain
 #   B32ira B32ir + archive-on-drop and `recall` (rule class "archive allowed"); FOLD_BATCHES=N for any
 #          improved arm fetches/folds N items per command
+#   B32iq  quoted events: B32ira, but the model never writes STATE.txt; per item it sends `name | op |
+#          amount | "exact quote"` lines to `ctxfold --events`, which checks each quote is verbatim in the
+#          item, checks the counters, does the arithmetic, archives and drops the item (QUOTED=1)
 #   KINDS=sparse  sparse prose (make_sparse_prose_tasks.py), options from SPARSE_ARGS (e.g. "--density 6 --words")
 #   PROSE_BATCH_TOKENS  prose batch size at generation [6400] (use a new OUT_DIR when changing it)
 #   Aw     A + SHOW_WINDOW: every tool result states the window used/left, and a fetch that cannot
@@ -119,7 +122,7 @@ ARMS = {"A": ("plain", "memory", 0), "B32": ("clm", "memory", 32768), "B131": ("
         "B32in": ("improved", "memory", 32768), "B32io": ("improved", "memory", 32768),
         "E32o": ("plain", "notes", 32768), "Aw": ("plain", "memory", 0),
         "B32ir": ("improved", "memory", 32768), "Ar": ("plain", "memory", 0), "E32r": ("plain", "notes", 32768),
-        "B32ira": ("improved", "memory", 32768)}
+        "B32ira": ("improved", "memory", 32768), "B32iq": ("improved", "memory", 32768)}
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]
@@ -220,11 +223,12 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   [[ "$arm" == E32o ]] && et=false                 # E32o: plain, files allowed, thinking off
   local sw=0; [[ "$arm" == Aw ]] && sw=1           # Aw: A + window line and fetch guard
   local fm=${FOLD_MODE:-}
-  local ar=0
-  [[ "$arm" == B32ir || "$arm" == B32ira ]] && fm=read && tp=judgement && tc=${THINK_CAP_R:-4096}   # B32ir: reads prose itself
+  local ar=0 qt=0
+  [[ "$arm" == B32ir || "$arm" == B32ira || "$arm" == B32iq ]] && fm=read && tp=judgement && tc=${THINK_CAP_R:-4096}   # B32ir: reads prose itself
   [[ "$arm" == B32ira ]] && ar=1                   # B32ira: + archive-on-drop and `recall`
+  [[ "$arm" == B32iq ]] && ar=1 && qt=1            # B32iq: + quoted events (`ctxfold --events`)
   [[ "$arm" == Ar ]] && sw=1                       # Ar: keep everything + window line (reading task baseline)
-  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
+  TASKS="$td" JOB_NAME="$job" CONTEXT_BUDGET="$budget" DROP_OLD_THINKING="$drop" THINK_CAP="$tc" ENABLE_THINKING="$et" THINKING_POLICY="$tp" SHOW_WINDOW="$sw" FOLD_MODE="$fm" ARCHIVE="$ar" QUOTED="$qt" "$D/run-context-job.sh" "$agent" "$RUNS" > "$RUNS/$job.out" 2>&1
   echo "   rc=$? $(grep -h -o '[a-z]* score [0-9.]* raw [0-9.]*.*void=[A-Za-z]*' "$RUNS/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1)"
   if ! "$PY" "$D/summarize_results.py" --brief --check "$RUNS/jobs/$job" > "$RUNS/$job.check" 2>&1; then
     echo "!!! $job: a cap, timeout, server refusal or the storage rule ended this run; it does not count:"

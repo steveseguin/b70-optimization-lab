@@ -228,6 +228,58 @@ PROTOCOL_READ = """
   the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
 """
 
+PROTOCOL_QUOTED = """
+
+## Working protocol for streamed data (read carefully)
+
+- The harness keeps the counters in `/tmp/.live_ctx/STATE.txt` (`name value`, or `name removed`) and
+  shows them in a pinned message every turn. You never write STATE.txt (any other change to it is undone):
+  the harness does the arithmetic. You may read it.
+- The reports are prose. Do not write a program to parse them: read each report yourself.
+- After each item, in ONE command that holds nothing else, send the item's changes as an event list, one
+  line per change, in the order they happen in the report:
+      ctxfold --events <<'EOF'
+      name | op | amount | "exact quote from the report"
+      EOF          (the EOF line starts at the beginning of the line, not indented)
+  op is one of:
+    set     the counter now holds amount (a value given outright, or the corrected value of a correction)
+    add     the counter went up by amount
+    sub     the counter went down by amount (amount positive)
+    remove  the counter was removed from the ledger (leave amount empty: `name | remove | | "..."`)
+    reopen  a counter opened (new, or opened again after a removal) with value amount
+  amount is written in digits (`-7`, `42`), even when the report spells the number out
+  ("minus seven", "forty-two"). The quote is copied exactly from the report (whitespace aside) and is
+  the words that state this change. A plan counts only if the report says it went ahead: then quote
+  the sentence that says so and give the planned amount. If the item changes nothing, send one line
+  `none`. Example (a report saying "abcd12 went down by eighty-three." and "A new page was started for
+  efgh34, at minus five."):
+      abcd12 | sub | 83 | "abcd12 went down by eighty-three."
+      efgh34 | reopen | -5 | "A new page was started for efgh34, at minus five."
+- The harness checks every line: the counter name occurs in the report, the quote is verbatim in it, the
+  amount is written in the quoted sentence (or in a sentence of the same paragraph that names the
+  counter), add/sub/remove need a live counter and reopen a new or removed one (set on a new counter
+  counts as reopen), and every counter the report names has a STATE line afterwards. If any line fails, it
+  refuses the WHOLE list ("ctxfold: REFUSED (reason): ...") and applies nothing: fix it and send the
+  whole list again. On success it applies the events, removes the item from your context and prints
+  "ctxfold: applied N events".
+- A refusal names the failing line and shows the delivered sentence it should quote: copy that sentence,
+  fix only that line, and send the whole list again (do not change a correct amount to get past a check).
+- Do not edit the mirror file by hand, and never copy a report or an event list into a note or a file
+  (stream text in files voids the run). If a counter name keeps being refused, send the list again with
+  the sentence quoted exactly: the harness corrects a misspelled name when the quote shows the right one.
+- After the final item arrives, the harness keeps it in the pinned message, so compacting cannot lose the
+  questions.
+- Before running a command that delivers a large item, make sure there is room for it: the harness
+  refuses to run such a command when the item would not fit ("NOT RUN").
+- Your earlier thinking is not kept between turns. Keep your thinking to what the current item needs;
+  act every turn.
+- Write /app/answers.json only after the final item with the questions has arrived, and put in it only
+  the counters it asks for (never the whole table). The harness refuses an earlier write or submit.
+- A question about a counter's value at the end of an earlier item: `recall NAME` lists every archived
+  sentence about it with its item number (one short command per counter); apply them in order up to that
+  item. Do not answer such a question with the current value.
+"""
+
 READ_REASONS = """- In your visible reply (not in your thinking), before the command, write one short line per changed
   counter: `name: old -> new (the words that decide it)`.
 """
@@ -257,6 +309,25 @@ class _ImprovedEnv(ContextEnv):
             a.n_archive_refused += 1
             text = ("NOT RUN: the archive is read-only and kept by the harness; search it with `recall PATTERN` "
                     "or `recall --item N`.")
+            res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
+            return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
+                              readout="", notes="", exec_time=0.0, touched_ctx=False)
+        # Quoted events (arm B32iq): STATE.txt is written only by `ctxfold --events` (any other change is
+        # restored by _PinnedState); the other fold commands are not run, and an events command runs alone
+        # (just the here-document), so nothing else in that command can touch STATE.txt.
+        if a.quoted and (re.search(r"(?:^|[;&|]\s*|\n\s*)ctxfold\b(?!\s+--events)", cmd)
+                         or (re.search(r"(?:^|[;&|]\s*|\n\s*)ctxfold\s+--events", cmd)
+                             and not _events_cmd_alone(cmd))
+                         # d12 rerun: event lists written by python into /tmp/ev22.sh and run with `bash`
+                         # (two files holding stream data: VOID)
+                         or ("ctxfold --events" in cmd and not _events_cmd_alone(cmd) and _WRITES.search(cmd))
+                         or re.search(r"(?:^|[;&|]\s*)(?:bash|sh|source|\.)\s+/(?:tmp|app)/\S+", cmd)):
+            a.n_quoted_refused_cmds += 1
+            text = ("NOT RUN: in this run the harness keeps STATE.txt; send the item's changes as an event list, "
+                    "as a command of its own: `ctxfold --events <<'EOF'`, one `name | op | amount | \"quote\"` line "
+                    "per change, then `EOF`, and nothing else in that command. Never write event lists or "
+                    "stream text to files (that voids the run); a misspelled counter name is corrected by the "
+                    "harness when the quote shows the right one.")
             res = types.SimpleNamespace(stdout=text, stderr="", return_code=75)
             return StepResult(result=res, ctx_changed=False, stdout_block=text + "\n\n(exit_code=75)",
                               readout="", notes="", exec_time=0.0, touched_ctx=False)
@@ -315,6 +386,12 @@ class _ImprovedEnv(ContextEnv):
         if _ITEM_FINAL.search(out0):
             a._final_seen = True
             a._asked = re.findall(r"(?m)^(?:QUERY|GET) (\S+)\s*$", out0) + re.findall(r"(?m)^ASK (\S+?):", out0)
+            if a.quoted:
+                # keep the final item (the questions) in the pinned message: B32iq ret s0 rerun compacted the
+                # mirror after two recalls, cut the final item away with it, and left all 12 retention
+                # questions blank (final items are never archived, so recall could not bring them back)
+                fm = _ITEM_FINAL.search(out0)
+                a._final_text = out0[fm.start():].split("\n\n(exit_code=")[0].strip()
         if a.answers_guard and a._final_seen and ANSWERS in cmd and _WRITES.search(cmd):
             try:
                 r = await environment.exec(command="python3 -c 'import json; print(json.dumps(sorted("
@@ -339,6 +416,22 @@ class _ImprovedEnv(ContextEnv):
             a._edit_since_call = True
         if out.lstrip().startswith(("ctxfold: folded", "ctxfold: removed items")):
             a._fold_ok = True
+        if a.quoted and re.match(r"ctxfold\s+--events\b", cmd):
+            m = re.match(r"\s*ctxfold: applied (\d+) events", out)
+            if m:
+                a._fold_ok = a._harness_wrote = True
+                a.n_events_applied += int(m.group(1))
+                a.n_event_lists_applied += 1
+                if a._event_refused_last:
+                    a.n_event_retries += 1
+                a._event_refused_last = False
+                a._refused_streak = 0
+            else:
+                r = re.search(r"ctxfold: REFUSED \(([a-z ]+)\)", out)
+                if r:
+                    a.lists_refused[r.group(1)] = a.lists_refused.get(r.group(1), 0) + 1
+                    a._event_refused_last = True
+                    a._refused_streak += 1
         if a._guard_out.search(out):
             a._largest_delivery = max(a._largest_delivery,
                                       int(tk.count_tokens([{"role": "tool", "content": out}])[0]
@@ -382,6 +475,14 @@ ANSWERS = "/app/answers.json"
 _WRITES = re.compile(r">|open\(|json\.dump|write|tee\b|cp\b|mv\b")
 _ITEM_UPDATE = re.compile(r"ITEM \d+/\d+ \((?!QUERY|GET)")
 _ITEM_FINAL = re.compile(r"ITEM \d+/\d+ \((?:QUERY|GET)\)")
+# quoted mode: an events command is the here-document and nothing else
+_EVENTS_CMD = re.compile(r"(?s)\s*ctxfold\s+--events(?:\s+[A-Z]+)*\s*<<-?\s*(['\"]?)(\w+)\1[ \t]*\n.*?\n?\2\s*$")
+
+
+def _events_cmd_alone(cmd: str) -> bool:
+    """The command is `ctxfold --events <<TERM`, the lines, TERM, and nothing else (TERM once)."""
+    m = _EVENTS_CMD.match(cmd)
+    return bool(m) and sum(1 for ln in cmd.splitlines() if ln.strip() == m.group(2)) == 1
 
 
 ARCHIVE_NOTE = """- Every item you drop is kept verbatim in a read-only archive (nothing is lost, only moved out of view).
@@ -420,7 +521,11 @@ class _PinnedState:
         note = ""
         if text != a._last_state:
             bad = a._validate(text)
-            if not bad and a.fold_mode == "read":
+            if not bad and a.quoted and not a._harness_wrote:
+                bad = "STATE.txt is written only by `ctxfold --events`"
+            elif not bad and a.quoted:
+                pass  # written by the harness from a checked event list
+            elif not bad and a.fold_mode == "read":
                 # (b) a counter line never just disappears: a removed counter keeps a `name removed` line
                 was = set(re.findall(r"(?m)^\s*([a-z]+\d\d)\b", a._last_state))
                 now_ = set(re.findall(r"(?m)^\s*([a-z]+\d\d)\b", text))
@@ -443,7 +548,11 @@ class _PinnedState:
                 text = a._last_state
             else:
                 a._last_state = text
+        a._harness_wrote = False
         content = f"{PIN_TAG}\n{text}{note}"
+        if a.quoted and a._final_text:
+            content += ("\n--- the final item, kept here by the harness (answer exactly these keys) ---\n"
+                        + a._final_text)
         if fold:
             content += f"\n--- {FOLD_PATH} ---\n{fold}"
         # A context edit can merge the pinned message into a neighbouring turn (upstream
@@ -484,7 +593,8 @@ class ClmImprovedAgent(_h.ClmAgent):
                  thinking_policy: str = "always", stable_system: Any = None,
                  fold_mode: str = "script", read_reasons: Any = False, repeat_guard: Any = True,
                  recover_text_calls: Any = True, answers_guard: Any = True, archive: Any = False,
-                 fold_batches: int | str = 1, **kwargs: Any) -> None:
+                 fold_batches: int | str = 1, quoted: Any = False,
+                 retry_think_cap: int | str = 2048, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # v3 (2026-10-05): stable prompt layout and per-call thinking
         self.stable_mirror = _as_bool(stable_mirror)
@@ -496,6 +606,22 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.read_reasons = _as_bool(read_reasons)
         self.repeat_guard = _as_bool(repeat_guard)
         self.answers_guard = _as_bool(answers_guard)
+        # quoted events (arm B32iq): the model sends `name | op | amount | "quote"` lines to
+        # `ctxfold --events`, which checks the quotes against the delivered text and does the arithmetic;
+        # read mode, archive on unless archive is given explicitly as false
+        self.quoted = _as_bool(quoted)
+        self.retry_think_cap = int(retry_think_cap or 0)
+        self.n_retry_capped = 0
+        self._refused_streak = 0
+        self._final_text = ""
+        if self.quoted:
+            self.fold_mode = "read"
+            if archive is False or archive is None:
+                archive = True
+        self.n_events_applied = self.n_event_lists_applied = self.n_event_retries = 0
+        self.n_quoted_refused_cmds = 0
+        self.lists_refused: dict[str, int] = {}
+        self._event_refused_last = self._harness_wrote = False
         # archive-on-drop + recall (arm B32ira) and multi-item folding (FOLD_BATCHES)
         self.archive = _as_bool(archive)
         self.fold_batches = max(1, int(fold_batches or 1))
@@ -649,6 +775,15 @@ class ClmImprovedAgent(_h.ClmAgent):
         self.pstats["thinking_on" if thinking else "thinking_off"] += 1
         self._prefix_stats(messages, thinking)
         cap = self.think_cap if thinking else 0
+        last_tool = next((str(m.get("content") or "") for m in reversed(messages) if m.get("role") == "tool"), "")
+        if (self.quoted and thinking and self.retry_think_cap and self._refused_streak in (1, 2)
+                and "ctxfold: REFUSED" in last_tool):
+            # adaptive retry cap: the call right after a refused event list gets retry_think_cap (2K), after a
+            # second refusal in a row 2x that, from the third on the normal cap. Only that call: the d12
+            # rerun capped 90 calls at 2K because the flag stayed set through 230 steps of diagnosis.
+            rc = self.retry_think_cap * self._refused_streak
+            cap = min(cap or rc, rc)
+            self.n_retry_capped += 1
         if (not cap and thinking and self.empty_streak_limit
                 and self._empty_streak >= self.empty_streak_limit):
             cap = min(self.fallback_think_cap, max(self.max_tokens // 2, 1))  # must be < max_tokens
@@ -777,10 +912,15 @@ class ClmImprovedAgent(_h.ClmAgent):
         saved = _h._SYSTEM_TEMPLATE
         proto = (PROTOCOL_READ + (READ_REASONS if self.read_reasons else "")) if self.fold_mode == "read" \
             else PROTOCOL
+        if self.quoted:
+            proto = PROTOCOL_QUOTED
         if self.archive:
             proto += ARCHIVE_NOTE
         if self.fold_batches > 1:
             proto += FOLD_N_NOTE.format(k=self.fold_batches, cmd=" && ".join(["next"] * self.fold_batches))
+            if self.quoted:
+                proto = proto.replace("fold them all in ONE update (apply the items in order) and drop them together "
+                                      "with `ctxfold --drop`", "send all their events, in order, in ONE `ctxfold --events` list")
         _h._SYSTEM_TEMPLATE = saved.replace("{{finish_instructions}}", proto + "\n{{finish_instructions}}") \
             if "{{finish_instructions}}" in saved else saved + proto
         try:
@@ -799,6 +939,13 @@ class ClmImprovedAgent(_h.ClmAgent):
                     "repeats_refused": self.n_repeats_refused,
                     "answers_refused": self.n_answers_refused,
                     "archive": self.archive, "fold_batches": self.fold_batches,
+                    "quoted": self.quoted, "events_applied": self.n_events_applied,
+                    "event_lists_applied": self.n_event_lists_applied,
+                    "event_lists_refused": dict(self.lists_refused),
+                    "event_lists_refused_total": sum(self.lists_refused.values()),
+                    "event_retries": self.n_event_retries, "quoted_cmds_refused": self.n_quoted_refused_cmds,
+                    "retry_think_cap": self.retry_think_cap if self.quoted else None,
+                    "retry_capped_calls": self.n_retry_capped, "final_item_pinned": bool(self._final_text),
                     "recall_calls": self.n_recalls, "recall_output_tokens": self.recall_tokens,
                     "archive_write_refused": self.n_archive_refused,
                     "answer_key_notes": self.n_answer_key_notes,

@@ -1,8 +1,13 @@
-# Unlimited context for the 27B: what the night of 2026-10-05 found
+# Context research for the 27B: measured results and limits
 
 Written for the owner. Plain words first; every number links to its detailed note at the end.
-Hardware: two Arc Pro B70, Qwen3.8-27B FP8, 16-bit cache (nothing quantized), drafting on, R314 image.
-Status: work in progress; rows marked *pending* are still running.
+Hardware: two Arc Pro B70, Qwen3.8-27B FP8, 16-bit attention cache (FP8 model weights), drafting on, R314 image.
+Status: work in progress; pending rows are not measured results.
+
+Review correction (2026-10-06): the 480K narrative seed-0 task asks **10** questions, not 24;
+the density-6 task asks **13**, not 24. The reported seed-1 480K success has no completed
+artifact and is withdrawn. See [review findings and source artifacts](2026-10-06-context-review.md).
+Historical timings below remain single-run observations, not established speed rankings.
 
 ## The short answer
 
@@ -13,22 +18,28 @@ Status: work in progress; rows marked *pending* are still running.
 3. **Small is still better where it can be had.** Writing speed falls from about 127 tokens a second at 8K to 26 at
    250K, and above about 60K the model occasionally (about 1 lookup in 40) reads a look-alike line instead of the
    one asked for. So the right design is a big window as the safety net and a pruned working context as the habit.
-4. **Nothing has to be lost: an archive the model can search beat summarising.** With dropped text moved to an
+4. **Quoting changes and letting code keep the books was faster on one matched stream.** The model reports each change as a quote plus a
+   fixed-format line; the harness checks the quote, does the arithmetic, archives the batch and drops it. On the
+   480K narrative stream: 10 of 10 in 19.6 minutes with almost no thinking, about 24 % less elapsed time than
+   reading and folding by hand in the matched seed-0 run. Code applies the submitted operations; it does not
+   prove that the model chose every operation correctly. It still needs care around the agent loop (two of its 120K cells
+   failed on context compaction and an untypeable name; fixes in).
+5. **Nothing has to be lost: an archive the model can search beat summarising.** With dropped text moved to an
    archive instead of deleted, the agent answered 36 of 36 questions, twelve of them about text it had dropped, in
    6 minutes with 23K of context; summarising also got 36 but took 26 minutes and wrote eight times as much.
-5. **Reading more than the window by understanding works, with guards around the loop (one seed so far).** On
-   a 480K stream of narrative text, 1.8 times the whole window, the read-mode agent at a 32K budget got all 24
+6. **Reading more than the window by understanding works, with guards around the loop (one seed so far).** On
+   a 480K stream of narrative text, 1.8 times the whole window, the read-mode agent at a 32K budget got all 10
    answers right in 26 minutes with never more than 24K tokens in view. The failures along the way were the agent
    loop (repeating itself with thinking off, writing answers before the questions arrived), not the reading; each
    got a guard. The remaining reading error is about 1 to 2 per 100 changes without thinking.
-6. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
+7. **"Unlimited" comes from the model managing its own state, and it already does that well.** Given a shell, the
    27B folds incoming data into a small running table or into files by itself and deletes the raw text. With files
    allowed it finished a 121K-token task in under two minutes with every answer right and never more than 9K of
    context. What broke the paper's agent in our test was the harness around the model, not the model's pruning.
-7. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
+8. **A CPU-side cleaner or classifier does not buy much.** Measured on real agent sessions, no-loss cleaning frees
    under 2 %. The cheap, real lever is to stop re-sending the model's old thinking (10 % of a typical call, up to
    56 %).
-8. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
+9. **Decisions do not need thinking tokens.** For a yes/no, a choice or a label, switching thinking off and
    restricting the output to the labels gave the same answers 6.5 times faster on easy items.
 
 ## What was tested, and what happened
@@ -289,11 +300,103 @@ the run ends).
   after every one of the 70 batches**; the run is void only because the model wrote the whole 32-line table into
   the answers file before the question batch arrived (14 keys it was not asked for). A guard for that is queued. The thinking-reduced agent on the
   478K ordinary ledger: **24 of 24 in 21.5 minutes** (was 0 of 24 and a 150-call loop). 
-- **The 480K narrative stream, with the guards (measured 22:50 EDT): 24 of 24 in 25.7 minutes.** 479,512 tokens
-  of narrative in 240 batches, 1.8 times the model's whole window, read at a 32K budget: 634 calls, 576 of them
+- **The 480K narrative stream, with the guards (measured 22:50 EDT): 10 of 10 in 25.7 minutes.** 479,512 tokens
+  of narrative in 282 batches (plus the final question batch), 1.8 times the model's whole window, read at a 32K budget: 634 calls, 576 of them
   with thinking off, 287 edits of its own context, never more than 23.5K tokens in view, 68K tokens written, no
-  rule broken, no parser. This is the model reading more than it can hold, by understanding, and keeping an exact
-  running table of what it read. One seed; the second is queued.
+  rule broken, no parser. This is the model reading more than it can hold, by understanding, and answering all ten final questions correctly. This score alone does not verify every intermediate
+  table. One verified seed; the second remains unverified.
+
+### Scaling the reading result (measured 2026-10-06 01:00-03:00 EDT)
+
+Same narrative task at 119K, seed 0. Data: `data/2026-10-05-context/reading/`.
+
+| Strategy | Correct / asked | Time | Tokens written |
+| --- | ---: | ---: | ---: |
+| Paper's self-editing agent (as released, our harness fixes only) | 24/24 | 39 min | 171K |
+| Summarise at 75 % | 24/24 | 17 min | 78K |
+| Read-mode agent, guarded, 3 changes per batch | 23/24 | 5.4 min | 14K |
+| Read-mode agent, **6 changes per batch** | 22/22 | 8.8 min | 31K |
+| Read-mode agent, **12 changes per batch** | 14/16 | 13 min | 46K |
+
+- **On the density-3 reading task the scores are 24/24, 24/24 and 23/24; times differ seven-fold.** The
+  paper's agent and the summariser spend their time thinking; the guarded read-mode agent reads with thinking off.
+- **Denser reading costs accuracy, as the calibration predicted:** 22 of 22 at 6 changes per batch, 14 of 16 at 12 (where
+  the single-step error is about 6 per 100 changes).
+- The run was ended at 03:10 by the host memory guard during the next trial (no fault lines; see the host-memory
+  note). The remaining cells resume under a supervisor that restarts the server after a guard kill and skips
+  finished trials.
+
+### Quoted events: the model quotes, the code keeps the books (measured 2026-10-06 12:15 EDT)
+
+The model reports each change as one fixed-format line with an exact quote from the batch; the harness checks the
+quote is really there, checks the counter and the amount, does the arithmetic itself, archives the batch and drops
+it; a list with any bad line is refused whole and the model retries with thinking on.
+
+| Task | Right | Time | Tokens written | Compare |
+| --- | ---: | ---: | ---: | --- |
+| Reading, 3 changes per batch, 119K | **24 of 24** | 12.4 min | 46K | read-mode agent 23 of 24 in 5.4 min |
+| Reading, **12 changes per batch**, 120K | **16 of 16** | 61 min | 274K | read-mode agent 14 of 16 in 13 min |
+| Retention (36 questions), seed 0 | 31 of 36 | 12.5 min | 44K | archive-and-recall 36 of 36 in 6.1 min |
+| Retention (30 questions), seed 1 | 26 of 30 | 19 min | 83K | |
+
+- **Initial interpretation (superseded by the checker diagnosis below):** the first runs appeared to
+  eliminate bookkeeping errors. The second retention seed included checker-induced wrong values. The price is time: refused lists make the model think, and at the hard density it wrote 274K
+  tokens over an hour.
+- **It did worse on the questions about dropped text** (31 of 36 and 26 of 30 against 36 of 36 for the
+  archive-and-recall agent); being traced.
+- **Traced (13:00 EDT): most of that time, and three of the wrong values on the second retention seed, were a bug
+  in our own checker**, not the model. Its number reader ran across sentence ends ("down by eighty-three. Two of
+  the packers" read as 85), so correct lists were refused: 37 refusals across the four trials, each costing a
+  retry with up to 4K tokens of thinking, and on one seed the model started sending amounts that happened to pass
+  the check, which corrupted the table. The other misses: on seed 0 the model answered old-value questions with the
+  current value instead of looking them up; at the hard density a misspelled counter name caused a run of
+  refusals. The checker is fixed (stops at punctuation, ignores digits inside names), refusals now show the sentence
+  to copy, retries think at most 2K tokens, and the protocol says never to change a correct amount to pass a check.
+  The four trials are being rerun; the numbers above stand as measured with the bug.
+- **Rerun with the fixed checker (13:15 EDT):** reading at 3 changes per batch **24 of 24 in 4.7 minutes** (now
+  faster than the read-mode agent's 5.4 and exact); retention seed 1 **29 of 30 in 5.1 minutes** (was 26 in 19).
+  But retention seed 0 answered all 24 current values and left all 12 old-value questions blank (9.9 min), and the
+  hard-density reading run hit the step cap after 320 calls with no answers and a rule breach (was 16 of 16 in an
+  hour with the bug). Two cells better, two worse.
+- **Traced (14:00 EDT): neither failure was the reading checks.** On the retention seed the model compacted its own
+  context and cut away the final batch that held the questions; final batches were never archived, so no search
+  could bring them back, and it searched for them for sixty steps. At the hard density the model could not type
+  one counter name (the earlier note printed the same spelling for both names, so it did not preserve
+  a usable typo example); its workaround wrote the event list to a file, which breaks the rule, and then it folded a batch into
+  its own notes where the harness could not find it and looped to the step cap. Fixes queued: the final batch is
+  kept in the pinned message once it arrives; a name typo is corrected by the harness when exactly one name in the
+  text is within two letters and the quote then matches; a batch merged into notes is still found and applied; event
+  lists cannot be written to files; the retry thinking cap grows 2K, 4K, then full. Rerun queued.
+- **The 480K stream with the quoted agent (fixed checker, measured 13:40 EDT): 10 of 10 in 19.6 minutes**, 578
+  calls, 573 of them with thinking off, 542 thinking tokens in the whole run, 37K tokens written, never more than
+  22K in view, no rule broken. Against the read-mode agent's 10 of 10 in 25.7 minutes on the same stream: about 24 %
+  less elapsed time in this single matched comparison. Quote and amount checks do not prove event
+  completeness, operation semantics or intermediate table correctness.
+
+### A million tokens, and the rest of the second seeds (measured 2026-10-06 14:00-18:30 EDT)
+
+| Run | Right | Time | Calls | Peak context |
+| --- | ---: | ---: | ---: | ---: |
+| **Read-mode agent, 1,000K-token narrative stream (3.8 times the window), 32K budget** | **23 of 24** (one stale value) | 62 min | 1,351 | 22.5K |
+| Read-mode agent, 480K stream, seed 1 | Unverified; prior claim withdrawn | — | — | — |
+| Read-mode agent, 480K stream, **6 changes per batch** | 13 of 13 | 28 min | 596 | 24.5K |
+| Quoted agent, retention seed 0, with the two fixes | 35 of 36 | 5.7 min | 159 | 21K |
+| Quoted agent, 12 changes per batch, with the two fixes | 16 of 16 | 7.4 min | 144 | 21K |
+| Summarise at 75 %, ledger seed 1 | 24 of 24 | 78 min | 60 | 23K |
+| Files allowed, ledger seed 1 (no management / self-editing) | 24 / 24 | 2.5 / 1.5 min | | 13K / 7.6K |
+| Keep everything with its window shown, ledger seed 1 (third try, corrected guard) | VOID (1/24 raw; extra answer keys) | 67 min | 36 | 175K |
+| Thinking-reduced agent on 121K of arbitrary key-values, no files, 32K | 2 of 24 | | | |
+
+- **A million tokens of narrative, read by understanding at a 32K budget, with one value stale at the end.** Input
+  3.8 times the window, an hour of work, never more than 23K in view. The final score alone cannot establish a
+  per-change error rate; the quoted agent on the same stream is running now.
+- **Both quoted-agent failures are gone with the fixes:** 35 of 36 on the retention seed that had been blank, 16 of
+  16 at the hard density in 7 minutes (was an hour with the checker bug, then a failure).
+- **Keep-everything on ledger seed 1 failed a third time**, now with the corrected guard (VOID: 133 extra answer keys, raw 1/24 correct): the model re-types every
+  batch and thinks at length, and no guard changes that. A big window without management is not a strategy for a
+  long job on this model.
+- **A 32K budget cannot hold 121K of arbitrary key-values without files or an archive** (2 of 24), as expected; the
+  archive arm is the answer there and is queued on that task.
 
 ### Retention: remembering what was dropped (measured 2026-10-06 00:45 EDT)
 

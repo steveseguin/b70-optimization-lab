@@ -38,13 +38,68 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   estimated peak output/cache/build bytes. Independent backup recovery and the
   known faulty memory's permanent repair remain open.
 
-The older dated entries below are retained history, not instructions to resume
-LTX, start a server, or change host settings.
+Older four-card entries below are retained history, not instructions to resume
+LTX, start a server, or change host settings. The two-card host has its own live entry.
+
+Latest two-card review: **2026-10-06 23:59 UTC**. Its protected context experiment
+continues independently; see its latest entry below.
+
+## 2026-10-06 19:59 EDT, two-B70 host: evidence pipeline and durable pilot ready; no new model results
+
+The [canonical historical manifest](experiments/qwen38-27b-b70/data/2026-10-05-context/canonical-2026-10-06/manifest.json)
+contains 28 completed, one interrupted and one incomplete attempt. Verified grader
+counts now drive the site’s selected rows; unsuccessful attempts remain visible.
+Unknown old runtime/checker identities remain unknown rather than being filled
+from the current checkout.
+
+A separate [durable pilot](experiments/qwen38-27b-b70/scripts/context/durable/README.md)
+archives source text before delivery, applies quoted events transactionally, and
+preserves records across restart. Its frozen eighteen-trial comparison uses
+three methods, equal retrieval permissions and current/history/cross-reference
+questions. It does not replace the active CLM code. Quote validity still does
+not prove correct semantic interpretation or complete extraction.
+
+[CPU validation and frozen tasks](experiments/qwen38-27b-b70/data/2026-10-06-durable-context/README.md):
+58 durable tests, nine exporter tests and 11 site-import tests pass. Six oracle-fed
+stub trials complete; these provide no model quality or speed evidence.
+
+**Protected active work remains `context-planE-a1`, port 18196.** Its supervisor,
+server and Harbor client were still running at 23:59 UTC. No new inference was
+sent and no active code or queue was changed. After it releases the machine,
+review its completed artifacts and run the normal preflight, then the frozen
+seed-7 extraction diagnostic in both styles. Only matching, perfect diagnostic
+results unlock the held-out pilot. The [preregistered protocol](experiments/qwen38-27b-b70/notes/2026-10-06-durable-context-prereg.md)
+sets correctness before speed; wider streams and new optimizations follow only
+if this comparison supports them. No unattended server launcher was installed.
+
+## 2026-10-06 19:27 EDT, two-B70 host: context results reviewed; experiment still active
+
+**The matched 480K narrative runs both answered 10 of 10 questions correctly, not the 24 of 24
+previously reported.** Quoted events took 19.6 minutes; the read-mode agent took 25.7 minutes
+(about 24% less elapsed time for quoted events on this one seed). The million-token read-mode
+run is verified at 23 of 24. A claimed second 480K seed has no completed artifact and is withdrawn.
+
+- Quoted reruns: retention seed 0 **35 of 36** in 5.7 minutes; density 12 **16 of 16** in
+  7.4 minutes. These are completed. Quoting plus arithmetic in code does not guarantee correct
+  event interpretation or completeness. Review found that the merged-batch fallback can accept
+  model-authored text and lose it from the archive; an unapplied repair is being validated.
+- **Protected active work:** `context-planE-a1` on the two cards, endpoint port 18196, output
+  `/mnt/fast-ai/bench-results/context-planE-a1`, plan `/mnt/fast-ai/bench-results/context-plan-20261006e.sh`.
+  The existing supervisor started its server at 19:20 EDT. Review leaves its server, plan and live
+  harness unchanged. The plan includes quoted 1M, quoted second seeds, denser 480K reading and
+  remaining retention/ledger trials; a queued entry is not evidence of completion.
+- Memory guard remains 1.6 GiB under the owner's earlier authorization. The recorded 23:08 fault
+  and passed health probe remain in the [fault note](experiments/qwen38-27b-b70/notes/2026-10-05-fault-2308-guard-kill.md).
+- [Review and repair status](experiments/qwen38-27b-b70/notes/2026-10-06-context-review.md) ·
+  [corrected results](experiments/qwen38-27b-b70/notes/2026-10-05-context-research-results.md).
+
+**Next:** assess completed plan-E artifacts, then validate the checker repair as a separately
+identified experiment. Parallel extraction and the one-card comparison remain proposed work.
 
 ## 2026-10-05 23:10 EDT, two-B70 host: the model read 1.8 times its window by understanding, every answer right; the comparison matrix and an explainer page are up
 
 **A read-mode self-editing agent at a 32K budget read a 480K-token narrative stream (1.8 times the whole window),
-kept an exact running table and got 24 of 24, in 26 minutes with never more than 24K tokens in view. Files plus
+answered 10 of 10 final questions correctly (denominator corrected 2026-10-06), in 26 minutes with never more than 24K tokens in view. Files plus
 search stay the fastest route when code can do the reading. Keeping everything in the big window failed twice at
 the window edge on long jobs. All of it is one or two seeds, one machine.**
 
@@ -53,7 +108,7 @@ the window edge on long jobs. All of it is one or two seeds, one machine.**
   exact table); improved agent 24 and 21 in 15-21 min; **thinking-reduced improved agent 24 and 24 in about 6 min**.
   With files allowed: 24 in under 2 minutes, context under 9K, at 121K and at 478K.
 - **Reading by understanding (narrative text, 3 changes per 2K batch, calibrated so a single step is about 98 %
-  right):** read-mode agent 23 of 24 and 18 of 18 at 119K (5 minutes each), **24 of 24 at 480K**; keep everything 24
+  right):** read-mode agent 23 of 24 and 18 of 18 at 119K (5 minutes each), **10 of 10 at 480K**; keep everything 24
   at 119K in 20 min; files 24 in 5 min. Before the loop guards the same agent got 20 of 24 at 119K and failed at
   480K; the losses were the loop repeating itself with thinking off, not the reading.
 - **What an edit costs with the exact cache:** re-read from the last kept state before the edit to the end: 0.7 to

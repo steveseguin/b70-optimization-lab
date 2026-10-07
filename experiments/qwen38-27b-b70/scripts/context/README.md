@@ -4,6 +4,10 @@ Prepared 2026-10-05. Nothing here starts a server or touches a GPU.
 
 [Follow-up experiment ideas](../../notes/2026-10-05-context-followup-ideas.md): verify every delivered update, test historical recall, separate file I/O from decode speed, validate cache save/restore, and measure when prefix reuse pays off. These proposals build on the current queued runs; they do not launch additional work.
 
+## Reviewed evidence and next pilot
+
+The [canonical trial exporter](evidence/README.md) generates the historical manifest and tables from verified grader records. The [durable context pilot](durable/README.md) is a separate three-arm harness with a persistent source archive, transactional event application and a frozen evaluation protocol. Its CPU/stub checks are software validation, not model results. Neither changes the protected Harbor campaign.
+
 ## What is where
 
 | item | location |
