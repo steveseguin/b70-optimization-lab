@@ -79,8 +79,11 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   inode, preserving both model paths and recovering 1.63 GiB. The separate 0.8B
   workflow pilot closed at its format gate; the planned 27B trial remains pending.
 - **Next:** close the intended 27B model-intake and runtime gaps. A read-only
-  audit found that its weight manifest omits configuration/tokenizer inputs;
-  fix that complete-download contract before admitting model intake. Investigate
+  audit found and fixed omitted configuration/tokenizer inputs in its weight
+  manifest. All 66 weight pins remain unchanged; both package download wrappers
+  now select the complete runtime inputs, with five offline controls passing.
+  CPU tokenization confirms the full recall prompt fits a 33,024-token profile.
+  Investigate
   a separately identified target-only path without borrowing speculative-kernel
   qualification. Leave the protected two-card endpoint alone.
   Qualify the corrected package when its exact inputs and host ownership
