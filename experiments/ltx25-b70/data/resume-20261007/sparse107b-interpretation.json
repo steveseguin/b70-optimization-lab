@@ -1,0 +1,135 @@
+{
+  "schema": "ltx.sparse107b.interpretation.v1",
+  "utc": "2026-10-07T21:49:05.777215+00:00",
+  "inputs": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/sparse107b-closeout/sparse-transport-candidate-check.json": "04c5385ed6f087acf1531a15c96a56527d1c85df9450461e3e4469b4f1bad866",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/sparse107b-closeout/sparse-transport-timed-fast.json": "c28010859017723230e36e5db3b984c29079f8bff51fd318a8f1afe92a199aff",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-sparse-transport-107b/resolution/components/transport_gate.py": "1548ca89d284698e33cac6fc153a89b2a7ee3ee4988cf1d9f2175288b30aaa84"
+  },
+  "receipt_reconstruction": {
+    "candidate-check": {
+      "passed": true,
+      "actual_jobs": 14
+    },
+    "timed-fast": {
+      "passed": true,
+      "actual_jobs": 14
+    }
+  },
+  "rows": [
+    {
+      "worker": 0,
+      "clip_index": 99907105,
+      "stage": "a",
+      "forward_ordinal": 2,
+      "partition_ms": {
+        "0": 81.96276,
+        "23": 94.303958
+      },
+      "fill_ms": {
+        "0": 0.690834,
+        "23": 1.181875
+      },
+      "incoming_allocation_ms": 0.158216,
+      "incoming_activation_bytes": 2072576,
+      "fill_bytes": {
+        "0": 21176324,
+        "23": 21176324
+      },
+      "fill_tensor_count": {
+        "0": 17,
+        "23": 17
+      },
+      "d2h_category_sum_ms": 0.486772,
+      "h2d_category_sum_ms": 0.809896,
+      "host_wait_category_sum_ms": 138.807534,
+      "replay_submission_category_sum_ms": 11.913137
+    },
+    {
+      "worker": 0,
+      "clip_index": 99907105,
+      "stage": "b",
+      "forward_ordinal": 2,
+      "partition_ms": {
+        "0": 161.119844,
+        "23": 180.530625
+      },
+      "fill_ms": {
+        "0": 0.477292,
+        "23": 0.387239
+      },
+      "incoming_allocation_ms": 0.109765,
+      "incoming_activation_bytes": 7970816,
+      "fill_bytes": {
+        "0": 44769284,
+        "23": 44769284
+      },
+      "fill_tensor_count": {
+        "0": 17,
+        "23": 17
+      },
+      "d2h_category_sum_ms": 1.0431249999999999,
+      "h2d_category_sum_ms": 0.875208,
+      "host_wait_category_sum_ms": 316.290906,
+      "replay_submission_category_sum_ms": 1.476647
+    },
+    {
+      "worker": 1,
+      "clip_index": 99907104,
+      "stage": "a",
+      "forward_ordinal": 2,
+      "partition_ms": {
+        "0": 81.907291,
+        "23": 89.738959
+      },
+      "fill_ms": {
+        "0": 0.6364059999999999,
+        "23": 0.847761
+      },
+      "incoming_allocation_ms": 0.100036,
+      "incoming_activation_bytes": 2072576,
+      "fill_bytes": {
+        "0": 21176324,
+        "23": 21176324
+      },
+      "fill_tensor_count": {
+        "0": 17,
+        "23": 17
+      },
+      "d2h_category_sum_ms": 0.404479,
+      "h2d_category_sum_ms": 1.028697,
+      "host_wait_category_sum_ms": 142.225982,
+      "replay_submission_category_sum_ms": 2.247789
+    },
+    {
+      "worker": 1,
+      "clip_index": 99907104,
+      "stage": "b",
+      "forward_ordinal": 2,
+      "partition_ms": {
+        "0": 161.792135,
+        "23": 182.612187
+      },
+      "fill_ms": {
+        "0": 0.551667,
+        "23": 0.37385399999999996
+      },
+      "incoming_allocation_ms": 0.102482,
+      "incoming_activation_bytes": 7970816,
+      "fill_bytes": {
+        "0": 44769284,
+        "23": 44769284
+      },
+      "fill_tensor_count": {
+        "0": 17,
+        "23": 17
+      },
+      "d2h_category_sum_ms": 1.085886,
+      "h2d_category_sum_ms": 0.872397,
+      "host_wait_category_sum_ms": 317.587652,
+      "replay_submission_category_sum_ms": 1.742034
+    }
+  ],
+  "decision": "Close direct-static activation-copy lever: tiny incoming allocation and whole-fill envelope does not justify alias/lifetime risk. Next audit a49-frame workload at unchanged640x384, BF16 and8+3steps; no GPU launch authorized by this interpretation artifact alone.",
+  "limits": "Each row is one second observed forward. Whole fill includes17 tensors, not activation-only. Host waits overlap queued replay work; partitions include submission gaps and later fills. No additive critical path, isolated kernel cost or FPS savings extrapolation. Timed phase has zero events but dormant CPU hooks remain."
+}

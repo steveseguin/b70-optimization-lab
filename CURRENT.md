@@ -15,8 +15,23 @@ quality proof remains preserved. All four cards passed postflight at2026-10-07 2
 with zero kernel faults this boot. The corrected **107b application is running**, unit`ltx107b-sparse-server-20261007`,
 PID**3362949**, start ticks`28246808`, same boot
 `10192010-9700-4915-ac6c-980d6b74afa0`. Its57-request campaign started at
-2026-10-07T21:31:48.975140+00:00; initial native-validation setup is active, no fault/halt.
-No107b quality, trace or speed verdict exists yet. There is no passive collector.
+2026-10-07T21:31:48.975140+00:00 and completed successfully at21:45:14UTC.
+The application remains healthy and idle; no fault/halt or kernel entries in the
+campaign window. All20 native executions form10 exact repeat pairs;10 candidate
+and10 timed clips match all four video/audio tensors. The unchanged sealed proof
+independently reconstructed at21:47:23UTC. There is no passive collector.
+
+The sparse transfer diagnostic is valid on both sampler workers. All14 actual
+timed jobs recorded zero timing events; dormant CPU hooks remain. The short
+repeated-workload screen delivered12.793 generated FPS, not a matched gain or
+public record. Close the proposed direct-static activation-copy change: incoming
+allocation takes0.100–0.158ms and the whole boundary fill0.374–1.182ms, too little
+to justify its buffer-lifetime risk. Long host waits overlap queued compute and
+are not removable copy latency. Next: offline audit and qualification design for
+49-frame clips at640×384, retaining BF16,8+3steps and exact video/audio gates.
+No longer-shape request has been launched. Preserve all107b raw artifacts.
+[107b closeout](experiments/ltx25-b70/data/resume-20261007/sparse107b-closeout/summary.json),
+[trace interpretation](experiments/ltx25-b70/data/resume-20261007/sparse107b-interpretation.json).
 Manifest`fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb`;
 client contractSHA`4f0c3c01ed5b4d8c525706da33d069d61aebcd34718f8d4270547db1c1f29b7e`.
 
@@ -84,7 +99,7 @@ is now CPU-reviewed:257 author and35 helper/overlay tests pass. It records at mo
 one candidate job per actual worker, with bounded events, and independently checks
 zero timing events across all actual later timed jobs including tails. Model
 quality gates remain mandatory; dormant CPU hooks remain. 107 source construction and the single106 controlled stop are complete.
-107 startup refused model admission; corrected107b is now running its first finite campaign.
+107 startup refused model admission; corrected107b completed its first finite campaign.
 106 duplicate retirement is complete.
 [107 injection contract and next sequence](experiments/ltx25-b70/notes/2026-10-07-sparse107-integration.md).
 The fixed40-file106 duplicate helper

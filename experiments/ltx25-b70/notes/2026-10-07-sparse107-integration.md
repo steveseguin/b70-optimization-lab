@@ -203,3 +203,57 @@ original fill position and argument ordering. Every new payload must copy despit
 Python object reuse; no stale slot.sources identity skip or unknown-signature
 recapture. The review made no edits to runtime, endpoint calls or GPU requests,
 and ended before21:39UTC.
+
+## Completed107b and measured decision
+
+All57 requests completed at21:45:14UTC. The application remains healthy and idle,
+with its finite plan consumed. No restart or extra request followed success.
+Twenty native executions formten exact repeat pairs;ten candidate andten timed
+clips match video latent, audio latent, images and waveform. The unmodified sealed
+final verifier independently reconstructed the entire proof at21:47:23UTC.
+Final receiptSHA`bb89b4130201a39e4bfea2684c7edd93a01fbf515afb7b5b40ab9165574b7d65`.
+Closeout binds1249 files and preserves both separate trace snapshots, journals,
+identity and quality receipts. Kernel journal has no entries in the campaign
+window. All live107b raw archives remain protected.
+
+The nine completion intervals are1.865,1.989,2.125,2.043,1.776,1.976,1.723,
+1.994,2.097seconds:mean1.954222seconds/25-frame clip,12.792813 generated FPS.
+This is a short repeated-workload diagnostic, not a matched speed gain, endurance
+test or public record. Playback remains24FPS. No unrelated work overlapped the
+candidate or timing blocks.
+
+Both saved trace receipts reconstruct exactly with the sealed CPU checker; root
+and independent reviewer agree. Worker0 selected99907105 andworker1 selected
+99907104, each48 timing events/16 operations. All14 actual timed sampler jobs,
+including tails, recorded zero events. Dormant hooks/CPU bookkeeping remain.
+Candidate snapshotSHA`04c5385ed6f087acf1531a15c96a56527d1c85df9450461e3e4469b4f1bad866`;
+timed snapshotSHA`c28010859017723230e36e5db3b984c29079f8bff51fd318a8f1afe92a199aff`.
+
+Each row below covers only the second observed forward. Columns overlap and must
+not be added into a critical path. All times are milliseconds.
+
+| Worker/stage | Partition0–22 | Partition23–47 | Fill0 | Fill23 | Incoming allocation sum |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0/A | 81.963 | 94.304 | 0.691 | 1.182 | 0.158 |
+| 1/A | 81.907 | 89.739 | 0.636 | 0.848 | 0.100 |
+| 0/B | 161.120 | 180.531 | 0.477 | 0.387 | 0.110 |
+| 1/B | 161.792 | 182.612 | 0.552 | 0.374 | 0.102 |
+
+Whole fills contain17 tensors:21,176,324bytes inA and44,769,284bytes inB.
+Incoming activations account for only2,072,576 and7,970,816bytes respectively.
+Four-move category totals span0.404–1.086ms D2H and0.810–1.029ms H2D. Long
+138.808–317.588ms host-wait sums overlap queued replay; they are not removable
+transport. Partition times include submission gaps/contention and are not
+isolated kernel costs. Worker0/A CPU submission is an unexplained11.913ms
+outlier versus1.477–2.248ms elsewhere; no causal claim follows.
+
+**Decision: close direct-static activation-copy reuse.** The measured incoming
+allocation and whole-fill envelope is too small to justify alias/lifetime risk.
+Do not turn this into another buffer experiment or rerun a diagnostic for green.
+The lane continues: audit49-frame640×384 qualification, retaining BF16,8+3steps
+and all four exact same-length native-reference gates. Longer workload admission
+requires new shape/signature/memory/storage checks; no such request is launched.
+Existing25-frame evidence does not establish longer-video reliability or speed.
+
+Evidence: `data/resume-20261007/sparse107b-closeout/summary.json`,
+`sparse107b-post-completion-proof.json`, and`sparse107b-interpretation.json`.
