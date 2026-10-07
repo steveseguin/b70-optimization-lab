@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Synthetic CPU fixtures in real capture/request schemas; no model evidence generated."""
 import copy
+import ast
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -12,7 +14,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('reference_gate', HERE / 'reference_gate.py')
 G = importlib.util.module_from_spec(spec); spec.loader.exec_module(G)
-PLAN = HERE.parent / '20261007-resolution-reference/candidate-plan.json'
+PLAN = HERE.parent / '20261007-resolution-reference-101c/candidate-plan.json'
 
 
 class GateTests(unittest.TestCase):
@@ -67,7 +69,7 @@ class GateTests(unittest.TestCase):
             events.append({'type': 'execution_success', 'seconds': .5,
                            'data': {'prompt_id': prompt_id, 'timestamp': start + 500}})
             (req / 'events.jsonl').write_text(''.join(json.dumps(e) + '\n' for e in events))
-            text_sha = G.sha(row['graph']['364']['inputs']['text'].encode())
+            text_sha = G.sha(('pipeline-window\n' + row['graph']['364']['inputs']['text']).encode('utf-8'))
             detail = {'text_sha256': text_sha, 'tag': text_sha, 'started_ahead': [], 'pending_after': [],
                       'speculation_miss': False, 'conditioning_fingerprint': G.sha(row['fixture'].encode()),
                       'window_encode': {'window': 64, 'clip_index': row['clip_index']}}
@@ -178,6 +180,35 @@ class GateTests(unittest.TestCase):
     def test_conditioning_wrong_index_or_speculation_refused(self):
         p = self.server / ('pipeline-' + self.plan['requests'][0]['name'] + '.json')
         self.mutate(p, lambda d:d['detail'].update(speculation_miss=True)); self.refuse()
+
+    def test_conditioning_tag_matches_exact_pinned_producer(self):
+        parent=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
+        manifest_raw=G.read_file(parent/'manifest.json')
+        self.assertEqual(G.sha(manifest_raw),G.PARENT_SHA)
+        source=G.read_file(parent/'source/scripts/pipeline_node.py')
+        self.assertEqual(G.sha(source),json.loads(manifest_raw)['files']['source/scripts/pipeline_node.py'])
+        tree=ast.parse(source)
+        functions=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in ('_text_sha256','_job_tag')]
+        self.assertEqual(len(functions),2)
+        ns={'hashlib':hashlib}
+        exec(compile(ast.Module(body=functions,type_ignores=[]),'pinned-producer-tag','exec'),ns)
+        for row in self.plan['requests'][:6]:
+            inputs=row['graph']['364']['inputs']
+            expected=ns['_job_tag'](inputs['mode'],inputs['text'])
+            report=json.loads((self.server/('pipeline-'+row['name']+'.json')).read_text())
+            self.assertEqual(report['detail']['tag'],expected)
+            self.assertEqual(report['detail']['text_sha256'],expected)
+            self.assertNotEqual(expected,ns['_text_sha256'](inputs['text']))
+        self.run_gate()
+
+    def test_raw_text_digest_cannot_stand_in_for_window_job_tag(self):
+        row=self.plan['requests'][0]
+        raw_digest=G.sha(row['graph']['364']['inputs']['text'].encode('utf-8'))
+        p=self.server/('pipeline-'+row['name']+'.json')
+        self.mutate(p,lambda d:d['detail'].update(tag=raw_digest,text_sha256=raw_digest))
+        with self.assertRaisesRegex(ValueError,'conditioning/ahead'):
+            self.run_gate()
+        self.assertFalse(self.output.exists())
 
     def test_raw_hash_corruption_and_nonfinite_tensor_refused(self):
         p = self.root/'output/validation'/self.plan['requests'][0]['name']/'tensors.safetensors'

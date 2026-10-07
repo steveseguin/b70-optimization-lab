@@ -1,7 +1,7 @@
 # Native reference receipt gate: CPU component, integration pending
 
 `reference_gate.py` validates the six native requests in reviewed plan
-`307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745`, whose
+`3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2`, whose
 qualified 99b parent is
 `f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a`.
 The contract and server must both use the existing model-verification receipt

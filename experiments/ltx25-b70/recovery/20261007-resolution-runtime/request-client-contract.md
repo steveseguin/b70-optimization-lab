@@ -1,7 +1,7 @@
 # Finite request client (CPU-tested; live integration pending)
 
 `request_client.py` implements serial requests from the reviewed plan, semantic SHA
-`307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745`.
+`3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2`.
 It has not contacted an endpoint or run a model. Tests use a stub transport and
 stub passive process/filesystem probes. This component neither launches nor
 stops a service, sends a process signal, modifies settings, or retries a POST.
@@ -50,7 +50,7 @@ object and its expected SHA-256, containing:
 
 For the complete schedule, also supply `setup_schedule_path` pointing to the
 sealed `resolution/setup-schedule.json` envelope, `setup_schedule_sha256` equal
-to `76a9770531366fe0149ded953fb84d52231bb3079f384e836c9c8b9e3bc4f82c`, and
+to `9f79ee01c507d46c106f9e0037eda772a20a717a49d3de03a2aca06785517441`, and
 `phase_observation_path` pointing to the bound run's
 `resolution-client-phase.json`. This digest is SHA-256 of the canonical inner
 `schedule` object, matching the envelope's `schedule_sha256`; it is not the

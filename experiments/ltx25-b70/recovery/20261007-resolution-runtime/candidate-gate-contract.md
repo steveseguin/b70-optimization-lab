@@ -18,7 +18,7 @@ as `reference_gate.py`. `phase` is `candidate-check` or `timed`. Candidate mode
 requires exactly the frozen six requests / three emissions. Timing mode requires
 exactly the frozen thirteen requests / ten emissions and a reconstructed verified
 candidate receipt. The semantic plan SHA remains
-`307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745`.
+`3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2`.
 
 The native gate is reused without weakening: `verify_receipt` reconstructs all
 six independent native requests, runtime identity, phase observations and complete

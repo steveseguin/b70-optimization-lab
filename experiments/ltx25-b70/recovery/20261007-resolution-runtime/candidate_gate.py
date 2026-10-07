@@ -107,7 +107,8 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
             if schema:
                 require(value.get('schema') == schema, 'Pipeline schema differs')
             phase_binding(value, role, name, phase, reference, reference_sha256, candidate_sha256)
-        text_sha = R.sha(row['graph']['364']['inputs']['text'].encode())
+        # Actual pipeline_node._job_tag namespaces window-conditioning jobs.
+        text_sha = R.sha(('pipeline-window\n' + row['graph']['364']['inputs']['text']).encode('utf-8'))
         require(text['clip_index'] == row['clip_index'] and text['mode'] == 'pipeline-window' and text['depth'] == 2 and
                 text['detail'].get('text_sha256') == text_sha and text['detail'].get('tag') == text_sha and
                 text['detail'].get('speculation_miss') is False and

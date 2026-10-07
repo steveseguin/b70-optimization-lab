@@ -142,14 +142,14 @@ class IntegrationControls(unittest.TestCase):
 
     def test_capture_tail_actual_done_marker_schema(self):
         row=self.setup_row('capture0');self.r.authority.completed.append(row['name'])
-        done={'stage':'sample','index':99900030,'finished_unix':10.,'finite':True,
+        done={'stage':'sample','index':99901030,'finished_unix':10.,'finite':True,
               'output_size':'640x384','speed_only':False,'output_parity_claimed':False,
               'session_observation':{'role':'auxiliary','run_name':None,'phase':'optimized_preparation',
                   'plan_sha256':SCHEDULE.PLAN_SHA,'qualification_id':SCHEDULE.QUALIFICATION_ID,
                   'comparison_mode':'same-size-native-v1','runtime_manifest_sha256':'a'*64,
                   'server_identity_sha256':self.r.identity_sha,'reference_receipt_sha256':'c'*64}}
         self.r.authority.phase='optimized_preparation';self.r.authority.references_sha='c'*64
-        (self.run/'pipeline-done-sample-99900030.json').write_text(json.dumps(done))
+        (self.run/'pipeline-done-sample-99901030.json').write_text(json.dumps(done))
         retired=[]
         with patch.object(self.r,'retire_tails',side_effect=lambda name:retired.append(name)):
             self.r.action('retire-capture-tails')

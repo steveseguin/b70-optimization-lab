@@ -12,7 +12,7 @@ import unittest
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('request_client_tested', HERE/'request_client.py')
 C = importlib.util.module_from_spec(spec); spec.loader.exec_module(C)
-PLAN = HERE.parent/'20261007-resolution-reference/candidate-plan.json'
+PLAN = HERE.parent/'20261007-resolution-reference-101c/candidate-plan.json'
 
 
 class Transport:

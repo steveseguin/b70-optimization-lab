@@ -7,11 +7,11 @@ import stat
 
 PARENT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA = '307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745'
+PLAN_SHA = '3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2'
 QUALIFICATION_ID = '29ef0d7afecc1254cb50477649b24a36d78648c177b7de3c553b02771ada5dc1'
-PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-reference/candidate-plan.json')
-PREFIX = 'resolution-ref101b-20261007'
-CAPTURE_INDEX = 99900030
+PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-reference-101c/candidate-plan.json')
+PREFIX = 'resolution-ref101c-20261007'
+CAPTURE_INDEX = 99901030
 GRAPHS = {
  'window-probe': ('text-window-probe.json','ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0'),
  'pin0': ('sampler-pin.json','fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005'),
@@ -109,7 +109,7 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
              'kind':kind,'graph':graph,'graph_sha256':sha(canonical(graph)),'depends_on':depends}
         if kind=='capture0':
             row.update(clip_index=CAPTURE_INDEX,expected_emitted_index=None,
-                       postcondition='sample99900030 finished finite; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail',
+                       postcondition='sample99901030 finished finite; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail',
                        output_role='unscored fill placeholder; no native-reference or candidate parity')
         rows.append(row);previous=name
     indices={r['clip_index'] for r in plan['requests']}

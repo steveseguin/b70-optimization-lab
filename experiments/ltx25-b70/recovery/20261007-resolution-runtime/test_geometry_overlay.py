@@ -49,7 +49,7 @@ def entry(m,role='text',body=None):
 class GeometryControls(unittest.TestCase):
     def setUp(self):
         self.m=module();self.env=patch.dict(os.environ,ENV,clear=True);self.env.start();self.addCleanup(self.env.stop)
-        self.kw=dict(run_name='resolution-ref-20261007-native-p1-boat',output_size='640x384',
+        self.kw=dict(run_name='resolution-ref101c-20261007-native-p1-boat',output_size='640x384',
                      speed_only=False,comparison_mode='same-size-native-v1',qualification_id=G.QUALIFICATION_ID)
 
     def test_historical_geometry_and_guards_unchanged(self):
@@ -135,7 +135,7 @@ class GeometryControls(unittest.TestCase):
     def test_actual_session_authority_integration(self):
         spec=importlib.util.spec_from_file_location('geometry_real_session',Path(__file__).with_name('session.py'))
         session=importlib.util.module_from_spec(spec);spec.loader.exec_module(session)
-        plan=Path(__file__).resolve().parent.parent/'20261007-resolution-reference/candidate-plan.json'
+        plan=Path(__file__).resolve().parent.parent/'20261007-resolution-reference-101c/candidate-plan.json'
         state={'queue_pending':0,'queue_running':0,'pipeline':{'running':0,'stages':{}},
                'fault':False,'sampler_routes':0,'lean_state':0,'decode_replicas':0}
         with tempfile.TemporaryDirectory() as td:

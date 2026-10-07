@@ -1,17 +1,18 @@
 # 640×384 reference/runtime components — CPU integration reviewed
 
-Packet101 passed its encoder check, then its new preparation inventory rejected
-a native FP32 metadata scalar. It stopped cleanly with healthy postflight and
-produced no reference clip. The [failure](../../notes/2026-10-07-resolution101-setup-refusal.md)
-is preserved. These authored components now target the separately named101b
-correction, now sealed and launched for a finite qualification attempt; it is
-not yet GPU-qualified. The qualified99b
-packet, original model and references remain unchanged.
+Packet101 exposed a native FP32 inventory omission;101b corrected it and
+produced six finite, exactly repeating native clips, then exposed a verifier
+job-tag convention error. Both attempts stopped cleanly with healthy postflight.
+The [101b closeout](../../notes/2026-10-07-resolution101b-verifier-refusal.md)
+and [nonqualifying diagnostic](101b-offline-verifier-diagnostic.json) are retained.
+These authored components now target101c with corrected producer-rooted tag
+checks and fresh names/indices throughout. No optimized640×384 result is qualified.
+The original model, qualified99b and both failed packets remain unchanged.
 
-The reviewed [request plan](../20261007-resolution-reference/README.md) fixes
+The reviewed [request plan](../20261007-resolution-reference-101c/README.md) fixes
 three original fixtures, native BF16, original8+3 steps, accepted text window,
 23/25 placement,25frames and640×384. Its plan hash is
-`307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745`.
+`3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2`.
 W1 is the first optimized scheduling configuration. Native sampling/decoding
 must run before optimized sampler capture, with independent repeats; the
 accepted text encoder remains graph-sharded. This is not an all-eager oracle.

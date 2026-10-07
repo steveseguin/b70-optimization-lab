@@ -19,16 +19,16 @@ arbitrary unreviewed graphs. `validate_schedule` reconstructs all rows, rather
 than trusting a self-updated JSON hash. CLI writes the plan to stdout only.
 
 Frozen schedule SHA:
-`76a9770531366fe0149ded953fb84d52231bb3079f384e836c9c8b9e3bc4f82c`.
+`9f79ee01c507d46c106f9e0037eda772a20a717a49d3de03a2aca06785517441`.
 
-All seven setup request names begin `resolution-ref101b-20261007-`; the 25 unconsumed plan request names retain `resolution-ref-20261007-`:
+All seven setup request names begin `resolution-ref101c-20261007-`; the 25 unconsumed plan request names retain `resolution-ref-20261007-`:
 
 | Suffix | Phase | Operation and prerequisite |
 | --- | --- | --- |
 | window-probe | native-setup | Original40-prompt window probe; same numerical inputs |
 | prepare-native | native-setup | New singleton node490 `LTXResolutionPrepareNative(run_name)` after passed window probe |
 | pin0 | optimized-setup | Pin sole sampler worker0, only after verified-reference/optimized-preparation barrier |
-| capture0 | optimized-setup | One nonlean graph capture request at fresh index99900030 after pin0 |
+| capture0 | optimized-setup | One nonlean graph capture request at fresh index99901030 after pin0 |
 | coverage | optimized-setup | Actual W1/two-stage coverage after sample completion and idle barrier |
 | decode-probe | optimized-setup | Original ten seeded640 native-vs-replica decoder checks after coverage |
 | freeze | optimized-setup | Original exact eager/replay/repeat chain and memory/residency freeze after decode probe |
@@ -54,14 +54,14 @@ three geometry-aware nodes receive only the new reviewed mode/qid/output fields.
 Text/seed come from the already pinned native boat graph. Run names and the two
 integer clip indices are bound to the capture request.
 
-Actual99b `ltx_pipeline.run_behind` submits index99900030 once. With no predecessor,
+Actual99b `ltx_pipeline.run_behind` submits index99901030 once. With no predecessor,
 it returns emitted_index=-1 immediately; the worker computes both sampler stages
 in the background. Actual `pipeline_decode_node`'s negative-index branch returns
 placeholders before defining/submitting any decode job. Node414 therefore records
 only an unscored placeholder for this request. The existing native decoder gate
 and required replica probe are not bypassed: no replica is requested here.
 
-The coordinator must wait for `pipeline-done-sample-99900030.json` with finite
+The coordinator must wait for `pipeline-done-sample-99901030.json` with finite
 success, inspect failed-job files and actual queue/worker state, preserve the
 completed un-emitted sample identity and retire that tail at the explicit barrier.
 It must never clear unfinished jobs, replay the capture request, or add a second

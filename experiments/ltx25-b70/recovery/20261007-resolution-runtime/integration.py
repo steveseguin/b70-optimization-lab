@@ -87,7 +87,7 @@ class Runtime:
             value = self.adapter.before_request(row['name'])
             self.write('native-memory-before-' + row['name'] + '.json', value)
         if row['phase'] in ('candidate-check', 'timed'):
-            name = 'resolution-ref101b-20261007-freeze'
+            name = 'resolution-ref101c-20261007-freeze'
             self.session.require(name in self.authority.completed, 'Passed freeze required before candidate/timing')
             state = self.inspect_state()
             self.session.require(state['captures_frozen'] is True and state['loads_frozen'] is True,
@@ -133,7 +133,7 @@ class Runtime:
         import nodes
         import comfy.model_management as mm
         from native_adapter import NativeAdapter
-        self.session.require(name == 'resolution-ref101b-20261007-prepare-native' and self.adapter is None,
+        self.session.require(name == 'resolution-ref101c-20261007-prepare-native' and self.adapter is None,
                              'Unexpected/repeated native preparation')
         self.session.require_phase('native', self.authority.plan['qualification_id'], name)
         hashes = {str(self.packet / path): sha for path, sha in self.manifest['files'].items()
@@ -194,7 +194,7 @@ class Runtime:
             self.session.require(name not in self.actions_done, 'Phase action already performed')
             self.storage_check()
             if name == 'before-native':
-                self.session.require('resolution-ref101b-20261007-prepare-native' in self.authority.completed,
+                self.session.require('resolution-ref101c-20261007-prepare-native' in self.authority.completed,
                                      'Native preparation incomplete')
                 self.native_observation('before')
             elif name == 'verify-native':
@@ -234,8 +234,8 @@ class Runtime:
                                      'Optimized preparation phase required')
                 before = 'pin0' if name == 'admit-capture' else 'coverage'
                 after = 'capture0' if name == 'admit-capture' else 'decode-probe'
-                self.session.require('resolution-ref101b-20261007-' + before in self.authority.completed and
-                                     'resolution-ref101b-20261007-' + after not in self.authority.completed,
+                self.session.require('resolution-ref101c-20261007-' + before in self.authority.completed and
+                                     'resolution-ref101c-20261007-' + after not in self.authority.completed,
                                      'Memory admission must immediately precede its setup stage')
                 if name == 'admit-decode':
                     self.session.require('retire-capture-tails' in self.actions_done,
@@ -256,17 +256,17 @@ class Runtime:
                 self.session.require(all(free['xpu:%d' % i] >= n*2**30 for i,n in enumerate(thresholds)),
                                      'Actual optimized preparation memory admission refused')
             elif name == 'retire-capture-tails':
-                self.session.require('resolution-ref101b-20261007-capture0' in self.authority.completed,
+                self.session.require('resolution-ref101c-20261007-capture0' in self.authority.completed,
                                      'Capture request incomplete')
                 # A tail that silently failed must never be mistaken for a successful capture.
-                done = self.receipt('pipeline-done-sample-', str(99900030))
+                done = self.receipt('pipeline-done-sample-', str(99901030))
                 observation = done.get('session_observation', {})
                 self.session.require(observation.get('server_identity_sha256') == self.identity_sha and
                     observation.get('runtime_manifest_sha256') == self.manifest_sha and
                     observation.get('plan_sha256') == self.session.PLAN_SHA256 and
                     observation.get('phase') == 'optimized_preparation' and
                     observation.get('reference_receipt_sha256') == self.authority.references_sha and
-                    done.get('stage') == 'sample' and done.get('index') == 99900030 and done['finite'] is True,
+                    done.get('stage') == 'sample' and done.get('index') == 99901030 and done['finite'] is True,
                                      'Capture sample did not finish finite')
                 self.retire_tails(name)
             elif name == 'verify-candidate':

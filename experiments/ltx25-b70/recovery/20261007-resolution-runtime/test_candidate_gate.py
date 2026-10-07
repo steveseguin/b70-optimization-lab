@@ -1,5 +1,7 @@
 """Small synthetic controls, using actual pinned graphs and real request/capture schemas."""
 import copy
+import ast
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -62,7 +64,7 @@ class CandidateControls(unittest.TestCase):
             (req/'events.jsonl').write_text(''.join(json.dumps(e)+'\n' for e in events))
             common = {'passed':True,'run_name':name,'server_identity_sha256':self.reference['server_identity_sha256'],
                       'model_verification_sha256':'b'*64}
-            textsha = C.R.sha(row['graph']['364']['inputs']['text'].encode())
+            textsha = C.R.sha(('pipeline-window\n' + row['graph']['364']['inputs']['text']).encode('utf-8'))
             text = dict(common,clip_index=row['clip_index'],mode='pipeline-window',depth=2,
                         detail={'text_sha256':textsha,'tag':textsha,'speculation_miss':False,
                                 'window_encode':{'window':64,'clip_index':row['clip_index']}})
@@ -109,18 +111,45 @@ class CandidateControls(unittest.TestCase):
         folder=self.root/'output/validation'/self.row(6)['name'];folder.mkdir();(folder/'tensors.safetensors').write_bytes(b'placeholder')
         result=self.run_gate();self.assertEqual([r['parity_status'] for r in result['executions'][:3]],['not-scored-fill']*3)
 
+    def test_conditioning_tags_match_pinned_producer_for_candidate_and_timing(self):
+        parent=Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
+        manifest=C.R.read_file(parent/'manifest.json')
+        self.assertEqual(C.R.sha(manifest),C.R.PARENT_SHA)
+        source=C.R.read_file(parent/'source/scripts/pipeline_node.py')
+        self.assertEqual(C.R.sha(source),json.loads(manifest)['files']['source/scripts/pipeline_node.py'])
+        functions=[n for n in ast.parse(source).body if isinstance(n,ast.FunctionDef) and n.name in ('_text_sha256','_job_tag')]
+        self.assertEqual(len(functions),2)
+        ns={'hashlib':hashlib}
+        exec(compile(ast.Module(body=functions,type_ignores=[]),'pinned-producer-tag','exec'),ns)
+        self.run_gate();candidate_sha=C.R.sha(self.output.read_bytes())
+        self.make_phase('timed',candidate_sha)
+        for row in self.f.plan['requests'][6:]:
+            inputs=row['graph']['364']['inputs'];expected=ns['_job_tag'](inputs['mode'],inputs['text'])
+            p=self.server/('pipeline-'+row['name']+'.json')
+            detail=json.loads(p.read_text())['detail']
+            self.assertEqual(detail['text_sha256'],expected);self.assertEqual(detail['tag'],expected)
+            self.assertNotEqual(expected,ns['_text_sha256'](inputs['text']))
+        C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,candidate_sha)
+
+    def test_raw_text_digest_refused_for_window_conditioning(self):
+        row=self.row();wrong=C.R.sha(row['graph']['364']['inputs']['text'].encode('utf-8'))
+        p=self.server/('pipeline-'+row['name']+'.json')
+        self.f.mutate(p,lambda v:v['detail'].update(tag=wrong,text_sha256=wrong))
+        with self.assertRaisesRegex(ValueError,'Conditioning provenance differs'):self.run_gate()
+        self.assertFalse(self.output.exists())
+
     def test_wrong_emitted_index_and_missing_worker_marker(self):
         name=self.row()['name'];p=self.server/('pipeline-decode-'+name+'.json')
-        self.f.mutate(p,lambda v:v['detail'].update(emitted_index=99900101));self.refuse()
+        self.f.mutate(p,lambda v:v['detail'].update(emitted_index=99901101));self.refuse()
 
     def test_missing_done_marker(self):
-        (self.server/'pipeline-done-save-99900100.json').unlink();self.refuse()
+        (self.server/'pipeline-done-save-99901100.json').unlink();self.refuse()
 
     def test_wrong_deterministic_decode_slot_refused(self):
-        self.f.mutate(self.server/'pipeline-done-decode-99900101.json',lambda v:v.update(slot='native'));self.refuse()
+        self.f.mutate(self.server/'pipeline-done-decode-99901101.json',lambda v:v.update(slot='native'));self.refuse()
 
     def test_preview_failure_refused(self):
-        self.f.mutate(self.server/'pipeline-done-save-99900100.json',lambda v:v.update(saved='save-failed:RuntimeError'));self.refuse()
+        self.f.mutate(self.server/'pipeline-done-save-99901100.json',lambda v:v.update(saved='save-failed:RuntimeError'));self.refuse()
 
     def test_coherent_tensor_change_still_rejected_by_native_bytes(self):
         folder=self.root/'output/validation'/self.row()['name'];p=folder/'tensors.safetensors'

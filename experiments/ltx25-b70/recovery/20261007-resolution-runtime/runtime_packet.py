@@ -20,14 +20,14 @@ sys.dont_write_bytecode = True
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT = ROOT / 'prepared-encoder-upstream-99b'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PACKET = ROOT / 'prepared-resolution-reference-101b'
-RUN_NAME = 'encoder-server-resolution-reference-101b-two-way-w1-b1-p1-dxpu2-s640x384'
+PACKET = ROOT / 'prepared-resolution-reference-101c'
+RUN_NAME = 'encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384'
 HERE = Path(__file__).resolve().parent
 AUTHOR = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-runtime')
-PLAN = AUTHOR.parent / '20261007-resolution-reference/candidate-plan.json'
-PLAN_SHA = '307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745'
+PLAN = AUTHOR.parent / '20261007-resolution-reference-101c/candidate-plan.json'
+PLAN_SHA = '3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2'
 COMMON, LAUNCHER = 'launch/encoder_runtime_common.py', 'launch/serve-encoder.py'
-STATUS = b'Packet101b successor after packet101 native-preparation refusal; same-size native reference candidate, not GPU-qualified.\n'
+STATUS = b'Packet101c successor after packet101b reference-gate convention refusal; same-size native reference candidate, not GPU-qualified.\n'
 # File names are deliberately explicit: no ambient files or caller-chosen code.
 COMPONENTS = ('geometry_overlay.py', 'native_safety.py', 'native_adapter.py',
               'session.py', 'executor_guard.py', 'runtime_observer.py', 'setup_gates.py',
@@ -208,7 +208,7 @@ def verify_packet(packet, expected_manifest_sha256):
     inventory = {n: filesha for n, filesha in
                  ((n, want['resolution/components/' + n]) for n in COMPONENTS)}
     inventory['candidate-plan.json'] = want['resolution/candidate-plan.json']
-    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '101b',
+    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '101c',
         'parent_packet': str(PARENT), 'parent_manifest_sha256': PARENT_SHA,
         'plan_sha256': PLAN_SHA, 'input_inventory': inventory,
         'input_inventory_sha256': digest(canonical(inventory)),
@@ -257,7 +257,7 @@ def build(expected_inventory_sha256, parent_stopped=False):
         write_new(PACKET / path, raw)
     files = {str(p.relative_to(PACKET)): sha(p) for p in PACKET.rglob('*')
              if p.is_file() and p.name != 'STATUS.txt'}
-    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '101b', 'parent_packet': str(PARENT),
+    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '101c', 'parent_packet': str(PARENT),
         'parent_manifest_sha256': PARENT_SHA, 'plan_sha256': PLAN_SHA,
         'input_inventory': inventory, 'input_inventory_sha256': expected_inventory_sha256,
         'source_delta': {p: {'before_sha256': parent['files'][p], 'after_sha256': digest(raw)}

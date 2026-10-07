@@ -12,7 +12,7 @@ import stat
 import struct
 import sys
 
-PLAN_SHA = '307ff7547b8275c75d7f642673174cac11a45e0d7bc0041958a834544faa8745'
+PLAN_SHA = '3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
 MODEL_VERIFICATION_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
 QUALIFICATION_ID = '29ef0d7afecc1254cb50477649b24a36d78648c177b7de3c553b02771ada5dc1'
@@ -229,7 +229,10 @@ def _verify_references(root, plan_path, runtime_contract_path, runtime_contract_
         request_identity = evidence.json(request / 'identity.json')
         require(request_identity == identity, 'Native source/runtime/process differs')
         pipeline = evidence.json(server_dir / ('pipeline-' + name + '.json'))
-        detail = pipeline['detail']; text_sha = sha(graph['364']['inputs']['text'].encode())
+        # Pinned pipeline_node._job_tag separates window jobs from full-text
+        # jobs. detail.text_sha256 is that job tag, not the raw text digest.
+        detail = pipeline['detail']
+        text_sha = sha(('pipeline-window\n' + graph['364']['inputs']['text']).encode('utf-8'))
         require(pipeline.get('passed') is True and pipeline['run_name'] == name and
                 pipeline['clip_index'] == row['clip_index'] and pipeline['depth'] == 2 and
                 pipeline['mode'] == 'pipeline-window', 'Conditioning request differs')
