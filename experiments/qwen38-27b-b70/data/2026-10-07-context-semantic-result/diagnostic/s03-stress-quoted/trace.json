@@ -1,0 +1,267 @@
+{
+  "schema": "semantic-live-attempt-trace.v1",
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "set",
+                "amount": 10,
+                "quote": "The opening posting set amber10 to 10."
+              },
+              {
+                "counter": "birch11",
+                "op": "set",
+                "amount": 20,
+                "quote": "The opening posting set birch11 to 20."
+              }
+            ],
+            "memory": "B1: amber10=10, birch11=20, ticket-s03->amber10, seal=copper-leaf"
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 2,
+            "predicted": 2,
+            "matched": 2,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 1,
+            "delivery_sha256": "ea42ab8bc48df7c422924bacb8f1ef161b489d7bb75e3137bc795b677d189447",
+            "events_sha256": "4614a9ec29429edc46ae0dbbd3d1980a48f9ccfa814fd65099e75127bc141a49",
+            "events_applied": 2,
+            "state_sha256": "6008f567afd1bf7e061bb6b3e1f6e27072a8b1e85891aae9a96508a4a914b175",
+            "applied_at": "2026-10-07T05:10:05.318934+00:00",
+            "replayed": false
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 2,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 10,
+        "birch11": 20
+      }
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "add",
+                "amount": 7,
+                "quote": "The clerk posted a credit of 7 to amber10."
+              }
+            ],
+            "memory": "B2: amber10=17, birch11=20, seal=linen-star"
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 1,
+            "predicted": 1,
+            "matched": 1,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 2,
+            "delivery_sha256": "52be3e7c00ab8ceeb4eb27f30aa90af0fe32e31ab7ac93781c9e150ef18707a6",
+            "events_sha256": "92b6884f578c5d37d8c11dab22ed4a8817694bef3d56f6617481a3991778120a",
+            "events_applied": 1,
+            "state_sha256": "fd4a5495ec734ae2a33e1dee0b4c65dddc962dae2e2d42bbbbd15f7396c1f6cc",
+            "applied_at": "2026-10-07T05:10:06.161487+00:00",
+            "replayed": false
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 2,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 17,
+        "birch11": 20
+      }
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "sub",
+                "amount": 7,
+                "quote": "the clerk now posted a debit of 7 to amber10"
+              },
+              {
+                "counter": "birch11",
+                "op": "add",
+                "amount": 2,
+                "quote": "birch11 was credited 2"
+              }
+            ],
+            "memory": "B3: amber10=10, birch11=22, seal=violet-gate"
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 2,
+            "predicted": 2,
+            "matched": 2,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 3,
+            "delivery_sha256": "babb6dbab6e682d50443ad98075145d9839fe0262bc7fccf2600da518d535797",
+            "events_sha256": "bed3a207f377af51890593dfce5410d856361a65c855ac80dd5e902dfbcf1f31",
+            "events_applied": 2,
+            "state_sha256": "ef5c7a1c646faa31dd14200876d73982481db66ebc69d5f1aa394c5c57626967",
+            "applied_at": "2026-10-07T05:10:07.311761+00:00",
+            "replayed": false
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 2,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 10,
+        "birch11": 22
+      }
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "events": [
+              {
+                "counter": "amber10",
+                "op": "add",
+                "amount": 3,
+                "quote": "A new delivery credited amber10 with 3."
+              },
+              {
+                "counter": "birch11",
+                "op": "sub",
+                "amount": 4,
+                "quote": "birch11 was debited 4."
+              }
+            ],
+            "memory": "B4: amber10=13, birch11=18, seal=marble-bird"
+          },
+          "events": {
+            "valid_format": true,
+            "expected": 2,
+            "predicted": 2,
+            "matched": 2,
+            "omitted": 0,
+            "spurious": 0,
+            "malformed": 0,
+            "substitutions": 0,
+            "wrong_fields": {
+              "counter": 0,
+              "op": 0,
+              "amount": 0
+            },
+            "missed_events": 0,
+            "extra_events": 0,
+            "semantic_precision": 1.0,
+            "semantic_recall": 1.0,
+            "semantic_f1": 1.0,
+            "exact_order": true
+          },
+          "receipt": {
+            "batch_id": 4,
+            "delivery_sha256": "85cd3f4c6fff7526fd0edce03ae3b4a80351fee1c1ae00813fe0b3fcdc2fad1b",
+            "events_sha256": "de3c8290f9fa2fffd8d4763079c01bfac4e26a6dcb407a23f66a5ab9dfeb4525",
+            "events_applied": 2,
+            "state_sha256": "de7b86a3abc74931093418237d7ba5a6de27e364bdfb96a5c79b1309a8919ad8",
+            "applied_at": "2026-10-07T05:10:08.417857+00:00",
+            "replayed": false
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 2,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 13,
+        "birch11": 18
+      }
+    }
+  ]
+}
