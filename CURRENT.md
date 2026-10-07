@@ -7,13 +7,20 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner explicitly resumed continuous LTX optimization: higher generated frame
 throughput and reliability, with no degradation in quality. Work is active on
-`steve-b70s`; Flash-Next and local-worker tuning remain parked. The first bounded
-LTX control started at 12:36 UTC: server PID 3055231, user unit
-`ltx98-resume-server-20261007`, with runner `ltx98-resume-campaign-20261007`.
-Its progress-lock exception fix is process-local and separately hash-bound; the
-sealed packet and installed virtualenv are unchanged. This is historical
-reference validation, not a speed improvement or current-upstream promotion.
-The runner owns one graceful stop; no automatic restart/retry policy exists.
+`steve-b70s`; Flash-Next and local-worker tuning remain parked. The first control
+halted before timing: its journal monitor hit the application's 1,024-file soft
+limit during text-encoder graph setup. The failure and descriptor census are
+preserved. The queue drained, passive GPU counters stayed idle for over a minute,
+and one SIGINT stopped PID 3055231 cleanly. All four cards passed postflight,
+with no kernel GPU fault. No model server is running at this checkpoint.
+[Incident closeout](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
+
+A separately preregistered corrected control will set the new LTX unit's open-file
+soft limit to 65,536 (existing hard limit 1,048,576), verify it before requests,
+and observe descriptor counts. No host/global limit or power/memory setting is
+changed. This is a controlled application correction, not an automatic retry.
+The process-local progress-lock fix stays separately hash-bound; installed and
+sealed source remain unchanged. No speed or descriptor-leak fix is claimed.
 
 The accepted reference remains batch 1, native BF16, 256×256, 25 frames at 24 fps,
 the unchanged two-stage schedule and the owner-accepted short text window.

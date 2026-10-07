@@ -1,0 +1,27 @@
+0000:23:00.0 control=on status=active
+0000:27:00.0 control=on status=active
+0000:43:00.0 control=on status=active
+0000:47:00.0 control=on status=active
+B70 runtime PM: all endpoints pinned on
+=== 2026-10-07T12:36:17Z [two-way-w2-b1-p1-dxpu2-s256x256] waiting for server health
+=== 2026-10-07T12:36:27Z [two-way-w2-b1-p1-dxpu2-s256x256] server pid 3055231 up, batch 1, 2 sampler jobs, shared pool 1, decode replica(s) xpu:2, depth 2, busy timers off, SIGINT honoured, health admission: yes
+=== 2026-10-07T12:36:27Z [two-way-w2-b1-p1-dxpu2-s256x256] engine-busy sampler pid 3055698 (fdinfo only, no device access)
+=== 2026-10-07T12:36:27Z [two-way-w2-b1-p1-dxpu2-s256x256] rest 60 s after construction
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-text-window-probe.py", line 62, in <module>
+    entry = call('/history/' + r['prompt_id']).get(r['prompt_id'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-text-window-probe.py", line 38, in call
+    assert not (ROOT / 'FAULT.json').exists(), 'device fault; halt requests'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: device fault; halt requests
+=== 2026-10-07T12:41:55Z [two-way-w2-b1-p1-dxpu2-s256x256] committed text-window probe (rc=1)
+=== 2026-10-07T12:41:55Z [two-way-w2-b1-p1-dxpu2-s256x256] text-window probe did not qualify (rc=1)
+=== 2026-10-07T12:41:55Z [two-way-w2-b1-p1-dxpu2-s256x256] FAULT latched: server left up for incident review
+arm                  references     verified  exact   iv_med  iv_mean enc_med  smp_job  smp/clip dec_med    decQ  clips_fl  ccs s/clip per card
+f98-twowayw2b1p1dxpu2s256x256-probe (not run)
+f98-twowayw2b1p1dxpu2s256x256-timed (not run)
+SUMMARY INCOMPLETE OR A PROOF FAILED: arm f98-twowayw2b1p1dxpu2s256x256-probe; arm f98-twowayw2b1p1dxpu2s256x256-timed; pair f98-twowayw2b1p1dxpu2s256x256-probe:f98-twowayw2b1p1dxpu2s256x256-timed
+=== 2026-10-07T12:42:05Z [two-way-w2-b1-p1-dxpu2-s256x256] SUMMARY / CONTEXT-SENTRY GATE FAILED (rc=3)
+=== 2026-10-07T12:42:05Z [two-way-w2-b1-p1-dxpu2-s256x256] committed summary (rc=11, stop rc=4)
+=== 2026-10-07T12:42:05Z [two-way-w2-b1-p1-dxpu2-s256x256] campaign finished (rc=11) but the server is STILL UP: it could not be stopped safely (stop rc=4)
