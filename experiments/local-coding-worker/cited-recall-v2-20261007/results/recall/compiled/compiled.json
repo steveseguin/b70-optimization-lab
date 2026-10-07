@@ -1,0 +1,184 @@
+{
+  "answers": [
+    {
+      "question_id": "V2Q01",
+      "answer": "The service should be stopped explicitly when done rather than left resident indefinitely, and a configured address does not prove the endpoint is currently available. After a failed client request, the model server must not be cycled or restarted.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 146,
+          "end_line": 150,
+          "quote": "The FP8 service stays available for the next task. Stop it explicitly when done:\n\n```bash\npython3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py stop --state-dir /absolute/path/new-worker-server\n```"
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 15,
+          "end_line": 19,
+          "quote": "- One persistent model server. Check CURRENT, actual containers, listeners and\n  render owners; run small compute/XCCL preflight under the existing lane lock.\n  The helper monitors the journal and owns graceful fault cleanup. Failed\n  clients never cycle the model server. Leave a healthy service available for\n  subsequent worker tasks and record its exact state path in CURRENT."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q02",
+      "answer": "The documented follow-up failed both new held-out issues, so it does not justify unattended work on new issues. A passing outcome should be described as tests passed awaiting review, requiring human approval before the issue is considered solved.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 10,
+          "end_line": 12,
+          "quote": "three produced patches that passed independent tests and agent review. A bounded\nfollow-up with readable tool output passed all five original issues, but failed\nboth new held-out issues. It remains an experimental coding assistant."
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 127,
+          "end_line": 128,
+          "quote": "`tests-passed-awaiting-review` means the independent tests passed; read the patch\nbefore applying it. `incomplete` means a test, limit, API request or tool failed."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q03",
+      "answer": "Only the acceptance directory should be mounted read-only at /acceptance, keeping answer keys and fixed-commit receipts outside of it. The coding task runs in a separate CPU-only container with a committed source snapshot, no network, no host checkout, and no GPU or Docker socket access.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 47,
+          "end_line": 50,
+          "quote": "For an external task packet, pass `--acceptance-dir /absolute/path/to/acceptance`.\nOnly that directory is mounted read-only at `/acceptance`; keep answer keys and\nfixed-commit receipts outside it. The run records the checks' hashes in\n`acceptance-identity.json`. Omitting the flag retains the original checks."
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 20,
+          "end_line": 24,
+          "quote": "- Each coding task gets a committed source snapshot without a Git worktree.\n  A separate CPU-only container mounts the editable snapshot and read-only\n  acceptance checks. No network, host checkout, credentials, Docker socket or\n  GPU is exposed. Root filesystem is read-only; CPU, memory, process count,\n  command output and command duration are bounded."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q04",
+      "answer": "A 40,000-token input is not supported because the worker input budget is 28,000 tokens and changing a client token limit does not increase server capacity. The 4,096-token batch limit is a scheduling limit separate from the total context capacity, not the maximum conversation length.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 63,
+          "end_line": 70,
+          "quote": "| Total context | 33,024 tokens, including input and generated output |\n| Worker input budget | 28,000 tokens, including instructions and conversation |\n| Speculative decoding | MTP depth 1, two B70s; prompt caching disabled |\n\nThe service has not been qualified for multiple simultaneous users. Keep the\nendpoint exclusive while the worker records per-request server-prefill metrics.\nThe model's advertised maximum context is larger than this deployed setting.\nChanging a client token limit does not increase the server's capacity."
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 89,
+          "end_line": 90,
+          "quote": "The server schedules up to 4,096 tokens per batch; that scheduling limit is\nseparate from its total context capacity."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q05",
+      "answer": "The lab cannot call the issue solved without human review of the patch, nor can it turn task timing into a benchmark headline because workloads differ. Public source closure alone does not earn a beginner-ready label, which requires a second machine or clean supported OS replay.",
+      "citations": [
+        {
+          "doc_id": "S02",
+          "start_line": 50,
+          "end_line": 52,
+          "quote": "histogram timing separately. Workloads differ; these are task observations, not\nnew benchmark headlines. Reject incomplete results and review each passing patch\nbefore calling the issue solved. Never have the model merge or publish changes."
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 76,
+          "end_line": 78,
+          "quote": "10. A second machine or clean supported OS replay is still required for\n    `starter-guide` certification. Public source closure alone earns no\n    beginner-ready label."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q06",
+      "answer": "The defensible status is draft, as assets or gates may still be missing. Before publication, the untracked file under /home must be tracked in the repository, and the base image must be obtained by immutable registry digest or its entire publicly closed parent chain must be rebuilt.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 47,
+          "end_line": 57,
+          "quote": "1. Start from a pristine clone of the public repository commit. Do not use a\n   dirty source tree, an unpublished patch, or an originating-host checkout.\n2. Resolve every build-script input. A declared `*_sha256` must match the exact\n   referenced file; a second hand-maintained allow-list cannot override it.\n3. Confirm every repository dependency is tracked. Reject `/home/<user>`,\n   `/mnt/fast-ai`, `/media/<user>`, `file://`, and other originating-host-only\n   dependencies. Normal platform paths such as `/opt/intel/oneapi` are allowed\n   only when the required version and installation source are documented.\n4. Obtain the base image by immutable registry digest, or rebuild its entire\n   publicly closed parent chain. A local image tag or image ID alone is not a\n   public dependency."
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 82,
+          "end_line": 83,
+          "quote": "- `draft`: assets or a gate may still be missing. Direct URLs can be planned,\n  but the website and README must say the packet is incomplete."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q07",
+      "answer": "The manifest must immediately return to draft status or a corrected immutable release must be published. The asset must never be silently replaced under an existing release identity, and remote_verified_at is an attestation, not a substitute for CI verification.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 86,
+          "end_line": 88,
+          "quote": "- If a public asset is removed, a digest changes, or a clean-clone build fails,\n  immediately return the manifest to `draft` or publish a corrected immutable\n  release. Never silently replace an asset under an existing release identity."
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 93,
+          "end_line": 96,
+          "quote": "or validator changes, on manual dispatch, and on a daily schedule. Thus a\nmissing or silently replaced public asset fails both at publication time and on\nthe next scheduled integrity check; `remote_verified_at` is an attestation, not\na substitute for CI verification."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q08",
+      "answer": "This is not justified because the headroom check is a point-in-time admission, not a reservation, and the backup pilot is additional-copy evidence, not long-term drive certification. Internal originals must be preserved, and the check must be rerun immediately before the writing job.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 130,
+          "end_line": 136,
+          "quote": "Budget peak additional writes, including temporary copies and caches. The 10 GiB\nabove is an example, not a measured campaign budget. Admission is a point-in-time\ncheck, not a reservation; rerun immediately before the writing job. For an external\ndestination also require its exact mount with `--require-mount /mnt/usb-models`.\nRead-only, missing or mismatched mounts fail closed. Historical frozen launchers\nare preserved; this check must precede new work rather than changing their pinned\nbytes silently."
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 142,
+          "end_line": 144,
+          "quote": "restore checks. No firmware, repair, power or memory changes were made. Preserve\nall internal originals: this is additional-copy evidence, not long-term drive\ncertification. See `CURRENT.md` and"
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q09",
+      "answer": "A boot ID is provenance, never an admission or consumption token, so it is not consumed by a run. Teardown alone does not permit the next launch if a postflight failed, as that blocks later device work until health is re-established. The first response to a suspected fault is to stop new launches and preserve the failing run directory while capturing passive evidence.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 57,
+          "end_line": 66,
+          "quote": "There is no one-experiment or one-model-load-per-boot rule. A boot ID is\nprovenance, never an admission or consumption token. After a run tears down,\nlater work may proceed on the same boot when it has an unused evidence path,\nholds the required exclusive host/device locks, finds no conflicting process\nor listener, revalidates exact source/runtime identity and storage/memory\nfloors, and passes the applicable bounded four-card health preflight. Every\ndevice run must route success and failure through cleanup plus host, four-card,\nand bounded journal postflight. A failed postflight blocks later device work\nuntil health is re-established; it does not by itself mandate a reboot. Reboot\nremains the last-resort recovery action described below."
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 68,
+          "end_line": 70,
+          "quote": "1. Stop new launches. Preserve the failing run directory and first capture\n   passive process, listener, progress, and journal evidence. Do not start an\n   XPU-SMI or compute-probe loop on a possibly flapping card."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q10",
+      "answer": "The reviewer can compare the original failure and candidate result using baseline-validation.json and validation-*.json, and inspect the proposed edits via changes.patch and changes.json. The status means independent tests passed but the patch must be read before applying, and the timings are task observations, not new benchmark headlines.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 118,
+          "end_line": 128,
+          "quote": "Each output directory contains:\n\n- `changes.patch` and `changes.json`: patch, changed paths and hashes.\n- `result.json`: acceptance status, timing and any failure.\n- `baseline-validation.json` and `validation-*.json`: original and candidate tests.\n- `trajectory.json` and `requests/`: full local agent conversation and API evidence.\n- `baseline/` and `workspace/`: original source and edited snapshot, without `.git`.\n- `sandbox.json`: exact CPU container identity and stopped status.\n\n`tests-passed-awaiting-review` means the independent tests passed; read the patch\nbefore applying it. `incomplete` means a test, limit, API request or tool failed."
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 50,
+          "end_line": 51,
+          "quote": "histogram timing separately. Workloads differ; these are task observations, not\nnew benchmark headlines. Reject incomplete results and review each passing patch"
+        }
+      ]
+    }
+  ]
+}

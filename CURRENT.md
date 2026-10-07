@@ -1,16 +1,17 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-07, cited-recall v2 preparation**. The dated two-card entries
+Latest four-card review: **2026-10-07, cited-recall v2 closeout**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**
-The earlier coding/recall trials are closed. **One bounded recall supervisor is active**
-on the four-card host; it owns startup, requests and graceful shutdown for a fresh [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/TRIAL.md)
-The run uses cards 0/1 and reserves all four for health checks; do not start a
-competing device owner. This does not authorize a resident service.
+**No model server is running.** The fresh [references-only recall trial](experiments/local-coding-worker/cited-recall-v2-20261007/CLOSEOUT.md)
+completed all ten answers in 176 seconds, passed strict citation compilation,
+and stopped cleanly with all four cards healthy. Independent review found all 20 citations relevant but only 12/30 criteria
+fully covered: required conditions were omitted. Its semantic gate failed.
+Keep it separate from unattended coding; no model/package is promoted.
 The [4B trial](experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
 and separate [27B trial](experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md)
 each completed zero of two coding repairs under different runtime/budget profiles.
@@ -24,7 +25,8 @@ headroom while keeping the same context limit; both finite runtime checks passed
 The server stopped cleanly, all four cards passed final checks, and no OOM or
 new kernel fault appeared. Coding evidence is archived and verified. Disposable
 source snapshots were released; all 80 model files remain in the verified cold
-copy. A newly verified temporary RAM copy is staged for the fresh recall trial.
+copy. The fresh recall trial
+finished and its temporary RAM copy was fully rehashed and released.
 EX400U is cleanly unmounted. The citation compiler passed 13 CPU tests; meaning
 and relevance still require separate review. The new packet uses four complete
 source documents and ten newly worded questions, with some shared themes.
@@ -97,8 +99,8 @@ setting was changed.
   `/mnt/usb-models/worker-models/qwen38-27b-fp8-20261007/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/`.
   Only the temporary RAM copy was removed after another full hash check and clean
   server stop. [Preservation receipt](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/model-preservation/summary.json).
-  A fresh fully verified RAM restore is staged for the references-only trial;
-  its receipt and one-shot limits are recorded in the linked trial plan. The downloader now resumes preallocated aria2 partials
+  The references-only trial used a freshly verified RAM restore, then released
+  it after healthy shutdown and another full hash check. The downloader now resumes preallocated aria2 partials
   correctly. The separate R276 trials and failed usefulness outcomes are
   preserved; they do not qualify the newer speculative package.
   Qualify the corrected package when its exact inputs and host ownership

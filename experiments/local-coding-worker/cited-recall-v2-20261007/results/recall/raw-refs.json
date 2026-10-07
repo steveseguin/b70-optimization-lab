@@ -1,0 +1,164 @@
+{
+  "answers": [
+    {
+      "question_id": "V2Q01",
+      "answer": "The service should be stopped explicitly when done rather than left resident indefinitely, and a configured address does not prove the endpoint is currently available. After a failed client request, the model server must not be cycled or restarted.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 146,
+          "end_line": 150
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 15,
+          "end_line": 19
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q02",
+      "answer": "The documented follow-up failed both new held-out issues, so it does not justify unattended work on new issues. A passing outcome should be described as tests passed awaiting review, requiring human approval before the issue is considered solved.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 10,
+          "end_line": 12
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 127,
+          "end_line": 128
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q03",
+      "answer": "Only the acceptance directory should be mounted read-only at /acceptance, keeping answer keys and fixed-commit receipts outside of it. The coding task runs in a separate CPU-only container with a committed source snapshot, no network, no host checkout, and no GPU or Docker socket access.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 47,
+          "end_line": 50
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 20,
+          "end_line": 24
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q04",
+      "answer": "A 40,000-token input is not supported because the worker input budget is 28,000 tokens and changing a client token limit does not increase server capacity. The 4,096-token batch limit is a scheduling limit separate from the total context capacity, not the maximum conversation length.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 63,
+          "end_line": 70
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 89,
+          "end_line": 90
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q05",
+      "answer": "The lab cannot call the issue solved without human review of the patch, nor can it turn task timing into a benchmark headline because workloads differ. Public source closure alone does not earn a beginner-ready label, which requires a second machine or clean supported OS replay.",
+      "citations": [
+        {
+          "doc_id": "S02",
+          "start_line": 50,
+          "end_line": 52
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 76,
+          "end_line": 78
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q06",
+      "answer": "The defensible status is draft, as assets or gates may still be missing. Before publication, the untracked file under /home must be tracked in the repository, and the base image must be obtained by immutable registry digest or its entire publicly closed parent chain must be rebuilt.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 47,
+          "end_line": 57
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 82,
+          "end_line": 83
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q07",
+      "answer": "The manifest must immediately return to draft status or a corrected immutable release must be published. The asset must never be silently replaced under an existing release identity, and remote_verified_at is an attestation, not a substitute for CI verification.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 86,
+          "end_line": 88
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 93,
+          "end_line": 96
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q08",
+      "answer": "This is not justified because the headroom check is a point-in-time admission, not a reservation, and the backup pilot is additional-copy evidence, not long-term drive certification. Internal originals must be preserved, and the check must be rerun immediately before the writing job.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 130,
+          "end_line": 136
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 142,
+          "end_line": 144
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q09",
+      "answer": "A boot ID is provenance, never an admission or consumption token, so it is not consumed by a run. Teardown alone does not permit the next launch if a postflight failed, as that blocks later device work until health is re-established. The first response to a suspected fault is to stop new launches and preserve the failing run directory while capturing passive evidence.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 57,
+          "end_line": 66
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 68,
+          "end_line": 70
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q10",
+      "answer": "The reviewer can compare the original failure and candidate result using baseline-validation.json and validation-*.json, and inspect the proposed edits via changes.patch and changes.json. The status means independent tests passed but the patch must be read before applying, and the timings are task observations, not new benchmark headlines.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 118,
+          "end_line": 128
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 50,
+          "end_line": 51
+        }
+      ]
+    }
+  ]
+}
