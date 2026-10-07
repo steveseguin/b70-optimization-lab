@@ -74,7 +74,9 @@ def main():
     owners = subprocess.run(['fuser', *map(str, nodes)], capture_output=True, timeout=10)
     if owners.returncode != 1 or owners.stdout or owners.stderr: raise RuntimeError('Render nodes not idle')
     if subprocess.check_output(['docker', 'ps', '-q'], timeout=10).strip(): raise RuntimeError('Container already running')
-    with socket.socket() as sock: sock.bind(('127.0.0.1', 18125))
+    with socket.socket() as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('127.0.0.1', 18125))
     mem = {line.split(':')[0]: int(line.split()[1]) for line in Path('/proc/meminfo').read_text().splitlines()}
     if mem['MemAvailable'] < 32 * 1024**2: raise RuntimeError('Require 32GiB available RAM')
     for block in range(53, 58):
