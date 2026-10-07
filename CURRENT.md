@@ -176,7 +176,10 @@ selects the [history study](experiments/qwen38-27b-b70/notes/2026-10-07-history-
 eight fresh trials crossing archive/quoted bookkeeping with source-only/history
 access on two fixed temporal documents. Both access modes save each method's
 actual accepted tables, including mistakes. The new client, independent auditor
-and supervised host wrapper are undergoing CPU checks and review before launch.
+and supervised host wrapper have passed 74 CPU tests and a complete eight-trial
+stub replay checked independently. The prepared packet fits the unchanged limits;
+the host binds all 14 packet files and 97 dependencies. Launch admission remains
+separate from these software checks.
 No holdout has been admitted.
 
 The [temporal reference packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md)

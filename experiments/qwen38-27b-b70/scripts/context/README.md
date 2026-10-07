@@ -25,12 +25,20 @@ experiments, so pooled scores or direct timing comparisons would be misleading.
 | [Sparse-state development](sparse_v1/README.md) | Four trials complete. At 128 counters both methods are exact; quoted uses 21.7% less elapsed time on one server. [Result and limits](../../notes/2026-10-07-sparse-state-result.md); [replication plan](../../notes/2026-10-07-sparse-state-replication-plan.md). |
 | [Sparse replication and transfer](sparse_replication_v1/README.md) | Four trials complete, all final answers 24/24. Original task repeats its exact 21.6% elapsed signal; dispatch archive fails seven early checkpoints. [Audited result](../../notes/2026-10-07-sparse-state-replication-result.md). |
 | [Historical state retrieval](history_v1/README.md) | CPU-only preparation: each method saves its own accepted states; explicit source-only/history modes isolate lookup access. No live result or study admission yet. |
+| [Historical-state study](history_study_v1/README.md) | Prepared fixed eight-trial comparison on two temporal documents, crossing bookkeeping and source-only/history access. [Prospective plan](../../notes/2026-10-07-history-state-study-plan.md); model execution pending admission. |
 
 The [temporal source packet](../../data/2026-10-07-temporal-development/authoring-note.md)
 is separate CPU preparation: four short narratives with earlier-value questions.
 Its [two independent assistant annotations and source replay](../../data/2026-10-07-temporal-development/review-note.md)
 agree on all 96 answers and 48 closing states. It has no model result or execution
 admission, and uses a shared controlled posting grammar.
+
+Each temporal document fits within the prompt limit with all its batches supplied
+together. These cases
+test correctness and costs inside this streaming/retrieval protocol; they do not
+show that external memory is necessary for such short documents. Before making a
+broader efficiency claim, compare against direct full-source answering where it
+fits, and separately test realistic streams longer than the available context.
 
 The revision 2, 3 and 4 holdouts remain unused. Frozen versions and negative outcomes are
 preserved; new experiments do not retrospectively complete or repair them.

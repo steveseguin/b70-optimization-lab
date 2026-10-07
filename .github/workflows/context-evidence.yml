@@ -16,6 +16,10 @@ on:
       - 'experiments/qwen38-27b-b70/scripts/context/*audit_sparse_replication_v1.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-replication/**'
       - 'experiments/qwen38-27b-b70/scripts/context/history_v1/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/history_study_v1/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/*history_study_v1_host_runner.py'
+      - 'experiments/qwen38-27b-b70/scripts/context/*audit_history_study_v1.py'
+      - 'experiments/qwen38-27b-b70/data/2026-10-07-history-study/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*audit_history_snapshots.py'
       - 'experiments/qwen38-27b-b70/scripts/context/*sparse_v1_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-development/**'
@@ -47,6 +51,10 @@ on:
       - 'experiments/qwen38-27b-b70/scripts/context/*audit_sparse_replication_v1.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-replication/**'
       - 'experiments/qwen38-27b-b70/scripts/context/history_v1/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/history_study_v1/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/*history_study_v1_host_runner.py'
+      - 'experiments/qwen38-27b-b70/scripts/context/*audit_history_study_v1.py'
+      - 'experiments/qwen38-27b-b70/data/2026-10-07-history-study/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*audit_history_snapshots.py'
       - 'experiments/qwen38-27b-b70/scripts/context/*sparse_v1_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-development/**'
@@ -126,3 +134,6 @@ jobs:
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context -p 'test_audit_sparse_replication_v1.py'
       - name: Replay temporal reference annotations without model requests
         run: python3 experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/verify_references.py
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context/history_study_v1 -p 'test_*.py'
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context -p 'test_history_study_v1_host_runner.py'
+      - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context -p 'test_audit_history_study_v1.py'
