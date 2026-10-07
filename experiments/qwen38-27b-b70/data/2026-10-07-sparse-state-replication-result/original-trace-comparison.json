@@ -1,0 +1,56 @@
+{
+  "schema": "sparse-original-repeat-trace-comparison.v1",
+  "scope": "Two observed fresh-server runs of the same generated task. Timing/response IDs differ; no universal determinism or broader quality claim.",
+  "trials": [
+    {
+      "arm": "archive",
+      "call_counts": [
+        40,
+        40
+      ],
+      "identical_call_fields": {
+        "phase": 40,
+        "batch_id": 40,
+        "messages": 40,
+        "response": 40,
+        "usage": 40,
+        "full_response_message": 40
+      },
+      "inputs": [
+        {
+          "path": "/mnt/fast-ai/bench-results/context-sparse-v1-20261007/diagnostic/sparse-n128-seed83-archive/native/calls.jsonl",
+          "sha256": "64081d537e572f76e93d983d4adc4ffe49054f8495e22513324864a9a19012c7"
+        },
+        {
+          "path": "/mnt/fast-ai/bench-results/context-sparse-replication-v1-20261007/diagnostic/sparse-n128-seed83-archive/native/calls.jsonl",
+          "sha256": "4044361bb5028952d396474a1c5f6c4fa748994888cc76a656a1fead47a6ca12"
+        }
+      ]
+    },
+    {
+      "arm": "quoted",
+      "call_counts": [
+        40,
+        40
+      ],
+      "identical_call_fields": {
+        "phase": 40,
+        "batch_id": 40,
+        "messages": 40,
+        "response": 40,
+        "usage": 40,
+        "full_response_message": 40
+      },
+      "inputs": [
+        {
+          "path": "/mnt/fast-ai/bench-results/context-sparse-v1-20261007/diagnostic/sparse-n128-seed83-quoted/native/calls.jsonl",
+          "sha256": "169e097a5c39e63e3849ceb2f45a4574ce3c40022b00bc91bce61a3604d500a3"
+        },
+        {
+          "path": "/mnt/fast-ai/bench-results/context-sparse-replication-v1-20261007/diagnostic/sparse-n128-seed83-quoted/native/calls.jsonl",
+          "sha256": "2c171cb1beb3e1d98b733c70391870d5f3df0e41e4184a28057ddabf3433ceba"
+        }
+      ]
+    }
+  ]
+}

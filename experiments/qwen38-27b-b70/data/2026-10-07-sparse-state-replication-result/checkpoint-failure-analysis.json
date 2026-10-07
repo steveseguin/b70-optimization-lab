@@ -1,0 +1,208 @@
+{
+  "schema": "sparse-replication-checkpoint-failure-analysis.v1",
+  "case_id": "sparse-n128-seed97-dispatch",
+  "arm": "archive",
+  "task_file": "experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-replication/sparse-n128-seed97-dispatch-task.json",
+  "task_file_sha256": "02c5dc56dde87e24366db37c9efc25f9a2ce6028e24af506c6d4364cbd181d8e",
+  "source_sha256": "c584ecdf657ec8904ab3cda48832520a3df8b15b5d63c9207b72f3d6f9127ce0",
+  "native_trace_sha256": "f29491848df7b5084f6ec27f6763c5695ca25930e5c0e6ecbec388310d6dc234",
+  "observation": "The model introduced unitex10:0 before any balance posting for that counter. The extra entry persists through batches1-7, then the explicit initialization in batch8 replaces it. All explicitly initialized values are correct at every checkpoint.",
+  "source_evidence": [
+    {
+      "batch_id": 1,
+      "quote": "ticket-n128-0 belongs to counter unitex10."
+    },
+    {
+      "batch_id": 8,
+      "quote": "Dispatch recorded unitex10 at a balance of 110."
+    }
+  ],
+  "conclusion": "The prewritten every-checkpoint-exact quality criterion fails. Later exact state and any final answer score do not retrospectively correct earlier accepted tables.",
+  "causal_limit": "This is one observed trace. Seed and wording changed together; no isolated wording effect is identified.",
+  "checkpoints": [
+    {
+      "batch_id": 1,
+      "extra": {
+        "unitex10": 0
+      },
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 2,
+      "extra": {
+        "unitex10": 0
+      },
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 3,
+      "extra": {
+        "unitex10": 0
+      },
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 4,
+      "extra": {
+        "unitex10": 0
+      },
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 5,
+      "extra": {
+        "unitex10": 0
+      },
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 6,
+      "extra": {
+        "unitex10": 0
+      },
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 7,
+      "extra": {
+        "unitex10": 0
+      },
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 8,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 9,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 10,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 11,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 12,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 13,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 14,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 15,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 16,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 17,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 18,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 19,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 20,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 21,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 22,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 23,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    },
+    {
+      "batch_id": 24,
+      "extra": {},
+      "wrong": {},
+      "missing": [],
+      "actual_state_matches_raw_reply": true
+    }
+  ],
+  "scope_limit": "The false zero is an extra uninitialized entry. All explicit posted balances were right, the later initialization corrected the table, and this task asks historical balances only from batch9 onward. This finding does not by itself establish a final-answer error or a broad arithmetic defect.",
+  "prompt_evidence": "System instruction: Do not invent facts. No source convention defines an uninitialized balance as zero."
+}

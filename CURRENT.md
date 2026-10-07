@@ -144,92 +144,58 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 06:39 UTC**. One supervised sparse-state
-replication is active. The original repeat is exact; dispatch quoted is exact,
-but dispatch archive invented an early zero balance and fails checkpoint quality.
-Its remaining work finishes unchanged; historical-state comparison preparation
-follows the prewritten fallback.
+Latest two-card review: **2026-10-07 06:46 UTC**. **No model server is running or
+queued.** The four sparse replication trials completed; both cards were released
+at 06:44:55 UTC and the final health check passed at 06:45:05. CPU preparation for
+the next fixed history comparison is active.
 
-## 2026-10-07, two-B70 host: sparse replication active
+## 2026-10-07, two-B70 host: replication preserved; prepare history comparison
 
-Revision 3 completed six development trials: archive 48/48, quoted events
-48/48, summary 44/48. Its original all-methods gate failed; held-out cases
-remain unused. [R3 findings](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-result.md).
+The [replication result](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-replication-result.md)
+is mixed. On the original generated task, both methods have 24/24 final answers
+and every saved table is correct. Quoted events took 397.1 seconds versus archive's
+506.6 seconds: 21.6% less time, following 21.7% in the first run. All inputs and
+full responses matched the earlier run on all 40 calls per method. This supports
+repeatability on that task, not a general speed claim.
 
-The separate cold-profile revision 4 passed strict qualification and extraction
-checks. Five development trials completed at 24/24; a sixth summary trial used
-its entire 8,192-token reasoning allowance without producing an answer. Six
-planned trials were therefore unstarted, and held-out cases remain untouched.
-All four completed structured trials were exact and uncached. Quoted events took
-longer than archive in both completed pairs; the incomplete matrix establishes
-no speed improvement. No cap was raised or failed result replaced.
-[R4 evidence and limits](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-result.md).
+The new dispatch task also produced 24/24 final answers for both methods. Quoted
+had all 24 saved tables correct; archive had 17. It assigned zero to a counter
+mentioned only as a ticket owner, seven batches before the counter's first posted
+balance. The later posting corrected the table, and the questions never asked
+about those early values. The prewritten checkpoint gate therefore fails even
+though final answers pass. No failed trial was replaced or budget increased.
 
-The owner explicitly asked work to continue. The semantic diagnostic completed
-with quoted events 84/84, summary 84/84 and archive 82/84 final answers. The
-independent audit confirms all 84 quoted events and 48 quoted checkpoints exact;
-archive had four wrong checkpoints. In both variants of the final pair, it added
-a number that explicitly replaced the balance. A separate wrong subtraction in
-one variant was hidden by a later reset; checkpoint grading exposed it.
-Every model call reported zero cache reuse. These are six authored stress/control
-pairs, not independent human validation or a general benchmark.
-[Semantic result and evidence](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-result.md).
+All 155 calls report zero cache reuse, all 96 source batches survived exactly,
+and all 352 quoted events match the references. The evidence and four databases
+are preserved; the independent audit replayed exactly from a restored copy.
+The supervisor stopped cleanly and completed health checks. No new server is
+admitted yet. Preserve all older frozen sources, packets and outcomes.
 
-The [sparse-state result](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-result.md)
-is mixed: eight counters scored archive 23/24 and quoted 24/24; at 128 counters,
-both scored 24/24 with every checkpoint exact. All 155 calls reported zero cache
-reuse. Quoted events took 397.3 seconds versus archive's 507.5 seconds at 128
-counters, a 21.7% elapsed reduction in one paired observation. All 82 checkpoints
-and 232 accepted quoted events were independently checked. The result and four
-SQLite stores are preserved, and the audit replayed exactly from a restored copy.
+The previously fixed [decision tree](experiments/qwen38-27b-b70/notes/2026-10-07-context-next-study-decision.md)
+selects the [history study](experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-plan.md):
+eight fresh trials crossing archive/quoted bookkeeping with source-only/history
+access on two fixed temporal documents. Both access modes save each method's
+actual accepted tables, including mistakes. The new client, independent auditor
+and supervised host wrapper are undergoing CPU checks and review before launch.
+No holdout has been admitted.
 
-The 128-counter pair meets the original replication trigger. Its historical
-questions are weak: only two of sixteen historical/ownership answers differ from
-the final values, versus thirteen in the eight-counter task. Keep that limitation
-visible; this is a wide-table cost signal, not broad recall or speed qualification.
+The [temporal reference packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md)
+has two independent assistant annotations agreeing on 201 events, 48 tables and
+96 answers; a separate source replay confirms them. Every historical balance
+differs from final, but historical ownership coverage is narrower. Forty-eight
+CPU fixtures fit the unchanged budgets; these are software checks, not model
+results. The documents are short, assistant-authored and use controlled posting
+grammar. The [history engine](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
+has nineteen CPU tests and twelve separate snapshot-audit tests passing.
 
-The [new replication plan](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-replication-plan.md)
-has passed CPU preparation: repeat the original 128-counter task with reversed
-method order on a fresh server, then test fixed seed 97 with dispatch wording.
-Nineteen client/packet tests, forty-five host tests and twenty-four sparse audit
-regressions pass. The original task bytes and new source references are checked;
-both cases retain the disclosed 2/16 historical-value distinction. Passive launch
-preparation passed at 06:09:28 UTC, and preflight health passed.
-`ctx-sparse-replication-v1.service` now owns startup, strict qualification, four
-trials and graceful cleanup. Output: `/mnt/fast-ai/bench-results/context-sparse-replication-v1-20261007`.
-[Preparation receipts](experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-replication-live/queue.json).
-The completed original-task repeat is 24/24 with all checkpoints exact for both
-methods: archive 506.6 seconds, quoted 397.1 seconds (21.6% less). The partial
-independent audit confirms all 80 calls report zero cached tokens. Every input
-and full response message matches the corresponding earlier run for both methods.
-This is repeatability on one generated task, not general speed qualification.
-Do not start another GPU owner or edit its frozen sources, packet or plan. Preserve every
-older frozen version and outcome; no holdout has been admitted.
-The [next-study decision tree](experiments/qwen38-27b-b70/notes/2026-10-07-context-next-study-decision.md)
-is fixed before the dispatch outcomes: confirm a successful transfer on a fresh
-server, with a conditional four-trial temporal diagnostic; otherwise compare
-source-only and actual-history access in eight fixed temporal trials. Neither
-branch has execution admission yet.
-Raw dispatch archive replies contain `unitex10: 0` in batches 1–7, although the
-counter is only named in a ticket assignment before its first balance posting in
-batch 8. All initialized values are right; the extra value violates the fixed
-all-checkpoints-exact gate. No failed trial is replaced. The
-[history study plan](experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-plan.md)
-fixes eight trials crossing bookkeeping and access to each method's actual saved
-history. New code is CPU preparation only until full prior closeout and admission.
-
-Separate [historical-state retrieval](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
-is CPU-only preparation. Both methods save their own accepted tables, including
-mistakes; source-only/history modes isolate model access to those tables.
-Nineteen CPU tests pass, and independent review caught and fixed missing final
-snapshot verification. A separate snapshot auditor passes twelve CPU tests.
-This lookup remains unmeasured while the registered replication runs.
-A separate [temporal source packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/authoring-note.md)
-has [two independently derived assistant annotations](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md)
-that agree on all 201 events, 48 closing states and 96 answers. A separate source
-replay confirms the key; all 16 historical answers per document differ from final
-values. It targets earlier values and changing ownership in four short narratives
-with controlled posting grammar; no model trial is admitted.
+Earlier findings remain in their own notes: the
+[semantic diagnostic](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-result.md)
+found 84/84 quoted and summary answers versus 82/84 archive, with four wrong
+archive checkpoints; the [initial sparse screen](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-result.md)
+produced the narrow wide-table signal. [Revision 3](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-result.md)
+and [revision 4](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-result.md)
+failed their original gates; their holdouts remain unused. Preserve the bounded
+failures and unstarted rows rather than retrospectively completing those studies.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 
