@@ -122,6 +122,7 @@ def main():
               '--network', 'host', '--memory', '16g', '--memory-swap', '16g',
               '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--user', '1000:1000',
               '--device', '/dev/dri', '--workdir', '/tmp', '--shm-size', '1g',
+              '--mount', 'type=bind,src=/dev/dri/by-path,dst=/dev/dri/by-path,readonly',
               '--log-driver', 'local', '--log-opt', 'max-size=10m', '--log-opt', 'max-file=2',
               '--mount', 'type=bind,src=' + MODEL_ROOT + ',dst=' + MODEL_ROOT + ',readonly',
               '--entrypoint', command[0]]

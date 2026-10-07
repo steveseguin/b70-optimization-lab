@@ -25,3 +25,12 @@ the existing BF16/no-MTP/eager16K profile and the one-canary, two-task gates.
 No rebuilding, new model download, inference retry or server restart is planned.
 The supervisor owns the actual container identity through graceful shutdown
 and verifies that it stopped; Docker CLI exit alone is insufficient.
+
+The first R276 attempt failed in oneCCL device initialization, before loading
+weights: `init_device_fds` could not open its device directory. The launcher
+passed GPU device nodes but omitted `/dev/dri/by-path`. Its stopped-container
+receipt and clean four-card before/after checks are retained in
+[the failure record](r276-device-path-failure/summary.json). A CPU-only container
+metadata check verifies all four render symlinks under an explicit read-only
+by-path mount. The corrected launcher changes only that mount. One manually
+reviewed corrected attempt is admitted; it is not an automatic restart policy.
