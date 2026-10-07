@@ -1,0 +1,55 @@
+{
+  "schema": "ltx.sparse107b.cpu-validation.v1",
+  "utc": "2026-10-07T21:27:26.663255+00:00",
+  "basis": "Correct original graph node registration; same unused107 workload and trace/quality code. Failed107 preserved.",
+  "prior_validation_sha256": "2a090ccd8aa44b86a62cf145c7a8f07abaf701374df55424f9eba0d01d449ef8",
+  "changed_prior_source_paths": [
+    "experiments/ltx25-b70/recovery/20261007-resolution-runtime/runtime_packet.py",
+    "experiments/ltx25-b70/recovery/20261007-resolution-runtime/test_runtime_packet.py"
+  ],
+  "unchanged_prior_source_bindings_verified": true,
+  "focused_tests": [
+    {
+      "command": "python3 -B -m unittest -q test_runtime_packet.py",
+      "cwd": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-runtime",
+      "tests": 12,
+      "seconds": 0.263,
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -B -m unittest -q test_builder_registration.py",
+      "cwd": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-sparse-transport107-runtime",
+      "tests": 5,
+      "seconds": 0.14,
+      "exit_code": 0
+    }
+  ],
+  "source_bindings": {
+    "experiments/ltx25-b70/recovery/20261007-resolution-runtime/runtime_packet.py": "d738507600de87ae2c24631b917c6494f32e74cffdecf980e833f7f26cc904ad",
+    "experiments/ltx25-b70/recovery/20261007-resolution-runtime/test_runtime_packet.py": "7afdfebe3b5c5f3b946f8349bf0ae732fecd3475f2565e75a7f5e96b09dfb855",
+    "experiments/ltx25-b70/recovery/20261007-sparse-transport107-runtime/test_builder_registration.py": "3cd3c4f275e86d77643e5701e50c0a89b4b74d8a60cbe8f773b42ea67a7d715a"
+  },
+  "input_inventory": {
+    "geometry_overlay.py": "75abafb768dd8349540518e11279433baf23073a7187de932188a3f73c029d40",
+    "native_safety.py": "e5e5eb42d520d20651a7e57bbb4588a566c72f598d316a371424c3b89f6552f5",
+    "native_adapter.py": "f811dcd139adf05eb36dceeb8aab42e8bd6ef81bb11370b8ae070dfee6034196",
+    "session.py": "4a5f14dfa08129fe7a1a4e2fdd526ab007d7d8a79bfc9a3a2df4ddd07ebecb3b",
+    "executor_guard.py": "1a2ec2ec7a08321c0cacd9625952658df04e07b861a0091a98ebc688c3fb947d",
+    "runtime_observer.py": "475ede8de04d5cd45fc3bc0e550d6c7f4d9d00da1bd129095d6736c8fd6ff0b8",
+    "setup_gates.py": "ae2657efb235736a0224d9554c735b783e77dfff959dd50e76ffe0c9165bb8de",
+    "reference_gate.py": "decf8080774b2ca7162a59f30a43c5ff9a1b46f031d223338838e5aa917c9f6a",
+    "candidate_gate.py": "3c4931720643f36c6016937bfb0ada7275292347fabfc89fec8af0f302dec737",
+    "request_client.py": "bf551be558607b303a23ffdc1f80817a1738cb59aa66867057ed5577f48d1fb5",
+    "schedule.py": "6a092bf15a08ba586e6c230debb770569cda7420354e1b23e69a5f2d5b344424",
+    "integration.py": "436e5897caf26a899baa7d1cdcbe05c18f150c007c9ee609ca0b398801b010ac",
+    "campaign.py": "889f14b40d4babae4fab25c8dfae31e229da4daec1fca87cd00f586243e02f60",
+    "runtime_packet.py": "d738507600de87ae2c24631b917c6494f32e74cffdecf980e833f7f26cc904ad",
+    "sparse_transport.py": "9234c89fc06ff299732d3a4763500a708f5f1bdd833fefad54ac016520484300",
+    "sparse_transport_overlay.py": "133e202da6e91166979a302da37dc9d6be9d6d9df8f97b137ae8e41211d505b6",
+    "transport_gate.py": "1548ca89d284698e33cac6fc153a89b2a7ee3ee4988cf1d9f2175288b30aaa84",
+    "candidate-plan.json": "58e31bae280eb9f04a638959e7055a673a24b9c29bcf7a6faf4f457d69f8cb7b"
+  },
+  "input_inventory_sha256": "cdb4bcfadcd69f729120ed8acbcd17d689e89d4be8639137518c235d5374a2ea",
+  "passed": true,
+  "model_requests": 0
+}

@@ -28,9 +28,9 @@ def literal(raw, name):
 
 class PacketControls(unittest.TestCase):
     def test_successor_identity_explicit_in_path_status_and_transition(self):
-        self.assertEqual(B.PACKET.name, 'prepared-sparse-transport-107')
-        self.assertEqual(B.RUN_NAME, 'encoder-server-sparse-transport-107-two-way-w2-b1-p1-dxpu2-s640x384')
-        self.assertIn(b'Packet107 sparse sampler transport trace after packet106', B.STATUS)
+        self.assertEqual(B.PACKET.name, 'prepared-sparse-transport-107b')
+        self.assertEqual(B.RUN_NAME, 'encoder-server-sparse-transport-107b-two-way-w2-b1-p1-dxpu2-s640x384')
+        self.assertIn(b'Packet107b sparse sampler transport trace; original graph node registration retained', B.STATUS)
         tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
         transitions=[]
         for node in ast.walk(tree):
@@ -38,7 +38,7 @@ class PacketControls(unittest.TestCase):
                 fields={k.value:v for k,v in zip(node.keys,node.values) if isinstance(k,ast.Constant)}
                 if 'schema' in fields and isinstance(fields['schema'],ast.Constant) and fields['schema'].value=='ltx.resolution101.transition.v1':
                     transitions.append(ast.literal_eval(fields['packet_revision']))
-        self.assertEqual(transitions,['107','107'])
+        self.assertEqual(transitions,['107b','107b'])
 
     def test_trace_runtime_modules_are_installed_and_passive_collector_absent(self):
         extras = B.extra_files(B.AUTHOR, B.regular(B.PLAN))

@@ -9,11 +9,19 @@ The owner resumed continuous LTX optimization on `steve-b70s`. The105 applicatio
 completed its71-request campaign successfully at19:43:32UTC, then stopped cleanly
 at2026-10-07T20:13:39.070899+00:00 for the necessary106 application reload. All four cards passed
 postflight at2026-10-07 20:13:55 UTC; no host restart or settings change occurred.
-The **106 application is retained and idle**, unit `ltx106-sampler-server-20261007`,
-PID **3348053**, start ticks `27822505`, boot
-`10192010-9700-4915-ac6c-980d6b74afa0`. Its57-request campaign completed successfully
-at **20:37:00UTC**. Queues, tails and previews are empty; no fault or halt.
-Its finite plan is consumed; do not append requests or modify the sealed packet.
+The **106 application stopped cleanly** at2026-10-07T21:17:16.424803+00:00 for the necessary107
+application reload. Its57-request campaign had completed at20:37:00UTC; the full
+quality proof remains preserved. All four cards passed postflight at2026-10-07 21:17:42 UTC,
+with zero kernel faults this boot. The107 application is running idle, PID3362138, but its first status admission
+failed before any model request: the builder incorrectly replaced the graph node
+registration wrapper with its helper. The sealed failed107 build and startup
+logs are preserved; standard queues/history are empty and no fault is latched.
+Do not send model requests or modify the sealed packet. Root is correcting the
+CPU builder into107b and adding an actual node-registration regression test before
+one necessary controlled application reload. The40-file106 duplicate retirement
+completed with direct105 keepers and restoration maps; fresh107 admission had
+54.897GiB free. No computer restart or host setting changed.
+[107 startup refusal](experiments/ltx25-b70/data/resume-20261007/sparse107-startup-refusal/summary.json).
 Flash-Next and local-worker tuning remain parked.
 
 106 preserved exact video and audio outputs:20 native executions form10 exact
@@ -66,12 +74,15 @@ sampler workers; every later timed request is trace-disabled. Runtime injection
 is now CPU-reviewed:257 author and35 helper/overlay tests pass. It records at most
 one candidate job per actual worker, with bounded events, and independently checks
 zero timing events across all actual later timed jobs including tails. Model
-quality gates remain mandatory; dormant CPU hooks remain. No107 build, launch,
-reload or106 deletion has occurred at this checkpoint.
+quality gates remain mandatory; dormant CPU hooks remain. 107 source construction and the single106 controlled stop are complete.
+107 startup refused model admission; the corrected107b builder is under CPU review.
+106 duplicate retirement is complete.
 [107 injection contract and next sequence](experiments/ltx25-b70/notes/2026-10-07-sparse107-integration.md).
 The fixed40-file106 duplicate helper
-passes17 synthetic safety tests and independent review; no real106 retirement
-plan, deletion or restore has run. All106 live outputs remain protected.
+passes17 synthetic safety tests and independent review; the real40-file106 retirement completed after stopped-owner and fresh full-proof
+checks. All direct105 keepers remain protected; restore the40 mapped ordinary
+copies before replaying106 full raw proof.
+[106 cleanup and restoration](experiments/ltx25-b70/notes/2026-10-07-after106-storage.md).
 Sampler A/B timings describe denoising stages, not individual GPU utilization;
 they do not justify a blind placement or worker-count sweep.
 
@@ -89,8 +100,9 @@ After two fresh full105 proof reconstructions,40 verified whole-file duplicate
 captures were retired with durable restoration mappings, reclaiming2.780GiB.
 Ten105 native-p1 anchors and all26 previous restoration anchors remain. Fresh106
 admission observed55.067GiB free and51.067GiB after its4GiB runtime allowance.
-After106 completion about52.24GiB remains. Its live raw outputs are protected;
-future storage admission must be fresh, not borrowed from the completed run.
+After106 completion about52.24GiB remained before107 construction and verified
+retirement. The fresh107 admission above is current; future admission must be
+fresh, not borrowed from a completed run.
 Restore the40 mapped ordinary copies before replaying105's full raw proof.
 Models, previews, metadata, patches and failed experiments remain protected.
 [105 cleanup and restoration](experiments/ltx25-b70/notes/2026-10-07-after105-storage-plan.md).

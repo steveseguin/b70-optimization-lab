@@ -91,3 +91,61 @@ reconstruction and stopped-owner evidence. Preserve all keepers and restoration
 receipts. Admit4GiB above50GiB freshly, launch107 once, bind client contract and
 run its finite campaign. No automatic restart/retry and no requests after faults.
 Retain the successful application and continue from measured evidence.
+
+## Sealed source and predecessor stop
+
+Source commitf4a0b7dff is pushed. Fresh384MiB build admission passed above50GiB;
+107 full source closure verified with manifest
+`36348968dd0a5ee3ce2aeda24d24f614823cae5c00050a3b3b72cfe9ad15ff38` and inventory
+`40c4ccb7f2a586d37fdbcf885f256523bcbd8c2b16d88b6a186d3019cdedb3fa`. Constructor99b PID3129897 was absent.
+106 remained untouched during source construction.
+
+106 received oneSIGINT after two idle queue/tail/preview observations5seconds
+apart, exact PID/start/boot/identity checks and clean kernel journal. It exited
+at2026-10-07T21:17:16.424803+00:00; all render nodes were unowned afterward. The single
+four-card postflight passed at2026-10-07 21:17:42 UTC, with zero earlier/new faults.
+The40-file106 retirement helper now reconstructs the full sealed proof before
+any deletion. Stop receipts are under`sampler106-closeout/`; models and all
+restoration keepers remain protected.
+
+## Storage transition completed
+
+The reviewed40-file retirement completed after two fresh106 full sealed proof
+reconstructions. PlanSHA`35042e3c1f28c9605c122298326f9bacc9000b72edde26e0d25212bc47863d0b`;
+receiptSHA`37d365a57b6fcdf3b7063a102faec8c6a0b0ed6caf91ab7180bb6a5de97d031b`. Reclaimed2.7801GiB with direct
+105 native-p1 keepers and restoration maps. Fresh107 admission observed54.897GiB
+free and50.897GiB after4GiB. No model or failed experiment removed.
+[Restoration details](2026-10-07-after106-storage.md).
+
+##107 startup refusal before model requests
+
+The single107 launch at21:22:04UTC started PID3362138, ticks28195647, same boot.
+Its first resolution-status GET returned500: `LTXGraphCaptureGate` was missing.
+The application had logged that the graph custom node lacked NODE_CLASS_MAPPINGS.
+The root builder incorrectly treated the canonical graph helper as a node mirror
+and replaced the distinct graph registration wrapper. The sampler script really
+is mirrored; the graph helper is not. Both root and independent review missed
+that packaging distinction. CPU source/overlay tests did not execute registration.
+
+No model request, client contract or campaign was created; standard queue and
+history reads were empty. No kernel/device fault was latched. The failed sealed107
+packet/run and full startup journal are preserved in place, with bound evidence
+under`data/resume-20261007/sparse107-startup-refusal/`. The application remains
+idle while the correction is prepared; do not modify its sealed source or append
+requests. This failed packaging attempt is not model or performance evidence.
+
+The author correction107b removes only the mistaken graph-wrapper replacement,
+keeping the original99b wrapper which imports the modified canonical graph
+adapter. It retains the same never-submitted107 plan/request namespace and all
+trace/quality code, with a new packet/run identity and explicit CPU node-export
+regression. No automatic reload or retry has occurred. One necessary controlled
+reload will follow reviewed/sealed corrected source and fresh storage admission.
+
+The corrected107b builder passed12 existing builder tests and5 new static
+registration regressions. The actual original graph wrapper and its class export
+are preserved, and the canonical instrumented adapter is imported. All other
+node mirrors were independently checked against their actual parent scripts and
+exports. The exact failed107 substitution is a negative test. Every previously
+validated source except the builder and its identity test is unchanged; the new
+validation binds that carried evidence and the focused tests. A fresh filename
+scan confirms the never-used107 request namespace is still clear for107b.
