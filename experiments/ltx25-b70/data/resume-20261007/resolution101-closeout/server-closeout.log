@@ -1,0 +1,210 @@
+2026-10-07T11:58:32.811386-04:00 steve-b70s systemd[2914601]: Started ltx101-resolution-server-20261007.service - /usr/bin/env --default-signal=INT LTX_OUTPUT_SIZE=640x384 LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=two-way LTX_SAMPLER_WORKERS=1 LTX_SAMPLER_BATCH=1 LTX_SAMPLER_SHARED_POOL=1 LTX_DECODE_REPLICA_DEVICE=xpu:2 LTX_DECODE_REPLICAS=1 NEOReadDebugKeys=1 EnableDeferBacking=0 /home/steve/.venvs/ltx25-baseline/bin/python -B /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/launch/serve-encoder.py --packet /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101 --manifest-sha256 a6e7be8a8ef49bda454803e6f22c98c29e37f77aa8d57c1c13518fd82471a636 --run-name encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-100b.json.
+2026-10-07T11:58:44.681810-04:00 steve-b70s env[3262996]: WARNING:root:--disable-api-nodes is deprecated and will be removed in a future version. It currently behaves like --offline. Use --offline to keep the frontend offline, or --disable-partner-nodes to only disable partner nodes.
+2026-10-07T11:58:44.682266-04:00 steve-b70s env[3262996]: [WARNING] --disable-api-nodes is deprecated and will be removed in a future version. It currently behaves like --offline. Use --offline to keep the frontend offline, or --disable-partner-nodes to only disable partner nodes.
+2026-10-07T11:58:44.682397-04:00 steve-b70s env[3262996]: INFO:root:Adding extra search path diffusion_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models
+2026-10-07T11:58:44.682435-04:00 steve-b70s env[3262996]: [INFO] Adding extra search path diffusion_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models
+2026-10-07T11:58:44.682468-04:00 steve-b70s env[3262996]: INFO:root:Adding extra search path text_encoders /mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders
+2026-10-07T11:58:44.682468-04:00 steve-b70s env[3262996]: [INFO] Adding extra search path text_encoders /mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders
+2026-10-07T11:58:44.682526-04:00 steve-b70s env[3262996]: INFO:root:Adding extra search path vae /mnt/fast-ai/llm-models/LTX-2.5-baseline/vae
+2026-10-07T11:58:44.682526-04:00 steve-b70s env[3262996]: [INFO] Adding extra search path vae /mnt/fast-ai/llm-models/LTX-2.5-baseline/vae
+2026-10-07T11:58:44.682526-04:00 steve-b70s env[3262996]: INFO:root:Adding extra search path latent_upscale_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models
+2026-10-07T11:58:44.682526-04:00 steve-b70s env[3262996]: [INFO] Adding extra search path latent_upscale_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models
+2026-10-07T11:58:44.682617-04:00 steve-b70s env[3262996]: INFO:root:Setting output directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/output
+2026-10-07T11:58:44.682617-04:00 steve-b70s env[3262996]: [INFO] Setting output directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/output
+2026-10-07T11:58:44.682617-04:00 steve-b70s env[3262996]: INFO:root:Setting input directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384/input
+2026-10-07T11:58:44.682617-04:00 steve-b70s env[3262996]: [INFO] Setting input directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384/input
+2026-10-07T11:58:44.682617-04:00 steve-b70s env[3262996]: INFO:root:Setting user directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384/user
+2026-10-07T11:58:44.682617-04:00 steve-b70s env[3262996]: [INFO] Setting user directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384/user
+2026-10-07T11:58:44.682836-04:00 steve-b70s env[3262996]: WARNING:root:WARNING: Potential Error in code: Torch already imported, torch should never be imported before this point.
+2026-10-07T11:58:44.682867-04:00 steve-b70s env[3262996]: [WARNING] WARNING: Potential Error in code: Torch already imported, torch should never be imported before this point.
+2026-10-07T11:58:44.726058-04:00 steve-b70s env[3262996]: INFO:root:Python version: 3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]
+2026-10-07T11:58:44.726102-04:00 steve-b70s env[3262996]: [INFO] Python version: 3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]
+2026-10-07T11:58:44.726102-04:00 steve-b70s env[3262996]: INFO:root:ComfyUI version: 0.39.0
+2026-10-07T11:58:44.726102-04:00 steve-b70s env[3262996]: [INFO] ComfyUI version: 0.39.0
+2026-10-07T11:58:44.726333-04:00 steve-b70s env[3262996]: INFO:root:comfy-aimdo version: 0.5.5
+2026-10-07T11:58:44.726366-04:00 steve-b70s env[3262996]: [INFO] comfy-aimdo version: 0.5.5
+2026-10-07T11:58:44.726659-04:00 steve-b70s env[3262996]: INFO:root:comfy-kitchen version: 0.2.37
+2026-10-07T11:58:44.726691-04:00 steve-b70s env[3262996]: [INFO] comfy-kitchen version: 0.2.37
+2026-10-07T11:58:44.726691-04:00 steve-b70s env[3262996]: WARNING:root:Dynamic vram disabled with argument. If you have any issues with dynamic vram enabled please give us a detailed reports as this argument will be removed soon. If you use gguf we recommend keeping dynamic vram enabled and using native ComfyUI model formats instead. ComfyUI native formats like fp8, int8 and w4a8 will be faster even if they are larger than your memory.
+2026-10-07T11:58:44.726746-04:00 steve-b70s env[3262996]: [WARNING] Dynamic vram disabled with argument. If you have any issues with dynamic vram enabled please give us a detailed reports as this argument will be removed soon. If you use gguf we recommend keeping dynamic vram enabled and using native ComfyUI model formats instead. ComfyUI native formats like fp8, int8 and w4a8 will be faster even if they are larger than your memory.
+2026-10-07T11:58:44.726746-04:00 steve-b70s env[3262996]: INFO:root:Setting temp directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384/temp/temp
+2026-10-07T11:58:44.726746-04:00 steve-b70s env[3262996]: [INFO] Setting temp directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384/temp/temp
+2026-10-07T11:58:44.728107-04:00 steve-b70s env[3262996]: INFO:root:comfyui-frontend-package version: 1.55.14
+2026-10-07T11:58:44.728143-04:00 steve-b70s env[3262996]: [INFO] comfyui-frontend-package version: 1.55.14
+2026-10-07T11:58:44.728143-04:00 steve-b70s env[3262996]: INFO:root:comfyui-workflow-templates version: 0.11.77
+2026-10-07T11:58:44.728193-04:00 steve-b70s env[3262996]: [INFO] comfyui-workflow-templates version: 0.11.77
+2026-10-07T11:58:44.728193-04:00 steve-b70s env[3262996]: INFO:root:comfyui-embedded-docs version: 0.5.13
+2026-10-07T11:58:44.728193-04:00 steve-b70s env[3262996]: [INFO] comfyui-embedded-docs version: 0.5.13
+2026-10-07T11:58:44.728267-04:00 steve-b70s env[3262996]: INFO:root:comfy-kitchen version: 0.2.37
+2026-10-07T11:58:44.728267-04:00 steve-b70s env[3262996]: [INFO] comfy-kitchen version: 0.2.37
+2026-10-07T11:58:44.728267-04:00 steve-b70s env[3262996]: INFO:root:comfy-aimdo version: 0.5.5
+2026-10-07T11:58:44.728267-04:00 steve-b70s env[3262996]: [INFO] comfy-aimdo version: 0.5.5
+2026-10-07T11:58:44.728565-04:00 steve-b70s env[3262996]: INFO:root:[Prompt Server] web root: /home/steve/ltx25-upstream99-dependencies/site-packages/comfyui_frontend_package/static
+2026-10-07T11:58:44.728596-04:00 steve-b70s env[3262996]: [INFO] [Prompt Server] web root: /home/steve/ltx25-upstream99-dependencies/site-packages/comfyui_frontend_package/static
+2026-10-07T11:58:44.729273-04:00 steve-b70s env[3262996]: INFO:root:Asset seeder disabled
+2026-10-07T11:58:44.729307-04:00 steve-b70s env[3262996]: [INFO] Asset seeder disabled
+2026-10-07T11:58:44.755632-04:00 steve-b70s env[3262996]: /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+2026-10-07T11:58:44.755632-04:00 steve-b70s env[3262996]:   warnings.warn(
+2026-10-07T11:58:45.183627-04:00 steve-b70s env[3262996]: INFO:OpenGL.acceleratesupport:No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-07T11:58:45.183736-04:00 steve-b70s env[3262996]: [INFO] No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-07T11:58:45.772118-04:00 steve-b70s env[3262996]: INFO:root:Skipping websocket_image_save.py due to disable_all_custom_nodes and whitelist_custom_nodes
+2026-10-07T11:58:45.772445-04:00 steve-b70s env[3262996]: [INFO] Skipping websocket_image_save.py due to disable_all_custom_nodes and whitelist_custom_nodes
+2026-10-07T11:58:45.780333-04:00 steve-b70s env[3262996]: INFO:root:
+2026-10-07T11:58:45.780333-04:00 steve-b70s env[3262996]: Import times for custom nodes:
+2026-10-07T11:58:45.780402-04:00 steve-b70s env[3262996]: [INFO]
+2026-10-07T11:58:45.780402-04:00 steve-b70s env[3262996]: Import times for custom nodes:
+2026-10-07T11:58:45.780402-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_resolution_lab
+2026-10-07T11:58:45.780402-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_resolution_lab
+2026-10-07T11:58:45.780489-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_encoder_identity
+2026-10-07T11:58:45.780489-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_encoder_identity
+2026-10-07T11:58:45.780489-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_baseline_capture
+2026-10-07T11:58:45.780489-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_baseline_capture
+2026-10-07T11:58:45.780489-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_vae_lab
+2026-10-07T11:58:45.780489-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_vae_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_phase_timed_upsampler_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_phase_timed_upsampler_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_speed_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_speed_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_resident_fastpath_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_resident_fastpath_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_qkv_fusion_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_qkv_fusion_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_encoder_diagnostics
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_encoder_diagnostics
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_concurrent_cfg_lab
+2026-10-07T11:58:45.780639-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_concurrent_cfg_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_upsampler_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_upsampler_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_text_encoder_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_text_encoder_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_pipeline_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_pipeline_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_multiblock_compile_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_multiblock_compile_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_na_axis_decode_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_na_axis_decode_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_capture_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_graph_capture_lab
+2026-10-07T11:58:45.780904-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_pipeline_sampler_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_pipeline_sampler_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_host_embedding_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_host_embedding_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_pipeline_decode_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_pipeline_decode_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: INFO:root:   0.1 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_block_compile_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: [INFO]    0.1 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/custom_nodes/ltx_block_compile_lab
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: INFO:root:
+2026-10-07T11:58:45.781205-04:00 steve-b70s env[3262996]: [INFO]
+2026-10-07T11:58:45.828083-04:00 steve-b70s env[3262996]: INFO:root:Disabling intermediate node cache.
+2026-10-07T11:58:45.828207-04:00 steve-b70s env[3262996]: [INFO] Disabling intermediate node cache.
+2026-10-07T11:58:45.828382-04:00 steve-b70s env[3262996]: INFO:root:Starting server
+2026-10-07T11:58:45.828432-04:00 steve-b70s env[3262996]: [INFO] Starting server
+2026-10-07T11:58:45.828571-04:00 steve-b70s env[3262996]: INFO:root:To see the GUI go to: http://127.0.0.1:8188
+2026-10-07T11:58:45.828609-04:00 steve-b70s env[3262996]: [INFO] To see the GUI go to: http://127.0.0.1:8188
+2026-10-07T11:59:37.718889-04:00 steve-b70s env[3262996]: INFO:root:got prompt
+2026-10-07T11:59:37.718889-04:00 steve-b70s env[3262996]: [INFO] got prompt
+2026-10-07T11:59:39.725156-04:00 steve-b70s env[3262996]: INFO:root:model weight dtype torch.bfloat16, manual cast: None
+2026-10-07T11:59:39.734089-04:00 steve-b70s env[3262996]: [INFO] model weight dtype torch.bfloat16, manual cast: None
+2026-10-07T11:59:39.741666-04:00 steve-b70s env[3262996]: INFO:root:model_type FLUX
+2026-10-07T11:59:39.741707-04:00 steve-b70s env[3262996]: [INFO] model_type FLUX
+2026-10-07T11:59:39.742977-04:00 steve-b70s env[3262996]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors']
+2026-10-07T11:59:39.743060-04:00 steve-b70s env[3262996]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors']
+2026-10-07T11:59:49.588720-04:00 steve-b70s env[3262996]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors']
+2026-10-07T11:59:49.589058-04:00 steve-b70s env[3262996]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors']
+2026-10-07T11:59:54.697258-04:00 steve-b70s env[3262996]: INFO:root:CLIP/text encoder model load device: xpu:2, offload device: cpu, current: cpu, dtype: torch.bfloat16
+2026-10-07T11:59:54.699593-04:00 steve-b70s env[3262996]: [INFO] CLIP/text encoder model load device: xpu:2, offload device: cpu, current: cpu, dtype: torch.bfloat16
+2026-10-07T11:59:54.800778-04:00 steve-b70s env[3262996]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors']
+2026-10-07T11:59:54.800863-04:00 steve-b70s env[3262996]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors']
+2026-10-07T11:59:57.364921-04:00 steve-b70s env[3262996]: INFO:root:VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T11:59:57.365277-04:00 steve-b70s env[3262996]: [INFO] VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T11:59:57.454439-04:00 steve-b70s env[3262996]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors']
+2026-10-07T11:59:57.454569-04:00 steve-b70s env[3262996]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors']
+2026-10-07T11:59:57.916835-04:00 steve-b70s env[3262996]: INFO:root:VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T11:59:57.918061-04:00 steve-b70s env[3262996]: [INFO] VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T11:59:57.941744-04:00 steve-b70s env[3262996]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors']
+2026-10-07T11:59:57.941829-04:00 steve-b70s env[3262996]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors']
+2026-10-07T11:59:59.155009-04:00 steve-b70s env[3262996]: INFO:root:Requested to load _TextShard
+2026-10-07T11:59:59.155388-04:00 steve-b70s env[3262996]: [INFO] Requested to load _TextShard
+2026-10-07T12:00:00.604697-04:00 steve-b70s env[3262996]: INFO:root:loaded completely;  10395.73 MB loaded, full load: True
+2026-10-07T12:00:00.605047-04:00 steve-b70s env[3262996]: [INFO] loaded completely;  10395.73 MB loaded, full load: True
+2026-10-07T12:00:00.659420-04:00 steve-b70s env[3262996]: INFO:root:Requested to load LTXAVTEModel_
+2026-10-07T12:00:00.659499-04:00 steve-b70s env[3262996]: [INFO] Requested to load LTXAVTEModel_
+2026-10-07T12:00:02.772791-04:00 steve-b70s env[3262996]: INFO:root:loaded completely; 28682.00 MB usable, 14604.25 MB loaded, full load: True
+2026-10-07T12:00:02.773165-04:00 steve-b70s env[3262996]: [INFO] loaded completely; 28682.00 MB usable, 14604.25 MB loaded, full load: True
+2026-10-07T12:04:56.734863-04:00 steve-b70s env[3262996]: INFO:root:Prompt executed in 319.01 seconds
+2026-10-07T12:04:56.735485-04:00 steve-b70s env[3262996]: [INFO] Prompt executed in 319.01 seconds
+2026-10-07T12:04:57.230112-04:00 steve-b70s env[3262996]: INFO:root:got prompt
+2026-10-07T12:04:57.230165-04:00 steve-b70s env[3262996]: [INFO] got prompt
+2026-10-07T12:04:57.413833-04:00 steve-b70s env[3262996]: ERROR:root:!!! Exception during processing !!! Unexpected reference tensor dtype: text_primary/gemma3_12b.logit_scale/torch.float32
+2026-10-07T12:04:57.413884-04:00 steve-b70s env[3262996]: [ERROR] !!! Exception during processing !!! Unexpected reference tensor dtype: text_primary/gemma3_12b.logit_scale/torch.float32
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]: ERROR:root:Traceback (most recent call last):
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 284, in prepare
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:     text_before = {r: fingerprint(self._rows(r, require_loaded=True))
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 247, in _rows
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:     require(dtype == 'torch.bfloat16' or (kind == 'buffer' and integral),
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 19, in require
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:     raise SafetyRefusal(reason)
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]: native_safety.SafetyRefusal: Unexpected reference tensor dtype: text_primary/gemma3_12b.logit_scale/torch.float32
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]: During handling of the above exception, another exception occurred:
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]: Traceback (most recent call last):
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 548, in execute
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:     output_data, output_ui, has_subgraph, has_pending_tasks = await get_output_data(prompt_id, unique_id, obj, input_data_all, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 353, in get_output_data
+2026-10-07T12:04:57.414801-04:00 steve-b70s env[3262996]:     return_values = await _async_map_node_over_list(prompt_id, unique_id, obj, input_data_all, obj.FUNCTION, allow_interrupt=True, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 327, in _async_map_node_over_list
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     await process_inputs(input_dict, i)
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 315, in process_inputs
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     result = f(**inputs)
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:              ^^^^^^^^^^^
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/integration.py", line 305, in apply
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     _CTX.prepare_native(run_name)
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/integration.py", line 146, in prepare_native
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     snapshot = self.adapter.prepare()
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:                ^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 323, in prepare
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     self._fail(exc)
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 97, in _fail
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     raise SafetyRefusal(self.failed)
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]: native_safety.SafetyRefusal: Unexpected reference tensor dtype: text_primary/gemma3_12b.logit_scale/torch.float32
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]: [ERROR] Traceback (most recent call last):
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 284, in prepare
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     text_before = {r: fingerprint(self._rows(r, require_loaded=True))
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 247, in _rows
+2026-10-07T12:04:57.415182-04:00 steve-b70s env[3262996]:     require(dtype == 'torch.bfloat16' or (kind == 'buffer' and integral),
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 19, in require
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:     raise SafetyRefusal(reason)
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]: native_safety.SafetyRefusal: Unexpected reference tensor dtype: text_primary/gemma3_12b.logit_scale/torch.float32
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]: During handling of the above exception, another exception occurred:
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]: Traceback (most recent call last):
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 548, in execute
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:     output_data, output_ui, has_subgraph, has_pending_tasks = await get_output_data(prompt_id, unique_id, obj, input_data_all, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 353, in get_output_data
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:     return_values = await _async_map_node_over_list(prompt_id, unique_id, obj, input_data_all, obj.FUNCTION, allow_interrupt=True, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 327, in _async_map_node_over_list
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:     await process_inputs(input_dict, i)
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/execution.py", line 315, in process_inputs
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:     result = f(**inputs)
+2026-10-07T12:04:57.415647-04:00 steve-b70s env[3262996]:              ^^^^^^^^^^^
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/integration.py", line 305, in apply
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:     _CTX.prepare_native(run_name)
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/integration.py", line 146, in prepare_native
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:     snapshot = self.adapter.prepare()
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:                ^^^^^^^^^^^^^^^^^^^^^^
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 323, in prepare
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:     self._fail(exc)
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:   File "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/source/scripts/native_adapter.py", line 97, in _fail
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]:     raise SafetyRefusal(self.failed)
+2026-10-07T12:04:57.415969-04:00 steve-b70s env[3262996]: native_safety.SafetyRefusal: Unexpected reference tensor dtype: text_primary/gemma3_12b.logit_scale/torch.float32
+2026-10-07T12:04:57.439587-04:00 steve-b70s env[3262996]: INFO:root:Prompt executed in 0.21 seconds
+2026-10-07T12:04:57.439689-04:00 steve-b70s env[3262996]: [INFO] Prompt executed in 0.21 seconds
+2026-10-07T12:05:02.514351-04:00 steve-b70s env[3262996]: INFO:root:
+2026-10-07T12:05:02.514351-04:00 steve-b70s env[3262996]: Stopped server
+2026-10-07T12:05:02.514862-04:00 steve-b70s env[3262996]: [INFO]
+2026-10-07T12:05:02.514862-04:00 steve-b70s env[3262996]: Stopped server
+2026-10-07T12:05:08.996518-04:00 steve-b70s systemd[2914601]: ltx101-resolution-server-20261007.service: Consumed 10min 22.705s CPU time.

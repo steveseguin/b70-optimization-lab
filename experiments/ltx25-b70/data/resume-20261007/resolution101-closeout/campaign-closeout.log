@@ -1,0 +1,20 @@
+2026-10-07T11:59:37.455405-04:00 steve-b70s systemd[2914601]: Started ltx101-resolution-campaign-20261007.service - /home/steve/.venvs/ltx25-baseline/bin/python -B /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101/resolution/components/campaign.py --run --contract /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101-two-way-w1-b1-p1-dxpu2-s640x384/resolution-client-contract.json --contract-sha256 d8e671202bc73af8c84113d80c81370e9d1f75c95375d23d4e0f6fbc1718f1c1 --manifest-sha256 a6e7be8a8ef49bda454803e6f22c98c29e37f77aa8d57c1c13518fd82471a636.
+2026-10-07T11:59:37.594154-04:00 steve-b70s python[3263182]: 2026-10-07T15:59:37Z request resolution-ref-20261007-window-probe
+2026-10-07T12:04:57.096278-04:00 steve-b70s python[3263182]: 2026-10-07T16:04:57Z completed resolution-ref-20261007-window-probe
+2026-10-07T12:04:57.133393-04:00 steve-b70s python[3263182]: 2026-10-07T16:04:57Z request resolution-ref-20261007-prepare-native
+2026-10-07T12:04:57.456853-04:00 steve-b70s python[3263182]: 2026-10-07T16:04:57Z campaign halted: Fault/halt present
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]: {
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   "passed": false,
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   "error": "ValueError('Fault/halt present')",
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   "requests": [
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:     "resolution-ref-20261007-window-probe"
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   ],
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   "actions": [],
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   "stop": {
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:     "stopped": true,
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:     "pid": 3262996
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   },
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]:   "ended_unix": 1791389110.5327096
+2026-10-07T12:05:10.542196-04:00 steve-b70s python[3263182]: }
+2026-10-07T12:05:10.562648-04:00 steve-b70s systemd[2914601]: ltx101-resolution-campaign-20261007.service: Main process exited, code=exited, status=1/FAILURE
+2026-10-07T12:05:10.562794-04:00 steve-b70s systemd[2914601]: ltx101-resolution-campaign-20261007.service: Failed with result 'exit-code'.

@@ -7,9 +7,12 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **One finite 640×384 reference experiment
-application is starting (15:58 UTC); no resident service is intended.** Its
-sealed packet passed source and inactive startup checks. The corrected
+local-worker tuning remain parked. **No model server is running.** The first
+640×384 setup stopped cleanly at 16:05 UTC after its new dtype guard rejected
+a native FP32 text-encoder scalar. The encoder check passed; no reference clip
+was generated. All four cards passed postflight with no kernel fault. The guard
+is being corrected against the original model definitions, with no precision
+change. The failed packet and evidence remain preserved. The corrected
 20/28 candidate passed all 128 output comparisons and stopped cleanly at 14:45
 UTC. All four GPUs passed postflight with no kernel GPU fault. It measured
 1.3007 seconds per clip versus the qualified control's 1.3156, only about 1.1%
@@ -54,9 +57,10 @@ fresh storage/memory budget before any larger model request.
 now includes exact-request phase gates, independent reference-file verification,
 delayed success reporting and explicit setup-result checks. The same-size plan
 passed review. Runtime wiring and all 14 CPU test suites now pass, including
-independent launch/shutdown review. Packet 101 is sealed and admitted for one
-bounded run; actual resident memory and same-size output qualification remain
-pending. No 640×384 model request or new speed result has been produced.
+independent launch/shutdown review. Packet 101 completed only its encoder check before preparation refused.
+Its [closeout](experiments/ltx25-b70/data/resume-20261007/resolution101-closeout/summary.json)
+preserves the failure. Actual resident memory and same-size output qualification
+remain pending; no 640×384 reference clip or speed result has been produced.
 [Resolution reference design](experiments/ltx25-b70/notes/2026-10-07-resolution-reference-design.md),
 [third-worker decision criteria](experiments/ltx25-b70/notes/2026-10-07-third-worker-decision.md),
 [original setup failure](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
