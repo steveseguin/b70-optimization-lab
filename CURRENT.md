@@ -15,8 +15,13 @@ and one SIGINT stopped PID 3055231 cleanly. All four cards passed postflight,
 with no kernel GPU fault.
 [Incident closeout](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
 
-The corrected control completed and stopped cleanly at 13:07 UTC. **No model
-server is running.** All 126 probe/timed clips matched the accepted references
+The corrected historical control completed and stopped cleanly at 13:07 UTC.
+A separately preregistered current-upstream control is now running on PID
+**3123108**, unit `ltx99-upstream-server-20261007`, with runner
+`ltx99-upstream-campaign-20261007` and a read-only descriptor observer. Its
+actual 65,536/1,048,576 file limits and empty initial queue were verified before
+submitting work. This one experiment must stop gracefully on completion.
+All 126 historical probe/timed clips matched the accepted references
 exactly; two self-check clips also passed. Sustained generation measured
 **1.31786 seconds per 25-frame clip, about 18.97 generated frames/s**, close to
 the earlier 1.3082-second control. This is a repeated historical baseline, not
@@ -52,7 +57,7 @@ is prepared separately with all five native and 63 added lab overlays accounted
 for. The separate runtime candidate and isolated application dependencies now
 pass source, CPU and inactive launch checks, including independent review.
 Its manifest is `e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736`;
-**GPU execution and exact-output qualification remain pending.** The fixed
+**Exact-output qualification remains pending; startup passed.** The fixed
 [upstream control](experiments/ltx25-b70/data/resume-20261007/runtime99-preregistration.json)
 is preregistered with a fresh 4 GiB allowance and about 64.45 GiB free.
 First qualify its unchanged 23/25 sampler split against the accepted outputs;
