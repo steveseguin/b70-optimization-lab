@@ -60,7 +60,8 @@ was applied to either original checkout.
   33,024-token capacity, batch 4,096, one sequence, prefix caching disabled.
 - The unchanged [qualified FP8 package](../../packages/qwen38-27b-fp8-tp2-b70/README.md),
   image `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2`.
-  One server startup; the healthy server remains available for subsequent jobs.
+  One startup was used for that historical trial; consult
+  [CURRENT.md](../../CURRENT.md) for present host ownership.
 - [mini-SWE-agent 2.4.6](https://github.com/SWE-agent/mini-swe-agent), with this
   repository's loopback-only model adapter and CPU sandbox. Dependencies are
   [hash-locked](../../worker/requirements.lock). No cloud model or fallback.

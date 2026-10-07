@@ -44,7 +44,10 @@ class Fixture(unittest.TestCase):
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
 
     def snapshot(self):
-        return S.prepare_snapshot(self.repo, self.commit, self.run)
+        # These tests exercise snapshot/sandbox behavior, not host disk capacity.
+        stats = types.SimpleNamespace(f_bavail=1024**3, f_frsize=4096, f_bsize=4096, f_flag=0)
+        with patch.object(S._storage.os, "statvfs", return_value=stats):
+            return S.prepare_snapshot(self.repo, self.commit, self.run)
 
     def sandbox(self):
         self.snapshot()

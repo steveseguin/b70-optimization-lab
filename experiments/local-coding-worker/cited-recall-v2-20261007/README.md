@@ -2,8 +2,8 @@
 
 This offline compiler removes the need for a model to reproduce source
 whitespace. It does not retrieve documents, repair incomplete answers, assess
-meaning, call a model, or perform external actions. There is no new recall
-quality result. The original ten-question trial and its failed answer remain
+meaning, call a model, or perform external actions. The [fresh trial](CLOSEOUT.md) completed its format checks but failed full
+semantic coverage (12/30 complete criteria). The original ten-question trial and its failed answer remain
 unchanged: **do not rerun, repair, or regrade that trial through this compiler.**
 
 A fresh ten-question [evaluation packet](evaluation/README.md) and one-shot

@@ -14,9 +14,14 @@ Read the [trial results and patches](../experiments/local-coding-worker/README.m
 Automatic tests, independent agent review, and human approval are reported separately.
 
 The [October evaluation packet](../experiments/local-coding-worker/evaluation-20261007/README.md)
-adds historical bug-fix controls and source-backed lab-memory questions. Model
-trials on that packet have not run. Consult `CURRENT.md` for host ownership;
-an old worker profile is not evidence that its endpoint is available.
+adds historical bug-fix controls and source-backed lab-memory questions. The
+separate [4B](../experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
+and [27B](../experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md)
+trials each completed no repairs in their first two cases; the original 27B
+recall attempt was incomplete and unscored. A separate
+[v2 recall trial](../experiments/local-coding-worker/cited-recall-v2-20261007/TRIAL.md)
+uses fresh inputs. Consult [CURRENT.md](../CURRENT.md) for host ownership and
+subsequent outcomes; a saved profile does not establish endpoint availability.
 
 ## Install
 
@@ -100,6 +105,19 @@ worker/neural-worker --repo /absolute/path/your-repo --issue-file /absolute/path
 The repository must be clean. The worker snapshots its current commit; it never
 mounts or edits the original checkout. `--commit` selects an exact earlier commit.
 The output directory must be new and outside the source repository.
+
+Before creating that directory, the worker checks the destination filesystem for
+enough space for the source archive, baseline, editable copy and conservative
+metadata overhead, while retaining **50 GiB free by default**. A refusal creates
+no snapshot or container and sends no model request. The admitted estimate is
+saved in `snapshot.json`. This check neither reserves space nor limits later
+build outputs, logs or concurrent writers; budget those separately.
+
+For a deliberately admitted RAM or other storage destination, a custom JSON
+configuration may set `storage_min_free_bytes` to an explicit nonnegative integer
+and `storage_require_mount` to the exact mount root. The floor is never lowered
+automatically for RAM. Do not lower the root disk reserve to make a large task
+fit. The existing 2 GiB source-size limit remains separate and unchanged.
 
 For a pinned task from the initial queue:
 

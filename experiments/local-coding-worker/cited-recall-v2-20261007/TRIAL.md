@@ -1,6 +1,8 @@
 # One fresh references-only recall trial
 
-Status: supervisor started 2026-10-07 04:41 UTC; results pending. This is a usefulness diagnostic, not model,
+Status: completed structurally; clean shutdown and all-four-card postflight passed.
+Independent review found 12/30 complete criteria: the semantic gate failed.
+See [closeout](CLOSEOUT.md); exact original evidence remains under `results/`. This is a usefulness diagnostic, not model,
 package, benchmark or unattended-agent qualification. The earlier ten-question
 failure remains unchanged and is not rerun or repaired.
 
