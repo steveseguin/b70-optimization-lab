@@ -1,5 +1,10 @@
 # Small local model pilot, October 7 UTC
 
+The initial host-venv attempt failed before model loading. Its complete failure
+record and the separately admitted existing-container candidate are described in
+the [R276 addendum](r276-addendum.md). No inference request was sent by that first
+attempt, and all four cards passed its before/after checks.
+
 Preregistered separately from the27B evaluation. Qwen3.5-0.8B BF16 is already
 local at Hugging Face revision2fc06364715b967f1860aea9cf38778875588b17.
 This is a bounded test of whether the existing installed runtime and coding
