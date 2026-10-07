@@ -79,3 +79,31 @@ intent/completion receipts. Restore with exclusive ordinary copies and fsync,
 never hardlinks. Affected105 proof would thereafter mean “verified before
 retirement”; full original-path replay requires restoration. No verifier bypass
 or new helper is included in this planning note.
+
+## Completed conditional retirement
+
+After106 source sealing,105 stopped cleanly for the necessary application reload.
+All four cards passed postflight at20:13:55UTC with no kernel faults. The unchanged
+sealed105 final-control verifier reconstructed the entire native/candidate/fast/
+control proof twice: once when forming the exact plan and again immediately
+before applying it. Root reviewed40 whole-file hash matches and ten retained
+native-p1 anchors. All26 earlier restoration anchors remain protected.
+
+Plan: `data/resume-20261007/post105-retirement-plan.json`, SHA-256
+`e7bcebdd89002487bc4e9c675a02de1b155fefc034e0b869ae88fa4eaea9ddfa`.
+Receipt, durable before-change intent and per-file events share the
+`post105-retirement-receipt.json` prefix. All40 removals completed, recovering
+2,985,119,744 allocated bytes (2.780109GiB). Previews, metadata, patches, models,
+failed outputs and retained references were not removed. Every retired archive
+can be rebuilt byte-for-byte as an ordinary copy from its mapped retained source.
+
+Before rerunning105's full raw proof, restore all40 mapped paths with the reviewed
+`recovery/20261007-post105-retirement/retire.py restore --plan ABS_PLAN --sha256`
+`e7bcebdd89002487bc4e9c675a02de1b155fefc034e0b869ae88fa4eaea9ddfa --receipt ABS_FRESH_RECEIPT`.
+The helper requires fresh restoration space above50GiB, all destinations absent,
+unchanged retained sources and stopped105. It refuses overwrite/retry; no restore
+has been run. Existing closeout bindings describe the pre-retirement artifacts.
+
+Fresh106 admission after sealed construction and cleanup observed55.06739GiB
+available, leaving51.06739GiB after its4GiB write allowance. This is recorded in
+`sampler106-storage-admission.json`; the retained50GiB reserve still applies.

@@ -36,7 +36,7 @@ and104 later stopped cleanly for105.
 Sealed105 confirmed the client improvement in reverse order:12.617FPS versus
 12.098FPS, a4.29% gain, with all ten native repeat pairs and thirty scored optimized
 clips exact across all four tensors. Its full sealed proof reconstructed after
-completion;105 remains retained and idle with its finite plan consumed.
+completion;105 later stopped cleanly for106 after its finite plan was consumed.
 [105 result](../../notes/2026-10-07-client105-performance.md).
 The client comparison lever is closed; keep the reduced-write policy.
 

@@ -5,12 +5,18 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-The owner resumed continuous LTX optimization on `steve-b70s`. The **105 application
-is retained and idle**, PID `3329528`, start ticks `27505015`, boot
-`10192010-9700-4915-ac6c-980d6b74afa0`. Its 71-request campaign completed successfully
-at **19:43:32 UTC**. Queues, pipeline tails and previews are empty, with no fault
-or halt. Its finite plan is consumed; do not invent requests or change the sealed
-runtime. Flash-Next and local-worker tuning remain parked.
+The owner resumed continuous LTX optimization on `steve-b70s`. The105 application
+completed its71-request campaign successfully at19:43:32UTC, then stopped cleanly
+at2026-10-07T20:13:39.070899+00:00 for the necessary106 application reload. All four cards passed
+postflight at2026-10-07 20:13:55 UTC; no host restart or settings change occurred.
+The106 application is running under `ltx106-sampler-server-20261007`,
+PID **3348053**, start ticks `27822505`, boot
+`10192010-9700-4915-ac6c-980d6b74afa0`. Its bounded57-request campaign launched once
+at **2026-10-07T20:23:28.201696+00:00**. Native/reference qualification is underway;
+there is no106 quality or accounting result yet. The observer is source-bound
+and will start only before the single timing block. Flash-Next and local-worker
+tuning remain parked. Do not append requests, edit the sealed packet, or restart
+on a failed request. Keep unrelated work quiet during the timed diagnostic.
 
 The reduced-write client policy improved generation throughput in both tested
 orders while preserving exact video and audio outputs:
@@ -39,7 +45,9 @@ file-safety tests, without any real deletion or restore. The proposed 106 diagno
 57 requests / 50 capture allowance, and needs fresh 4 GiB runtime plus 384 MiB
 source admission above the 50 GiB reserve. The standalone plan and schedule passed 31 CPU controls. Runtime integration now passes253 CPU tests, including passive-child readiness,
 source binding and failure handling. The106 namespace scan found no collisions.
-Observer admission, source build and a necessary controlled reload are still pending.
+Source packet106 is sealed as `59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2`.
+Actual observer/client contracts passed sealed admission; the campaign is now live.
+The passive counter child has not yet reached its scheduled timing stage.
 Sampler A/B timings describe denoising stages, not individual GPU utilization;
 they do not justify a blind placement or worker-count sweep.
 
@@ -53,11 +61,13 @@ they do not justify a blind placement or worker-count sweep.
 [reviewed raw collector](experiments/ltx25-b70/recovery/20261007-driver-accounting106/README.md),
 [106 plan](experiments/ltx25-b70/recovery/20261007-sampler-accounting106-plan/candidate-plan.json).
 
-About 52.41 GiB is free after 105. Its raw outputs remain protected while the
-application is retained. A conditional 40-file duplicate subset could provide
-106 admission after a necessary controlled reload and fresh full proof, but no
-105 cleanup is authorized by a metadata estimate alone. Models, references,
-previews, metadata, patches and failed experiments remain protected.
+After two fresh full105 proof reconstructions,40 verified whole-file duplicate
+captures were retired with durable restoration mappings, reclaiming2.780GiB.
+Ten105 native-p1 anchors and all26 previous restoration anchors remain. Fresh106
+admission observed55.067GiB free and51.067GiB after its4GiB runtime allowance.
+Restore the40 mapped ordinary copies before replaying105's full raw proof.
+Models, previews, metadata, patches and failed experiments remain protected.
+[105 cleanup and restoration](experiments/ltx25-b70/notes/2026-10-07-after105-storage-plan.md).
 
 104 stopped cleanly at 19:14:56 UTC for the controlled 105 reload, and all four
 cards passed postflight at 19:15:32 UTC. Then 52 verified whole-file duplicates
