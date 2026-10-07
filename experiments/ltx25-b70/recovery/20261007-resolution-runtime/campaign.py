@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded packet103 campaign on one already-owned server. Never starts or retries it.
+"""Bounded packet104 campaign on one already-owned server. Never starts or retries it.
 
 Default prints the CPU schedule. --run requires a pinned client contract and
 manifest. Success keeps the application available. Failure attempts one proven-idle
@@ -110,7 +110,9 @@ class Campaign:
         self.check_identity()
         emit('phase action ' + name)
         # One POST; a lost response is uncertain and is never resubmitted.
-        value = call('/ltx-resolution/action', {'action': name}, timeout=180)
+        # Fast proof also reconstructs the control proof; allow bounded CPU scans.
+        timeout = 300 if name.startswith('verify-') else 180
+        value = call('/ltx-resolution/action', {'action': name}, timeout=timeout)
         gate.require(value.get('passed') is True and value.get('action') == name, 'Phase action did not pass')
         self.actions.append(name)
 
@@ -121,7 +123,7 @@ class Campaign:
         request_client.write_new(self.run / 'resolution-campaign-started.json', {
             'schema': 'ltx.resolution-campaign-start.v1', 'started_unix': self.started,
             'client_contract_sha256': self.client.contract_sha, 'manifest_sha256': self.manifest_sha,
-            'policy': '87 attempts maximum; one owned application; no restart/retry'})
+            'policy': '71 attempts maximum; one owned application; no restart/retry'})
         self.owns_campaign = True
         self.wait_idle()
         setup = schedule.build_schedule(plan_path=Path(self.client.contract['plan_path']))['schedule']['rows']
@@ -152,9 +154,13 @@ class Campaign:
         for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed']:
             await self.request(row)
         self.action('verify-timed')
+        for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed-fast']:
+            await self.request(row)
+        self.action('verify-fast-timed')
         return {'passed': True, 'requests': self.requests, 'actions': self.actions,
                 'timed_receipt': str(self.run / 'same-size-timed.json'),
-                'claim': 'Ten-fixture W2 initial screen plus thirty continuity emissions; measured separately, no record claim.'}
+                'fast_timed_receipt': str(self.run / 'same-size-timed-fast.json'),
+                'claim': 'Paired ten-fixture client checkpoint screen; fixed control-first order, no record claim.'}
 
     def graceful_stop(self):
         gate.require(self.owns_campaign and self.lock_fd is not None,
@@ -193,7 +199,7 @@ def main():
     if not args.run:
         value = schedule.build_schedule()
         print(json.dumps({'status': 'plan-only', 'schedule_sha256': value['schedule_sha256'],
-                          'requests': 87, 'model_requests': 0, 'server_actions': 0}))
+                          'requests': 71, 'model_requests': 0, 'server_actions': 0}))
         return
     campaign = Campaign(args.contract, args.contract_sha256, args.manifest_sha256)
     signal_received = []

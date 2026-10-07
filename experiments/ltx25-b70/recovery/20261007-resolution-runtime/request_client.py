@@ -15,11 +15,11 @@ _spec = importlib.util.spec_from_file_location('resolution_reference_gate_client
                                              Path(__file__).with_name('reference_gate.py'))
 G = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(G)
 MIN_FREE = 50 * 1024**3
-WRITE_ALLOWANCE = 7 * 1024**3
-CAPTURE_CAP = 80
-ATTEMPT_CAP = 87
+WRITE_ALLOWANCE = 5 * 1024**3
+CAPTURE_CAP = 64
+ATTEMPT_CAP = 71
 MODEL_SHA = G.MODEL_VERIFICATION_SHA256
-SCHEDULE_SHA = '6c2e7a35102ddcb5e84468965495311ba62768e271553b54745daefbe232e4fb'
+SCHEDULE_SHA = '0f7eb98ec7e0c3fa3137c56f26ee3991eb919b8d9a5f2ffa05500b56179c6362'
 
 
 def write_new(path, value):
@@ -119,7 +119,8 @@ class Client:
         native_rows = [r for r in self.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')]
         candidate_rows = [r for r in self.plan['requests'] if r['phase'] == 'candidate-check']
         timed_rows = [r for r in self.plan['requests'] if r['phase'] == 'timed']
-        G.require((len(native_rows), len(candidate_rows), len(timed_rows)) == (20, 14, 44),
+        fast_rows = [r for r in self.plan['requests'] if r['phase'] == 'timed-fast']
+        G.require((len(native_rows), len(candidate_rows), len(timed_rows), len(fast_rows)) == (20, 14, 14, 14),
                   'W2 plan phase counts differ')
         self.ordered_names = [r['name'] for r in native_rows]
         self.identity_raw = G.read_file(self.run / 'server-identity.json'); self.identity = G.strict_json(self.identity_raw)
@@ -151,7 +152,7 @@ class Client:
                 G.require(row['name'] not in self.rows, 'Duplicate setup/plan name')
                 self.rows[row['name']] = row
             groups = [[r for r in setup if r['phase'] == 'native-setup'], native_rows,
-                      [r for r in setup if r['phase'] == 'optimized-setup'], candidate_rows, timed_rows]
+                      [r for r in setup if r['phase'] == 'optimized-setup'], candidate_rows, timed_rows, fast_rows]
             self.ordered_names = [r['name'] for group in groups for r in group]
             G.require(len(self.ordered_names) == ATTEMPT_CAP and len(set(self.ordered_names)) == ATTEMPT_CAP,
                       'Complete schedule request count differs')
@@ -167,7 +168,7 @@ class Client:
         value = G.strict_json(raw)
         expected = {'native-setup': 'native_reference', 'native-reference': 'native_reference',
                     'native-repeat': 'native_reference', 'optimized-setup': 'optimized_preparation',
-                    'candidate-check': 'optimized_preparation', 'timed': 'timing'}[row['phase']]
+                    'candidate-check': 'optimized_preparation', 'timed': 'timing', 'timed-fast': 'timing'}[row['phase']]
         G.require(value.get('schema') == 'ltx.resolution-client-phase.v1' and value.get('phase') == expected and
                   value.get('plan_sha256') == G.PLAN_SHA and value.get('qualification_id') == G.QUALIFICATION_ID and
                   value.get('runtime_manifest_sha256') == self.contract['runtime_manifest_sha256'] and
@@ -196,11 +197,38 @@ class Client:
         self.check_fixed()
         now = self.free_probe(self.root)
         G.require(type(now) is int and now >= 0, 'Invalid filesystem reading')
+        previous_storage = (self.state['charged_write_bytes'], self.state['last_available_bytes'])
         self.state['charged_write_bytes'] += max(0, self.state['last_available_bytes'] - now)
         self.state['last_available_bytes'] = now
         remaining = WRITE_ALLOWANCE - self.state['charged_write_bytes']
         G.require(remaining >= 0 and now >= MIN_FREE + remaining, 'Storage reserve/allowance exhausted')
-        self.save_state()
+        self.policy_counts['checkpoint_count'] += 1
+        expected = 'storage-change-only' if self.active_row['phase'] == 'timed-fast' else 'always'
+        G.require(self.active_row['client_checkpoint_policy'] == self.checkpoint_policy == expected,
+                  'Client checkpoint policy differs from pinned request')
+        changed = (self.state['charged_write_bytes'], self.state['last_available_bytes']) != previous_storage
+        # Only a redundant storage-ledger write may be omitted. Every check above
+        # still runs, and every other mutation retains its explicit durable save.
+        if self.checkpoint_policy == 'always' or changed:
+            self.save_state()
+            self.policy_counts['storage_save_count'] += 1
+        else:
+            self.policy_counts['skipped_storage_save_count'] += 1
+
+    def policy_readout(self, request):
+        G.require(self.policy_counts['checkpoint_count'] == self.policy_counts['storage_save_count'] +
+                  self.policy_counts['skipped_storage_save_count'], 'Checkpoint counters differ')
+        source = str(Path(__file__).resolve())
+        source_sha = G.sha(G.read_file(Path(source)))
+        G.require(source_sha == self.contract['source_bindings'][source], 'Client policy source changed')
+        write_new(request / 'client-policy.json', {
+            'schema': 'ltx.client-checkpoint-policy.v1', 'name': self.active_row['name'],
+            'phase': self.active_row['phase'], 'policy': self.checkpoint_policy,
+            **self.policy_counts, 'source_sha256': source_sha,
+            'plan_sha256': G.PLAN_SHA,
+            'runtime_manifest_sha256': self.contract['runtime_manifest_sha256'],
+            'server_identity_sha256': self.contract['server_identity_sha256'],
+            'client_contract_sha256': self.contract_sha})
 
     def save_state(self):
         path = self.directory / 'state.json'; temp = self.directory / ('state-' + uuid.uuid4().hex + '.tmp')
@@ -232,6 +260,10 @@ class Client:
     async def execute(self, name, transport=None):
         self.acquire(); request = None
         try:
+            G.require(name in self.rows, 'Unknown request; no policy available')
+            self.active_row = self.rows[name]
+            self.checkpoint_policy = self.active_row['client_checkpoint_policy']
+            self.policy_counts = dict(checkpoint_count=0, storage_save_count=0, skipped_storage_save_count=0)
             self.checkpoint()
             G.require(name in self.rows and name not in self.state['attempts'], 'Unknown/already attempted request; no retry')
             row = self.rows[name]
@@ -327,6 +359,7 @@ class Client:
                           beginnings[0]['timestamp'] >= wall_before and beginnings[0]['timestamp'] < terminal[0]['timestamp'],
                           'Stale/reordered history terminal')
             self.checkpoint()
+            self.policy_readout(request)
             self.state['completed'].append(name); self.save_state()
             return result
         except BaseException as error:

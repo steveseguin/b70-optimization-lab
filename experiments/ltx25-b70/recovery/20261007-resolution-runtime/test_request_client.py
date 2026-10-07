@@ -8,11 +8,12 @@ from pathlib import Path
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('request_client_tested', HERE/'request_client.py')
 C = importlib.util.module_from_spec(spec); spec.loader.exec_module(C)
-PLAN = HERE.parent/'20261007-resolution-full-103/candidate-plan.json'
+PLAN = HERE.parent/'20261007-client-compare-104/candidate-plan.json'
 
 
 class Transport:
@@ -72,7 +73,7 @@ class ClientControls(unittest.TestCase):
                        'parent_manifest_sha256':C.G.PARENT_SHA,'root':str(self.root),'server_run':str(self.run),
                        'client_dir':str(self.client_dir),'plan_path':str(PLAN),'runtime_manifest_sha256':'a'*64,
                        'server_identity_sha256':C.G.sha((self.run/'server-identity.json').read_bytes()),
-                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':80,'max_attempts':87,
+                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':64,'max_attempts':71,
                        'request_timeout_seconds':10,'capture_guard_path':str(guard),
                        'source_bindings':{str(p.resolve()):C.G.sha(p.read_bytes()) for p in
                                           [guard, HERE/'request_client.py', HERE/'reference_gate.py']}}
@@ -97,7 +98,7 @@ class ClientControls(unittest.TestCase):
         self.client=self.make_client()
     def phase(self,row,**changes):
         phase={'native-setup':'native_reference','native-reference':'native_reference','native-repeat':'native_reference',
-               'optimized-setup':'optimized_preparation','candidate-check':'optimized_preparation','timed':'timing'}[row['phase']]
+               'optimized-setup':'optimized_preparation','candidate-check':'optimized_preparation','timed':'timing','timed-fast':'timing'}[row['phase']]
         value={'schema':'ltx.resolution-client-phase.v1','phase':phase,'plan_sha256':C.G.PLAN_SHA,
                'qualification_id':C.G.QUALIFICATION_ID,'runtime_manifest_sha256':'a'*64,
                'server_identity_sha256':self.contract['server_identity_sha256'],'active_request':None,'fault':False,
@@ -159,10 +160,10 @@ class ClientControls(unittest.TestCase):
         with self.assertRaises(ValueError):self.execute(t)
         self.assertFalse(self.client_dir.exists());self.assertFalse((self.root/'requests'/self.name).exists())
 
-    def test_fullsuite_admission_keeps50GiB_and_exact7GiB_write_budget(self):
+    def test_fullsuite_admission_keeps50GiB_and_exact5GiB_write_budget(self):
         self.assertEqual(C.MIN_FREE,50*1024**3)
-        self.assertEqual(C.WRITE_ALLOWANCE,7*1024**3)
-        self.assertEqual((C.ATTEMPT_CAP,C.CAPTURE_CAP),(87,80))
+        self.assertEqual(C.WRITE_ALLOWANCE,5*1024**3)
+        self.assertEqual((C.ATTEMPT_CAP,C.CAPTURE_CAP),(71,64))
         self.free=C.MIN_FREE+C.WRITE_ALLOWANCE
         t=Transport();self.execute(t)
         self.assertEqual(t.posts,1)
@@ -190,35 +191,130 @@ class ClientControls(unittest.TestCase):
         t=Transport();self.refused(t);self.assertEqual(t.posts,0)
         self.assertEqual(sorted(x.name for x in p.iterdir()),['original'])
 
-    def test_exact_full_schedule87_serial_requests_with_external_phase_observations(self):
+    def test_exact_full_schedule71_serial_requests_with_external_phase_observations(self):
         self.full_client();posts=0
         for name in self.client.ordered_names:
             row=self.client.rows[name];self.phase(row);t=Transport();self.execute(t,name);posts+=t.posts
-        self.assertEqual(posts,87)
-        self.assertEqual(C.CAPTURE_CAP,80)
+        self.assertEqual(posts,71)
+        self.assertEqual(C.CAPTURE_CAP,64)
         self.assertEqual(sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave')
-                                 for n in r['graph'].values()) for r in self.client.rows.values()),80)
-        for phase,count in (('candidate-check',14),('timed',44)):
+                                 for n in r['graph'].values()) for r in self.client.rows.values()),64)
+        for phase,count in (('candidate-check',14),('timed',14),('timed-fast',14)):
             self.assertEqual(sum(self.client.rows[n]['phase']==phase for n in self.client.ordered_names),count)
         self.assertEqual(self.client.state['completed'],self.client.ordered_names)
         emitted=[r['expected_emitted_fixture'] for r in self.client.plan['requests']
                  if r['phase']=='timed' and r['expected_emitted_fixture'] is not None]
         fixture_ids=[f['id'] for f in self.client.plan['fixtures']]
         self.assertEqual(len(fixture_ids),10)
-        self.assertEqual(emitted,fixture_ids*4)
+        self.assertEqual(emitted,fixture_ids)
         self.assertEqual(emitted[:10],fixture_ids)
-        self.assertEqual(len(emitted[10:]),30)
+        self.assertEqual(len(emitted[10:]),0)
+
+    def ready_for_phase(self,phase):
+        self.full_client();row=next(r for r in self.client.rows.values() if r['phase']==phase)
+        prior=self.client.ordered_names[:self.client.ordered_names.index(row['name'])]
+        self.client.acquire()
+        try:
+            self.client.state['completed']=list(prior);self.client.state['attempts']=list(prior)
+            self.client.save_state()
+        finally:self.client.release()
+        self.phase(row)
+        return row
+
+    def test_always_policy_readout_counts_and_precedes_completion(self):
+        writes=[];original=C.write_new
+        def observe(path,value):
+            if path.name=='client-policy.json':
+                durable=json.loads((self.client_dir/'state.json').read_text())
+                self.assertNotIn(self.name,durable['completed']);writes.append(path)
+            return original(path,value)
+        with patch.object(C,'write_new',side_effect=observe):self.execute(Transport())
+        self.assertEqual(len(writes),1)
+        report=json.loads(writes[0].read_text())
+        self.assertEqual(report['schema'],'ltx.client-checkpoint-policy.v1')
+        self.assertEqual(report['name'],self.name)
+        self.assertEqual(report['phase'],'native-reference')
+        self.assertEqual(report['policy'],'always')
+        self.assertGreater(report['checkpoint_count'],0)
+        self.assertEqual(report['checkpoint_count'],report['storage_save_count'])
+        self.assertEqual(report['skipped_storage_save_count'],0)
+        self.assertEqual(report['source_sha256'],C.G.sha((HERE/'request_client.py').read_bytes()))
+        self.assertEqual(report['client_contract_sha256'],self.client.contract_sha)
+        self.assertEqual(report['plan_sha256'],C.G.PLAN_SHA)
+
+    def test_fast_skips_only_unchanged_storage_saves_and_checks_still_run(self):
+        row=self.ready_for_phase('timed-fast');saves=[]
+        original=self.client.save_state
+        def save():saves.append(copy.deepcopy(self.client.state));return original()
+        before=self.proc_calls
+        with patch.object(self.client,'save_state',side_effect=save):self.execute(Transport(),row['name'])
+        report=json.loads((self.root/'requests'/row['name']/'client-policy.json').read_text())
+        self.assertEqual(report['policy'],'storage-change-only')
+        self.assertGreater(report['checkpoint_count'],0)
+        self.assertEqual(report['storage_save_count'],0)
+        self.assertEqual(report['skipped_storage_save_count'],report['checkpoint_count'])
+        self.assertEqual(self.proc_calls-before,report['checkpoint_count'])
+        # Attempts, prompt IDs and completion all remain separately durable.
+        self.assertEqual(len(saves),3)
+        self.assertIn(row['name'],saves[0]['attempts']);self.assertNotIn(row['name'],saves[0]['completed'])
+        self.assertTrue(saves[1]['prompt_ids']);self.assertIn(row['name'],saves[2]['completed'])
+
+    def test_fast_storage_changes_still_save_and_never_reset_charged_bytes(self):
+        row=self.ready_for_phase('timed-fast')
+        initial=self.free
+        def free_probe(_):
+            self.free-=4096
+            return self.free
+        self.client.free_probe=free_probe
+        self.execute(Transport(),row['name'])
+        report=json.loads((self.root/'requests'/row['name']/'client-policy.json').read_text())
+        self.assertEqual(report['skipped_storage_save_count'],0)
+        self.assertEqual(report['storage_save_count'],report['checkpoint_count'])
+        self.assertEqual(self.client.state['charged_write_bytes'],initial-self.free)
+
+    def test_fast_keeps_fault_source_and_storage_checks(self):
+        row=self.ready_for_phase('timed-fast')
+        t=Transport(hook=lambda:(self.root/'FAULT.json').write_text('{}'))
+        self.refused(t,row['name']);self.assertEqual(t.posts,1)
+        self.assertNotIn(row['name'],self.client.state['completed'])
+        self.assertFalse((self.root/'requests'/row['name']/'client-policy.json').exists())
+
+    def test_fast_source_drift_is_checked_after_submit(self):
+        row=self.ready_for_phase('timed-fast')
+        t=Transport(hook=lambda:Path(self.contract['capture_guard_path']).write_text('# drift'))
+        self.refused(t,row['name']);self.assertEqual(t.posts,1)
+        self.assertNotIn(row['name'],self.client.state['completed'])
+
+    def test_fast_disk_drawdown_is_checked_after_submit(self):
+        row=self.ready_for_phase('timed-fast')
+        def consume():self.free-=C.WRITE_ALLOWANCE+1
+        t=Transport(hook=consume)
+        self.refused(t,row['name']);self.assertEqual(t.posts,1)
+        self.assertNotIn(row['name'],self.client.state['completed'])
+
+    def test_policy_mismatch_refused_before_transport(self):
+        row=self.ready_for_phase('timed-fast');row['client_checkpoint_policy']='always'
+        t=Transport();self.refused(t,row['name']);self.assertEqual(t.posts,0)
+
+    def test_failed_policy_receipt_cannot_durably_complete_request(self):
+        original=C.write_new
+        def fail(path,value):
+            if path.name=='client-policy.json':raise OSError('synthetic readout fsync failure')
+            return original(path,value)
+        with patch.object(C,'write_new',side_effect=fail):self.refused(Transport())
+        durable=json.loads((self.client_dir/'state.json').read_text())
+        self.assertNotIn(self.name,durable['completed']);self.assertIsNotNone(durable['halted'])
 
     def test_attempt_limit_separate_from_capture_limit_and_contract_strict(self):
-        for key, value in [('max_attempts',32),('max_attempts',87.0),('max_attempts',True),
-                           ('max_attempts',None),('max_captures',87),('max_captures',80.0)]:
+        for key, value in [('max_attempts',32),('max_attempts',71.0),('max_attempts',True),
+                           ('max_attempts',None),('max_captures',71),('max_captures',64.0)]:
             original=self.contract[key]
             self.contract[key]=value
             with self.subTest(key=key,value=value),self.assertRaisesRegex(ValueError,'budget contract'):
                 self.make_client()
             self.contract[key]=original
 
-    def test_exhausted87_attempts_refuses_before_transport_or_output(self):
+    def test_exhausted71_attempts_refuses_before_transport_or_output(self):
         self.client.acquire()
         try:
             self.client.state['attempts']=['prior-attempt-%d'%i for i in range(C.ATTEMPT_CAP)]

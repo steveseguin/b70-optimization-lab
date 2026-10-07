@@ -48,6 +48,47 @@ def request_evidence(e, root, row, identity, previous_end, seen):
     return pid, starts[0], ends[0]
 
 
+def verify_client_policy(e, root, server, row, identity):
+    """Read the actual client policy/counters and bind them to the sealed source."""
+    contract_path = server / 'resolution-client-contract.json'
+    contract = e.json(contract_path)
+    contract_sha = e.hashes[str(contract_path)]
+    require(contract.get('schema') == 'ltx.resolution-request-client.v1' and
+            contract.get('plan_sha256') == R.PLAN_SHA and
+            contract.get('runtime_manifest_sha256') == identity['source_packet_manifest_sha256'] and
+            contract.get('server_identity_sha256') == e.hashes[str(server / 'server-identity.json')] and
+            contract.get('root') == str(root) and contract.get('server_run') == str(server),
+            'Client policy contract identity differs')
+    packet = R.safe_path(identity['source_packet_path'])
+    manifest_path = packet / 'manifest.json'
+    manifest = e.json(manifest_path)
+    require(e.hashes[str(manifest_path)] == identity['source_packet_manifest_sha256'],
+            'Client policy source manifest differs')
+    source = packet / 'resolution/components/request_client.py'
+    source_sha = R.sha(e.raw(source))
+    require(manifest['files'].get('resolution/components/request_client.py') == source_sha and
+            contract['source_bindings'].get(str(source)) == source_sha,
+            'Client policy source binding differs')
+    value = e.json(root / 'requests' / row['name'] / 'client-policy.json')
+    policy = 'always' if row['phase'] == 'timed' else 'storage-change-only'
+    require(row['client_checkpoint_policy'] == policy and
+            value.get('schema') == 'ltx.client-checkpoint-policy.v1' and
+            value.get('name') == row['name'] and value.get('phase') == row['phase'] and
+            value.get('policy') == policy and value.get('source_sha256') == source_sha and
+            value.get('plan_sha256') == R.PLAN_SHA and
+            value.get('runtime_manifest_sha256') == identity['source_packet_manifest_sha256'] and
+            value.get('server_identity_sha256') == contract['server_identity_sha256'] and
+            value.get('client_contract_sha256') == contract_sha, 'Client policy readout identity differs')
+    keys = ('checkpoint_count', 'storage_save_count', 'skipped_storage_save_count')
+    require(all(type(value.get(k)) is int and value[k] >= 0 for k in keys) and
+            value['checkpoint_count'] > 0 and
+            value['checkpoint_count'] == value['storage_save_count'] + value['skipped_storage_save_count'],
+            'Client policy counter accounting differs')
+    if policy == 'always':
+        require(value['skipped_storage_save_count'] == 0, 'Control policy skipped a storage save')
+    return value
+
+
 def phase_binding(value, role, name, phase, reference, reference_sha, candidate_sha=None):
     auth = value.get('phase_authorization') if role != 'auxiliary' else value.get('session_observation')
     require(isinstance(auth, dict), 'Missing phase binding')
@@ -58,15 +99,15 @@ def phase_binding(value, role, name, phase, reference, reference_sha, candidate_
             auth.get('runtime_manifest_sha256') == reference['runtime_manifest_sha256'] and
             auth.get('server_identity_sha256') == reference['server_identity_sha256'] and
             auth.get('reference_receipt_sha256') == reference_sha, 'Phase identity differs')
-    if phase == 'timed':
+    if phase in ('timed', 'timed-fast'):
         require(auth.get('candidate_receipt_sha256') == candidate_sha, 'Timing candidate binding differs')
     require(value.get('output_size') == '640x384' and value.get('speed_only') is False and
             value.get('output_parity_claimed') is False, 'Geometry or premature parity claim differs')
 
 
 def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
-            candidate_receipt_path=None, candidate_sha256=None):
-    require(phase in ('candidate-check', 'timed'), 'Unknown verification phase')
+            candidate_receipt_path=None, candidate_sha256=None, control_receipt_path=None, control_sha256=None):
+    require(phase in ('candidate-check', 'timed', 'timed-fast'), 'Unknown verification phase')
     root = R.safe_path(root); require(not (root / 'FAULT.json').exists(), 'Fault present')
     e = R.Evidence(); plan = R.load_plan(plan_path, e)
     reference = R.verify_receipt(reference_receipt_path, reference_sha256)
@@ -77,21 +118,34 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
     require(R.sha(R.canonical(identity)) == R.sha(R.canonical(e.json(root / 'requests' / plan['requests'][0]['name'] / 'identity.json'))), 'Native identity differs')
     require(not (server / 'FAULT.json').exists() and not (server / 'resolution-halt.json').exists(), 'Server fault/halt present')
     candidate = None
-    if phase == 'timed':
+    if phase in ('timed', 'timed-fast'):
         require(candidate_receipt_path is not None and candidate_sha256 is not None, 'Timing needs verified candidate')
         candidate = verify_candidate_receipt(candidate_receipt_path, candidate_sha256)
         require(candidate['reference_receipt_sha256'] == reference_sha256 and candidate['inputs']['root'] == str(root), 'Candidate basis differs')
         e.raw(candidate_receipt_path)
     else:
         require(candidate_receipt_path is None and candidate_sha256 is None, 'Unexpected candidate input')
+    control = None
+    if phase == 'timed-fast':
+        require(control_receipt_path is not None and control_sha256 is not None, 'Fast timing needs verified control')
+        control = verify_control_receipt(control_receipt_path, control_sha256)
+        require(control['reference_receipt_sha256'] == reference_sha256 and
+                control['candidate_receipt_sha256'] == candidate_sha256 and
+                control['inputs']['root'] == str(root) and
+                control['server_identity_sha256'] == reference['server_identity_sha256'], 'Control basis differs')
+        e.raw(control_receipt_path)
+    else:
+        require(control_receipt_path is None and control_sha256 is None, 'Unexpected control input')
     rows = R.request_groups(plan)[phase]
-    require(len(rows) == (14 if phase == 'candidate-check' else 44), 'Request count differs')
+    require(len(rows) == 14, 'Request count differs')
     base = rows[0]['clip_index']; expected_count = len(rows) - 4
     references = {r['name']: r for r in reference['executions'][:10]}
     seen = {r['prompt_id'] for r in reference['executions']}
     if candidate:
         seen.update(r['prompt_id'] for r in candidate['executions'])
-    previous_end = (candidate or reference)['executions'][-1]['success_ms']
+    if control:
+        seen.update(r['prompt_id'] for r in control['executions'])
+    previous_end = (control or candidate or reference)['executions'][-1]['success_ms']
     executions = []; emitted = []
     for i, row in enumerate(rows):
         name = row['name']; pid, start, end = request_evidence(e, root, row, identity, previous_end, seen)
@@ -125,12 +179,11 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
         record = {'name': name, 'prompt_id': pid, 'start_ms': start, 'success_ms': end,
                   'graph_sha256': row['graph_sha256'], 'fill': i < 4,
                   'emitted_index': None if i < 4 else row['expected_emitted_index']}
-        if phase == 'timed':
-            expected_scope = ('unscored-fill' if i < 4 else 'full-suite-pass' if i < 14 else 'bounded-continuity')
-            require(row['timing_scope'] == expected_scope and
-                    row.get('emitted_suite_pass') == (None if i < 4 else (i-4)//10+1),
-                    'Timing block mapping differs')
-            record.update(timing_scope=expected_scope, emitted_suite_pass=row.get('emitted_suite_pass'))
+        if phase in ('timed', 'timed-fast'):
+            expected_scope = 'unscored-fill' if i < 4 else ('client-control' if phase == 'timed' else 'client-storage-change-only')
+            require(row['timing_scope'] == expected_scope, 'Timing block mapping differs')
+            policy = verify_client_policy(e, root, server, row, identity)
+            record.update(timing_scope=expected_scope, client_policy=policy)
         if i < 4:
             require(row['reference'] is None and row['expected_emitted_fixture'] is None, 'Fill cannot have oracle')
             record['parity_status'] = 'not-scored-fill'
@@ -173,39 +226,35 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
     require(not (root / 'FAULT.json').exists() and not (server / 'FAULT.json').exists() and
             not (server / 'resolution-halt.json').exists(), 'Fault/halt before receipt')
     result = {'schema': 'ltx.same-size-optimized-evidence.v1',
-              'status': 'candidate_verified' if phase == 'candidate-check' else 'timed_verified',
+              'status': {'candidate-check': 'candidate_verified', 'timed': 'timed_verified', 'timed-fast': 'timed_fast_verified'}[phase],
               'phase': phase, 'plan_sha256': R.PLAN_SHA, 'qualification_id': R.QUALIFICATION_ID,
               'runtime_manifest_sha256': reference['runtime_manifest_sha256'],
               'server_identity_sha256': reference['server_identity_sha256'],
               'reference_receipt_sha256': reference_sha256, 'candidate_receipt_sha256': candidate_sha256,
+              'control_receipt_sha256': control_sha256,
               'four_tensor_exact_clips': expected_count, 'distinct_fixtures': 10, 'fills_not_scored': 4,
               'executions': executions, 'evidence_sha256': e.hashes,
               'inputs': {'root': str(root), 'plan_path': str(plan_path), 'reference_receipt_path': str(reference_receipt_path),
-                         'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None},
-              'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. Repeated timing/continuity clips do not establish broader visual quality, resolution, duration or a speed record.'}
-    if phase == 'timed':
+                         'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None,
+                         'control_receipt_path': str(control_receipt_path) if control_receipt_path else None},
+              'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. The two client-policy timing blocks are a repeated-workload comparison, not broader visual quality, resolution, duration or speed-record evidence.'}
+    if phase in ('timed', 'timed-fast'):
         ends = [r['success_ms'] for r in executions if not r['fill']]
-        require(len(ends) == 40, 'Forty timed/continuity emissions required')
-        intervals = lambda values: [(b-a)/1000 for a,b in zip(values, values[1:])]
-        result['completion_intervals_seconds'] = intervals(ends[:10])
-        result['continuity_completion_intervals_seconds'] = intervals(ends[10:])
-        result['aggregate_completion_intervals_seconds'] = intervals(ends)
-        result['boundary_interval_seconds'] = (ends[10]-ends[9])/1000
-        result['timing_definition'] = ('Nine server-success intervals between the initial ten emitted original fixtures, '
-            'each once; preview completion checked separately. This is the initial full-suite screen.')
-        result['continuity_timing_definition'] = ('Twenty-nine server-success intervals within the subsequent thirty '
-            'emissions, three original-suite repetitions. Boundary from initial screen excluded; continuity evidence only.')
-        result['aggregate_timing_definition'] = ('All thirty-nine intervals, including the initial-to-continuity boundary; '
-            'diagnostic aggregate only, not a headline or record.')
-        result['timing_blocks'] = {'initial': {'emissions': 10, 'intervals': 9, 'fixture_passes': 1},
-                                   'continuity': {'emissions': 30, 'intervals': 29, 'fixture_passes': 3}}
+        require(len(ends) == 10, 'Ten timed emissions required')
+        result['completion_intervals_seconds'] = [(b-a)/1000 for a,b in zip(ends, ends[1:])]
+        result['client_checkpoint_policy'] = 'always' if phase == 'timed' else 'storage-change-only'
+        result['timing_definition'] = ('Nine server-success intervals between ten emitted original fixtures, '
+            'each once within this client-policy block; fills excluded and preview completion checked separately. '
+            'Repeated-workload screen, not a cold request, headline or record.')
+        result['policy_totals'] = {key: sum(r['client_policy'][key] for r in executions)
+            for key in ('checkpoint_count', 'storage_save_count', 'skipped_storage_save_count')}
     return result
 
 
 def verify_outputs(root, plan_path, reference_receipt_path, reference_sha256, phase, output_path,
-                   candidate_receipt_path=None, candidate_sha256=None):
+                   candidate_receipt_path=None, candidate_sha256=None, control_receipt_path=None, control_sha256=None):
     output_path = R.safe_path(output_path); require(not output_path.exists(), 'Receipt already exists')
-    result = _verify(root, plan_path, reference_receipt_path, reference_sha256, phase, candidate_receipt_path, candidate_sha256)
+    result = _verify(root, plan_path, reference_receipt_path, reference_sha256, phase, candidate_receipt_path, candidate_sha256, control_receipt_path, control_sha256)
     with output_path.open('xb') as stream:
         stream.write(json.dumps(result, indent=2, sort_keys=True, allow_nan=False).encode() + b'\n')
         stream.flush(); os.fsync(stream.fileno())
@@ -223,4 +272,18 @@ def verify_candidate_receipt(path, expected_sha256):
     actual = _verify(Path(inputs['root']), Path(inputs['plan_path']), Path(inputs['reference_receipt_path']),
                      receipt['reference_receipt_sha256'], 'candidate-check')
     require(R.canonical(actual) == R.canonical(receipt), 'Candidate receipt differs from actual evidence')
+    return actual
+
+
+def verify_control_receipt(path, expected_sha256):
+    raw = R.read_file(path)
+    require(R.sha(raw) == R.digest(expected_sha256), 'Control receipt digest differs')
+    receipt = R.strict_json(raw)
+    require(receipt.get('status') == 'timed_verified' and receipt.get('phase') == 'timed',
+            'Not a verified control receipt')
+    inputs = receipt['inputs']
+    actual = _verify(Path(inputs['root']), Path(inputs['plan_path']), Path(inputs['reference_receipt_path']),
+        receipt['reference_receipt_sha256'], 'timed', Path(inputs['candidate_receipt_path']),
+        receipt['candidate_receipt_sha256'])
+    require(R.canonical(actual) == R.canonical(receipt), 'Control receipt differs from actual evidence')
     return actual

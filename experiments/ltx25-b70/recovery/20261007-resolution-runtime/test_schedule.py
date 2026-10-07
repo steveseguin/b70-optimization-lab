@@ -18,14 +18,14 @@ class ScheduleControls(unittest.TestCase):
         self.envelope=S.build_schedule();self.schedule=self.envelope['schedule']
         self.rows={r['kind']:r for r in self.schedule['rows']}
 
-    def test_no_names_or_indices_collide_with_sealed_101_through_102(self):
+    def test_no_names_or_indices_collide_with_sealed_101_through_103(self):
         plan=json.loads(S.PLAN.read_text())['plan']
         names={r['name'] for r in plan['requests']} | {r['name'] for r in self.schedule['rows']}
         indices={r['clip_index'] for r in plan['requests']} | set(S.CAPTURE_INDICES.values())
-        self.assertEqual(len(names),87)
-        self.assertEqual(len(indices),80)
-        for revision in ('101','101b','101c','102'):
-            root=S.PARENT.parent/('prepared-resolution-w2-102' if revision=='102' else 'prepared-resolution-reference-'+revision)/'resolution'
+        self.assertEqual(len(names),71)
+        self.assertEqual(len(indices),64)
+        for revision in ('101','101b','101c','102','103'):
+            root=S.PARENT.parent/('prepared-resolution-w2-102' if revision=='102' else 'prepared-resolution-full-103' if revision=='103' else 'prepared-resolution-reference-'+revision)/'resolution'
             prior=json.loads((root/'candidate-plan.json').read_text())['plan']
             setup=json.loads((root/'setup-schedule.json').read_text())['schedule']
             oldnames={r['name'] for r in prior['requests']} | {r['name'] for r in setup['rows']}
@@ -33,22 +33,22 @@ class ScheduleControls(unittest.TestCase):
                 r['clip_index'] for r in setup['rows'] if 'clip_index' in r}
             self.assertTrue(names.isdisjoint(oldnames))
             self.assertTrue(indices.isdisjoint(oldindices))
-        self.assertTrue(all(99903000 <= i < 99904000 for i in indices))
+        self.assertTrue(all(99904000 <= i < 99905000 for i in indices))
 
     def test_frozen_setup_order_boundaries_and_budget(self):
         self.assertEqual(list(self.rows),['window-probe','prepare-native','pin0','capture0','pin1','capture1','coverage','decode-probe','freeze'])
-        self.assertEqual(self.schedule['submitted_requests'],87)
-        self.assertEqual(self.schedule['raw_capture_requests'],80)
+        self.assertEqual(self.schedule['submitted_requests'],71)
+        self.assertEqual(self.schedule['raw_capture_requests'],64)
         self.assertEqual(self.schedule['retry_or_extra_fill_requests'],0)
-        self.assertEqual(self.schedule['capture_cap'],80)
+        self.assertEqual(self.schedule['capture_cap'],64)
         self.assertEqual(self.schedule['native_reference_captures'],20)
         self.assertEqual(self.schedule['candidate_compared_clips'],10)
-        self.assertEqual(self.schedule['timed_compared_clips'],40)
+        self.assertEqual(self.schedule['timed_compared_clips'],20)
         self.assertEqual(len(self.schedule['boundary_dependencies']['barrier:reference_verified']),20)
         self.assertEqual(len(self.schedule['boundary_dependencies']['barrier:candidate_verified']),14)
         self.assertEqual(self.rows['pin0']['depends_on'],['barrier:optimized_preparation'])
         self.assertEqual(self.rows['coverage']['depends_on'],[self.rows['capture1']['name']])
-        self.assertEqual(self.schedule['boundary_dependencies']['resolution-full-20261007-candidate-check-00'],[self.rows['freeze']['name']])
+        self.assertEqual(self.schedule['boundary_dependencies']['resolution-client-20261007-candidate-check-00'],[self.rows['freeze']['name']])
         self.assertEqual(S.validate_schedule(self.envelope),self.envelope)
 
     def test_both_workers_are_pinned_and_capture_actions_are_distinct(self):
@@ -64,6 +64,17 @@ class ScheduleControls(unittest.TestCase):
         self.assertEqual(self.rows['pin1']['depends_on'],[self.rows['capture0']['name']])
         self.assertEqual(self.rows['capture1']['clip_index'] % 2,1)
 
+    def test_fast_block_requires_control_barrier_and_setup_policy_is_always(self):
+        plan=json.loads(S.PLAN.read_text())['plan']
+        control=[r for r in plan['requests'] if r['phase']=='timed']
+        fast=[r for r in plan['requests'] if r['phase']=='timed-fast']
+        deps=self.schedule['boundary_dependencies']
+        self.assertEqual(deps['barrier:control_verified'],[r['name'] for r in control])
+        self.assertEqual(deps[fast[0]['name']],['barrier:control_verified'])
+        self.assertTrue(all(r['client_checkpoint_policy']=='always' for r in self.rows.values()))
+        self.assertEqual(self.schedule['timed_control_compared_clips'],10)
+        self.assertEqual(self.schedule['timed_fast_compared_clips'],10)
+
     def test_unchanged_setup_numerical_inputs(self):
         for kind in ('window-probe','pin0','coverage','decode-probe','freeze'):
             before=json.loads(S.read(S.PARENT/'graphs'/S.GRAPHS[kind][0]))
@@ -74,7 +85,7 @@ class ScheduleControls(unittest.TestCase):
 
     def test_native_prepare_only_one_trusted_node(self):
         self.assertEqual(self.rows['prepare-native']['graph'],{'490':{'class_type':'LTXResolutionPrepareNative',
-            'inputs':{'run_name':'resolution-full-20261007-prepare-native'}}})
+            'inputs':{'run_name':'resolution-client-20261007-prepare-native'}}})
         self.assertEqual(self.rows['prepare-native']['phase'],'native-setup')
 
     def test_successor_setup_namespace_matches_fresh_plan(self):
@@ -83,13 +94,13 @@ class ScheduleControls(unittest.TestCase):
         self.assertEqual(S.sha(S.canonical(plan['plan'])),S.PLAN_SHA)
         self.assertEqual(plan['plan']['qualification_id'],S.QUALIFICATION_ID)
         for row in self.rows.values():
-            self.assertEqual(row['name'],'resolution-full-20261007-'+row['kind'])
+            self.assertEqual(row['name'],'resolution-client-20261007-'+row['kind'])
             for node in row['graph'].values():
                 if 'run_name' in node['inputs']:
                     self.assertEqual(node['inputs']['run_name'],row['name'])
         names=[r['name'] for r in plan['plan']['requests']]
-        self.assertEqual(len(names),78)
-        self.assertTrue(all(n.startswith('resolution-full-20261007-') for n in names))
+        self.assertEqual(len(names),62)
+        self.assertTrue(all(n.startswith('resolution-client-20261007-') for n in names))
         self.assertFalse(set(names)&{r['name'] for r in self.rows.values()})
 
     def test_capture_delta_is_only_names_geometry_identity_and_serial_setup_depth(self):
@@ -128,12 +139,12 @@ class ScheduleControls(unittest.TestCase):
         exec(compile(ast.Module(body=[fn],type_ignores=[]),str(path),'exec'),ns)
         value,detail=ns['run_behind']('sample',S.CAPTURE_INDICES['capture0'],1,forbidden,target='ltx-sample-0')
         self.assertIsNone(value);self.assertEqual(detail['emitted_index'],-1)
-        self.assertEqual(calls,[('sample',99903030,'ltx-sample-0')]);self.assertEqual(len(state['jobs']),1)
+        self.assertEqual(calls,[('sample',99904030,'ltx-sample-0')]);self.assertEqual(len(state['jobs']),1)
         # Even if a prior done tail remained, the second nonadjacent capture must
         # not collect it into the decoder. Runtime still explicitly retires it.
         value,detail=ns['run_behind']('sample',S.CAPTURE_INDICES['capture1'],1,forbidden,target='ltx-sample-1')
         self.assertIsNone(value);self.assertEqual(detail['emitted_index'],-1)
-        self.assertEqual(calls[-1],('sample',99903041,'ltx-sample-1'))
+        self.assertEqual(calls[-1],('sample',99904041,'ltx-sample-1'))
         # PipelineDecode's existing negative-index branch produces placeholders,
         # before its decode_job definition / run_behind('decode') call.
         text=S.read(S.PARENT/'source/scripts/pipeline_decode_node.py').decode()

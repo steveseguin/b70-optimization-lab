@@ -12,10 +12,10 @@ import stat
 import struct
 import sys
 
-PLAN_SHA = '84bdccba3e2fe39b9bf5bcd1cd074c6ee74bbd8ade2a9be7aa63e945f5b07e1d'
+PLAN_SHA = '1fc6e1f2f5874ab88915c93424f333402fa2bae1b73370391105fade270c841c'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
 MODEL_VERIFICATION_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-QUALIFICATION_ID = 'e017bccd97b4713eab3ca9216e25c540201f117b330bd2cbab35254d19d7e4ac'
+QUALIFICATION_ID = 'c847e9b506f2fb5b08e97a263cb599e2b456e7868a9d20c50e3dfe94c8a701dd'
 SHAPES = {'images': [25, 384, 640, 3], 'video_latent': [1, 128, 4, 12, 20],
           'audio_latent': [1, 8, 26, 16], 'waveform': [1, 2, 48480]}
 FIXTURE_IDS = ('boat', 'marble', 'bird', 'pendulum', 'rain', 'paper', 'candle', 'pour', 'fabric', 'wheel')
@@ -141,9 +141,9 @@ def request_groups(plan):
     fixtures = [row['id'] for row in plan['fixtures']]
     require(tuple(fixtures) == FIXTURE_IDS, 'Original ten-fixture order differs')
     groups = {phase: [r for r in plan['requests'] if r['phase'] == phase]
-              for phase in ('native-reference', 'native-repeat', 'candidate-check', 'timed')}
-    require([len(groups[p]) for p in groups] == [10, 10, 14, 44] and
-            len(plan['requests']) == 78, 'Full-suite phase counts differ')
+              for phase in ('native-reference', 'native-repeat', 'candidate-check', 'timed', 'timed-fast')}
+    require([len(groups[p]) for p in groups] == [10, 10, 14, 14, 14] and
+            len(plan['requests']) == 62, 'Full-suite phase counts differ')
     for phase in ('native-reference', 'native-repeat'):
         require([r['fixture'] for r in groups[phase]] == fixtures, 'Native fixture sequence differs')
     require(plan['reference_names'] == {r['fixture']: r['name'] for r in groups['native-reference']},

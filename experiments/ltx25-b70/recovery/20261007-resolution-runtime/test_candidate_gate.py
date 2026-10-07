@@ -29,13 +29,21 @@ class CandidateControls(unittest.TestCase):
         self.reference = C.R.verify_receipt(self.ref, self.refsha)
         self.root = self.f.root; self.server = self.f.server
         self.output = self.root / 'candidate.json'; self.timed = self.root / 'timed.json'
+        self.client_contract = {'schema': 'ltx.resolution-request-client.v1',
+            'root': str(self.root), 'server_run': str(self.server),
+            'plan_sha256': C.R.PLAN_SHA,
+            'runtime_manifest_sha256': self.reference['runtime_manifest_sha256'],
+            'server_identity_sha256': self.reference['server_identity_sha256'],
+            'source_bindings': {str(self.f.client_source): C.R.sha(self.f.client_source.read_bytes())}}
+        self.f.write(self.server / 'resolution-client-contract.json', self.client_contract)
+        self.fast = self.root / 'fast.json'
         self.make_phase('candidate-check')
 
     def auth(self, role, name, phase, candidate_sha=None):
         value = {'role': role, 'run_name': name,
                  'phase': 'optimized_preparation' if phase == 'candidate-check' else 'timing',
                  'qualification_id': C.R.QUALIFICATION_ID, 'plan_sha256': C.R.PLAN_SHA,
-                 'comparison_mode': 'same-size-native-v1', 'runtime_manifest_sha256': 'a'*64,
+                 'comparison_mode': 'same-size-native-v1', 'runtime_manifest_sha256': self.reference['runtime_manifest_sha256'],
                  'server_identity_sha256': self.reference['server_identity_sha256'],
                  'reference_receipt_sha256': self.refsha, 'candidate_receipt_sha256': candidate_sha}
         return value
@@ -45,12 +53,11 @@ class CandidateControls(unittest.TestCase):
         value['session_observation' if role == 'auxiliary' else 'phase_authorization'] = self.auth(role, name, phase, candidate_sha)
         return value
 
-    def make_phase(self, phase, candidate_sha=None, continuity_gap_ms=0):
+    def make_phase(self, phase, candidate_sha=None):
         rows = [r for r in self.f.plan['requests'] if r['phase'] == phase]
         for i, row in enumerate(rows):
             name = row['name']; req = self.root / 'requests' / name; req.mkdir(parents=True)
-            pid = 'test-' + name; start = (30000 if phase == 'candidate-check' else 60000) + i*1000
-            if phase == 'timed' and i >= 14: start += continuity_gap_ms
+            pid = 'test-' + name; start = {'candidate-check':30000,'timed':60000,'timed-fast':90000}[phase] + i*1000
             end = start+500
             messages = [['execution_start', {'prompt_id': pid, 'timestamp': start}],
                         ['execution_cached', {'prompt_id': pid, 'timestamp': start, 'nodes': []}],
@@ -64,6 +71,17 @@ class CandidateControls(unittest.TestCase):
             events += [{'type':'executing','seconds':j/10,'data':{'prompt_id':pid,'node':n}} for j,n in enumerate(['364','428','426','414'])]
             events.append({'type':'execution_success','seconds':.5,'data':messages[-1][1]})
             (req/'events.jsonl').write_text(''.join(json.dumps(e)+'\n' for e in events))
+            if phase in ('timed', 'timed-fast'):
+                self.f.write(req / 'client-policy.json', {
+                    'schema':'ltx.client-checkpoint-policy.v1','name':name,'phase':phase,
+                    'policy':row['client_checkpoint_policy'], 'checkpoint_count':20,
+                    'storage_save_count':20 if phase=='timed' else 5,
+                    'skipped_storage_save_count':0 if phase=='timed' else 15,
+                    'source_sha256':C.R.sha(self.f.client_source.read_bytes()),
+                    'plan_sha256':C.R.PLAN_SHA,
+                    'runtime_manifest_sha256':self.reference['runtime_manifest_sha256'],
+                    'server_identity_sha256':self.reference['server_identity_sha256'],
+                    'client_contract_sha256':C.R.sha((self.server/'resolution-client-contract.json').read_bytes())})
             common = {'passed':True,'run_name':name,'server_identity_sha256':self.reference['server_identity_sha256'],
                       'model_verification_sha256':'b'*64}
             textsha = C.R.sha(('pipeline-window\n' + row['graph']['364']['inputs']['text']).encode('utf-8'))
@@ -107,14 +125,20 @@ class CandidateControls(unittest.TestCase):
     def test_complete_candidate_reconstruction_and_timing(self):
         result=self.run_gate();self.assertEqual(result['four_tensor_exact_clips'],10)
         sha=C.R.sha(self.output.read_bytes());self.assertEqual(C.verify_candidate_receipt(self.output,sha),result)
-        self.make_phase('timed',sha,continuity_gap_ms=5000)
+        self.make_phase('timed',sha)
         timing=C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,sha)
-        self.assertEqual(timing['four_tensor_exact_clips'],40);self.assertEqual(timing['distinct_fixtures'],10)
+        self.assertEqual(timing['four_tensor_exact_clips'],10);self.assertEqual(timing['distinct_fixtures'],10)
         self.assertEqual(timing['completion_intervals_seconds'],[1.]*9)
-        self.assertEqual(timing['continuity_completion_intervals_seconds'],[1.]*29)
-        self.assertEqual(timing['aggregate_completion_intervals_seconds'],[1.]*9+[6.]+[1.]*29)
-        self.assertEqual(timing['boundary_interval_seconds'],6.)
-        self.assertEqual(timing['timing_blocks']['continuity']['emissions'],30)
+        self.assertNotIn('aggregate_completion_intervals_seconds', timing)
+        control_sha=C.R.sha(self.timed.read_bytes())
+        self.assertEqual(C.verify_control_receipt(self.timed,control_sha),timing)
+        self.make_phase('timed-fast',sha)
+        fast=C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,
+                              self.output,sha,self.timed,control_sha)
+        self.assertEqual(fast['completion_intervals_seconds'],[1.]*9)
+        self.assertEqual(fast['status'],'timed_fast_verified')
+        self.assertEqual(fast['control_receipt_sha256'],control_sha)
+        self.assertEqual(fast['policy_totals']['skipped_storage_save_count'],14*15)
         self.assertNotIn('torch',sys.modules)
 
     def test_fill_capture_is_never_parity(self):
@@ -135,7 +159,7 @@ class CandidateControls(unittest.TestCase):
         exec(compile(ast.Module(body=functions,type_ignores=[]),'pinned-producer-tag','exec'),ns)
         self.run_gate();candidate_sha=C.R.sha(self.output.read_bytes())
         self.make_phase('timed',candidate_sha)
-        for row in self.f.plan['requests'][20:]:
+        for row in [r for r in self.f.plan['requests'] if r['phase'] in ('candidate-check','timed')]:
             inputs=row['graph']['364']['inputs'];expected=ns['_job_tag'](inputs['mode'],inputs['text'])
             p=self.server/('pipeline-'+row['name']+'.json')
             detail=json.loads(p.read_text())['detail']
@@ -210,7 +234,7 @@ class CandidateControls(unittest.TestCase):
             self.run_gate()
         self.assertFalse(self.output.exists())
 
-    def test_last_continuity_fixture_still_requires_exact_native_bytes(self):
+    def test_last_timed_fixture_still_requires_exact_native_bytes(self):
         self.run_gate(); sha=C.R.sha(self.output.read_bytes());self.make_phase('timed',sha)
         row = [r for r in self.f.plan['requests'] if r['phase'] == 'timed'][-1]
         self.assertEqual(row['expected_emitted_fixture'], 'wheel')
@@ -221,6 +245,72 @@ class CandidateControls(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Four-tensor native equality failed'):
             C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,sha)
         self.assertFalse(self.timed.exists())
+
+    def prepare_control(self):
+        self.run_gate(); candidate_sha=C.R.sha(self.output.read_bytes())
+        self.make_phase('timed',candidate_sha)
+        return candidate_sha
+
+    def run_control(self, candidate_sha):
+        return C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,
+                                self.output,candidate_sha)
+
+    def test_control_policy_readout_is_required_and_cannot_skip(self):
+        sha=self.prepare_control()
+        row=next(r for r in self.f.plan['requests'] if r['phase']=='timed')
+        path=self.root/'requests'/row['name']/'client-policy.json'
+        self.f.mutate(path,lambda v:v.update(storage_save_count=19,skipped_storage_save_count=1))
+        with self.assertRaisesRegex(ValueError,'Control policy skipped'):
+            self.run_control(sha)
+        path.unlink()
+        with self.assertRaises(FileNotFoundError):self.run_control(sha)
+        self.assertFalse(self.timed.exists())
+
+    def test_policy_counts_identity_and_source_pin_are_checked(self):
+        sha=self.prepare_control()
+        row=next(r for r in self.f.plan['requests'] if r['phase']=='timed')
+        path=self.root/'requests'/row['name']/'client-policy.json'
+        original=json.loads(path.read_text())
+        for changes in ({'checkpoint_count':21},{'checkpoint_count':True},
+                        {'source_sha256':'f'*64},{'client_contract_sha256':'f'*64},
+                        {'policy':'storage-change-only'},{'phase':'timed-fast'}):
+            self.f.write(path,dict(original,**changes))
+            with self.assertRaises(ValueError):self.run_control(sha)
+            self.assertFalse(self.timed.exists())
+        self.f.write(path,original)
+        self.f.client_source.write_text('# Changed source bytes')
+        with self.assertRaisesRegex(ValueError,'source binding differs'):self.run_control(sha)
+
+    def test_fast_needs_verified_control_not_just_candidate(self):
+        sha=self.prepare_control();self.make_phase('timed-fast',sha)
+        with self.assertRaisesRegex(ValueError,'needs verified control'):
+            C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,self.output,sha)
+        self.assertFalse(self.fast.exists())
+
+    def test_forged_control_receipt_and_changed_control_policy_refused(self):
+        sha=self.prepare_control();self.run_control(sha)
+        original=self.timed.read_bytes()
+        self.f.mutate(self.timed,lambda v:v.update(four_tensor_exact_clips=99))
+        with self.assertRaisesRegex(ValueError,'actual evidence'):
+            C.verify_control_receipt(self.timed,C.R.sha(self.timed.read_bytes()))
+        self.timed.write_bytes(original);control_sha=C.R.sha(original)
+        self.make_phase('timed-fast',sha)
+        row=next(r for r in self.f.plan['requests'] if r['phase']=='timed')
+        self.f.mutate(self.root/'requests'/row['name']/'client-policy.json',lambda v:v.update(source_sha256='f'*64))
+        with self.assertRaisesRegex(ValueError,'readout identity'):
+            C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,
+                             self.output,sha,self.timed,control_sha)
+        self.assertFalse(self.fast.exists())
+
+    def test_fast_zero_skips_is_valid_but_must_report_it_truthfully(self):
+        sha=self.prepare_control();self.run_control(sha);control_sha=C.R.sha(self.timed.read_bytes())
+        self.make_phase('timed-fast',sha)
+        for row in (r for r in self.f.plan['requests'] if r['phase']=='timed-fast'):
+            self.f.mutate(self.root/'requests'/row['name']/'client-policy.json',
+                          lambda v:v.update(storage_save_count=20,skipped_storage_save_count=0))
+        result=C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,
+                                self.output,sha,self.timed,control_sha)
+        self.assertEqual(result['policy_totals']['skipped_storage_save_count'],0)
 
     def test_unknown_graph_or_runtime_refused(self):
         p=self.root/'requests'/self.row()['name']/'identity.json';self.f.mutate(p,lambda v:v.update(pid=999));self.refuse()

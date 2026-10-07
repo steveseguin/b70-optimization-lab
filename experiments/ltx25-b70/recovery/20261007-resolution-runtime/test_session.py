@@ -12,7 +12,7 @@ HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('resolution_session_tested', HERE / 'session.py')
 S = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(S)
-PLAN = HERE.parent / '20261007-resolution-full-103/candidate-plan.json'
+PLAN = HERE.parent / '20261007-client-compare-104/candidate-plan.json'
 
 
 def empty_state():
@@ -53,14 +53,14 @@ class SessionControls(unittest.TestCase):
         self.assertEqual(len(self.a.prompt_ids), 20)
         self.assertEqual(self.a.capture_count, 20)
 
-    def test_capture_cap80_separate_from87_request_plan(self):
-        self.assertEqual(len(self.rows),78)
-        self.a.capture_count=79
+    def test_capture_cap64_separate_from71_request_plan(self):
+        self.assertEqual(len(self.rows),62)
+        self.a.capture_count=63
         self.run_row(self.rows[0])
-        self.assertEqual(self.a.capture_count,80)
+        self.assertEqual(self.a.capture_count,64)
         with self.assertRaisesRegex(RuntimeError,'capture allowance exhausted'):
             self.run_row(self.rows[1])
-        self.assertEqual(self.a.capture_count,80)
+        self.assertEqual(self.a.capture_count,64)
         self.assertIsNotNone(self.a.failed)
 
     def test_noncapturing_setup_does_not_consume_capture_allowance(self):
@@ -69,13 +69,23 @@ class SessionControls(unittest.TestCase):
         setup=module.build_schedule()['schedule']['rows']
         self.assertEqual(len(setup),9)
         self.assertEqual(sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave')
-                                 for n in r['graph'].values()) for r in [*self.rows,*setup]),80)
+                                 for n in r['graph'].values()) for r in [*self.rows,*setup]),64)
         self.a=S.Authority(PLAN,'a'*64,'b'*64,self.root,lambda:copy.deepcopy(self.state),{},setup)
-        self.a.capture_count=80
+        self.a.capture_count=64
         row=setup[0]
         self.a.begin(row['name'],row['graph'],'setup-pid')
         self.a.finish([('execution_success',{'prompt_id':'setup-pid'})])
-        self.assertEqual(self.a.capture_count,80)
+        self.assertEqual(self.a.capture_count,64)
+
+    def test_fast_requests_use_existing_timing_authority_and_keep_order(self):
+        self.a.phase='timing';self.a.references_sha='c'*64;self.a.candidate_sha='d'*64
+        fast=[r for r in self.rows if r['phase']=='timed-fast']
+        self.assertEqual(len(fast),14)
+        for row in fast:
+            receipt=self.run_row(row)
+            self.assertEqual(receipt['phase'],'timing')
+            self.assertEqual(receipt['candidate_receipt_sha256'],'d'*64)
+        self.assertEqual(self.a.completed,[r['name'] for r in fast])
 
     def test_forged_graph_fails_before_authorization_and_latches(self):
         row = self.rows[0]

@@ -20,16 +20,16 @@ sys.dont_write_bytecode = True
 ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
 PARENT = ROOT / 'prepared-encoder-upstream-99b'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PACKET = ROOT / 'prepared-resolution-full-103'
-RUN_NAME = 'encoder-server-resolution-full-103-two-way-w2-b1-p1-dxpu2-s640x384'
+PACKET = ROOT / 'prepared-client-compare-104'
+RUN_NAME = 'encoder-server-client-compare-104-two-way-w2-b1-p1-dxpu2-s640x384'
 HERE = Path(__file__).resolve().parent
 AUTHOR = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-runtime')
-PLAN = AUTHOR.parent / '20261007-resolution-full-103/candidate-plan.json'
-PLAN_SHA = '84bdccba3e2fe39b9bf5bcd1cd074c6ee74bbd8ade2a9be7aa63e945f5b07e1d'
-PREDECESSOR = ROOT / 'prepared-resolution-w2-102'
-PREDECESSOR_SHA = '25761564f8e6790d25cbc4495662b2be19dfe2001401c5b8966e0a9c09264db4'
+PLAN = AUTHOR.parent / '20261007-client-compare-104/candidate-plan.json'
+PLAN_SHA = '1fc6e1f2f5874ab88915c93424f333402fa2bae1b73370391105fade270c841c'
+PREDECESSOR = ROOT / 'prepared-resolution-full-103'
+PREDECESSOR_SHA = 'a8b78c0a73a3045f902a2cf7f6ff55dff1931f4f4872b12576e976399708b5cb'
 COMMON, LAUNCHER = 'launch/encoder_runtime_common.py', 'launch/serve-encoder.py'
-STATUS = b'Packet103 ten-fixture W2 qualification and bounded continuity after packet102; constructed from qualified99b, not GPU-qualified.\n'
+STATUS = b'Packet104 paired client checkpoint comparison after packet103; constructed from qualified99b, not GPU-qualified.\n'
 # File names are deliberately explicit: no ambient files or caller-chosen code.
 COMPONENTS = ('geometry_overlay.py', 'native_safety.py', 'native_adapter.py',
               'session.py', 'executor_guard.py', 'runtime_observer.py', 'setup_gates.py',
@@ -139,8 +139,8 @@ def input_inventory():
 def extra_files(component_dir, plan_raw, plan_path=PLAN):
     result = {'provenance/packet99b-manifest.json': regular(PARENT / 'manifest.json'),
               'resolution/candidate-plan.json': plan_raw,
-              'provenance/reviewed-predecessor102-manifest.json': regular(PREDECESSOR / 'manifest.json')}
-    require(digest(result['provenance/reviewed-predecessor102-manifest.json']) == PREDECESSOR_SHA,
+              'provenance/reviewed-predecessor103-manifest.json': regular(PREDECESSOR / 'manifest.json')}
+    require(digest(result['provenance/reviewed-predecessor103-manifest.json']) == PREDECESSOR_SHA,
             'Reviewed W2 predecessor manifest changed')
     for name in COMPONENTS:
         raw = regular(component_dir / name)
@@ -213,7 +213,7 @@ def verify_packet(packet, expected_manifest_sha256):
     inventory = {n: filesha for n, filesha in
                  ((n, want['resolution/components/' + n]) for n in COMPONENTS)}
     inventory['candidate-plan.json'] = want['resolution/candidate-plan.json']
-    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '103',
+    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '104',
         'parent_packet': str(PARENT), 'parent_manifest_sha256': PARENT_SHA,
         'plan_sha256': PLAN_SHA, 'input_inventory': inventory,
         'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
@@ -263,7 +263,7 @@ def build(expected_inventory_sha256, parent_stopped=False):
         write_new(PACKET / path, raw)
     files = {str(p.relative_to(PACKET)): sha(p) for p in PACKET.rglob('*')
              if p.is_file() and p.name != 'STATUS.txt'}
-    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '103', 'parent_packet': str(PARENT),
+    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '104', 'parent_packet': str(PARENT),
         'parent_manifest_sha256': PARENT_SHA, 'plan_sha256': PLAN_SHA,
         'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
         'input_inventory': inventory, 'input_inventory_sha256': expected_inventory_sha256,

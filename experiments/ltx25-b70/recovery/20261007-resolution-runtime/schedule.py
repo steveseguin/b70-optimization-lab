@@ -7,11 +7,11 @@ import stat
 
 PARENT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA = '84bdccba3e2fe39b9bf5bcd1cd074c6ee74bbd8ade2a9be7aa63e945f5b07e1d'
-QUALIFICATION_ID = 'e017bccd97b4713eab3ca9216e25c540201f117b330bd2cbab35254d19d7e4ac'
-PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-full-103/candidate-plan.json')
-PREFIX = 'resolution-full-20261007'
-CAPTURE_INDICES = {'capture0': 99903030, 'capture1': 99903041}
+PLAN_SHA = '1fc6e1f2f5874ab88915c93424f333402fa2bae1b73370391105fade270c841c'
+QUALIFICATION_ID = 'c847e9b506f2fb5b08e97a263cb599e2b456e7868a9d20c50e3dfe94c8a701dd'
+PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-client-compare-104/candidate-plan.json')
+PREFIX = 'resolution-client-20261007'
+CAPTURE_INDICES = {'capture0': 99904030, 'capture1': 99904041}
 GRAPHS = {
  'window-probe': ('text-window-probe.json','ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0'),
  'pin0': ('sampler-pin.json','fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005'),
@@ -111,7 +111,7 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
         depends=[] if previous is None else [previous]
         if kind=='pin0':depends=['barrier:optimized_preparation']
         row={'name':name,'phase':'native-setup' if kind in ('window-probe','prepare-native') else 'optimized-setup',
-             'kind':kind,'graph':graph,'graph_sha256':sha(canonical(graph)),'depends_on':depends}
+             'kind':kind,'client_checkpoint_policy':'always','graph':graph,'graph_sha256':sha(canonical(graph)),'depends_on':depends}
         if kind in CAPTURE_INDICES:
             row.update(clip_index=CAPTURE_INDICES[kind],expected_emitted_index=None,
                        worker=int(kind[-1]),
@@ -124,7 +124,7 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
         max(r['clip_index'] for r in plan['requests'][:20])<i<min(r['clip_index'] for r in plan['requests'][20:])
         for i in CAPTURE_INDICES.values()),'Capture index collision')
     captures=sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave') for n in r['graph'].values()) for r in [*plan['requests'],*rows])
-    require(captures==80 and captures<=80,'Capture budget differs')
+    require(captures==64 and captures<=64,'Capture budget differs')
     result={'schema':'ltx.resolution-setup-schedule.v1','status':'CPU-plan-only-not-runtime-qualified',
             'parent_manifest_sha256':PARENT_SHA,'plan_sha256':PLAN_SHA,'qualification_id':QUALIFICATION_ID,
             'source_graph_sha256':sources,'rows':rows,
@@ -134,10 +134,12 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
                 'barrier:optimized_preparation':['barrier:reference_verified'],
                 plan['requests'][20]['name']:[PREFIX+'-freeze'],
                 'barrier:candidate_verified':[r['name'] for r in plan['requests'][20:34]],
-                'barrier:timing':['barrier:candidate_verified']},
-            'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':80,
-            'retry_or_extra_fill_requests':0,'native_reference_captures':20,'candidate_compared_clips':10,'timed_compared_clips':40,
-            'timed_full_suite_clips':10,'timed_bounded_continuity_clips':30,
+                'barrier:timing':['barrier:candidate_verified'],
+                'barrier:control_verified':[r['name'] for r in plan['requests'] if r['phase']=='timed'],
+                plan['requests'][48]['name']:['barrier:control_verified']},
+            'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':64,
+            'retry_or_extra_fill_requests':0,'native_reference_captures':20,'candidate_compared_clips':10,'timed_compared_clips':20,
+            'timed_control_compared_clips':10,'timed_fast_compared_clips':10,
             'obligations':['Exact registered setup order and per-kind verdict checks in trusted executor adapter',
                            'Quiescence plus durable completed-tail retirement at explicit barriers; no clear/recompute',
                            'Native proof verified before any sampler route/sentry/replica installation',

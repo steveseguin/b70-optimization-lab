@@ -14,7 +14,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('reference_gate', HERE / 'reference_gate.py')
 G = importlib.util.module_from_spec(spec); spec.loader.exec_module(G)
-PLAN = HERE.parent / '20261007-resolution-full-103/candidate-plan.json'
+PLAN = HERE.parent / '20261007-client-compare-104/candidate-plan.json'
 
 
 class GateTests(unittest.TestCase):
@@ -28,15 +28,22 @@ class GateTests(unittest.TestCase):
         self.patch = patch.object(G, 'SHAPES', self.shapes); self.patch.start(); self.addCleanup(self.patch.stop)
         model_pin = patch.object(G, 'MODEL_VERIFICATION_SHA256', 'b' * 64)
         model_pin.start(); self.addCleanup(model_pin.stop)
+        self.packet = self.root / 'synthetic-packet'
+        self.client_source = self.packet / 'resolution/components/request_client.py'
+        self.client_source.parent.mkdir(parents=True)
+        self.client_source.write_text('# Synthetic policy source; never executed.\n')
+        self.write(self.packet / 'manifest.json', {'files': {
+            'resolution/components/request_client.py': G.sha(self.client_source.read_bytes())}})
+        self.runtime_sha = G.sha((self.packet / 'manifest.json').read_bytes())
         self.identity = {'pid': 12345, 'proc_start_ticks': '5678', 'boot_id': 'synthetic-boot',
                          'source_commit': 'synthetic-only', 'runtime': {'python': 'synthetic'},
                          'rope_compatibility': {'synthetic': True},
-                         'source_packet_manifest_sha256': 'a' * 64, 'model_verification_sha256': 'b' * 64}
+                         'source_packet_path': str(self.packet), 'source_packet_manifest_sha256': self.runtime_sha, 'model_verification_sha256': 'b' * 64}
         self.write(self.server / 'server-identity.json', self.identity)
         identity_hash = G.sha((self.server / 'server-identity.json').read_bytes())
         self.contract = {'schema': 'ltx.native-reference-runtime-contract.v1', 'plan_sha256': G.PLAN_SHA,
                          'parent_manifest_sha256': G.PARENT_SHA, 'server_run': str(self.server),
-                         'server_identity_sha256': identity_hash, 'successor_manifest_sha256': 'a' * 64,
+                         'server_identity_sha256': identity_hash, 'successor_manifest_sha256': self.runtime_sha,
                          'model_verification_sha256': 'b' * 64,
                          'request_names': [r['name'] for r in self.plan['requests'][:20]],
                          'runtime_evidence': {str(self.server / 'server-identity.json'): identity_hash}}

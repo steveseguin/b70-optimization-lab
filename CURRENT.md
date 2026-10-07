@@ -48,8 +48,11 @@ clips in one application with identical numerical settings and inputs.
 [paired plan](experiments/ltx25-b70/recovery/20261007-client-compare-104/README.md),
 [profile](experiments/ltx25-b70/notes/2026-10-07-client-overhead-profile.md).
 
-104 is CPU planning only: no runtime integration, reservation, packet build or
+104 is implemented and all fifteen CPU suites passed; its71 request names and
+64 capture indices are reserved without collisions. Independent review found no
+issues in client durability, ordering or source construction. No packet build or
 launch yet. Its71 attempts/64 captures need a fresh5GiB allowance plus50GiB reserve.
+[Implementation and comparison rules](experiments/ltx25-b70/notes/2026-10-07-client104-comparison.md).
 All103 raw outputs remain intact. A conditional plan identifies30 continuity
 archives that may be byte-identical to retained initial samples; no retirement
 has run, and an explicit restoration map is required before any such deletion.

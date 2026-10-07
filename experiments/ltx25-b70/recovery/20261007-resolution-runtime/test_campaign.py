@@ -37,7 +37,7 @@ class CampaignControls(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         self.run = self.root / 'server'; self.run.mkdir()
-        plan_path = HERE.parent / '20261007-resolution-full-103/candidate-plan.json'
+        plan_path = HERE.parent / '20261007-client-compare-104/candidate-plan.json'
         self.plan = json.loads(plan_path.read_text())['plan']
         self.fake_client = NS(run=self.run, root=self.root, full_schedule=True,
             contract={'runtime_manifest_sha256': 'b' * 64, 'plan_path': str(plan_path),
@@ -72,7 +72,7 @@ class CampaignControls(unittest.TestCase):
         self.assertEqual((result['status'], result['model_requests'], result['server_actions']), ('plan-only', 0, 0))
         cls.assert_not_called(); C.call.assert_not_called(); C.os.kill.assert_not_called()
 
-    def test_exact_87_requests_and_memory_phase_barriers(self):
+    def test_exact_71_requests_and_memory_phase_barriers(self):
         self.c.wait_idle = Mock(return_value=self.status())
         self.c.status = Mock(return_value=self.status())
         self.c.check_identity = Mock()
@@ -87,7 +87,7 @@ class CampaignControls(unittest.TestCase):
         expected = [r['name'] for r in setup[:2]] + [r['name'] for r in self.plan['requests'][:20]]
         expected += [r['name'] for r in setup[2:]] + [r['name'] for r in self.plan['requests'][20:]]
         self.assertEqual(result['requests'], expected)
-        self.assertEqual(len(expected), 87); self.assertEqual(len(set(expected)), 87)
+        self.assertEqual(len(expected), 71); self.assertEqual(len(set(expected)), 71)
         for capture_index in (3, 5):
             row = setup[capture_index]
             self.assertEqual(log[log.index(('action', row['admission_action'])) + 1], ('request', row['name']))
@@ -101,17 +101,18 @@ class CampaignControls(unittest.TestCase):
         native_begin = log.index(('request', native_names[0]))
         self.assertEqual(log[native_begin:native_begin+20], [('request', n) for n in native_names])
         self.assertEqual(log[native_begin+20], ('action', 'verify-native'))
-        timed_names = [r['name'] for r in self.plan['requests'][34:]]
-        self.assertEqual(len(timed_names), 44)
-        timed_begin = log.index(('request', timed_names[0]))
-        self.assertEqual(log[timed_begin:timed_begin+44], [('request', n) for n in timed_names])
-        self.assertEqual(log[timed_begin+44], ('action', 'verify-timed'))
-        self.assertEqual([r['timing_scope'] for r in self.plan['requests'][34:]],
-                         ['unscored-fill']*4 + ['full-suite-pass']*10 + ['bounded-continuity']*30)
+        for phase,action in [('timed','verify-timed'),('timed-fast','verify-fast-timed')]:
+            names=[r['name'] for r in self.plan['requests'] if r['phase']==phase]
+            self.assertEqual(len(names),14)
+            begin=log.index(('request',names[0]))
+            self.assertEqual(log[begin:begin+14],[('request',n) for n in names])
+            self.assertEqual(log[begin+14],('action',action))
+        self.assertLess(log.index(('action','verify-timed')),
+                        log.index(('request',next(r['name'] for r in self.plan['requests'] if r['phase']=='timed-fast'))))
         self.assertEqual(result['actions'], ['before-native', 'verify-native', 'start-optimized',
                          'admit-capture0', 'retire-capture0-tails', 'admit-capture1',
                          'retire-capture1-tails', 'admit-decode', 'verify-candidate',
-                         'start-timing', 'verify-timed'])
+                         'start-timing', 'verify-timed', 'verify-fast-timed'])
         self.assertLess(log.index(('action', 'verify-native')), log.index(('action', 'start-optimized')))
         self.assertLess(log.index(('action', 'verify-candidate')), log.index(('action', 'start-timing')))
         C.os.kill.assert_not_called()

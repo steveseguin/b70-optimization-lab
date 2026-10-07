@@ -1,4 +1,4 @@
-# 640×384 reference/runtime components — ten-fixture qualification passed
+# 640×384 runtime — paired client comparison104 in preparation
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -19,21 +19,26 @@ reconstructed the proof. It later stopped cleanly for the controlled103 reload,
 with healthy four-card postflight.
 [102 closeout](../../data/resume-20261007/resolution102-closeout/summary.json).
 
-The current authored and sealed103 runtime passed all ten original fixtures:20
+The sealed103 runtime passed all ten original fixtures:20
 native executions and50 scored optimized clips were exact. Initial throughput
 was12.00FPS and thirty continuity clips averaged11.03FPS; late client delivery
 drift has concurrent repository-work confounds. The application remains idle,
 and the unmodified proof reconstructed after completion.
 [103 closeout](../../data/resume-20261007/resolution103-closeout/summary.json).
 
-The103 plan broadens qualification to all ten original fixtures. The model, steps, precision, encoder window and W2/B1 configuration
-remain unchanged. The [full-suite plan](../20261007-resolution-full-103/README.md)
-fixes20 native requests,14 candidate requests and44 timed/continuity requests;
-nine setup requests bring the total to87 attempts and80 raw captures. Both
-workers are pinned, admitted and checked independently. The first ten timed
-emissions and subsequent thirty continuity emissions have separate summaries.
-The proposed write allowance is7GiB with50GiB reserved; execution requires a
-fresh filesystem admission. No client delivery optimization is included.
+The current author sources prepare104, a paired client checkpoint comparison.
+The [fixed plan](../20261007-client-compare-104/README.md) preserves all ten
+fixtures, model arithmetic, original steps, precision, encoder window and W2/B1.
+It admits20 native requests,14 candidate requests,14 control timing requests and
+14 candidate timing requests; nine setup requests bring the total to71 attempts
+and64 raw captures. Fresh admission requires5GiB above the50GiB reserve.
+
+The client skips a storage-ledger rewrite only for an unchanged storage tuple in
+the second timing block. Every check, changed-state save and event fsync remains.
+Each request records source-bound policy and actual checkpoint/write counts.
+Control verification must succeed before a durable barrier admits the second
+block. Both blocks are ten repeated qualification fixtures in fixed order, so
+this remains a short screen with possible order effects. No104 GPU result exists.
 
 The owner has supplied replacement instructions preferring application reuse.
 The runner now retains a successful application after verifying quiescence.
@@ -42,7 +47,7 @@ unresolved work remain for the coordinator. No automatic restart or request retr
 is allowed. Retaining the application does not authorize bypassing its consumed
 request plan; follow-up work needs its own registered admission.
 
-102 is the reviewed W2 predecessor; 99b remains the constructor source. Sealed
+103 is the reviewed W2 predecessor; 99b remains the constructor source. Sealed
 historical packets and plans are unchanged. New native references must precede
 optimized capture. The accepted text encoder remains graph-sharded, so this is
 not an all-eager oracle. The103 result is exact on the registered ten-fixture scope; it is not a public
@@ -63,7 +68,7 @@ Implemented components:
 - `runtime_observer.py` reads the actual registered node modules and pipeline
   jobs, including completed but uncollected tails. Importing a separate source
   mirror cannot stand in for the active node's ownership state.
-- `reference_gate.py` rereads six native executions and all four tensor files,
+- `reference_gate.py` rereads twenty native executions and all four tensor files,
   verifies distinct executions and exact repeat pairs, and exclusively writes
   a reference receipt. Reading the receipt reconstructs its proof from retained
   artifacts. [Reference contract](reference-gate-contract.md).
@@ -76,8 +81,8 @@ Implemented components:
 registered node owners, unchanged resident tensor identities and fresh device
 memory. The narrow loader wrapper protects loaded owners from eviction; ordinary
 Comfy allocator bookkeeping is retained. `candidate_gate.py` verifies real
-emissions against the three native references and excludes fills. The complete
-`request_client.py` accepts only the87 exact scheduled requests and reads fresh
+emissions against the ten native reference pairs and excludes fills. The complete
+`request_client.py` accepts only the71 exact scheduled requests and reads fresh
 server phase observations; `schedule.py` binds the nine setup graphs.
 
 `integration.py` connects setup-result checks, native safety, source identity and
@@ -103,7 +108,7 @@ The latter keeps a provisional 4 GiB transient allowance, 1 GiB rounded pool
 allowance and 2 GiB floor on the sampler cards. Neither is a measured peak bound.
 Both captures record fresh post-capture memory and enforce the 2 GiB floor.
 Actual resident weights and encoder graphs must already be present.
-Keep the50GiB disk reserve, fresh7GiB write allowance and80-capture bound.
+Keep the50GiB disk reserve, fresh5GiB write allowance and64-capture bound.
 
 Tests are adjacent `test_*.py` scripts, run with `python3 -B` individually.
 Synthetic schema controls are labeled as such and are not model measurements.
