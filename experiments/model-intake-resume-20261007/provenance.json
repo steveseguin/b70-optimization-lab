@@ -1,0 +1,9 @@
+{
+  "schema": "lab.model-intake-resume-candidate.v1",
+  "status": "unapplied candidate; active downloader preserved",
+  "source_path": "tools/container-packet/download-model.sh",
+  "baseline_sha256": "74f940068f59e091b530c54c6080f9a098bb70fb903b2fc31f082cc687f6e910",
+  "candidate_sha256": "e0abf6307c2cd1c7821ff370562e9ea593dbfdd544807d91de1dc2dca3254760",
+  "scope": "One conditional: a remaining aria2 control sidecar prevents skipping a size-matching preallocated partial file. Complete size-matching files without a sidecar keep existing skip behavior.",
+  "application_gate": "Wait until active download bash PID2973482 has finished, then verify the shared script still matches baseline_sha256 before applying. No application or download is performed by this packet."
+}

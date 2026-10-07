@@ -33,7 +33,7 @@ for group in ('lfs_files','small_files'):
 for row in "${rows[@]}"; do
   path=${row%%$'\t'*}; want=${row##*$'\t'}
   out="${dest}/${path}"; mkdir -p "$(dirname -- "${out}")"
-  if [[ -f "${out}" && ! -e "${out}.aria2" && -n "${want}" && "$(stat -c%s "${out}")" == "${want}" ]]; then
+  if [[ -f "${out}" && -n "${want}" && "$(stat -c%s "${out}")" == "${want}" ]]; then
     printf '  have  %s\n' "${path}"; continue
   fi
   url="https://huggingface.co/${hf_repo}/resolve/${revision}/${path}"

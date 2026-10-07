@@ -1,0 +1,22 @@
+{
+  "schema": "lab.model-intake-resume-application.v1",
+  "utc": "2026-10-07T03:32:52.597590+00:00",
+  "status": "applied",
+  "source": "tools/container-packet/download-model.sh",
+  "source_sha256": "e0abf6307c2cd1c7821ff370562e9ea593dbfdd544807d91de1dc2dca3254760",
+  "download_gate": {
+    "pid": 2973482,
+    "exited_before_edit": true,
+    "exec_session": 35350,
+    "exit_code": 0,
+    "completed_marker": true
+  },
+  "tests": {
+    "command": "python3 -B experiments/model-intake-resume-20261007/test_resume_control.py -v",
+    "tests_passed": 3,
+    "offline_cases": 4,
+    "shell_syntax": "passed",
+    "applied_bytes_match_tested_candidate": true
+  },
+  "scope": "Resume an aria2 partial even when its preallocated file matches the expected size; complete files retain existing skip behavior. Hash verification remains required."
+}
