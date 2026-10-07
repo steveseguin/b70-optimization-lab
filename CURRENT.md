@@ -12,7 +12,8 @@ and no fault is latched. The105 successor is sealed, manifest
 all four cards passed postflight at19:15:32UTC. The52-file duplicate retirement
 completed and fresh5GiB+50GiB storage admission passed.105 launched once at19:26:58UTC;
 PID3329528, start ticks27505015. Endpoint/source-bound client admission passed;
-its finite campaign is next. The same passive descriptor observer is running.
+its finite71-request campaign is running with fast policy first, control second.
+The same passive descriptor observer is running.
 The completed104 manifest is `49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`.
 The campaign completed all71 registered requests successfully at18:54:45UTC.
 Its finite plan is consumed: do not invent requests or run other GPU work beside it.
@@ -42,7 +43,7 @@ second, then sampler service/overlap work. The standalone105 plan preserves all
 numerics and ten original scenes, with71 requests,64 captures and a fresh5GiB
 allowance above50GiB reserve. Runtime integration and independent review are complete; all fifteen CPU suites
 passed and its71 request names/64 capture indices are reserved without collisions.
-105 is launched and has no model requests yet. Current sampler phase A/B timings describe
+105 is running its registered setup and exact-output gates before timing. Current sampler phase A/B timings describe
 denoising stages, not per-card utilization, and cannot justify a blind partition
 or worker-count sweep.
 [Next priorities](experiments/ltx25-b70/notes/2026-10-07-after104-priorities.md),
