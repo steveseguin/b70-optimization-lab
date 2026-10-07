@@ -1,0 +1,490 @@
+{
+  "schema": "project-decision-recall.references-review.v1",
+  "corpus_id": "project-decision-recall-20261007",
+  "reviewed_at_utc": "2026-10-07T12:13:54.472240+00:00",
+  "reviewer": "Codex assistant, separate from packet author",
+  "passed": true,
+  "status": "pass",
+  "answer_sessions_inspected": false,
+  "answer_generation_started_by_reviewer": false,
+  "gpu_actions": 0,
+  "bindings": {
+    "manifest.json": {
+      "sha256": "1284fd189c5a896895f17b5e7841bd7b29c582a569f0b09f4f90668046ffd671",
+      "bytes": 5158
+    },
+    "reference.json": {
+      "sha256": "531d92261d8f78782820f73333700dd92aafec2dd193a48db42bdf39bb3e2775",
+      "bytes": 33938
+    },
+    "questions.json": {
+      "sha256": "25b31541407c6ceefeb5f8ad94c4e3a41274ebda31532ce7dfd3c06e5ccb35a0",
+      "bytes": 4018
+    },
+    "protocol.json": {
+      "sha256": "dc8b5c55d8a97bacc038fca6fb699fc3eaaa1a791abca588a5679b7117a4292e",
+      "bytes": 3924
+    }
+  },
+  "source_checks": [
+    {
+      "source_id": "s01",
+      "path": "sources/01.txt",
+      "git_object": "a96a072efa4a6611d79ef323bef507da42607885:AGENTS.md",
+      "sha256": "3b6faae522d7af7e7795887d75666c9cfd0e9beece989e9dfcaa1186e4f4b89f",
+      "bytes": 35719,
+      "lines": 584,
+      "complete_git_blob_exact": true,
+      "last_change_metadata_exact": true,
+      "whole_source_read": true,
+      "passed": true
+    },
+    {
+      "source_id": "s02",
+      "path": "sources/02.txt",
+      "git_object": "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-10-07-context-campaign-followup.md",
+      "sha256": "50ba0433cb1c134478f4c4c2d79371e18e3aa9e3a996559cd69d00b0d9c51fa1",
+      "bytes": 2312,
+      "lines": 39,
+      "complete_git_blob_exact": true,
+      "last_change_metadata_exact": true,
+      "whole_source_read": true,
+      "passed": true
+    },
+    {
+      "source_id": "s03",
+      "path": "sources/03.txt",
+      "git_object": "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-result.md",
+      "sha256": "dc728fce4b077481f161094ff1d3d95cad9a5170e5e42215ac21cc9e5b34df57",
+      "bytes": 3794,
+      "lines": 64,
+      "complete_git_blob_exact": true,
+      "last_change_metadata_exact": true,
+      "whole_source_read": true,
+      "passed": true
+    },
+    {
+      "source_id": "s04",
+      "path": "sources/04.txt",
+      "git_object": "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.md",
+      "sha256": "c7a88d965b8684e0875cd156a6c698815b2e92f4d26c168cb78538f958a81fe1",
+      "bytes": 1408,
+      "lines": 20,
+      "complete_git_blob_exact": true,
+      "last_change_metadata_exact": true,
+      "whole_source_read": true,
+      "passed": true
+    },
+    {
+      "source_id": "s05",
+      "path": "sources/05.txt",
+      "git_object": "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-mtp4-whole-graph-r197-result.md",
+      "sha256": "3d97ee8a837a7be12fe360486ef92568f4e4e927736902bb28d79de82d29b15e",
+      "bytes": 1167,
+      "lines": 18,
+      "complete_git_blob_exact": true,
+      "last_change_metadata_exact": true,
+      "whole_source_read": true,
+      "passed": true
+    }
+  ],
+  "totals": {
+    "sources": 5,
+    "source_bytes": 44400,
+    "source_lines": 725,
+    "questions": 12,
+    "essential_criteria": 38,
+    "exact_citation_occurrences": 45,
+    "supported_criteria": 38,
+    "unknown_items": 2
+  },
+  "methodology": [
+    "Read all five complete source snapshots as evidence data, including all 584 lines of historicalAGENTS.",
+    "Compared every source byte to git show at exact commit:path; checked SHA256, byte/line counts and last-change Git metadata.",
+    "Validated each of 45 citation occurrence against exact 1-based inclusive original lines.",
+    "Independently evaluated all 38 atomic criteria for entailment, authority, temporal scope, exceptions, failure classification and qualification boundaries.",
+    "For unknowns read the complete closed corpus and cross-checked owner/author/name/resident and seed 29 terms; did not follow linked documents or infer from unrelated measurements.",
+    "Bound the latest public answer-contract clarification and Independent-semantic-review wording; neither changed questions or essential criteria.",
+    "Read final protocol byte_accounting clarification; successful reader payload cap and rejected-operation accounting do not alter reference entailment or unknown scopes."
+  ],
+  "questions": [
+    {
+      "question_id": "q01",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q01.c1",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q01.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q01.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "Explicit withdrawal, experiment-only lifecycle and the owner-request exception are all directly recorded. The older wording is attributed to an agent reading, not left as an unresolved current rule.",
+      "scope_caveats": [
+        "Does not prove actual present server state."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q02",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q02.c1",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q02.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q02.c3",
+          "supported": true,
+          "exact_citations_checked": 2
+        }
+      ],
+      "finding": "The overriding authority and reboot authorization are attributed to the owner. The repository record contains no original authenticated human message for this policy; that distinction is supported by inspection of the complete corpus, not by quotation alone.",
+      "scope_caveats": [
+        "Owner is a role attribution, not a verified named author."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q03",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q03.c1",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q03.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q03.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q03.c4",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "Full 16-bit BF16 or runtime FP16 default, both explicit exceptions, and the exclusion of compressed KV from default/headline status are present together in the policy.",
+      "scope_caveats": [
+        "An exception to use compressed KV is not evidence of headline qualification."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q04",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q04.c1",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q04.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q04.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "CURRENT.md is explicitly designated live-state authority; old notes cannot establish current operation and Git status/process/endpoint checks are expressly required before changes.",
+      "scope_caveats": [
+        "CURRENT.md content is not supplied; no actual live-state answer is implied."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q05",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q05.c1",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q05.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q05.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "The follow-up directly states incomplete-to-completed million-token progression, incomplete 480K quoted seed1, and preservation of the earlier snapshot. Temporal scope is the described snapshot, not a later campaign outcome.",
+      "scope_caveats": [
+        "The 480K seed1 question count is 21 in the source; do not silently assume 24."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q06",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q06.c1",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q06.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q06.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "Missing task input is a planning/setup failure without a model score; 35/36 belongs to seed0 and wrapper plan-complete does not mean every cell completed.",
+      "scope_caveats": [
+        "Do not grade setup failure as a zero-accuracy model trial or successful seed1."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q07",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q07.c1",
+          "supported": true,
+          "exact_citations_checked": 2
+        },
+        {
+          "criterion_id": "q07.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q07.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q07.c4",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "8192 reasoning tokens exhausted the fixed output cap with no answer, expressly bounded-model rather than GPU/transport failure. No retry, cap increase, retrospective completion or held-out admission occurred; future failure handling needs a new protocol and tests.",
+      "scope_caveats": [
+        "The six unstarted rows remain unstarted despite four exact primary trials."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q08",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q08.c1",
+          "supported": true,
+          "exact_citations_checked": 2
+        },
+        {
+          "criterion_id": "q08.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q08.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q08.c4",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "The notes concern different task/protocol comparisons. The single million-token pair supports only its reported 23.0% elapsed observation, not repeat-confirmed speed or intermediate-state guarantees. R4 explicitly disabled prefix caching, records uncached primary trials and quoted slower in both completed pairs, with no qualifying speed verdict.",
+      "scope_caveats": [
+        "Legacy read-mode scored 23/24 versus quoted 24/24; do not claim both were exact.",
+        "The separate 480K cache-enabled statement does not establish million-token cache settings.",
+        "Quote existence does not replace comparison-identity qualification."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q09",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q09.c1",
+          "supported": true,
+          "exact_citations_checked": 2
+        },
+        {
+          "criterion_id": "q09.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q09.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "R189 is explicitly published as the R187 line depth profile: R156 via whole-graph R187 wrappers, splitting_ops=[], one slot, tested 2K–32K contexts. MTP1/MTP0 equivalence is supported only at six listed context lengths and tested configuration.",
+      "scope_caveats": [
+        "The R150 real-content protocol and cache-zero qualification are stated in source lines 3–5.",
+        "Historical publication is reported by this note; linked publication artifacts are outside the closed corpus.",
+        "Context length and speculative-token depth must not be conflated."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q10",
+      "expected_status": "answered",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q10.c1",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q10.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q10.c3",
+          "supported": true,
+          "exact_citations_checked": 1
+        },
+        {
+          "criterion_id": "q10.c4",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "R156/splitting_ops=[]/four speculative tokens received the fastest-lossless-single-user-so-far description. First ladder exact through c16, c32=30/32, c64=58/64, weaker high concurrency and queued R201 are all explicit.",
+      "scope_caveats": [
+        "Standing two-run identity rule reinforces that first-ladder exactness is not full concurrency qualification.",
+        "No subsequent R201 outcome may be imported."
+      ],
+      "unknown_absence_review": null
+    },
+    {
+      "question_id": "q11",
+      "expected_status": "unknown",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q11.c1",
+          "supported": true,
+          "exact_citations_checked": 2
+        },
+        {
+          "criterion_id": "q11.c2",
+          "supported": true,
+          "exact_citations_checked": 2
+        }
+      ],
+      "finding": "Null is justified by reading all 725 source lines: owner attribution exists, but no source establishes a named human as author of this specific withdrawal. Hostnames and /home/steve paths do not identify that author, and Git metadata says Codex Agent rather than authenticating original human input.",
+      "scope_caveats": [
+        "Absence is limited to all five supplied documents, not global unknowability.",
+        "Relevant citations support the available role attribution; exhaustive corpus review supports absence."
+      ],
+      "unknown_absence_review": {
+        "all_sources": [
+          "s01",
+          "s02",
+          "s03",
+          "s04",
+          "s05"
+        ],
+        "whole_corpus_read": true,
+        "targeted_keyword_search_used_as_crosscheck": true,
+        "absent_requested_fact": true
+      }
+    },
+    {
+      "question_id": "q12",
+      "expected_status": "unknown",
+      "passed": true,
+      "essential_criteria": [
+        {
+          "criterion_id": "q12.c1",
+          "supported": true,
+          "exact_citations_checked": 2
+        },
+        {
+          "criterion_id": "q12.c2",
+          "supported": true,
+          "exact_citations_checked": 1
+        }
+      ],
+      "finding": "Null is justified across the complete corpus. R4 explicitly says all six seed 29 trials did not start; no other supplied document gives a seed 29 dispatch quoted elapsed measurement. Other seeds, the million-token trial and older R-series timings cannot fill that gap.",
+      "scope_caveats": [
+        "Unstarted is not a measured zero duration.",
+        "No claim is made about unprovided later records."
+      ],
+      "unknown_absence_review": {
+        "all_sources": [
+          "s01",
+          "s02",
+          "s03",
+          "s04",
+          "s05"
+        ],
+        "whole_corpus_read": true,
+        "targeted_keyword_search_used_as_crosscheck": true,
+        "absent_requested_fact": true
+      }
+    }
+  ],
+  "blocking_findings": [],
+  "resolved_before_answering": [
+    {
+      "issue": "reference grading initially said Human semantic review although workflow is assistant review",
+      "resolution": "Parent changed wording to Independent semantic review and refreshed manifest; verified latest hashes."
+    }
+  ],
+  "limitations": [
+    "This reviewer is independent of packet authorship but has prior involvement in underlying lab work; judgments above are limited to the supplied closed corpus.",
+    "The corpus contains agent-curated owner attributions, not authenticated human transcripts. Git equality verifies faithful copying, not historical truth of every claim.",
+    "Historical publication and experiment facts are supported as statements in source notes; linked raw evidence is intentionally outside this task.",
+    "Absence judgments are corpus-scoped and cannot be certified by a positive quote alone.",
+    "Answerer isolation is instruction-based on a shared filesystem, not an enforced sandbox.",
+    "Hosted model snapshot/token/cache/monetary costs remain unknown; this reference pass is not model quality, memory-system or speed qualification."
+  ]
+}

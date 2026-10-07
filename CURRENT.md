@@ -166,6 +166,18 @@ were verified byte-identical to the reviewed build.
 [Publication check](experiments/qwen38-27b-b70/data/2026-10-07-context-site-publication.json).
 No additional model experiment is queued.
 
+## 2026-10-07, project decision recall workflow
+
+The owner authorized the next application check. A [fixed twelve-question packet](experiments/project-decision-recall-20261007/README.md)
+uses five complete existing project records, with explicit reference criteria,
+two source-unknown answers and exact citations. Independent reference review and
+CPU checks precede one complete-source and one ordinary search/read assistant
+attempt. These use fresh hosted assistant sessions, not the local Qwen server;
+no GPU experiment or resident service is queued. The sources are agent-curated
+with claimed owner input, not authenticated human transcripts. Source access and
+semantic answer coverage are graded separately; no new structured memory store
+is admitted by this plan.
+
 ## 2026-10-07, two-B70 host: short-document decision settled
 
 The [direct full-source baseline](experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md)
