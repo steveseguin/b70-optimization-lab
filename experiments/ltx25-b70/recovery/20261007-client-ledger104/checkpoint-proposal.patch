@@ -1,0 +1,19 @@
+--- sealed103/request_client.py
++++ proposed104/request_client.py
+@@ -196,11 +196,15 @@
+         self.check_fixed()
+         now = self.free_probe(self.root)
+         G.require(type(now) is int and now >= 0, 'Invalid filesystem reading')
++        previous_storage = (self.state['charged_write_bytes'], self.state['last_available_bytes'])
+         self.state['charged_write_bytes'] += max(0, self.state['last_available_bytes'] - now)
+         self.state['last_available_bytes'] = now
+         remaining = WRITE_ALLOWANCE - self.state['charged_write_bytes']
+         G.require(remaining >= 0 and now >= MIN_FREE + remaining, 'Storage reserve/allowance exhausted')
+-        self.save_state()
++        # Every other state mutation has its own explicit durable save. If these
++        # fields did not change, the ledger already contains this checkpoint state.
++        if (self.state['charged_write_bytes'], self.state['last_available_bytes']) != previous_storage:
++            self.save_state()
+ 
+     def save_state(self):
+         path = self.directory / 'state.json'; temp = self.directory / ('state-' + uuid.uuid4().hex + '.tmp')

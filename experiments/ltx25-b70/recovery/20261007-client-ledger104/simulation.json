@@ -1,0 +1,66 @@
+{
+  "limitations": [
+    "Actual unchanged-free frequency has not been measured.",
+    "Skipping writes can itself alter future observed free-space values; same exogenous traces prove accounting behavior, not identical live I/O traces.",
+    "Per-event log flush/fsync and every source/process/fault check remain unchanged."
+  ],
+  "proposal_sha256": "3d1bd86db28af9e8bf446bbb7880236965101581063f57b1441f7e3c70e9ec59",
+  "rows": [
+    {
+      "avoided_save_state_calls": 100,
+      "checkpoints": 100,
+      "final_charged_write_bytes": 0,
+      "old_check_fixed_calls": 100,
+      "old_free_probe_calls": 100,
+      "old_save_state_calls": 100,
+      "proposed_check_fixed_calls": 100,
+      "proposed_free_probe_calls": 100,
+      "proposed_save_state_calls": 0,
+      "scenario": "constant_free",
+      "states_equal_after_every_checkpoint": true
+    },
+    {
+      "avoided_save_state_calls": 0,
+      "checkpoints": 100,
+      "final_charged_write_bytes": 100,
+      "old_check_fixed_calls": 100,
+      "old_free_probe_calls": 100,
+      "old_save_state_calls": 100,
+      "proposed_check_fixed_calls": 100,
+      "proposed_free_probe_calls": 100,
+      "proposed_save_state_calls": 100,
+      "scenario": "free_decreases_every_checkpoint",
+      "states_equal_after_every_checkpoint": true
+    },
+    {
+      "avoided_save_state_calls": 88,
+      "checkpoints": 100,
+      "final_charged_write_bytes": 48,
+      "old_check_fixed_calls": 100,
+      "old_free_probe_calls": 100,
+      "old_save_state_calls": 100,
+      "proposed_check_fixed_calls": 100,
+      "proposed_free_probe_calls": 100,
+      "proposed_save_state_calls": 12,
+      "scenario": "free_changes_every_eight_checkpoints",
+      "states_equal_after_every_checkpoint": true
+    },
+    {
+      "avoided_save_state_calls": 0,
+      "checkpoints": 100,
+      "final_charged_write_bytes": 0,
+      "old_check_fixed_calls": 100,
+      "old_free_probe_calls": 100,
+      "old_save_state_calls": 100,
+      "proposed_check_fixed_calls": 100,
+      "proposed_free_probe_calls": 100,
+      "proposed_save_state_calls": 100,
+      "scenario": "free_increases_every_checkpoint",
+      "states_equal_after_every_checkpoint": true
+    }
+  ],
+  "schema": "ltx.client-ledger104.simulation.v1",
+  "scope": "Synthetic free-space traces and mocked persistence only. Counts are not wall-time/model-speed predictions.",
+  "source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-full-103/resolution/components/request_client.py",
+  "source_sha256": "4cd6c8b18cfce78367ea35f01ea67dffa7bbf4bb88abad38c4ac5df4b7c15c1d"
+}
