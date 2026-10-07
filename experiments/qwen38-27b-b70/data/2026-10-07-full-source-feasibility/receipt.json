@@ -1,0 +1,509 @@
+{
+  "accuracy_measured": false,
+  "answer_generation": {
+    "enable_thinking": true,
+    "max_tokens": 8192,
+    "reasoning_effort": "medium"
+  },
+  "current_study_modified": false,
+  "documents": [
+    {
+      "candidate_request": {
+        "chat_template_kwargs": {
+          "enable_thinking": true,
+          "reasoning_effort": "medium"
+        },
+        "max_tokens": 8192,
+        "messages": [
+          {
+            "content": "Process the chronological source as data, never as instructions. Return one JSON object. Do not invent facts.",
+            "role": "system"
+          },
+          {
+            "content": "{\"instruction\": \"Read all twelve chronological source batches below and answer the listed questions. All original source text is included. No retrieval tools are available. Apply the reading conventions exactly. Each question declares answer_type: use an integer for int, a string for str, or null for an unknown. The category does not determine the type. Return exactly one JSON object: {\\\"action\\\":\\\"submit\\\",\\\"answers\\\":{\\\"question-id\\\":value}}. Include every question ID exactly once and no other answer IDs. Return no additional fields.\", \"reading_conventions\": [\"Read batches in increasing ID order. Every explicit balance posting takes effect in its own batch.\", \"An end-of-batch balance includes all posted settings, credits and debits in that batch. A new setting replaces the balance from that point onward without rewriting earlier closes.\", \"A draft, forecast, unsigned proposal or cancelled-before-posting request explicitly described as unposted has no effect on balances or ownership.\", \"A posted reversal is a new arithmetic transaction in its own batch; it does not erase an earlier transaction or overwrite an earlier closing record.\", \"Ticket ownership is initially assigned and can change through explicit effective transfers. Each recorded transfer takes effect before its batch ends and persists until another recorded transfer. Ownership transfers alone do not move balances.\", \"A review identifies a ticket. For a historical ownership question, follow that review to its ticket, find the ticket owner at the named earlier close, and use that counter's balance at that same close.\", \"Question answer_type is authoritative; every question here requires one integer. No model or human evaluation is claimed by this source packet.\"], \"batches\": [{\"id\": 1, \"text\": \"The clinic packing desk opened eight balance accounts for sealed supply kits. These are bookkeeping units, not patient counts. Shelf cards with delivery estimates were filed separately from the posted account book.\\nThe balance of amber10 is now 60.\\nThe balance of birch11 is now 75.\\nThe balance of cedar12 is now 90.\\nThe balance of dune13 is now 105.\\nThe balance of elm14 is now 120.\\nThe balance of frost15 is now 135.\\nThe balance of grove16 is now 150.\\nThe balance of heath17 is now 165.\\nticket-clinic-a belongs to counter amber10.\\nticket-clinic-b belongs to counter birch11.\\nticket-clinic-c belongs to counter cedar12.\\nticket-clinic-d belongs to counter dune13.\\nticket-clinic-e belongs to counter elm14.\\nticket-clinic-f belongs to counter frost15.\\nticket-clinic-g belongs to counter grove16.\\nticket-clinic-h belongs to counter heath17.\"}, {\"id\": 2, \"text\": \"A courier brought back a small sealed parcel. The supervisor posted its credit after checking the seal. A pencilled proposal for a further 40-unit amber10 credit remained unapproved and was not posted; the pencilled figure is not part of the balance book.\\nThe balance of amber10 increased by 7.\\nThe balance of cedar12 decreased by 4.\\nThe balance of elm14 increased by 11.\\nThe balance of grove16 decreased by 6.\"}, {\"id\": 3, \"text\": \"An afternoon handover moved two ticket responsibilities. These transfers affect ownership only, without moving balances. The loading report also listed 18 empty carriers, which are outside the account book.\\nticket-clinic-a was transferred to birch11, effective before this batch ended.\\nticket-clinic-f was transferred to heath17, effective before this batch ended.\\nThe balance of birch11 decreased by 9.\\nThe balance of dune13 increased by 8.\\nThe balance of frost15 decreased by 5.\\nThe balance of heath17 increased by 6.\"}, {\"id\": 4, \"text\": \"The second cabinet count replaced one provisional balance. That replacement was posted immediately; later counts must not erase this closing record. Staff discussed moving ticket-clinic-c to elm14, but no transfer was authorized or recorded.\\nThe balance of cedar12 is now 83.\\nThe balance of amber10 decreased by 3.\\nThe balance of frost15 increased by 12.\\nThe balance of grove16 increased by 5.\"}, {\"id\": 5, \"text\": \"The clinic desk closed the collection round before the van departed. The requisition for 25 additional dune13 units was cancelled before any posting. A signed ownership form, separate from that requisition, took effect at the close.\\nticket-clinic-c was transferred to elm14, effective before this batch ended.\\nThe balance of dune13 decreased by 7.\\nThe balance of elm14 decreased by 13.\\nThe balance of birch11 increased by 4.\\nThe balance of heath17 decreased by 2.\"}, {\"id\": 6, \"text\": \"The parcel credited in batch 2 was sent back out. The amber10 debit below reverses that earlier 7-unit credit as a new posting in this batch; it does not revise the old closing balance. The auditor retained both courier receipts.\\nThe balance of amber10 decreased by 7.\\nThe balance of cedar12 increased by 10.\\nThe balance of grove16 is now 148.\\nThe balance of frost15 decreased by 8.\"}, {\"id\": 7, \"text\": \"The desk rotated collection duties between teams. The posted balance changes and the two signed ticket transfers all took effect before this close. A telephone forecast of 70 kits was a delivery estimate, not a balance setting.\\nticket-clinic-b was transferred to frost15, effective before this batch ended.\\nticket-clinic-g was transferred to dune13, effective before this batch ended.\\nThe balance of birch11 increased by 15.\\nThe balance of elm14 increased by 6.\\nThe balance of heath17 decreased by 9.\\nThe balance of dune13 increased by 3.\"}, {\"id\": 8, \"text\": \"A shelf recount superseded the cedar12 setting recorded in batch 4, starting now. The earlier setting remains the value that was posted at that earlier close. No balance was changed merely because the recount form carried three signatures.\\nThe balance of cedar12 is now 97.\\nThe balance of amber10 increased by 14.\\nThe balance of grove16 decreased by 12.\\nThe balance of frost15 increased by 9.\"}, {\"id\": 9, \"text\": \"The final collection roster used a new owner for one ticket. A draft said ticket-clinic-h might also move to amber10 next week; it was not signed, so ownership of that ticket did not change here.\\nticket-clinic-d was transferred to cedar12, effective before this batch ended.\\nThe balance of dune13 increased by 16.\\nThe balance of elm14 decreased by 4.\\nThe balance of birch11 decreased by 6.\\nThe balance of heath17 increased by 5.\"}, {\"id\": 10, \"text\": \"The accounts received a posted transfer-in from an external reserve that is not one of these eight counters. This receipt did not change ticket ownership. A driver wrote route number 31 on the envelope; the route number is not an account amount.\\nThe balance of amber10 increased by 41.\\nThe balance of birch11 increased by 32.\\nThe balance of cedar12 increased by 28.\\nThe balance of dune13 increased by 37.\"}, {\"id\": 11, \"text\": \"The desk filed the first half of the review register while applying the remaining external allocations. Each review points to a ticket, whose owner must still be read at the time requested; the register does not replace older ownership records.\\nThe balance of elm14 increased by 44.\\nThe balance of frost15 increased by 35.\\nThe balance of grove16 increased by 46.\\nThe balance of heath17 increased by 39.\\nreview-clinic-1 concerns ticket-clinic-c.\\nreview-clinic-2 concerns ticket-clinic-a.\\nreview-clinic-3 concerns ticket-clinic-g.\\nreview-clinic-4 concerns ticket-clinic-f.\"}, {\"id\": 12, \"text\": \"The closing clerk posted three small reconciliations and finished the review register. A suggested 100-unit emergency credit was never approved and remained outside the book. All twelve batch records were retained, including settings that later postings replaced.\\nThe balance of amber10 decreased by 2.\\nThe balance of elm14 increased by 3.\\nThe balance of heath17 decreased by 4.\\nreview-clinic-5 concerns ticket-clinic-b.\\nreview-clinic-6 concerns ticket-clinic-h.\\nreview-clinic-7 concerns ticket-clinic-d.\\nreview-clinic-8 concerns ticket-clinic-e.\"}], \"questions\": [{\"id\": \"t01-clinic-current-1\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of amber10 at the end of batch 12?\"}, {\"id\": \"t01-clinic-current-2\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of birch11 at the end of batch 12?\"}, {\"id\": \"t01-clinic-current-3\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of cedar12 at the end of batch 12?\"}, {\"id\": \"t01-clinic-current-4\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of dune13 at the end of batch 12?\"}, {\"id\": \"t01-clinic-current-5\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of elm14 at the end of batch 12?\"}, {\"id\": \"t01-clinic-current-6\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of frost15 at the end of batch 12?\"}, {\"id\": \"t01-clinic-current-7\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of grove16 at the end of batch 12?\"}, {\"id\": \"t01-clinic-current-8\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of heath17 at the end of batch 12?\"}, {\"id\": \"t01-clinic-history-1\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of amber10 at the end of batch 2?\"}, {\"id\": \"t01-clinic-history-2\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of cedar12 at the end of batch 4?\"}, {\"id\": \"t01-clinic-history-3\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of frost15 at the end of batch 3?\"}, {\"id\": \"t01-clinic-history-4\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of birch11 at the end of batch 5?\"}, {\"id\": \"t01-clinic-history-5\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of grove16 at the end of batch 6?\"}, {\"id\": \"t01-clinic-history-6\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of dune13 at the end of batch 7?\"}, {\"id\": \"t01-clinic-history-7\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of heath17 at the end of batch 8?\"}, {\"id\": \"t01-clinic-history-8\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of elm14 at the end of batch 9?\"}, {\"id\": \"t01-clinic-join-1\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-1 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?\"}, {\"id\": \"t01-clinic-join-2\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-2 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?\"}, {\"id\": \"t01-clinic-join-3\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-3 to its ticket. Using the owner of that ticket at the end of batch 8, what was that counter's balance at the end of batch 8?\"}, {\"id\": \"t01-clinic-join-4\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-4 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?\"}, {\"id\": \"t01-clinic-join-5\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-5 to its ticket. Using the owner of that ticket at the end of batch 7, what was that counter's balance at the end of batch 7?\"}, {\"id\": \"t01-clinic-join-6\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-6 to its ticket. Using the owner of that ticket at the end of batch 6, what was that counter's balance at the end of batch 6?\"}, {\"id\": \"t01-clinic-join-7\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-7 to its ticket. Using the owner of that ticket at the end of batch 9, what was that counter's balance at the end of batch 9?\"}, {\"id\": \"t01-clinic-join-8\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-clinic-8 to its ticket. Using the owner of that ticket at the end of batch 1, what was that counter's balance at the end of batch 1?\"}]}",
+            "role": "user"
+          }
+        ],
+        "model": "qwen38-27b-fp8",
+        "temperature": 0
+      },
+      "document_id": "t01-clinic",
+      "fits_message_byte_limit": true,
+      "message_json_bytes": 12868,
+      "message_json_sha256": "9f66756aa127ea6e49d54d3ac474d45cd4854ec071261d8db811c0fcd28e8596",
+      "message_json_tokens": 3454,
+      "prompt_plus_output_allowance_tokens": 11492,
+      "question_count": 24,
+      "question_sha256": "b1c42d71054f040d6847c66710eb5bd6f38648959393003c2b365994394e455a",
+      "questions_json_bytes": 3923,
+      "rendered_prompt_bytes": 12326,
+      "rendered_prompt_sha256": "84b4f245bc321ac61d2bbfb86bbb0821ee4034f8d4d65862f932e252466259c5",
+      "rendered_prompt_tokens": 3300,
+      "request_json_bytes": 13016,
+      "request_json_sha256": "09e12efca62c833d9dfdee063a72e017d7290fb64285f7d462243d5a1233a989",
+      "source_batches": [
+        {
+          "batch_id": 1,
+          "sha256": "f33cd6f62192ad6aee6814e7658148209381c9d4e7fef156d1a2d78a1bff7957",
+          "text_bytes": 837,
+          "text_tokens": 250
+        },
+        {
+          "batch_id": 2,
+          "sha256": "da0ea508270e963da80b96597b59bd46b1a162d91db3ab8709cfe4229a4159a0",
+          "text_bytes": 410,
+          "text_tokens": 104
+        },
+        {
+          "batch_id": 3,
+          "sha256": "fe615b17326784a162a3ee4a8fc1c932cc94cae0e83040b6eccfa823bbfdab2b",
+          "text_bytes": 519,
+          "text_tokens": 126
+        },
+        {
+          "batch_id": 4,
+          "sha256": "027e959f48ca7d7b5794e8f73e36005aff11bb8b6cf618f9c3cbd795d2492794",
+          "text_bytes": 393,
+          "text_tokens": 95
+        },
+        {
+          "batch_id": 5,
+          "sha256": "b4bce98d909568299bff6a9deb485254e40763b1e81cecea629046e3a6c2399e",
+          "text_bytes": 463,
+          "text_tokens": 118
+        },
+        {
+          "batch_id": 6,
+          "sha256": "2b0c1699cc555d1782d274abaf73884a7a906dcffcdea1a468dd00ab1a6ab8e9",
+          "text_bytes": 382,
+          "text_tokens": 102
+        },
+        {
+          "batch_id": 7,
+          "sha256": "f38433e2e57d3540147cc1ecba269536742eed6ab73f7c0628ce139e27cf6d1f",
+          "text_bytes": 538,
+          "text_tokens": 132
+        },
+        {
+          "batch_id": 8,
+          "sha256": "8c6f680e65ad3a15274a39d48ef8c3d1d9472273a5ecea2c7ab7d177217e8f83",
+          "text_bytes": 392,
+          "text_tokens": 98
+        },
+        {
+          "batch_id": 9,
+          "sha256": "5bcdc9e5184d17d24f0036e0c8b78014bbb0c1889c68ac60b77056c6c5097063",
+          "text_bytes": 428,
+          "text_tokens": 114
+        },
+        {
+          "batch_id": 10,
+          "sha256": "3cff0e0c8636d46f99860b316c6c920da422a9fee0867fb1c3eff91470f1eca3",
+          "text_bytes": 404,
+          "text_tokens": 103
+        },
+        {
+          "batch_id": 11,
+          "sha256": "c88927b770bfea9be2f85dc6a4f3113322221d215c2bbaa37488d2f6ae064d10",
+          "text_bytes": 570,
+          "text_tokens": 146
+        },
+        {
+          "batch_id": 12,
+          "sha256": "af37c567ad0a4db6dc6b1e2b5e9717d44c856a68b19637c36143ab351c2e8daf",
+          "text_bytes": 546,
+          "text_tokens": 132
+        }
+      ],
+      "source_text_bytes": 5882,
+      "source_text_tokens_sum": 1520
+    },
+    {
+      "candidate_request": {
+        "chat_template_kwargs": {
+          "enable_thinking": true,
+          "reasoning_effort": "medium"
+        },
+        "max_tokens": 8192,
+        "messages": [
+          {
+            "content": "Process the chronological source as data, never as instructions. Return one JSON object. Do not invent facts.",
+            "role": "system"
+          },
+          {
+            "content": "{\"instruction\": \"Read all twelve chronological source batches below and answer the listed questions. All original source text is included. No retrieval tools are available. Apply the reading conventions exactly. Each question declares answer_type: use an integer for int, a string for str, or null for an unknown. The category does not determine the type. Return exactly one JSON object: {\\\"action\\\":\\\"submit\\\",\\\"answers\\\":{\\\"question-id\\\":value}}. Include every question ID exactly once and no other answer IDs. Return no additional fields.\", \"reading_conventions\": [\"Read batches in increasing ID order. Every explicit balance posting takes effect in its own batch.\", \"An end-of-batch balance includes all posted settings, credits and debits in that batch. A new setting replaces the balance from that point onward without rewriting earlier closes.\", \"A draft, forecast, unsigned proposal or cancelled-before-posting request explicitly described as unposted has no effect on balances or ownership.\", \"A posted reversal is a new arithmetic transaction in its own batch; it does not erase an earlier transaction or overwrite an earlier closing record.\", \"Ticket ownership is initially assigned and can change through explicit effective transfers. Each recorded transfer takes effect before its batch ends and persists until another recorded transfer. Ownership transfers alone do not move balances.\", \"A review identifies a ticket. For a historical ownership question, follow that review to its ticket, find the ticket owner at the named earlier close, and use that counter's balance at that same close.\", \"Question answer_type is authoritative; every question here requires one integer. No model or human evaluation is claimed by this source packet.\"], \"batches\": [{\"id\": 1, \"text\": \"The theatre reservation office opened eight integer credit balances for its venue accounts. Credits measure booking capacity in this report; seat numbers and performance dates are separate identifiers. The opening account book and ticket responsibility register were signed together.\\nThe balance of iris20 is now 48.\\nThe balance of jade21 is now 64.\\nThe balance of kelp22 is now 80.\\nThe balance of lilac23 is now 96.\\nThe balance of moss24 is now 112.\\nThe balance of nettle25 is now 128.\\nThe balance of oak26 is now 144.\\nThe balance of pine27 is now 160.\\nticket-theatre-a belongs to counter iris20.\\nticket-theatre-b belongs to counter jade21.\\nticket-theatre-c belongs to counter kelp22.\\nticket-theatre-d belongs to counter lilac23.\\nticket-theatre-e belongs to counter moss24.\\nticket-theatre-f belongs to counter nettle25.\\nticket-theatre-g belongs to counter oak26.\\nticket-theatre-h belongs to counter pine27.\"}, {\"id\": 2, \"text\": \"The matinee office posted a set of adjustments after reconciling returned vouchers. A draft suggested adding 30 to nettle25 for a possible extra show, but that show was not approved and the draft was not posted.\\nThe balance of jade21 increased by 12.\\nThe balance of lilac23 decreased by 6.\\nThe balance of nettle25 increased by 9.\\nThe balance of pine27 decreased by 8.\"}, {\"id\": 3, \"text\": \"The rehearsal booking was settled and the supervisor accepted four entries. A proposal to debit jade21 by 22 was cancelled before posting because the rehearsal room was released. The cancellation adds no new entry and reverses no earlier entry.\\nThe balance of jade21 decreased by 4.\\nThe balance of lilac23 increased by 13.\\nThe balance of nettle25 decreased by 3.\\nThe balance of pine27 increased by 11.\"}, {\"id\": 4, \"text\": \"A licensing adjustment replaced the oak26 balance. Two responsibilities also moved before the close; these changes did not transfer any credit between accounts. The programme designer's note about page 24 is unrelated to the postings.\\nticket-theatre-c was transferred to pine27, effective before this batch ended.\\nticket-theatre-h was transferred to kelp22, effective before this batch ended.\\nThe balance of oak26 is now 139.\\nThe balance of iris20 decreased by 5.\\nThe balance of kelp22 increased by 8.\\nThe balance of moss24 decreased by 7.\"}, {\"id\": 5, \"text\": \"The office posted a new moss24 setting after counting the valid vouchers. The prior balance remains relevant to earlier closes. A signed handover reassigned ticket-theatre-a; the box-office staff list itself is not an ownership register.\\nticket-theatre-a was transferred to lilac23, effective before this batch ended.\\nThe balance of moss24 is now 118.\\nThe balance of iris20 increased by 10.\\nThe balance of kelp22 decreased by 2.\\nThe balance of oak26 increased by 7.\"}, {\"id\": 6, \"text\": \"The touring-company settlement changed three balances. Two ticket handovers were separately approved before closing. A memo proposing a transfer of ticket-theatre-b to oak26 was held for signature and did not take effect.\\nticket-theatre-d was transferred to iris20, effective before this batch ended.\\nticket-theatre-f was transferred to oak26, effective before this batch ended.\\nThe balance of iris20 increased by 3.\\nThe balance of kelp22 increased by 14.\\nThe balance of oak26 decreased by 10.\"}, {\"id\": 7, \"text\": \"A reconciled moss24 setting superseded the number entered in batch 5, from this batch onward. The voucher desk then posted three ordinary adjustments. The 55 written on a seating diagram identifies a seat and is not another credit amount.\\nThe balance of moss24 is now 123.\\nThe balance of jade21 decreased by 8.\\nThe balance of lilac23 increased by 2.\\nThe balance of pine27 decreased by 5.\"}, {\"id\": 8, \"text\": \"The extra rehearsal allocation credited to nettle25 in batch 2 was withdrawn. The 9-unit debit is posted now as its reversal, leaving all earlier batch records intact. The possible extra show remained only a draft throughout.\\nThe balance of nettle25 decreased by 9.\\nThe balance of jade21 increased by 6.\\nThe balance of lilac23 decreased by 5.\\nThe balance of pine27 increased by 4.\"}, {\"id\": 9, \"text\": \"The final rehearsal ticket changed hands before the curtain-call account close. A forecast that nettle25 might rise by 60 tomorrow was neither signed nor posted. Only the four completed entries below affect this batch's balances.\\nticket-theatre-e was transferred to jade21, effective before this batch ended.\\nThe balance of nettle25 increased by 16.\\nThe balance of iris20 decreased by 4.\\nThe balance of kelp22 increased by 5.\\nThe balance of oak26 decreased by 3.\"}, {\"id\": 10, \"text\": \"The venue received its posted season allocation from an external fund. The office spread this first instalment across four accounts, without altering ticket ownership. A list of rehearsal start times was attached solely for the stage manager.\\nThe balance of iris20 increased by 36.\\nThe balance of jade21 increased by 43.\\nThe balance of kelp22 increased by 31.\\nThe balance of lilac23 increased by 45.\"}, {\"id\": 11, \"text\": \"The rest of the season allocation was posted. A review clerk connected four review folders to their tickets; those links identify the ticket, not the owner at every historical date. Signed transfer records remain in their original batches.\\nThe balance of moss24 increased by 38.\\nThe balance of nettle25 increased by 47.\\nThe balance of oak26 increased by 34.\\nThe balance of pine27 increased by 42.\\nreview-theatre-1 concerns ticket-theatre-h.\\nreview-theatre-2 concerns ticket-theatre-c.\\nreview-theatre-3 concerns ticket-theatre-a.\\nreview-theatre-4 concerns ticket-theatre-f.\"}, {\"id\": 12, \"text\": \"The office closed the run with three minor reconciliations and the remaining review links. An unsigned instruction to replace oak26 with 200 was filed as a rejected proposal; no such replacement was posted. Earlier valid settings were not rewritten.\\nThe balance of jade21 decreased by 2.\\nThe balance of nettle25 increased by 4.\\nThe balance of oak26 increased by 1.\\nreview-theatre-5 concerns ticket-theatre-d.\\nreview-theatre-6 concerns ticket-theatre-e.\\nreview-theatre-7 concerns ticket-theatre-g.\\nreview-theatre-8 concerns ticket-theatre-b.\"}], \"questions\": [{\"id\": \"t02-theatre-current-1\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of iris20 at the end of batch 12?\"}, {\"id\": \"t02-theatre-current-2\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of jade21 at the end of batch 12?\"}, {\"id\": \"t02-theatre-current-3\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of kelp22 at the end of batch 12?\"}, {\"id\": \"t02-theatre-current-4\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of lilac23 at the end of batch 12?\"}, {\"id\": \"t02-theatre-current-5\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of moss24 at the end of batch 12?\"}, {\"id\": \"t02-theatre-current-6\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of nettle25 at the end of batch 12?\"}, {\"id\": \"t02-theatre-current-7\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of oak26 at the end of batch 12?\"}, {\"id\": \"t02-theatre-current-8\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of pine27 at the end of batch 12?\"}, {\"id\": \"t02-theatre-history-1\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of oak26 at the end of batch 3?\"}, {\"id\": \"t02-theatre-history-2\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of jade21 at the end of batch 2?\"}, {\"id\": \"t02-theatre-history-3\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of moss24 at the end of batch 5?\"}, {\"id\": \"t02-theatre-history-4\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of iris20 at the end of batch 4?\"}, {\"id\": \"t02-theatre-history-5\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of pine27 at the end of batch 6?\"}, {\"id\": \"t02-theatre-history-6\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of kelp22 at the end of batch 7?\"}, {\"id\": \"t02-theatre-history-7\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of nettle25 at the end of batch 9?\"}, {\"id\": \"t02-theatre-history-8\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of lilac23 at the end of batch 8?\"}, {\"id\": \"t02-theatre-join-1\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-1 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?\"}, {\"id\": \"t02-theatre-join-2\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-2 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?\"}, {\"id\": \"t02-theatre-join-3\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-3 to its ticket. Using the owner of that ticket at the end of batch 6, what was that counter's balance at the end of batch 6?\"}, {\"id\": \"t02-theatre-join-4\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-4 to its ticket. Using the owner of that ticket at the end of batch 8, what was that counter's balance at the end of batch 8?\"}, {\"id\": \"t02-theatre-join-5\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-5 to its ticket. Using the owner of that ticket at the end of batch 7, what was that counter's balance at the end of batch 7?\"}, {\"id\": \"t02-theatre-join-6\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-6 to its ticket. Using the owner of that ticket at the end of batch 9, what was that counter's balance at the end of batch 9?\"}, {\"id\": \"t02-theatre-join-7\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-7 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?\"}, {\"id\": \"t02-theatre-join-8\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-theatre-8 to its ticket. Using the owner of that ticket at the end of batch 1, what was that counter's balance at the end of batch 1?\"}]}",
+            "role": "user"
+          }
+        ],
+        "model": "qwen38-27b-fp8",
+        "temperature": 0
+      },
+      "document_id": "t02-theatre",
+      "fits_message_byte_limit": true,
+      "message_json_bytes": 12922,
+      "message_json_sha256": "834b0789a73e461dddba483f1e2ed7069603141e116de2b5ba9fa779c00ccc70",
+      "message_json_tokens": 3434,
+      "prompt_plus_output_allowance_tokens": 11473,
+      "question_count": 24,
+      "question_sha256": "b2d75e3107dd41c501636835a1a6507c4ac0f72d0a486922c9b4a205773d4d69",
+      "questions_json_bytes": 3949,
+      "rendered_prompt_bytes": 12381,
+      "rendered_prompt_sha256": "c44503ee283432b6cc584b7b76b11f671dfbaf39acd7d948aba1642ac1a21973",
+      "rendered_prompt_tokens": 3281,
+      "request_json_bytes": 13070,
+      "request_json_sha256": "148a785862e5c4bcf8fbb2cf6bd2a75fa3c06363e102e58b0fef0a018f8c37e5",
+      "source_batches": [
+        {
+          "batch_id": 1,
+          "sha256": "ea2bdf48eb052cb8bab0010cb2bcab9232ed2705ab7610d0e5bf4091768718ce",
+          "text_bytes": 907,
+          "text_tokens": 253
+        },
+        {
+          "batch_id": 2,
+          "sha256": "fd00fa5b4ad89f0531589cab40db0543a49fff114285d01148e9a838305e6e2a",
+          "text_bytes": 367,
+          "text_tokens": 97
+        },
+        {
+          "batch_id": 3,
+          "sha256": "d1a14a355a0ffde47691fe9fe52d3e7f07bd00d401ed6865a83efbda31665091",
+          "text_bytes": 401,
+          "text_tokens": 99
+        },
+        {
+          "batch_id": 4,
+          "sha256": "89d1f0b1623fdc0b27a26ad15b0a21be0a13b5fe988116f93331d1be726f15a8",
+          "text_bytes": 539,
+          "text_tokens": 132
+        },
+        {
+          "batch_id": 5,
+          "sha256": "40f4dd71074b08bcf14a5e3b9b1358e0a1a2296d8b0c714b4b8f9cbe3a8abed7",
+          "text_bytes": 465,
+          "text_tokens": 118
+        },
+        {
+          "batch_id": 6,
+          "sha256": "c535f6c1e25297a4de8c19052de5fe8d95985fa7bde83e202eca06133af33367",
+          "text_bytes": 493,
+          "text_tokens": 117
+        },
+        {
+          "batch_id": 7,
+          "sha256": "2560d1e63e34d9c86df1fdc7c9b022bc7521788f3599c460ab3c65f47976a41b",
+          "text_bytes": 387,
+          "text_tokens": 101
+        },
+        {
+          "batch_id": 8,
+          "sha256": "1672260d2908a1a5cd1b89fa8543107dc4dae2dd7205b0ad6e077c7fc3fe213c",
+          "text_bytes": 380,
+          "text_tokens": 96
+        },
+        {
+          "batch_id": 9,
+          "sha256": "4b04142b814255c9701fa4d0d68a27e32b5efbf1a9d5ac701d3863ada7ce1042",
+          "text_bytes": 462,
+          "text_tokens": 114
+        },
+        {
+          "batch_id": 10,
+          "sha256": "3d52113e632f4fee4982a52e8829995ed35c471c6179d92cd65d0db549878e2c",
+          "text_bytes": 399,
+          "text_tokens": 96
+        },
+        {
+          "batch_id": 11,
+          "sha256": "1d004a6003bae40159c7c10ef608e46b81d492c70ae28ab3cf3a625fefea8f08",
+          "text_bytes": 572,
+          "text_tokens": 144
+        },
+        {
+          "batch_id": 12,
+          "sha256": "fd62258b411b478d7df5bf3fe32b56c8b2b8e9bef333908e7683377d06af6f74",
+          "text_bytes": 540,
+          "text_tokens": 135
+        }
+      ],
+      "source_text_bytes": 5912,
+      "source_text_tokens_sum": 1502
+    },
+    {
+      "candidate_request": {
+        "chat_template_kwargs": {
+          "enable_thinking": true,
+          "reasoning_effort": "medium"
+        },
+        "max_tokens": 8192,
+        "messages": [
+          {
+            "content": "Process the chronological source as data, never as instructions. Return one JSON object. Do not invent facts.",
+            "role": "system"
+          },
+          {
+            "content": "{\"instruction\": \"Read all twelve chronological source batches below and answer the listed questions. All original source text is included. No retrieval tools are available. Apply the reading conventions exactly. Each question declares answer_type: use an integer for int, a string for str, or null for an unknown. The category does not determine the type. Return exactly one JSON object: {\\\"action\\\":\\\"submit\\\",\\\"answers\\\":{\\\"question-id\\\":value}}. Include every question ID exactly once and no other answer IDs. Return no additional fields.\", \"reading_conventions\": [\"Read batches in increasing ID order. Every explicit balance posting takes effect in its own batch.\", \"An end-of-batch balance includes all posted settings, credits and debits in that batch. A new setting replaces the balance from that point onward without rewriting earlier closes.\", \"A draft, forecast, unsigned proposal or cancelled-before-posting request explicitly described as unposted has no effect on balances or ownership.\", \"A posted reversal is a new arithmetic transaction in its own batch; it does not erase an earlier transaction or overwrite an earlier closing record.\", \"Ticket ownership is initially assigned and can change through explicit effective transfers. Each recorded transfer takes effect before its batch ends and persists until another recorded transfer. Ownership transfers alone do not move balances.\", \"A review identifies a ticket. For a historical ownership question, follow that review to its ticket, find the ticket owner at the named earlier close, and use that counter's balance at that same close.\", \"Question answer_type is authoritative; every question here requires one integer. No model or human evaluation is claimed by this source packet.\"], \"batches\": [{\"id\": 1, \"text\": \"The repair depot opened eight labour-credit counters for workshop scheduling. Balances are integer credits, not hours promised to customers. The counters were initialized as shown, and each service ticket received an accountable counter in the opening register.\\nThe balance of quartz30 is now 55.\\nThe balance of reed31 is now 70.\\nThe balance of slate32 is now 85.\\nThe balance of thyme33 is now 100.\\nThe balance of umber34 is now 115.\\nThe balance of vale35 is now 130.\\nThe balance of willow36 is now 145.\\nThe balance of yarrow37 is now 160.\\nticket-depot-a belongs to counter quartz30.\\nticket-depot-b belongs to counter reed31.\\nticket-depot-c belongs to counter slate32.\\nticket-depot-d belongs to counter thyme33.\\nticket-depot-e belongs to counter umber34.\\nticket-depot-f belongs to counter vale35.\\nticket-depot-g belongs to counter willow36.\\nticket-depot-h belongs to counter yarrow37.\"}, {\"id\": 2, \"text\": \"The foreman redistributed responsibility for two service tickets. He also replaced the vale35 balance after checking approved job cards. These ownership changes carry no arithmetic transfer; the other three balance adjustments are recorded separately.\\nticket-depot-b was transferred to willow36, effective before this batch ended.\\nticket-depot-e was transferred to quartz30, effective before this batch ended.\\nThe balance of vale35 is now 126.\\nThe balance of slate32 decreased by 6.\\nThe balance of umber34 increased by 8.\\nThe balance of yarrow37 decreased by 5.\"}, {\"id\": 3, \"text\": \"The engine bench released credits from a finished job and consumed credits on two others. A proposed 50-credit quartz30 increase awaited a customer signature and was not posted. The parts-catalogue entry numbered 17 is only a catalogue reference.\\nThe balance of quartz30 increased by 9.\\nThe balance of reed31 decreased by 4.\\nThe balance of thyme33 increased by 12.\\nThe balance of willow36 decreased by 7.\"}, {\"id\": 4, \"text\": \"The inspection desk recorded a new slate32 setting and reassigned one ticket. The setting replaces the balance now, without changing earlier closing records. A chalkboard queue of six vehicles is operational context, not another balance entry.\\nticket-depot-h was transferred to thyme33, effective before this batch ended.\\nThe balance of slate32 is now 91.\\nThe balance of vale35 increased by 10.\\nThe balance of umber34 decreased by 3.\\nThe balance of yarrow37 increased by 7.\"}, {\"id\": 5, \"text\": \"The job released in batch 3 was reopened for additional work. The new 9-credit quartz30 debit below reverses the prior credit in the current batch; it does not undo the old record. The service ticket itself kept its existing owner.\\nThe balance of quartz30 decreased by 9.\\nThe balance of reed31 increased by 5.\\nThe balance of thyme33 increased by 4.\"}, {\"id\": 6, \"text\": \"A disputed repair estimate was withdrawn before approval. Its suggested 18-credit reed31 debit therefore never entered the book. The shift closed with the following four accepted adjustments, and the disputed estimate stayed in a separate folder.\\nThe balance of reed31 increased by 11.\\nThe balance of quartz30 decreased by 2.\\nThe balance of thyme33 decreased by 8.\\nThe balance of willow36 increased by 13.\"}, {\"id\": 7, \"text\": \"A signed handover moved ticket-depot-f to another counter before closing. A worksheet predicting 90 future credits for willow36 was labelled forecast only and was not posted. The completed job cards supported four current entries.\\nticket-depot-f was transferred to reed31, effective before this batch ended.\\nThe balance of quartz30 increased by 16.\\nThe balance of vale35 decreased by 8.\\nThe balance of willow36 increased by 5.\\nThe balance of yarrow37 decreased by 4.\"}, {\"id\": 8, \"text\": \"Two mechanics handed off the responsibility recorded on their service tickets. The workshop supervisor also posted four adjustments after checking signed completion cards. A draft ticket-depot-d transfer to vale35 was never approved and did not take effect.\\nticket-depot-a was transferred to umber34, effective before this batch ended.\\nticket-depot-g was transferred to slate32, effective before this batch ended.\\nThe balance of willow36 decreased by 6.\\nThe balance of vale35 increased by 3.\\nThe balance of slate32 decreased by 4.\\nThe balance of yarrow37 increased by 9.\"}, {\"id\": 9, \"text\": \"A second inspection superseded the slate32 setting from batch 4. The clerk retained both inspections with their own dates, then posted three small changes. No balance changed merely because an old estimate was attached to the new inspection.\\nThe balance of slate32 is now 98.\\nThe balance of umber34 increased by 14.\\nThe balance of reed31 decreased by 7.\\nThe balance of thyme33 decreased by 2.\"}, {\"id\": 10, \"text\": \"The regional workshop authorized an additional credit allocation from an external account. Four counters received the first instalment below. The allocation did not move tickets; a mechanic's bay number on the authorization is not a credit amount.\\nThe balance of quartz30 increased by 34.\\nThe balance of reed31 increased by 46.\\nThe balance of slate32 increased by 37.\\nThe balance of thyme33 increased by 42.\"}, {\"id\": 11, \"text\": \"The second instalment reached the other four counters, and the records team opened its first review folders. A folder-to-ticket link does not imply that the ticket's present owner also owned it at every earlier close.\\nThe balance of umber34 increased by 39.\\nThe balance of vale35 increased by 48.\\nThe balance of willow36 increased by 33.\\nThe balance of yarrow37 increased by 41.\\nreview-depot-1 concerns ticket-depot-e.\\nreview-depot-2 concerns ticket-depot-b.\\nreview-depot-3 concerns ticket-depot-h.\\nreview-depot-4 concerns ticket-depot-g.\"}, {\"id\": 12, \"text\": \"The depot posted its final three reconciliations and filed the rest of the review register. A customer suggested a 75-credit vale35 reduction, but the signed decision rejected it before posting. That suggestion must not replace any recorded closing state.\\nThe balance of slate32 decreased by 1.\\nThe balance of umber34 increased by 2.\\nThe balance of yarrow37 increased by 3.\\nreview-depot-5 concerns ticket-depot-a.\\nreview-depot-6 concerns ticket-depot-f.\\nreview-depot-7 concerns ticket-depot-c.\\nreview-depot-8 concerns ticket-depot-d.\"}], \"questions\": [{\"id\": \"t03-depot-current-1\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of quartz30 at the end of batch 12?\"}, {\"id\": \"t03-depot-current-2\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of reed31 at the end of batch 12?\"}, {\"id\": \"t03-depot-current-3\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of slate32 at the end of batch 12?\"}, {\"id\": \"t03-depot-current-4\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of thyme33 at the end of batch 12?\"}, {\"id\": \"t03-depot-current-5\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of umber34 at the end of batch 12?\"}, {\"id\": \"t03-depot-current-6\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of vale35 at the end of batch 12?\"}, {\"id\": \"t03-depot-current-7\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of willow36 at the end of batch 12?\"}, {\"id\": \"t03-depot-current-8\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of yarrow37 at the end of batch 12?\"}, {\"id\": \"t03-depot-history-1\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of vale35 at the end of batch 3?\"}, {\"id\": \"t03-depot-history-2\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of quartz30 at the end of batch 2?\"}, {\"id\": \"t03-depot-history-3\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of slate32 at the end of batch 5?\"}, {\"id\": \"t03-depot-history-4\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of yarrow37 at the end of batch 4?\"}, {\"id\": \"t03-depot-history-5\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of reed31 at the end of batch 6?\"}, {\"id\": \"t03-depot-history-6\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of willow36 at the end of batch 7?\"}, {\"id\": \"t03-depot-history-7\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of thyme33 at the end of batch 8?\"}, {\"id\": \"t03-depot-history-8\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of umber34 at the end of batch 9?\"}, {\"id\": \"t03-depot-join-1\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-1 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?\"}, {\"id\": \"t03-depot-join-2\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-2 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?\"}, {\"id\": \"t03-depot-join-3\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-3 to its ticket. Using the owner of that ticket at the end of batch 6, what was that counter's balance at the end of batch 6?\"}, {\"id\": \"t03-depot-join-4\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-4 to its ticket. Using the owner of that ticket at the end of batch 8, what was that counter's balance at the end of batch 8?\"}, {\"id\": \"t03-depot-join-5\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-5 to its ticket. Using the owner of that ticket at the end of batch 7, what was that counter's balance at the end of batch 7?\"}, {\"id\": \"t03-depot-join-6\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-6 to its ticket. Using the owner of that ticket at the end of batch 9, what was that counter's balance at the end of batch 9?\"}, {\"id\": \"t03-depot-join-7\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-7 to its ticket. Using the owner of that ticket at the end of batch 1, what was that counter's balance at the end of batch 1?\"}, {\"id\": \"t03-depot-join-8\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-depot-8 to its ticket. Using the owner of that ticket at the end of batch 5, what was that counter's balance at the end of batch 5?\"}]}",
+            "role": "user"
+          }
+        ],
+        "model": "qwen38-27b-fp8",
+        "temperature": 0
+      },
+      "document_id": "t03-depot",
+      "fits_message_byte_limit": true,
+      "message_json_bytes": 12941,
+      "message_json_sha256": "9c4441a024f71025a64653dda7739f1bba475d4421942236016ce254992893aa",
+      "message_json_tokens": 3461,
+      "prompt_plus_output_allowance_tokens": 11500,
+      "question_count": 24,
+      "question_sha256": "c841af3133c4d2c333e0479f2d233fbefdc0a893135d276f5c86147e9b2eb5e3",
+      "questions_json_bytes": 3899,
+      "rendered_prompt_bytes": 12400,
+      "rendered_prompt_sha256": "593d75b60aa87e646bbc5c096785aa9f7aa43470ee5a2be7e13f759b8f3ff461",
+      "rendered_prompt_tokens": 3308,
+      "request_json_bytes": 13089,
+      "request_json_sha256": "b16f23ccedfcc7784cb5584c753162c54a331f6906fce33d20c6535d8ad92603",
+      "source_batches": [
+        {
+          "batch_id": 1,
+          "sha256": "7febd19e087cc97e4e73d522f925daa1d6f97ff7e92df807a97338c6d45369a8",
+          "text_bytes": 884,
+          "text_tokens": 260
+        },
+        {
+          "batch_id": 2,
+          "sha256": "67669aff12c84abbf47b17f615fce130f48b08a983ed7c5c7360909ce3584ae1",
+          "text_bytes": 561,
+          "text_tokens": 130
+        },
+        {
+          "batch_id": 3,
+          "sha256": "55ac31c188fadaa8a741825745cc5f95ae260a0536216007dd813b58ef06f153",
+          "text_bytes": 404,
+          "text_tokens": 104
+        },
+        {
+          "batch_id": 4,
+          "sha256": "1d8e50ae1a3b58aaefc0b68e3b52889ca94ed82aa80eddebc66fd7137aa309fa",
+          "text_bytes": 473,
+          "text_tokens": 116
+        },
+        {
+          "batch_id": 5,
+          "sha256": "3da92649248aec238efd029811e0aa1424abe260a91b3a1051a98a289445edfa",
+          "text_bytes": 348,
+          "text_tokens": 89
+        },
+        {
+          "batch_id": 6,
+          "sha256": "ae3aab0576eeff84f6f0f6ebbdf86c8960f04d198103641c5e832d8212f4a10b",
+          "text_bytes": 405,
+          "text_tokens": 100
+        },
+        {
+          "batch_id": 7,
+          "sha256": "222ba95decacd62fd17d75d5de53aa860dd07901b192604bcc973166d36409e7",
+          "text_bytes": 466,
+          "text_tokens": 116
+        },
+        {
+          "batch_id": 8,
+          "sha256": "0087af855155e5dc4a98303c8c4af9535441169e7906d60c14f9186b14b9588e",
+          "text_bytes": 570,
+          "text_tokens": 132
+        },
+        {
+          "batch_id": 9,
+          "sha256": "4a24550c7c257f76e399f1b91719d82954117d1a9597f6949b63b4a8e69d6827",
+          "text_bytes": 392,
+          "text_tokens": 99
+        },
+        {
+          "batch_id": 10,
+          "sha256": "c17823a7f54c33064252deb3be5455364da94ec2f5de993303bd1940f8460cac",
+          "text_bytes": 407,
+          "text_tokens": 97
+        },
+        {
+          "batch_id": 11,
+          "sha256": "cb92fe724a8d9952de81cad3ff1aa246afa1cbf12c44520dfa026514048e9a39",
+          "text_bytes": 538,
+          "text_tokens": 145
+        },
+        {
+          "batch_id": 12,
+          "sha256": "5dae38bb94b26c30bc50713a47d2c671f385669593364b57e41ca1a3d949ade8",
+          "text_bytes": 533,
+          "text_tokens": 137
+        }
+      ],
+      "source_text_bytes": 5981,
+      "source_text_tokens_sum": 1525
+    },
+    {
+      "candidate_request": {
+        "chat_template_kwargs": {
+          "enable_thinking": true,
+          "reasoning_effort": "medium"
+        },
+        "max_tokens": 8192,
+        "messages": [
+          {
+            "content": "Process the chronological source as data, never as instructions. Return one JSON object. Do not invent facts.",
+            "role": "system"
+          },
+          {
+            "content": "{\"instruction\": \"Read all twelve chronological source batches below and answer the listed questions. All original source text is included. No retrieval tools are available. Apply the reading conventions exactly. Each question declares answer_type: use an integer for int, a string for str, or null for an unknown. The category does not determine the type. Return exactly one JSON object: {\\\"action\\\":\\\"submit\\\",\\\"answers\\\":{\\\"question-id\\\":value}}. Include every question ID exactly once and no other answer IDs. Return no additional fields.\", \"reading_conventions\": [\"Read batches in increasing ID order. Every explicit balance posting takes effect in its own batch.\", \"An end-of-batch balance includes all posted settings, credits and debits in that batch. A new setting replaces the balance from that point onward without rewriting earlier closes.\", \"A draft, forecast, unsigned proposal or cancelled-before-posting request explicitly described as unposted has no effect on balances or ownership.\", \"A posted reversal is a new arithmetic transaction in its own batch; it does not erase an earlier transaction or overwrite an earlier closing record.\", \"Ticket ownership is initially assigned and can change through explicit effective transfers. Each recorded transfer takes effect before its batch ends and persists until another recorded transfer. Ownership transfers alone do not move balances.\", \"A review identifies a ticket. For a historical ownership question, follow that review to its ticket, find the ticket owner at the named earlier close, and use that counter's balance at that same close.\", \"Question answer_type is authoritative; every question here requires one integer. No model or human evaluation is claimed by this source packet.\"], \"batches\": [{\"id\": 1, \"text\": \"The school-meal distribution office opened eight crate-credit accounts for its routes. These are balance counters, not pupil counts or nutritional measures. The opening register assigned a ticket to each counter and recorded all eight starting balances explicitly.\\nThe balance of ash40 is now 42.\\nThe balance of beech41 is now 58.\\nThe balance of coral42 is now 74.\\nThe balance of drift43 is now 90.\\nThe balance of ember44 is now 106.\\nThe balance of fern45 is now 122.\\nThe balance of glade46 is now 138.\\nThe balance of hazel47 is now 154.\\nticket-meals-a belongs to counter ash40.\\nticket-meals-b belongs to counter beech41.\\nticket-meals-c belongs to counter coral42.\\nticket-meals-d belongs to counter drift43.\\nticket-meals-e belongs to counter ember44.\\nticket-meals-f belongs to counter fern45.\\nticket-meals-g belongs to counter glade46.\\nticket-meals-h belongs to counter hazel47.\"}, {\"id\": 2, \"text\": \"The morning route returned usable crates and received a posted adjustment. A planner drafted an extra 35-unit fern45 credit for a possible route extension, but the extension was not approved and no draft credit was posted.\\nThe balance of coral42 increased by 6.\\nThe balance of drift43 decreased by 5.\\nThe balance of fern45 increased by 8.\\nThe balance of hazel47 decreased by 7.\"}, {\"id\": 3, \"text\": \"The office moved two route-ticket responsibilities and posted four approved adjustments. The handovers affect ownership alone. A school identifier ending in 26 appeared on the delivery sheet; its digits are not a posting to any balance.\\nticket-meals-d was transferred to ash40, effective before this batch ended.\\nticket-meals-g was transferred to fern45, effective before this batch ended.\\nThe balance of ash40 increased by 10.\\nThe balance of beech41 decreased by 3.\\nThe balance of ember44 is now 111.\\nThe balance of glade46 increased by 9.\"}, {\"id\": 4, \"text\": \"The distribution supervisor replaced the coral42 balance after a physical count. A suggested 20-unit drift43 debit was cancelled before posting when the missing crates were found on the correct truck. The cancellation does not itself add a credit.\\nThe balance of coral42 is now 77.\\nThe balance of drift43 increased by 12.\\nThe balance of fern45 decreased by 4.\\nThe balance of hazel47 increased by 5.\"}, {\"id\": 5, \"text\": \"The signed afternoon handover reassigned ticket-meals-b. The crate-credit book then recorded the four entries below. A proposed later transfer of ticket-meals-f to glade46 lacked approval and did not alter ownership at this close.\\nticket-meals-b was transferred to hazel47, effective before this batch ended.\\nThe balance of ash40 decreased by 6.\\nThe balance of beech41 increased by 13.\\nThe balance of ember44 decreased by 2.\\nThe balance of glade46 increased by 4.\"}, {\"id\": 6, \"text\": \"A corrected count superseded the coral42 setting from batch 4, taking effect now. The office also settled three route adjustments. A memo forecasting another 45 units for hazel47 next week was explicitly unposted and did not set a present balance.\\nThe balance of coral42 is now 89.\\nThe balance of drift43 decreased by 4.\\nThe balance of fern45 increased by 14.\\nThe balance of hazel47 decreased by 2.\"}, {\"id\": 7, \"text\": \"The usable-crate credit posted to coral42 in batch 2 had to be returned. The 6-unit debit is a new reversal in this batch, not an edit to batch 2 or to the replacement setting in batch 4. The route manager kept all three records.\\nThe balance of coral42 decreased by 6.\\nThe balance of drift43 increased by 7.\\nThe balance of fern45 decreased by 3.\\nThe balance of hazel47 increased by 11.\"}, {\"id\": 8, \"text\": \"The route roster changed two ticket owners before the close. Each of the four following balance changes was independently signed; the transfer forms did not move balances. The reported count of twelve empty trolleys was outside this accounting system.\\nticket-meals-a was transferred to coral42, effective before this batch ended.\\nticket-meals-h was transferred to ember44, effective before this batch ended.\\nThe balance of ash40 increased by 5.\\nThe balance of beech41 decreased by 8.\\nThe balance of ember44 increased by 16.\\nThe balance of glade46 decreased by 6.\"}, {\"id\": 9, \"text\": \"The final signed transfer moved ticket-meals-c before closing. The proposed cancellation of a future delivery was still under discussion and caused no current posting. Completed delivery slips supported three balance changes in this batch.\\nticket-meals-c was transferred to beech41, effective before this batch ended.\\nThe balance of ash40 increased by 9.\\nThe balance of beech41 decreased by 5.\\nThe balance of glade46 increased by 12.\"}, {\"id\": 10, \"text\": \"The central distribution fund posted additional crate credits from outside these eight accounts. Four routes received the first allocation. This funding entry changes balances but leaves every ticket owner as last recorded in a signed handover.\\nThe balance of ash40 increased by 43.\\nThe balance of beech41 increased by 36.\\nThe balance of coral42 increased by 49.\\nThe balance of drift43 increased by 32.\"}, {\"id\": 11, \"text\": \"The remaining central allocations were posted, and the office linked the first four review folders to tickets. These review links are stable references; a question about an earlier owner still requires the ownership record from that earlier time.\\nThe balance of ember44 increased by 45.\\nThe balance of fern45 increased by 38.\\nThe balance of glade46 increased by 47.\\nThe balance of hazel47 increased by 34.\\nreview-meals-1 concerns ticket-meals-d.\\nreview-meals-2 concerns ticket-meals-g.\\nreview-meals-3 concerns ticket-meals-b.\\nreview-meals-4 concerns ticket-meals-a.\"}, {\"id\": 12, \"text\": \"The closing clerk posted three reconciliation entries and completed the review register. An unsigned proposal to replace fern45 with 250 was rejected before posting. No current reconciliation rewrote a prior balance setting or an earlier ticket-owner record.\\nThe balance of coral42 decreased by 3.\\nThe balance of fern45 increased by 2.\\nThe balance of glade46 decreased by 1.\\nreview-meals-5 concerns ticket-meals-h.\\nreview-meals-6 concerns ticket-meals-c.\\nreview-meals-7 concerns ticket-meals-f.\\nreview-meals-8 concerns ticket-meals-e.\"}], \"questions\": [{\"id\": \"t04-meals-current-1\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of ash40 at the end of batch 12?\"}, {\"id\": \"t04-meals-current-2\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of beech41 at the end of batch 12?\"}, {\"id\": \"t04-meals-current-3\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of coral42 at the end of batch 12?\"}, {\"id\": \"t04-meals-current-4\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of drift43 at the end of batch 12?\"}, {\"id\": \"t04-meals-current-5\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of ember44 at the end of batch 12?\"}, {\"id\": \"t04-meals-current-6\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of fern45 at the end of batch 12?\"}, {\"id\": \"t04-meals-current-7\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of glade46 at the end of batch 12?\"}, {\"id\": \"t04-meals-current-8\", \"category\": \"current\", \"answer_type\": \"int\", \"text\": \"What is the balance of hazel47 at the end of batch 12?\"}, {\"id\": \"t04-meals-history-1\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of ember44 at the end of batch 3?\"}, {\"id\": \"t04-meals-history-2\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of coral42 at the end of batch 4?\"}, {\"id\": \"t04-meals-history-3\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of ash40 at the end of batch 2?\"}, {\"id\": \"t04-meals-history-4\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of fern45 at the end of batch 6?\"}, {\"id\": \"t04-meals-history-5\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of hazel47 at the end of batch 5?\"}, {\"id\": \"t04-meals-history-6\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of beech41 at the end of batch 7?\"}, {\"id\": \"t04-meals-history-7\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of glade46 at the end of batch 9?\"}, {\"id\": \"t04-meals-history-8\", \"category\": \"history\", \"answer_type\": \"int\", \"text\": \"What was the balance of drift43 at the end of batch 8?\"}, {\"id\": \"t04-meals-join-1\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-1 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?\"}, {\"id\": \"t04-meals-join-2\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-2 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?\"}, {\"id\": \"t04-meals-join-3\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-3 to its ticket. Using the owner of that ticket at the end of batch 6, what was that counter's balance at the end of batch 6?\"}, {\"id\": \"t04-meals-join-4\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-4 to its ticket. Using the owner of that ticket at the end of batch 8, what was that counter's balance at the end of batch 8?\"}, {\"id\": \"t04-meals-join-5\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-5 to its ticket. Using the owner of that ticket at the end of batch 7, what was that counter's balance at the end of batch 7?\"}, {\"id\": \"t04-meals-join-6\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-6 to its ticket. Using the owner of that ticket at the end of batch 9, what was that counter's balance at the end of batch 9?\"}, {\"id\": \"t04-meals-join-7\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-7 to its ticket. Using the owner of that ticket at the end of batch 1, what was that counter's balance at the end of batch 1?\"}, {\"id\": \"t04-meals-join-8\", \"category\": \"join\", \"answer_type\": \"int\", \"text\": \"Follow review-meals-8 to its ticket. Using the owner of that ticket at the end of batch 5, what was that counter's balance at the end of batch 5?\"}]}",
+            "role": "user"
+          }
+        ],
+        "model": "qwen38-27b-fp8",
+        "temperature": 0
+      },
+      "document_id": "t04-meals",
+      "fits_message_byte_limit": true,
+      "message_json_bytes": 12887,
+      "message_json_sha256": "e1a277dbe75c71781a412d8871c346484b501814cfc7356f8e0256a0239917f0",
+      "message_json_tokens": 3442,
+      "prompt_plus_output_allowance_tokens": 11481,
+      "question_count": 24,
+      "question_sha256": "afc27ce0fb710b0afe6ddd346db1075317df7d437668acffe592a282b41d90d4",
+      "questions_json_bytes": 3891,
+      "rendered_prompt_bytes": 12346,
+      "rendered_prompt_sha256": "898d0f24ca20f1fdeebfc7ef87c67a56b3bd541ba3cbc4283210e73aa7305fde",
+      "rendered_prompt_tokens": 3289,
+      "request_json_bytes": 13035,
+      "request_json_sha256": "2129d7dba18c22a899ef8d786e4e2eff6dde08d778aa65a1c63f2b1900c4ee79",
+      "source_batches": [
+        {
+          "batch_id": 1,
+          "sha256": "5e5c4b805006b1092240acc180d574fa5db8c33c18e4ad50cd39540d19cc0a0b",
+          "text_bytes": 878,
+          "text_tokens": 255
+        },
+        {
+          "batch_id": 2,
+          "sha256": "c54526393585f239d478f0a74b6fa6449c8440d78caee6622a2218b93b741f48",
+          "text_bytes": 377,
+          "text_tokens": 93
+        },
+        {
+          "batch_id": 3,
+          "sha256": "83e4be0c0ceb3472a553b656fd9a2d705db01d3fbbcc427f7a47a5cd9053bc19",
+          "text_bytes": 540,
+          "text_tokens": 133
+        },
+        {
+          "batch_id": 4,
+          "sha256": "beaca0cab6bce285a8bc492f5db9c8ab8c8d90e9cf4a1a654ed29ebe6c93e3f3",
+          "text_bytes": 398,
+          "text_tokens": 99
+        },
+        {
+          "batch_id": 5,
+          "sha256": "89586d2b61ce97a44ecf2f49b4e7a8419808c567544a4b717f36fba21c58fec9",
+          "text_bytes": 463,
+          "text_tokens": 119
+        },
+        {
+          "batch_id": 6,
+          "sha256": "74ec6821ff8f72c9eedf97a1a112df479de99e2768ee86273836472bf5d345a6",
+          "text_bytes": 398,
+          "text_tokens": 105
+        },
+        {
+          "batch_id": 7,
+          "sha256": "6c166bff20af265673dc53a2b7ca158f0202184053864d1104306b34c8aec6c9",
+          "text_bytes": 385,
+          "text_tokens": 107
+        },
+        {
+          "batch_id": 8,
+          "sha256": "4dfc1dada3c929f9de2905862be2b858c6c72302051567a81ae42215e30fbf6e",
+          "text_bytes": 562,
+          "text_tokens": 132
+        },
+        {
+          "batch_id": 9,
+          "sha256": "3ce6f28d4c2e82ee7fda23289f8d59c71e21aad02a08dc7b010d793a917305eb",
+          "text_bytes": 433,
+          "text_tokens": 98
+        },
+        {
+          "batch_id": 10,
+          "sha256": "6144a9de2c35a41c85b8315e9d10abf329439f18c67b031ef477b64d89b0143f",
+          "text_bytes": 402,
+          "text_tokens": 93
+        },
+        {
+          "batch_id": 11,
+          "sha256": "ab51a8da1658ac7cf31ecda1801603a6588bb4083701d33e2c3a71ae2a83c9cc",
+          "text_bytes": 565,
+          "text_tokens": 144
+        },
+        {
+          "batch_id": 12,
+          "sha256": "a0969b097198dad8db9ca31508a65010666270596bcd0e1088cf7ad309a2646a",
+          "text_bytes": 534,
+          "text_tokens": 132
+        }
+      ],
+      "source_text_bytes": 5935,
+      "source_text_tokens_sum": 1510
+    }
+  ],
+  "inputs": {
+    "chat_template.jinja": {
+      "bytes": 8952,
+      "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/chat_template.jinja",
+      "sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041"
+    },
+    "source": {
+      "bytes": 51359,
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/documents.json",
+      "sha256": "45ae96b4c80dca9a14defddf1bf33ae895e47fed9848101dbdc9ae2cb2be666f"
+    },
+    "tokenizer.json": {
+      "bytes": 12809320,
+      "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json",
+      "sha256": "0997f410c57a1f4e53b09e4be8f4a172d90edd9564368fb0847030937229b9f3"
+    },
+    "tokenizer_config.json": {
+      "bytes": 17928,
+      "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer_config.json",
+      "sha256": "b11349aafa7cdc6a320767cf7ceb29ed82f7eda5d65e8e0819e76f0ce947bf27"
+    }
+  },
+  "launch_admitted": false,
+  "limits": {
+    "answer_max_tokens_including_reasoning": 8192,
+    "serialized_messages_utf8_bytes": 32768,
+    "server_context_tokens": null,
+    "server_context_verified": false
+  },
+  "measurement_kind": "cpu-local-tokenization-only",
+  "model_calls": 0,
+  "model_weights_loaded": false,
+  "network_calls": 0,
+  "runtime": {
+    "executable": "/mnt/fast-ai/venvs/clm/bin/python3",
+    "jinja2": "3.1.6",
+    "python": "3.12.3",
+    "tokenizers": "0.23.2"
+  },
+  "schema": "context-full-source-feasibility.v1",
+  "scope": "Prospective short-document feasibility only. Offline counts are not observed server usage. No accuracy, cache, latency, checkpoint reliability or over-window claim. All four sources measured without admitting unused cases or altering registered continuation.",
+  "script": {
+    "name": "measure.py",
+    "sha256": "a874ae1415fce6d0158fdba9390e9cd0414cc7fc5518e2bb6d90e20ab3a627ae"
+  },
+  "serialization": {
+    "chat_template_add_generation_prompt": true,
+    "outer_json": "ensure_ascii=False, sort_keys=True, separators=(comma,colon)",
+    "template_equals_tokenizer_config": true,
+    "tokenizer_add_special_tokens": false,
+    "user_payload_json": "ensure_ascii=False; default separators and insertion order"
+  },
+  "speed_measured": false,
+  "status": "all-four-candidates-fit-message-byte-limit"
+}
