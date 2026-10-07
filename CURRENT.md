@@ -47,8 +47,11 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
   this does not admit a large build/download.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
-  estimated peak output/cache/build bytes. Independent backup recovery and the
-  known faulty memory's permanent repair remain open.
+  estimated peak output/cache/build bytes. Independent backup recovery remains
+  the next storage priority; first review the saved USB incident evidence.
+- **RAM, owner decision October 6:** no replacement in 2026. Blocks 53–57
+  (10 GiB) were rechecked offline and `b70-offline-bad-memory.service` enabled.
+  Keep that mitigation unchanged; replacement is not an immediate work item.
 
 [Follow-up decisions and recovery checks](notes/2026-10-06-storage-and-recovery-followup.md)
 record the archive restore rehearsal, isolated CPU fixes and remaining priorities.

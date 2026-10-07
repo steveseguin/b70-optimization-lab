@@ -74,8 +74,10 @@ There is no automatic deletion policy or new background service.
 1. Obtain a dependable independent backup destination and copy the preserved
    research plus archives with read-back verification. Do not regard Git as a
    backup of model weights or untracked raw experiment artifacts.
-2. Complete the known faulty-memory hardware repair. Existing mitigation is
-   retained; consolidation does not establish a permanent hardware fix.
+2. Keep the existing RAM exclusion unchanged. **Owner clarification October 6:
+   no RAM replacement in 2026.** Blocks 53–57 were rechecked offline and the boot
+   service enabled. Hardware replacement is removed from the near-term plan;
+   the mitigation remains active and ordinary fault handling still applies.
 3. Coordinate exact Qwen inputs and owning-host availability, then qualify the
    candidate with actual kernels, unchanged-model checks and full release
    evidence. Do not interfere with the other host's active context experiment.
