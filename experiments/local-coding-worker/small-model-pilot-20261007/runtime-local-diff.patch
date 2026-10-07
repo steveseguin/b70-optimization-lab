@@ -1,0 +1,32 @@
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index 919f8ac345..af2afb1119 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -268,6 +268,7 @@ class MoERunner(MoERunnerInterface):
+         enable_dbo: bool,
+         routed_output_transform: torch.nn.Module | None = None,
+         routed_scaling_factor: float = 1.0,
++        shared_expert_gate: torch.nn.Module | None = None,
+     ):
+         super().__init__()
+         self.moe_config = moe_config
+@@ -279,6 +280,19 @@ class MoERunner(MoERunnerInterface):
+         self._quant_method = quant_method
+         self.enable_dbo = enable_dbo
+ 
++        # FusedMoE.__init__ always forwards its shared_expert_gate, but this runner has no
++        # fused-shared-expert path to apply one with: nothing here reads the gate. Accept it
++        # so models without shared experts (shared_expert_gate is None, which is every model
++        # this tree serves today) construct, and refuse a real gate rather than silently
++        # dropping it and returning wrong logits.
++        if shared_expert_gate is not None:
++            raise NotImplementedError(
++                "MoERunner in this tree has no fused shared expert path, so the "
++                "shared_expert_gate passed by FusedMoE cannot be applied. Serving this "
++                "model would silently skip the gate and produce wrong output."
++            )
++        self.shared_expert_gate = shared_expert_gate
++
+         self._shared_experts: SharedExperts | None = None
+         if shared_experts is not None:
+             self._shared_experts = SharedExperts(
