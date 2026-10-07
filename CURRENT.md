@@ -144,9 +144,12 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 07:06 UTC**. One supervised historical-state
+Latest two-card review: **2026-10-07 07:22 UTC**. One supervised historical-state
 study is active. Admission, health preflight and 12/12 strict reference checks
-passed; its eight fixed trials started at 07:05:38 UTC. The prior replication stopped cleanly,
+passed; its eight fixed trials started at 07:05:38 UTC. Four clinic rows are complete:
+source-only archive and quoted each 24/24; history-access archive and quoted each
+19/24, with the same five wrong ownership joins despite exact numeric snapshots.
+The four theatre rows continue unchanged. The prior replication stopped cleanly,
 released both cards at 06:44:55 UTC, and passed final health at 06:45:05.
 
 ## 2026-10-07, two-B70 host: replication preserved; history comparison active
@@ -186,7 +189,11 @@ fixed trials and graceful cleanup. Output:
 Do not edit its frozen engine, client, host, auditors, source/reference packet or
 plans, and do not start another GPU owner. The entire temporal source directory
 is included in the dependency inventory; use separate paths for new CPU work.
-No holdout has been admitted.
+No holdout has been admitted. The [independent four-row partial audit](experiments/qwen38-27b-b70/data/2026-10-07-history-study-live/partial-audit-0722.json)
+confirms all 48 clinic checkpoints and 102 quoted postings exact. These failures
+prevent the registered history extension; finish and preserve all eight rows first.
+A separate [two-call full-source screen](experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-plan.md)
+is being prepared, with no additional live calls yet.
 
 The [temporal reference packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md)
 has two independent assistant annotations agreeing on 201 events, 48 tables and
