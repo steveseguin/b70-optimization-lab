@@ -28,4 +28,13 @@ jobs:
       - name: Verify frozen plan without model requests
         run: |
           python3 experiments/qwen38-27b-b70/scripts/context/durable/campaign.py --suite experiments/qwen38-27b-b70/data/2026-10-06-durable-context/holdout/suite.json --out "$RUNNER_TEMP/context-plan"
-          cmp "$RUNNER_TEMP/context-plan/plan.json" experiments/qwen38-27b-b70/data/2026-10-06-durable-context/plan.json
+          python3 - "$RUNNER_TEMP/context-plan/plan.json" experiments/qwen38-27b-b70/data/2026-10-06-durable-context/plan.json <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          # Source enumeration order varies by filesystem; every identity and run
+          # must match, but JSON object key order is not part of that identity.
+          generated, frozen = (json.loads(Path(p).read_text()) for p in sys.argv[1:])
+          if generated != frozen:
+              raise SystemExit("Generated plan differs from the frozen experiment identity")
+          PY
