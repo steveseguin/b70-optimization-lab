@@ -1,0 +1,822 @@
+{
+  "schema": "context-semantic-development-documents.v1",
+  "provenance": {
+    "kind": "authored-development",
+    "authored_on": "2026-10-07",
+    "author": "Codex assistant",
+    "construction": "Six manually specified narrative cases, each paired with a plain-language control; not externally sourced or independently validated.",
+    "scope": "Development diagnostics only. No model evaluation, external-validity claim, oracle, answer key, or adapter is supplied."
+  },
+  "reading_conventions": [
+    "Read batches in increasing ID order. Statements take effect when explicitly posted, unless an explicit effective time says otherwise.",
+    "A proposal, forecast or draft explicitly described as unposted does not change a balance or ownership.",
+    "Posted reversals are new transactions; they do not rewrite earlier end-of-batch states.",
+    "Both variants in a pair ask the same questions. Question categories do not imply the answer type; answer_type is authoritative."
+  ],
+  "documents": [
+    {
+      "id": "s01-stress",
+      "pair_id": "s01",
+      "variant": "stress",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s01 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "If approval arrived, amber10 would receive a credit of 9. Approval did not arrive; that proposal was not posted. birch11 was debited 3. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "The order proposing an 8-unit credit to amber10 was cancelled before posting. A separate approved posting credited amber10 with 4. ticket-s01 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "The balance of birch11 was replaced with 18. review-s01 concerns ticket-s01. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s01-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s01-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s01-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s01-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s01-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 2?"
+        },
+        {
+          "id": "s01-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s01 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s01-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s01 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    },
+    {
+      "id": "s01-control",
+      "pair_id": "s01",
+      "variant": "control",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s01 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "birch11 was debited 3. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "amber10 was credited 4. ticket-s01 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "birch11 was set to 18. review-s01 concerns ticket-s01. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s01-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s01-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s01-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s01-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s01-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 2?"
+        },
+        {
+          "id": "s01-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s01 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s01-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s01 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    },
+    {
+      "id": "s02-stress",
+      "pair_id": "s02",
+      "variant": "stress",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s02 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "An unposted draft listed a replacement balance of 70 for amber10 and a debit of 9 for birch11. That entire draft was withdrawn before any posting. The approved replacement record set amber10 to 17. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "birch11 was credited 6. A forecast suggested a future amber10 balance of 40; it was a forecast only and was not posted. ticket-s02 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "amber10 was debited 2. The closing posting replaced birch11 with 23. review-s02 concerns ticket-s02. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s02-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s02-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s02-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s02-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s02-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 3?"
+        },
+        {
+          "id": "s02-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s02 to its ticket. Using the owner of that ticket at the end of batch 1, what was that counter's balance at the end of batch 1?"
+        },
+        {
+          "id": "s02-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s02 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    },
+    {
+      "id": "s02-control",
+      "pair_id": "s02",
+      "variant": "control",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s02 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "amber10 was set to 17. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "birch11 was credited 6. ticket-s02 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "amber10 was debited 2. birch11 was set to 23. review-s02 concerns ticket-s02. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s02-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s02-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s02-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s02-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s02-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 3?"
+        },
+        {
+          "id": "s02-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s02 to its ticket. Using the owner of that ticket at the end of batch 1, what was that counter's balance at the end of batch 1?"
+        },
+        {
+          "id": "s02-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s02 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    },
+    {
+      "id": "s03-stress",
+      "pair_id": "s03",
+      "variant": "stress",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s03 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "The clerk posted a credit of 7 to amber10. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "The earlier 7-unit credit to amber10 had already been posted. To reverse it, the clerk now posted a debit of 7 to amber10. This was a new posting; earlier batch records were not rewritten. birch11 was credited 2. ticket-s03 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "A new delivery credited amber10 with 3. birch11 was debited 4. review-s03 concerns ticket-s03. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s03-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s03-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s03-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s03-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 3?"
+        },
+        {
+          "id": "s03-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 4?"
+        },
+        {
+          "id": "s03-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s03 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s03-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s03 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?"
+        }
+      ]
+    },
+    {
+      "id": "s03-control",
+      "pair_id": "s03",
+      "variant": "control",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s03 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "amber10 was credited 7. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "amber10 was debited 7. birch11 was credited 2. ticket-s03 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "amber10 was credited 3. birch11 was debited 4. review-s03 concerns ticket-s03. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s03-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s03-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s03-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s03-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 3?"
+        },
+        {
+          "id": "s03-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 4?"
+        },
+        {
+          "id": "s03-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s03 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s03-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s03 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?"
+        }
+      ]
+    },
+    {
+      "id": "s04-stress",
+      "pair_id": "s04",
+      "variant": "stress",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s04 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "For this notice, North desk means amber10 and South desk means birch11. North desk received a credit of four. South desk received a debit of three. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "In this notice, Harbor desk means birch11 and Lake desk means amber10. Harbor desk was set to twenty-five. Lake desk was debited two. ticket-s04 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "For this closing notice, Red desk means amber10 and Blue desk means birch11. Red desk was credited six. Blue desk was debited five. review-s04 concerns ticket-s04. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s04-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s04-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s04-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s04-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s04-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 1?"
+        },
+        {
+          "id": "s04-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s04 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s04-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s04 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    },
+    {
+      "id": "s04-control",
+      "pair_id": "s04",
+      "variant": "control",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s04 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "amber10 was credited 4. birch11 was debited 3. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "birch11 was set to 25. amber10 was debited 2. ticket-s04 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "amber10 was credited 6. birch11 was debited 5. review-s04 concerns ticket-s04. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s04-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s04-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s04-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s04-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s04-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 1?"
+        },
+        {
+          "id": "s04-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s04 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s04-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s04 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    },
+    {
+      "id": "s05-stress",
+      "pair_id": "s05",
+      "variant": "stress",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s05 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "The unposted target for amber10 was 80. amber10 was credited 5. The unposted plan for birch11 mentioned 46. birch11 was debited 4. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "An abandoned draft proposed setting amber10 to 2; it was not posted. amber10 was actually set to 19. The planning ceiling for birch11 was 90 and was not a posting. birch11 was credited 3. ticket-s05 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "A forecast mentioned an amber10 balance of 60, without authorizing any change. amber10 was debited 7. birch11 was set to 24. review-s05 concerns ticket-s05. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s05-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s05-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s05-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s05-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s05-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 2?"
+        },
+        {
+          "id": "s05-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s05 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s05-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s05 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?"
+        }
+      ]
+    },
+    {
+      "id": "s05-control",
+      "pair_id": "s05",
+      "variant": "control",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s05 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "amber10 was credited 5. birch11 was debited 4. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "amber10 was set to 19. birch11 was credited 3. ticket-s05 was transferred to birch11, effective before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "amber10 was debited 7. birch11 was set to 24. review-s05 concerns ticket-s05. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s05-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s05-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s05-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s05-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s05-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 2?"
+        },
+        {
+          "id": "s05-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s05 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s05-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s05 to its ticket. Using the owner of that ticket at the end of batch 4, what was that counter's balance at the end of batch 4?"
+        }
+      ]
+    },
+    {
+      "id": "s06-stress",
+      "pair_id": "s06",
+      "variant": "stress",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s06 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "amber10 was credited 8. birch11 was debited 5. A proposed transfer of ticket-s06 to an outside desk was cancelled without taking effect. ticket-s06 was instead transferred to birch11, effective before this batch ended. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "amber10 was set to 7. birch11 was credited 9. ticket-s06 was transferred back to amber10, effective before this batch ended. The former owner remained listed in an archived directory, which did not change ownership. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "amber10 was credited 2. birch11 was set to 13. An unsigned proposal to transfer ticket-s06 to birch11 was not approved and did not take effect. review-s06 refers to case-s06. case-s06 concerns ticket-s06. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s06-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s06-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s06-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s06-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s06-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 3?"
+        },
+        {
+          "id": "s06-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s06 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s06-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s06 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    },
+    {
+      "id": "s06-control",
+      "pair_id": "s06",
+      "variant": "control",
+      "batches": [
+        {
+          "id": 1,
+          "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s06 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf."
+        },
+        {
+          "id": 2,
+          "text": "amber10 was credited 8. birch11 was debited 5. ticket-s06 was transferred to birch11 before this batch ended. The delivery seal for batch 2 was linen-star."
+        },
+        {
+          "id": 3,
+          "text": "amber10 was set to 7. birch11 was credited 9. ticket-s06 was transferred to amber10 before this batch ended. The delivery seal for batch 3 was violet-gate."
+        },
+        {
+          "id": 4,
+          "text": "amber10 was credited 2. birch11 was set to 13. review-s06 refers to case-s06. case-s06 concerns ticket-s06. The delivery seal for batch 4 was marble-bird."
+        }
+      ],
+      "questions": [
+        {
+          "id": "s06-q01",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of amber10 at the end of batch 4?"
+        },
+        {
+          "id": "s06-q02",
+          "category": "current",
+          "answer_type": "int",
+          "text": "What is the balance of birch11 at the end of batch 4?"
+        },
+        {
+          "id": "s06-q03",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of amber10 at the end of batch 2?"
+        },
+        {
+          "id": "s06-q04",
+          "category": "history",
+          "answer_type": "int",
+          "text": "What was the balance of birch11 at the end of batch 3?"
+        },
+        {
+          "id": "s06-q05",
+          "category": "history",
+          "answer_type": "str",
+          "text": "What exact delivery seal is recorded for batch 3?"
+        },
+        {
+          "id": "s06-q06",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s06 to its ticket. Using the owner of that ticket at the end of batch 2, what was that counter's balance at the end of batch 2?"
+        },
+        {
+          "id": "s06-q07",
+          "category": "join",
+          "answer_type": "int",
+          "text": "Follow review-s06 to its ticket. Using the owner of that ticket at the end of batch 3, what was that counter's balance at the end of batch 3?"
+        }
+      ]
+    }
+  ]
+}

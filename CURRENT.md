@@ -113,33 +113,33 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 04:28 UTC**. Revision 4 is active in one supervised
-cold-profile run. The prior r3 result and cleanup remain preserved.
+Latest two-card review: **2026-10-07 04:50 UTC**. No model server is running.
+Revision 4 stopped after a bounded answer failure; GPU release was verified at
+04:45:14 UTC. Semantic development tooling is being checked on the CPU.
 
-## 2026-10-07, two-B70 host: reasoning improved answers; cold confirmation next
+## 2026-10-07, two-B70 host: preserve cold result; test meaning next
 
-Revision 3 completed all six development trials: archive 48/48, quoted events
-48/48, summary 44/48. Its original all-methods gate failed, so held-out cases
-remain unused. All source batches and structured tables were exact; the remaining
-summary errors were wrong totals in its own notes. The server stopped cleanly;
-GPU release was verified at 04:22:53 UTC. [Full r3 findings](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-result.md).
+Revision 3 completed six development trials: archive 48/48, quoted events
+48/48, summary 44/48. Its original all-methods gate failed; held-out cases
+remain unused. [R3 findings](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-result.md).
 
-The timing audit found cache reuse in quoted-event answer calls, so old elapsed
-comparisons cannot support a cold-request speed claim. No speed claim was made.
-The [separate r4 plan](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-plan.md)
-uses a cache-disabled profile and new development seeds 17/29. It prospectively
-compares archive and quoted events as the primary pair, keeping every summary
-trial as a diagnostic. All primary answers must be correct, every trial must
-complete cleanly, and raw cache counts must be verified zero before any holdout.
-A single cold-server result remains descriptive until fresh-server replication.
+The separate cold-profile revision 4 passed strict qualification and extraction
+checks. Five development trials completed at 24/24; a sixth summary trial used
+its entire 8,192-token reasoning allowance without producing an answer. Six
+planned trials were therefore unstarted, and held-out cases remain untouched.
+All four completed structured trials were exact and uncached. Quoted events took
+longer than archive in both completed pairs; the incomplete matrix establishes
+no speed improvement. No cap was raised or failed result replaced.
+[R4 evidence and limits](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-result.md).
 
-Designated next output: `/mnt/fast-ai/bench-results/context-durable-r4-20261007`;
-owned unit: `ctx-durable-r4.service`. Preserve frozen r2/r3 sources and outcomes.
-The owner explicitly asked work to continue. R4 implementation and independent
-review are complete: 102 harness and 33 lifecycle CPU tests passed. Passive
-preparation verified prior cleanup and idle ownership. **The unit is active**
-and will perform strict qualification before any development trial. Do not start
-another GPU owner. Live status overrides this snapshot.
+The owner explicitly asked work to continue. Next is a separate, authored
+semantic diagnostic: cancelled changes, drafts, reversals, aliases, distracting
+numbers and ownership references. Two separate assistant annotations agree on
+all 84 answers and 48 batch states; six valid alias quote-span differences are
+preserved. This is development evidence, not independent human validation or a
+new benchmark. CPU adapter checks are underway before a fresh supervised run.
+[Packet scope](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-development-plan.md).
+Preserve frozen r2/r3/r4 sources and outcomes. Live status overrides this snapshot.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 

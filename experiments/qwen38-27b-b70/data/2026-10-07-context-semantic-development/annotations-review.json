@@ -1,0 +1,1692 @@
+{
+  "schema": "context-semantic-development-review-annotations.v1",
+  "source": {
+    "path": "documents.json",
+    "sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579"
+  },
+  "provenance": {
+    "reviewer": "Codex independent review agent /root/fix_site",
+    "method": "Direct reading and manual arithmetic. Only documents.json was read. States, answers and event interpretations were manually transcribed; Python serialized them and checked exact quote membership and answer types. No other annotation, ledger, task generator, GPU or external model was used.",
+    "independence_limit": "A separate assistant review is not independent human validation."
+  },
+  "operation_definitions": {
+    "set": "Replace balance with amount.",
+    "add": "Increase balance by amount.",
+    "sub": "Decrease balance by amount."
+  },
+  "documents": [
+    {
+      "document_id": "s01-stress",
+      "pair_id": "s01",
+      "variant": "stress",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s01": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 10,
+            "birch11": 17
+          },
+          "ownership": {
+            "ticket-s01": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 14,
+            "birch11": 17
+          },
+          "ownership": {
+            "ticket-s01": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 14,
+            "birch11": 18
+          },
+          "ownership": {
+            "ticket-s01": "birch11"
+          },
+          "references": {
+            "review-s01": "ticket-s01"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s01-q01": 14,
+        "s01-q02": 18,
+        "s01-q03": 10,
+        "s01-q04": 17,
+        "s01-q05": "linen-star",
+        "s01-q06": 10,
+        "s01-q07": 17
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 3,
+          "quote": "birch11 was debited 3."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 4,
+          "quote": "A separate approved posting credited amber10 with 4."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 18,
+          "quote": "The balance of birch11 was replaced with 18."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: the unapproved +9 is not posted; birch is 20-3=17.",
+        "Batch 3: the cancelled +8 is not posted; amber is 10+4=14. Ticket changes from amber to birch.",
+        "Batch 4: birch is replaced by 18.",
+        "Join answers use amber at batch 2 (10) and birch at batch 3 (17)."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s01-control",
+      "pair_id": "s01",
+      "variant": "control",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s01": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 10,
+            "birch11": 17
+          },
+          "ownership": {
+            "ticket-s01": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 14,
+            "birch11": 17
+          },
+          "ownership": {
+            "ticket-s01": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 14,
+            "birch11": 18
+          },
+          "ownership": {
+            "ticket-s01": "birch11"
+          },
+          "references": {
+            "review-s01": "ticket-s01"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s01-q01": 14,
+        "s01-q02": 18,
+        "s01-q03": 10,
+        "s01-q04": 17,
+        "s01-q05": "linen-star",
+        "s01-q06": 10,
+        "s01-q07": 17
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 3,
+          "quote": "birch11 was debited 3."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 4,
+          "quote": "amber10 was credited 4."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 18,
+          "quote": "birch11 was set to 18."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: birch is 20-3=17; amber stays 10.",
+        "Batch 3: amber is 10+4=14; ticket changes to birch.",
+        "Batch 4: birch is set to 18.",
+        "Join answers: amber at batch 2 is 10; birch at batch 3 is 17."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s02-stress",
+      "pair_id": "s02",
+      "variant": "stress",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s02": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 17,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s02": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 17,
+            "birch11": 26
+          },
+          "ownership": {
+            "ticket-s02": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 15,
+            "birch11": 23
+          },
+          "ownership": {
+            "ticket-s02": "birch11"
+          },
+          "references": {
+            "review-s02": "ticket-s02"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s02-q01": 15,
+        "s02-q02": 23,
+        "s02-q03": 17,
+        "s02-q04": 26,
+        "s02-q05": "violet-gate",
+        "s02-q06": 10,
+        "s02-q07": 26
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 17,
+          "quote": "The approved replacement record set amber10 to 17."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 6,
+          "quote": "birch11 was credited 6."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 2,
+          "quote": "amber10 was debited 2."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 23,
+          "quote": "The closing posting replaced birch11 with 23."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: withdrawn draft values 70 and -9 do not apply; amber is set to 17, birch stays 20.",
+        "Batch 3: birch is 20+6=26; forecast 40 does not apply to amber. Ticket changes to birch.",
+        "Batch 4: amber is 17-2=15; birch is replaced by 23.",
+        "Join answers use amber at batch 1 (10) and birch at batch 3 (26)."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s02-control",
+      "pair_id": "s02",
+      "variant": "control",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s02": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 17,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s02": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 17,
+            "birch11": 26
+          },
+          "ownership": {
+            "ticket-s02": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 15,
+            "birch11": 23
+          },
+          "ownership": {
+            "ticket-s02": "birch11"
+          },
+          "references": {
+            "review-s02": "ticket-s02"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s02-q01": 15,
+        "s02-q02": 23,
+        "s02-q03": 17,
+        "s02-q04": 26,
+        "s02-q05": "violet-gate",
+        "s02-q06": 10,
+        "s02-q07": 26
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 17,
+          "quote": "amber10 was set to 17."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 6,
+          "quote": "birch11 was credited 6."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 2,
+          "quote": "amber10 was debited 2."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 23,
+          "quote": "birch11 was set to 23."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: amber is set to 17; birch stays 20.",
+        "Batch 3: birch is 20+6=26; ticket changes to birch.",
+        "Batch 4: amber is 17-2=15; birch is set to 23.",
+        "Join answers: amber at batch 1 is 10; birch at batch 3 is 26."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s03-stress",
+      "pair_id": "s03",
+      "variant": "stress",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s03": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 17,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s03": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 10,
+            "birch11": 22
+          },
+          "ownership": {
+            "ticket-s03": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 13,
+            "birch11": 18
+          },
+          "ownership": {
+            "ticket-s03": "birch11"
+          },
+          "references": {
+            "review-s03": "ticket-s03"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s03-q01": 13,
+        "s03-q02": 18,
+        "s03-q03": 17,
+        "s03-q04": 10,
+        "s03-q05": "marble-bird",
+        "s03-q06": 17,
+        "s03-q07": 18
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 7,
+          "quote": "The clerk posted a credit of 7 to amber10."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 7,
+          "quote": "To reverse it, the clerk now posted a debit of 7 to amber10."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 2,
+          "quote": "birch11 was credited 2."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 3,
+          "quote": "A new delivery credited amber10 with 3."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 4,
+          "quote": "birch11 was debited 4."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: amber is 10+7=17.",
+        "Batch 3: the new reversal debit makes amber 17-7=10; it does not erase the batch-2 value 17. birch is 20+2=22. Ticket changes to birch.",
+        "Batch 4: amber is 10+3=13; birch is 22-4=18.",
+        "Join answers use amber at batch 2 (17) and birch at batch 4 (18)."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s03-control",
+      "pair_id": "s03",
+      "variant": "control",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s03": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 17,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s03": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 10,
+            "birch11": 22
+          },
+          "ownership": {
+            "ticket-s03": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 13,
+            "birch11": 18
+          },
+          "ownership": {
+            "ticket-s03": "birch11"
+          },
+          "references": {
+            "review-s03": "ticket-s03"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s03-q01": 13,
+        "s03-q02": 18,
+        "s03-q03": 17,
+        "s03-q04": 10,
+        "s03-q05": "marble-bird",
+        "s03-q06": 17,
+        "s03-q07": 18
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 7,
+          "quote": "amber10 was credited 7."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 7,
+          "quote": "amber10 was debited 7."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 2,
+          "quote": "birch11 was credited 2."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 3,
+          "quote": "amber10 was credited 3."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 4,
+          "quote": "birch11 was debited 4."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: amber is 10+7=17.",
+        "Batch 3: amber is 17-7=10; birch is 20+2=22; ticket changes to birch.",
+        "Batch 4: amber is 10+3=13; birch is 22-4=18.",
+        "Join answers: amber at batch 2 is 17; birch at batch 4 is 18."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s04-stress",
+      "pair_id": "s04",
+      "variant": "stress",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s04": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 14,
+            "birch11": 17
+          },
+          "ownership": {
+            "ticket-s04": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 12,
+            "birch11": 25
+          },
+          "ownership": {
+            "ticket-s04": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 18,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s04": "birch11"
+          },
+          "references": {
+            "review-s04": "ticket-s04"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s04-q01": 18,
+        "s04-q02": 20,
+        "s04-q03": 14,
+        "s04-q04": 25,
+        "s04-q05": "copper-leaf",
+        "s04-q06": 14,
+        "s04-q07": 25
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 4,
+          "quote": "For this notice, North desk means amber10 and South desk means birch11. North desk received a credit of four."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 3,
+          "quote": "For this notice, North desk means amber10 and South desk means birch11. North desk received a credit of four. South desk received a debit of three."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 25,
+          "quote": "In this notice, Harbor desk means birch11 and Lake desk means amber10. Harbor desk was set to twenty-five."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 2,
+          "quote": "In this notice, Harbor desk means birch11 and Lake desk means amber10. Harbor desk was set to twenty-five. Lake desk was debited two."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 6,
+          "quote": "For this closing notice, Red desk means amber10 and Blue desk means birch11. Red desk was credited six."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 5,
+          "quote": "For this closing notice, Red desk means amber10 and Blue desk means birch11. Red desk was credited six. Blue desk was debited five."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: local aliases give amber 10+4=14, birch 20-3=17.",
+        "Batch 3: Harbor denotes birch, set to 25; Lake denotes amber, 14-2=12. Ticket changes to birch.",
+        "Batch 4: Red denotes amber, 12+6=18; Blue denotes birch, 25-5=20.",
+        "Join answers use amber at batch 2 (14) and birch at batch 3 (25)."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s04-control",
+      "pair_id": "s04",
+      "variant": "control",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s04": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 14,
+            "birch11": 17
+          },
+          "ownership": {
+            "ticket-s04": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 12,
+            "birch11": 25
+          },
+          "ownership": {
+            "ticket-s04": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 18,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s04": "birch11"
+          },
+          "references": {
+            "review-s04": "ticket-s04"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s04-q01": 18,
+        "s04-q02": 20,
+        "s04-q03": 14,
+        "s04-q04": 25,
+        "s04-q05": "copper-leaf",
+        "s04-q06": 14,
+        "s04-q07": 25
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 4,
+          "quote": "amber10 was credited 4."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 3,
+          "quote": "birch11 was debited 3."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 25,
+          "quote": "birch11 was set to 25."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 2,
+          "quote": "amber10 was debited 2."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 6,
+          "quote": "amber10 was credited 6."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 5,
+          "quote": "birch11 was debited 5."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: amber is 10+4=14; birch is 20-3=17.",
+        "Batch 3: birch is set to 25; amber is 14-2=12; ticket changes to birch.",
+        "Batch 4: amber is 12+6=18; birch is 25-5=20.",
+        "Join answers: amber at batch 2 is 14; birch at batch 3 is 25."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s05-stress",
+      "pair_id": "s05",
+      "variant": "stress",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s05": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 15,
+            "birch11": 16
+          },
+          "ownership": {
+            "ticket-s05": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 19,
+            "birch11": 19
+          },
+          "ownership": {
+            "ticket-s05": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 12,
+            "birch11": 24
+          },
+          "ownership": {
+            "ticket-s05": "birch11"
+          },
+          "references": {
+            "review-s05": "ticket-s05"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s05-q01": 12,
+        "s05-q02": 24,
+        "s05-q03": 15,
+        "s05-q04": 19,
+        "s05-q05": "linen-star",
+        "s05-q06": 15,
+        "s05-q07": 24
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 5,
+          "quote": "amber10 was credited 5."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 4,
+          "quote": "birch11 was debited 4."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 19,
+          "quote": "amber10 was actually set to 19."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 3,
+          "quote": "birch11 was credited 3."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 7,
+          "quote": "amber10 was debited 7."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 24,
+          "quote": "birch11 was set to 24."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: unposted numbers 80 and 46 do not apply; amber is 10+5=15, birch is 20-4=16.",
+        "Batch 3: abandoned setting 2 and planning ceiling 90 do not apply; amber is set to 19, birch is 16+3=19. Ticket changes to birch.",
+        "Batch 4: forecast 60 does not apply; amber is 19-7=12, birch is set to 24.",
+        "Join answers use amber at batch 2 (15) and birch at batch 4 (24)."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s05-control",
+      "pair_id": "s05",
+      "variant": "control",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s05": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 15,
+            "birch11": 16
+          },
+          "ownership": {
+            "ticket-s05": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 19,
+            "birch11": 19
+          },
+          "ownership": {
+            "ticket-s05": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 12,
+            "birch11": 24
+          },
+          "ownership": {
+            "ticket-s05": "birch11"
+          },
+          "references": {
+            "review-s05": "ticket-s05"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s05-q01": 12,
+        "s05-q02": 24,
+        "s05-q03": 15,
+        "s05-q04": 19,
+        "s05-q05": "linen-star",
+        "s05-q06": 15,
+        "s05-q07": 24
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 5,
+          "quote": "amber10 was credited 5."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 4,
+          "quote": "birch11 was debited 4."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 19,
+          "quote": "amber10 was set to 19."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 3,
+          "quote": "birch11 was credited 3."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "sub",
+          "amount": 7,
+          "quote": "amber10 was debited 7."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 24,
+          "quote": "birch11 was set to 24."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: amber is 10+5=15; birch is 20-4=16.",
+        "Batch 3: amber is set to 19; birch is 16+3=19; ticket changes to birch.",
+        "Batch 4: amber is 19-7=12; birch is set to 24.",
+        "Join answers: amber at batch 2 is 15; birch at batch 4 is 24."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s06-stress",
+      "pair_id": "s06",
+      "variant": "stress",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s06": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 18,
+            "birch11": 15
+          },
+          "ownership": {
+            "ticket-s06": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 7,
+            "birch11": 24
+          },
+          "ownership": {
+            "ticket-s06": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 9,
+            "birch11": 13
+          },
+          "ownership": {
+            "ticket-s06": "amber10"
+          },
+          "references": {
+            "review-s06": "case-s06",
+            "case-s06": "ticket-s06"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s06-q01": 9,
+        "s06-q02": 13,
+        "s06-q03": 18,
+        "s06-q04": 24,
+        "s06-q05": "violet-gate",
+        "s06-q06": 15,
+        "s06-q07": 7
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 8,
+          "quote": "amber10 was credited 8."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 5,
+          "quote": "birch11 was debited 5."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 7,
+          "quote": "amber10 was set to 7."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 9,
+          "quote": "birch11 was credited 9."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 2,
+          "quote": "amber10 was credited 2."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 13,
+          "quote": "birch11 was set to 13."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: amber is 10+8=18, birch is 20-5=15; cancelled outside transfer does not apply, actual owner becomes birch.",
+        "Batch 3: amber is set to 7, birch is 15+9=24; actual ticket transfer makes amber the owner despite an archived former-owner entry.",
+        "Batch 4: amber is 7+2=9, birch is set to 13; unsigned transfer does not apply, so amber remains owner.",
+        "review-s06 -> case-s06 -> ticket-s06. Join answers use birch at batch 2 (15) and amber at batch 3 (7)."
+      ],
+      "ambiguities": []
+    },
+    {
+      "document_id": "s06-control",
+      "pair_id": "s06",
+      "variant": "control",
+      "after_batch_states": [
+        {
+          "batch_id": 1,
+          "balances": {
+            "amber10": 10,
+            "birch11": 20
+          },
+          "ownership": {
+            "ticket-s06": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf"
+          }
+        },
+        {
+          "batch_id": 2,
+          "balances": {
+            "amber10": 18,
+            "birch11": 15
+          },
+          "ownership": {
+            "ticket-s06": "birch11"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star"
+          }
+        },
+        {
+          "batch_id": 3,
+          "balances": {
+            "amber10": 7,
+            "birch11": 24
+          },
+          "ownership": {
+            "ticket-s06": "amber10"
+          },
+          "references": {},
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate"
+          }
+        },
+        {
+          "batch_id": 4,
+          "balances": {
+            "amber10": 9,
+            "birch11": 13
+          },
+          "ownership": {
+            "ticket-s06": "amber10"
+          },
+          "references": {
+            "review-s06": "case-s06",
+            "case-s06": "ticket-s06"
+          },
+          "delivery_seals": {
+            "1": "copper-leaf",
+            "2": "linen-star",
+            "3": "violet-gate",
+            "4": "marble-bird"
+          }
+        }
+      ],
+      "answers": {
+        "s06-q01": 9,
+        "s06-q02": 13,
+        "s06-q03": 18,
+        "s06-q04": 24,
+        "s06-q05": "violet-gate",
+        "s06-q06": 15,
+        "s06-q07": 7
+      },
+      "balance_events": [
+        {
+          "batch_id": 1,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 10,
+          "quote": "The opening posting set amber10 to 10."
+        },
+        {
+          "batch_id": 1,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 20,
+          "quote": "The opening posting set birch11 to 20."
+        },
+        {
+          "batch_id": 2,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 8,
+          "quote": "amber10 was credited 8."
+        },
+        {
+          "batch_id": 2,
+          "counter": "birch11",
+          "op": "sub",
+          "amount": 5,
+          "quote": "birch11 was debited 5."
+        },
+        {
+          "batch_id": 3,
+          "counter": "amber10",
+          "op": "set",
+          "amount": 7,
+          "quote": "amber10 was set to 7."
+        },
+        {
+          "batch_id": 3,
+          "counter": "birch11",
+          "op": "add",
+          "amount": 9,
+          "quote": "birch11 was credited 9."
+        },
+        {
+          "batch_id": 4,
+          "counter": "amber10",
+          "op": "add",
+          "amount": 2,
+          "quote": "amber10 was credited 2."
+        },
+        {
+          "batch_id": 4,
+          "counter": "birch11",
+          "op": "set",
+          "amount": 13,
+          "quote": "birch11 was set to 13."
+        }
+      ],
+      "reasoning": [
+        "Batch 2: amber is 10+8=18; birch is 20-5=15; ticket changes to birch.",
+        "Batch 3: amber is set to 7; birch is 15+9=24; ticket changes to amber.",
+        "Batch 4: amber is 7+2=9; birch is set to 13; ticket stays with amber.",
+        "review-s06 -> case-s06 -> ticket-s06. Join answers: birch at batch 2 is 15; amber at batch 3 is 7."
+      ],
+      "ambiguities": []
+    }
+  ],
+  "pair_review": {
+    "same_states_answers_and_actual_balance_events": true,
+    "unexpected_pair_semantic_differences": [],
+    "question_ambiguities": [],
+    "notes": [
+      "All six stress/control pairs have matching balances, ownership, references and answers under the stated reading conventions. The quotes differ while their actual financial postings match.",
+      "References are introduced in batch 4; retrospective questions explicitly ask to follow that reference and use ownership and balances at the requested earlier batch. This does not imply the reference was already known at that earlier time.",
+      "The s03 reversal is a new debit in batch 3, not a correction of batch-2 history.",
+      "The s04 stress variant combines scoped aliases with spelled-out numbers, so a performance difference would not isolate either factor.",
+      "The s06 two-hop review -> case -> ticket relationship exists in both variants. The paired stress difference is cancelled/unapproved transfers and a stale-directory distractor, not hop count.",
+      "Stress passages are longer and contain more distracting numbers or statements; pairs do not isolate semantic difficulty from input length.",
+      "Every document reuses the same opening balances, counter names and batch seals. These twelve authored development documents are not twelve independent underlying accounting tasks.",
+      "Several join answers duplicate a direct current/history answer in the same document; seven answer fields are not seven independent reasoning outcomes."
+    ]
+  }
+}

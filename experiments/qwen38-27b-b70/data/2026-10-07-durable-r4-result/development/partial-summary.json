@@ -1,0 +1,70 @@
+{
+  "arms": {
+    "summary": {
+      "completed": 1,
+      "asked": 24,
+      "correct": 24,
+      "all_valid": true,
+      "model_timing": true,
+      "cache_zero_known": true
+    },
+    "archive": {
+      "completed": 2,
+      "asked": 48,
+      "correct": 48,
+      "all_valid": true,
+      "model_timing": true,
+      "cache_zero_known": true
+    },
+    "quoted": {
+      "completed": 2,
+      "asked": 48,
+      "correct": 48,
+      "all_valid": true,
+      "model_timing": true,
+      "cache_zero_known": true
+    }
+  },
+  "complete_planned_matrix": false,
+  "campaign_clean": false,
+  "primary_arms": [
+    "archive",
+    "quoted"
+  ],
+  "secondary_arms": [
+    "summary"
+  ],
+  "expected_trials": 12,
+  "observed_trials": 5,
+  "primary_quality_gate_passed": false,
+  "all_arms_quality_gate_passed": false,
+  "quality_gate_passed": false,
+  "quality_gate_definition": "Alias of primary_quality_gate_passed; summary accuracy is secondary.",
+  "timing_eligible": false,
+  "median_quoted_over_archive_elapsed_ratio": null,
+  "single_server_speed_signal": false,
+  "speed_gate_passed": false,
+  "scope": "Synthetic primary-pair pilot. Single-server timing is descriptive; confirmation requires two fresh qualified servers.",
+  "schema": "durable-pilot-summary.v4",
+  "protocol": "durable-context-r4",
+  "stage": "development",
+  "status": "failed",
+  "source_sha256": {
+    "pilot.py": "d50e7ce1241db819f6cf24a3ba4be676acbb7158d0d51e4f62693dd2ae41cb77",
+    "campaign.py": "34b210435b4073c5c9ed6359d2a3f254d8355b9f0204203c2bfc72fc5b9df775",
+    "tasks.py": "ddcde99e455b0abc1734e535730da0715df42fff5bd40c267a7970b84801ad0c",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "extraction.py": "8e890dd192dce55f3a0762976ff5a55dd8bf7a26af0645209dce0ea1385d7560",
+    "answers.py": "508330f7ea324d9b8e83b54d2fe2b7ec2238e3a6aecee69ee3a6b8e78aa542ab"
+  },
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "development_gate_passed": false
+}

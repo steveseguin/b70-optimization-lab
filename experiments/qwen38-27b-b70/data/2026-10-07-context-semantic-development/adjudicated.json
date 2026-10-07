@@ -1,0 +1,1197 @@
+{
+  "schema": "context-semantic-adjudicated.v1",
+  "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+  "annotation_sources": [
+    {
+      "path": "annotations-independent.json",
+      "sha256": "5eac639d3b2e888414a5b603a538257f2fa8defad57bfc73ea42a66a09a1e8dc"
+    },
+    {
+      "path": "annotations-review.json",
+      "sha256": "922039d8a2b87858a8b83d954419cc54cd91b8e88e4c56f7a7ff07aeb57ac595"
+    }
+  ],
+  "review": {
+    "documents": 12,
+    "states": 48,
+    "answers": 84,
+    "events": 84,
+    "semantic_agreement": true,
+    "quote_span_variants": [
+      {
+        "document_id": "s04-stress",
+        "event_index": 2,
+        "batch_id": 2,
+        "counter": "amber10",
+        "canonical_quote": "North desk received a credit of four.",
+        "alternative_quote": "For this notice, North desk means amber10 and South desk means birch11. North desk received a credit of four.",
+        "resolution": "Both are verbatim. Canonical form is the complete posting sentence; alternative adds explicit alias context. Semantic event is identical."
+      },
+      {
+        "document_id": "s04-stress",
+        "event_index": 3,
+        "batch_id": 2,
+        "counter": "birch11",
+        "canonical_quote": "South desk received a debit of three.",
+        "alternative_quote": "For this notice, North desk means amber10 and South desk means birch11. North desk received a credit of four. South desk received a debit of three.",
+        "resolution": "Both are verbatim. Canonical form is the complete posting sentence; alternative adds explicit alias context. Semantic event is identical."
+      },
+      {
+        "document_id": "s04-stress",
+        "event_index": 4,
+        "batch_id": 3,
+        "counter": "birch11",
+        "canonical_quote": "Harbor desk was set to twenty-five.",
+        "alternative_quote": "In this notice, Harbor desk means birch11 and Lake desk means amber10. Harbor desk was set to twenty-five.",
+        "resolution": "Both are verbatim. Canonical form is the complete posting sentence; alternative adds explicit alias context. Semantic event is identical."
+      },
+      {
+        "document_id": "s04-stress",
+        "event_index": 5,
+        "batch_id": 3,
+        "counter": "amber10",
+        "canonical_quote": "Lake desk was debited two.",
+        "alternative_quote": "In this notice, Harbor desk means birch11 and Lake desk means amber10. Harbor desk was set to twenty-five. Lake desk was debited two.",
+        "resolution": "Both are verbatim. Canonical form is the complete posting sentence; alternative adds explicit alias context. Semantic event is identical."
+      },
+      {
+        "document_id": "s04-stress",
+        "event_index": 6,
+        "batch_id": 4,
+        "counter": "amber10",
+        "canonical_quote": "Red desk was credited six.",
+        "alternative_quote": "For this closing notice, Red desk means amber10 and Blue desk means birch11. Red desk was credited six.",
+        "resolution": "Both are verbatim. Canonical form is the complete posting sentence; alternative adds explicit alias context. Semantic event is identical."
+      },
+      {
+        "document_id": "s04-stress",
+        "event_index": 7,
+        "batch_id": 4,
+        "counter": "birch11",
+        "canonical_quote": "Blue desk was debited five.",
+        "alternative_quote": "For this closing notice, Red desk means amber10 and Blue desk means birch11. Red desk was credited six. Blue desk was debited five.",
+        "resolution": "Both are verbatim. Canonical form is the complete posting sentence; alternative adds explicit alias context. Semantic event is identical."
+      }
+    ],
+    "unresolved_disagreements": [],
+    "limit": "Two separate assistant annotations and parent comparison; not independent human or external validation."
+  },
+  "documents": [
+    {
+      "document_id": "s01-stress",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 3,
+              "quote": "birch11 was debited 3."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 17
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 4,
+              "quote": "A separate approved posting credited amber10 with 4."
+            }
+          ],
+          "state_after": {
+            "amber10": 14,
+            "birch11": 17
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 18,
+              "quote": "The balance of birch11 was replaced with 18."
+            }
+          ],
+          "state_after": {
+            "amber10": 14,
+            "birch11": 18
+          }
+        }
+      ],
+      "answers": {
+        "s01-q01": 14,
+        "s01-q02": 18,
+        "s01-q03": 10,
+        "s01-q04": 17,
+        "s01-q05": "linen-star",
+        "s01-q06": 10,
+        "s01-q07": 17
+      }
+    },
+    {
+      "document_id": "s01-control",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 3,
+              "quote": "birch11 was debited 3."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 17
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 4,
+              "quote": "amber10 was credited 4."
+            }
+          ],
+          "state_after": {
+            "amber10": 14,
+            "birch11": 17
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 18,
+              "quote": "birch11 was set to 18."
+            }
+          ],
+          "state_after": {
+            "amber10": 14,
+            "birch11": 18
+          }
+        }
+      ],
+      "answers": {
+        "s01-q01": 14,
+        "s01-q02": 18,
+        "s01-q03": 10,
+        "s01-q04": 17,
+        "s01-q05": "linen-star",
+        "s01-q06": 10,
+        "s01-q07": 17
+      }
+    },
+    {
+      "document_id": "s02-stress",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 17,
+              "quote": "The approved replacement record set amber10 to 17."
+            }
+          ],
+          "state_after": {
+            "amber10": 17,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 6,
+              "quote": "birch11 was credited 6."
+            }
+          ],
+          "state_after": {
+            "amber10": 17,
+            "birch11": 26
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 2,
+              "quote": "amber10 was debited 2."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 23,
+              "quote": "The closing posting replaced birch11 with 23."
+            }
+          ],
+          "state_after": {
+            "amber10": 15,
+            "birch11": 23
+          }
+        }
+      ],
+      "answers": {
+        "s02-q01": 15,
+        "s02-q02": 23,
+        "s02-q03": 17,
+        "s02-q04": 26,
+        "s02-q05": "violet-gate",
+        "s02-q06": 10,
+        "s02-q07": 26
+      }
+    },
+    {
+      "document_id": "s02-control",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 17,
+              "quote": "amber10 was set to 17."
+            }
+          ],
+          "state_after": {
+            "amber10": 17,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 6,
+              "quote": "birch11 was credited 6."
+            }
+          ],
+          "state_after": {
+            "amber10": 17,
+            "birch11": 26
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 2,
+              "quote": "amber10 was debited 2."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 23,
+              "quote": "birch11 was set to 23."
+            }
+          ],
+          "state_after": {
+            "amber10": 15,
+            "birch11": 23
+          }
+        }
+      ],
+      "answers": {
+        "s02-q01": 15,
+        "s02-q02": 23,
+        "s02-q03": 17,
+        "s02-q04": 26,
+        "s02-q05": "violet-gate",
+        "s02-q06": 10,
+        "s02-q07": 26
+      }
+    },
+    {
+      "document_id": "s03-stress",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 7,
+              "quote": "The clerk posted a credit of 7 to amber10."
+            }
+          ],
+          "state_after": {
+            "amber10": 17,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 7,
+              "quote": "To reverse it, the clerk now posted a debit of 7 to amber10."
+            },
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 2,
+              "quote": "birch11 was credited 2."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 22
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 3,
+              "quote": "A new delivery credited amber10 with 3."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 4,
+              "quote": "birch11 was debited 4."
+            }
+          ],
+          "state_after": {
+            "amber10": 13,
+            "birch11": 18
+          }
+        }
+      ],
+      "answers": {
+        "s03-q01": 13,
+        "s03-q02": 18,
+        "s03-q03": 17,
+        "s03-q04": 10,
+        "s03-q05": "marble-bird",
+        "s03-q06": 17,
+        "s03-q07": 18
+      }
+    },
+    {
+      "document_id": "s03-control",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 7,
+              "quote": "amber10 was credited 7."
+            }
+          ],
+          "state_after": {
+            "amber10": 17,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 7,
+              "quote": "amber10 was debited 7."
+            },
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 2,
+              "quote": "birch11 was credited 2."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 22
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 3,
+              "quote": "amber10 was credited 3."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 4,
+              "quote": "birch11 was debited 4."
+            }
+          ],
+          "state_after": {
+            "amber10": 13,
+            "birch11": 18
+          }
+        }
+      ],
+      "answers": {
+        "s03-q01": 13,
+        "s03-q02": 18,
+        "s03-q03": 17,
+        "s03-q04": 10,
+        "s03-q05": "marble-bird",
+        "s03-q06": 17,
+        "s03-q07": 18
+      }
+    },
+    {
+      "document_id": "s04-stress",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 4,
+              "quote": "North desk received a credit of four."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 3,
+              "quote": "South desk received a debit of three."
+            }
+          ],
+          "state_after": {
+            "amber10": 14,
+            "birch11": 17
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 25,
+              "quote": "Harbor desk was set to twenty-five."
+            },
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 2,
+              "quote": "Lake desk was debited two."
+            }
+          ],
+          "state_after": {
+            "amber10": 12,
+            "birch11": 25
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 6,
+              "quote": "Red desk was credited six."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 5,
+              "quote": "Blue desk was debited five."
+            }
+          ],
+          "state_after": {
+            "amber10": 18,
+            "birch11": 20
+          }
+        }
+      ],
+      "answers": {
+        "s04-q01": 18,
+        "s04-q02": 20,
+        "s04-q03": 14,
+        "s04-q04": 25,
+        "s04-q05": "copper-leaf",
+        "s04-q06": 14,
+        "s04-q07": 25
+      }
+    },
+    {
+      "document_id": "s04-control",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 4,
+              "quote": "amber10 was credited 4."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 3,
+              "quote": "birch11 was debited 3."
+            }
+          ],
+          "state_after": {
+            "amber10": 14,
+            "birch11": 17
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 25,
+              "quote": "birch11 was set to 25."
+            },
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 2,
+              "quote": "amber10 was debited 2."
+            }
+          ],
+          "state_after": {
+            "amber10": 12,
+            "birch11": 25
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 6,
+              "quote": "amber10 was credited 6."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 5,
+              "quote": "birch11 was debited 5."
+            }
+          ],
+          "state_after": {
+            "amber10": 18,
+            "birch11": 20
+          }
+        }
+      ],
+      "answers": {
+        "s04-q01": 18,
+        "s04-q02": 20,
+        "s04-q03": 14,
+        "s04-q04": 25,
+        "s04-q05": "copper-leaf",
+        "s04-q06": 14,
+        "s04-q07": 25
+      }
+    },
+    {
+      "document_id": "s05-stress",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 5,
+              "quote": "amber10 was credited 5."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 4,
+              "quote": "birch11 was debited 4."
+            }
+          ],
+          "state_after": {
+            "amber10": 15,
+            "birch11": 16
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 19,
+              "quote": "amber10 was actually set to 19."
+            },
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 3,
+              "quote": "birch11 was credited 3."
+            }
+          ],
+          "state_after": {
+            "amber10": 19,
+            "birch11": 19
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 7,
+              "quote": "amber10 was debited 7."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 24,
+              "quote": "birch11 was set to 24."
+            }
+          ],
+          "state_after": {
+            "amber10": 12,
+            "birch11": 24
+          }
+        }
+      ],
+      "answers": {
+        "s05-q01": 12,
+        "s05-q02": 24,
+        "s05-q03": 15,
+        "s05-q04": 19,
+        "s05-q05": "linen-star",
+        "s05-q06": 15,
+        "s05-q07": 24
+      }
+    },
+    {
+      "document_id": "s05-control",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 5,
+              "quote": "amber10 was credited 5."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 4,
+              "quote": "birch11 was debited 4."
+            }
+          ],
+          "state_after": {
+            "amber10": 15,
+            "birch11": 16
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 19,
+              "quote": "amber10 was set to 19."
+            },
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 3,
+              "quote": "birch11 was credited 3."
+            }
+          ],
+          "state_after": {
+            "amber10": 19,
+            "birch11": 19
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "sub",
+              "amount": 7,
+              "quote": "amber10 was debited 7."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 24,
+              "quote": "birch11 was set to 24."
+            }
+          ],
+          "state_after": {
+            "amber10": 12,
+            "birch11": 24
+          }
+        }
+      ],
+      "answers": {
+        "s05-q01": 12,
+        "s05-q02": 24,
+        "s05-q03": 15,
+        "s05-q04": 19,
+        "s05-q05": "linen-star",
+        "s05-q06": 15,
+        "s05-q07": 24
+      }
+    },
+    {
+      "document_id": "s06-stress",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 8,
+              "quote": "amber10 was credited 8."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 5,
+              "quote": "birch11 was debited 5."
+            }
+          ],
+          "state_after": {
+            "amber10": 18,
+            "birch11": 15
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 7,
+              "quote": "amber10 was set to 7."
+            },
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 9,
+              "quote": "birch11 was credited 9."
+            }
+          ],
+          "state_after": {
+            "amber10": 7,
+            "birch11": 24
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 2,
+              "quote": "amber10 was credited 2."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 13,
+              "quote": "birch11 was set to 13."
+            }
+          ],
+          "state_after": {
+            "amber10": 9,
+            "birch11": 13
+          }
+        }
+      ],
+      "answers": {
+        "s06-q01": 9,
+        "s06-q02": 13,
+        "s06-q03": 18,
+        "s06-q04": 24,
+        "s06-q05": "violet-gate",
+        "s06-q06": 15,
+        "s06-q07": 7
+      }
+    },
+    {
+      "document_id": "s06-control",
+      "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+      "batches": [
+        {
+          "batch_id": 1,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 10,
+              "quote": "The opening posting set amber10 to 10."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 20,
+              "quote": "The opening posting set birch11 to 20."
+            }
+          ],
+          "state_after": {
+            "amber10": 10,
+            "birch11": 20
+          }
+        },
+        {
+          "batch_id": 2,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 8,
+              "quote": "amber10 was credited 8."
+            },
+            {
+              "counter": "birch11",
+              "op": "sub",
+              "amount": 5,
+              "quote": "birch11 was debited 5."
+            }
+          ],
+          "state_after": {
+            "amber10": 18,
+            "birch11": 15
+          }
+        },
+        {
+          "batch_id": 3,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "set",
+              "amount": 7,
+              "quote": "amber10 was set to 7."
+            },
+            {
+              "counter": "birch11",
+              "op": "add",
+              "amount": 9,
+              "quote": "birch11 was credited 9."
+            }
+          ],
+          "state_after": {
+            "amber10": 7,
+            "birch11": 24
+          }
+        },
+        {
+          "batch_id": 4,
+          "events": [
+            {
+              "counter": "amber10",
+              "op": "add",
+              "amount": 2,
+              "quote": "amber10 was credited 2."
+            },
+            {
+              "counter": "birch11",
+              "op": "set",
+              "amount": 13,
+              "quote": "birch11 was set to 13."
+            }
+          ],
+          "state_after": {
+            "amber10": 9,
+            "birch11": 13
+          }
+        }
+      ],
+      "answers": {
+        "s06-q01": 9,
+        "s06-q02": 13,
+        "s06-q03": 18,
+        "s06-q04": 24,
+        "s06-q05": "violet-gate",
+        "s06-q06": 15,
+        "s06-q07": 7
+      }
+    }
+  ]
+}
