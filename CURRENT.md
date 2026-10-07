@@ -20,17 +20,20 @@ Named20/28 placement, BF16 and 8+3 steps remain unchanged. The tightest sampled
 poststage memory was 4.968GiB free on the decoder card, above its 2GiB floor;
 these observations are not continuous peak-memory bounds.
 
-Next: qualify the same configuration on all ten fixed fixtures. An older, stopped
-97 B4-r2 test arm has 577 potential duplicate archives (10.855GiB); fresh exact
-comparisons, complete file hashes and direct restore maps must precede retirement.
-That could fund the broader suite while retaining the successful109 application.
-The full ten-fixture110 successor now passes305 combined runtime CPU tests and31
+Next: qualify the same configuration on all ten fixed fixtures. The old, stopped
+97 B4-r2 arm's577 byte-identical duplicates have now been retired after two fresh
+original-comparator passes. That recovered10.855GiB;20 reference/representative
+archives were reverified, all metadata/previews retained, and direct ordinary-copy
+restore maps are recorded. The first plan's wrong cyclic fixture assumption was
+safely refused; the corrected map uses the pinned historical emitted order.
+[Cleanup receipt](experiments/ltx25-b70/data/resume-20261007/after109-b4-retirement-completed.json).
+
+The full ten-fixture110 successor passes305 combined runtime CPU tests and31
 standalone plan controls, actual-venv source/runtime checks and independent review.
 It admits57 requests/50 captures with9GiB runtime writes above the50GiB reserve;
 prebuild admission additionally reserves384MiB. Its numerical path and memory
-floors match109. Source is prepared but no110 packet or GPU request exists yet.
-The first cleanup plan safely refused an incorrect assumed cyclic fixture order;
-its failed source is preserved and the corrected fresh proof is in progress.
+floors match109. Source construction is in progress while109 remains retained;
+no110 GPU request has occurred. Fresh prebuild available space was68,258,586,624bytes.
 No extra requests are authorized by the consumed pilot plan, and no passive
 observer is running. Models, failed experiments and unique outputs stay protected.
 [Completed pilot proof](experiments/ltx25-b70/data/resume-20261007/duration109-closeout/summary.json),

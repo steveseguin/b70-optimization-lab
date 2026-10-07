@@ -49,3 +49,20 @@ or a silent change to this qualification. Existing deterministic duplicate
 retirement is the smaller, independently reviewable step here. No reserve
 reduction, unique-experiment deletion, reference-chain rewrite or automatic
 cache eviction is proposed.
+
+## Verified retirement completed
+
+Root rebuilt the original587 comparisons twice, with matching whole-archive
+hashes and stable file identities, then removed exactly577 duplicates. All20
+protected B4 references and first complete outputs were reverified afterward.
+Allocated reclaim11,655,794,688bytes (10.8553GiB); final receipt is completed with
+no error. No109 process, endpoint mutation or raw output was touched. Direct
+ordinary-copy restoration is recorded; replaying the old complete proof requires
+restoring retired paths first. The50GiB restore-admission guard remains required.
+
+PlanSHA`e016e31c6047155c480ed20b94794ae37cef660f7188c22dc2b5786337ecb662`;
+receiptSHA`e01fccf3d827a982612d71707115f57437e061d953a3b04c75dd39ad2768386c`.
+[Completed verification](../data/resume-20261007/after109-b4-retirement-completed.json).
+The first mapping attempt was safely refused before producing a plan or deleting
+anything. Its failed source/tests are preserved under failed-v1; the corrected
+helper uses original emitted order, not a guessed cyclic fixture schedule.
