@@ -56,8 +56,27 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-06 23:59 UTC**. Its protected context experiment
+Latest two-card review: **2026-10-07 00:22 UTC**. Its protected context experiment
 continues independently; see its latest entry below.
+
+## 2026-10-06 20:22 EDT, two-B70 host: million-token quote run verified; handoff being prepared
+
+The million-token quoted trial completed **24/24 in 47.9 minutes**, nonvoid.
+Exact stream/answer hashes match read mode's **23/24 in 62.2 minutes**; the 23.0%
+elapsed reduction describes one pair. The new [31-attempt snapshot](experiments/qwen38-27b-b70/data/2026-10-05-context/canonical-2026-10-07/manifest.json)
+retains every prior attempt; 29 are completed, one interrupted and one incomplete.
+
+**The retention seed-1 quote block did not run:** planning failed because its task
+file was absent. The existing 35/36 in that directory is seed 0. The wrapper
+continued; its future `plan complete` marker cannot certify every requested cell.
+The 480K quoted seed 1 is running, with 21 actual questions. See the
+[follow-up audit](experiments/qwen38-27b-b70/notes/2026-10-07-context-campaign-followup.md).
+
+The user authorized proceeding with the next experiment. A separate one-shot
+host coordinator is being prepared for the frozen durable pilot; it must wait
+for the protected supervisor's full lifetime and clean server release, then
+qualify a fresh server and enforce both development gates. No new model request
+has been sent and the protected plan-E code/queue remains unchanged.
 
 ## 2026-10-06 19:59 EDT, two-B70 host: evidence pipeline and durable pilot ready; no new model results
 
