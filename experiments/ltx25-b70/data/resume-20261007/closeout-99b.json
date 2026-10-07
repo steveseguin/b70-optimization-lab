@@ -1,0 +1,619 @@
+{
+  "schema": "ltx.rope99b.qualified-control-closeout.v1",
+  "at_utc": "2026-10-07T14:15:26.454455+00:00",
+  "status": "completed-exact-control-clean-stop",
+  "qualification_scope": "Tested two-way 23/25, W2 B1 shared-pool decoder-xpu2, BF16 256x256 25-frame 8+3 schedule against ten existing w93c fixtures only. No new speed record or general upstream/package qualification.",
+  "source_commit": "b00c6e95279053474955540ba4f551646722b9aa",
+  "packet_manifest_sha256": "f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a",
+  "parent99_still_failed": true,
+  "source_inventory_unchanged_from99": {
+    "equal": true,
+    "files": 1333,
+    "basis": "pinned complete manifest source/ mappings"
+  },
+  "dependency_receipt_sha256": "626dd5e9d840c6bfa56f6da23f326e2a434aae46c73b3662c5a08a3d50970e09",
+  "rope_installation": {
+    "schema": "ltx.rope-arithmetic-compat.v1",
+    "status": "installed-unqualified",
+    "installer_sha256": "99e6bc916789b8d4443a869000af524462ce66eef4757f000280b8a80366c570",
+    "source_path": "/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_kitchen/backends/eager/rope.py",
+    "original_source_sha256": "630a3d287bf602046935086f9d43eb6db2ec4971913a1cb3fb35bae6ea4ac9ee",
+    "restored_source_sha256": "aee33a18bb5fe75ce24ebad389b830c9d5775d52723fc7df4864598547b2257c",
+    "function": "apply_rope_split_half1",
+    "before_code_sha256": "eb01825368fd62ed8e50df0bf47c342211e056aa6016471417a9e9484279ae56",
+    "after_code_sha256": "23f9f6e80fe2fed667eb8f1916c691e367d74f2030f54b3dcc6a42abcb7fa6fb",
+    "backend": "eager",
+    "aliases_preserved": [
+      "apply_rope_split_half1",
+      "apply_rope_split_half",
+      "apply_rope_split_half1_",
+      "apply_rope_split_half_"
+    ],
+    "package_files_changed": false,
+    "scope": "one process-local function code replacement; no exception interception",
+    "gpu_parity_qualified": false
+  },
+  "quality": {
+    "probe_exact_clips": 10,
+    "timed_exact_clips": 116,
+    "selfcheck_exact_clips": 2,
+    "four_tensor_parity_receipts": [
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-03-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-04-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-05-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-06-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-07-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-08-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-09-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-10-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-11-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-12-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-self-04-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-self-05-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-04-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-05-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-06-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-07-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-08-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-09-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-10-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-100-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-101-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-102-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-103-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-104-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-105-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-106-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-107-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-108-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-109-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-11-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-110-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-111-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-112-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-113-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-114-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-115-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-116-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-117-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-118-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-119-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-12-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-13-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-14-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-15-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-16-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-17-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-18-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-19-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-20-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-21-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-22-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-23-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-24-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-25-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-26-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-27-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-28-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-29-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-30-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-31-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-32-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-33-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-34-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-35-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-36-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-37-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-38-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-39-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-40-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-41-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-42-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-43-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-44-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-45-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-46-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-47-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-48-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-49-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-50-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-51-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-52-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-53-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-54-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-55-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-56-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-57-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-58-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-59-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-60-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-61-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-62-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-63-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-64-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-65-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-66-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-67-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-68-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-69-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-70-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-71-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-72-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-73-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-74-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-75-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-76-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-77-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-78-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-79-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-80-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-81-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-82-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-83-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-84-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-85-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-86-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-87-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-88-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-89-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-90-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-91-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-92-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-93-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-94-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-95-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-96-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-97-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-98-parity.json",
+      "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-99-parity.json"
+    ],
+    "context_sentry_gate_passed": true,
+    "emission_sequence_ok": true,
+    "conditioning_restored_six_self_inputs": [
+      {
+        "self_index": 0,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-00.json",
+            "conditioning_fingerprint": "ca4e91780703736d1f313898ddf10b618ada1851d2cd620bbfc6a3911bd6ab34"
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-00.json",
+            "conditioning_fingerprint": "4525b1eb0c846ae9844d533f6e4f51ef40bebc957f40e5146894465c3b412b93"
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-00.json",
+            "conditioning_fingerprint": "ca4e91780703736d1f313898ddf10b618ada1851d2cd620bbfc6a3911bd6ab34"
+          }
+        }
+      },
+      {
+        "self_index": 1,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-01.json",
+            "conditioning_fingerprint": "2106ddd6d6218b7613382842c4ae222a8c7c38017b5162dcff0c24b5851fa34b"
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-01.json",
+            "conditioning_fingerprint": "494966da0b5bda91e6d016df4c490da80ccffacd33665c803d639a692e14c095"
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-01.json",
+            "conditioning_fingerprint": "2106ddd6d6218b7613382842c4ae222a8c7c38017b5162dcff0c24b5851fa34b"
+          }
+        }
+      },
+      {
+        "self_index": 2,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-02.json",
+            "conditioning_fingerprint": "475c23c11d78cc8275df26e34bfd32f6734c4584077f12e626384983214bc9c9"
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-02.json",
+            "conditioning_fingerprint": "b0f798519709a2d1b649782aa87d582827b1edf6d4277c7930cd05b16880aed2"
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-02.json",
+            "conditioning_fingerprint": "475c23c11d78cc8275df26e34bfd32f6734c4584077f12e626384983214bc9c9"
+          }
+        }
+      },
+      {
+        "self_index": 3,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-03.json",
+            "conditioning_fingerprint": "2964e77b938e47bf203a464ef52f9cbfae7827eefe9095a0c87d763871bad9b2"
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-03.json",
+            "conditioning_fingerprint": "86aa32cc18daffd5096eadb6f12ccc18ed96b62d5b60b03f03cc9d6c9f3cce6e"
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-03.json",
+            "conditioning_fingerprint": "2964e77b938e47bf203a464ef52f9cbfae7827eefe9095a0c87d763871bad9b2"
+          }
+        }
+      },
+      {
+        "self_index": 4,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-04.json",
+            "conditioning_fingerprint": "0a095b9d10254f131c327ce907b70030d24b9e983e92856300fe2601f66445b4"
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-04.json",
+            "conditioning_fingerprint": "c616bbc0c9c22d968bd4a06c7a6cb82b391f700128954352aec38bc8cd890f5d"
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-04.json",
+            "conditioning_fingerprint": "0a095b9d10254f131c327ce907b70030d24b9e983e92856300fe2601f66445b4"
+          }
+        }
+      },
+      {
+        "self_index": 5,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-05.json",
+            "conditioning_fingerprint": "1f89097979d43550cad17dfde1938fdc52204b95d492f02d8a4808e9e9c40f33"
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-05.json",
+            "conditioning_fingerprint": "73b0ef8e1baf2668cffd5d020e884f4d82370355ab6f9b19242f08b994887944"
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-05.json",
+            "conditioning_fingerprint": "1f89097979d43550cad17dfde1938fdc52204b95d492f02d8a4808e9e9c40f33"
+          }
+        }
+      }
+    ],
+    "sampler_context_and_input_restoration": [
+      {
+        "self_index": 2,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-sampler-f98-twowayw2b1p1dxpu2s256x256r2-self-02.json",
+            "conditioning_fingerprint": "ca4e91780703736d1f313898ddf10b618ada1851d2cd620bbfc6a3911bd6ab34",
+            "context": {
+              "stage_a_context_sha256": "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+              "stage_b_context_sha256": "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+            },
+            "inputs": {
+              "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+              "guider_a_conds": "1f158b64d3ac34040fd40e67c9f587b13b48bfef2f962e3c4d4b2474a25dae64",
+              "guider_b_conds": "1f158b64d3ac34040fd40e67c9f587b13b48bfef2f962e3c4d4b2474a25dae64",
+              "noise_seeds": [
+                42,
+                42
+              ],
+              "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+            }
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99-twowayw2b1p1dxpu2s256x256-self-02.json",
+            "conditioning_fingerprint": "4525b1eb0c846ae9844d533f6e4f51ef40bebc957f40e5146894465c3b412b93",
+            "context": {
+              "stage_a_context_sha256": "1032e454026bc83dd8a4b2e2781ee473dc342071d7f51d0c5575f20b648698ee",
+              "stage_b_context_sha256": "1032e454026bc83dd8a4b2e2781ee473dc342071d7f51d0c5575f20b648698ee"
+            },
+            "inputs": {
+              "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+              "guider_a_conds": "ea6d45b24114e61c2d5e2681146a1ade3fc1c296286d6c27b0ccdc592cfa441c",
+              "guider_b_conds": "ea6d45b24114e61c2d5e2681146a1ade3fc1c296286d6c27b0ccdc592cfa441c",
+              "noise_seeds": [
+                42,
+                42
+              ],
+              "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+            }
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99b-twowayw2b1p1dxpu2s256x256-self-02.json",
+            "conditioning_fingerprint": "ca4e91780703736d1f313898ddf10b618ada1851d2cd620bbfc6a3911bd6ab34",
+            "context": {
+              "stage_a_context_sha256": "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+              "stage_b_context_sha256": "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+            },
+            "inputs": {
+              "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+              "guider_a_conds": "1f158b64d3ac34040fd40e67c9f587b13b48bfef2f962e3c4d4b2474a25dae64",
+              "guider_b_conds": "1f158b64d3ac34040fd40e67c9f587b13b48bfef2f962e3c4d4b2474a25dae64",
+              "noise_seeds": [
+                42,
+                42
+              ],
+              "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+            }
+          }
+        }
+      },
+      {
+        "self_index": 3,
+        "packets": {
+          "98r2": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-sampler-f98-twowayw2b1p1dxpu2s256x256r2-self-03.json",
+            "conditioning_fingerprint": "2106ddd6d6218b7613382842c4ae222a8c7c38017b5162dcff0c24b5851fa34b",
+            "context": {
+              "stage_a_context_sha256": "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+              "stage_b_context_sha256": "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+            },
+            "inputs": {
+              "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+              "guider_a_conds": "d3291832104a1b847557b7d84185c1d1948839ac6153b64a55dff155ff6de1ec",
+              "guider_b_conds": "d3291832104a1b847557b7d84185c1d1948839ac6153b64a55dff155ff6de1ec",
+              "noise_seeds": [
+                17,
+                17
+              ],
+              "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+            }
+          },
+          "99": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99-twowayw2b1p1dxpu2s256x256-self-03.json",
+            "conditioning_fingerprint": "494966da0b5bda91e6d016df4c490da80ccffacd33665c803d639a692e14c095",
+            "context": {
+              "stage_a_context_sha256": "fab52d82320c7ed866e985518cac0c983bab0d414ec67cfbf1ecc385adc63ca6",
+              "stage_b_context_sha256": "fab52d82320c7ed866e985518cac0c983bab0d414ec67cfbf1ecc385adc63ca6"
+            },
+            "inputs": {
+              "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+              "guider_a_conds": "969a230a580d99bab3176558f34a15a7b5f1147b7c114a4a5f0db1d436ee127c",
+              "guider_b_conds": "969a230a580d99bab3176558f34a15a7b5f1147b7c114a4a5f0db1d436ee127c",
+              "noise_seeds": [
+                17,
+                17
+              ],
+              "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+            }
+          },
+          "99b": {
+            "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99b-twowayw2b1p1dxpu2s256x256-self-03.json",
+            "conditioning_fingerprint": "2106ddd6d6218b7613382842c4ae222a8c7c38017b5162dcff0c24b5851fa34b",
+            "context": {
+              "stage_a_context_sha256": "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+              "stage_b_context_sha256": "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+            },
+            "inputs": {
+              "audio_latent": "44afdc7145ae3dea7d1d8404ba1dc8878686e2bc472e6c5498be1d0c785fa1ec",
+              "guider_a_conds": "d3291832104a1b847557b7d84185c1d1948839ac6153b64a55dff155ff6de1ec",
+              "guider_b_conds": "d3291832104a1b847557b7d84185c1d1948839ac6153b64a55dff155ff6de1ec",
+              "noise_seeds": [
+                17,
+                17
+              ],
+              "video_latent": "035356ec76d4ece17c11ada8213aa1066409b81dbd6c25a486f93b0dba13c60b"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "timing": {
+    "count": 120,
+    "distinct_clips_emitted": 116,
+    "steady_mean_s": 1.315640350877193,
+    "steady_p95_s": 1.573,
+    "steady_min_s": 0.942,
+    "steady_max_s": 1.708,
+    "effective_fps": 19.00215357740544,
+    "seconds_of_wall_per_second_of_video": 1.2630147368421052,
+    "definition": "interval between server execution_success timestamps of consecutive distinct emitted clips; the first such interval is excluded from the mean; fills are prompts that emit nothing (pipeline fill); a re-emitted clip fails the arm"
+  },
+  "historical98r2_seconds_per_clip": 1.317859649122807,
+  "speed_record": false,
+  "playback_fps": 24,
+  "frames_per_clip": 25,
+  "shutdown": {
+    "server_pid": 3129897,
+    "single_SIGINT_utc": "2026-10-07T14:12:02Z",
+    "process_gone_utc": "2026-10-07T14:12:07Z",
+    "campaign_exit_code": 0,
+    "stop_exit_code": 0,
+    "basis": "bound campaign log; no additional process/device probe performed for this closeout"
+  },
+  "postflight": {
+    "passed": true,
+    "end_utc": "2026-10-07 14:12:38 UTC",
+    "gpu_fault_lines_this_boot": 0,
+    "all_four_cards_passed": true
+  },
+  "fd_observation": {
+    "samples": 496,
+    "min": 33,
+    "max": 2634,
+    "last_pre_exit": 2503,
+    "any_alert": false,
+    "terminal": {
+      "status": "process-exited",
+      "pid": 3129897,
+      "reason": "matching-zombie-or-dead-state",
+      "observed_identity": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "start_ticks": "25511190",
+        "state": "Z"
+      }
+    },
+    "stderr_bytes": 0,
+    "limitation": "Clean observer teardown and no alert in this finite run; no descriptor leak-fix or long-run stability claim."
+  },
+  "evidence_sha256": {
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/summary.json": "2c8877f67f7b47916ad2bfe70c57990c5a0c418ae22aee5851f647cd8121e4c5",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/selfcheck.json": "86f25725e6159525a12405af45ba8f6b3e83503bbec0792278a66294fa3cbbda",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-throughput.json": "502550ae69bfa4d58938f2f72265932ea03981e2d7ac646afcf05c880532fd06",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-throughput.json": "cc991a9dfecd5c51bcef027a43bebfc68abf8abd9cf21a625fbe636d8e7a91cd",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-self-throughput.json": "e18f528783c12a8d388241f8fb7ccc6c4f259603bbd591f0cbb01db8c0dc3bbf",
+    "experiments/ltx25-b70/data/resume-20261007/postflight-99b.json": "c10b30aba37dd773e2a9b91406ed6d2b6c7ad08adab4934564d39c2e4d04cb3a",
+    "experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json": "b73dd6f1786eb3c98b029c99e8a3ae487a54832e07784bfbad592a3f16dc4784",
+    "experiments/ltx25-b70/data/resume-20261007/runtime99b-build.json": "4351346dbf7b04b9f2f08565f9e2be5c8616e00e346b847871f5f1b64b7075f4",
+    "experiments/ltx25-b70/data/resume-20261007/closeout-r2.json": "9ae27397e778176b1309ab8b300b2cd9ed1c3ef83f6e038d31541c91f9b46359",
+    "experiments/ltx25-b70/data/resume-20261007/closeout-99.json": "bcee1b30a191eaa32dbb91d6d00f5122fa2707b565f8dbfb6ba7512d1c358eb2",
+    "experiments/ltx25-b70/data/resume-20261007/fd-observations-99b.jsonl": "c72d56f76b735b060df9258f80ddb5ac5ae2f4b87fc55c3efeafaed138877dda",
+    "experiments/ltx25-b70/data/resume-20261007/fd-observations-99b.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/server-identity.json": "f2b850d71566e2127f06fe6673737bcc68f3047dc74a0b29f5ca85e290e1454a",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/upstream99b-campaign-control.log": "3a79bb9a211a085597af52bbc84016265544b5d818d86748e35b85a6a272c77d",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/upstream99b-server-control.log": "acce7a99ca6c5137d551963fd15b0516620b08fc449aca1b63e6f988af6f5d7b",
+    "/home/steve/ltx25-upstream99-dependencies/receipt.json": "626dd5e9d840c6bfa56f6da23f326e2a434aae46c73b3662c5a08a3d50970e09",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-03-parity.json": "2788e2723295d7472f3811d2f6da3cdf5720249c73f84f24a9dc34d29638ae7b",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-04-parity.json": "f09e7061c19af2f836403ea9c5ced35206006ccf554029b8bc173425bdf955a8",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-05-parity.json": "15dcfb83b75a3690a685f286c343b979b2628a94b2ea8053af43a82fa3af15e0",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-06-parity.json": "603c7a72c937723d695bdbafb7d6f1ccbf664a8e6872ad89b5ef46c9d23b4235",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-07-parity.json": "4794c825d39b75c447a94384281808bb006171b74f92014a102ad8a4fcade9d2",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-08-parity.json": "4f8c18c88adb2628634b8304723430ab72cd42ce5c96756f39ab21d56aed1761",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-09-parity.json": "c22fb63c442d596e34291ce174cfe3fe7e77e3cb1fce2bd48564010cac1ead65",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-10-parity.json": "e37d637aa0d413c05f69e129c895288e9a46670bcb525b830ab630e75506ba6a",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-11-parity.json": "787b2d64ea4aca8663770eeddaf056218997dc802768135b1b627ed508f60f59",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-probe-12-parity.json": "ff1893b363791b6f129e3dd0db32371367abccf63beccb32d2bac9bde14ea3d2",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-self-04-parity.json": "df70e4c8b8a3822227e1df09a79e001e60023d35dca18c5c5d1349c6583954b0",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-self-05-parity.json": "20bfa3507367137554458a57d6a6e058834786d0d23ed7e75d35b8e88e234623",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-04-parity.json": "27d1b4cb6acac877e7e395f8ef3b8e83055573b472fdcc8cee8d034e0bb49f5e",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-05-parity.json": "9417bee0fbc7d843fe07086412a342730c39279a6cb0836c198260de924cf504",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-06-parity.json": "96bf598051f94d7b7d4c852ba1e5c26aea125a53d6f669f0b2eedf84c6c82cee",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-07-parity.json": "cbe120883fc842ca57388475efcea4d0091a34015548f32fc8d9f11d9f8a162e",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-08-parity.json": "d056b7f63971ff872f6f1333f10fdd3f7f2fabf400c605ea1b2aecea5f38a5f6",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-09-parity.json": "f0d79f0fe148271458d9824ff4ac1a9f6cbe613a55625ea5ff2158e8f4bc9430",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-10-parity.json": "79659d73eb4c1fd8e9c0a47ffe540fd1ffe4def299fc055bb8d04cabafefb197",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-100-parity.json": "d8d2006ff01b8620f8a2f5630b43d4441200e0ed91940f8279a935f0b20c1561",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-101-parity.json": "ab56c15f697885187a06f349c012e859280be82cc983b7ce1d58883ad250f1c9",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-102-parity.json": "d6f9ed51b79b527aab85da4345cc877085837f7b15dc21c2ab79bb558ba5fab1",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-103-parity.json": "54edf07fd7f519c74e2fdf753b35140ac6ce04f3ea0ffbc5138f9b16cc4c55f8",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-104-parity.json": "9be7a29453f3bb41d91b6780fbb6ffd6ac721c1012a40fa32d27317385278813",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-105-parity.json": "bfcca87cbfc6d46f3180c9b051bbcc349bd74e7a22e4ec39c3f73e3a99598c64",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-106-parity.json": "4f94fdb131cd573971291a2bfd736ebb8e2bd5e50a159fe1df03d43869eff3f1",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-107-parity.json": "8213776502de7d0e1ba04f399355f2c6364d17b2eb187e6f57b78cd311d42de2",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-108-parity.json": "698e95a2161e6d6c87d912393a05ab286b1494a44b275197546a87dc75b07747",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-109-parity.json": "2d2a219bd6105205025ab981bf7ae14c58dcf4fd8fed682672da29e52b2e6aa5",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-11-parity.json": "60986901ef99b12e8cb2fc280deb47f3edf36a5ed6dd0ced5a333f09071dd332",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-110-parity.json": "678848d1b572bd9933115d788478e67164117122b584688b1341f76940d764c6",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-111-parity.json": "204dfec326e8e6f19b8cf6b497248ff73da4f1d8f481d4938704117cbd831af2",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-112-parity.json": "ec07945f8b0fdf2fbd241f6a8fc015d7ebecf646755dde16c9fce6ffb7a1db68",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-113-parity.json": "187d8451d6c748cd6590fa845fa57721fdd0e51e7bbb0b345cd63c0dc7bdf514",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-114-parity.json": "0b48337b674a1cb8f92b69976a14cb99413df9e16b399d7998c4a82ce9bc9cab",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-115-parity.json": "1aca13371bca5bafb39322062e5d940300d3b6a604495b0ba4f99cb52c374917",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-116-parity.json": "a9a00bd43aa28fbc0f7fb4e32cb30bad29c00381062aabd531dbbffdb76d141d",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-117-parity.json": "645c64e79b59dfac80cc9cd6cebdb0a10f506e70290680519cba9901f7c081fb",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-118-parity.json": "e418a1b6a87e46b3482100fb9e68c3ca9bd9ae2dea295d728f46ff9a617ae439",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-119-parity.json": "4ca09099539e43dc70cf40dd3584fa6c12aab0a63e7d5e80683622bb4d5743d0",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-12-parity.json": "8e5b22e0e50b64ee414fd28fcabb3f929f4289028a557cb879c79930a18fbf9e",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-13-parity.json": "253b971f6c5ac1f8e439b353024d23bf9c120eb7b7d0c2b8172fa54202976182",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-14-parity.json": "d161715dd2c7d87f99fce852be8955477764a30b0197138a4820179a7719a3a4",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-15-parity.json": "aa029ccac0e5220f7128611ca9229a96f2cf4b61ca3e4e5e9eec700302c11cce",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-16-parity.json": "c36546e024521e93f6718bf0e6e2ea4e1eb4103a6a2d0700cc8ee110bad3830a",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-17-parity.json": "85df3bcd79d582d71d718b51a888687572e8feb3ee749f1e9a4f77f8f9ee1730",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-18-parity.json": "abcc8351ef89291284b3e65f7ab216947ed74f17973eb05f3aa732df3dda8401",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-19-parity.json": "c3d2179c5a88feacc4e210bcc6a00cae25b5c93c386272664d883b637d5c5b01",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-20-parity.json": "9a03b4c2a9eba4ade4f3738acead11b17d259febae410364f7c244815e120a9a",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-21-parity.json": "45abd40cd13caff0acc73b8c73940a0f8e61498908db613dbc7c63077206cb50",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-22-parity.json": "6586553315b650ecd2e44daf24dba10e163c6e93d4d1886461c5659242500e30",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-23-parity.json": "d51511d4adbddb8e7eeb46995deefcebbcaa6313eecc9f04798ec4fa2f9d6175",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-24-parity.json": "b498d80919619dc88e2c39cc66ffe0b6223d1eef53ca2167942db6d660cf9547",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-25-parity.json": "15874001cf3d03f72c07af6950e38e2e8b43c8608eed07227754fedd705cd11b",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-26-parity.json": "4b52ceb172b0d2c00cc867767002e60716d6591b98679f89a1ab19758a5f4fc9",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-27-parity.json": "83a2f918aaf458c2c99d7467c21b2244f4f56e96ac9dec13838f10595caea612",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-28-parity.json": "3f13a8ecc437d9500570df9e82b89cd7e8cac65bd888091307aa44e24d2765e3",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-29-parity.json": "e8b1208305a7839244edc93c4a4d807143caadadbc5da8cdf8f2896a1745e08d",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-30-parity.json": "a9f3f0d8c2639c97db496632cdae2c625b8160917fa39bb69a1f923dfd5fab31",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-31-parity.json": "5f064771f3fc1743f44f1edc68f54b6ba91a182609b4407059cedfc72decbea0",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-32-parity.json": "8d92094501c3c8e8cf9297e7a187a536d451bed5b56b8493f6f92454d1f4d2eb",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-33-parity.json": "3ba569afb79799961b4b6e25fc6206c63da0d8a0d996c9e740b1475d9d26f91f",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-34-parity.json": "3092a85295285c7d86a3df71804569d9e22b0f0b89afb4f93cacfbe8569d9675",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-35-parity.json": "0d06db20e4910a8c67ba63e7955fb8022f02e368a0cbcc09d47b2ffa6834898e",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-36-parity.json": "30d4b8e692cd4b37266f7c33e70bb3c553b2268cf29f6af2c06bba9fc0f9cfcf",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-37-parity.json": "dd4ed0342882254156b0dc01d083a6693d187e0d20cec6cb33d3c59815ac3bbf",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-38-parity.json": "2d395a96b9fafd9d48bca16a10e109dd0f7ffeb1a598c5d1bf228627695c8038",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-39-parity.json": "947eff280ff8c4431c7a89b5de41d3fe4269ee2f839de6d7f364cc5966d2bc28",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-40-parity.json": "0579de52a4c06293a35611ea7ba52c9f8d75fe9c00d6304b5ea91bf0dd6ffc1c",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-41-parity.json": "270fd82f82e44dd7c79643bcd9b5d845bf59a0a8b839496c1af2319c9dc820b7",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-42-parity.json": "aff4bf7d8a17d9ae158fab613d317f911476785dcdd926b80739432083ca370b",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-43-parity.json": "3a7ce0adf6878382cd8064dd054ad9335945d038fa8331045a74804e0898f949",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-44-parity.json": "24b913142e023014cb3147058e3f3f05865ca7e9dc433a9a1eb9d473472adc9f",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-45-parity.json": "1bcbe6653fda5ffc9b0524602cc4d2c2e1a26e59d6bbf8ff3e886adc8bb3b183",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-46-parity.json": "0b5042c9c569844dcef381c9f5a011e5abc46e16c1f3d36ef8c3d340b3f61c50",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-47-parity.json": "d4cbea22d7422bdd30bc467944806a1d1c6e299f82d3d1d1d1e232bcfbf2bd9b",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-48-parity.json": "a668dadfc6e8058d2070c4e6afbeac1a449b9d713bbf36f757ee3e8678f7cfe6",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-49-parity.json": "beda2d0a5d4c50249128ac07ce6b0c053016bb4a13e954f9e2c7bb39f275b402",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-50-parity.json": "5d7cc53e99941a8133da1f77fb621d3760ef9443fc444a3f1a4a7ef36472f7c8",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-51-parity.json": "ef56fe62edbe9e54ea8973d7e72c582e797b423a9884d3b836f6f13335f4d905",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-52-parity.json": "51a844810fcf8392350dbf63be9af6ba573e64ae6827fead3df6048cdc2d1918",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-53-parity.json": "b337dfa78c6e05aeefcd8fe7659c455d4d87f88c15a2b22dc02b3d65aca5b7fd",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-54-parity.json": "6d85ff820e5fefcae62278510498cb247f32d5b4cd2af8acda46abde9101a2e9",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-55-parity.json": "3645f38c3d34102e4811aaaa7190a8e0b4fa8f4a2e4b9d9cd2d2e3f5f233ad0f",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-56-parity.json": "121833747f279cecd1558885c02f5d8057ed27db82b1f44c47881bcdcd75180d",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-57-parity.json": "cfcb2507bb04f3b115220c093584017fdd71675d0c5a31008b741acf6bcab2f8",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-58-parity.json": "760efd89f29f9d1f3172375e32c4fce63aa43ab85f2574fe60c196898dcb0a24",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-59-parity.json": "5f4975fc2f5943ccb7675152b780a253b8a28df383eb38daab1391056b3f1e54",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-60-parity.json": "45d8c68ceed3ec190b89440c2ec3b4f723309df9e052e9eba99c0ef1ecce0f78",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-61-parity.json": "b1bcbbe11edbca4e29bb9af8b115825e2ae85573ee609e7bcda16582a1743a51",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-62-parity.json": "e0d87353b9793d9a82bbe905ec408eb0ac0c8029490f2330c302d1337caa9a57",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-63-parity.json": "76f630098afcbbff5b21e791e32ce8e5e9beeaa655b05b67265851f96d9f0563",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-64-parity.json": "cf147d0d83a95e711cf2e243356985f390e4507e8b3349252372c6a28492c2d1",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-65-parity.json": "95488fedf628b88eef879be8db74a9c6fd7ff67ccf2d00aae7ec471a804317c9",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-66-parity.json": "4ec10075f46649d0ad62ef7acd52906a900143507fe838d5c153f07f1db56704",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-67-parity.json": "1df6bb45eac8ba3d7f601b381c71a0bb7ae4f2aab310913709d40fdcfe7dd66d",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-68-parity.json": "7a80910f31ac7e0c912945320d54d44cd793b8c57d365a01937419261eaefc25",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-69-parity.json": "a2ad350d814150d185f00b61340db7b74f7f4672b525dee20b93568618485891",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-70-parity.json": "04817602d8be154a19bc3ae43a3c76b401659cbcb176e187115ea5d4614a423a",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-71-parity.json": "5f239365fccf721afbc4f51bafc20636700dcc6934b1440d061e272fc85a6614",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-72-parity.json": "d1775465c14a591bebb01e1d3e91b720dd4b6c043e4374bb8609c5969cc700d5",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-73-parity.json": "31c10c6946c0efe127e63499dbf5dec56f9c8c4c04fa32a4cfe1f4d58c17e3ee",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-74-parity.json": "e4684d25aaba82003fb3dfdfd27315a4614de1d56a8adc85e5caa54d4774410c",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-75-parity.json": "5979f3a44a3e1f7fe9d1c000dab807e6db75bb78fd0671d0c6ab825bfb7ac599",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-76-parity.json": "a2fe2bbedef2985aeded3ed416371469aaa0bb146a11d6826ac307b950f5be07",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-77-parity.json": "148699ec2602a72a799be7cc124dbeed041be56ecda9f5ea8c8d360e99ec2578",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-78-parity.json": "bda943cb77b115f3b93844df94018ae4013286e18d33e09fd0e8b34c9c2fb581",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-79-parity.json": "28ffd881e8803c8f27a3c1e329d7b7113b8c892cfdebc63d717c7f487e71d674",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-80-parity.json": "8a4ef4116f16647dfac40c97d5933b73fbf4486cde48c19b6e253b2dd026cefd",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-81-parity.json": "ab0442bc81f54f523bca24c91e26a41a2f0551bc824fd40bd045663d373c282d",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-82-parity.json": "c673803755250754d52a43d2125214cb3e4b4aba676de7567f6439caf29eded6",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-83-parity.json": "db7cef00bc201c89c142a4a4ca92ba8857a9bf16e8aed448e561e1ef919b3650",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-84-parity.json": "64cd07cda331456d92de43b55c702849e5edcef27f90aa66169c23d2ba5b26ec",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-85-parity.json": "8844b2873256ae39cf888e239da2ec3175f52b51720440db1ae59b3e2a02fb98",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-86-parity.json": "c3d47a26008e201d35179f3f469e478e3b6e27e03d3527bc398542ac1c938283",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-87-parity.json": "6c9ab2d193647270200c28d8292273d392308d4b1a092e90ef8a5b6cf165d34d",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-88-parity.json": "f5021b9c9c4d1f0cadb20774485f06414975a982196f7f3c06fbb7eb6f5800a4",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-89-parity.json": "fd17db6a580113cd69cc552b3e4b9d544237b43efefec3f24514c00dcf500025",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-90-parity.json": "161a08b9b17d2dc31a2c542262e401bca83ff6f39bd89be56b738d14e66ef2b1",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-91-parity.json": "dcf86d3e68bd83f3cfaa156447cb2d4db54d3106096c84bb51451bab834b2620",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-92-parity.json": "b38372461b054afbae4254ce1177db1c77803caf0bf27f04a1a972bbac6a5477",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-93-parity.json": "4b27ebfb7538abe356a70054dc09e07034b8b9c091a408c6b3cfb8c135488473",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-94-parity.json": "85eadf09043bc4014c26166dacb79035b469b4194b68314ee4556891d73bbc74",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-95-parity.json": "df27a7438dda626b71008bf458775cdbeda040da52dd5ac00dac5fb606082ba2",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-96-parity.json": "e219c9541f96c293107a31e073b3cf854c9e0050357c3616a1ae53693c0a0640",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-97-parity.json": "f0e952b54311e479162296efc51479f9aa06a97dd4e4244c34c3538c29237625",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-98-parity.json": "71fa466c948d942facb7e8e44967879ada7ff92f627a6a5206fa6be728c6f8ca",
+    "experiments/ltx25-b70/data/upstream-99b/two-way-w2-b1-p1-dxpu2-s256x256/f99b-twowayw2b1p1dxpu2s256x256-timed-99-parity.json": "33f1a8b46b7a96eeb91b58a2e8483af5ebe1fe12d8f0609402950750cde26f7d",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-00.json": "4833d4461dc23b86f8a88542f8e8ada5497135e0fcb996ccc613a37833bbaa11",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-00.json": "b3d1a09a01c635f5c0ed51f4ad3eab20c5f6ce65049389918112bca9dd3324e3",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-00.json": "9191b540e2f1b68d55ea2edfd6b354387200c3ae2565d7233dcbd2123e768602",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-01.json": "717f386f1ac3b926e51703ae597d52860db1c660c2538f51144360de3a90a366",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-01.json": "9dc3074a1ea15ff32a64ecb32f757e40d5a390ad8d1555053652905bb73032a1",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-01.json": "22d2c4ffae306b4b2d7ffb81c4108356e23a3792428250268c3c7a417585eeba",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-02.json": "a97d440ee6a767eb27e2cf2c2c38acb9d38e3bb1a5f3924b068e5400ba25254e",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-02.json": "332bc5350515e158a2eb233731fb47ea758f1cf255c5ab14b061bd763f7cedb9",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-02.json": "db03a079254412bd6eda11e32e9e474b21e987a58307033dd97da867359e5059",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-03.json": "4aa6168d9fee656cd49b16518a77cffaf2bc3cf526b5d46154a6ea090fa0e8cc",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-03.json": "2e4b6c707f606b98ac0eca008b1d8b7cf5b30d518a40d1077d42ca60a2cfd681",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-03.json": "d77e3cda6457b0663b3d829fb6edca39aa7a54e37d7394113487568b6d776b71",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-04.json": "58175807cc6ff84206a5de88a0a59ae4888bd5f95864b72a9a0ad44deff68b08",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-04.json": "b2561a9341e369c5133f76548d09ec4410b7792d4a662cb04da572728ceb7d65",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-04.json": "a938b5f4714640324d8a1d5f26221f2d94d130a872ad7becbfb9fc15de4b357f",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-f98-twowayw2b1p1dxpu2s256x256r2-self-05.json": "d9d870e90c9deeb9d924efa7cd436626d11aa1100f559e91b92e8e3f535d779f",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99-twowayw2b1p1dxpu2s256x256-self-05.json": "83cfb9128c0fff2adb9dbfc4be3be55bcbe61bf56605f90e206646629428ec4b",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-f99b-twowayw2b1p1dxpu2s256x256-self-05.json": "c2427537d99a3f37b6a8292014196710b91fb404a65ed6b1ed5c40bb9138bb88",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-sampler-f98-twowayw2b1p1dxpu2s256x256r2-self-02.json": "57fbe555408498b3e017f082f384107e9b5ed4e8ed2fd87bac6dca32b1b6ce13",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99-twowayw2b1p1dxpu2s256x256-self-02.json": "a2ec3c9ffb3878413a532e95553012ca3f69d043f05783a2395ef0b581f03b7d",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99b-twowayw2b1p1dxpu2s256x256-self-02.json": "554e3d58c499c766a95251a417759590c8721912d46f6b2146009c04887e08c4",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256-r2/pipeline-sampler-f98-twowayw2b1p1dxpu2s256x256r2-self-03.json": "352fadfff12a9347517bd01a996144d7a451d39decc7a2879c0a0c6925ed4a3d",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99-twowayw2b1p1dxpu2s256x256-self-03.json": "1c2739affb67472fb11af2d2b148b70a30dc16fa89c6bd2c3500b476bfafa2b2",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256/pipeline-sampler-f99b-twowayw2b1p1dxpu2s256x256-self-03.json": "9798281e64d85eb87f69ad25f318bd169d7a37b7ba85556941bfe7dda12dfb09",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99/manifest.json": "e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/manifest.json": "f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a",
+    "experiments/ltx25-b70/recovery/20261007-rope-compat/install_rope_compat.py": "99e6bc916789b8d4443a869000af524462ce66eef4757f000280b8a80366c570"
+  },
+  "next": "Separate placement-only 20/28 comparison against this qualified control; preserve exact-reference and health gates."
+}

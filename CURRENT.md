@@ -31,6 +31,7 @@ restores the accepted outputs across the tested fixtures; source/package files
 and references remain unchanged. Original failed clips and evidence remain
 preserved. The qualified packet manifest is
 `f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a`.
+[Compatibility result](experiments/ltx25-b70/notes/2026-10-07-rope-compatibility-results.md),
 [Original failure](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md),
 [compatibility plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
 
