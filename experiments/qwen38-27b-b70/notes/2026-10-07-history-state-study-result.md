@@ -42,6 +42,10 @@ of the ticket’s initial owner at the requested close, after the ticket had
 transferred to another owner. The numeric balance histories themselves were
 correct. The [source and answer error analysis](../data/2026-10-07-history-study-result/answer-error-analysis.json)
 records each question, original transfer, expected owner and observed value.
+Its `task_sha256` field hashes the complete task file; it is not the internal
+semantic task fingerprint used by native results. The separately bound
+[provenance clarification](../data/2026-10-07-history-analysis-provenance.json)
+records both identities explicitly. Scores and preserved inputs are unchanged.
 
 Both clinic history conditions used initial ownership for the same five joins.
 The theatre archive/history condition also missed five joins. Theatre quoted/history
