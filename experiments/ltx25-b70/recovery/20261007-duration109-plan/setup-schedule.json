@@ -1,0 +1,989 @@
+{
+  "schedule": {
+    "boundary_dependencies": {
+      "barrier:candidate_verified": [
+        "resolution-duration109-20261007-candidate-check-00",
+        "resolution-duration109-20261007-candidate-check-01",
+        "resolution-duration109-20261007-candidate-check-02",
+        "resolution-duration109-20261007-candidate-check-03",
+        "resolution-duration109-20261007-candidate-check-04",
+        "resolution-duration109-20261007-candidate-check-05",
+        "resolution-duration109-20261007-candidate-check-06"
+      ],
+      "barrier:fast_verified": [
+        "resolution-duration109-20261007-timed-fast-00",
+        "resolution-duration109-20261007-timed-fast-01",
+        "resolution-duration109-20261007-timed-fast-02",
+        "resolution-duration109-20261007-timed-fast-03",
+        "resolution-duration109-20261007-timed-fast-04",
+        "resolution-duration109-20261007-timed-fast-05",
+        "resolution-duration109-20261007-timed-fast-06"
+      ],
+      "barrier:first_native_verified": [
+        "resolution-duration109-20261007-native-p1-boat"
+      ],
+      "barrier:optimized_preparation": [
+        "barrier:reference_verified"
+      ],
+      "barrier:reference_verified": [
+        "resolution-duration109-20261007-native-p1-boat",
+        "resolution-duration109-20261007-native-p1-marble",
+        "resolution-duration109-20261007-native-p1-bird",
+        "resolution-duration109-20261007-native-p2-boat",
+        "resolution-duration109-20261007-native-p2-marble",
+        "resolution-duration109-20261007-native-p2-bird"
+      ],
+      "barrier:timing": [
+        "barrier:candidate_verified"
+      ],
+      "resolution-duration109-20261007-candidate-check-00": [
+        "resolution-duration109-20261007-freeze"
+      ],
+      "resolution-duration109-20261007-native-p1-boat": [
+        "resolution-duration109-20261007-prepare-native"
+      ],
+      "resolution-duration109-20261007-native-p1-marble": [
+        "barrier:first_native_verified"
+      ],
+      "resolution-duration109-20261007-timed-fast-00": [
+        "barrier:timing"
+      ]
+    },
+    "candidate_compared_clips": 3,
+    "capture_cap": 22,
+    "diagnostics": "none",
+    "final_verification_action": "verify-fast-timed",
+    "first_native_verification_action": "verify-first-native",
+    "native_reference_captures": 6,
+    "obligations": [
+      "Source-bound first-native header/memory gate before second request",
+      "Prewrite14-full/8-placeholder role and byte classification for22 captures; no suppression",
+      "Exact registered setup order and per-kind verdict checks in trusted executor adapter",
+      "Quiescence plus durable completed-tail retirement at explicit barriers; no clear/recompute",
+      "Native proof verified before any sampler route/sentry/replica installation",
+      "Actual memory/storage admission and pending-tail observation; no automatic extra captures"
+    ],
+    "parent_manifest_sha256": "f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a",
+    "plan_sha256": "6533fa06a31ec88e461abe4c43809950249655ec6c43dc86516831d38b1c3745",
+    "qualification_id": "1dc8a0434690df40e6557ba44cc2afa29d71ac7bbb47d9bfdf5282026f35a638",
+    "raw_capture_requests": 22,
+    "retry_or_extra_fill_requests": 0,
+    "rows": [
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [],
+        "graph": {
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "resolution-duration109-20261007-window-probe"
+            }
+          },
+          "470": {
+            "class_type": "LTXTextWindowProbe",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-window-probe"
+            }
+          }
+        },
+        "graph_sha256": "1a5c33bee0688ea5cb22a29524eb66218308f469ed537262eca0619856b7fdc0",
+        "kind": "window-probe",
+        "name": "resolution-duration109-20261007-window-probe",
+        "phase": "native-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-duration109-20261007-window-probe"
+        ],
+        "graph": {
+          "490": {
+            "class_type": "LTXResolutionPrepareNative",
+            "inputs": {
+              "run_name": "resolution-duration109-20261007-prepare-native"
+            }
+          }
+        },
+        "graph_sha256": "aeb91f207300224904f473f97d3cb51437cd0844468edc1233416c0318a8cede",
+        "kind": "prepare-native",
+        "name": "resolution-duration109-20261007-prepare-native",
+        "phase": "native-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "barrier:optimized_preparation"
+        ],
+        "graph": {
+          "483": {
+            "class_type": "LTXSamplerPin",
+            "inputs": {
+              "run_name": "resolution-duration109-20261007-pin0",
+              "worker": 0
+            }
+          }
+        },
+        "graph_sha256": "65f75c46f017d5546e0cb47d646d94d76bb38effa90fd169b294b8cf9653be52",
+        "kind": "pin0",
+        "name": "resolution-duration109-20261007-pin0",
+        "phase": "optimized-setup"
+      },
+      {
+        "admission_action": "admit-capture0",
+        "client_checkpoint_policy": "always",
+        "clip_index": 99909030,
+        "depends_on": [
+          "resolution-duration109-20261007-pin0"
+        ],
+        "expected_emitted_index": null,
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99909030,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "1dc8a0434690df40e6557ba44cc2afa29d71ac7bbb47d9bfdf5282026f35a638",
+              "run_name": "resolution-duration109-20261007-capture0",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "426",
+                1
+              ],
+              "audio_latent": [
+                "426",
+                3
+              ],
+              "images": [
+                "426",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture0",
+              "video_latent": [
+                "426",
+                2
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "422": {
+            "class_type": "LTXGraphCaptureGate",
+            "inputs": {
+              "chain": "1",
+              "mode": "graph",
+              "model": [
+                "427",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture0",
+              "selection": "all48"
+            }
+          },
+          "423": {
+            "class_type": "LTXVAEGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-duration109-20261007-capture0",
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "424": {
+            "class_type": "LTXFusionGate",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "431",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture0"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "resolution-duration109-20261007-capture0"
+            }
+          },
+          "426": {
+            "class_type": "LTXPipelineDecode",
+            "inputs": {
+              "audio_latent": [
+                "428",
+                1
+              ],
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "clip_index": [
+                "428",
+                2
+              ],
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "mode": "pipeline-save",
+              "output_size": "640x384",
+              "qualification_id": "1dc8a0434690df40e6557ba44cc2afa29d71ac7bbb47d9bfdf5282026f35a638",
+              "run_name": "resolution-duration109-20261007-capture0",
+              "speed_only": false,
+              "upstream_depth": 0,
+              "vae": [
+                "423",
+                0
+              ],
+              "video_latent": [
+                "428",
+                0
+              ]
+            }
+          },
+          "427": {
+            "class_type": "LTXConcurrentCFG",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "424",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture0"
+            }
+          },
+          "428": {
+            "class_type": "LTXPipelineSampler",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "clip_index": 99909030,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "guider_a": [
+                "388",
+                0
+              ],
+              "guider_b": [
+                "391",
+                0
+              ],
+              "mode": "pipeline",
+              "noise_a": [
+                "339",
+                0
+              ],
+              "noise_b": [
+                "338",
+                0
+              ],
+              "output_size": "640x384",
+              "qualification_id": "1dc8a0434690df40e6557ba44cc2afa29d71ac7bbb47d9bfdf5282026f35a638",
+              "run_name": "resolution-duration109-20261007-capture0",
+              "sampler_a": [
+                "352",
+                0
+              ],
+              "sampler_b": [
+                "341",
+                0
+              ],
+              "sigmas_a": [
+                "404",
+                0
+              ],
+              "sigmas_b": [
+                "395",
+                0
+              ],
+              "speed_only": false,
+              "upscale_model": [
+                "429",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ],
+              "video_latent": [
+                "356",
+                0
+              ]
+            }
+          },
+          "429": {
+            "class_type": "LTXUpsamplerGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-duration109-20261007-capture0",
+              "upscale_model": [
+                "420",
+                4
+              ]
+            }
+          },
+          "430": {
+            "class_type": "LTXPipelineSaveRecord",
+            "inputs": {
+              "run_name": "resolution-duration109-20261007-capture0",
+              "saved_file": [
+                "426",
+                4
+              ]
+            }
+          },
+          "431": {
+            "class_type": "LTXResidentFastPath",
+            "inputs": {
+              "mode": "fast",
+              "model": [
+                "420",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture0"
+            }
+          }
+        },
+        "graph_sha256": "3da2142c04710d42c7adfa15afc5d99268eb9ea7e798530f00dd7268a8870758",
+        "kind": "capture0",
+        "name": "resolution-duration109-20261007-capture0",
+        "output_role": "unscored fill placeholder; no native-reference or candidate parity",
+        "phase": "optimized-setup",
+        "postcondition": "sample99909030 finished finite on pinned worker; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail",
+        "retirement_action": "retire-capture0-tails",
+        "worker": 0
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-duration109-20261007-capture0"
+        ],
+        "graph": {
+          "483": {
+            "class_type": "LTXSamplerPin",
+            "inputs": {
+              "run_name": "resolution-duration109-20261007-pin1",
+              "worker": 1
+            }
+          }
+        },
+        "graph_sha256": "98222ff2342590d3903254c4d92e192175271634b1b6a68bab831971b5a78781",
+        "kind": "pin1",
+        "name": "resolution-duration109-20261007-pin1",
+        "phase": "optimized-setup"
+      },
+      {
+        "admission_action": "admit-capture1",
+        "client_checkpoint_policy": "always",
+        "clip_index": 99909041,
+        "depends_on": [
+          "resolution-duration109-20261007-pin1"
+        ],
+        "expected_emitted_index": null,
+        "graph": {
+          "338": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "339": {
+            "class_type": "RandomNoise",
+            "inputs": {
+              "noise_seed": 42
+            }
+          },
+          "341": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "352": {
+            "class_type": "KSamplerSelect",
+            "inputs": {
+              "sampler_name": "euler_ancestral"
+            }
+          },
+          "356": {
+            "class_type": "EmptyLTXVLatentVideo",
+            "inputs": {
+              "batch_size": 1,
+              "height": 192,
+              "length": 49,
+              "width": 320
+            }
+          },
+          "364": {
+            "class_type": "LTXPipelineTextEncode",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "clip_index": 99909041,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 2,
+              "mode": "pipeline-window",
+              "output_size": "640x384",
+              "qualification_id": "1dc8a0434690df40e6557ba44cc2afa29d71ac7bbb47d9bfdf5282026f35a638",
+              "run_name": "resolution-duration109-20261007-capture1",
+              "speed_only": false,
+              "text": "A locked-off close-up shot of a small red wooden toy boat floating on calm clear water. The boat gently rocks once as soft ripples spread outward. Warm natural daylight, realistic wood texture, consistent lighting, no camera movement. Quiet water gently laps against the boat."
+            }
+          },
+          "365": {
+            "class_type": "LTXVConditioning",
+            "inputs": {
+              "frame_rate": 24.0,
+              "negative": [
+                "364",
+                0
+              ],
+              "positive": [
+                "364",
+                0
+              ]
+            }
+          },
+          "366": {
+            "class_type": "LTXVEmptyLatentAudio",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "batch_size": 1,
+              "frame_rate": 24.0,
+              "frames_number": 49
+            }
+          },
+          "388": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "391": {
+            "class_type": "LTXVDualCFGGuider",
+            "inputs": {
+              "audio_cfg": 1.0,
+              "model": [
+                "422",
+                0
+              ],
+              "negative": [
+                "365",
+                1
+              ],
+              "positive": [
+                "365",
+                0
+              ],
+              "video_cfg": 1.0
+            }
+          },
+          "395": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+            }
+          },
+          "404": {
+            "class_type": "ManualSigmas",
+            "inputs": {
+              "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+            }
+          },
+          "414": {
+            "class_type": "LTXBaselineCapture",
+            "inputs": {
+              "audio": [
+                "426",
+                1
+              ],
+              "audio_latent": [
+                "426",
+                3
+              ],
+              "images": [
+                "426",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture1",
+              "video_latent": [
+                "426",
+                2
+              ]
+            }
+          },
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "422": {
+            "class_type": "LTXGraphCaptureGate",
+            "inputs": {
+              "chain": "1",
+              "mode": "graph",
+              "model": [
+                "427",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture1",
+              "selection": "all48"
+            }
+          },
+          "423": {
+            "class_type": "LTXVAEGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-duration109-20261007-capture1",
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          },
+          "424": {
+            "class_type": "LTXFusionGate",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "431",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture1"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "resolution-duration109-20261007-capture1"
+            }
+          },
+          "426": {
+            "class_type": "LTXPipelineDecode",
+            "inputs": {
+              "audio_latent": [
+                "428",
+                1
+              ],
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "clip_index": [
+                "428",
+                2
+              ],
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "mode": "pipeline-save",
+              "output_size": "640x384",
+              "qualification_id": "1dc8a0434690df40e6557ba44cc2afa29d71ac7bbb47d9bfdf5282026f35a638",
+              "run_name": "resolution-duration109-20261007-capture1",
+              "speed_only": false,
+              "upstream_depth": 0,
+              "vae": [
+                "423",
+                0
+              ],
+              "video_latent": [
+                "428",
+                0
+              ]
+            }
+          },
+          "427": {
+            "class_type": "LTXConcurrentCFG",
+            "inputs": {
+              "mode": "original",
+              "model": [
+                "424",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture1"
+            }
+          },
+          "428": {
+            "class_type": "LTXPipelineSampler",
+            "inputs": {
+              "audio_latent": [
+                "366",
+                0
+              ],
+              "clip_index": 99909041,
+              "comparison_mode": "same-size-native-v1",
+              "depth": 1,
+              "guider_a": [
+                "388",
+                0
+              ],
+              "guider_b": [
+                "391",
+                0
+              ],
+              "mode": "pipeline",
+              "noise_a": [
+                "339",
+                0
+              ],
+              "noise_b": [
+                "338",
+                0
+              ],
+              "output_size": "640x384",
+              "qualification_id": "1dc8a0434690df40e6557ba44cc2afa29d71ac7bbb47d9bfdf5282026f35a638",
+              "run_name": "resolution-duration109-20261007-capture1",
+              "sampler_a": [
+                "352",
+                0
+              ],
+              "sampler_b": [
+                "341",
+                0
+              ],
+              "sigmas_a": [
+                "404",
+                0
+              ],
+              "sigmas_b": [
+                "395",
+                0
+              ],
+              "speed_only": false,
+              "upscale_model": [
+                "429",
+                0
+              ],
+              "vae": [
+                "420",
+                2
+              ],
+              "video_latent": [
+                "356",
+                0
+              ]
+            }
+          },
+          "429": {
+            "class_type": "LTXUpsamplerGraphGate",
+            "inputs": {
+              "mode": "original",
+              "run_name": "resolution-duration109-20261007-capture1",
+              "upscale_model": [
+                "420",
+                4
+              ]
+            }
+          },
+          "430": {
+            "class_type": "LTXPipelineSaveRecord",
+            "inputs": {
+              "run_name": "resolution-duration109-20261007-capture1",
+              "saved_file": [
+                "426",
+                4
+              ]
+            }
+          },
+          "431": {
+            "class_type": "LTXResidentFastPath",
+            "inputs": {
+              "mode": "fast",
+              "model": [
+                "420",
+                0
+              ],
+              "run_name": "resolution-duration109-20261007-capture1"
+            }
+          }
+        },
+        "graph_sha256": "ac26b55c72377dd09eec5b17d8082acf41fe15f9c2141726ed315050664c2689",
+        "kind": "capture1",
+        "name": "resolution-duration109-20261007-capture1",
+        "output_role": "unscored fill placeholder; no native-reference or candidate parity",
+        "phase": "optimized-setup",
+        "postcondition": "sample99909041 finished finite on pinned worker; no failed jobs; pipeline idle; preserve then retire completed un-emitted tail",
+        "retirement_action": "retire-capture1-tails",
+        "worker": 1
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-duration109-20261007-capture1"
+        ],
+        "graph": {
+          "481": {
+            "class_type": "LTXSamplerCaptureCoverage",
+            "inputs": {
+              "run_name": "resolution-duration109-20261007-coverage"
+            }
+          }
+        },
+        "graph_sha256": "d58464efa896a4b834ad47c9a1aafe0277d6ab9a0fa50678f8e6d45acc7814e7",
+        "kind": "coverage",
+        "name": "resolution-duration109-20261007-coverage",
+        "phase": "optimized-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-duration109-20261007-coverage"
+        ],
+        "graph": {
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "440": {
+            "class_type": "LTXDecodeReplicaProbe",
+            "inputs": {
+              "audio_vae": [
+                "420",
+                3
+              ],
+              "run_name": "resolution-duration109-20261007-decode-probe",
+              "vae": [
+                "420",
+                2
+              ]
+            }
+          }
+        },
+        "graph_sha256": "126cac5b43b3ec4ec87d22725aaae6b8250e89dc75f8b25e09eced22f707936d",
+        "kind": "decode-probe",
+        "name": "resolution-duration109-20261007-decode-probe",
+        "phase": "optimized-setup"
+      },
+      {
+        "client_checkpoint_policy": "always",
+        "depends_on": [
+          "resolution-duration109-20261007-decode-probe"
+        ],
+        "graph": {
+          "480": {
+            "class_type": "LTXSamplerCaptureFreeze",
+            "inputs": {
+              "run_name": "resolution-duration109-20261007-freeze"
+            }
+          }
+        },
+        "graph_sha256": "7b96223bc6e19a0c087e0f9c63abcf1665442074d283362a380a04ca3e13e0a0",
+        "kind": "freeze",
+        "name": "resolution-duration109-20261007-freeze",
+        "phase": "optimized-setup"
+      }
+    ],
+    "sampler_placement": {
+      "blocks": [
+        20,
+        28
+      ],
+      "enforcement": "Runtime launcher and source ownership guards required before any model operation",
+      "name": "two-way20-28",
+      "segments": [
+        [
+          "xpu:0",
+          0,
+          20
+        ],
+        [
+          "xpu:1",
+          20,
+          48
+        ]
+      ]
+    },
+    "schema": "ltx.resolution-setup-schedule.v1",
+    "source_graph_sha256": {
+      "graphs/decode-replica-probe.json": "c14a72eb97855140b728e62f189fddcb1c8cf2d281e42e276d825c6bc6d484ef",
+      "graphs/graph-capture-all48-pipe-samp2-tsh-win.json": "181b2fe7e9daed17f516a38f0dd93d5b4e7d9f26b7c8673a419b0dd1fc0385bd",
+      "graphs/sampler-capture-coverage.json": "268ca20b91158e6d8487a4b7ceb6d43ed67c0264550b60eff631dc0d94af0579",
+      "graphs/sampler-capture-freeze.json": "a7740efa3829edc15bf99d6c4e03d974a2c909f3041d358c517345c007c7a161",
+      "graphs/sampler-pin.json": "fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005",
+      "graphs/text-window-probe.json": "ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0"
+    },
+    "status": "CPU-plan-only-not-runtime-qualified",
+    "submitted_requests": 29,
+    "timed_compared_clips": 3,
+    "timed_control_compared_clips": 0,
+    "timed_fast_compared_clips": 3,
+    "timing_interval_count": 2
+  },
+  "schedule_sha256": "b62de0ff76ae78e4d62df390ad2b9f8bd968e3fb2f532d10d02ec1567f127724"
+}

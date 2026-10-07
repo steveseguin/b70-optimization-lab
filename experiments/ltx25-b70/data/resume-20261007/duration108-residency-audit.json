@@ -1,0 +1,196 @@
+{
+  "allowance_bytes": {
+    "xpu:0": 8589934592,
+    "xpu:1": 8589934592,
+    "xpu:2": 2147483648,
+    "xpu:3": 9663676416
+  },
+  "cases": [
+    {
+      "historical_margin_bytes": {
+        "xpu:0": -913710061,
+        "xpu:1": 3856430784,
+        "xpu:2": 9703271628,
+        "xpu:3": 6084029926
+      },
+      "historical_margin_gib": {
+        "xpu:0": -0.8509588064625859,
+        "xpu:1": 3.5915810465812683,
+        "xpu:2": 9.036875914782286,
+        "xpu:3": 5.666194414719939
+      },
+      "moved_bf16_weight_bytes": 0,
+      "passes_historical_preload_inputs": false,
+      "required_bytes": {
+        "xpu:0": 34627025901,
+        "xpu:1": 29857052992,
+        "xpu:2": 3006477108,
+        "xpu:3": 11684237850
+      },
+      "split": [
+        23,
+        25
+      ]
+    },
+    {
+      "historical_margin_bytes": {
+        "xpu:0": -63025325,
+        "xpu:1": 3005746048,
+        "xpu:2": 9703271628,
+        "xpu:3": 6084029926
+      },
+      "historical_margin_gib": {
+        "xpu:0": -0.058696907944977283,
+        "xpu:1": 2.7993191480636597,
+        "xpu:2": 9.036875914782286,
+        "xpu:3": 5.666194414719939
+      },
+      "moved_bf16_weight_bytes": 773349760,
+      "passes_historical_preload_inputs": false,
+      "required_bytes": {
+        "xpu:0": 33776341165,
+        "xpu:1": 30707737728,
+        "xpu:2": 3006477108,
+        "xpu:3": 11684237850
+      },
+      "split": [
+        22,
+        26
+      ]
+    },
+    {
+      "historical_margin_bytes": {
+        "xpu:0": 787659411,
+        "xpu:1": 2155061312,
+        "xpu:2": 9703271628,
+        "xpu:3": 6084029926
+      },
+      "historical_margin_gib": {
+        "xpu:0": 0.7335649905726314,
+        "xpu:1": 2.007057249546051,
+        "xpu:2": 9.036875914782286,
+        "xpu:3": 5.666194414719939
+      },
+      "moved_bf16_weight_bytes": 1546699520,
+      "passes_historical_preload_inputs": true,
+      "required_bytes": {
+        "xpu:0": 32925656429,
+        "xpu:1": 31558422464,
+        "xpu:2": 3006477108,
+        "xpu:3": 11684237850
+      },
+      "split": [
+        21,
+        27
+      ]
+    },
+    {
+      "historical_margin_bytes": {
+        "xpu:0": 1638344147,
+        "xpu:1": 1304376575,
+        "xpu:2": 9703271628,
+        "xpu:3": 6084029926
+      },
+      "historical_margin_gib": {
+        "xpu:0": 1.52582688909024,
+        "xpu:1": 1.2147953500971198,
+        "xpu:2": 9.036875914782286,
+        "xpu:3": 5.666194414719939
+      },
+      "moved_bf16_weight_bytes": 2320049280,
+      "passes_historical_preload_inputs": true,
+      "required_bytes": {
+        "xpu:0": 32074971693,
+        "xpu:1": 32409107201,
+        "xpu:2": 3006477108,
+        "xpu:3": 11684237850
+      },
+      "split": [
+        20,
+        28
+      ]
+    }
+  ],
+  "created_utc": "2026-10-07T22:37:29.167865+00:00",
+  "formula": "ceil(1.1 * missing_tensor_bytes[card]) + max(PRE_BYTES[card], ceil(loader_reserve))",
+  "header": {
+    "basis": "All block parameter shapes normalized to BF16; exact match to historical loaded secondary bytes /25. Six FP32 checkpoint scale tables per block explain disk-byte excess.",
+    "bf16_block_bytes": 773349760,
+    "checkpoint_block_bytes": 773546368,
+    "count": 48,
+    "file_size_bytes": 42018190584,
+    "header_length_bytes": 677616,
+    "header_offset": 8,
+    "header_sha256": "641d57ff76ba1bbb2dac09b0110792652675ce83ad78b02b71ef750729995ab0",
+    "path": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors",
+    "prefix_plus_header_sha256": "e0558e1aff461dedc507377213969ead72c1be73e0a0ebaea839f5e73942d747",
+    "read_payload_bytes": 0,
+    "whole_model_rehashed": false
+  },
+  "historical_loader_reserve_bytes_inferred_from_zero_missing_card": 3006477108,
+  "historical_preload": {
+    "free": {
+      "xpu:0": 33713315840,
+      "xpu:1": 33713483776,
+      "xpu:2": 12709748736,
+      "xpu:3": 17768267776
+    },
+    "missing_tensor_bytes": {
+      "xpu:0": 23670083008,
+      "xpu:1": 19333744000,
+      "xpu:2": 0,
+      "xpu:3": 1836874030
+    },
+    "required": {
+      "xpu:0": 32479542253,
+      "xpu:1": 27709569344,
+      "xpu:2": 3006477108,
+      "xpu:3": 9536754202
+    }
+  },
+  "inputs_sha256": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/closeout-100b.json": "6a06e1126b6f103bb50812308d8d26f2748e98b237c596149fa85650a7360762",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md": "eec2f69ccc306579cd2cf7008861f61230c948746175ee8793d2d1919c95a189",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/notes/2026-10-07-rebalance100b-results.md": "2647b206835c35e0730c122560dae30c6d4dee8e4edabef1596a5e5b332edfc5",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/notes/graph-capture-84-results.md": "c62f5b35ce281ed189398b382c2504b3ea0cdba434581251691ceb290eac0369",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/notes/split-rebalance-design.md": "736b9806d7c72a44587de2ffaa7b2a047dc7d85dca9cc78911669cd8c059bb40",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-sparse-transport-107b-two-way-w2-b1-p1-dxpu2-s640x384/native-preparation.json": "ab8693d2dfa9febf4e4bdf64e8aa801c70af4a56df8a29ba2519c852dddfdd52",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108b/manifest.json": "ef839f83eaea6526f09cc353c6996a56414a95beb41609278b4b6e2994697ad7",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108b/source/scripts/ltx_graph_capture.py": "3a9a99954cb4877829c4407eb74306f6b409864002dfcccf3562fd0c98380400",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108b/source/scripts/ltx_layer_shard.py": "9caaec0aeb68e9f391fab5ae9b6a63e464aa62a99e1ffc449775b3687d2149b2",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108b/source/scripts/native_adapter.py": "f811dcd139adf05eb36dceeb8aab42e8bd6ef81bb11370b8ae070dfee6034196",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108b/source/scripts/native_safety.py": "8a98f462417c4e5b630bbeb023666acc3829f8248361fb3b8ce0f73fa998fa0c",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-pilot-108b/source/scripts/setup_gates.py": "8a36fc0feffc5090dbbb5dfaa1179e355a8ad8c99325829273c4470f11f56e6c",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b/launch/encoder_runtime_common.py": "ed3a28abd47eb9c8169f40615ff9f818f01e056fe4341bfc11034bbc848ba15a",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b/manifest.json": "50beee86e0ea22d7ef2405dcb4af56631a6eab7258c4052fbfb06214381aef63",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b/source/scripts/host_embedding_resident_node.py": "4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b/source/scripts/ltx_layer_shard.py": "a000ccd309e70b2f41167c84b73aae01caf50f9cd38d1256a21f6cc7b0dd2ef3",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-sparse-transport-107b/manifest.json": "fb26b0d5d3d2d892bce046e93547e1b71bf4c7d34ba2b1d0992dfabf9a4ab1fb"
+  },
+  "limitations": [
+    "Historical inputs are107b25-frame measurements, not recovered108b measurements.",
+    "Static block bytes do not bound49-frame activations, graph-pool allocation, VAE workspace, fragmentation or concurrency peaks.",
+    "100b128 exact comparisons were256x256/25;100 setup failure was identity integration, not a quality failure.",
+    "Changing device boundaries preserves intended ops but exact numerical equivalence still requires fresh complete output checks.",
+    "No GPU, endpoint, process control, model payload read, tests or runtime edits performed in this audit."
+  ],
+  "observed108b_failure": "Coordinator reports preload-admission refusal, before any49-frame output; per-card refusal snapshot was not persisted because native-setup failure evidence path omitted adapter receipts. No exact failing-card assertion from108b telemetry.",
+  "recommendation": {
+    "candidate": "two-way20-28",
+    "keep_guards": true,
+    "purpose": "One bounded49-frame resource-feasibility successor, not a reopened256 speed sweep",
+    "quality_requirement": "Fresh same49-frame native repeats plus exact four-tensor candidate/timed proof; no topology-specific arithmetic tolerance.",
+    "rationale": "Better minimum historical preload margin than21/27;100b provides current-lineage exactness evidence at256x256/25, not49-frame qualification.",
+    "runtime_constraints": [
+      "Port source-pinned100b named two-segment placement and fixed shared_identity consumer in both mirrors.",
+      "Native adapter must explicitly admit exact20/28 segment identity, one secondary owner, and all48 block routes; remove no ownership checks.",
+      "Setup coverage currently hardcodes0..22/23..47; bind exact0..19/20..47 with both registered workers/four graph chains.",
+      "Update graph helper shard source pin and all manifest/extension/pipeline source checks without replacing actual graph wrapper.",
+      "Use new semantic plan/QID/namespace and exact environment identity; preserve108b/100b sealed artifacts.",
+      "Retain preload equation, native8/8/2/9, capture7/7/2/9,decode2/2/10/9, replica8postbuild/2postprobe and chain2GiB margin.",
+      "Stop on real preload, first-native shape/memory, capture, or four-tensor mismatch; no automatic alternative split or relaxed guard."
+    ]
+  },
+  "schema": "ltx.duration108.residency-audit.v1",
+  "status": "offline-historical-inference-not-49-frame-fit-proof"
+}

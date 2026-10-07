@@ -17,7 +17,12 @@ The exact failed free/required memory readings were not saved: the existing
 failure hook covered native generation but omitted its setup phase. That gap is
 fixed in the future author source;46 integration tests pass. Source and historical
 residency evidence are being reviewed for a targeted memory-placement change.
-The admission guard stays intact; no immediate rerun or blanket split sweep.
+The admission guard stays intact. A single20/28 resource successor is now
+CPU-implemented and independently reviewed:303 runtime and30 plan tests pass.
+It ports the previously exact100b placement with new49-frame quality gates,
+not a split sweep or transferred quality claim. Source preflight passed;109 is
+not yet materialized or launched.
+[109 plan and next steps](experiments/ltx25-b70/notes/2026-10-07-duration109-operation.md).
 [108b refusal and46-file evidence inventory](experiments/ltx25-b70/data/resume-20261007/duration108b-closeout/summary.json).
 
 107b stopped cleanly once at22:18:33UTC; all four GPUs passed postflight with no
