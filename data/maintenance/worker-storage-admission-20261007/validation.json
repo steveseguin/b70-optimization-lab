@@ -1,0 +1,19 @@
+{
+  "scope": "Initial snapshot admission, no model experiment",
+  "worker_tests_passed": 119,
+  "new_admission_tests": 12,
+  "shared_storage_checker_tests_passed": 12,
+  "independent_review": "cleanup_audit",
+  "independent_review_result": "No material blockers; initial snapshot estimate, not reservation or runtime quota. Lock file may precede admission, but snapshot directory/archive, Docker and model do not.",
+  "files": {
+    "worker/sandbox.py": "88cd05fd0d04b56d7b471f7a281ea3c2462ecf7fbffb00a746ba157fb79bca34",
+    "worker/run.py": "683bb8edaa192fcb6809b948ac110ceb38fd6cc7060d27ffc51ba9644c8b4c2e",
+    "worker/test_storage_admission.py": "d02851c1d23b8b5f6d5a4d8752a7fef8e80b7a849a418735f963d4c053c5eac2",
+    "worker/test_sandbox.py": "4e0b475d30320d14a59158b7002a375883c1a0620d3b90c6626739ef35d3c4da",
+    "scripts/check-storage-headroom.py": "daf118c70b9bf544d9d4c54178ee6bdc58eb032b5311340e7de3dfed51c29ba2"
+  },
+  "source_limit_unchanged_bytes": 2147483648,
+  "default_minimum_free_bytes": 53687091200,
+  "real_check": "real-refusal.json",
+  "tested_commit_tag": "lab-check/worker-storage-admission-20261007"
+}

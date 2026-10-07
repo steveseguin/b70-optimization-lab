@@ -1,0 +1,64 @@
+{
+  "schema": "lab.cited-recall.closeout-independent-review.v1",
+  "status": "passed",
+  "reviewed_at_utc": "2026-10-07T04:52:59.528790+00:00",
+  "reviewer": "Codex /root/review_research",
+  "scope": "Read-only evidence and narrative audit; only this receipt written. No model requests, device calls, drive mounts, process changes or commits.",
+  "inventory": {
+    "file_count": 117,
+    "total_bytes": 2418381,
+    "exact_file_set": true,
+    "all_sizes_and_sha256_match": true,
+    "byte_identical_to_original_raw_files": 115,
+    "derived_files": [
+      "host-final-state.json",
+      "observation.json"
+    ],
+    "result_inventory_sha256": "6ad93b65288217f4c51d9b0b39bef6e8a2202b32af9e409a49993550305a421c"
+  },
+  "model_restore_metadata": {
+    "location": "model-restore/ (sibling of results/)",
+    "file_count": 13,
+    "total_bytes": 60622,
+    "exact_original_file_set_and_bytes": true,
+    "preservation_scope_note_resolved": "Restore metadata already preserved separately before inference. Results now also include the original 79-byte model-release.log."
+  },
+  "narrative_review": {
+    "CLOSEOUT.md": "Accurately reports completion/mechanical pass versus failed semantic gate; 12 complete, 15 partial, 3 absent criteria; zero wholly covered questions; 20 relevant/exact citations; no listed disqualifier; two over-specific reviewer claims and one sentence-count deviation. Correctly avoids prior-packet comparison or model/package/worker qualification.",
+    "CURRENT.md_four_card_section": "Matches bounded recall outcome and failed coding attempts under separate identities. Preserves parked LTX/Flash-Next status, cold model and RAM exclusion; does not promote runtime or unattended work.",
+    "timing": "Original response and metric delta exactly support the request-level numbers. Narrative labels them observations rather than benchmarks.",
+    "shutdown": "One successful recorded SIGINT, container exited 0 without OOM, recorded fault-free shutdown and four passing card postflight results; recorded idle render nodes and no running containers.",
+    "model_release": "80 release inventory rows exactly match the original full source/destination restore inventories; sums to 30,890,049,597 bytes. Cold/restore/publisher receipt hashes verified. Only the named temporary RAM model path is absent.",
+    "limitations": "Host state and cold-model preservation conclusions are tied to recorded receipts and timestamps; no fresh GPU probe or external-drive read performed. This is not a second independent rehash of deleted RAM weights or unmounted cold weights.",
+    "unresolved_findings": []
+  },
+  "bindings": {
+    "closeout_sha256": "142d4fd4452a405065a609fb15f9a3dff81a981de356152a645735128ff594ea",
+    "current_full_file_sha256": "5616398cc0cd1f9edadf3eba6f7db73acb6032223218651f3576aba10367b80d",
+    "current_reviewed_four_card_section_sha256": "a1e072cb05a18626d58d3064e1384f153005eca83db65eeec25062361bf1a862",
+    "semantic_review_sha256": "6285cfe2ce0ec79b1afd0628064847081aa210cf2e39dc57d2b3a02620fb618f",
+    "raw_refs_sha256": "016306254d4dfe4de150cff850787bf8489346df68fd372f806e63985b191a9e",
+    "raw_sse_sha256": "57850ec3924d1ac847c37d4d82bee8a0f62053bdb44bd6fbd728d5916a0798f1",
+    "shutdown_sha256": "8d9df8fd30944c97caeda67ec8d9921fa580f8a592fb3ebd8aca3dfa0cedf566",
+    "postflight_sha256": "0e95cb83f82477fa17ed9ad34593155cb59ee06ab8c6cdf68a0238eb8ba0a9ae",
+    "model_release_sha256": "f686aa9b0bad9d58990ac4faf8551e9b5a086c20b717fe94e3caf45c4f3d72ab",
+    "host_final_state_sha256": "e32880e81ecce5a09925db177b35881372e2546135630a8196540224bff08e13"
+  },
+  "followup_reviews": [
+    {
+      "reviewed_at_utc": "2026-10-07T04:54:02.917726+00:00",
+      "status": "passed",
+      "scope": "Only the two narrative deltas and the real-refusal receipt reviewed; no inventory rerun, tests, model calls or device actions. Original bindings above are preserved as historical audit identities.",
+      "finding": "CURRENT and CLOSEOUT now accurately describe completed snapshot storage admission, 119 recorded passing worker tests, refusal before output/archive creation, and the 50 GiB reserve. The recorded 4,560,129,788-byte shortfall rounds to 4.25 GiB. The text correctly limits this protection to initial snapshots rather than later runtime writes. Relative evidence link resolves correctly.",
+      "verification_boundary": "The 119-test outcome is supported by the supplied receipt, not independently rerun in this follow-up. Current worker/sandbox.py hash matches the receipt.",
+      "bindings": {
+        "closeout_sha256": "0073fc4a7da5dc26d4a776c1bc5e6d878aa27bc71725592957837faaecdc6516",
+        "current_full_file_sha256": "de8756d21485b17a1ba57ee0ba7717b85b53fd9fe12db7a2d2e57d224583de60",
+        "current_reviewed_four_card_section_sha256": "06dd743e8794473c5f10bf3d2f8bb30232b0ea51da1dd79ca9efb5fb2c8d56d9",
+        "real_refusal_receipt_sha256": "3f5cd1be210c9825d3dc66edb194d3ac856a41cdda9566860a2bd7b480c647ad",
+        "sandbox_sha256": "88cd05fd0d04b56d7b471f7a281ea3c2462ecf7fbffb00a746ba157fb79bca34"
+      },
+      "unresolved_findings": []
+    }
+  ]
+}

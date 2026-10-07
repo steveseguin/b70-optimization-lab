@@ -52,6 +52,6 @@ about 53.2 GiB, and the existing 10 GiB RAM exclusion remains unchanged.
 Keep the compiler as a tested mechanical component. Do not connect this recall
 output to an unattended coding worker or promote a model/package on this result.
 Preserve the six unused coding cases and stop tuning these completed question
-sets. The next immediate maintenance improvement is storage admission before
-worker snapshot creation; it addresses a demonstrated risk independently of
-model quality. LTX and Flash-Next remain parked for the owner's eventual return.
+sets. The follow-up added storage admission before worker snapshot creation;
+119 CPU tests passed and a [real refusal](../../../data/maintenance/worker-storage-admission-20261007/real-refusal.json)
+created no snapshot. This addresses a demonstrated risk independently of model quality. LTX and Flash-Next remain parked for the owner's eventual return.

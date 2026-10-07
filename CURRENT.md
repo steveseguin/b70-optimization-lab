@@ -107,7 +107,12 @@ setting was changed.
   are available. The 50 GiB reserve is now met, with only about 3 GiB above it;
   this does not admit a large build/download on the root filesystem.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
-  estimated peak output/cache/build bytes. A verified additional research backup
+  estimated peak output/cache/build bytes. Worker snapshots now enforce admission
+  before creating their archive or two source copies, retaining 50 GiB by default.
+  All 119 worker tests passed. A real check on this repository refused the job
+  before creating any snapshot; it would need about 4.25 GiB more headroom.
+  [Check evidence](data/maintenance/worker-storage-admission-20261007/real-refusal.json).
+  This protects initial snapshot creation, not later build/log writes. A verified additional research backup
   now exists; keep the internal sources and the documented backup-scope limits.
 - **RAM, owner decision October 6:** no replacement in 2026. Blocks 53–57
   (10 GiB) were rechecked offline and `b70-offline-bad-memory.service` enabled.
