@@ -144,7 +144,7 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 06:00 UTC**. The four-trial sparse-state
+Latest two-card review: **2026-10-07 06:09 UTC**. The four-trial sparse-state
 screen is complete and independently audited. Card release was verified at
 05:58:40 UTC; postflight health passed. No model server is running.
 
@@ -187,10 +187,13 @@ the final values, versus thirteen in the eight-counter task. Keep that limitatio
 visible; this is a wide-table cost signal, not broad recall or speed qualification.
 
 The [new replication plan](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-replication-plan.md)
-is in CPU preparation: repeat the original 128-counter task with reversed method
-order on a fresh server, then test fixed seed 97 with dispatch wording. No model
-request is queued yet. Freeze and independently review the new wrapper/packet
-and verify prior cleanup before one supervised owner starts. Preserve every
+has passed CPU preparation: repeat the original 128-counter task with reversed
+method order on a fresh server, then test fixed seed 97 with dispatch wording.
+Nineteen client/packet tests, forty-five host tests and twenty-four sparse audit
+regressions pass. The original task bytes and new source references are checked;
+both cases retain the disclosed 2/16 historical-value distinction. Next is passive
+launch preparation against the frozen implementation and previous cleanup, then
+one supervised owner. No model server is running yet. Preserve every
 older frozen version and outcome; no holdout has been admitted.
 
 Separate [historical-state retrieval](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
