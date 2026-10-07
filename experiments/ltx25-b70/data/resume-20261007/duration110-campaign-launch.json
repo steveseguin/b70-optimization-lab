@@ -1,0 +1,25 @@
+{
+  "utc": "2026-10-07T23:18:36.403553+00:00",
+  "command": [
+    "systemd-run",
+    "--user",
+    "--unit=ltx110-duration-campaign-20261007",
+    "--property=Restart=no",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=180",
+    "--property=WorkingDirectory=/home/steve/llm-optimizations",
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-duration-full-110/resolution/components/campaign.py",
+    "--run",
+    "--contract",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-duration-full-110-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49/resolution-client-contract.json",
+    "--contract-sha256",
+    "70b5379a715b7c51008fbc65967e2dc503554b70e5e460d02ddbe8d4689df27d",
+    "--manifest-sha256",
+    "bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": "Running as unit: ltx110-duration-campaign-20261007.service; invocation ID: 5ed76a467135430892f904f37624d6eb\n"
+}

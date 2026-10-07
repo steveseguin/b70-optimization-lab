@@ -5,7 +5,20 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-**Live update, 2026-10-07:** the 49-frame LTX pilot completed successfully at
+**Live update, 2026-10-07:**110 is running on the four-card host, PID3391197,
+start ticks28885324, unit `ltx110-duration-server-20261007`, same boot.
+Its finite57-request, ten-fixture49-frame qualification campaign started at
+2026-10-07T23:18:36.403553+00:00. All actual graph node classes, idle endpoint,
+source/process identity and sealed client checks passed before the first request.
+No result is available yet. This uses the successful109 numerical path and
+unchanged memory floors, with broader exact video/audio comparisons. No observer
+or extra request stream is running; successful app retained, faults halt work.
+
+110 manifest`bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09`;
+client contract`70b5379a715b7c51008fbc65967e2dc503554b70e5e460d02ddbe8d4689df27d`.
+[110 operation](experiments/ltx25-b70/notes/2026-10-07-duration110-operation.md).
+
+The preceding49-frame109 pilot completed successfully at
 22:56:44 UTC. Its application stopped cleanly once at2026-10-07T23:15:35.660027+00:00
 for the necessary110 full-fixture application reload. PID3380321 is gone; no
 host restart or settings change occurred. All four cards passed postflight at2026-10-07 23:15:46 UTC; no faults this boot.
@@ -34,7 +47,7 @@ standalone plan controls, actual-venv source/runtime checks and independent revi
 It admits57 requests/50 captures with9GiB runtime writes above the50GiB reserve;
 prebuild admission additionally reserves384MiB. Its numerical path and memory
 floors match109. 110 source construction and the actual sealed CPU startup check passed;
-no110 GPU request has occurred. Its fresh9GiB launch admission passes, leaving54.463GiB after allowance. Fresh prebuild available space was68,258,586,624bytes.
+The110 campaign is now underway. Fresh9GiB launch admission left54.46GiB after allowance. Fresh prebuild available space was68,258,586,624bytes.
 No extra requests are authorized by the consumed pilot plan, and no passive
 observer is running. Models, failed experiments and unique outputs stay protected.
 [Completed pilot proof](experiments/ltx25-b70/data/resume-20261007/duration109-closeout/summary.json),

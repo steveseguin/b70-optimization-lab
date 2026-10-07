@@ -55,3 +55,17 @@ faults this boot. Fresh launch admission observes68,142,292,992available bytes;
 after9GiB allowance58,478,616,576bytes remain, exceeding50GiB reserve.
 Preregistration and exact launch command are recorded before one application
 launch. No110 model request exists at this admission checkpoint.
+
+## Live campaign
+
+110 launched once, PID3391197/start28885324, sameboot
+`10192010-9700-4915-ac6c-980d6b74afa0`. Actual graph registration, full57-name
+contract, server/source identity and idle endpoint checks passed. IdentitySHA
+`5ae1e53b679a6ae345b2ce8d41aadaeb7559c30fe6a73c85a0be4615aa7de0c6`;
+clientcontractSHA
+`70b5379a715b7c51008fbc65967e2dc503554b70e5e460d02ddbe8d4689df27d`.
+The57-request campaign began at2026-10-07T23:18:36.403553+00:00; initial request is the
+bounded text-window probe. No passive observer or extra request stream exists.
+Successful app retained; noautomaticretry/restart, faultshalt. No110 numerical
+qualification or timing result exists at launch. Root monitors the fixed campaign
+and independently reconstructs completed proof before interpreting results.
