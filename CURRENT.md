@@ -144,11 +144,12 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 07:38 UTC**. The eight-trial historical-state
+Latest two-card review: **2026-10-07 07:39 UTC**. The eight-trial historical-state
 study completed and stopped cleanly. Both cards were released at 07:36:13 UTC;
-healthy completion followed at 07:36:23. No GPU owner is active at this update.
+healthy completion followed at 07:36:23. The separate two-call full-source screen
+is now active under `ctx-full-source-v1.service`; no other GPU owner is active.
 
-## 2026-10-07, two-B70 host: history result preserved; direct-source screen ready
+## 2026-10-07, two-B70 host: history result preserved; direct-source screen active
 
 The [complete history study](experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md)
 is negative. Source-only archive and quoted bookkeeping both scored 24/24 on both
@@ -169,9 +170,14 @@ is implemented, reviewed and frozen in `18ebff28e`. Exactly two requests will
 supply the entire clinic/theatre sources and their questions, with the unchanged
 8,192-token answer cap. It measures final answers only; intermediate state quality
 is not applicable. All 58 new CPU tests pass, the two-stub independent replay is
-exact after relocation, and all 35 guide workflow checks pass. Admission still
-requires the completed history preservation and a newly qualified supervised
-server. No direct-source model request has run at this update.
+exact after relocation, and all 35 guide workflow checks pass. Admission
+passed at 07:38:53 UTC after verifying prior preservation and the negative
+quality decision. The owner pins 120 dependencies and 410 prior artifacts; it
+qualifies one fresh server before exactly two requests and graceful cleanup.
+[Start receipts](experiments/qwen38-27b-b70/data/2026-10-07-full-source-live/queue.json).
+Output: `/mnt/fast-ai/bench-results/context-full-source-v1-20261007`. No final
+baseline score is available yet. Do not edit its frozen client, supervisor,
+auditor, packet, feasibility inputs, plan or preserved history evidence.
 
 The [research review](experiments/qwen38-27b-b70/notes/2026-10-07-context-research-priorities.md)
 now distinguishes a useful numeric bookkeeping optimization from general memory.
