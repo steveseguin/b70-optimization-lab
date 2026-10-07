@@ -42,6 +42,9 @@ def main():
     try:
         response = model.query([{'role': 'system', 'content': SYSTEM},
                                 {'role': 'user', 'content': USER}])
+        wire = json.loads((args.out / 'requests/001/response.json').read_text())
+        if wire.get('token_ids_available') is not True or len(wire.get('token_ids', [])) != wire['completion_tokens']:
+            raise ValueError('Complete output token identities are required')
         actions = response['extra']['actions']
         if len(actions) != 1:
             raise ValueError('Expected exactly one action')

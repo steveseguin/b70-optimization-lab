@@ -11,8 +11,9 @@ The [0.8B pilot](experiments/local-coding-worker/small-model-pilot-20261007/READ
 is closed: transport/accounting worked, but its one canary failed command format.
 No coding task ran. Its server stopped gracefully and all four cards passed
 postflight without a new kernel fault. A separate pinned 4B worker pilot is being
-prepared, using existing RAM-backed scratch and a verified cold-storage copy;
-no model service is currently running. Live receipts for that new attempt belong
+admitted, using existing RAM-backed scratch and a verified cold-storage copy.
+All twelve model files passed full hash checks before and after a clean external
+drive remount; the drive is unmounted. One bounded server attempt is next. Live receipts for that new attempt belong
 under `/home/steve/worker-qwen4b-pilot-20261007/server/`.
 Do not borrow that endpoint or infer it is ready from this note. LTX's
 disk-full incident left a worker blocked on a progress-bar lock. After preserving

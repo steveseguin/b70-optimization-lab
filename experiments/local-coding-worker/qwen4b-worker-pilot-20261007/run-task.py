@@ -26,9 +26,10 @@ campaign={'schema':'neural.download.worker-overnight-campaign.v1','review_identi
 (raw/'campaign.json').write_text(json.dumps(campaign,indent=2)+'\n')
 cmd=['/home/steve/.venvs/neural-worker/bin/python','-u',str(repo/'worker/run.py'),'--repo',str(repo),'--task',str(packet/'tasks-a'/(args.task+'.json')),'--acceptance-dir',str(accept),'--config',str(profile),'--out',str(raw/'attempt')]
 (receipt/'launch.json').write_text(json.dumps({'command':cmd,'raw_root':str(raw),'source_commit':subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip(),'source_snapshot_scope':'complete','scratch_medium':'existing tmpfs','configuration_changes':False},indent=2)+'\n')
-child=None;stopping=False
+child=None;stopping=False;requested_stop=False
 def stop(signum=None,frame=None):
- global stopping
+ global stopping,requested_stop
+ requested_stop=True
  if child is not None and child.poll() is None and not stopping:
   stopping=True;child.send_signal(signal.SIGINT)
 signal.signal(signal.SIGINT,stop);signal.signal(signal.SIGTERM,stop)
@@ -44,7 +45,9 @@ def mirror():
    try:shutil.copy2(source,target)
    except FileNotFoundError:pass
 with (receipt/'worker.log').open('w') as log:
+ if requested_stop:raise RuntimeError('Stop requested before worker launch')
  child=subprocess.Popen(cmd,cwd=repo,stdout=log,stderr=subprocess.STDOUT)
+ if requested_stop:stop()
  try:
   while child.poll() is None:
    if (state/'FAULT.json').exists() or (state/'shutdown.json').exists():stop()

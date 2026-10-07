@@ -69,4 +69,38 @@ historical gold fixes are separately preserved and never supplied to the model. 
 receipts, including an independent review bound to exact identities, before
 removing only owned scratch. The campaign sets `review_identity_required=true`;
 keep the source tree clean throughout both tasks. Stop the server with its
-`server/STOP` file after both tasks; review cleanup and postflight receipts.
+`server/STOP` file after the optional bounded memory trial below (or after both
+tasks if it is skipped); review cleanup and postflight receipts.
+
+## Separate source-recall baseline
+
+Before any 4B output, `memory-protocol.json` freezes one request answering all
+ten memory questions using all five corpus files (36,685 original bytes), with
+every original line numbered. No answer key, grader rubric or linked source is
+sent. The helper copies only questions and documents into a read-only input
+directory and sends their frozen prompt through the strict existing practical
+wire, without the worker's bash parser or any executable tools.
+
+After both coding attempts, reuse this same healthy server if at least four
+minutes remain in its original forty-minute window:
+
+```bash
+/home/steve/.venvs/neural-worker/bin/python -B \
+  experiments/local-coding-worker/qwen4b-worker-pilot-20261007/run-memory.py
+```
+
+One full-prompt tokenization must admit at most 12,000 input tokens and a 4,096
+output cap within the 16,384-token context. Refuse oversized input without
+truncation. Generation keeps the frozen nonthinking, temperature-zero profile;
+the entire network phase has a 180-second wall limit. Require natural stop,
+returned token identities, exact prompt accounting and explicit zero cache.
+No retries, answer repairs or task-specific hints. A failed citation check is
+a recorded answer failure, never permission to ask again.
+
+Raw prompt, profile, protocol, stream, token/metric receipts, answer and exact
+citation-validation output stay at
+`/home/steve/worker-qwen4b-pilot-20261007/memory`. The frozen validator checks
+structure and exact quotes; an independent reviewer must assess all ten
+answers against the separate existing rubric, including unsupported claims
+and contradictions. Report those outcomes independently of coding. This is
+a curated source-recall baseline, not long-context or retrieval qualification.
