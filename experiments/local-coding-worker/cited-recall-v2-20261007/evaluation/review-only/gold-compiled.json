@@ -1,0 +1,184 @@
+{
+  "answers": [
+    {
+      "question_id": "V2Q01",
+      "answer": "Treat the server as one bounded experiment resource: verify CURRENT, containers, listeners and render ownership, reuse it for authorized tasks, and stop it gracefully afterward. A configured address does not prove availability, and a failed client must not cycle the server.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 30,
+          "end_line": 45,
+          "quote": "This creates `~/.venvs/neural-worker`, installs hash-locked dependencies and pulls\nthe public CPU sandbox image by digest. It does not change GPU drivers or start\nor restart a model server. Set `NEURAL_WORKER_VENV` to use a different environment.\n\n## Start the model once\n\nFollow the [FP8 quickstart](../packages/qwen38-27b-fp8-tp2-b70/README.md) to pull\nits pinned image and verify/download the model. During an authorized, bounded\nexperiment, use one server for its tasks and stop it gracefully afterward:\n\n```bash\npython3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/new-worker-server --port 18124\n```\n\nWait for `Ready`. The worker defaults to `http://127.0.0.1:18124` and model\n`qwen38-27b-fp8`. Keep other requests off this endpoint while a task is running."
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 15,
+          "end_line": 19,
+          "quote": "- One persistent model server. Check CURRENT, actual containers, listeners and\n  render owners; run small compute/XCCL preflight under the existing lane lock.\n  The helper monitors the journal and owns graceful fault cleanup. Failed\n  clients never cycle the model server. Leave a healthy service available for\n  subsequent worker tasks and record its exact state path in CURRENT."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q02",
+      "answer": "No: the follow-up passed the five original issues but failed both new held-out issues, so the worker remains experimental. Loop-feedback behavior has only CPU-fixture/trace-replay evidence, and automatic tests, independent agent review and human approval remain separate outcomes.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 7,
+          "end_line": 14,
+          "quote": "This first version uses the qualified **Qwen3.8 27B FP8 / MTP1 / 32K-input**\nsetup and [mini-SWE-agent 2.4.6](https://github.com/SWE-agent/mini-swe-agent).\nThe [first milestone](PLAN.md) covered five real bugs across two repositories:\nthree produced patches that passed independent tests and agent review. A bounded\nfollow-up with readable tool output passed all five original issues, but failed\nboth new held-out issues. It remains an experimental coding assistant.\nRead the [trial results and patches](../experiments/local-coding-worker/README.md).\nAutomatic tests, independent agent review, and human approval are reported separately."
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 133,
+          "end_line": 141,
+          "quote": "The default limits are 40 model steps, a 20-minute agent budget, 28K input tokens,\n2,048 output tokens per step, and three completion checks. The agent checks its\ntime budget between turns; source setup and final export add time. No automatic context\ntruncation hides earlier instructions. Three identical consecutive commands trigger corrective feedback; a fourth stops\nthe task. The worker also warns after three exact two-command/output cycles and\nstops before the next cycle if its first command repeats. This additional guard\nwas checked with CPU fixtures and recorded trace replay; model responses to its\nfeedback are not yet measured. CPU commands have a 120-second limit and\n10 KB returned output. See [config.json](config.json) for the fixed first profile."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q03",
+      "answer": "Expose only the acceptance-check directory read-only at /acceptance, keep the answer key and fixed-commit receipt outside it, and record check hashes in acceptance-identity.json. The CPU container edits a committed snapshot with a read-only root and bounded resources, without the host checkout, network, credentials, Docker socket or GPU.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 47,
+          "end_line": 50,
+          "quote": "For an external task packet, pass `--acceptance-dir /absolute/path/to/acceptance`.\nOnly that directory is mounted read-only at `/acceptance`; keep answer keys and\nfixed-commit receipts outside it. The run records the checks' hashes in\n`acceptance-identity.json`. Omitting the flag retains the original checks."
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 20,
+          "end_line": 26,
+          "quote": "- Each coding task gets a committed source snapshot without a Git worktree.\n  A separate CPU-only container mounts the editable snapshot and read-only\n  acceptance checks. No network, host checkout, credentials, Docker socket or\n  GPU is exposed. Root filesystem is read-only; CPU, memory, process count,\n  command output and command duration are bounded.\n- Pin the public Node/Debian sandbox image by digest; it supplies Python 3,\n  Node, git, curl, grep and core shell tools. Python dependencies are hash-locked."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q04",
+      "answer": "The deployed total context is 33,024 tokens including output, with a 28,000-token worker input budget and a 2,048-token original-profile output cap; raising a client limit does not expand server capacity. The 4,096-token batch scheduling limit is separate from total context, and the advertised model maximum does not describe this deployment.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 63,
+          "end_line": 70,
+          "quote": "| Total context | 33,024 tokens, including input and generated output |\n| Worker input budget | 28,000 tokens, including instructions and conversation |\n| Speculative decoding | MTP depth 1, two B70s; prompt caching disabled |\n\nThe service has not been qualified for multiple simultaneous users. Keep the\nendpoint exclusive while the worker records per-request server-prefill metrics.\nThe model's advertised maximum context is larger than this deployed setting.\nChanging a client token limit does not increase the server's capacity."
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 80,
+          "end_line": 90,
+          "quote": "Client profiles select thinking, sampling and output budgets separately from\nthe loaded server. The [original profile](config.json) uses greedy generation,\nthinking disabled, and a 2,048-token output cap. Profile experiments and their\nqualification status are recorded in the [worker results](../experiments/local-coding-worker/README.md).\n\nTo try the experimental readable-output profile, add\n`--config worker/profiles/readable-observations.json` to a worker command. It keeps\ngreedy generation and the 2,048-token output cap. The original default is retained;\nthe follow-up does not establish reliable unattended work on new issues.\nThe server schedules up to 4,096 tokens per batch; that scheduling limit is\nseparate from its total context capacity."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q05",
+      "answer": "Acceptance alone does not settle the issue: reject incomplete results and independently review the passing patch, while keeping variable-workload task timing as an observation rather than a benchmark headline. Public closure also does not replace quality gates or the second-machine/clean-supported-OS replay required for starter-guide certification.",
+      "citations": [
+        {
+          "doc_id": "S02",
+          "start_line": 47,
+          "end_line": 52,
+          "quote": "Retain the original failing test, conversation, full request/response streams,\ncommands, final acceptance checks, changed-file hashes and patch. Report elapsed\nissue-to-patch time, input/output counts, HTTP first-token wait, and server-prefill\nhistogram timing separately. Workloads differ; these are task observations, not\nnew benchmark headlines. Reject incomplete results and review each passing patch\nbefore calling the issue solved. Never have the model merge or publish changes."
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 60,
+          "end_line": 78,
+          "quote": "6. Verify artifact sizes and SHA-256 digests, binary sections, RUNPATHs, image\n   labels/contracts, and a runtime import/operator smoke test.\n7. Run the recipe's fixed quality and determinism gates. Publication closure\n   does not promote a benchmark that failed output or realistic-workload rules.\n8. Upload the release assets, then download every public URL and re-hash it.\n   Re-extract the declared ELF sections, verify RUNPATH, verify the wheel's\n   embedded binaries, and reconcile the checksum manifest. Record\n   `remote_verified_at` only after this succeeds.\n9. Run both validators from the clean clone:\n\n   ```bash\n   python3 tools/validate-recipe-publication.py\n   python3 tools/validate-recipe-publication.py --check-remote\n   python3 tools/validate-repro-guides.py\n   ```\n\n10. A second machine or clean supported OS replay is still required for\n    `starter-guide` certification. Public source closure alone earns no\n    beginner-ready label."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q06",
+      "answer": "It cannot claim published public closure; retain an honest incomplete classification such as candidate-portable-repro or lab-replay. Rebuild from pristine public tracked inputs with matching hashes, remove originating-host-only dependencies, and obtain the base by immutable registry digest or a completely publicly closed parent build chain.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 3,
+          "end_line": 11,
+          "quote": "A recipe is **published** only when a third party can obtain every required\ninput from public locations and verify the same identities that the build and\nresult evidence name. Working on the lab host, being committed to Git, and\nhaving a README are necessary but not sufficient.\n\nThis policy applies to every promoted `repro/` recipe and package. Existing\nrecipes may remain honestly classified as `lab-replay`, `record-capsule`, or\n`candidate-portable-repro` while their closure is incomplete. They must not\nclaim public source closure."
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 47,
+          "end_line": 59,
+          "quote": "1. Start from a pristine clone of the public repository commit. Do not use a\n   dirty source tree, an unpublished patch, or an originating-host checkout.\n2. Resolve every build-script input. A declared `*_sha256` must match the exact\n   referenced file; a second hand-maintained allow-list cannot override it.\n3. Confirm every repository dependency is tracked. Reject `/home/<user>`,\n   `/mnt/fast-ai`, `/media/<user>`, `file://`, and other originating-host-only\n   dependencies. Normal platform paths such as `/opt/intel/oneapi` are allowed\n   only when the required version and installation source are documented.\n4. Obtain the base image by immutable registry digest, or rebuild its entire\n   publicly closed parent chain. A local image tag or image ID alone is not a\n   public dependency.\n5. Build using only the declared public sources. Record the full log and exact\n   compiler/runtime package inventory."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q07",
+      "answer": "Return it to draft or publish a corrected immutable release; never silently replace an asset under the same identity. Re-download and re-hash every public asset, re-extract ELF sections, verify RUNPATH and wheel-embedded binaries, and reconcile the checksum manifest before attesting again; retain CI remote audits because remote_verified_at is an attestation, not a substitute for ongoing verification.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 60,
+          "end_line": 67,
+          "quote": "6. Verify artifact sizes and SHA-256 digests, binary sections, RUNPATHs, image\n   labels/contracts, and a runtime import/operator smoke test.\n7. Run the recipe's fixed quality and determinism gates. Publication closure\n   does not promote a benchmark that failed output or realistic-workload rules.\n8. Upload the release assets, then download every public URL and re-hash it.\n   Re-extract the declared ELF sections, verify RUNPATH, verify the wheel's\n   embedded binaries, and reconcile the checksum manifest. Record\n   `remote_verified_at` only after this succeeds."
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 80,
+          "end_line": 96,
+          "quote": "## Status rules\n\n- `draft`: assets or a gate may still be missing. Direct URLs can be planned,\n  but the website and README must say the packet is incomplete.\n- `published`: all required asset types exist, all three validation gates pass,\n  and every public asset has been downloaded and verified.\n- If a public asset is removed, a digest changes, or a clean-clone build fails,\n  immediately return the manifest to `draft` or publish a corrected immutable\n  release. Never silently replace an asset under an existing release identity.\n\nCI validates manifest structure, source-commit and tracked dependency closure,\nbuild-script digest contracts, and hash-bound evidence. A dedicated publication\nworkflow runs the full `--check-remote` audit whenever a publication manifest\nor validator changes, on manual dispatch, and on a daily schedule. Thus a\nmissing or silently replaced public asset fails both at publication time and on\nthe next scheduled integrity check; `remote_verified_at` is an attestation, not\na substitute for CI verification."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q08",
+      "answer": "No: budget peak temporary copies and caches on the actual output filesystem, preserve the free-space floor, and recheck immediately before writing because admission reserves nothing; an external target needs its exact mounted, writable destination. The newer USB review keeps internal originals and is not long-term drive certification, so older relocation advice and a successful backup pilot do not authorize deletion or imply current safety.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 123,
+          "end_line": 136,
+          "quote": "Before a new build, download or campaign, check each actual output filesystem:\n\n```bash\npython3 scripts/check-storage-headroom.py /absolute/output/path \\\n  --planned-write-bytes 10GiB --min-free-bytes 50GiB\n```\n\nBudget peak additional writes, including temporary copies and caches. The 10 GiB\nabove is an example, not a measured campaign budget. Admission is a point-in-time\ncheck, not a reservation; rerun immediately before the writing job. For an external\ndestination also require its exact mount with `--require-mount /mnt/usb-models`.\nRead-only, missing or mismatched mounts fail closed. Historical frozen launchers\nare preserved; this check must precede new work rather than changing their pinned\nbytes silently."
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 138,
+          "end_line": 152,
+          "quote": "The EX400U is currently cleanly unmounted after a later October 6 ordinary-I/O\nbackup review. The earlier SMART passthrough produced USB command/read errors;\nit was not repeated. A bounded read/write pilot and selected additional backup\npassed full read-back after clean unmount/read-only remount, plus Git and LTX\nrestore checks. No firmware, repair, power or memory changes were made. Preserve\nall internal originals: this is additional-copy evidence, not long-term drive\ncertification. See `CURRENT.md` and\n[`the backup review`](../notes/2026-10-06-ex400u-backup-review.md).\nFuture planned cold-backup operations must recheck UUID, mount state, capacity\nand kernel errors, use explicit `norecover`, retain sources and verify read-back.\nDo not force a refused mount or repeat bridge passthrough. The vendor's documented\nULFM91.0 reinitialization erases user data and was not attempted. No automatic\nmount, backup schedule or deletion policy was installed.\nThe older mount/relocation instructions below are historical operational context,\nnot evidence that this drive is currently safe."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q09",
+      "answer": "A boot ID is provenance, not a one-run allowance, but another run needs a fresh evidence path, exclusive locks, no conflicts, exact identity/floor checks and a passing health preflight; failed postflight blocks device work until health returns without automatically requiring reboot. On suspected fault, stop launches, preserve passive evidence, allow at least 60 seconds of bounded draining when work may still drain, then request graceful shutdown and use at most one needed bounded health probe rather than polling loops.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 57,
+          "end_line": 66,
+          "quote": "There is no one-experiment or one-model-load-per-boot rule. A boot ID is\nprovenance, never an admission or consumption token. After a run tears down,\nlater work may proceed on the same boot when it has an unused evidence path,\nholds the required exclusive host/device locks, finds no conflicting process\nor listener, revalidates exact source/runtime identity and storage/memory\nfloors, and passes the applicable bounded four-card health preflight. Every\ndevice run must route success and failure through cleanup plus host, four-card,\nand bounded journal postflight. A failed postflight blocks later device work\nuntil health is re-established; it does not by itself mandate a reboot. Reboot\nremains the last-resort recovery action described below."
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 68,
+          "end_line": 80,
+          "quote": "1. Stop new launches. Preserve the failing run directory and first capture\n   passive process, listener, progress, and journal evidence. Do not start an\n   XPU-SMI or compute-probe loop on a possibly flapping card.\n2. After clients are stopped, allow at least a 60-second bounded quiet period\n   when work may still drain. Recheck passive progress and ownership evidence;\n   do not create a retry storm on a possibly unhealthy driver.\n3. Request graceful workload shutdown. If workers are blocked in the runtime\n   and cannot exit after the chosen bound, preserve that fact before targeted\n   termination. Only after assessing the risk, use at most one bounded active\n   discovery/health probe if it is needed to classify the failure. The existing\n   `scripts/qwen36-xpu-recovery-snapshot.sh` is not passive: even without\n   `--copy-smoke` it makes many XPU-SMI calls across all four cards. Never use\n   it as a polling loop during a suspected wedge."
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q10",
+      "answer": "Compare baseline-validation.json and validation-*.json, result.json, and changes.patch/changes.json for original and candidate tests, status, edits and hashes; tests-passed-awaiting-review still needs patch review rather than automatic application. Server-prefill measures reading, received-token intervals measure writing and first-token wait includes transport, so changing task inputs make these observations unsuitable as replacements for fixed-input prefill benchmarks.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 118,
+          "end_line": 131,
+          "quote": "Each output directory contains:\n\n- `changes.patch` and `changes.json`: patch, changed paths and hashes.\n- `result.json`: acceptance status, timing and any failure.\n- `baseline-validation.json` and `validation-*.json`: original and candidate tests.\n- `trajectory.json` and `requests/`: full local agent conversation and API evidence.\n- `baseline/` and `workspace/`: original source and edited snapshot, without `.git`.\n- `sandbox.json`: exact CPU container identity and stopped status.\n\n`tests-passed-awaiting-review` means the independent tests passed; read the patch\nbefore applying it. `incomplete` means a test, limit, API request or tool failed.\nThe worker never merges, commits, pushes, contacts others, or restarts the model.\nYou can inspect a patch with `git apply --stat /path/changes.patch`; applying it\nis a separate user action against the intended source commit."
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 152,
+          "end_line": 155,
+          "quote": "Reading speed uses server-prefill timing; writing speed uses received token\nintervals; first-token wait includes the API/transport. Task input sizes change\nas the conversation grows, so these results are not a replacement for the\n[fixed-input prefill benchmarks](../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md)."
+        }
+      ]
+    }
+  ]
+}

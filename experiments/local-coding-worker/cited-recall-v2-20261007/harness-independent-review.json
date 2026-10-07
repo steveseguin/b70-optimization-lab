@@ -1,0 +1,59 @@
+{
+  "schema": "lab.cited-recall-v2.harness-independent-review.v1",
+  "status": "passed-offline-focused-review",
+  "reviewer": "storage_admission; independent of harness implementer review_research",
+  "scope": "One-call harness, lifecycle, source exposure, deadline, raw evidence and frozen identity bindings; not model quality or hardware qualification",
+  "reviewed_file_sha256": {
+    "experiments/local-coding-worker/cited-recall-v2-20261007/evaluation/model-input/source-bundle.json": "a337a8b2066e8af725aae1ad7812f32ff544182a6326076b80719fc3ead6d0a9",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/evaluation/model-input/instructions.txt": "20dacc5cc3287e1290bc5128d5fd251d5e2158901aa657814c6c76f3a1a4c1c5",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/request-profile.json": "a814a413180bb9c639c2e865804783109b102e97a8a7a34347ea12de35075c2b",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/compile_citations.py": "4be0fb6cd059e119531cf01502ae0ace51b3a8f41c6dff112a3f9ca935b7f008",
+    "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py": "1059f06bc9f85aed9426d71441710988dbfbb31491f7dad864a8be9f4ac66d5d",
+    "/home/steve/llm-optimizations/experiments/local-coding-worker/evaluation-20261007/memory/validate.py": "76d1b7808d18dabad349b7a1c9769f04e99d3b32c6000830f9c263523eddc07d",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/run_recall.py": "f093f07953d187322bb34b256a314974a87e527a348a6fd071aac35d1f52aa3e",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/serve_r276_once.py": "f3ec4194460c1a0f65c5af271c268ae779e1fa7605c9b7c5b53e28535aaeb0e9",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/check_boundaries.py": "d9a3fccd9dbfc5b1c0402a711a15e96933c8dd31f3bd8d1d68e0f3376c568c32",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/boundary-protocol.json": "461257501a08b1b3bcb97317c87e3630c9ef6edb0b34729eb210de78227de440",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/test_run_recall.py": "5a0cbdf24114a8663ae62168f77588de008c1b01de1ae8dc00689bef9fa43678",
+    "experiments/local-coding-worker/cited-recall-v2-20261007/trial-protocol.json": "bcad61539e2d9fffc9c867d5b577197e688172543a4f437937452e2f2aeed659"
+  },
+  "messages_sha256": "a188482058663bde6c9348363114455bd6fe19ce835fcee1bd3a9be387a5ded6",
+  "tests": {
+    "command": "python3 -B experiments/local-coding-worker/cited-recall-v2-20261007/test_run_recall.py",
+    "passed": 12,
+    "failed": 0,
+    "network": "socket construction forbidden by fixture; no live endpoint requests"
+  },
+  "findings_resolved": [
+    "SIGTERM now raises a caught InterruptedError and follows result/partial-SSE/STOP cleanup; dedicated offline control passes.",
+    "Prompt now consumes exact hash-bound model-input/instructions.txt and renders all complete documents before questions, matching packet."
+  ],
+  "checks": {
+    "single_generation_request_no_retry": true,
+    "raw_sse_written_and_flushed_before_parse_or_timeout_check": true,
+    "partial_sse_preserved_on_stream_failure_and_SIGTERM": true,
+    "outer_420s_alarm_covers_tokenization_metrics_and_stream": true,
+    "wire_420s_forwarded": true,
+    "STOP_on_success_failure_and_SIGTERM": true,
+    "existing_STOP_preserved": true,
+    "strict_zero_cache_natural_stop_and_token_id_coverage": true,
+    "bundle_instructions_profile_compiler_wire_validator_runner_supervisor_boundary_and_prompt_hashes_match_final_protocol": true,
+    "no_answer_key_or_review_only_prompt_read": true,
+    "complete_sources_before_questions_no_trimming": true,
+    "max_two_citations_no_quote_repair": true,
+    "output_files_and_directories_fsynced": true
+  },
+  "source_review_notes": [
+    "One request_one call; no model-query loop, retry, cloud fallback or external actions. LocalModel constrains endpoint to loopback and blocks redirects/proxies.",
+    "Boundary pass and remaining supervisor lifetime are checked before generation; STOP/fault/shutdown guards bracket network work.",
+    "Compiled citations cross-check through unchanged original validator; successful status remains complete-awaiting-semantic-review, never a quality pass."
+  ],
+  "limits": [
+    "Tests use synthetic fixtures and fake model transport; actual launch health and tokenizer/model behavior remain main-runner admission responsibilities.",
+    "The unchanged wire source was read for SSE preservation and timeout forwarding; harness tests mock wire transport.",
+    "Fresh question wording/source files overlap original operational concepts and are not a controlled A/B quality comparison."
+  ],
+  "model_requests": 0,
+  "gpu_calls": 0,
+  "unresolved_blockers": []
+}

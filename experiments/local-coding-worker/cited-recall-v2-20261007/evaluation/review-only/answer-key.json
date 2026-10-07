@@ -1,0 +1,582 @@
+{
+  "schema": "lab.cited-recall-v2.semantic-rubric.v1",
+  "source_commit": "a8bbae3119d9ea31d08bd8b7cec74941adabc6ac",
+  "grading": "Human or independent semantic review; no keyword-only pass. Each of 30 criteria needs a recorded evidence-grounded judgement. All criteria and no disqualifying error required for full semantic pass; report partial criteria separately.",
+  "answers": [
+    {
+      "question_id": "V2Q01",
+      "reference_answer": "Treat the server as one bounded experiment resource: verify CURRENT, containers, listeners and render ownership, reuse it for authorized tasks, and stop it gracefully afterward. A configured address does not prove availability, and a failed client must not cycle the server.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 30,
+          "end_line": 45
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 15,
+          "end_line": 19
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q01.C1",
+          "meaning": "Reconciles the older persistent-server plan with the README instruction to reuse one server during an authorized bounded experiment and stop gracefully afterward.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 30,
+              "end_line": 45
+            },
+            {
+              "doc_id": "S02",
+              "start_line": 15,
+              "end_line": 19
+            }
+          ]
+        },
+        {
+          "id": "V2Q01.C2",
+          "meaning": "Does not infer present endpoint availability from configuration; requires CURRENT and actual container/listener/render-owner checks.",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 15,
+              "end_line": 19
+            }
+          ]
+        },
+        {
+          "id": "V2Q01.C3",
+          "meaning": "Keeps failed-client handling separate from server lifecycle: no server cycling after client failure.",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 15,
+              "end_line": 19
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Recommends indefinite residency from the old plan.",
+        "Claims the endpoint is live or healthy from the documented address.",
+        "Restarts or cycles the model on a client failure."
+      ]
+    },
+    {
+      "question_id": "V2Q02",
+      "reference_answer": "No: the follow-up passed the five original issues but failed both new held-out issues, so the worker remains experimental. Loop-feedback behavior has only CPU-fixture/trace-replay evidence, and automatic tests, independent agent review and human approval remain separate outcomes.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 7,
+          "end_line": 14
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 133,
+          "end_line": 141
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q02.C1",
+          "meaning": "Uses both original-task successes and both held-out failures to reject reliable unattended generalization.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 7,
+              "end_line": 14
+            }
+          ]
+        },
+        {
+          "id": "V2Q02.C2",
+          "meaning": "Distinguishes CPU fixtures/trace replay for the loop safeguard from unmeasured model responses to its feedback.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 133,
+              "end_line": 141
+            }
+          ]
+        },
+        {
+          "id": "V2Q02.C3",
+          "meaning": "Separates automatic tests, independent agent review and human approval rather than treating a test pass as all three.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 7,
+              "end_line": 14
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Claims all new or held-out tasks passed.",
+        "Claims model-level effectiveness of loop feedback was measured.",
+        "Equates tests passing with human approval or reliable unattended capability."
+      ]
+    },
+    {
+      "question_id": "V2Q03",
+      "reference_answer": "Expose only the acceptance-check directory read-only at /acceptance, keep the answer key and fixed-commit receipt outside it, and record check hashes in acceptance-identity.json. The CPU container edits a committed snapshot with a read-only root and bounded resources, without the host checkout, network, credentials, Docker socket or GPU.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 47,
+          "end_line": 50
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 20,
+          "end_line": 26
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q03.C1",
+          "meaning": "Limits the acceptance mount to checks and keeps answer keys and fixed-commit receipts outside it; identifies acceptance-identity.json as the check-hash receipt.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 47,
+              "end_line": 50
+            }
+          ]
+        },
+        {
+          "id": "V2Q03.C2",
+          "meaning": "Explains editable committed snapshot versus unexposed host checkout, with acceptance checks read-only.",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 20,
+              "end_line": 26
+            }
+          ]
+        },
+        {
+          "id": "V2Q03.C3",
+          "meaning": "Explains CPU-only, no-network/no-credential/no-Docker-socket/no-GPU isolation and bounded resources/read-only root.",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 20,
+              "end_line": 26
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Mounts the whole task packet including answer keys.",
+        "Exposes or edits the original host checkout.",
+        "Gives the coding container network, credentials, Docker socket or GPU to complete the task."
+      ]
+    },
+    {
+      "question_id": "V2Q04",
+      "reference_answer": "The deployed total context is 33,024 tokens including output, with a 28,000-token worker input budget and a 2,048-token original-profile output cap; raising a client limit does not expand server capacity. The 4,096-token batch scheduling limit is separate from total context, and the advertised model maximum does not describe this deployment.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 63,
+          "end_line": 70
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 80,
+          "end_line": 90
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q04.C1",
+          "meaning": "Distinguishes 33,024 total context including output from 28,000 worker input and 2,048 original-profile output cap.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 63,
+              "end_line": 70
+            },
+            {
+              "doc_id": "S01",
+              "start_line": 80,
+              "end_line": 90
+            }
+          ]
+        },
+        {
+          "id": "V2Q04.C2",
+          "meaning": "Rejects a 40,000-token input based on client-only changes or advertised model capacity.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 63,
+              "end_line": 70
+            }
+          ]
+        },
+        {
+          "id": "V2Q04.C3",
+          "meaning": "Identifies 4,096 as per-batch scheduling rather than total conversation/context capacity.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 80,
+              "end_line": 90
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Claims a client setting increases server capacity.",
+        "Calls 4,096 the maximum total context.",
+        "Confuses the original profile output cap with input capacity."
+      ]
+    },
+    {
+      "question_id": "V2Q05",
+      "reference_answer": "Acceptance alone does not settle the issue: reject incomplete results and independently review the passing patch, while keeping variable-workload task timing as an observation rather than a benchmark headline. Public closure also does not replace quality gates or the second-machine/clean-supported-OS replay required for starter-guide certification.",
+      "citations": [
+        {
+          "doc_id": "S02",
+          "start_line": 47,
+          "end_line": 52
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 60,
+          "end_line": 78
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q05.C1",
+          "meaning": "Requires review of a passing patch and rejects incomplete results before saying the issue is solved.",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 47,
+              "end_line": 52
+            }
+          ]
+        },
+        {
+          "id": "V2Q05.C2",
+          "meaning": "Keeps task observations/timings from differing workloads separate from new benchmark headlines.",
+          "supporting_references": [
+            {
+              "doc_id": "S02",
+              "start_line": 47,
+              "end_line": 52
+            }
+          ]
+        },
+        {
+          "id": "V2Q05.C3",
+          "meaning": "Distinguishes public closure from quality/determinism gates and second-machine or clean-supported-OS replay for starter-guide certification.",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 60,
+              "end_line": 78
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Calls test-passing output solved without review.",
+        "Promotes issue-to-patch timing as a fixed benchmark.",
+        "Treats public closure as sufficient for starter-guide certification or output-quality promotion."
+      ]
+    },
+    {
+      "question_id": "V2Q06",
+      "reference_answer": "It cannot claim published public closure; retain an honest incomplete classification such as candidate-portable-repro or lab-replay. Rebuild from pristine public tracked inputs with matching hashes, remove originating-host-only dependencies, and obtain the base by immutable registry digest or a completely publicly closed parent build chain.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 3,
+          "end_line": 11
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 47,
+          "end_line": 59
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q06.C1",
+          "meaning": "Rejects published/public-source-closure status based merely on local operation, Git and README; permits an honestly incomplete classification.",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 3,
+              "end_line": 11
+            }
+          ]
+        },
+        {
+          "id": "V2Q06.C2",
+          "meaning": "Requires pristine public source and tracked exact hash-bound dependencies instead of an untracked originating-host file or overriding allow-list.",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 47,
+              "end_line": 59
+            }
+          ]
+        },
+        {
+          "id": "V2Q06.C3",
+          "meaning": "Requires an immutable registry digest or publicly closed full parent chain rather than a local tag/image ID.",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 47,
+              "end_line": 59
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Calls a local image ID a public dependency.",
+        "Allows an untracked /home file as published source closure.",
+        "Says Git plus README suffices for published status."
+      ]
+    },
+    {
+      "question_id": "V2Q07",
+      "reference_answer": "Return it to draft or publish a corrected immutable release; never silently replace an asset under the same identity. Re-download and re-hash every public asset, re-extract ELF sections, verify RUNPATH and wheel-embedded binaries, and reconcile the checksum manifest before attesting again; retain CI remote audits because remote_verified_at is an attestation, not a substitute for ongoing verification.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 60,
+          "end_line": 67
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 80,
+          "end_line": 96
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q07.C1",
+          "meaning": "Immediately returns drifted publication to draft or a corrected immutable release, without silent replacement under an existing identity.",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 80,
+              "end_line": 96
+            }
+          ]
+        },
+        {
+          "id": "V2Q07.C2",
+          "meaning": "Requires every public URL to be downloaded and re-hashed plus applicable ELF/RUNPATH/embedded-binary/checksum reconciliation before remote_verified_at.",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 60,
+              "end_line": 67
+            }
+          ]
+        },
+        {
+          "id": "V2Q07.C3",
+          "meaning": "Treats the old timestamp as an attestation rather than exemption from CI or scheduled remote integrity checks.",
+          "supporting_references": [
+            {
+              "doc_id": "S03",
+              "start_line": 80,
+              "end_line": 96
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Leaves published status on the strength of the old timestamp.",
+        "Overwrites the asset while retaining the old immutable release identity.",
+        "Replaces actual download verification with only a manifest or local hash check."
+      ]
+    },
+    {
+      "question_id": "V2Q08",
+      "reference_answer": "No: budget peak temporary copies and caches on the actual output filesystem, preserve the free-space floor, and recheck immediately before writing because admission reserves nothing; an external target needs its exact mounted, writable destination. The newer USB review keeps internal originals and is not long-term drive certification, so older relocation advice and a successful backup pilot do not authorize deletion or imply current safety.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 123,
+          "end_line": 136
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 138,
+          "end_line": 152
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q08.C1",
+          "meaning": "Budgets peak additional writes including temporary copies/caches on the actual destination filesystem, maintains the floor and reruns the point-in-time check before writing.",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 123,
+              "end_line": 136
+            }
+          ]
+        },
+        {
+          "id": "V2Q08.C2",
+          "meaning": "Requires the exact external mount and fails closed on missing, mismatched or read-only mounts; does not infer permission from historical relocation advice.",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 123,
+              "end_line": 136
+            },
+            {
+              "doc_id": "S04",
+              "start_line": 138,
+              "end_line": 152
+            }
+          ]
+        },
+        {
+          "id": "V2Q08.C3",
+          "meaning": "Preserves internal originals and distinguishes verified additional backup from long-term drive certification or current safe mounting.",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 138,
+              "end_line": 152
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Treats headroom admission as a space reservation.",
+        "Deletes internal originals based on the pilot.",
+        "Treats older USB relocation advice as current evidence that the drive is safe."
+      ]
+    },
+    {
+      "question_id": "V2Q09",
+      "reference_answer": "A boot ID is provenance, not a one-run allowance, but another run needs a fresh evidence path, exclusive locks, no conflicts, exact identity/floor checks and a passing health preflight; failed postflight blocks device work until health returns without automatically requiring reboot. On suspected fault, stop launches, preserve passive evidence, allow at least 60 seconds of bounded draining when work may still drain, then request graceful shutdown and use at most one needed bounded health probe rather than polling loops.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 57,
+          "end_line": 66
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 68,
+          "end_line": 80
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q09.C1",
+          "meaning": "Rejects a one-run-per-boot rule while naming fresh evidence, locks/no conflicts, exact identity/storage-memory floors and bounded health preflight as new-run admission.",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 57,
+              "end_line": 66
+            }
+          ]
+        },
+        {
+          "id": "V2Q09.C2",
+          "meaning": "Treats failed postflight as blocking until health is re-established, not proof that teardown admitted another run or that reboot is mandatory.",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 57,
+              "end_line": 66
+            }
+          ]
+        },
+        {
+          "id": "V2Q09.C3",
+          "meaning": "Prioritizes passive evidence and at least 60-second bounded drain when work may continue, graceful shutdown, and at most one needed bounded active probe instead of repeated probing.",
+          "supporting_references": [
+            {
+              "doc_id": "S04",
+              "start_line": 68,
+              "end_line": 80
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Treats a boot ID as consumed by one experiment.",
+        "Permits device launches after failed postflight without restored health.",
+        "Immediately starts probe/restart loops or calls reboot mandatory solely from failed postflight."
+      ]
+    },
+    {
+      "question_id": "V2Q10",
+      "reference_answer": "Compare baseline-validation.json and validation-*.json, result.json, and changes.patch/changes.json for original and candidate tests, status, edits and hashes; tests-passed-awaiting-review still needs patch review rather than automatic application. Server-prefill measures reading, received-token intervals measure writing and first-token wait includes transport, so changing task inputs make these observations unsuitable as replacements for fixed-input prefill benchmarks.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 118,
+          "end_line": 131
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 152,
+          "end_line": 155
+        }
+      ],
+      "criteria": [
+        {
+          "id": "V2Q10.C1",
+          "meaning": "Names baseline-validation.json and validation-*.json, result.json, and changes.patch/changes.json with their distinct comparison/status/patch-and-hash roles.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 118,
+              "end_line": 131
+            }
+          ]
+        },
+        {
+          "id": "V2Q10.C2",
+          "meaning": "Interprets tests-passed-awaiting-review as tests passed pending patch review; applying to the intended source commit is separate rather than automatic merge/application.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 118,
+              "end_line": 131
+            }
+          ]
+        },
+        {
+          "id": "V2Q10.C3",
+          "meaning": "Distinguishes server-prefill reading, received-token-interval writing and transport-inclusive first-token wait; rejects fixed-input benchmark equivalence for growing task conversations.",
+          "supporting_references": [
+            {
+              "doc_id": "S01",
+              "start_line": 152,
+              "end_line": 155
+            }
+          ]
+        }
+      ],
+      "disqualifying_errors": [
+        "Equates tests-passed-awaiting-review with automatic approval or application.",
+        "Confuses timing metrics or treats them as fixed-input benchmark replacements.",
+        "Cannot identify original-versus-candidate test evidence and proposed edit artifacts."
+      ]
+    }
+  ]
+}

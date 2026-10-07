@@ -1,0 +1,164 @@
+{
+  "answers": [
+    {
+      "question_id": "V2Q01",
+      "answer": "Treat the server as one bounded experiment resource: verify CURRENT, containers, listeners and render ownership, reuse it for authorized tasks, and stop it gracefully afterward. A configured address does not prove availability, and a failed client must not cycle the server.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 30,
+          "end_line": 45
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 15,
+          "end_line": 19
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q02",
+      "answer": "No: the follow-up passed the five original issues but failed both new held-out issues, so the worker remains experimental. Loop-feedback behavior has only CPU-fixture/trace-replay evidence, and automatic tests, independent agent review and human approval remain separate outcomes.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 7,
+          "end_line": 14
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 133,
+          "end_line": 141
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q03",
+      "answer": "Expose only the acceptance-check directory read-only at /acceptance, keep the answer key and fixed-commit receipt outside it, and record check hashes in acceptance-identity.json. The CPU container edits a committed snapshot with a read-only root and bounded resources, without the host checkout, network, credentials, Docker socket or GPU.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 47,
+          "end_line": 50
+        },
+        {
+          "doc_id": "S02",
+          "start_line": 20,
+          "end_line": 26
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q04",
+      "answer": "The deployed total context is 33,024 tokens including output, with a 28,000-token worker input budget and a 2,048-token original-profile output cap; raising a client limit does not expand server capacity. The 4,096-token batch scheduling limit is separate from total context, and the advertised model maximum does not describe this deployment.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 63,
+          "end_line": 70
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 80,
+          "end_line": 90
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q05",
+      "answer": "Acceptance alone does not settle the issue: reject incomplete results and independently review the passing patch, while keeping variable-workload task timing as an observation rather than a benchmark headline. Public closure also does not replace quality gates or the second-machine/clean-supported-OS replay required for starter-guide certification.",
+      "citations": [
+        {
+          "doc_id": "S02",
+          "start_line": 47,
+          "end_line": 52
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 60,
+          "end_line": 78
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q06",
+      "answer": "It cannot claim published public closure; retain an honest incomplete classification such as candidate-portable-repro or lab-replay. Rebuild from pristine public tracked inputs with matching hashes, remove originating-host-only dependencies, and obtain the base by immutable registry digest or a completely publicly closed parent build chain.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 3,
+          "end_line": 11
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 47,
+          "end_line": 59
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q07",
+      "answer": "Return it to draft or publish a corrected immutable release; never silently replace an asset under the same identity. Re-download and re-hash every public asset, re-extract ELF sections, verify RUNPATH and wheel-embedded binaries, and reconcile the checksum manifest before attesting again; retain CI remote audits because remote_verified_at is an attestation, not a substitute for ongoing verification.",
+      "citations": [
+        {
+          "doc_id": "S03",
+          "start_line": 60,
+          "end_line": 67
+        },
+        {
+          "doc_id": "S03",
+          "start_line": 80,
+          "end_line": 96
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q08",
+      "answer": "No: budget peak temporary copies and caches on the actual output filesystem, preserve the free-space floor, and recheck immediately before writing because admission reserves nothing; an external target needs its exact mounted, writable destination. The newer USB review keeps internal originals and is not long-term drive certification, so older relocation advice and a successful backup pilot do not authorize deletion or imply current safety.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 123,
+          "end_line": 136
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q09",
+      "answer": "A boot ID is provenance, not a one-run allowance, but another run needs a fresh evidence path, exclusive locks, no conflicts, exact identity/floor checks and a passing health preflight; failed postflight blocks device work until health returns without automatically requiring reboot. On suspected fault, stop launches, preserve passive evidence, allow at least 60 seconds of bounded draining when work may still drain, then request graceful shutdown and use at most one needed bounded health probe rather than polling loops.",
+      "citations": [
+        {
+          "doc_id": "S04",
+          "start_line": 57,
+          "end_line": 66
+        },
+        {
+          "doc_id": "S04",
+          "start_line": 68,
+          "end_line": 80
+        }
+      ]
+    },
+    {
+      "question_id": "V2Q10",
+      "answer": "Compare baseline-validation.json and validation-*.json, result.json, and changes.patch/changes.json for original and candidate tests, status, edits and hashes; tests-passed-awaiting-review still needs patch review rather than automatic application. Server-prefill measures reading, received-token intervals measure writing and first-token wait includes transport, so changing task inputs make these observations unsuitable as replacements for fixed-input prefill benchmarks.",
+      "citations": [
+        {
+          "doc_id": "S01",
+          "start_line": 118,
+          "end_line": 131
+        },
+        {
+          "doc_id": "S01",
+          "start_line": 152,
+          "end_line": 155
+        }
+      ]
+    }
+  ]
+}
