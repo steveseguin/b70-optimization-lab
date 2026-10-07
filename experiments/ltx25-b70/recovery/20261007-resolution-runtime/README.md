@@ -5,12 +5,20 @@ produced six finite, exactly repeating native clips, then exposed a verifier
 job-tag convention error. Both attempts stopped cleanly with healthy postflight.
 The [101b closeout](../../notes/2026-10-07-resolution101b-verifier-refusal.md)
 and [nonqualifying diagnostic](101b-offline-verifier-diagnostic.json) are retained.
-These authored components now target101c with corrected producer-rooted tag
-checks and fresh names/indices throughout. No optimized640×384 result is qualified.
-The original model, qualified99b and both failed packets remain unchanged.
+Packet 101c then passed six native references, three candidate clips and ten timed
+clips with exact four-tensor comparisons. Its short three-fixture serial-client
+screen averaged 2.8702 s/clip (8.710 generated fps). The sealed proof reconstructed
+after graceful shutdown; all four GPUs passed postflight.
+[Measured closeout](../../data/resume-20261007/resolution101c-closeout/summary.json).
+This is scoped workload qualification, not a speed record or endurance result.
+
+The campaign's automatic stop-on-success is historical behavior: the owner has
+since supplied replacement instructions preferring application reuse. Change that
+lifecycle for subsequent work; retain all no-retry/fault-halt/source-quality guards.
+The original model, qualified 99b and both failed packets remain unchanged.
 
 The reviewed [request plan](../20261007-resolution-reference-101c/README.md) fixes
-three original fixtures, native BF16, original8+3 steps, accepted text window,
+three original fixtures, native BF16, original 8+3 steps, accepted text window,
 23/25 placement,25frames and640×384. Its plan hash is
 `3281a1eb45d210ac75f2a07c415cf2f99b2b9308651456587aa483e2596d65e2`.
 W1 is the first optimized scheduling configuration. Native sampling/decoding

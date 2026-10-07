@@ -7,30 +7,33 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **One finite 640×384 reference application
-is starting at16:33UTC.** Packet101c corrects both producer job-tag checks and
-uses fresh names/indices; all15 CPU suites and historical-producer review pass.
-The corrected
-640×384 preparation passed and generated six native clips. Their three repeat
-pairs have identical hashes for all four tensors, but the new verifier refused
-a prompt-hash convention mismatch before optimized setup. The application
-stopped cleanly at16:24UTC; all four GPUs passed postflight with no fault.
-The verifier and its actual producer records are being audited before the next
-sealed candidate. No larger-size speed result is qualified. The first
-640×384 setup stopped cleanly at 16:05 UTC after its new dtype guard rejected
-a native FP32 text-encoder scalar. The encoder check passed; no reference clip
-was generated. All four cards passed postflight with no kernel fault. The guard
-is being corrected against the original model definitions, with no precision
-change. The failed packet and evidence remain preserved. The corrected
-20/28 candidate passed all 128 output comparisons and stopped cleanly at 14:45
-UTC. All four GPUs passed postflight with no kernel GPU fault. It measured
-1.3007 seconds per clip versus the qualified control's 1.3156, only about 1.1%
-faster in one screen. This is not a robust speed improvement or a new record.
-The busiest GPU remains about 92% utilized; another worker offers too little
-credible margin to justify a new small-shape campaign. Work now moves to a
-checked 640×384 workload, beginning with independent native sampling/decoding
-references and explicit memory admission. All five bad-memory blocks remain
-offline; no power, memory, swap, driver or reboot change was made.
+local-worker tuning remain parked. **No model application is running now.**
+The 640×384 reference/optimized screen completed successfully and stopped cleanly
+at 16:44 UTC, before the latest instruction update favoring application reuse.
+All four GPUs passed postflight at 16:45 UTC with no kernel GPU fault.
+
+At640×384, 25 frames, native BF16 weights, original 8+3 steps, accepted encoder
+window 64 and one sampler worker, all three native repeat pairs and all 13 scored
+optimized clips matched exactly across video, audio, images and waveform.
+The short serial-client screen averaged **2.8702 seconds per clip, 8.710 generated
+frames/s** across nine completion intervals. This cycles three fixtures; it is
+not a full-suite/endurance result, an optimized fresh-server repeat, or a record.
+The unchanged sealed verifier reconstructed the saved proof after shutdown.
+[Result and evidence inventory](experiments/ltx25-b70/data/resume-20261007/resolution101c-closeout/summary.json),
+[post-shutdown proof](experiments/ltx25-b70/data/resume-20261007/resolution101c-post-closeout-proof.json),
+[postflight](experiments/ltx25-b70/data/resume-20261007/postflight-101c.json).
+
+Next: test two overlapping batch-one sampler jobs at the same resolution if
+fresh memory admission supports it. Sampling takes about 2.8 seconds per clip;
+post-freeze physical free memory was about 7.63/12.34/9.74/14.74 GiB. These are
+observations, not a promised W2 speed or safe peak bound. Keep all numeric and
+quality settings fixed and compare using the same serial client first.
+The latest owner-provided instructions prefer one continuously running application
+and endpoint reuse. Future work must not carry forward automatic stop-on-success
+or restart-chain behavior; a necessary controlled application reload remains
+authorized within the optimization work. No host reboot, driver reset or changes
+to power, RAM, swap or page-cache settings are authorized. Blocks 53–57 remain
+offline and `b70-offline-bad-memory.service` is enabled; RAM replacement is deferred.
 
 The current-upstream compatibility control passed: **126 probe/timed clips and
 two self-check clips match the accepted references exactly**, including video,
@@ -54,27 +57,17 @@ preserved. The qualified packet manifest is
 [Original failure](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md),
 [compatibility plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
 
-The 20/28 experiment and ownership correction remain preserved research.
-[Measured result and decision](experiments/ltx25-b70/notes/2026-10-07-rebalance100b-results.md).
-The first setup failure exposed an untested two-segment identity consumer; the
-corrected candidate now has direct regression coverage and passed full output
-parity. Its small speed difference does not justify replacing the established
-23/25 control. W3 is not queued. The next workload needs same-size native
-references, the accepted encoder window, unchanged BF16/8+3 arithmetic, and a
-fresh storage/memory budget before any larger model request.
-[CPU integration work](experiments/ltx25-b70/recovery/20261007-resolution-runtime/README.md)
-now includes exact-request phase gates, independent reference-file verification,
-delayed success reporting and explicit setup-result checks. The same-size plan
-passed review. Runtime wiring and all 14 CPU test suites now pass, including
-independent launch/shutdown review. Packet 101 completed only its encoder check before preparation refused.
-Its [closeout](experiments/ltx25-b70/data/resume-20261007/resolution101-closeout/summary.json)
-preserves the failure. Actual resident memory and same-size output qualification
-remain pending. Six native clips are now preserved from101b, with its
-[verification refusal](experiments/ltx25-b70/data/resume-20261007/resolution101b-closeout/summary.json).
-[Resolution reference design](experiments/ltx25-b70/notes/2026-10-07-resolution-reference-design.md),
-[third-worker decision criteria](experiments/ltx25-b70/notes/2026-10-07-third-worker-decision.md),
-[original setup failure](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
-[Next useful workload](experiments/ltx25-b70/notes/2026-10-07-next-useful-workload.md).
+The earlier 20/28 placement screen was only about1.1% faster at 256×256, so it did
+not replace the 23/25 control. W3 at that small shape is not queued.
+[Placement result](experiments/ltx25-b70/notes/2026-10-07-rebalance100b-results.md).
+Two failed 640×384 attempts exposed admission/verifier assumptions, now corrected
+without changing model calculations: original FP32 constructor state and the
+window-encoder's mode-prefixed job tag. Both failed packets, six unqualified
+native clips from 101b, and all failure evidence remain protected.
+[Initial preparation refusal](experiments/ltx25-b70/notes/2026-10-07-resolution101-setup-refusal.md),
+[verifier refusal](experiments/ltx25-b70/notes/2026-10-07-resolution101b-verifier-refusal.md),
+[successful runtime components](experiments/ltx25-b70/recovery/20261007-resolution-runtime/README.md),
+[follow-up choices](experiments/ltx25-b70/notes/2026-10-07-follow-up-levers.md).
 
 The application-only 65,536-file soft limit prevented the original descriptor
 exhaustion. The corrected observer also exited cleanly. This is a practical

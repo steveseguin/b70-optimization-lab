@@ -46,12 +46,12 @@ in; tiling, bf16 already” were not supported by the qualified pipeline and mus
 not guide a new optimization experiment.
 
 The qualified 99b optimized graph keeps node 423 `LTXVAEGraphGate` in
-[`original` mode](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean-s1.json).
+`original` mode (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/graphs/graph-capture-all48-pipe-samp2-tsh-rep-wlean-s1.json`).
 That mode leaves decoder methods unchanged
-([gate source](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/graph_vae_node.py:98)).
+(gate source (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/graph_vae_node.py:98`)).
 The pipeline uses native eager decode or an eager replica on another card
-([native/replica dispatch](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/pipeline_decode_node.py:349),
-[replica implementation](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/ltx_decode_replica.py:309)).
+(native/replica dispatch (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/pipeline_decode_node.py:349`),
+replica implementation (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/ltx_decode_replica.py:309`)).
 Sampler/text graph capture does not imply decoder graph capture.
 
 The [packet 101 plan](../recovery/20261007-resolution-reference/candidate-plan.json)

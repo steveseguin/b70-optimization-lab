@@ -15,8 +15,8 @@ If 101 establishes exact 640×384 native/candidate outputs, consider one separat
 admitted W2/B1 comparison against its W1 control. One W1 sampler job traverses
 both 23/25-card segments serially; a second independent clip could overlap the
 segments without batching arithmetic or combining conditioning. The existing
-[worker-specific pipeline path](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/pipeline_sampler_node.py:933)
-and [per-worker chain check](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/ltx_graph_capture.py:631)
+worker-specific pipeline path (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/pipeline_sampler_node.py:933`)
+and per-worker chain check (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/ltx_graph_capture.py:631`)
 already provide mechanisms and exact eager/replay/repeat checks. Their earlier
 small-shape qualification is not qualification of this new geometry/worker arm.
 
@@ -37,14 +37,14 @@ the current live run.
 ## 2. Remove duplicate host copies in output delivery
 
 The normal VAE output device is CPU unless `gpu_only` is selected
-([device policy](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/comfy/model_management.py:1267)).
+(device policy (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/comfy/model_management.py:1267`)).
 In the nonchunked B1 replica path, a freshly copied decoder output is copied again
 into `pixel_samples`
-([replica wrapper](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/ltx_decode_replica.py:330)).
+(replica wrapper (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/ltx_decode_replica.py:330`)).
 The preview queue then makes a private CPU copy
-([submit](/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/pipeline_decode_node.py:175));
+(submit (`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b/source/scripts/pipeline_decode_node.py:175`));
 raw capture separately makes contiguous tensors, allocates bytes for hashing,
-scans statistics and writes safetensors ([capture implementation](../scripts/capture_node.py:44)).
+scans statistics and writes safetensors ([capture implementation](../scripts/capture_node.py#L44)).
 
 A 640×384×25 F32 image tensor alone is 73,728,000 bytes. A narrow ownership design
 could avoid the extra nonchunked B1 destination copy when an already-owned output

@@ -1,0 +1,336 @@
+2026-10-07T12:33:33.591382-04:00 steve-b70s systemd[2914601]: Started ltx101c-resolution-server-20261007.service - /usr/bin/env --default-signal=INT LTX_OUTPUT_SIZE=640x384 LTX_BUSY_WINDOWS=0 LTX_SAMPLER_PLACEMENT=two-way LTX_SAMPLER_WORKERS=1 LTX_SAMPLER_BATCH=1 LTX_SAMPLER_SHARED_POOL=1 LTX_DECODE_REPLICA_DEVICE=xpu:2 LTX_DECODE_REPLICAS=1 NEOReadDebugKeys=1 EnableDeferBacking=0 /home/steve/.venvs/ltx25-baseline/bin/python -B /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/launch/serve-encoder.py --packet /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c --manifest-sha256 236637003cf90e2146a8e5bd8fef6aca0a280a1d580c192f5666ae2476f0a966 --run-name encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384 --health-receipt /home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-101b.json.
+2026-10-07T12:33:45.408156-04:00 steve-b70s env[3266914]: WARNING:root:--disable-api-nodes is deprecated and will be removed in a future version. It currently behaves like --offline. Use --offline to keep the frontend offline, or --disable-partner-nodes to only disable partner nodes.
+2026-10-07T12:33:45.408580-04:00 steve-b70s env[3266914]: [WARNING] --disable-api-nodes is deprecated and will be removed in a future version. It currently behaves like --offline. Use --offline to keep the frontend offline, or --disable-partner-nodes to only disable partner nodes.
+2026-10-07T12:33:45.408746-04:00 steve-b70s env[3266914]: INFO:root:Adding extra search path diffusion_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models
+2026-10-07T12:33:45.408779-04:00 steve-b70s env[3266914]: [INFO] Adding extra search path diffusion_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models
+2026-10-07T12:33:45.408814-04:00 steve-b70s env[3266914]: INFO:root:Adding extra search path text_encoders /mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders
+2026-10-07T12:33:45.408814-04:00 steve-b70s env[3266914]: [INFO] Adding extra search path text_encoders /mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders
+2026-10-07T12:33:45.408867-04:00 steve-b70s env[3266914]: INFO:root:Adding extra search path vae /mnt/fast-ai/llm-models/LTX-2.5-baseline/vae
+2026-10-07T12:33:45.408867-04:00 steve-b70s env[3266914]: [INFO] Adding extra search path vae /mnt/fast-ai/llm-models/LTX-2.5-baseline/vae
+2026-10-07T12:33:45.408867-04:00 steve-b70s env[3266914]: INFO:root:Adding extra search path latent_upscale_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models
+2026-10-07T12:33:45.408867-04:00 steve-b70s env[3266914]: [INFO] Adding extra search path latent_upscale_models /mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models
+2026-10-07T12:33:45.408959-04:00 steve-b70s env[3266914]: INFO:root:Setting output directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/output
+2026-10-07T12:33:45.408959-04:00 steve-b70s env[3266914]: [INFO] Setting output directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/output
+2026-10-07T12:33:45.408959-04:00 steve-b70s env[3266914]: INFO:root:Setting input directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/input
+2026-10-07T12:33:45.408959-04:00 steve-b70s env[3266914]: [INFO] Setting input directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/input
+2026-10-07T12:33:45.408959-04:00 steve-b70s env[3266914]: INFO:root:Setting user directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/user
+2026-10-07T12:33:45.408959-04:00 steve-b70s env[3266914]: [INFO] Setting user directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/user
+2026-10-07T12:33:45.409211-04:00 steve-b70s env[3266914]: WARNING:root:WARNING: Potential Error in code: Torch already imported, torch should never be imported before this point.
+2026-10-07T12:33:45.409250-04:00 steve-b70s env[3266914]: [WARNING] WARNING: Potential Error in code: Torch already imported, torch should never be imported before this point.
+2026-10-07T12:33:45.452694-04:00 steve-b70s env[3266914]: INFO:root:Python version: 3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]
+2026-10-07T12:33:45.452723-04:00 steve-b70s env[3266914]: [INFO] Python version: 3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]
+2026-10-07T12:33:45.452747-04:00 steve-b70s env[3266914]: INFO:root:ComfyUI version: 0.39.0
+2026-10-07T12:33:45.452747-04:00 steve-b70s env[3266914]: [INFO] ComfyUI version: 0.39.0
+2026-10-07T12:33:45.452967-04:00 steve-b70s env[3266914]: INFO:root:comfy-aimdo version: 0.5.5
+2026-10-07T12:33:45.452998-04:00 steve-b70s env[3266914]: [INFO] comfy-aimdo version: 0.5.5
+2026-10-07T12:33:45.453305-04:00 steve-b70s env[3266914]: INFO:root:comfy-kitchen version: 0.2.37
+2026-10-07T12:33:45.453332-04:00 steve-b70s env[3266914]: [INFO] comfy-kitchen version: 0.2.37
+2026-10-07T12:33:45.453364-04:00 steve-b70s env[3266914]: WARNING:root:Dynamic vram disabled with argument. If you have any issues with dynamic vram enabled please give us a detailed reports as this argument will be removed soon. If you use gguf we recommend keeping dynamic vram enabled and using native ComfyUI model formats instead. ComfyUI native formats like fp8, int8 and w4a8 will be faster even if they are larger than your memory.
+2026-10-07T12:33:45.453364-04:00 steve-b70s env[3266914]: [WARNING] Dynamic vram disabled with argument. If you have any issues with dynamic vram enabled please give us a detailed reports as this argument will be removed soon. If you use gguf we recommend keeping dynamic vram enabled and using native ComfyUI model formats instead. ComfyUI native formats like fp8, int8 and w4a8 will be faster even if they are larger than your memory.
+2026-10-07T12:33:45.453436-04:00 steve-b70s env[3266914]: INFO:root:Setting temp directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/temp/temp
+2026-10-07T12:33:45.453436-04:00 steve-b70s env[3266914]: [INFO] Setting temp directory to: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-resolution-reference-101c-two-way-w1-b1-p1-dxpu2-s640x384/temp/temp
+2026-10-07T12:33:45.454758-04:00 steve-b70s env[3266914]: INFO:root:comfyui-frontend-package version: 1.55.14
+2026-10-07T12:33:45.454785-04:00 steve-b70s env[3266914]: [INFO] comfyui-frontend-package version: 1.55.14
+2026-10-07T12:33:45.454807-04:00 steve-b70s env[3266914]: INFO:root:comfyui-workflow-templates version: 0.11.77
+2026-10-07T12:33:45.454807-04:00 steve-b70s env[3266914]: [INFO] comfyui-workflow-templates version: 0.11.77
+2026-10-07T12:33:45.454848-04:00 steve-b70s env[3266914]: INFO:root:comfyui-embedded-docs version: 0.5.13
+2026-10-07T12:33:45.454848-04:00 steve-b70s env[3266914]: [INFO] comfyui-embedded-docs version: 0.5.13
+2026-10-07T12:33:45.454888-04:00 steve-b70s env[3266914]: INFO:root:comfy-kitchen version: 0.2.37
+2026-10-07T12:33:45.454888-04:00 steve-b70s env[3266914]: [INFO] comfy-kitchen version: 0.2.37
+2026-10-07T12:33:45.454888-04:00 steve-b70s env[3266914]: INFO:root:comfy-aimdo version: 0.5.5
+2026-10-07T12:33:45.454888-04:00 steve-b70s env[3266914]: [INFO] comfy-aimdo version: 0.5.5
+2026-10-07T12:33:45.455223-04:00 steve-b70s env[3266914]: INFO:root:[Prompt Server] web root: /home/steve/ltx25-upstream99-dependencies/site-packages/comfyui_frontend_package/static
+2026-10-07T12:33:45.455255-04:00 steve-b70s env[3266914]: [INFO] [Prompt Server] web root: /home/steve/ltx25-upstream99-dependencies/site-packages/comfyui_frontend_package/static
+2026-10-07T12:33:45.455938-04:00 steve-b70s env[3266914]: INFO:root:Asset seeder disabled
+2026-10-07T12:33:45.455963-04:00 steve-b70s env[3266914]: [INFO] Asset seeder disabled
+2026-10-07T12:33:45.483376-04:00 steve-b70s env[3266914]: /home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+2026-10-07T12:33:45.483376-04:00 steve-b70s env[3266914]:   warnings.warn(
+2026-10-07T12:33:45.922946-04:00 steve-b70s env[3266914]: INFO:OpenGL.acceleratesupport:No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-07T12:33:45.922998-04:00 steve-b70s env[3266914]: [INFO] No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+2026-10-07T12:33:46.513921-04:00 steve-b70s env[3266914]: INFO:root:Skipping websocket_image_save.py due to disable_all_custom_nodes and whitelist_custom_nodes
+2026-10-07T12:33:46.514301-04:00 steve-b70s env[3266914]: [INFO] Skipping websocket_image_save.py due to disable_all_custom_nodes and whitelist_custom_nodes
+2026-10-07T12:33:46.521619-04:00 steve-b70s env[3266914]: INFO:root:
+2026-10-07T12:33:46.521619-04:00 steve-b70s env[3266914]: Import times for custom nodes:
+2026-10-07T12:33:46.521690-04:00 steve-b70s env[3266914]: [INFO]
+2026-10-07T12:33:46.521690-04:00 steve-b70s env[3266914]: Import times for custom nodes:
+2026-10-07T12:33:46.521690-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_resolution_lab
+2026-10-07T12:33:46.521690-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_resolution_lab
+2026-10-07T12:33:46.521787-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_encoder_identity
+2026-10-07T12:33:46.521787-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_encoder_identity
+2026-10-07T12:33:46.521787-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_baseline_capture
+2026-10-07T12:33:46.521787-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_baseline_capture
+2026-10-07T12:33:46.521787-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_vae_lab
+2026-10-07T12:33:46.521787-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_vae_lab
+2026-10-07T12:33:46.521787-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_phase_timed_upsampler_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_phase_timed_upsampler_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_speed_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_speed_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_resident_fastpath_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_resident_fastpath_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_qkv_fusion_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_qkv_fusion_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_encoder_diagnostics
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_encoder_diagnostics
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_concurrent_cfg_lab
+2026-10-07T12:33:46.521950-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_concurrent_cfg_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_upsampler_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_upsampler_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_text_encoder_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_text_encoder_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_multiblock_compile_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_multiblock_compile_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_pipeline_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_pipeline_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_na_axis_decode_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_na_axis_decode_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_pipeline_sampler_lab
+2026-10-07T12:33:46.522210-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_pipeline_sampler_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_capture_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_graph_capture_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_host_embedding_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_host_embedding_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: INFO:root:   0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_pipeline_decode_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: [INFO]    0.0 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_pipeline_decode_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: INFO:root:   0.1 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_block_compile_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: [INFO]    0.1 seconds: /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-reference-101c/source/custom_nodes/ltx_block_compile_lab
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: INFO:root:
+2026-10-07T12:33:46.522483-04:00 steve-b70s env[3266914]: [INFO]
+2026-10-07T12:33:46.570407-04:00 steve-b70s env[3266914]: INFO:root:Disabling intermediate node cache.
+2026-10-07T12:33:46.570534-04:00 steve-b70s env[3266914]: [INFO] Disabling intermediate node cache.
+2026-10-07T12:33:46.570721-04:00 steve-b70s env[3266914]: INFO:root:Starting server
+2026-10-07T12:33:46.570777-04:00 steve-b70s env[3266914]: [INFO] Starting server
+2026-10-07T12:33:46.570912-04:00 steve-b70s env[3266914]: INFO:root:To see the GUI go to: http://127.0.0.1:8188
+2026-10-07T12:33:46.570945-04:00 steve-b70s env[3266914]: [INFO] To see the GUI go to: http://127.0.0.1:8188
+2026-10-07T12:34:40.928351-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:34:40.928351-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:34:42.889531-04:00 steve-b70s env[3266914]: INFO:root:model weight dtype torch.bfloat16, manual cast: None
+2026-10-07T12:34:42.889881-04:00 steve-b70s env[3266914]: [INFO] model weight dtype torch.bfloat16, manual cast: None
+2026-10-07T12:34:42.905309-04:00 steve-b70s env[3266914]: INFO:root:model_type FLUX
+2026-10-07T12:34:42.905340-04:00 steve-b70s env[3266914]: [INFO] model_type FLUX
+2026-10-07T12:34:42.906572-04:00 steve-b70s env[3266914]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors']
+2026-10-07T12:34:42.906605-04:00 steve-b70s env[3266914]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors']
+2026-10-07T12:34:52.990177-04:00 steve-b70s env[3266914]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors']
+2026-10-07T12:34:52.990615-04:00 steve-b70s env[3266914]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors']
+2026-10-07T12:34:58.061032-04:00 steve-b70s env[3266914]: INFO:root:CLIP/text encoder model load device: xpu:2, offload device: cpu, current: cpu, dtype: torch.bfloat16
+2026-10-07T12:34:58.062024-04:00 steve-b70s env[3266914]: [INFO] CLIP/text encoder model load device: xpu:2, offload device: cpu, current: cpu, dtype: torch.bfloat16
+2026-10-07T12:34:58.160689-04:00 steve-b70s env[3266914]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors']
+2026-10-07T12:34:58.160782-04:00 steve-b70s env[3266914]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors']
+2026-10-07T12:35:01.118420-04:00 steve-b70s env[3266914]: INFO:root:VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T12:35:01.118800-04:00 steve-b70s env[3266914]: [INFO] VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T12:35:01.287991-04:00 steve-b70s env[3266914]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors']
+2026-10-07T12:35:01.288128-04:00 steve-b70s env[3266914]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-audio-vae-bf16.safetensors']
+2026-10-07T12:35:01.771393-04:00 steve-b70s env[3266914]: INFO:root:VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T12:35:01.771393-04:00 steve-b70s env[3266914]: [INFO] VAE load device: xpu:3, offload device: cpu, dtype: torch.bfloat16
+2026-10-07T12:35:01.798938-04:00 steve-b70s env[3266914]: INFO:root:Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors']
+2026-10-07T12:35:01.798989-04:00 steve-b70s env[3266914]: [INFO] Model storage policy: fast_disk=True paths=['/mnt/fast-ai/llm-models/LTX-2.5-baseline/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors']
+2026-10-07T12:35:03.502126-04:00 steve-b70s env[3266914]: INFO:root:Requested to load _TextShard
+2026-10-07T12:35:03.502531-04:00 steve-b70s env[3266914]: [INFO] Requested to load _TextShard
+2026-10-07T12:35:05.047249-04:00 steve-b70s env[3266914]: INFO:root:loaded completely;  10395.73 MB loaded, full load: True
+2026-10-07T12:35:05.047608-04:00 steve-b70s env[3266914]: [INFO] loaded completely;  10395.73 MB loaded, full load: True
+2026-10-07T12:35:05.113107-04:00 steve-b70s env[3266914]: INFO:root:Requested to load LTXAVTEModel_
+2026-10-07T12:35:05.113190-04:00 steve-b70s env[3266914]: [INFO] Requested to load LTXAVTEModel_
+2026-10-07T12:35:07.222582-04:00 steve-b70s env[3266914]: INFO:root:loaded completely; 28682.00 MB usable, 14604.25 MB loaded, full load: True
+2026-10-07T12:35:07.222967-04:00 steve-b70s env[3266914]: [INFO] loaded completely; 28682.00 MB usable, 14604.25 MB loaded, full load: True
+2026-10-07T12:40:02.190486-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 321.26 seconds
+2026-10-07T12:40:02.190954-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 321.26 seconds
+2026-10-07T12:40:02.696181-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:40:02.696257-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:40:02.951637-04:00 steve-b70s env[3266914]: INFO:root:Requested to load AudioVAE
+2026-10-07T12:40:02.951706-04:00 steve-b70s env[3266914]: [INFO] Requested to load AudioVAE
+2026-10-07T12:40:02.951706-04:00 steve-b70s env[3266914]: INFO:root:Requested to load CausalDiffusionVAE
+2026-10-07T12:40:02.951706-04:00 steve-b70s env[3266914]: [INFO] Requested to load CausalDiffusionVAE
+2026-10-07T12:40:02.951706-04:00 steve-b70s env[3266914]: INFO:root:Requested to load LatentUpsampler
+2026-10-07T12:40:02.951789-04:00 steve-b70s env[3266914]: [INFO] Requested to load LatentUpsampler
+2026-10-07T12:40:02.951789-04:00 steve-b70s env[3266914]: INFO:root:Requested to load _Shard
+2026-10-07T12:40:02.951789-04:00 steve-b70s env[3266914]: [INFO] Requested to load _Shard
+2026-10-07T12:40:02.951789-04:00 steve-b70s env[3266914]: INFO:root:Requested to load LTXAV
+2026-10-07T12:40:02.951789-04:00 steve-b70s env[3266914]: [INFO] Requested to load LTXAV
+2026-10-07T12:40:03.074068-04:00 steve-b70s env[3266914]: INFO:root:loaded completely;  346.73 MB loaded, full load: True
+2026-10-07T12:40:03.074137-04:00 steve-b70s env[3266914]: [INFO] loaded completely;  346.73 MB loaded, full load: True
+2026-10-07T12:40:03.327041-04:00 steve-b70s env[3266914]: INFO:root:loaded completely;  1403.92 MB loaded, full load: True
+2026-10-07T12:40:03.327041-04:00 steve-b70s env[3266914]: [INFO] loaded completely;  1403.92 MB loaded, full load: True
+2026-10-07T12:40:03.496226-04:00 steve-b70s env[3266914]: INFO:root:loaded completely;  949.61 MB loaded, full load: True
+2026-10-07T12:40:03.496303-04:00 steve-b70s env[3266914]: [INFO] loaded completely;  949.61 MB loaded, full load: True
+2026-10-07T12:40:06.138957-04:00 steve-b70s env[3266914]: INFO:root:loaded completely;  18433.41 MB loaded, full load: True
+2026-10-07T12:40:06.139295-04:00 steve-b70s env[3266914]: [INFO] loaded completely;  18433.41 MB loaded, full load: True
+2026-10-07T12:40:47.426654-04:00 steve-b70s env[3266914]: INFO:root:loaded completely;  21618.06 MB loaded, full load: True
+2026-10-07T12:40:47.427062-04:00 steve-b70s env[3266914]: [INFO] loaded completely;  21618.06 MB loaded, full load: True
+2026-10-07T12:40:47.594227-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 44.90 seconds
+2026-10-07T12:40:47.594384-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 44.90 seconds
+2026-10-07T12:40:48.087129-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:40:48.087231-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:40:52.356484-04:00 steve-b70s env[3266914]: [568B blob data]
+2026-10-07T12:40:53.847672-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:41:05.064059-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 16.97 seconds
+2026-10-07T12:41:05.064644-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 16.97 seconds
+2026-10-07T12:41:05.456933-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:41:05.457011-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:41:08.827407-04:00 steve-b70s env[3266914]: [568B blob data]
+2026-10-07T12:41:10.033693-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:41:12.276327-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 6.82 seconds
+2026-10-07T12:41:12.276845-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 6.82 seconds
+2026-10-07T12:41:12.488891-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:41:12.488891-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:41:15.813179-04:00 steve-b70s env[3266914]: [568B blob data]
+2026-10-07T12:41:17.018996-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:41:19.231838-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 6.74 seconds
+2026-10-07T12:41:19.232410-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 6.74 seconds
+2026-10-07T12:41:19.621635-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:41:19.621730-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:41:22.949375-04:00 steve-b70s env[3266914]: [568B blob data]
+2026-10-07T12:41:24.156954-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:41:26.364167-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 6.74 seconds
+2026-10-07T12:41:26.364656-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 6.74 seconds
+2026-10-07T12:41:26.516897-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:41:26.516897-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:41:29.828691-04:00 steve-b70s env[3266914]: [568B blob data]
+2026-10-07T12:41:31.040537-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:41:33.233533-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 6.71 seconds
+2026-10-07T12:41:33.234000-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 6.71 seconds
+2026-10-07T12:41:33.591288-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:41:33.591373-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:41:36.908782-04:00 steve-b70s env[3266914]: [568B blob data]
+2026-10-07T12:41:38.118800-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:41:40.333050-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 6.74 seconds
+2026-10-07T12:41:40.333521-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 6.74 seconds
+2026-10-07T12:41:51.874638-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:41:51.875020-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:41:51.900535-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 0.03 seconds
+2026-10-07T12:41:51.900639-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 0.03 seconds
+2026-10-07T12:41:52.308569-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:41:52.308643-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:41:52.786203-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 0.48 seconds
+2026-10-07T12:41:52.786302-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 0.48 seconds
+2026-10-07T12:41:57.493758-04:00 steve-b70s env[3266914]: [568B blob data]
+2026-10-07T12:42:02.084382-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:42:04.229244-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:42:04.229550-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:42:04.278882-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 0.05 seconds
+2026-10-07T12:42:04.278967-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 0.05 seconds
+2026-10-07T12:42:04.726543-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:42:04.726616-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:42:55.728875-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 51.00 seconds
+2026-10-07T12:42:55.729467-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 51.00 seconds
+2026-10-07T12:42:56.165314-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:42:56.165384-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:42:58.270048-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 2.10 seconds
+2026-10-07T12:42:58.270463-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.10 seconds
+2026-10-07T12:42:58.457527-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:42:58.457601-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:42:58.921560-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 0.46 seconds
+2026-10-07T12:42:58.921697-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 0.46 seconds
+2026-10-07T12:43:00.216245-04:00 steve-b70s env[3266914]: [392B blob data]
+2026-10-07T12:43:00.216477-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:00.457704-04:00 steve-b70s env[3266914]: [196B blob data]
+2026-10-07T12:43:01.585332-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:01.649509-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:01.649642-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 1.43 seconds
+2026-10-07T12:43:02.212041-04:00 steve-b70s env[3266914]: [122B blob data]
+2026-10-07T12:43:02.212108-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:03.171308-04:00 steve-b70s env[3266914]: [428B blob data]
+2026-10-07T12:43:04.312092-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:04.380453-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:04.380551-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.17 seconds
+2026-10-07T12:43:04.757208-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:04.757274-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:05.875531-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:07.008357-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:07.217723-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:07.217839-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.46 seconds
+2026-10-07T12:43:07.729231-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:07.729315-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:09.016797-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:10.173499-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:10.370258-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:10.370377-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.64 seconds
+2026-10-07T12:43:10.626350-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:10.626418-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:11.791397-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:12.928111-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:13.143701-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:13.143828-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.52 seconds
+2026-10-07T12:43:14.579297-04:00 steve-b70s env[3266914]: [530B blob data]
+2026-10-07T12:43:15.716625-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:34.130828-04:00 steve-b70s env[3266914]: INFO:root:got prompt
+2026-10-07T12:43:34.131275-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:34.604937-04:00 steve-b70s env[3266914]: INFO:root:Prompt executed in 0.47 seconds
+2026-10-07T12:43:34.605071-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 0.47 seconds
+2026-10-07T12:43:35.925217-04:00 steve-b70s env[3266914]: [330B blob data]
+2026-10-07T12:43:35.925552-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:36.416465-04:00 steve-b70s env[3266914]: [258B blob data]
+2026-10-07T12:43:37.551078-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:37.630352-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:37.630447-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 1.70 seconds
+2026-10-07T12:43:37.980322-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:37.980389-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:39.153614-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:40.316016-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:40.383925-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:40.384019-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.40 seconds
+2026-10-07T12:43:40.752372-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:40.752440-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:41.911969-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:43.050532-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:43.253380-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:43.253505-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.50 seconds
+2026-10-07T12:43:43.610101-04:00 steve-b70s env[3266914]: [122B blob data]
+2026-10-07T12:43:43.610171-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:44.705686-04:00 steve-b70s env[3266914]: [428B blob data]
+2026-10-07T12:43:45.849614-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:46.055375-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:46.055497-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.44 seconds
+2026-10-07T12:43:46.561283-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:46.561863-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:47.850704-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:48.993216-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:49.203993-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:49.204107-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.64 seconds
+2026-10-07T12:43:49.456242-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:49.456319-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:50.627428-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:51.790087-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:52.016819-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:52.018115-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.56 seconds
+2026-10-07T12:43:52.271657-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:52.271697-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:53.440111-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:54.574823-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:54.778094-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:54.778189-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.50 seconds
+2026-10-07T12:43:55.032942-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:55.033003-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:56.229581-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:43:57.381381-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:43:57.608492-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:43:57.608612-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.57 seconds
+2026-10-07T12:43:58.131505-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:43:58.131577-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:43:59.397644-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:44:00.536792-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:44:00.741266-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:44:00.741378-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.61 seconds
+2026-10-07T12:44:00.998235-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:44:00.998302-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:44:02.161556-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:44:03.319697-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:44:03.525079-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:44:03.525208-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.53 seconds
+2026-10-07T12:44:03.772616-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:44:03.772669-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:44:04.954083-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:44:06.091792-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:44:06.297800-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:44:06.297916-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.52 seconds
+2026-10-07T12:44:06.552871-04:00 steve-b70s env[3266914]: [70B blob data]
+2026-10-07T12:44:06.552936-04:00 steve-b70s env[3266914]: [INFO] got prompt
+2026-10-07T12:44:07.732421-04:00 steve-b70s env[3266914]: [480B blob data]
+2026-10-07T12:44:08.880246-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:44:09.085395-04:00 steve-b70s env[3266914]: [79B blob data]
+2026-10-07T12:44:09.085506-04:00 steve-b70s env[3266914]: [INFO] Prompt executed in 2.53 seconds
+2026-10-07T12:44:10.876526-04:00 steve-b70s env[3266914]: [530B blob data]
+2026-10-07T12:44:12.015031-04:00 steve-b70s env[3266914]: [284B blob data]
+2026-10-07T12:44:41.555177-04:00 steve-b70s env[3266914]: INFO:root:
+2026-10-07T12:44:41.555177-04:00 steve-b70s env[3266914]: Stopped server
+2026-10-07T12:44:41.555564-04:00 steve-b70s env[3266914]: [INFO]
+2026-10-07T12:44:41.555564-04:00 steve-b70s env[3266914]: Stopped server
+2026-10-07T12:44:46.325635-04:00 steve-b70s systemd[2914601]: ltx101c-resolution-server-20261007.service: Consumed 15min 46.263s CPU time.
