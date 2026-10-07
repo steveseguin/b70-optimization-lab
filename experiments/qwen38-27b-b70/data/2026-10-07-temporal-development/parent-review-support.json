@@ -1,0 +1,214 @@
+{
+  "annotation_vs_source_disagreements": [
+    {
+      "answer_basis": 0,
+      "answers": 0,
+      "event_batches": 0,
+      "path": "annotations-independent.json",
+      "state_batches": 0
+    },
+    {
+      "answer_basis": 0,
+      "answers": 0,
+      "event_batches": 0,
+      "path": "annotations-review.json",
+      "state_batches": 0
+    }
+  ],
+  "annotations": [
+    {
+      "bytes": 70811,
+      "path": "annotations-independent.json",
+      "sha256": "80411f06139cd5e7f0f39251b6d4f01e1afae31b079a2483aa866457913b93ba"
+    },
+    {
+      "bytes": 70810,
+      "path": "annotations-review.json",
+      "sha256": "c43123857d93419cc346e509520ba2910265f3173ff67297dd5a1ce493067833"
+    }
+  ],
+  "between_annotation_disagreements": {
+    "answer_basis": 0,
+    "answers": 0,
+    "event_lists": 0,
+    "states": 0
+  },
+  "caveats": [
+    "Both annotators agree exactly, but they are assistant agents, not independent human annotators or external validators. This review was performed by the source author and is not blind.",
+    "The four settings have distinct numeric timelines and question targets, but share an intentionally clear posting grammar, eight-counter structure, and late external allocations that make historical values differ from final values. They are not independent real-world samples.",
+    "All64 historical/join values differ from their final values, but some questions repeat the same counter/time target. The per-document duplicate-target lists quantify this; question count is not independent-fact count.",
+    "Only5 of32 ownership joins select an owner different from the ticket final owner;13 joins do test a transfer effective in the requested batch. Historical ownership coverage is therefore weaker than the64/64 historical-balance contrast suggests. No source/question retuning was performed.",
+    "Drafts and cancellations are explicitly signposted. This packet does not establish performance on implicit reversals, ambiguous language, unseen grammars, large state or long context.",
+    "This support receipt validates source/annotation consistency only. Parent adjudication and any future protocol-specific admission remain separate; no execution or performance claim is granted."
+  ],
+  "counts": {
+    "answers": 96,
+    "events": 201,
+    "historical_questions": 64,
+    "historical_values_different_from_final": 64,
+    "joins_owner_changed_at_requested_batch": 13,
+    "joins_owner_differs_from_final_owner": 5,
+    "state_values": 384,
+    "states": 48
+  },
+  "documents": [
+    {
+      "annotation_disagreements": 0,
+      "answers": 24,
+      "coverage": {
+        "history_asked": 8,
+        "history_different_from_final": 8,
+        "join_asked": 8,
+        "join_different_from_final": 8
+      },
+      "distinct_counter_time_targets": 16,
+      "distinct_requested_historical_batches": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "document_id": "t01-clinic",
+      "duplicate_counter_time_targets": [],
+      "events": 51,
+      "joins_owner_changed_at_requested_batch": 4,
+      "joins_owner_differs_from_final_owner": 1,
+      "states": 12
+    },
+    {
+      "annotation_disagreements": 0,
+      "answers": 24,
+      "coverage": {
+        "history_asked": 8,
+        "history_different_from_final": 8,
+        "join_asked": 8,
+        "join_different_from_final": 8
+      },
+      "distinct_counter_time_targets": 15,
+      "distinct_requested_historical_batches": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "document_id": "t02-theatre",
+      "duplicate_counter_time_targets": [
+        {
+          "batch_id": 3,
+          "counter": "oak26",
+          "question_count": 2
+        }
+      ],
+      "events": 50,
+      "joins_owner_changed_at_requested_batch": 3,
+      "joins_owner_differs_from_final_owner": 1,
+      "states": 12
+    },
+    {
+      "annotation_disagreements": 0,
+      "answers": 24,
+      "coverage": {
+        "history_asked": 8,
+        "history_different_from_final": 8,
+        "join_asked": 8,
+        "join_different_from_final": 8
+      },
+      "distinct_counter_time_targets": 16,
+      "distinct_requested_historical_batches": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "document_id": "t03-depot",
+      "duplicate_counter_time_targets": [],
+      "events": 50,
+      "joins_owner_changed_at_requested_batch": 3,
+      "joins_owner_differs_from_final_owner": 1,
+      "states": 12
+    },
+    {
+      "annotation_disagreements": 0,
+      "answers": 24,
+      "coverage": {
+        "history_asked": 8,
+        "history_different_from_final": 8,
+        "join_asked": 8,
+        "join_different_from_final": 8
+      },
+      "distinct_counter_time_targets": 16,
+      "distinct_requested_historical_batches": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "document_id": "t04-meals",
+      "duplicate_counter_time_targets": [],
+      "events": 50,
+      "joins_owner_changed_at_requested_batch": 3,
+      "joins_owner_differs_from_final_owner": 2,
+      "states": 12
+    }
+  ],
+  "execution_admitted": false,
+  "interpretation_checks": [
+    {
+      "batch_id": 6,
+      "document_id": "t01-clinic",
+      "finding": "The posted7-unit amber10 debit reverses the batch2 credit prospectively; the cancelled25-unit dune13 request in batch5 is absent from events."
+    },
+    {
+      "batch_id": 8,
+      "document_id": "t02-theatre",
+      "finding": "The posted9-unit nettle25 reversal refers to the real batch2 credit, not the separate unposted30-unit extra-show draft; the cancelled22-unit jade21 proposal in batch3 creates no event."
+    },
+    {
+      "batch_id": 5,
+      "document_id": "t03-depot",
+      "finding": "Reopening a job is narrative context, not a counter reopen operation. The actual9-unit quartz30 debit is applied now, preserving the batch3 credit and earlier states."
+    },
+    {
+      "batch_id": 7,
+      "document_id": "t04-meals",
+      "finding": "The posted6-unit coral42 debit applies to its then-current balance after intervening settings in batches4 and6. It does not delete the batch2 credit or retroactively revise either setting."
+    }
+  ],
+  "issues": [],
+  "methodology": [
+    "Read the complete frozen narrative paragraphs after both annotation files were complete; checked the distinction between unposted proposals and explicitly posted reversals.",
+    "Re-derived posting events directly from literal source lines with token splitting and independently replayed integer states. This check did not consume annotation events or reuse saved authoring answers.",
+    "Read initial ticket ownership and explicit effective transfers in chronological order; saved ownership after every batch. Resolved later review-to-ticket links against ownership at the question's requested earlier close.",
+    "Parsed all96 question texts to derive counter/time bases and integer answers, including same-batch ownership transfers. Compared both annotations independently against this derivation, then compared annotations directly.",
+    "Checked exact batch/question coverage, integer types, quote presence/order through exact event-list comparison, all48 full states, and distinct historical values versus final state. No model output, live process, frozen runtime or source file was changed."
+  ],
+  "reviewer": "Codex /root/audit_results (also the source author; this is independent recalculation, not a third blind annotation)",
+  "schema": "context-temporal-parent-review-support.v1",
+  "source": {
+    "bytes": 51359,
+    "path": "documents.json",
+    "sha256": "45ae96b4c80dca9a14defddf1bf33ae895e47fed9848101dbdc9ae2cb2be666f"
+  },
+  "source_consistency_passed": true,
+  "speed_gate_passed": false
+}

@@ -144,11 +144,11 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 06:10 UTC**. One supervised sparse-state
-replication is active. The previous four-trial screen completed and passed its
-registered replication trigger; card release was verified at 05:58:40 UTC.
+Latest two-card review: **2026-10-07 06:31 UTC**. One supervised sparse-state
+replication is active. Its original-task repeat is exact in both methods and
+meets the prewritten elapsed criterion; the new dispatch pair is still running.
 
-## 2026-10-07, two-B70 host: sparse signal; prepare fresh-server replication
+## 2026-10-07, two-B70 host: sparse replication active
 
 Revision 3 completed six development trials: archive 48/48, quoted events
 48/48, summary 44/48. Its original all-methods gate failed; held-out cases
@@ -196,6 +196,11 @@ preparation passed at 06:09:28 UTC, and preflight health passed.
 `ctx-sparse-replication-v1.service` now owns startup, strict qualification, four
 trials and graceful cleanup. Output: `/mnt/fast-ai/bench-results/context-sparse-replication-v1-20261007`.
 [Preparation receipts](experiments/qwen38-27b-b70/data/2026-10-07-sparse-state-replication-live/queue.json).
+The completed original-task repeat is 24/24 with all checkpoints exact for both
+methods: archive 506.6 seconds, quoted 397.1 seconds (21.6% less). The partial
+independent audit confirms all 80 calls report zero cached tokens. Every input
+and full response message matches the corresponding earlier run for both methods.
+This is repeatability on one generated task, not general speed qualification.
 Do not start another GPU owner or edit its frozen sources, packet or plan. Preserve every
 older frozen version and outcome; no holdout has been admitted.
 
@@ -206,8 +211,11 @@ Nineteen CPU tests pass, and independent review caught and fixed missing final
 snapshot verification. A separate snapshot auditor passes twelve CPU tests.
 This lookup remains unmeasured while the registered replication runs.
 A separate [temporal source packet](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/authoring-note.md)
-is frozen for two independent assistant annotations. It targets earlier values
-and changing ownership in four short narratives; no model trial is admitted.
+has [two independently derived assistant annotations](experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/review-note.md)
+that agree on all 201 events, 48 closing states and 96 answers. A separate source
+replay confirms the key; all 16 historical answers per document differ from final
+values. It targets earlier values and changing ownership in four short narratives
+with controlled posting grammar; no model trial is admitted.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 

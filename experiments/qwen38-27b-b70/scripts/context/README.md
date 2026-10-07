@@ -23,13 +23,14 @@ experiments, so pooled scores or direct timing comparisons would be misleading.
 | [Revision 4](durable_v4/README.md) | Cache-disabled prospective comparison; five trials completed, one capped, six unstarted. [Result](../../notes/2026-10-07-durable-context-r4-result.md). |
 | [Semantic development](semantic_v1/README.md) | All 36 trials complete: quoted and summary 84/84, archive 82/84. [Audited result](../../notes/2026-10-07-context-semantic-result.md); short authored pairs, not external validation. |
 | [Sparse-state development](sparse_v1/README.md) | Four trials complete. At 128 counters both methods are exact; quoted uses 21.7% less elapsed time on one server. [Result and limits](../../notes/2026-10-07-sparse-state-result.md); [replication plan](../../notes/2026-10-07-sparse-state-replication-plan.md). |
-| [Sparse replication and transfer](sparse_replication_v1/README.md) | Prepared four-trial fresh-server campaign: unchanged seed-83 report plus fixed seed-97 dispatch. [Prospective plan](../../notes/2026-10-07-sparse-state-replication-plan.md). |
+| [Sparse replication and transfer](sparse_replication_v1/README.md) | Active four-trial fresh-server campaign: original report repeat exact at 24/24 for both methods; dispatch pair pending. [Prospective plan](../../notes/2026-10-07-sparse-state-replication-plan.md). |
 | [Historical state retrieval](history_v1/README.md) | CPU-only preparation: each method saves its own accepted states; explicit source-only/history modes isolate lookup access. No live result or study admission yet. |
 
 The [temporal source packet](../../data/2026-10-07-temporal-development/authoring-note.md)
 is separate CPU preparation: four short narratives with earlier-value questions.
-Its source text is frozen for two independent assistant annotations. It has no
-model result or execution admission, and uses a shared controlled posting grammar.
+Its [two independent assistant annotations and source replay](../../data/2026-10-07-temporal-development/review-note.md)
+agree on all 96 answers and 48 closing states. It has no model result or execution
+admission, and uses a shared controlled posting grammar.
 
 The revision 2, 3 and 4 holdouts remain unused. Frozen versions and negative outcomes are
 preserved; new experiments do not retrospectively complete or repair them.
