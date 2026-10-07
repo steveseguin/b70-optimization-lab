@@ -1,0 +1,128 @@
+{
+  "schema": "ltx.progress-overlay-cpu-review.v1",
+  "observed_at_utc": "2026-10-07T12:34:16.338762+00:00",
+  "status": "passed-cpu-and-inactive-launch-check",
+  "commands": [
+    {
+      "argv": [
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-progress-lock",
+        "-p",
+        "test*progress_lock.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "timeout_seconds": 15,
+      "tests_run": 18,
+      "log": "progress-overlay-cpu.log"
+    },
+    {
+      "argv": [
+        "/home/steve/.venvs/ltx25-baseline/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-progress-lock/launch_with_progress_lock.py",
+        "--receipt",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/overlay-check-only.json",
+        "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-size-98/launch/serve-encoder.py",
+        "--packet",
+        "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-size-98",
+        "--manifest-sha256",
+        "918b47a5530b4dc97fe8fc8f4ec77fd64521ec6846217c54f5fba589e0e8377f",
+        "--run-name",
+        "encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256",
+        "--health-receipt",
+        "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/health.json",
+        "--check-only"
+      ],
+      "exit_code": 0,
+      "timeout_seconds": 180,
+      "environment_overrides": {
+        "LTX_OUTPUT_SIZE": "256x256",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "log": "overlay-check-only.log"
+    }
+  ],
+  "packet98_guarded_cpu": {
+    "argv": [
+      "/home/steve/.venvs/ltx25-baseline/bin/python",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-packet98-size-cpu.py"
+    ],
+    "timeout_seconds": 180,
+    "exit_code": 0,
+    "tests_run": 24,
+    "elapsed_seconds": 67.682,
+    "guard": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/cpu-guard-98.py",
+    "guard_installation": "Exact guard copied to disposable /tmp/ltx98-audit-cpu-*/sitecustomize.py; PYTHONPATH set to that directory; PYTHONDONTWRITEBYTECODE=1; stdout/stderr to fresh temporary log subsequently copied unchanged",
+    "log": "packet98-guarded-cpu.log"
+  },
+  "files": [
+    {
+      "path": "experiments/ltx25-b70/recovery/20261007-progress-lock/launch_with_progress_lock.py",
+      "bytes": 6897,
+      "sha256": "617665cf6ff68e854e304ea7277befeb049188c51cfd3a8234f2c48501e93fa4"
+    },
+    {
+      "path": "experiments/ltx25-b70/recovery/20261007-progress-lock/test_launch_with_progress_lock.py",
+      "bytes": 5309,
+      "sha256": "8a24731bfa3dd0e700a94a28f41d0eff0cdb5d7aa52972ebf440ce05a79c3bbd"
+    },
+    {
+      "path": "experiments/ltx25-b70/recovery/20261007-progress-lock/test_progress_lock.py",
+      "bytes": 8304,
+      "sha256": "fe96cb5932eb4e5ced93b9f03dc065edad41d49cf3bc7989824d7ca85271c9ec"
+    },
+    {
+      "path": "experiments/ltx25-b70/recovery/20261007-progress-lock/refresh.candidate.py",
+      "bytes": 746,
+      "sha256": "1dc1fb8c669aed183eb45ac67a579838e45389c3d5d77cb59ff44b4c7c8ffd56"
+    },
+    {
+      "path": "experiments/ltx25-b70/recovery/20261007-progress-lock/refresh.original.py",
+      "bytes": 712,
+      "sha256": "331cd792515f2f7f1b1b283a725f278c2e37c647011d1c5afc724d58f016f03d"
+    },
+    {
+      "path": "experiments/ltx25-b70/scripts/test-packet98-size-cpu.py",
+      "bytes": 24979,
+      "sha256": "db1e6e566725d5e7eaad86fdd37f81cb58af391e0412e1f5c971303854cd8f3d"
+    },
+    {
+      "path": "experiments/ltx25-b70/scripts/cpu-guard-98.py",
+      "bytes": 4258,
+      "sha256": "3a9d29785dc29bc247816359e874a5fd025d012770e75a23c84389edbec8ea25"
+    },
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261007/packet98-guarded-cpu.log",
+      "bytes": 2657,
+      "sha256": "45b1a3299fa1636dbedad5f1407f7366def6cd1dabfd3b8ce485ec24806d22ad"
+    },
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261007/progress-overlay-cpu.log",
+      "bytes": 2577,
+      "sha256": "8e6adb4283d2f2d0f68f373625cb5b8f6cdf7103da8be88b740aac7eb1b98e45"
+    },
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261007/overlay-check-only.json",
+      "bytes": 1704,
+      "sha256": "4030a7c7df722841827b144f930a07e2bda2496c8102f0e5e10781954a4d2f5f"
+    },
+    {
+      "path": "experiments/ltx25-b70/data/resume-20261007/overlay-check-only.log",
+      "bytes": 2666,
+      "sha256": "800bcc62c0c380b532eabbe305629996cd07422cf111aa3550d9c857fd342955"
+    }
+  ],
+  "gpu_calls": false,
+  "model_weight_reads": false,
+  "server_launched": false,
+  "installed_runtime_changed": false,
+  "sealed_packet_changed": false,
+  "limits": "CPU regression and inactive startup only; no application/output parity or performance result"
+}

@@ -1,0 +1,63 @@
+{
+  "schema": "ltx.packet98-control-storage-budget.v1",
+  "created_utc": "2026-10-07T12:33:22.485257+00:00",
+  "status": "planning_estimate_pending_cleanup_and_fresh_admission",
+  "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+  "same_filesystem_repo": true,
+  "identity": {
+    "mode": "two-way-w2-b1-p1-dxpu2-s256x256",
+    "batch": 1,
+    "sampler_workers": 2,
+    "shared_pool": 1,
+    "decode_replica": "xpu:2",
+    "resolution": [
+      256,
+      256
+    ],
+    "repeat": 1,
+    "timed_prompts": 120,
+    "packet_manifest_sha256": "918b47a5530b4dc97fe8fc8f4ec77fd64521ec6846217c54f5fba589e0e8377f"
+  },
+  "raw_output_budget": {
+    "capture_prompts": 2,
+    "selfcheck_prompts": 6,
+    "placement_probe_prompts": 13,
+    "timed_prompts": 120,
+    "total_prompts": 141,
+    "full_tensor_bytes_each": 20193360,
+    "expected_real_outputs": 128,
+    "expected_real_tensor_bytes": 2584750080,
+    "bytes": 2847263760,
+    "basis": "Charge every prompt including pipeline fills at full accepted-reference tensor size; expected fills are smaller."
+  },
+  "additional_allowances_bytes": {
+    "extra_fill_probe_diagnostics_and_filesystem_overhead": 67108864,
+    "mp4_previews_including_drained_pipeline_jobs_and_temp_encoding": 268435456,
+    "requests_receipts_server_client_logs_git_and_health": 134217728,
+    "inductor_triton_driver_and_other_cache_growth": 977941488
+  },
+  "total_planned_write_bytes": 4294967296,
+  "minimum_remaining_free_bytes": 53687091200,
+  "required_available_bytes": 57982058496,
+  "observed_available_bytes_before_ledger_writes": 56386994176,
+  "verified_candidate_reclaim_allocated_bytes": 2342895616,
+  "estimated_available_after_candidate_deletion_bytes": 58729889792,
+  "estimated_remaining_after_run_and_candidate_deletion_bytes": 54434922496,
+  "point_in_time_admission_after_estimated_deletion": true,
+  "limitations": [
+    "Planning allowance is not a worst-case mathematical bound: sealed compiler/driver caches and log writers have no enforced byte cap.",
+    "Historic matching packet97 run Inductor cache was4096 allocated bytes and Triton cache absent; future cache growth can differ.",
+    "No capacity reservation; ledger writes, unrelated writes and concurrent jobs can reduce available space.",
+    "Sealed launcher checks only5GiB free; coordinator must enforce50GiB plus planned writes before starting either unit and retain outstanding-write margin during monitoring.",
+    "No files deleted by this audit; perform fresh actual-filesystem admission after separately receipted cleanup."
+  ],
+  "admission_command": [
+    "python3",
+    "/home/steve/llm-optimizations/scripts/check-storage-headroom.py",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-size-98-two-way-w2-b1-p1-dxpu2-s256x256",
+    "--min-free-bytes",
+    "50GiB",
+    "--planned-write-bytes",
+    "4GiB"
+  ]
+}

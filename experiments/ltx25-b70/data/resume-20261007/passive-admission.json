@@ -1,0 +1,67 @@
+{
+  "observed_at_utc": "2026-10-07T12:30:20.783814+00:00",
+  "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+  "host": "steve-b70s",
+  "commands": {
+    "kernel_journal": {
+      "args": [
+        "journalctl",
+        "-k",
+        "-b",
+        "--no-pager"
+      ],
+      "exit_code": 0,
+      "path": "experiments/ltx25-b70/data/resume-20261007/kernel_journal.txt",
+      "sha256": "c41b44f67c748e5f4661f5feda85a7296b83d9ffb72d9dac0580a1d1f07a92ec"
+    },
+    "containers": {
+      "args": [
+        "docker",
+        "ps",
+        "--format",
+        "{{.ID}} {{.Names}}"
+      ],
+      "exit_code": 0,
+      "path": "experiments/ltx25-b70/data/resume-20261007/containers.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "listeners": {
+      "args": [
+        "ss",
+        "-ltnp",
+        "sport = :8188"
+      ],
+      "exit_code": 0,
+      "path": "experiments/ltx25-b70/data/resume-20261007/listeners.txt",
+      "sha256": "14f4ea5bdea2bd6f8d856ec28619243555e53de100d4bca155a751876e97a843"
+    },
+    "render_owners": {
+      "args": [
+        "fuser",
+        "/dev/dri/renderD128",
+        "/dev/dri/renderD129",
+        "/dev/dri/renderD130",
+        "/dev/dri/renderD131"
+      ],
+      "exit_code": 1,
+      "path": "experiments/ltx25-b70/data/resume-20261007/render_owners.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "power_observation": {
+      "args": [
+        "bash",
+        "scripts/check-b70-runtime-pm.sh"
+      ],
+      "exit_code": 0,
+      "path": "experiments/ltx25-b70/data/resume-20261007/power_observation.txt",
+      "sha256": "4056a4750cfd2e05b13d82731e3f94b123a38fe93c1dd4fdc98bfa2809b91cb1"
+    }
+  },
+  "bad_memory_blocks": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "offline"
+  }
+}
