@@ -7,10 +7,10 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **The104 LTX application is running and idle**,
+local-worker tuning remain parked. **The104 LTX application and paired campaign are running**,
 PID3311653, unit `ltx104-client-server-20261007`, loopback8188. Its sealed manifest is
-`49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`. The71-request paired client comparison is configured and validated; its
-campaign starts next. Do not submit invented requests or run other GPU work.
+`49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`. The71-request paired client comparison is running under
+`ltx104-client-campaign-20261007`; its first setup request was admitted. Do not submit invented requests or run other GPU work.
 
 The103 application stopped cleanly at18:28UTC for this controlled reload, and
 all four GPUs passed postflight. Thirty verified duplicate continuity archives
@@ -55,7 +55,7 @@ clips in one application with identical numerical settings and inputs.
 
 104 is implemented and all fifteen CPU suites passed; its71 request names and
 64 capture indices are reserved without collisions. Independent review found no
-issues in client durability, ordering or source construction. The successor is sealed and its application is running; the campaign is next. Its71 attempts/64 captures need a fresh5GiB allowance plus50GiB reserve.
+issues in client durability, ordering or source construction. The successor is sealed and its application and campaign are running. Its71 attempts/64 captures need a fresh5GiB allowance plus50GiB reserve.
 [Implementation and comparison rules](experiments/ltx25-b70/notes/2026-10-07-client104-comparison.md).
 Thirty103 continuity tensor archives were retired only after full proof
 reconstruction and whole-file equality checks. All native/candidate/initial

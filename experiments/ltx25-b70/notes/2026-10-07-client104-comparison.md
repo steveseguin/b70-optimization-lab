@@ -51,4 +51,10 @@ and reserved without collisions. The104 source packet is sealed, manifest
 A check-only attempt before cleanup correctly refused insufficient storage;
 no application was started by that check. After verified duplicate retirement,
 fresh5GiB+50GiB admission and the source-only launcher check passed.
-The application launch is now requested; no timing result exists yet.
+The application and campaign are running on the same boot. Server PID3311653,
+start ticks27195355; unit `ltx104-client-server-20261007`. Campaign unit
+`ltx104-client-campaign-20261007` admitted its first setup request.
+Client contract SHA256 is
+`461306985ea3db9bb93c73d8242c435712b19b98e973b9a02b0a351ee15ba105`.
+No timing result exists yet. All unrelated tests, Git work and agent file writes
+stop before either timing block.
