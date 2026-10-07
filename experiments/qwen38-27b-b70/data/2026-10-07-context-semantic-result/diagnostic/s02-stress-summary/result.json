@@ -1,0 +1,204 @@
+{
+  "schema": "semantic-live-trial.v1",
+  "protocol": "semantic-development-live-v1",
+  "document_id": "s02-stress",
+  "case_id": "s02-stress",
+  "pair_id": "s02",
+  "variant": "stress",
+  "arm": "summary",
+  "task_sha256": "789672180befeac5a287500183f8afd5adc3eb703b96555b70009ee3b1a674f5",
+  "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+  "adjudication_sha256": "a0a2759fde24de3b1e421c47a01718647469ea13cd885c90dcc849ced242f641",
+  "source_code_sha256": {
+    "diagnostics.py": "6bab40287c483b9cfc41d8c042e88c27989144cb5e36de834747a4eb8b8181d6",
+    "tasks.py": "e15dd0f9e64521b6b143bc872ea17e1f08b27ef5530932b929f9e46d4ec6433f",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "live.py": "79f9f3a5e251a8221c15da33bbe488c8e8e30278b90674aabdc658f648c56f57",
+    "answers.py": "e54f797d6c20cde0bd8d40ddf78894ad2004f059ca6ef3535a78b8dbb7ea9bfc"
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "3c45ee7fa27b3883e9c08d95169de4d86c837168df25b9d1a4fd7677ff0957f1"
+  },
+  "resumed": false,
+  "context_limit_utf8_bytes": 32768,
+  "memory_limit_utf8_bytes": 6553,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "max_ingestion_attempts": 3,
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "summary_policy": "compress after every batch; short semantic diagnostic, not the r4 workload",
+  "status": "completed",
+  "failure": null,
+  "failure_kind": null,
+  "processed_batches": 4,
+  "ingestion_complete": true,
+  "final_answer_complete": true,
+  "protocol_complete": true,
+  "score": {
+    "asked": 7,
+    "correct": 7,
+    "valid": true,
+    "answer_types_valid": true,
+    "exact_question_coverage": true,
+    "invalid_type_ids": [],
+    "missing_ids": [],
+    "unknown_ids": [],
+    "by_category": {
+      "current": {
+        "asked": 2,
+        "correct": 2
+      },
+      "history": {
+        "asked": 3,
+        "correct": 3
+      },
+      "join": {
+        "asked": 2,
+        "correct": 2
+      }
+    },
+    "by_answer_type": {
+      "int": {
+        "asked": 6,
+        "correct": 6
+      },
+      "str": {
+        "asked": 1,
+        "correct": 1
+      }
+    }
+  },
+  "answers": {
+    "s02-q01": 15,
+    "s02-q02": 23,
+    "s02-q03": 17,
+    "s02-q04": 26,
+    "s02-q05": "violet-gate",
+    "s02-q06": 10,
+    "s02-q07": 26
+  },
+  "answer_protocol": {
+    "answers": {
+      "s02-q01": 15,
+      "s02-q02": 23,
+      "s02-q03": 17,
+      "s02-q04": 26,
+      "s02-q05": "violet-gate",
+      "s02-q06": 10,
+      "s02-q07": 26
+    },
+    "calls": 1,
+    "retrievals": 0,
+    "cache": {},
+    "recent": [],
+    "feedback": "Submitted.",
+    "completed": true
+  },
+  "trace_format": "semantic-live-attempt-trace.v1; enriched native evidence, not CPU replay input",
+  "calls": 5,
+  "cache_usage": {
+    "complete": true,
+    "cached_tokens": 0,
+    "calls": 5
+  },
+  "cold_cache_known": true,
+  "wall_seconds": 9.024200856045354,
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s02 belongs to amber10. Delivery seal: copper-leaf."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s02 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: An unposted draft (amber10=70, birch11 debit 9) was withdrawn and has no effect. The approved replacement record set amber10 to 17. Delivery seal: linen-star."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s02 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: An unposted draft (amber10=70, birch11 debit 9) was withdrawn and has no effect. The approved replacement record set amber10 to 17. Delivery seal: linen-star.\nBatch 3: birch11 credited 6 (balance 26). Forecast for amber10 (40) was unposted and has no effect. ticket-s02 transferred to birch11. Delivery seal: violet-gate."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s02 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: An unposted draft (amber10=70, birch11 debit 9) was withdrawn and has no effect. The approved replacement record set amber10 to 17. Delivery seal: linen-star.\nBatch 3: birch11 credited 6 (balance 26). Forecast for amber10 (40) was unposted and has no effect. ticket-s02 transferred to birch11. Delivery seal: violet-gate.\nBatch 4: amber10 debited 2 (balance 15). Closing posting replaced birch11 with 23 (balance 23). review-s02 concerns ticket-s02. Delivery seal: marble-bird."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    }
+  ],
+  "refusals": [],
+  "checkpoint_metrics_complete": true,
+  "all_checkpoint_states_exact": null,
+  "final_state_exact": null,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Short authored semantic development diagnostic; no speed claim.",
+  "artifacts": {
+    "calls.jsonl": {
+      "path": "calls.jsonl",
+      "sha256": "54dbd10201c9246f9e1b59efeafb1363c1da825e88dadf8792ca232fe25f36a5"
+    },
+    "trace.json": {
+      "path": "trace.json",
+      "sha256": "b69a2829c2202b1e1c331bf14629a24e5857862079e91585cb1e06affbb5cd49"
+    },
+    "checkpoint.json": {
+      "path": "checkpoint.json",
+      "sha256": "76622bf458d9ad778973bdbb7ce02fcaed6f5bcd5da977c549372834092aad19"
+    },
+    "answer-session.json": {
+      "path": "answer-session.json",
+      "sha256": "bb137935d39f5a098e1265eacbcf9b62f20dbf8af47d8d8719dc0d349672844e"
+    }
+  }
+}

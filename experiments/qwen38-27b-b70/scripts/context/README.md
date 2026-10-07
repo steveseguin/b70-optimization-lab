@@ -21,7 +21,8 @@ experiments, so pooled scores or direct timing comparisons would be misleading.
 | [Revision 2](durable_v2/README.md) | Answer/retrieval protocol repair; six development trials completed but its quality gate failed. |
 | [Revision 3](durable_v3/README.md) | Final-answer reasoning enabled; structured methods exact, summary inaccurate. [Result](../../notes/2026-10-07-durable-context-r3-result.md). |
 | [Revision 4](durable_v4/README.md) | Cache-disabled prospective comparison; five trials completed, one capped, six unstarted. [Result](../../notes/2026-10-07-durable-context-r4-result.md). |
-| [Semantic development](semantic_v1/README.md) | Short authored stress/control pairs distinguish interpretation errors from valid quotations. [Prospective live plan](../../notes/2026-10-07-context-semantic-live-plan.md). |
+| [Semantic development](semantic_v1/README.md) | All 36 trials complete: quoted and summary 84/84, archive 82/84. [Audited result](../../notes/2026-10-07-context-semantic-result.md); short authored pairs, not external validation. |
+| [Sparse-state development](sparse_v1/README.md) | Separate generated 8/128-counter screen, initialization included and budgets unchanged. [Prospective plan](../../notes/2026-10-07-sparse-state-development-plan.md). |
 
 The revision 2, 3 and 4 holdouts remain unused. Frozen versions and negative outcomes are
 preserved; new experiments do not retrospectively complete or repair them.

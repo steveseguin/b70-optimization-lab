@@ -1,0 +1,276 @@
+{
+  "schema": "semantic-live-trial.v1",
+  "protocol": "semantic-development-live-v1",
+  "document_id": "s06-control",
+  "case_id": "s06-control",
+  "pair_id": "s06",
+  "variant": "control",
+  "arm": "archive",
+  "task_sha256": "eb2fa8d74049109d5e0a4bf9fb35a9c846c8a1307ea37d792ffdc516040fc008",
+  "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+  "adjudication_sha256": "a0a2759fde24de3b1e421c47a01718647469ea13cd885c90dcc849ced242f641",
+  "source_code_sha256": {
+    "diagnostics.py": "6bab40287c483b9cfc41d8c042e88c27989144cb5e36de834747a4eb8b8181d6",
+    "tasks.py": "e15dd0f9e64521b6b143bc872ea17e1f08b27ef5530932b929f9e46d4ec6433f",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "live.py": "79f9f3a5e251a8221c15da33bbe488c8e8e30278b90674aabdc658f648c56f57",
+    "answers.py": "e54f797d6c20cde0bd8d40ddf78894ad2004f059ca6ef3535a78b8dbb7ea9bfc"
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "3c45ee7fa27b3883e9c08d95169de4d86c837168df25b9d1a4fd7677ff0957f1"
+  },
+  "resumed": false,
+  "context_limit_utf8_bytes": 32768,
+  "memory_limit_utf8_bytes": 6553,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "max_ingestion_attempts": 3,
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "summary_policy": "compress after every batch; short semantic diagnostic, not the r4 workload",
+  "status": "completed",
+  "failure": null,
+  "failure_kind": null,
+  "processed_batches": 4,
+  "ingestion_complete": true,
+  "final_answer_complete": true,
+  "protocol_complete": true,
+  "score": {
+    "asked": 7,
+    "correct": 6,
+    "valid": true,
+    "answer_types_valid": true,
+    "exact_question_coverage": true,
+    "invalid_type_ids": [],
+    "missing_ids": [],
+    "unknown_ids": [],
+    "by_category": {
+      "current": {
+        "asked": 2,
+        "correct": 1
+      },
+      "history": {
+        "asked": 3,
+        "correct": 3
+      },
+      "join": {
+        "asked": 2,
+        "correct": 2
+      }
+    },
+    "by_answer_type": {
+      "int": {
+        "asked": 6,
+        "correct": 5
+      },
+      "str": {
+        "asked": 1,
+        "correct": 1
+      }
+    }
+  },
+  "answers": {
+    "s06-q01": 27,
+    "s06-q02": 13,
+    "s06-q03": 18,
+    "s06-q06": 15,
+    "s06-q04": 24,
+    "s06-q05": "violet-gate",
+    "s06-q07": 7
+  },
+  "answer_protocol": {
+    "answers": {
+      "s06-q01": 27,
+      "s06-q02": 13,
+      "s06-q03": 18,
+      "s06-q06": 15,
+      "s06-q04": 24,
+      "s06-q05": "violet-gate",
+      "s06-q07": 7
+    },
+    "calls": 4,
+    "retrievals": 3,
+    "cache": {
+      "fetch:2": {
+        "batch_id": 2,
+        "text": "amber10 was credited 8. birch11 was debited 5. ticket-s06 was transferred to birch11 before this batch ended. The delivery seal for batch 2 was linen-star.",
+        "truncated": false
+      },
+      "fetch:1": {
+        "batch_id": 1,
+        "text": "The opening posting set amber10 to 10. The opening posting set birch11 to 20. ticket-s06 belonged to amber10 at the end of this batch. The delivery seal for batch 1 was copper-leaf.",
+        "truncated": false
+      },
+      "fetch:3": {
+        "batch_id": 3,
+        "text": "amber10 was set to 7. birch11 was credited 9. ticket-s06 was transferred to amber10 before this batch ended. The delivery seal for batch 3 was violet-gate.",
+        "truncated": false
+      }
+    },
+    "recent": [
+      "fetch:2",
+      "fetch:1",
+      "fetch:3"
+    ],
+    "feedback": "Submitted.",
+    "completed": true
+  },
+  "trace_format": "semantic-live-attempt-trace.v1; enriched native evidence, not CPU replay input",
+  "calls": 8,
+  "cache_usage": {
+    "complete": true,
+    "cached_tokens": 0,
+    "calls": 8
+  },
+  "cold_cache_known": true,
+  "wall_seconds": 24.70014913601335,
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 10,
+              "birch11": 20
+            },
+            "memory": "b1: amber10=10, birch11=20, ticket-s06->amber10, seal=copper-leaf"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 2,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 10,
+        "birch11": 20
+      }
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 18,
+              "birch11": 15
+            },
+            "memory": "b2: amber10=18, birch11=15, ticket-s06->birch11, seal=linen-star"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": true,
+        "correct": 2,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 18,
+        "birch11": 15
+      }
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 25,
+              "birch11": 24
+            },
+            "memory": "b3: amber10=25, birch11=24, ticket-s06->amber10, seal=violet-gate"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": false,
+        "correct": 1,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 25,
+        "birch11": 24
+      }
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "state": {
+              "amber10": 27,
+              "birch11": 13
+            },
+            "memory": "b4: amber10=27, birch11=13, seal=marble-bird"
+          }
+        }
+      ],
+      "accepted": true,
+      "state": {
+        "valid": true,
+        "exact": false,
+        "correct": 1,
+        "asked": 2
+      },
+      "observed_state": {
+        "amber10": 27,
+        "birch11": 13
+      }
+    }
+  ],
+  "refusals": [],
+  "checkpoint_metrics_complete": true,
+  "all_checkpoint_states_exact": false,
+  "final_state_exact": false,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Short authored semantic development diagnostic; no speed claim.",
+  "artifacts": {
+    "calls.jsonl": {
+      "path": "calls.jsonl",
+      "sha256": "e8719aa839be38fbc0c355b9c96f3aeab13fe08ee95cdd27a07122e78f1935e4"
+    },
+    "trace.json": {
+      "path": "trace.json",
+      "sha256": "cb07c5f534913783e3df158791f62b01698ecfec67aec7390a5cca23d37a202d"
+    },
+    "checkpoint.json": {
+      "path": "checkpoint.json",
+      "sha256": "20ea5c44fa84877ba60b4e49ffda1be347b246e48114c5f2a89463da84974237"
+    },
+    "answer-session.json": {
+      "path": "answer-session.json",
+      "sha256": "d5a1c0b0caf713d0455c916cd78629a23b783e832d8e30c6c7614870f33bf552"
+    },
+    "retrieval.jsonl": {
+      "path": "retrieval.jsonl",
+      "sha256": "30de93cc786b8733266f95d006535c62f1aacfe0b6e4e56bedbd8354bd6a8076"
+    }
+  }
+}

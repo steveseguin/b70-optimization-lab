@@ -144,9 +144,9 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 05:00 UTC**. One supervised semantic
-diagnostic is active on the two-card host. Revision 4 remains closed; its GPU
-release was verified at 04:45:14 UTC.
+Latest two-card review: **2026-10-07 05:27 UTC**. One supervised sparse-state
+screen is active. The semantic diagnostic completed all 36 trials, and its card
+release was verified at 05:19:26 UTC before this new owner started.
 
 ## 2026-10-07, two-B70 host: preserve cold result; test meaning next
 
@@ -163,17 +163,24 @@ longer than archive in both completed pairs; the incomplete matrix establishes
 no speed improvement. No cap was raised or failed result replaced.
 [R4 evidence and limits](experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-result.md).
 
-The owner explicitly asked work to continue. Next is a separate, authored
-semantic diagnostic: cancelled changes, drafts, reversals, aliases, distracting
-numbers and ownership references. Two separate assistant annotations agree on
-all 84 answers and 48 batch states; six valid alias quote-span differences are
-preserved. This is development evidence, not independent human validation or a
-new benchmark. CPU checks and the full scripted rehearsal passed. The new
-`ctx-semantic-v1.service` owns startup, strict qualification, all 36 diagnostic
-trials and graceful shutdown; do not start another GPU owner. Output is
-`/mnt/fast-ai/bench-results/context-semantic-v1-20261007`.
-[Packet scope](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-development-plan.md)
-and [fixed live plan](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-live-plan.md).
+The owner explicitly asked work to continue. The semantic diagnostic completed
+with quoted events 84/84, summary 84/84 and archive 82/84 final answers. The
+independent audit confirms all 84 quoted events and 48 quoted checkpoints exact;
+archive had four wrong checkpoints. In both variants of the final pair, it added
+a number that explicitly replaced the balance. A separate wrong subtraction in
+one variant was hidden by a later reset; checkpoint grading exposed it.
+Every model call reported zero cache reuse. These are six authored stress/control
+pairs, not independent human validation or a general benchmark.
+[Semantic result and evidence](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-result.md).
+
+Next is the [fixed sparse-state screen](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-development-plan.md):
+archive versus quoted events with 8 and 128 counters, counting initialization
+and keeping every existing budget. Its reference responses fit the local
+tokenizer limits. The client, failure handling and lifecycle CPU checks passed;
+passive preparation verified the semantic audit, previous release and idle host.
+`ctx-sparse-v1.service` owns strict qualification, the four trials and graceful
+shutdown. Output: `/mnt/fast-ai/bench-results/context-sparse-v1-20261007`. Do not
+start another GPU owner; no resident service is authorized.
 Preserve frozen r2/r3/r4 sources and outcomes. Live status overrides this snapshot.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed

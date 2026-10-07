@@ -1,0 +1,204 @@
+{
+  "schema": "semantic-live-trial.v1",
+  "protocol": "semantic-development-live-v1",
+  "document_id": "s04-control",
+  "case_id": "s04-control",
+  "pair_id": "s04",
+  "variant": "control",
+  "arm": "summary",
+  "task_sha256": "674b53f864b87ec8913ee13847c8f975fe16a261e2ccd30fd2574ae258cdaad3",
+  "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+  "adjudication_sha256": "a0a2759fde24de3b1e421c47a01718647469ea13cd885c90dcc849ced242f641",
+  "source_code_sha256": {
+    "diagnostics.py": "6bab40287c483b9cfc41d8c042e88c27989144cb5e36de834747a4eb8b8181d6",
+    "tasks.py": "e15dd0f9e64521b6b143bc872ea17e1f08b27ef5530932b929f9e46d4ec6433f",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "live.py": "79f9f3a5e251a8221c15da33bbe488c8e8e30278b90674aabdc658f648c56f57",
+    "answers.py": "e54f797d6c20cde0bd8d40ddf78894ad2004f059ca6ef3535a78b8dbb7ea9bfc"
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "3c45ee7fa27b3883e9c08d95169de4d86c837168df25b9d1a4fd7677ff0957f1"
+  },
+  "resumed": false,
+  "context_limit_utf8_bytes": 32768,
+  "memory_limit_utf8_bytes": 6553,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "max_ingestion_attempts": 3,
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "summary_policy": "compress after every batch; short semantic diagnostic, not the r4 workload",
+  "status": "completed",
+  "failure": null,
+  "failure_kind": null,
+  "processed_batches": 4,
+  "ingestion_complete": true,
+  "final_answer_complete": true,
+  "protocol_complete": true,
+  "score": {
+    "asked": 7,
+    "correct": 7,
+    "valid": true,
+    "answer_types_valid": true,
+    "exact_question_coverage": true,
+    "invalid_type_ids": [],
+    "missing_ids": [],
+    "unknown_ids": [],
+    "by_category": {
+      "current": {
+        "asked": 2,
+        "correct": 2
+      },
+      "history": {
+        "asked": 3,
+        "correct": 3
+      },
+      "join": {
+        "asked": 2,
+        "correct": 2
+      }
+    },
+    "by_answer_type": {
+      "int": {
+        "asked": 6,
+        "correct": 6
+      },
+      "str": {
+        "asked": 1,
+        "correct": 1
+      }
+    }
+  },
+  "answers": {
+    "s04-q01": 18,
+    "s04-q02": 20,
+    "s04-q03": 14,
+    "s04-q04": 25,
+    "s04-q05": "copper-leaf",
+    "s04-q06": 14,
+    "s04-q07": 25
+  },
+  "answer_protocol": {
+    "answers": {
+      "s04-q01": 18,
+      "s04-q02": 20,
+      "s04-q03": 14,
+      "s04-q04": 25,
+      "s04-q05": "copper-leaf",
+      "s04-q06": 14,
+      "s04-q07": 25
+    },
+    "calls": 1,
+    "retrievals": 0,
+    "cache": {},
+    "recent": [],
+    "feedback": "Submitted.",
+    "completed": true
+  },
+  "trace_format": "semantic-live-attempt-trace.v1; enriched native evidence, not CPU replay input",
+  "calls": 5,
+  "cache_usage": {
+    "complete": true,
+    "cached_tokens": 0,
+    "calls": 5
+  },
+  "cold_cache_known": true,
+  "wall_seconds": 8.71670048701344,
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s04 belongs to amber10. Delivery seal: copper-leaf."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s04 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: amber10 credited 4 (new balance 14). birch11 debited 3 (new balance 17). Delivery seal: linen-star."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s04 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: amber10 credited 4 (new balance 14). birch11 debited 3 (new balance 17). Delivery seal: linen-star.\nBatch 3: birch11 set to 25. amber10 debited 2 (new balance 12). ticket-s04 transferred to birch11. Delivery seal: violet-gate."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s04 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: amber10 credited 4 (new balance 14). birch11 debited 3 (new balance 17). Delivery seal: linen-star.\nBatch 3: birch11 set to 25. amber10 debited 2 (new balance 12). ticket-s04 transferred to birch11. Delivery seal: violet-gate.\nBatch 4: amber10 credited 6 (new balance 18). birch11 debited 5 (new balance 20). review-s04 concerns ticket-s04. Delivery seal: marble-bird."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    }
+  ],
+  "refusals": [],
+  "checkpoint_metrics_complete": true,
+  "all_checkpoint_states_exact": null,
+  "final_state_exact": null,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Short authored semantic development diagnostic; no speed claim.",
+  "artifacts": {
+    "calls.jsonl": {
+      "path": "calls.jsonl",
+      "sha256": "4213f72a7ae8a6ac2e1fb46e0691842e58638cf99acdc977c6a9ababba6e8b2d"
+    },
+    "trace.json": {
+      "path": "trace.json",
+      "sha256": "5855f48234dea38b71573af3d32f464b1b82566e2a133fbe1899cb59a66eb6e6"
+    },
+    "checkpoint.json": {
+      "path": "checkpoint.json",
+      "sha256": "538aa8ea1bc9f14a722508c60f6a41328cb25dddd214c0e51dc2bcfa18ac3b47"
+    },
+    "answer-session.json": {
+      "path": "answer-session.json",
+      "sha256": "215db8d030246055f912a74f4832346be901f3467c3ec9592bafdacdfa709737"
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "schema": "semantic-live-trial.v1",
+  "protocol": "semantic-development-live-v1",
+  "document_id": "s06-stress",
+  "case_id": "s06-stress",
+  "pair_id": "s06",
+  "variant": "stress",
+  "arm": "summary",
+  "task_sha256": "a1332a8b9f41a232aaaabeaa4eeec1f92583eaae2c8fbeb79224124f6d247ca8",
+  "source_sha256": "8fe86d7dc3ebd7d16ee06672ab0f7b8dc950a2ecc6b92c88f8019849dfcdb579",
+  "adjudication_sha256": "a0a2759fde24de3b1e421c47a01718647469ea13cd885c90dcc849ced242f641",
+  "source_code_sha256": {
+    "diagnostics.py": "6bab40287c483b9cfc41d8c042e88c27989144cb5e36de834747a4eb8b8181d6",
+    "tasks.py": "e15dd0f9e64521b6b143bc872ea17e1f08b27ef5530932b929f9e46d4ec6433f",
+    "ledger.py": "abff2a06690e1f52b4e37479696ba16acb890d630940385ff0d86e13d92c4ef1",
+    "live.py": "79f9f3a5e251a8221c15da33bbe488c8e8e30278b90674aabdc658f648c56f57",
+    "answers.py": "e54f797d6c20cde0bd8d40ddf78894ad2004f059ca6ef3535a78b8dbb7ea9bfc"
+  },
+  "measurement_kind": "model",
+  "server_identity": {
+    "endpoint": "http://127.0.0.1:18196/v1",
+    "model": "qwen38-27b-fp8",
+    "launch_sha256": "3c45ee7fa27b3883e9c08d95169de4d86c837168df25b9d1a4fd7677ff0957f1"
+  },
+  "resumed": false,
+  "context_limit_utf8_bytes": 32768,
+  "memory_limit_utf8_bytes": 6553,
+  "max_retrieval": 24,
+  "max_answer_calls": 32,
+  "max_ingestion_attempts": 3,
+  "answer_generation": {
+    "enable_thinking": true,
+    "reasoning_effort": "medium",
+    "max_tokens": 8192
+  },
+  "ingestion_generation": {
+    "enable_thinking": false,
+    "max_tokens": 4096
+  },
+  "summary_policy": "compress after every batch; short semantic diagnostic, not the r4 workload",
+  "status": "completed",
+  "failure": null,
+  "failure_kind": null,
+  "processed_batches": 4,
+  "ingestion_complete": true,
+  "final_answer_complete": true,
+  "protocol_complete": true,
+  "score": {
+    "asked": 7,
+    "correct": 7,
+    "valid": true,
+    "answer_types_valid": true,
+    "exact_question_coverage": true,
+    "invalid_type_ids": [],
+    "missing_ids": [],
+    "unknown_ids": [],
+    "by_category": {
+      "current": {
+        "asked": 2,
+        "correct": 2
+      },
+      "history": {
+        "asked": 3,
+        "correct": 3
+      },
+      "join": {
+        "asked": 2,
+        "correct": 2
+      }
+    },
+    "by_answer_type": {
+      "int": {
+        "asked": 6,
+        "correct": 6
+      },
+      "str": {
+        "asked": 1,
+        "correct": 1
+      }
+    }
+  },
+  "answers": {
+    "s06-q01": 9,
+    "s06-q02": 13,
+    "s06-q03": 18,
+    "s06-q04": 24,
+    "s06-q05": "violet-gate",
+    "s06-q06": 15,
+    "s06-q07": 7
+  },
+  "answer_protocol": {
+    "answers": {
+      "s06-q01": 9,
+      "s06-q02": 13,
+      "s06-q03": 18,
+      "s06-q04": 24,
+      "s06-q05": "violet-gate",
+      "s06-q06": 15,
+      "s06-q07": 7
+    },
+    "calls": 1,
+    "retrievals": 0,
+    "cache": {},
+    "recent": [],
+    "feedback": "Submitted.",
+    "completed": true
+  },
+  "trace_format": "semantic-live-attempt-trace.v1; enriched native evidence, not CPU replay input",
+  "calls": 5,
+  "cache_usage": {
+    "complete": true,
+    "cached_tokens": 0,
+    "calls": 5
+  },
+  "cold_cache_known": true,
+  "wall_seconds": 12.259031839028466,
+  "batches": [
+    {
+      "batch_id": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s06 belongs to amber10. Delivery seal: copper-leaf."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s06 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: amber10 credited 8 (balance 18). birch11 debited 5 (balance 15). Proposed transfer of ticket-s06 to outside desk cancelled (no effect). ticket-s06 transferred to birch11 (effective before batch end). Delivery seal: linen-star."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 3,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s06 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: amber10 credited 8 (balance 18). birch11 debited 5 (balance 15). Proposed transfer of ticket-s06 to outside desk cancelled (no effect). ticket-s06 transferred to birch11 (effective before batch end). Delivery seal: linen-star.\nBatch 3: amber10 set to 7. birch11 credited 9 (balance 24). ticket-s06 transferred back to amber10 (effective before batch end). Archived directory listing former owner did not change ownership. Delivery seal: violet-gate."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    },
+    {
+      "batch_id": 4,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "response": {
+            "memory": "Batch 1: Opening postings set amber10=10, birch11=20. Ownership: ticket-s06 belongs to amber10. Delivery seal: copper-leaf.\nBatch 2: amber10 credited 8 (balance 18). birch11 debited 5 (balance 15). Proposed transfer of ticket-s06 to outside desk cancelled (no effect). ticket-s06 transferred to birch11 (effective before batch end). Delivery seal: linen-star.\nBatch 3: amber10 set to 7. birch11 credited 9 (balance 24). ticket-s06 transferred back to amber10 (effective before batch end). Archived directory listing former owner did not change ownership. Delivery seal: violet-gate.\nBatch 4: amber10 credited 2 (balance 9). birch11 set to 13. Unsigned proposal to transfer ticket-s06 to birch11 was not approved and did not take effect (ownership remains amber10). review-s06 refers to case-s06; case-s06 concerns ticket-s06. Delivery seal: marble-bird."
+          }
+        }
+      ],
+      "accepted": true,
+      "state": null,
+      "observed_state": null
+    }
+  ],
+  "refusals": [],
+  "checkpoint_metrics_complete": true,
+  "all_checkpoint_states_exact": null,
+  "final_state_exact": null,
+  "speed_gate_passed": false,
+  "holdout_admitted": false,
+  "scope": "Short authored semantic development diagnostic; no speed claim.",
+  "artifacts": {
+    "calls.jsonl": {
+      "path": "calls.jsonl",
+      "sha256": "12ad46c6966aeff21c31c124c4a5db1ba4d00a02eebd931a7a816d8136f53629"
+    },
+    "trace.json": {
+      "path": "trace.json",
+      "sha256": "c88ec6864ef8215c00befa055254050ddc24646b96ae219fac0f081bfb0d0d96"
+    },
+    "checkpoint.json": {
+      "path": "checkpoint.json",
+      "sha256": "1a85dd8675d90c3fa86a95003d34861aac5855f734666a8acc3763b8bef9639d"
+    },
+    "answer-session.json": {
+      "path": "answer-session.json",
+      "sha256": "7c7278cf26dea9abaf040ef81ac449a1e4973b4e058de666db02eedc5103020e"
+    }
+  }
+}
