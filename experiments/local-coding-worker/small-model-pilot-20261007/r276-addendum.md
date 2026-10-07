@@ -34,3 +34,12 @@ receipt and clean four-card before/after checks are retained in
 metadata check verifies all four render symlinks under an explicit read-only
 by-path mount. The corrected launcher changes only that mount. One manually
 reviewed corrected attempt is admitted; it is not an automatic restart policy.
+
+With that mount, the server loaded and emitted one complete11-token response.
+The adapter refused it because the launcher omitted
+`--enable-prompt-tokens-details`: usage did not explicitly report zero cached
+tokens. The server stopped cleanly and all four cards passed postflight. Retain
+this as a failed transport gate, not a coding failure. The known package launcher
+already uses that flag; adding it requires one controlled application reload.
+No parser/quality gate is weakened, and the response remains preserved in
+`transport-metadata-failure/`. No further launcher tuning is planned.

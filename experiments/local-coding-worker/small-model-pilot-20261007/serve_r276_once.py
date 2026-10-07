@@ -112,7 +112,7 @@ def main():
                '--dtype', 'bfloat16', '--kv-cache-dtype', 'auto', '--tensor-parallel-size', '1',
                '--pipeline-parallel-size', '1', '--max-model-len', '16384', '--max-num-seqs', '1',
                '--max-num-batched-tokens', '512', '--gpu-memory-utilization', '0.25',
-               '--language-model-only', '--no-enable-prefix-caching', '--enforce-eager']
+               '--language-model-only', '--no-enable-prefix-caching', '--enable-prompt-tokens-details', '--enforce-eager']
     owner = uuid.uuid4().hex
     container_name = 'qwen35-08b-pilot-' + owner
     owner_label = 'lab.local-coding-worker.pilot-owner'

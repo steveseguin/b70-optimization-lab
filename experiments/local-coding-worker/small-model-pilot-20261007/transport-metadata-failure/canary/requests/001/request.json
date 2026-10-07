@@ -1,0 +1,26 @@
+{
+  "model": "qwen35-0.8b-bf16-pilot",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a coding assistant. Reply with exactly one fenced bash code block."
+    },
+    {
+      "role": "user",
+      "content": "Return a command that prints pilot-ok. Do not add any explanation."
+    }
+  ],
+  "temperature": 0,
+  "top_p": 1,
+  "seed": 42,
+  "max_tokens": 64,
+  "n": 1,
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "return_token_ids": true,
+  "chat_template_kwargs": {
+    "enable_thinking": false
+  }
+}
