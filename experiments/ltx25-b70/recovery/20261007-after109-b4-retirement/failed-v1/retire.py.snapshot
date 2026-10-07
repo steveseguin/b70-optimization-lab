@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""Fixed old97 B4-r2 retirement; never controls or inspects the live109 process."""
+import argparse
+import contextlib
+import hashlib
+import importlib.util
+import io
+import os
+from pathlib import Path
+import runpy
+import sys
+import tempfile
+
+sys.dont_write_bytecode = True
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[3]
+LANE = REPO / 'experiments/ltx25-b70'
+PRIMITIVES = HERE.parent / '20261007-resolution103-retirement/retire103.py'
+PRIMITIVES_SHA = '043912bdf375d36f0691cfa3d000a66a48408747d5837871b3d1af8da76150bb'
+BASE_SOURCE = LANE / 'scripts/retire-verified-outputs-99.py'
+BASE_SHA = 'af221d8ae4801ab28b0ac2c7a26adef8b56ec85fcaf5dbe0cdeb59416bac01f1'
+
+
+def pinned_module(path, digest, name):
+    if path.is_symlink() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+        raise RuntimeError('Reviewed helper source differs: ' + str(path))
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    return module
+
+
+H = pinned_module(PRIMITIVES, PRIMITIVES_SHA, 'b4_file_safety')
+B = pinned_module(BASE_SOURCE, BASE_SHA, 'b4_original_retirement')
+need, fp, read_json, canonical = H.need, H.fp, H.read_json, H.canonical
+safe, load, exclusive_json, fsync_dir = H.safe, H.load, H.exclusive_json, H.fsync_dir
+unlink_exact, restore_one = H.unlink_exact, H.restore_one
+ROOT = H.ROOT
+PREFIX = 'f97-twowayw2b4p1dxpu2r2-timed'
+RUN = ROOT / 'encoder-server-place-97-two-way-w2-b4-p1-dxpu2-r2'
+PACKET = ROOT / 'prepared-encoder-place-97'
+DATA = LANE / 'data/place-97/two-way-w2-b4-p1-dxpu2-r2'
+THROUGHPUT = DATA / (PREFIX + '-throughput.json')
+SUMMARY = DATA / 'summary.json'
+PREREG = LANE / 'data/stability-01-batch4-prereg.json'
+COMPARATOR = LANE / 'scripts/compare-clip.py'
+PINS = {
+    'manifest': '6e232f72a9835727323c383bc9baaa167844b58dc6400a5de43a3b9eb4e44b9f',
+    'identity': 'c691f9f7cbab11c05332ab4d9d24aa3b08bf2877cda71cda9639ccade4fa304b',
+    'throughput': 'ee4c3cd992cb3a7463ed3d2be43ae307d26660d981e7b77983f37bc0933b8ff2',
+    'summary': 'c768789db55aaff4eb36cc2c24071b0fce937ebcc277c83413f269ecb4782212',
+    'prereg': 'ee8d6fdbf3c20c8f913cfbf35832c6d3f4605843a67dbc742d603d1c2f90fafb',
+    'comparator': '80ee7a45468f95c6c0b8df9ecceea338af9fdf4d2537ba5966603b4f5b03fe0e',
+}
+PID, START, BOOT = 2241785, '16935911', '10192010-9700-4915-ac6c-980d6b74afa0'
+SCHEMA = 'ltx.old97-b4-r2.fixed-retirement.v1'
+FIXTURES = H.FIXTURES
+
+
+def archive(name):
+    return ROOT / 'output/validation' / name / 'tensors.safetensors'
+
+
+def selection():
+    return [(f'{PREFIX}-{i:02d}', 'stability-01-b4-' + FIXTURES[(i-13) % 10],
+             FIXTURES[(i-13) % 10]) for i in range(23, 600)]
+
+
+def protected():
+    return [str(archive('stability-01-b4-' + f)) for f in FIXTURES] + [
+        str(archive(f'{PREFIX}-{i:02d}')) for i in range(13, 23)]
+
+
+def process_exists(pid):
+    # Only this pinned historical PID is examined; reuse/zombies also refuse.
+    return Path('/proc', str(pid)).exists()
+
+
+def stopped(expected=None):
+    need(not any(p.exists() for p in (ROOT/'FAULT.json', RUN/'FAULT.json', RUN/'resolution-halt.json')),
+         'fault/halt present; preserve evidence')
+    evidence = {}
+    identity = read_json(RUN/'server-identity.json', evidence)
+    need(evidence[str(RUN/'server-identity.json')]['sha256'] == PINS['identity'], 'old owner identity hash differs')
+    need(type(identity['pid']) is int and identity['pid'] == PID and
+         identity['proc_start_ticks'] == START and identity['boot_id'] == BOOT and
+         identity['source_packet_manifest_sha256'] == PINS['manifest'] and
+         identity['source_packet_path'] == str(PACKET), 'old owner PID/start/boot/source differs')
+    need(expected is None or identity == expected, 'plan old owner identity differs')
+    need(not process_exists(PID), 'old97 owner PID still exists')
+    return identity, evidence
+
+
+def source_evidence():
+    evidence = {}
+    docs = {}
+    for key, path in [('manifest', PACKET/'manifest.json'), ('throughput', THROUGHPUT),
+                      ('summary', SUMMARY), ('prereg', PREREG)]:
+        docs[key] = read_json(path, evidence)
+        need(evidence[str(path)]['sha256'] == PINS[key], 'pinned source differs: ' + key)
+    for key, path in [('comparator', COMPARATOR), ('base', BASE_SOURCE), ('primitives', PRIMITIVES)]:
+        evidence[str(path)] = fp(path)
+        need(evidence[str(path)]['sha256'] == {'base': BASE_SHA, 'primitives': PRIMITIVES_SHA,
+             'comparator': PINS['comparator']}[key], 'pinned executable differs: ' + key)
+    # Metadata campaign claims accompany, never replace, the fresh exact gate.
+    s, t = docs['summary'], docs['throughput']
+    need(s['run'] == str(RUN) and s['batch'] == 4 and not s['missing_or_failed'] and
+         s['context_sentry_gate_passed'] is True, 'campaign summary incomplete')
+    arm = s['arms'][PREFIX]
+    need(arm['all_exact'] is True and arm['exact'] == arm['clips_verified'] == 587 and
+         arm['prompts'] == 600, 'campaign timed census differs')
+    need(t['server_run'] == str(RUN) and t['prefix'] == PREFIX and t['batch'] == 4 and
+         t['count'] == 600 and t['distinct_clips_emitted'] == 587 and
+         t['references_from'] == str(PREREG), 'pinned timed identity differs')
+    need([(r['id'], r['reference']) for r in docs['prereg']['fixtures']] ==
+         [(f, 'stability-01-b4-'+f) for f in FIXTURES], 'protected batch4 oracle differs')
+    return evidence
+
+
+def replay_comparator(reference, candidate):
+    """Execute the original, hash-pinned CLI unchanged, with CPU load_file default.
+
+    Imports are cached across calls. Its scratch report is compared to the
+    existing durable parity report; no capture, request, or server file is written.
+    """
+    need(sys.flags.optimize == 0, 'Python optimization disables original comparator assertions')
+    need(fp(COMPARATOR)['sha256'] == PINS['comparator'], 'original comparator changed')
+    with tempfile.TemporaryDirectory(prefix='ltx-old97-b4-proof-') as folder:
+        output = Path(folder)/'parity.json'
+        previous = sys.argv
+        try:
+            sys.argv = [str(COMPARATOR), reference, candidate, '--output', str(output)]
+            with contextlib.redirect_stdout(io.StringIO()):
+                try:
+                    runpy.run_path(str(COMPARATOR), run_name='__main__')
+                except SystemExit as exc:
+                    need(exc.code == 0, 'original exact comparator failed: ' + candidate)
+            value = read_json(output)
+            need(value['status'] == 'passed', 'fresh original comparison failed')
+            return value
+        finally:
+            sys.argv = previous
+
+
+def reconstruct():
+    evidence = source_evidence()
+    # This pinned predecessor also validates every request/history/identity,
+    # stored parity, fixture/order/census and fresh whole-file/reference equality.
+    base = B.build_plan(ROOT, THROUGHPUT)
+    need(base['prefix'] == PREFIX and base['validation']['completed_prompts'] == 600 and
+         base['validation']['exact_emitted_clips'] == 587 and len(base['retire']) == 577,
+         'original structural proof census differs')
+    need([(r['candidate']['path'], r['reference']['path'], r['fixture']) for r in base['retire']] ==
+         [(str(archive(a)), str(archive(b)), f) for a,b,f in selection()], 'fixed candidate mapping differs')
+    need([r['candidate']['path'] for r in base['keep_first_per_fixture']] == protected()[10:],
+         'first ten keeper identities differ')
+    for i in range(13, 600):
+        name = f'{PREFIX}-{i:02d}'; reference = 'stability-01-b4-' + FIXTURES[(i-13) % 10]
+        original = read_json(DATA/(name+'-parity.json'), evidence)
+        need(replay_comparator(reference, name) == original, 'fresh comparator report differs: ' + name)
+    # Bind the completed comparison to the same originals, catching replacement
+    # even when all currently present replacement archives equal one another.
+    for record in [*base['raw_files'], *base['evidence']]:
+        now = fp(record['path'])
+        need(all(now[k] == v for k,v in record.items()), 'original proof input changed')
+        evidence[record['path']] = now
+    for path, record in evidence.items():
+        need(fp(path) == record, 'proof evidence drift')
+    return base, evidence
+
+
+def build_plan():
+    identity, stop_evidence = stopped()
+    base, evidence = reconstruct()
+    need(base['server_identity'] == identity, 'structural proof owner differs')
+    rows = []
+    for record, (name, reference, fixture) in zip(base['retire'], selection()):
+        a, b = fp(archive(name)), fp(archive(reference))
+        need(all(a[k] == v for k,v in record['candidate'].items()) and
+             all(b[k] == v for k,v in record['reference'].items()), 'archive changed after comparison')
+        need(a['sha256'] == b['sha256'] and a['st_size'] == b['st_size'] and
+             (a['st_dev'],a['st_ino']) != (b['st_dev'],b['st_ino']), 'whole archive differs or aliases keeper')
+        rows.append({'fixture':fixture, 'candidate':a, 'retained':b,
+            'restore':{'destination':a['path'],'source':b['path'],'sha256':b['sha256'],'bytes':b['st_size']}})
+    need(stopped(identity) == (identity,stop_evidence), 'old owner evidence changed')
+    return {'schema':SCHEMA,'helper_sha256':fp(Path(__file__).resolve())['sha256'],
+        'primitives_sha256':PRIMITIVES_SHA,'base_sha256':BASE_SHA,'pins':PINS,
+        'identity':identity,'stop_evidence':stop_evidence,'proof_evidence':evidence,
+        'protected':protected(),'retire':rows,
+        'reclaim_logical_bytes':sum(r['candidate']['st_size'] for r in rows),
+        'reclaim_allocated_bytes':sum(r['candidate']['st_blocks']*512 for r in rows),
+        'proof_status':'587 fresh original comparator passes plus whole-file equality; restore retired paths for full replay',
+        'live109':'No process check, endpoint, source or archive operation targets109; no application control'}
+
+
+def checked_plan(path, digest):
+    plan = read_json(path)
+    need(fp(path)['sha256'] == digest, 'explicit plan SHA mismatch')
+    need(plan['schema'] == SCHEMA and plan['helper_sha256'] == fp(Path(__file__).resolve())['sha256'] and
+         plan['primitives_sha256'] == PRIMITIVES_SHA and plan['base_sha256'] == BASE_SHA and
+         plan['pins'] == PINS and plan['protected'] == protected(), 'plan/source identity differs')
+    need(len(plan['retire']) == 577, 'exact577 rows required')
+    for row,(name,reference,fixture) in zip(plan['retire'],selection()):
+        a,b = row['candidate'],row['retained']
+        need(row['fixture'] == fixture and a['path'] == str(archive(name)) and
+             b['path'] == str(archive(reference)) and a['sha256'] == b['sha256'] and
+             a['st_size'] == b['st_size'] and a['st_nlink'] == b['st_nlink'] == 1 and
+             a['path'] not in protected() and row['restore'] ==
+             {'destination':a['path'],'source':b['path'],'sha256':b['sha256'],'bytes':b['st_size']},
+             'fixed restoration mapping differs')
+    return plan
+
+
+def storage_admission(rows):
+    module = load(REPO / 'scripts/check-storage-headroom.py', 'old97_b4_headroom')
+    planned = sum((r['candidate']['st_size'] + 4095) // 4096 * 4096 for r in rows) + 16 * 1024**2
+    result = module.inspect_destination(ROOT / 'output/validation', 50 * 1024**3, planned)
+    need(result['admitted'] is True, 'restore storage admission refused')
+    return result
+
+
+def operate(mode, path, digest, receipt):
+    need(mode in ('apply', 'restore'), 'unknown operation')
+    plan = checked_plan(path, digest)
+    need(stopped(plan['identity']) == (plan['identity'], plan['stop_evidence']), 'old owner evidence changed')
+    if mode == 'apply':
+        need(build_plan() == plan, 'full proof or exact plan changed')
+    for row in plan['retire']:
+        need(fp(row['retained']['path']) == row['retained'], 'retained archive changed')
+        if mode == 'restore':
+            need(not safe(row['candidate']['path'], False).exists(), 'restore destination exists; no overwrite/resume')
+    admission = storage_admission(plan['retire']) if mode == 'restore' else None
+    receipt = safe(receipt, False); need(not receipt.is_relative_to(ROOT), 'control output must be outside artifacts')
+    intent = receipt.with_name(receipt.name + '.intent.json'); events = receipt.with_name(receipt.name + '.events.jsonl')
+    need(not any(p.exists() for p in (receipt, intent, events)), 'operation output exists; no automatic retry')
+    exclusive_json(intent, {'schema': SCHEMA, 'mode': mode, 'plan_sha256': digest, 'plan': plan,
+                            'storage_admission': admission, 'status': 'intent-before-any-file-change'})
+    with events.open('xb') as stream:
+        stream.flush(); os.fsync(stream.fileno())
+    fsync_dir(events.parent)
+    def event(value):
+        with events.open('ab') as stream:
+            stream.write(canonical(value) + b'\n'); stream.flush(); os.fsync(stream.fileno())
+    completed, error = [], None
+    try:
+        for row in plan['retire']:
+            need(stopped(plan['identity']) == (plan['identity'], plan['stop_evidence']), 'old owner evidence changed')
+            need(fp(row['retained']['path']) == row['retained'], 'retained source changed before operation')
+            event({'phase': 'file-intent', 'mode': mode, 'candidate': row['candidate'], 'restore': row['restore']})
+            actual = restore_one(row) if mode == 'restore' else unlink_exact(row['candidate'])
+            completed.append(row['candidate']['path'])
+            event({'phase': 'file-completed', 'mode': mode, 'path': completed[-1], 'restored_stat': actual})
+    except BaseException as exc:
+        error = type(exc).__name__ + ': ' + str(exc)
+        raise
+    finally:
+        exclusive_json(receipt, {'schema': SCHEMA, 'mode': mode, 'plan_sha256': digest,
+            'status': 'completed' if error is None else 'incomplete-no-automatic-retry', 'error': error,
+            'completed': completed, 'intent_sha256': fp(intent)['sha256'], 'events_sha256': fp(events)['sha256'],
+            'proof_status': ('verified before retirement; selected raw paths absent and restorable' if mode == 'apply'
+                             else 'ordinary copies restored; unchanged full proof revalidation still required')})
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__); subs = p.add_subparsers(dest='mode', required=True)
+    sub = subs.add_parser('plan'); sub.add_argument('--out', type=Path, required=True)
+    for mode in ('apply', 'restore'):
+        sub = subs.add_parser(mode); sub.add_argument('--plan', type=Path, required=True)
+        sub.add_argument('--sha256', required=True); sub.add_argument('--receipt', type=Path, required=True)
+    args = p.parse_args()
+    if args.mode == 'plan':
+        need(not args.out.is_relative_to(ROOT), 'control output must be outside artifacts')
+        exclusive_json(args.out, build_plan()); print(fp(args.out)['sha256'])
+    else:
+        operate(args.mode, args.plan, args.sha256, args.receipt)
+
+
+if __name__ == '__main__':
+    main()
