@@ -1,7 +1,45 @@
 # Current Workspace State
 
-Last reviewed: **2026-10-06 03:10 UTC** (2026-10-05 23:10 EDT), two-B70 host.
-The four-B70 host section below was added 2026-09-11.
+Latest four-card review: **2026-10-06 evening EDT**. The dated two-card entries
+below remain that host's own research record; this consolidation did not operate it.
+
+## Four-card host now: consolidation; LTX and Flash-Next parked
+
+The owner asked to preserve both lanes and make the existing lab dependable before
+returning to optimization. **No model server is running on `steve-b70s`.** LTX's
+disk-full incident left a worker blocked on a progress-bar lock. After preserving
+the evidence and checking passive GPU idleness, one SIGINT stopped the application;
+port 8188 closed, no render-node holders remained, and no kernel GPU fault appeared.
+No reboot, driver reset, power, swap or page-cache setting was changed.
+
+- **LTX:** accepted-reference result 1.308 s/clip; batch-4 result 0.808 s/clip
+  remains conditional on accepting its different outputs. Packet 98 is prepared,
+  CPU-tested and unmeasured on GPUs. A zero-byte helper was recovered from its
+  hash-verified sealed copy; incomplete run evidence remains unmodified.
+  [Resume handoff](experiments/ltx25-b70/RESUME.md).
+- **Flash-Next:** preserve the [46.854 tok/s closeout](results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md),
+  model, runtime and evidence. No new experiment or weight relocation is queued.
+- **Storage:** about 33 GiB of cold compiler caches were preserved in 2.64 GiB of
+  verified compressed archives under `/home/steve/git-archives/cache-consolidation-20261006/`;
+  only their unpacked copies were removed. About **38 GiB is available** afterward.
+  Full byte comparisons passed before removal; hashes and restore commands are in
+  [the consolidation receipt](data/maintenance/consolidation-20261006/summary.json).
+  These same-disk archives are preservation, not independent backups.
+  The external EX400U mounted read-only, but a vendor SMART query was followed by
+  USB command errors, a kernel-initiated USB reset and a failed read. It was cleanly
+  unmounted; do not retry, repair, write to it or treat it as a verified backup.
+  Evidence: `data/maintenance/consolidation-20261006/`.
+- **Qwen 27B TP2:** a separate [correctness release candidate](experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md)
+  passed 20 CPU tests; published package pins remain unchanged. TP1 needs a separate kernel
+  port. This host lacks the documented R314 build/image and FP8 model inputs.
+- **Next:** qualify the corrected package when its exact inputs and host ownership
+  are available; no large build/download is admitted by today's 50 GiB reserve.
+  Use `scripts/check-storage-headroom.py` before new writing jobs, including
+  estimated peak output/cache/build bytes. Independent backup recovery and the
+  known faulty memory's permanent repair remain open.
+
+The older dated entries below are retained history, not instructions to resume
+LTX, start a server, or change host settings.
 
 ## 2026-10-05 23:10 EDT, two-B70 host: the model read 1.8 times its window by understanding, every answer right; the comparison matrix and an explainer page are up
 
@@ -2743,4 +2781,3 @@ boots), so the idle-state hypothesis is still untested; the user holds the
 The freeze zeroed 34 git objects including HEAD's commit; all recovered from
 origin (quarantine at .git/quarantine-zero-objects-20260920), fsck clean, no
 receipt lost, because the runner pushes after every arm.
-

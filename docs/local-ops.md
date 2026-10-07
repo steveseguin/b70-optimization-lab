@@ -118,6 +118,30 @@ experiment processes.
 
 ## Local Model Storage
 
+### October 6 consolidation admission
+
+Before a new build, download or campaign, check each actual output filesystem:
+
+```bash
+python3 scripts/check-storage-headroom.py /absolute/output/path \
+  --planned-write-bytes 10GiB --min-free-bytes 50GiB
+```
+
+Budget peak additional writes, including temporary copies and caches. The 10 GiB
+above is an example, not a measured campaign budget. Admission is a point-in-time
+check, not a reservation; rerun immediately before the writing job. For an external
+destination also require its exact mount with `--require-mount /mnt/usb-models`.
+Read-only, missing or mismatched mounts fail closed. Historical frozen launchers
+are preserved; this check must precede new work rather than changing their pinned
+bytes silently.
+
+The EX400U is currently unmounted after the October 6 read-only inspection and
+SMART passthrough produced USB command/read errors. No filesystem writes or repair
+were attempted. Preserve internal originals and see `CURRENT.md` plus
+`data/maintenance/consolidation-20261006/` before considering external archival.
+The older mount/relocation instructions below are historical operational context,
+not evidence that this drive is currently safe.
+
 Primary hot-path model cache is still on the internal NVMe:
 
 ```text

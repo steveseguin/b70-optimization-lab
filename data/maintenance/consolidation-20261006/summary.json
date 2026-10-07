@@ -1,0 +1,78 @@
+{
+  "recorded_utc": "2026-10-07T00:09:13.376093+00:00",
+  "host": "steve-b70s",
+  "status": "local preservation complete; external backup and GPU release qualification pending",
+  "archives": [
+    {
+      "source": "/home/steve/.cache/libsycl_cache",
+      "archive": "/home/steve/git-archives/cache-consolidation-20261006/libsycl_cache.tar.zst",
+      "archive_bytes": 266320332,
+      "archive_sha256": "cb38e820126796f95e36867e6bcce47d7cda110cf6c00fa23d4563404f489787",
+      "tar_compare_returncode": 0,
+      "source_deleted": true,
+      "restore_command": "tar --zstd -xf /home/steve/git-archives/cache-consolidation-20261006/libsycl_cache.tar.zst -C /home/steve/.cache"
+    },
+    {
+      "source": "/var/tmp/qwen38-nightly-strict-cache",
+      "archive": "/home/steve/git-archives/cache-consolidation-20261006/qwen38-nightly-strict-cache.tar.zst",
+      "archive_bytes": 95389557,
+      "archive_sha256": "89c3038e37407acccc9b5149ad2749770112749be2242786770fc78d246a47ad",
+      "tar_compare_returncode": 0,
+      "source_deleted": true,
+      "restore_command": "sudo tar --zstd -xf /home/steve/git-archives/cache-consolidation-20261006/qwen38-nightly-strict-cache.tar.zst -C /var/tmp"
+    },
+    {
+      "source": "/mnt/fast-ai/vllm-cache-exp",
+      "archive": "/home/steve/git-archives/cache-consolidation-20261006/vllm-cache-exp.tar.zst",
+      "archive_bytes": 1662970490,
+      "tar_compare_returncode": 0,
+      "source_deleted": true,
+      "archive_sha256": "a917de9f4b39786634d4473c5435bb6e05af2529aea549a86374370c4db1c79d",
+      "restore_command": "tar --zstd -xf /home/steve/git-archives/cache-consolidation-20261006/vllm-cache-exp.tar.zst -C /mnt/fast-ai"
+    },
+    {
+      "source": "/mnt/fast-ai/vllm-cache",
+      "archive": "/home/steve/git-archives/cache-consolidation-20261006/vllm-cache.tar.zst",
+      "archive_bytes": 809806586,
+      "archive_sha256": "f8a51fa66c953a79c7e4f07d071fc551ccd7d2999fbf001a14ef539fa7411da2",
+      "tar_compare_returncode": 0,
+      "source_deleted": true,
+      "restore_command": "sudo tar --zstd -xf /home/steve/git-archives/cache-consolidation-20261006/vllm-cache.tar.zst -C /mnt/fast-ai"
+    }
+  ],
+  "archived_allocated_bytes_before": 35432550400,
+  "archive_bytes": 2834486965,
+  "available_bytes": 40173568000,
+  "archive_storage": "same internal NVMe; these are compressed preservation copies, not independent backups",
+  "external_drive": {
+    "uuid": "4E0E66ED0E66CD91",
+    "readonly_mount": "succeeded",
+    "ntfsfix_no_action": "passed limited metadata check; not full filesystem certification",
+    "vendor_smart": "sntasmedia query returned some plausible fields and nonsensical counters; vendor-command completion error preceded kernel USB reset and read I/O error",
+    "current_state": "unmounted, no writes or repair attempted; do not use as sole archive or backup",
+    "next": "separate storage-recovery review; do not repeat bridge passthrough or force mount"
+  },
+  "ltx": {
+    "stopped": true,
+    "signals": 1,
+    "signal": "SIGINT",
+    "restarted": false,
+    "kernel_gpu_fault_after_stop": false,
+    "resume": "experiments/ltx25-b70/RESUME.md"
+  },
+  "qwen_tp2": {
+    "candidate": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix",
+    "cpu_tests": 20,
+    "gpu_qualified": false,
+    "published_package_changed": false
+  },
+  "storage_guard": {
+    "script": "scripts/check-storage-headroom.py",
+    "cpu_tests": 12,
+    "default_reserve_gib": 50,
+    "frozen_launchers_modified": false
+  },
+  "ltx_recovered_source_cpu_tests": 24,
+  "host_settings_changed": false,
+  "models_research_notes_results_removed": false
+}

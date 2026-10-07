@@ -1,0 +1,12 @@
+Oct 06 19:59:50 steve-b70s kernel: sd 8:0:0:0: [sda] tag#10 data cmplt err -75 uas-tag 1 inflight: CMD 
+Oct 06 19:59:50 steve-b70s kernel: sd 8:0:0:0: [sda] tag#10 CDB: opcode=0xe6 (vendor) e6 02 00 01 00 00 00 0f 00 00 00 00 00 00 00 00
+Oct 06 20:00:47 steve-b70s kernel: sd 8:0:0:0: [sda] tag#21 uas_eh_abort_handler 0 uas-tag 2 inflight: CMD IN 
+Oct 06 20:00:47 steve-b70s kernel: sd 8:0:0:0: [sda] tag#21 CDB: Read(16) 88 00 00 00 00 00 6b 3b dc 28 00 00 00 08 00 00
+Oct 06 20:00:50 steve-b70s kernel: sd 8:0:0:0: [sda] tag#10 uas_eh_abort_handler 0 uas-tag 1 inflight: CMD 
+Oct 06 20:00:50 steve-b70s kernel: sd 8:0:0:0: [sda] tag#10 CDB: opcode=0xe6 (vendor) e6 02 00 01 00 00 00 0f 00 00 00 00 00 00 00 00
+Oct 06 20:00:50 steve-b70s kernel: scsi host8: uas_eh_device_reset_handler start
+Oct 06 20:00:50 steve-b70s kernel: usb 8-1: reset SuperSpeed Plus Gen 2x1 USB device number 2 using xhci_hcd
+Oct 06 20:00:50 steve-b70s kernel: scsi host8: uas_eh_device_reset_handler success
+Oct 06 20:00:50 steve-b70s kernel: sd 8:0:0:0: [sda] tag#21 FAILED Result: hostbyte=DID_ERROR driverbyte=DRIVER_OK cmd_age=32s
+Oct 06 20:00:50 steve-b70s kernel: sd 8:0:0:0: [sda] tag#21 CDB: Read(16) 88 00 00 00 00 00 6b 3b dc 28 00 00 00 08 00 00
+Oct 06 20:00:50 steve-b70s kernel: I/O error, dev sda, sector 1799085096 op 0x0:(READ) flags 0x880700 phys_seg 1 prio class 2
