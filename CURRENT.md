@@ -7,16 +7,16 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **The corrected 20/28 experiment is running**, unit
-`ltx100b-rebalance-server-20261007`, PID 3195828. The first 20/28
-candidate stopped cleanly at 14:17 UTC after a setup ownership check rejected its
-valid single secondary shard. No clips or timing were produced. All four GPUs
-passed postflight at 14:18 UTC, with no kernel GPU fault. The existing checker
-assumed a named layout had at least three segments; the correction must exercise
-the actual two-segment ownership path on CPU before another sealed candidate.
-[Setup failure and correction](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
-All five bad-memory blocks remain offline. No power, memory, swap, driver or
-reboot change was made.
+local-worker tuning remain parked. **No model server is running.** The corrected
+20/28 candidate passed all 128 output comparisons and stopped cleanly at 14:45
+UTC. All four GPUs passed postflight with no kernel GPU fault. It measured
+1.3007 seconds per clip versus the qualified control's 1.3156, only about 1.1%
+faster in one screen. This is not a robust speed improvement or a new record.
+The busiest GPU remains about 92% utilized; another worker offers too little
+credible margin to justify a new small-shape campaign. Work now moves to a
+checked 640×384 workload, beginning with independent native sampling/decoding
+references and explicit memory admission. All five bad-memory blocks remain
+offline; no power, memory, swap, driver or reboot change was made.
 
 The current-upstream compatibility control passed: **126 probe/timed clips and
 two self-check clips match the accepted references exactly**, including video,
@@ -40,17 +40,17 @@ preserved. The qualified packet manifest is
 [Original failure](experiments/ltx25-b70/notes/2026-10-07-upstream99-quality-failure.md),
 [compatibility plan](experiments/ltx25-b70/data/resume-20261007/runtime99b-preregistration.json).
 
-The corrected ownership candidate is now sealed and independently reviewed;
-22 CPU checks and the inactive launch check pass. Its actual consuming function
-regression reproduces the old failure and validates the correction.
-The corrected 20/28 candidate is now running against the accepted baseline.
-[Corrected test plan](experiments/ltx25-b70/data/resume-20261007/runtime100b-preregistration.json). The
-qualified 99b control remains the comparison and memory basis. The failed run
-is not a performance or quality verdict on 20/28. Each new experiment needs a
-fresh 4 GiB output/cache allowance and the 50 GiB disk reserve. No projected gain
-counts as a measurement. After the placement decision, screen W3 only if
-occupancy and memory support it; then qualify a useful-resolution baseline
-rather than keep chasing the small-shape benchmark.
+The 20/28 experiment and ownership correction remain preserved research.
+[Measured result and decision](experiments/ltx25-b70/notes/2026-10-07-rebalance100b-results.md).
+The first setup failure exposed an untested two-segment identity consumer; the
+corrected candidate now has direct regression coverage and passed full output
+parity. Its small speed difference does not justify replacing the established
+23/25 control. W3 is not queued. The next workload needs same-size native
+references, the accepted encoder window, unchanged BF16/8+3 arithmetic, and a
+fresh storage/memory budget before any larger model request.
+[Resolution reference design](experiments/ltx25-b70/notes/2026-10-07-resolution-reference-design.md),
+[third-worker decision criteria](experiments/ltx25-b70/notes/2026-10-07-third-worker-decision.md),
+[original setup failure](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
 [Next useful workload](experiments/ltx25-b70/notes/2026-10-07-next-useful-workload.md).
 
 The application-only 65,536-file soft limit prevented the original descriptor
@@ -59,8 +59,11 @@ limit/observation fix, not proof of no descriptor leak. Historical and current
 source packets, failures, references, notes and models remain protected.
 [Initial incident](experiments/ltx25-b70/data/resume-20261007/fd-incident/closeout.json).
 Verified duplicate tensor retirement recovered 2.18 GiB, 1.99 GiB and 10.96 GiB
-in three recorded batches. No model was deleted. The latest control outputs are
-retained; previous experiment write allowances do not carry over automatically.
+in three recorded batches. No model was deleted. A further 212 duplicate timed tensor archives from the completed 99b/100b runs
+were freshly verified and retired, recovering 3.99 GiB and leaving about 63 GiB
+free. Ten timed samples per run, all references, metadata, previews, fill captures
+and failures remain. Previous experiment write allowances do not carry over
+automatically.
 Batch-2/4 output-changing results and larger speed-only arms remain unqualified
 for the lossless objective.
 
