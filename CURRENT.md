@@ -7,10 +7,14 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **No model application is running now.**
-The 640×384 reference/optimized screen completed successfully and stopped cleanly
-at 16:44 UTC, before the latest instruction update favoring application reuse.
-All four GPUs passed postflight at 16:45 UTC with no kernel GPU fault.
+local-worker tuning remain parked. **One LTX application is running now** for the 640×384 W2 screen, PID 3277317,
+unit `ltx102-resolution-server-20261007`, loopback port 8188. The sealed manifest is
+`25761564f8e6790d25cbc4495662b2be19dfe2001401c5b8966e0a9c09264db4`.
+The campaign uses new registered requests; no other GPU work is authorized
+alongside it. It retains the application on success.
+[Preregistration](experiments/ltx25-b70/data/resume-20261007/resolution102-preregistration.json).
+The prior W1 screen stopped cleanly at 16:44 UTC; all four GPUs passed postflight
+at 16:45 UTC with no kernel GPU fault.
 
 At640×384, 25 frames, native BF16 weights, original 8+3 steps, accepted encoder
 window 64 and one sampler worker, all three native repeat pairs and all 13 scored
@@ -23,7 +27,7 @@ The unchanged sealed verifier reconstructed the saved proof after shutdown.
 [post-shutdown proof](experiments/ltx25-b70/data/resume-20261007/resolution101c-post-closeout-proof.json),
 [postflight](experiments/ltx25-b70/data/resume-20261007/postflight-101c.json).
 
-The W2 successor is being prepared for two overlapping batch-one sampler jobs
+The W2 successor is measuring two overlapping batch-one sampler jobs
 at the same resolution, subject to fresh memory admission. The CPU plan fixes
 36 attempts and 29 captures; model arithmetic and the exact-output gate remain
 unchanged. [Plan](experiments/ltx25-b70/recovery/20261007-resolution-w2-102/README.md). Sampling takes about 2.8 seconds per clip;
