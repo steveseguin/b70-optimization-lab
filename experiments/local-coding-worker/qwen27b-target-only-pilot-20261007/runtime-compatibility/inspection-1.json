@@ -1,0 +1,59 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "r276-cpu-source-187b96db01f6",
+    "--network",
+    "none",
+    "--read-only",
+    "--cap-drop",
+    "ALL",
+    "--security-opt",
+    "no-new-privileges",
+    "--memory",
+    "1g",
+    "--memory-swap",
+    "1g",
+    "--cpus",
+    "1",
+    "--pids-limit",
+    "64",
+    "--user",
+    "1000:1000",
+    "--env",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "--entrypoint",
+    "/opt/venv/bin/python",
+    "sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+    "-B",
+    "-c",
+    "import json,pathlib,hashlib\nbase=pathlib.Path('/opt/venv/lib/python3.12/site-packages/vllm')\nfiles=['model_executor/layers/quantization/fp8.py','model_executor/layers/quantization/utils/w8a16_utils.py','model_executor/layers/quantization/utils/fp8_utils.py','model_executor/models/qwen3_5.py','model_executor/models/registry.py','platforms/xpu.py','_xpu_ops.py']\nout={}\nfor name in files:\n p=base/name\n out[name]={'text':p.read_text(),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} if p.exists() else {'missing':True}\nprint(json.dumps(out))\n"
+  ],
+  "returncode": 0,
+  "stderr": "",
+  "files": {
+    "model_executor/layers/quantization/fp8.py": {
+      "sha256": "2be6e530b0a9ba4388b17db3a810b7dbd0bf493846b8549e0c7a41e01d026dc9"
+    },
+    "model_executor/layers/quantization/utils/w8a16_utils.py": {
+      "missing": true
+    },
+    "model_executor/layers/quantization/utils/fp8_utils.py": {
+      "sha256": "ba29e79fa8ef4060b49111257550643223dbc8047ccde09ca66cb601d279bd90"
+    },
+    "model_executor/models/qwen3_5.py": {
+      "sha256": "d5fa8f7c99c5cac89bfb0c0288bab58c846ee27b9733178bf957ca44b9d1392d"
+    },
+    "model_executor/models/registry.py": {
+      "sha256": "1b47a85b3c9a415fcec99e2eca6347a361c21fa896b75075ce649f642069a18e"
+    },
+    "platforms/xpu.py": {
+      "sha256": "5951dc8c6e25f57c80fa4f4c5a55b8d5b39799a7fc578e36f9c98e89b9897af0"
+    },
+    "_xpu_ops.py": {
+      "sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3"
+    }
+  }
+}

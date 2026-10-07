@@ -1,0 +1,96 @@
+{
+  "schema": "lab.qwen27b.boundary-offline-validation.v1",
+  "at_epoch_s": 1791341906.1984427,
+  "scope": "Independent offline helper review and mocked refusal controls; no inference or runtime qualification",
+  "gpu_actions": 0,
+  "network_requests": 0,
+  "model_requests": 0,
+  "helper_edits_by_reviewer": false,
+  "files": {
+    "test_boundary_gate.py": {
+      "sha256": "036157e16dc25c1304479cbf0427585c3b1bbfea6d98bcbd750da3586b78fa12",
+      "bytes": 7861
+    },
+    "check_boundaries.py": {
+      "sha256": "8f9b1e3e028c7d81a2b527f51d0e1938d350b21d1f6d25c9a4ce74fa391a99cd",
+      "bytes": 5692
+    },
+    "prepare_boundaries.py": {
+      "sha256": "3a0050184f13e61645ab1fd854509e476b8bc6858ee65d4f4490738a5090e1e0",
+      "bytes": 4099
+    },
+    "run-memory.py": {
+      "sha256": "343c2136aadd047eb680de85c346d95e1a0de3862372be9164c70762075efd22",
+      "bytes": 9823
+    },
+    "boundary-protocol.json": {
+      "sha256": "4ae8649925cf421467888f6227dcc7273930ca7bc0318e201f3821ace8a55429",
+      "bytes": 12425
+    },
+    "memory-protocol.json": {
+      "sha256": "e17004e70604acbd27ada22ab039514d822f3dec35be1e826b3587c91ce71ebd",
+      "bytes": 2083
+    },
+    "worker-profile.json": {
+      "sha256": "f7dfc537364eb784fb47f4a22a30cde1352512adb4760a9d1050529ad7ac93ac",
+      "bytes": 432
+    }
+  },
+  "unittest": {
+    "command": "python3 -B experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/test_boundary_gate.py",
+    "returncode": 0,
+    "tests_run": 12,
+    "result": "OK",
+    "controls": [
+      "valid eight frozen requests",
+      "preexisting STOP blocks generation",
+      "STOP between tokenization and generation",
+      "FAULT after response halts remaining cases",
+      "CPU/server token-count mismatch",
+      "generation prompt-count mismatch",
+      "incorrect marker",
+      "missing output token identities",
+      "incomplete output token identities",
+      "nonzero cache",
+      "repeat output token-identity drift",
+      "all ten questions/five complete documents and new memory profile/path hashes"
+    ],
+    "limitations": "LocalModel and wire are mocked; these controls exercise the actual boundary main and refusal lifecycle, not live SSE parsing or GPU correctness."
+  },
+  "cpu_tokenizer_recheck": {
+    "python": "/home/steve/.venvs/vllm-xpu/bin/python -B",
+    "environment": {
+      "USE_TORCH": "0",
+      "USE_TF": "0",
+      "HF_HUB_OFFLINE": "1",
+      "TRANSFORMERS_OFFLINE": "1",
+      "TOKENIZERS_PARALLELISM": "false"
+    },
+    "tokenizer_directory": "/home/steve/worker-qwen27b-intake-20261007/metadata",
+    "method": "AutoTokenizer.from_pretrained(local_files_only=True, trust_remote_code=False); each frozen case apply_chat_template(tokenize=True,add_generation_prompt=True,enable_thinking=False); worker SYSTEM encode(add_special_tokens=False)",
+    "counts": {
+      "511": 511,
+      "512": 512,
+      "513": 513,
+      "1025": 1025
+    },
+    "worker_system_body_tokens": 312,
+    "frozen_tokenizer_hashes_match": true,
+    "torch_present_in_modules": true,
+    "torch_note": "Tokenizer dependencies imported torch despite USE_TORCH=0; reviewer invoked no torch/XPU/model/device API.",
+    "preliminary_interpreter_failure": "neural-worker venv lacks transformers; no package installation performed"
+  },
+  "review": {
+    "full_corpus_bytes": 36685,
+    "all_questions": 10,
+    "answer_key_in_model_context": false,
+    "memory_context_contract": "28000 input cap plus4096 output <=33024, actual frozen full corpus expected around14K; no truncation",
+    "memory_lifecycle": "Same 27B pilot paths; both stopped task receipts required; >=480seconds remaining in3600second supervisor budget; network wall alarm420seconds",
+    "reported_minor_contract_gap": "run-memory count<=0 check should reject count<=1 under restricted old-runtime prompt contract; reported to root without editing helper",
+    "other_notes": [
+      "Boundary marker test intentionally strips outer whitespace; repeat token IDs remain exact.",
+      "Duplicate model-input chmod loop in memory helper is harmless.",
+      "Finite boundary marker checks are not a full arithmetic oracle or general runtime qualification."
+    ]
+  }
+}

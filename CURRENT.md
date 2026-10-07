@@ -78,17 +78,21 @@ No reboot, driver reset, power, swap or page-cache setting was changed.
   Two hash-identical 0.8B weight-cache copies were consolidated into one read-only
   inode, preserving both model paths and recovering 1.63 GiB. The separate 0.8B
   workflow pilot closed at its format gate; the planned 27B trial remains pending.
-- **Next:** close the intended 27B model-intake and runtime gaps. A read-only
-  audit found and fixed omitted configuration/tokenizer inputs in its weight
-  manifest. All 66 weight pins remain unchanged; both package download wrappers
-  now select the complete runtime inputs, with five offline controls passing.
-  CPU tokenization confirms the full recall prompt fits a 33,024-token profile.
-  Investigate
-  a separately identified target-only path without borrowing speculative-kernel
-  qualification. Leave the protected two-card endpoint alone.
+- **27B next:** the corrected download manifest includes the required tokenizer
+  and runtime files while preserving all 66 weight pins; five offline controls
+  cover both package download wrappers. Independent model intake is now running
+  in `/dev/shm/qwen38-27b-fp8-worker-20261007`, with live receipts under
+  `/home/steve/worker-qwen27b-intake-20261007/`. A supervised cold-copy watcher
+  must fully verify preservation and unmount EX400U before any GPU launch.
+  The separate [target-only pilot](experiments/local-coding-worker/qwen27b-target-only-pilot-20261007/README.md)
+  uses the installed R276 image and leaves the two-card host alone. Its source
+  and CPU communication checks passed; actual model/collective qualification
+  remains pending. No new server is running. Known one-token-prefill limitations
+  are explicitly restricted and prefill-boundary diagnostics precede useful tasks.
+  CPU tokenization confirms the full recall prompt fits its 33,024-token profile.
   Qualify the corrected package when its exact inputs and host ownership
   are available. The 50 GiB reserve is now met, with only about 4 GiB above it;
-  this does not admit a large build/download.
+  this does not admit a large build/download on the root filesystem.
   Use `scripts/check-storage-headroom.py` before new writing jobs, including
   estimated peak output/cache/build bytes. A verified additional research backup
   now exists; keep the internal sources and the documented backup-scope limits.

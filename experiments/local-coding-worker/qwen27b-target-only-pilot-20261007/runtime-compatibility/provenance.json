@@ -1,0 +1,126 @@
+{
+  "schema": "lab.r276.fp8-compatibility.v1",
+  "created_epoch_s": 1791341087.896375,
+  "image": "sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+  "gpu_actions": 0,
+  "model_requests": 0,
+  "scope": "Installed-source compatibility inspection only",
+  "python_block_fp8_half_weight_cache": false,
+  "qualified": false,
+  "peak_device_memory_measured": false,
+  "known_limitations": [
+    "old one-token GDN prefill bug",
+    "patched binary internal allocations not measured",
+    "full model loading and boundary correctness untested"
+  ],
+  "files": [
+    {
+      "path": "installed/vllm/_xpu_ops.py",
+      "bytes": 50540,
+      "sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
+      "source": "/tmp/r276-installed-source-3qovpoj5/_xpu_ops.py"
+    },
+    {
+      "path": "installed/vllm/model_executor/layers/quantization/fp8.py",
+      "bytes": 32580,
+      "sha256": "2be6e530b0a9ba4388b17db3a810b7dbd0bf493846b8549e0c7a41e01d026dc9",
+      "source": "/tmp/r276-installed-source-3qovpoj5/model_executor/layers/quantization/fp8.py"
+    },
+    {
+      "path": "installed/vllm/model_executor/layers/quantization/utils/fp8_utils.py",
+      "bytes": 48393,
+      "sha256": "ba29e79fa8ef4060b49111257550643223dbc8047ccde09ca66cb601d279bd90",
+      "source": "/tmp/r276-installed-source-3qovpoj5/model_executor/layers/quantization/utils/fp8_utils.py"
+    },
+    {
+      "path": "installed/vllm/model_executor/models/qwen3_5.py",
+      "bytes": 27104,
+      "sha256": "d5fa8f7c99c5cac89bfb0c0288bab58c846ee27b9733178bf957ca44b9d1392d",
+      "source": "/tmp/r276-installed-source-3qovpoj5/model_executor/models/qwen3_5.py"
+    },
+    {
+      "path": "installed/vllm/model_executor/models/registry.py",
+      "bytes": 62453,
+      "sha256": "1b47a85b3c9a415fcec99e2eca6347a361c21fa896b75075ce649f642069a18e",
+      "source": "/tmp/r276-installed-source-3qovpoj5/model_executor/models/registry.py"
+    },
+    {
+      "path": "installed/vllm/platforms/xpu.py",
+      "bytes": 20662,
+      "sha256": "5951dc8c6e25f57c80fa4f4c5a55b8d5b39799a7fc578e36f9c98e89b9897af0",
+      "source": "/tmp/r276-installed-source-3qovpoj5/platforms/xpu.py"
+    },
+    {
+      "path": "inspection-1.json",
+      "bytes": 2061,
+      "sha256": "df82862d157319e76f9b764221081e9b71b6512200c4fd63d7d172f85c0e8b69",
+      "source": "/tmp/r276-installed-source-3qovpoj5/receipt.json"
+    },
+    {
+      "path": "inspection-2.json",
+      "bytes": 2736,
+      "sha256": "adf77f72c8f45deadf5f84950d321846f51d378a261ee4f6b90818b02c7d9f77",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/receipt.json"
+    },
+    {
+      "path": "installed/vllm/model_executor/kernels/linear/__init__.py",
+      "bytes": 41523,
+      "sha256": "813ef122fb5d50555eaa46eecd2a7a2b28b808b397e12cb81c3b36f9c91f02d5",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/vllm/model_executor/kernels/linear/__init__.py"
+    },
+    {
+      "path": "installed/vllm/model_executor/kernels/linear/scaled_mm/BlockScaledMMLinearKernel.py",
+      "bytes": 7499,
+      "sha256": "26807d4a0a78dbbdcb5724c15905f3a39007924f858494cce9e88953e4cbbc76",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/vllm/model_executor/kernels/linear/scaled_mm/BlockScaledMMLinearKernel.py"
+    },
+    {
+      "path": "installed/vllm/model_executor/kernels/linear/scaled_mm/xpu.py",
+      "bytes": 12053,
+      "sha256": "7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/vllm/model_executor/kernels/linear/scaled_mm/xpu.py"
+    },
+    {
+      "path": "installed/vllm-0.27.2rc1.dev77+gac7509e2b.xpu.dist-info/METADATA",
+      "bytes": 11369,
+      "sha256": "e278f411c42d6f843da98ee2ac5dae9cb50371d7f763d492f489f3dc634b8278",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/vllm-0.27.2rc1.dev77+gac7509e2b.xpu.dist-info/METADATA"
+    },
+    {
+      "path": "installed/vllm-0.27.2rc1.dev77+gac7509e2b.xpu.dist-info/licenses/LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/vllm-0.27.2rc1.dev77+gac7509e2b.xpu.dist-info/licenses/LICENSE"
+    },
+    {
+      "path": "installed/vllm_xpu_kernels-0.1.dev1+g1e90ffa67.dist-info/METADATA",
+      "bytes": 5899,
+      "sha256": "74fc2c2f4640e92737b37e018fe42827c905351c92c33a310f250d3646638070",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/vllm_xpu_kernels-0.1.dev1+g1e90ffa67.dist-info/METADATA"
+    },
+    {
+      "path": "installed/vllm_xpu_kernels-0.1.dev1+g1e90ffa67.dist-info/licenses/LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "source": "/tmp/r276-dispatch-source-4nzdj_pj/vllm_xpu_kernels-0.1.dev1+g1e90ffa67.dist-info/licenses/LICENSE"
+    },
+    {
+      "path": "kernel-base-source/csrc/xpu/onednn/fp8_gemm_w8a16.h",
+      "bytes": 5064,
+      "sha256": "3fce5a6d135904eb5807cac311742d308fcadf2a1a705c4a394edf887c789106",
+      "source": "git:/home/steve/src/vllm-xpu-kernels@1e90ffa672ba02f17a909da11838a4c55b199783:csrc/xpu/onednn/fp8_gemm_w8a16.h; historical base, not installed binary identity"
+    },
+    {
+      "path": "kernel-base-source/LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "source": "git:/home/steve/src/vllm-xpu-kernels@1e90ffa672ba02f17a909da11838a4c55b199783:LICENSE; historical base, not installed binary identity"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4894,
+      "sha256": "2a76a6bb5c62331fb399e73c3e0873d5441d6e587f2f4fd979e67677a88aa209",
+      "source": "audit synthesis from retained source and existing repo receipts"
+    }
+  ]
+}

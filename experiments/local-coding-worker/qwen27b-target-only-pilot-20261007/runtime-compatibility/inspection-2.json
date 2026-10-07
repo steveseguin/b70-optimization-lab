@@ -1,0 +1,68 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "r276-cpu-dispatch-41e38b5e2889",
+    "--network",
+    "none",
+    "--read-only",
+    "--cap-drop",
+    "ALL",
+    "--security-opt",
+    "no-new-privileges",
+    "--memory",
+    "1g",
+    "--memory-swap",
+    "1g",
+    "--cpus",
+    "1",
+    "--pids-limit",
+    "64",
+    "--user",
+    "1000:1000",
+    "--env",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "--entrypoint",
+    "/opt/venv/bin/python",
+    "sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+    "-B",
+    "-c",
+    "import json,pathlib,hashlib\nbase=pathlib.Path('/opt/venv/lib/python3.12/site-packages')\nfiles=['vllm/model_executor/kernels/linear/scaled_mm/xpu.py','vllm/model_executor/kernels/linear/scaled_mm/BlockScaledMMLinearKernel.py','vllm/model_executor/kernels/linear/__init__.py','vllm/LICENSE','vllm_xpu_kernels/LICENSE','vllm_xpu_kernels/csrc/xpu/onednn/fp8_gemm_w8a16.h']\nfor pattern in ['vllm-*.dist-info/licenses/LICENSE','vllm_xpu_kernels-*.dist-info/licenses/LICENSE','vllm-*.dist-info/METADATA','vllm_xpu_kernels-*.dist-info/METADATA']:\n files.extend(str(p.relative_to(base)) for p in base.glob(pattern))\nout={}\nfor name in files:\n p=base/name\n out[name]={'text':p.read_text(),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} if p.is_file() else {'missing':True}\nprint(json.dumps(out))\n"
+  ],
+  "returncode": 0,
+  "stderr": "",
+  "files": {
+    "vllm/model_executor/kernels/linear/scaled_mm/xpu.py": {
+      "sha256": "7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208"
+    },
+    "vllm/model_executor/kernels/linear/scaled_mm/BlockScaledMMLinearKernel.py": {
+      "sha256": "26807d4a0a78dbbdcb5724c15905f3a39007924f858494cce9e88953e4cbbc76"
+    },
+    "vllm/model_executor/kernels/linear/__init__.py": {
+      "sha256": "813ef122fb5d50555eaa46eecd2a7a2b28b808b397e12cb81c3b36f9c91f02d5"
+    },
+    "vllm/LICENSE": {
+      "missing": true
+    },
+    "vllm_xpu_kernels/LICENSE": {
+      "missing": true
+    },
+    "vllm_xpu_kernels/csrc/xpu/onednn/fp8_gemm_w8a16.h": {
+      "missing": true
+    },
+    "vllm-0.27.2rc1.dev77+gac7509e2b.xpu.dist-info/licenses/LICENSE": {
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "vllm_xpu_kernels-0.1.dev1+g1e90ffa67.dist-info/licenses/LICENSE": {
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "vllm-0.27.2rc1.dev77+gac7509e2b.xpu.dist-info/METADATA": {
+      "sha256": "e278f411c42d6f843da98ee2ac5dae9cb50371d7f763d492f489f3dc634b8278"
+    },
+    "vllm_xpu_kernels-0.1.dev1+g1e90ffa67.dist-info/METADATA": {
+      "sha256": "74fc2c2f4640e92737b37e018fe42827c905351c92c33a310f250d3646638070"
+    }
+  }
+}
