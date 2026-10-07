@@ -1,0 +1,42 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "local/kv-memory-t120k-s0"
+description = "kvstream v2, memory, ~121396 tokens, seed 0"
+authors = []
+keywords = ["context", "kvstream"]
+
+[metadata]
+seed = 0
+target_tokens = 120000
+stream_tokens = 121396
+token_counter = "tokenizer:/mnt/fast-ai/llm-models/qwen3.8-27b-fp8/tokenizer.json"
+batch_size = 100
+batch_tokens = 6389
+n_get = 24
+n_overwritten_queried = 8
+n_items = 20
+n_batches = 19
+mode = "memory"
+kind = "kvstream"
+max_item_chars = 16419
+
+[verifier]
+timeout_sec = 300.0
+collect = []
+
+[verifier.env]
+
+[agent]
+timeout_sec = 18000.0
+
+[environment]
+network_mode = "public"  # "no-network" needs Harbor's egress sidecar, built with docker buildx (not installed here)
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

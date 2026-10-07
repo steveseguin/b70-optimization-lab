@@ -1,0 +1,34 @@
+{
+  "schema": "context-plan-audit.v1",
+  "observed_at": "2026-10-07T00:20:49.999606+00:00",
+  "source_log": "/mnt/fast-ai/bench-results/context-planE-a1/tp2-planE-w262144-client.log",
+  "copied_prefix": "campaign-log-prefix.txt",
+  "prefix_sha256": "7a207dad79c35a975e783177fdf35d3f3f2dc51f0a8b8b06dcde48d3f93b2f0f",
+  "prefix_bytes": 3532,
+  "campaign_still_running": true,
+  "setup_failures": [
+    {
+      "block": "ret120q2",
+      "arm": "B32iq",
+      "seed": 1,
+      "status": "setup_failed",
+      "reason": "Missing sparse-memory-t120k-s1/task.toml; no model trial began",
+      "model_score": null,
+      "log_lines": [
+        19,
+        31
+      ]
+    }
+  ],
+  "matched_million_pair": {
+    "quoted": "sparse-memory-t1000k-s0__QuVH42k",
+    "read": "sparse-memory-t1000k-s0__8gCWSuS",
+    "task_fingerprint": "aa962b595f47cdae4758d7c6fed86f7eb9c66ab6401932021cbb7420a7578abb",
+    "quoted_correct": 24,
+    "read_correct": 23,
+    "asked": 24,
+    "elapsed_reduction_fraction": 0.2303160149973219,
+    "scope": "One matched seed; descriptive elapsed comparison, not a repeat-confirmed speed verdict."
+  },
+  "completeness_limit": "The legacy wrapper continues after a planning error. Its final plan-complete marker is not evidence that every planned cell ran."
+}

@@ -1,0 +1,39 @@
+### [rd1mq] ARMS=B32iq KINDS=sparse SEEDS=0 SIZES=1000000
+{"refreshed_graders": 0, "root": "/mnt/fast-ai/bench-results/context-planA-client/rd1mq/tasks"}
+== plan (SUBSET=core, arms in the given order: B32iq; estimate from the 2026-10-05 measurements, prefix cache on)
+  B32iq  improved budget 32768  sparse-memory-t1000k-s0   999361 tok 588 items  ~15.28M new read ~3907k written ~851 min
+  estimated total: 14.2 h (3,300 written tokens/call at 90->41 tok/s by context, new prompt tokens at
+  2,000 tok/s; B32 took 1.9x its estimate on 2026-10-05 because of a thinking/rollback thrash)
+window 262144; arm A needs about 56384 at its largest task
+== 19:23:03 B32iq__sparse-memory-t1000k-s0 (agent=improved budget=32768 drop_old_thinking=0)
+   rc=0 ledger score 1.0000 raw 1.0000 ({'correct': 24, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False
+
+== table (all trials of this comparison)
+arm	kind	mode	size	seed	budget	reward	lm_calls	real_edits	summaries	summary_failed	peak_sent_ctx	prompt_tokens	cached_tokens	think_share	completion_tokens	think_tok_est	other_tok_est	thinking_off_calls	prefix_stable_share	wall_s	items_lost	ended_by	rule
+B32iq	sparse	memory	999361	0	32768	1.000	1236	598	0	0	22815	18186229	14921920	0.000	111709	34623	77085	1205	0.512	2874	0	submit	ok+archive
+
+# diagnostics
+arm	kind	mode	size	seed	correct	blank	stale	wrong	lost_never	lost_dropped	lost_copy	stored_frac	items	delivered	seen_whole	items_lost	cut	gate_refusals	protected_rollbacks	state_rejected	think_cap_cont	loop_guard	ctxfold_calls	ctxfold_refused	events_applied	ev_ref_quote	ev_ref_counter	ev_ref_format	ev_ref_amount	event_retries	prefix_unstable_no_edit	broken_pipe	to_file	tee	refused	hit_max_tokens	rollbacks	nudges	suspect_cmds	score_raw
+B32iq	sparse	memory	999361	0	24	0	0	0					588	588	588	0	0	7	0	0	4	0	591	0	1790	0	0	0	0	0	1	0	0	0	0	0	3	149	0	1.000
+# trials=1 mean_reward=1.0000 prompt_tokens=18186229 cached_tokens=14921920 completion_tokens=111709 lm_calls=1236
+### [ret120q2] ARMS=B32iq KINDS=sparse SEEDS=1 SIZES=120000
+{"refreshed_graders": 0, "root": "/mnt/fast-ai/bench-results/context-planA-client/ret120q2/tasks"}
+Traceback (most recent call last):
+  File "<stdin>", line 69, in <module>
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/fast-ai/bench-results/context-planA-client/ret120q2/tasks/sparse-memory/sparse-memory-t120k-s1/task.toml'
+planning failed
+### block ended rc=1
+### [rd480q2] ARMS=B32iq KINDS=sparse SEEDS=1 SIZES=480000
+{"refreshed_graders": 0, "root": "/mnt/fast-ai/bench-results/context-planA-client/rd480q2/tasks"}
+== plan (SUBSET=core, arms in the given order: B32iq; estimate from the 2026-10-05 measurements, prefix cache on)
+  B32iq  improved budget 32768  sparse-memory-t480k-s1    480247 tok 283 items  ~7.41M new read ~1894k written ~412 min
+  estimated total: 6.9 h (3,300 written tokens/call at 90->41 tok/s by context, new prompt tokens at
+  2,000 tok/s; B32 took 1.9x its estimate on 2026-10-05 because of a thinking/rollback thrash)
+window 262144; arm A needs about 56384 at its largest task
+== 20:11:05 B32iq__sparse-memory-t480k-s1 (agent=improved budget=32768 drop_old_thinking=0)
