@@ -390,28 +390,28 @@ class IntegrationControls(unittest.TestCase):
         with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=55*2**30-1)):
             with self.assertRaisesRegex(RuntimeError,'storage allowance'):self.r.storage_check()
 
-    def test_fast_requests_require_control_proof_and_durable_barrier(self):
-        fast=next(r for r in self.rows if r['phase']=='timed-fast')
+    def test_control_requests_require_fast_proof_and_durable_barrier(self):
+        fast=next(r for r in self.rows if r['phase']=='timed')
         deps=self.r.schedule['boundary_dependencies'][fast['name']]
         self.r.authority.completed.extend(d for d in deps if not d.startswith('barrier:'))
         with self.assertRaisesRegex(RuntimeError,'barrier missing'):
             self.r.before_request(fast,'cpu')
-        self.r.write('resolution-phase-control_verified.json',{'synthetic':True})
-        with self.assertRaisesRegex(RuntimeError,'Control proof not verified'):
+        self.r.write('resolution-phase-fast_verified.json',{'synthetic':True})
+        with self.assertRaisesRegex(RuntimeError,'Fast proof not verified'):
             self.r.before_request(fast,'cpu')
-        self.r.actions_done.add('verify-timed')
+        self.r.actions_done.add('verify-fast-timed')
         self.r.authority.completed.append(self.setup_row('freeze')['name'])
         self.state.update(captures_frozen=True,loads_frozen=True)
         self.r.before_request(fast,'cpu')
 
-    def test_control_verification_failure_never_opens_fast_barrier(self):
+    def test_fast_verification_failure_never_opens_control_barrier(self):
         with patch.object(self.r,'retire_tails'),patch.object(CAND,'verify_outputs',side_effect=RuntimeError('synthetic parity refusal')):
             with self.assertRaisesRegex(RuntimeError,'parity refusal'):
-                self.r.action('verify-timed')
-        self.assertNotIn('verify-timed',self.r.actions_done)
-        self.assertFalse((self.run/'resolution-phase-control_verified.json').exists())
-        with self.assertRaisesRegex(RuntimeError,'Control proof not verified'):
-            self.r.action('verify-fast-timed')
+                self.r.action('verify-fast-timed')
+        self.assertNotIn('verify-fast-timed',self.r.actions_done)
+        self.assertFalse((self.run/'resolution-phase-fast_verified.json').exists())
+        with self.assertRaisesRegex(RuntimeError,'Fast proof not verified'):
+            self.r.action('verify-timed')
 
     def test_phase_actions_need_actual_native_completion(self):
         with self.assertRaisesRegex(RuntimeError,'Twenty native requests'):self.r.action('verify-native')

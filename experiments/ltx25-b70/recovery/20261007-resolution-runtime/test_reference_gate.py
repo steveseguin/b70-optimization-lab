@@ -14,7 +14,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('reference_gate', HERE / 'reference_gate.py')
 G = importlib.util.module_from_spec(spec); spec.loader.exec_module(G)
-PLAN = HERE.parent / '20261007-client-compare-104/candidate-plan.json'
+PLAN = HERE.parent / '20261007-client-reverse-105/candidate-plan.json'
 
 
 class GateTests(unittest.TestCase):
@@ -242,6 +242,7 @@ class GateTests(unittest.TestCase):
     def test_full_suite_phase_counts_and_fixture_mapping_are_fixed(self):
         for mutate in (lambda p: p['requests'].pop(),
                        lambda p: p['fixtures'].reverse(),
+                       lambda p: p['requests'].__setitem__(slice(34,62), p['requests'][48:62]+p['requests'][34:48]),
                        lambda p: p['reference_names'].update(wheel=p['reference_names']['boat'])):
             plan = copy.deepcopy(self.plan)
             mutate(plan)

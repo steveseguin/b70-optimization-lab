@@ -57,7 +57,7 @@ class CandidateControls(unittest.TestCase):
         rows = [r for r in self.f.plan['requests'] if r['phase'] == phase]
         for i, row in enumerate(rows):
             name = row['name']; req = self.root / 'requests' / name; req.mkdir(parents=True)
-            pid = 'test-' + name; start = {'candidate-check':30000,'timed':60000,'timed-fast':90000}[phase] + i*1000
+            pid = 'test-' + name; start = {'candidate-check':30000,'timed':90000,'timed-fast':60000}[phase] + i*1000
             end = start+500
             messages = [['execution_start', {'prompt_id': pid, 'timestamp': start}],
                         ['execution_cached', {'prompt_id': pid, 'timestamp': start, 'nodes': []}],
@@ -125,20 +125,21 @@ class CandidateControls(unittest.TestCase):
     def test_complete_candidate_reconstruction_and_timing(self):
         result=self.run_gate();self.assertEqual(result['four_tensor_exact_clips'],10)
         sha=C.R.sha(self.output.read_bytes());self.assertEqual(C.verify_candidate_receipt(self.output,sha),result)
-        self.make_phase('timed',sha)
-        timing=C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,sha)
-        self.assertEqual(timing['four_tensor_exact_clips'],10);self.assertEqual(timing['distinct_fixtures'],10)
-        self.assertEqual(timing['completion_intervals_seconds'],[1.]*9)
-        self.assertNotIn('aggregate_completion_intervals_seconds', timing)
-        control_sha=C.R.sha(self.timed.read_bytes())
-        self.assertEqual(C.verify_control_receipt(self.timed,control_sha),timing)
         self.make_phase('timed-fast',sha)
-        fast=C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,
-                              self.output,sha,self.timed,control_sha)
+        fast=self.run_fast(sha)
         self.assertEqual(fast['completion_intervals_seconds'],[1.]*9)
         self.assertEqual(fast['status'],'timed_fast_verified')
-        self.assertEqual(fast['control_receipt_sha256'],control_sha)
+        self.assertIsNone(fast['fast_receipt_sha256'])
         self.assertEqual(fast['policy_totals']['skipped_storage_save_count'],14*15)
+        fast_sha=C.R.sha(self.fast.read_bytes())
+        self.assertEqual(C.verify_fast_receipt(self.fast,fast_sha),fast)
+        self.make_phase('timed',sha)
+        timing=self.run_control(sha)
+        self.assertEqual(timing['four_tensor_exact_clips'],10);self.assertEqual(timing['distinct_fixtures'],10)
+        self.assertEqual(timing['completion_intervals_seconds'],[1.]*9)
+        self.assertEqual(timing['fast_receipt_sha256'],fast_sha)
+        self.assertEqual(timing['inputs']['fast_receipt_path'],str(self.fast))
+        self.assertNotIn('aggregate_completion_intervals_seconds', timing)
         self.assertNotIn('torch',sys.modules)
 
     def test_fill_capture_is_never_parity(self):
@@ -157,15 +158,14 @@ class CandidateControls(unittest.TestCase):
         self.assertEqual(len(functions),2)
         ns={'hashlib':hashlib}
         exec(compile(ast.Module(body=functions,type_ignores=[]),'pinned-producer-tag','exec'),ns)
-        self.run_gate();candidate_sha=C.R.sha(self.output.read_bytes())
-        self.make_phase('timed',candidate_sha)
-        for row in [r for r in self.f.plan['requests'] if r['phase'] in ('candidate-check','timed')]:
+        candidate_sha=self.prepare_control()
+        for row in [r for r in self.f.plan['requests'] if r['phase'] in ('candidate-check','timed-fast','timed')]:
             inputs=row['graph']['364']['inputs'];expected=ns['_job_tag'](inputs['mode'],inputs['text'])
             p=self.server/('pipeline-'+row['name']+'.json')
             detail=json.loads(p.read_text())['detail']
             self.assertEqual(detail['text_sha256'],expected);self.assertEqual(detail['tag'],expected)
             self.assertNotEqual(expected,ns['_text_sha256'](inputs['text']))
-        C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,candidate_sha)
+        self.run_control(candidate_sha)
 
     def test_raw_text_digest_refused_for_window_conditioning(self):
         row=self.row();wrong=C.R.sha(row['graph']['364']['inputs']['text'].encode('utf-8'))
@@ -235,7 +235,7 @@ class CandidateControls(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     def test_last_timed_fixture_still_requires_exact_native_bytes(self):
-        self.run_gate(); sha=C.R.sha(self.output.read_bytes());self.make_phase('timed',sha)
+        sha=self.prepare_control()
         row = [r for r in self.f.plan['requests'] if r['phase'] == 'timed'][-1]
         self.assertEqual(row['expected_emitted_fixture'], 'wheel')
         folder = self.root/'output/validation'/row['name'];p=folder/'tensors.safetensors'
@@ -243,17 +243,26 @@ class CandidateControls(unittest.TestCase):
         self.f.mutate(folder/'summary.json',lambda v:v['tensors']['waveform'].update(
             sha256=C.R.sha(struct.pack('<ff',99.,1.))))
         with self.assertRaisesRegex(ValueError, 'Four-tensor native equality failed'):
-            C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,sha)
+            self.run_control(sha)
         self.assertFalse(self.timed.exists())
 
-    def prepare_control(self):
+    def prepare_fast(self):
         self.run_gate(); candidate_sha=C.R.sha(self.output.read_bytes())
+        self.make_phase('timed-fast',candidate_sha)
+        return candidate_sha
+
+    def run_fast(self, candidate_sha):
+        return C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,
+                                self.output,candidate_sha)
+
+    def prepare_control(self):
+        candidate_sha=self.prepare_fast();self.run_fast(candidate_sha)
         self.make_phase('timed',candidate_sha)
         return candidate_sha
 
     def run_control(self, candidate_sha):
         return C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,
-                                self.output,candidate_sha)
+                                self.output,candidate_sha,self.fast,C.R.sha(self.fast.read_bytes()))
 
     def test_control_policy_readout_is_required_and_cannot_skip(self):
         sha=self.prepare_control()
@@ -281,36 +290,65 @@ class CandidateControls(unittest.TestCase):
         self.f.client_source.write_text('# Changed source bytes')
         with self.assertRaisesRegex(ValueError,'source binding differs'):self.run_control(sha)
 
-    def test_fast_needs_verified_control_not_just_candidate(self):
-        sha=self.prepare_control();self.make_phase('timed-fast',sha)
-        with self.assertRaisesRegex(ValueError,'needs verified control'):
-            C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,self.output,sha)
-        self.assertFalse(self.fast.exists())
+    def test_control_needs_verified_fast_not_just_candidate(self):
+        sha=self.prepare_fast();self.make_phase('timed',sha)
+        with self.assertRaisesRegex(ValueError,'needs verified fast'):
+            C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,sha)
+        self.assertFalse(self.timed.exists())
 
-    def test_forged_control_receipt_and_changed_control_policy_refused(self):
-        sha=self.prepare_control();self.run_control(sha)
-        original=self.timed.read_bytes()
-        self.f.mutate(self.timed,lambda v:v.update(four_tensor_exact_clips=99))
+    def test_forged_fast_receipt_and_changed_fast_policy_refused(self):
+        sha=self.prepare_fast();self.run_fast(sha)
+        original=self.fast.read_bytes()
+        self.f.mutate(self.fast,lambda v:v.update(four_tensor_exact_clips=99))
         with self.assertRaisesRegex(ValueError,'actual evidence'):
-            C.verify_control_receipt(self.timed,C.R.sha(self.timed.read_bytes()))
-        self.timed.write_bytes(original);control_sha=C.R.sha(original)
-        self.make_phase('timed-fast',sha)
-        row=next(r for r in self.f.plan['requests'] if r['phase']=='timed')
+            C.verify_fast_receipt(self.fast,C.R.sha(self.fast.read_bytes()))
+        self.fast.write_bytes(original)
+        self.make_phase('timed',sha)
+        row=next(r for r in self.f.plan['requests'] if r['phase']=='timed-fast')
         self.f.mutate(self.root/'requests'/row['name']/'client-policy.json',lambda v:v.update(source_sha256='f'*64))
         with self.assertRaisesRegex(ValueError,'readout identity'):
-            C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,
-                             self.output,sha,self.timed,control_sha)
-        self.assertFalse(self.fast.exists())
+            self.run_control(sha)
+        self.assertFalse(self.timed.exists())
 
     def test_fast_zero_skips_is_valid_but_must_report_it_truthfully(self):
-        sha=self.prepare_control();self.run_control(sha);control_sha=C.R.sha(self.timed.read_bytes())
-        self.make_phase('timed-fast',sha)
+        sha=self.prepare_fast()
         for row in (r for r in self.f.plan['requests'] if r['phase']=='timed-fast'):
             self.f.mutate(self.root/'requests'/row['name']/'client-policy.json',
                           lambda v:v.update(storage_save_count=20,skipped_storage_save_count=0))
-        result=C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed-fast',self.fast,
-                                self.output,sha,self.timed,control_sha)
+        result=self.run_fast(sha)
         self.assertEqual(result['policy_totals']['skipped_storage_save_count'],0)
+
+    def test_first_fast_last_fixture_still_requires_exact_native_bytes(self):
+        sha=self.prepare_fast()
+        row=[r for r in self.f.plan['requests'] if r['phase']=='timed-fast'][-1]
+        self.assertEqual(row['expected_emitted_fixture'],'wheel')
+        folder=self.root/'output/validation'/row['name'];p=folder/'tensors.safetensors'
+        p.write_bytes(p.read_bytes()[:-8]+struct.pack('<ff',99.,1.))
+        self.f.mutate(folder/'summary.json',lambda v:v['tensors']['waveform'].update(
+            sha256=C.R.sha(struct.pack('<ff',99.,1.))))
+        with self.assertRaisesRegex(ValueError,'Four-tensor native equality failed'):
+            self.run_fast(sha)
+        self.assertFalse(self.fast.exists())
+
+    def test_second_control_cannot_reuse_first_fast_prompt_id(self):
+        sha=self.prepare_control()
+        fast=json.loads(self.fast.read_text())
+        row=next(r for r in self.f.plan['requests'] if r['phase']=='timed')
+        self.f.mutate(self.root/'requests'/row['name']/'submission.json',
+                      lambda v:v.update(prompt_id=fast['executions'][0]['prompt_id']))
+        with self.assertRaisesRegex(ValueError,'Duplicate/failed submission'):
+            self.run_control(sha)
+        self.assertFalse(self.timed.exists())
+
+    def test_control_must_begin_after_last_fast_execution(self):
+        sha=self.prepare_control()
+        row=next(r for r in self.f.plan['requests'] if r['phase']=='timed')
+        folder=self.root/'requests'/row['name']
+        for n in ['history.json','result.json']:
+            self.f.mutate(folder/n,lambda v:v['status']['messages'][0][1].update(timestamp=60000))
+        with self.assertRaisesRegex(ValueError,'time ordering differs'):
+            self.run_control(sha)
+        self.assertFalse(self.timed.exists())
 
     def test_unknown_graph_or_runtime_refused(self):
         p=self.root/'requests'/self.row()['name']/'identity.json';self.f.mutate(p,lambda v:v.update(pid=999));self.refuse()

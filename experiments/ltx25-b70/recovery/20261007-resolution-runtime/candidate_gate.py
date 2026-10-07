@@ -106,7 +106,7 @@ def phase_binding(value, role, name, phase, reference, reference_sha, candidate_
 
 
 def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
-            candidate_receipt_path=None, candidate_sha256=None, control_receipt_path=None, control_sha256=None):
+            candidate_receipt_path=None, candidate_sha256=None, fast_receipt_path=None, fast_sha256=None):
     require(phase in ('candidate-check', 'timed', 'timed-fast'), 'Unknown verification phase')
     root = R.safe_path(root); require(not (root / 'FAULT.json').exists(), 'Fault present')
     e = R.Evidence(); plan = R.load_plan(plan_path, e)
@@ -125,17 +125,17 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
         e.raw(candidate_receipt_path)
     else:
         require(candidate_receipt_path is None and candidate_sha256 is None, 'Unexpected candidate input')
-    control = None
-    if phase == 'timed-fast':
-        require(control_receipt_path is not None and control_sha256 is not None, 'Fast timing needs verified control')
-        control = verify_control_receipt(control_receipt_path, control_sha256)
-        require(control['reference_receipt_sha256'] == reference_sha256 and
-                control['candidate_receipt_sha256'] == candidate_sha256 and
-                control['inputs']['root'] == str(root) and
-                control['server_identity_sha256'] == reference['server_identity_sha256'], 'Control basis differs')
-        e.raw(control_receipt_path)
+    first_fast = None
+    if phase == 'timed':
+        require(fast_receipt_path is not None and fast_sha256 is not None, 'Control timing needs verified fast block')
+        first_fast = verify_fast_receipt(fast_receipt_path, fast_sha256)
+        require(first_fast['reference_receipt_sha256'] == reference_sha256 and
+                first_fast['candidate_receipt_sha256'] == candidate_sha256 and
+                first_fast['inputs']['root'] == str(root) and
+                first_fast['server_identity_sha256'] == reference['server_identity_sha256'], 'Fast basis differs')
+        e.raw(fast_receipt_path)
     else:
-        require(control_receipt_path is None and control_sha256 is None, 'Unexpected control input')
+        require(fast_receipt_path is None and fast_sha256 is None, 'Unexpected fast input')
     rows = R.request_groups(plan)[phase]
     require(len(rows) == 14, 'Request count differs')
     base = rows[0]['clip_index']; expected_count = len(rows) - 4
@@ -143,9 +143,9 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
     seen = {r['prompt_id'] for r in reference['executions']}
     if candidate:
         seen.update(r['prompt_id'] for r in candidate['executions'])
-    if control:
-        seen.update(r['prompt_id'] for r in control['executions'])
-    previous_end = (control or candidate or reference)['executions'][-1]['success_ms']
+    if first_fast:
+        seen.update(r['prompt_id'] for r in first_fast['executions'])
+    previous_end = (first_fast or candidate or reference)['executions'][-1]['success_ms']
     executions = []; emitted = []
     for i, row in enumerate(rows):
         name = row['name']; pid, start, end = request_evidence(e, root, row, identity, previous_end, seen)
@@ -231,12 +231,12 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
               'runtime_manifest_sha256': reference['runtime_manifest_sha256'],
               'server_identity_sha256': reference['server_identity_sha256'],
               'reference_receipt_sha256': reference_sha256, 'candidate_receipt_sha256': candidate_sha256,
-              'control_receipt_sha256': control_sha256,
+              'fast_receipt_sha256': fast_sha256,
               'four_tensor_exact_clips': expected_count, 'distinct_fixtures': 10, 'fills_not_scored': 4,
               'executions': executions, 'evidence_sha256': e.hashes,
               'inputs': {'root': str(root), 'plan_path': str(plan_path), 'reference_receipt_path': str(reference_receipt_path),
                          'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None,
-                         'control_receipt_path': str(control_receipt_path) if control_receipt_path else None},
+                         'fast_receipt_path': str(fast_receipt_path) if fast_receipt_path else None},
               'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. The two client-policy timing blocks are a repeated-workload comparison, not broader visual quality, resolution, duration or speed-record evidence.'}
     if phase in ('timed', 'timed-fast'):
         ends = [r['success_ms'] for r in executions if not r['fill']]
@@ -252,9 +252,9 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
 
 
 def verify_outputs(root, plan_path, reference_receipt_path, reference_sha256, phase, output_path,
-                   candidate_receipt_path=None, candidate_sha256=None, control_receipt_path=None, control_sha256=None):
+                   candidate_receipt_path=None, candidate_sha256=None, fast_receipt_path=None, fast_sha256=None):
     output_path = R.safe_path(output_path); require(not output_path.exists(), 'Receipt already exists')
-    result = _verify(root, plan_path, reference_receipt_path, reference_sha256, phase, candidate_receipt_path, candidate_sha256, control_receipt_path, control_sha256)
+    result = _verify(root, plan_path, reference_receipt_path, reference_sha256, phase, candidate_receipt_path, candidate_sha256, fast_receipt_path, fast_sha256)
     with output_path.open('xb') as stream:
         stream.write(json.dumps(result, indent=2, sort_keys=True, allow_nan=False).encode() + b'\n')
         stream.flush(); os.fsync(stream.fileno())
@@ -275,15 +275,15 @@ def verify_candidate_receipt(path, expected_sha256):
     return actual
 
 
-def verify_control_receipt(path, expected_sha256):
+def verify_fast_receipt(path, expected_sha256):
     raw = R.read_file(path)
-    require(R.sha(raw) == R.digest(expected_sha256), 'Control receipt digest differs')
+    require(R.sha(raw) == R.digest(expected_sha256), 'Fast receipt digest differs')
     receipt = R.strict_json(raw)
-    require(receipt.get('status') == 'timed_verified' and receipt.get('phase') == 'timed',
-            'Not a verified control receipt')
+    require(receipt.get('status') == 'timed_fast_verified' and receipt.get('phase') == 'timed-fast',
+            'Not a verified fast receipt')
     inputs = receipt['inputs']
     actual = _verify(Path(inputs['root']), Path(inputs['plan_path']), Path(inputs['reference_receipt_path']),
-        receipt['reference_receipt_sha256'], 'timed', Path(inputs['candidate_receipt_path']),
+        receipt['reference_receipt_sha256'], 'timed-fast', Path(inputs['candidate_receipt_path']),
         receipt['candidate_receipt_sha256'])
-    require(R.canonical(actual) == R.canonical(receipt), 'Control receipt differs from actual evidence')
+    require(R.canonical(actual) == R.canonical(receipt), 'Fast receipt differs from actual evidence')
     return actual

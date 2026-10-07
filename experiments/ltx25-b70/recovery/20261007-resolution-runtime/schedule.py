@@ -7,11 +7,11 @@ import stat
 
 PARENT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA = '1fc6e1f2f5874ab88915c93424f333402fa2bae1b73370391105fade270c841c'
-QUALIFICATION_ID = 'c847e9b506f2fb5b08e97a263cb599e2b456e7868a9d20c50e3dfe94c8a701dd'
-PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-client-compare-104/candidate-plan.json')
-PREFIX = 'resolution-client-20261007'
-CAPTURE_INDICES = {'capture0': 99904030, 'capture1': 99904041}
+PLAN_SHA = 'f12dfbfa8be44c9798a1ac9f0dacb1ae7576e3ca30317a5b57de847642faec4f'
+QUALIFICATION_ID = '770e8efb25557f9820d7ed2a091c4be7231b25dbec5c23924f947925f7ba760d'
+PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-client-reverse-105/candidate-plan.json')
+PREFIX = 'resolution-client-reverse-20261007'
+CAPTURE_INDICES = {'capture0': 99905030, 'capture1': 99905041}
 GRAPHS = {
  'window-probe': ('text-window-probe.json','ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0'),
  'pin0': ('sampler-pin.json','fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005'),
@@ -135,8 +135,9 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
                 plan['requests'][20]['name']:[PREFIX+'-freeze'],
                 'barrier:candidate_verified':[r['name'] for r in plan['requests'][20:34]],
                 'barrier:timing':['barrier:candidate_verified'],
-                'barrier:control_verified':[r['name'] for r in plan['requests'] if r['phase']=='timed'],
-                plan['requests'][48]['name']:['barrier:control_verified']},
+                plan['requests'][34]['name']:['barrier:timing'],
+                'barrier:fast_verified':[r['name'] for r in plan['requests'] if r['phase']=='timed-fast'],
+                plan['requests'][48]['name']:['barrier:fast_verified']},
             'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':64,
             'retry_or_extra_fill_requests':0,'native_reference_captures':20,'candidate_compared_clips':10,'timed_compared_clips':20,
             'timed_control_compared_clips':10,'timed_fast_compared_clips':10,

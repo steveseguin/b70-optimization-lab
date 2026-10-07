@@ -34,8 +34,9 @@ observations peaked at2662 with no alert; that is not proof of leak freedom.
 Next is one quiet reverse-order confirmation, fast policy first and control
 second, then sampler service/overlap work. The standalone105 plan preserves all
 numerics and ten original scenes, with71 requests,64 captures and a fresh5GiB
-allowance above50GiB reserve. Runtime integration is in progress;105 has no packet,
-reservation, build or GPU requests yet. Current sampler phase A/B timings describe
+allowance above50GiB reserve. Runtime integration and independent review are complete; all fifteen CPU suites
+passed and its71 request names/64 capture indices are reserved without collisions.
+105 has no packet build or GPU requests yet. Current sampler phase A/B timings describe
 denoising stages, not per-card utilization, and cannot justify a blind partition
 or worker-count sweep.
 [Next priorities](experiments/ltx25-b70/notes/2026-10-07-after104-priorities.md),

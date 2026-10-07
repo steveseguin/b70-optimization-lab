@@ -1,4 +1,4 @@
-# 640×384 runtime — paired client comparison104 in preparation
+# 640×384 runtime — reverse-order client confirmation105 in preparation
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -26,19 +26,27 @@ drift has concurrent repository-work confounds. The application remains idle,
 and the unmodified proof reconstructed after completion.
 [103 closeout](../../data/resume-20261007/resolution103-closeout/summary.json).
 
-The current author sources prepare104, a paired client checkpoint comparison.
-The [fixed plan](../20261007-client-compare-104/README.md) preserves all ten
-fixtures, model arithmetic, original steps, precision, encoder window and W2/B1.
-It admits20 native requests,14 candidate requests,14 control timing requests and
-14 candidate timing requests; nine setup requests bring the total to71 attempts
-and64 raw captures. Fresh admission requires5GiB above the50GiB reserve.
+Sealed104 completed71 requests:20 native executions,10 candidate clips and both
+ten-clip timing blocks passed exact four-tensor comparisons. The unchanged-ledger
+policy measured12.786FPS versus12.040FPS, a6.20% gain in one quiet control-first
+pair. It skipped724 redundant storage saves. Full proof reconstructed afterward,
+and the successful application remains idle.
+[104 result](../../notes/2026-10-07-client104-performance.md).
 
-The client skips a storage-ledger rewrite only for an unchanged storage tuple in
-the second timing block. Every check, changed-state save and event fsync remains.
-Each request records source-bound policy and actual checkpoint/write counts.
-Control verification must succeed before a durable barrier admits the second
-block. Both blocks are ten repeated qualification fixtures in fixed order, so
-this remains a short screen with possible order effects. No104 GPU result exists.
+Current author sources prepare105, one quiet reverse-order confirmation. The
+[fixed plan](../20261007-client-reverse-105/README.md) preserves all ten fixtures,
+model arithmetic, steps, precision, encoder window and W2/B1. It admits20 native,
+14 candidate,14 fast timing and14 control timing requests, plus nine setup
+requests:71 attempts and64 captures. Fresh admission requires5GiB above50GiB.
+
+The fast block now precedes control. Its verified proof opens a durable
+`fast_verified` barrier; final control verification reconstructs that first proof.
+Both remain in the existing timing authority. Client checks, state durability,
+event fsyncs and policy readouts are unchanged from104. Only unchanged storage
+ledger rewrites may be skipped, and only for `timed-fast`. This is the final
+client-specific confirmation before pursuing sampler service/overlap. No105
+GPU result exists, and this remains a repeated-workload screen without a public
+record or endurance claim.
 
 The owner has supplied replacement instructions preferring application reuse.
 The runner now retains a successful application after verifying quiescence.
@@ -47,7 +55,7 @@ unresolved work remain for the coordinator. No automatic restart or request retr
 is allowed. Retaining the application does not authorize bypassing its consumed
 request plan; follow-up work needs its own registered admission.
 
-103 is the reviewed W2 predecessor; 99b remains the constructor source. Sealed
+104 is the reviewed predecessor; 99b remains the constructor source. Sealed
 historical packets and plans are unchanged. New native references must precede
 optimized capture. The accepted text encoder remains graph-sharded, so this is
 not an all-eager oracle. The103 result is exact on the registered ten-fixture scope; it is not a public

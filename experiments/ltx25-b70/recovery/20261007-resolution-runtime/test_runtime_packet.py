@@ -28,9 +28,9 @@ def literal(raw, name):
 
 class PacketControls(unittest.TestCase):
     def test_successor_identity_explicit_in_path_status_and_transition(self):
-        self.assertEqual(B.PACKET.name, 'prepared-client-compare-104')
-        self.assertEqual(B.RUN_NAME, 'encoder-server-client-compare-104-two-way-w2-b1-p1-dxpu2-s640x384')
-        self.assertIn(b'Packet104 paired client checkpoint comparison after packet103', B.STATUS)
+        self.assertEqual(B.PACKET.name, 'prepared-client-reverse-105')
+        self.assertEqual(B.RUN_NAME, 'encoder-server-client-reverse-105-two-way-w2-b1-p1-dxpu2-s640x384')
+        self.assertIn(b'Packet105 reverse-order client checkpoint confirmation after packet104', B.STATUS)
         tree=ast.parse(B.regular(HERE/'runtime_packet.py'))
         transitions=[]
         for node in ast.walk(tree):
@@ -38,16 +38,16 @@ class PacketControls(unittest.TestCase):
                 fields={k.value:v for k,v in zip(node.keys,node.values) if isinstance(k,ast.Constant)}
                 if 'schema' in fields and isinstance(fields['schema'],ast.Constant) and fields['schema'].value=='ltx.resolution101.transition.v1':
                     transitions.append(ast.literal_eval(fields['packet_revision']))
-        self.assertEqual(transitions,['104','104'])
+        self.assertEqual(transitions,['105','105'])
 
-    def test_constructor99b_and_reviewed103_provenance_are_distinct_and_bound(self):
+    def test_constructor99b_and_reviewed104_provenance_are_distinct_and_bound(self):
         self.assertEqual(B.PARENT.name,'prepared-encoder-upstream-99b')
-        self.assertEqual(B.PREDECESSOR.name,'prepared-resolution-full-103')
+        self.assertEqual(B.PREDECESSOR.name,'prepared-client-compare-104')
         extras=B.extra_files(B.AUTHOR,B.regular(B.PLAN))
         self.assertEqual(B.digest(extras['provenance/packet99b-manifest.json']),B.PARENT_SHA)
-        self.assertEqual(B.digest(extras['provenance/reviewed-predecessor103-manifest.json']),B.PREDECESSOR_SHA)
-        prior=json.loads(extras['provenance/reviewed-predecessor103-manifest.json'])
-        self.assertEqual(prior['resolution101']['packet_revision'],'103')
+        self.assertEqual(B.digest(extras['provenance/reviewed-predecessor104-manifest.json']),B.PREDECESSOR_SHA)
+        prior=json.loads(extras['provenance/reviewed-predecessor104-manifest.json'])
+        self.assertEqual(prior['resolution101']['packet_revision'],'104')
         self.assertEqual(prior['resolution101']['parent_manifest_sha256'],B.PARENT_SHA)
         self.assertEqual(prior['resolution101']['control']['workers'],2)
         self.assertEqual(prior['rope99b'],B._parent_manifest['rope99b'])

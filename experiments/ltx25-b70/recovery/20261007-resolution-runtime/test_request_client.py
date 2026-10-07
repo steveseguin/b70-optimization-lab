@@ -13,7 +13,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('request_client_tested', HERE/'request_client.py')
 C = importlib.util.module_from_spec(spec); spec.loader.exec_module(C)
-PLAN = HERE.parent/'20261007-client-compare-104/candidate-plan.json'
+PLAN = HERE.parent/'20261007-client-reverse-105/candidate-plan.json'
 
 
 class Transport:
@@ -209,6 +209,17 @@ class ClientControls(unittest.TestCase):
         self.assertEqual(emitted,fixture_ids)
         self.assertEqual(emitted[:10],fixture_ids)
         self.assertEqual(len(emitted[10:]),0)
+
+    def test_reversed_timing_order_is_exact_and_early_control_refused(self):
+        self.full_client()
+        phases=[self.client.rows[n]['phase'] for n in self.client.ordered_names]
+        self.assertEqual(phases[-28:],['timed-fast']*14+['timed']*14)
+        fast=self.ready_for_phase('timed-fast')
+        control=next(r for r in self.client.rows.values() if r['phase']=='timed')
+        self.phase(control);t=Transport()
+        self.refused(t,control['name'])
+        self.assertEqual(t.posts,0)
+        self.assertFalse((self.root/'requests'/control['name']).exists())
 
     def ready_for_phase(self,phase):
         self.full_client();row=next(r for r in self.client.rows.values() if r['phase']==phase)

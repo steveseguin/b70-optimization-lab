@@ -37,7 +37,7 @@ class CampaignControls(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         self.run = self.root / 'server'; self.run.mkdir()
-        plan_path = HERE.parent / '20261007-client-compare-104/candidate-plan.json'
+        plan_path = HERE.parent / '20261007-client-reverse-105/candidate-plan.json'
         self.plan = json.loads(plan_path.read_text())['plan']
         self.fake_client = NS(run=self.run, root=self.root, full_schedule=True,
             contract={'runtime_manifest_sha256': 'b' * 64, 'plan_path': str(plan_path),
@@ -101,18 +101,18 @@ class CampaignControls(unittest.TestCase):
         native_begin = log.index(('request', native_names[0]))
         self.assertEqual(log[native_begin:native_begin+20], [('request', n) for n in native_names])
         self.assertEqual(log[native_begin+20], ('action', 'verify-native'))
-        for phase,action in [('timed','verify-timed'),('timed-fast','verify-fast-timed')]:
+        for phase,action in [('timed-fast','verify-fast-timed'),('timed','verify-timed')]:
             names=[r['name'] for r in self.plan['requests'] if r['phase']==phase]
             self.assertEqual(len(names),14)
             begin=log.index(('request',names[0]))
             self.assertEqual(log[begin:begin+14],[('request',n) for n in names])
             self.assertEqual(log[begin+14],('action',action))
-        self.assertLess(log.index(('action','verify-timed')),
-                        log.index(('request',next(r['name'] for r in self.plan['requests'] if r['phase']=='timed-fast'))))
+        self.assertLess(log.index(('action','verify-fast-timed')),
+                        log.index(('request',next(r['name'] for r in self.plan['requests'] if r['phase']=='timed'))))
         self.assertEqual(result['actions'], ['before-native', 'verify-native', 'start-optimized',
                          'admit-capture0', 'retire-capture0-tails', 'admit-capture1',
                          'retire-capture1-tails', 'admit-decode', 'verify-candidate',
-                         'start-timing', 'verify-timed', 'verify-fast-timed'])
+                         'start-timing', 'verify-fast-timed', 'verify-timed'])
         self.assertLess(log.index(('action', 'verify-native')), log.index(('action', 'start-optimized')))
         self.assertLess(log.index(('action', 'verify-candidate')), log.index(('action', 'start-timing')))
         C.os.kill.assert_not_called()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded packet104 campaign on one already-owned server. Never starts or retries it.
+"""Bounded packet105 campaign on one already-owned server. Never starts or retries it.
 
 Default prints the CPU schedule. --run requires a pinned client contract and
 manifest. Success keeps the application available. Failure attempts one proven-idle
@@ -110,7 +110,7 @@ class Campaign:
         self.check_identity()
         emit('phase action ' + name)
         # One POST; a lost response is uncertain and is never resubmitted.
-        # Fast proof also reconstructs the control proof; allow bounded CPU scans.
+        # Final control proof also reconstructs the first fast proof; allow bounded CPU scans.
         timeout = 300 if name.startswith('verify-') else 180
         value = call('/ltx-resolution/action', {'action': name}, timeout=timeout)
         gate.require(value.get('passed') is True and value.get('action') == name, 'Phase action did not pass')
@@ -151,16 +151,16 @@ class Campaign:
             await self.request(row)
         self.action('verify-candidate')
         self.action('start-timing')
-        for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed']:
-            await self.request(row)
-        self.action('verify-timed')
         for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed-fast']:
             await self.request(row)
         self.action('verify-fast-timed')
+        for row in [r for r in self.client.plan['requests'] if r['phase'] == 'timed']:
+            await self.request(row)
+        self.action('verify-timed')
         return {'passed': True, 'requests': self.requests, 'actions': self.actions,
                 'timed_receipt': str(self.run / 'same-size-timed.json'),
                 'fast_timed_receipt': str(self.run / 'same-size-timed-fast.json'),
-                'claim': 'Paired ten-fixture client checkpoint screen; fixed control-first order, no record claim.'}
+                'claim': 'Paired ten-fixture client checkpoint screen; fixed fast-first order, no record claim.'}
 
     def graceful_stop(self):
         gate.require(self.owns_campaign and self.lock_fd is not None,

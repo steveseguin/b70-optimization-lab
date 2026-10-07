@@ -19,7 +19,7 @@ WRITE_ALLOWANCE = 5 * 1024**3
 CAPTURE_CAP = 64
 ATTEMPT_CAP = 71
 MODEL_SHA = G.MODEL_VERIFICATION_SHA256
-SCHEDULE_SHA = '0f7eb98ec7e0c3fa3137c56f26ee3991eb919b8d9a5f2ffa05500b56179c6362'
+SCHEDULE_SHA = '1cc88d11b9fefb97f67c370e4e920df3fbb2cbf62c3739b606a84651c4fc0bcb'
 
 
 def write_new(path, value):
@@ -152,7 +152,7 @@ class Client:
                 G.require(row['name'] not in self.rows, 'Duplicate setup/plan name')
                 self.rows[row['name']] = row
             groups = [[r for r in setup if r['phase'] == 'native-setup'], native_rows,
-                      [r for r in setup if r['phase'] == 'optimized-setup'], candidate_rows, timed_rows, fast_rows]
+                      [r for r in setup if r['phase'] == 'optimized-setup'], candidate_rows, fast_rows, timed_rows]
             self.ordered_names = [r['name'] for group in groups for r in group]
             G.require(len(self.ordered_names) == ATTEMPT_CAP and len(set(self.ordered_names)) == ATTEMPT_CAP,
                       'Complete schedule request count differs')

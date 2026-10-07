@@ -87,10 +87,10 @@ class Runtime:
                                  'Native phase observation/preparation missing')
             value = self.adapter.before_request(row['name'])
             self.write('native-memory-before-' + row['name'] + '.json', value)
-        if row['phase'] == 'timed-fast':
-            self.session.require('verify-timed' in self.actions_done, 'Control proof not verified')
+        if row['phase'] == 'timed':
+            self.session.require('verify-fast-timed' in self.actions_done, 'Fast proof not verified')
         if row['phase'] in ('candidate-check', 'timed', 'timed-fast'):
-            name = 'resolution-client-20261007-freeze'
+            name = 'resolution-client-reverse-20261007-freeze'
             self.session.require(name in self.authority.completed, 'Passed freeze required before candidate/timing')
             state = self.inspect_state()
             self.session.require(state['captures_frozen'] is True and state['loads_frozen'] is True,
@@ -137,7 +137,7 @@ class Runtime:
         import nodes
         import comfy.model_management as mm
         from native_adapter import NativeAdapter
-        self.session.require(name == 'resolution-client-20261007-prepare-native' and self.adapter is None,
+        self.session.require(name == 'resolution-client-reverse-20261007-prepare-native' and self.adapter is None,
                              'Unexpected/repeated native preparation')
         self.session.require_phase('native', self.authority.plan['qualification_id'], name)
         hashes = {str(self.packet / path): sha for path, sha in self.manifest['files'].items()
@@ -198,7 +198,7 @@ class Runtime:
             self.session.require(name not in self.actions_done, 'Phase action already performed')
             self.storage_check()
             if name == 'before-native':
-                self.session.require('resolution-client-20261007-prepare-native' in self.authority.completed,
+                self.session.require('resolution-client-reverse-20261007-prepare-native' in self.authority.completed,
                                      'Native preparation incomplete')
                 self.native_observation('before')
             elif name == 'verify-native':
@@ -239,8 +239,8 @@ class Runtime:
                 before, after = {'admit-capture0': ('pin0', 'capture0'),
                                  'admit-capture1': ('pin1', 'capture1'),
                                  'admit-decode': ('coverage', 'decode-probe')}[name]
-                self.session.require('resolution-client-20261007-' + before in self.authority.completed and
-                                     'resolution-client-20261007-' + after not in self.authority.completed,
+                self.session.require('resolution-client-reverse-20261007-' + before in self.authority.completed and
+                                     'resolution-client-reverse-20261007-' + after not in self.authority.completed,
                                      'Memory admission must immediately precede its setup stage')
                 if name in ('admit-capture1', 'admit-decode'):
                     needed = ['retire-capture0-tails']
@@ -321,25 +321,25 @@ class Runtime:
             elif name == 'start-timing':
                 self.session.require('verify-candidate' in self.actions_done, 'Candidate proof not verified')
                 self.authority.advance('timing')
-            elif name == 'verify-timed':
-                self.retire_tails(name)
-                candidate_gate.verify_outputs(self.root, self.plan_path, self.reference_receipt,
-                    self.authority.references_sha, 'timed', self.timed_receipt,
-                    self.candidate_receipt, self.authority.candidate_sha)
-                self.write('resolution-phase-control_verified.json', {
-                    'schema': 'ltx.client-control-barrier.v1',
-                    'plan_sha256': self.session.PLAN_SHA256,
-                    'runtime_manifest_sha256': self.manifest_sha,
-                    'server_identity_sha256': self.identity_sha,
-                    'control_receipt_path': str(self.timed_receipt),
-                    'control_receipt_sha256': self.session.digest(self.session.read_regular(self.timed_receipt))})
             elif name == 'verify-fast-timed':
-                self.session.require('verify-timed' in self.actions_done, 'Control proof not verified')
                 self.retire_tails(name)
                 candidate_gate.verify_outputs(self.root, self.plan_path, self.reference_receipt,
                     self.authority.references_sha, 'timed-fast', self.fast_timed_receipt,
+                    self.candidate_receipt, self.authority.candidate_sha)
+                self.write('resolution-phase-fast_verified.json', {
+                    'schema': 'ltx.client-fast-barrier.v1',
+                    'plan_sha256': self.session.PLAN_SHA256,
+                    'runtime_manifest_sha256': self.manifest_sha,
+                    'server_identity_sha256': self.identity_sha,
+                    'fast_receipt_path': str(self.fast_timed_receipt),
+                    'fast_receipt_sha256': self.session.digest(self.session.read_regular(self.fast_timed_receipt))})
+            elif name == 'verify-timed':
+                self.session.require('verify-fast-timed' in self.actions_done, 'Fast proof not verified')
+                self.retire_tails(name)
+                candidate_gate.verify_outputs(self.root, self.plan_path, self.reference_receipt,
+                    self.authority.references_sha, 'timed', self.timed_receipt,
                     self.candidate_receipt, self.authority.candidate_sha,
-                    self.timed_receipt, self.session.digest(self.session.read_regular(self.timed_receipt)))
+                    self.fast_timed_receipt, self.session.digest(self.session.read_regular(self.fast_timed_receipt)))
             else:
                 raise RuntimeError('Unknown finite resolution action')
             self.actions_done.add(name)

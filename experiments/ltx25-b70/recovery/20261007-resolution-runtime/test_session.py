@@ -12,7 +12,7 @@ HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('resolution_session_tested', HERE / 'session.py')
 S = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(S)
-PLAN = HERE.parent / '20261007-client-compare-104/candidate-plan.json'
+PLAN = HERE.parent / '20261007-client-reverse-105/candidate-plan.json'
 
 
 def empty_state():
