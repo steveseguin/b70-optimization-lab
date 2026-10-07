@@ -1,0 +1,30 @@
+{
+  "schema": "neural.download.source-preparation.v1",
+  "scope": "Pinned upstream source preparation only; not a publication manifest, rebuilt runtime, or clean-host certification.",
+  "repository": "https://github.com/ggml-org/llama.cpp",
+  "revision": "9fee29e9435f865ec0b811a783a6471a136d9317",
+  "archive": {
+    "url": "https://codeload.github.com/ggml-org/llama.cpp/tar.gz/9fee29e9435f865ec0b811a783a6471a136d9317",
+    "bytes": 36908556,
+    "sha256": "2f303e6c13a244e38f8cae618ae5b7cd1e6551668a4e68b4f066197b00064d6f",
+    "prefix": "llama.cpp-9fee29e9435f865ec0b811a783a6471a136d9317",
+    "members": 3826,
+    "file_bytes": 166085860,
+    "observed_date": "2026-10-07",
+    "identity_note": "SHA-256 observed from the public commit-addressed archive; not an upstream signature. Changed archive packaging fails closed and requires review."
+  },
+  "critical_files": {
+    "CMakeLists.txt": "f79c17bd8c89dadbc7031d0f6adec8c17ecf5a3e70bb54e1abb42932c9ce1c41",
+    "ggml/src/ggml-sycl/CMakeLists.txt": "742ea5fd0018c4cacfd7ad116e6771583a61cffd139ff925304ccac4e9812063",
+    ".gitmodules": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/backend/SYCL.md": "8248b6f0849d5409f0a1088f822dc146e956555d1964e115a2925b22cce05b8a"
+  },
+  "toolchain": {
+    "status": "incomplete",
+    "required_components": ["Intel SYCL compiler/runtime", "oneDPL", "oneDNN", "oneMKL", "TBB", "Level Zero headers/loader", "CMake", "Ninja"],
+    "installation_source": "https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit.html",
+    "historical_depth_sweep_compiler": "IntelLLVM 2026.0.0",
+    "strict_headline_compiler": null,
+    "remaining": "Recover the complete strict-headline toolchain and package identities, obtain those exact public inputs, then rebuild and run the fixed quality gates. The current four-card build does not match the retained strict-headline runtime hashes."
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "lab.scoped-worker.controller-independent-review.v1",
+  "status": "focused lifecycle review passed; guard wrapper reviewed separately",
+  "controller_sha256": "96309ad6f50e9c3853f98e33da9f1edd8d16ee902deec867b56f252b29f0d926",
+  "supervisor_sha256": "e3930ed69b68cddecd8b06f224f041abe4d5f035d0e59d5009fadf25cb97dc86",
+  "supervisor_diff": "Only restore receipt path, served model alias and container-name prefix differ from cited-recall-v2 supervisor; runtime/fault/locks/cache settings unchanged.",
+  "offline_test_script": "/home/steve/worker-scoped-task-preparation-20261007/test-controller-lifecycle.py",
+  "offline_test_sha256": "0337419d7daf8973dd0d6aba531b87c73f1a5fa9772c2ef4f2f39767144531ee",
+  "cpu_controls_passed": 5,
+  "controls": [
+    "normal child exit waits without SIGINT",
+    "fault sends SIGINT once and waits",
+    "unexpected monitor exception still signals and waits",
+    "ProcessLookupError race still waits",
+    "latched pre-spawn interruption creates no child"
+  ],
+  "source_checks": "Controller requires clean source before start, code/task/profile/acceptance bindings, unchanged source HEAD/status after child exit; worker additionally pins clean snapshot and verifies final source state.",
+  "fault_checks": "Controller checks STOP/FAULT/shutdown and live supervisor PID/start ticks; per-request guard wrapper is a separate prerequisite.",
+  "limits": [
+    "All test Popen/source/supervisor/health/signal/time calls replaced by temporary fixtures; no live controller main, model, Docker or GPU operation performed.",
+    "Controller does not protect a child against SIGKILL or host crash.",
+    "Per-request run_guarded_worker.py was not present at initial review; reviewer/root must verify it and final runtime-plan bindings before use."
+  ],
+  "model_calls": 0,
+  "gpu_calls": 0,
+  "docker_calls": 0
+}

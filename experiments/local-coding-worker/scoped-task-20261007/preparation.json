@@ -1,0 +1,103 @@
+{
+  "schema": "lab.worker.scoped-task-preparation.v1",
+  "status": "scoped host and real pinned CPU-container controls passed; no model trial",
+  "original_task_path": "experiments/local-coding-worker/evaluation-20261007/tasks-a/lab-worker-action-ready-latency.json",
+  "original_task_sha256": "6a057b6cb1807ab33a09ad9333990a9e47af99e822e6acbc5b8440778fc2de05",
+  "original_issue_sha256": "71b88f4e64e9229855f02080af95bd06c86f290342a4d21539f19671b0872f85",
+  "original_issue_and_source_commit_unchanged": true,
+  "source_commit": "7324c356f00901b4d53f9ec26bda46900294ebb4",
+  "acceptance_path": "experiments/local-coding-worker/evaluation-20261007/tasks-a/acceptance/worker_action_latency.py",
+  "acceptance_sha256": "db1bc0d85b59979675e388d1f34aebae96cc6ad8b81f0fc0f5c847a0b2e81f9c",
+  "model_calls": 0,
+  "gpu_calls": 0,
+  "read_evaluation_provenance_scope": "Only this task and its own historical validation receipt; no other unused evaluation answer key read.",
+  "review_only_controls": {
+    "directory": "/home/steve/worker-scoped-task-preparation-20261007",
+    "summary_path": "/home/steve/worker-scoped-task-preparation-20261007/summary.json",
+    "summary_sha256": "a5013612fdcefadb144fe78dccc46679388e21addd760b23f8742bd4aafe6427",
+    "plans_sha256": "23ad9d49fa6e0a27e4ebb9d0431b371cfe890cb1fbb867352d2b4c9dcd0016a7",
+    "control_script_sha256": "5625e04ccadfe6c9f2e2dde923bf8d3deba854c8f980cdaf4e69f05775b89b1f",
+    "never_mount_in_model_workspace_or_acceptance": true
+  },
+  "scope_boundary": "Only task issue plus explicit source/new-path notice go to model; preparation/source inventory are trusted coordinator receipts, not model hints.",
+  "baseline_control": {
+    "acceptance_returncode": 1,
+    "expected_failure_marker": "ACTION_LATENCY_FAILURE",
+    "selected_files": 12,
+    "selected_bytes": 202639,
+    "source_archive_sha256": "16059b97324a45a36352c9b4079b4c49ab0a62d2562aafac6a9f109d3f9afcac"
+  },
+  "known_fix_control": {
+    "acceptance_returncode": 0,
+    "fixed_identity_location": "review-only external summary.json; not task/model input",
+    "selected_files": 12,
+    "selected_bytes": 209836
+  },
+  "existing_regressions": {
+    "baseline": {
+      "test_collect_overnight.py": {
+        "tests": 20,
+        "returncode": 0
+      },
+      "test_collect_results.py": {
+        "tests": 13,
+        "returncode": 0
+      },
+      "test_stream.py": {
+        "tests": 12,
+        "returncode": 0
+      }
+    },
+    "fixed": {
+      "test_collect_overnight.py": {
+        "tests": 26,
+        "returncode": 0
+      },
+      "test_collect_results.py": {
+        "tests": 13,
+        "returncode": 0
+      },
+      "test_stream.py": {
+        "tests": 12,
+        "returncode": 0
+      }
+    }
+  },
+  "planner_source_checkout_head": "cce81fdae24459d243ac14b788952e355a55bcd2",
+  "planned_snapshot_write_bytes": 269481812,
+  "default_disk_floor_bytes": 53687091200,
+  "remaining_work": "Main owns final preregistration, clean-source admission and any later single model attempt. CPU closure establishes the selected task is runnable, not model quality.",
+  "cpu_container_controls": {
+    "directory": "/home/steve/worker-scoped-task-preparation-20261007/container-controls",
+    "summary_sha256": "8c9fa9fe295746a0a2e15e5bb0b955ba1a33135c7f2b0ba6b990fb67de0762b1",
+    "image": "node@sha256:8a34c4ab3ea2c5cd194f07e317b2a8f09461d3c8b05c4e34c8ccd56d56024c4d",
+    "sandbox_sha256": "d8d525c807a6d52ae7fd50ec10105e67a68749bc7011947d0bc67a0e20f9681e",
+    "source_repository_unchanged_during_controls": true,
+    "source_was_clean_when_snapshotted": true,
+    "source_clean_during_containers": false,
+    "source_note": "Snapshots were created under clean cce81fdae; later receipt/runtime-plan edits made shared repo dirty before container controls, but before/after HEAD/index/status identities and selected snapshot hashes remained unchanged.",
+    "controls": [
+      {
+        "role": "baseline",
+        "passed": true,
+        "receipt_sha256": "4a0493fb8146b59d702aacf3da92725c31ac4eec02b6c8dcefe5f1b798a80033",
+        "container_id": "cfbc4eacf49007d62d05c381f4860208978dd9681c13b26b47a7b33345eaa2f7",
+        "stopped": true
+      },
+      {
+        "role": "fixed",
+        "passed": true,
+        "receipt_sha256": "750d3580bfb25bda4996257eca16c45c6e323c7bbcf55fe9aab40e391533b9ea",
+        "container_id": "708cb715ba477a20270b1d5814fc243319b3e0244458a6005d2e9f30388c15d0",
+        "stopped": true
+      }
+    ],
+    "policy_verified": "network none, no devices/GPU/Docker socket/host checkout; read-only root, dropped capabilities, non-root user; only selected workspace and single acceptance script mounted",
+    "both_baseline_and_fixed_existing_regressions": "all three suites passed in both; baseline acceptance failed expected marker and fixed acceptance passed",
+    "snapshots_and_acceptance_unchanged": true,
+    "model_calls": 0,
+    "gpu_calls": 0
+  },
+  "docker_scope": "Two authorized CPU-only container lifecycles, each started/stopped once; no model container or image download.",
+  "cpu_container_lifecycles": 2
+}

@@ -1,0 +1,202 @@
+{
+  "schema": "neural.download.source-preparation-review.v1",
+  "date": "2026-10-07",
+  "status": "source-preparation-verified",
+  "scope": "LFM2.5 upstream source acquisition and byte verification only. No build, toolchain installation, model download, GPU, Docker, service operation or publication.",
+  "qualified_result": {
+    "path": "data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json",
+    "bytes": 1625,
+    "sha256": "b8214a60585431e6d67e51cf94bf3da9ddfaabbfed740cdc32673900a27f05b2"
+  },
+  "qualification_preserved": {
+    "status": "qualified",
+    "fresh_servers": 2,
+    "exact_prompts": 12,
+    "total_prompts": 12,
+    "both_workload_and_canary_gates_passed": true,
+    "new_measurements": false
+  },
+  "inputs": [
+    {
+      "path": "repro/lfm25-26b-q8-b70/source-inputs.json",
+      "bytes": 1926,
+      "sha256": "150472e32f7f64afabf722abef91c0993b9e3c00fe331e5e1e61a7c708905dda"
+    },
+    {
+      "path": "repro/lfm25-26b-q8-b70/prepare-source.py",
+      "bytes": 8742,
+      "sha256": "668c3d69e7406dee933a7f5ad5732b275badef7e4cbaf165418c2e707b671b57"
+    },
+    {
+      "path": "repro/lfm25-26b-q8-b70/test_prepare_source.py",
+      "bytes": 7386,
+      "sha256": "f3898f912086593f2ee0a874b43e6a5f79b807c039059d8cee7541f333245635"
+    }
+  ],
+  "public_read_checks": {
+    "source_commit_api": "HTTP 200, exact revision matched",
+    "model_revision_api": "HTTP 200, exact revision readable; no weight bytes downloaded",
+    "source_archive": "see source-inputs.json; full archive hash and census observed"
+  },
+  "local_toolchain_review": {
+    "source_build_exists": true,
+    "cmake_cache": {
+      "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/CMakeCache.txt",
+      "sha256": "fca23995c97242115f71888b2dbd953e839b0b3305d560d317666ff4b9b586ee",
+      "compiler": "IntelLLVM 2026.0.0",
+      "mkl": "2026.0",
+      "dnnl": "2026.0",
+      "tbb": "2023.0",
+      "cmake_build_directory_version": "4.3.2"
+    },
+    "runtime_checks": [
+      {
+        "file": "libggml-base.so",
+        "bytes": 1043168,
+        "strict_headline_sha256": "37b4e5ef151d698cbc36d853c6e90a69b93c44c231391a9ef9c602430d77c05a",
+        "observed_local_sha256": "d7675d35df93b61b5175370128527e1225e60ad330aaa8fe1b317ade9b90c4ab",
+        "matches": false
+      },
+      {
+        "file": "libggml-cpu.so",
+        "bytes": 1754880,
+        "strict_headline_sha256": "609636d85dd1e2bcdaf6bb02500c313e0d6a44d0bbb1ef7b76dd13244f3456a1",
+        "observed_local_sha256": "d1fbb0b0e1bb82376db22303cc4cad68937668b3740ba69c7d2d336e84a52bb8",
+        "matches": false
+      },
+      {
+        "file": "libggml-sycl.so",
+        "bytes": 267560912,
+        "strict_headline_sha256": "5f0b9ed040737c1629bd4b4968347244c3d4dced88a12a0b80d6f529d7d810e4",
+        "status": "not rehashed: bounded review used files below 128 MiB"
+      },
+      {
+        "file": "libggml.so",
+        "bytes": 55440,
+        "strict_headline_sha256": "810b6c6dbae53586a491b0ff089fb1e4e5d280b97c5a38fc31389b75af1d9d26",
+        "observed_local_sha256": "db46d7b720d042c212dbeb8391d1f7b5b4ff0114c00f62f80cf49dde9a2e19d5",
+        "matches": false
+      },
+      {
+        "file": "libllama-common.so",
+        "bytes": 5711400,
+        "strict_headline_sha256": "59dd9902f947b8591a67e209093543b4b397dfc6075b00863db8ce1cd171f47f",
+        "observed_local_sha256": "50d4c2699b417d41d8f88f0bf868366532314b6298546d214d84c9ed109afb7e",
+        "matches": false
+      },
+      {
+        "file": "libllama-server-impl.so",
+        "bytes": 7497512,
+        "strict_headline_sha256": "c07c39c5b547f41e3dd70207d3b3bcc0014aae8d2ddc04af814f133ee694d344",
+        "observed_local_sha256": "8d2507871a45c9aeab76aacfcd5d9b7b06b1fe5387db4e8774fc31c17b213534",
+        "matches": false
+      },
+      {
+        "file": "libllama.so",
+        "bytes": 4099640,
+        "strict_headline_sha256": "03af889304acd9df10f5bd36db9f65ae99de525de81f69eddf90ef011827fa8e",
+        "observed_local_sha256": "e43c73e0107c671f93ee2211269bb73f672d59353a331f44ff2ebdaaa4b1d6bf",
+        "matches": false
+      },
+      {
+        "file": "libmtmd.so",
+        "bytes": 2036256,
+        "strict_headline_sha256": "f4bfe35aa10369fd69b6aeea6dfd91a1ad2901db1cd21bb0a0606d8c7fec8798",
+        "observed_local_sha256": "7b2bf1015f9e853189168767e7473fe1b5a331c5ff484e005907ba246049e0c9",
+        "matches": false
+      },
+      {
+        "file": "llama-server",
+        "bytes": 756976,
+        "strict_headline_sha256": "7d524360677aa06d1847e7a68b7e8a8234aaad203ea7334cd7237e6015fb0e56",
+        "observed_local_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+        "matches": false
+      }
+    ],
+    "boundary": "These current local toolchain/cache observations are not provenance for the strict-headline binaries. A separate retained audit-host manifest says IntelLLVM 2026.1.1 and shares two strict runtime library hashes; this does not recover the complete strict toolchain."
+  },
+  "isolated_snapshot": {
+    "base_commit": "1b9ff38fdc0918eeb2629e52f0fbf2c94ded2a1b",
+    "scope": [
+      "repro/lfm25-26b-q8-b70",
+      "packages/lfm25-26b-q8-b70/package.json"
+    ],
+    "archive_bytes": 51200,
+    "archive_sha256": "9d33bf951c64e009b8f59836a3507e3c9f2039c9792411be84040d69931df28c",
+    "candidate_overlay": {
+      "repro/lfm25-26b-q8-b70/source-inputs.json": "150472e32f7f64afabf722abef91c0993b9e3c00fe331e5e1e61a7c708905dda",
+      "repro/lfm25-26b-q8-b70/prepare-source.py": "668c3d69e7406dee933a7f5ad5732b275badef7e4cbaf165418c2e707b671b57",
+      "repro/lfm25-26b-q8-b70/test_prepare_source.py": "f3898f912086593f2ee0a874b43e6a5f79b807c039059d8cee7541f333245635",
+      "repro/lfm25-26b-q8-b70/README.md": "338fc8ca247f3e4b76e0dc605c8c52db86e028425c5af609e19935731a97c654",
+      "packages/lfm25-26b-q8-b70/package.json": "626791822691d478417188f9db02497cfc1d9e3999aac6623fc3d8f010d9135f"
+    },
+    "contains_git_directory": false,
+    "scope_limit": "Isolated precommit candidate overlay on a scoped git archive, not a clean published checkout or clean OS."
+  },
+  "cpu_controls": {
+    "command": "python3 -B -m unittest discover -s repro/lfm25-26b-q8-b70 -p 'test_prepare_source.py' -v",
+    "passed": 11,
+    "live_tree_and_isolated_candidate": true,
+    "network_or_model_calls": false
+  },
+  "build_feasibility": {
+    "additional_budget_bytes": 536870912,
+    "full_sycl_build_admitted": false,
+    "reason": "Source alone occupies 166085860 file bytes; the existing SYCL library alone is 267560912 bytes. Compiler objects, other outputs and scratch are not budgeted. No build was started."
+  },
+  "remaining_gates": [
+    "Recover or explicitly define and validate the full compiler/runtime/library package identity; exact strict-headline toolchain is unresolved.",
+    "Reserve measured peak build space and build only from public pinned inputs; retain log, inventory, binaries, ELF sections and RUNPATH proof.",
+    "Run fixed same-identity runtime, quality and determinism gates on an available host; source preparation supplies no new quality result.",
+    "Create and validate a publication manifest, publish approved immutable assets and re-download/re-hash all assets before published status.",
+    "Replay on a second machine or clean supported OS before starter-guide certification."
+  ],
+  "publication_status": "not-published-by-this-work",
+  "clean_host_certified": false,
+  "public_source_replay": {
+    "status": "source-prepared-only",
+    "receipt_path": "/home/steve/lfm-source-closure-20261007/upstream-source/SOURCE-PREPARATION.json",
+    "receipt_bytes": 613025,
+    "receipt_sha256": "6b22b2e4ab4ae933a21f284154e26d2d04c67707fab72d6afb523522613d1aa4",
+    "source_files": 3452,
+    "source_bytes": 166085860,
+    "archive_sha256": "2f303e6c13a244e38f8cae618ae5b7cd1e6551668a4e68b4f066197b00064d6f",
+    "archive_bytes": 36908556,
+    "admission": {
+      "planned_bytes": 266785520,
+      "available_bytes": 57038323712,
+      "min_free_bytes": 53687091200,
+      "filesystem_parent": "/home/steve/lfm-source-closure-20261007"
+    },
+    "all_extracted_files_read_back": true,
+    "git_metadata_present": false,
+    "runtime_qualified": false
+  },
+  "final_root_available_bytes": 56861302784,
+  "committed_source_replay": {
+    "commit": "cce81fdae24459d243ac14b788952e355a55bcd2",
+    "scope": [
+      "repro/lfm25-26b-q8-b70"
+    ],
+    "git_archive_bytes": 71680,
+    "git_archive_sha256": "c5290c51ebab0c4196a79e0ac9881016c8f09d8535526e060643b449847d21da",
+    "overlay": false,
+    "contains_git_metadata": false,
+    "source_files": 3452,
+    "source_bytes": 166085860,
+    "receipt_sha256": "1f64c9494e1dcf6374467ec29d04c1e335e7e2beef71575346f17d5115867231",
+    "archive_sha256": "2f303e6c13a244e38f8cae618ae5b7cd1e6551668a4e68b4f066197b00064d6f",
+    "status": "committed-source-preparation-replayed",
+    "clean_os_tested": false,
+    "build_performed": false
+  },
+  "integration_validation": {
+    "workflow_run_lines_passed": 35,
+    "workflow_run_lines_total": 35,
+    "new_drift_controls_passed": 10,
+    "generated_pages_changed": false,
+    "source_drift_acceptance": "pending; frozen evidence replay only",
+    "receipt_path": "/home/steve/lfm-source-closure-20261007/ci-results-final.json",
+    "receipt_sha256": "8e430044572da5486e43600a7a39095efc6392d578ddd5d21715c5ff3de96113"
+  }
+}

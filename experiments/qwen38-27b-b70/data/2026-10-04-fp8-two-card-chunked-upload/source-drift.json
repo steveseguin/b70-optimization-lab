@@ -1,0 +1,59 @@
+{
+  "schema": "neural.download.source-drift.v1",
+  "date": "2026-10-07",
+  "entries": [
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/check-fp8-practical-session.py",
+      "frozen_sha256": "aa737e945a4b369af4af669d182f9097ea406ceeca8ca268270b8f81a9da627b",
+      "current_sha256": "1059f06bc9f85aed9426d71441710988dbfbb31491f7dad864a8be9f4ac66d5d",
+      "acceptance": "pending",
+      "reason": "Commit c83e7515279b55934531a13a0b4ca829ddfe993c adds an optional timeout_seconds keyword. Complete-module AST normalization proves the unchanged default 120-second path; overrides are not newly acceptance-qualified.",
+      "retire_by": "A separately authorized fresh acceptance packet with the new exact source identity; do not rewrite this historical packet.",
+      "proof": {
+        "kind": "default_timeout_120"
+      },
+      "change": "Commit c83e7515279b55934531a13a0b4ca829ddfe993c adds an optional timeout_seconds keyword. Complete-module AST normalization proves the unchanged default 120-second path; overrides are not newly acceptance-qualified.",
+      "declared": "2026-10-07"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/scripts/collect-fp8-tp2-acceptance-evidence.py",
+      "frozen_sha256": "083adddb9834e48b0cfb62e0ea8e1131122757f0482b6bceb1d3a8a25339f38a",
+      "current_sha256": "3d0074971846a0a74230803f6566c136fbb4050ca51e33991a7d45a514f495c1",
+      "acceptance": "pending",
+      "reason": "Register two shared narrow CPU source-drift proofs. Every existing top-level function/class remains byte-identical, including derive, check_sources, freeze and verify. No frozen outcome or hash is rewritten.",
+      "retire_by": "A separately authorized fresh acceptance packet with the new exact source identity; do not rewrite this historical packet.",
+      "proof": {
+        "kind": "unchanged_definitions",
+        "definitions": [
+          "digest",
+          "dump",
+          "load_module",
+          "definitions",
+          "segments",
+          "prove_docker_argv",
+          "prove_unchanged",
+          "prove_additive",
+          "check_sources",
+          "derive",
+          "collect",
+          "verify"
+        ]
+      },
+      "change": "Register two shared narrow CPU source-drift proofs. Every existing top-level function/class remains byte-identical, including derive, check_sources, freeze and verify. No frozen outcome or hash is rewritten.",
+      "declared": "2026-10-07"
+    },
+    {
+      "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
+      "frozen_sha256": "61e3df11c49cb0dc2b7fe49ba56fe97a6a95d05732e5a52911343ecca7edc4fb",
+      "current_sha256": "e603fd7ec4506ce6a1078cfe293c6b37fe574ac01b4535557f6dc07251a56ccd",
+      "acceptance": "pending",
+      "reason": "Commit 8a9770b7eea6ff26ee7d1bfa2bf4a64455e1a985 adds pinned tokenizer and runtime metadata at the same revision. All 66 original weights and all original model identity fields remain exact. This does not rerun the archived serving acceptance.",
+      "retire_by": "A separately authorized fresh acceptance packet with the new exact source identity; do not rewrite this historical packet.",
+      "proof": {
+        "kind": "model_metadata_addition"
+      },
+      "change": "Commit 8a9770b7eea6ff26ee7d1bfa2bf4a64455e1a985 adds pinned tokenizer and runtime metadata at the same revision. All 66 original weights and all original model identity fields remain exact. This does not rerun the archived serving acceptance.",
+      "declared": "2026-10-07"
+    }
+  ]
+}

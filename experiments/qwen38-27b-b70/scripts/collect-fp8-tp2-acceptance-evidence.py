@@ -149,6 +149,8 @@ def prove_additive(entry, frozen_source, current_source):
 
 
 PROOFS = {'docker_argv': prove_docker_argv, 'unchanged_definitions': prove_unchanged, 'additive': prove_additive}
+_shared_drift_proofs = load_module('source_drift_proofs', (ROOT / 'tools/source_drift_proofs.py').read_bytes())
+PROOFS.update(_shared_drift_proofs.PROOFS)
 
 
 def check_sources(sources, drift, files):

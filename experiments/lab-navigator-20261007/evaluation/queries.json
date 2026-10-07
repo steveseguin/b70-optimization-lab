@@ -1,0 +1,325 @@
+{
+  "schema": "lab.navigator.retrieval-evaluation.v1",
+  "frozen_at_utc": "2026-10-07T05:09:07.737206+00:00",
+  "source_commit": "1b9ff38fdc0918eeb2629e52f0fbf2c94ded2a1b",
+  "authorship": "Independent assistant-authored source lookup questions; sources inspected before any ranked output. Not independent human validation.",
+  "status": "frozen-before-first-retrieval",
+  "ranked_output_seen": false,
+  "model_calls": 0,
+  "question_count": 12,
+  "development_count": 6,
+  "heldout_count": 6,
+  "evaluation": {
+    "k": 8,
+    "query_text": "Use the literal query field once with the same global tokenizer/ranker for both splits. No per-query keywords, expected-path boosts or span injection.",
+    "primary_metric": "complete_required_evidence_coverage_at_8: fraction of queries whose every expected evidence span is fully covered by the union of top-eight retrieved spans from that exact file/commit.",
+    "secondary_metrics": [
+      "required_span_recall_at_8",
+      "expected_file_recall_at_8",
+      "first_relevant_rank",
+      "retrieved_lines_or_bytes_per_query"
+    ],
+    "span_rule": "One-based inclusive lines; a matching source path with wrong lines is file recall only. Union may cover a required span across multiple chunks. Count only ranked results, not automatically appended authority context.",
+    "missing_evidence": "Record misses unchanged. Relevant alternative sources may be noted in separate manual observations, without changing frozen targets or rescoring this run.",
+    "heldout_rule": "Freeze global configuration before the first held-out output. Report development and held-out separately; once observed, held-out questions are consumed for future tuning.",
+    "claim_boundary": "Source/span retrieval coverage only; not model accuracy, semantic sufficiency, completeness of obligations, current host state or operational authorization."
+  },
+  "queries": [
+    {
+      "id": "NAV-D01",
+      "split": "development",
+      "query": "Where did we leave LTX packet 98, and what must happen before its larger-resolution experiments can resume?",
+      "expected_evidence": [
+        {
+          "path": "experiments/ltx25-b70/RESUME.md",
+          "start_line": 3,
+          "end_line": 20,
+          "git_blob_oid": "9f5d9eecfe60bfd6255cd07d5abb44989c90db88",
+          "source_sha256": "758614bf73d1f882f123fb6faafef2b2cd990c843cc322a516ff336209feddc4",
+          "span_sha256_lf_join": "abf5f6baba22bc929e7eeea37e63ff843fe6f5f00eab724f413419e77e906e00"
+        },
+        {
+          "path": "experiments/ltx25-b70/RESUME.md",
+          "start_line": 49,
+          "end_line": 74,
+          "git_blob_oid": "9f5d9eecfe60bfd6255cd07d5abb44989c90db88",
+          "source_sha256": "758614bf73d1f882f123fb6faafef2b2cd990c843cc322a516ff336209feddc4",
+          "span_sha256_lf_join": "0262e9fe5950d968bb8715b3528ad6588783c54cbd3eabb73ee5dc5edd97dea1"
+        }
+      ],
+      "coverage_purpose": "Parked lane and prepared-but-unmeasured successor; conditional resume order, not authorization."
+    },
+    {
+      "id": "NAV-D02",
+      "split": "development",
+      "query": "What does the Flash-Next 46.854 tokens/sec record actually measure, and does the 32K result certify long-context or stable serving?",
+      "expected_evidence": [
+        {
+          "path": "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md",
+          "start_line": 5,
+          "end_line": 26,
+          "git_blob_oid": "ed719c7d5317cede6e1430b88d006874ac7d4fb5",
+          "source_sha256": "6dfc794a8488fe22b0928448b42f1c8b2ad3ed8eb3b15fc7874396f78ce8de39",
+          "span_sha256_lf_join": "7a75ec46a8aef72be4787c6d51eae3bc26830e4f8dbe6061dd8e8dc34ed15282"
+        },
+        {
+          "path": "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md",
+          "start_line": 28,
+          "end_line": 42,
+          "git_blob_oid": "ed719c7d5317cede6e1430b88d006874ac7d4fb5",
+          "source_sha256": "6dfc794a8488fe22b0928448b42f1c8b2ad3ed8eb3b15fc7874396f78ce8de39",
+          "span_sha256_lf_join": "13d6c4d132b3092c4e8d6129e1a75249f81c874a130851e44e1c540d26d39a4d"
+        }
+      ],
+      "coverage_purpose": "Headline versus separate depth observations, negative outcomes and unresolved qualification."
+    },
+    {
+      "id": "NAV-D03",
+      "split": "development",
+      "query": "Which bad RAM blocks are excluded on the four-card host, and are we supposed to replace RAM this year or change that mitigation?",
+      "expected_evidence": [
+        {
+          "path": "CURRENT.md",
+          "start_line": 117,
+          "end_line": 119,
+          "git_blob_oid": "212ebf2f02b72de98d3cd0a9e321c121603efc4a",
+          "source_sha256": "fc23b1fa22ca9e1af6d3cdbca396af090505fcde3f33cf3ac1cd8e59b6e349ee",
+          "span_sha256_lf_join": "ad51ce01f410519e791d05fec1f1d692d0a453ccea93160fe3123d51c04c7575"
+        }
+      ],
+      "coverage_purpose": "Owner decision and preserved memory exclusion, frozen state rather than live hardware evidence."
+    },
+    {
+      "id": "NAV-D04",
+      "split": "development",
+      "query": "Why did both the 4B and 27B coding-worker pilots fail to produce patches, and would faster decoding or one longer timeout fix both?",
+      "expected_evidence": [
+        {
+          "path": "experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md",
+          "start_line": 3,
+          "end_line": 16,
+          "git_blob_oid": "2cfc17f67130f4e249beb80d6fc93dd27b6cd6c8",
+          "source_sha256": "32a65742fcc1ce1d7bb8b1751b892152b20ccaeadecbe18a142929c1223087e2",
+          "span_sha256_lf_join": "e11a06c0b6f77b68fba411ebb284bcbad41f1f95e9cc839a4cdfaeb2b65cbbdf"
+        },
+        {
+          "path": "experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md",
+          "start_line": 3,
+          "end_line": 11,
+          "git_blob_oid": "0f3796ecff4109cf2126774e3b04e58f3165ab7b",
+          "source_sha256": "bdbcf2cb013b1388940299e96baa6fe06be5a1870cad1689fb772a5252e09053",
+          "span_sha256_lf_join": "7a90cce501c352675c1b908cb2dec34292c870161e928ac7b8ae44f63d710623"
+        },
+        {
+          "path": "experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md",
+          "start_line": 53,
+          "end_line": 59,
+          "git_blob_oid": "0f3796ecff4109cf2126774e3b04e58f3165ab7b",
+          "source_sha256": "bdbcf2cb013b1388940299e96baa6fe06be5a1870cad1689fb772a5252e09053",
+          "span_sha256_lf_join": "1329bf4cf7c88ad5b9bb479f962fec4cdb602e196bf140663ba332276fc9f153"
+        }
+      ],
+      "coverage_purpose": "Distinct models and budgets; investigation loops versus oversized command timeout; no conflation."
+    },
+    {
+      "id": "NAV-D05",
+      "split": "development",
+      "query": "Did durable-context revision 4 establish a cold-cache advantage for quoted events, or what stopped its development matrix?",
+      "expected_evidence": [
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-result.md",
+          "start_line": 3,
+          "end_line": 24,
+          "git_blob_oid": "aa3565acac608bcfbc858d4c8ff8133910f6ba2e",
+          "source_sha256": "dc728fce4b077481f161094ff1d3d95cad9a5170e5e42215ac21cc9e5b34df57",
+          "span_sha256_lf_join": "b1d07c554ae54d467130558dfceee9b8d24586621058fb3c3ba0564b00856d35"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r4-result.md",
+          "start_line": 26,
+          "end_line": 39,
+          "git_blob_oid": "aa3565acac608bcfbc858d4c8ff8133910f6ba2e",
+          "source_sha256": "dc728fce4b077481f161094ff1d3d95cad9a5170e5e42215ac21cc9e5b34df57",
+          "span_sha256_lf_join": "46c2250ccd3017acd78dffa667d57932c592593794abe62d2825991b9a630aec"
+        }
+      ],
+      "coverage_purpose": "Cold profile, exact completed trials, bounded summary failure, incomplete matrix and no speed verdict."
+    },
+    {
+      "id": "NAV-D06",
+      "split": "development",
+      "query": "Why can the coding worker refuse a source snapshot even with roughly 53 GiB free, and what writes does its new admission guard leave outside its protection?",
+      "expected_evidence": [
+        {
+          "path": "CURRENT.md",
+          "start_line": 105,
+          "end_line": 115,
+          "git_blob_oid": "212ebf2f02b72de98d3cd0a9e321c121603efc4a",
+          "source_sha256": "fc23b1fa22ca9e1af6d3cdbca396af090505fcde3f33cf3ac1cd8e59b6e349ee",
+          "span_sha256_lf_join": "18cd191e453de688daae8bad7617974d591a7b4d7bd6151d7baeb6338debab97"
+        }
+      ],
+      "coverage_purpose": "Default reserve plus peak snapshot bytes; before-write refusal and runtime-write limitation."
+    },
+    {
+      "id": "NAV-H01",
+      "split": "heldout",
+      "query": "Can I advertise the LTX batch-four result as lossless subsecond interactive video, or how does it differ from the accepted reference run?",
+      "expected_evidence": [
+        {
+          "path": "experiments/ltx25-b70/RESUME.md",
+          "start_line": 24,
+          "end_line": 43,
+          "git_blob_oid": "9f5d9eecfe60bfd6255cd07d5abb44989c90db88",
+          "source_sha256": "758614bf73d1f882f123fb6faafef2b2cd990c843cc322a516ff336209feddc4",
+          "span_sha256_lf_join": "954edf8a99d706cb25b9ace10f04f826710dd535231c03cfcfece3c36290a147"
+        }
+      ],
+      "coverage_purpose": "Reference identity, independent batch references, output difference and buffering/continuation limits."
+    },
+    {
+      "id": "NAV-H02",
+      "split": "heldout",
+      "query": "Does the CPU-verified Qwen TP2 state-width candidate mean I can update the published package or reuse that kernel for TP1 now?",
+      "expected_evidence": [
+        {
+          "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md",
+          "start_line": 3,
+          "end_line": 12,
+          "git_blob_oid": "b5d53a5771bfa9bbc4185e670f8ddc0b53035ab4",
+          "source_sha256": "5c04fe0af5f0734dabf65f6ab928cf045bfaa435a45de438a72f412116bf5871",
+          "span_sha256_lf_join": "a601329df2edb3a6d354ff6a9c63b1a9cbaa6f8e2dc76fdb3eb2945ef68c2b7c"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md",
+          "start_line": 79,
+          "end_line": 99,
+          "git_blob_oid": "b5d53a5771bfa9bbc4185e670f8ddc0b53035ab4",
+          "source_sha256": "5c04fe0af5f0734dabf65f6ab928cf045bfaa435a45de438a72f412116bf5871",
+          "span_sha256_lf_join": "14fc40cfb9bd8a775b71f7132885432d1d6075593d5fb0a42b1925fbc2c62134"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/release-candidates/20261006-tp2-state-fix/README.md",
+          "start_line": 205,
+          "end_line": 209,
+          "git_blob_oid": "b5d53a5771bfa9bbc4185e670f8ddc0b53035ab4",
+          "source_sha256": "5c04fe0af5f0734dabf65f6ab928cf045bfaa435a45de438a72f412116bf5871",
+          "span_sha256_lf_join": "b86325f8d054b13eca22691da39324694febe7ac438b68b1df720111ce6fc687"
+        }
+      ],
+      "coverage_purpose": "Draft qualification boundary, fail-closed offline preflight, separate TP1 checkpoint path."
+    },
+    {
+      "id": "NAV-H03",
+      "split": "heldout",
+      "query": "What research is actually in the EX400U backup, which model or raw-output data is excluded, and what does verification fail to establish about that drive?",
+      "expected_evidence": [
+        {
+          "path": "notes/2026-10-06-ex400u-backup-review.md",
+          "start_line": 63,
+          "end_line": 78,
+          "git_blob_oid": "90f83f5ed061269e443440d1ea751f3c0c9945c1",
+          "source_sha256": "cdc123f9d34ce04d10a5b27bef1ff0208d80daeca8a4ced6ebe258b19a498436",
+          "span_sha256_lf_join": "92cd7b1240f6569bcbd4ad250153722df2aa6091332571a34f1b5666f7fb4ba3"
+        },
+        {
+          "path": "notes/2026-10-06-ex400u-backup-review.md",
+          "start_line": 88,
+          "end_line": 101,
+          "git_blob_oid": "90f83f5ed061269e443440d1ea751f3c0c9945c1",
+          "source_sha256": "cdc123f9d34ce04d10a5b27bef1ff0208d80daeca8a4ced6ebe258b19a498436",
+          "span_sha256_lf_join": "4812ab566acb1cf7d2f683740fe512e1802547ec552be28fe127ea7e3d370fcf"
+        },
+        {
+          "path": "notes/2026-10-06-ex400u-backup-review.md",
+          "start_line": 114,
+          "end_line": 116,
+          "git_blob_oid": "90f83f5ed061269e443440d1ea751f3c0c9945c1",
+          "source_sha256": "cdc123f9d34ce04d10a5b27bef1ff0208d80daeca8a4ced6ebe258b19a498436",
+          "span_sha256_lf_join": "8fbe0aa63f6e9edd69c2d4982af3452be8b8b41182cec4f2b883e314c6c84308"
+        }
+      ],
+      "coverage_purpose": "Concrete backup selection and exclusions, full readback and restore evidence, source retention and hardware limits."
+    },
+    {
+      "id": "NAV-H04",
+      "split": "heldout",
+      "query": "Why might the authored semantic-memory cases catch wrong quoted events despite matching source text, and how strong is the independent annotation evidence?",
+      "expected_evidence": [
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-development-plan.md",
+          "start_line": 7,
+          "end_line": 19,
+          "git_blob_oid": "b18457d7a166dc7ee59b051d187c7f9f2db2d65a",
+          "source_sha256": "6d8dfa840c467b25c92fba03ae3cd82007152ba013ff45dc7e69271b895a7c16",
+          "span_sha256_lf_join": "09d27218aed4a1f584eb6ee1372fd3d0a62fc53ec3f00e5c03928ec17a27290f"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-development-plan.md",
+          "start_line": 55,
+          "end_line": 68,
+          "git_blob_oid": "b18457d7a166dc7ee59b051d187c7f9f2db2d65a",
+          "source_sha256": "6d8dfa840c467b25c92fba03ae3cd82007152ba013ff45dc7e69271b895a7c16",
+          "span_sha256_lf_join": "7941667017cfbeef629a3bcad4cc598baf9870a42d717fe395ea154009d24092"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-development-plan.md",
+          "start_line": 79,
+          "end_line": 88,
+          "git_blob_oid": "b18457d7a166dc7ee59b051d187c7f9f2db2d65a",
+          "source_sha256": "6d8dfa840c467b25c92fba03ae3cd82007152ba013ff45dc7e69271b895a7c16",
+          "span_sha256_lf_join": "8e8425d478a99fa3590fe041bbbd42e7768a112fc57c3a4c0791cd03ff3f22c9"
+        }
+      ],
+      "coverage_purpose": "Assistant annotations, provenance-versus-meaning gap, excluded interfaces and development-only scope."
+    },
+    {
+      "id": "NAV-H05",
+      "split": "heldout",
+      "query": "What caused the old Qwen 3.6 35B run to drop from about 93 to 15 tokens/sec, and which model and graph identity must be matched before calling it a regression?",
+      "expected_evidence": [
+        {
+          "path": "notes/2026-06-16-qwen36-current-handoff.md",
+          "start_line": 13,
+          "end_line": 37,
+          "git_blob_oid": "a5f20d4a554d26b245984ad323b94a391d5758c5",
+          "source_sha256": "2779d6c1dce6103316a274cfe30b55c2c05940c5870582c826c1c2833decbca3",
+          "span_sha256_lf_join": "d1bea0796bd768b799b2fefe7801a7e831fcb89dd08d5376d6bd37f9baa7ee99"
+        },
+        {
+          "path": "notes/2026-06-16-qwen36-current-handoff.md",
+          "start_line": 49,
+          "end_line": 69,
+          "git_blob_oid": "a5f20d4a554d26b245984ad323b94a391d5758c5",
+          "source_sha256": "2779d6c1dce6103316a274cfe30b55c2c05940c5870582c826c1c2833decbca3",
+          "span_sha256_lf_join": "8f59f3a122b4b7c3a775046da89cc1c016572448fbd17fdf0af7774041533b81"
+        }
+      ],
+      "coverage_purpose": "Historical missing PIECEWISE identity mistake; distinct 35B INT8 model and flags, not current launch advice."
+    },
+    {
+      "id": "NAV-H06",
+      "split": "heldout",
+      "query": "Why did revision 3 remain a failed durable-context experiment even when archive and quoted events answered every question, and why was its timing not cold-request evidence?",
+      "expected_evidence": [
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-result.md",
+          "start_line": 8,
+          "end_line": 23,
+          "git_blob_oid": "6106aead0e1e5e628757d26b74d4a0c2e93a2a97",
+          "source_sha256": "72367dfe30e99178108a6d4ca81a6d4bd6a8b962cc6aa42f479fafefe5318814",
+          "span_sha256_lf_join": "c3c4b5f1bb026d6eb9f2c122c3dec09dbe97aa67d99d7ac2b5504d360f152ee3"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/notes/2026-10-07-durable-context-r3-result.md",
+          "start_line": 31,
+          "end_line": 49,
+          "git_blob_oid": "6106aead0e1e5e628757d26b74d4a0c2e93a2a97",
+          "source_sha256": "72367dfe30e99178108a6d4ca81a6d4bd6a8b962cc6aa42f479fafefe5318814",
+          "span_sha256_lf_join": "f096bbd69adfb0561d0c3a1736e72a85375ad5467be811cbcbd44340df788e9e"
+        }
+      ],
+      "coverage_purpose": "Original all-methods failure, inspected development scope and asymmetric prefix-cache reuse; no retrospective relabeling."
+    }
+  ]
+}

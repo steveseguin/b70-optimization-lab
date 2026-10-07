@@ -131,6 +131,53 @@ Your custom test command must work inside the CPU image: Python standard library
 Node and ordinary shell tools are available. Network downloads are unavailable,
 so required dependencies must already be present. The bundled checks are mounted read-only.
 
+### Explicitly scoped tasks
+
+Full-repository snapshots remain the default. For a deliberately narrowed task,
+add exact repository-relative file paths to its pinned task JSON:
+
+```json
+{
+  "source_paths": ["src/calculation.py", "tests/test_calculation.py"],
+  "allowed_new_paths": ["tests/test_calculation_regression.py"]
+}
+```
+
+These fields extend the existing task; keep its issue, exact `source_commit`,
+acceptance command and other required fields. `source_paths` must be a nonempty
+list: omitting it means full source, while `[]` or `null` is an error. Directories,
+globs, traversal, duplicate paths, Git pathspec syntax, symlinks and submodules
+are refused. The worker automatically includes `AGENTS.md` at the root and each
+ancestor of selected files and permitted new paths, using the same pinned commit.
+Only selected regular files enter the source archive, baseline and workspace.
+
+The coordinator must include the dependency and existing-test closure; the worker
+does not discover missing dependencies or fetch excluded files. Scoped bytes come
+directly from pinned Git blobs, without archive attribute substitution or omission,
+and exact membership and hashes are checked before the workspace is admitted.
+The 2 GiB/50,000-file limits apply to the selected set, including automatically
+included instructions. The full repository may be larger. The same storage
+headroom check still applies.
+
+`allowed_new_paths` defaults to an empty list for scoped tasks. Export rejects
+every undeclared addition, including a recreated excluded file, rather than
+silently dropping it. The model receives the selected-file list and new-path
+restrictions in its task context; with no permitted new file it must place new
+regression coverage in an existing test file. Listing a root instruction file
+does not grant permission to add arbitrary root files.
+
+For a read-only preview, import `plan_snapshot` from `worker/sandbox.py` and call
+it with the same repository, exact commit, new output path, `source_paths` and
+`allowed_new_paths` as the intended task. It requires a clean source checkout and
+returns a JSON-serializable selection plus storage admission without creating an
+output directory. `snapshot.json` records the requested and automatic selection,
+pinned blob identities, full-tree manifest hash, excluded counts/bytes and budget;
+scoped patch receipts and results explicitly identify the narrower evidence class.
+This is an assisted, scoped task protocol, not evidence equivalent to a model
+finding the right files in the full repository or a controlled improvement over
+an earlier full-repository trial. Keep fixed answers, gold patches and control
+snapshots outside all model-visible directories and acceptance mounts.
+
 ## Review the result
 
 Each output directory contains:

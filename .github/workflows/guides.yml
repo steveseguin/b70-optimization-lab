@@ -36,6 +36,9 @@ on:
       - "tools/test_validate_repro_guides.py"
       - "tools/validate-recipe-publication.py"
       - "tools/test_validate_recipe_publication.py"
+      - "tools/source_drift_proofs.py"
+      - "tools/replay_fp8_prefill_source_drift.py"
+      - "tools/test_source_drift_proofs.py"
       - "tools/sync-depth-sweep-profiles.py"
       - "tools/test_sync_depth_sweep_profiles.py"
       - "tools/sync-public-result-summary.py"
@@ -90,6 +93,9 @@ on:
       - "tools/test_validate_repro_guides.py"
       - "tools/validate-recipe-publication.py"
       - "tools/test_validate_recipe_publication.py"
+      - "tools/source_drift_proofs.py"
+      - "tools/replay_fp8_prefill_source_drift.py"
+      - "tools/test_source_drift_proofs.py"
       - "tools/sync-depth-sweep-profiles.py"
       - "tools/test_sync_depth_sweep_profiles.py"
       - "tools/sync-public-result-summary.py"
@@ -129,7 +135,8 @@ jobs:
       - run: python3 tools/sync-short-prefill-profiles.py --check
       - run: python3 experiments/qwen38-27b-b70/scripts/verify-prefill-followup-evidence.py
       - run: python3 tools/sync-prefill-followup-profiles.py --check
-      - run: python3 experiments/qwen38-27b-b70/scripts/verify-fp8-prefill-evidence.py
+      - run: python3 tools/replay_fp8_prefill_source_drift.py
+      - run: python3 -m unittest tools/test_source_drift_proofs.py
       - run: python3 tools/sync-fp8-prefill-focus-profile.py --check
       - run: python3 tools/sync-amd-transfer-prefill-profile.py --check
       - run: python3 -m unittest tools/test_sync_fp8_prefill_focus_profile.py
