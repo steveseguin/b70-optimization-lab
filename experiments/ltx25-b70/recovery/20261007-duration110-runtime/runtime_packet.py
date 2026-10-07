@@ -1,0 +1,403 @@
+#!/usr/bin/env python3
+"""CPU-only, exact99b successor builder/checker. Default does not materialize.
+
+All integration components and an explicitly reviewed input-inventory hash are
+required to build. No source edit is made in the qualified parent packet.
+"""
+import argparse
+import ast
+import copy
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import sys
+
+sys.dont_write_bytecode = True
+ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+PARENT = ROOT / 'prepared-encoder-upstream-99b'
+PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
+PACKET = ROOT / 'prepared-duration-full-110'
+RUN_NAME = 'encoder-server-duration-full-110-two-way20-28-w2-b1-p1-dxpu2-s640x384-f49'
+HERE = Path(__file__).resolve().parent
+AUTHOR = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-duration110-runtime')
+PLAN = AUTHOR.parent / '20261007-duration110-plan/candidate-plan.json'
+PLAN_SHA = 'cafb272fcb182d80022a0e73eff838dc7fd0aeb5001704d0b9ccbd37fadeccab'
+PREDECESSOR = ROOT / 'prepared-duration-pilot-109'
+PREDECESSOR_SHA = 'e91e8994642cf03210c5bde724a485e0c314a409a300a40379cc79a43fc67906'
+PLACEMENT_SOURCE = ROOT / 'prepared-encoder-rebalance-100b'
+PLACEMENT_MANIFEST_SHA = '50beee86e0ea22d7ef2405dcb4af56631a6eab7258c4052fbfb06214381aef63'
+PLACEMENT_FILES = {
+    'source/scripts/ltx_layer_shard.py': 'a000ccd309e70b2f41167c84b73aae01caf50f9cd38d1256a21f6cc7b0dd2ef3',
+    'source/scripts/ltx_graph_capture.py': 'fc691e4ff4fdbeba0724a8946dbb58dbf3b4cbd9ccdaf325c307f2d86981d7e5',
+    'source/scripts/host_embedding_resident_node.py': '4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065',
+    'source/custom_nodes/ltx_host_embedding_lab/__init__.py': '4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065',
+}
+COMMON, LAUNCHER = 'launch/encoder_runtime_common.py', 'launch/serve-encoder.py'
+STATUS = b'Packet110 ten-fixture49-frame exact qualification; exact same-length output gates required; constructed from qualified99b, not GPU-qualified.\n'
+# File names are deliberately explicit: no ambient files or caller-chosen code.
+COMPONENTS = ('geometry_overlay.py', 'native_safety.py', 'native_adapter.py',
+              'session.py', 'executor_guard.py', 'runtime_observer.py', 'setup_gates.py',
+              'reference_gate.py', 'candidate_gate.py', 'request_client.py',
+              'schedule.py', 'integration.py', 'campaign.py', 'runtime_packet.py',
+              'duration_guard.py')
+RUNTIME_MODULES = {n: ({'session.py': 'ltx_resolution_session.py',
+                        'duration_guard.py': 'ltx_duration_guard.py'}.get(n, n))
+                   for n in COMPONENTS if n not in ('geometry_overlay.py', 'runtime_packet.py', 'campaign.py', 'request_client.py')}
+
+
+def require(ok, why):
+    if not ok:
+        raise RuntimeError(why)
+
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()
+
+
+def load(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_parent_raw = (PARENT / 'manifest.json').read_bytes()
+require(digest(_parent_raw) == PARENT_SHA, 'Qualified99b parent manifest changed')
+_parent_manifest = json.loads(_parent_raw)
+require(digest((PARENT / COMMON).read_bytes()) == _parent_manifest['files'][COMMON], 'Parent checker changed')
+BASE = load(PARENT / COMMON, 'resolution101_qualified_parent')
+regular, sha, safe_path, module = BASE.regular, BASE.sha, BASE.safe_path, BASE.module
+NODES = [*BASE.NODES, 'ltx_resolution_lab']
+SERIALIZER_ROOT = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/safetensors')
+SERIALIZER_FILES = {
+    str(SERIALIZER_ROOT / 'torch.py'): 'f3f476d1f8c04fe65fa3797426556a0b7afa43f8c4db9db6b799c7cf84748f3d',
+    str(SERIALIZER_ROOT / '_safetensors_rust.abi3.so'): 'e6f17a9e9846bc2bc4ad94cc5431746b59785de3d2681ef2666e8890ae192dfb',
+}
+
+
+def runtime_fingerprints():
+    # The qualified99b adapter exposes verify_runtime, not the older private
+    # fingerprint constructor. Reuse its checked return value unchanged.
+    actual = BASE.verify_runtime(copy.deepcopy(_parent_manifest['runtime']))
+    for path, expected in SERIALIZER_FILES.items():
+        require(sha(Path(path)) == expected, 'Duration capture serializer changed: ' + path)
+    actual['files'].update(SERIALIZER_FILES)
+    return actual
+
+
+def verify_runtime(expected):
+    baseline = copy.deepcopy(expected)
+    for path, digest_value in SERIALIZER_FILES.items():
+        require(baseline['files'].pop(path, None) == digest_value, 'Missing duration serializer identity')
+    BASE.verify_runtime(baseline)
+    actual = runtime_fingerprints()
+    require(actual == expected, 'Duration runtime identity differs')
+    return actual
+
+
+def activate_dependencies(packet, manifest):
+    # The immutable99 dependency receipt binds only its original three-file
+    # Torch/Python baseline. Keep that exact comparison, while independently
+    # binding both serializer files before activation. Do not import Torch here:
+    # the inherited activation requires a clean application-module namespace.
+    baseline_manifest = copy.deepcopy(manifest)
+    for path, expected in SERIALIZER_FILES.items():
+        require(baseline_manifest['runtime']['files'].pop(path, None) == expected,
+                'Missing duration serializer identity')
+        require(sha(Path(path)) == expected, 'Duration capture serializer changed: ' + path)
+    require(baseline_manifest['runtime'] == _parent_manifest['runtime'],
+            'Dependency Torch/Python baseline differs')
+    return BASE.activate_dependencies(packet, baseline_manifest)
+
+
+def __getattr__(name):
+    return getattr(BASE, name)
+
+
+def replace_once(text, old, new):
+    require(text.count(old) == 1, 'Source anchor changed: ' + repr(old))
+    return text.replace(old, new)
+
+
+def check_control_environment():
+    expected = {'LTX_OUTPUT_SIZE': '640x384', 'LTX_BUSY_WINDOWS': '0',
+                'LTX_SAMPLER_PLACEMENT': 'two-way20-28', 'LTX_SAMPLER_WORKERS': '2',
+                'LTX_SAMPLER_BATCH': '1', 'LTX_SAMPLER_SHARED_POOL': '1',
+                'LTX_DECODE_REPLICA_DEVICE': 'xpu:2', 'LTX_DECODE_REPLICAS': '1',
+                'NEOReadDebugKeys': '1', 'EnableDeferBacking': '0'}
+    require(all(os.environ.get(k) == v for k, v in expected.items()), 'Explicit101 environment differs')
+
+
+def admit_storage(packet, run):
+    """Override inherited99's 4GiB allowance for the full49-frame suite."""
+    helper = module(packet / 'launch/check-storage-headroom.py', 'duration110_storage')
+    result = helper.inspect_destination(run, 50 * 1024**3, 9 * 1024**3)
+    require(result['admitted'], '50GiB reserve plus9GiB full-run allowance required')
+    return result
+
+
+def launcher_source(raw):
+    text = raw.decode()
+    text = replace_once(text,
+        "re.fullmatch(r'encoder-server-upstream-99b-two-way-w2-b1-p1-dxpu2-s256x256(?:-r[2-5])?', run_name)",
+        "run_name == " + repr(RUN_NAME))
+    text = replace_once(text, 'Packet99b admits only the frozen batch-one compatibility control',
+                        'Packet101 admits only the reviewed W2 same-size reference experiment')
+    text = replace_once(text, "    identity = {'runtime99b_transition': manifest['rope99b'],",
+                        "    identity = {'resolution101_transition': manifest['resolution101'],\n"
+                        "                'runtime99b_transition': manifest['rope99b'],")
+    text = replace_once(text, "    runpy.run_path(str(packet / 'source/main.py'), run_name='__main__')",
+                        "    import integration as resolution_integration\n"
+                        "    resolution_integration.install(packet, manifest, digest, run)\n"
+                        "    runpy.run_path(str(packet / 'source/main.py'), run_name='__main__')")
+    ast.parse(text)
+    return text.encode()
+
+
+def source_delta(component_dir):
+    geom = load(component_dir / 'geometry_overlay.py', 'resolution101_geometry')
+    safety = load(component_dir / 'native_safety.py', 'resolution101_safety')
+    duration = load(component_dir / 'duration_guard.py', 'duration110_source_guard')
+    duration.serializer_binding({Path(path).name: regular(Path(path)) for path in SERIALIZER_FILES})
+    delta = geom.transform_sources({p: regular(PARENT / p) for p in geom.SOURCE_HASHES},
+                                   geometry_transform=duration.transform_geometry)
+    placement_raw = regular(PLACEMENT_SOURCE / 'manifest.json')
+    require(digest(placement_raw) == PLACEMENT_MANIFEST_SHA, 'Qualified100b placement manifest changed')
+    placement_manifest = json.loads(placement_raw)
+    for path, expected in PLACEMENT_FILES.items():
+        raw = regular(PLACEMENT_SOURCE / path)
+        require(placement_manifest['files'][path] == expected == digest(raw),
+                'Qualified100b placement source changed: ' + path)
+        require(path not in delta, 'Placement/duration transform collision')
+        delta[path] = raw
+    for path in ('source/scripts/capture_node.py', 'source/custom_nodes/ltx_baseline_capture/__init__.py'):
+        delta[path] = duration.transform_capture(path, regular(PARENT / path))
+    replica_path = 'source/scripts/ltx_decode_replica.py'
+    raw = regular(PARENT / replica_path)
+    require(digest(raw) == '910b5948b8efc0dd5887c8241b8162ea64953af9261c3c957407d599b416682c',
+            'Decoder replica guard parent changed')
+    replica = replace_once(raw.decode(), 'MIN_FREE_AFTER_BUILD = 5 * 2**30', 'MIN_FREE_AFTER_BUILD = 8 * 2**30')
+    replica = replace_once(replica, 'MIN_FREE_AFTER_PROBE = 1 * 2**30', 'MIN_FREE_AFTER_PROBE = 2 * 2**30')
+    delta[replica_path] = replica.encode()
+    delta['source/comfy/sd.py'] = safety.transform_sd(regular(PARENT / 'source/comfy/sd.py'))
+    # Existing NA decoder initialization verifies comfy.sd's source bytes even
+    # when its numerical path is not selected. Update only this integrity pin
+    # in both mirrors to the reviewed OOM-refusal overlay, preserving its code.
+    for path in ('source/scripts/na_axis_decode_node.py',
+                 'source/custom_nodes/ltx_na_axis_decode_lab/__init__.py'):
+        raw = regular(PARENT / path)
+        require(digest(raw) == _parent_manifest['files'][path], 'Parent NA decoder node changed')
+        text = replace_once(raw.decode(),
+            "SD_SHA = '" + safety.SOURCE_SHA256 + "'",
+            "SD_SHA = '" + digest(delta['source/comfy/sd.py']) + "'")
+        ast.parse(text)
+        delta[path] = text.encode()
+    delta[LAUNCHER] = launcher_source(regular(PARENT / LAUNCHER))
+    delta[COMMON] = regular(component_dir / 'runtime_packet.py')
+    return delta
+
+
+def input_inventory():
+    missing = [n for n in COMPONENTS if not (AUTHOR / n).is_file()]
+    require(not missing, 'Integration incomplete: ' + ', '.join(missing))
+    files = {n: sha(AUTHOR / n) for n in COMPONENTS}
+    plan = json.loads(regular(PLAN))
+    require(plan['plan_sha256'] == PLAN_SHA == digest(canonical(plan['plan'])), 'Reviewed plan changed')
+    files['candidate-plan.json'] = sha(PLAN)
+    return files
+
+
+def extra_files(component_dir, plan_raw, plan_path=PLAN):
+    result = {'provenance/packet99b-manifest.json': regular(PARENT / 'manifest.json'),
+              'resolution/candidate-plan.json': plan_raw,
+              'provenance/reviewed-predecessor109-manifest.json': regular(PREDECESSOR / 'manifest.json'),
+              'provenance/qualified-placement100b-manifest.json': regular(PLACEMENT_SOURCE / 'manifest.json')}
+    require(digest(result['provenance/reviewed-predecessor109-manifest.json']) == PREDECESSOR_SHA,
+            'Reviewed duration predecessor manifest changed')
+    require(digest(result['provenance/qualified-placement100b-manifest.json']) == PLACEMENT_MANIFEST_SHA,
+            'Qualified100b placement manifest changed')
+    for name in COMPONENTS:
+        raw = regular(component_dir / name)
+        result['resolution/components/' + name] = raw
+        if name in RUNTIME_MODULES:
+            result['source/scripts/' + RUNTIME_MODULES[name]] = raw
+    schedule = load(component_dir / 'schedule.py', 'resolution101_schedule')
+    # The reviewed plan is identical in author and packet copies. Source graph
+    # inputs remain the immutable99b packet even when verifying a successor.
+    schedule_value = schedule.build_schedule(plan_path=plan_path)
+    result['resolution/setup-schedule.json'] = json.dumps(schedule_value, indent=2, sort_keys=True).encode() + b'\n'
+    result['source/custom_nodes/ltx_resolution_lab/__init__.py'] = (
+        b'from integration import NODE_CLASS_MAPPINGS, install_routes\ninstall_routes()\n')
+    return result
+
+
+def semantic_manifest(parent, files, transition):
+    result = copy.deepcopy(parent)
+    placement_raw = regular(PLACEMENT_SOURCE / 'manifest.json')
+    require(digest(placement_raw) == PLACEMENT_MANIFEST_SHA, 'Qualified100b placement manifest changed')
+    result['sampler_placement'] = copy.deepcopy(json.loads(placement_raw)['sampler_placement'])
+    result['runtime']['files'].update(SERIALIZER_FILES)
+    result.update(schema='ltx.resolution-reference-runtime.v1', files=files,
+                  preparer_sha256=files['resolution/components/runtime_packet.py'], resolution101=transition)
+    result['startup_tools'] = {Path(k).name: files[k] for k in (COMMON, LAUNCHER)}
+    result['graph_capture']['adapter_sha256'] = files['source/scripts/ltx_graph_capture.py']
+    result['sampler_shared_pool']['adapter_sha256'] = files['source/scripts/ltx_graph_capture.py']
+    for name in result['extension_sha256s']:
+        path = 'source/scripts/' + name
+        if path in files:
+            result['extension_sha256s'][name] = files[path]
+    for name in RUNTIME_MODULES.values():
+        result['extension_sha256s'][name] = files['source/scripts/' + name]
+    result['output_size']['module_sha256'] = files['source/scripts/ltx_output_size_98.py']
+    result['output_size']['same_size_native'] = {'plan_sha256': PLAN_SHA,
+        'size': '640x384', 'frame_count': 49, 'comparison_mode': 'same-size-native-v1', 'qualified': False}
+    return result
+
+
+def verify_packet(packet, expected_manifest_sha256):
+    packet = Path(packet)
+    require(packet == PACKET, 'Unexpected101 packet path')
+    require(re.fullmatch('[0-9a-f]{64}', expected_manifest_sha256 or '') and
+            sha(packet / 'manifest.json') == expected_manifest_sha256, '101 manifest hash differs')
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+    manifest = json.loads(regular(packet / 'manifest.json'))
+    require(regular(packet / 'STATUS.txt') == STATUS, 'Status identity differs')
+    # Verify bytes against the externally pinned manifest BEFORE executing any
+    # successor component, including its source-transform helpers.
+    require(isinstance(manifest.get('files'), dict), '101 file inventory missing')
+    for path, expected in manifest['files'].items():
+        require(isinstance(path, str) and isinstance(expected, str) and
+                re.fullmatch('[0-9a-f]{64}', expected) and
+                sha(safe_path(packet, path)) == expected, '101 file changed before component import: ' + str(path))
+    require(all('resolution/components/' + n in manifest['files'] for n in COMPONENTS),
+            '101 component inventory incomplete')
+    component_dir = packet / 'resolution/components'
+    delta = source_delta(component_dir)
+    extras = extra_files(component_dir, regular(packet / 'resolution/candidate-plan.json'),
+                         packet / 'resolution/candidate-plan.json')
+    want = dict(parent['files'])
+    for path, raw in delta.items():
+        require(regular(packet / 'provenance/packet99b' / path) == regular(PARENT / path),
+                'Parent delta provenance changed')
+        want['provenance/packet99b/' + path] = parent['files'][path]
+        want[path] = digest(raw)
+    want.update({path: digest(raw) for path, raw in extras.items()})
+    require(manifest['files'] == want, '101 source closure differs')
+    checker = module(PARENT / 'provenance/source99/check-upstream-source-99.py', 'resolution101_inventory')
+    require(checker.inventory(packet) == set(want) | {'manifest.json', 'STATUS.txt'}, 'Unbound101 packet file')
+    for path, expected in want.items():
+        require(sha(safe_path(packet, path)) == expected, '101 file changed: ' + path)
+    plan = json.loads(regular(packet / 'resolution/candidate-plan.json'))
+    require(plan['plan_sha256'] == PLAN_SHA == digest(canonical(plan['plan'])), '101 plan changed')
+    transition = manifest['resolution101']
+    inventory = {n: filesha for n, filesha in
+                 ((n, want['resolution/components/' + n]) for n in COMPONENTS)}
+    inventory['candidate-plan.json'] = want['resolution/candidate-plan.json']
+    expected_transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '110',
+        'parent_packet': str(PARENT), 'parent_manifest_sha256': PARENT_SHA,
+        'plan_sha256': PLAN_SHA, 'input_inventory': inventory,
+        'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
+        'placement_source': {'packet': str(PLACEMENT_SOURCE), 'manifest_sha256': PLACEMENT_MANIFEST_SHA, 'files': PLACEMENT_FILES},
+        'input_inventory_sha256': digest(canonical(inventory)),
+        'source_delta': {p: {'before_sha256': parent['files'][p], 'after_sha256': digest(raw)}
+                         for p, raw in delta.items()},
+        'control': {'size': '640x384', 'batch': 1, 'workers': 2, 'layout': 'two-way20-28', 'blocks': [20, 28],
+                    'shared_pool': 1, 'decode_replica': 'xpu:2', 'frame_count': 49},
+        'storage_admission': transition['storage_admission'], 'qualification': False, 'model_requests': 0}
+    require(transition == expected_transition and transition['storage_admission']['admitted'] is True,
+            '101 transition differs')
+    require(manifest == semantic_manifest(parent, want, transition), '101 semantic contract differs')
+    return manifest
+
+
+def write_new(path, raw, mode=0o644):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as f:
+        f.write(raw); os.fchmod(f.fileno(), mode); f.flush(); os.fsync(f.fileno())
+
+
+def build(expected_inventory_sha256, parent_stopped=False):
+    require(parent_stopped is True, 'Coordinator must establish constructor99b parent cleanly stopped')
+    inventory = input_inventory()
+    require(digest(canonical(inventory)) == expected_inventory_sha256, 'Reviewed source inventory differs')
+    require(not PACKET.exists() and not PACKET.is_symlink() and
+            not any(p.is_symlink() for p in PACKET.parents), 'Exclusive regular destination required')
+    parent = BASE.verify_packet(PARENT, PARENT_SHA)
+    storage = module(PARENT / 'launch/check-storage-headroom.py', 'resolution101_build_storage')
+    admission = storage.inspect_destination(PACKET, 59 * 1024**3, 384 * 1024**2)
+    require(admission['admitted'], '50GiB reserve plus9GiB run allowance plus384MiB build allowance required')
+    delta = source_delta(AUTHOR)
+    extras = extra_files(AUTHOR, regular(PLAN))
+    require(input_inventory() == inventory, 'Authored components changed during read')
+    PACKET.mkdir(mode=0o700)
+    write_new(PACKET / 'STATUS.txt', STATUS)
+    for path, expected in parent['files'].items():
+        raw = regular(PARENT / path)
+        require(digest(raw) == expected, 'Parent changed during copy')
+        mode = stat.S_IMODE((PARENT / path).stat().st_mode)
+        if path in delta:
+            write_new(PACKET / 'provenance/packet99b' / path, raw, mode)
+            raw = delta[path]
+        write_new(PACKET / path, raw, mode)
+    for path, raw in extras.items():
+        require(path not in parent['files'], 'New helper collides with parent: ' + path)
+        write_new(PACKET / path, raw)
+    files = {str(p.relative_to(PACKET)): sha(p) for p in PACKET.rglob('*')
+             if p.is_file() and p.name != 'STATUS.txt'}
+    transition = {'schema': 'ltx.resolution101.transition.v1', 'packet_revision': '110', 'parent_packet': str(PARENT),
+        'parent_manifest_sha256': PARENT_SHA, 'plan_sha256': PLAN_SHA,
+        'reviewed_predecessor': {'packet': str(PREDECESSOR), 'manifest_sha256': PREDECESSOR_SHA},
+        'placement_source': {'packet': str(PLACEMENT_SOURCE), 'manifest_sha256': PLACEMENT_MANIFEST_SHA, 'files': PLACEMENT_FILES},
+        'input_inventory': inventory, 'input_inventory_sha256': expected_inventory_sha256,
+        'source_delta': {p: {'before_sha256': parent['files'][p], 'after_sha256': digest(raw)}
+                         for p, raw in delta.items()},
+        'control': {'size': '640x384', 'batch': 1, 'workers': 2, 'layout': 'two-way20-28', 'blocks': [20, 28],
+                    'shared_pool': 1, 'decode_replica': 'xpu:2', 'frame_count': 49},
+        'storage_admission': admission, 'qualification': False, 'model_requests': 0}
+    manifest = semantic_manifest(parent, files, transition)
+    write_new(PACKET / 'manifest.json', json.dumps(manifest, indent=2, sort_keys=True).encode() + b'\n')
+    for directory in [p for p in PACKET.rglob('*') if p.is_dir()] + [PACKET, PACKET.parent]:
+        fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    manifest_sha = sha(PACKET / 'manifest.json')
+    verify_packet(PACKET, manifest_sha)
+    return {'status': 'prepared-not-GPU-qualified', 'packet': str(PACKET),
+            'manifest_sha256': manifest_sha, 'model_requests': 0}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--build', action='store_true')
+    parser.add_argument('--input-inventory-sha256')
+    parser.add_argument('--parent-stopped', action='store_true',
+                        help='Assert constructor99b is stopped; this is not a claim about predecessor109')
+    parser.add_argument('--verify-manifest-sha256')
+    args = parser.parse_args()
+    if args.build:
+        result = build(args.input_inventory_sha256, args.parent_stopped)
+    elif args.verify_manifest_sha256:
+        verify_packet(PACKET, args.verify_manifest_sha256)
+        result = {'status': 'source-closure-verified', 'model_requests': 0}
+    else:
+        missing = [n for n in COMPONENTS if not (AUTHOR / n).is_file()]
+        result = {'status': 'plan-only', 'packet': str(PACKET), 'missing_components': missing,
+                  'model_requests': 0, 'materialized': False}
+        if not missing:
+            inventory = input_inventory()
+            result.update(input_inventory=inventory, input_inventory_sha256=digest(canonical(inventory)))
+    print(json.dumps(result, indent=2, sort_keys=True))
+
+
+if __name__ == '__main__':
+    main()
