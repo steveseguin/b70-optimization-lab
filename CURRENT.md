@@ -5,18 +5,33 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-**Live update, 2026-10-07:**110 is running on the four-card host, PID3391197,
-start ticks28885324, unit `ltx110-duration-server-20261007`, same boot.
-Its finite57-request, ten-fixture49-frame qualification campaign started at
-2026-10-07T23:18:36.403553+00:00. All actual graph node classes, idle endpoint,
-source/process identity and sealed client checks passed before the first request.
-No result is available yet. This uses the successful109 numerical path and
-unchanged memory floors, with broader exact video/audio comparisons. No observer
-or extra request stream is running; successful app retained, faults halt work.
+**Live update, 2026-10-07:** the full ten-fixture, 49-frame LTX qualification
+passed. All 57 requests completed at 23:35:42 UTC. Twenty native outputs formed
+ten exact repeat pairs; ten optimized and ten timed clips matched all four
+video/audio tensors. The unchanged sealed verifier independently rebuilt the
+complete proof at 23:38:47 UTC. Memory and capture checks passed, with no kernel
+faults in the campaign window. About 58 GiB of disk space remains free.
 
+Nine delivery intervals averaged 2.8836 seconds per 49-frame clip, or 16.99
+generated frames/s. This is a short qualification screen, not a matched speed
+gain, endurance result or public record. Playback remains 24 FPS; independent
+clips do not establish coherent streaming.
+
+The successful application stays available: PID3391197, start ticks28885324,
+unit `ltx110-duration-server-20261007`, same boot. It is idle, with no observer
+or extra request stream. Its finite request authority is consumed.
 110 manifest`bfa78fcf6af59acc3d63318ca97c61846b3a9b80999f6f17cb4c4d3651f2ad09`;
 client contract`70b5379a715b7c51008fbc65967e2dc503554b70e5e460d02ddbe8d4689df27d`.
-[110 operation](experiments/ltx25-b70/notes/2026-10-07-duration110-operation.md).
+[Completed proof and 1,246 file bindings](experiments/ltx25-b70/data/resume-20261007/duration110-closeout/summary.json),
+[resource audit](experiments/ltx25-b70/notes/2026-10-07-duration110-resource-audit.md),
+[operation](experiments/ltx25-b70/notes/2026-10-07-duration110-operation.md).
+
+Next: prepare a native three-chunk scene-continuation reference and exact replay,
+using the preceding decoded frame before both samplers. This is CPU preparation,
+not an admitted GPU workload or adopted quality mode. Additional VAE encoding
+needs separate memory admission; exact replay and visual seam quality are separate
+gates. Raw audio remains unchanged and separate until its timeline is resolved.
+[Continuation design](experiments/ltx25-b70/notes/2026-10-07-after110-continuation-priority.md).
 
 The preceding49-frame109 pilot completed successfully at
 22:56:44 UTC. Its application stopped cleanly once at2026-10-07T23:15:35.660027+00:00
@@ -34,7 +49,7 @@ Named20/28 placement, BF16 and 8+3 steps remain unchanged. The tightest sampled
 poststage memory was 4.968GiB free on the decoder card, above its 2GiB floor;
 these observations are not continuous peak-memory bounds.
 
-Next: qualify the same configuration on all ten fixed fixtures. The old, stopped
+The full ten-fixture qualification is now complete. The old, stopped
 97 B4-r2 arm's577 byte-identical duplicates have now been retired after two fresh
 original-comparator passes. That recovered10.855GiB;20 reference/representative
 archives were reverified, all metadata/previews retained, and direct ordinary-copy
@@ -47,7 +62,7 @@ standalone plan controls, actual-venv source/runtime checks and independent revi
 It admits57 requests/50 captures with9GiB runtime writes above the50GiB reserve;
 prebuild admission additionally reserves384MiB. Its numerical path and memory
 floors match109. 110 source construction and the actual sealed CPU startup check passed;
-The110 campaign is now underway. Fresh9GiB launch admission left54.46GiB after allowance. Fresh prebuild available space was68,258,586,624bytes.
+The110 campaign completed successfully as recorded above. Fresh9GiB launch admission left54.46GiB after allowance. Fresh prebuild available space was68,258,586,624bytes.
 No extra requests are authorized by the consumed pilot plan, and no passive
 observer is running. Models, failed experiments and unique outputs stay protected.
 [Completed pilot proof](experiments/ltx25-b70/data/resume-20261007/duration109-closeout/summary.json),

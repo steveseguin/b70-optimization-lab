@@ -69,3 +69,41 @@ bounded text-window probe. No passive observer or extra request stream exists.
 Successful app retained; noautomaticretry/restart, faultshalt. No110 numerical
 qualification or timing result exists at launch. Root monitors the fixed campaign
 and independently reconstructs completed proof before interpreting results.
+
+
+## Completed qualification and independent closeout
+
+All57 requests completed successfully at2026-10-07T23:35:42.938171+00:00.
+All20 native executions form ten exact repeat pairs. Ten candidate and ten timed
+outputs match every video latent, audio latent, image and waveform tensor.
+The unchanged sealed verifier independently reconstructed the complete proof
+at2026-10-07T23:38:47.915669+00:00 in105.737seconds, returning the exact stored
+receipt. [Independent proof](../data/resume-20261007/duration110-post-completion-proof.json).
+
+The nine delivery intervals average2.8835556seconds per49-frame clip,
+16.99291 generatedFPS. This broader fixture mix is not a matched comparison
+against109's three-fixture pilot, nor endurance, a public record or visual
+acceptance of arbitrary scenes. Numerical settings and all existing floors
+remain unchanged. [Resource audit](2026-10-07-duration110-resource-audit.md).
+
+Root closeout freshly bound1,246 files, all57 request directories, planned raw
+captures and previews, and copied identity/contracts/receipts/status/kernel
+records. Capture checkpoints20/36/50 extend their prefixes correctly;50 records
+comprise40 full outputs,2 setup captures and8 bounded fills. Their conservative
+reservation is6,150,071,120bytes, exactly the sealed cap. Each raw file was
+checked against its own bounds. The first-native measured barrier matches the
+first verified native archive and its metadata/memory bindings. Explicit
+operational checks separately establish plan/runtime/server identity and charges.
+[Closeout](../data/resume-20261007/duration110-closeout/summary.json).
+
+The application remains healthy and idle atPID3391197/start28885324. The campaign
+unit exited successfully. There are no kernel entries in the launch-to-closeout
+window and no pending jobs or sticky fault. Closeout available space was
+62,239,444,992bytes. Do not extend the consumed57-request authority or retire
+these live-owned captures. No stop-on-success, host restart or settings changes.
+
+The next work is a separately sealed native continuation reference, initially
+CPU-only. Its extra VAE encoding needs fresh memory admission; existing decoder
+snapshots do not authorize it. Preserve raw audio separately and assess visual
+seams independently of exact replay. The successful110 application is retained
+while this design and validation proceed.
