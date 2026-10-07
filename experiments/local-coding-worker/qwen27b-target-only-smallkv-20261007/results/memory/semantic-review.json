@@ -1,0 +1,183 @@
+{
+  "schema": "lab.memory.independent-partial-review.v1",
+  "official_status": "INCOMPLETE",
+  "question_score": null,
+  "criterion_score": null,
+  "citation_pass_score": null,
+  "semantic_grade": "not-assigned; no completed ten-question response",
+  "reviewed_at_epoch_s": 1791346686.8637593,
+  "reviewer": "independent Codex review_research agent",
+  "reviewer_minutes": 4,
+  "reviewer_time_basis": "Approximate read-only transcript, source/citation and identity inspection; no model intervention",
+  "model_requests_recorded": 1,
+  "new_model_requests_by_reviewer": 0,
+  "answer_repaired": false,
+  "bindings": {
+    "raw_sse_sha256": "6065a022a872f52aee901153bfcc958dea03cfd9b5ed2963b724f4a9b8852da4",
+    "prompt_file_sha256": "daebe57f5c0913be632d501d9eee62579cdcadd5ffa05d960378bbd41fe7723c",
+    "canonical_messages_sha256": "5cad1a5621ad96ad97f106d49220f8e28e34a073a3e1ac980910c5190ff93529",
+    "protocol_sha256": "e17004e70604acbd27ada22ab039514d822f3dec35be1e826b3587c91ce71ebd",
+    "runner_sha256": "edcdeea56bc7c2b9664885a46e799688416bd5d8d03e1e1c0dab7dcd33b1b4b0",
+    "runner_path": "/home/steve/llm-optimizations/experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/run-memory.py",
+    "worker_profile_sha256": "f7dfc537364eb784fb47f4a22a30cde1352512adb4760a9d1050529ad7ac93ac",
+    "result_sha256": "6e6325b2409c08143d13d2ee519fa5a731986b0e16e4a33f3d591ad3be0ad6d7",
+    "request_sha256": "c05f514cf8fab486ced019f1f9bd74d5c3690c5e1e6bc9c33a23554842d129d9",
+    "model_visible_sha256": {
+      "questions.json": "e24a3dd1b7954058f9e9ad4cb1cc30f9d3c479be59368e96dfde35c35471f6c7",
+      "corpus/D01.txt": "385f16952896f1d324ca519fb3f60dcccef48edeb836ec26e0d51af78f8ce15b",
+      "corpus/D02.txt": "cdc123f9d34ce04d10a5b27bef1ff0208d80daeca8a4ced6ebe258b19a498436",
+      "corpus/D03.txt": "758614bf73d1f882f123fb6faafef2b2cd990c843cc322a516ff336209feddc4",
+      "corpus/D04.txt": "5c04fe0af5f0734dabf65f6ab928cf045bfaa435a45de438a72f412116bf5871",
+      "corpus/D05.txt": "6dfc794a8488fe22b0928448b42f1c8b2ad3ed8eb3b15fc7874396f78ce8de39"
+    }
+  },
+  "input_integrity": {
+    "request_matches_saved_prompt": true,
+    "full_five_document_hashes_match": true,
+    "questions_hash_matches": true,
+    "server_tokenization_input_tokens": 14008,
+    "source_bytes": 36685,
+    "answer_key_supplied": false
+  },
+  "termination": {
+    "recorded_error": "TimeoutError: Memory trial exceeded its 420-second total network budget",
+    "wall_seconds": 420.12296056747437,
+    "configured_total_network_seconds": 420,
+    "raw_sse_bytes": 1067392,
+    "partial_token_ids_observed": 4000,
+    "partial_content_characters": 15268,
+    "max_output_tokens": 4096,
+    "finish_reasons": [],
+    "final_usage_frames": 0,
+    "done": false,
+    "completed_response_json_present": false,
+    "complete_answer_json_present": false
+  },
+  "partial_diagnostics_only": {
+    "complete_prefix_object_ids": [
+      "Q01",
+      "Q02",
+      "Q03",
+      "Q04",
+      "Q05",
+      "Q06",
+      "Q07"
+    ],
+    "incomplete_object": "Q08, interrupted inside third citation quote",
+    "question_ids_not_emitted": [
+      "Q09",
+      "Q10"
+    ],
+    "extraction_method": "Read complete JSON object prefixes directly from unmodified emitted text using JSONDecoder.raw_decode; did not append delimiters, reconstruct missing fields or write a repaired answer.",
+    "content_observations": [
+      "Emitted prose addresses the supplied frozen-source questions: RAM deferral, storage admission, selected backup scope, archived experiment restoration, LTX reference distinctions and Qwen plugin qualification. This is diagnostic evidence of source use, not a semantic pass assessment.",
+      "Q06 emitted the sealed packet directory, manifest hash and separate helper hash present in D03. No full rubric scoring was attempted.",
+      "Question IDs progress in order without an observed repetition loop. The main output burden is lengthy answer prose plus extensive multi-line quotes.",
+      "At interruption, 4000 observed output token IDs were already near the 4096-token cap while Q08 remained incomplete and Q09\u2013Q10 absent. The issue is not demonstrated to be inference throughput alone; output allocation/verbosity would remain a concern even with more time."
+    ],
+    "citation_observations": [
+      {
+        "question_id": "Q01",
+        "doc_id": "D01",
+        "start_line": 81,
+        "end_line": 84,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q01",
+        "doc_id": "D03",
+        "start_line": 120,
+        "end_line": 124,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q02",
+        "doc_id": "D01",
+        "start_line": 50,
+        "end_line": 54,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q03",
+        "doc_id": "D01",
+        "start_line": 74,
+        "end_line": 80,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q03",
+        "doc_id": "D02",
+        "start_line": 114,
+        "end_line": 116,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q04",
+        "doc_id": "D01",
+        "start_line": 19,
+        "end_line": 22,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q04",
+        "doc_id": "D01",
+        "start_line": 16,
+        "end_line": 18,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q05",
+        "doc_id": "D03",
+        "start_line": 31,
+        "end_line": 40,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q05",
+        "doc_id": "D03",
+        "start_line": 41,
+        "end_line": 43,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q06",
+        "doc_id": "D03",
+        "start_line": 55,
+        "end_line": 58,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q06",
+        "doc_id": "D03",
+        "start_line": 89,
+        "end_line": 92,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q06",
+        "doc_id": "D03",
+        "start_line": 64,
+        "end_line": 73,
+        "diagnostic_issue": "changed indentation and truncated cited source text"
+      },
+      {
+        "question_id": "Q06",
+        "doc_id": "D03",
+        "start_line": 52,
+        "end_line": 53,
+        "diagnostic_issue": "added/changed indentation"
+      },
+      {
+        "question_id": "Q07",
+        "doc_id": "D03",
+        "start_line": 93,
+        "end_line": 97,
+        "diagnostic_issue": "added/changed indentation"
+      }
+    ],
+    "additional_incomplete_citation_issue": "Q08 declares D04 lines 172\u2013197 (26 lines), exceeding the frozen 20-line maximum; its quote itself is incomplete.",
+    "concrete_text_omission": "Q06 D03 lines 64\u201373 quote ends with quality. and omits the rest of source line 73: Two-worker/batch-4 at 640\u00d7384 is refused by the current memory plan.",
+    "no_formal_partial_citation_score": true
+  },
+  "conclusion": "Incomplete source-recall attempt with substantial on-topic partial content, excessive output allocation and exact-quote formatting violations. No completed ten-question/30-criterion result, citation pass, memory qualification or repaired answer is claimed. Preserve this failure; no rerun of these questions."
+}

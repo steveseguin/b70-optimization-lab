@@ -1,0 +1,41 @@
+{
+  "schema": "lab.qwen27b.target-only-memory-protocol.v1",
+  "status": "preregistered-unrun",
+  "scope": "One five-document source-recall baseline, ten known-corpus questions; not a long-context or blind-generalization evaluation",
+  "server": "Reuse admitted R276 27B target-only TP2 server after both coding attempts, healthy with at least480 seconds remaining in original3600-second supervisor window",
+  "model_visible_sha256": {
+    "questions.json": "e24a3dd1b7954058f9e9ad4cb1cc30f9d3c479be59368e96dfde35c35471f6c7",
+    "corpus/D01.txt": "385f16952896f1d324ca519fb3f60dcccef48edeb836ec26e0d51af78f8ce15b",
+    "corpus/D02.txt": "cdc123f9d34ce04d10a5b27bef1ff0208d80daeca8a4ced6ebe258b19a498436",
+    "corpus/D03.txt": "758614bf73d1f882f123fb6faafef2b2cd990c843cc322a516ff336209feddc4",
+    "corpus/D04.txt": "5c04fe0af5f0734dabf65f6ab928cf045bfaa435a45de438a72f412116bf5871",
+    "corpus/D05.txt": "6dfc794a8488fe22b0928448b42f1c8b2ad3ed8eb3b15fc7874396f78ce8de39"
+  },
+  "messages_sha256": "5cad1a5621ad96ad97f106d49220f8e28e34a073a3e1ac980910c5190ff93529",
+  "worker_profile_sha256": "f7dfc537364eb784fb47f4a22a30cde1352512adb4760a9d1050529ad7ac93ac",
+  "input_limit": 28000,
+  "output_limit": 4096,
+  "context_limit": 33024,
+  "network_wall_time_limit_s": 420,
+  "generation": {
+    "enable_thinking": false,
+    "temperature": 0,
+    "top_p": 1,
+    "seed": 42
+  },
+  "request_count": 1,
+  "retries": 0,
+  "answer_repair": false,
+  "truncation": false,
+  "full_corpus_original_bytes": 36685,
+  "citation_validation": "Existing validate.py check_responses plus exactquestionorder; no semantic grade inferred",
+  "semantic_review": "Independent review with existing answer-key.json after raw answer preserved; no key in model context",
+  "readonly_input_area": "Only questions and five documents copied to memory/model-input; actual API sees only frozen messages",
+  "grader_only_not_sent": [
+    "answer-key.json",
+    "manifest.json",
+    "protocol.json",
+    "validate.py"
+  ],
+  "validator_sha256": "76d1b7808d18dabad349b7a1c9769f04e99d3b32c6000830f9c263523eddc07d"
+}

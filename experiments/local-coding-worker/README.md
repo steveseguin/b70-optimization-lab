@@ -1,5 +1,10 @@
 # Local coding worker results
 
+The separate October 7 [four-card-host trial](qwen27b-target-only-smallkv-20261007/CLOSEOUT.md)
+completed zero of two new coding repairs and did not finish its source-recall
+request. All run evidence and independent rejections remain visible; no server
+is left running. Its target-only runtime differs from the older trial below.
+
 The [overnight follow-up](overnight-2026-09-14-results.md) passed all five original
 issues with readable tool output, while both new held-out issues remained unsolved.
 The original default remains unchanged and the new profile is experimental.
