@@ -176,3 +176,30 @@ unit`ltx107b-sparse-campaign-20261007`. No passive collector orFD observer was
 started. First window/native setup is active; no quality/trace/speed verdict yet.
 No unrelated tests, Git operations or writes during candidate/timed blocks.
 Keep successful application, preserve all failed evidence, halt new work on faults.
+
+## Pre-result interpretation boundary,21:36UTC
+
+An independent read-only review of the actual sealed107b sources confirmed the
+measurement scopes before candidate/timed work. Direct-static activation handling
+would remove block23 destination allocation and the later redundant D2D copy into
+Slot.img; D2H and H2D remain required. Large transfer or host-wait times alone
+therefore do not justify that implementation. Both actual workers/stages need
+valid trace coverage and exact output proof.
+
+The block23 fill duration includes all copied activation/keyword/expanded-core
+tensors. Compare its byte/count aggregate with the two incoming img move sizes;
+the whole fill is only an upper envelope of removable activation-copy cost.
+Partition spans exclude their first fill at0/23 but include subsequent fills and
+submission gaps. Host wait overlaps queued source replay and D2H. Replay CPU
+submission overlaps device execution. Do not add these scopes, align clocks
+across devices, or extrapolate a recoverable whole-clip critical path.
+
+Substantial consistent allocation/fill cost supports one guarded implementation
+and matched exact-quality/timing comparison. Negligible allocation/fill closes
+this specific lever, not the sampler lane. Block47 outputs escape to callers, so
+the direct-static candidate applies only to incoming block23 activations. Preserve
+exact worker/device/signature/stride/core-layout ownership, pinned lifetime,
+original fill position and argument ordering. Every new payload must copy despite
+Python object reuse; no stale slot.sources identity skip or unknown-signature
+recapture. The review made no edits to runtime, endpoint calls or GPU requests,
+and ended before21:39UTC.
