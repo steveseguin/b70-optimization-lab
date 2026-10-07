@@ -1,0 +1,68 @@
+{
+  "campaign_unit": "ltx102-resolution-campaign-20261007",
+  "claim": "Same-size native reference qualification followed by preliminary W2 serial-client screen, compared with W1 screen; no record or public promotion.",
+  "correction": "W2 batch-one overlap, sampler depth2, per-worker capture admission and retirement. No model numerical change. Bothworkers exact-output gate required.",
+  "environment": {
+    "EnableDeferBacking": "0",
+    "LTX_BUSY_WINDOWS": "0",
+    "LTX_DECODE_REPLICAS": "1",
+    "LTX_DECODE_REPLICA_DEVICE": "xpu:2",
+    "LTX_OUTPUT_SIZE": "640x384",
+    "LTX_SAMPLER_BATCH": "1",
+    "LTX_SAMPLER_PLACEMENT": "two-way",
+    "LTX_SAMPLER_SHARED_POOL": "1",
+    "LTX_SAMPLER_WORKERS": "2",
+    "NEOReadDebugKeys": "1"
+  },
+  "health_receipt": "experiments/ltx25-b70/data/resume-20261007/postflight-101c.json",
+  "input_inventory_sha256": "2003443b4f00c00762c72a8b42eb7ad6f22622e03cf126ecbe5ba6e4d6213383",
+  "limits": {
+    "capture_cap": 32,
+    "hard_kill": false,
+    "nofile": "65536:1048576",
+    "per_request_timeout_seconds": 1800,
+    "planned_captures": 29,
+    "requests": 36,
+    "server_restart": "no",
+    "storage_reserve_bytes": 53687091200,
+    "write_allowance_bytes": 4294967296
+  },
+  "manifest_sha256": "25761564f8e6790d25cbc4495662b2be19dfe2001401c5b8966e0a9c09264db4",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-w2-102",
+  "plan_sha256": "5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd",
+  "run_name": "encoder-server-resolution-w2-102-two-way-w2-b1-p1-dxpu2-s640x384",
+  "schedule_sha256": "e3953da6514bce5bc86e83dbf149a3ad7850894e57c4496c028039f357fc449f",
+  "schema": "ltx.resolution102.preregistration.v1",
+  "server_unit": "ltx102-resolution-server-20261007",
+  "source_commit": "3e96ae58509effe2d42a2de0f189c2f04d10bbaa",
+  "utc": "2026-10-07T17:11:24.523891+00:00",
+  "lifecycle": "Retain successful application after verified quiescence. No automatic restart/retry. Failed campaign one proven-idle graceful incident stop; faults/unresolved work coordinator.",
+  "memory_admission_gib": {
+    "native": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture0": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture1": [
+      7,
+      7,
+      2,
+      7
+    ],
+    "decode": [
+      2,
+      2,
+      7,
+      7
+    ],
+    "postcapture_floor": 2,
+    "not_proven_peak_bounds": true
+  }
+}
