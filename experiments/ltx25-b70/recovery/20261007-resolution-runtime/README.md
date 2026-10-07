@@ -1,4 +1,4 @@
-# 640×384 runtime — passive sampler accounting106 in preparation
+# 640×384 runtime — sampler accounting106 completed
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -40,7 +40,7 @@ completion;105 later stopped cleanly for106 after its finite plan was consumed.
 [105 result](../../notes/2026-10-07-client105-performance.md).
 The client comparison lever is closed; keep the reduced-write policy.
 
-Current author sources prepare106, one bounded passive sampler diagnostic. The
+Current author sources reconstruct106, one completed passive sampler diagnostic. The
 [fixed plan](../20261007-sampler-accounting106-plan/README.md) preserves all ten
 fixtures, model arithmetic, steps, precision, encoder window and W2/B1. It admits
 20 native,14 candidate and14 reduced-write timing requests plus nine setup
@@ -60,9 +60,15 @@ original fault/lifecycle decision and any partial diagnostic without waiting.
 
 Diagnostic validity is independent of model equality. Complete raw records do
 not by themselves establish utilization or attribution inside the scored clips;
-those require subsequent interval/engine/client analysis. No106 GPU result
-exists. This remains a repeated-workload diagnostic, not a public record or
-endurance claim.
+those require separate interval/engine/client analysis.106 completed57 requests,
+withten exact native repeat pairs andtwenty exact optimized clips. The full proof
+rebuilt independently. Its whole counter diagnostic remains invalid because two
+scans lost an unclassified descriptor, including one inside the scored window.
+Seven later complete interior pairs support only a posthoc exploratory raw-counter
+subset. The application remains retained and idle; its finite plan is consumed.
+This remains a repeated-workload diagnostic, not a public record or endurance claim.
+[106 closeout](../../data/resume-20261007/sampler106-closeout/summary.json),
+[scoped counter analysis](../../data/resume-20261007/sampler106-posthoc-counter-subset.json).
 
 The owner has supplied replacement instructions preferring application reuse.
 The runner now retains a successful application after verifying quiescence.

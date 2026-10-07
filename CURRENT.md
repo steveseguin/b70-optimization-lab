@@ -9,14 +9,31 @@ The owner resumed continuous LTX optimization on `steve-b70s`. The105 applicatio
 completed its71-request campaign successfully at19:43:32UTC, then stopped cleanly
 at2026-10-07T20:13:39.070899+00:00 for the necessary106 application reload. All four cards passed
 postflight at2026-10-07 20:13:55 UTC; no host restart or settings change occurred.
-The106 application is running under `ltx106-sampler-server-20261007`,
+The **106 application is retained and idle**, unit `ltx106-sampler-server-20261007`,
 PID **3348053**, start ticks `27822505`, boot
-`10192010-9700-4915-ac6c-980d6b74afa0`. Its bounded57-request campaign launched once
-at **2026-10-07T20:23:28.201696+00:00**. Native/reference qualification is underway;
-there is no106 quality or accounting result yet. The observer is source-bound
-and will start only before the single timing block. Flash-Next and local-worker
-tuning remain parked. Do not append requests, edit the sealed packet, or restart
-on a failed request. Keep unrelated work quiet during the timed diagnostic.
+`10192010-9700-4915-ac6c-980d6b74afa0`. Its57-request campaign completed successfully
+at **20:37:00UTC**. Queues, tails and previews are empty; no fault or halt.
+Its finite plan is consumed; do not append requests or modify the sealed packet.
+Flash-Next and local-worker tuning remain parked.
+
+106 preserved exact video and audio outputs:20 native executions form10 exact
+repeat pairs, followed by10 exact candidate and10 exact timed clips. The unchanged
+sealed final proof independently reconstructed at20:39:25UTC. The instrumented
+short workload averaged1.99278seconds per25-frame clip (12.545 generated FPS);
+this is a diagnostic rate, not a new record or matched speed improvement.
+
+The **whole passive diagnostic remains invalid**:27 snapshots contained25 complete
+and2 incomplete scans where an unclassified descriptor disappeared. One was
+inside the scored delivery window. It ended normally at its128KiB output cap,
+with no missed cadence slots. Two independent reviews identified seven later
+complete interior intervals suitable only for explicitly posthoc raw-counter
+analysis. They show sampler copy-accounting activity, not transfer latency,
+critical-path causality or whole-device utilization. Do not rerun merely for a
+green diagnostic flag. Next: one sparse attributed transfer/fill trace, then a
+measured source change if the evidence supports it.
+[106 closeout](experiments/ltx25-b70/data/resume-20261007/sampler106-closeout/summary.json),
+[independent proof](experiments/ltx25-b70/data/resume-20261007/sampler106-post-completion-proof.json),
+[integration and next-lever evidence](experiments/ltx25-b70/notes/2026-10-07-sampler106-integration.md).
 
 The reduced-write client policy improved generation throughput in both tested
 orders while preserving exact video and audio outputs:
@@ -36,18 +53,13 @@ keeps all fault/source/storage checks, changed-state saves and event-log fsyncs.
 105 skipped 705 unchanged saves and retained 667, versus 1,282 control saves.
 The full unmodified sealed proof was independently reconstructed at 19:46:02 UTC.
 
-Keep the reduced-write policy and **close the client comparison lever**. The next
-work is bounded GPU activity accounting to locate sampler computation or waiting,
-then one measured optimization. Do not start another client confirmation campaign.
-The read-only collector passed independent review and 24 synthetic tests; it has
-never observed a live server. The fixed retirement helper passed 15 synthetic
-file-safety tests, without any real deletion or restore. The proposed 106 diagnostic retains the ten scenes and numerics with
-57 requests / 50 capture allowance, and needs fresh 4 GiB runtime plus 384 MiB
-source admission above the 50 GiB reserve. The standalone plan and schedule passed 31 CPU controls. Runtime integration now passes253 CPU tests, including passive-child readiness,
-source binding and failure handling. The106 namespace scan found no collisions.
-Source packet106 is sealed as `59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2`.
-Actual observer/client contracts passed sealed admission; the campaign is now live.
-The passive counter child has not yet reached its scheduled timing stage.
+Keep the reduced-write policy and **close the client comparison lever**. The106
+counter diagnostic now guides the sampler investigation, with the incomplete
+coverage limitation above. The106 runtime passed253 CPU tests and independent
+review before launch. Its57 requests and50-capture cap used a fresh4GiB runtime
+allowance above50GiB; source construction had its separate384MiB admission.
+Sealed106 manifest:
+`59765f873aa553104691053c43f0964725353ddb25df471f806b039e1aa4c6e2`.
 Sampler A/B timings describe denoising stages, not individual GPU utilization;
 they do not justify a blind placement or worker-count sweep.
 
@@ -65,6 +77,8 @@ After two fresh full105 proof reconstructions,40 verified whole-file duplicate
 captures were retired with durable restoration mappings, reclaiming2.780GiB.
 Ten105 native-p1 anchors and all26 previous restoration anchors remain. Fresh106
 admission observed55.067GiB free and51.067GiB after its4GiB runtime allowance.
+After106 completion about52.24GiB remains. Its live raw outputs are protected;
+future storage admission must be fresh, not borrowed from the completed run.
 Restore the40 mapped ordinary copies before replaying105's full raw proof.
 Models, previews, metadata, patches and failed experiments remain protected.
 [105 cleanup and restoration](experiments/ltx25-b70/notes/2026-10-07-after105-storage-plan.md).

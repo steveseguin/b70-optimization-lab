@@ -129,3 +129,71 @@ this particular copy or prove critical-path benefit. Negligible copy activity or
 heavy sustained compute would lower its priority. Low/ambiguous activity needs
 one sparse attributed boundary trace first. Do not turn this proposal into a
 speculative implementation or claim an unmeasured speedup.
+
+## Completed106 and next decision
+
+The57-request campaign completed20:37:00UTC. All20 native executions formten
+exact repeat pairs; allten candidate andten timed clips are exact across video
+latent, audio latent, images and waveform. The unmodified sealed final verifier
+rebuilt the full proof at20:39:25UTC. The application remains healthy and idle,
+with its finite plan consumed. No stop/restart or extra request followed success.
+Closeout preserves1237 file bindings and25 small raw receipts/counter artifacts.
+
+Timing intervals were1.807,1.991,2.109,2.549,1.526,2.194,1.540,2.519,1.700s,
+mean1.99277778s and12.5453 generated FPS. These are instrumented repeated-workload
+observations, not a speed record or matched improvement over105.
+
+The observer ended normally at its output cap:128164bytes,27 snapshots,25 complete,
+2 incomplete, no missed cadence slots. Global diagnostic_valid staysfalse.
+The unclassified descriptor disappearance at20:35:37.603–37.656UTC was during
+fills; the second at20:35:43.603–43.653UTC was INSIDE the scored completion window
+20:35:43.401–20:36:01.336. Matching surviving render maps do not clear either
+unknown disappearance. No fault occurred, and the observer child exited normally.
+
+Independent reviews agree that eight later complete snapshots (zero-based5–12,
+JSONLrows6–13) provide seven stable interior pairs. They span approximately
+20:35:45.610–20:35:59.670UTC including scan widths, with all source, client,
+capacity and counter checks intact. Any analysis of this subset is posthoc and
+exploratory; it cannot turn the whole diagnostic valid. Sampler-card copy counters
+advance materially, but cannot identify a costly transfer or critical path.
+
+Decision: preserve this result, do not rerun accounting merely to obtain green,
+and design ONE sparse attributed transport/fill trace before implementing the
+conditional buffer change. Prefer placing sparse traces in the existing candidate
+phase and retaining a later uninstrumented timing block if attribution and exact
+quality gates permit; this is still a proposal, not a registered107 runtime.
+Sampler transfer timing must distinguish the existing host wait from actual
+copy intervals and retain lifetime/order guarantees. Small hypothetical savings
+are not a reason to build a long optimization campaign.
+
+## Durable retrospective counter analysis
+
+`recovery/20261007-accounting106-analysis/analyze.py` binds13 fixed evidence
+inputs, including the independently rebuilt quality proof and collector source.
+Root reviewed it and reran21 synthetic controls successfully in0.018seconds.
+The actual exclusive output is `data/resume-20261007/sampler106-posthoc-counter-subset.json`.
+It derives seven eligible adjacent pairs rather than preselecting their indexes;
+records all rejected-pair reasons,65.758ms observed clock-offset envelope, scan
+uncertainty and edge exclusions; and retains global diagnostic_valid=false.
+Only per-client/per-engine raw cycle deltas are emitted. No utilization estimate,
+busy seconds, cross-client aggregate, speed claim or per-clip GPU attribution.
+
+## Next storage admission hypothesis
+
+The retained106 outputs remain protected. A bounded read-only audit hashed only
+the ten106 native-p1 archives and ten already-protected105 native-p1 anchors
+(20 archives,1,492,420,320bytes). Every same-fixture whole-file hash and size matched,
+with distinct inodes and nlink1. Stored proof hashes for all40 scored106 archives
+map to those same ten105 anchors, so a future necessary controlled reload could
+retire all40 duplicates with direct restoration maps, preserving106 metadata and
+avoiding another permanent set of identical raw anchors. No106 deletion occurred.
+
+Potential allocated reclaim is2,985,103,360bytes (2.7801GiB). At20:44:27UTC,
+56,096,702,464bytes free plus that conditional reclaim would admit4GiB runtime
+and384MiB source above50GiB with697,094,144bytes spare;5GiB runtime would still
+fall short. All40 candidate files still need fresh full proof, hashes/stats,
+exact stopped-owner evidence and durable per-file receipts before retirement.
+Runtime/source admission must then be checked afresh. This is a hypothesis only.
+Stopped104/105 and live106 inductor caches are empty. Older compiler caches carry
+negative-result source evidence and are protected. Pip cache is only36KiB and uv
+cache is absent, so package-cache deletion provides no meaningful headroom.
