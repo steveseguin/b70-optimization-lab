@@ -48,6 +48,11 @@ parity. Its small speed difference does not justify replacing the established
 23/25 control. W3 is not queued. The next workload needs same-size native
 references, the accepted encoder window, unchanged BF16/8+3 arithmetic, and a
 fresh storage/memory budget before any larger model request.
+[CPU integration work](experiments/ltx25-b70/recovery/20261007-resolution-runtime/README.md)
+now includes exact-request phase gates, independent reference-file verification,
+delayed success reporting and explicit setup-result checks. The same-size plan
+passed review. Runtime wiring and real memory admission are still pending;
+no 640×384 model request or new speed result has been produced.
 [Resolution reference design](experiments/ltx25-b70/notes/2026-10-07-resolution-reference-design.md),
 [third-worker decision criteria](experiments/ltx25-b70/notes/2026-10-07-third-worker-decision.md),
 [original setup failure](experiments/ltx25-b70/notes/2026-10-07-rebalance100-setup-failure.md).
