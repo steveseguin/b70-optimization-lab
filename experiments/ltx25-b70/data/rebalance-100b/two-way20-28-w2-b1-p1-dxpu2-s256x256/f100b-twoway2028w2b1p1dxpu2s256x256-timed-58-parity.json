@@ -1,0 +1,588 @@
+{
+  "status": "passed",
+  "scope": "exact output comparison; graph changes are intentional and must be reviewed separately",
+  "executions": [
+    {
+      "name": "stability-01-w93c-rain",
+      "prompt_id": "52d26b18-15fe-475e-9b5c-aad6a789a359",
+      "prompt_sha256": "0150fe08cabb2d5d6487915d8d9eec348266217b197fd3a907dad19778aaa225",
+      "server_identity": {
+        "pid": 253434,
+        "proc_start_ticks": "2097789",
+        "boot_id": "73884bca-1022-490a-91be-af7f713c5813",
+        "start_utc": "2026-10-04 04:33:55 UTC",
+        "devices": [
+          {
+            "ordinal": 0,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 1,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 2,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 3,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          }
+        ],
+        "torch": "2.14.0+xpu",
+        "runtime": {
+          "files": {
+            "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a"
+          },
+          "python": "3.12.13",
+          "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+          "torch": "2.14.0+xpu"
+        },
+        "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+        "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-window-93c",
+        "source_packet_manifest_sha256": "b02b844ed5e15d40113e3d3d2fbd5e2e41c20d656be54a2f4b6423eb581ffdc8",
+        "encoder_run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c",
+        "extension_sha256s": {
+          "av_model.py": "e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213",
+          "block_compile_node.py": "f1c5441ec25bdb093d939598d319ecea769fa15879b425f22cba7694938435a7",
+          "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+          "concurrent_cfg_node.py": "48d2b4dd1d95c6729a3b7dbc7a767f60efe70f2af723a0833e6561153dcdd96e",
+          "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+          "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+          "graph_capture_node.py": "4daa6c625a56a327cafdae571c529e523232f9863be406cb232ffe93eca3ed11",
+          "graph_fusion_node.py": "12899f9972369971d3e3a4f81ea215ab2915915bcbc9d2f33134b906d0d7caca",
+          "graph_text_encoder_node.py": "cb6a60c94c621a7b47de785a20b7d6f875579ba20537bd2718a536dbf58ee1d6",
+          "graph_upsampler_node.py": "6abf7e4958c4d6c4d9a4aff8bc3145c1a5f81ace50ee733366a1a6a8dd9b9151",
+          "graph_vae_node.py": "1e61796a4a6ea5c6f2d5c9645c2045e122836565514725831fe7ed40f1e31c10",
+          "host_embedding_clip.py": "61b04906cb1520362a60138a4ac31f14fa13f22fe08bd7c6b03cfb1040d2caec",
+          "host_embedding_placement_node.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+          "host_embedding_resident_node.py": "3b2d5d8adffe924de7fd6a77ccb560a1bbaf0a43f7bbcadd51e28e3d8411cc2d",
+          "host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+          "ltx_block_compile.py": "e439b052e8bf72375d280c0a078fc0030a84f4ed521b149f80cf5e67537b2a41",
+          "ltx_decode_child.py": "d149793333d091989773e63ca4fd0bbc5aa0aa4cd05a8a25bf5c3d6b7709708d",
+          "ltx_decode_replica.py": "da9daab31306781711227988787d3405910abb5255ab39886809179536de4f8d",
+          "ltx_gil_probe.py": "12377616151fc2c3d94ce082c3f9dd78803e1a3f27e38db25d93a278ebc7550c",
+          "ltx_graph_capture.py": "bc1a6c52a01de5863ac39b4f716c8a931b32818f831904286f216c29acbd3e87",
+          "ltx_graph_text_encoder.py": "b488e89d16053eb517e99cec8922a6e97af3c8bed6a65943191f2fbc2e153e6d",
+          "ltx_graph_upsampler.py": "03d828654bb8a3a10c93bcd3b95c9582e4ad01f2cd7c62fc0009e619fd54de58",
+          "ltx_graph_vae.py": "02199884f583dd4c0cfce795599d5d32d0aff91d9fa9e414b7f068f313e8055c",
+          "ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+          "ltx_layer_shard.py": "025eb527133653d53d26c976e1b11a2b3107b9f59610ede1a490247c37689bc6",
+          "ltx_lean_conditioning.py": "7fe0e4ed41ac64f4d22bdd524c8649a6a3ee9c86b2d9270d202583d4e34f921c",
+          "ltx_multiblock_compile.py": "f3e1401aa9898587ff67f9727ac3fe44099003ac71a74d02ee7f07fb362854b9",
+          "ltx_na_axis_candidate.py": "d2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a",
+          "ltx_na_axis_router.py": "1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7",
+          "ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+          "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+          "ltx_pipeline.py": "73aa5742903ff3e1525f6fa99f09cc3cf50700b32008c022a3faff526a54f49c",
+          "ltx_qkv_fusion.py": "e32e18f260ba8593f47f55c3897a57e41d69675efc12da295348d635f1062c1b",
+          "ltx_text_shard.py": "0a2e085b2d6f51a1ba754c2355e601ae15022f8a25e828ab43490ef6412ec047",
+          "ltx_text_window.py": "70bb7be90cc458a7e0940759650a7cc438ff4d8f713c5163df1ae0358c4ac611",
+          "multiblock_compile_node.py": "e1fc1e6f8e42344c1e23582c9d284c89eda8ca1b058ea242948db1388650d743",
+          "na_axis_decode_node.py": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+          "phase_timed_upsampler_node.py": "262dfbae0cbd0b5f43ca308b259fe33e1743c83c3fbc41eb42475eed82557895",
+          "pipeline_decode_node.py": "a0b6fac09e5467366e674f9c5717cc3fe87284237f4edc0ac476322365ed7440",
+          "pipeline_node.py": "e33eb50e3c9d3019f8091c1922655541b921e32f21081eaaf05c16ce6966a6dc",
+          "pipeline_sampler_node.py": "fcd6e3956e2330b19ec8d4e0b2b96b18a046493a3c78e6dd17832f52e138598d",
+          "resident_fastpath_node.py": "a689ab7975f202753803dc4b159c05d0d6aa89eae332c132424c1f97eaf00f6f",
+          "resident_node.py": "3523c95ab0a250a56ff9ce16251d16f6d5ffa76e03c0addf927e638d0b724951"
+        },
+        "compiler_environment": {
+          "TORCHINDUCTOR_COMPILE_THREADS": "1",
+          "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c/inductor-cache",
+          "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-window-93c/triton-cache"
+        },
+        "launcher_sha256": "84bc118529ff51594eb21c31606639ea64979ea5b60ca32ab0cebb4b3ae974de",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_args_sha256": "a471c879d3fd0a7affd00ffd497029720875b3d28b9821f23d97f0e4d85bb546",
+        "health_admission": {
+          "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/health/four-card-health-20261004T0413Z.json",
+          "sha256": "98acad3fdeeb4aacd8a51eaa01c68fca98ae11daf1e2c57e116a270f1e49f540",
+          "end_utc": "2026-10-04 04:13:30 UTC",
+          "boot_id": "73884bca-1022-490a-91be-af7f713c5813",
+          "admitted_fault_lines": 11,
+          "watch_since": "2026-10-04 04:33:55 UTC"
+        }
+      },
+      "sample_rate": 48000,
+      "client_seconds": 1.3259999752044678
+    },
+    {
+      "name": "f100b-twoway2028w2b1p1dxpu2s256x256-timed-58",
+      "prompt_id": "df9d7a07-248a-4231-9c1d-cbc6416c92fb",
+      "prompt_sha256": "94c6213ef123199f2ce8e6af538e6bfa7e4d7bedd18ea2bc96ce311447e47ab7",
+      "server_identity": {
+        "runtime100b_transition": {
+          "campaign_bindings": {
+            "memory_helper": {
+              "packet_path": "campaign/worker-headroom-100b.py",
+              "sha256": "8a4d4a197ec2f67294354011d5899721a412129e280a79234be8593057b52603",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/worker-headroom-100b.py"
+            },
+            "runner": {
+              "packet_path": "campaign/run-campaign-100b.sh",
+              "sha256": "7a37c0c943759a2f47e278e461188bd5f53ff2cb041ef362dde8f3907c345ac4",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-100b.sh"
+            }
+          },
+          "control": {
+            "batch": 1,
+            "blocks": [
+              20,
+              28
+            ],
+            "decode_replica": "xpu:2",
+            "layout": "two-way20-28",
+            "references": "w93c",
+            "shared_pool": 1,
+            "size": "256x256",
+            "workers": 2
+          },
+          "control_basis": {
+            "packet_path": "provenance/control-basis.json",
+            "sha256": "c3ba80c2d92da7f295589403309d0a34bd3eb01e093958da8225d399ee1b3191",
+            "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/rebalance100-control-basis.json"
+          },
+          "model_requests": 0,
+          "parent_manifest_sha256": "5f156563da17edda65d8e0042a90344de665c5c93d4b61b603fc8ff0f9037bbc",
+          "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100",
+          "qualification": false,
+          "schema": "ltx.ownership100b.transition.v1",
+          "source_delta": {
+            "source/custom_nodes/ltx_host_embedding_lab/__init__.py": {
+              "after_sha256": "4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065",
+              "before_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44"
+            },
+            "source/scripts/host_embedding_resident_node.py": {
+              "after_sha256": "4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065",
+              "before_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44"
+            }
+          },
+          "storage_admission": {
+            "admitted": true,
+            "available_bytes": 66231468032,
+            "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+            "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b",
+            "failures": [],
+            "filesystem": {
+              "filesystem_type": "ext4",
+              "mount_id": 33,
+              "mount_point": "/",
+              "source": "/dev/nvme0n1p2"
+            },
+            "min_free_bytes": 53687091200,
+            "planned_write_bytes": 402653184,
+            "remaining_after_planned_write_bytes": 65828814848,
+            "required_bytes": 54089744384,
+            "required_mount": null,
+            "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b",
+            "schema_version": 1
+          }
+        },
+        "runtime100_transition": {
+          "campaign_bindings": {
+            "memory_helper": {
+              "packet_path": "campaign/worker-headroom-100.py",
+              "sha256": "96df73e2f974ac68bcee6f05759d960130d0f681eafa6108c98a3b1720aa5932",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/worker-headroom-100.py"
+            },
+            "runner": {
+              "packet_path": "campaign/run-campaign-100.sh",
+              "sha256": "67de086d259d25f18fd80583224eef2b29fd94dc628dec9ba6d61818554e75dd",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-100.sh"
+            }
+          },
+          "control": {
+            "batch": 1,
+            "blocks": [
+              20,
+              28
+            ],
+            "decode_replica": "xpu:2",
+            "layout": "two-way20-28",
+            "references": "w93c",
+            "shared_pool": 1,
+            "size": "256x256",
+            "workers": 2
+          },
+          "control_basis": {
+            "packet_path": "provenance/control-basis.json",
+            "sha256": "c3ba80c2d92da7f295589403309d0a34bd3eb01e093958da8225d399ee1b3191",
+            "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/rebalance100-control-basis.json"
+          },
+          "model_requests": 0,
+          "parent_manifest_sha256": "f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a",
+          "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b",
+          "qualification": false,
+          "schema": "ltx.rebalance100.transition.v1",
+          "source_delta": {
+            "source/scripts/ltx_graph_capture.py": {
+              "after_sha256": "fc691e4ff4fdbeba0724a8946dbb58dbf3b4cbd9ccdaf325c307f2d86981d7e5",
+              "before_sha256": "3a9a99954cb4877829c4407eb74306f6b409864002dfcccf3562fd0c98380400"
+            },
+            "source/scripts/ltx_layer_shard.py": {
+              "after_sha256": "a000ccd309e70b2f41167c84b73aae01caf50f9cd38d1256a21f6cc7b0dd2ef3",
+              "before_sha256": "9caaec0aeb68e9f391fab5ae9b6a63e464aa62a99e1ffc449775b3687d2149b2"
+            }
+          },
+          "storage_admission": {
+            "admitted": true,
+            "available_bytes": 66352451584,
+            "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+            "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100",
+            "failures": [],
+            "filesystem": {
+              "filesystem_type": "ext4",
+              "mount_id": 33,
+              "mount_point": "/",
+              "source": "/dev/nvme0n1p2"
+            },
+            "min_free_bytes": 53687091200,
+            "planned_write_bytes": 402653184,
+            "remaining_after_planned_write_bytes": 65949798400,
+            "required_bytes": 54089744384,
+            "required_mount": null,
+            "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100",
+            "schema_version": 1
+          }
+        },
+        "runtime99b_transition": {
+          "campaign_bindings": {
+            "memory_helper": {
+              "packet_path": "campaign/worker-headroom-98.py",
+              "sha256": "8dee8c4748a026ce1f4d1125ca50b67431a1d44921d33121addf6a4aa7d37944",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/worker-headroom-98.py"
+            },
+            "runner": {
+              "packet_path": "campaign/run-campaign-99b.sh",
+              "sha256": "3e2f8e3780997f0fa8e44c712bda8374b67011c045de110844fb93c13df38140",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-99b.sh"
+            }
+          },
+          "control": {
+            "batch": 1,
+            "blocks": [
+              23,
+              25
+            ],
+            "decode_replica": "xpu:2",
+            "layout": "two-way",
+            "references": "w93c",
+            "shared_pool": 1,
+            "size": "256x256",
+            "workers": 2
+          },
+          "installer": {
+            "activation": "after-preflight-and-normal-quant-ops-import-before-identity-and-main",
+            "files": {
+              "README.md": "99c888bb9650ca6d60b4cc507baf74c876deeda8e2980e3c849db19d5e78633f",
+              "cpu-controls.log": "add31358cfb4f069401a4dffba291687ddcf790e3fd26bf5b800ba688105ee74",
+              "cpu-validation.json": "6b5d97488ed101dda926af1ed900d0f7a1875ccd052064137dc51e9760a57bea",
+              "install_rope_compat.py": "99e6bc916789b8d4443a869000af524462ce66eef4757f000280b8a80366c570",
+              "source-evidence/LICENSE": "cd1c9ea1573c9047e9b5a3676ecc1c8f755e56f249ac1ebd8b5ceda7899037da",
+              "source-evidence/NOTICE": "35c43127ad3acbd6bc94ff63c56684a7c26eedf07795e596c8105a0476dae2ea",
+              "source-evidence/apply_rope_split_half1-0.2.33.py": "a53cbeb1e3ef955f058c2eb8bd9642dd53b5c2fc7b843596264a52fb8e66eb3f",
+              "source-evidence/apply_rope_split_half1-0.2.37.py": "367baee35496439634c9f6acd9f752a9ce270a891511cfb94d7e10e61af77022",
+              "source-evidence/provenance.json": "e90ac6ea6245929ea2d7560df0c8f2bcdaf17121cc3529983af75a9070408c8c",
+              "source-evidence/rope-0.2.33.py": "aee33a18bb5fe75ce24ebad389b830c9d5775d52723fc7df4864598547b2257c",
+              "source-evidence/rope-0.2.37.py": "630a3d287bf602046935086f9d43eb6db2ec4971913a1cb3fb35bae6ea4ac9ee",
+              "test_rope_compat.py": "31957485c4c39812dbb068005ac02fd16d14871e6fb6994075167df86f2a14e6"
+            },
+            "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-rope-compat"
+          },
+          "model_requests": 0,
+          "parent_manifest_sha256": "e7b268d2e54e9010e88e325681a5d7af43052d7affdf803ca9b6c7ee54ed8736",
+          "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99",
+          "qualification": false,
+          "schema": "ltx.rope99b.transition.v1",
+          "storage_admission": {
+            "admitted": true,
+            "available_bytes": 69149999104,
+            "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+            "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b",
+            "failures": [],
+            "filesystem": {
+              "filesystem_type": "ext4",
+              "mount_id": 33,
+              "mount_point": "/",
+              "source": "/dev/nvme0n1p2"
+            },
+            "min_free_bytes": 53687091200,
+            "planned_write_bytes": 402653184,
+            "remaining_after_planned_write_bytes": 68747345920,
+            "required_bytes": 54089744384,
+            "required_mount": null,
+            "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b",
+            "schema_version": 1
+          }
+        },
+        "runtime99_transition": {
+          "campaign_bindings": {
+            "memory_helper": {
+              "packet_path": "campaign/worker-headroom-98.py",
+              "sha256": "8dee8c4748a026ce1f4d1125ca50b67431a1d44921d33121addf6a4aa7d37944",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/worker-headroom-98.py"
+            },
+            "runner": {
+              "packet_path": "campaign/run-campaign-99.sh",
+              "sha256": "1f9f405b75fc7212ec742af36198e4eeffcc894babf788d89ae822a333fa41bf",
+              "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-campaign-99.sh"
+            }
+          },
+          "control": {
+            "batch": 1,
+            "blocks": [
+              23,
+              25
+            ],
+            "decode_replica": "xpu:2",
+            "layout": "two-way",
+            "references": "w93c",
+            "shared_pool": 1,
+            "size": "256x256",
+            "workers": 2
+          },
+          "dependencies": {
+            "overlay_root": "/home/steve/ltx25-upstream99-dependencies/site-packages",
+            "receipt_sha256": "626dd5e9d840c6bfa56f6da23f326e2a434aae46c73b3662c5a08a3d50970e09",
+            "receipt_source": "/home/steve/ltx25-upstream99-dependencies/receipt.json",
+            "state": "matched"
+          },
+          "historical_contract_sections": "Retained as historical behavior contracts; upstream source changes explicitly recorded separately",
+          "historical_manifest_sha256": "918b47a5530b4dc97fe8fc8f4ec77fd64521ec6846217c54f5fba589e0e8377f",
+          "model_requests": 0,
+          "progress_overlay": {
+            "candidate_refresh_sha256": "1dc1fb8c669aed183eb45ac67a579838e45389c3d5d77cb59ff44b4c7c8ffd56",
+            "original_refresh_sha256": "331cd792515f2f7f1b1b283a725f278c2e37c647011d1c5afc724d58f016f03d",
+            "sha256": "f834a5f4a5a55c23e999c0958cfa91ad6641c5d290b6f5d1477730513433d862",
+            "source": "launch/progress_lock.py"
+          },
+          "qualification": false,
+          "schema": "ltx.upstream99.runtime-transition.v1",
+          "source_input": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99-source",
+          "source_plan_sha256": "97e77c7c88df6e8d9915a5efb39e53ab8e4aad2f820f7950ffa0671f9c929503",
+          "source_runtime_overlays": {
+            "custom_nodes/ltx_host_embedding_lab/__init__.py": {
+              "after_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44",
+              "before_sha256": "07dab8b80c3ddfe69f70b0fca9d69a93cfa487ec7c88f1ad664afb4842eb8750",
+              "diff": "--- source99/custom_nodes/ltx_host_embedding_lab/__init__.py\n+++ runtime99/custom_nodes/ltx_host_embedding_lab/__init__.py\n@@ -164,6 +164,12 @@\n                 phase = 'load-diffusion'\n                 model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]\n                 _pending.append(model)\n+                # Packet99: preserve native BF16 attention; reject checkpoint-selected backends.\n+                from comfy.ldm.modules.attention import ComfyAttention\n+                attention_modules = [m for m in model.model.diffusion_model.modules()\n+                                     if isinstance(m, ComfyAttention)]\n+                require(attention_modules and all(m.config is None and m.function is None\n+                        for m in attention_modules), 'Packet99 requires unconfigured native attention')\n             else:\n                 model, video, audio, upscaler = _shared\n                 vaes = [video, audio]\n"
+            },
+            "custom_nodes/ltx_na_axis_decode_lab/__init__.py": {
+              "after_sha256": "05a99e8cef5bed07aadee45459633b148090fb754f9489fcabf0ea31b58316ba",
+              "before_sha256": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+              "diff": "--- source99/custom_nodes/ltx_na_axis_decode_lab/__init__.py\n+++ runtime99/custom_nodes/ltx_na_axis_decode_lab/__init__.py\n@@ -14,8 +14,8 @@\n \n ROUTER_SHA = '1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7'\n CANDIDATE_SHA = 'd2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a'\n-NODES_SHA = 'dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e'\n-SD_SHA = '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0'\n+NODES_SHA = 'e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96'\n+SD_SHA = '2917a7982d08640ebe297ebc5cb5ad873567099c2e66688dcaff3650464dc694'\n DECODER_SHA = '7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21'\n NODE_CLASS_MAPPINGS = {}\n \n"
+            },
+            "scripts/host_embedding_resident_node.py": {
+              "after_sha256": "ec82f8da5c5e301d314beafeb7fbdbaeef4aa4f856e0c9f58f8e4c990476de44",
+              "before_sha256": "07dab8b80c3ddfe69f70b0fca9d69a93cfa487ec7c88f1ad664afb4842eb8750",
+              "diff": "--- source99/scripts/host_embedding_resident_node.py\n+++ runtime99/scripts/host_embedding_resident_node.py\n@@ -164,6 +164,12 @@\n                 phase = 'load-diffusion'\n                 model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]\n                 _pending.append(model)\n+                # Packet99: preserve native BF16 attention; reject checkpoint-selected backends.\n+                from comfy.ldm.modules.attention import ComfyAttention\n+                attention_modules = [m for m in model.model.diffusion_model.modules()\n+                                     if isinstance(m, ComfyAttention)]\n+                require(attention_modules and all(m.config is None and m.function is None\n+                        for m in attention_modules), 'Packet99 requires unconfigured native attention')\n             else:\n                 model, video, audio, upscaler = _shared\n                 vaes = [video, audio]\n"
+            },
+            "scripts/ltx_graph_text_encoder.py": {
+              "after_sha256": "079d2965d3849acf83a351bb459fc5a079e727d7a976940f7e76ce8a58a3ca10",
+              "before_sha256": "b488e89d16053eb517e99cec8922a6e97af3c8bed6a65943191f2fbc2e153e6d",
+              "diff": "--- source99/scripts/ltx_graph_text_encoder.py\n+++ runtime99/scripts/ltx_graph_text_encoder.py\n@@ -85,7 +85,7 @@\n     if stream is None:\n         stream = _STREAMS[key] = torch.xpu.Stream(device=device)\n     return stream\n-GEMMA_SOURCE_SHA256 = 'a0bec322e45e94e5c938c2b8bde0112d23805166a533612077915d594d18dbbc'\n+GEMMA_SOURCE_SHA256 = '6fc1b06e42e33bed5e69c208808551af839265ad319f4eb9a0aa40ecc62d179a'\n LAYER_CLASS = 'TransformerBlockGemma4'\n STACK_CLASS = 'Gemma4Transformer'\n LAYERS = 48\n"
+            },
+            "scripts/na_axis_decode_node.py": {
+              "after_sha256": "05a99e8cef5bed07aadee45459633b148090fb754f9489fcabf0ea31b58316ba",
+              "before_sha256": "363fe377ae8170ec9c22d28b927f280c3a995f8493cd41f0f17fedbdbcb44d91",
+              "diff": "--- source99/scripts/na_axis_decode_node.py\n+++ runtime99/scripts/na_axis_decode_node.py\n@@ -14,8 +14,8 @@\n \n ROUTER_SHA = '1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7'\n CANDIDATE_SHA = 'd2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a'\n-NODES_SHA = 'dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e'\n-SD_SHA = '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0'\n+NODES_SHA = 'e498f0dfe9146d56ddeff184ade4b402edd6e6c4eaca136ae112c8be3914bc96'\n+SD_SHA = '2917a7982d08640ebe297ebc5cb5ad873567099c2e66688dcaff3650464dc694'\n DECODER_SHA = '7356bfcaedc545e8af1f4820e7466bbde0a56ccd2e8b2941902af83f16657f21'\n NODE_CLASS_MAPPINGS = {}\n \n"
+            }
+          },
+          "storage_admission": {
+            "admitted": true,
+            "available_bytes": 69319917568,
+            "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+            "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99",
+            "failures": [],
+            "filesystem": {
+              "filesystem_type": "ext4",
+              "mount_id": 33,
+              "mount_point": "/",
+              "source": "/dev/nvme0n1p2"
+            },
+            "min_free_bytes": 53687091200,
+            "planned_write_bytes": 402653184,
+            "remaining_after_planned_write_bytes": 68917264384,
+            "required_bytes": 54089744384,
+            "required_mount": null,
+            "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99",
+            "schema_version": 1
+          }
+        },
+        "process_file_limits": {
+          "soft": 65536,
+          "hard": 1048576,
+          "changed_by_launcher": false
+        },
+        "progress_lock": {
+          "distribution": "tqdm",
+          "version": "4.70.1",
+          "source_path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/tqdm/std.py",
+          "source_sha256": "dd76d965de52c590819dec376644220cb35dc4831e40efb4c30944884fc57d86",
+          "original_refresh_sha256": "331cd792515f2f7f1b1b283a725f278c2e37c647011d1c5afc724d58f016f03d",
+          "candidate_refresh_sha256": "1dc1fb8c669aed183eb45ac67a579838e45389c3d5d77cb59ff44b4c7c8ffd56",
+          "loaded_refresh_filename": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b/launch/refresh.candidate.py"
+        },
+        "pid": 3195828,
+        "proc_start_ticks": "25715590",
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "start_utc": "2026-10-07 14:28:49 UTC",
+        "devices": [
+          {
+            "ordinal": 0,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 1,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 2,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          },
+          {
+            "ordinal": 3,
+            "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+            "copy_compute": "passed"
+          }
+        ],
+        "torch": "2.14.0+xpu",
+        "runtime": {
+          "files": {
+            "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+            "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a"
+          },
+          "python": "3.12.13",
+          "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+          "torch": "2.14.0+xpu"
+        },
+        "source_commit": "b00c6e95279053474955540ba4f551646722b9aa",
+        "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-rebalance-100b",
+        "source_packet_manifest_sha256": "50beee86e0ea22d7ef2405dcb4af56631a6eab7258c4052fbfb06214381aef63",
+        "encoder_run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100b-two-way20-28-w2-b1-p1-dxpu2-s256x256",
+        "extension_sha256s": {
+          "av_model.py": "e880b29b1d6e2cefe807c53c26cf4733d90aaae13126d8652f5989de15d1f213",
+          "block_compile_node.py": "f1c5441ec25bdb093d939598d319ecea769fa15879b425f22cba7694938435a7",
+          "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+          "concurrent_cfg_node.py": "48d2b4dd1d95c6729a3b7dbc7a767f60efe70f2af723a0833e6561153dcdd96e",
+          "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+          "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+          "graph_capture_node.py": "775456c2d20b692dbe17d37819fb0364fdedf44681eae5b54b39ffc692a677c3",
+          "graph_fusion_node.py": "12899f9972369971d3e3a4f81ea215ab2915915bcbc9d2f33134b906d0d7caca",
+          "graph_text_encoder_node.py": "cb6a60c94c621a7b47de785a20b7d6f875579ba20537bd2718a536dbf58ee1d6",
+          "graph_upsampler_node.py": "6abf7e4958c4d6c4d9a4aff8bc3145c1a5f81ace50ee733366a1a6a8dd9b9151",
+          "graph_vae_node.py": "1e61796a4a6ea5c6f2d5c9645c2045e122836565514725831fe7ed40f1e31c10",
+          "host_embedding_clip.py": "61b04906cb1520362a60138a4ac31f14fa13f22fe08bd7c6b03cfb1040d2caec",
+          "host_embedding_placement_node.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+          "host_embedding_resident_node.py": "4f6119e13473610b0ff4d3ffc6c36096ba2e3f5e8ec3ebbacbcd0495cbf1a065",
+          "host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+          "ltx_block_compile.py": "e439b052e8bf72375d280c0a078fc0030a84f4ed521b149f80cf5e67537b2a41",
+          "ltx_decode_child.py": "d149793333d091989773e63ca4fd0bbc5aa0aa4cd05a8a25bf5c3d6b7709708d",
+          "ltx_decode_replica.py": "910b5948b8efc0dd5887c8241b8162ea64953af9261c3c957407d599b416682c",
+          "ltx_gil_probe.py": "12377616151fc2c3d94ce082c3f9dd78803e1a3f27e38db25d93a278ebc7550c",
+          "ltx_graph_capture.py": "fc691e4ff4fdbeba0724a8946dbb58dbf3b4cbd9ccdaf325c307f2d86981d7e5",
+          "ltx_graph_text_encoder.py": "079d2965d3849acf83a351bb459fc5a079e727d7a976940f7e76ce8a58a3ca10",
+          "ltx_graph_upsampler.py": "03d828654bb8a3a10c93bcd3b95c9582e4ad01f2cd7c62fc0009e619fd54de58",
+          "ltx_graph_vae.py": "02199884f583dd4c0cfce795599d5d32d0aff91d9fa9e414b7f068f313e8055c",
+          "ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+          "ltx_layer_shard.py": "a000ccd309e70b2f41167c84b73aae01caf50f9cd38d1256a21f6cc7b0dd2ef3",
+          "ltx_lean_conditioning.py": "6740d6665c7dea622fc859287cf075bc01a5e521a7154e6138afaf6afbad7d99",
+          "ltx_multiblock_compile.py": "f3e1401aa9898587ff67f9727ac3fe44099003ac71a74d02ee7f07fb362854b9",
+          "ltx_na_axis_candidate.py": "d2907c1ee764fbb344db08851e19a67f0fd2144256d5451f0d15a9382dc08b6a",
+          "ltx_na_axis_router.py": "1fe42fe9cc52fc957ef9bb3d8de070f2aefb3cb320b12d090146ad04f420b2a7",
+          "ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+          "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+          "ltx_output_size_98.py": "895b1c02ac764838b5d69446b0e5cf054884b191dd8b9446c5ce641ec40f2e52",
+          "ltx_pipeline.py": "5c2b36efa1ef3fcc9f865e841063ac15da9a1db765fc9d8e2d608fd1a622db58",
+          "ltx_qkv_fusion.py": "e32e18f260ba8593f47f55c3897a57e41d69675efc12da295348d635f1062c1b",
+          "ltx_sampler_batch.py": "a1c7e6e05be201dc5b26d77051b213158fa3443229386ece05726b0346662aa3",
+          "ltx_text_shard.py": "0a2e085b2d6f51a1ba754c2355e601ae15022f8a25e828ab43490ef6412ec047",
+          "ltx_text_window.py": "70bb7be90cc458a7e0940759650a7cc438ff4d8f713c5163df1ae0358c4ac611",
+          "multiblock_compile_node.py": "e1fc1e6f8e42344c1e23582c9d284c89eda8ca1b058ea242948db1388650d743",
+          "na_axis_decode_node.py": "05a99e8cef5bed07aadee45459633b148090fb754f9489fcabf0ea31b58316ba",
+          "phase_timed_upsampler_node.py": "262dfbae0cbd0b5f43ca308b259fe33e1743c83c3fbc41eb42475eed82557895",
+          "pipeline_decode_node.py": "bb03e12809feaedf93235130827d40d352b21ee8488c31f08dec1397c068d8c8",
+          "pipeline_node.py": "3c170dc810c95ad00aebd721c7031c1a9220b152b52a779925ef672e0e89b690",
+          "pipeline_sampler_node.py": "1d20b4ad3341710f71a36d8d1bef57e0f11004a4a9cb5bbd46bced1407e377b0",
+          "resident_fastpath_node.py": "92ee944474fc7f2bd865b5ec08479441f031dbad24364d3eddeac20ca653ddbc",
+          "resident_node.py": "3523c95ab0a250a56ff9ce16251d16f6d5ffa76e03c0addf927e638d0b724951"
+        },
+        "compiler_environment": {
+          "TORCHINDUCTOR_COMPILE_THREADS": "1",
+          "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100b-two-way20-28-w2-b1-p1-dxpu2-s256x256/inductor-cache",
+          "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100b-two-way20-28-w2-b1-p1-dxpu2-s256x256/triton-cache"
+        },
+        "launcher_sha256": "d5b98857f81d04faf4e7a4f4749b41220c77fb1ba82f42bd9856a07dc870740f",
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "server_args_sha256": "e4bbb116f4e7a249c6f4feaade740ac91c5a87eca3c31886ed77340f1aae14bf",
+        "health_admission": {
+          "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-100.json",
+          "sha256": "c347e511c416d22517e1766fe67f3b050e0045c241954d3ae5abc4b2c12804ce",
+          "end_utc": "2026-10-07 14:18:58 UTC",
+          "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+          "admitted_fault_lines": 1,
+          "watch_since": "2026-10-07 14:28:49 UTC"
+        },
+        "rope_compatibility": {
+          "schema": "ltx.rope-arithmetic-compat.v1",
+          "status": "installed-unqualified",
+          "installer_sha256": "99e6bc916789b8d4443a869000af524462ce66eef4757f000280b8a80366c570",
+          "source_path": "/home/steve/ltx25-upstream99-dependencies/site-packages/comfy_kitchen/backends/eager/rope.py",
+          "original_source_sha256": "630a3d287bf602046935086f9d43eb6db2ec4971913a1cb3fb35bae6ea4ac9ee",
+          "restored_source_sha256": "aee33a18bb5fe75ce24ebad389b830c9d5775d52723fc7df4864598547b2257c",
+          "function": "apply_rope_split_half1",
+          "before_code_sha256": "eb01825368fd62ed8e50df0bf47c342211e056aa6016471417a9e9484279ae56",
+          "after_code_sha256": "23f9f6e80fe2fed667eb8f1916c691e367d74f2030f54b3dcc6a42abcb7fa6fb",
+          "backend": "eager",
+          "aliases_preserved": [
+            "apply_rope_split_half1",
+            "apply_rope_split_half",
+            "apply_rope_split_half1_",
+            "apply_rope_split_half_"
+          ],
+          "package_files_changed": false,
+          "scope": "one process-local function code replacement; no exception interception",
+          "gpu_parity_qualified": false
+        }
+      },
+      "sample_rate": 48000,
+      "client_seconds": 1.5920000076293945
+    }
+  ],
+  "comparisons": {
+    "audio_latent": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    },
+    "images": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    },
+    "video_latent": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    },
+    "waveform": {
+      "bitwise_equal": true,
+      "same_layout": true,
+      "max_abs_diff": 0.0,
+      "unequal_values": 0
+    }
+  }
+}
