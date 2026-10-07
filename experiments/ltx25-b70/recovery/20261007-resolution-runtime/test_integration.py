@@ -63,9 +63,9 @@ class IntegrationControls(unittest.TestCase):
         self.r.adapter=a;return a,seen
 
     def test_actual_pinned_schedule_registered_and_init_no_models(self):
-        self.assertEqual(len(self.r.authority.requests),36)
+        self.assertEqual(len(self.r.authority.requests),87)
         self.assertEqual(self.r.authority.phase,'native_reference')
-        self.assertEqual(self.r.schedule['raw_capture_requests'],29)
+        self.assertEqual(self.r.schedule['raw_capture_requests'],80)
         self.assertIsNone(self.r.adapter)
 
     def test_dependencies_cannot_be_bypassed_or_mutated(self):
@@ -219,7 +219,7 @@ class IntegrationControls(unittest.TestCase):
         self.assertFalse((self.run/'resolution-tails-synthetic.json').exists())
 
     def test_optimized_actual_freeze_required_and_storage_floor(self):
-        row=self.rows[6];self.r.authority.completed.append(self.setup_row('freeze')['name'])
+        row=self.rows[20];self.r.authority.completed.append(self.setup_row('freeze')['name'])
         with self.assertRaisesRegex(RuntimeError,'not frozen'):self.r.before_request(row,'cpu')
         self.state.update(captures_frozen=True,loads_frozen=True);self.r.before_request(row,'cpu')
         with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=49*2**30)):
@@ -249,7 +249,7 @@ class IntegrationControls(unittest.TestCase):
         handlers=self.routes()
         with patch.object(I,'_CTX',self.r):
             for phase,row in [('native_reference',self.setup_row('window-probe')),
-                              ('optimized_preparation',self.setup_row('pin0')),('timing',self.rows[13])]:
+                              ('optimized_preparation',self.setup_row('pin0')),('timing',self.rows[34])]:
                 self.r.authority.phase=phase
                 self.r.authority.references_sha=None if phase=='native_reference' else 'c'*64
                 self.r.authority.candidate_sha='d'*64 if phase=='timing' else None
@@ -347,8 +347,51 @@ class IntegrationControls(unittest.TestCase):
                 self.r.action('admit-decode')
         self.assertFalse((self.run/'resolution-admit-capture0.json').exists())
 
+    def test_twenty_native_barrier_requires_last_fixture_and_binds_all_requests(self):
+        self.adapter();self.r.authority.completed.append(self.setup_row('prepare-native')['name'])
+        self.r.action('before-native')
+        native=[r for r in self.rows if r['phase'] in ('native-reference','native-repeat')]
+        self.assertEqual(len(native),20)
+        self.assertEqual(native[-1]['fixture'],'wheel')
+        self.assertEqual(native[-1]['phase'],'native-repeat')
+        self.r.authority.completed.extend(r['name'] for r in native[:-1])
+        with self.assertRaisesRegex(RuntimeError,'Twenty native requests'):
+            self.r.action('verify-native')
+        self.assertFalse((self.run/'native-after.json').exists())
+        self.r.authority.completed.append(native[-1]['name'])
+        (self.run/'native-preparation.json').write_text('{}')
+        observed=[]
+        def verifier(root,plan,contract_path,contract_sha,output):
+            contract=json.loads(contract_path.read_text());observed.append(contract)
+            self.assertEqual(contract['request_names'],[r['name'] for r in native])
+            self.assertEqual(contract_sha,self.session.digest(contract_path.read_bytes()))
+            # Stop at the boundary; CPU fixtures do not contain generated tensors.
+            raise RuntimeError('twenty-request verifier reached')
+        with patch.object(REF,'verify_references',side_effect=verifier):
+            with self.assertRaisesRegex(RuntimeError,'twenty-request verifier reached'):
+                self.r.action('verify-native')
+        self.assertEqual(len(observed),1)
+        self.assertNotIn('verify-native',self.r.actions_done)
+        self.assertEqual(self.r.authority.phase,'native_reference')
+
+    def test_storage_allows_seven_gib_drawdown_and_rejects_more(self):
+        self.r.previous_free=64*2**30;self.r.consumed=0
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=57*2**30)):
+            self.r.storage_check()
+        self.assertEqual(self.r.consumed,7*2**30)
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=57*2**30-1)):
+            with self.assertRaisesRegex(RuntimeError,'storage allowance'):self.r.storage_check()
+
+    def test_storage_fresh_admission_reserves_seven_gib_above_fifty(self):
+        self.r.previous_free=57*2**30;self.r.consumed=0
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=57*2**30)):
+            self.r.storage_check()
+        self.r.previous_free=57*2**30-1;self.r.consumed=0
+        with patch.object(I.shutil,'disk_usage',return_value=types.SimpleNamespace(free=57*2**30-1)):
+            with self.assertRaisesRegex(RuntimeError,'storage allowance'):self.r.storage_check()
+
     def test_phase_actions_need_actual_native_completion(self):
-        with self.assertRaisesRegex(RuntimeError,'Six native requests'):self.r.action('verify-native')
+        with self.assertRaisesRegex(RuntimeError,'Twenty native requests'):self.r.action('verify-native')
         with self.assertRaisesRegex(RuntimeError,'not verified'):self.r.action('start-optimized')
         self.assertFalse((self.run/'native-runtime-contract.json').exists())
 

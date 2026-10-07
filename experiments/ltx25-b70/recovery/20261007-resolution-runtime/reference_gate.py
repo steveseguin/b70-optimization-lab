@@ -12,12 +12,13 @@ import stat
 import struct
 import sys
 
-PLAN_SHA = '5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd'
+PLAN_SHA = '84bdccba3e2fe39b9bf5bcd1cd074c6ee74bbd8ade2a9be7aa63e945f5b07e1d'
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
 MODEL_VERIFICATION_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
-QUALIFICATION_ID = '007ffea2b24009bb6ae84f03cac7372a708e2dc193da0661562ffb1ddedca534'
+QUALIFICATION_ID = 'e017bccd97b4713eab3ca9216e25c540201f117b330bd2cbab35254d19d7e4ac'
 SHAPES = {'images': [25, 384, 640, 3], 'video_latent': [1, 128, 4, 12, 20],
           'audio_latent': [1, 8, 26, 16], 'waveform': [1, 2, 48480]}
+FIXTURE_IDS = ('boat', 'marble', 'bird', 'pendulum', 'rain', 'paper', 'candle', 'pour', 'fabric', 'wheel')
 REQUIRED_NODES = {'364', '344', '348', '368', '374', '358', '414'}
 MAX_FILE_BYTES = 90 * 1024**2
 
@@ -131,7 +132,23 @@ def load_plan(path, evidence):
     plan = envelope['plan']
     require(plan['qualification_id'] == QUALIFICATION_ID and
             plan['basis']['parent_manifest_sha256'] == PARENT_SHA and not plan['runtime_qualified'], 'Plan basis differs')
+    request_groups(plan)
     return plan
+
+
+def request_groups(plan):
+    """Only the full reviewed ten-fixture schedule, never an arbitrary shorter subset."""
+    fixtures = [row['id'] for row in plan['fixtures']]
+    require(tuple(fixtures) == FIXTURE_IDS, 'Original ten-fixture order differs')
+    groups = {phase: [r for r in plan['requests'] if r['phase'] == phase]
+              for phase in ('native-reference', 'native-repeat', 'candidate-check', 'timed')}
+    require([len(groups[p]) for p in groups] == [10, 10, 14, 44] and
+            len(plan['requests']) == 78, 'Full-suite phase counts differ')
+    for phase in ('native-reference', 'native-repeat'):
+        require([r['fixture'] for r in groups[phase]] == fixtures, 'Native fixture sequence differs')
+    require(plan['reference_names'] == {r['fixture']: r['name'] for r in groups['native-reference']},
+            'Native reference fixture mapping differs')
+    return groups
 
 
 def native_state(value, identity_hash, qualification_id):
@@ -184,7 +201,8 @@ def _verify_references(root, plan_path, runtime_contract_path, runtime_contract_
         require(sha(raw) == digest(binding['sha256']), 'Native state binding differs')
         states.append(native_state(strict_json(raw), identity_hash, QUALIFICATION_ID))
     require(states[0] < states[1], 'Native state ordering differs')
-    native = plan['requests'][:6]
+    groups = request_groups(plan)
+    native = groups['native-reference'] + groups['native-repeat']
     require(contract.get('request_names') == [row['name'] for row in native], 'Native request order differs')
     executions = []; seen_ids = set(); previous_end = states[0]
     for row in native:
@@ -256,7 +274,7 @@ def _verify_references(root, plan_path, runtime_contract_path, runtime_contract_
                            'prompt_id': pid, 'graph_sha256': row['graph_sha256'],
                            'start_ms': starts[0], 'success_ms': ends[0],
                            'conditioning_sha256': conditioning, 'tensors': inventory})
-    for first, repeat in zip(executions[:3], executions[3:]):
+    for first, repeat in zip(executions[:10], executions[10:]):
         require(first['fixture'] == repeat['fixture'] and first['tensors'] == repeat['tensors'] and
                 first['conditioning_sha256'] == repeat['conditioning_sha256'], 'Native repeat differs')
     evidence.recheck()
@@ -269,8 +287,8 @@ def _verify_references(root, plan_path, runtime_contract_path, runtime_contract_
                'runtime_contract_sha256': runtime_contract_sha256, 'executions': executions,
                'inputs': {'root': str(root), 'plan_path': str(plan_path),
                           'runtime_contract_path': str(runtime_contract_path)},
-               'four_tensor_repeat_pairs_exact': 3, 'evidence_sha256': evidence.hashes,
-               'claim': 'Three native sampler/decode fixture repeats with accepted graph-sharded window encoder; no optimized candidate or timing qualification.'}
+               'four_tensor_repeat_pairs_exact': 10, 'evidence_sha256': evidence.hashes,
+               'claim': 'Ten original native sampler/decode fixture repeats with accepted graph-sharded window encoder; no optimized candidate or timing qualification.'}
     if output_path is None:
         return receipt
     raw = json.dumps(receipt, indent=2, sort_keys=True, allow_nan=False).encode() + b'\n'
@@ -298,7 +316,7 @@ def verify_receipt(path, expected_sha256):
             receipt.get('status') == 'reference_verified' and receipt.get('plan_sha256') == PLAN_SHA and
             receipt.get('qualification_id') == QUALIFICATION_ID and
             digest(receipt.get('runtime_manifest_sha256')) and
-            receipt.get('four_tensor_repeat_pairs_exact') == 3 and len(receipt.get('executions', [])) == 6,
+            receipt.get('four_tensor_repeat_pairs_exact') == 10 and len(receipt.get('executions', [])) == 20,
             'Reference receipt contract differs')
     require(receipt.get('evidence_sha256'), 'Reference evidence missing')
     for source, expected in receipt['evidence_sha256'].items():

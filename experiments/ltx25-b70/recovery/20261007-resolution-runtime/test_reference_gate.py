@@ -14,7 +14,7 @@ from unittest.mock import patch
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('reference_gate', HERE / 'reference_gate.py')
 G = importlib.util.module_from_spec(spec); spec.loader.exec_module(G)
-PLAN = HERE.parent / '20261007-resolution-w2-102/candidate-plan.json'
+PLAN = HERE.parent / '20261007-resolution-full-103/candidate-plan.json'
 
 
 class GateTests(unittest.TestCase):
@@ -38,9 +38,9 @@ class GateTests(unittest.TestCase):
                          'parent_manifest_sha256': G.PARENT_SHA, 'server_run': str(self.server),
                          'server_identity_sha256': identity_hash, 'successor_manifest_sha256': 'a' * 64,
                          'model_verification_sha256': 'b' * 64,
-                         'request_names': [r['name'] for r in self.plan['requests'][:6]],
+                         'request_names': [r['name'] for r in self.plan['requests'][:20]],
                          'runtime_evidence': {str(self.server / 'server-identity.json'): identity_hash}}
-        for key, timestamp in [('before_native', 1000), ('after_native', 8000)]:
+        for key, timestamp in [('before_native', 1000), ('after_native', 22000)]:
             state = {'schema': 'ltx.native-reference-state.v1', 'phase': 'native_reference',
                      'server_identity_sha256': identity_hash, 'qualification_id': G.QUALIFICATION_ID,
                      'timestamp_ms': timestamp, 'native_residency_admitted': True,
@@ -49,7 +49,7 @@ class GateTests(unittest.TestCase):
             state.update({k: [] for k in ['queue_running','queue_pending','pending_encode','pending_sample','pending_decode','pending_save']})
             p = self.root / (key + '.json'); self.write(p, state)
             self.contract[key] = {'path': str(p), 'sha256': G.sha(p.read_bytes())}
-        for i, row in enumerate(self.plan['requests'][:6]):
+        for i, row in enumerate(self.plan['requests'][:20]):
             name = row['name']; req = self.root / 'requests' / name; req.mkdir(parents=True)
             prompt_id = 'synthetic-' + str(i); start = 1100 + i * 1000
             messages = [['execution_start', {'prompt_id': prompt_id, 'timestamp': start}],
@@ -80,7 +80,7 @@ class GateTests(unittest.TestCase):
             out = self.root / 'output/validation' / name; out.mkdir(parents=True)
             header, payload, metadata = {}, b'', {}
             for key in sorted(self.shapes):
-                data = struct.pack('<ff', float(i % 3), 1.0)
+                data = struct.pack('<ff', float(i % 10), 1.0)
                 header[key] = {'dtype': 'F32', 'shape': [2], 'data_offsets': [len(payload), len(payload) + len(data)]}
                 payload += data
                 metadata[key] = {'dtype': 'torch.float32', 'shape': [2], 'finite': True, 'sha256': G.sha(data)}
@@ -112,9 +112,9 @@ class GateTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     def test_complete_synthetic_real_schema_and_reread_receipt(self):
-        result = self.run_gate(); self.assertEqual(result['four_tensor_repeat_pairs_exact'], 3)
+        result = self.run_gate(); self.assertEqual(result['four_tensor_repeat_pairs_exact'], 10)
         verified = G.verify_receipt(self.output, G.sha(self.output.read_bytes()))
-        self.assertEqual(len(verified['executions']), 6)
+        self.assertEqual(len(verified['executions']), 20)
         self.assertNotIn('torch', __import__('sys').modules)
 
     def test_receipt_exclusive_and_changed_evidence_refused(self):
@@ -137,7 +137,7 @@ class GateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Unreviewed plan'): G.load_plan(p, G.Evidence())
 
     def test_candidate_graph_cannot_be_reference(self):
-        self.write(self.request() / 'prompt.json', self.plan['requests'][6]['graph']); self.refuse()
+        self.write(self.request() / 'prompt.json', self.plan['requests'][20]['graph']); self.refuse()
 
     def test_duplicate_prompt_id_refused(self):
         self.mutate(self.request(1) / 'submission.json', lambda d: d.update(prompt_id='synthetic-0')); self.refuse()
@@ -192,7 +192,7 @@ class GateTests(unittest.TestCase):
         self.assertEqual(len(functions),2)
         ns={'hashlib':hashlib}
         exec(compile(ast.Module(body=functions,type_ignores=[]),'pinned-producer-tag','exec'),ns)
-        for row in self.plan['requests'][:6]:
+        for row in self.plan['requests'][:20]:
             inputs=row['graph']['364']['inputs']
             expected=ns['_job_tag'](inputs['mode'],inputs['text'])
             report=json.loads((self.server/('pipeline-'+row['name']+'.json')).read_text())
@@ -214,11 +214,32 @@ class GateTests(unittest.TestCase):
         p = self.root/'output/validation'/self.plan['requests'][0]['name']/'tensors.safetensors'
         raw=p.read_bytes(); p.write_bytes(raw[:-4]+struct.pack('<f',float('nan'))); self.refuse()
 
-    def test_repeat_difference_even_coherent_summary_refused(self):
-        d=self.root/'output/validation'/self.plan['requests'][3]['name']; p=d/'tensors.safetensors'
+    def test_tenth_repeat_difference_even_coherent_summary_refused(self):
+        d=self.root/'output/validation'/self.plan['requests'][19]['name']; p=d/'tensors.safetensors'
         raw=p.read_bytes(); p.write_bytes(raw[:-8]+struct.pack('<ff',7.,1.))
         self.mutate(d/'summary.json', lambda v:v['tensors']['waveform'].update(sha256=G.sha(struct.pack('<ff',7.,1.))))
         self.refuse()
+
+    def test_tenth_first_pass_fixture_corruption_refused(self):
+        folder = self.root / 'output/validation' / self.plan['requests'][9]['name']
+        p = folder / 'tensors.safetensors'
+        p.write_bytes(p.read_bytes()[:-4] + struct.pack('<f', float('nan')))
+        with self.assertRaisesRegex(ValueError, 'Nonfinite tensor bytes'):
+            self.run_gate()
+        self.assertFalse(self.output.exists())
+
+    def test_twentieth_reference_request_is_required(self):
+        (self.request(19) / 'events.jsonl').unlink()
+        self.refuse()
+
+    def test_full_suite_phase_counts_and_fixture_mapping_are_fixed(self):
+        for mutate in (lambda p: p['requests'].pop(),
+                       lambda p: p['fixtures'].reverse(),
+                       lambda p: p['reference_names'].update(wheel=p['reference_names']['boat'])):
+            plan = copy.deepcopy(self.plan)
+            mutate(plan)
+            with self.assertRaises(ValueError):
+                G.request_groups(plan)
 
     def test_shape_and_missing_tensor_refused(self):
         p=self.root/'output/validation'/self.plan['requests'][0]['name']/'summary.json'

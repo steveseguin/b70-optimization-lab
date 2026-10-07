@@ -37,7 +37,7 @@ class CampaignControls(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         self.run = self.root / 'server'; self.run.mkdir()
-        plan_path = HERE.parent / '20261007-resolution-w2-102/candidate-plan.json'
+        plan_path = HERE.parent / '20261007-resolution-full-103/candidate-plan.json'
         self.plan = json.loads(plan_path.read_text())['plan']
         self.fake_client = NS(run=self.run, root=self.root, full_schedule=True,
             contract={'runtime_manifest_sha256': 'b' * 64, 'plan_path': str(plan_path),
@@ -72,7 +72,7 @@ class CampaignControls(unittest.TestCase):
         self.assertEqual((result['status'], result['model_requests'], result['server_actions']), ('plan-only', 0, 0))
         cls.assert_not_called(); C.call.assert_not_called(); C.os.kill.assert_not_called()
 
-    def test_exact_36_requests_and_memory_phase_barriers(self):
+    def test_exact_87_requests_and_memory_phase_barriers(self):
         self.c.wait_idle = Mock(return_value=self.status())
         self.c.status = Mock(return_value=self.status())
         self.c.check_identity = Mock()
@@ -84,19 +84,30 @@ class CampaignControls(unittest.TestCase):
             return {'passed': True, 'action': body['action']}
         with patch.object(C, 'call', side_effect=action_call): result = asyncio.run(self.c.execute())
         setup = C.schedule.build_schedule()['schedule']['rows']
-        expected = [r['name'] for r in setup[:2]] + [r['name'] for r in self.plan['requests'][:6]]
-        expected += [r['name'] for r in setup[2:]] + [r['name'] for r in self.plan['requests'][6:]]
+        expected = [r['name'] for r in setup[:2]] + [r['name'] for r in self.plan['requests'][:20]]
+        expected += [r['name'] for r in setup[2:]] + [r['name'] for r in self.plan['requests'][20:]]
         self.assertEqual(result['requests'], expected)
-        self.assertEqual(len(expected), 36); self.assertEqual(len(set(expected)), 36)
+        self.assertEqual(len(expected), 87); self.assertEqual(len(set(expected)), 87)
         for capture_index in (3, 5):
             row = setup[capture_index]
             self.assertEqual(log[log.index(('action', row['admission_action'])) + 1], ('request', row['name']))
             self.assertEqual(log[log.index(('request', row['name'])) + 1], ('action', row['retirement_action']))
         self.assertEqual(log[log.index(('action', 'admit-decode')) + 1], ('request', setup[7]['name']))
-        candidate_names = [r['name'] for r in self.plan['requests'][6:13]]
+        candidate_names = [r['name'] for r in self.plan['requests'][20:34]]
         candidate_begin = log.index(('request', candidate_names[0]))
-        self.assertEqual(log[candidate_begin:candidate_begin+7], [('request', n) for n in candidate_names])
-        self.assertEqual(log[candidate_begin+7], ('action', 'verify-candidate'))
+        self.assertEqual(log[candidate_begin:candidate_begin+14], [('request', n) for n in candidate_names])
+        self.assertEqual(log[candidate_begin+14], ('action', 'verify-candidate'))
+        native_names = [r['name'] for r in self.plan['requests'][:20]]
+        native_begin = log.index(('request', native_names[0]))
+        self.assertEqual(log[native_begin:native_begin+20], [('request', n) for n in native_names])
+        self.assertEqual(log[native_begin+20], ('action', 'verify-native'))
+        timed_names = [r['name'] for r in self.plan['requests'][34:]]
+        self.assertEqual(len(timed_names), 44)
+        timed_begin = log.index(('request', timed_names[0]))
+        self.assertEqual(log[timed_begin:timed_begin+44], [('request', n) for n in timed_names])
+        self.assertEqual(log[timed_begin+44], ('action', 'verify-timed'))
+        self.assertEqual([r['timing_scope'] for r in self.plan['requests'][34:]],
+                         ['unscored-fill']*4 + ['full-suite-pass']*10 + ['bounded-continuity']*30)
         self.assertEqual(result['actions'], ['before-native', 'verify-native', 'start-optimized',
                          'admit-capture0', 'retire-capture0-tails', 'admit-capture1',
                          'retire-capture1-tails', 'admit-decode', 'verify-candidate',

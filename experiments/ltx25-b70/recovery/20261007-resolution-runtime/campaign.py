@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded packet102 campaign on one already-owned server. Never starts or retries it.
+"""Bounded packet103 campaign on one already-owned server. Never starts or retries it.
 
 Default prints the CPU schedule. --run requires a pinned client contract and
 manifest. Success keeps the application available. Failure attempts one proven-idle
@@ -121,7 +121,7 @@ class Campaign:
         request_client.write_new(self.run / 'resolution-campaign-started.json', {
             'schema': 'ltx.resolution-campaign-start.v1', 'started_unix': self.started,
             'client_contract_sha256': self.client.contract_sha, 'manifest_sha256': self.manifest_sha,
-            'policy': '36 attempts maximum; one owned application; no restart/retry'})
+            'policy': '87 attempts maximum; one owned application; no restart/retry'})
         self.owns_campaign = True
         self.wait_idle()
         setup = schedule.build_schedule(plan_path=Path(self.client.contract['plan_path']))['schedule']['rows']
@@ -129,7 +129,7 @@ class Campaign:
             await self.request(row)
             self.wait_idle()
         self.action('before-native')
-        for row in self.client.plan['requests'][:6]:
+        for row in [r for r in self.client.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')]:
             await self.request(row)
         self.action('verify-native')
         self.action('start-optimized')
@@ -154,7 +154,7 @@ class Campaign:
         self.action('verify-timed')
         return {'passed': True, 'requests': self.requests, 'actions': self.actions,
                 'timed_receipt': str(self.run / 'same-size-timed.json'),
-                'claim': 'Preliminary serial-client W2 completion intervals cycling three native-qualified fixtures; no record claim.'}
+                'claim': 'Ten-fixture W2 initial screen plus thirty continuity emissions; measured separately, no record claim.'}
 
     def graceful_stop(self):
         gate.require(self.owns_campaign and self.lock_fd is not None,
@@ -193,7 +193,7 @@ def main():
     if not args.run:
         value = schedule.build_schedule()
         print(json.dumps({'status': 'plan-only', 'schedule_sha256': value['schedule_sha256'],
-                          'requests': 36, 'model_requests': 0, 'server_actions': 0}))
+                          'requests': 87, 'model_requests': 0, 'server_actions': 0}))
         return
     campaign = Campaign(args.contract, args.contract_sha256, args.manifest_sha256)
     signal_received = []

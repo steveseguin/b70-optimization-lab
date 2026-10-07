@@ -15,11 +15,11 @@ _spec = importlib.util.spec_from_file_location('resolution_reference_gate_client
                                              Path(__file__).with_name('reference_gate.py'))
 G = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(G)
 MIN_FREE = 50 * 1024**3
-WRITE_ALLOWANCE = 4 * 1024**3
-CAPTURE_CAP = 32
-ATTEMPT_CAP = 36
+WRITE_ALLOWANCE = 7 * 1024**3
+CAPTURE_CAP = 80
+ATTEMPT_CAP = 87
 MODEL_SHA = G.MODEL_VERIFICATION_SHA256
-SCHEDULE_SHA = 'e3953da6514bce5bc86e83dbf149a3ad7850894e57c4496c028039f357fc449f'
+SCHEDULE_SHA = '6c2e7a35102ddcb5e84468965495311ba62768e271553b54745daefbe232e4fb'
 
 
 def write_new(path, value):
@@ -119,7 +119,7 @@ class Client:
         native_rows = [r for r in self.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')]
         candidate_rows = [r for r in self.plan['requests'] if r['phase'] == 'candidate-check']
         timed_rows = [r for r in self.plan['requests'] if r['phase'] == 'timed']
-        G.require((len(native_rows), len(candidate_rows), len(timed_rows)) == (6, 7, 14),
+        G.require((len(native_rows), len(candidate_rows), len(timed_rows)) == (20, 14, 44),
                   'W2 plan phase counts differ')
         self.ordered_names = [r['name'] for r in native_rows]
         self.identity_raw = G.read_file(self.run / 'server-identity.json'); self.identity = G.strict_json(self.identity_raw)

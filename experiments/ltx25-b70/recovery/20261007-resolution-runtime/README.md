@@ -1,4 +1,4 @@
-# 640×384 reference/runtime components — W2 successor in preparation
+# 640×384 reference/runtime components — full-suite successor in preparation
 
 Packet101 exposed a native FP32 inventory omission;101b corrected it and
 produced six finite, exactly repeating native clips, then exposed a verifier
@@ -12,12 +12,21 @@ after graceful shutdown; all four GPUs passed postflight.
 [Measured closeout](../../data/resume-20261007/resolution101c-closeout/summary.json).
 This is scoped workload qualification, not a speed record or endurance result.
 
-The current authored successor tests W2/B1 at the same geometry. The model,
-steps, precision and encoder window remain unchanged. The
-[102 request plan](../20261007-resolution-w2-102/README.md) fixes six native
-requests, seven candidate requests and fourteen timed requests; nine setup
-requests bring the total to 36 attempts and 29 raw captures. Captures remain
-capped at 32. Both workers are pinned, admitted and checked independently.
+Sealed102 passed its W2 screen: all six native executions and13 scored clips
+matched exactly. Throughput rose41% to12.282 generated frames/s in the matched
+three-fixture serial-client screen. The app remains running and idle after
+successful completion; the unmodified verifier reconstructed the proof.
+[102 closeout](../../data/resume-20261007/resolution102-closeout/summary.json).
+
+The current authored successor103 broadens qualification to all ten original
+fixtures. The model, steps, precision, encoder window and W2/B1 configuration
+remain unchanged. The [full-suite plan](../20261007-resolution-full-103/README.md)
+fixes20 native requests,14 candidate requests and44 timed/continuity requests;
+nine setup requests bring the total to87 attempts and80 raw captures. Both
+workers are pinned, admitted and checked independently. The first ten timed
+emissions and subsequent thirty continuity emissions have separate summaries.
+The proposed write allowance is7GiB with50GiB reserved; execution requires a
+fresh filesystem admission. No client delivery optimization is included.
 
 The owner has supplied replacement instructions preferring application reuse.
 The runner now retains a successful application after verifying quiescence.
@@ -26,10 +35,10 @@ unresolved work remain for the coordinator. No automatic restart or request retr
 is allowed. Retaining the application does not authorize bypassing its consumed
 request plan; follow-up work needs its own registered admission.
 
-101c is the reviewed W1 predecessor; 99b remains the constructor source. Sealed
+102 is the reviewed W2 predecessor; 99b remains the constructor source. Sealed
 historical packets and plans are unchanged. New native references must precede
 optimized capture. The accepted text encoder remains graph-sharded, so this is
-not an all-eager oracle. The new W2 result is not yet GPU-qualified.
+not an all-eager oracle. The expanded103 result is not yet GPU-qualified.
 
 Implemented components:
 
@@ -60,7 +69,7 @@ registered node owners, unchanged resident tensor identities and fresh device
 memory. The narrow loader wrapper protects loaded owners from eviction; ordinary
 Comfy allocator bookkeeping is retained. `candidate_gate.py` verifies real
 emissions against the three native references and excludes fills. The complete
-`request_client.py` accepts only the 36 exact scheduled requests and reads fresh
+`request_client.py` accepts only the87 exact scheduled requests and reads fresh
 server phase observations; `schedule.py` binds the nine setup graphs.
 
 `integration.py` connects setup-result checks, native safety, source identity and
@@ -86,7 +95,7 @@ The latter keeps a provisional 4 GiB transient allowance, 1 GiB rounded pool
 allowance and 2 GiB floor on the sampler cards. Neither is a measured peak bound.
 Both captures record fresh post-capture memory and enforce the 2 GiB floor.
 Actual resident weights and encoder graphs must already be present.
-Keep the50GiB disk reserve, fresh4GiB write allowance and32-capture bound.
+Keep the50GiB disk reserve, fresh7GiB write allowance and80-capture bound.
 
 Tests are adjacent `test_*.py` scripts, run with `python3 -B` individually.
 Synthetic schema controls are labeled as such and are not model measurements.

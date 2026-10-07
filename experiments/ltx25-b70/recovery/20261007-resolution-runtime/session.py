@@ -12,7 +12,7 @@ import re
 import threading
 import time
 
-PLAN_SHA256 = '5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd'
+PLAN_SHA256 = '84bdccba3e2fe39b9bf5bcd1cd074c6ee74bbd8ade2a9be7aa63e945f5b07e1d'
 MODE = 'same-size-native-v1'
 PHASES = ('native_reference', 'reference_verified', 'optimized_preparation',
           'candidate_verified', 'timing')
@@ -240,7 +240,7 @@ class Authority:
                 capture = any(n['class_type'] in ('LTXBaselineCapture', 'LTXPipelineSave')
                               for n in graph.values())
                 if capture:
-                    require(self.capture_count < 32, 'Bounded capture allowance exhausted')
+                    require(self.capture_count < 80, 'Bounded capture allowance exhausted')
                     self.capture_count += 1
                 self.prompt_ids.add(prompt_id)
                 self.active = {'name': name, 'prompt_id': prompt_id, 'start_ns': time.time_ns()}

@@ -45,11 +45,13 @@ class CandidateControls(unittest.TestCase):
         value['session_observation' if role == 'auxiliary' else 'phase_authorization'] = self.auth(role, name, phase, candidate_sha)
         return value
 
-    def make_phase(self, phase, candidate_sha=None):
+    def make_phase(self, phase, candidate_sha=None, continuity_gap_ms=0):
         rows = [r for r in self.f.plan['requests'] if r['phase'] == phase]
         for i, row in enumerate(rows):
             name = row['name']; req = self.root / 'requests' / name; req.mkdir(parents=True)
-            pid = 'test-' + name; start = (10000 if phase == 'candidate-check' else 30000) + i*1000; end = start+500
+            pid = 'test-' + name; start = (30000 if phase == 'candidate-check' else 60000) + i*1000
+            if phase == 'timed' and i >= 14: start += continuity_gap_ms
+            end = start+500
             messages = [['execution_start', {'prompt_id': pid, 'timestamp': start}],
                         ['execution_cached', {'prompt_id': pid, 'timestamp': start, 'nodes': []}],
                         ['execution_success', {'prompt_id': pid, 'timestamp': end}]]
@@ -96,23 +98,27 @@ class CandidateControls(unittest.TestCase):
         with self.assertRaises((ValueError,KeyError,FileNotFoundError)):self.run_gate()
         self.assertFalse(self.output.exists())
 
-    def row(self,index=10):return self.f.plan['requests'][index]
+    def row(self,index=24):return self.f.plan['requests'][index]
 
     def marker(self, stage, emitted=0):
-        base = self.row(6)['clip_index']
+        base = self.row(20)['clip_index']
         return self.server / ('pipeline-done-%s-%d.json' % (stage, base+emitted))
 
     def test_complete_candidate_reconstruction_and_timing(self):
-        result=self.run_gate();self.assertEqual(result['four_tensor_exact_clips'],3)
+        result=self.run_gate();self.assertEqual(result['four_tensor_exact_clips'],10)
         sha=C.R.sha(self.output.read_bytes());self.assertEqual(C.verify_candidate_receipt(self.output,sha),result)
-        self.make_phase('timed',sha)
+        self.make_phase('timed',sha,continuity_gap_ms=5000)
         timing=C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,sha)
-        self.assertEqual(timing['four_tensor_exact_clips'],10);self.assertEqual(timing['distinct_fixtures'],3)
+        self.assertEqual(timing['four_tensor_exact_clips'],40);self.assertEqual(timing['distinct_fixtures'],10)
         self.assertEqual(timing['completion_intervals_seconds'],[1.]*9)
+        self.assertEqual(timing['continuity_completion_intervals_seconds'],[1.]*29)
+        self.assertEqual(timing['aggregate_completion_intervals_seconds'],[1.]*9+[6.]+[1.]*29)
+        self.assertEqual(timing['boundary_interval_seconds'],6.)
+        self.assertEqual(timing['timing_blocks']['continuity']['emissions'],30)
         self.assertNotIn('torch',sys.modules)
 
     def test_fill_capture_is_never_parity(self):
-        for index in (6, 9):  # First and fourth fills are not scored tensor captures.
+        for index in (20, 23):  # First and fourth fills are not scored tensor captures.
             folder=self.root/'output/validation'/self.row(index)['name']
             folder.mkdir();(folder/'tensors.safetensors').write_bytes(b'placeholder')
         result=self.run_gate();self.assertEqual([r['parity_status'] for r in result['executions'][:4]],['not-scored-fill']*4)
@@ -129,7 +135,7 @@ class CandidateControls(unittest.TestCase):
         exec(compile(ast.Module(body=functions,type_ignores=[]),'pinned-producer-tag','exec'),ns)
         self.run_gate();candidate_sha=C.R.sha(self.output.read_bytes())
         self.make_phase('timed',candidate_sha)
-        for row in self.f.plan['requests'][6:]:
+        for row in self.f.plan['requests'][20:]:
             inputs=row['graph']['364']['inputs'];expected=ns['_job_tag'](inputs['mode'],inputs['text'])
             p=self.server/('pipeline-'+row['name']+'.json')
             detail=json.loads(p.read_text())['detail']
@@ -146,7 +152,7 @@ class CandidateControls(unittest.TestCase):
 
     def test_wrong_emitted_index_and_missing_worker_marker(self):
         name=self.row()['name'];p=self.server/('pipeline-decode-'+name+'.json')
-        self.f.mutate(p,lambda v:v['detail'].update(emitted_index=self.row(6)['clip_index']+1));self.refuse()
+        self.f.mutate(p,lambda v:v['detail'].update(emitted_index=self.row(20)['clip_index']+1));self.refuse()
 
     def test_wrong_sampler_worker_or_depth_refused(self):
         p = self.server / ('pipeline-sampler-' + self.row()['name'] + '.json')
@@ -161,7 +167,7 @@ class CandidateControls(unittest.TestCase):
         self.f.write(p, original)
 
     def test_fourth_fill_and_two_prompt_sampler_delay_are_required(self):
-        row = self.row(7)  # second candidate request must still be sampler fill
+        row = self.row(21)  # second candidate request must still be sampler fill
         p = self.server / ('pipeline-sampler-' + row['name'] + '.json')
         self.f.mutate(p, lambda v: v['detail'].update(emitted_index=row['clip_index']-1))
         with self.assertRaisesRegex(ValueError, 'Sampler emission differs'):
@@ -171,7 +177,7 @@ class CandidateControls(unittest.TestCase):
     def test_preview_must_use_two_prompt_producer_offset(self):
         row = self.row()
         p = self.server / ('pipeline-save-' + row['name'] + '.json')
-        wrong = self.row(7)['name'] + '/preview'
+        wrong = self.row(21)['name'] + '/preview'
         self.f.mutate(p, lambda v: v.update(prefix=wrong))
         with self.assertRaisesRegex(ValueError, 'Preview completion/prefix differs'):
             self.run_gate()
@@ -191,6 +197,30 @@ class CandidateControls(unittest.TestCase):
         p.write_bytes(p.read_bytes()[:-8]+struct.pack('<ff',99.,1.))
         self.f.mutate(folder/'summary.json',lambda v:v['tensors']['waveform'].update(sha256=C.R.sha(struct.pack('<ff',99.,1.))))
         self.refuse()
+
+    def test_last_candidate_fixture_tensor_difference_refused(self):
+        row = [r for r in self.f.plan['requests'] if r['phase'] == 'candidate-check'][-1]
+        self.assertEqual(row['expected_emitted_fixture'], 'wheel')
+        folder = self.root/'output/validation'/row['name']
+        p = folder/'tensors.safetensors'
+        p.write_bytes(p.read_bytes()[:-8] + struct.pack('<ff', 77., 1.))
+        self.f.mutate(folder/'summary.json', lambda v: v['tensors']['waveform'].update(
+            sha256=C.R.sha(struct.pack('<ff', 77., 1.))))
+        with self.assertRaisesRegex(ValueError, 'Four-tensor native equality failed'):
+            self.run_gate()
+        self.assertFalse(self.output.exists())
+
+    def test_last_continuity_fixture_still_requires_exact_native_bytes(self):
+        self.run_gate(); sha=C.R.sha(self.output.read_bytes());self.make_phase('timed',sha)
+        row = [r for r in self.f.plan['requests'] if r['phase'] == 'timed'][-1]
+        self.assertEqual(row['expected_emitted_fixture'], 'wheel')
+        folder = self.root/'output/validation'/row['name'];p=folder/'tensors.safetensors'
+        p.write_bytes(p.read_bytes()[:-8]+struct.pack('<ff',99.,1.))
+        self.f.mutate(folder/'summary.json',lambda v:v['tensors']['waveform'].update(
+            sha256=C.R.sha(struct.pack('<ff',99.,1.))))
+        with self.assertRaisesRegex(ValueError, 'Four-tensor native equality failed'):
+            C.verify_outputs(self.root,T.PLAN,self.ref,self.refsha,'timed',self.timed,self.output,sha)
+        self.assertFalse(self.timed.exists())
 
     def test_unknown_graph_or_runtime_refused(self):
         p=self.root/'requests'/self.row()['name']/'identity.json';self.f.mutate(p,lambda v:v.update(pid=999));self.refuse()

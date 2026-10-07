@@ -7,11 +7,11 @@ import stat
 
 PARENT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-upstream-99b')
 PARENT_SHA = 'f819270165a7e8c59206b0dd641ebb1b7763e586b458a1e32a75344f96220d0a'
-PLAN_SHA = '5973dddeed7f1af0324c87aab04ad9b95c0e452181a7c92e81134fcd075479dd'
-QUALIFICATION_ID = '007ffea2b24009bb6ae84f03cac7372a708e2dc193da0661562ffb1ddedca534'
-PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-w2-102/candidate-plan.json')
-PREFIX = 'resolution-w2-20261007'
-CAPTURE_INDICES = {'capture0': 99902030, 'capture1': 99902041}
+PLAN_SHA = '84bdccba3e2fe39b9bf5bcd1cd074c6ee74bbd8ade2a9be7aa63e945f5b07e1d'
+QUALIFICATION_ID = 'e017bccd97b4713eab3ca9216e25c540201f117b330bd2cbab35254d19d7e4ac'
+PLAN = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/recovery/20261007-resolution-full-103/candidate-plan.json')
+PREFIX = 'resolution-full-20261007'
+CAPTURE_INDICES = {'capture0': 99903030, 'capture1': 99903041}
 GRAPHS = {
  'window-probe': ('text-window-probe.json','ce6085a42aab926e8159c9bc966cc1b67a8da03dd6ecaef6b5efa52669ccd7a0'),
  'pin0': ('sampler-pin.json','fdd237a084723741d41689e7450482f77bc03624abfabcf3300c18f3761f3005'),
@@ -121,22 +121,23 @@ def build_schedule(packet=PARENT, plan_path=PLAN):
         rows.append(row);previous=name
     indices={r['clip_index'] for r in plan['requests']}
     require(len(set(CAPTURE_INDICES.values()))==2 and all(i not in indices and
-        max(r['clip_index'] for r in plan['requests'][:6])<i<min(r['clip_index'] for r in plan['requests'][6:])
+        max(r['clip_index'] for r in plan['requests'][:20])<i<min(r['clip_index'] for r in plan['requests'][20:])
         for i in CAPTURE_INDICES.values()),'Capture index collision')
     captures=sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave') for n in r['graph'].values()) for r in [*plan['requests'],*rows])
-    require(captures==29 and captures<=32,'Capture budget differs')
+    require(captures==80 and captures<=80,'Capture budget differs')
     result={'schema':'ltx.resolution-setup-schedule.v1','status':'CPU-plan-only-not-runtime-qualified',
             'parent_manifest_sha256':PARENT_SHA,'plan_sha256':PLAN_SHA,'qualification_id':QUALIFICATION_ID,
             'source_graph_sha256':sources,'rows':rows,
             'boundary_dependencies':{
                 plan['requests'][0]['name']:[PREFIX+'-prepare-native'],
-                'barrier:reference_verified':[r['name'] for r in plan['requests'][:6]],
+                'barrier:reference_verified':[r['name'] for r in plan['requests'][:20]],
                 'barrier:optimized_preparation':['barrier:reference_verified'],
-                plan['requests'][6]['name']:[PREFIX+'-freeze'],
-                'barrier:candidate_verified':[r['name'] for r in plan['requests'][6:13]],
+                plan['requests'][20]['name']:[PREFIX+'-freeze'],
+                'barrier:candidate_verified':[r['name'] for r in plan['requests'][20:34]],
                 'barrier:timing':['barrier:candidate_verified']},
-            'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':32,
-            'retry_or_extra_fill_requests':0,'native_reference_captures':6,'candidate_compared_clips':3,'timed_compared_clips':10,
+            'submitted_requests':len(plan['requests'])+len(rows),'raw_capture_requests':captures,'capture_cap':80,
+            'retry_or_extra_fill_requests':0,'native_reference_captures':20,'candidate_compared_clips':10,'timed_compared_clips':40,
+            'timed_full_suite_clips':10,'timed_bounded_continuity_clips':30,
             'obligations':['Exact registered setup order and per-kind verdict checks in trusted executor adapter',
                            'Quiescence plus durable completed-tail retirement at explicit barriers; no clear/recompute',
                            'Native proof verified before any sampler route/sentry/replica installation',

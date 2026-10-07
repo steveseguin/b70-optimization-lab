@@ -84,10 +84,10 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
         e.raw(candidate_receipt_path)
     else:
         require(candidate_receipt_path is None and candidate_sha256 is None, 'Unexpected candidate input')
-    rows = [r for r in plan['requests'] if r['phase'] == phase]
-    require(len(rows) == (7 if phase == 'candidate-check' else 14), 'Request count differs')
+    rows = R.request_groups(plan)[phase]
+    require(len(rows) == (14 if phase == 'candidate-check' else 44), 'Request count differs')
     base = rows[0]['clip_index']; expected_count = len(rows) - 4
-    references = {r['name']: r for r in reference['executions'][:3]}
+    references = {r['name']: r for r in reference['executions'][:10]}
     seen = {r['prompt_id'] for r in reference['executions']}
     if candidate:
         seen.update(r['prompt_id'] for r in candidate['executions'])
@@ -125,6 +125,12 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
         record = {'name': name, 'prompt_id': pid, 'start_ms': start, 'success_ms': end,
                   'graph_sha256': row['graph_sha256'], 'fill': i < 4,
                   'emitted_index': None if i < 4 else row['expected_emitted_index']}
+        if phase == 'timed':
+            expected_scope = ('unscored-fill' if i < 4 else 'full-suite-pass' if i < 14 else 'bounded-continuity')
+            require(row['timing_scope'] == expected_scope and
+                    row.get('emitted_suite_pass') == (None if i < 4 else (i-4)//10+1),
+                    'Timing block mapping differs')
+            record.update(timing_scope=expected_scope, emitted_suite_pass=row.get('emitted_suite_pass'))
         if i < 4:
             require(row['reference'] is None and row['expected_emitted_fixture'] is None, 'Fill cannot have oracle')
             record['parity_status'] = 'not-scored-fill'
@@ -172,15 +178,27 @@ def _verify(root, plan_path, reference_receipt_path, reference_sha256, phase,
               'runtime_manifest_sha256': reference['runtime_manifest_sha256'],
               'server_identity_sha256': reference['server_identity_sha256'],
               'reference_receipt_sha256': reference_sha256, 'candidate_receipt_sha256': candidate_sha256,
-              'four_tensor_exact_clips': expected_count, 'distinct_fixtures': 3, 'fills_not_scored': 4,
+              'four_tensor_exact_clips': expected_count, 'distinct_fixtures': 10, 'fills_not_scored': 4,
               'executions': executions, 'evidence_sha256': e.hashes,
               'inputs': {'root': str(root), 'plan_path': str(plan_path), 'reference_receipt_path': str(reference_receipt_path),
                          'candidate_receipt_path': str(candidate_receipt_path) if candidate_receipt_path else None},
-              'claim': 'Exact native-reference bytes for three fixtures only; fills excluded. No broader video-quality, resolution, duration or speed-record claim.'}
+              'claim': 'Exact native-reference bytes for ten original fixtures only; fills excluded. Repeated timing/continuity clips do not establish broader visual quality, resolution, duration or a speed record.'}
     if phase == 'timed':
         ends = [r['success_ms'] for r in executions if not r['fill']]
-        result['completion_intervals_seconds'] = [(b-a)/1000 for a,b in zip(ends, ends[1:])]
-        result['timing_definition'] = 'Nine server-success intervals between ten emitted clips cycling three fixtures; preview completion checked separately.'
+        require(len(ends) == 40, 'Forty timed/continuity emissions required')
+        intervals = lambda values: [(b-a)/1000 for a,b in zip(values, values[1:])]
+        result['completion_intervals_seconds'] = intervals(ends[:10])
+        result['continuity_completion_intervals_seconds'] = intervals(ends[10:])
+        result['aggregate_completion_intervals_seconds'] = intervals(ends)
+        result['boundary_interval_seconds'] = (ends[10]-ends[9])/1000
+        result['timing_definition'] = ('Nine server-success intervals between the initial ten emitted original fixtures, '
+            'each once; preview completion checked separately. This is the initial full-suite screen.')
+        result['continuity_timing_definition'] = ('Twenty-nine server-success intervals within the subsequent thirty '
+            'emissions, three original-suite repetitions. Boundary from initial screen excluded; continuity evidence only.')
+        result['aggregate_timing_definition'] = ('All thirty-nine intervals, including the initial-to-continuity boundary; '
+            'diagnostic aggregate only, not a headline or record.')
+        result['timing_blocks'] = {'initial': {'emissions': 10, 'intervals': 9, 'fixture_passes': 1},
+                                   'continuity': {'emissions': 30, 'intervals': 29, 'fixture_passes': 3}}
     return result
 
 

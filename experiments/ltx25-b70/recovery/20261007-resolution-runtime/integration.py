@@ -55,7 +55,7 @@ class Runtime:
         free = shutil.disk_usage(self.root).free
         self.consumed += max(0, self.previous_free-free)
         self.previous_free = free
-        self.session.require(self.consumed <= 4*2**30 and free >= 50*2**30 + (4*2**30-self.consumed),
+        self.session.require(self.consumed <= 7*2**30 and free >= 50*2**30 + (7*2**30-self.consumed),
                              'Resolution experiment storage allowance exhausted')
 
     def write(self, name, value):
@@ -87,7 +87,7 @@ class Runtime:
             value = self.adapter.before_request(row['name'])
             self.write('native-memory-before-' + row['name'] + '.json', value)
         if row['phase'] in ('candidate-check', 'timed'):
-            name = 'resolution-w2-20261007-freeze'
+            name = 'resolution-full-20261007-freeze'
             self.session.require(name in self.authority.completed, 'Passed freeze required before candidate/timing')
             state = self.inspect_state()
             self.session.require(state['captures_frozen'] is True and state['loads_frozen'] is True,
@@ -134,7 +134,7 @@ class Runtime:
         import nodes
         import comfy.model_management as mm
         from native_adapter import NativeAdapter
-        self.session.require(name == 'resolution-w2-20261007-prepare-native' and self.adapter is None,
+        self.session.require(name == 'resolution-full-20261007-prepare-native' and self.adapter is None,
                              'Unexpected/repeated native preparation')
         self.session.require_phase('native', self.authority.plan['qualification_id'], name)
         hashes = {str(self.packet / path): sha for path, sha in self.manifest['files'].items()
@@ -195,13 +195,13 @@ class Runtime:
             self.session.require(name not in self.actions_done, 'Phase action already performed')
             self.storage_check()
             if name == 'before-native':
-                self.session.require('resolution-w2-20261007-prepare-native' in self.authority.completed,
+                self.session.require('resolution-full-20261007-prepare-native' in self.authority.completed,
                                      'Native preparation incomplete')
                 self.native_observation('before')
             elif name == 'verify-native':
                 self.session.require('before-native' in self.actions_done and
-                    all(r['name'] in self.authority.completed for r in self.authority.plan['requests'][:6]),
-                    'Six native requests required')
+                    all(r['name'] in self.authority.completed for r in [r for r in self.authority.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')]),
+                    'Twenty native requests required')
                 self.native_observation('after')
                 evidence = {str(self.packet / 'manifest.json'): self.manifest_sha,
                             str(self.run / 'native-preparation.json'): self.session.digest(
@@ -214,7 +214,7 @@ class Runtime:
                     'server_run': str(self.run), 'server_identity_sha256': self.identity_sha,
                     'successor_manifest_sha256': self.manifest_sha,
                     'model_verification_sha256': self.manifest['model_verification_sha256'],
-                    'request_names': [r['name'] for r in self.authority.plan['requests'][:6]],
+                    'request_names': [r['name'] for r in [r for r in self.authority.plan['requests'] if r['phase'] in ('native-reference', 'native-repeat')]],
                     'runtime_evidence': evidence}
                 for key, suffix in (('before_native','before'), ('after_native','after')):
                     path = self.run / ('native-' + suffix + '.json')
@@ -236,8 +236,8 @@ class Runtime:
                 before, after = {'admit-capture0': ('pin0', 'capture0'),
                                  'admit-capture1': ('pin1', 'capture1'),
                                  'admit-decode': ('coverage', 'decode-probe')}[name]
-                self.session.require('resolution-w2-20261007-' + before in self.authority.completed and
-                                     'resolution-w2-20261007-' + after not in self.authority.completed,
+                self.session.require('resolution-full-20261007-' + before in self.authority.completed and
+                                     'resolution-full-20261007-' + after not in self.authority.completed,
                                      'Memory admission must immediately precede its setup stage')
                 if name in ('admit-capture1', 'admit-decode'):
                     needed = ['retire-capture0-tails']

@@ -12,7 +12,7 @@ import unittest
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('request_client_tested', HERE/'request_client.py')
 C = importlib.util.module_from_spec(spec); spec.loader.exec_module(C)
-PLAN = HERE.parent/'20261007-resolution-w2-102/candidate-plan.json'
+PLAN = HERE.parent/'20261007-resolution-full-103/candidate-plan.json'
 
 
 class Transport:
@@ -72,7 +72,7 @@ class ClientControls(unittest.TestCase):
                        'parent_manifest_sha256':C.G.PARENT_SHA,'root':str(self.root),'server_run':str(self.run),
                        'client_dir':str(self.client_dir),'plan_path':str(PLAN),'runtime_manifest_sha256':'a'*64,
                        'server_identity_sha256':C.G.sha((self.run/'server-identity.json').read_bytes()),
-                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':32,'max_attempts':36,
+                       'min_free_bytes':C.MIN_FREE,'planned_write_bytes':C.WRITE_ALLOWANCE,'max_captures':80,'max_attempts':87,
                        'request_timeout_seconds':10,'capture_guard_path':str(guard),
                        'source_bindings':{str(p.resolve()):C.G.sha(p.read_bytes()) for p in
                                           [guard, HERE/'request_client.py', HERE/'reference_gate.py']}}
@@ -118,12 +118,12 @@ class ClientControls(unittest.TestCase):
         for name in ['submission.json','events.jsonl','history.json','result.json']:self.assertTrue((req/name).exists())
         self.assertEqual(result['status']['status_str'],'success');self.assertGreater(self.proc_calls,2)
 
-    def test_six_serial_requests_no_parallel_submission(self):
+    def test_twenty_serial_requests_no_parallel_submission(self):
         transports=[]
         def factory():
             t=Transport();transports.append(t);return t
         results=asyncio.run(C.execute_native_sequence(self.client,factory))
-        self.assertEqual(len(results),6);self.assertTrue(all(t.posts==1 and t.closed for t in transports))
+        self.assertEqual(len(results),20);self.assertTrue(all(t.posts==1 and t.closed for t in transports))
 
     def test_attempted_name_not_retried_after_submission_error(self):
         t=Transport('submit-error');self.refused(t);self.assertEqual(t.posts,1)
@@ -159,6 +159,14 @@ class ClientControls(unittest.TestCase):
         with self.assertRaises(ValueError):self.execute(t)
         self.assertFalse(self.client_dir.exists());self.assertFalse((self.root/'requests'/self.name).exists())
 
+    def test_fullsuite_admission_keeps50GiB_and_exact7GiB_write_budget(self):
+        self.assertEqual(C.MIN_FREE,50*1024**3)
+        self.assertEqual(C.WRITE_ALLOWANCE,7*1024**3)
+        self.assertEqual((C.ATTEMPT_CAP,C.CAPTURE_CAP),(87,80))
+        self.free=C.MIN_FREE+C.WRITE_ALLOWANCE
+        t=Transport();self.execute(t)
+        self.assertEqual(t.posts,1)
+
     def test_cumulative_write_allowance_not_reset_between_requests(self):
         self.execute(Transport())
         self.free-=C.WRITE_ALLOWANCE+1;t=Transport();self.refused(t,self.client.plan['requests'][1]['name'])
@@ -172,7 +180,7 @@ class ClientControls(unittest.TestCase):
         self.refused(t);self.assertEqual(t.posts,1);self.assertEqual(t.polls,0)
 
     def test_wrong_native_order_and_candidate_phase_refused(self):
-        t=Transport();self.refused(t,self.client.plan['requests'][6]['name']);self.assertEqual(t.posts,0)
+        t=Transport();self.refused(t,next(r['name'] for r in self.client.plan['requests'] if r['phase']=='candidate-check'));self.assertEqual(t.posts,0)
 
     def test_source_drift_after_admission_refuses(self):
         Path(self.contract['capture_guard_path']).write_text('# changed\n');t=Transport();self.refused(t);self.assertEqual(t.posts,0)
@@ -182,28 +190,35 @@ class ClientControls(unittest.TestCase):
         t=Transport();self.refused(t);self.assertEqual(t.posts,0)
         self.assertEqual(sorted(x.name for x in p.iterdir()),['original'])
 
-    def test_exact_full_schedule36_serial_requests_with_external_phase_observations(self):
+    def test_exact_full_schedule87_serial_requests_with_external_phase_observations(self):
         self.full_client();posts=0
         for name in self.client.ordered_names:
             row=self.client.rows[name];self.phase(row);t=Transport();self.execute(t,name);posts+=t.posts
-        self.assertEqual(posts,36)
-        self.assertEqual(C.CAPTURE_CAP,32)
+        self.assertEqual(posts,87)
+        self.assertEqual(C.CAPTURE_CAP,80)
         self.assertEqual(sum(any(n['class_type'] in ('LTXBaselineCapture','LTXPipelineSave')
-                                 for n in r['graph'].values()) for r in self.client.rows.values()),29)
-        for phase,count in (('candidate-check',7),('timed',14)):
+                                 for n in r['graph'].values()) for r in self.client.rows.values()),80)
+        for phase,count in (('candidate-check',14),('timed',44)):
             self.assertEqual(sum(self.client.rows[n]['phase']==phase for n in self.client.ordered_names),count)
         self.assertEqual(self.client.state['completed'],self.client.ordered_names)
+        emitted=[r['expected_emitted_fixture'] for r in self.client.plan['requests']
+                 if r['phase']=='timed' and r['expected_emitted_fixture'] is not None]
+        fixture_ids=[f['id'] for f in self.client.plan['fixtures']]
+        self.assertEqual(len(fixture_ids),10)
+        self.assertEqual(emitted,fixture_ids*4)
+        self.assertEqual(emitted[:10],fixture_ids)
+        self.assertEqual(len(emitted[10:]),30)
 
     def test_attempt_limit_separate_from_capture_limit_and_contract_strict(self):
-        for key, value in [('max_attempts',32),('max_attempts',36.0),('max_attempts',True),
-                           ('max_attempts',None),('max_captures',36),('max_captures',32.0)]:
+        for key, value in [('max_attempts',32),('max_attempts',87.0),('max_attempts',True),
+                           ('max_attempts',None),('max_captures',87),('max_captures',80.0)]:
             original=self.contract[key]
             self.contract[key]=value
             with self.subTest(key=key,value=value),self.assertRaisesRegex(ValueError,'budget contract'):
                 self.make_client()
             self.contract[key]=original
 
-    def test_exhausted36_attempts_refuses_before_transport_or_output(self):
+    def test_exhausted87_attempts_refuses_before_transport_or_output(self):
         self.client.acquire()
         try:
             self.client.state['attempts']=['prior-attempt-%d'%i for i in range(C.ATTEMPT_CAP)]
@@ -216,9 +231,11 @@ class ClientControls(unittest.TestCase):
 
     def test_full_schedule_does_not_advance_phase_from_completed_request_count(self):
         self.full_client()
-        for name in self.client.ordered_names[:8]:
+        first_optimized=next(i for i,n in enumerate(self.client.ordered_names)
+                             if self.client.rows[n]['phase']=='optimized-setup')
+        for name in self.client.ordered_names[:first_optimized]:
             self.phase(self.client.rows[name]);self.execute(Transport(),name)
-        name=self.client.ordered_names[8]
+        name=self.client.ordered_names[first_optimized]
         self.phase(self.client.rows[name],phase='native_reference')
         t=Transport();self.refused(t,name);self.assertEqual(t.posts,0)
 
