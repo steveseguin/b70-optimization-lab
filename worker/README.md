@@ -14,9 +14,14 @@ Read the [trial results and patches](../experiments/local-coding-worker/README.m
 Automatic tests, independent agent review, and human approval are reported separately.
 
 The [October evaluation packet](../experiments/local-coding-worker/evaluation-20261007/README.md)
-adds historical bug-fix controls and source-backed lab-memory questions. Model
-trials on that packet have not run. Consult `CURRENT.md` for host ownership;
-an old worker profile is not evidence that its endpoint is available.
+adds historical bug-fix controls and source-backed lab-memory questions. The
+separate [4B](../experiments/local-coding-worker/qwen4b-worker-pilot-20261007/CLOSEOUT.md)
+and [27B](../experiments/local-coding-worker/qwen27b-target-only-smallkv-20261007/CLOSEOUT.md)
+trials each completed no repairs in their first two cases; the original 27B
+recall attempt was incomplete and unscored. A separate
+[v2 recall trial](../experiments/local-coding-worker/cited-recall-v2-20261007/TRIAL.md)
+uses fresh inputs. Consult [CURRENT.md](../CURRENT.md) for host ownership and
+subsequent outcomes; a saved profile does not establish endpoint availability.
 
 ## Install
 

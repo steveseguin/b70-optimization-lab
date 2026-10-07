@@ -2,7 +2,7 @@
 
 Status: frozen CPU controls and evaluation inputs. Separate
 [4B](../qwen4b-worker-pilot-20261007/CLOSEOUT.md) and
-[27B](../qwen27b-target-only-smallkv-20261007/README.md) trials each produced zero
+[27B](../qwen27b-target-only-smallkv-20261007/CLOSEOUT.md) trials each produced zero
 completed patches in the initial two tasks; remaining six cases stay unused.
 Their runtime identities and budgets differ. The purpose is to measure completed, reviewable work before combining
 the local coding worker with the long-context project.
@@ -25,7 +25,10 @@ model training. Historical-fix controls prove the checks distinguish those
 revisions; they do not prove a model can solve the issue or that every possible
 incorrect patch is caught. Review remains required.
 
-## First model trial, when ready
+## Frozen initial-trial protocol (completed)
+
+The following records the initial protocol; it does not authorize rerunning
+the completed attempts linked above.
 
 Use `lab-catalog-pending-headlines` and `lab-context-number-boundaries` from set A
 first, in that order: one user-facing catalog issue and one research correctness
@@ -94,8 +97,10 @@ patches, reference answers or live repository into the coding sandbox.
 
 ## Next priorities
 
-Run the small coding trial when admitted, then evaluate source-backed lab recall.
-Use those results to decide whether connecting the two is worthwhile. The next
-model-package milestone is an end-to-end correctness-qualified Qwen TP2 run with
-its exact inputs. Resume LTX and Flash-Next from their existing ledgers afterward;
-no new weight download or hardware-tuning campaign is justified by this packet.
+Preserve the two trials' zero completed repairs and the original 27B recall's
+incomplete, unscored response. The separately preregistered
+[v2 recall trial](../cited-recall-v2-20261007/TRIAL.md) uses fresh inputs and a
+references-only response format; no outcome is implied here. Keep coding and
+memory separate until each demonstrates useful results. LTX and Flash-Next
+remain parked; consult [CURRENT.md](../../../CURRENT.md) for host ownership and
+authorized next work.
