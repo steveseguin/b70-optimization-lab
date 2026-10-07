@@ -5,73 +5,65 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
-frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **The104 LTX application and paired campaign are running**,
-PID3311653, unit `ltx104-client-server-20261007`, loopback8188. Its sealed manifest is
-`49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`. The71-request paired client comparison is running under
-`ltx104-client-campaign-20261007`; its first setup request was admitted. Do not submit invented requests or run other GPU work.
+The owner resumed continuous LTX optimization on `steve-b70s`. **The104 application
+is running and idle**, PID3311653, unit `ltx104-client-server-20261007`, loopback8188.
+Its manifest is `49892a00ece1cf4a7d84ce5d03e6a9c2290ffc3af9b2822ba4866e72cfa2e93a`.
+The campaign completed all71 registered requests successfully at18:54:45UTC.
+Its finite plan is consumed: do not invent requests or run other GPU work beside it.
+Flash-Next and local-worker tuning remain parked.
 
-The103 application stopped cleanly at18:28UTC for this controlled reload, and
-all four GPUs passed postflight. Thirty verified duplicate continuity archives
-were retired, reclaiming2.08GiB. The fresh5GiB+50GiB storage admission passed with
-about56GiB available. Models, reference samples, previews, metadata and failed
-experiments remain protected; the retired files have a durable restoration map.
+Skipping redundant unchanged storage-ledger writes measured **12.786 generated
+frames/s**, versus **12.040** for the control: **6.20% higher throughput** in one
+quiet control-first pair. Both ten-scene timing blocks matched their native
+references exactly in video, audio, images and waveform. Twenty native executions
+formed ten exact repeat pairs, and ten candidate clips also passed. No fault or
+halt is latched; queues, pipeline tails and preview work are empty. The unchanged
+sealed verifier rebuilt the complete proof after completion at18:59:58UTC.
+[Closeout](experiments/ltx25-b70/data/resume-20261007/client104-closeout/summary.json),
+[proof](experiments/ltx25-b70/data/resume-20261007/client104-post-completion-proof.json),
+[performance](experiments/ltx25-b70/notes/2026-10-07-client104-performance.md).
 
-The two-worker640×384 configuration passed all ten original fixtures: twenty
-native executions form ten exact repeat pairs, and all50 scored optimized clips
-match video, audio, image and waveform tensors exactly. The initial ten-clip block
-measured about **12.00 generated frames/s**; the additional thirty continuity clips
-averaged **11.03 frames/s**. Their timing intervals are separate, excluding the
-boundary. This is short bounded continuity, not long endurance or a public record.
-The unmodified sealed verifier rebuilt the entire saved proof after completion.
-No fault is latched, and queues, pipeline tails and previews are empty.
-[Closeout](experiments/ltx25-b70/data/resume-20261007/resolution103-closeout/summary.json),
-[proof](experiments/ltx25-b70/data/resume-20261007/resolution103-post-completion-proof.json),
-[performance analysis](experiments/ltx25-b70/notes/2026-10-07-resolution103-performance.md).
+The candidate skipped724 of1392 checkpoint ledger saves. All source/process/fault
+and storage checks, changed-state saves and event-log fsyncs remained. Between-
+request gaps fell sharply, exposing sampler waiting; worker computation did not
+become faster. This is a short repeated-workload screen with order effects still
+possible, not a cold-input, endurance or public-record claim. Both timed blocks
+ran without unrelated root/agent tests, Git activity or file writes. Descriptor
+observations peaked at2662 with no alert; that is not proof of leak freedom.
 
-The final continuity pass slowed in client delivery while recorded worker
-durations generally fell. Repository work overlapped this period, including a
-commit at17:54:33UTC; the cause is not established. The next paired timing blocks
-must pause unrelated tests, Git activity and file writes. Descriptor observations
-peaked at2663, with no alert; this finite run does not establish leak freedom.
+Next is one quiet reverse-order confirmation, fast policy first and control
+second, then sampler service/overlap work. The standalone105 plan preserves all
+numerics and ten original scenes, with71 requests,64 captures and a fresh5GiB
+allowance above50GiB reserve. Runtime integration is in progress;105 has no packet,
+reservation, build or GPU requests yet. Current sampler phase A/B timings describe
+denoising stages, not per-card utilization, and cannot justify a blind partition
+or worker-count sweep.
+[Next priorities](experiments/ltx25-b70/notes/2026-10-07-after104-priorities.md),
+[reverse plan](experiments/ltx25-b70/recovery/20261007-client-reverse-105/README.md).
 
-The earlier matched three-fixture screen improved from8.710 to12.282 generated
-frames/s (**41% higher throughput**) by adding the second sampler worker. It also
-passed exact four-tensor comparisons. The broader103 workload differs, so do not
-call its12.00/11.03FPS a regression from12.282.
-[Matched W1/W2 result](experiments/ltx25-b70/data/resume-20261007/resolution102-closeout/summary.json).
+About52.44GiB is free after104. A conditional52-archive duplicate retirement across
+101c,102 and104 could reclaim3.614GiB while retaining all103 restoration anchors.
+It requires fresh whole-file proof and all affected applications stopped; no part
+of that next retirement has run. Models, references, previews, metadata, patches
+and failed experiments remain protected.
+[Storage options](experiments/ltx25-b70/notes/2026-10-07-after104-storage-options.md).
 
-Next: test a narrow client optimization that skips a ledger rewrite only when its
-two storage fields remain unchanged. Every source/process/fault/free-space check,
-changed-state durable save, and event-log fsync stays in place. A source-pinned
-prototype passed nine CPU controls and independent review. Isolated synthetic I/O
-measured about17.23ms per ledger save and8.50ms per event fsync; actual savings are
-not yet measured. The conditional104 plan pairs ten control and ten candidate
-clips in one application with identical numerical settings and inputs.
-[Proposal](experiments/ltx25-b70/recovery/20261007-client-ledger104/README.md),
-[paired plan](experiments/ltx25-b70/recovery/20261007-client-compare-104/README.md),
-[profile](experiments/ltx25-b70/notes/2026-10-07-client-overhead-profile.md).
-
-104 is implemented and all fifteen CPU suites passed; its71 request names and
-64 capture indices are reserved without collisions. Independent review found no
-issues in client durability, ordering or source construction. The successor is sealed and its application and campaign are running. Its71 attempts/64 captures need a fresh5GiB allowance plus50GiB reserve.
-[Implementation and comparison rules](experiments/ltx25-b70/notes/2026-10-07-client104-comparison.md).
-Thirty103 continuity tensor archives were retired only after full proof
-reconstruction and whole-file equality checks. All native/candidate/initial
-reference samples, previews and metadata remain. The durable restoration map
-must be used to restore ordinary copies before replaying the full103 proof.
-[Storage plan](experiments/ltx25-b70/notes/2026-10-07-resolution103-retirement-plan.md).
-The successful102 application was retained until a necessary controlled reload
-for103's new native fixtures. It stopped cleanly at17:37UTC and all four cards
-passed postflight at17:38UTC.103 stopped cleanly at18:28UTC for104 and all four cards passed postflight.
+103 previously passed all ten fixtures and50 scored optimized clips, measuring
+12.00FPS initially and11.03FPS in thirty continuity clips. Concurrent repository
+work confounded its late delivery drift. Its application stopped cleanly at18:28
+for104, and all four cards passed postflight at18:28:52UTC. Thirty verified duplicate
+continuity archives were then retired, reclaiming2.08GiB. Restore mapped ordinary
+copies before replaying the full103 proof; all its anchors remain protected.
+[103 closeout](experiments/ltx25-b70/data/resume-20261007/resolution103-closeout/summary.json),
+[retirement and restoration](experiments/ltx25-b70/notes/2026-10-07-resolution103-retirement-plan.md).
+The earlier matched W1/W2 three-fixture screen improved8.710→12.282FPS, a41% gain;
+its narrower workload is not directly comparable to the later ten-fixture results.
 
 The latest owner-provided instructions prefer one continuously running application
-and endpoint reuse. Future work must not carry forward automatic stop-on-success
-or restart-chain behavior; a necessary controlled application reload remains
-authorized within the optimization work. No host reboot, driver reset or changes
-to power, RAM, swap or page-cache settings are authorized. Blocks 53–57 remain
-offline and `b70-offline-bad-memory.service` is enabled; RAM replacement is deferred.
+and endpoint reuse. A necessary controlled application reload remains authorized;
+no automatic stop-on-success, restart chain, request retry, host reboot, driver
+reset or power/RAM/swap/page-cache change is authorized. Blocks53–57 remain offline
+and `b70-offline-bad-memory.service` enabled; RAM replacement is deferred for2026.
 
 The current-upstream compatibility control passed: **126 probe/timed clips and
 two self-check clips match the accepted references exactly**, including video,
