@@ -27,3 +27,19 @@ all source, runtime and test hashes are recorded in
 No109 packet or GPU work exists at this CPU checkpoint. The next steps are
 exclusive packet construction, complete CPU startup check, fresh namespace/disk
 admission and one bounded postflight before a single109 launch.
+
+## Sealed build and live admission
+
+109 built at22:43:34.449919UTC; manifest
+`e91e8994642cf03210c5bde724a485e0c314a409a300a40379cc79a43fc67906`.
+474,686 filenames scanned with no namespace/index collisions. The real sealed
+`--check-only` CPU startup path passed. All four cards passed the one bounded
+postflight after108b at2026-10-07 22:43:43 UTC with zero earlier/new faults.
+Fresh4GiB runtime admission observed58404892672 available bytes.
+The application launched once at22:44:26.455441UTC; PID3380321/start28689819,
+identitySHA`91a1620521a8faaa8a5aba2b9a65351828cce3136e364d9fdf03b43224b63e56`.
+Actual node registration, idle endpoint and sealed client checks passed before
+requests. ContractSHA`aed8513ec6bdbc96571891738e7667772110b63261f2245eadaa98f2092cb251`.
+The29-request campaign began at2026-10-07T22:45:12.561586+00:00. No observer or extra
+requests are authorized by this plan; successful app retained, no automatic
+retry/restart, faults halt new work. No49-frame result exists at launch.

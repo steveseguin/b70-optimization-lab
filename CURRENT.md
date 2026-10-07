@@ -5,25 +5,30 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
-**Live update,2026-10-07 22:33UTC:** No LTX application is running.
-108b completed its text-window check, then the native full-residency memory guard
-refused preparation. The campaign halted submissions and stopped the application
-once gracefully; both PIDs are gone and the launch-to-stop kernel log is empty.
-There were two setup attempts, one success, and **zero49-frame generations**.
-No native repeat, optimized quality or timing gate was reached. This is a safe
-resource refusal, not an OOM or proof that49-frame generation is impossible.
+**Live update,2026-10-07:**109 is running on the four-card host, PID3380321,
+start ticks28689819, unit`ltx109-duration-server-20261007`, same boot. Its finite
+29-request49-frame resource pilot started at2026-10-07T22:45:12.561586+00:00.
+The named20/28 placement targets native full-residency headroom while keeping
+all memory floors, BF16,8+3steps and exact video/audio gates. The first actual
+49-frame shape/finite/memory barrier precedes the second native request.
+No observer is running. This pilot is not full-suite quality, endurance, adoption,
+a speed-gain or public record claim. No49-frame result is available yet.
 
-The exact failed free/required memory readings were not saved: the existing
-failure hook covered native generation but omitted its setup phase. That gap is
-fixed in the future author source;46 integration tests pass. Source and historical
-residency evidence are being reviewed for a targeted memory-placement change.
-The admission guard stays intact. A single20/28 resource successor is now
-CPU-implemented and independently reviewed:303 runtime and30 plan tests pass.
-It ports the previously exact100b placement with new49-frame quality gates,
-not a split sweep or transferred quality claim. Source preflight passed;109 is
-not yet materialized or launched.
-[109 plan and next steps](experiments/ltx25-b70/notes/2026-10-07-duration109-operation.md).
-[108b refusal and46-file evidence inventory](experiments/ltx25-b70/data/resume-20261007/duration108b-closeout/summary.json).
+108b completed text preparation then safely refused the full-residency guard,
+with zero49-frame generations and one graceful shutdown. Its missing setup
+memory evidence is now fixed for109. Historical source arithmetic—not recovered
+108b telemetry—supports one20/28 candidate; it is not a split sweep. The four
+placement source files match earlier100b exactly, including host ownership fix.
+303 runtime and30 plan CPU tests pass; independent review and actual sealed CPU
+startup check pass. All four cards passed postflight at2026-10-07 22:43:43 UTC
+with zero earlier/new faults. The109 source packet and request namespace are
+sealed/reserved. Fresh4GiB runtime admission left50.394GiB after allowance.
+
+109 manifest`e91e8994642cf03210c5bde724a485e0c314a409a300a40379cc79a43fc67906`;
+client contract`aed8513ec6bdbc96571891738e7667772110b63261f2245eadaa98f2092cb251`.
+[109 operational record](experiments/ltx25-b70/notes/2026-10-07-duration109-operation.md),
+[108b refusal](experiments/ltx25-b70/data/resume-20261007/duration108b-closeout/summary.json),
+[residency audit](experiments/ltx25-b70/notes/2026-10-07-duration108-residency.md).
 
 107b stopped cleanly once at22:18:33UTC; all four GPUs passed postflight with no
 faults. After two fresh full quality-proof reconstructions,40 whole-file duplicate
