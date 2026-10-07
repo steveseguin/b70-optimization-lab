@@ -203,6 +203,11 @@ and full response message matches the corresponding earlier run for both methods
 This is repeatability on one generated task, not general speed qualification.
 Do not start another GPU owner or edit its frozen sources, packet or plan. Preserve every
 older frozen version and outcome; no holdout has been admitted.
+The [next-study decision tree](experiments/qwen38-27b-b70/notes/2026-10-07-context-next-study-decision.md)
+is fixed before the dispatch outcomes: confirm a successful transfer on a fresh
+server, with a conditional four-trial temporal diagnostic; otherwise compare
+source-only and actual-history access in eight fixed temporal trials. Neither
+branch has execution admission yet.
 
 Separate [historical-state retrieval](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
 is CPU-only preparation. Both methods save their own accepted tables, including

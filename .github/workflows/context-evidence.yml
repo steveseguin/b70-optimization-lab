@@ -23,6 +23,7 @@ on:
       - 'experiments/qwen38-27b-b70/scripts/context/*audit_sparse_v1.py'
       - 'experiments/qwen38-27b-b70/scripts/context/*semantic_v1_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-context-semantic-development/**'
+      - 'experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*durable_v4_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-durable-context-r4/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*durable_v3_host_runner.py'
@@ -53,6 +54,7 @@ on:
       - 'experiments/qwen38-27b-b70/scripts/context/*audit_sparse_v1.py'
       - 'experiments/qwen38-27b-b70/scripts/context/*semantic_v1_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-context-semantic-development/**'
+      - 'experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*durable_v4_host_runner.py'
       - 'experiments/qwen38-27b-b70/data/2026-10-07-durable-context-r4/**'
       - 'experiments/qwen38-27b-b70/scripts/context/*durable_v3_host_runner.py'
@@ -122,3 +124,5 @@ jobs:
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context/sparse_replication_v1 -p 'test_*.py'
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context -p 'test_sparse_replication_v1_host_runner.py'
       - run: python3 -m unittest discover -s experiments/qwen38-27b-b70/scripts/context -p 'test_audit_sparse_replication_v1.py'
+      - name: Replay temporal reference annotations without model requests
+        run: python3 experiments/qwen38-27b-b70/data/2026-10-07-temporal-development/verify_references.py
