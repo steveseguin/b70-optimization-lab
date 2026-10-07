@@ -144,11 +144,11 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 05:52 UTC**. One supervised sparse-state
-screen is active. The semantic diagnostic completed all 36 trials, and its card
-release was verified at 05:19:26 UTC before this new owner started.
+Latest two-card review: **2026-10-07 06:00 UTC**. The four-trial sparse-state
+screen is complete and independently audited. Card release was verified at
+05:58:40 UTC; postflight health passed. No model server is running.
 
-## 2026-10-07, two-B70 host: preserve cold result; test meaning next
+## 2026-10-07, two-B70 host: sparse signal; prepare fresh-server replication
 
 Revision 3 completed six development trials: archive 48/48, quoted events
 48/48, summary 44/48. Its original all-methods gate failed; held-out cases
@@ -173,28 +173,32 @@ Every model call reported zero cache reuse. These are six authored stress/contro
 pairs, not independent human validation or a general benchmark.
 [Semantic result and evidence](experiments/qwen38-27b-b70/notes/2026-10-07-context-semantic-result.md).
 
-Next is the [fixed sparse-state screen](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-development-plan.md):
-archive versus quoted events with 8 and 128 counters, counting initialization
-and keeping every existing budget. Its reference responses fit the local
-tokenizer limits. The client, failure handling and lifecycle CPU checks passed;
-passive preparation verified the semantic audit, previous release and idle host.
-`ctx-sparse-v1.service` owns strict qualification, the four trials and graceful
-shutdown. Output: `/mnt/fast-ai/bench-results/context-sparse-v1-20261007`. Do not
-start another GPU owner; no resident service is authorized.
-Preserve frozen r2/r3/r4 sources and outcomes. Live status overrides this snapshot.
+The [sparse-state result](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-result.md)
+is mixed: eight counters scored archive 23/24 and quoted 24/24; at 128 counters,
+both scored 24/24 with every checkpoint exact. All 155 calls reported zero cache
+reuse. Quoted events took 397.3 seconds versus archive's 507.5 seconds at 128
+counters, a 21.7% elapsed reduction in one paired observation. All 82 checkpoints
+and 232 accepted quoted events were independently checked. The result and four
+SQLite stores are preserved, and the audit replayed exactly from a restored copy.
 
-Three sparse trials have completed; the 128-counter archive trial remains active.
-The eight-counter pair scored archive 23/24 and quoted 24/24. The 128-counter
-quoted trial scored 24/24 with every state checkpoint exact. These are interim
-native results pending the complete independent audit. The registered decision
-still applies: an exact, cold 128-counter pair with at least 10% less elapsed time
-for quoted events triggers fresh-server replication and another writing style.
+The 128-counter pair meets the original replication trigger. Its historical
+questions are weak: only two of sixteen historical/ownership answers differ from
+the final values, versus thirteen in the eight-counter task. Keep that limitation
+visible; this is a wide-table cost signal, not broad recall or speed qualification.
+
+The [new replication plan](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-replication-plan.md)
+is in CPU preparation: repeat the original 128-counter task with reversed method
+order on a fresh server, then test fixed seed 97 with dispatch wording. No model
+request is queued yet. Freeze and independently review the new wrapper/packet
+and verify prior cleanup before one supervised owner starts. Preserve every
+older frozen version and outcome; no holdout has been admitted.
 
 Separate [historical-state retrieval](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
 is CPU-only preparation. Both methods save their own accepted tables, including
 mistakes; source-only/history modes isolate model access to those tables.
 Nineteen CPU tests pass, and independent review caught and fixed missing final
-snapshot verification. No new model request or changed live protocol is implied.
+snapshot verification. A separate snapshot auditor passes twelve CPU tests.
+This lookup remains unmeasured while the registered replication is prepared.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
 

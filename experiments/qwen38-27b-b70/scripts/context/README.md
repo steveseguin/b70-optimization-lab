@@ -22,7 +22,7 @@ experiments, so pooled scores or direct timing comparisons would be misleading.
 | [Revision 3](durable_v3/README.md) | Final-answer reasoning enabled; structured methods exact, summary inaccurate. [Result](../../notes/2026-10-07-durable-context-r3-result.md). |
 | [Revision 4](durable_v4/README.md) | Cache-disabled prospective comparison; five trials completed, one capped, six unstarted. [Result](../../notes/2026-10-07-durable-context-r4-result.md). |
 | [Semantic development](semantic_v1/README.md) | All 36 trials complete: quoted and summary 84/84, archive 82/84. [Audited result](../../notes/2026-10-07-context-semantic-result.md); short authored pairs, not external validation. |
-| [Sparse-state development](sparse_v1/README.md) | Separate generated 8/128-counter screen, initialization included and budgets unchanged. [Prospective plan](../../notes/2026-10-07-sparse-state-development-plan.md). |
+| [Sparse-state development](sparse_v1/README.md) | Four trials complete. At 128 counters both methods are exact; quoted uses 21.7% less elapsed time on one server. [Result and limits](../../notes/2026-10-07-sparse-state-result.md); [replication plan](../../notes/2026-10-07-sparse-state-replication-plan.md). |
 | [Historical state retrieval](history_v1/README.md) | CPU-only preparation: each method saves its own accepted states; explicit source-only/history modes isolate lookup access. No live result or study admission yet. |
 
 The revision 2, 3 and 4 holdouts remain unused. Frozen versions and negative outcomes are
