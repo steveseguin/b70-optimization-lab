@@ -25,6 +25,8 @@ server retry, driver reset, reboot, power change or process-pattern kill.
 The server is stopped through its own STOP receipt on success, failure or
 graceful cancellation. Cleanup failures are recorded for manual inspection;
 the runner does not forcibly kill an unresponsive GPU owner.
+The qualified owner retains its existing Docker stop timeout and emergency
+memory guard. This coordinator does not disable or broaden those mechanisms.
 
 ## Commands
 
