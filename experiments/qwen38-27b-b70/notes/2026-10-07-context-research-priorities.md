@@ -1,5 +1,12 @@
 # Context research priorities after the checker review
 
+**Closeout update:** the [two-call full-source screen](2026-10-07-full-source-screen-result.md)
+completed at 24/24 on both documents in 27.75/34.86 seconds. Priority one is now
+resolved for these short static questions: prefer complete source and stop
+retrieval-interface tuning there. The [history extension](2026-10-07-history-state-study-result.md)
+failed its fixed gate. The remaining priorities below are requirements for a
+new application-driven study, not an automatically queued model campaign.
+
 The practical question is when durable state improves answers or reduces total
 cost enough to justify its machinery. The current historical-state study keeps
 its [fixed eight trials and continuation rule](2026-10-07-history-state-study-plan.md).

@@ -144,11 +144,14 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 07:47 UTC**. The direct-source screen is
+Latest two-card review: **2026-10-07 07:56 UTC**. The direct-source screen is
 complete, preserved and independently reviewed. Its server stopped, both cards
 were released at 07:45:31 UTC, and health passed at 07:45:39. Both context owner
-units are inactive; no model server remains running. Website documentation is
-being reconciled with the final evidence. No additional model experiment is queued.
+units are inactive; no model server remains running. The [updated website](https://skindeep.ai/context-results.html#bookkeeping)
+is live at site commit `4351fe3208352f78d584cd477d91c75780f739c5`; both changed pages
+were verified byte-identical to the reviewed build.
+[Publication check](experiments/qwen38-27b-b70/data/2026-10-07-context-site-publication.json).
+No additional model experiment is queued.
 
 ## 2026-10-07, two-B70 host: short-document decision settled
 
