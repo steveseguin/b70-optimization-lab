@@ -124,9 +124,9 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 05:20 UTC**. No model server is running.
-The semantic diagnostic completed all 36 trials, and card release was verified
-at 05:19:26 UTC. The separate sparse-state screen is being prepared on the CPU.
+Latest two-card review: **2026-10-07 05:27 UTC**. One supervised sparse-state
+screen is active. The semantic diagnostic completed all 36 trials, and its card
+release was verified at 05:19:26 UTC before this new owner started.
 
 ## 2026-10-07, two-B70 host: preserve cold result; test meaning next
 
@@ -156,8 +156,11 @@ pairs, not independent human validation or a general benchmark.
 Next is the [fixed sparse-state screen](experiments/qwen38-27b-b70/notes/2026-10-07-sparse-state-development-plan.md):
 archive versus quoted events with 8 and 128 counters, counting initialization
 and keeping every existing budget. Its reference responses fit the local
-tokenizer limits; implementation review and final CPU checks precede any launch.
-No further GPU job is queued yet.
+tokenizer limits. The client, failure handling and lifecycle CPU checks passed;
+passive preparation verified the semantic audit, previous release and idle host.
+`ctx-sparse-v1.service` owns strict qualification, the four trials and graceful
+shutdown. Output: `/mnt/fast-ai/bench-results/context-sparse-v1-20261007`. Do not
+start another GPU owner; no resident service is authorized.
 Preserve frozen r2/r3/r4 sources and outcomes. Live status overrides this snapshot.
 
 ## 2026-10-06 23:52 EDT, two-B70 host: protocol repaired; reasoning gate failed
