@@ -47,7 +47,48 @@ archives alongside any summaries or structured memories.
 
 ## Next useful work
 
-Use packs for actual coordinator questions and inspect their citations. Keep
-one task and explicit source files for a local coding worker, with independent
-patch acceptance. Defer another broad model-memory campaign until a practical
-workflow has proved useful. LTX and Flash-Next remain parked and preserved.
+Use complete selected sources for actual coordinator questions and inspect their
+citations. The subsequent [scoped worker attempt](../local-coding-worker/scoped-task-20261007/CLOSEOUT.md)
+made no repair; further local-worker tuning and memory integration are parked.
+LTX and Flash-Next remain parked and preserved.
+
+## Complete sources and bounded reviews
+
+The companion `tools/lab_evidence.py` reads original files from the indexed Git
+commit and verifies the actual tree path, blob ID and bytes. This adds independent
+Git binding beyond the original pack's internally consistent index checks. It
+does not change search ranking or the frozen retrieval scores above.
+
+```bash
+python3 tools/lab_evidence.py read --repo . --index /home/steve/lab-navigator-new/index.sqlite --path CURRENT.md --outline
+python3 tools/lab_evidence.py read --repo . --index /home/steve/lab-navigator-new/index.sqlite --path CURRENT.md --start-line 1 --end-line 100
+python3 tools/lab_evidence.py review --repo . --index /home/steve/lab-navigator-new/index.sqlite --query 'full source history ownership joins' --include experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md --out /home/steve/lab-navigator-new/review.json
+```
+
+An index must match repository HEAD unless `--allow-stale` explicitly selects
+historical evidence. Dirty working-tree state is recorded; reads still use
+committed bytes. Rebuild into a new index path after committing new sources.
+`--include` names up to 16 exact indexed documents separately from search ranks.
+The default 64 KiB source budget admits whole selected documents first, in
+selection order. If a document does not fit, exact matched ranges are merged and
+admitted in source-line order. An oversized explicit-only document with no match
+can be omitted completely; use `read` with explicit bounds to inspect it.
+
+Every document includes an outline and exact omitted line ranges. Excerpts keep
+original UTF-8 bytes, including CRLF and the final newline or its absence. An
+independent 64 KiB context allowance tries complete AGENTS and AGENT_HANDOFF,
+then the first 200 CURRENT lines. These are policy/status previews, not complete
+authority: nested and external instructions, conflicts and live state still need
+coordinator review. Budgets count excerpt bytes, not model tokens or JSON size.
+Both commands separately refuse serialized output over 16 MiB, including outlines
+and the final newline. They never silently truncate an outline. Exports refuse
+existing paths and never execute source text.
+
+The [practical review receipt](followup/results/practical-review.json) records a
+manually selected decision review, not another evaluation or a quality score.
+The complete short-source result supports closing retrieval-interface tuning for
+those specific static questions. Exact historical numeric state did not prevent
+incorrect ownership joins; source integrity and semantic correctness remain
+separate checks. The [bounded toolchain audit](followup/toolchain-audit.json)
+also preserves newly located runtime-version clues without certifying the
+unrecovered strict LFM build environment.

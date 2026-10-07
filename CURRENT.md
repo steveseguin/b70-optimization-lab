@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Latest four-card review: **2026-10-07, scoped workflow closeout**. The dated two-card entries
+Latest four-card review: **2026-10-07, source-backed decision review**. The dated two-card entries
 below remain that host's own research record; this consolidation did not operate it.
 
 ## Four-card host now: consolidation; LTX and Flash-Next parked
@@ -10,6 +10,14 @@ The owner authorized the five follow-up priorities. The CPU-only
 source commits and exports verified passages. Frozen retrieval covered all
 required spans for 4/6 development and 4/6 held-out questions; missing conditions
 remain a known limit. This is source search, not model-memory qualification.
+The companion reader now binds sources to actual Git tree paths and bytes,
+refuses stale indexes by default, and supports complete selected documents with
+explicit omitted ranges and separate policy/status previews. The
+[practical review](experiments/lab-navigator-20261007/followup/results/practical-review.json)
+uses the latest recorded short-source and history results; it does not rerun the
+consumed retrieval evaluation or qualify an autonomous worker. Use complete
+short sources where practical; defer new memory machinery until a concrete task
+requires it. No new model requests were made for this follow-up.
 The [scoped worker task](experiments/local-coding-worker/scoped-task-20261007/README.md)
 selects about 203 KB of pinned source with explicit patch boundaries. All 135
 worker CPU tests pass; historical bug/fix controls pass their expected outcomes.
@@ -25,6 +33,11 @@ qualification is implied. Five other unused coding tasks remain untouched. LTX a
 public archive and every extracted file. Full strict-headline toolchain identity,
 public runtime rebuild and clean-host replay remain pending; the older local
 build is not the strict-headline build. No new measured speed is claimed.
+The [bounded follow-up audit](experiments/lab-navigator-20261007/followup/toolchain-audit.json)
+found matching strict runtime receipts and versioned library search paths, but
+these do not recover the original compiler/build inventory or resolved libraries.
+Recover that evidence or qualify a separate reconstruction; do not infer a
+historical toolchain from search-path labels.
 
 The owner asked to preserve both lanes and make the existing lab dependable before
 returning to optimization. **No resident model service is authorized on `steve-b70s`.**

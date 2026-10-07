@@ -1,0 +1,161 @@
+{
+  "schema": "neural.download.toolchain-provenance-audit.v1",
+  "created_at_utc": "2026-10-07T12:07:47.483503+00:00",
+  "package": "lfm25-26b-q8-b70",
+  "status": "unresolved-strict-headline-toolchain",
+  "full_public_build_closure_established": false,
+  "scope": "Bounded read-only inspection of tracked strict/audit-host evidence, original evidence Git commit, and named local small build metadata. No network, install, build, model, GPU, other-host operation, bulk binary hashing or archive extraction.",
+  "findings": {
+    "strict_attempt_runtime_hashes_equal": true,
+    "strict_runtime_binary_count": 9,
+    "strict_server_sha256": "7d524360677aa06d1847e7a68b7e8a8234aaad203ea7334cd7237e6015fb0e56",
+    "strict_build_info": "b1-9fee29e",
+    "strict_runtime_environments_identical": true,
+    "recorded_runtime_search_path_versions": {
+      "compiler": "2026.1",
+      "mkl": "2026.1",
+      "dnnl": "2026.0",
+      "tbb": "2023.1",
+      "ccl": "2022.1",
+      "mpi": "2021.18",
+      "umf": "1.1",
+      "tcm": "1.5"
+    },
+    "runtime_search_path_limit": "LD_LIBRARY_PATH labels are direct recorded evidence, but do not prove the actual resolved libraries, package patch/build versions, or compiler used to produce the strict server.",
+    "audit_host_compiler": "IntelLLVM 2026.1.1",
+    "audit_host_linkage_limit": "The separate August 22 audit-host manifest binds llama-bench and two libraries sharing strict-receipt hashes. Two shared libraries do not bind the complete strict-server build or full toolchain.",
+    "strict_headline_compiler": null,
+    "local_build_limit": "The named four-card local CMakeCache describes IntelLLVM 2026.0.0, MKL/DNNL 2026.0, TBB 2023.0. Prior bounded review found eight smaller runtime artifacts do not match strict receipt hashes; it cannot substitute for the strict build. No new binary hashes were read in this audit."
+  },
+  "strict_evidence_history": {
+    "attempt_a_original_commit": "c877b70097bd5c6fd86ae7f1510fd5d6db124d74",
+    "attempt_a_files_added": 14,
+    "audit_host_original_commit": "723ceeb26c2b4a2415a306118b00f485e19c4082",
+    "missing_in_retained_strict_packet": [
+      "compiler version output",
+      "CMakeCache and configure log for the strict binaries",
+      "complete build log",
+      "package version/build inventory",
+      "resolved runtime shared-library map",
+      "server.log"
+    ],
+    "search_limit": "Exact strict server hashes were found in the historical runner and strict receipts, but no additional tracked toolchain inventory in the bounded inspected paths. This is not a claim about uninspected other-host storage."
+  },
+  "evidence": [
+    {
+      "path": "data/neural-download-stock-headline-lfm25-20260827-r1a/runtime-environment.txt",
+      "bytes": 616,
+      "sha256": "c9990d999cd74599ca4ccc28eeaca9dd61764018a0e1588a57ad2e04bffec430",
+      "lines": [
+        2,
+        4
+      ]
+    },
+    {
+      "path": "data/neural-download-stock-headline-lfm25-20260827-r1a/campaign-identity.json",
+      "bytes": 4007,
+      "sha256": "e74b1c6a358e3ed9f4b3f4e79ceda0582726205765e9f6570843db3a100183bd",
+      "lines": [
+        23,
+        32,
+        48,
+        56,
+        87
+      ]
+    },
+    {
+      "path": "data/neural-download-stock-headline-lfm25-20260827-r1a/props.json",
+      "bytes": 7563,
+      "sha256": "e31edbdc64d9360774de09f896d73d2d1b381c061bdb91325c76df51037619f1",
+      "lines": [
+        1
+      ]
+    },
+    {
+      "path": "data/neural-download-stock-headline-lfm25-20260827-r1b/runtime-environment.txt",
+      "bytes": 616,
+      "sha256": "c9990d999cd74599ca4ccc28eeaca9dd61764018a0e1588a57ad2e04bffec430",
+      "lines": [
+        2,
+        4
+      ]
+    },
+    {
+      "path": "data/neural-download-stock-headline-lfm25-20260827-r1b/campaign-identity.json",
+      "bytes": 4007,
+      "sha256": "0f30ff8983034b501d8adf60589864d275b77553a3959a8446fddcfe8aef40b9",
+      "lines": [
+        23,
+        32,
+        48,
+        56,
+        87
+      ]
+    },
+    {
+      "path": "data/neural-download-stock-headline-lfm25-20260827-r1b/props.json",
+      "bytes": 7563,
+      "sha256": "86b193522f7af345754a0196abd496d4fe903dd4096d4e5eaa0eaed22d657450",
+      "lines": [
+        1
+      ]
+    },
+    {
+      "path": "data/neural-download-audit-host-depth-sweeps-20260822/run-manifest.json",
+      "bytes": 1448,
+      "sha256": "cababdd568b601fb842fc68e57fed8f8ae3b6a7b739552473c324f7d266f16d3",
+      "lines": [
+        4,
+        26,
+        27,
+        28,
+        29,
+        40
+      ]
+    },
+    {
+      "path": "data/neural-download-audit-host-depth-sweeps-20260822/README.md",
+      "bytes": 5045,
+      "sha256": "5ca441556ddbecead730cc8359519c142a5c567455491bfbfec128a0e0023485",
+      "lines": [
+        13,
+        15,
+        16,
+        25
+      ]
+    },
+    {
+      "path": "repro/lfm25-26b-q8-b70/source-preparation-review.json",
+      "bytes": 9354,
+      "sha256": "03c4fd10aadac60a88097f2eedc288f1e75ec8117314e76797ac82152d528a5d",
+      "lines": [
+        41,
+        43,
+        52,
+        57,
+        58,
+        64,
+        65,
+        77,
+        78,
+        84,
+        85,
+        91,
+        92,
+        98,
+        99,
+        105,
+        106,
+        112,
+        113,
+        116
+      ]
+    }
+  ],
+  "next_action": {
+    "preferred": "Recover original strict-build CMakeCache/configure/build logs and compiler/package inventory, and bind them to all nine strict artifacts plus resolved shared libraries.",
+    "if_unrecoverable": "Define a separate fully pinned reconstruction profile, budget its build, and run fresh same-identity runtime/quality gates. Preserve the historical strict result; do not assign it inferred toolchain provenance."
+  },
+  "clean_host_certification": false,
+  "package_or_guide_modified": false
+}

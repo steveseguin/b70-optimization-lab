@@ -1,0 +1,25 @@
+name: lab-evidence
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/lab_navigator.py'
+      - 'tools/lab_evidence.py'
+      - 'tools/test_lab_navigator.py'
+      - 'tools/test_lab_evidence.py'
+      - '.github/workflows/lab-evidence.yml'
+  pull_request:
+    paths:
+      - 'tools/lab_navigator.py'
+      - 'tools/lab_evidence.py'
+      - 'tools/test_lab_navigator.py'
+      - 'tools/test_lab_evidence.py'
+      - '.github/workflows/lab-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  source-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest tools/test_lab_navigator.py tools/test_lab_evidence.py

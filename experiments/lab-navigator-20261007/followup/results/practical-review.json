@@ -1,0 +1,168 @@
+{
+  "schema": "lab.evidence.practical-review.v1",
+  "purpose": "Coordinator review of whether short-document retrieval/history work warrants another model campaign.",
+  "classification": "Manually selected practical use; not a benchmark, model answer, fresh holdout or retrieval-score improvement.",
+  "source_commit": "a96a072efa4a6611d79ef323bef507da42607885",
+  "query": "short documents full source baseline history ownership joins next research",
+  "explicit_documents": [
+    "experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md",
+    "experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md",
+    "experiments/qwen38-27b-b70/notes/2026-10-07-context-research-priorities.md"
+  ],
+  "tool_sha256": "cd8d23c9b4a1339efdc8f007d7dce6550b27dafa7fb3c30d68f87ff66e988c6b",
+  "ranker_sha256": "12cbfdea2330619c47de4298a7b572de8ad56c2d401d4aa87d8e53edfecdb687",
+  "index": {
+    "path": "/home/steve/lab-evidence-review-20261007/index.sqlite",
+    "sha256": "1b074954ddf9695c7f03020eebe06a99285c355346959c9410fc509efc0bd80f"
+  },
+  "pack": {
+    "path": "/home/steve/lab-evidence-review-20261007/short-document-decision-final.json",
+    "sha256": "a85d929dc01981ba9125e91e11c4c283b5a336ead434710c9a65b53e4e3a4b90",
+    "bytes": 119085
+  },
+  "repository": {
+    "indexed_commit": "a96a072efa4a6611d79ef323bef507da42607885",
+    "repository_head": "a96a072efa4a6611d79ef323bef507da42607885",
+    "index_at_head": true,
+    "stale_use_explicit": false,
+    "worktree_dirty": true,
+    "worktree_status_sha256": "e5bbc994317dda7aedb2cb371e242b69dd523df2544beb74c249ea24f8a2ec84",
+    "git_tree_oid": "f2caf259175f54c8ceaefa01e5b46459a6af620a",
+    "observed_at_utc": "2026-10-07T12:17:53.795812+00:00",
+    "git_tree_sha256": "f25581caa1639c4623593f043a656fd8b5bcd8ae5ec160dfbc5c110f888c94b9",
+    "source_binding": "exact Git tree path and blob bytes",
+    "live_host_state_verified": false
+  },
+  "budget": {
+    "unit": "Original UTF-8 excerpt bytes, preserving line endings; not tokens or total JSON bytes",
+    "source_allowed": 65536,
+    "source_used": 30596,
+    "authority_allowed": 65536,
+    "authority_used": 51724,
+    "current_first_lines": 200
+  },
+  "source_coverage": [
+    {
+      "path": "experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md",
+      "blob": "71ac281c9ec4a3530ca71d389481a134a6f40c25",
+      "sha256": "f2cf131f601600c58a183543e98689e2826b815999905bbd4788f6bb3783c5fe",
+      "selection": "explicit",
+      "full_document_included": true,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md:L1-L100"
+      ],
+      "omitted_ranges": []
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md",
+      "blob": "69b6b38f7049c51f5eb319b365ff783a8c88cdfe",
+      "sha256": "169de8f929c9d52675bf3a3a2803f4e01c00aff45144f438fa946df1f501658a",
+      "selection": "explicit",
+      "full_document_included": true,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md:L1-L101"
+      ],
+      "omitted_ranges": []
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/notes/2026-10-07-context-research-priorities.md",
+      "blob": "143d1c637065d6dbbf1b1237c596d1d8e1e43e72",
+      "sha256": "330f726bc6f25e499aaad518c6bb14d9c836f7552033caef04827ba4ed80acbe",
+      "selection": "explicit",
+      "full_document_included": true,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-10-07-context-research-priorities.md:L1-L106"
+      ],
+      "omitted_ranges": []
+    },
+    {
+      "path": "CURRENT.md",
+      "blob": "7eb5e59634c2ff89b2677347bc02677ef00237d0",
+      "sha256": "39405891b5da513f3322fb66c2ebac055a9e01a915c09bd271a9d596b1e599db",
+      "selection": "ranked",
+      "full_document_included": false,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:CURRENT.md:L156-L217"
+      ],
+      "omitted_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 155
+        },
+        {
+          "start_line": 218,
+          "end_line": 3110
+        }
+      ]
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-plan.md",
+      "blob": "1a1fd395314d170269903f959b29782564ade23c",
+      "sha256": "e581c58a0096bdb7aeb9cb674a24e0b092c322272fa0414b52cfce9ee2af03d7",
+      "selection": "ranked",
+      "full_document_included": true,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-plan.md:L1-L116"
+      ],
+      "omitted_ranges": []
+    }
+  ],
+  "authority_coverage": [
+    {
+      "path": "AGENTS.md",
+      "full_document_included": true,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:AGENTS.md:L1-L584"
+      ],
+      "omitted_ranges": []
+    },
+    {
+      "path": "AGENT_HANDOFF.md",
+      "full_document_included": true,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:AGENT_HANDOFF.md:L1-L21"
+      ],
+      "omitted_ranges": []
+    },
+    {
+      "path": "CURRENT.md",
+      "full_document_included": false,
+      "included_citations": [
+        "a96a072efa4a6611d79ef323bef507da42607885:CURRENT.md:L1-L200"
+      ],
+      "omitted_ranges": [
+        {
+          "start_line": 201,
+          "end_line": 3110
+        }
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Prefer complete short source for the observed static final-answer task; close additional retrieval-interface variants for that task.",
+      "evidence_path": "experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md",
+      "observations": "Both fixed documents achieved 24/24, at 27.75 and 34.86 seconds.",
+      "limits": "Two assistant-authored development documents, roughly 1500 source tokens each; different information schedule and computation from streaming; no general speed multiplier, holdout or beyond-window qualification."
+    },
+    {
+      "decision": "Keep the historical-access extension closed; preserve unused t03/t04 and do not confuse exact numeric state with correct ownership interpretation.",
+      "evidence_path": "experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-result.md",
+      "observations": "All 96 numeric checkpoints and 202 quoted postings were exact, yet history access produced 16 wrong joins matching initial owners after transfers.",
+      "limits": "The answer instruction and available tool changed together. This is not a general causal result about memory."
+    },
+    {
+      "decision": "Require a concrete streaming/audit need or independently sourced relevant-history task before new memory/model work; use exact original evidence for current coordinator questions.",
+      "evidence_path": "experiments/qwen38-27b-b70/notes/2026-10-07-context-research-priorities.md",
+      "limits": "This CPU tool does not independently grade meaning, prove source selection complete or authorize operations."
+    }
+  ],
+  "current_host_actions": {
+    "model_requests": 0,
+    "server_restarts": 0,
+    "host_setting_changes": 0,
+    "other_host_operations": 0
+  },
+  "future_replay": "After repository advances, use --allow-stale for this historical index or build a new index at current HEAD. The pinned source revision remains the authority for this receipt.",
+  "overall_evidence_complete": false
+}
