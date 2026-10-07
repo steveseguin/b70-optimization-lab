@@ -26,7 +26,7 @@ experiments, so pooled scores or direct timing comparisons would be misleading.
 | [Sparse replication and transfer](sparse_replication_v1/README.md) | Four trials complete, all final answers 24/24. Original task repeats its exact 21.6% elapsed signal; dispatch archive fails seven early checkpoints. [Audited result](../../notes/2026-10-07-sparse-state-replication-result.md). |
 | [Historical state retrieval](history_v1/README.md) | Frozen engine used by the completed study below: each method saves its own accepted states; source-only/history modes isolate lookup access. Engine wiring and snapshot integrity alone do not establish model quality. |
 | [Historical-state study](history_study_v1/README.md) | All eight trials complete: source-only always 24/24; history access 19/24, 19/24, 19/24 and 23/24 despite all 96 checkpoints exact. [Complete negative result](../../notes/2026-10-07-history-state-study-result.md); no extension admitted. |
-| [Direct full-source screen](full_source_v1/README.md) | Active supervised two-request final-answer screen after the completed, preserved negative history result. No intermediate-state guarantee; model results pending. |
+| [Direct full-source screen](full_source_v1/README.md) | Both requests complete: 24/24 each in 27.75/34.86 seconds, all cold. [Audited result](../../notes/2026-10-07-full-source-screen-result.md). Prefer full source for these short static questions; intermediate state is unmeasured. |
 
 The [temporal source packet](../../data/2026-10-07-temporal-development/authoring-note.md)
 is separate CPU preparation: four short narratives with earlier-value questions.
