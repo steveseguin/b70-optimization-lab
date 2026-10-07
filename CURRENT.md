@@ -144,9 +144,11 @@ record the archive restore rehearsal, isolated CPU fixes and remaining prioritie
 Older four-card entries below are retained history, not instructions to resume
 LTX, start a server, or change host settings. The two-card host has its own live entry.
 
-Latest two-card review: **2026-10-07 06:31 UTC**. One supervised sparse-state
-replication is active. Its original-task repeat is exact in both methods and
-meets the prewritten elapsed criterion; the new dispatch pair is still running.
+Latest two-card review: **2026-10-07 06:39 UTC**. One supervised sparse-state
+replication is active. The original repeat is exact; dispatch quoted is exact,
+but dispatch archive invented an early zero balance and fails checkpoint quality.
+Its remaining work finishes unchanged; historical-state comparison preparation
+follows the prewritten fallback.
 
 ## 2026-10-07, two-B70 host: sparse replication active
 
@@ -208,6 +210,13 @@ is fixed before the dispatch outcomes: confirm a successful transfer on a fresh
 server, with a conditional four-trial temporal diagnostic; otherwise compare
 source-only and actual-history access in eight fixed temporal trials. Neither
 branch has execution admission yet.
+Raw dispatch archive replies contain `unitex10: 0` in batches 1–7, although the
+counter is only named in a ticket assignment before its first balance posting in
+batch 8. All initialized values are right; the extra value violates the fixed
+all-checkpoints-exact gate. No failed trial is replaced. The
+[history study plan](experiments/qwen38-27b-b70/notes/2026-10-07-history-state-study-plan.md)
+fixes eight trials crossing bookkeeping and access to each method's actual saved
+history. New code is CPU preparation only until full prior closeout and admission.
 
 Separate [historical-state retrieval](experiments/qwen38-27b-b70/scripts/context/history_v1/README.md)
 is CPU-only preparation. Both methods save their own accepted tables, including
