@@ -7,13 +7,12 @@ below remain that host's own research record; this consolidation did not operate
 
 The owner resumed continuous LTX optimization on `steve-b70s`: higher generated
 frame throughput and reliability without quality degradation. Flash-Next and
-local-worker tuning remain parked. **One LTX application remains running and idle** after the successful 640×384
-W2 screen, PID 3277317, unit `ltx102-resolution-server-20261007`, loopback port8188.
-Its sealed manifest is
-`25761564f8e6790d25cbc4495662b2be19dfe2001401c5b8966e0a9c09264db4`.
-All 36 registered requests completed. Its finite request plan is consumed; do not
-send invented requests or bypass its admission guards. No other GPU work should
-run alongside the resident application.
+local-worker tuning remain parked. The successful W2 application was retained after completion, then stopped once
+at17:37UTC for a controlled reload into the sealed ten-fixture successor.
+**No model application is running during this transition.** All four GPUs passed
+postflight with no kernel fault. No host or memory setting changed.
+[Controlled reload](experiments/ltx25-b70/data/resume-20261007/resolution102-closeout/controlled-reload-stopped.json),
+[postflight](experiments/ltx25-b70/data/resume-20261007/postflight-102.json).
 
 The short matched screen improved from **8.710 to 12.282 generated frames/s**
 (about **41% higher throughput**) at 640×384. Mean completion interval fell from
@@ -32,9 +31,8 @@ Next in CPU preparation: all ten original fixtures, twenty native references,
 ten scored candidate clips, ten initial timed clips and thirty additional
 continuity clips. The timing blocks remain separate. The proposed immutable plan
 needs87 attempts and80 captures, with a fresh7GiB write allowance and50GiB reserve.
-The current successful application remains available while this successor is
-prepared; a controlled reload is necessary because its sealed plan cannot admit
-new native fixtures. This is not an automatic restart chain.
+The controlled reload follows successful source and CPU checks; the previous
+sealed plan could not admit the new native fixtures. This is not an automatic restart chain.
 [Expanded plan](experiments/ltx25-b70/recovery/20261007-resolution-full-103/README.md).
 Client event-processing delay is a promising subsequent speed lever; it has not
 been changed for this broader quality test.

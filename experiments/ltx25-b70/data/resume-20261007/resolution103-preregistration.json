@@ -1,0 +1,68 @@
+{
+  "campaign_unit": "ltx103-resolution-campaign-20261007",
+  "claim": "Ten original fixtures, twenty native references, ten candidate outputs, ten initial timed outputs and thirty continuity outputs. Timing blocks separate. No record or public promotion.",
+  "correction": "Expand exact reference coverage and bounded continuity; unchanged W2 scheduling, model arithmetic, client delivery and numerical settings.",
+  "environment": {
+    "EnableDeferBacking": "0",
+    "LTX_BUSY_WINDOWS": "0",
+    "LTX_DECODE_REPLICAS": "1",
+    "LTX_DECODE_REPLICA_DEVICE": "xpu:2",
+    "LTX_OUTPUT_SIZE": "640x384",
+    "LTX_SAMPLER_BATCH": "1",
+    "LTX_SAMPLER_PLACEMENT": "two-way",
+    "LTX_SAMPLER_SHARED_POOL": "1",
+    "LTX_SAMPLER_WORKERS": "2",
+    "NEOReadDebugKeys": "1"
+  },
+  "health_receipt": "experiments/ltx25-b70/data/resume-20261007/postflight-102.json",
+  "input_inventory_sha256": "be41ea4aedd07673c65f1c1aa9d4370e22213ceb886b311f559bf79e7fe66963",
+  "limits": {
+    "capture_cap": 80,
+    "hard_kill": false,
+    "nofile": "65536:1048576",
+    "per_request_timeout_seconds": 1800,
+    "planned_captures": 80,
+    "requests": 87,
+    "server_restart": "no",
+    "storage_reserve_bytes": 53687091200,
+    "write_allowance_bytes": 7516192768
+  },
+  "manifest_sha256": "a8b78c0a73a3045f902a2cf7f6ff55dff1931f4f4872b12576e976399708b5cb",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-resolution-full-103",
+  "plan_sha256": "84bdccba3e2fe39b9bf5bcd1cd074c6ee74bbd8ade2a9be7aa63e945f5b07e1d",
+  "run_name": "encoder-server-resolution-full-103-two-way-w2-b1-p1-dxpu2-s640x384",
+  "schedule_sha256": "6c2e7a35102ddcb5e84468965495311ba62768e271553b54745daefbe232e4fb",
+  "schema": "ltx.resolution103.preregistration.v1",
+  "server_unit": "ltx103-resolution-server-20261007",
+  "source_commit": "5c0f0b964ce07d841f888448c873d0b2021616c9",
+  "utc": "2026-10-07T17:38:41.600270+00:00",
+  "lifecycle": "Retain successful application after verified quiescence. No automatic restart/retry. Failed campaign one proven-idle graceful incident stop; faults/unresolved work coordinator.",
+  "memory_admission_gib": {
+    "native": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture0": [
+      6,
+      6,
+      2,
+      7
+    ],
+    "capture1": [
+      7,
+      7,
+      2,
+      7
+    ],
+    "decode": [
+      2,
+      2,
+      7,
+      7
+    ],
+    "postcapture_floor": 2,
+    "not_proven_peak_bounds": true
+  }
+}

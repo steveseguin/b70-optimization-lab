@@ -14,8 +14,9 @@ This is scoped workload qualification, not a speed record or endurance result.
 
 Sealed102 passed its W2 screen: all six native executions and13 scored clips
 matched exactly. Throughput rose41% to12.282 generated frames/s in the matched
-three-fixture serial-client screen. The app remains running and idle after
-successful completion; the unmodified verifier reconstructed the proof.
+three-fixture serial-client screen. The app was retained after successful completion; the unmodified verifier
+reconstructed the proof. It later stopped cleanly for the controlled103 reload,
+with healthy four-card postflight.
 [102 closeout](../../data/resume-20261007/resolution102-closeout/summary.json).
 
 The current authored successor103 broadens qualification to all ten original
