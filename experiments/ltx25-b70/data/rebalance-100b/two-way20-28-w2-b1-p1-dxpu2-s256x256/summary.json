@@ -1,0 +1,311 @@
+{
+  "schema": "ltx.campaign-96-summary.v1",
+  "run": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-rebalance-100b-two-way20-28-w2-b1-p1-dxpu2-s256x256",
+  "batch": 1,
+  "arms": {
+    "f100b-twoway2028w2b1p1dxpu2s256x256-probe": {
+      "label": "placement-probe",
+      "present": true,
+      "prompts": 13,
+      "index_base": 97500200,
+      "order": "cycle",
+      "batch": 1,
+      "output_size": "256x256",
+      "comparison": "references:w93c",
+      "speed_only": false,
+      "references_checked_against": "references:w93c",
+      "shape_problems": [],
+      "emission_sequence_ok": true,
+      "clips_emitted": 10,
+      "clips_verified": 10,
+      "exact": 10,
+      "all_exact": true,
+      "references": [
+        "stability-01-w93c-bird",
+        "stability-01-w93c-boat",
+        "stability-01-w93c-candle",
+        "stability-01-w93c-fabric",
+        "stability-01-w93c-marble",
+        "stability-01-w93c-paper",
+        "stability-01-w93c-pendulum",
+        "stability-01-w93c-pour",
+        "stability-01-w93c-rain",
+        "stability-01-w93c-wheel"
+      ],
+      "interval_median_s": 1.308,
+      "interval_mean_s": 1.3559,
+      "interval_median_steady_s": 1.3065,
+      "intervals_excluded_for_host_stall": 0,
+      "host_stall_durations_s_in_run": [],
+      "sampler_in_flight": {
+        "jobs_mean": 1.822,
+        "jobs_max": 3,
+        "jobs": 11,
+        "clips_mean": 1.822,
+        "clips_max": 3
+      },
+      "encode_job_median_s": 0.4456,
+      "sampler_job_median_s": 2.6235,
+      "sampler_job_median_per_clip_s": 2.6235,
+      "decode_job_median_s": 1.8595,
+      "decode_queue_depth_median": 3,
+      "decode_queue_depth_max": 3,
+      "connector_computed_per_job_median": 0,
+      "connector_reused_per_job_median": 0,
+      "engine": {
+        "window_s": 9.46,
+        "prompts": 7,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.3921,
+            "bcs_s_per_clip": 1.1218,
+            "ccs_util": 1.0298
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.1505,
+            "bcs_s_per_clip": 1.0435,
+            "ccs_util": 0.8511
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.3304,
+            "bcs_s_per_clip": 0.3019,
+            "ccs_util": 0.2444
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 1.4109,
+            "bcs_s_per_clip": 0.225,
+            "ccs_util": 1.0437
+          }
+        },
+        "total_ccs_s_per_clip": 4.2839
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    },
+    "f100b-twoway2028w2b1p1dxpu2s256x256-timed": {
+      "label": "timed",
+      "present": true,
+      "prompts": 120,
+      "index_base": 98500000,
+      "order": "cycle",
+      "batch": 1,
+      "output_size": "256x256",
+      "comparison": "references:w93c",
+      "speed_only": false,
+      "references_checked_against": "references:w93c",
+      "shape_problems": [],
+      "emission_sequence_ok": true,
+      "clips_emitted": 116,
+      "clips_verified": 116,
+      "exact": 116,
+      "all_exact": true,
+      "references": [
+        "stability-01-w93c-bird",
+        "stability-01-w93c-boat",
+        "stability-01-w93c-candle",
+        "stability-01-w93c-fabric",
+        "stability-01-w93c-marble",
+        "stability-01-w93c-paper",
+        "stability-01-w93c-pendulum",
+        "stability-01-w93c-pour",
+        "stability-01-w93c-rain",
+        "stability-01-w93c-wheel"
+      ],
+      "interval_median_s": 1.452,
+      "interval_mean_s": 1.3007,
+      "interval_median_steady_s": 1.458,
+      "intervals_excluded_for_host_stall": 0,
+      "host_stall_durations_s_in_run": [],
+      "sampler_in_flight": {
+        "jobs_mean": 1.994,
+        "jobs_max": 3,
+        "jobs": 118,
+        "clips_mean": 1.994,
+        "clips_max": 3
+      },
+      "encode_job_median_s": 0.4552,
+      "sampler_job_median_s": 2.5068,
+      "sampler_job_median_per_clip_s": 2.5068,
+      "decode_job_median_s": 1.4739,
+      "decode_queue_depth_median": 5.0,
+      "decode_queue_depth_max": 5,
+      "connector_computed_per_job_median": 1.0,
+      "connector_reused_per_job_median": 3.0,
+      "engine": {
+        "window_s": 148.28,
+        "prompts": 114,
+        "cards": {
+          "0000:23:00.0": {
+            "role": "xpu:0",
+            "ccs_s_per_clip": 1.1996,
+            "bcs_s_per_clip": 0.9582,
+            "ccs_util": 0.9223
+          },
+          "0000:27:00.0": {
+            "role": "xpu:1",
+            "ccs_s_per_clip": 1.0515,
+            "bcs_s_per_clip": 0.9481,
+            "ccs_util": 0.8084
+          },
+          "0000:43:00.0": {
+            "role": "xpu:2",
+            "ccs_s_per_clip": 0.9063,
+            "bcs_s_per_clip": 0.4101,
+            "ccs_util": 0.6968
+          },
+          "0000:47:00.0": {
+            "role": "xpu:3",
+            "ccs_s_per_clip": 0.8035,
+            "bcs_s_per_clip": 0.273,
+            "ccs_util": 0.6177
+          }
+        },
+        "total_ccs_s_per_clip": 3.9609
+      },
+      "context_sentries": {
+        "bird": [
+          [
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a",
+            "c6a9760ca0e86ecd8e7993cfb38eb113d583ea679ac572502c432b3512c0a87a"
+          ]
+        ],
+        "boat": [
+          [
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c",
+            "b318cf6bd31fbadde2882a813583aedc594fae15e62cd06c92546a85e418de0c"
+          ]
+        ],
+        "candle": [
+          [
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e",
+            "218a657ce3ecf1f5ac1f595ccd6651d35a889fdc4009a743357e7d1e0b08f58e"
+          ]
+        ],
+        "fabric": [
+          [
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be",
+            "47146131321bf0c4114d3f9d63f9108747b4f5f80ee814f1266a950cb29535be"
+          ]
+        ],
+        "marble": [
+          [
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f",
+            "d9bf7de92991defafc427d29e956398d52d7e9534a143349afa4721642b3e11f"
+          ]
+        ],
+        "paper": [
+          [
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc",
+            "71ef377aaa53e0baa741fe3789e660dd864c9a4cba496aa7739b8954f08387cc"
+          ]
+        ],
+        "pendulum": [
+          [
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123",
+            "ef8d24e0a251a4b898ca82916d169a48174129f334d2cfffff2a7c6c51a58123"
+          ]
+        ],
+        "pour": [
+          [
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8",
+            "bcf594ad8e113ff5a69fe5660eb2a54fcffc54d989b294ed8793aca41aa61dc8"
+          ]
+        ],
+        "rain": [
+          [
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed",
+            "5d253b41abbd6c73dc178e1664c1b580ccdd793c4805a5e8b0bb543c8d2c14ed"
+          ]
+        ],
+        "wheel": [
+          [
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab",
+            "168ca8fa21d3488b0564b7cb25e567320a86f12d2a73ddfd2313f3919f2567ab"
+          ]
+        ]
+      }
+    }
+  },
+  "context_sentry_pairs": {
+    "f100b-twoway2028w2b1p1dxpu2s256x256-probe:f100b-twoway2028w2b1p1dxpu2s256x256-timed": {
+      "fixtures_expected": 10,
+      "identical": 10,
+      "passed": true,
+      "problems": []
+    }
+  },
+  "context_sentry_gate_passed": true,
+  "missing_or_failed": [],
+  "batch_reference_closeness_vs_w93c": null,
+  "proofs": {},
+  "reference_sets": {
+    "f100b-twoway2028w2b1p1dxpu2s256x256-probe": "references:w93c",
+    "f100b-twoway2028w2b1p1dxpu2s256x256-timed": "references:w93c"
+  },
+  "label": "batch 1: the packet 95 path, checked against the w93c references",
+  "engine_samples": 467
+}
