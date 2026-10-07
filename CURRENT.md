@@ -33,10 +33,12 @@ The full unmodified sealed proof was independently reconstructed at 19:46:02 UTC
 Keep the reduced-write policy and **close the client comparison lever**. The next
 work is bounded GPU activity accounting to locate sampler computation or waiting,
 then one measured optimization. Do not start another client confirmation campaign.
-A read-only collector prototype is under review and has never observed a live
-server. The proposed 106 diagnostic retains the ten scenes and numerics with
+The read-only collector passed independent review and 24 synthetic tests; it has
+never observed a live server. The fixed retirement helper passed 15 synthetic
+file-safety tests, without any real deletion or restore. The proposed 106 diagnostic retains the ten scenes and numerics with
 57 requests / 50 capture allowance, and needs fresh 4 GiB runtime plus 384 MiB
-source admission above the 50 GiB reserve. Its plan/runtime is not prepared yet.
+source admission above the 50 GiB reserve. The standalone plan and schedule passed 31 CPU controls. Runtime integration,
+observer admission, source build and a necessary controlled reload are still pending.
 Sampler A/B timings describe denoising stages, not individual GPU utilization;
 they do not justify a blind placement or worker-count sweep.
 
@@ -46,7 +48,9 @@ they do not justify a blind placement or worker-count sweep.
 [independent proof](experiments/ltx25-b70/data/resume-20261007/client105-post-completion-proof.json),
 [105 measurements](experiments/ltx25-b70/notes/2026-10-07-client105-performance.md),
 [104 measurements](experiments/ltx25-b70/notes/2026-10-07-client104-performance.md),
-[sampler investigation](experiments/ltx25-b70/notes/2026-10-07-sampler-after105-audit.md).
+[sampler investigation](experiments/ltx25-b70/notes/2026-10-07-sampler-after105-audit.md),
+[reviewed raw collector](experiments/ltx25-b70/recovery/20261007-driver-accounting106/README.md),
+[106 plan](experiments/ltx25-b70/recovery/20261007-sampler-accounting106-plan/candidate-plan.json).
 
 About 52.41 GiB is free after 105. Its raw outputs remain protected while the
 application is retained. A conditional 40-file duplicate subset could provide

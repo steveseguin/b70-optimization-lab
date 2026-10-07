@@ -197,3 +197,12 @@ UUIDs with bus fields23,27,43,47 for ordinals0–3. The local compute-runtime
 checkout documents this PCI-derived layout, but is not yet proven identical to
 the installed package. Do not substitute ordinal assumptions for reviewed mapping
 evidence in the future observer contract.
+
+The matching installed-version tag was subsequently found locally: compute-runtime
+`26.18.38308.1`, commit `82aab87fc932edc0558a0302d545a5bcc22edf41`. Its PCI UUID
+layout matches every vendor, device, revision, domain, bus, device, function and
+reserved field of all four recorded105 UUIDs and their actual sysfs devices.
+Each match is unique. This resolves the ordinal mapping for the reviewed105
+evidence; future106 must bind its own identity and recheck sysfs. It is a
+package-version/source-layout match, not a reproducible binary build attestation.
+[Mapping source review](../data/resume-20261007/driver106-mapping-source-review.json).

@@ -1,0 +1,15 @@
+{
+  "schema": "ltx.cpu-validation.v1",
+  "utc": "2026-10-07T19:56:55.804049+00:00",
+  "passed": true,
+  "tests": 24,
+  "seconds": 0.209,
+  "command": "python3 -B experiments/ltx25-b70/recovery/20261007-driver-accounting106/test_collector.py",
+  "scope": "Root independent source review plus synthetic proc/counter/clock/output tests; collector never run against a live process.",
+  "sources": {
+    "collector.py": "abee1ac0c0e2a47ec9d622f4639bfaec45c7bd45272380dba4c51f7a195fc480",
+    "test_collector.py": "40fd80f2f40d619bf7efb5dc8eb29d06a30f76e0adf57a77833a8d843d307948",
+    "README.md": "a1ffd926ac6ab3169f44bbb27895bd33f6f4eba91e3ce1f7fc8bf6f188de33a1"
+  },
+  "review": "Read-only bounded raw per-client/per-engine counter collection with exact source/process/mapping binding. No GPU node opens, endpoint requests, signals or settings. Snapshot completeness and terminal status must be assessed separately; exit zero alone does not qualify data. Proc latency can overrun deadline, as documented."
+}

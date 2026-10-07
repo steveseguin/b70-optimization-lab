@@ -1,0 +1,65 @@
+{
+  "schema": "ltx.driver106.mapping-source-review.v1",
+  "utc": "2026-10-07T19:51:32.037133+00:00",
+  "purpose": "Reviewed evidence for future observer mapping; not a106observer contract and no GPU work.",
+  "server_identity_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-client-reverse-105-two-way-w2-b1-p1-dxpu2-s640x384/server-identity.json",
+  "server_identity_sha256": "cb4ff31d62bdf6ad094adbec7325fb20e4eb02995f6a36d96dec63a8f5254d58",
+  "source_repository": "/home/steve/src/pti-gpu/build-unitrace/compute-runtime",
+  "tag": "26.18.38308.1",
+  "commit": "82aab87fc932edc0558a0302d545a5bcc22edf41",
+  "source_path": "shared/source/device/device.cpp",
+  "source_sha256": "34e1d33a24321aaf10616f4a47cfa628b46ebc90130a521b547c390ed8eb3236",
+  "uuid_function_sha256": "6a726405530670c70dc6e3a73090d2ec1ec6b7b7b5c2be29253665945f6dc89f",
+  "installed_package": "libze-intel-gpu1",
+  "installed_version": "26.18.38308.1-0",
+  "loaded_library": "/usr/lib/x86_64-linux-gnu/libze_intel_gpu.so.1.15.38308",
+  "loaded_library_sha256": "26fa68779adb03b200a8c3001cf81e59fc9a3d63e0f38627ec0005ffce574e7a",
+  "ordered_mapping": [
+    {
+      "ordinal": 0,
+      "render_node": "/dev/dri/renderD130",
+      "pci": "0000:23:00.0",
+      "uuid": "868023e2-0000-0000-2300-000000000000",
+      "properties_sha256": "e0493f40c36dfa0a17be7753a06c62fcca2a7f1db179215a4ba7188b8a569b64",
+      "sysfs_device": "/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0",
+      "vendor": 32902,
+      "device": 57891,
+      "revision": 0
+    },
+    {
+      "ordinal": 1,
+      "render_node": "/dev/dri/renderD131",
+      "pci": "0000:27:00.0",
+      "uuid": "868023e2-0000-0000-2700-000000000000",
+      "properties_sha256": "1dd8b81bb7d5dfac95727a4b990b0301ac7bf81a593171110a8e15b536ed3230",
+      "sysfs_device": "/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0",
+      "vendor": 32902,
+      "device": 57891,
+      "revision": 0
+    },
+    {
+      "ordinal": 2,
+      "render_node": "/dev/dri/renderD128",
+      "pci": "0000:43:00.0",
+      "uuid": "868023e2-0000-0000-4300-000000000000",
+      "properties_sha256": "74717e374d9144f4e2afe5d52c9950ec4b53bf1c4a6379225e300686a8b7de53",
+      "sysfs_device": "/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0",
+      "vendor": 32902,
+      "device": 57891,
+      "revision": 0
+    },
+    {
+      "ordinal": 3,
+      "render_node": "/dev/dri/renderD129",
+      "pci": "0000:47:00.0",
+      "uuid": "868023e2-0000-0000-4700-000000000000",
+      "properties_sha256": "2ca1cb8270a258163d7d4f477d5cf6bae3ea2aef87eb8bcaf3eac544c24b653a",
+      "sysfs_device": "/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0",
+      "vendor": 32902,
+      "device": 57891,
+      "revision": 0
+    }
+  ],
+  "reasoning": "Sealed ordinal properties contain UUIDs matching every vendor/device/revision/domain/bus/device/function/reserved field in the corresponding installed-version upstream tag PCI UUID layout and actual sysfs device. All four matches unique. Runtime package version matches source tag; not a reproducible build attestation. Futureserver must rebind its own identity and revalidate sysfs.",
+  "upstream_url": "https://github.com/intel/compute-runtime/blob/26.18.38308.1/shared/source/device/device.cpp"
+}
