@@ -1,0 +1,77 @@
+{
+  "schema": "screen1b.certified-memory-reconstruction.v1",
+  "certified_runs": [
+    "A364",
+    "A365",
+    "A366",
+    "A367"
+  ],
+  "source_sha256": {
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a364-native-exact-gdn-ple-only-qsa-stable-summary.json": "6af6a70ca3fc50e44d85fcc25af24b04329777872e7f3a0fb7f981dcae6c73ad",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a365-fresh-repeat-deterministic-summary.json": "8752fe4828b58d6d99b1e156639beb4efdc21be5f0e08b4eae3018776e3f69b9",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a366-native-exact-gdn-ple-only-qsa-stable-summary.json": "cf9937cbdfdb8d464a0fd6541f654db7dfe6e4261dc4989e7a310fb012ec8211",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-identity.txt": "cfca8d785b7e03234164937ba36e1f728b636ea1c838fbbd708b115e1e0572b7",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp1-a314-placement-load-receipt.txt": "55760a444ded3e78417b40011c7f69fd350e9387804642eccb3269fd8e15dfb8",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+    "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp0-long-context-base.sh": "d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/certified-run-search.json": "181479f8ddd5979108e8ba528235e026059dbe114f8c0be2dbc37f6a41e2454d",
+    "experiments/qwen38-flash-next-fp8-b70/reopen-20261008/cpu-buffer-measurement.json": "abf1826ea3813e09f76b75b301d580ef624a6cfe4f766d214af951c8c1099fd2"
+  },
+  "certified_launch": {
+    "tp": 4,
+    "ep": 4,
+    "mtp": 1,
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "gpu_memory_utilization": 0.92,
+    "kv_budget_bytes_per_rank": 376569856,
+    "kv_dtype": "16-bit",
+    "graphs": "FULL_DECODE_ONLY",
+    "compilation_mode": "NONE",
+    "capture_sizes": [
+      1,
+      2
+    ],
+    "offload_budget_gib_per_rank": 12.25
+  },
+  "worker_rss_bytes": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "host_peak_bytes": null,
+  "per_rank_vram_weights_bytes": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "per_rank_vram_graph_pool_bytes": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "per_rank_vram_kv_allocated_bytes": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "pins_formula": "12800061440 + 317849600 + host_experts * 4915200 per rank",
+  "pins_bytes_per_rank": [
+    15786864640,
+    16003133440,
+    15821271040,
+    15998218240
+  ],
+  "pins_total_bytes": 63609487360,
+  "ple_host_rows_per_rank": 80000384,
+  "ple_device_rows_per_rank": 0,
+  "ple_view": "rank-local XPU UVA view of CPU storage; not duplicate VRAM",
+  "host_peak_relative_error": null,
+  "pin_formula_vs_cpu_os_locked_relative_error": 0,
+  "warning": "CPU OS-locked storage is not the XPU pinned allocator. No 10% server-peak calibration is possible from surviving receipts."
+}

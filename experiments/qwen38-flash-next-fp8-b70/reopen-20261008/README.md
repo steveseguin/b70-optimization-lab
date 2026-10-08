@@ -1,82 +1,80 @@
-# Flash-Next FP8 Screen 1b — CPU port, execution refused
+# Flash-Next Screen 1b — v5 port and CPU memory reconstruction
 
-Screen 1b ports the lab's memory-lifetime safeguards onto the official vLLM
-0.30.0 XPU image and the pinned Lumnus Python base. **It is not yet an admitted
-GPU configuration.** The fit gate refuses unknown bounds as well as excessive
-predictions. No server was started to develop or test this packet; the LTX
-server and port 8188 were not contacted.
+**No honest joint fit is established yet.** The certified placement is now
+ported and its **63.609487 GB** of host buffers is validated with real-shape
+CPU allocations. The surviving certified receipts do not contain worker RSS
+or host/VRAM peaks, so a ±10% server-peak calibration is unavailable. The
+previous assertion that placement could not help has been withdrawn.
+[Evidence, formulas, configuration table and limitations](CALIBRATION.md).
 
-The direct-allocation PLE path removes the pageable-to-pinned duplicate of the
-native checkpoint table. It preserves its dtype and values, checks complete
-local shard coverage, filters non-owned PLE shards before materialization,
-and uses the actual XPU device for UVA. Checkpoint copies are bounded and
-serialized across ranks; cancellation drains outstanding copies. Python
-shutdown changes remove automatic worker hard-kill escalation. These are
-storage and lifetime changes, not an exact-GDN port or sampler change.
+The old 20 GiB allowance plus 256 MiB staging gives **85.352759 GB** for the
+new placement, down from 92.237316 GB. This is an **uncalibrated sensitivity
+case**, not the predicted measured peak. It passes 90 GB numerically but misses
+85 GB; execution also refuses unknown phase bounds and VRAM reserves.
 
-Whole-file Python replacements are sealed in [overlay-manifest.json](overlay-manifest.json).
-[container-entrypoint.sh](container-entrypoint.sh) applies them after checking
-both input and output hashes. The native wheel and unchanged Python files stay
-in the official image, pinned by its `e4446310…` digest in
-[image-plan.json](image-plan.json). The source checkout is left unchanged.
-Attribution: the existing Lumnus/wu1ff deltas are pinned at
-`9d79d28d7e32f33bdbd115c85d116583ce679cb6`; the new PLE/loading/shutdown port
-adapts this lab's certified patch series. No community speed boost is claimed.
+| V30 placement | Pins GB | Nonpin host room below 85 GB | MTP1 / MTP0 static reserve upper bound, GiB | Server peak |
+| --- | ---: | ---: | ---: | --- |
+| Certified v5 | 63.609 | 21.391 GB | 2.140 / 2.796 | Unknown |
+| Lab long-context v5 | 68.731 | 16.269 GB | 3.225 / 3.881 | Unknown |
+| 1,000 host expert rows/rank | 72.132 | 12.868 GB | 4.232 / 4.888 | Unknown |
+| 1,100 host expert rows/rank | 74.099 | 10.901 GB | 4.690 / 5.345 | Unknown |
+| 1,200 host expert rows/rank | 76.065 | 8.935 GB | 5.148 / 5.803 | Unknown |
 
-The requested MTP1 configuration keeps maximum length 4,352, TP4+EP, native FP8
-model/table bytes, BF16 activations and full 16-bit KV. It uses selective UVA
-for PLE and whole expert tensors, at 16.25 GiB per rank with whole-parameter
-overshoot. Its predicted final pins are **70.494044 GB**. With the fit note's
-20 GiB overhead assumptions and one 256 MiB live staging buffer, the planning
-peak is **92.237316 GB**, above the **90 GB** ceiling. This is an assumption-based
-prediction, not measured host RAM. Complete V30 runtime/retention and VRAM
-bounds remain unqualified; the authoritative qualified peak is therefore
-unknown and execution refuses independently of that numeric failure.
+Reserve is the worst rank, assuming historical rank0 capacity on all cards,
+**before** graph/runtime/allocator overhead; it is not promised free VRAM.
+All alternatives use native host PLE, full 16-bit KV at **376,569,856
+bytes/rank**, **FULL_DECODE_ONLY**, length **4,352**, TP4/EP4. None qualifies.
+The default remains the certified mask with MTP1 to minimize differences while
+resolving memory accounting; it is not labelled as a fitting selection.
 
-Final v5 expert-row placement is **not added**. Under those same allowances,
-even ideal placement cannot meet both the host ceiling and four GiB spare per
-card: an optimistic static calculation already needs 28.560915 GiB per card
-before several runtime costs. v5 changes which rows live on host, not this
-total-memory obstruction. Smaller *evidenced* overhead bounds or another
-lossless memory reduction are needed before choosing an admitted placement.
-See [runtime notes](runtime-notes.md) for the component table and limitations.
+The v5 port creates final resident/host expert tensors directly, keeps every
+expert callable through the loader row map and Triton address table, retains
+full block scales and logical expert counts, and checks parameter replacement.
+It also restores input-embedding UVA and selects compilation NONE, utilization
+0.92 and the certified 12.25 GiB generic offload budget. PLE coverage, bounded
+serialized copies, the independent watchdog and graceful drainage remain.
+[Overlay hashes](overlay-manifest.json), [phase bounds](memory-bounds.json),
+[prediction](host-memory-prediction.json), [CPU tests](VALIDATION.md).
 
-From this directory, preview the prediction and exact command without any GPU
-or Docker operation:
+Compared with the certified lane, the NVIDIA-derived V30 model, native kernels,
+GDN, compiler, collective and tuning context differ. Compared with stock V30,
+this includes the already-pinned Lumnus XPU Python changes plus lab storage,
+loader and shutdown changes. Native wheel and sampler are unchanged by this
+port. Output parity, actual XPU pointers, graph pools and server fit remain
+untested. No speed/quality promotion follows from CPU tests.
 
-```sh
-python3 screen.py run --mode mtp1 --dry-run
-```
-
-The exact future execution command is:
+Preview without Docker, GPU or network operations:
 
 ```sh
-python3 screen.py run --mode mtp1 --execute
+python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --dry-run
 ```
 
-**That command currently refuses the memory gate.** It is supplied for review,
-not as a claim of permission or readiness to displace LTX. A later admitted
-execution requires idle cards, complete passive process/journal access, a
-fresh result directory (default `runs/screen1b-mtp1`), the existing pinned image,
-and the lane's five-minute shutdown gap. No password/sudo fallback exists.
-Nothing retries, restarts, changes host settings, or installs into a venv.
+Exact requested execution command — **not run, currently refuses admission**:
 
-On an admitted run, the controller rechecks the source/model/launch prediction
-before and after full model hashing. The independent watchdog polls every
-250 ms from startup through drainage. At accounted host pressure ≥80 GB or
-MemAvailable ≤32 GiB it writes a cancellation latch and sends **one SIGINT**;
-normal cleanup shares the same latch. Loader admission also checks the next
-allocation against those thresholds. Signal failure or a drain timeout leaves
-evidence for review; it never escalates to a hard kill. These guards cannot
-guarantee safety under unbounded unrelated host pressure.
+```sh
+python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --execute
+```
 
-The protocol remains sixteen requests: exact-2K twice, exact-4K twice, then all
-twelve cold realistic prompts once, with zero cached tokens and a 512-token
-response cap. Fused GDN remains in place. A pin miss establishes a mismatch on
-that fixture, but cannot attribute it solely to GDN; model lineage, compiler,
-MoE and placement also differ from certification. A match establishes only
-those checked token streams. Neither establishes broad exactness, full quality,
-MTP3 correctness, or fresh-server determinism. Any speed remains diagnostic;
-46.854250 tok/s is a historical reference, not a matched A/B.
+The fallback CPU measurement was implemented and run:
 
-CPU validation commands and results are in [VALIDATION.md](VALIDATION.md).
+```sh
+python3 experiments/qwen38-flash-next-fp8-b70/reopen-20261008/dry_buffers.py \
+  --output experiments/qwen38-flash-next-fp8-b70/reopen-20261008/cpu-buffer-measurement.json
+```
+
+It constructs OS-locked buffers one rank at a time, with a 20 GB process
+address-space cap and pressure checks. Maximum RSS was **16.161030 GB**;
+locked bytes matched the formula exactly and all mappings were released.
+It does not use or measure the XPU pinned allocator. Missing archived RSS,
+host-peak and VRAM pool receipts are listed in the calibration note.
+
+The unchanged watchdog polls every 250 ms and sends one SIGINT at accounted
+host pressure ≥80 GB or MemAvailable ≤32 GiB. Allocation admission checks the
+next buffer too. Nothing retries or escalates to hard kill. A below-85-GB
+scenario can still trip this stricter watchdog. No threshold was relaxed.
+
+No server, GPU, Docker run/pull/create, install, credential access, branch,
+commit or host-setting change was performed. Port 8188 was never contacted.
+All work remains uncommitted; concurrent LTX files and existing runs were
+preserved. Future execution needs separately resolved memory bounds and idle
+cards; this packet is not authorization to displace LTX.

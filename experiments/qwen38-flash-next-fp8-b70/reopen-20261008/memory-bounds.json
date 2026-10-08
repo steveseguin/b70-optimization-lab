@@ -36,12 +36,13 @@
     "active_files_bytes": 4294967296,
     "other_host_and_driver_bytes": 4294967296
   },
-  "illustrative_assumptions_source": "../notes/2026-10-08-screen1b-host-memory-fit.md: explicitly chosen 12+4+4 GiB allowances, not measurements or certified bounds",
+  "illustrative_assumptions_source": "Legacy 20 GiB sensitivity case only; NOT calibrated, NOT a bound. No inference of physical impossibility or admission from it.",
   "enforced_candidate_contract": {
     "maximum_copy_ranks": 1,
     "maximum_live_copy_bytes": 268435456,
     "direct_ple_destination_allocation": true,
-    "model_and_ple_requantization": false
+    "model_and_ple_requantization": false,
+    "final_size_v5_expert_placement": true
   },
   "remaining_committed_growth_bytes": null,
   "phases": {
@@ -172,6 +173,46 @@
     "Complete per-rank resident weight partition and MTP/GDN/workspace upper bound",
     "Exact physical VRAM capacities for all four cards",
     "Post-hash host, cgroup, process observations in an otherwise idle launch window",
-    "Load cancellation latency and complete allocation lifetime qualification"
-  ]
+    "Load cancellation latency and complete allocation lifetime qualification",
+    "Certified A364-A367 worker RSS and host/VRAM peaks unavailable; a 10% peak calibration cannot be computed"
+  ],
+  "placement_sha256": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+  "calibration": {
+    "status": "PIN_BYTES_VALIDATED_ONLY; SERVER_PEAK_CALIBRATION_UNAVAILABLE",
+    "certified_pins_total_bytes": 63609487360,
+    "certified_host_peak_bytes": null,
+    "certified_worker_rss_bytes": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "certified_per_rank_vram_weights_kv_graphs_bytes": {
+      "weights": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "kv_budget": [
+        376569856,
+        376569856,
+        376569856,
+        376569856
+      ],
+      "graphs": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "peak_relative_error": null,
+    "reason": "A364-A367 raw run directories absent at named locations; recorded USB evidence path unavailable. Summaries/identity/guide give allocation/flags, not RSS or peak.",
+    "cpu_measurement": "cpu-buffer-measurement.json",
+    "cpu_measurement_sha256": "abf1826ea3813e09f76b75b301d580ef624a6cfe4f766d214af951c8c1099fd2",
+    "cpu_measurement_scope": "OS mlock of exact host buffer shapes, one rank at a time, not XPU pin allocator or server peak",
+    "reconstruction": "certified-memory-reconstruction.json",
+    "reconstruction_sha256": "22593408f471c80da9894ada963e4f83ced0a783deff24c25d0ac317aeb9205c"
+  }
 }

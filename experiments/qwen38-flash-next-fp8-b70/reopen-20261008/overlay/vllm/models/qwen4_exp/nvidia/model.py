@@ -398,6 +398,12 @@ class Qwen4ExpModel(nn.Module):
             and getattr(config, "indexer_n_heads", None) is not None
         )
         self.embed_tokens = VocabParallelEmbedding(self.vocab_size, config.hidden_size)
+        from vllm import q38_expert_placement as _q38_place
+        if _q38_place.enabled():
+            from vllm.model_executor.offloader import get_offloader
+            self.embed_tokens = get_offloader().wrap_modules(
+                iter([self.embed_tokens]), prefix=f"{prefix}.embed_tokens"
+            )[0]
 
         def get_layer(prefix: str) -> Qwen4ExpDecoderLayer:
             layer_idx = extract_layer_index(prefix)

@@ -5,18 +5,29 @@
   "launch": {
     "tensor_parallel_size": 4,
     "expert_parallel_size": 4,
-    "cpu_offload_bytes_per_rank": 17448304640,
+    "cpu_offload_bytes_per_rank": 13153337344,
     "offload_suffixes": [
       "ple_embedding.ngram_embedding.weight",
-      "mlp.experts.w13_weight",
-      "mlp.experts.w2_weight"
+      "embed_tokens.weight"
     ],
+    "placement": "/screen-package/placement-certified-v5.json",
+    "gpu_memory_utilization": "0.92",
+    "compilation": {
+      "mode": 0,
+      "compile_sizes": [],
+      "cudagraph_num_of_warmups": 1,
+      "cudagraph_mode": "FULL_DECODE_ONLY",
+      "cudagraph_capture_sizes": [
+        1,
+        2
+      ]
+    },
     "max_model_len": 4352,
     "max_num_seqs": 1,
     "max_num_batched_tokens": 64,
     "kv_bytes_per_rank": 376569856,
     "mtp_depth": 1,
-    "command_sha256": "71a0c4e4ab2e36d1716d753d089fb7e91ed4cf14b9680c561f860dcd70143d3a"
+    "command_sha256": "72bae27bf3350a156ad21c950dc6f3ab3457a7007e3f21f7e223ecb088e034f1"
   },
   "metadata": {
     "config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
@@ -166,8 +177,8 @@
     "vllm/model_executor/layers/quantization/fp8.py": "947540b443c15e9e5b4c08ff07f7a7c0e8d8f0d8494f3964c0172a772a779fe5",
     "vllm/v1/worker/gpu/model_runner.py": "0b02bdb26b340d57869861c0570815bc68d36812a87c1b78a16960f3b20f842a"
   },
-  "overlay_manifest_sha256": "5abf94d7d019823c936882139761d2fab4c81081993751cea5f6fa93096bc168",
-  "phase_bounds_manifest_sha256": "11a949f9531f9568f08545fcf1a27bc6b7259a7671ff0e02ff25509944fe94a0",
+  "overlay_manifest_sha256": "4b63d55d9ebd164bbb240ec40fe3c1e389d9eaed6f177cc5a60b67791b8cdf7c",
+  "phase_bounds_manifest_sha256": "1aa4903e1e08c4387a6edb44eaf2bf2664600d55d624c20bfaa3c9968adef4d3",
   "physical_vram_bytes_per_rank": [
     34242297856,
     null,
@@ -185,105 +196,4775 @@
     "ranks1_to_3": "exact per-card receipts not located; required bounds remain null",
     "nominal_32gib": "optimistic capacity upper bound only for conditional impossibility proof; never admission"
   },
-  "selected_parameters_per_rank": [
+  "selected_parameters_rank0": [
     {
-      "name": "model.language_model.layers.0.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
-    },
-    {
-      "name": "model.language_model.layers.0.mlp.experts.w2_weight",
-      "bytes": 209715200,
-      "kind": "experts"
-    },
-    {
-      "name": "model.language_model.layers.1.ple.ple_embedding.ngram_embedding.weight",
+      "name": "PLE",
       "bytes": 12800061440,
-      "kind": "ple"
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.1.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
+      "name": "input_embedding",
+      "bytes": 317849600,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.1.mlp.experts.w2_weight",
-      "bytes": 209715200,
-      "kind": "experts"
+      "name": "layer0.w13",
+      "bytes": 9830400,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.2.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
+      "name": "layer0.w2",
+      "bytes": 4915200,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.2.mlp.experts.w2_weight",
-      "bytes": 209715200,
-      "kind": "experts"
+      "name": "layer1.w13",
+      "bytes": 6553600,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.3.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
+      "name": "layer1.w2",
+      "bytes": 3276800,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.3.mlp.experts.w2_weight",
-      "bytes": 209715200,
-      "kind": "experts"
+      "name": "layer2.w13",
+      "bytes": 9830400,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.4.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
+      "name": "layer2.w2",
+      "bytes": 4915200,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.4.mlp.experts.w2_weight",
-      "bytes": 209715200,
-      "kind": "experts"
+      "name": "layer3.w13",
+      "bytes": 29491200,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.5.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
+      "name": "layer3.w2",
+      "bytes": 14745600,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.5.mlp.experts.w2_weight",
-      "bytes": 209715200,
-      "kind": "experts"
+      "name": "layer4.w13",
+      "bytes": 26214400,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.6.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
+      "name": "layer4.w2",
+      "bytes": 13107200,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.6.mlp.experts.w2_weight",
-      "bytes": 209715200,
-      "kind": "experts"
+      "name": "layer5.w13",
+      "bytes": 29491200,
+      "kind": "v5-final"
     },
     {
-      "name": "model.language_model.layers.7.mlp.experts.w13_weight",
-      "bytes": 419430400,
-      "kind": "experts"
+      "name": "layer5.w2",
+      "bytes": 14745600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer6.w13",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer6.w2",
+      "bytes": 13107200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer7.w13",
+      "bytes": 22937600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer7.w2",
+      "bytes": 11468800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer8.w13",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer8.w2",
+      "bytes": 13107200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer9.w13",
+      "bytes": 49152000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer9.w2",
+      "bytes": 24576000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer10.w13",
+      "bytes": 19660800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer10.w2",
+      "bytes": 9830400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer11.w13",
+      "bytes": 19660800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer11.w2",
+      "bytes": 9830400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer12.w13",
+      "bytes": 22937600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer12.w2",
+      "bytes": 11468800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer13.w13",
+      "bytes": 6553600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer13.w2",
+      "bytes": 3276800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer14.w13",
+      "bytes": 39321600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer14.w2",
+      "bytes": 19660800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer15.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer15.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer16.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer16.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer17.w13",
+      "bytes": 45875200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer17.w2",
+      "bytes": 22937600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer18.w13",
+      "bytes": 29491200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer18.w2",
+      "bytes": 14745600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer19.w13",
+      "bytes": 32768000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer19.w2",
+      "bytes": 16384000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer20.w13",
+      "bytes": 42598400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer20.w2",
+      "bytes": 21299200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer21.w13",
+      "bytes": 13107200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer21.w2",
+      "bytes": 6553600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer22.w13",
+      "bytes": 22937600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer22.w2",
+      "bytes": 11468800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer23.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer23.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer24.w13",
+      "bytes": 45875200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer24.w2",
+      "bytes": 22937600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer25.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer25.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer26.w13",
+      "bytes": 39321600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer26.w2",
+      "bytes": 19660800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer27.w13",
+      "bytes": 39321600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer27.w2",
+      "bytes": 19660800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer28.w13",
+      "bytes": 22937600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer28.w2",
+      "bytes": 11468800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer29.w13",
+      "bytes": 16384000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer29.w2",
+      "bytes": 8192000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer30.w13",
+      "bytes": 49152000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer30.w2",
+      "bytes": 24576000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer31.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer31.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer32.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer32.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer33.w13",
+      "bytes": 49152000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer33.w2",
+      "bytes": 24576000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer34.w13",
+      "bytes": 32768000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer34.w2",
+      "bytes": 16384000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer35.w13",
+      "bytes": 32768000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer35.w2",
+      "bytes": 16384000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer36.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer36.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer37.w13",
+      "bytes": 49152000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer37.w2",
+      "bytes": 24576000,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer38.w13",
+      "bytes": 39321600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer38.w2",
+      "bytes": 19660800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer39.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer39.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer40.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer40.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer41.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer41.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer42.w13",
+      "bytes": 45875200,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer42.w2",
+      "bytes": 22937600,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer43.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer43.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer44.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer44.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer45.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer45.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer46.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer46.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer47.w13",
+      "bytes": 52428800,
+      "kind": "v5-final"
+    },
+    {
+      "name": "layer47.w2",
+      "bytes": 26214400,
+      "kind": "v5-final"
     }
   ],
   "final_pins_bytes_per_rank": [
-    17623511040,
-    17623511040,
-    17623511040,
-    17623511040
+    15786864640,
+    16003133440,
+    15821271040,
+    15998218240
   ],
-  "final_pins_total_bytes": 70494044160,
-  "offload_budget_overshoot_bytes_per_rank": 175206400,
+  "placement_census": [
+    {
+      "rank": 0,
+      "ple_host_rows": 80000384,
+      "ple_device_rows": 0,
+      "host_experts": 543,
+      "buffers": [
+        {
+          "name": "PLE",
+          "shape": [
+            80000384,
+            160
+          ],
+          "itemsize": 1,
+          "bytes": 12800061440
+        },
+        {
+          "name": "input_embedding",
+          "shape": [
+            62080,
+            2560
+          ],
+          "itemsize": 2,
+          "bytes": 317849600
+        },
+        {
+          "name": "layer0.w13",
+          "shape": [
+            3,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer0.w2",
+          "shape": [
+            3,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 4915200
+        },
+        {
+          "name": "layer1.w13",
+          "shape": [
+            2,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer1.w2",
+          "shape": [
+            2,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 3276800
+        },
+        {
+          "name": "layer2.w13",
+          "shape": [
+            3,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer2.w2",
+          "shape": [
+            3,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 4915200
+        },
+        {
+          "name": "layer3.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer3.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer4.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer4.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer5.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer5.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer6.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer6.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer7.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer7.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer8.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer8.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer9.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer9.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer10.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer10.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer11.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer11.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer12.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer12.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer13.w13",
+          "shape": [
+            2,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer13.w2",
+          "shape": [
+            2,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 3276800
+        },
+        {
+          "name": "layer14.w13",
+          "shape": [
+            12,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 39321600
+        },
+        {
+          "name": "layer14.w2",
+          "shape": [
+            12,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer15.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer15.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer16.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer16.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer17.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer17.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer18.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer18.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer19.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer19.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer20.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer20.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer21.w13",
+          "shape": [
+            4,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer21.w2",
+          "shape": [
+            4,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer22.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer22.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer23.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer23.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer24.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer24.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer25.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer25.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer26.w13",
+          "shape": [
+            12,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 39321600
+        },
+        {
+          "name": "layer26.w2",
+          "shape": [
+            12,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer27.w13",
+          "shape": [
+            12,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 39321600
+        },
+        {
+          "name": "layer27.w2",
+          "shape": [
+            12,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer28.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer28.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer29.w13",
+          "shape": [
+            5,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer29.w2",
+          "shape": [
+            5,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 8192000
+        },
+        {
+          "name": "layer30.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer30.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer31.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer31.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer32.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer32.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer33.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer33.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer34.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer34.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer35.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer35.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer36.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer36.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer37.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer37.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer38.w13",
+          "shape": [
+            12,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 39321600
+        },
+        {
+          "name": "layer38.w2",
+          "shape": [
+            12,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer39.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer39.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer40.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer40.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer41.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer41.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer42.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer42.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer43.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer43.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer44.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer44.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer45.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer45.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer46.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer46.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer47.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer47.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        }
+      ],
+      "pinned_bytes": 15786864640
+    },
+    {
+      "rank": 1,
+      "ple_host_rows": 80000384,
+      "ple_device_rows": 0,
+      "host_experts": 587,
+      "buffers": [
+        {
+          "name": "PLE",
+          "shape": [
+            80000384,
+            160
+          ],
+          "itemsize": 1,
+          "bytes": 12800061440
+        },
+        {
+          "name": "input_embedding",
+          "shape": [
+            62080,
+            2560
+          ],
+          "itemsize": 2,
+          "bytes": 317849600
+        },
+        {
+          "name": "layer0.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer0.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer1.w13",
+          "shape": [
+            1,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 3276800
+        },
+        {
+          "name": "layer1.w2",
+          "shape": [
+            1,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 1638400
+        },
+        {
+          "name": "layer2.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer2.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer3.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer3.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer4.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer4.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer5.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer5.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer6.w13",
+          "shape": [
+            1,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 3276800
+        },
+        {
+          "name": "layer6.w2",
+          "shape": [
+            1,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 1638400
+        },
+        {
+          "name": "layer7.w13",
+          "shape": [
+            4,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer7.w2",
+          "shape": [
+            4,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer8.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer8.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer9.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer9.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer10.w13",
+          "shape": [
+            3,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer10.w2",
+          "shape": [
+            3,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 4915200
+        },
+        {
+          "name": "layer11.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer11.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer12.w13",
+          "shape": [
+            5,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer12.w2",
+          "shape": [
+            5,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 8192000
+        },
+        {
+          "name": "layer13.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer13.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer14.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer14.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer15.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer15.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer16.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer16.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer17.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer17.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer18.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer18.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer19.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer19.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer20.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer20.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer21.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer21.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer22.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer22.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer23.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer23.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer24.w13",
+          "shape": [
+            11,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 36044800
+        },
+        {
+          "name": "layer24.w2",
+          "shape": [
+            11,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 18022400
+        },
+        {
+          "name": "layer25.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer25.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer26.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer26.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer27.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer27.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer28.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer28.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer29.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer29.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer30.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer30.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer31.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer31.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer32.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer32.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer33.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer33.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer34.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer34.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer35.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer35.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer36.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer36.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer37.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer37.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer38.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer38.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer39.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer39.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer40.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer40.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer41.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer41.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer42.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer42.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer43.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer43.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer44.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer44.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer45.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer45.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer46.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer46.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer47.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer47.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        }
+      ],
+      "pinned_bytes": 16003133440
+    },
+    {
+      "rank": 2,
+      "ple_host_rows": 80000384,
+      "ple_device_rows": 0,
+      "host_experts": 550,
+      "buffers": [
+        {
+          "name": "PLE",
+          "shape": [
+            80000384,
+            160
+          ],
+          "itemsize": 1,
+          "bytes": 12800061440
+        },
+        {
+          "name": "input_embedding",
+          "shape": [
+            62080,
+            2560
+          ],
+          "itemsize": 2,
+          "bytes": 317849600
+        },
+        {
+          "name": "layer0.w13",
+          "shape": [
+            3,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer0.w2",
+          "shape": [
+            3,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 4915200
+        },
+        {
+          "name": "layer1.w13",
+          "shape": [
+            5,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer1.w2",
+          "shape": [
+            5,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 8192000
+        },
+        {
+          "name": "layer2.w13",
+          "shape": [
+            5,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer2.w2",
+          "shape": [
+            5,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 8192000
+        },
+        {
+          "name": "layer3.w13",
+          "shape": [
+            11,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 36044800
+        },
+        {
+          "name": "layer3.w2",
+          "shape": [
+            11,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 18022400
+        },
+        {
+          "name": "layer4.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer4.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer5.w13",
+          "shape": [
+            12,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 39321600
+        },
+        {
+          "name": "layer5.w2",
+          "shape": [
+            12,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer6.w13",
+          "shape": [
+            4,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer6.w2",
+          "shape": [
+            4,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer7.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer7.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer8.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer8.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer9.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer9.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer10.w13",
+          "shape": [
+            2,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer10.w2",
+          "shape": [
+            2,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 3276800
+        },
+        {
+          "name": "layer11.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer11.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer12.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer12.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer13.w13",
+          "shape": [
+            3,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer13.w2",
+          "shape": [
+            3,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 4915200
+        },
+        {
+          "name": "layer14.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer14.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer15.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer15.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer16.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer16.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer17.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer17.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer18.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer18.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer19.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer19.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer20.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer20.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer21.w13",
+          "shape": [
+            4,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer21.w2",
+          "shape": [
+            4,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer22.w13",
+          "shape": [
+            3,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer22.w2",
+          "shape": [
+            3,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 4915200
+        },
+        {
+          "name": "layer23.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer23.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer24.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer24.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer25.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer25.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer26.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer26.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer27.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer27.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer28.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer28.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer29.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer29.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer30.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer30.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer31.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer31.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer32.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer32.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer33.w13",
+          "shape": [
+            12,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 39321600
+        },
+        {
+          "name": "layer33.w2",
+          "shape": [
+            12,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer34.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer34.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer35.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer35.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer36.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer36.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer37.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer37.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer38.w13",
+          "shape": [
+            12,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 39321600
+        },
+        {
+          "name": "layer38.w2",
+          "shape": [
+            12,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer39.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer39.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer40.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer40.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer41.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer41.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer42.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer42.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer43.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer43.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer44.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer44.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer45.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer45.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer46.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer46.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer47.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer47.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        }
+      ],
+      "pinned_bytes": 15821271040
+    },
+    {
+      "rank": 3,
+      "ple_host_rows": 80000384,
+      "ple_device_rows": 0,
+      "host_experts": 586,
+      "buffers": [
+        {
+          "name": "PLE",
+          "shape": [
+            80000384,
+            160
+          ],
+          "itemsize": 1,
+          "bytes": 12800061440
+        },
+        {
+          "name": "input_embedding",
+          "shape": [
+            62080,
+            2560
+          ],
+          "itemsize": 2,
+          "bytes": 317849600
+        },
+        {
+          "name": "layer0.w13",
+          "shape": [
+            4,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer0.w2",
+          "shape": [
+            4,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer1.w13",
+          "shape": [
+            3,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer1.w2",
+          "shape": [
+            3,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 4915200
+        },
+        {
+          "name": "layer2.w13",
+          "shape": [
+            4,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer2.w2",
+          "shape": [
+            4,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer3.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer3.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer4.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer4.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer5.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer5.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer6.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer6.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer7.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer7.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer8.w13",
+          "shape": [
+            4,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer8.w2",
+          "shape": [
+            4,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer9.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer9.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer10.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer10.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer11.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer11.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer12.w13",
+          "shape": [
+            6,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 19660800
+        },
+        {
+          "name": "layer12.w2",
+          "shape": [
+            6,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 9830400
+        },
+        {
+          "name": "layer13.w13",
+          "shape": [
+            9,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 29491200
+        },
+        {
+          "name": "layer13.w2",
+          "shape": [
+            9,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 14745600
+        },
+        {
+          "name": "layer14.w13",
+          "shape": [
+            15,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 49152000
+        },
+        {
+          "name": "layer14.w2",
+          "shape": [
+            15,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 24576000
+        },
+        {
+          "name": "layer15.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer15.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer16.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer16.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer17.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer17.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer18.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer18.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer19.w13",
+          "shape": [
+            13,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 42598400
+        },
+        {
+          "name": "layer19.w2",
+          "shape": [
+            13,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 21299200
+        },
+        {
+          "name": "layer20.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer20.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer21.w13",
+          "shape": [
+            7,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer21.w2",
+          "shape": [
+            7,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 11468800
+        },
+        {
+          "name": "layer22.w13",
+          "shape": [
+            2,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 6553600
+        },
+        {
+          "name": "layer22.w2",
+          "shape": [
+            2,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 3276800
+        },
+        {
+          "name": "layer23.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer23.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer24.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer24.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer25.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer25.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer26.w13",
+          "shape": [
+            11,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 36044800
+        },
+        {
+          "name": "layer26.w2",
+          "shape": [
+            11,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 18022400
+        },
+        {
+          "name": "layer27.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer27.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer28.w13",
+          "shape": [
+            10,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 32768000
+        },
+        {
+          "name": "layer28.w2",
+          "shape": [
+            10,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer29.w13",
+          "shape": [
+            8,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer29.w2",
+          "shape": [
+            8,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 13107200
+        },
+        {
+          "name": "layer30.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer30.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer31.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer31.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer32.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer32.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer33.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer33.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer34.w13",
+          "shape": [
+            5,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 16384000
+        },
+        {
+          "name": "layer34.w2",
+          "shape": [
+            5,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 8192000
+        },
+        {
+          "name": "layer35.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer35.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer36.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer36.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer37.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer37.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer38.w13",
+          "shape": [
+            14,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 45875200
+        },
+        {
+          "name": "layer38.w2",
+          "shape": [
+            14,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 22937600
+        },
+        {
+          "name": "layer39.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer39.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer40.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer40.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer41.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer41.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer42.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer42.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer43.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer43.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer44.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer44.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer45.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer45.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer46.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer46.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        },
+        {
+          "name": "layer47.w13",
+          "shape": [
+            16,
+            1280,
+            2560
+          ],
+          "itemsize": 1,
+          "bytes": 52428800
+        },
+        {
+          "name": "layer47.w2",
+          "shape": [
+            16,
+            2560,
+            640
+          ],
+          "itemsize": 1,
+          "bytes": 26214400
+        }
+      ],
+      "pinned_bytes": 15998218240
+    }
+  ],
+  "calibration": {
+    "status": "PIN_BYTES_VALIDATED_ONLY; SERVER_PEAK_CALIBRATION_UNAVAILABLE",
+    "certified_pins_total_bytes": 63609487360,
+    "certified_host_peak_bytes": null,
+    "certified_worker_rss_bytes": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "certified_per_rank_vram_weights_kv_graphs_bytes": {
+      "weights": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "kv_budget": [
+        376569856,
+        376569856,
+        376569856,
+        376569856
+      ],
+      "graphs": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "peak_relative_error": null,
+    "reason": "A364-A367 raw run directories absent at named locations; recorded USB evidence path unavailable. Summaries/identity/guide give allocation/flags, not RSS or peak.",
+    "cpu_measurement": "cpu-buffer-measurement.json",
+    "cpu_measurement_sha256": "abf1826ea3813e09f76b75b301d580ef624a6cfe4f766d214af951c8c1099fd2",
+    "cpu_measurement_scope": "OS mlock of exact host buffer shapes, one rank at a time, not XPU pin allocator or server peak",
+    "reconstruction": "certified-memory-reconstruction.json",
+    "reconstruction_sha256": "22593408f471c80da9894ada963e4f83ced0a783deff24c25d0ac317aeb9205c"
+  },
+  "candidate_table": [
+    {
+      "name": "certified-v5",
+      "mtp_depth": 1,
+      "pins_per_rank": [
+        15786864640,
+        16003133440,
+        15821271040,
+        15998218240
+      ],
+      "pins_total": 63609487360,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 21390512640,
+      "conditional_static_reserve_gib_per_rank": [
+        2.140115201473236,
+        2.341531217098236,
+        2.172158658504486,
+        2.336953580379486
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "certified-v5",
+      "mtp_depth": 0,
+      "pins_per_rank": [
+        15786864640,
+        16003133440,
+        15821271040,
+        15998218240
+      ],
+      "pins_total": 63609487360,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 21390512640,
+      "conditional_static_reserve_gib_per_rank": [
+        2.79569274187088,
+        2.99710875749588,
+        2.82773619890213,
+        2.99253112077713
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "long-context-v5",
+      "mtp_depth": 1,
+      "pins_per_rank": [
+        16951767040,
+        17118883840,
+        17379389440,
+        17281085440
+      ],
+      "pins_total": 68731125760,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 16268874240,
+      "conditional_static_reserve_gib_per_rank": [
+        3.225015103816986,
+        3.380654752254486,
+        3.623269498348236,
+        3.531716763973236
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "long-context-v5",
+      "mtp_depth": 0,
+      "pins_per_rank": [
+        16951767040,
+        17118883840,
+        17379389440,
+        17281085440
+      ],
+      "pins_total": 68731125760,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 16268874240,
+      "conditional_static_reserve_gib_per_rank": [
+        3.88059264421463,
+        4.03623229265213,
+        4.27884703874588,
+        4.18729430437088
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "v5-1000-rows",
+      "mtp_depth": 1,
+      "pins_per_rank": [
+        18033111040,
+        18033111040,
+        18033111040,
+        18033111040
+      ],
+      "pins_total": 72132444160,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 12867555840,
+      "conditional_static_reserve_gib_per_rank": [
+        4.232095181941986,
+        4.232095181941986,
+        4.232095181941986,
+        4.232095181941986
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "v5-1000-rows",
+      "mtp_depth": 0,
+      "pins_per_rank": [
+        18033111040,
+        18033111040,
+        18033111040,
+        18033111040
+      ],
+      "pins_total": 72132444160,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 12867555840,
+      "conditional_static_reserve_gib_per_rank": [
+        4.88767272233963,
+        4.88767272233963,
+        4.88767272233963,
+        4.88767272233963
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "v5-1100-rows",
+      "mtp_depth": 1,
+      "pins_per_rank": [
+        18524631040,
+        18524631040,
+        18524631040,
+        18524631040
+      ],
+      "pins_total": 74098524160,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 10901475840,
+      "conditional_static_reserve_gib_per_rank": [
+        4.689858853816986,
+        4.689858853816986,
+        4.689858853816986,
+        4.689858853816986
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "v5-1100-rows",
+      "mtp_depth": 0,
+      "pins_per_rank": [
+        18524631040,
+        18524631040,
+        18524631040,
+        18524631040
+      ],
+      "pins_total": 74098524160,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 10901475840,
+      "conditional_static_reserve_gib_per_rank": [
+        5.34543639421463,
+        5.34543639421463,
+        5.34543639421463,
+        5.34543639421463
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "v5-1200-rows",
+      "mtp_depth": 1,
+      "pins_per_rank": [
+        19016151040,
+        19016151040,
+        19016151040,
+        19016151040
+      ],
+      "pins_total": 76064604160,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 8935395840,
+      "conditional_static_reserve_gib_per_rank": [
+        5.147622525691986,
+        5.147622525691986,
+        5.147622525691986,
+        5.147622525691986
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    },
+    {
+      "name": "v5-1200-rows",
+      "mtp_depth": 0,
+      "pins_per_rank": [
+        19016151040,
+        19016151040,
+        19016151040,
+        19016151040
+      ],
+      "pins_total": 76064604160,
+      "host_peak_bytes": null,
+      "nonpin_allowance_under_85gb": 8935395840,
+      "conditional_static_reserve_gib_per_rank": [
+        5.80320006608963,
+        5.80320006608963,
+        5.80320006608963,
+        5.80320006608963
+      ],
+      "complete_vram_peak_bytes_per_rank": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "qualifies": false,
+      "reason": "peak calibration unavailable; static floor is not a VRAM upper bound"
+    }
+  ],
+  "final_pins_total_bytes": 63609487360,
+  "offload_budget_overshoot_bytes_per_rank": null,
   "checkpoint_weight_bytes": 185486485760,
   "checkpoint_total_bytes": 185502232570,
   "static_floor_excluded_nonweight_bytes": 15746810,
   "replicated_hc_bytes": 1310720000,
   "vram_static_lower_bound_bytes_per_rank": [
-    30107720256,
-    30107720256,
-    30107720256,
-    30107720256
+    31944366656,
+    31728097856,
+    31909960256,
+    31733013056
   ],
   "host_phases_bytes": {
     "construction": null,
@@ -358,9 +5039,9 @@
     null,
     null
   ],
-  "illustrative_host_peak_bytes": 92237316096,
+  "illustrative_host_peak_bytes": 85352759296,
   "illustrative_components": {
-    "pins": 70494044160,
+    "pins": 63609487360,
     "private_runtime_and_retention_bytes": 12884901888,
     "active_files_bytes": 4294967296,
     "other_host_and_driver_bytes": 4294967296,
@@ -372,7 +5053,7 @@
     "best_possible_vram_lower_bound_bytes_per_rank": 30667049280,
     "nominal_capacity_upper_bound_bytes": 34359738368,
     "cannot_fit_even_nominal_32gib": true,
-    "meaning": "conditional on illustrative overhead; neither generic nor v5 placement alone fixes allocation-total conflict"
+    "meaning": "sensitivity to the old 20 GiB allowance ONLY; no impossibility claim without measured overhead"
   },
   "generic_budget_sweep": [
     {
@@ -584,8 +5265,7 @@
     "rank 3: required VRAM phase/capacity bound unknown",
     "post-hash MemAvailable/remaining committed growth unknown",
     "runtime retention/workspace/lifetime bounds are unqualified; scenario is not admission evidence",
-    "required pre/post-hash, cgroup and process observations absent/incomplete",
-    "note-based conservative scenario exceeds host ceiling: 92237316096 bytes (assumed overhead)"
+    "required pre/post-hash, cgroup and process observations absent/incomplete"
   ],
   "remaining_committed_growth_bytes": null,
   "unknowns": [
@@ -594,7 +5274,8 @@
     "Complete per-rank resident weight partition and MTP/GDN/workspace upper bound",
     "Exact physical VRAM capacities for all four cards",
     "Post-hash host, cgroup, process observations in an otherwise idle launch window",
-    "Load cancellation latency and complete allocation lifetime qualification"
+    "Load cancellation latency and complete allocation lifetime qualification",
+    "Certified A364-A367 worker RSS and host/VRAM peaks unavailable; a 10% peak calibration cannot be computed"
   ],
   "observations": {}
 }
