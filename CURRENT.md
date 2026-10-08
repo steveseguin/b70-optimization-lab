@@ -6,6 +6,17 @@ below remain that host's own research record; this consolidation did not operate
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
 
+**2026-10-08, Flash-Next calibration loading guard adjusted on CPU:** the
+load-only measurement now allows up to 90 GB of host memory in use, through
+an explicit launch parameter recorded in its receipts. It no longer stops at
+the old 80 GB / 32 GiB line. The watchdog still sends SIGINT below 24 GiB
+available, and MTP1 still needs a measured plateau plus 15% within 90 GB.
+All 179 CPU tests pass. Memory fit remains unproven; attempt 4 is prepared
+with a placeholder health receipt and was not launched. No commits or runtime
+operations were made; LTX and port 8188 were untouched.
+[Change and CPU validation](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#attempt-4-calibration-loading-threshold).
+
+
 **2026-10-08, Flash-Next attempt 3 reviewed on CPU:** the first stop came
 from rank 1 when host memory in use crossed 80 GB. Rank 0 then noticed the
 same stop while building its expert map; the map was not broken. Errors now
@@ -79,6 +90,8 @@ audio alignment unreviewed). 111 stopped once with SIGINT at 00:54:03 UTC;
 four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
 [Results](experiments/ltx25-b70/notes/2026-10-08-continuation111-results.md),
 [stop receipt](experiments/ltx25-b70/data/resume-20261007/continuation111-stop.json).
+
+**18:50 UTC: 116b measured — captured decoder exact but only 9% faster; sharp 97-frame chain stands at 1.37 s/s.** Over ~60 chunks: cadence ≈5.5 s per 4.04 s chunk; stage costs text+A-prep 0.52, sampler A 1.62, upsample+B-prep 0.31, sampler B 1.20, **video decode on the chain 1.57 s (eager was 1.72)**, handoff 0.03, receipt 0.12; decode tail 0.92 and preview 0.49 off-chain; seams 0.87–0.96 (identical to the baseline bytes); zero faults; router route `axis-router-original` recorded. The decode is compute-bound at 97 frames, not dispatch-bound as the 45–60% overhead assumption supposed, so graph replay buys little. Standing results for one coherent 256² chain with sharp seams: **1.37 s of work per second of video at 4-second chunks** (5.98 → 5.74 → 5.50 s today), ≈2.15 s/s at 2-second chunks; the soft-seam latent modes reach 0.83 s/s but are not adopted. Remaining exact levers, each small: cone-restricted anchor decode (≈−0.5 s at 97, exactness unverified), stage-B encode overlap via a guard redesign (≈−0.25), 121-frame chunks (amortisation), prep/encode-ahead (≈−0.3); together they estimate ≈1.0–1.1 s/s. The owner's resolution goal (≥640×384) multiplies every term ≈3×. 116b is the best qualified sharp chain to date; server stopped once after the measurement for the Flash-Next calibration window.
 
 **18:35 UTC: packet 116b qualified exact WITH the captured decoder.** Launched 18:21 UTC (97 frames, frame anchor, `LTX_DECODER_GRAPH=1`, manifest `06688f41…`). Gate: eager chain vs graph-replay chain vs repeat all byte-identical; the graph chain's decode ran twice (uncached eager first, then the captured decoder with the bounded RoPE/mask/noise caches) and matched byte for byte; no refusal latch written; the eager chain equals the 114 frame reference. First chunk: submit→anchor 4.78 s (text+A-prep 0.45, sampler A 1.54, sampler B 1.11, video decode 1.60 on the chain, handoff 0.02, receipt 0.08), decode tail 0.76 and preview 0.45 off-chain. Cadence over ~60 chunks being measured. Receipts `postflight-pre116b-frame-f97.json`, `continuation116b-frame-dg1-f97-storage-admission.json`.
 
