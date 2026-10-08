@@ -558,6 +558,21 @@ human transcripts. Fresh hosted assistant sessions supplied these answers; this
 does not qualify local Qwen, general memory or speed. No local model server or
 GPU experiment was started. Existing context owner units remain inactive.
 
+## 2026-10-07 23:30 EDT, two-B70 host: the many-users profile is an accepted package profile (875 tok/s at 64 users, exact)
+
+**No model server is running.** One acceptance session through the public two-card package launcher
+(`run-fp8-tp2-acceptance-session.py --commit 8a46c0cae --multi-user`, unit `fp8-tp2-acceptance-mu`) passed all
+twelve existing gates (strict 12/12 identical to no-MTP, six practical requests, owned clean stop; recommended
+profile now 90.31 tok/s median of 90.37/90.25) and the new gate: `serve.py start --profile multi-user`, and at
+**16, 32 and 64 users every answer equal to the frozen single-user answer**, short ladder and 2K-8K long-prompt
+suite, two passes each. Totals together: short 415 / 653 / **875** tok/s, long 51 / 60 / 66 tok/s.
+Packet `experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/` (130 files; the collector's
+DEFAULT now points here; the 2026-10-04 packet's declared drift is retired). `package.json` carries
+`recommended_setup.multi_user_profile` (written by the publish script from the packet), the package README and
+neural.download's top pick say "Ready to try". Runbook: `notes/2026-10-07-multi-user-profile-acceptance-plan.md`.
+Not covered: a clean host; drafting with several users (needs R314, local only). Next on the cards: the
+LongMemEval retention study, stage 1 (F control on 56 questions, then the 7-question pilot of three arms).
+
 ## 2026-10-07 23:00 EDT, two-B70 host: public context numbers re-verified on the fixed checker; site revamped; packaging and streaming prepared
 
 **No model server is running.** The 2026-10-06 review's checker patch is applied to the live harness

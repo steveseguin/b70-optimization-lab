@@ -5962,7 +5962,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.2 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
+        "summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -5989,15 +5989,15 @@
           "32K input"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.01 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit ce0a51d7c). Clean-host install and multiple users are untested.",
+        "benchmark_status": "September 17 comm-2 campaign on the R310 runtime: depth 5 with the allgather allreduce overlay measured 90.37 and 90.28 tok/s on one fresh server (ring allreduce, September 16: 88.32), 12/12 identical to no MTP on the strict suite, 64/64 on the 64-prompt sequential oracle plus two queued passes, exact after 2K/8K/16K prompts and on the chat quality suite; the no-MTP server under the same overlay reproduced the ring-allreduce outputs 12/12 at 33.86 tok/s. The depth-1 profile (54.90 tok/s, September 16) is unchanged. The public-source acceptance replay through this launcher measured 90.25 tok/s with 12/12 outputs identical to no MTP, six practical requests with exact repeats, and a clean stop (commit 8a46c0cae). Clean-host install and multiple users are untested.",
         "featured_metric": {
-          "value": 90.19097312141272,
+          "value": 90.30984105545438,
           "unit": "tok/s",
           "label": "Writing speed · MTP depth 5 · allgather allreduce · two cards",
-          "scope": "Median of two fresh R310 two-card servers (90.370 / 90.012) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
+          "scope": "Median of two fresh R310 two-card servers (90.370 / 90.250) at a 33,024-token context on the fixed 12-prompt six-class suite, 512-token answers, class-balanced median of tokens 1-100, cache zero, canaries passed, 12/12 complete outputs identical to no-MTP decoding (33.86 tok/s on the same image), 64/64 on the sequential oracle.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-09-17-fp8-comm2/tp2-ag-mtp5-strict-performance.json"
         },
-        "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.2 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
+        "public_summary": "Official Qwen FP8 weights on two Intel Arc Pro B70 cards. Recommended: one user, MTP depth 5 with a draft-only INT4 shortlist head and the two-rank allreduce done as one allgather plus a fixed-order add, 33,024 total tokens (a 32K input plus 256 for the answer), 90.3 tok/s writing speed; outputs identical to no MTP. A depth-1 profile keeps the September 14 recipe."
       },
       "contributors": [
         {
@@ -6539,7 +6539,9 @@
         "experiments/qwen38-27b-b70/overlays/b70-fa-decode-per-seq/b70_fa_decode_per_seq.py",
         "experiments/qwen38-27b-b70/scripts/run-20261004-fp8-multiuser-campaign.py",
         "experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/results.json",
-        "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md"
+        "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md",
+        "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+        "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/manifest.json"
       ],
       "performance_profiles": [
         {
@@ -7565,7 +7567,7 @@
         "ring_allreduce_decode_tokens_s": 88.320170008887,
         "strict_pair_decode_tokens_s": [
           90.36997965552153,
-          90.01196658730392
+          90.24970245538724
         ],
         "no_mtp_decode_tokens_s": 33.861142438999366,
         "depth1_decode_tokens_s": 54.89813975243729,
@@ -7589,6 +7591,7 @@
           "max_num_batched_tokens": 4096,
           "max_num_seqs": 64,
           "prefix_caching": false,
+          "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
           "overlays": [
             "b70_allgather_allreduce",
             "b70_exclusive_prefill",
@@ -7603,20 +7606,55 @@
             "B70_EXCLUSIVE_PREFILL_BATCH": "8",
             "B70_FA_DECODE_PER_SEQ": "1"
           },
-          "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
           "launcher": "packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py",
+          "users": [
+            16,
+            32,
+            64
+          ],
+          "repeats": 2,
+          "short_prompts_tokens_s_together": {
+            "16": [
+              414.58,
+              416.58
+            ],
+            "32": [
+              653.4,
+              652.73
+            ],
+            "64": [
+              875.31,
+              875.05
+            ]
+          },
+          "long_prompts_tokens_s_together": {
+            "16": [
+              50.77,
+              50.73
+            ],
+            "32": [
+              60.55,
+              60.44
+            ],
+            "64": [
+              66.32,
+              65.43
+            ]
+          },
           "short_prompts_64_users_tokens_s": [
-            874.29,
-            874.43
+            875.31,
+            875.05
           ],
           "long_prompts_64_users_tokens_s": [
-            66.44,
-            66.59
+            66.32,
+            65.43
           ],
-          "exact": "64/64 equal to each user's solo answer on short and long prompts, and 64/64 equal to the frozen single-user no-MTP reference (short prompts), two passes each",
-          "acceptance_status": "pending",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/results.json",
-          "note": "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md"
+          "exact": "through the package launcher from a public download: at 16, 32 and 64 users every answer equal to the frozen single-user no-MTP answer, short ladder and 2K-8K long-prompt suite, two passes each",
+          "acceptance_status": "passed-on-configured-lab-host",
+          "acceptance_gate": "multi_user_exact_16_32_64_both_passes",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json",
+          "research_result": "experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md",
+          "note": "experiments/qwen38-27b-b70/notes/2026-10-07-multi-user-profile-acceptance-plan.md"
         }
       }
     },

@@ -1,0 +1,322 @@
+{
+  "configuration": {
+    "cards": 2,
+    "draft_shortlist": "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt",
+    "image_id": "sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04",
+    "max_model_len": 33024,
+    "max_num_batched_tokens": 4096,
+    "max_num_seqs": 1,
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "mtp_depth": 5,
+    "prefix_caching": false
+  },
+  "gates": {
+    "multi_user_exact_16_32_64_both_passes": true,
+    "owned_clean_stop": true,
+    "post_stop_absent": true,
+    "practical_cache_zero": true,
+    "practical_six_pass": true,
+    "practical_token_repeat_exact": true,
+    "pre_post_health": true,
+    "public_source_bytes": true,
+    "runtime_matches_qualified_depth5": true,
+    "strict_12_no_mtp_reference_outputs_exact": true,
+    "strict_cache_zero": true,
+    "strict_canaries": true,
+    "strict_natural_quality_gate": true
+  },
+  "limits": [
+    "one configured lab host; existing hash-verified model files and Docker layers reused",
+    "clean source/state directories, not clean driver installation or independent-host replay",
+    "three supplied chat tasks, not long-context retrieval quality or a prolonged soak"
+  ],
+  "multi_user": {
+    "gates": {
+      "downloaded_sources_match": true,
+      "image": true,
+      "launched_multi_user_profile": true,
+      "long_suite_exact_all_levels_both_passes": true,
+      "owned_clean_stop": true,
+      "post_stop_absent": true,
+      "references_are_the_frozen_single_user_answers": true,
+      "session_summary_agrees": true,
+      "short_suite_exact_all_levels_both_passes": true
+    },
+    "interpretation": "tok_s_together is generated tokens of one batch over its wall time (all users at once); exact counts are against the frozen single-user no-MTP answers of the 2026-10-04 campaign",
+    "passed": true,
+    "profile": "multi-user",
+    "references": {
+      "long": {
+        "frozen_at": "/mnt/fast-ai/bench-results/fp8-multiuser-three-s64-20261004/tp2-pure-faseq-head4-mtp0-s64-long-concurrency.json",
+        "sha256": "680167246a80d7f95f07d5b79c582ea07a6523a05e5b8825c97eb82e1e5e31dc"
+      },
+      "short": {
+        "frozen_at": "/mnt/fast-ai/bench-results/fp8-comm2-20260917/tp2-ag-mtp0-ladder.json",
+        "sha256": "843ef0c2e053f03deb94b74390b3df5bdddde2fd0ef6e44e3a0fa3758ecc1878"
+      }
+    },
+    "repeats": 2,
+    "speed_gated": false,
+    "suites": {
+      "long": {
+        "passed": true,
+        "passes": [
+          {
+            "answers": 16,
+            "cache_zero": true,
+            "elapsed_s": 30.13342264201492,
+            "exact_vs_own_solo": 16,
+            "exact_vs_reference": 16,
+            "first_divergences": [],
+            "generated_tokens": 1530,
+            "repeat": 1,
+            "tok_s_together": 50.77,
+            "users": 16
+          },
+          {
+            "answers": 16,
+            "cache_zero": true,
+            "elapsed_s": 30.15990620100638,
+            "exact_vs_own_solo": 16,
+            "exact_vs_reference": 16,
+            "first_divergences": [],
+            "generated_tokens": 1530,
+            "repeat": 2,
+            "tok_s_together": 50.73,
+            "users": 16
+          },
+          {
+            "answers": 32,
+            "cache_zero": true,
+            "elapsed_s": 56.996371586981695,
+            "exact_vs_own_solo": 32,
+            "exact_vs_reference": 32,
+            "first_divergences": [],
+            "generated_tokens": 3451,
+            "repeat": 1,
+            "tok_s_together": 60.55,
+            "users": 32
+          },
+          {
+            "answers": 32,
+            "cache_zero": true,
+            "elapsed_s": 57.09760433802148,
+            "exact_vs_own_solo": 32,
+            "exact_vs_reference": 32,
+            "first_divergences": [],
+            "generated_tokens": 3451,
+            "repeat": 2,
+            "tok_s_together": 60.44,
+            "users": 32
+          },
+          {
+            "answers": 64,
+            "cache_zero": true,
+            "elapsed_s": 112.67382292100228,
+            "exact_vs_own_solo": 64,
+            "exact_vs_reference": 64,
+            "first_divergences": [],
+            "generated_tokens": 7472,
+            "repeat": 1,
+            "tok_s_together": 66.32,
+            "users": 64
+          },
+          {
+            "answers": 64,
+            "cache_zero": true,
+            "elapsed_s": 114.19071794999763,
+            "exact_vs_own_solo": 64,
+            "exact_vs_reference": 64,
+            "first_divergences": [],
+            "generated_tokens": 7472,
+            "repeat": 2,
+            "tok_s_together": 65.43,
+            "users": 64
+          }
+        ],
+        "sequential": {
+          "answers": 64,
+          "cache_zero": true,
+          "exact_vs_reference": 64,
+          "first_divergences": [],
+          "reference_answers": 64
+        }
+      },
+      "short": {
+        "passed": true,
+        "passes": [
+          {
+            "answers": 16,
+            "cache_zero": true,
+            "elapsed_s": 4.939988923026249,
+            "exact_vs_own_solo": 16,
+            "exact_vs_reference": 16,
+            "first_divergences": [],
+            "generated_tokens": 2048,
+            "repeat": 1,
+            "tok_s_together": 414.58,
+            "users": 16
+          },
+          {
+            "answers": 16,
+            "cache_zero": true,
+            "elapsed_s": 4.916248464025557,
+            "exact_vs_own_solo": 16,
+            "exact_vs_reference": 16,
+            "first_divergences": [],
+            "generated_tokens": 2048,
+            "repeat": 2,
+            "tok_s_together": 416.58,
+            "users": 16
+          },
+          {
+            "answers": 32,
+            "cache_zero": true,
+            "elapsed_s": 6.268759042024612,
+            "exact_vs_own_solo": 32,
+            "exact_vs_reference": 32,
+            "first_divergences": [],
+            "generated_tokens": 4096,
+            "repeat": 1,
+            "tok_s_together": 653.4,
+            "users": 32
+          },
+          {
+            "answers": 32,
+            "cache_zero": true,
+            "elapsed_s": 6.275144826970063,
+            "exact_vs_own_solo": 32,
+            "exact_vs_reference": 32,
+            "first_divergences": [],
+            "generated_tokens": 4096,
+            "repeat": 2,
+            "tok_s_together": 652.73,
+            "users": 32
+          },
+          {
+            "answers": 64,
+            "cache_zero": true,
+            "elapsed_s": 9.358944186998997,
+            "exact_vs_own_solo": 64,
+            "exact_vs_reference": 64,
+            "first_divergences": [],
+            "generated_tokens": 8192,
+            "repeat": 1,
+            "tok_s_together": 875.31,
+            "users": 64
+          },
+          {
+            "answers": 64,
+            "cache_zero": true,
+            "elapsed_s": 9.361713827995118,
+            "exact_vs_own_solo": 64,
+            "exact_vs_reference": 64,
+            "first_divergences": [],
+            "generated_tokens": 8192,
+            "repeat": 2,
+            "tok_s_together": 875.05,
+            "users": 64
+          }
+        ],
+        "sequential": {
+          "answers": 64,
+          "cache_zero": true,
+          "exact_vs_reference": 64,
+          "first_divergences": [],
+          "reference_answers": 64
+        }
+      }
+    },
+    "users": [
+      16,
+      32,
+      64
+    ]
+  },
+  "passed": true,
+  "practical": {
+    "repeats": 2,
+    "requests": 6,
+    "rows": [
+      {
+        "http_ttft_ms": 150.25356697151437,
+        "input_tokens": 129,
+        "output_tokens": 37,
+        "passed": true,
+        "repeat": 1,
+        "task": "conversation",
+        "token_identity": null
+      },
+      {
+        "http_ttft_ms": 124.99784998362884,
+        "input_tokens": 122,
+        "output_tokens": 44,
+        "passed": true,
+        "repeat": 1,
+        "task": "code",
+        "token_identity": null
+      },
+      {
+        "http_ttft_ms": 137.35473802080378,
+        "input_tokens": 182,
+        "output_tokens": 74,
+        "passed": true,
+        "repeat": 1,
+        "task": "document",
+        "token_identity": null
+      },
+      {
+        "http_ttft_ms": 130.7512010098435,
+        "input_tokens": 129,
+        "output_tokens": 37,
+        "passed": true,
+        "repeat": 2,
+        "task": "conversation",
+        "token_identity": {
+          "text_exact": true,
+          "token_ids_available_both": true,
+          "token_ids_exact": true
+        }
+      },
+      {
+        "http_ttft_ms": 124.568996950984,
+        "input_tokens": 122,
+        "output_tokens": 44,
+        "passed": true,
+        "repeat": 2,
+        "task": "code",
+        "token_identity": {
+          "text_exact": true,
+          "token_ids_available_both": true,
+          "token_ids_exact": true
+        }
+      },
+      {
+        "http_ttft_ms": 136.5262619801797,
+        "input_tokens": 182,
+        "output_tokens": 74,
+        "passed": true,
+        "repeat": 2,
+        "task": "document",
+        "token_identity": {
+          "text_exact": true,
+          "token_ids_available_both": true,
+          "token_ids_exact": true
+        }
+      }
+    ],
+    "tasks": 3
+  },
+  "public_source_archive_sha256": "097ff72f8e9369abd9bc774fd79d629c04cd36559481dba7a8221a00aa8fdc85",
+  "public_source_commit": "8a46c0cae",
+  "schema": "neural.download.fp8-tp2-acceptance-result.v1",
+  "strict": {
+    "decode_tokens_s": 90.24970245538724,
+    "interpretation": "second fresh depth-5 server of the two-run pair (the first is the comm-2 campaign tp2-ag-mtp5 stage, 2026-09-17, allgather allreduce overlay); outputs identical to the same-image no-MTP reference",
+    "no_mtp_reference_decode_tokens_s": 33.03516454010384,
+    "no_mtp_reference_exact": 12,
+    "requests": 12,
+    "speedup_vs_no_mtp": 2.731928347014177
+  },
+  "timing_scope": "Practical HTTP TTFT is a transport measurement; no server-prefill headline inferred. Strict decode uses the canonical first-100-token interval definition."
+}

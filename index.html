@@ -447,7 +447,7 @@ Style genome (duotone-hixffp):
       <article class="feat-card">
         <p class="eyebrow">Ready to try &middot; 2 cards</p>
         <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8</a></h3>
-        <p class="feat-num"><span class="big">90.19</span> tok/s <span class="feat-for">for one person</span></p>
+        <p class="feat-num"><span class="big">90.31</span> tok/s <span class="feat-for">for one person</span></p>
         <p>A smart all-round chat and coding AI, split across two B70 cards. Our fastest setup that gives the same answers as running it slowly, on every test we have.</p>
         <p class="feat-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a></p>
       </article>
@@ -459,10 +459,10 @@ Style genome (duotone-hixffp):
         <p class="feat-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></p>
       </article>
       <article class="feat-card soon">
-        <p class="eyebrow">Coming &middot; 2 cards</p>
+        <p class="eyebrow">Ready to try &middot; 2 cards</p>
         <h3>Many users at once, exact</h3>
-        <p class="feat-num"><span class="big">874</span> tok/s <span class="feat-for">for 64 people together</span></p>
-        <p>The same 27B model serving many people at the same time, where each person gets exactly the answer they would get alone. <strong>Research result, not yet a package.</strong></p>
+        <p class="feat-num"><span class="big">875</span> tok/s <span class="feat-for">for 64 people together</span></p>
+        <p>The same 27B model serving many people at the same time, where each person gets exactly the answer they would get alone. Start it with the two-card package's <code>multi-user</code> profile; accepted October 7, 2026 at 16, 32 and 64 users.</p>
         <p class="feat-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Read the research notes</a></p>
       </article>
       <article class="feat-card soon">
@@ -650,7 +650,7 @@ Style genome (duotone-hixffp):
         <tr class="variant-row">
           <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; official FP8 + lab W8A16 &middot; MTP depth 5 &middot; INT4 draft shortlist</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">Recommended FP8</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user: median of two fresh servers (September 17). Outputs identical to no MTP on every test. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.19</a></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user: median of two fresh servers (October 7). Outputs identical to no MTP on every test. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.31</a></td>
           <td class="num r model-32k mut" data-label="32K input" title="Not measured at 32K for this profile yet; 96.29 tok/s after a 16,384-token prompt is on the details page.">&mdash;</td>
           <td class="num r model-agg" data-label="Many users"><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#profiles" title="Throughput ceiling, not exact: R200/R204, MTP5, c16: 493.2 tok/s together. Its test ladders matched, but drafting with several users is not exact by construction; an October 4 recheck on the current image found 57-61 of 64 answers matching at 2-8 users.">493.2</a><small>ceiling &middot; not exact</small></td>
           <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
@@ -945,7 +945,7 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M</td><td class="mut">no MTP</td><td class="num r">1&times;</td>
           <td class="num r" title="Class-balanced median of input-class medians on the fixed cold 12-prompt suite; cache-zero, no speculation; all-prompt median 27.824790">27.83<div class="ratebar" style="width:14.5%" aria-hidden="true"></div></td>
-          <td class="more-cards hide-s"><span title="Official FP8, MTP depth 5 with the allgather allreduce; median of two fresh servers 90.19 tok/s, 12/12 identical to no MTP.">&times;2 FP8+W8A16+MTP5 <a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.19</a></span> &middot; <span title="AutoRound INT4 + MTP4 shortlist record; strict G1/G2/G3 12/12.">&times;2 INT4+MTP4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">117.53</a></span></td>
+          <td class="more-cards hide-s"><span title="Official FP8, MTP depth 5 with the allgather allreduce; median of two fresh servers 90.31 tok/s, 12/12 identical to no MTP.">&times;2 FP8+W8A16+MTP5 <a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.19</a></span> &middot; <span title="AutoRound INT4 + MTP4 shortlist record; strict G1/G2/G3 12/12.">&times;2 INT4+MTP4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">117.53</a></span></td>
           <td class="mut hide-s">typical of the 1-card Q4 package</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q4km-tp1-b70/README.md">candidate guide</a></td>
         </tr>
@@ -960,8 +960,8 @@ Style genome (duotone-hixffp):
 <section id="multi-user">
   <div class="wrap">
     <p class="teaser-strip">
-      <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; research result, not yet a package</span>
-      <strong>874 tok/s combined</strong> &mdash; two Arc Pro B70 cards serving 64 people at once with Qwen3.8-27B FP8, and each person gets exactly the answer they would get alone (short prompts).
+      <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; accepted package profile</span>
+      <strong>875 tok/s combined</strong> &mdash; two Arc Pro B70 cards serving 64 people at once with Qwen3.8-27B FP8, and each person gets exactly the answer they would get alone (short prompts).
       <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Read the research notes</a> &middot; <a href="learn/multi-user.html">How serving many users works</a>
     </p>
   </div>

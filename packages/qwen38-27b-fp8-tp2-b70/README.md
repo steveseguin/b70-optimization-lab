@@ -50,7 +50,9 @@ and long prompts, and matched the frozen single-user reference, twice each.
 
 | Users at once | Short prompts | Long prompts (2K to 8K tokens) |
 | ---: | ---: | ---: |
-| 64 | **874 tok/s** all users together | 66 tok/s all users together |
+| 16 | 415 tok/s all users together | 51 tok/s all users together |
+| 32 | 653 tok/s all users together | 60 tok/s all users together |
+| 64 | **875 tok/s** all users together | 66 tok/s all users together |
 
 One person waits a little longer per answer than on `recommended` (no drafting), so use it when several people or
 programs share the server.
@@ -59,11 +61,12 @@ programs share the server.
 python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile multi-user --model-dir /path/qwen3.8-27b-fp8 --state-dir /path/fp8-session
 ```
 
-Measured October 4 on this package's image
-([results](../../experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/prefill-batch8-limits-s64/results.json),
-[summary](../../experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md)) with the research
-launcher; the same launch settings now come from `serve.py`. Its own acceptance packet through this launcher is
-pending.
+Accepted October 7, 2026 through this launcher from a public download of the repository: at 16, 32 and 64 users,
+every answer equal to the frozen single-user answer on the short ladder and on the 2K to 8K long-prompt suite, two
+passes each ([evidence packet](../../experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/),
+[how it was run](../../experiments/qwen38-27b-b70/notes/2026-10-07-multi-user-profile-acceptance-plan.md)). The
+research measurements of October 4 are in the
+[pin note](../../experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md).
 
 ## Use and stop
 
@@ -114,8 +117,8 @@ launcher above owns the tested start, status and stop path.
   on the chat quality suite. The second was this launcher run from an anonymous download of the repository: model
   verify, image pull, start, strict 12/12 identical to no-MTP, six practical chat requests with exact repeats, clean
   stop ([evidence packet](../../experiments/qwen38-27b-b70/data/2026-09-17-fp8-two-card-depth5/)).
-- **Not yet tested:** a machine without Intel drivers, Docker or the model already in place; more than one user at
-  a time (drafting is exact only one request at a time); prolonged use.
+- **Not yet tested:** a machine without Intel drivers, Docker or the model already in place; prolonged use. More
+  than one user at a time is covered by the `multi-user` profile (drafting is exact only one request at a time).
 
 <details>
 <summary>Historical configurations, results, and build commands</summary>

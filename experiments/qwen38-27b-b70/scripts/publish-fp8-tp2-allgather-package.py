@@ -24,7 +24,11 @@ NEW_DEPENDENCIES = [
     'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
     'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
     'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',
+    'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py',
+    'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py',
     'experiments/qwen38-27b-b70/overlays/b70-chunked-upload/b70_chunked_upload.py',
+    'experiments/qwen38-27b-b70/overlays/b70-exclusive-prefill/b70_exclusive_prefill.py',
+    'experiments/qwen38-27b-b70/overlays/b70-fa-decode-per-seq/b70_fa_decode_per_seq.py',
     'packages/qwen38-27b-fp8-tp2-b70/compose.yaml',
     'experiments/qwen38-27b-b70/scripts/run-20260917-fp8-comm2-campaign.py',
     'experiments/qwen38-27b-b70/overlays/b70-allgather-allreduce/b70_allgather_allreduce.py',
@@ -111,7 +115,9 @@ def main():
         'experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-gdn-fwd-o-global-barriers-r310-20260915.patch',
         'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_verify_rows.py',
         'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_allgather_allreduce.py',
-        'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py']}
+        'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_chunked_upload.py',
+        'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_exclusive_prefill.py',
+        'packages/qwen38-27b-fp8-tp2-b70/overlays/b70_fa_decode_per_seq.py']}
     package['commands'] = {
         'preflight': f'docker pull {R310}',
         'launch': 'python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /absolute/path/qwen3.8-27b-fp8 --state-dir /absolute/path/fp8-session',
@@ -139,6 +145,31 @@ def main():
                             'max_num_seqs': 1, 'prefix_caching': False, 'image': R304,
                             'evidence': 'experiments/qwen38-27b-b70/data/2026-09-16-fp8-flagship/summary.json',
                             'r310_decode_tokens_s': depth1}}
+    # The multi-user profile (serve.py --profile multi-user, 2026-10-07): written from the packet's multi_user section
+    # when the acceptance summary carries one, so a republish never drops it.
+    summary_mu = (json.loads(a.acceptance.read_text()).get('multi_user') if a.acceptance else None) or {}
+    if summary_mu.get('passed'):
+        def totals(suite):
+            out = {}
+            for run in summary_mu['suites'][suite]['passes']:
+                out.setdefault(str(run['users']), []).append(round(run['tok_s_together'], 2))
+            return out
+        short, long_ = totals('short'), totals('long')
+        package['recommended_setup']['multi_user_profile'] = {
+            'profile': 'multi-user', 'cards': 2, 'mtp_depth': 0, 'max_model_len': 33024, 'max_num_batched_tokens': 4096,
+            'max_num_seqs': 64, 'prefix_caching': False, 'image': R310,
+            'overlays': ['b70_allgather_allreduce', 'b70_exclusive_prefill', 'b70_fa_decode_per_seq', 'b70_chunked_upload', 'b70_fa_verify_rows'],
+            'env': {'B70_ALLGATHER_ALLREDUCE': '1', 'B70_CHUNKED_UPLOAD': '1', 'B70_EXCLUSIVE_PREFILL': '1',
+                    'B70_EXCLUSIVE_PREFILL_BATCH': '8', 'B70_FA_DECODE_PER_SEQ': '1'},
+            'launcher': 'packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py',
+            'users': summary_mu.get('users'), 'repeats': summary_mu.get('repeats'),
+            'short_prompts_tokens_s_together': short, 'long_prompts_tokens_s_together': long_,
+            'short_prompts_64_users_tokens_s': short.get('64'), 'long_prompts_64_users_tokens_s': long_.get('64'),
+            'exact': 'through the package launcher from a public download: at 16, 32 and 64 users every answer equal to the frozen '
+                     'single-user no-MTP answer, short ladder and 2K-8K long-prompt suite, two passes each',
+            'acceptance_status': 'passed-on-configured-lab-host', 'acceptance_gate': 'multi_user_exact_16_32_64_both_passes',
+            'evidence': str(accepted), 'research_result': 'experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md',
+            'note': 'experiments/qwen38-27b-b70/notes/2026-10-07-multi-user-profile-acceptance-plan.md'}
     PACKAGE.write_text(json.dumps(package, indent=2, ensure_ascii=False) + '\n')
     print(f'manifest updated: featured {statistics.median(pair):.3f} tok/s from {pair}')
 

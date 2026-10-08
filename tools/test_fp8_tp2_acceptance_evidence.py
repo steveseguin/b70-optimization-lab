@@ -78,7 +78,8 @@ class EvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'missing \\[DONE\\]'):MODULE.derive(files)
 
     def test_packet_without_multi_user_stage_derives_no_multi_user_section(self):
-        result=MODULE.derive(self.files)
+        files={k:v for k,v in self.files.items() if not k.startswith('run/multi-user/')}  # a session without the stage
+        result=MODULE.derive(files)
         self.assertNotIn('multi_user',result);self.assertNotIn('multi_user_exact_16_32_64_both_passes',result['gates'])
 
 
