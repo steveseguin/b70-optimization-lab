@@ -1,0 +1,437 @@
+[
+  {
+    "id": "sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b"
+    ],
+    "size_bytes": 5823411421,
+    "created": "2026-09-11T10:30:36.620845734-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-int4-gdn-spec-group-sync-free-r276",
+      "neural.download.composite.base.r139": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+      "neural.download.kernel.base-gdn-patch": "qwen38-dynamic-active-width-serial-gdn-r35",
+      "neural.download.kernel.base-gdn-patch.sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+      "neural.download.kernel.gdn-library.sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.split-gdn-patch": "qwen38-gdn-split-serial-gates-r50",
+      "neural.download.kernel.split-gdn-patch.sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.kernel.xpu-extension.sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "neural.download.onednn.patch.sha256": "180112219b5b8d2f44eae5e32134fe3b80e50b75f332c000a37eec17c7557e13",
+      "neural.download.vllm.draft-int4-r62.patch.sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.gdn-split-mixed.patch.sha256": "b17e31320a7622d245cb6ea242c6e961d5c214f75678b44ba4bd66eef6ee99b2",
+      "neural.download.vllm.llm-base-proposer.py.sha256": "96131347dd01576e3bf956371a25937bc17c1476489cab13d1030a5a1a00240b",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact r31",
+      "neural.download.vllm.overlay.base": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.vocab-parallel-embedding.py.sha256": "a67215084b55800174b37166e7e74593e62e4b2d7460da59ad2eb4a23c8c8ba7",
+      "neural.download.xpu.extension.sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "bash -c test \"$(sha256sum /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl | awk '{print $1}')\" =       \"f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6\" &&     uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     rm -f /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     /opt/venv/bin/python -c       'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")'",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba"
+    ],
+    "size_bytes": 5823309680,
+    "created": "2026-09-10T02:18:55.63902935-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-int4-gdn-spec-group-sync-free-r276",
+      "neural.download.composite.base.r139": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+      "neural.download.kernel.base-gdn-patch": "qwen38-dynamic-active-width-serial-gdn-r35",
+      "neural.download.kernel.base-gdn-patch.sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+      "neural.download.kernel.gdn-library.sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.split-gdn-patch": "qwen38-gdn-split-serial-gates-r50",
+      "neural.download.kernel.split-gdn-patch.sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.kernel.xpu-extension.sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "neural.download.onednn.patch.sha256": "180112219b5b8d2f44eae5e32134fe3b80e50b75f332c000a37eec17c7557e13",
+      "neural.download.vllm.draft-int4-r62.patch.sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.gdn-split-mixed.patch.sha256": "b17e31320a7622d245cb6ea242c6e961d5c214f75678b44ba4bd66eef6ee99b2",
+      "neural.download.vllm.llm-base-proposer.py.sha256": "96131347dd01576e3bf956371a25937bc17c1476489cab13d1030a5a1a00240b",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact r31",
+      "neural.download.vllm.overlay.base": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.vocab-parallel-embedding.py.sha256": "a67215084b55800174b37166e7e74593e62e4b2d7460da59ad2eb4a23c8c8ba7",
+      "neural.download.xpu.extension.sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "bash -c test \"$(sha256sum /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl | awk '{print $1}')\" =       \"f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6\" &&     uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     rm -f /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     /opt/venv/bin/python -c       'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")'",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:679f176c5be8c634343190c30cdb3e9ccb64b0bb9e807009e78a5c5bd734bd6a",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-int4-r276-dynamic-mamba-alloc"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:679f176c5be8c634343190c30cdb3e9ccb64b0bb9e807009e78a5c5bd734bd6a"
+    ],
+    "size_bytes": 5823198419,
+    "created": "2026-09-10T01:11:50.546203116-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-int4-gdn-spec-group-sync-free-r276",
+      "neural.download.composite.base.r139": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+      "neural.download.kernel.base-gdn-patch": "qwen38-dynamic-active-width-serial-gdn-r35",
+      "neural.download.kernel.base-gdn-patch.sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+      "neural.download.kernel.gdn-library.sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.split-gdn-patch": "qwen38-gdn-split-serial-gates-r50",
+      "neural.download.kernel.split-gdn-patch.sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.kernel.xpu-extension.sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "neural.download.onednn.patch.sha256": "180112219b5b8d2f44eae5e32134fe3b80e50b75f332c000a37eec17c7557e13",
+      "neural.download.vllm.draft-int4-r62.patch.sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.gdn-split-mixed.patch.sha256": "b17e31320a7622d245cb6ea242c6e961d5c214f75678b44ba4bd66eef6ee99b2",
+      "neural.download.vllm.llm-base-proposer.py.sha256": "96131347dd01576e3bf956371a25937bc17c1476489cab13d1030a5a1a00240b",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact r31",
+      "neural.download.vllm.overlay.base": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.vocab-parallel-embedding.py.sha256": "a67215084b55800174b37166e7e74593e62e4b2d7460da59ad2eb4a23c8c8ba7",
+      "neural.download.xpu.extension.sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "bash -c test \"$(sha256sum /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl | awk '{print $1}')\" =       \"f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6\" &&     uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     rm -f /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     /opt/venv/bin/python -c       'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")'",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276",
+      "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+      "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad"
+    ],
+    "size_bytes": 5823148023,
+    "created": "2026-09-06T04:22:07.005355809-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-int4-gdn-spec-group-sync-free-r276",
+      "neural.download.composite.base.r139": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+      "neural.download.kernel.base-gdn-patch": "qwen38-dynamic-active-width-serial-gdn-r35",
+      "neural.download.kernel.base-gdn-patch.sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+      "neural.download.kernel.gdn-library.sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.split-gdn-patch": "qwen38-gdn-split-serial-gates-r50",
+      "neural.download.kernel.split-gdn-patch.sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.kernel.xpu-extension.sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "neural.download.onednn.patch.sha256": "180112219b5b8d2f44eae5e32134fe3b80e50b75f332c000a37eec17c7557e13",
+      "neural.download.vllm.draft-int4-r62.patch.sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.gdn-split-mixed.patch.sha256": "b17e31320a7622d245cb6ea242c6e961d5c214f75678b44ba4bd66eef6ee99b2",
+      "neural.download.vllm.llm-base-proposer.py.sha256": "96131347dd01576e3bf956371a25937bc17c1476489cab13d1030a5a1a00240b",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact r31",
+      "neural.download.vllm.overlay.base": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.vocab-parallel-embedding.py.sha256": "a67215084b55800174b37166e7e74593e62e4b2d7460da59ad2eb4a23c8c8ba7",
+      "neural.download.xpu.extension.sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "bash -c test \"$(sha256sum /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl | awk '{print $1}')\" =       \"f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6\" &&     uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     rm -f /tmp/vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl &&     /opt/venv/bin/python -c       'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")'",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:cbe09ce2f8b82133d213fcde9a0bb3c33ce16d23f8dbab354d9d22276945885b",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:cbe09ce2f8b82133d213fcde9a0bb3c33ce16d23f8dbab354d9d22276945885b"
+    ],
+    "size_bytes": 5785147044,
+    "created": "2026-09-02T22:53:28.942907634-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-fp8-mtp1-fixed-k-w8a16-r139",
+      "neural.download.kernel.base-gdn-patch": "qwen38-dynamic-active-width-serial-gdn-r35",
+      "neural.download.kernel.base-gdn-patch.sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+      "neural.download.kernel.gdn-library.offload-device-code.sha256": "88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7",
+      "neural.download.kernel.gdn-library.sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.rebuilt-wheel.sha256": "fa0288ff90aa75fd182489659f41a11ca2b82bc1eca711ca1c992324cf74905b",
+      "neural.download.kernel.split-gdn-patch": "qwen38-gdn-split-serial-gates-r50",
+      "neural.download.kernel.split-gdn-patch.sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.kernel.xpu-extension.offload-device-code.sha256": "023a45d0ab8363dd3d4538f7c171ca88e29afa68d048c74086439572e6d8678b",
+      "neural.download.kernel.xpu-extension.sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "neural.download.onednn.patch.sha256": "5d2a93f0a36fa89f0ef13cf21ed5332a72491dd5856519bbe2eb21414112464f+feb4f125f69b36dbc3f579ad93743abe655678b7540ba2743fcff797fe35ebd9",
+      "neural.download.vllm.draft-int4-r62.patch.sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.llm-base-proposer.py.sha256": "96131347dd01576e3bf956371a25937bc17c1476489cab13d1030a5a1a00240b",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact",
+      "neural.download.vllm.overlay.base.historical-image-id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.overlay.base.profile": "mtp0-content-contract-v1",
+      "neural.download.vllm.vocab-parallel-embedding.py.sha256": "a67215084b55800174b37166e7e74593e62e4b2d7460da59ad2eb4a23c8c8ba7",
+      "neural.download.xpu.extension.sha256": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6 bash -c test \"$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')\" = \"${KERNEL_WHEEL_SHA256}\"     && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL}     && rm -f /tmp/${KERNEL_WHEEL}     && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")' # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:982f3fb6fbe7fdc6c38c856eb2b599fe21647eb6585acd71edafb23664e9f6a7",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:982f3fb6fbe7fdc6c38c856eb2b599fe21647eb6585acd71edafb23664e9f6a7"
+    ],
+    "size_bytes": 5747354925,
+    "created": "2026-09-02T22:53:19.580241126-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-fp8-mtp1-draft-only-int4-r62",
+      "neural.download.kernel.base-gdn-patch": "qwen38-dynamic-active-width-serial-gdn-r35",
+      "neural.download.kernel.base-gdn-patch.sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+      "neural.download.kernel.gdn-library.offload-device-code.sha256": "88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7",
+      "neural.download.kernel.gdn-library.sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.rebuilt-wheel.sha256": "fa0288ff90aa75fd182489659f41a11ca2b82bc1eca711ca1c992324cf74905b",
+      "neural.download.kernel.split-gdn-patch": "qwen38-gdn-split-serial-gates-r50",
+      "neural.download.kernel.split-gdn-patch.sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.kernel.xpu-extension.offload-device-code.sha256": "023a45d0ab8363dd3d4538f7c171ca88e29afa68d048c74086439572e6d8678b",
+      "neural.download.kernel.xpu-extension.sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "neural.download.vllm.draft-int4-r62.patch.sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.llm-base-proposer.py.sha256": "96131347dd01576e3bf956371a25937bc17c1476489cab13d1030a5a1a00240b",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact",
+      "neural.download.vllm.overlay.base.historical-image-id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.overlay.base.profile": "mtp0-content-contract-v1",
+      "neural.download.vllm.vocab-parallel-embedding.py.sha256": "a67215084b55800174b37166e7e74593e62e4b2d7460da59ad2eb4a23c8c8ba7",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6 bash -c test \"$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')\" = \"${KERNEL_WHEEL_SHA256}\"     && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL}     && rm -f /tmp/${KERNEL_WHEEL}     && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")' # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:1d1dd0a2a6b55310aded558478da0ed31b539e9eaf0a9eb39daebf913a22aaf6",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-r55c-public-binaries"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:1d1dd0a2a6b55310aded558478da0ed31b539e9eaf0a9eb39daebf913a22aaf6"
+    ],
+    "size_bytes": 5747229868,
+    "created": "2026-09-02T22:53:12.780230839-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-fp8-mtp1-serial-fa-split-gdn-r50",
+      "neural.download.kernel.base-gdn-patch": "qwen38-dynamic-active-width-serial-gdn-r35",
+      "neural.download.kernel.base-gdn-patch.sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+      "neural.download.kernel.gdn-library.offload-device-code.sha256": "88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7",
+      "neural.download.kernel.gdn-library.sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.rebuilt-wheel.sha256": "fa0288ff90aa75fd182489659f41a11ca2b82bc1eca711ca1c992324cf74905b",
+      "neural.download.kernel.split-gdn-patch": "qwen38-gdn-split-serial-gates-r50",
+      "neural.download.kernel.split-gdn-patch.sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.kernel.xpu-extension.offload-device-code.sha256": "023a45d0ab8363dd3d4538f7c171ca88e29afa68d048c74086439572e6d8678b",
+      "neural.download.kernel.xpu-extension.sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact",
+      "neural.download.vllm.overlay.base.historical-image-id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.overlay.base.profile": "mtp0-content-contract-v1",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6 bash -c test \"$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')\" = \"${KERNEL_WHEEL_SHA256}\"     && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL}     && rm -f /tmp/${KERNEL_WHEEL}     && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")' # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:59bd6b2bcb1b77ecb37d07e0bd9d5da9547de3e45c6456d7608be02971eab7ec",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-attention-r49"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:59bd6b2bcb1b77ecb37d07e0bd9d5da9547de3e45c6456d7608be02971eab7ec"
+    ],
+    "size_bytes": 5697459292,
+    "created": "2026-09-02T22:52:53.538100269-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-fp8-mtp1-serial-attention-r49",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.vllm.flash-attn.py.sha256": "c90006b0e4e59eab26fce7c1636b99507b8eabf3acf2d88d62b6e569939975d1",
+      "neural.download.vllm.mtp1-serial-attention.patch.sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact",
+      "neural.download.vllm.overlay.base.historical-image-id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.overlay.base.profile": "mtp0-content-contract-v1",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6 bash -c test \"$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')\" = \"${KERNEL_WHEEL_SHA256}\"     && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL}     && rm -f /tmp/${KERNEL_WHEEL}     && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")' # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:a485e20ac89823f514a885e123d9de2a429955120f41f57a02f7d2a0b4a307e0",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:a485e20ac89823f514a885e123d9de2a429955120f41f57a02f7d2a0b4a307e0"
+    ],
+    "size_bytes": 5697391793,
+    "created": "2026-09-02T22:52:50.349222274-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-f01e-kernel-1e90-zero-vllm-overlay",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "neural.download.vllm.overlay": "XPU Qwen/Gemma MTP1 RMSNorm serial exact",
+      "neural.download.vllm.overlay.base.historical-image-id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+      "neural.download.vllm.overlay.base.profile": "mtp0-content-contract-v1",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6 bash -c test \"$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')\" = \"${KERNEL_WHEEL_SHA256}\"     && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL}     && rm -f /tmp/${KERNEL_WHEEL}     && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")' # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:d677dc4b24988f1381c6ede7df82dcda467351ea9a67a3dcb17412af53996719",
+    "tags": [
+      "neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:d677dc4b24988f1381c6ede7df82dcda467351ea9a67a3dcb17412af53996719"
+    ],
+    "size_bytes": 5697383755,
+    "created": "2026-09-02T22:52:23.08178252-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-f01e-kernel-1e90-zero-vllm-overlay",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6 bash -c test \"$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')\" = \"${KERNEL_WHEEL_SHA256}\"     && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL}     && rm -f /tmp/${KERNEL_WHEEL}     && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")' # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:88b612e8ac736e610601e8264e0ee0718595ae723d9f64d56baa664e29fa606d",
+    "tags": [
+      "neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13"
+    ],
+    "digests": [
+      "neural-download/vllm-openai-xpu@sha256:88b612e8ac736e610601e8264e0ee0718595ae723d9f64d56baa664e29fa606d"
+    ],
+    "size_bytes": 5697350973,
+    "created": "2026-09-02T22:50:51.388438007-04:00",
+    "labels": {
+      "neural.download.base.digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+      "neural.download.build.lane": "qwen38-f01e-kernel-1e90-zero-vllm-overlay",
+      "neural.download.kernel.head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "neural.download.kernel.wheel.sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 KERNEL_WHEEL=vllm_xpu_kernels-0.1.dev1+g1e90ffa67-cp38-abi3-manylinux_2_28_x86_64.whl KERNEL_WHEEL_SHA256=f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6 bash -c test \"$(sha256sum /tmp/${KERNEL_WHEEL} | awk '{print $1}')\" = \"${KERNEL_WHEEL_SHA256}\"     && uv pip install --python /opt/venv/bin/python --no-deps --reinstall /tmp/${KERNEL_WHEEL}     && rm -f /tmp/${KERNEL_WHEEL}     && /opt/venv/bin/python -c 'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, \"fp8_gemm_out\"); assert hasattr(torch.ops._xpu_C, \"gdn_attention\")' # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  },
+  {
+    "id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "tags": [
+      "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f"
+    ],
+    "digests": [
+      "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f"
+    ],
+    "size_bytes": 4649189937,
+    "created": "2026-08-14T05:09:36.607926454Z",
+    "labels": {
+      "org.opencontainers.image.version": "24.04"
+    },
+    "version_history": [
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install -e tests/vllm_test_utils # buildkit",
+      "RUN |2 NIXL_VERSION=v1.2.0 GIT_REPO_CHECK=1 bash -c uv pip install --no-build-isolation --no-deps . # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c uv pip install grpcio-tools protobuf nanobind &&     uv pip install -r /workspace/vllm/requirements/xpu.txt &&     uv pip install --no-build-isolation -r /workspace/vllm/requirements/test/xpu.txt &&     uv pip uninstall triton triton-xpu &&     uv pip install triton-xpu==3.7.2 # buildkit",
+      "RUN |1 NIXL_VERSION=v1.2.0 bash -c apt-get update -y && apt-get install -y --no-install-recommends     rdma-core     libibverbs1     librdmacm1     libibumad3     libibmad5     libmlx5-1     libmlx4-1     ibverbs-providers     librdmacm1t64     && rm -rf /var/lib/apt/lists/*     && uv pip install --no-deps /tmp/nixl_wheels/nixl*.whl     && uv pip install nixl==${NIXL_VERSION} && uv pip uninstall nixl-cu13     && rm -rf /tmp/nixl_wheels # buildkit",
+      "RUN |2 PYTHON_VERSION=3.12 PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu bash -c uv pip install --upgrade pip # buildkit"
+    ]
+  }
+]
