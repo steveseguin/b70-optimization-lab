@@ -1,4 +1,37 @@
-# Packet 112 continuation stream client
+# Packet 112 / 113 continuation stream client
+
+## Packet 113 (`--packet 113`)
+
+The default is still `--packet 112`, and its behaviour is unchanged (46/46 of
+`tests/run_tests_112.py`). Against a packet 113 server, add **`--packet 113`**.
+That is the only change needed. It does three things:
+
+- It selects the sealed 113 manifest `a23dbc94…f7f28b` and module hashes, and
+  the default `--contract-dir` `prepared-continuation-stream-113/resolution/components/`.
+  A 112 setting refuses a 113 server at preflight (exit 8), and the reverse also
+  holds.
+- It applies the 113 bounded wait rule (113 CONTRACT.md §6a). The receipt comes
+  before the MP4. The client submits the next chunk as soon as the receipt is
+  seen, and only then waits, for at most `--save-wait` (default 10 s), for
+  `GET /ltx-stream/preview/<run>`. It checks the MP4's bytes and SHA-256
+  against the record, then writes the manifest line. The sink therefore never
+  sees an incomplete MP4. A missing record means exit 7. A preview failure
+  (`stream-preview-failure-*.json` or 503) means exit 6 or 2.
+- It enables the chain-reset options, which are both off by default:
+  - `--reset-every-chunks N`: a reset at every `stream_seq` divisible by N.
+  - `--reset-on-scene-change`: a reset whenever the scene or its prompt changes.
+
+  A reset chunk is unanchored. Its manifest line has no `skip_first_frames` and
+  carries `"reset": true`. 113 manifest lines also carry
+  `submit_to_anchor_ready`, `preview_sha256` and the anchor border diagnostic
+  (`border_to_centre_chroma_ratio`, `border_mean_chroma`,
+  `centre_mean_chroma`) for drift plots.
+
+Tests: `tests/run_tests_113.py` against `tests/fake_comfy113.py` (11/11).
+
+Measured on the live 112 receipts: the next submit followed each commit by a
+median of 0.41 s, which is the `--poll 0.5` status-poll interval.
+`--poll 0.05` recovers most of that on either packet.
 
 `ltx_continuation_client.py` drives the packet 112 continuation server
 (`recovery/20261008-continuation112-stream/CONTRACT.md`, `LAUNCH.md`). It runs

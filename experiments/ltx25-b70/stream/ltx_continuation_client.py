@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ltx_continuation_client.py - the stream client for the packet 112 continuation server.
+"""ltx_continuation_client.py - the stream client for the packet 112 / 113 continuation servers.
 
     /home/steve/.venvs/ltx25-baseline/bin/python -B ltx_continuation_client.py --work-dir DIR [options]
 
@@ -19,6 +19,15 @@ next request is prepared while the current one runs and is posted in the same po
 the previous receipt is seen. Scenes come from --scenes and cycle forever; a scene change is a cut
 on the same anchor chain. Seeds are --base-seed + stream_seq. Each completed chunk appends one
 line to --manifest for ltx_rtmp_sink.py (anchored chunks carry "skip_first_frames": 1).
+
+Packet 113 (--packet 113; default 112 keeps the exact 112 behaviour): the server commits a receipt
+when the chunk's anchor is ready and writes the MP4 preview afterwards on one in-order writer
+thread. The client submits the next chunk as soon as the receipt exists and only then waits for
+the previous chunk's preview record (GET /ltx-stream/preview/<run_name>, bounded by --save-wait;
+the MP4 bytes and SHA-256 must match the record) before writing its manifest line, so the sink
+never sees a chunk whose MP4 is incomplete. 113 only: --reset-every-chunks N and
+--reset-on-scene-change submit chain resets (an unanchored chunk that restarts the anchor chain;
+its manifest line has no skip_first_frames).
 
 Never retries a refused request, never restarts or signals anything. Halts:
 exit 0 clean stop; 2 server halted / execution error; 4 FAULT.json; 5 HTTP failure (> --http-fail-
@@ -51,13 +60,24 @@ from pathlib import Path
 sys.dont_write_bytecode = True          # never leave __pycache__ anywhere (also run with -B)
 
 R = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
-PACKET = R / 'prepared-continuation-stream-112'
+# Sealed packets this client speaks to: packet dir, runtime manifest SHA-256 and the sealed module
+# hashes (manifest.json files['resolution/components/<name>']). --packet selects one (default 112).
+PACKETS = {
+    112: {'dir': R / 'prepared-continuation-stream-112',
+          'manifest_sha256': 'e49f669d580a55d7f2a99ddfc5c2c5fc4a22dd7168987eb471704e2be6352b91',
+          'modules': {'stream_contract': '7749eae14df5ae9e71909eb5a592d84d7f4f69f389c067821adeb8a085de1aca',
+                      'stream_receipts': '6b023dd555d61ea4ddad5f13aac57ef2df62fd8a8714db33f98104441bbbb725',
+                      'qualification_gate': '828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1'}},
+    113: {'dir': R / 'prepared-continuation-stream-113',
+          'manifest_sha256': 'a23dbc946d156df70c3e61134dc3231b147817c5cb110a015f84c8f020f7f28b',
+          'modules': {'stream_contract': '5ea528f08d9237beac177f462688f66bbab3358f735b9780e4b0779d5b125205',
+                      'stream_receipts': '878b02037fa8fdc8520b058c5186034f48e12c0381bb6a5a13a6ec2348130613',
+                      'qualification_gate': '828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1'}},
+}
+PACKET = PACKETS[112]['dir']                     # packet 112 defaults (unchanged)
 CONTRACT_DIR = PACKET / 'resolution/components'
-MANIFEST_SHA = 'e49f669d580a55d7f2a99ddfc5c2c5fc4a22dd7168987eb471704e2be6352b91'
-# The sealed module hashes (manifest.json files['resolution/components/<name>']).
-MODULE_SHA = {'stream_contract': '7749eae14df5ae9e71909eb5a592d84d7f4f69f389c067821adeb8a085de1aca',
-              'stream_receipts': '6b023dd555d61ea4ddad5f13aac57ef2df62fd8a8714db33f98104441bbbb725',
-              'qualification_gate': '828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1'}
+MANIFEST_SHA = PACKETS[112]['manifest_sha256']
+MODULE_SHA = PACKETS[112]['modules']
 TEXT_ENCODER = Path('/mnt/fast-ai/llm-models/LTX-2.5-baseline/text_encoders/'
                     'gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
 DEFAULT_SCENES = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/data/stream/kittens-01.json')
@@ -107,7 +127,8 @@ class Stop(Exception):
 # ----------------------------------------------------------------------------------------------
 # Sealed contract modules (read-only import; -B and dont_write_bytecode keep the packet clean)
 # ----------------------------------------------------------------------------------------------
-def load_contract_modules(directory, check_hashes=True):
+def load_contract_modules(directory, check_hashes=True, module_sha=None):
+    module_sha = MODULE_SHA if module_sha is None else module_sha
     mods = {}
     for name in ('stream_contract', 'stream_receipts', 'qualification_gate'):
         path = Path(directory) / (name + '.py')
@@ -115,8 +136,8 @@ def load_contract_modules(directory, check_hashes=True):
             raw = path.read_bytes()
         except OSError as e:
             raise Stop(8, 'cannot read contract module %s (%s)' % (path, e))
-        if check_hashes and sha256_bytes(raw) != MODULE_SHA[name]:
-            raise Stop(8, '%s differs from the sealed packet 112 module (sha256 %s)' % (path, sha256_bytes(raw)))
+        if check_hashes and sha256_bytes(raw) != module_sha[name]:
+            raise Stop(8, '%s differs from the sealed packet module (sha256 %s)' % (path, sha256_bytes(raw)))
         spec = importlib.util.spec_from_file_location(name, str(path))
         mod = importlib.util.module_from_spec(spec)
         sys.modules[name] = mod             # stream_receipts / qualification_gate import stream_contract
@@ -363,6 +384,10 @@ class Client:
             raise Stop(4, 'FAULT.json present (%s): device fault latched; halting requests' % (self.root / 'FAULT.json'))
         if run_name and (self.run_dir / ('stream-failure-%s.json' % run_name)).exists():
             raise Stop(6, 'FAILED JOB: %s exists; the server latched' % (self.run_dir / ('stream-failure-%s.json' % run_name)))
+        if self.a.packet == 113:
+            fails = sorted(self.run_dir.glob('stream-preview-failure-*.json'))
+            if fails:
+                raise Stop(6, 'PREVIEW WRITE FAILED: %s; the server latched' % fails[-1])
 
     def halted(self, st, run_name=None):
         self.check_fault_files(run_name)
@@ -407,6 +432,11 @@ class Client:
                             % (st.get('qualification_id'), st['frames'], st['placement']))
         if not isinstance(st.get('server_identity_sha256'), str) or not st.get('receipt_dir'):
             problems.append('status lacks server identity / receipt_dir')
+        feats = st.get('features') or {}
+        if self.a.packet == 113 and not (st.get('packet') == 113 and feats.get('async_preview') is True and
+                                         feats.get('chain_reset') is True):
+            problems.append('--packet 113 needs a packet 113 server (status packet=%r features=%r)'
+                            % (st.get('packet'), feats))
         if problems:
             raise Stop(8, 'preflight refused: ' + '; '.join(problems))
         self.bind_dirs(st)
@@ -680,9 +710,11 @@ class Client:
         for k, v in want.items():
             if r.get(k) != v:
                 problems.append('%s=%r (expected %r)' % (k, r.get(k), v))
-        if expect['stream_seq'] == 0:
+        if 'reset' in expect and bool(r.get('reset')) != bool(expect['reset']):
+            problems.append('reset=%r (expected %r)' % (r.get('reset'), bool(expect['reset'])))
+        if expect['stream_seq'] == 0 or r.get('reset') is True:
             if r.get('anchor_in') is not None:
-                problems.append('chunk 0 consumed an anchor')
+                problems.append('an unanchored chunk consumed an anchor')
         elif (r.get('anchor_in') or {}).get('sha256') != expect['predecessor']:
             problems.append('anchor_in %s is not the predecessor anchor %s'
                             % ((r.get('anchor_in') or {}).get('sha256'), expect['predecessor']))
@@ -712,17 +744,63 @@ class Client:
                 raise Stop(7, 'preview %s missing or empty' % p)
             time.sleep(0.1)
 
+    def wait_preview(self, r):
+        """Packet 113 bounded wait rule: the MP4 is written after the receipt. Wait at most --save-wait
+        seconds for its preview record, then require the file to match the record's bytes and SHA-256.
+        A halted server ends the wait at once (exit 2/6); a record that never appears is exit 7."""
+        name = r['run_name']
+        prev = r['preview']
+        p = Path(prev['path'])
+        if p.parent != self.output_dir / name or not PREVIEW_RE.fullmatch(p.name):
+            raise Stop(7, 'preview of %s is not at %s/<counter>.mp4: %s' % (name, self.output_dir / name, p))
+        deadline = time.monotonic() + self.a.save_wait
+        while True:
+            self.check_fault_files(name)
+            got = self.api.get('/ltx-stream/preview/' + name)
+            if got is not None:
+                code, raw = got
+                if code == 200:
+                    break
+                if code == 503:
+                    self.halted(self.status())
+                if code != 404:
+                    raise Stop(7, 'preview route for %s answered HTTP %d: %s' % (name, code, raw[:300]))
+            if time.monotonic() > deadline:
+                st = self.status()
+                if st.get('halted'):
+                    self.halted(st, name)
+                raise Stop(7, 'preview record of %s not written %.1f s after its receipt was seen (--save-wait)'
+                           % (name, self.a.save_wait))
+            time.sleep(min(self.a.poll, 0.1))
+        try:
+            rec = self.rc.validate_preview_record(json.loads(raw), r)
+        except ValueError as e:
+            raise Stop(7, 'preview record of %s fails its schema: %s' % (name, e))
+        try:
+            data = p.read_bytes()
+        except OSError as e:
+            raise Stop(7, 'preview %s unreadable: %s' % (p, e))
+        if len(data) != rec['bytes'] or sha256_bytes(data) != rec['sha256']:
+            raise Stop(7, 'preview %s (%d bytes) differs from its record (%d bytes)' % (p, len(data), rec['bytes']))
+        return p, rec
+
     def record_chunk(self, r, path, pos, adopted=False):
         """Manifest line + state + log for one verified chunk."""
+        precord = None
+        if path is None:                         # packet 113: the preview is written after the receipt
+            path, precord = self.wait_preview(r)
         seq = self.state['next_manifest_seq']
         timing = r.get('timing_s') or {}
         tn = r.get('timing_ns') or {}
         lag = timing.get('submit_to_preview_written')
+        if precord is not None:
+            lag = precord['timing_s']['submit_to_preview_written']
         scene, si, k, cycle = self.schedule.at(pos) if pos is not None else (None, None, None, None)
         label = '%s %s seed %d s%d' % (r['scene_id'], '%d/%d' % (k + 1, scene['chunks'])
                                        if scene and scene['scene_id'] == r['scene_id'] else '', r['seed'],
                                        r['stream_seq'])
-        gen = tn.get('preview_written') or r.get('commit_ns') or time.time_ns()
+        gen = (precord or {}).get('timing_ns', {}).get('preview_written') or tn.get('preview_written') or \
+            r.get('commit_ns') or time.time_ns()
         line = {'seq': seq, 'path': str(path), 'generated_utc': utc(gen / 1e9), 'label': label,
                 'index': r['stream_seq'], 'stream_seq': r['stream_seq'], 'scene': r['scene_id'],
                 'seed': r['seed'], 'anchor_sha256': r['anchor_out']['sha256'],
@@ -730,8 +808,15 @@ class Client:
                 'submit_to_preview_written': lag, 'run_name': r['run_name'], 'prompt_id': r['prompt_id'],
                 'new_frames': r['delivery']['new_frames'], 'schedule_pos': pos,
                 'server_identity_sha256': self.ident}
-        if r['stream_seq'] > 0:
+        if r['stream_seq'] > 0 and r['delivery']['drop_leading_frames']:
             line['skip_first_frames'] = r['delivery']['drop_leading_frames']
+        if precord is not None:
+            diag = r.get('anchor_diagnostics') or {}
+            line.update(reset=bool(r.get('reset')), submit_to_anchor_ready=timing.get('submit_to_anchor_ready'),
+                        preview_sha256=precord['sha256'],
+                        border_to_centre_chroma_ratio=diag.get('border_to_centre_chroma_ratio'),
+                        border_mean_chroma=diag.get('border_mean_chroma'),
+                        centre_mean_chroma=diag.get('centre_mean_chroma'))
         self.append_manifest(line)
         st = self.state
         st['next_manifest_seq'] = seq + 1
@@ -747,12 +832,30 @@ class Client:
         stages = [('queue', d('submit', 'execution_start')), ('text+A-prep', d('execution_start', 'sampler_a_start')),
                   ('samplerA', d('sampler_a_start', 'sampler_b_start')), ('samplerB', d('sampler_b_start', 'decode_start')),
                   ('decode', d('decode_start', 'decode_done')), ('preview', d('decode_done', 'preview_written'))]
+        if precord is not None:
+            stages[-1] = ('anchor', d('decode_done', 'anchor_ready'))
+            stages.append(('preview(off-chain)', precord['timing_s']['anchor_ready_to_preview_written']))
         stxt = ' '.join('%s %.2f' % (n, v) for n, v in stages if v is not None)
-        log('seq %d stream_seq %d scene %s seed %d submit->preview %s s%s anchor %s%s' % (
-            seq, r['stream_seq'], r['scene_id'], r['seed'], 'n/a' if lag is None else '%.3f' % lag,
+        extra = ''
+        if precord is not None:
+            ready = timing.get('submit_to_anchor_ready')
+            extra = ' submit->anchor %s s%s' % ('n/a' if ready is None else '%.3f' % ready,
+                                                 ' RESET' if r.get('reset') else '')
+        log('seq %d stream_seq %d scene %s seed %d submit->preview %s s%s%s anchor %s%s' % (
+            seq, r['stream_seq'], r['scene_id'], r['seed'], 'n/a' if lag is None else '%.3f' % lag, extra,
             (' [' + stxt + ']') if stxt else '', r['anchor_out']['sha256'][:12], ' (adopted)' if adopted else ''))
 
     # ---- streaming -----------------------------------------------------------------------
+    def wants_reset(self, n, scene_id, prompt, prev_prompt_sha):
+        """Packet 113 chain reset policy (both off by default): every N chunks, and/or on a scene change."""
+        if n == 0 or self.a.packet != 113:
+            return False
+        if self.a.reset_every_chunks and n % self.a.reset_every_chunks == 0:
+            return True
+        prev_scene = getattr(self, 'last_scene_id', None)
+        changed = (prev_scene is not None and scene_id != prev_scene) or self.c.text_sha256(prompt) != prev_prompt_sha
+        return bool(self.a.reset_on_scene_change and changed)
+
     def prepare(self, n, predecessor, prev_prompt_sha):
         pos = self.origin + n
         scene, si, k, cycle = self.schedule.at(pos)
@@ -760,12 +863,14 @@ class Client:
         if seed > self.c.SEED_MAX:
             raise Stop(8, 'seed %d exceeds uint64' % seed)
         prompt = scene['prompt']
-        reuse = int(self.text_reuse == 1 and n > 0 and self.c.text_sha256(prompt) == prev_prompt_sha)
+        reset = int(self.wants_reset(n, scene['scene_id'], prompt, prev_prompt_sha))
+        reuse = int(self.text_reuse == 1 and n > 0 and not reset and self.c.text_sha256(prompt) == prev_prompt_sha)
+        extra = {'reset': reset} if self.a.packet == 113 else {}
         params = self.c.stream_params(self.frames, n, prompt, seed, predecessor, scene['scene_id'], reuse,
-                                      placement=self.placement)
+                                      placement=self.placement, **extra)
         graph = self.c.build_chunk_graph(params)
         return {'stream_seq': n, 'run_name': self.c.run_name(params), 'params': params, 'graph': graph,
-                'prompt': prompt, 'seed': seed, 'scene_id': scene['scene_id'], 'reuse_text': reuse,
+                'prompt': prompt, 'seed': seed, 'scene_id': scene['scene_id'], 'reuse_text': reuse, 'reset': reset,
                 'predecessor': predecessor, 'pos': pos, 'cut': n > 0 and self.c.text_sha256(prompt) != prev_prompt_sha}
 
     def submit(self, p):
@@ -813,7 +918,8 @@ class Client:
         st, binding = self.wait_chunk(n, expect['run_name'])
         raw = self.fetch_receipt_raw(expect['run_name'])
         r = self.verify_receipt(raw, binding, expect)
-        path = self.preview_path(r)
+        # 112: the MP4 exists before the receipt. 113: it is waited for after the next submit.
+        path = self.preview_path(r) if self.a.packet == 112 else None
         chain = st.get('chain') or {}
         if chain.get('anchor_sha256') != r['anchor_out']['sha256'] or chain.get('last_run_name') != r['run_name']:
             raise Stop(12, 'status chain %s/%s differs from receipt %s' % (chain.get('last_run_name'),
@@ -863,6 +969,8 @@ class Client:
             prm = active.get('params') or {}
             expect = {'run_name': active['name'], 'stream_seq': n, 'prompt_id': active.get('prompt_id'),
                       'predecessor': prm.get('predecessor_anchor_sha256', '')}
+            if prm.get('reset'):
+                expect['reset'] = True
             self.complete(n, expect)            # verified; recorded by the backfill below
             st = self.status()
             n = st['next_stream_seq']
@@ -885,8 +993,12 @@ class Client:
             name = self.c.run_name({'kind': 'stream', 'stream_seq': k})
             raw = self.fetch_receipt_raw(name)
             expect = {'run_name': name, 'stream_seq': k, 'predecessor': prev_anchor or ''}
+            if self.a.packet == 113:
+                head = json.loads(raw)
+                if head.get('reset') is True:          # a reset names (at most) its predecessor; it is unanchored
+                    expect['reset'] = True
             r = self.verify_receipt(raw, None, expect)
-            path = self.preview_path(r)
+            path = self.preview_path(r) if self.a.packet == 112 else None
             self.record_chunk(r, path, self.origin + k if (mine or same) else None, adopted=True)
             prev_anchor = r['anchor_out']['sha256']
         if r is None:
@@ -894,6 +1006,7 @@ class Client:
         chain = st.get('chain') or {}
         if chain.get('anchor_sha256') != r['anchor_out']['sha256'] or chain.get('last_stream_seq') != n - 1:
             raise Stop(12, 'server chain %r does not end at receipt %s' % (chain, r['run_name']))
+        self.last_scene_id = r.get('scene_id')
         log('resuming this server\'s chain at stream_seq %d on anchor %s (schedule position %d, manifest seq %d)'
             % (n, r['anchor_out']['sha256'][:12], self.origin + n, self.state['next_manifest_seq']))
         return n, r['anchor_out']['sha256'], chain.get('prompt_sha256')
@@ -915,8 +1028,9 @@ class Client:
                     self.submit(p)
                     submitted = True
                     gap = '' if last_done is None else ' %.3f s after the previous receipt' % (time.monotonic() - last_done)
-                    log('submitted %s (scene %s%s, seed %d, reuse_text %d)%s' % (
-                        p['run_name'], p['scene_id'], ', cut' if p['cut'] else '', p['seed'], p['reuse_text'], gap))
+                    log('submitted %s (scene %s%s%s, seed %d, reuse_text %d)%s' % (
+                        p['run_name'], p['scene_id'], ', cut' if p['cut'] else '', ', RESET' if p['reset'] else '',
+                        p['seed'], p['reuse_text'], gap))
             if pending_record is not None:
                 self.record_chunk(*pending_record)
                 pending_record = None
@@ -931,7 +1045,10 @@ class Client:
             expect = {'run_name': p['run_name'], 'stream_seq': p['stream_seq'], 'prompt_id': p['prompt_id'],
                       'prompt': p['prompt'], 'seed': p['seed'], 'scene_id': p['scene_id'],
                       'reuse_text': p['reuse_text'], 'predecessor': p['predecessor']}
+            if self.a.packet == 113:
+                expect['reset'] = bool(p['reset'])
             r, path = self.complete(p['stream_seq'], expect)
+            self.last_scene_id = r['scene_id']
             last_done = time.monotonic()
             self.chunks_this_run += 1
             self.state['pending'] = None
@@ -992,8 +1109,14 @@ def main(argv=None):
     ap.add_argument('--host', default='127.0.0.1')
     ap.add_argument('--port', type=int, default=8188)
     ap.add_argument('--root', type=Path, default=R, help='results root holding the server run dir and output/')
-    ap.add_argument('--manifest-sha256', default=MANIFEST_SHA, help='expected runtime_manifest_sha256')
-    ap.add_argument('--contract-dir', type=Path, default=CONTRACT_DIR, help='sealed stream_contract.py location')
+    ap.add_argument('--packet', type=int, choices=sorted(PACKETS), default=112,
+                    help='server packet: 112 (default, unchanged behaviour) or 113 (preview after receipt, resets)')
+    ap.add_argument('--manifest-sha256', help='expected runtime_manifest_sha256 (default: the --packet build)')
+    ap.add_argument('--contract-dir', type=Path, help='sealed stream_contract.py location (default: the --packet build)')
+    ap.add_argument('--reset-every-chunks', type=int, default=0,
+                    help='113 only: submit a chain reset (unanchored chunk) at every stream_seq divisible by N (0 = never)')
+    ap.add_argument('--reset-on-scene-change', action='store_true',
+                    help='113 only: submit a chain reset whenever the scene (or its prompt) changes')
     ap.add_argument('--expect-frames', type=int, choices=(49, 25))
     ap.add_argument('--expect-placement', choices=('two-way', 'two-way20-28'))
     ap.add_argument('--expect-text-reuse', type=int, choices=(0, 1))
@@ -1016,6 +1139,13 @@ def main(argv=None):
     ap.add_argument('--poll', type=float, default=0.5)
     ap.add_argument('--max-chunks', type=int, default=0, help='clean stop after N chunks this run (0 = forever)')
     a = ap.parse_args(argv)
+    sealed = PACKETS[a.packet]
+    a.manifest_sha256 = a.manifest_sha256 or sealed['manifest_sha256']
+    a.contract_dir = a.contract_dir or sealed['dir'] / 'resolution/components'
+    if a.packet != 113 and (a.reset_every_chunks or a.reset_on_scene_change):
+        raise SystemExit('--reset-every-chunks / --reset-on-scene-change need --packet 113')
+    if a.reset_every_chunks < 0:
+        raise SystemExit('--reset-every-chunks must be >= 0')
     a.work_dir = a.work_dir.resolve()
     a.manifest = (a.manifest or a.work_dir / 'manifest.jsonl').resolve()
     a.state = (a.state or a.work_dir / 'client-state.json').resolve()
@@ -1023,12 +1153,12 @@ def main(argv=None):
     for p in (a.work_dir, a.manifest, a.state):
         if str(p).startswith(str(R.resolve()) + '/prepared-'):
             raise SystemExit('refusing to write under %s/prepared-*: %s' % (R, p))
-    if a.port == 8188 and a.contract_dir.resolve() != CONTRACT_DIR:
-        raise SystemExit('the live port needs the sealed --contract-dir')
+    if a.port == 8188 and a.contract_dir.resolve() != sealed['dir'] / 'resolution/components':
+        raise SystemExit('the live port needs the sealed --contract-dir of --packet %d' % a.packet)
     a.work_dir.mkdir(parents=True, exist_ok=True)
     client = None
     try:
-        contract, receipts, gate = load_contract_modules(a.contract_dir)
+        contract, receipts, gate = load_contract_modules(a.contract_dir, module_sha=sealed['modules'])
         client = Client(a, contract, receipts, gate)
         signal.signal(signal.SIGINT, client.on_signal)
         signal.signal(signal.SIGTERM, client.on_signal)
