@@ -346,3 +346,19 @@ on 2026-10-08: 46/46 passed.
   one.
 - **Seeds repeating across server launches** (decision 7). Change
   `--base-seed` on each launch if that matters.
+
+## Packet 117 (`--packet 117`)
+
+As 116b, plus the three frame-anchor levers and 121-frame chunks. The client reads `anchor_decode`
+(`full`|`cone`), `bencode_overlap` and `prep_ahead` (0|1) from `/ltx-stream/status`, puts them in every
+request (`stream_contract.stream_params(..., anchor_decode=, bencode_overlap=, prep_ahead=)`) and checks them
+with `--expect-anchor-decode`, `--expect-bencode-overlap`, `--expect-prep-ahead` (refused for other packets).
+`--expect-frames 121` is accepted (120 new frames per anchored chunk). Qualification is re-derived with the 117
+gate including `levers=`; any `anchor_decode_failures` / `precompute_failures` stop the client (exit 13).
+Receipts must carry the launch `levers`. Manifest lines add `levers`, `anchor_decode_mode`, `anchor_decode_s`,
+`display_decode_s`, `cone_equal`, `anchor_decode_in_chain` and `conditioning_sources`. Stage buckets:
+`anchor-decode(chain)` (the cone or full decode the chain waited for), `anchor-handoff`, `receipt`,
+`precompute-A-wait`, `precompute-B-wait`, `go-wait(off-chain)`, `display-decode(off-chain)`,
+`decode-tail(off-chain)`, `preview(off-chain)`. The packet's manifest and module hashes are placeholders
+(`PACKET117_MANIFEST_SHA256`, `PACKET117_MODULE_SHAS` in `ltx_continuation_client.py`) until the 117 build.
+Tests: `tests/run_tests_117.py` against `tests/fake_comfy117.py` (port 18192).

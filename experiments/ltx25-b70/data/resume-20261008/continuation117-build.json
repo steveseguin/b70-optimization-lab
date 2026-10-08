@@ -1,0 +1,596 @@
+{
+ "auxiliary_files_not_in_packet": {
+  "CONTRACT.md": "03f7368275dfb589e30a669717b8092f2835d4238c3c8fa59b14f460e6c4b686",
+  "LAUNCH.md": "fda3a4d0adcaffa65c87567df8ae8a036a7c5e68cbfc9f30d5ae22693d3d6d4e",
+  "cpu_decoder.py": "700984ae38d8118bac5666cd9c21a206dad5cee69199805aaa7490858d4f0ee2",
+  "cpu_native_lt.py": "b1737d2845988bda68fcebab23c1a9aac52dc568bd00ab8fd4c4454b8b606ba7",
+  "harness_runtime.py": "c8b93393febbfc277ac0f5ed9b8f5796aa63dc643eabcbc6898a5e914d58da3f",
+  "owner_seam_view.py": "5e48b4a61f65a190eb75d12c6b3e6623134c5a0b0b18f8411bbdada2c9ac6596",
+  "test_anchor_decode.py": "3d1e37f797d9563aa364182869b8fe2219ae6a4a237dd07cb0ccb4fca0ce9e1a",
+  "test_candidate_safety.py": "3753e44811905913aa3d585d6efa2dea32512897ac1aebbc4085900cde0724d5",
+  "test_contract.py": "5ce2c97f085aaca5b62ceefcb17765ebd942153841f85d03465d4890c8563b56",
+  "test_decode.py": "5b07c97c2c9ef28e5ada06360db573aeb59aed149a3e4d9f17722faee117faee",
+  "test_decoder_graph.py": "0b7220c51967f6359df2ecfcec90528e52154d727293cce387888ff3d4c0830a",
+  "test_gate_receipts.py": "64bbe9be010659143850f87e7eb6697668049b633b7f11cf426d9b2493c4f83a",
+  "test_guide_anchor.py": "1e2b3488888992e1a3b03a4bbbf63def194f208ec986042fe797dd71fd17081d",
+  "test_latent_anchor.py": "bb93f02fbc243866cd2412f7055a7c134cfa718f179e476f8c440251b03ea270",
+  "test_precompute_guard.py": "9572ee7161ee4f92913bacc011d0286fadd93aca8fcec009086e0067908ab9a3",
+  "test_preview.py": "7a47ad6050ad065bda7d1689666d2ce8890ea6fcc15103aab0c55f1af01a6084",
+  "test_reset.py": "7ca75552902994a892c0ab763cf30cd138eaa9234df4d608f4bcfde2c2b61575",
+  "test_runtime_flow.py": "a423dd9ee34adefa2cf0d8c4ffceb4ac592e9f0e50a8166c9b62c146ecb66bd9",
+  "test_runtime_packet.py": "e5708d58278988e348318548dd0e99167dc1fa50ed2b6432ddf22d1278d199a5",
+  "test_session.py": "35623cae09996969621e06990ac1f4cca0965b527e152738997378095a3f0129"
+ },
+ "builder": "recovery/20261008-continuation117-stream/runtime_packet.py (sealed-116b successor)",
+ "claims": {
+  "cone_exact_on_xpu": false,
+  "decoder_graph_exact_on_xpu": false,
+  "geometry_121_measured": false,
+  "gpu_qualified": false,
+  "precompute_exact_on_xpu": false,
+  "seam_quality": false,
+  "speed": false
+ },
+ "client": {
+  "PACKETS[117].manifest_sha256": "5826174ee3a3965d033758de006552742878f624800dadb90423879b3f0802c9",
+  "file": "stream/ltx_continuation_client.py",
+  "flags": [
+   "--packet 117",
+   "--expect-anchor-decode",
+   "--expect-bencode-overlap",
+   "--expect-prep-ahead"
+  ],
+  "sha256": "045efe51830a81a4c3b285833f5d5c2fd1110fd4c3c3e5d94229ed11c6359421",
+  "tests": {
+   "run_tests.py": "27/27",
+   "run_tests_112.py": "46/46",
+   "run_tests_113.py": "11/11",
+   "run_tests_114.py": "25/26 (X5 pre-existing)",
+   "run_tests_115.py": "20/20",
+   "run_tests_116.py": "30/30",
+   "run_tests_116b.py": "8/8",
+   "run_tests_117.py": "21/21",
+   "test_cleaner.py": "4/4"
+  }
+ },
+ "command": [
+  "/home/steve/.venvs/ltx25-baseline/bin/python",
+  "-B",
+  "experiments/ltx25-b70/recovery/20261008-continuation117-stream/runtime_packet.py",
+  "--build",
+  "--input-inventory-sha256",
+  "11bdccf7c69266608633c92cc89cd3458bd99cf7962aee363a403401547eae9a"
+ ],
+ "cpu_tests": {
+  "adapted_from_116b": "169/169 (test_contract 28, test_session 17, test_reset 13, test_gate_receipts 39, test_decode 23, test_decoder_graph 22, test_preview 11, test_runtime_packet 16)",
+  "new_modules": {
+   "test_anchor_decode": 14,
+   "test_precompute_guard": 10
+  },
+  "packet116b_suite": "197/198 (test_live_root_is_clean_now fails because the 116b run created its stream116b- names; expected)",
+  "packet117_suite": "249/249 (unittest discover, -B)",
+  "test_runtime_flow": "25 (9 new lever cases)"
+ },
+ "design_note": {
+  "path": "notes/2026-10-08-continuation117-stream-design.md",
+  "sha256": "6c4a5934d17d4001f53c306ace34c688f44c07b504991604b470ddcae2d7247b"
+ },
+ "devices_touched": false,
+ "host_state_at_build": "FAULT.json present at the results root (four-card device fault 21:11 UTC, Flash-Next lane; owner reboot decision pending); this build touched no device, process or setting",
+ "input_inventory": {
+  "candidate_safety.py": "087772db88cbd26d8ddb4c9905f0d27cf583f57a9cdff56a932ba6de8ab7e510",
+  "conditioning_guard.py": "e7063937bec3e5e874bcc28b5199bde205fa68635ca9a0aebb313d333915deeb",
+  "continuation_anchor.py": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+  "derive_from_111.py": "01c3cbbc2d29dc9b0ee9d827c8fcb22f72fb7cffac69e06d48898cdc69f4c1fe",
+  "integration.py": "a24dc20cd6f0cf640d7100c00e0cd7087d907b521f1ed3d31903c9088c8eaf84",
+  "latent_anchor.py": "eda5b4fa4859032e8d904443532b7ea6258107b1582b959ce4cb73f0c24d1e90",
+  "native_bindings.py": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+  "plan.py": "4fbc92f815edcb5781bd4fb3d090520d99670d83370d9aae73ed7e6ad3ada376",
+  "precompute_guard.py": "861d59d8dad4d2b6880cf761315d191967344f587b56f8e3a5f33807d86c2716",
+  "qualification_gate.py": "90385af6e91ccf940d009d33c9cd957b1730ad3f8b91f15906773171545142ad",
+  "qualify_client.py": "a9f2944a2f53b16e11eef21da5aaa7b7da9fe59f36962ba6b86827f4fe47d2a4",
+  "reference-frame-qualification-hashes.json": "47040972fdcbb7f5837086d067122afd5130441bc5396f7b562a028e7faf5bb7",
+  "runtime_packet.py": "d937987d1870390d88e98a544d4ee33032b6823bd82ecfff254ee67c65f59cc0",
+  "session.py": "aadc68d95c4495acd25c1b4b5d4f6798d5ca352efc0814add60381cd93396501",
+  "stream-plan.json": "0370f7b2315f636e1019e146becf2bc28c0e8afa4f55f32a2649ef3784539164",
+  "stream_anchor_decode.py": "8588c717e76fa4065a78376426cedd8f9f7da83c26f17bef3d19b93ceadc757d",
+  "stream_contract.py": "1e4a3d15a80b04d9fd81efe5ae5ab7940975b20beebe3a880cef619f4b0014be",
+  "stream_decode.py": "1122ac091edeb4a6cf571127c823e2d7795e1a43dd8e4dbe43f4f8cefcc6672e",
+  "stream_decoder_graph.py": "08576eb035e4870d3bceea15a6fb46830e18ba610adb42a1a45fe74ee9ac0666",
+  "stream_preview.py": "3ebae293cd265a7ea1b1d2bf8ca53c6eec7ce6aeb51f073c5ad11f15a9a2ed33",
+  "stream_receipts.py": "001e50aa8581e4e165acd3fee2aeb503c08ac34c9be6e4408cfda858d009b4dc"
+ },
+ "manifest_sha256": "5826174ee3a3965d033758de006552742878f624800dadb90423879b3f0802c9",
+ "model_requests": 0,
+ "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117",
+ "parent": {
+  "manifest_sha256": "06688f41f6b06b1fc0a1596bf61abbe8a74388836badf639330d0d272570442b",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-116b"
+ },
+ "payload_bytes": 118824767,
+ "plan_sha256": "8390d15e01a7107948484ea76f90b2661a31a68a42e1b2a72fb803835e55d4c4",
+ "processes_touched": false,
+ "pycache_in_sealed_packets": 0,
+ "qualification_ids": {
+  "121/two-way/frame/dg0/ad-cone/bo0/pa0": "babae9a3e445287d1a1c556c88c0f445a11fe3b7c32955129b6f10bc929460b8",
+  "121/two-way/frame/dg0/ad-cone/bo0/pa1": "a75587ef1fafe922dff523d317c02a7c8bacd03388b2a52ef134d9ef5f8b50dc",
+  "121/two-way/frame/dg0/ad-cone/bo1/pa0": "36f23a012f3687f2bf9db4e836ea8a7c01ab617ab18abba7867f1a179da0f6c7",
+  "121/two-way/frame/dg0/ad-cone/bo1/pa1": "d38a0a21aeca0d7b0e133304275e1f1668c52b39493e49f33bc6f2a1f553616d",
+  "121/two-way/frame/dg0/ad-full/bo0/pa0": "a5f4768e42e3947d9a23ba3697fe520b3e6bbb8147e2d5b2619d0bafbad91b9d",
+  "121/two-way/frame/dg0/ad-full/bo0/pa1": "27a670284bae30913f6c4e0dfd79f8fecfbaacbba2a19379ed93aa7ba2fc6159",
+  "121/two-way/frame/dg0/ad-full/bo1/pa0": "a63bada04cd5a41f6f7c0ad6bbd53239f2e9b7ddf2f81a590e9a8d17a1355436",
+  "121/two-way/frame/dg0/ad-full/bo1/pa1": "c6506268fa1048fa7c29f70a6a76b3273395ea11352fb0875b8d0a504c36ba9a",
+  "121/two-way/frame/dg1/ad-cone/bo0/pa0": "78aab30d8c366f04945b1a878f63f05cb6c91feec526d2559e5b72c62701412b",
+  "121/two-way/frame/dg1/ad-cone/bo0/pa1": "5a375bb43669157d1107d9dd9bea822bb18328a641465c682933685b9dbb73c8",
+  "121/two-way/frame/dg1/ad-cone/bo1/pa0": "d08197eed4e88cb5c5fcf703248e9b8bca3c9085bfc9a6848f80d8cbedeb669e",
+  "121/two-way/frame/dg1/ad-cone/bo1/pa1": "2dfb8369532e2af1d03603cc7c8201542e68e4fe8d84f475483ab29dad9e69fb",
+  "121/two-way/frame/dg1/ad-full/bo0/pa0": "f09ab6c0467e79c6281a2184155cd706eb6be68fdc6cd5fffac6f6a406536ae7",
+  "121/two-way/frame/dg1/ad-full/bo0/pa1": "a1f571dbf67f3419685d104e030a5d108734a46df5a06e43a38e515bc2d07077",
+  "121/two-way/frame/dg1/ad-full/bo1/pa0": "f9a828d328cdb95f1f4645c88e2cf8c3ca1bbcaaf7b2e68dfb3252c51d467eec",
+  "121/two-way/frame/dg1/ad-full/bo1/pa1": "75a1362f752764e050618b0b422215d06c8ed09f0a74dd68257a5fcfe33d5cf6",
+  "121/two-way/guide/dg0/ad-full/bo0/pa0": "64b456344703ac5bc6948652fe42a0e04c46acd828d56241760baf0c5764a6fe",
+  "121/two-way/guide/dg1/ad-full/bo0/pa0": "ae3e5e3433b5af564d06311d09fa017b60286bd997f85f8910906dc0e739a239",
+  "121/two-way/latent/dg0/ad-full/bo0/pa0": "8d68c6e1bebca0f86bcd7487e231ec5aed3d6b2ef03be9c84f638f23a0948766",
+  "121/two-way/latent/dg1/ad-full/bo0/pa0": "1341338c64244a45ca52c3d0f1a3c859e9331ea19dba5bca01bceda743518c8b",
+  "121/two-way/mixed/dg0/ad-full/bo0/pa0": "76715c45568eeba161c575ebb86ac3a4d5556ac50834fc2e0404b9a37fcadb34",
+  "121/two-way/mixed/dg1/ad-full/bo0/pa0": "4a4205fc8c272f2c9c7a2adc8aa71874348f17019650ee7e5c9c16493c2276d2",
+  "121/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "ea0d62b41efa53dc75ed23e823ce57375c7cbdf153a4cbc935caeda9d7051e3b",
+  "121/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "25e767c48ddfd4d46385d9216a5573ce8c738ee541e9ee812534cab71d10c834",
+  "121/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "909000a2c994788f074283e2af6c3cc1c3116e0533f0f21ef41078931ec97545",
+  "121/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "7b5244e746214f4fcf03bdb7366b1dcd3ca5aaf5dd4cb4b6c4ff6339cd32667a",
+  "121/two-way20-28/frame/dg0/ad-full/bo0/pa0": "77886bf82f8968045a85daa25babe88e9d1b05a05fe9924134460bc9ba920e22",
+  "121/two-way20-28/frame/dg0/ad-full/bo0/pa1": "1f98d88009fc06a57daecab2b806dd4563359d9784bd60e374e974df12b6d2bb",
+  "121/two-way20-28/frame/dg0/ad-full/bo1/pa0": "11b84789692d817b2e041d20c50dc6bd6733f9a88db0587810f6d3c0faf9c0a6",
+  "121/two-way20-28/frame/dg0/ad-full/bo1/pa1": "508fe5004191c058e324243c1b9fdefde4e6b47c2d62f67e493aaca1307d0a02",
+  "121/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "48801bdd3fdd533bd5778bd88b3c81f479641911e4e4ea96eb356a3d81c1aa0d",
+  "121/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "1d2325d6e93a5abceb8a7580310162d153e34c16d2e3ea73a8de0be8765a8538",
+  "121/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "7099f8cce9aa685dfb3a3a69d215181d8e8bcc8bc32b4b8c11273ca94a3e2027",
+  "121/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "cf27a212158c3b9bc2d4989c277180522307d7b573b76aba0db9c844b935d222",
+  "121/two-way20-28/frame/dg1/ad-full/bo0/pa0": "6ca305a516bb6234c1351c005070f42acd383af0919fd8168b698d4bc9462316",
+  "121/two-way20-28/frame/dg1/ad-full/bo0/pa1": "52d22b4301e5d7ee9a4e6be5741a9ea48c6af77300f52f7a4d29a870e50b9a15",
+  "121/two-way20-28/frame/dg1/ad-full/bo1/pa0": "9b67a5b9c144b89e264874a9747ff4effbefbd01326a6080e721e98bbe184fd6",
+  "121/two-way20-28/frame/dg1/ad-full/bo1/pa1": "a1f082626c1b8cc6627999a8f1a229e132e396bbba37b047c78286bb4e44b47b",
+  "121/two-way20-28/guide/dg0/ad-full/bo0/pa0": "6926cbdd0fd2640bd8c5884ce207e4bfd7aca9f0abdc4c200002f6e579ce9ddb",
+  "121/two-way20-28/guide/dg1/ad-full/bo0/pa0": "f2ae8abafcab32a04eaf4b9532b0e8a83693d3dc6c8cd8d875c6263533716370",
+  "121/two-way20-28/latent/dg0/ad-full/bo0/pa0": "8ef1044327d8ee1f4083fa4a9c9b47e81193367d089d84e3a46a9fab09364373",
+  "121/two-way20-28/latent/dg1/ad-full/bo0/pa0": "49322e0c7275ff8acf0255d3a742e32dc07d9f6a49fcb0dd362329a1e2c37add",
+  "121/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "b340aaefd42e31dc5fff8711dba3c8bee897ade9494e8d7c0578f92dbd014955",
+  "121/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "3c574dccce431ef14e6cae7c81f020a098e4941c9a4931c5a9fae292aaefbb6d",
+  "49/two-way/frame/dg0/ad-cone/bo0/pa0": "472db89a61f87442427ca6dd8c4195fedeca6ae1bb1fae066d1fc04ea5f85568",
+  "49/two-way/frame/dg0/ad-cone/bo0/pa1": "ab3adbb6311950013c9228d3550847f07379208a7b58516d47592fdc4b48f01c",
+  "49/two-way/frame/dg0/ad-cone/bo1/pa0": "2f6d8e88e31bb6354f23d82da796e68bd5df071674bb6cb16ec9e69c13d299d4",
+  "49/two-way/frame/dg0/ad-cone/bo1/pa1": "aa592a5476cb37ff38f9fdac3b7f872b1c1ec61a3bc36d6e0ff0d1347d39ef05",
+  "49/two-way/frame/dg0/ad-full/bo0/pa0": "37931488480302023dac4d4cf13b049cdf78ed74333ffa63c77a8f6c04e4826a",
+  "49/two-way/frame/dg0/ad-full/bo0/pa1": "c2a1e6480665c70bdb93c81b54df890941032d770b9fd54f6f836d2ee74f8c6c",
+  "49/two-way/frame/dg0/ad-full/bo1/pa0": "00f8442766a320dbdba8da79bd24b8b0efc8c74d2e4080c3448295fdd51158f6",
+  "49/two-way/frame/dg0/ad-full/bo1/pa1": "98af577057f3db8cf33b546470a1acf908942d2d3e2f24ce8b58ae71a1660c2d",
+  "49/two-way/frame/dg1/ad-cone/bo0/pa0": "903fd87cee2c003a48033e63b570e18c0da276b1461c75631e336f8af1e720f2",
+  "49/two-way/frame/dg1/ad-cone/bo0/pa1": "7848f93aaeeaeb2e2661f0db96223ca7a3239ff21429dc1368c8c545865a601b",
+  "49/two-way/frame/dg1/ad-cone/bo1/pa0": "faeda557ee65ce411c4680508983e064583eb64e37a339a18cbc317115fac59f",
+  "49/two-way/frame/dg1/ad-cone/bo1/pa1": "25476a3f7dd38245c485665772dda46869d51c1ae1ba472cfddc874a68f2f953",
+  "49/two-way/frame/dg1/ad-full/bo0/pa0": "9c5ca70f08e548a8ad160487cb0a5aae7e33591f1a1adfb9ff739d6f90aecc6b",
+  "49/two-way/frame/dg1/ad-full/bo0/pa1": "1e38fdebb57cc4404d44be2b6ec595d8de2de12b90f9467728de1141d24297ec",
+  "49/two-way/frame/dg1/ad-full/bo1/pa0": "2f496d551f725cd97ac39961a144f24633bbd8cf9e066388a9db81f855bd57f1",
+  "49/two-way/frame/dg1/ad-full/bo1/pa1": "25de76c0e02213611477c9897a44c8060659a7ebb66b4e61e875c8229da188dd",
+  "49/two-way/guide/dg0/ad-full/bo0/pa0": "8f3f65a0a4ae41b8abf704ea4a2de8f5cbbfa53070ea9a3382030ab42b8ba577",
+  "49/two-way/guide/dg1/ad-full/bo0/pa0": "38adf4b097a84c9919c02d7e04991a8cd84a345615d4547e11e0b664ad7b6af0",
+  "49/two-way/latent/dg0/ad-full/bo0/pa0": "ccdedbf465460e72cefc2568b02abd4ed1044d834f3996fcf4ec44c8d748cf66",
+  "49/two-way/latent/dg1/ad-full/bo0/pa0": "f320c39aa901fb26fb0734a91d98a42d708497c0668401bccd82f9e4dc1d2721",
+  "49/two-way/mixed/dg0/ad-full/bo0/pa0": "7256cae7944ae497c9b6e128d30f22ee16cbc7fd2020ef4104e54cf8108acbac",
+  "49/two-way/mixed/dg1/ad-full/bo0/pa0": "3684efb97a181927b836914af6f1d56f9293f4761075c5e5f9232038c71505ef",
+  "49/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "db0770aca5762fb84736a8a9d80ae36f8dcb83ae0c9d0d5bebf07c01c2bfe7fe",
+  "49/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "cb8de51cd014e5db3a2612214fe5aed6129328b545140653a7e1fa399152ba8d",
+  "49/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "a4f351f14c2db2ddcd24932384b8587a4e70e7dcca0ed0d1b2196d9d460e559f",
+  "49/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "67aea773db5607b1e8a5bb0b12931e027edd869508ffa341870248ecff798867",
+  "49/two-way20-28/frame/dg0/ad-full/bo0/pa0": "a7d1d836f2b2c9a1f3c36bed7427186cf8e4d36baacc7a2859d0443953d53110",
+  "49/two-way20-28/frame/dg0/ad-full/bo0/pa1": "57e642da5dd6951963288283b6c6fbc82165f272d083bc9dd57f20802cddd32f",
+  "49/two-way20-28/frame/dg0/ad-full/bo1/pa0": "a8b3994ed4eb3922fe471a9d63cb881ace195b4f433c96f62fd9d36976cdfc73",
+  "49/two-way20-28/frame/dg0/ad-full/bo1/pa1": "cf3e5a74018f2648636848958cb815fe7668418d2b03086682fc103edf4ef2a8",
+  "49/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "f22bcd39e4002442c5649645c1025de3881497e8ba65ff846ed22198dbbd5734",
+  "49/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "11aa162d4a41331c0d08f4cc9348779983051184e6b2f5a08d1626ed8affa12d",
+  "49/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "667d4f6b1131d82e94cb41d3c8da28284edfa880c1224afb0a480adbb551f560",
+  "49/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "e5a49a6526b4cacc96ec3f39babc02e6603cf748cf00a09c84634a63c98c9bcb",
+  "49/two-way20-28/frame/dg1/ad-full/bo0/pa0": "68ded339cbd02716842c10d446b7b98678d8eb487c0bc8dfca9cddce90d50fb9",
+  "49/two-way20-28/frame/dg1/ad-full/bo0/pa1": "7103868f01c7acc56b1c0fc74ae334bfd75f59fbd220272d7b00a25d9fa47d13",
+  "49/two-way20-28/frame/dg1/ad-full/bo1/pa0": "101358dd46ad74e57a9112d3ad42b4389dde517b9924b217bd498c3ed00293e9",
+  "49/two-way20-28/frame/dg1/ad-full/bo1/pa1": "043ed124cad31550c5760e3dcffe34126e47aba291e69acc4a3818daa664a6b8",
+  "49/two-way20-28/guide/dg0/ad-full/bo0/pa0": "b8b637f602b2f14695b80875f700c839d80198dfe2a20fc235d42f2fc28cb36b",
+  "49/two-way20-28/guide/dg1/ad-full/bo0/pa0": "95d9329a84e4af9e6b24a2d976bfb4d936d896717f0af505a466dbd23fd1b67e",
+  "49/two-way20-28/latent/dg0/ad-full/bo0/pa0": "448dc7495d26159930a034922d8896410dcd03bf6f8533ebb94f04d1b12c30ec",
+  "49/two-way20-28/latent/dg1/ad-full/bo0/pa0": "00c70bf2908dec4ff9f4fa4aad48d76787cde011c69b5ec34db9e5f46250ae40",
+  "49/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "b659a37d0115fd41ab0c0fd00df518695e2d2529971fed158b0ad0d3b55d0c8b",
+  "49/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "982045e30fb3ea951effa65c089e50e796c8137f7cfb2d41c118c0424f3a6df1",
+  "97/two-way/frame/dg0/ad-cone/bo0/pa0": "7565d4651c593ee106d809dc146017c5d5338640a058463825f32744762e1314",
+  "97/two-way/frame/dg0/ad-cone/bo0/pa1": "a1cd9224574e8a90a103b1663d36520e60e5116c83b6c02f9cbcf4a8f4f37fb7",
+  "97/two-way/frame/dg0/ad-cone/bo1/pa0": "026db2440d14d4da967b71700840709b1c99a92c81850f38cfb956efb742096a",
+  "97/two-way/frame/dg0/ad-cone/bo1/pa1": "81462a7a2751df310d7a95341a13d40ddc36d759cd60795f0a6942eb56a22920",
+  "97/two-way/frame/dg0/ad-full/bo0/pa0": "517b43ccc924ba9f45284578d0aa5bf019b1738782d33d81505b30be8cdfb81c",
+  "97/two-way/frame/dg0/ad-full/bo0/pa1": "1d1f720a2c7d5040ab7212e93576825bbae3f346a08f70e9b7aa15072a6b992a",
+  "97/two-way/frame/dg0/ad-full/bo1/pa0": "4d27c9d27212be3eeaaf1362bedf1bbe690dd8e819d51b8425359574703ef529",
+  "97/two-way/frame/dg0/ad-full/bo1/pa1": "a8b82cca03b55fa6d5dfeaa7b35a307e5698cae6200cd9b33ffd8b5187f2ba13",
+  "97/two-way/frame/dg1/ad-cone/bo0/pa0": "296850941481d06d2363247513404209abfae4e167a8baa01e0313861056c59f",
+  "97/two-way/frame/dg1/ad-cone/bo0/pa1": "a5609aa5593fa138af4c09c2b4305514e2d5f5832c5048c985c2fd902b2c4914",
+  "97/two-way/frame/dg1/ad-cone/bo1/pa0": "4518fb83a1a5f9485b00e8b9c49a36489952b86388fe8266fc621c99f84eb721",
+  "97/two-way/frame/dg1/ad-cone/bo1/pa1": "07b8e6d527e81e3f36404b3754a17d193073d761d21be45639f9a71c6431b16f",
+  "97/two-way/frame/dg1/ad-full/bo0/pa0": "6c2430850f14cd9b52a6193c0be6121dd24344bad895783aeb7002fcef8a8ed7",
+  "97/two-way/frame/dg1/ad-full/bo0/pa1": "adafe82868f9a8da5badf46c4c8e3ec0a9792d9e034cdb85b0308d77dcda36dc",
+  "97/two-way/frame/dg1/ad-full/bo1/pa0": "0964d0e0f80180647285633cda34eca4fdce1c51cbc782e30068c9744e3c1c21",
+  "97/two-way/frame/dg1/ad-full/bo1/pa1": "f25eec9a1a802ac9f5a662e0a70db5428cc121f6a48d36d435c2e1d2f30d4add",
+  "97/two-way/guide/dg0/ad-full/bo0/pa0": "3611905b4f9c8e6e137c01302040bcba64b5ae9896ec74e37d04cd239f7d16b1",
+  "97/two-way/guide/dg1/ad-full/bo0/pa0": "222e4af10ad6f4d66afe7ddcd8d5eb9a06800b651bf157ea78c930225f11ac6b",
+  "97/two-way/latent/dg0/ad-full/bo0/pa0": "1fe3a34794a8522099364b4018f27d947239bedbaf512b047527e389f3da69b3",
+  "97/two-way/latent/dg1/ad-full/bo0/pa0": "5476cd1b0d1b3fd12476006e6ebe6e886b145e6b3494d70a5c7aab71d0373ba9",
+  "97/two-way/mixed/dg0/ad-full/bo0/pa0": "b290e4f589c3ea62e037ef8ff64d87b31ad46db098bb04b30a72b0168176d7a4",
+  "97/two-way/mixed/dg1/ad-full/bo0/pa0": "c77e0f2dc472539eaa58972e3a524be727aa39223e7d7f0bed16e34d600870db",
+  "97/two-way20-28/frame/dg0/ad-cone/bo0/pa0": "2ccd87631ad64ad41ae0b223e96f1be59ef719787a792cbf11be1c83084b88f3",
+  "97/two-way20-28/frame/dg0/ad-cone/bo0/pa1": "093854463a4120d8338f8ef64363634344df47924d6ef3d94e760029ddd82f0f",
+  "97/two-way20-28/frame/dg0/ad-cone/bo1/pa0": "2762c8e1f771a03da653a2882360ec38573f42e62a9fd90c96ad21c9fcd618b4",
+  "97/two-way20-28/frame/dg0/ad-cone/bo1/pa1": "709c3f7543e0f6db0ef31567838cb8f6ab7d7170470a0eda449e907250445066",
+  "97/two-way20-28/frame/dg0/ad-full/bo0/pa0": "538155b026f4399c8b8b1e9a860289876013913b61fd220e57ba833db11120ee",
+  "97/two-way20-28/frame/dg0/ad-full/bo0/pa1": "dbc3eda723ed3c5bc0302b84ffa3ea8f5ed80bce9366eeaba4e6686513c5a34e",
+  "97/two-way20-28/frame/dg0/ad-full/bo1/pa0": "eb58a6fad5a4c61caf57228b64743116a92484da0a579663245744a14b026489",
+  "97/two-way20-28/frame/dg0/ad-full/bo1/pa1": "7432c74585efe9777ca242abf56d17f4c93c3e7ec4484135f31c5a5f56501bad",
+  "97/two-way20-28/frame/dg1/ad-cone/bo0/pa0": "3f44e6284c3931b4ef843a32e3cba1d301675336995c3228aecf34ab2f180e69",
+  "97/two-way20-28/frame/dg1/ad-cone/bo0/pa1": "a567485ca63783ab7a0c31db19800d7cf6f1ff0027d21039214a241b17432db2",
+  "97/two-way20-28/frame/dg1/ad-cone/bo1/pa0": "4184dfde03009c105e6621ddb648c3748ddc4b02997c939273ca2f689958211f",
+  "97/two-way20-28/frame/dg1/ad-cone/bo1/pa1": "13e17b61cb157c8bf40373f12b26b0f3fe3482709e7b35994701f9c3092acb3e",
+  "97/two-way20-28/frame/dg1/ad-full/bo0/pa0": "dad2fd937d92470035fef2764339adecf9ba087627ad91816c7b5de1b07adff6",
+  "97/two-way20-28/frame/dg1/ad-full/bo0/pa1": "fa00e0c5c4773b635c78a9c38a8c26eb7aea95dc94dc67696533eef4b27334d6",
+  "97/two-way20-28/frame/dg1/ad-full/bo1/pa0": "b35d87809e588c80269ba5d39b4978aeba75e6113e8011a860a63429d2a87d97",
+  "97/two-way20-28/frame/dg1/ad-full/bo1/pa1": "fae1fdf7dda58017deffcff968cfc41b48d3300e2a91bbafa31c5a63d53c3f5b",
+  "97/two-way20-28/guide/dg0/ad-full/bo0/pa0": "621f27bfb34dfc85e565390da945145ad66dec2ccd5d36c785ce8ce76f627fdb",
+  "97/two-way20-28/guide/dg1/ad-full/bo0/pa0": "64e88b1ca61259d342b24171ee965f4940a39a6d4b1955bc2f4fa6d5f080b527",
+  "97/two-way20-28/latent/dg0/ad-full/bo0/pa0": "ed36da342c6ee54dbe51bda4363d6c2bb68124df309ac989bbeefe73239ce64b",
+  "97/two-way20-28/latent/dg1/ad-full/bo0/pa0": "d5d3f84c84ab5e58faccb2e5faa64f4829de06601821f0d7cc297669f5c30a79",
+  "97/two-way20-28/mixed/dg0/ad-full/bo0/pa0": "cb80f42e51a994fc3b5914a01338d37c146ee299cf6111b08b8bd2090c58c90f",
+  "97/two-way20-28/mixed/dg1/ad-full/bo0/pa0": "db6a5c2fb7afe22e86e971663bb0fe99f1c8851978ea376a3805b2f65b4d6103"
+ },
+ "result": {
+  "input_inventory_sha256": "11bdccf7c69266608633c92cc89cd3458bd99cf7962aee363a403401547eae9a",
+  "manifest_sha256": "5826174ee3a3965d033758de006552742878f624800dadb90423879b3f0802c9",
+  "model_requests": 0,
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117",
+  "status": "prepared-not-GPU-qualified",
+  "storage_admission": {
+   "admitted": true,
+   "available_bytes": 111150616576,
+   "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+   "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117",
+   "failures": [],
+   "filesystem": {
+    "filesystem_type": "ext4",
+    "mount_id": 33,
+    "mount_point": "/",
+    "source": "/dev/nvme0n1p2"
+   },
+   "min_free_bytes": 56908316672,
+   "planned_write_bytes": 167772160,
+   "remaining_after_planned_write_bytes": 110982844416,
+   "required_bytes": 57076088832,
+   "required_mount": null,
+   "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117",
+   "schema_version": 1
+  }
+ },
+ "returncode": 0,
+ "schema": "ltx.stream117.build-receipt.v1",
+ "scope": {
+  "1_cone_anchor_decode": "LTX_ANCHOR_DECODE full|cone (default cone): native VAEDecode with the cone-restricted stage-5 step (stream_anchor_decode.py); full display decode after the successor sampler-A start (bounded 3 s); per-chunk last-frame byte check; latch anchor-decode-117-refused.json",
+  "2_bencode_overlap": "LTX_BENCODE_OVERLAP 0|1 (default 1): stage-B anchor encode on the decode thread at the successor sampler-A start, between xpu:3-only snapshots (precompute_guard.Xpu3Snapshot P1-P8) under the encoder lock; consumed through ReplayVAE inside the unchanged four-card ConditioningStageGuard; graph chain dual-checked; latch precompute-117-refused.json",
+  "3_chunk_121": "LTX_STREAM_FRAMES 49|97|121: 121 = 16 latents, 256/1024 tokens, audio [1,8,126,16], waveform 240480 (sealed formulas, checked on the first eager chunk)",
+  "4_prep_ahead": "LTX_PREP_AHEAD 0|1 (default 1): stage-A anchor encode on the decode thread after the predecessor receipt commits, same guard; noise/latents/sigmas/conditioning nodes not moved (ms; executor guard refuses cross-request node caching)",
+  "5_kept": "decoder graph + router-aware installer, chain waits only for the anchor decode, stream117- names + collision preflight, reset, coredump-deletion exclusion, sharpness diagnostics, 113/114 references for the levers-off eager chain"
+ },
+ "source_delta": {
+  "launch/encoder_runtime_common.py": {
+   "after_sha256": "d937987d1870390d88e98a544d4ee33032b6823bd82ecfff254ee67c65f59cc0",
+   "before_sha256": "ca3e51d2da09f728d3660c1b37a21cf5844006b656a812b6a7f0bdb981eac2bc"
+  },
+  "launch/serve-encoder.py": {
+   "after_sha256": "f51ec32d69642b2688f21a38da366fc1040c860aac6b9d906d095d6785cd5034",
+   "before_sha256": "f87ee6923eb1552314c7853671d25c4db233ad760700e491abe930067e774269"
+  },
+  "provenance/packet116b-manifest.json": {
+   "after_sha256": "06688f41f6b06b1fc0a1596bf61abbe8a74388836badf639330d0d272570442b",
+   "before_sha256": null
+  },
+  "resolution/components/integration.py": {
+   "after_sha256": "a24dc20cd6f0cf640d7100c00e0cd7087d907b521f1ed3d31903c9088c8eaf84",
+   "before_sha256": "58e052b0c4e467df9826469aa95e6cdebfacda35eb3873953b84d86293e4ad8d"
+  },
+  "resolution/components/plan.py": {
+   "after_sha256": "4fbc92f815edcb5781bd4fb3d090520d99670d83370d9aae73ed7e6ad3ada376",
+   "before_sha256": "f8518500e16cd9b3eeeee94536166a5094a9ea1723053fb68ce6d10733395184"
+  },
+  "resolution/components/precompute_guard.py": {
+   "after_sha256": "861d59d8dad4d2b6880cf761315d191967344f587b56f8e3a5f33807d86c2716",
+   "before_sha256": null
+  },
+  "resolution/components/qualification_gate.py": {
+   "after_sha256": "90385af6e91ccf940d009d33c9cd957b1730ad3f8b91f15906773171545142ad",
+   "before_sha256": "bc8598be36e03884264a938e4ad65256036d49b3037d17f59b0cb6a585acf0c0"
+  },
+  "resolution/components/qualify_client.py": {
+   "after_sha256": "a9f2944a2f53b16e11eef21da5aaa7b7da9fe59f36962ba6b86827f4fe47d2a4",
+   "before_sha256": "887ca2a6994f58373bb8542567799ea498bf1fe3d83b76ff17cc78d2a278b134"
+  },
+  "resolution/components/runtime_packet.py": {
+   "after_sha256": "d937987d1870390d88e98a544d4ee33032b6823bd82ecfff254ee67c65f59cc0",
+   "before_sha256": "ca3e51d2da09f728d3660c1b37a21cf5844006b656a812b6a7f0bdb981eac2bc"
+  },
+  "resolution/components/session.py": {
+   "after_sha256": "aadc68d95c4495acd25c1b4b5d4f6798d5ca352efc0814add60381cd93396501",
+   "before_sha256": "bfc45959193298f51468fde6f118b9f654bf24f93059fae48ec8bcd21c6c4c4a"
+  },
+  "resolution/components/stream_anchor_decode.py": {
+   "after_sha256": "8588c717e76fa4065a78376426cedd8f9f7da83c26f17bef3d19b93ceadc757d",
+   "before_sha256": null
+  },
+  "resolution/components/stream_contract.py": {
+   "after_sha256": "1e4a3d15a80b04d9fd81efe5ae5ab7940975b20beebe3a880cef619f4b0014be",
+   "before_sha256": "32705611a81c2c1d99da759f14bcc8df0dc75302a87aa34fc23a96ed1560ddf7"
+  },
+  "resolution/components/stream_decoder_graph.py": {
+   "after_sha256": "08576eb035e4870d3bceea15a6fb46830e18ba610adb42a1a45fe74ee9ac0666",
+   "before_sha256": "3ac9f7b9e8a01a2f3fadb6629e221a4c1af490af8edc1c224b0c3b21c4eb3ecb"
+  },
+  "resolution/components/stream_receipts.py": {
+   "after_sha256": "001e50aa8581e4e165acd3fee2aeb503c08ac34c9be6e4408cfda858d009b4dc",
+   "before_sha256": "6b316cd4d0290c91480f07af113077204df89a00e7a247d5591c9a527669acef"
+  },
+  "resolution/stream-plan.json": {
+   "after_sha256": "0370f7b2315f636e1019e146becf2bc28c0e8afa4f55f32a2649ef3784539164",
+   "before_sha256": "32a4f6a883b4d471203432259aa2124d818c12739a4a839a85f963c17420bb8b"
+  },
+  "source/scripts/integration.py": {
+   "after_sha256": "a24dc20cd6f0cf640d7100c00e0cd7087d907b521f1ed3d31903c9088c8eaf84",
+   "before_sha256": "58e052b0c4e467df9826469aa95e6cdebfacda35eb3873953b84d86293e4ad8d"
+  },
+  "source/scripts/ltx_duration_guard.py": {
+   "after_sha256": "9113910f2d5d22729024052c1573c5b698ab3f9b3da310709e21c35b6f5bfa6e",
+   "before_sha256": "3a9ab6ff5d4e101529fdac5c296308dd9b6f3ebbf6f580caeeaa94adec630e3f"
+  },
+  "source/scripts/ltx_output_size_98.py": {
+   "after_sha256": "204fc5abce07c3eae7809838301997d4bceadcdc06712c4ad1620a86dd74858c",
+   "before_sha256": "b40cf05fd71e50a6d1d2f4ac5c042aa0e5ac2345c4fe630fdd82b564aaef49e8"
+  },
+  "source/scripts/ltx_resolution_session.py": {
+   "after_sha256": "aadc68d95c4495acd25c1b4b5d4f6798d5ca352efc0814add60381cd93396501",
+   "before_sha256": "bfc45959193298f51468fde6f118b9f654bf24f93059fae48ec8bcd21c6c4c4a"
+  },
+  "source/scripts/precompute_guard.py": {
+   "after_sha256": "861d59d8dad4d2b6880cf761315d191967344f587b56f8e3a5f33807d86c2716",
+   "before_sha256": null
+  },
+  "source/scripts/qualification_gate.py": {
+   "after_sha256": "90385af6e91ccf940d009d33c9cd957b1730ad3f8b91f15906773171545142ad",
+   "before_sha256": "bc8598be36e03884264a938e4ad65256036d49b3037d17f59b0cb6a585acf0c0"
+  },
+  "source/scripts/stream_anchor_decode.py": {
+   "after_sha256": "8588c717e76fa4065a78376426cedd8f9f7da83c26f17bef3d19b93ceadc757d",
+   "before_sha256": null
+  },
+  "source/scripts/stream_contract.py": {
+   "after_sha256": "1e4a3d15a80b04d9fd81efe5ae5ab7940975b20beebe3a880cef619f4b0014be",
+   "before_sha256": "32705611a81c2c1d99da759f14bcc8df0dc75302a87aa34fc23a96ed1560ddf7"
+  },
+  "source/scripts/stream_decoder_graph.py": {
+   "after_sha256": "08576eb035e4870d3bceea15a6fb46830e18ba610adb42a1a45fe74ee9ac0666",
+   "before_sha256": "3ac9f7b9e8a01a2f3fadb6629e221a4c1af490af8edc1c224b0c3b21c4eb3ecb"
+  },
+  "source/scripts/stream_receipts.py": {
+   "after_sha256": "001e50aa8581e4e165acd3fee2aeb503c08ac34c9be6e4408cfda858d009b4dc",
+   "before_sha256": "6b316cd4d0290c91480f07af113077204df89a00e7a247d5591c9a527669acef"
+  }
+ },
+ "startup_check_only": {
+  "49-frame": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "49-guide": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "49-latent": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "49-mixed": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "97-guide": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "97-mixed": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "encoder-server-continuation-stream-117-frame-dg0-adcone-bo0-pa0-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "encoder-server-continuation-stream-117-frame-dg0-adcone-bo1-pa1-two-way20-28-w1-b1-p1-dxpu2-s256x256-f121": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "encoder-server-continuation-stream-117-frame-dg1-adcone-bo1-pa1-two-way20-28-w1-b1-p1-dxpu2-s256x256-f121": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "encoder-server-continuation-stream-117-frame-dg1-adcone-bo1-pa1-two-way20-28-w1-b1-p1-dxpu2-s256x256-f49": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "encoder-server-continuation-stream-117-frame-dg1-adcone-bo1-pa1-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "encoder-server-continuation-stream-117-frame-dg1-adfull-bo0-pa0-two-way20-28-w1-b1-p1-dxpu2-s256x256-f97": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  },
+  "encoder-server-continuation-stream-117-mixed-dg1-adfull-bo0-pa0-two-way20-28-w1-b1-p1-dxpu2-s256x256-f49": {
+   "passed_before_refusal": [
+    "control environment, levers and latches",
+    "file limits",
+    "run name and absent run dir",
+    "packet verification (117 -> 111)",
+    "naming preflight (stream117-)",
+    "dependency activation",
+    "runtime verification"
+   ],
+   "reason": "RuntimeError: Fault recorded; halt new work",
+   "refused_at": "verify_model_receipt: FAULT.json present (written by the coordinator 2026-10-08 21:14 UTC after the 21:11 UTC four-card fault)",
+   "status": "refused-before-health-check"
+  }
+ },
+ "storage": {
+  "build_admission": {
+   "admitted": true,
+   "available_bytes": 111150616576,
+   "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+   "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117",
+   "failures": [],
+   "filesystem": {
+    "filesystem_type": "ext4",
+    "mount_id": 33,
+    "mount_point": "/",
+    "source": "/dev/nvme0n1p2"
+   },
+   "min_free_bytes": 56908316672,
+   "planned_write_bytes": 167772160,
+   "remaining_after_planned_write_bytes": 110982844416,
+   "required_bytes": 57076088832,
+   "required_mount": null,
+   "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-117",
+   "schema_version": 1
+  },
+  "build_allowance_bytes": 167772160,
+  "reserve_bytes": 53687091200,
+  "run_allowance_bytes": 3221225472
+ },
+ "utc": "2026-10-08T21:25:08.363043+00:00"
+}
