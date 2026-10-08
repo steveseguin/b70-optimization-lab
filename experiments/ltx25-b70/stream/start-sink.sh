@@ -2,7 +2,7 @@
 # Start the LTX RTMP sink. Destination: the first line of /home/steve/.config/ltx-stream/rtmp_url (outside Git, never printed),
 # else a local discard receiver on rtmp://127.0.0.1:1935/live/local so the pipeline stays live and in sync.
 set -u
-W=/home/steve/ltx-stream/s97-stream01
+W=${LTX_STREAM_WORKDIR:-/home/steve/ltx-stream/s97-stream01}
 PY=/home/steve/.venvs/ltx25-baseline/bin/python
 SINK=/home/steve/llm-optimizations/experiments/ltx25-b70/stream/ltx_rtmp_sink.py
 # Always push to the local relay (relay2.sh): it writes the LAN preview frame and forwards to the
@@ -11,5 +11,5 @@ URL=rtmp://127.0.0.1:1935/live/local; DEST=local-relay
 echo "sink destination: $DEST ($(date -u +%FT%TZ))" >> $W/sink-destinations.log
 exec $PY -B $SINK --manifest $W/manifest.jsonl --rtmp "$URL" --state $W/sink-state.json --stats $W/sink-stats.json \
   --workdir $W/sinkwork --size 768x768 --decode-threads 2 \
-  --title "LTX-2.5 kittens, live on 4x Intel Arc Pro B70 - 256x256 native, every clip freshly generated (independent takes; continuous scenes coming)" \
-  --delete-played-after-seconds 3600 --disposable-dir-regex 's97-twowayw2b2p1dxpu2-stream01-[0-9]{7}' "$@"
+  --title "${LTX_STREAM_TITLE:-LTX-2.5 kittens, live on 4x Intel Arc Pro B70 - 256x256 native, every clip freshly generated (independent takes; continuous scenes coming)}" \
+  ${LTX_STREAM_DISPOSE:---delete-played-after-seconds 3600 --disposable-dir-regex s97-twowayw2b2p1dxpu2-stream01-[0-9]{7}} "$@"
