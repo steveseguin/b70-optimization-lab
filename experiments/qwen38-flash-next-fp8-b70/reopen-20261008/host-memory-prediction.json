@@ -5,6 +5,14 @@
   "launch": {
     "tensor_parallel_size": 4,
     "expert_parallel_size": 4,
+    "driver_environment": {
+      "NEOReadDebugKeys": [
+        "1"
+      ],
+      "EnableDeferBacking": [
+        "0"
+      ]
+    },
     "cpu_offload_bytes_per_rank": 13153337344,
     "offload_suffixes": [
       "ple_embedding.ngram_embedding.weight",
@@ -27,7 +35,7 @@
     "max_num_batched_tokens": 64,
     "kv_bytes_per_rank": 376569856,
     "mtp_depth": 1,
-    "command_sha256": "1e806e869f116aa685d8d13eb779ede5866b6f5d963bfe1d87a676aa1e148dc1"
+    "command_sha256": "76f1a7b9c2dcf9798655542489c8a2e3aced0d13e9a86452cc28fc30d298f7de"
   },
   "metadata": {
     "config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
@@ -177,7 +185,7 @@
     "vllm/model_executor/layers/quantization/fp8.py": "947540b443c15e9e5b4c08ff07f7a7c0e8d8f0d8494f3964c0172a772a779fe5",
     "vllm/v1/worker/gpu/model_runner.py": "0b02bdb26b340d57869861c0570815bc68d36812a87c1b78a16960f3b20f842a"
   },
-  "overlay_manifest_sha256": "48437117087a329825c4dad0b609fea2e00e4dfd9e0709be2fa440c41f65e50a",
+  "overlay_manifest_sha256": "0397b67618737258e8b1713a0906d3858983946880e03a5254eb2f5e0f0330a3",
   "phase_bounds_manifest_sha256": "7bf1f66042eaac46d372703f2dc9cb4bba5ecd7e740ba91fe5d1edac7272bc4a",
   "physical_vram_bytes_per_rank": [
     34242297856,
@@ -4661,6 +4669,9 @@
     "active_file_allowance_bytes": 4294967296,
     "historical_pressure_delta_bytes": 115869876224,
     "historical_native_pins_bytes": 63609487360,
+    "deferred_backing_shadow_credit_bytes": 52260388864,
+    "deferred_backing_evidence": "experiments/ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md",
+    "deferred_backing_credit_is_measured": false,
     "host_baseline_bytes": 2500000000,
     "runtime_difference_contingency_bytes": 10000000000,
     "prediction_is_measurement": false,
@@ -5086,10 +5097,17 @@
     null,
     null
   ],
-  "illustrative_host_peak_bytes": 87765002264,
+  "illustrative_host_peak_bytes": 35504613400,
+  "driver_shadow_adjustment": {
+    "enabled_by_explicit_container_environment": true,
+    "historical_residual_before_credit_bytes": 52260388864,
+    "subtracted_shadow_bytes": 52260388864,
+    "evidence": "experiments/ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md",
+    "qualification": "unmeasured attribution assumption; remaining driver memory is within the runtime contingency"
+  },
   "illustrative_components": {
     "pins": 16704864256,
-    "historical_unattributed_residual_bytes": 52260388864,
+    "historical_unattributed_residual_bytes": 0,
     "cache_metadata_bytes": 1736346392,
     "active_files_bytes": 4294967296,
     "host_baseline_bytes": 2500000000,
@@ -5097,7 +5115,7 @@
     "concurrent_staging_bytes": 268435456
   },
   "joint_gate_obstruction": {
-    "scope": "historical full-PLE generic budget, not mmap placement",
+    "scope": "historical full-PLE generic budget with default deferred backing, not mmap placement",
     "assumed_nonpin_host_bytes": 71060138008,
     "maximum_total_pins_under_host_gate_bytes": 18939861992,
     "best_possible_vram_lower_bound_bytes_per_rank": 42996265798,

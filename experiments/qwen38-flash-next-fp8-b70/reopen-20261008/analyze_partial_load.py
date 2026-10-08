@@ -38,6 +38,7 @@ def analyze(run):
                    'partial_model_construction' if t < failure else 'failure_and_drain'),
             pressure_bytes=s['mem_total_bytes']-s['mem_available_bytes'],
             mem_available_bytes=s['mem_available_bytes'],
+            gpu_active_bytes=s.get('meminfo_bytes', {}).get('GPUActive'),
             cgroup_current_bytes=s.get('cgroup_memory_current_bytes'),
             worker_rss_bytes=s.get('worker_rss_bytes'),
             completed_v5_parameters=len(placed),
@@ -97,7 +98,7 @@ def analyze(run):
 def write_report(report, output):
     output.write_text(json.dumps(report, indent=2)+'\n')
     fields = ('source', 'monotonic', 'seconds_from_constructor', 'phase', 'pressure_bytes',
-              'mem_available_bytes', 'cgroup_current_bytes', 'completed_v5_parameters',
+              'mem_available_bytes', 'gpu_active_bytes', 'cgroup_current_bytes', 'completed_v5_parameters',
               'completed_v5_host_bytes', 'completed_v5_device_bytes', 'next_bytes')
     with output.with_suffix('.csv').open('w') as f:
         writer = csv.DictWriter(f, fields, extrasaction='ignore')

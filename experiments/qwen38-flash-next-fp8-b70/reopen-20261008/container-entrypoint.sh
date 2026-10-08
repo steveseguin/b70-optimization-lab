@@ -7,6 +7,11 @@ if [[ "${1:-}" != --execute ]]; then
 fi
 shift
 [[ "${1:-}" == serve && "${2:-}" == /model ]] || exit 2
+# NEO reads these in each process before device initialization. This changes
+# allocation backing only, never host settings or peer-sharing policy.
+[[ "${NEOReadDebugKeys:-}" == 1 && "${EnableDeferBacking:-}" == 0 ]] || {
+    echo 'Screen 1b requires NEOReadDebugKeys=1 EnableDeferBacking=0' >&2; exit 2;
+}
 [[ "${B70_SCREEN1B:-}" == 1 ]] || { echo 'Screen 1b guard must be enabled' >&2; exit 2; }
 [[ ! -e /screen/STOP ]] || { echo 'Screen 1b cancellation is latched' >&2; exit 2; }
 # Required native-FP8 mmap contract is sealed with the overlay. No table rewrite.

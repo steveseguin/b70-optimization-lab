@@ -6,6 +6,19 @@ below remain that host's own research record; this consolidation did not operate
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
 
+**2026-10-08, Flash-Next attempt 5 prepared on CPU:** attempt 4's saved launch
+omitted the driver settings that LTX already uses. Its memory samples show
+74.063 GB held by the GPU driver at the 90.013 GB host-pressure peak; that
+memory rose during construction and went away when the workers drained.
+All Screen 1b modes now set the two per-process driver variables. The revised
+estimate is **35.505 GB**, not a measured fit. The old 115.87 GB certified
+observation stays intact; it is not an irreducible host-buffer requirement.
+All **185 CPU tests pass**, and every admission and quality gate remains.
+Attempt 5 needs its own fresh health receipt and exclusive launch window.
+Nothing was launched or committed; host settings, LTX and port 8188 were untouched.
+[Evidence, prediction and command](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/VALIDATION.md#attempt-5-per-process-driver-backing-cpu-only-preparation).
+
+
 **2026-10-08, Flash-Next calibration loading guard adjusted on CPU:** the
 load-only measurement now allows up to 90 GB of host memory in use, through
 an explicit launch parameter recorded in its receipts. It no longer stops at

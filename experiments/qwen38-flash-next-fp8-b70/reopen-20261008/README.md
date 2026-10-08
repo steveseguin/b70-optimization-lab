@@ -1,5 +1,27 @@
 # Flash-Next Screen 1b — native FP8 mmap adapter
 
+**Attempt 5 is prepared; nothing was launched.** All four Screen 1b modes now
+set `NEOReadDebugKeys=1 EnableDeferBacking=0` in the container. These are
+per-process Intel NEO driver settings, not host settings. The entrypoint
+requires them before runtime imports. [LTX's October 4 measurement](../../ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md)
+shows that they remove host backing of device buffers while keeping peer sharing.
+
+Attempt 4's saved launch and image defaults omitted both. Its sampled pressure
+peaked at **90.013 GB**, including **74.063 GB of GPUActive**, during construction;
+the loader then cancelled before readiness. The new predicted host peak is
+**35.505 GB**, subtracting the old **52.260 GB** residual while retaining the
+10 GB runtime/remaining-driver contingency. This is an unmeasured scenario;
+all memory, VRAM, health, identity and quality gates remain. **185/185 CPU tests
+pass, zero skips.** The certified 115.87 GB remains a historical measurement,
+but includes possible driver shadow and is not an irreducible host-buffer need.
+
+[Memory curve, certified-lane audit, exact prediction and attempt-5 command](VALIDATION.md#attempt-5-per-process-driver-backing-cpu-only-preparation).
+
+## Historical attempt 3/4 preparation
+
+The following entries preserve the earlier diagnosis and commands. Attempt 4
+was subsequently run by the owner; use the attempt-5 command linked above.
+
 **attempt 3: stopped by the internal 80 GB host-memory guard during model
 construction. TP1 caused the stop; TP0's expert-map traceback was a consequence.**
 The first refusal records **80,005,660,672 bytes** in use and a 2,048-byte next
@@ -114,10 +136,11 @@ pinned raw-row clock cache per rank (4 GiB total)**, and small stable step
 buffers. The original hash, TP ownership, int8 byte reduction and scale/cast
 arithmetic remain. No PLE requantization or checkpoint rewrite occurs.
 
-The updated unqualified prediction is **87.765002 GB (81.737528 GiB)** of host
+The earlier, pre-driver-fix unqualified prediction was **87.765002 GB (81.737528 GiB)** of host
 pressure, with **16.704864 GB** of final pins. The full 51.200246 GB table stays
 file-backed. Cache metadata, staging, active-page allowance and the historical
-unexplained memory residual are included. See [prediction](host-memory-prediction.json),
+unexplained memory residual were included. The current scenario above removes that
+residual only when both driver settings are explicit. See [prediction](host-memory-prediction.json),
 [shared inputs](memory-contract.json), and [latency/exactness design](../notes/2026-10-08-host-memory-reduction-design.md).
 The 4 GiB page allowance is an assumption, not an enforced page-cache ceiling.
 
@@ -278,7 +301,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 
 ## Owner-approved sequence: calibrate-load → mtp1
 
-Attempts 1, 2 and 3 failed as recorded above. These attempt-4 commands are prepared
+Attempts 1–4 failed before readiness as recorded in VALIDATION.md. These attempt-5 commands are prepared
 for the owner and **were not executed in this CPU-only fix**. First arrange exclusive idle cards and the existing
 recovered-boot admission above, with at least five minutes after the previous
 server stops.
@@ -288,10 +311,10 @@ The pinned image must already exist. Existing `SCREEN_PRIVILEGED_FD_SCAN` and
 the opt-in fd scan uses that existing privileged path. The sampler never does.
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --loading-ram-guard-gb 90 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4 --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode calibrate-load --loading-ram-guard-gb 90 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt5 --execute
 ```
 
-This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt4/`.
+This command uses the fresh `runs/screen1b-mmap-calibrate-load-20261008-attempt5/`.
 The original run directory, STOP latch and failed calibration stay intact.
 The controller default remains `runs/screen1b-calibrate-load/`; choose another
 fresh `--run-dir` if the selected directory exists. The mode uses **the MTP1 model/runtime configuration**, with only the loading guard changed, including
@@ -337,7 +360,7 @@ After reviewing a passing receipt and leaving the five-minute stop-to-launch
 gap, use a fresh MTP1 run with that receipt explicitly supplied:
 
 ```sh
-SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run --mode mtp1 --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json --calibration /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt5/calibration-load.json --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mtp1-calibrated --execute
 ```
 
 The gate rechecks sample hashes and recomputes the verdict. Image, overlay,

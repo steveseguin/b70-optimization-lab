@@ -1,5 +1,153 @@
 # Screen 1b CPU validation — native FP8 mmap, 2026-10-08
 
+## Attempt 5: per-process driver backing (CPU-only preparation)
+
+**185/185 CPU tests pass, zero skips. New predicted host peak: 35.505 GB
+(33.066 GiB), unmeasured.** Attempt 4 confirmed the missing host-memory
+attribution: its saved `launch.json` and image defaults contain neither
+`NEOReadDebugKeys` nor `EnableDeferBacking`. At the sampled host-pressure peak
+of **90.013 GB**, `/proc/meminfo` recorded **74.063 GB of GPUActive**. Only
+**15.950 GB** of that pressure remained after subtracting GPUActive; RSS and
+cgroup figures overlap and are not added to it.
+
+Every Screen 1b mode now passes `NEOReadDebugKeys=1 EnableDeferBacking=0`
+explicitly into the container, before Python/driver initialization. The
+entrypoint refuses missing or different values. Spawned workers inherit them.
+These are **Intel NEO per-process driver settings**, not host settings. They
+remove deferred host backing while retaining peer sharing; they do not select
+new arithmetic, weight precision or KV precision. The measured precedent is
+[LTX's October 4 host-shadow note](../../ltx25-b70/notes/2026-10-04-host-ram-shadow-of-vram.md).
+Flash-Next still needs its own runtime and exact-output qualification.
+
+The [attempt-4 analysis](evidence/attempt4-driver-shadow.json) includes input
+hashes, environment checks and the certified-path search. The
+[full memory curve](evidence/attempt4-partial-load.csv) joins samples to loader
+allocation events by monotonic time. Seconds are relative to the first
+`load_begin`; all memory columns below are decimal GB.
+
+| Constructor seconds | Phase | MemAvailable | Host pressure | GPUActive | Completed expert-device allocations |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 0.028 | construction | 109.933 | 14.246 | 3.290 | 0.000 |
+| 1.029 | construction | 101.199 | 22.980 | 9.876 | 3.662 |
+| 2.029 | construction | 88.034 | 36.145 | 20.824 | 11.198 |
+| 4.029 | construction | 65.591 | 58.589 | 43.110 | 30.735 |
+| 6.035 | construction | 48.674 | 75.505 | 58.685 | 43.996 |
+| 8.040 | construction, sampled peak | 34.167 | 90.013 | 74.063 | 56.520 |
+| 14.041 | cancellation/drain | 117.882 | 6.297 | 0.000 | 56.520 cumulative |
+
+The 17 construction samples correlate pressure with GPUActive at 0.99938,
+and completed device allocations with GPUActive at 0.99935 (Pearson).
+This establishes the timing and direct driver-memory attribution; it is not
+an exact one-byte-per-device-byte census. The completed expert events omit
+other/in-flight allocations and allocator retention; live VRAM counters were
+unavailable. Cumulative allocation events do not fall when buffers are freed.
+`server.log` places model construction at 18:46:46 UTC, PLE initialization at
+18:46:47 and cancellation at 18:46:55. No checkpoint-load completion, capture
+or readiness was reached. Rank 2's first refusal, between sampler ticks, saw
+**90.384 GB**, slightly above the half-second sample peak. Worker RSS maxima
+were 2.779–2.782 GB each; the cgroup peak was 11.514 GB (9.773 GB at the host
+peak). GPUActive returned to 114,688 bytes during drainage. The guard stopped
+construction without OOM or GPU fault, but container exit was **1**, and the
+calibration receipt correctly remains failed rather than claiming a successful
+clean calibration.
+
+### Revised prediction and certified-lane interpretation
+
+The old model carried `115.869876224 - 63.609487360 = 52.260388864 GB`
+as an unexplained historical residual. The new scenario subtracts **only that
+52.260 GB term**, conditional on both explicit container settings. It does
+not subtract the entire device footprint from actual host buffers or subtract
+GPUActive twice. The [prediction](host-memory-prediction.json) retains:
+
+| Component | GB |
+| --- | ---: |
+| Final pinned buffers, including 4 GiB PLE cache | 16.704864256 |
+| PLE metadata | 1.736346392 |
+| Active file-page allowance | 4.294967296 |
+| Nominal host baseline | 2.500000000 |
+| Runtime/remaining-driver contingency | 10.000000000 |
+| Aggregate bounded staging | 0.268435456 |
+| **Predicted peak** | **35.504613400** |
+
+Thus **87.765002264 - 52.260388864 = 35.504613400 GB**. Attribution of the
+old residual is an assumption supported by attempt 4 and LTX, not an A367
+GPUActive measurement. The 10 GB contingency remains for runtime differences,
+private memory and remaining driver memory (LTX with the setting still peaked
+at 3.6–3.7 GiB of driver memory). The nominal 2.5 GB baseline is below attempt
+4's 4.929 GB post-hash baseline; this is an illustrative scenario with a
+contingency, not a strict upper bound. Active file pages are not capped at the
+allowance. `host_peak_bytes` remains null and prediction status **REFUSED**
+until qualified bounds or a valid calibration supply the missing evidence.
+The historical full-PLE/default-backing sweep stays labeled separately.
+
+The requested search was:
+
+```sh
+rg -n 'NEOReadDebugKeys|EnableDeferBacking' repro/ results/ experiments/qwen38-flash-next-fp8-b70/tools/ patches/
+```
+
+It found **no Flash-Next occurrence**, including the frozen A367 launcher
+and certification/replay paths. The sole match is an unrelated Gemma shim's
+passthrough allow-list for `NEOReadDebugKeys`; it does not set either value.
+There is no recorded evidence that the certified lane enabled the fix.
+The older launcher can inherit shell variables, so absence from these saved
+files cannot prove the contents of an unrecorded parent environment.
+
+The certified **115.870 GB** remains the observed whole-host pressure change
+under its original configuration. It is consistent with substantial driver
+shadow, and is **not evidence of irreducible host tensor/RSS demand** or a
+valid unchanged allowance for this new allocation policy. Do not rewrite the
+old measurement or claim a measured corrected A367 peak. Four times 29.5 GiB
+is **118 GiB = 126.702 GB**, a rough device-footprint scale, not an amount that
+can safely be subtracted from the 115.870 GB measurement. CPU evidence alone
+does not justify removing the PLE adapter or changing certified placement.
+
+### Gates and CPU verification
+
+All existing gates remain: 90 GB calibration loading guard, 24 GiB available
+hard stop, 2 GiB/card emergency stop, 20-second plateau, plateau ×1.15 ≤90 GB,
+4 GiB/card admission reserve, complete accounting and sample-gap checks,
+model/overlay hashes, idle-card ownership, health receipt, journal, stop gap,
+full 16-bit KV, output/quality gates and single graceful shutdown. The known
+VRAM reserve conflict and missing live VRAM readings are still open.
+Calibration and MTP1 identities match with these settings; older receipts
+cannot admit the changed environment. Other generation modes retain their
+80 GB / 32 GiB watchdog limits. No failed receipt is upgraded.
+
+Six new CPU tests cover all four modes against a conflicting parent
+environment, receipt identity, missing/wrong/duplicate environment values,
+bounded prediction credit, and entrypoint refusal/acceptance before runtime
+imports. The full suite includes four real-model CPU construction rehearsals.
+[Full 185-test log](evidence/cpu-attempt5-driver-tests.log).
+The [attempt-5 CPU dry run](evidence/attempt5-calibrate-load-dry-run.txt),
+entrypoint shell syntax, `git diff --check` and `tools/check-doc-links.py`
+also pass. Raw attempt-4 input hashes were rechecked unchanged.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -m unittest discover \
+  -s experiments/qwen38-flash-next-fp8-b70/reopen-20261008 -p 'test_*.py' -v
+python3 experiments/qwen38-flash-next-fp8-b70/reopen-20261008/analyze_partial_load.py \
+  experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt4 \
+  --output experiments/qwen38-flash-next-fp8-b70/reopen-20261008/evidence/attempt4-partial-load.json
+```
+
+### Attempt-5 command — prepared, not executed
+
+Use a fresh health receipt and exclusive idle cards, observing the existing
+five-minute stop gap. This is a load-only measurement with no generation.
+The driver settings are supplied by the controller; no host exports are needed.
+
+```sh
+SCREEN_PRIVILEGED_FD_SCAN=1 python3 /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/screen.py run \
+  --mode calibrate-load --loading-ram-guard-gb 90 \
+  --health-receipt /PATH/TO/FRESH-HEALTH-RECEIPT.json \
+  --run-dir /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt5 \
+  --execute
+```
+
+All attempt-4 raw receipts remain unchanged. No GPU, Docker, server, install,
+secret, host-setting, port-8188 or Git branch/commit operation was performed.
+
 ## Attempt 4 calibration loading threshold
 
 CPU-only change, 2026-10-08. Calibrate-load now defaults to the explicit

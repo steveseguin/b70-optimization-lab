@@ -246,11 +246,11 @@
   },
   "support_files": {
     "apply_overlay.py": "4c3620bde0cd73686fce04df94253a8e3615e6fc458283a3bfe4cc8196259ddf",
-    "container-entrypoint.sh": "bfe1e2e177bd4cba7d52ecd66e2b2e9ea2d92af07ca29e43831ab4a9688ed86d",
+    "container-entrypoint.sh": "56ef3bba57278c421971936b501baaa11b606697fca1cee16e8f3ff430e30145",
     "placement-certified-v5.json": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
-    "memory-contract.json": "6fcf3411fe9e58786ad2c773d2cfdb31336a4b43f006f47ea11925b0790decf3",
+    "memory-contract.json": "f198127060f159b82d4c6fc849b10decc0841aaf494995aec06aed57f0bab615",
     "memory-bounds.json": "7bf1f66042eaac46d372703f2dc9cb4bba5ecd7e740ba91fe5d1edac7272bc4a",
-    "memory_plan.py": "65585fd794153ec8674e92b4ee7727965b6b97222daa9c2697b5045860c7aefe"
+    "memory_plan.py": "ea4abfcaab619011ede2cefc9cec0e3ca70127fe36f81e9df15520e8bed8f3b1"
   },
   "semantics": {
     "PLE": "native FP8 shard mmap; fixed 1 GiB pinned clock cache/rank; original hash, raw int8 owner reduction and unchanged dequantization; synchronous pre-forward staging",
@@ -259,6 +259,7 @@
     "final_v5_placement": "CPU port: final-size creation, row loader, unchanged block scales, Triton offset table, logical E in all config/dispatch paths; native execution unqualified",
     "sampler": "unchanged",
     "exact_gdn_native_kernel": "not ported; fused official kernel unchanged",
-    "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once"
+    "embedding": "certified input embedding selected for generic UVA, shared MTP alias counted once",
+    "driver_allocation": "NEOReadDebugKeys=1 EnableDeferBacking=0 in every container process; retain peer sharing; host shadow removed; Flash-Next runtime qualification pending"
   }
 }

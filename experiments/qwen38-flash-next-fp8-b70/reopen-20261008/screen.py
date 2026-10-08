@@ -390,6 +390,9 @@ def launch(args, run):
            '--ipc=host', '--security-opt=seccomp=unconfined', '--stop-signal=SIGINT',
            '--entrypoint=/bin/bash', '-w', '/opt/venv']
     env = {
+        # Per-process NEO allocation policy, not a host setting. See the LTX
+        # 2026-10-04-host-ram-shadow-of-vram note; retain peer sharing.
+        'NEOReadDebugKeys': '1', 'EnableDeferBacking': '0',
         'ZE_AFFINITY_MASK': '0,1,2,3', 'ZE_FLAT_DEVICE_HIERARCHY': 'FLAT',
         'CCL_ZE_IPC_EXCHANGE': 'sockets', 'CCL_SYCL_ALLGATHERV_TMP_BUF': '1',
         'CCL_SYCL_ALLREDUCE_TMP_BUF': '1', 'VLLM_TARGET_DEVICE': 'xpu',

@@ -1,0 +1,49 @@
+{
+  "mode": "calibrate-load",
+  "image": "vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9",
+  "disk_before_pull_gib": 89,
+  "requests": 0,
+  "launches": 1,
+  "promotion_eligible": false
+}
+Screen 1b host-RAM prediction (GB=10^9; GiB=2^30; not measured):
+Component                                              bytes         GB        GiB
+pins                                          16,704,864,256  16.704864  15.557617
+historical_unattributed_residual_bytes                     0   0.000000   0.000000
+cache_metadata_bytes                           1,736,346,392   1.736346   1.617099
+active_files_bytes                             4,294,967,296   4.294967   4.000000
+host_baseline_bytes                            2,500,000,000   2.500000   2.328306
+runtime_difference_contingency_bytes          10,000,000,000  10.000000   9.313226
+concurrent_staging_bytes                         268,435,456   0.268435   0.250000
+Sensitivity peak (unqualified allowances)     35,504,613,400  35.504613  33.066248
+Qualified Hpred: None; status: REFUSED
+Rescued A367: measured host-pressure increase 115.869876 GB (historical whole-host peak lower bound, not a V30 bound).
+Rank 0: static VRAM LOWER bound 29.750662 GiB; complete Vpeak/reserve UNKNOWN
+Rank 1: static VRAM LOWER bound 29.549246 GiB; complete Vpeak/reserve UNKNOWN
+Rank 2: static VRAM LOWER bound 29.718619 GiB; complete Vpeak/reserve UNKNOWN
+Rank 3: static VRAM LOWER bound 29.553824 GiB; complete Vpeak/reserve UNKNOWN
+Historical full-PLE candidates (NOT mmap adapter): KV 376569856, FULL_DECODE_ONLY; no calibrated peak available.
+Candidate             Mode    Pins GB   Nonpin room to 85 GB   Static reserve UPPER bound GiB (r0..r3)
+certified-v5          MTP1     63.609                21.391   2.140/2.342/2.172/2.337
+certified-v5          MTP0     63.609                21.391   2.796/2.997/2.828/2.993
+long-context-v5       MTP1     68.731                16.269   3.225/3.381/3.623/3.532
+long-context-v5       MTP0     68.731                16.269   3.881/4.036/4.279/4.187
+v5-1000-rows          MTP1     72.132                12.868   4.232/4.232/4.232/4.232
+v5-1000-rows          MTP0     72.132                12.868   4.888/4.888/4.888/4.888
+v5-1100-rows          MTP1     74.099                10.901   4.690/4.690/4.690/4.690
+v5-1100-rows          MTP0     74.099                10.901   5.345/5.345/5.345/5.345
+v5-1200-rows          MTP1     76.065                 8.935   5.148/5.148/5.148/5.148
+v5-1200-rows          MTP0     76.065                 8.935   5.803/5.803/5.803/5.803
+All complete peaks UNKNOWN; none qualifies. Capacity assumption: 34242297856 bytes each, historical rank0 only.
+REFUSE: required host phase bound unknown
+REFUSE: rank 0: required VRAM phase/capacity bound unknown
+REFUSE: rank 1: required VRAM phase/capacity bound unknown
+REFUSE: rank 2: required VRAM phase/capacity bound unknown
+REFUSE: rank 3: required VRAM phase/capacity bound unknown
+REFUSE: post-hash MemAvailable/remaining committed growth unknown
+REFUSE: runtime retention/workspace/lifetime bounds are unqualified; scenario is not admission evidence
+REFUSE: required pre/post-hash, cgroup and process observations absent/incomplete
+CALIBRATE-LOAD: diagnostic prediction does not gate loading; zero generation requests; 0.5s watchdog; 20s plateau.
+DRY RUN: reads config/index/tensor headers only; no GPU, network, process inspection, Docker operation or writes.
+/usr/bin/python3 /home/steve/llm-optimizations/scripts/verify-qwen38-flash-next-fp8-tree.py --model-root /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8 --receipt /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt5/model-verification.json
+docker run --name flashnext-screen1-screen1b-mmap-calibrate-load-20261008-attempt5 --pull=never --restart=no --network=host --device=/dev/dri --ipc=host --security-opt=seccomp=unconfined --stop-signal=SIGINT --entrypoint=/bin/bash -w /opt/venv -e NEOReadDebugKeys=1 -e EnableDeferBacking=0 -e ZE_AFFINITY_MASK=0,1,2,3 -e ZE_FLAT_DEVICE_HIERARCHY=FLAT -e CCL_ZE_IPC_EXCHANGE=sockets -e CCL_SYCL_ALLGATHERV_TMP_BUF=1 -e CCL_SYCL_ALLREDUCE_TMP_BUF=1 -e VLLM_TARGET_DEVICE=xpu -e VLLM_WORKER_MULTIPROC_METHOD=spawn -e VLLM_USE_V2_MODEL_RUNNER=1 -e VLLM_XPU_ENABLE_XPU_GRAPH=1 -e B70_GDN_MODE=official -e Q38_EXPERT_HOST_PLACEMENT=/screen-package/placement-certified-v5.json -e B70_SCREEN1B=1 -e B70_SCREEN1B_STATE_DIR=/screen -e B70_PLE_FP8=0 -e B70_PLE_INT8=0 -e B70_PLE_DIRECT_PINNED=0 -e HF_HUB_OFFLINE=1 -e TRANSFORMERS_OFFLINE=1 -e HF_DATASETS_OFFLINE=1 -e HF_HOME=/screen/cache/hf -e TRITON_CACHE_DIR=/screen/cache/triton -e VLLM_CACHE_ROOT=/screen/cache/vllm -e XDG_CACHE_HOME=/screen/cache/xdg -e TMPDIR=/screen/cache/tmp -e PYTHONDONTWRITEBYTECODE=1 -e B70_SCREEN1B_CALIBRATE_LOAD_RAM_GUARD_BYTES=90000000000 -v /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8:/model:ro -v /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/runs/screen1b-mmap-calibrate-load-20261008-attempt5:/screen -v /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008/container-entrypoint.sh:/screen-entrypoint.sh:ro -v /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/reopen-20261008:/screen-package:ro vllm/vllm-openai-xpu@sha256:e4446310b1d30015e8fdc1a0a2ef1669ac6bef857cbe772487571ed5c1a926a9 /screen-entrypoint.sh --execute serve /model --host 127.0.0.1 --port 19988 --served-model-name qwen38-flash-next-fp8-tp4 --tensor-parallel-size 4 --enable-expert-parallel --expert-placement-strategy linear --all2all-backend allgather_reducescatter --dtype bfloat16 --quantization fp8 --kv-cache-dtype auto --max-model-len 4352 --max-num-seqs 1 --max-num-batched-tokens 64 --enable-chunked-prefill --no-enable-prefix-caching --no-async-scheduling --generation-config vllm --gpu-memory-utilization 0.92 --kv-cache-memory-bytes 376569856 --offload-backend uva --cpu-offload-gb 12.25 --cpu-offload-params ple_embedding.ngram_embedding.weight embed_tokens.weight --safetensors-load-strategy lazy --moe-backend triton --enable-prompt-tokens-details --limit-mm-per-prompt '{"image":0,"video":0}' --compilation-config '{"mode": 0, "compile_sizes": [], "cudagraph_num_of_warmups": 1, "cudagraph_mode": "FULL_DECODE_ONLY", "cudagraph_capture_sizes": [1, 2]}' --cudagraph-metrics --speculative-config '{"method": "mtp", "num_speculative_tokens": 1, "rejection_sample_method": "standard"}'

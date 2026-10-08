@@ -153,6 +153,10 @@ def flag(command, name, default=None):
 
 
 def launch_identity(command):
+    driver_env = {key: [command[i+1].split('=', 1)[1]
+                       for i, arg in enumerate(command[:-1])
+                       if arg == '-e' and command[i+1].startswith(key + '=')]
+                  for key in ('NEOReadDebugKeys', 'EnableDeferBacking')}
     tp = int(flag(command, '--tensor-parallel-size', '1'))
     if tp != 4 or '--enable-expert-parallel' not in command:
         raise ValueError('Screen 1b predictor is bound to TP4/EP4')
@@ -191,6 +195,7 @@ def launch_identity(command):
     elif set(suffixes) != accepted:
         raise ValueError('registration census supports exactly PLE/w13/w2 suffixes')
     return {'tensor_parallel_size': tp, 'expert_parallel_size': tp,
+            'driver_environment': driver_env,
             'cpu_offload_bytes_per_rank': budget,
             'offload_suffixes': suffixes,
             'placement': placement,
@@ -316,6 +321,35 @@ def should_stop(sample, next_allocation_bytes=0):
             or sample['accounted_pressure_bytes'] + next_allocation_bytes >= WATCHDOG_PRESSURE)
 
 
+def adapter_scenario(adapter, identity):
+    """Illustrative attribution only; never a measured or qualified phase bound.
+
+    A367 did not measure GPUActive. Remove only the residual actually carried
+    in the old model, conditional on explicit, unambiguous container settings.
+    The runtime contingency still covers private runtime and remaining driver
+    memory; do not subtract the entire device footprint from host buffers.
+    """
+    residual = adapter['historical_pressure_delta_bytes'] - adapter['historical_native_pins_bytes']
+    disabled = identity.get('driver_environment') == {
+        'NEOReadDebugKeys': ['1'], 'EnableDeferBacking': ['0']}
+    credit = adapter['deferred_backing_shadow_credit_bytes'] if disabled else 0
+    if not 0 <= credit <= residual:
+        raise ValueError('driver shadow credit exceeds historical residual')
+    return {
+        'historical_unattributed_residual_bytes': residual - credit,
+        'cache_metadata_bytes': adapter['ple_metadata_bytes'],
+        'active_files_bytes': adapter['active_file_allowance_bytes'],
+        'host_baseline_bytes': adapter['host_baseline_bytes'],
+        'runtime_difference_contingency_bytes': adapter['runtime_difference_contingency_bytes'],
+    }, {
+        'enabled_by_explicit_container_environment': disabled,
+        'historical_residual_before_credit_bytes': residual,
+        'subtracted_shadow_bytes': credit,
+        'evidence': adapter['deferred_backing_evidence'],
+        'qualification': 'unmeasured attribution assumption; remaining driver memory is within the runtime contingency',
+    }
+
+
 def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observations=None):
     """Build prediction; persisted bounds are source-bound and fail closed."""
     bounds_path = Path(bounds_path or HERE / 'memory-bounds.json')
@@ -380,14 +414,9 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
     scenario = bound['illustrative_assumptions']
     overhead = sum(scenario[k] for k in ('private_runtime_and_retention_bytes', 'active_files_bytes', 'other_host_and_driver_bytes'))
     illustration = pins + overhead + CHUNK_BYTES
+    shadow_adjustment = None
     if adapter:
-        scenario = {
-            'historical_unattributed_residual_bytes': adapter['historical_pressure_delta_bytes'] - adapter['historical_native_pins_bytes'],
-            'cache_metadata_bytes': adapter['ple_metadata_bytes'],
-            'active_files_bytes': adapter['active_file_allowance_bytes'],
-            'host_baseline_bytes': adapter['host_baseline_bytes'],
-            'runtime_difference_contingency_bytes': adapter['runtime_difference_contingency_bytes'],
-        }
+        scenario, shadow_adjustment = adapter_scenario(adapter, identity)
         overhead = sum(scenario.values())
         illustration = pins + overhead + CHUNK_BYTES
     refusal = []
@@ -430,7 +459,10 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
         refusal.append('required pre/post-hash, cgroup and process observations absent/incomplete')
     if illustration > HOST_LIMIT and (not bound.get('qualified', False) or result['host_peak_bytes'] is None):
         refusal.append(f'note-based conservative scenario exceeds host ceiling: {illustration} bytes (assumed overhead)')
-    pin_ceiling = HOST_LIMIT - overhead - CHUNK_BYTES
+    # Preserve the historical full-PLE/default-backing sensitivity, separate
+    # from the new mmap/per-process-driver candidate.
+    historical_overhead = overhead + (shadow_adjustment['subtracted_shadow_bytes'] if shadow_adjustment else 0)
+    pin_ceiling = HOST_LIMIT - historical_overhead - CHUNK_BYTES
     joint_floor = math.ceil((total_weights - pin_ceiling + replicated * (tp - 1)) / tp) + identity['kv_bytes_per_rank']
     sweep = []
     for quarter in range(48, 73):
@@ -438,10 +470,10 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
         chosen, pin_count = select_offload(parameters, budget)
         lower = math.ceil((total_weights - pin_count * tp + replicated * (tp - 1)) / tp) + identity['kv_bytes_per_rank']
         sweep.append({'budget_gib_per_rank': quarter / 4, 'final_pins_bytes': pin_count * tp,
-                      'scenario_host_peak_bytes': pin_count * tp + overhead + CHUNK_BYTES,
+                      'scenario_host_peak_bytes': pin_count * tp + historical_overhead + CHUNK_BYTES,
                       'vram_lower_bound_bytes_per_rank': lower,
                       'reserve_upper_bound_at_nominal_32gib_bytes': 32 * GIB - lower,
-                      'joint_scenario_possible': (pin_count * tp + overhead + CHUNK_BYTES <= HOST_LIMIT and lower <= 28 * GIB)})
+                      'joint_scenario_possible': (pin_count * tp + historical_overhead + CHUNK_BYTES <= HOST_LIMIT and lower <= 28 * GIB)})
     return {'schema': 'screen1b.host-memory-prediction.v1', 'status': 'REFUSED' if refusal else 'ADMITTED',
             'prediction_is_measurement': False, 'launch': identity, 'metadata': metadata,
             'source_sha256': bound['source_sha256'], 'overlay_manifest_sha256': overlay_identity,
@@ -462,8 +494,9 @@ def build_prediction(command, model_root=DEFAULT_MODEL, bounds_path=None, observ
             'vram_static_lower_bound_bytes_per_rank': floors,
             'host_phases_bytes': phases, 'vram_phases_bytes_per_rank': vram_phases, **result,
             'illustrative_host_peak_bytes': illustration,
+            'driver_shadow_adjustment': shadow_adjustment,
             'illustrative_components': {'pins': pins, **scenario, 'concurrent_staging_bytes': CHUNK_BYTES},
-            'joint_gate_obstruction': {'scope': 'historical full-PLE generic budget, not mmap placement', 'assumed_nonpin_host_bytes': overhead + CHUNK_BYTES,
+            'joint_gate_obstruction': {'scope': 'historical full-PLE generic budget with default deferred backing, not mmap placement', 'assumed_nonpin_host_bytes': historical_overhead + CHUNK_BYTES,
                 'maximum_total_pins_under_host_gate_bytes': pin_ceiling,
                 'best_possible_vram_lower_bound_bytes_per_rank': joint_floor,
                 'nominal_capacity_upper_bound_bytes': 32 * GIB,
