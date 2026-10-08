@@ -5,6 +5,40 @@ below remain that host's own research record; this consolidation did not operate
 
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
+**Live update, 2026-10-08 01:00 UTC (10-07 evening local):** the owner set two
+priorities: Flash-Next is not given up (re-open against the matured ecosystem;
+"stratra" = Strata, a 1-bit IQ1_M engine at 70–78 tok/s on one B70, not a
+lossless comparison; the relevant external work is Lumnus/b70-flash-next on
+vLLM v0.30.0 + xpu-kernels 0.1.14.1 with 3-draft MTP at 87.9 tok/s on W4A16,
+no FP8 numbers), and LTX must produce a **live RTMP/WHIP stream** (Twitch or
+meshcast.io) of continuously generated video, 24/7 as the goal; the owner has
+not yet seen any video from this lane. Continuation 111 **passed**: eight of
+eight requests verified, three exact four-tensor replay pairs across two
+three-chunk chains at 640×384, 145 unique frames per chain; native eager
+chunks took 15–24 s each (2–3 fps, reference only, no speed claim, seams and
+audio alignment unreviewed). 111 stopped once with SIGINT at 00:54:03 UTC;
+four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
+[Results](experiments/ltx25-b70/notes/2026-10-08-continuation111-results.md),
+[stop receipt](experiments/ltx25-b70/data/resume-20261007/continuation111-stop.json).
+
+**Now:** the packet-97 server (two-way, two sampler workers, batch 2, shared
+pool, decode replica on xpu:2; the 27.5 fps configuration of 2026-10-06, 613/613
+exact against the `stability-01-b2` references) is being launched once as
+`encoder-server-place-97-two-way-w2-b2-p1-dxpu2-stream01` (unit
+`ltx97-stream01-server-20261008`) after the five-minute gap, to serve a
+continuous stream driver. The stream uses the batch-2 lane because it is the
+only configuration above real time; batch-2 clips remain a different take from
+batch-1 (rounding), so this is a streaming choice, not a baseline ruling.
+Being built (CPU): `experiments/ltx25-b70/stream/` — an RTMP sink (ffmpeg, now
+installed from Ubuntu packages) and a continuous driver that reproduces the
+runner's warm-up then cycles the ten fixtures with a new seed each cycle.
+Stream previews are disposable by design; references, anchors and failures stay
+protected. Flash-Next: Codex is producing a CPU-only analysis of the Lumnus
+stack (`experiments/qwen38-flash-next-fp8-b70/notes/2026-10-08-lumnus-v0300-stack-analysis.md`);
+no GPU time for Flash-Next while the stream owns the cards — time-sharing is the
+owner's call.
+
+
 **Live update, 2026-10-07 local / October8 UTC:** the native three-chunk
 continuation/replay test is running under its fixed eight-request plan.111
 launched once after a clean controlled110 application shutdown and passing
