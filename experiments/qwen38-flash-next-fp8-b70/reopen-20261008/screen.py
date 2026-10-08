@@ -356,7 +356,8 @@ def main():
         for d in ['tmp', 'hf', 'triton', 'vllm', 'xdg']:
             (run / 'cache' / d).mkdir(parents=True)
         unit = 'flashnext-screen1-' + datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-        command = ['systemd-run', '--user', '--unit', unit, '--collect',
+        passthrough = [f'--setenv={k}={os.environ[k]}' for k in ('SCREEN_PRIVILEGED_FD_SCAN', 'SCREEN_SUDO_PASSWORD_FILE') if k in os.environ]
+        command = ['systemd-run', '--user', '--unit', unit, '--collect', *passthrough,
                    '--property=Restart=no', '--property=KillMode=process', '--property=SendSIGKILL=no',
                    '--property=TimeoutStopSec=360', sys.executable, str(HERE / 'screen.py'), '_worker',
                    '--mode', args.mode, '--port', str(args.port), '--run-dir', str(run), '--execute']
