@@ -558,6 +558,26 @@ human transcripts. Fresh hosted assistant sessions supplied these answers; this
 does not qualify local Qwen, general memory or speed. No local model server or
 GPU experiment was started. Existing context owner units remain inactive.
 
+## 2026-10-07 23:00 EDT, two-B70 host: public context numbers re-verified on the fixed checker; site revamped; packaging and streaming prepared
+
+**No model server is running.** The 2026-10-06 review's checker patch is applied to the live harness
+(commit 414eb6374; 9/9 unit tests, 22/22 stub checks). The two quoted-events runs published on
+skindeep.ai were repeated on the same task bytes with the patched checker and scored the same:
+480K stream **10/10** in 1,165 s (was 1,173) and the million-token stream **24/24** in 2,867 s
+(was 2,874), the latter call-for-call identical. Evidence `experiments/qwen38-27b-b70/data/2026-10-07-context-reverify/`,
+note [re-verification](experiments/qwen38-27b-b70/notes/2026-10-07-context-reverify-fixed-checker.md).
+The first attempt at the original 262K window was stopped by the host-memory guard (no GPU fault);
+the repeat ran at a 65K window, which the agent never approaches.
+
+Also tonight: neural.download leads with the two 27B FP8 packages, the rest collapsed, old many-user
+figures labelled "throughput ceiling, not exact" (2d655c27e); the two-card package gained a
+`multi-user` profile (64 users, exact by construction, acceptance pending, db98ba0d4) with an
+acceptance stage prepared (715b9cc56, runbook `notes/2026-10-07-multi-user-profile-acceptance-plan.md`);
+`experiments/minimax-h3-b70/scripts/h3_stream.py` streams finished lossless clips to RTMP/WHIP
+(tested on a local sink; needs the owner's key); and the LongMemEval retention study is built and
+wiring-checked (`notes/2026-10-07-longmemeval-retention-prereg.md`), not yet run. Next on the cards:
+the multi-user acceptance session, then the retention pilot.
+
 ## 2026-10-07, two-B70 host: short-document decision settled
 
 The [direct full-source baseline](experiments/qwen38-27b-b70/notes/2026-10-07-full-source-screen-result.md)

@@ -4,6 +4,10 @@ Written for the owner. Plain words first; every number links to its detailed not
 Hardware: two Arc Pro B70, Qwen3.8-27B FP8, 16-bit attention cache (FP8 model weights), drafting on, R314 image.
 Status: work in progress; pending rows are not measured results.
 
+Re-verification (2026-10-07): the 480K and million-token quoted-events runs were repeated on the patched
+checker with the same task bytes and scored the same (10/10 and 24/24); see
+[the re-verification note](2026-10-07-context-reverify-fixed-checker.md).
+
 Review correction (2026-10-06): the 480K narrative seed-0 task asks **10** questions, not 24;
 the density-6 task asks **13**, not 24. The reported seed-1 480K success has no completed
 artifact and is withdrawn. See [review findings and source artifacts](2026-10-06-context-review.md).
