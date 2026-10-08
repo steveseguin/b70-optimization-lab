@@ -1,0 +1,837 @@
+{
+  "plan": {
+    "admission": {
+      "conditioning_stage_floors": "same",
+      "note": "Unchanged from the after-111 preregistration; see LAUNCH.md for the xpu:0 margin risk",
+      "post_floor_gib": 2,
+      "pre_floor_gib": [
+        8,
+        8,
+        2,
+        9
+      ]
+    },
+    "basis": {
+      "parent_manifest_sha256": "65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363",
+      "parent_packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111",
+      "preregistration": "notes/2026-10-07-after111-graph-candidate.md"
+    },
+    "budget": {
+      "build_allowance_bytes": 167772160,
+      "reserve_bytes": 53687091200,
+      "retries": 0,
+      "run_allowance_bytes": 3221225472
+    },
+    "capture_contract": {
+      "25": {
+        "count": 9,
+        "full_file_bound_bytes": 20258568,
+        "full_payload_bytes": 20193024,
+        "raw_capture_bound_bytes": 182327112
+      },
+      "49": {
+        "count": 9,
+        "full_file_bound_bytes": 39628040,
+        "full_payload_bytes": 39562496,
+        "raw_capture_bound_bytes": 356652360
+      }
+    },
+    "claims": {
+      "adopted": false,
+      "audio_alignment_resolved": false,
+      "graph_replay_qualified": false,
+      "seam_quality_accepted": false,
+      "speed_claim": false,
+      "text_reuse_default": 0
+    },
+    "execution_order": [
+      "stream112-window-probe",
+      "stream112-prepare",
+      "stream112-qeager-c000000",
+      "stream112-qeager-c000001",
+      "stream112-qeager-c000002",
+      "stream112-qgraph-c000000",
+      "stream112-qgraph-c000001",
+      "stream112-qgraph-c000002",
+      "stream112-qrepeat-c000000",
+      "stream112-qrepeat-c000001",
+      "stream112-qrepeat-c000002",
+      "action:qualify-verdict"
+    ],
+    "geometry": {
+      "25": {
+        "anchor_frame_index": 24,
+        "audio_latents": 26,
+        "audio_samples": 48480,
+        "frames": 25,
+        "full_payload_bytes": 20193024,
+        "new_frames_continuation": 24,
+        "new_frames_first_chunk": 25,
+        "noise_mask_shape": [
+          1,
+          1,
+          4,
+          1,
+          1
+        ],
+        "seconds_per_chunk": 1.0416666666666667,
+        "stage_shapes": {
+          "A": [
+            1,
+            128,
+            4,
+            4,
+            4
+          ],
+          "B": [
+            1,
+            128,
+            4,
+            8,
+            8
+          ]
+        },
+        "temporal_latents": 4,
+        "tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "images": [
+            25,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            4,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            48480
+          ]
+        }
+      },
+      "49": {
+        "anchor_frame_index": 48,
+        "audio_latents": 51,
+        "audio_samples": 96480,
+        "frames": 49,
+        "full_payload_bytes": 39562496,
+        "new_frames_continuation": 48,
+        "new_frames_first_chunk": 49,
+        "noise_mask_shape": [
+          1,
+          1,
+          7,
+          1,
+          1
+        ],
+        "seconds_per_chunk": 2.0416666666666665,
+        "stage_shapes": {
+          "A": [
+            1,
+            128,
+            7,
+            4,
+            4
+          ],
+          "B": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ]
+        },
+        "temporal_latents": 7,
+        "tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        }
+      }
+    },
+    "launch_parameters": {
+      "LTX_SAMPLER_PLACEMENT": {
+        "choices": [
+          "two-way",
+          "two-way20-28"
+        ],
+        "default": "two-way"
+      },
+      "LTX_STREAM_FRAMES": {
+        "choices": [
+          "49",
+          "25"
+        ],
+        "default": "49"
+      },
+      "LTX_STREAM_TEXT_REUSE": {
+        "choices": [
+          "0",
+          "1"
+        ],
+        "default": "0"
+      }
+    },
+    "numerical_contracts": {
+      "25/two-way": {
+        "conditioning": {
+          "anchor": "previous chunk images[24], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode + LTXVAudioVAEDecode on the resident VAEs (xpu:3)",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "images": [
+            25,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            4,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            48480
+          ]
+        },
+        "placement": "two-way",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "pipeline_decode_node.save_preview (CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto)",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            23
+          ],
+          "xpu:1": [
+            23,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream112.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          4,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          4,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial image-conditioned continuation, 256x256, 25 frames, 24 fps"
+      },
+      "25/two-way20-28": {
+        "conditioning": {
+          "anchor": "previous chunk images[24], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode + LTXVAudioVAEDecode on the resident VAEs (xpu:3)",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            26,
+            16
+          ],
+          "images": [
+            25,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            4,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            48480
+          ]
+        },
+        "placement": "two-way20-28",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "pipeline_decode_node.save_preview (CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto)",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            20
+          ],
+          "xpu:1": [
+            20,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream112.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          4,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          4,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial image-conditioned continuation, 256x256, 25 frames, 24 fps"
+      },
+      "49/two-way": {
+        "conditioning": {
+          "anchor": "previous chunk images[48], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode + LTXVAudioVAEDecode on the resident VAEs (xpu:3)",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        },
+        "placement": "two-way",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "pipeline_decode_node.save_preview (CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto)",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            23
+          ],
+          "xpu:1": [
+            23,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream112.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          7,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          7,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial image-conditioned continuation, 256x256, 49 frames, 24 fps"
+      },
+      "49/two-way20-28": {
+        "conditioning": {
+          "anchor": "previous chunk images[48], F32, no conversion",
+          "bypass": false,
+          "native": "LTXVImgToVideoInplace.execute",
+          "stage_B_after_upsampler": true,
+          "stages": [
+            "A",
+            "B"
+          ],
+          "strength": 1.0
+        },
+        "decoder": "native VAEDecode + LTXVAudioVAEDecode on the resident VAEs (xpu:3)",
+        "graph_replay": {
+          "chain": "1",
+          "freeze_after_qualification": true,
+          "lean_memo": false,
+          "max_signatures_per_block": 8,
+          "node": "LTXGraphCaptureGate",
+          "selection": "all48"
+        },
+        "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+        "output_tensor_shapes": {
+          "audio_latent": [
+            1,
+            8,
+            51,
+            16
+          ],
+          "images": [
+            49,
+            256,
+            256,
+            3
+          ],
+          "video_latent": [
+            1,
+            128,
+            7,
+            8,
+            8
+          ],
+          "waveform": [
+            1,
+            2,
+            96480
+          ]
+        },
+        "placement": "two-way20-28",
+        "precision": "BF16 weights, F32 CPU intermediates, strict deterministic algorithms",
+        "preview": "pipeline_decode_node.save_preview (CreateVideo fps24 8-bit sRGB + SaveVideo mp4 auto)",
+        "sample_rate": 48000,
+        "sampler_batch": 1,
+        "sampler_blocks": {
+          "xpu:0": [
+            0,
+            20
+          ],
+          "xpu:1": [
+            20,
+            48
+          ]
+        },
+        "sampler_workers": 1,
+        "schema": "ltx.stream112.numerical-contract.v1",
+        "shared_pool": 1,
+        "stage_A_latent_shape": [
+          1,
+          128,
+          7,
+          4,
+          4
+        ],
+        "stage_B_latent_shape": [
+          1,
+          128,
+          7,
+          8,
+          8
+        ],
+        "steps": {
+          "cfg": {
+            "audio": 1.0,
+            "video": 1.0
+          },
+          "sampler": "euler_ancestral",
+          "stage_A_sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+          "stage_B_sigmas": "0.85, 0.7250, 0.4219, 0.0"
+        },
+        "text": "LTXPipelineTextEncode pipeline-window on the accepted graph-sharded encoder",
+        "workload": "serial image-conditioned continuation, 256x256, 49 frames, 24 fps"
+      }
+    },
+    "qualification": [
+      {
+        "capture_role": "full",
+        "chunk_index": 0,
+        "gate_mode": "original",
+        "graph_sha256": {
+          "25/two-way/0": "0fb2c0268096354e55bf9bbde95212ff2cc8321d6cd3ce78c8eef33950cbbe12",
+          "25/two-way/1": "0fb2c0268096354e55bf9bbde95212ff2cc8321d6cd3ce78c8eef33950cbbe12",
+          "25/two-way20-28/0": "d7ecbea5868b2f77b0a1a8992c3bca1fc9b86cdcaf13a07385fbb5f840e74f75",
+          "25/two-way20-28/1": "d7ecbea5868b2f77b0a1a8992c3bca1fc9b86cdcaf13a07385fbb5f840e74f75",
+          "49/two-way/0": "9ae5988fca9be4858c87d09eaa3f87bf0488008b6de74f2808fc6f7bb067bce3",
+          "49/two-way/1": "9ae5988fca9be4858c87d09eaa3f87bf0488008b6de74f2808fc6f7bb067bce3",
+          "49/two-way20-28/0": "4ca8f8e749f0fa88ca244fdc27d1c854abc05a5a2d21c9c77f8d83fc5b4fde8e",
+          "49/two-way20-28/1": "4ca8f8e749f0fa88ca244fdc27d1c854abc05a5a2d21c9c77f8d83fc5b4fde8e"
+        },
+        "kind": "qualify-eager",
+        "name": "stream112-qeager-c000000",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qeager",
+        "seed": 42
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 1,
+        "gate_mode": "original",
+        "graph_sha256": {
+          "25/two-way/0": "c627dc326da2d06ced9088578ed63b03ffcd1e99e653940e91a8c767e17a958b",
+          "25/two-way/1": "c627dc326da2d06ced9088578ed63b03ffcd1e99e653940e91a8c767e17a958b",
+          "25/two-way20-28/0": "032765b96cb74f6a0aaa98a10ae83610648e2f00c888b076c07d5e1f16ea943e",
+          "25/two-way20-28/1": "032765b96cb74f6a0aaa98a10ae83610648e2f00c888b076c07d5e1f16ea943e",
+          "49/two-way/0": "d0932ba1b751e7f361fc98567da47d0c0a952f56f4f4ab400e0d98965802d5f7",
+          "49/two-way/1": "d0932ba1b751e7f361fc98567da47d0c0a952f56f4f4ab400e0d98965802d5f7",
+          "49/two-way20-28/0": "cd23dbd62dec1be33cc6224001cfd71dc449e642f35f1ee141452d67a2714c38",
+          "49/two-way20-28/1": "cd23dbd62dec1be33cc6224001cfd71dc449e642f35f1ee141452d67a2714c38"
+        },
+        "kind": "qualify-eager",
+        "name": "stream112-qeager-c000001",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qeager",
+        "seed": 43
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 2,
+        "gate_mode": "original",
+        "graph_sha256": {
+          "25/two-way/0": "20ac0708e67828b6588b10bf776e7f3ee07060505faec79b98b25fb7f0684fed",
+          "25/two-way/1": "20ac0708e67828b6588b10bf776e7f3ee07060505faec79b98b25fb7f0684fed",
+          "25/two-way20-28/0": "93952a18d36f30deffb2c0418fecc44828821d26fe4d8f6ed6fbcedd92e638ed",
+          "25/two-way20-28/1": "93952a18d36f30deffb2c0418fecc44828821d26fe4d8f6ed6fbcedd92e638ed",
+          "49/two-way/0": "9000b82e26cdbada817cc35dc35bf32cf3411228d1e887dc7e798c5d04505156",
+          "49/two-way/1": "9000b82e26cdbada817cc35dc35bf32cf3411228d1e887dc7e798c5d04505156",
+          "49/two-way20-28/0": "5cd8988dd585e5393faac65eb74eb17302b77607f3a839380917e9104fb89b9d",
+          "49/two-way20-28/1": "5cd8988dd585e5393faac65eb74eb17302b77607f3a839380917e9104fb89b9d"
+        },
+        "kind": "qualify-eager",
+        "name": "stream112-qeager-c000002",
+        "prompt_sha256": "e3084519bedf9cff6b53bccb355b0624250be52a0e9be9b666d556890b66d0ae",
+        "scene_id": "qeager",
+        "seed": 44
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 0,
+        "gate_mode": "graph",
+        "graph_sha256": {
+          "25/two-way/0": "0a2738b6037a70f33723cccdea27a62e8cc976c78ae955a24c58fadc2f3fbd14",
+          "25/two-way/1": "0a2738b6037a70f33723cccdea27a62e8cc976c78ae955a24c58fadc2f3fbd14",
+          "25/two-way20-28/0": "765ed95b7200f4627c8083d4aacdfe67960746a87f72a5816d764b68abdd7210",
+          "25/two-way20-28/1": "765ed95b7200f4627c8083d4aacdfe67960746a87f72a5816d764b68abdd7210",
+          "49/two-way/0": "2ce8f20cd404faec84ebdfa7726d38db1f9cf4d473cb01f62a41b28e1aa2106b",
+          "49/two-way/1": "2ce8f20cd404faec84ebdfa7726d38db1f9cf4d473cb01f62a41b28e1aa2106b",
+          "49/two-way20-28/0": "15400d031fd3e328c0bb19903458fd4e41fa1573b5c64b0a640c20a2ed3c512f",
+          "49/two-way20-28/1": "15400d031fd3e328c0bb19903458fd4e41fa1573b5c64b0a640c20a2ed3c512f"
+        },
+        "kind": "qualify-graph",
+        "name": "stream112-qgraph-c000000",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qgraph",
+        "seed": 42
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 1,
+        "gate_mode": "graph",
+        "graph_sha256": {
+          "25/two-way/0": "240acc507b316b4f573408ebf0544bf548c1186bdc51ff1dbe99a3eb965ea688",
+          "25/two-way/1": "26dc1f8cd25c9c63c122b45ab3c522d0ffce3ff5b6280de5aecec6643696f761",
+          "25/two-way20-28/0": "ad7d85291b0e981afc0e68d94a6ae33dfcc2bfb08779a9e0ed1e84a55a6c60ce",
+          "25/two-way20-28/1": "8e131a48db2de11200c1c502fab2160a57c241e68b87fd605a2e238673364c89",
+          "49/two-way/0": "166bd850c03f9494a6ca0fcd0d6580b5b84b400ef297b4de5051a83b7a739907",
+          "49/two-way/1": "886705b9400ed45900e414bae12b60d7e4b2a03c2f5e5192d75f545ec0701765",
+          "49/two-way20-28/0": "3cfb16476c9e22253867db698b3c8622d80c8365885d4178cce7baaece7a28b5",
+          "49/two-way20-28/1": "8d26146be179747d653a01bb9738da837d268b2104158265e9131157f9d260b9"
+        },
+        "kind": "qualify-graph",
+        "name": "stream112-qgraph-c000001",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qgraph",
+        "seed": 43
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 2,
+        "gate_mode": "graph",
+        "graph_sha256": {
+          "25/two-way/0": "c7cea729cce8255502798ab7603df817a26f9f96a6a884b600a17abff0d13551",
+          "25/two-way/1": "c7cea729cce8255502798ab7603df817a26f9f96a6a884b600a17abff0d13551",
+          "25/two-way20-28/0": "dbfeb0c12f3757cc1c6442283e3b16eee8a41880357b3cb73d50fdbc9c8996e1",
+          "25/two-way20-28/1": "dbfeb0c12f3757cc1c6442283e3b16eee8a41880357b3cb73d50fdbc9c8996e1",
+          "49/two-way/0": "15b47ed1e3796c358a539b4f543135086fc1503e794ce882306209eba8dc6ce9",
+          "49/two-way/1": "15b47ed1e3796c358a539b4f543135086fc1503e794ce882306209eba8dc6ce9",
+          "49/two-way20-28/0": "fe336765b87800e6c5512544c743ba77f8f48f8e03c49ca026bad3b29f0ca896",
+          "49/two-way20-28/1": "fe336765b87800e6c5512544c743ba77f8f48f8e03c49ca026bad3b29f0ca896"
+        },
+        "kind": "qualify-graph",
+        "name": "stream112-qgraph-c000002",
+        "prompt_sha256": "e3084519bedf9cff6b53bccb355b0624250be52a0e9be9b666d556890b66d0ae",
+        "scene_id": "qgraph",
+        "seed": 44
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 0,
+        "gate_mode": "absent (stream graph form; routes persist on the patcher)",
+        "graph_sha256": {
+          "25/two-way/0": "361375f45f65a33161e1d91c99ed7bed2363ff08a08a90c3cd339d012a11134e",
+          "25/two-way/1": "361375f45f65a33161e1d91c99ed7bed2363ff08a08a90c3cd339d012a11134e",
+          "25/two-way20-28/0": "48e5466a7283d93c30790ebfec8c1c75a27180ec0a5c508d1937108a2e2f95ea",
+          "25/two-way20-28/1": "48e5466a7283d93c30790ebfec8c1c75a27180ec0a5c508d1937108a2e2f95ea",
+          "49/two-way/0": "966121cd9f9c61739332adff68e270f6e16997924f19ba6b3390bed18cca7765",
+          "49/two-way/1": "966121cd9f9c61739332adff68e270f6e16997924f19ba6b3390bed18cca7765",
+          "49/two-way20-28/0": "e45af87edba415adfefb51c9004f33409d004fc11d99103cd904ff6d3c1456b3",
+          "49/two-way20-28/1": "e45af87edba415adfefb51c9004f33409d004fc11d99103cd904ff6d3c1456b3"
+        },
+        "kind": "qualify-repeat",
+        "name": "stream112-qrepeat-c000000",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qrepeat",
+        "seed": 42
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 1,
+        "gate_mode": "absent (stream graph form; routes persist on the patcher)",
+        "graph_sha256": {
+          "25/two-way/0": "6686b3891b5795b63a11145627c6fd2dac5706a816ea4f89bf8e35b77439f219",
+          "25/two-way/1": "35557babc5f6022b2ad2fe805f0990572162df750d3349d052ef93adb063f067",
+          "25/two-way20-28/0": "5d1ba2be4e94acb61a942ad435307d23c8ee5ce305942a8153ab3a593a691ccc",
+          "25/two-way20-28/1": "749f733a39b6d29e5d047a95bf0e2091d7c2869e1e3153e2d40ff5d282a75cb0",
+          "49/two-way/0": "b7b5a3ec11cdcd3cd0a253fa03b74a06ce5d8d718a1c828cbf28a2ce6314491d",
+          "49/two-way/1": "7f8ceacb2306ca4c814a71d657f2822e28a6aee722e727cb9a6ea60e709b6f7d",
+          "49/two-way20-28/0": "f7e8173a59fe3ab1e16b462310f04c2aaa05bb9201427e92172bd13ebdcdc9f5",
+          "49/two-way20-28/1": "addf636787ce09a8b55b394086349c825b4f0ebbd743743760a2f329322deaa6"
+        },
+        "kind": "qualify-repeat",
+        "name": "stream112-qrepeat-c000001",
+        "prompt_sha256": "666d0d68193d5b09b8e35bd8762be946ca398db1ec436eea4438f73ffa555a99",
+        "scene_id": "qrepeat",
+        "seed": 43
+      },
+      {
+        "capture_role": "full",
+        "chunk_index": 2,
+        "gate_mode": "absent (stream graph form; routes persist on the patcher)",
+        "graph_sha256": {
+          "25/two-way/0": "d71ccce63d9c527c303bd263585b8df056572df548e4c335fa39f4aee8a12184",
+          "25/two-way/1": "d71ccce63d9c527c303bd263585b8df056572df548e4c335fa39f4aee8a12184",
+          "25/two-way20-28/0": "9b832cb8cb33250ed1853fa23207235f8fdf60eb3b787ee4a375d48c20760b52",
+          "25/two-way20-28/1": "9b832cb8cb33250ed1853fa23207235f8fdf60eb3b787ee4a375d48c20760b52",
+          "49/two-way/0": "3b63214922f27bb157e7eabea79f57238a2918d03fb7cbd8759bd9fc7105e1f6",
+          "49/two-way/1": "3b63214922f27bb157e7eabea79f57238a2918d03fb7cbd8759bd9fc7105e1f6",
+          "49/two-way20-28/0": "c0658120715498676f5fb2ffffb3e19a0bae4ca32a76c50757854cd6544d1883",
+          "49/two-way20-28/1": "c0658120715498676f5fb2ffffb3e19a0bae4ca32a76c50757854cd6544d1883"
+        },
+        "kind": "qualify-repeat",
+        "name": "stream112-qrepeat-c000002",
+        "prompt_sha256": "e3084519bedf9cff6b53bccb355b0624250be52a0e9be9b666d556890b66d0ae",
+        "scene_id": "qrepeat",
+        "seed": 44
+      }
+    ],
+    "qualification_gate": {
+      "anchors": "each chain consumes only its own verified predecessor anchor (the last frame)",
+      "compare": "all four complete tensors (SHA-256 of full F32 payload) of each chunk equal across eager chain, graph chain and graph repeat; capture files re-read and must agree",
+      "graph": "eager chain observes zero routes; graph chain chunk 2 and the whole repeat chain capture nothing new; uniform <=8 signatures on the prompt thread; frozen afterwards",
+      "on_failure": "latch: the server refuses all streaming requests",
+      "prompt_cut": "chunk 2 of every chain changes the prompt on the same anchor chain",
+      "stream_form": "the repeat chain uses the streaming graph form (no gate nodes)"
+    },
+    "qualification_ids": {
+      "25/two-way": "b5ea97da305a36b13922d78d8fb4f5b6353ab71ad5e9680ad8bf81ce60c4a2b3",
+      "25/two-way20-28": "7d40ff29e6d76a9b5bfc5503933d1d4e95d6e36532a51d8e76a2bd3a5e5f01ad",
+      "49/two-way": "09c1fda000494fb391e934fcffc83aa5169d80626a13f3c9edf715111da318b8",
+      "49/two-way20-28": "0f7cda48784e92bdb6ff99708ae12809838eaf0b1db535d259f0a116a2ab9b0e"
+    },
+    "schema": "ltx.stream112.plan.v2",
+    "setup": [
+      {
+        "graph": {
+          "420": {
+            "class_type": "LTXHostEmbeddingComponents",
+            "inputs": {
+              "encoder_mode": "control",
+              "placement": "split"
+            }
+          },
+          "425": {
+            "class_type": "LTXTextEncoderGraphGate",
+            "inputs": {
+              "clip": [
+                "420",
+                1
+              ],
+              "mode": "graph-shard",
+              "run_name": "stream112-window-probe"
+            }
+          },
+          "470": {
+            "class_type": "LTXTextWindowProbe",
+            "inputs": {
+              "clip": [
+                "425",
+                0
+              ],
+              "run_name": "stream112-window-probe"
+            }
+          }
+        },
+        "graph_sha256": "b21287cc592e87c229c92f8bddaad63ad9c869aa4c5228c53c1ce26f5c4bf24c",
+        "kind": "window-probe",
+        "name": "stream112-window-probe"
+      },
+      {
+        "graph": {
+          "490": {
+            "class_type": "LTXStreamPrepare112",
+            "inputs": {
+              "run_name": "stream112-prepare"
+            }
+          }
+        },
+        "graph_sha256": "f815cfe9eea70cf085ea52c2682ed03209700471d67ddf24aebdbf953ca50ba7",
+        "kind": "prepare",
+        "name": "stream112-prepare"
+      }
+    ],
+    "status": "cpu-prepared-not-admitted",
+    "stream_contract": {
+      "full_captures": 0,
+      "module": "stream_contract.py",
+      "ordering": "one anchor chain; stream_seq n>0 names the anchor of n-1; the prompt may change at any chunk",
+      "per_chunk_sanity": [
+        "finite",
+        "shapes",
+        "anchor_chain"
+      ],
+      "schema": "ltx.stream112.chunk-contract.v2"
+    }
+  },
+  "plan_sha256": "7c37f64883394c729562a84d5b411494eadeb67e89808b415b27e209467f49e1"
+}

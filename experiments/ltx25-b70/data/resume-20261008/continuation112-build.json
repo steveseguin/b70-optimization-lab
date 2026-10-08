@@ -1,0 +1,258 @@
+{
+  "builder": "recovery/20261008-continuation112-stream/runtime_packet.py (sealed-111 successor of the 111 builder recovery/20261007-continuation111-runtime/runtime_packet.py)",
+  "claims": {
+    "gpu_qualified": false,
+    "graph_replay_exact": false,
+    "seam_quality": false,
+    "speed": false
+  },
+  "command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "-B",
+    "experiments/ltx25-b70/recovery/20261008-continuation112-stream/runtime_packet.py",
+    "--build",
+    "--input-inventory-sha256",
+    "856998b4baa2dc0bde6579d648e6a2387f9329a49d768cfa3807893cd099f2e1"
+  ],
+  "cpu_tests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 /home/steve/.venvs/ltx25-baseline/bin/python -B -m unittest discover -s experiments/ltx25-b70/recovery/20261008-continuation112-stream -p \"test_*.py\"",
+    "files": {
+      "test_candidate_safety.py": 15,
+      "test_contract.py": 15,
+      "test_gate_receipts.py": 13,
+      "test_runtime_packet.py": 8,
+      "test_session.py": 12
+    },
+    "passed": 63,
+    "ran": 63
+  },
+  "devices_touched": false,
+  "input_inventory": {
+    "candidate_safety.py": "087772db88cbd26d8ddb4c9905f0d27cf583f57a9cdff56a932ba6de8ab7e510",
+    "conditioning_guard.py": "5a04ccc7f7ad31e11989191eecbe6a14cf4453a0fa37f5e46569a6f3bb8a922d",
+    "continuation_anchor.py": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+    "derive_from_111.py": "e324b85e6a13195fe2ff19baa145be2603e46008f9d1cdde4237ac5d98695390",
+    "integration.py": "402b8bbbc976465db188793ede15e80500b2f0652c16769c6ba0b01db94ddfb4",
+    "native_bindings.py": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+    "plan.py": "5e7ff2d84ee228ad9f8f63156540bab3521d7546478b52587b350bb00657c5e7",
+    "qualification_gate.py": "828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1",
+    "qualify_client.py": "f91ecc93314ac2865501b288fc82d5b02e36b8c39aa3682868a295d76ae4076e",
+    "runtime_packet.py": "d2c1bf15fdd2fbeca820c1165f16572511c4519bc16d317fea6178b5e0a4dd07",
+    "session.py": "27e1a9f23c2c0f04b51519743313f7d700bf23fc85a2a2bf84da70f2c2fb0e7c",
+    "stream-plan.json": "906539830e718fcf7309d5f8c02bb6a242d9abc7fe1e9d78e1a04cac1fd8f4e9",
+    "stream_contract.py": "7749eae14df5ae9e71909eb5a592d84d7f4f69f389c067821adeb8a085de1aca",
+    "stream_receipts.py": "6b023dd555d61ea4ddad5f13aac57ef2df62fd8a8714db33f98104441bbbb725"
+  },
+  "manifest_sha256": "e49f669d580a55d7f2a99ddfc5c2c5fc4a22dd7168987eb471704e2be6352b91",
+  "model_requests": 0,
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-112",
+  "parent": {
+    "manifest_sha256": "65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363",
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-native-111"
+  },
+  "payload_bytes": 111971892,
+  "plan_sha256": "7c37f64883394c729562a84d5b411494eadeb67e89808b415b27e209467f49e1",
+  "processes_touched": false,
+  "pycache_in_sealed_packets": 0,
+  "qualification_ids": {
+    "25/two-way": "b5ea97da305a36b13922d78d8fb4f5b6353ab71ad5e9680ad8bf81ce60c4a2b3",
+    "25/two-way20-28": "7d40ff29e6d76a9b5bfc5503933d1d4e95d6e36532a51d8e76a2bd3a5e5f01ad",
+    "49/two-way": "09c1fda000494fb391e934fcffc83aa5169d80626a13f3c9edf715111da318b8",
+    "49/two-way20-28": "0f7cda48784e92bdb6ff99708ae12809838eaf0b1db535d259f0a116a2ab9b0e"
+  },
+  "result": {
+    "input_inventory_sha256": "856998b4baa2dc0bde6579d648e6a2387f9329a49d768cfa3807893cd099f2e1",
+    "manifest_sha256": "e49f669d580a55d7f2a99ddfc5c2c5fc4a22dd7168987eb471704e2be6352b91",
+    "model_requests": 0,
+    "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-112",
+    "status": "prepared-not-GPU-qualified",
+    "storage_admission": {
+      "admitted": true,
+      "available_bytes": 58080661504,
+      "checked_existing_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+      "destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-112",
+      "failures": [],
+      "filesystem": {
+        "filesystem_type": "ext4",
+        "mount_id": 33,
+        "mount_point": "/",
+        "source": "/dev/nvme0n1p2"
+      },
+      "min_free_bytes": 56908316672,
+      "planned_write_bytes": 167772160,
+      "remaining_after_planned_write_bytes": 57912889344,
+      "required_bytes": 57076088832,
+      "required_mount": null,
+      "resolved_destination": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-continuation-stream-112",
+      "schema_version": 1
+    }
+  },
+  "returncode": 0,
+  "schema": "ltx.stream112.build-receipt.v1",
+  "source_delta": {
+    "launch/encoder_runtime_common.py": {
+      "after_sha256": "d2c1bf15fdd2fbeca820c1165f16572511c4519bc16d317fea6178b5e0a4dd07",
+      "before_sha256": "4d5a493a65ba32a81764f5e8e0cc5a8686d0a64c0443b07f3e85a2709f375b94"
+    },
+    "launch/serve-encoder.py": {
+      "after_sha256": "66cca090ff7c332e4b1069ed97054524a291fb510ae81ffbc35e7e7eaebde0a3",
+      "before_sha256": "9271fda4394a0273145731e12a71b206addaa1b29d4fa2cedc265b950f066940"
+    },
+    "provenance/packet111-manifest.json": {
+      "after_sha256": "65adf13fca14f92047960ed939c507cd7e28a08b41940decd089189c86c41363",
+      "before_sha256": null
+    },
+    "resolution/components/candidate_safety.py": {
+      "after_sha256": "087772db88cbd26d8ddb4c9905f0d27cf583f57a9cdff56a932ba6de8ab7e510",
+      "before_sha256": null
+    },
+    "resolution/components/conditioning_guard.py": {
+      "after_sha256": "5a04ccc7f7ad31e11989191eecbe6a14cf4453a0fa37f5e46569a6f3bb8a922d",
+      "before_sha256": "5cf7c634e35e111299552b086df4bbbbe856fc1db6838d0fde2f85f2927dfaa1"
+    },
+    "resolution/components/continuation_anchor.py": {
+      "after_sha256": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+      "before_sha256": "a3aa2c357f47af7cc3e98b941f7473bcaf37ef376e2772dc9270c81159e96319"
+    },
+    "resolution/components/derive_from_111.py": {
+      "after_sha256": "e324b85e6a13195fe2ff19baa145be2603e46008f9d1cdde4237ac5d98695390",
+      "before_sha256": null
+    },
+    "resolution/components/integration.py": {
+      "after_sha256": "402b8bbbc976465db188793ede15e80500b2f0652c16769c6ba0b01db94ddfb4",
+      "before_sha256": "b2de87b9c28d852bc0c88ff9285a0651204d0dcf19750e984f311b629407713f"
+    },
+    "resolution/components/native_bindings.py": {
+      "after_sha256": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+      "before_sha256": "b07b1fc71426ce2eaf8f47236d90140a5600347b88e451742d1d13916669bb02"
+    },
+    "resolution/components/plan.py": {
+      "after_sha256": "5e7ff2d84ee228ad9f8f63156540bab3521d7546478b52587b350bb00657c5e7",
+      "before_sha256": null
+    },
+    "resolution/components/qualification_gate.py": {
+      "after_sha256": "828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1",
+      "before_sha256": null
+    },
+    "resolution/components/qualify_client.py": {
+      "after_sha256": "f91ecc93314ac2865501b288fc82d5b02e36b8c39aa3682868a295d76ae4076e",
+      "before_sha256": null
+    },
+    "resolution/components/runtime_packet.py": {
+      "after_sha256": "d2c1bf15fdd2fbeca820c1165f16572511c4519bc16d317fea6178b5e0a4dd07",
+      "before_sha256": "4d5a493a65ba32a81764f5e8e0cc5a8686d0a64c0443b07f3e85a2709f375b94"
+    },
+    "resolution/components/session.py": {
+      "after_sha256": "27e1a9f23c2c0f04b51519743313f7d700bf23fc85a2a2bf84da70f2c2fb0e7c",
+      "before_sha256": "8cf02d9ac4f38892f8f6a12926274026bd5ca25e6f583abeecb38bf406f0fa5b"
+    },
+    "resolution/components/stream_contract.py": {
+      "after_sha256": "7749eae14df5ae9e71909eb5a592d84d7f4f69f389c067821adeb8a085de1aca",
+      "before_sha256": null
+    },
+    "resolution/components/stream_receipts.py": {
+      "after_sha256": "6b023dd555d61ea4ddad5f13aac57ef2df62fd8a8714db33f98104441bbbb725",
+      "before_sha256": null
+    },
+    "resolution/stream-plan.json": {
+      "after_sha256": "906539830e718fcf7309d5f8c02bb6a242d9abc7fe1e9d78e1a04cac1fd8f4e9",
+      "before_sha256": null
+    },
+    "source/scripts/candidate_safety.py": {
+      "after_sha256": "087772db88cbd26d8ddb4c9905f0d27cf583f57a9cdff56a932ba6de8ab7e510",
+      "before_sha256": null
+    },
+    "source/scripts/conditioning_guard.py": {
+      "after_sha256": "5a04ccc7f7ad31e11989191eecbe6a14cf4453a0fa37f5e46569a6f3bb8a922d",
+      "before_sha256": "5cf7c634e35e111299552b086df4bbbbe856fc1db6838d0fde2f85f2927dfaa1"
+    },
+    "source/scripts/continuation_anchor.py": {
+      "after_sha256": "89812304ab8471cfafae5156170ccd1f428ed0dac257aa7a41f569be34577264",
+      "before_sha256": "a3aa2c357f47af7cc3e98b941f7473bcaf37ef376e2772dc9270c81159e96319"
+    },
+    "source/scripts/integration.py": {
+      "after_sha256": "402b8bbbc976465db188793ede15e80500b2f0652c16769c6ba0b01db94ddfb4",
+      "before_sha256": "b2de87b9c28d852bc0c88ff9285a0651204d0dcf19750e984f311b629407713f"
+    },
+    "source/scripts/ltx_duration_guard.py": {
+      "after_sha256": "dd56951309bddf72b5d964d8538f25acca30c4c8793efb84827b6fee2558a68c",
+      "before_sha256": "a7869c0e446336788082af726f7a51cd5aa0432deb7bc8006dface22aeb9d382"
+    },
+    "source/scripts/ltx_output_size_98.py": {
+      "after_sha256": "95d3684d32dfe6572e48d3f9db299f3cab30020c3ca5c28a1257a82e870dd3d0",
+      "before_sha256": "a6f46a1924777b968c8e2af9047dad4f9c63319408ded0f0862bc11a8d7c5826"
+    },
+    "source/scripts/ltx_resolution_session.py": {
+      "after_sha256": "27e1a9f23c2c0f04b51519743313f7d700bf23fc85a2a2bf84da70f2c2fb0e7c",
+      "before_sha256": "8cf02d9ac4f38892f8f6a12926274026bd5ca25e6f583abeecb38bf406f0fa5b"
+    },
+    "source/scripts/native_bindings.py": {
+      "after_sha256": "1ce082ecd4c79cc0a3d7a58c3938e13bc84a94c0efbf42bfdb91ef6b92e8cf43",
+      "before_sha256": "b07b1fc71426ce2eaf8f47236d90140a5600347b88e451742d1d13916669bb02"
+    },
+    "source/scripts/qualification_gate.py": {
+      "after_sha256": "828ac51d2b071621b7492f3e1016edd62d7a5ff692e501e11f3fc3a854b2aec1",
+      "before_sha256": null
+    },
+    "source/scripts/setup_gates.py": {
+      "after_sha256": "8fe64b1fe5fb713f3a80c1fe0415759eb43d9591b22af51e4718b0151961f2bc",
+      "before_sha256": "000c806bd2fa771d3260f2d06a3fc9c229dcde7c59ac99ff0ece15a55407f43a"
+    },
+    "source/scripts/stream_contract.py": {
+      "after_sha256": "7749eae14df5ae9e71909eb5a592d84d7f4f69f389c067821adeb8a085de1aca",
+      "before_sha256": null
+    },
+    "source/scripts/stream_receipts.py": {
+      "after_sha256": "6b023dd555d61ea4ddad5f13aac57ef2df62fd8a8714db33f98104441bbbb725",
+      "before_sha256": null
+    }
+  },
+  "startup_check_only": {
+    "25-two-way": {
+      "health_receipt": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "end_utc": "2026-10-08 00:55:03 UTC",
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-111.json",
+        "sha256": "d309e68e533c159e8904cff9857575057c26369feecec80bfef41108a33e431f",
+        "verified": "schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch"
+      },
+      "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-112-two-way-w1-b1-p1-dxpu2-s256x256-f25",
+      "status": "inactive-startup-check-passed"
+    },
+    "49-two-way": {
+      "health_receipt": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "end_utc": "2026-10-08 00:55:03 UTC",
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-111.json",
+        "sha256": "d309e68e533c159e8904cff9857575057c26369feecec80bfef41108a33e431f",
+        "verified": "schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch"
+      },
+      "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-112-two-way-w1-b1-p1-dxpu2-s256x256-f49",
+      "status": "inactive-startup-check-passed"
+    },
+    "49-two-way20-28": {
+      "health_receipt": {
+        "boot_id": "10192010-9700-4915-ac6c-980d6b74afa0",
+        "end_utc": "2026-10-08 00:55:03 UTC",
+        "path": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/resume-20261007/postflight-111.json",
+        "sha256": "d309e68e533c159e8904cff9857575057c26369feecec80bfef41108a33e431f",
+        "verified": "schema, passed, four cards, boot id, age; the journal-since-receipt check runs only at launch"
+      },
+      "run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-continuation-stream-112-two-way20-28-w1-b1-p1-dxpu2-s256x256-f49",
+      "status": "inactive-startup-check-passed"
+    }
+  },
+  "storage": {
+    "build_allowance_bytes": 167772160,
+    "free_at_build_bytes": 58080661504,
+    "parent_111_packet_bytes": 110933761,
+    "required_at_build_bytes": 57076088832,
+    "reserve_bytes": 53687091200,
+    "run_allowance_bytes": 3221225472
+  },
+  "superseded_build": {
+    "manifest_sha256": "921b05b810b34b4fa7f7d585f9a26d54c566a549382c1517680f6ef6ca07f8bd",
+    "reason": "built before frame count/placement became launch-selected run names (run name hard-coded -f25); never launched; removed by the author before handoff and rebuilt"
+  },
+  "utc": "2026-10-08T04:24:46.086606+00:00"
+}
