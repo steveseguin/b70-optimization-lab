@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 continuation servers.
+"""ltx_continuation_client.py - the stream client for the packet 112 / 113 / 114 / 115 continuation servers.
 
     /home/steve/.venvs/ltx25-baseline/bin/python -B ltx_continuation_client.py --work-dir DIR [options]
 
@@ -37,6 +37,12 @@ for 114) and validates before the preview record. Qualification is re-derived wi
 over the nine receipts, the nine decode records and the server's capture re-reads. Text reuse is on
 by default on 114 servers; the client sends reuse_text=1 exactly when the server requires it.
 Resets are allowed as on 113. 114 manifest lines also carry frames, new_frames, seconds and anchor.
+
+Packet 115 (--packet 115): as 114, with four server anchor modes (status 'anchor': 'mixed' (default),
+'latent', 'frame' or 'guide'; --expect-anchor checks it), stream115- run names, the 115 gate for the
+qualification re-derivation, and the decode record's sharpness profile in every manifest line
+(sharpness_relative, sharpness_first_frames_min). A guide-anchored chunk delivers all its frames (no
+skip_first_frames); mixed receipts carry the stage-B frame wait (frame_wait_s in the manifest line).
 
 Never retries a refused request, never restarts or signals anything. Halts:
 exit 0 clean stop; 2 server halted / execution error; 4 FAULT.json; 5 HTTP failure (> --http-fail-
@@ -96,6 +102,14 @@ PACKET114_MODULE_SHA256 = {
 PACKETS[114] = {'dir': R / 'prepared-continuation-stream-114',
                 'manifest_sha256': PACKET114_MANIFEST_SHA256,
                 'modules': PACKET114_MODULE_SHA256}
+# Packet 115 (built 2026-10-08; manifest.json of prepared-continuation-stream-115 and its
+# files['resolution/components/<name>'] hashes).
+PACKETS[115] = {'dir': R / 'prepared-continuation-stream-115',
+                'manifest_sha256': 'a934bac2ba8f9673f98f7b1186919d341c74b10e54f308979ca9cff5ef4c7137',
+                'modules': {'stream_contract': '7e82e9b7da1f88861cf227b14bb8e7a9035af6b068695449438cf5da7f104518',
+                            'stream_receipts': '87a5d35a989f98abb580dcfb2e55e3b6dc34bcafb483de0b214cb8b62277277e',
+                            'qualification_gate': '56ac50126dd975c05f9dc38ebf50bda6a540bf0258b5b7e25e1ef91cfd9e5ad5'}}
+DECODE_THREAD_PACKETS = (114, 115)               # anchor mode, decode thread, decode records
 # ----------------------------------------------------------------------------------------------
 PACKET = PACKETS[112]['dir']                     # packet 112 defaults (unchanged)
 CONTRACT_DIR = PACKET / 'resolution/components'
@@ -107,6 +121,7 @@ DEFAULT_SCENES = Path('/home/steve/llm-optimizations/experiments/ltx25-b70/data/
 WINDOW_BUCKETS = (64, 128, 256, 512, 1024)      # ltx_text_window.BUCKETS
 STREAM_DIR_RE = re.compile(r'stream112-s[0-9]{8}')   # integration.RUN_NAME_RE, stream form only
 STREAM_DIR_RE_114 = re.compile(r'stream114-s[0-9]{8}')   # packet 114 (stream_contract.RUN_PREFIX stream114)
+STREAM_DIR_RE_115 = re.compile(r'stream115-s[0-9]{8}')   # packet 115
 PREVIEW_RE = re.compile(r'preview_[0-9]{5}_\.mp4')
 SETUP_TIMEOUT_S = 1800                          # qualify_client.py bounds
 QUAL_CHUNK_TIMEOUT_S = 900
@@ -373,8 +388,9 @@ class Client:
     def __init__(self, a, contract, receipts, gate):
         self.a, self.c, self.rc, self.gate = a, contract, receipts, gate
         self.api = Api('http://%s:%d' % (a.host, a.port), a.http_fail_seconds)
-        self.client_id = ('stream114-client-' if a.packet == 114 else 'stream112-client-') + uuid.uuid4().hex[:12]
-        self.stream_dir_re = STREAM_DIR_RE_114 if a.packet == 114 else STREAM_DIR_RE
+        self.client_id = ({114: 'stream114-client-', 115: 'stream115-client-'}.get(a.packet, 'stream112-client-') +
+                          uuid.uuid4().hex[:12])
+        self.stream_dir_re = {114: STREAM_DIR_RE_114, 115: STREAM_DIR_RE_115}.get(a.packet, STREAM_DIR_RE)
         self.anchor = None
         self.state = json.loads(a.state.read_text()) if a.state.is_file() else {}
         self.stopping = False
@@ -413,11 +429,11 @@ class Client:
             raise Stop(4, 'FAULT.json present (%s): device fault latched; halting requests' % (self.root / 'FAULT.json'))
         if run_name and (self.run_dir / ('stream-failure-%s.json' % run_name)).exists():
             raise Stop(6, 'FAILED JOB: %s exists; the server latched' % (self.run_dir / ('stream-failure-%s.json' % run_name)))
-        if self.a.packet in (113, 114):
+        if self.a.packet in (113, 114, 115):
             fails = sorted(self.run_dir.glob('stream-preview-failure-*.json'))
             if fails:
                 raise Stop(6, 'PREVIEW WRITE FAILED: %s; the server latched' % fails[-1])
-        if self.a.packet == 114:
+        if self.a.packet in DECODE_THREAD_PACKETS:
             fails = sorted(self.run_dir.glob('stream-decode-failure-*.json'))
             if fails:
                 raise Stop(2, 'DECODE FAILED: %s; the server halted (decode thread latched)' % fails[-1])
@@ -460,7 +476,7 @@ class Client:
                 st.get('text_reuse') not in (0, 1):
             problems.append('status frames/placement/text_reuse invalid: %r/%r/%r'
                             % (st.get('frames'), st.get('placement'), st.get('text_reuse')))
-        elif self.a.packet == 114:
+        elif self.a.packet in DECODE_THREAD_PACKETS:
             if st.get('anchor') not in self.c.ANCHORS:
                 problems.append('status anchor invalid: %r' % st.get('anchor'))
             elif st.get('qualification_id') != self.c.qualification_id(st['frames'], st['placement'], st['anchor']):
@@ -481,6 +497,11 @@ class Client:
                 feats.get('latent_anchor') is (st.get('anchor') == 'latent')):
             problems.append('--packet 114 needs a packet 114 server (status packet=%r anchor=%r features=%r)'
                             % (st.get('packet'), st.get('anchor'), feats))
+        if self.a.packet == 115 and not (st.get('packet') == 115 and all(feats.get(k) is True for k in (
+                'decode_thread', 'async_preview', 'chain_reset', 'chunk_length_choice', 'sharpness_diagnostic')) and
+                all(feats.get(k + '_anchor') is (st.get('anchor') == k) for k in ('mixed', 'latent', 'guide'))):
+            problems.append('--packet 115 needs a packet 115 server (status packet=%r anchor=%r features=%r)'
+                            % (st.get('packet'), st.get('anchor'), feats))
         if problems:
             raise Stop(8, 'preflight refused: ' + '; '.join(problems))
         self.bind_dirs(st)
@@ -492,7 +513,7 @@ class Client:
 
     # ---- qualification -------------------------------------------------------------------
     def qual_params(self, st):
-        if self.a.packet == 114:
+        if self.a.packet in DECODE_THREAD_PACKETS:
             return self.c.qualification_params(st['frames'], st['text_reuse'], st['placement'], st['anchor'])
         return self.c.qualification_params(st['frames'], st['text_reuse'], st['placement'])
 
@@ -592,7 +613,7 @@ class Client:
             raise Stop(13, '%s does not hash to the server verdict digest' % path)
         v = json.loads(raw)
         pairs = v.get('exact_replay') or []
-        same_key = 'all_identical' if self.a.packet == 114 else 'all_four_identical'   # 114 gate field name
+        same_key = 'all_identical' if self.a.packet in DECODE_THREAD_PACKETS else 'all_four_identical'
         if v.get('passed') is not True or v.get('failures') != [] or len(pairs) != 3 or \
                 not all(p.get(same_key) is True for p in pairs):
             raise Stop(13, 'verdict file is not a pass: passed=%r failures=%r' % (v.get('passed'), v.get('failures')))
@@ -614,7 +635,7 @@ class Client:
             except ValueError as e:
                 raise Stop(13, 'qualification receipt %s fails the receipt schema: %s' % (name, e))
             receipts.append(rec)
-            if self.a.packet == 114:
+            if self.a.packet in DECODE_THREAD_PACKETS:
                 # The decode thread's record of this chunk, from the decode route, bound to the verdict.
                 raw_d = self.fetch_record_raw('decode', name, 13)
                 dbind = (v.get('decode_records') or {}).get(name) or {}
@@ -625,7 +646,7 @@ class Client:
                 except ValueError as e:
                     raise Stop(13, 'qualification decode record %s fails its schema: %s' % (name, e))
         captures = v.get('captures') or {}
-        if self.a.packet == 114:
+        if self.a.packet in DECODE_THREAD_PACKETS:
             mine = self.gate.decide(receipts, decodes, captures, st.get('plan_sha256'), st['frames'],
                                     st['text_reuse'], st['placement'], st['anchor'])
         else:
@@ -782,7 +803,7 @@ class Client:
         want = {'run_name': name, 'kind': 'stream', 'stream_seq': expect['stream_seq'],
                 'chunk_index': expect['stream_seq'], 'frames': self.frames, 'placement': self.placement,
                 'committed': True, 'server_identity_sha256': self.ident}
-        if self.a.packet == 114:
+        if self.a.packet in DECODE_THREAD_PACKETS:
             want['anchor'] = self.anchor
         for key in ('prompt_id', 'seed', 'scene_id', 'reuse_text'):
             if key in expect:
@@ -899,7 +920,7 @@ class Client:
     def record_chunk(self, r, path, pos, adopted=False):
         """Manifest line + state + log for one verified chunk."""
         precord = drec = None
-        if path is None and self.a.packet == 114:
+        if path is None and self.a.packet in DECODE_THREAD_PACKETS:
             # Packet 114: decode record first, then the preview record; one --save-wait bound for both.
             deadline = time.monotonic() + self.a.save_wait
             drec = self.wait_decode(r, deadline)
@@ -939,6 +960,11 @@ class Client:
                         border_to_centre_chroma_ratio=diag.get('border_to_centre_chroma_ratio'),
                         border_mean_chroma=diag.get('border_mean_chroma'),
                         centre_mean_chroma=diag.get('centre_mean_chroma'))
+            sharp = drec.get('sharpness')
+            if sharp is not None:            # packet 115: the decode thread's seam diagnostic
+                line.update(sharpness_relative=sharp.get('relative_to_reference'),
+                            sharpness_first_frames_min=sharp.get('first_frames_min_relative'),
+                            frame_wait_s=timing.get('frame_wait'))
         elif precord is not None:
             diag = r.get('anchor_diagnostics') or {}
             line.update(reset=bool(r.get('reset')), submit_to_anchor_ready=timing.get('submit_to_anchor_ready'),
@@ -987,7 +1013,7 @@ class Client:
     # ---- streaming -----------------------------------------------------------------------
     def wants_reset(self, n, scene_id, prompt, prev_prompt_sha):
         """Packet 113/114 chain reset policy (both off by default): every N chunks, and/or on a scene change."""
-        if n == 0 or self.a.packet not in (113, 114):
+        if n == 0 or self.a.packet not in (113, 114, 115):
             return False
         if self.a.reset_every_chunks and n % self.a.reset_every_chunks == 0:
             return True
@@ -1004,8 +1030,8 @@ class Client:
         prompt = scene['prompt']
         reset = int(self.wants_reset(n, scene['scene_id'], prompt, prev_prompt_sha))
         reuse = int(self.text_reuse == 1 and n > 0 and not reset and self.c.text_sha256(prompt) == prev_prompt_sha)
-        extra = {'reset': reset} if self.a.packet in (113, 114) else {}
-        if self.a.packet == 114:
+        extra = {'reset': reset} if self.a.packet in (113, 114, 115) else {}
+        if self.a.packet in DECODE_THREAD_PACKETS:
             extra['anchor'] = self.anchor
         params = self.c.stream_params(self.frames, n, prompt, seed, predecessor, scene['scene_id'], reuse,
                                       placement=self.placement, **extra)
@@ -1134,7 +1160,7 @@ class Client:
             name = self.c.run_name({'kind': 'stream', 'stream_seq': k})
             raw = self.fetch_receipt_raw(name)
             expect = {'run_name': name, 'stream_seq': k, 'predecessor': prev_anchor or ''}
-            if self.a.packet in (113, 114):
+            if self.a.packet in (113, 114, 115):
                 head = json.loads(raw)
                 if head.get('reset') is True:          # a reset names (at most) its predecessor; it is unanchored
                     expect['reset'] = True
@@ -1154,9 +1180,10 @@ class Client:
 
     def stream(self, st):
         self.frames, self.placement, self.text_reuse = st['frames'], st['placement'], st['text_reuse']
-        if self.a.packet == 114:
+        if self.a.packet in DECODE_THREAD_PACKETS:
             self.anchor = st['anchor']
-        self.chunk_seconds = (self.frames - 1) / FPS
+        # A guide-anchored chunk delivers all its frames; slot-0 anchors drop the overlap frame.
+        self.chunk_seconds = (self.frames if self.anchor == 'guide' else self.frames - 1) / FPS
         n, predecessor, prev_sha = self.resume(st)
         p = self.prepare(n, predecessor, prev_sha)
         pending_record = None
@@ -1188,7 +1215,7 @@ class Client:
             expect = {'run_name': p['run_name'], 'stream_seq': p['stream_seq'], 'prompt_id': p['prompt_id'],
                       'prompt': p['prompt'], 'seed': p['seed'], 'scene_id': p['scene_id'],
                       'reuse_text': p['reuse_text'], 'predecessor': p['predecessor']}
-            if self.a.packet in (113, 114):
+            if self.a.packet in (113, 114, 115):
                 expect['reset'] = bool(p['reset'])
             r, path = self.complete(p['stream_seq'], expect)
             self.last_scene_id = r['scene_id']
@@ -1207,8 +1234,9 @@ class Client:
         log('server %s identity %s phase %s frames %s placement %s text_reuse %s next_stream_seq %s%s' % (
             self.run_dir.name, self.ident[:12], st.get('phase'), st.get('frames'), st.get('placement'),
             st.get('text_reuse'), st.get('next_stream_seq'),
-            (' anchor %s packet 114' % st.get('anchor')) if self.a.packet == 114 else ''))
-        anchor_kw = {'anchor': st['anchor']} if self.a.packet == 114 else {}
+            (' anchor %s packet %d' % (st.get('anchor'), self.a.packet)) if self.a.packet in DECODE_THREAD_PACKETS
+            else ''))
+        anchor_kw = {'anchor': st['anchor']} if self.a.packet in DECODE_THREAD_PACKETS else {}
         self.schedule = Schedule(a.scenes, a.default_chunks)
         window = WindowCheck(a.token_check, a.text_encoder)
         allowed = set(st.get('qualified_text_windows') or [64])
@@ -1256,15 +1284,17 @@ def main(argv=None):
     ap.add_argument('--root', type=Path, default=R, help='results root holding the server run dir and output/')
     ap.add_argument('--packet', type=int, choices=sorted(PACKETS), default=112,
                     help='server packet: 112 (default, unchanged behaviour), 113 (preview after receipt, resets) '
-                         'or 114 (latent/frame anchor, decode thread, 49/97 frames, text reuse on by default)')
+                         'or 114 (latent/frame anchor, decode thread, 49/97 frames, text reuse on by default) '
+                         'or 115 (mixed/latent/frame/guide anchor, sharpness profile)')
     ap.add_argument('--manifest-sha256', help='expected runtime_manifest_sha256 (default: the --packet build)')
     ap.add_argument('--contract-dir', type=Path, help='sealed stream_contract.py location (default: the --packet build)')
     ap.add_argument('--reset-every-chunks', type=int, default=0,
-                    help='113/114 only: submit a chain reset (unanchored chunk) at every stream_seq divisible by N (0 = never)')
+                    help='113/114/115 only: submit a chain reset (unanchored chunk) at every stream_seq divisible by N (0 = never)')
     ap.add_argument('--reset-on-scene-change', action='store_true',
-                    help='113/114 only: submit a chain reset whenever the scene (or its prompt) changes')
+                    help='113/114/115 only: submit a chain reset whenever the scene (or its prompt) changes')
     ap.add_argument('--expect-frames', type=int, choices=(49, 25, 97))
-    ap.add_argument('--expect-anchor', choices=('latent', 'frame'), help='114 only: the server anchor mode')
+    ap.add_argument('--expect-anchor', choices=('mixed', 'latent', 'frame', 'guide'),
+                    help='114/115 only: the server anchor mode (114: latent or frame)')
     ap.add_argument('--expect-placement', choices=('two-way', 'two-way20-28'))
     ap.add_argument('--expect-text-reuse', type=int, choices=(0, 1))
     g = ap.add_mutually_exclusive_group()
@@ -1292,11 +1322,13 @@ def main(argv=None):
     a.manifest_sha256 = a.manifest_sha256 or sealed['manifest_sha256']
     a.contract_dir = a.contract_dir or sealed['dir'] / 'resolution/components'
     if a.save_wait is None:
-        a.save_wait = 30.0 if a.packet == 114 else 10.0
-    if a.packet not in (113, 114) and (a.reset_every_chunks or a.reset_on_scene_change):
-        raise SystemExit('--reset-every-chunks / --reset-on-scene-change need --packet 113 or 114')
-    if a.expect_anchor is not None and a.packet != 114:
-        raise SystemExit('--expect-anchor needs --packet 114')
+        a.save_wait = 30.0 if a.packet in DECODE_THREAD_PACKETS else 10.0
+    if a.packet not in (113, 114, 115) and (a.reset_every_chunks or a.reset_on_scene_change):
+        raise SystemExit('--reset-every-chunks / --reset-on-scene-change need --packet 113, 114 or 115')
+    if a.expect_anchor is not None and a.packet not in DECODE_THREAD_PACKETS:
+        raise SystemExit('--expect-anchor needs --packet 114 or 115')
+    if a.expect_anchor in ('mixed', 'guide') and a.packet == 114:
+        raise SystemExit('--expect-anchor %s needs --packet 115' % a.expect_anchor)
     if a.reset_every_chunks < 0:
         raise SystemExit('--reset-every-chunks must be >= 0')
     a.work_dir = a.work_dir.resolve()
