@@ -238,6 +238,28 @@ Style genome (duotone-hixffp):
   }
   .research-links a { color: var(--ink); border-bottom: 1px solid currentColor; }
 
+  /* featured picks */
+  .feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .feat-card { border: 2px solid var(--ink); padding: 16px; background: var(--paper); display: flex; flex-direction: column; }
+  .feat-card.soon { background: var(--surface2); }
+  .feat-card .eyebrow { margin: 0 0 6px; color: var(--spot-dark); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+  .feat-card h3 { margin: 0 0 6px; font-family: var(--display); font-size: 16px; text-transform: uppercase; }
+  .feat-card p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  .feat-card p.feat-num { color: var(--ink); font-family: var(--mono); font-size: 12px; }
+  .feat-card .big { font-family: var(--display); font-size: 28px; line-height: 1.1; color: var(--ink); }
+  .feat-card .feat-for { display: block; color: var(--muted); }
+  .feat-card .feat-links { margin: auto 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .feat-card .feat-links a:not(.button) { color: var(--ink); border-bottom: 1px solid currentColor; }
+  details.all-models > summary { cursor: pointer; list-style: none; padding: 12px 14px; border: 2px solid var(--ink); background: var(--surface2); }
+  details.all-models > summary::-webkit-details-marker { display: none; }
+  details.all-models > summary h2 { margin: 0 0 4px; }
+  details.all-models > summary h2::before { content: "+"; display: inline-block; width: 1ch; color: var(--spot-dark); }
+  details.all-models[open] > summary h2::before { content: "\2212"; }
+  details.all-models > summary .all-hint { display: block; color: var(--muted); font-size: 13px; }
+  details.all-models[open] > summary { margin-bottom: 14px; }
+  @media (max-width: 1020px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 720px) { .feat-grid { grid-template-columns: 1fr; } }
+
   .contribute-panel {
     display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, .8fr);
     gap: 24px; padding: 22px; border: 2px solid var(--ink); background: var(--surface2);
@@ -417,9 +439,48 @@ Style genome (duotone-hixffp):
 
 <main id="main">
 
+<section id="featured">
+  <div class="wrap">
+    <h2 id="t-featured">Our top picks</h2>
+    <p class="sub">The models we work on most right now. Speeds are in <abbr title="tokens per second">tok/s</abbr>: about how many words the AI writes each second (a token is about &frac34; of a word).</p>
+    <div class="feat-grid">
+      <article class="feat-card">
+        <p class="eyebrow">Ready to try &middot; 2 cards</p>
+        <h3><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Qwen3.8 27B FP8</a></h3>
+        <p class="feat-num"><span class="big">90.19</span> tok/s <span class="feat-for">for one person</span></p>
+        <p>A smart all-round chat and coding AI, split across two B70 cards. Our fastest setup that gives the same answers as running it slowly, on every test we have.</p>
+        <p class="feat-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Recipe</a></p>
+      </article>
+      <article class="feat-card">
+        <p class="eyebrow">Ready to try &middot; 1 card</p>
+        <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Qwen3.8 27B FP8</a></h3>
+        <p class="feat-num"><span class="big">54.04</span> tok/s <span class="feat-for">for one person</span></p>
+        <p>The same model on a single B70 card. A bit slower, and it still gives the same answers as running it slowly on every test.</p>
+        <p class="feat-links"><a class="button" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Recipe</a></p>
+      </article>
+      <article class="feat-card soon">
+        <p class="eyebrow">Coming &middot; 2 cards</p>
+        <h3>Many users at once, exact</h3>
+        <p class="feat-num"><span class="big">874</span> tok/s <span class="feat-for">for 64 people together</span></p>
+        <p>The same 27B model serving many people at the same time, where each person gets exactly the answer they would get alone. <strong>Research result, not yet a package.</strong></p>
+        <p class="feat-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Read the research notes</a></p>
+      </article>
+      <article class="feat-card soon">
+        <p class="eyebrow">Research &middot; 2 cards</p>
+        <h3>MiniMax-H3 video</h3>
+        <p class="feat-num"><span class="big">~400</span> s <span class="feat-for">per 5-second clip</span></p>
+        <p>Makes short video clips with sound from a written description. Every speed-up we kept leaves the clip exactly the same. Uses a trimmed community copy of the model so it fits two cards. No install package yet.</p>
+        <p class="feat-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/minimax-h3-b70/README.md">Read the lab notes</a></p>
+      </article>
+    </div>
+    <p class="research-links">Looking for something else? Older and smaller models are still here: open <a href="#all-models">All models and setups</a> below, or <a href="models/">browse every model</a>.</p>
+  </div>
+</section>
+
 <section id="pick">
   <div class="wrap">
-    <h2 id="t0">Which model should I try?</h2>
+    <details class="all-models" id="all-models">
+    <summary><h2 id="t0">All models and setups</h2><span class="all-hint">Every model we have tested, older ones included, with speeds and guides. Click to open.</span></summary>
     <p class="sub">
       Speeds are in <abbr title="tokens per second">tok/s</abbr>: a token is about &frac34; of a
       word, so 100 tok/s is roughly 75 words a second.
@@ -446,7 +507,7 @@ Style genome (duotone-hixffp):
         <tr>
           <th scope="row" class="model"><a href="models/ornith-1-5.html">Ornith 1.5 35B-A3B</a> <small>1&times; B70 &middot; Q4_K_M &middot; no MTP &middot; Ornith AI</small></th>
           <td class="model-use" data-label="Best for"><span class="use-chip">General</span></td>
-          <td class="num r model-speed mut" data-label="1 user" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">strict headline pending</span></td>
+          <td class="num r model-speed mut" data-label="1 user" title="Not shown: answers did not pass the required consistency checks.">&mdash;<span class="visually-hidden">withheld after consistency failure</span></td>
           <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens. Engine-only test; see details.">99.61&dagger;</td>
           <td class="num r model-agg" data-label="Many users" title="Engine-only test: total writing speed across parallel sequences. See the details page."><a href="models/ornith-15-35b-a3b-q4km-b70.html#profiles">216.5&dagger;</a></td>
           <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
@@ -587,6 +648,51 @@ Style genome (duotone-hixffp):
           <th scope="rowgroup" colspan="7"><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>Alibaba &middot; newest all-rounder &middot; reads pictures</small> <span class="use-chip">General</span></th>
         </tr>
         <tr class="variant-row">
+          <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; official FP8 + lab W8A16 &middot; MTP depth 5 &middot; INT4 draft shortlist</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Recommended FP8</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user: median of two fresh servers (September 17). Outputs identical to no MTP on every test. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.19</a></td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured at 32K for this profile yet; 96.29 tok/s after a 16,384-token prompt is on the details page.">&mdash;</td>
+          <td class="num r model-agg" data-label="Many users"><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#profiles" title="Throughput ceiling, not exact: R200/R204, MTP5, c16: 493.2 tok/s together. Its test ladders matched, but drafting with several users is not exact by construction; an October 4 recheck on the current image found 57-61 of 64 answers matching at 2-8 users.">493.2</a><small>ceiling &middot; not exact</small></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 FP8 depth-5 package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr class="variant-row">
+          <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; official FP8 &middot; MTP depth 5 &middot; INT4 draft shortlist</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">FP8 on one card</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user; outputs identical to no MTP. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html#measured">54.04</a></td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured at 32K on one card yet; results to 16,384-token prompts are on the details page.">&mdash;</td>
+          <td class="num r model-agg mut" data-label="Many users" title="Not tested with several users.">&mdash;</td>
+          <td class="num r model-prefill" data-label="Prefill" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for 2K-12K results."><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html#prefill">1,370</a>&dagger;</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 FP8 package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr class="variant-row">
+          <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; official FP8 &middot; MTP depth 5 &middot; FP16 draft shortlist (no quantization)</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">No quantized parts</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user; outputs identical to no MTP. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html#measured">52.19</a></td>
+          <td class="num r model-32k mut" data-label="32K input" title="Not measured at 32K on one card; this profile holds 28,672 tokens.">&mdash;</td>
+          <td class="num r model-agg mut" data-label="Many users" title="Not tested with several users.">&mdash;</td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this profile; 2K-12K results are on the details page.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 FP8 package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr class="variant-row">
+          <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; official FP8 + lab W8A16 &middot; MTP depth 1</small></th>
+          <td class="model-use" data-label="Best for"><span class="use-chip">Fast interactive FP8</span></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">54.60</a></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#profiles">46.64&dagger;</a></td>
+          <td class="num r model-agg" data-label="Many users" title="Throughput ceiling, not exact. Total writing speed for 16 simultaneous users on the older R156/R187 image. Tested answers matched the one-user answers in that run, but drafting with several users is not exact by construction."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#multi-user">474.3</a><small>ceiling &middot; not exact</small></td>
+          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="27b-fp8" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for setup and timing details."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#prefill">2,885</a>&dagger;</td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B FP8 MTP1 candidate package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr class="variant-row">
+          <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; official FP8 + lab W8A16 &middot; no MTP</small></th>
+          <td class="model-use" data-label="Best for"></td>
+          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">33.31</a></td>
+          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#profiles">29.78&dagger;</a></td>
+          <td class="num r model-agg" data-label="Many users" title="Throughput ceiling, not exact. Total writing speed for 64 simultaneous users, short prompts, older R156/R187 image (September). Tested answers matched the one-user answers in that run, but the setup is not exact by construction: an October 4 recheck on the current image found 58-61 of 64 answers matching at 64 users."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#multi-user">931.4</a><small>throughput ceiling, not exact</small></td>
+          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
+          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 FP8 candidate package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
+        </tr>
+        <tr class="variant-row">
           <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; Q4_K_M &middot; no MTP</small></th>
           <td class="model-use" data-label="Best for"></td>
           <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup.">27.83</td>
@@ -650,42 +756,6 @@ Style genome (duotone-hixffp):
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-q8-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q8-tp2-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-q8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 Q8 candidate package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
         </tr>
         <tr class="variant-row">
-          <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; official FP8 + lab W8A16 &middot; no MTP</small></th>
-          <td class="model-use" data-label="Best for"></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">33.31</a></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#profiles">29.78&dagger;</a></td>
-          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 64 simultaneous users. Tested answers matched the one-user answers."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#multi-user">931.4</a></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B two-B70 FP8 candidate package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr class="variant-row">
-          <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; official FP8 + lab W8A16 &middot; MTP depth 1</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">Fast interactive FP8</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">54.60</a></td>
-          <td class="num r model-32k" data-label="32K input" title="Writing speed after about 32,000 input tokens."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#profiles">46.64&dagger;</a></td>
-          <td class="num r model-agg" data-label="Many users" title="Total writing speed for 16 simultaneous users. Tested answers matched the one-user answers."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#multi-user">474.3</a></td>
-          <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="27b-fp8" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for setup and timing details."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#prefill">2,885</a>&dagger;</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp2-b70/README.md" aria-label="Copy Qwen3.8-27B FP8 MTP1 candidate package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr class="variant-row">
-          <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; official FP8 &middot; MTP depth 5 &middot; INT4 draft shortlist</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">FP8 on one card</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user; outputs identical to no MTP. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html#measured">53.52</a></td>
-          <td class="num r model-32k mut" data-label="32K input" title="Not available on one card: the context limit is 16,384 tokens.">&mdash;</td>
-          <td class="num r model-agg mut" data-label="Many users" title="Not tested with several users.">&mdash;</td>
-          <td class="num r model-prefill" data-label="Prefill" title="Reading speed at 512 input tokens, one user. Separate short-prompt test; open for 2K-12K results."><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html#prefill">1,370</a>&dagger;</td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 FP8 package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr class="variant-row">
-          <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; official FP8 &middot; MTP depth 5 &middot; FP16 draft shortlist (no quantization)</small></th>
-          <td class="model-use" data-label="Best for"><span class="use-chip">No quantized parts</span></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user; outputs identical to no MTP. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html#measured">51.61</a></td>
-          <td class="num r model-32k mut" data-label="32K input" title="Not available on one card: the context limit is 12,544 tokens.">&mdash;</td>
-          <td class="num r model-agg mut" data-label="Many users" title="Not tested with several users.">&mdash;</td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this profile; 2K-12K results are on the details page.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Details page</a><a class="open-guide secondary-guide icon-btn" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md" title="GitHub guide" aria-label="GitHub guide"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span class="visually-hidden">GitHub guide</span></a><button type="button" class="copy-md" data-copy-markdown="packages/qwen38-27b-fp8-tp1-b70/README.md" aria-label="Copy Qwen3.8-27B one-B70 FP8 package Markdown" aria-live="polite" title="Copy the guide Markdown to your clipboard">📋<span class="visually-hidden">Copy Markdown</span></button></div></td>
-        </tr>
-        <tr class="variant-row">
           <th scope="row" class="model"><small class="variant-label">1&times; B70 &middot; AutoRound INT4 &middot; no MTP</small></th>
           <td class="model-use" data-label="Best for"></td>
           <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-autoround-int4-b70.html#measured">33.09</a></td>
@@ -702,15 +772,6 @@ Style genome (duotone-hixffp):
           <td class="num r model-agg" data-label="Many users"><a href="models/qwen38-27b-autoround-int4-b70.html#profiles" title="R304 TP1 MTP4 c8: 273.1/272.7 tok/s, 8/8 exact in both passes; warm rate shown">272.7</a></td>
           <td class="num r model-prefill" data-label="Prefill" data-prefill-profile="27b-int4-tp1" title="Reading speed at 512 input tokens, one user. Separate short-prompt test with unrepeated text; open for setup and timing details."><a href="models/qwen38-27b-autoround-int4-b70.html#prefill">1,209</a>&dagger;</td>
           <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-autoround-int4-b70.html">Details page</a></div></td>
-        </tr>
-        <tr class="variant-row">
-          <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; official FP8 + lab W8A16 &middot; MTP depth 5 &middot; R187</small></th>
-          <td class="model-use" data-label="Best for"></td>
-          <td class="num r model-speed" data-label="1 user" title="Writing speed for one user. See the details page for the tested setup."><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">86.18</a></td>
-          <td class="num r model-32k mut" data-label="32K input" title="No qualified result for this setup yet.">&mdash;</td>
-          <td class="num r model-agg" data-label="Many users"><a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#profiles" title="R200/R204, MTP5, c16: 493.2 aggregate tok/s; exact in both ladders">493.2</a></td>
-          <td class="num r model-prefill mut" data-label="Prefill" title="512-token prefill not measured for this setup.">&mdash;<span class="visually-hidden">not measured</span></td>
-          <td class="lnk model-actions"><div class="guide-actions"><a class="open-guide" href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">Details page</a></div></td>
         </tr>
         <tr class="variant-row">
           <th scope="row" class="model"><small class="variant-label">2&times; B70 &middot; AutoRound INT4 fixed-K (lab oneDNN W4A16) &middot; no MTP &middot; XPU graphs</small></th>
@@ -757,7 +818,8 @@ Style genome (duotone-hixffp):
       </tbody>
     </table>
     </div>
-    <p class="icon-key mut">Reviewed September 14, 2026. &mdash; No qualified measurement for that setup. &dagger; Separate test settings; speeds in a row may come from different tests. Prefill uses server processing time, not the full wait over the network. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md">Prefill test details</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md">Additional prefill tests</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md">27B FP8 longer-prompt test</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md">27B FP8 transfer tests and 16K reading speed</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md">27B FP8 follow-up: no new speedup</a> &middot; <a href="learn.html">Model names and speed labels explained &rarr;</a></p>
+    <p class="icon-key mut">Reviewed October 7, 2026. &mdash; No qualified measurement for that setup. &dagger; Separate test settings; speeds in a row may come from different tests. Prefill uses server processing time, not the full wait over the network. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-results.md">Prefill test details</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-prefill-followup-results.md">Additional prefill tests</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md">27B FP8 longer-prompt test</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md">27B FP8 transfer tests and 16K reading speed</a> &middot; <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md">27B FP8 follow-up: no new speedup</a> &middot; <a href="learn.html">Model names and speed labels explained &rarr;</a></p>
+    </details>
   </div>
 </section>
 
@@ -768,14 +830,14 @@ Style genome (duotone-hixffp):
     <div class="start-grid">
       <article class="start-card">
         <p class="eyebrow">I have one B70</p>
-        <h3><a href="models/qwen-27b.html">Start with Qwen</a></h3>
-        <p>The Qwen3.8 Q4 package is our most complete one-card candidate. Gemma is faster in this lab, but its self-contained package is still being finished.</p>
-        <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-q4km-tp1-b70/README.md">Open one-card package</a>
+        <h3><a href="models/qwen38-27b-fp8-vllm-tp1-b70.html">Start with Qwen FP8</a></h3>
+        <p>Qwen3.8 27B FP8 runs on one B70 at about 54 tok/s, with the same answers as running it without drafting on every test. Smaller Q4 and Q8 versions are in the full list.</p>
+        <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp1-b70/README.md">Open one-card package</a>
       </article>
       <article class="start-card">
         <p class="eyebrow">I have two to four B70s</p>
         <h3>Put your extra cards to work</h3>
-        <p>Run official Qwen3.8 27B FP8 on two B70s: one user, MTP1, and 32K input capacity. The public-source replay passed 12 reference-output checks and six practical requests. Follow the quickstart for start, status, and stop commands.</p>
+        <p>Run official Qwen3.8 27B FP8 on two B70s: one user, MTP depth 5, about 90 tok/s, and room for a 32K prompt. The public-source replay passed 12 reference-output checks and six practical requests. Follow the quickstart for start, status, and stop commands.</p>
         <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">Open two-card package</a>
       </article>
       <article class="start-card">
@@ -883,8 +945,8 @@ Style genome (duotone-hixffp):
           <th scope="row" class="model"><span class="dot" aria-hidden="true">&#9679;</span><span class="visually-hidden">Lab-tested: </span><a href="models/qwen-27b.html">Qwen3.8-27B</a> <small>newest all-rounder &middot; reads pictures &middot; Aug 2026</small></th>
           <td class="mut">llama.cpp SYCL</td><td class="mut">Q4_K_M</td><td class="mut">no MTP</td><td class="num r">1&times;</td>
           <td class="num r" title="Class-balanced median of input-class medians on the fixed cold 12-prompt suite; cache-zero, no speculation; all-prompt median 27.824790">27.83<div class="ratebar" style="width:14.5%" aria-hidden="true"></div></td>
-          <td class="more-cards hide-s"><span title="Official FP8, R187 MTP5; strict pair center 86.18 tok/s, all gates 12/12.">&times;2 FP8+W8A16+MTP5 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/packages/qwen38-27b-fp8-tp2-b70/README.md">86.18</a></span> &middot; <span title="AutoRound INT4 + MTP4 shortlist record; strict G1/G2/G3 12/12.">&times;2 INT4+MTP4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">117.53</a></span></td>
-          <td class="mut hide-s">typical of the promoted 1-card package</td>
+          <td class="more-cards hide-s"><span title="Official FP8, MTP depth 5 with the allgather allreduce; median of two fresh servers 90.19 tok/s, 12/12 identical to no MTP.">&times;2 FP8+W8A16+MTP5 <a href="models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html#measured">90.19</a></span> &middot; <span title="AutoRound INT4 + MTP4 shortlist record; strict G1/G2/G3 12/12.">&times;2 INT4+MTP4 <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">117.53</a></span></td>
+          <td class="mut hide-s">typical of the 1-card Q4 package</td>
           <td class="lnk"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q4km-tp1-b70/README.md">candidate guide</a></td>
         </tr>
       <tr><th scope="row" class="model"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">Qwen3.8 Flash-Next</a></th><td class="mut">vLLM XPU</td><td class="mut">FP8</td><td class="mut">MTP1 · exact serial GDN</td><td class="num r">4&times;</td><td class="num r">46.85<div class="ratebar" style="width:24.4%" aria-hidden="true"></div></td><td class="more-cards hide-s">&mdash;</td><td class="mut hide-s">class-balanced strict suite</td><td class="lnk"><a href="models/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913.html">test report</a></td></tr>
@@ -898,9 +960,9 @@ Style genome (duotone-hixffp):
 <section id="multi-user">
   <div class="wrap">
     <p class="teaser-strip">
-      <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; experimental</span>
-      <strong>1,039 tok/s combined</strong> &mdash; one Arc Pro B70 serving 64 people at once with Qwen3.6-35B-A3B.
-      <a href="learn/multi-user.html">Read the multi-user report</a>
+      <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; research result, not yet a package</span>
+      <strong>874 tok/s combined</strong> &mdash; two Arc Pro B70 cards serving 64 people at once with Qwen3.8-27B FP8, and each person gets exactly the answer they would get alone (short prompts).
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-10-05-state-of-optimization-pin.md">Read the research notes</a> &middot; <a href="learn/multi-user.html">How serving many users works</a>
     </p>
   </div>
 </section>
@@ -1051,6 +1113,20 @@ Style genome (duotone-hixffp):
         }, 1800);
       });
     });
+  })();
+</script>
+
+<script>
+  (() => {
+    const all = document.getElementById("all-models");
+    if (!all) return;
+    const openFor = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const target = id && document.getElementById(id);
+      if (target && (target === all || all.contains(target) || target.id === "pick")) all.open = true;
+    };
+    window.addEventListener("hashchange", openFor);
+    openFor();
   })();
 </script>
 

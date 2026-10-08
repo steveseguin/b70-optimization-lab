@@ -112,16 +112,22 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn(">68.3&dagger;</a>", index_html)
         self.assertNotIn("raw&dagger;", index_html)
         self.assertNotIn("HTTP&dagger;", index_html)
+        # The recommended depth-5 row now leads the 27B group, so target the
+        # two-card no-MTP row by its label instead of the first FP8 match.
         fp8_row = re.search(
-            r"official FP8.*?</tr>", index_html, flags=re.DOTALL
+            r"official FP8 \+ lab W8A16 &middot; no MTP</small>.*?</tr>",
+            index_html,
+            flags=re.DOTALL,
         )
         self.assertIsNotNone(fp8_row)
         self.assertIn(">29.78&dagger;</a>", fp8_row.group(0))
-        # Many-users cell is the identity-qualified c64 aggregate (raw 128-user
-        # throughput without output identity is no longer surfaced).
+        # Many-users cell is the c64 short-prompt aggregate from the older image:
+        # its run matched, but it is not exact by construction, so the page
+        # must call it a throughput ceiling.
         self.assertIn(">931.4</a>", fp8_row.group(0))
         self.assertIn("64 simultaneous users", fp8_row.group(0))
         self.assertIn("Tested answers matched the one-user answers", fp8_row.group(0))
+        self.assertIn("throughput ceiling, not exact", fp8_row.group(0))
         laguna_row = re.search(
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
         )
