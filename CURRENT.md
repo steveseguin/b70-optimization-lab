@@ -578,6 +578,21 @@ human transcripts. Fresh hosted assistant sessions supplied these answers; this
 does not qualify local Qwen, general memory or speed. No local model server or
 GPU experiment was started. Existing context owner units remain inactive.
 
+## 2026-10-08 09:35 EDT, two-B70 host: H3 live stream is on air; retention stage 2 interrupted by a memory-guard stop, resumes after the live session
+
+**Live H3 video is streaming to the owner's meshcast.io RTMP endpoint** (unit `h3-stream`, key in
+`~/.config/h3-stream/meshcast.env`, never in the repo). Unit `h3-live` runs duet generations (960x544, 124 frames,
+51 steps, two cards, one process each, seed stepping from 1000) over
+`experiments/minimax-h3-b70/data/live-prompts.txt` until 13:31 EDT or `STOP-LIVE` under the bench dir; each
+finished clip is picked up by its receipt and cut in. **Fault of the day:** the first stream start at 09:27:34
+used 830 MB host RAM (the tool cached four decoded clips) beside the stage-2 server, whose memory guard sat at
+2.1 GiB available; the guard killed the server at 09:27:47 (`campaign-c2/tp2-lme2-w65536/MEMORY-GUARD.json`).
+No GPU fault; cards left empty. `h3_stream.py` now streams one frame at a time (127 MB peak, measured).
+Rule reaffirmed: nothing new starts beside a research server when available RAM is within a few hundred MB
+of the guard floor. Stage 2 state: archive-and-recall 52/56 graded (kept; finished jobs are skipped on
+resume), summarise 0/56. The live session chains into `launch-d.sh` (unit `ctx-lme-stage2b`, `campaign-c3`,
+`client-d.sh`), which finishes the remaining 4 + 56 trials and judges (about 17 h, so tomorrow morning).
+
 ## 2026-10-08 03:50 EDT, two-B70 host: retention study on an outside benchmark, stage 1 done, stage 2 running
 
 **One two-card server is up for the study (unit `ctx-lme-stage2`, about 19 h); it stops itself.** LongMemEval

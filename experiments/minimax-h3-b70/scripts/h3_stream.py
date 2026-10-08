@@ -211,28 +211,44 @@ class Watcher:
 # ------------------------------------------------------------------------------------------------
 
 
-def decode_clip(path: pathlib.Path, size, fps: int):
-    """-> (list of rgb24 HxWx3 uint8 arrays at `size`, s16 interleaved stereo bytes at 48 kHz)."""
+def decode_audio(path: pathlib.Path):
+    """-> (s16 interleaved stereo samples at 48 kHz, declared video frame count or 0).
+
+    Audio is small (a 5 s clip is ~1 MB); video frames are NOT held in memory -- see iter_video.
+    Four cached 960x544 clips cost 780 MB and tripped the host memory guard beside the 27B server
+    on 2026-10-08, so the decoder streams one frame at a time (a few MB resident)."""
     import av
     import numpy as np
 
-    frames, pcm = [], []
+    pcm, nframes = [], 0
     with av.open(str(path)) as container:
         vstreams = container.streams.video
         astreams = container.streams.audio
-        resampler = av.AudioResampler(format="s16", layout="stereo", rate=AUDIO_RATE)
-        streams = [s for s in (vstreams[:1] + astreams[:1])]
-        for frame in container.decode(*streams):
-            if isinstance(frame, av.VideoFrame):
-                frames.append(fit(frame, size))
-            else:
+        if vstreams:
+            nframes = int(vstreams[0].frames or 0)
+        if astreams:
+            resampler = av.AudioResampler(format="s16", layout="stereo", rate=AUDIO_RATE)
+            for frame in container.decode(astreams[0]):
                 for out in resampler.resample(frame):
                     pcm.append(out.to_ndarray().reshape(-1))
-        if astreams:
             for out in resampler.resample(None):
                 pcm.append(out.to_ndarray().reshape(-1))
     audio = np.concatenate(pcm).astype("<i2") if pcm else np.zeros(0, "<i2")
-    return frames, audio
+    return audio, nframes
+
+
+def iter_video(path: pathlib.Path, size):
+    """Yield rgb24 HxWx3 uint8 arrays at `size`, one at a time (decoding a 5 s clip is far cheaper than
+    the 24 fps pacing, so this never falls behind)."""
+    import av
+
+    with av.open(str(path)) as container:
+        vstreams = container.streams.video
+        if not vstreams:
+            return
+        vstreams[0].thread_type = "AUTO"
+        for frame in container.decode(vstreams[0]):
+            yield fit(frame, size)
 
 
 def fit(frame, size):
@@ -499,7 +515,6 @@ def run(args) -> int:
     n = 0  # frames sent on this encoder
     loop_pos = 0
     last_scan = 0.0
-    cache: dict[pathlib.Path, tuple] = {}
 
     def send(rgb, pcm):
         nonlocal n, t0, encoder
@@ -545,19 +560,15 @@ def run(args) -> int:
                     break
             continue
 
-        if clip.mp4 not in cache:
-            try:
-                cache[clip.mp4] = decode_clip(clip.mp4, size, args.fps)
-            except Exception as exc:  # noqa: BLE001
-                LOG.error("cannot decode %s: %s", clip.mp4, exc)
-                playlist = [c for c in playlist if c.mp4 != clip.mp4]
-                continue
-            keep = {c.mp4 for c in playlist} | {c.mp4 for c in pending}
-            for k in [k for k in cache if k not in keep and k != clip.mp4]:
-                del cache[k]
-        frames, audio = cache[clip.mp4]
+        try:
+            audio, nframes = decode_audio(clip.mp4)
+            frames = iter_video(clip.mp4, size)
+        except Exception as exc:  # noqa: BLE001
+            LOG.error("cannot decode %s: %s", clip.mp4, exc)
+            playlist = [c for c in playlist if c.mp4 != clip.mp4]
+            continue
         write_caption(caption_file, clip.caption(args.overlay_text or "", args.prompt_chars))
-        LOG.info("on air: %s (%d frames, %.2f s)", clip.label, len(frames), len(frames) / args.fps)
+        LOG.info("on air: %s (%d frames, %.2f s)", clip.label, nframes, nframes / args.fps)
         for i, rgb in enumerate(frames):
             a0, a1 = round(i * samples_per_frame) * 2, round((i + 1) * samples_per_frame) * 2
             chunk = audio[a0:a1]
