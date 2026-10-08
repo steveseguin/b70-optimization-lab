@@ -11,13 +11,13 @@ while true; do
   DEST=""; [ -s "$KEYFILE" ] && DEST=$(head -n1 "$KEYFILE" | tr -d '\r\n')
   if [ -n "$DEST" ]; then
     echo "$(date -u +%FT%TZ) relay: listening; forwarding to remote destination (key hidden)" >> $W/relay.log
-    ffmpeg -hide_banner -loglevel warning -nostats -listen 1 -i rtmp://127.0.0.1:1935/live/local \
+    ffmpeg -y -hide_banner -loglevel warning -nostats -listen 1 -i rtmp://127.0.0.1:1935/live/local \
       -map 0 -c copy -flvflags no_duration_filesize -f flv "$DEST" \
       -map 0:v -an -vf fps=12 -q:v 4 -update 1 -atomic_writing 1 -f image2 /dev/shm/ltx-live/frame.jpg \
       2>> $W/relay.log
   else
     echo "$(date -u +%FT%TZ) relay: listening; local JPEG preview only (no destination file)" >> $W/relay.log
-    ffmpeg -hide_banner -loglevel warning -nostats -listen 1 -i rtmp://127.0.0.1:1935/live/local \
+    ffmpeg -y -hide_banner -loglevel warning -nostats -listen 1 -i rtmp://127.0.0.1:1935/live/local \
       -map 0:v -an -vf fps=12 -q:v 4 -update 1 -atomic_writing 1 -f image2 /dev/shm/ltx-live/frame.jpg \
       2>> $W/relay.log
   fi
