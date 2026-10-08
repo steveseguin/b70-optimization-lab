@@ -5,16 +5,9 @@ set -u
 W=/home/steve/ltx-stream/s97-stream01
 PY=/home/steve/.venvs/ltx25-baseline/bin/python
 SINK=/home/steve/llm-optimizations/experiments/ltx25-b70/stream/ltx_rtmp_sink.py
-KEYFILE=/home/steve/.config/ltx-stream/rtmp_url
-if [ -s "$KEYFILE" ]; then
-  URL=$(head -n1 "$KEYFILE" | tr -d '\r\n'); DEST=remote
-else
-  URL=rtmp://127.0.0.1:1935/live/local; DEST=local-discard
-  if ! pgrep -f 'listen 1 -i rtmp://127.0.0.1:1935/live/local' >/dev/null; then
-    setsid ffmpeg -hide_banner -loglevel warning -listen 1 -i rtmp://127.0.0.1:1935/live/local -f null - > $W/local-receiver.log 2>&1 < /dev/null &
-    sleep 1
-  fi
-fi
+# Always push to the local relay (relay2.sh): it writes the LAN preview frame and forwards to the
+# remote destination in ~/.config/ltx-stream/rtmp_url without re-encoding. The sink never holds the key.
+URL=rtmp://127.0.0.1:1935/live/local; DEST=local-relay
 echo "sink destination: $DEST ($(date -u +%FT%TZ))" >> $W/sink-destinations.log
 exec $PY -B $SINK --manifest $W/manifest.jsonl --rtmp "$URL" --state $W/sink-state.json --stats $W/sink-stats.json \
   --workdir $W/sinkwork --size 768x768 --decode-threads 2 \
