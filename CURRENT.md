@@ -6,6 +6,17 @@ below remain that host's own research record; this consolidation did not operate
 ## Four-card host now: LTX speed and reliability, unchanged quality
 
 
+**2026-10-08, Flash-Next CPU-only memory adapter:** the unchanged FP8 PLE rows
+can now be read from their original files with a 4 GiB total pinned row cache.
+Loading has a shared staging cap and per-rank memory receipts. All 125 CPU
+tests pass, including small checks against the real checkpoint. The revised
+host-memory estimate is **87.765 GB**, not a measured fit. Existing host and
+card-memory guards still apply; reading missed rows will add decode latency.
+Nothing was launched and LTX was not touched. The next runtime step needs its
+own exclusive launch window and load measurement; exact output checks remain
+open. [Implementation, command and risks](experiments/qwen38-flash-next-fp8-b70/reopen-20261008/README.md).
+
+
 **2026-10-08, Flash-Next CPU-only calibration follow-up:** the rescued A367
 supervisor trace was found: available RAM fell by **115.87 GB**, so the old
 run does not demonstrate a 90 GB fit. Worker RSS and complete live card-memory
@@ -33,6 +44,8 @@ audio alignment unreviewed). 111 stopped once with SIGINT at 00:54:03 UTC;
 four-card postflight passed 00:54:58 UTC, zero fault lines this boot.
 [Results](experiments/ltx25-b70/notes/2026-10-08-continuation111-results.md),
 [stop receipt](experiments/ltx25-b70/data/resume-20261007/continuation111-stop.json).
+
+**16:30 UTC: guide mode measured — exact, 2.94 s per 2.04 s chunk (1.44 s/s), seams as soft as the other latent modes.** Sharpness over 20 chunks: frames 0–11 at 0.54–0.85 of mid-chunk (0.67, 0.54, 0.57, 0.57, 0.65, 0.68, 0.71, 0.72, 0.77, 0.73, 0.77, 0.78), end of chunk 1.0–1.08. Guide tokens also cost sampler A 1.60 vs 1.35 s. **Conclusion across 114/115:** every latent-side conditioning (slot-0 latent, mixed, guide) leaves the first ~12 frames soft; only the decoded-frame anchor at both stages (113) is sharp, and it puts the full VAE decode on the chain. **Packet 116 idea:** keep the frame anchor at both stages, but obtain the anchor by decoding only the tail of the previous chunk (the causal VAE should reproduce its last frame from a short causal context; the gate checks byte-identity against the full decode's last frame), while the full decode for display runs off-chain. Estimated: ≈2.75 s per 2 s chunk at 49 frames and ≈3.5 s per 4 s at 97 (≈0.87 s/s) with 113-grade seams. Design starting.
 
 **16:15 UTC: 115 `guide` mode qualified exact (3/3) and is streaming at 49 frames** (relaunched 16:07 UTC after archiving the mixed run's outputs to `output/archive-stream115-run01-mixed49/`; `LTXVAddLatentGuide` with the previous two latents per stage as guide tokens, 144/576 tokens at 49 frames, four signatures per route). First anchored chunk: submit→anchor 2.62 s (text+A-prep 0.10, sampler A 1.59, sampler B 0.89), decode 1.50 s off-chain. Guide chunks deliver all 49 frames (no overlap frame to drop). Cadence and seam sharpness over ~120 chunks being measured.
 
